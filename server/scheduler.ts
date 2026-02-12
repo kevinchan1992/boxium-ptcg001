@@ -1,0 +1,251 @@
+import { getDb } from "./db";
+import { dataSources, scheduledTasks } from "../drizzle/schema";
+import { eq, and, lt } from "drizzle-orm";
+import { scrapeSnkrdunkPage } from "./snkrdunkScraper";
+
+/**
+ * Auto-update scheduler for SNKRDUNK data sources
+ * Runs every 12 hours to fetch latest price data
+ */
+
+const UPDATE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+let schedulerInterval: NodeJS.Timeout | null = null;
+
+/**
+ * Start the auto-update scheduler
+ */
+export function startScheduler() {
+  if (schedulerInterval) {
+    console.log("[Scheduler] Scheduler already running");
+    return;
+  }
+
+  console.log("[Scheduler] Starting auto-update scheduler (12-hour interval)");
+
+  // Run immediately on startup
+  runAutoUpdate().catch((err) => {
+    console.error("[Scheduler] Initial update failed:", err);
+  });
+
+  // Then run every 12 hours
+  schedulerInterval = setInterval(() => {
+    runAutoUpdate().catch((err) => {
+      console.error("[Scheduler] Scheduled update failed:", err);
+    });
+  }, UPDATE_INTERVAL);
+}
+
+/**
+ * Stop the auto-update scheduler
+ */
+export function stopScheduler() {
+  if (schedulerInterval) {
+    clearInterval(schedulerInterval);
+    schedulerInterval = null;
+    console.log("[Scheduler] Scheduler stopped");
+  }
+}
+
+/**
+ * Run auto-update for all active SNKRDUNK data sources
+ */
+async function runAutoUpdate() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Scheduler] Database not available");
+    return;
+  }
+
+  try {
+    console.log("[Scheduler] Starting auto-update cycle...");
+
+    // Get all active SNKRDUNK data sources that need updating
+    const sourcesToUpdate = await db
+      .select()
+      .from(dataSources)
+      .where(
+        and(
+          eq(dataSources.source, "snkrdunk"),
+          eq(dataSources.isActive, 1),
+          // Update if nextUpdateAt is in the past or null
+          lt(dataSources.nextUpdateAt || new Date(0), new Date())
+        )
+      );
+
+    console.log(
+      `[Scheduler] Found ${sourcesToUpdate.length} data sources to update`
+    );
+
+    for (const source of sourcesToUpdate) {
+      await updateDataSource(db, source);
+    }
+
+    console.log("[Scheduler] Auto-update cycle completed");
+  } catch (error) {
+    console.error("[Scheduler] Auto-update cycle failed:", error);
+  }
+}
+
+/**
+ * Update a single data source
+ */
+async function updateDataSource(db: any, source: any) {
+  const taskId = `${source.id}-${Date.now()}`;
+
+  try {
+    // Create scheduled task record (skip if db doesn't support insert return)
+    try {
+      await db.insert(scheduledTasks).values({
+        taskType: "snkrdunk_update",
+        status: "running",
+        targetId: source.id,
+        startedAt: new Date(),
+        metadata: JSON.stringify({
+          sourceUrl: source.sourceUrl,
+          cardId: source.cardId,
+        }),
+      });
+    } catch (e) {
+      console.warn("[Scheduler] Could not create task record:", e);
+    }
+
+    console.log(
+      `[Scheduler] Updating data source ${source.id} from ${source.sourceUrl}`
+    );
+
+    // Scrape the latest data
+    const result = await scrapeSnkrdunkPage(source.sourceUrl);
+
+    // Update the data source with new timestamps
+    const nextUpdate = new Date();
+    nextUpdate.setHours(nextUpdate.getHours() + 12);
+
+    await db
+      .update(dataSources)
+      .set({
+        lastFetchedAt: new Date(),
+        lastUpdatedAt: new Date(),
+        nextUpdateAt: nextUpdate,
+        lastFetchStatus: "success",
+        fetchErrorMessage: null,
+        updateCount: (source.updateCount || 0) + 1,
+      })
+      .where(eq(dataSources.id, source.id));
+
+    console.log(
+      `[Scheduler] Successfully updated data source ${source.id}`
+    );
+
+    // Update scheduled task as completed (skip if db doesn't support)
+    try {
+      const taskRecord = await db
+        .select()
+        .from(scheduledTasks)
+        .where(eq(scheduledTasks.taskType, "snkrdunk_update"))
+        .limit(1);
+      if (taskRecord.length > 0) {
+        await db
+          .update(scheduledTasks)
+          .set({
+            status: "completed",
+            completedAt: new Date(),
+          })
+          .where(eq(scheduledTasks.id, taskRecord[0].id));
+      }
+    } catch (e) {
+      console.warn("[Scheduler] Could not update task record:", e);
+    }
+  } catch (error) {
+    console.error(
+      `[Scheduler] Failed to update data source ${source.id}:`,
+      error
+    );
+
+    const errorMessage =
+      error instanceof Error ? error.message : String(error);
+
+    // Update the data source with error status
+    await db
+      .update(dataSources)
+      .set({
+        lastFetchStatus: "failed",
+        fetchErrorMessage: errorMessage,
+      })
+      .where(eq(dataSources.id, source.id));
+
+    // Update scheduled task as failed (skip if db doesn't support)
+    try {
+      const taskRecord = await db
+        .select()
+        .from(scheduledTasks)
+        .where(eq(scheduledTasks.taskType, "snkrdunk_update"))
+        .limit(1);
+      if (taskRecord.length > 0) {
+        await db
+          .update(scheduledTasks)
+          .set({
+            status: "failed",
+            completedAt: new Date(),
+            errorMessage: errorMessage,
+          })
+          .where(eq(scheduledTasks.id, taskRecord[0].id));
+      }
+    } catch (e) {
+      console.warn("[Scheduler] Could not update failed task record:", e);
+    }
+  }
+}
+
+/**
+ * Manually trigger update for a specific data source
+ */
+export async function manualUpdateDataSource(dataSourceId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const source = await db
+    .select()
+    .from(dataSources)
+    .where(eq(dataSources.id, dataSourceId))
+    .limit(1);
+
+  if (!source.length) {
+    throw new Error("Data source not found");
+  }
+
+  await updateDataSource(db, source[0]);
+}
+
+/**
+ * Get update status for a data source
+ */
+export async function getUpdateStatus(dataSourceId: number) {
+  const db = await getDb();
+  if (!db) {
+    return null;
+  }
+
+  const source = await db
+    .select()
+    .from(dataSources)
+    .where(eq(dataSources.id, dataSourceId))
+    .limit(1);
+
+  if (!source.length) {
+    return null;
+  }
+
+  const s = source[0];
+  return {
+    id: s.id,
+    source: s.source,
+    sourceUrl: s.sourceUrl,
+    lastUpdatedAt: s.lastUpdatedAt,
+    nextUpdateAt: s.nextUpdateAt,
+    lastFetchStatus: s.lastFetchStatus,
+    fetchErrorMessage: s.fetchErrorMessage,
+    updateCount: s.updateCount,
+  };
+}

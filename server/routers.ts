@@ -6,6 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
+import { getUpdateStatus, manualUpdateDataSource } from "./scheduler";
 
 export const appRouter = router({
   system: systemRouter,
@@ -254,6 +255,37 @@ export const appRouter = router({
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: `Failed to refresh data source: ${error.message}`,
+          });
+        }
+      }),
+
+    getUpdateStatus: protectedProcedure
+      .input(z.object({
+        dataSourceId: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        const status = await getUpdateStatus(input.dataSourceId);
+        return status;
+      }),
+
+    manualUpdate: protectedProcedure
+      .input(z.object({
+        dataSourceId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        try {
+          await manualUpdateDataSource(input.dataSourceId);
+          return { success: true };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to trigger manual update: ${error.message}`,
           });
         }
       }),

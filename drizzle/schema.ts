@@ -110,8 +110,11 @@ export const dataSources = mysqlTable("dataSources", {
   sourceIdentifier: varchar("sourceIdentifier", { length: 128 }), // External ID from source
   isActive: int("isActive").default(1).notNull(), // 1 = active, 0 = inactive
   lastFetchedAt: timestamp("lastFetchedAt"), // Last time data was fetched
+  lastUpdatedAt: timestamp("lastUpdatedAt"), // Last time price data was updated
+  nextUpdateAt: timestamp("nextUpdateAt"), // Scheduled time for next update
   lastFetchStatus: varchar("lastFetchStatus", { length: 32 }), // success, failed, pending
   fetchErrorMessage: text("fetchErrorMessage"), // Error message if fetch failed
+  updateCount: int("updateCount").default(0).notNull(), // Number of times updated
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
