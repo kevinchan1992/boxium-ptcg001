@@ -378,3 +378,20 @@
 - [x] 識別問題：Firecrawl 輸出格式變更（直接 JSON vs 帶前綴）
 - [x] 修復 snkrdunkScraper.ts 的解析邏輯（支援兩種格式）
 - [x] 添加 maxBuffer 參數避免大輸出截斷
+
+## Bug 修復: 測試模式再次失敗（已處理 URL 0/0）
+
+- [ ] 檢查最新的伺服器日誌
+- [ ] 檢查 snkrdunkAutoCrawler.ts 的 URL 列表抓取邏輯
+- [ ] 檢查 Firecrawl 列表頁抓取是否正常
+- [ ] 修復識別出的問題
+- [ ] 驗證修復後測試模式正常運作
+
+## Bug 修復: 數據源列表出現重複項目 - 完成
+
+- [x] 檢查 scheduler.ts 的去重邏輯
+- [x] 識別問題：URL 格式不一致（帶參數/片段）導致去重失敗
+- [x] 修改 db.ts addDataSource 添加 URL 正規化比對
+- [x] 添加 cleanDuplicateDataSources tRPC procedure
+- [x] 在 Admin 頁面添加「清理重複」按鈕
+- [x] 實作清理邏輯（保留最早添加的）

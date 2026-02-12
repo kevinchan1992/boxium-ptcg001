@@ -65,6 +65,23 @@ export default function Admin() {
     },
   });
 
+  const cleanDuplicatesMutation = trpc.admin.cleanDuplicateDataSources.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message);
+      utils.admin.getDataSources.invalidate();
+      setSelectedIds([]); // Clear selection after cleanup
+    },
+    onError: (error: any) => {
+      toast.error(`清理失敗: ${error.message}`);
+    },
+  });
+
+  const handleCleanDuplicates = () => {
+    if (confirm('確定要清理重複的數據源嗎？系統將保留最早添加的版本，刪除其他重複項。')) {
+      cleanDuplicatesMutation.mutate();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!snkrdunkUrl.trim()) {
@@ -515,6 +532,20 @@ export default function Admin() {
                     刪除 ({selectedIds.length})
                   </Button>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCleanDuplicates}
+                  disabled={cleanDuplicatesMutation.isPending}
+                  title="清理重複的數據源（保留最早添加的）"
+                >
+                  {cleanDuplicatesMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4 mr-2" />
+                  )}
+                  清理重複
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"

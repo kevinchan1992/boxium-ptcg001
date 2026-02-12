@@ -341,6 +341,55 @@ export const appRouter = router({
         const { getCrawlProgress } = await import("./scheduler");
         return getCrawlProgress();
       }),
+
+    cleanDuplicateDataSources: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        
+        try {
+          // Get all data sources
+          const allSources = await db.getDataSources();
+          
+          // Group by normalized URL
+          const urlGroups = new Map<string, typeof allSources>();
+          
+          for (const source of allSources) {
+            const normalizedUrl = source.sourceUrl.split('?')[0].split('#')[0];
+            if (!urlGroups.has(normalizedUrl)) {
+              urlGroups.set(normalizedUrl, []);
+            }
+            urlGroups.get(normalizedUrl)!.push(source);
+          }
+          
+          // Delete duplicates (keep the oldest one)
+          let deletedCount = 0;
+          for (const [normalizedUrl, sources] of Array.from(urlGroups.entries())) {
+            if (sources.length > 1) {
+              // Sort by createdAt (oldest first)
+              sources.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+              
+              // Delete all except the first one
+              for (let i = 1; i < sources.length; i++) {
+                await db.deleteDataSource(sources[i].id);
+                deletedCount++;
+              }
+            }
+          }
+          
+          return { 
+            success: true, 
+            deletedCount,
+            message: `Successfully deleted ${deletedCount} duplicate data sources`
+          };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to clean duplicates: ${error.message}`,
+          });
+        }
+      }),
   }),
 
   watchlist: router({

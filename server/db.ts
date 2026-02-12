@@ -1,4 +1,4 @@
-import { eq, desc, and, like, or, gte, lte, inArray } from "drizzle-orm";
+import { eq, desc, and, gte, lte, or, like, sql, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -298,6 +298,21 @@ export async function getDataSources() {
 export async function addDataSource(data: Omit<InsertDataSource, "id" | "createdAt" | "updatedAt">) {
   const db = await getDb();
   if (!db) return null;
+
+  // Normalize URL by removing query parameters and fragments
+  const normalizedUrl = data.sourceUrl.split('?')[0].split('#')[0];
+  
+  // Check if URL already exists (normalized comparison)
+  const allSources = await db.select().from(dataSources);
+  const isDuplicate = allSources.some(source => {
+    const existingNormalized = source.sourceUrl.split('?')[0].split('#')[0];
+    return existingNormalized === normalizedUrl;
+  });
+  
+  if (isDuplicate) {
+    console.log(`[Database] Data source already exists: ${normalizedUrl}`);
+    return null; // Return null if duplicate
+  }
 
   const result = await db.insert(dataSources).values({
     ...data,
