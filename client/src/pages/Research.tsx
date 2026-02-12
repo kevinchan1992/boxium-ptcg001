@@ -34,7 +34,7 @@ export default function Home() {
           {/* Logo/Brand */}
           <div className="space-y-4">
             <img
-              src="/boxium-logo.png"
+              src="/boxium-logo-white.png"
               alt="BOXIUM"
               className="h-32 mx-auto"
             />
