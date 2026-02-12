@@ -341,6 +341,17 @@ export async function getDataSourceById(dataSourceId: number) {
   return result.length > 0 ? result[0] : null;
 }
 
+export async function deleteDataSource(dataSourceId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .delete(dataSources)
+    .where(eq(dataSources.id, dataSourceId));
+
+  return result;
+}
+
 export async function createCard(data: Omit<typeof cards.$inferInsert, "id" | "createdAt" | "updatedAt">) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

@@ -289,6 +289,25 @@ export const appRouter = router({
           });
         }
       }),
+
+    deleteDataSource: protectedProcedure
+      .input(z.object({
+        dataSourceId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        try {
+          await db.deleteDataSource(input.dataSourceId);
+          return { success: true };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to delete data source: ${error.message}`,
+          });
+        }
+      }),
   }),
 
   watchlist: router({

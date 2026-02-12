@@ -8,14 +8,16 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Plus, RefreshCw, ExternalLink, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Loader2, Plus, RefreshCw, ExternalLink, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getLoginUrl } from "@/const";
 
 export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]}>({ success: 0, failed: 0, errors: [] });
+  const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const utils = trpc.useUtils();
   const dataSourcesQuery = trpc.admin.getDataSources.useQuery(undefined, {
@@ -68,8 +70,24 @@ export default function Admin() {
       return;
     }
 
+    // Deduplicate URLs
+    const existingUrls = dataSourcesQuery.data?.map((ds: any) => ds.sourceUrl) || [];
+    const uniqueUrls = Array.from(new Set(urls)); // Remove duplicates within input
+    const newUrls = uniqueUrls.filter(url => !existingUrls.includes(url)); // Remove existing URLs
+    const duplicateCount = urls.length - newUrls.length;
+
+    if (newUrls.length === 0) {
+      toast.error(`所有 URL 都已存在，無需添加`);
+      setBatchResults({ success: 0, failed: 0, errors: [], duplicates: duplicateCount });
+      return;
+    }
+
+    if (duplicateCount > 0) {
+      toast.info(`已過濾 ${duplicateCount} 個重複 URL`);
+    }
+
     setIsSubmitting(true);
-    setBatchResults({ success: 0, failed: 0, errors: [] });
+    setBatchResults({ success: 0, failed: 0, errors: [], duplicates: duplicateCount });
     
     let successCount = 0;
     let failedCount = 0;
@@ -77,7 +95,10 @@ export default function Admin() {
 
     try {
       // Process URLs sequentially to avoid overwhelming the server
-      for (const url of urls) {
+      for (let i = 0; i < newUrls.length; i++) {
+        const url = newUrls[i];
+        setBatchResults(prev => ({ ...prev, progress: `處理中 ${i + 1}/${newUrls.length}` }));
+        
         try {
           await addDataSourceMutation.mutateAsync({ url });
           successCount++;
@@ -87,7 +108,7 @@ export default function Admin() {
         }
       }
 
-      setBatchResults({ success: successCount, failed: failedCount, errors });
+      setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount });
       
       if (successCount > 0) {
         toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}`);
@@ -104,6 +125,50 @@ export default function Admin() {
 
   const handleRefresh = (dataSourceId: number) => {
     refreshDataSourceMutation.mutate({ dataSourceId });
+  };
+
+  const deleteDataSourceMutation = trpc.admin.deleteDataSource.useMutation({
+    onSuccess: () => {
+      toast.success("數據源已刪除");
+      utils.admin.getDataSources.invalidate();
+      setSelectedIds([]);
+    },
+    onError: (error: any) => {
+      toast.error(`刪除失敗: ${error.message}`);
+    },
+  });
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.length === 0) {
+      toast.error("請選擇要刪除的數據源");
+      return;
+    }
+
+    if (!confirm(`確定要刪除 ${selectedIds.length} 個數據源嗎？`)) {
+      return;
+    }
+
+    for (const id of selectedIds) {
+      try {
+        await deleteDataSourceMutation.mutateAsync({ dataSourceId: id });
+      } catch (error) {
+        console.error(`Failed to delete data source ${id}:`, error);
+      }
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === dataSourcesQuery.data?.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(dataSourcesQuery.data?.map((ds: any) => ds.id) || []);
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   };
 
   if (loading) {
@@ -182,11 +247,21 @@ export default function Admin() {
                 <p className="text-sm text-muted-foreground mt-2">
                   系統將自動抓取卡牌圖片與「最近の売買履歴」價格數據。支援批量添加，每行一個連結。
                 </p>
-                {batchResults.success > 0 || batchResults.failed > 0 ? (
+                {batchResults.progress && (
+                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                    <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                      {batchResults.progress}
+                    </p>
+                  </div>
+                )}
+                {(batchResults.success > 0 || batchResults.failed > 0 || batchResults.duplicates > 0) && !batchResults.progress ? (
                   <div className="mt-4 p-4 bg-muted rounded-lg space-y-2">
-                    <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-4 text-sm flex-wrap">
                       <span className="text-green-600 font-medium">✓ 成功: {batchResults.success}</span>
                       <span className="text-red-600 font-medium">✗ 失敗: {batchResults.failed}</span>
+                      {batchResults.duplicates > 0 && (
+                        <span className="text-yellow-600 font-medium">⚠ 已過濾重複: {batchResults.duplicates}</span>
+                      )}
                     </div>
                     {batchResults.errors.length > 0 && (
                       <div className="mt-2 space-y-1">
@@ -221,22 +296,53 @@ export default function Admin() {
 
           {/* Data Sources List */}
           <Card className="p-6 bg-card border-border">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-foreground">
-                數據源列表
-              </h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => dataSourcesQuery.refetch()}
-                disabled={dataSourcesQuery.isLoading}
-              >
-                {dataSourcesQuery.isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-semibold text-foreground">
+                  數據源列表
+                </h2>
+                {dataSourcesQuery.data && dataSourcesQuery.data.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="select-all"
+                      checked={selectedIds.length === dataSourcesQuery.data.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                    <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
+                      全選
+                    </label>
+                  </div>
                 )}
-              </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                {selectedIds.length > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBatchDelete}
+                    disabled={deleteDataSourceMutation.isPending}
+                  >
+                    {deleteDataSourceMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4 mr-2" />
+                    )}
+                    刪除 ({selectedIds.length})
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => dataSourcesQuery.refetch()}
+                  disabled={dataSourcesQuery.isLoading}
+                >
+                  {dataSourcesQuery.isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
             </div>
 
             {dataSourcesQuery.isLoading ? (
@@ -250,7 +356,14 @@ export default function Admin() {
                     key={source.id}
                     className="flex items-start justify-between gap-4 p-4 bg-background rounded-lg border border-border"
                   >
-                    <div className="flex-1 space-y-2 min-w-0">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <Checkbox
+                        id={`select-${source.id}`}
+                        checked={selectedIds.includes(source.id)}
+                        onCheckedChange={() => toggleSelect(source.id)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1 space-y-2 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">
                           {source.source.toUpperCase()}
@@ -296,6 +409,7 @@ export default function Admin() {
                           錯誤: {source.fetchErrorMessage}
                         </p>
                       )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       {source.card?.imageUrl && (
