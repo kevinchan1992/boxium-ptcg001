@@ -325,3 +325,24 @@
 - [x] 添加批量選擇功能（checkbox）
 - [x] 實作批量刪除按鈕
 - [x] 測試所有新功能
+
+## 測試: Admin 頁面 URL 去重功能
+
+- [x] 測試輸入包含重複 URL 的列表
+- [x] 驗證系統檢測並移除重複項
+- [x] 驗證提示訊息顯示過濾數量
+- [x] 驗證實際提交結果正確
+
+## 功能開發: SNKRDUNK 全自動卡牌抓取系統 - 完成
+
+- [x] 測試 Firecrawl 抓取單頁 SNKRDUNK 列表
+- [x] 實作後端分頁抓取邏輯（1-1575 頁）
+- [x] 提取所有卡牌 URL 並批量添加
+- [x] 實作定時任務（每日 01:00 HKT 自動執行）
+- [x] 添加 Admin 手動觸發按鈕
+- [x] 顯示抓取進度和結果統計
+- [x] 安裝 node-cron 套件
+- [x] 創建 snkrdunkAutoCrawler.ts 模組
+- [x] 更新 scheduler.ts 添加自動抓取功能
+- [x] 添加 autoCrawlSnkrdunk tRPC procedure
+- [x] 更新 Admin 頁面添加自動抓取按鈕和結果顯示

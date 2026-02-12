@@ -1,7 +1,10 @@
+import cron from "node-cron";
 import { getDb } from "./db";
+import * as db from "./db";
 import { dataSources, scheduledTasks, priceHistory } from "../drizzle/schema";
 import { eq, and, lt } from "drizzle-orm";
-import { scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
+import { scrapeSnkrdunkPage, convertJpyToHkd, extractSnkrdunkId } from "./snkrdunkScraper";
+import { scrapeSnkrdunkPages } from "./snkrdunkAutoCrawler";
 
 /**
  * Auto-update scheduler for SNKRDUNK data sources
@@ -33,6 +36,9 @@ export function startScheduler() {
       console.error("[Scheduler] Scheduled update failed:", err);
     });
   }, UPDATE_INTERVAL);
+
+  // Start daily auto-crawl task
+  startDailyAutoCrawl();
 }
 
 /**
@@ -269,4 +275,153 @@ export async function getUpdateStatus(dataSourceId: number) {
     fetchErrorMessage: s.fetchErrorMessage,
     updateCount: s.updateCount,
   };
+}
+
+/**
+ * Start daily auto-crawl task for SNKRDUNK
+ * Runs at 01:00 AM Hong Kong time every day
+ */
+function startDailyAutoCrawl() {
+  console.log("[Scheduler] Registering daily SNKRDUNK auto-crawl task (01:00 AM HKT)");
+
+  // Schedule: Every day at 01:00 AM Hong Kong time
+  cron.schedule("0 1 * * *", async () => {
+    console.log("[AutoCrawl] Starting daily SNKRDUNK auto-crawl at", new Date().toISOString());
+    
+    try {
+      await autoCrawlSnkrdunk();
+      console.log("[AutoCrawl] Daily SNKRDUNK auto-crawl completed successfully");
+    } catch (error) {
+      console.error("[AutoCrawl] Daily SNKRDUNK auto-crawl failed:", error);
+    }
+  }, {
+    timezone: "Asia/Hong_Kong"
+  });
+
+  console.log("[Scheduler] Daily auto-crawl task registered");
+}
+
+/**
+ * Auto-crawl all SNKRDUNK cards
+ * Can be triggered by scheduled task or manual trigger
+ */
+export async function autoCrawlSnkrdunk(startPage: number = 1, endPage: number = 1575) {
+  console.log(`[AutoCrawl] Starting SNKRDUNK auto-crawl from page ${startPage} to ${endPage}...`);
+  
+  const startTime = Date.now();
+  let totalFound = 0;
+  let newUrls = 0;
+  let duplicates = 0;
+  let successCount = 0;
+  let failedCount = 0;
+
+  try {
+    // Fetch all card URLs from SNKRDUNK
+    console.log("[AutoCrawl] Fetching card URLs from SNKRDUNK...");
+    const urls = await scrapeSnkrdunkPages(startPage, endPage);
+    totalFound = urls.length;
+    console.log(`[AutoCrawl] Found ${totalFound} card URLs`);
+
+    // Deduplicate against existing data sources
+    console.log("[AutoCrawl] Checking for duplicates...");
+    const existingSources = await db.getDataSources();
+    const existingUrls = new Set(existingSources.map(s => s.sourceUrl));
+    const uniqueUrls = urls.filter(url => !existingUrls.has(url));
+    newUrls = uniqueUrls.length;
+    duplicates = totalFound - newUrls;
+    console.log(`[AutoCrawl] ${newUrls} new URLs, ${duplicates} duplicates filtered`);
+
+    // Process new URLs in batches
+    console.log("[AutoCrawl] Processing new URLs...");
+    for (let i = 0; i < uniqueUrls.length; i++) {
+      const url = uniqueUrls[i];
+      
+      // Log progress every 100 URLs
+      if ((i + 1) % 100 === 0) {
+        console.log(`[AutoCrawl] Progress: ${i + 1}/${uniqueUrls.length} URLs processed`);
+      }
+
+      try {
+        const snkrdunkId = extractSnkrdunkId(url);
+        if (!snkrdunkId) {
+          console.warn(`[AutoCrawl] Invalid URL format: ${url}`);
+          failedCount++;
+          continue;
+        }
+
+        // Scrape card data
+        const cardData = await scrapeSnkrdunkPage(url);
+        
+        // Check if card already exists
+        const existingCard = await db.getCardByCardId(`snkrdunk-${snkrdunkId}`);
+        let cardId: number;
+
+        if (existingCard) {
+          // Update existing card
+          cardId = existingCard.id;
+          await db.updateCard(cardId, {
+            name: cardData.name,
+            nameJa: cardData.nameJa,
+            imageUrl: cardData.imageUrl || undefined,
+          });
+        } else {
+          // Create new card
+          cardId = await db.createCard({
+            cardId: `snkrdunk-${snkrdunkId}`,
+            name: cardData.name,
+            nameJa: cardData.nameJa,
+            imageUrl: cardData.imageUrl,
+          });
+        }
+
+        // Add data source
+        await db.addDataSource({
+          cardId,
+          source: "snkrdunk",
+          sourceUrl: url,
+        });
+
+        // Add price history
+        for (const priceEntry of cardData.priceHistory) {
+          const priceHkd = convertJpyToHkd(priceEntry.price);
+          await db.addPriceHistory({
+            cardId,
+            source: "snkrdunk",
+            price: priceHkd.toString(),
+            currency: "HKD",
+            grade: priceEntry.grade,
+            soldAt: priceEntry.soldAt,
+            listingUrl: url,
+          });
+        }
+
+        successCount++;
+      } catch (error) {
+        console.error(`[AutoCrawl] Failed to process ${url}:`, error);
+        failedCount++;
+      }
+
+      // Add delay to avoid overwhelming the server (500ms per URL)
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    const endTime = Date.now();
+    const duration = ((endTime - startTime) / 1000 / 60).toFixed(2);
+
+    console.log(`[AutoCrawl] Completed in ${duration} minutes`);
+    console.log(`[AutoCrawl] Results: ${successCount} success, ${failedCount} failed, ${duplicates} duplicates`);
+
+    return {
+      success: true,
+      totalFound,
+      newUrls,
+      duplicates,
+      successCount,
+      failedCount,
+      duration: `${duration} minutes`,
+    };
+  } catch (error) {
+    console.error("[AutoCrawl] Fatal error:", error);
+    throw error;
+  }
 }

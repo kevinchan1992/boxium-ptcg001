@@ -308,6 +308,98 @@ export const appRouter = router({
           });
         }
       }),
+
+    autoCrawlSnkrdunk: protectedProcedure
+      .input(z.object({
+        startPage: z.number().min(1).default(1),
+        endPage: z.number().min(1).default(1575),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        
+        const { scrapeSnkrdunkPages } = await import("./snkrdunkAutoCrawler");
+        
+        try {
+          // 抓取指定頁面範圍
+          const urls = await scrapeSnkrdunkPages(input.startPage, input.endPage);
+          
+          // 去重：與現有數據源比對
+          const existingSources = await db.getDataSources();
+          const existingUrls = new Set(existingSources.map(s => s.sourceUrl));
+          const newUrls = urls.filter(url => !existingUrls.has(url));
+          
+          // 批量添加（使用現有的 addSnkrdunkSource 邏輯）
+          let successCount = 0;
+          let failedCount = 0;
+          
+          for (const url of newUrls) {
+            try {
+              const snkrdunkId = extractSnkrdunkId(url);
+              if (!snkrdunkId) continue;
+              
+              const cardData = await scrapeSnkrdunkPage(url);
+              const existingCard = await db.getCardByCardId(`snkrdunk-${snkrdunkId}`);
+              let cardId: number;
+              
+              if (existingCard) {
+                cardId = existingCard.id;
+                await db.updateCard(cardId, {
+                  name: cardData.name,
+                  nameJa: cardData.nameJa,
+                  imageUrl: cardData.imageUrl || undefined,
+                });
+              } else {
+                cardId = await db.createCard({
+                  cardId: `snkrdunk-${snkrdunkId}`,
+                  name: cardData.name,
+                  nameJa: cardData.nameJa,
+                  imageUrl: cardData.imageUrl,
+                });
+              }
+              
+              await db.addDataSource({
+                cardId,
+                source: "snkrdunk",
+                sourceUrl: url,
+              });
+              
+              for (const priceEntry of cardData.priceHistory) {
+                const priceHkd = convertJpyToHkd(priceEntry.price);
+                await db.addPriceHistory({
+                  cardId,
+                  source: "snkrdunk",
+                  price: priceHkd.toString(),
+                  currency: "HKD",
+                  grade: priceEntry.grade,
+                  soldAt: priceEntry.soldAt,
+                  listingUrl: url,
+                });
+              }
+              
+              successCount++;
+            } catch (error) {
+              console.error(`Failed to add ${url}:`, error);
+              failedCount++;
+            }
+          }
+          
+          return {
+            success: true,
+            totalFound: urls.length,
+            newUrls: newUrls.length,
+            duplicates: urls.length - newUrls.length,
+            successCount,
+            failedCount,
+          };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Auto crawl failed: ${error.message}`,
+          });
+        }
+      }),
   }),
 
   watchlist: router({
