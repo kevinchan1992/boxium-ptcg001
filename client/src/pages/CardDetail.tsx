@@ -6,7 +6,7 @@ import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight } from "l
 import { trpc } from "@/lib/trpc";
 
 
-const grades = ["PSA 10", "BGS BL", "BGS 10", "ARS 10+", "ARS 10"];
+const grades = ["PSA 10", "BGS 10"];
 
 export default function CardDetail() {
   const [, params] = useRoute("/card/:id");
