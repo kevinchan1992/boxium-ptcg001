@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, grade, price, currency FROM priceHistory ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, grade, price, currency FROM priceHistory ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "80",
+      "grade": "A",
+      "price": "3107.50",
+      "currency": "HKD"
+    },
+    {
+      "id": "79",
+      "grade": "PSA10",
+      "price": "4399.95",
+      "currency": "HKD"
+    },
+    {
+      "id": "78",
+      "grade": "PSA10",
+      "price": "4400.00",
+      "currency": "HKD"
+    },
+    {
+      "id": "77",
+      "grade": "PSA10",
+      "price": "4399.95",
+      "currency": "HKD"
+    },
+    {
+      "id": "76",
+      "grade": "PSA10",
+      "price": "4399.95",
+      "currency": "HKD"
+    },
+    {
+      "id": "75",
+      "grade": "PSA10",
+      "price": "4372.50",
+      "currency": "HKD"
+    },
+    {
+      "id": "74",
+      "grade": "PSA10",
+      "price": "4399.95",
+      "currency": "HKD"
+    },
+    {
+      "id": "73",
+      "grade": "A",
+      "price": "2750.00",
+      "currency": "HKD"
+    },
+    {
+      "id": "72",
+      "grade": "A",
+      "price": "2583.90",
+      "currency": "HKD"
+    },
+    {
+      "id": "71",
+      "grade": "PSA10",
+      "price": "4372.50",
+      "currency": "HKD"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tgrade\tprice\tcurrency\n80\tA\t3107.50\tHKD\n79\tPSA10\t4399.95\tHKD\n78\tPSA10\t4400.00\tHKD\n77\tPSA10\t4399.95\tHKD\n76\tPSA10\t4399.95\tHKD\n75\tPSA10\t4372.50\tHKD\n74\tPSA10\t4399.95\tHKD\n73\tA\t2750.00\tHKD\n72\tA\t2583.90\tHKD\n71\tPSA10\t4372.50\tHKD\n",
+  "stderr": "",
+  "execution_time_ms": 1587
+}
