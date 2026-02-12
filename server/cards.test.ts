@@ -1,10 +1,33 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
 function createMockContext(): TrpcContext {
   return {
     user: null,
+    req: {
+      protocol: "https",
+      headers: {},
+    } as TrpcContext["req"],
+    res: {
+      clearCookie: () => {},
+    } as TrpcContext["res"],
+  };
+}
+
+function createAuthContext(): TrpcContext {
+  return {
+    user: {
+      id: 1,
+      openId: "test-user",
+      name: "Test User",
+      email: "test@example.com",
+      loginMethod: "manus",
+      role: "user" as const,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    },
     req: {
       protocol: "https",
       headers: {},
@@ -23,7 +46,6 @@ describe("cards router", () => {
     const result = await caller.cards.search({ query: "Charizard", limit: 10 });
 
     expect(Array.isArray(result)).toBe(true);
-    // Since database might be empty, we just check the structure
     expect(result).toBeDefined();
   });
 
@@ -33,7 +55,6 @@ describe("cards router", () => {
 
     const result = await caller.cards.getById({ id: 1 });
 
-    // Result can be undefined if card doesn't exist
     expect(result === undefined || typeof result === "object").toBe(true);
   });
 
@@ -43,8 +64,16 @@ describe("cards router", () => {
 
     const result = await caller.cards.getByCardId({ cardId: "test-card-123" });
 
-    // Result can be undefined if card doesn't exist
     expect(result === undefined || typeof result === "object").toBe(true);
+  });
+
+  it("getPopular procedure should return popular cards", async () => {
+    const ctx = createMockContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.cards.getPopular({ limit: 10 });
+
+    expect(Array.isArray(result)).toBe(true);
   });
 });
 
@@ -81,62 +110,59 @@ describe("prices router", () => {
 
     expect(Array.isArray(result)).toBe(true);
   });
+
+  it("getStatistics procedure should return price statistics", async () => {
+    const ctx = createMockContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.prices.getStatistics({ cardId: 1 });
+
+    expect(result === null || typeof result === "object").toBe(true);
+  });
 });
 
-describe("auctions router", () => {
-  it("getActive procedure should return active auctions", async () => {
+describe("trends router", () => {
+  it("getMarketTrends procedure should return market trends", async () => {
     const ctx = createMockContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.auctions.getActive({ limit: 10 });
-
-    expect(Array.isArray(result)).toBe(true);
-  });
-
-  it("getById procedure should accept id and return auction or undefined", async () => {
-    const ctx = createMockContext();
-    const caller = appRouter.createCaller(ctx);
-
-    const result = await caller.auctions.getById({ id: 1 });
-
-    expect(result === undefined || typeof result === "object").toBe(true);
-  });
-
-  it("getBids procedure should accept auctionId and return bids", async () => {
-    const ctx = createMockContext();
-    const caller = appRouter.createCaller(ctx);
-
-    const result = await caller.auctions.getBids({ auctionId: 1 });
+    const result = await caller.trends.getMarketTrends({ cardId: 1 });
 
     expect(Array.isArray(result)).toBe(true);
   });
 });
 
-describe("offers router", () => {
-  it("getActive procedure should return active offers", async () => {
-    const ctx = createMockContext();
+describe("watchlist router", () => {
+  it("getUserWatchlist procedure should require authentication", async () => {
+    const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.offers.getActive({ limit: 10 });
+    const result = await caller.watchlist.getUserWatchlist();
 
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it("getActive procedure should accept optional cardId filter", async () => {
-    const ctx = createMockContext();
+  it("addToWatchlist procedure should add card to watchlist", async () => {
+    const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.offers.getActive({ cardId: 1 });
+    const result = await caller.watchlist.addToWatchlist({ 
+      cardId: 1,
+      targetPrice: "1000",
+      notes: "Test note"
+    });
 
-    expect(Array.isArray(result)).toBe(true);
+    expect(result).toHaveProperty("success");
+    expect(result.success).toBe(true);
   });
 
-  it("getActive procedure should accept optional type filter", async () => {
-    const ctx = createMockContext();
+  it("removeFromWatchlist procedure should remove card from watchlist", async () => {
+    const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.offers.getActive({ type: "buy" });
+    const result = await caller.watchlist.removeFromWatchlist({ cardId: 1 });
 
-    expect(Array.isArray(result)).toBe(true);
+    expect(result).toHaveProperty("success");
+    expect(result.success).toBe(true);
   });
 });

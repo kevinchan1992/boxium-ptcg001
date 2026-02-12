@@ -1,6 +1,6 @@
-import { eq, desc, and, like, or } from "drizzle-orm";
+import { eq, desc, and, like, or, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, auctions, bids, offers, reviews, watchlist } from "../drizzle/schema";
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -125,6 +125,20 @@ export async function getCardByCardId(cardId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getPopularCards(limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // For now, return latest cards. In future, can be based on view count or price trends
+  const result = await db
+    .select()
+    .from(cards)
+    .orderBy(desc(cards.createdAt))
+    .limit(limit);
+
+  return result;
+}
+
 // Price history queries
 export async function getPriceHistory(cardId: number, source?: string, grade?: string, limit: number = 50) {
   const db = await getDb();
@@ -150,64 +164,60 @@ export async function getPriceHistory(cardId: number, source?: string, grade?: s
   return result;
 }
 
-// Auction queries
-export async function getActiveAuctions(limit: number = 20) {
+export async function getPriceStatistics(cardId: number, source?: string, grade?: string) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return null;
 
-  const result = await db
-    .select()
-    .from(auctions)
-    .where(eq(auctions.status, "active"))
-    .orderBy(desc(auctions.createdAt))
-    .limit(limit);
-
-  return result;
-}
-
-export async function getAuctionById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-
-  const result = await db.select().from(auctions).where(eq(auctions.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-// Bid queries
-export async function getBidsByAuctionId(auctionId: number) {
-  const db = await getDb();
-  if (!db) return [];
-
-  const result = await db
-    .select()
-    .from(bids)
-    .where(eq(bids.auctionId, auctionId))
-    .orderBy(desc(bids.createdAt));
-
-  return result;
-}
-
-// Offer queries
-export async function getActiveOffers(cardId?: number, type?: string, limit: number = 20) {
-  const db = await getDb();
-  if (!db) return [];
-
-  let conditions = [eq(offers.status, "active")];
+  let conditions = [eq(priceHistory.cardId, cardId)];
   
-  if (cardId) {
-    conditions.push(eq(offers.cardId, cardId));
+  if (source) {
+    conditions.push(eq(priceHistory.source, source as any));
   }
   
-  if (type) {
-    conditions.push(eq(offers.type, type as any));
+  if (grade) {
+    conditions.push(eq(priceHistory.grade, grade));
+  }
+
+  const prices = await db
+    .select()
+    .from(priceHistory)
+    .where(and(...conditions));
+
+  if (prices.length === 0) return null;
+
+  const priceValues = prices.map(p => parseFloat(p.price));
+  const avgPrice = priceValues.reduce((a, b) => a + b, 0) / priceValues.length;
+  const minPrice = Math.min(...priceValues);
+  const maxPrice = Math.max(...priceValues);
+
+  return {
+    avgPrice: avgPrice.toFixed(2),
+    minPrice: minPrice.toFixed(2),
+    maxPrice: maxPrice.toFixed(2),
+    count: prices.length,
+  };
+}
+
+// Market trends queries
+export async function getMarketTrends(cardId: number, startDate?: Date, endDate?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let conditions = [eq(marketTrends.cardId, cardId)];
+  
+  if (startDate) {
+    conditions.push(gte(marketTrends.date, startDate));
+  }
+  
+  if (endDate) {
+    conditions.push(lte(marketTrends.date, endDate));
   }
 
   const result = await db
     .select()
-    .from(offers)
+    .from(marketTrends)
     .where(and(...conditions))
-    .orderBy(desc(offers.createdAt))
-    .limit(limit);
+    .orderBy(desc(marketTrends.date));
 
   return result;
 }
@@ -222,6 +232,31 @@ export async function getUserWatchlist(userId: number) {
     .from(watchlist)
     .where(eq(watchlist.userId, userId))
     .orderBy(desc(watchlist.createdAt));
+
+  return result;
+}
+
+export async function addToWatchlist(userId: number, cardId: number, targetPrice?: string, notes?: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.insert(watchlist).values({
+    userId,
+    cardId,
+    targetPrice,
+    notes,
+  });
+
+  return result;
+}
+
+export async function removeFromWatchlist(userId: number, cardId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .delete(watchlist)
+    .where(and(eq(watchlist.userId, userId), eq(watchlist.cardId, cardId)));
 
   return result;
 }

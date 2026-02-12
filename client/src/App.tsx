@@ -9,7 +9,6 @@ import CardDetail from "./pages/CardDetail";
 import SearchResults from "./pages/SearchResults";
 import Research from "./pages/Research";
 import Pricing from "./pages/Pricing";
-import Marketplace from "./pages/Marketplace";
 import Profile from "./pages/Profile";
 
 function Router() {
@@ -21,7 +20,6 @@ function Router() {
       <Route path="/card/:id" component={CardDetail} />
       <Route path="/research" component={Research} />
       <Route path="/pricing" component={Pricing} />
-      <Route path="/marketplace" component={Marketplace} />
       <Route path="/profile" component={Profile} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

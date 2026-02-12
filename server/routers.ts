@@ -47,13 +47,22 @@ export const appRouter = router({
         const card = await db.getCardByCardId(input.cardId);
         return card;
       }),
+
+    getPopular: publicProcedure
+      .input(z.object({
+        limit: z.number().optional().default(10),
+      }))
+      .query(async ({ input }) => {
+        const cards = await db.getPopularCards(input.limit);
+        return cards;
+      }),
   }),
 
   prices: router({
     getHistory: publicProcedure
       .input(z.object({
         cardId: z.number(),
-        source: z.enum(["snkrdunk", "ebay", "other"]).optional(),
+        source: z.enum(["snkrdunk", "ebay", "tcgplayer", "other"]).optional(),
         grade: z.string().optional(),
         limit: z.number().optional().default(50),
       }))
@@ -66,51 +75,37 @@ export const appRouter = router({
         );
         return history;
       }),
-  }),
 
-  auctions: router({
-    getActive: publicProcedure
+    getStatistics: publicProcedure
       .input(z.object({
-        limit: z.number().optional().default(20),
+        cardId: z.number(),
+        source: z.enum(["snkrdunk", "ebay", "tcgplayer", "other"]).optional(),
+        grade: z.string().optional(),
       }))
       .query(async ({ input }) => {
-        const auctions = await db.getActiveAuctions(input.limit);
-        return auctions;
-      }),
-
-    getById: publicProcedure
-      .input(z.object({
-        id: z.number(),
-      }))
-      .query(async ({ input }) => {
-        const auction = await db.getAuctionById(input.id);
-        return auction;
-      }),
-
-    getBids: publicProcedure
-      .input(z.object({
-        auctionId: z.number(),
-      }))
-      .query(async ({ input }) => {
-        const bids = await db.getBidsByAuctionId(input.auctionId);
-        return bids;
-      }),
-  }),
-
-  offers: router({
-    getActive: publicProcedure
-      .input(z.object({
-        cardId: z.number().optional(),
-        type: z.enum(["buy", "sell"]).optional(),
-        limit: z.number().optional().default(20),
-      }))
-      .query(async ({ input }) => {
-        const offers = await db.getActiveOffers(
+        const stats = await db.getPriceStatistics(
           input.cardId,
-          input.type,
-          input.limit
+          input.source,
+          input.grade
         );
-        return offers;
+        return stats;
+      }),
+  }),
+
+  trends: router({
+    getMarketTrends: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      }))
+      .query(async ({ input }) => {
+        const trends = await db.getMarketTrends(
+          input.cardId,
+          input.startDate,
+          input.endDate
+        );
+        return trends;
       }),
   }),
 
@@ -119,6 +114,31 @@ export const appRouter = router({
       .query(async ({ ctx }) => {
         const watchlist = await db.getUserWatchlist(ctx.user.id);
         return watchlist;
+      }),
+
+    addToWatchlist: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+        targetPrice: z.string().optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.addToWatchlist(
+          ctx.user.id,
+          input.cardId,
+          input.targetPrice,
+          input.notes
+        );
+        return { success: true, result };
+      }),
+
+    removeFromWatchlist: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.removeFromWatchlist(ctx.user.id, input.cardId);
+        return { success: true, result };
       }),
   }),
 });

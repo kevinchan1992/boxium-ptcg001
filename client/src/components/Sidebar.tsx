@@ -1,4 +1,4 @@
-import { Home, Search, TrendingUp, User, Package } from "lucide-react";
+import { Home, Search, TrendingUp, User } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
@@ -6,7 +6,6 @@ const navItems = [
   { icon: Home, label: "首頁", path: "/" },
   { icon: Search, label: "研究", path: "/research" },
   { icon: TrendingUp, label: "格價", path: "/pricing" },
-  { icon: Package, label: "交易", path: "/marketplace" },
   { icon: User, label: "用戶", path: "/profile" },
 ];
 

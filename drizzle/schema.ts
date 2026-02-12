@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -51,7 +51,7 @@ export type InsertCard = typeof cards.$inferInsert;
 export const priceHistory = mysqlTable("priceHistory", {
   id: int("id").autoincrement().primaryKey(),
   cardId: int("cardId").notNull(), // Foreign key to cards table
-  source: mysqlEnum("source", ["snkrdunk", "ebay", "other"]).notNull(), // Price source
+  source: mysqlEnum("source", ["snkrdunk", "ebay", "tcgplayer", "other"]).notNull(), // Price source
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Price value
   currency: varchar("currency", { length: 8 }).default("HKD").notNull(), // Currency code
   grade: varchar("grade", { length: 32 }), // Card grade (e.g., "PSA 10", "BGS 9.5")
@@ -65,85 +65,7 @@ export type PriceHistory = typeof priceHistory.$inferSelect;
 export type InsertPriceHistory = typeof priceHistory.$inferInsert;
 
 /**
- * Auctions table - stores auction listings
- */
-export const auctions = mysqlTable("auctions", {
-  id: int("id").autoincrement().primaryKey(),
-  cardId: int("cardId").notNull(), // Foreign key to cards table
-  sellerId: int("sellerId").notNull(), // Foreign key to users table
-  title: text("title").notNull(),
-  description: text("description"),
-  startingPrice: decimal("startingPrice", { precision: 10, scale: 2 }).notNull(),
-  currentPrice: decimal("currentPrice", { precision: 10, scale: 2 }).notNull(),
-  buyNowPrice: decimal("buyNowPrice", { precision: 10, scale: 2 }), // Optional buy now price
-  currency: varchar("currency", { length: 8 }).default("HKD").notNull(),
-  grade: varchar("grade", { length: 32 }), // Card grade
-  condition: varchar("condition", { length: 64 }), // Card condition
-  imageUrls: text("imageUrls"), // JSON array of image URLs
-  status: mysqlEnum("status", ["active", "ended", "cancelled"]).default("active").notNull(),
-  startTime: timestamp("startTime").notNull(),
-  endTime: timestamp("endTime").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type Auction = typeof auctions.$inferSelect;
-export type InsertAuction = typeof auctions.$inferInsert;
-
-/**
- * Bids table - stores auction bids
- */
-export const bids = mysqlTable("bids", {
-  id: int("id").autoincrement().primaryKey(),
-  auctionId: int("auctionId").notNull(), // Foreign key to auctions table
-  bidderId: int("bidderId").notNull(), // Foreign key to users table
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  currency: varchar("currency", { length: 8 }).default("HKD").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type Bid = typeof bids.$inferSelect;
-export type InsertBid = typeof bids.$inferInsert;
-
-/**
- * Offers table - stores buy/sell offers
- */
-export const offers = mysqlTable("offers", {
-  id: int("id").autoincrement().primaryKey(),
-  cardId: int("cardId").notNull(), // Foreign key to cards table
-  userId: int("userId").notNull(), // Foreign key to users table
-  type: mysqlEnum("type", ["buy", "sell"]).notNull(), // Offer type
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  currency: varchar("currency", { length: 8 }).default("HKD").notNull(),
-  grade: varchar("grade", { length: 32 }), // Card grade
-  condition: varchar("condition", { length: 64 }), // Card condition
-  description: text("description"),
-  status: mysqlEnum("status", ["active", "accepted", "cancelled"]).default("active").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type Offer = typeof offers.$inferSelect;
-export type InsertOffer = typeof offers.$inferInsert;
-
-/**
- * Reviews table - stores user reviews and ratings
- */
-export const reviews = mysqlTable("reviews", {
-  id: int("id").autoincrement().primaryKey(),
-  reviewerId: int("reviewerId").notNull(), // Foreign key to users table (reviewer)
-  reviewedUserId: int("reviewedUserId").notNull(), // Foreign key to users table (reviewed user)
-  auctionId: int("auctionId"), // Optional foreign key to auctions table
-  rating: int("rating").notNull(), // Rating (1-5)
-  comment: text("comment"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type Review = typeof reviews.$inferSelect;
-export type InsertReview = typeof reviews.$inferInsert;
-
-/**
- * Watchlist table - stores user's watched cards
+ * Watchlist table - stores user's watched cards for price alerts
  */
 export const watchlist = mysqlTable("watchlist", {
   id: int("id").autoincrement().primaryKey(),
@@ -151,8 +73,28 @@ export const watchlist = mysqlTable("watchlist", {
   cardId: int("cardId").notNull(), // Foreign key to cards table
   targetPrice: decimal("targetPrice", { precision: 10, scale: 2 }), // Optional target price alert
   currency: varchar("currency", { length: 8 }).default("HKD"),
+  notes: text("notes"), // User notes about this card
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type Watchlist = typeof watchlist.$inferSelect;
 export type InsertWatchlist = typeof watchlist.$inferInsert;
+
+/**
+ * Market trends table - stores aggregated market data for analysis
+ */
+export const marketTrends = mysqlTable("marketTrends", {
+  id: int("id").autoincrement().primaryKey(),
+  cardId: int("cardId").notNull(), // Foreign key to cards table
+  date: timestamp("date").notNull(), // Date of the trend data
+  avgPrice: decimal("avgPrice", { precision: 10, scale: 2 }), // Average price
+  minPrice: decimal("minPrice", { precision: 10, scale: 2 }), // Minimum price
+  maxPrice: decimal("maxPrice", { precision: 10, scale: 2 }), // Maximum price
+  volume: int("volume"), // Number of transactions
+  currency: varchar("currency", { length: 8 }).default("HKD").notNull(),
+  source: varchar("source", { length: 32 }), // Data source
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type MarketTrend = typeof marketTrends.$inferSelect;
+export type InsertMarketTrend = typeof marketTrends.$inferInsert;
