@@ -22,11 +22,16 @@ export default function CardDetail() {
   );
 
   // Fetch price history
+  const normalizeGrade = (grade: string | null) => {
+    if (!grade) return undefined;
+    return grade.replace(/\s+/g, '');
+  };
+
   const { data: priceHistory = [], isLoading: priceLoading } = trpc.prices.getHistory.useQuery(
     {
       cardId: cardId!,
       source: activeSource === "snkrdunk" ? "snkrdunk" : "ebay",
-      grade: activeGrade || undefined,
+      grade: normalizeGrade(activeGrade),
       limit: 50,
     },
     { enabled: !!cardId, retry: 1 }
