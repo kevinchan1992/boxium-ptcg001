@@ -76,7 +76,7 @@ export default function CardDetail() {
   // Group prices by grade
   const pricesByGrade: Record<string, typeof priceHistory> = {};
   priceHistory.forEach((p) => {
-    const grade = p.grade || "未評級";
+    const grade = p.grade || "中古";
     if (!pricesByGrade[grade]) {
       pricesByGrade[grade] = [];
     }
@@ -201,7 +201,13 @@ export default function CardDetail() {
                               : "N/A"}
                           </td>
                           <td className="py-3 px-4 text-foreground text-sm">
-                            {item.grade || "未評級"}
+                            {item.grade ? (
+                              <span>{item.grade}</span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-xs font-medium">
+                                中古
+                              </span>
+                            )}
                           </td>
                           <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
                             HKD ${item.price}
