@@ -52,8 +52,8 @@ export default function Home() {
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
           <img
-            src="/hero-graded-cards.jpg"
-            alt="Professional Graded Pokemon Cards"
+            src="/hero-pokemon-cards.jpg"
+            alt="Pokemon Trading Cards Collection"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#06038d]/80 via-[#06038d]/70 to-[#06038d]/90"></div>
@@ -101,8 +101,8 @@ export default function Home() {
       {/* Visual Divider */}
       <section className="relative h-[60vh] overflow-hidden">
         <img
-          src="/section-grading.png"
-          alt="Professional Card Grading"
+          src="/section-booster-packs.jpg"
+          alt="Pokemon Booster Packs Collection"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent flex items-center">
