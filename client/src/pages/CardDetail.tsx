@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useRoute } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Loader2, AlertCircle } from "lucide-react";
+import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useRef } from "react";
 
 const grades = ["PSA 10", "BGS BL", "BGS 10", "ARS 10+", "ARS 10"];
 
@@ -13,6 +14,17 @@ export default function CardDetail() {
   const [activeGrade, setActiveGrade] = useState<string | null>(null);
 
   const cardId = params?.id ? parseInt(params.id, 10) : null;
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      scrollContainerRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
 
   // Fetch card details
   const { data: card, isLoading: cardLoading, error: cardError } = trpc.cards.getById.useQuery(
@@ -159,7 +171,7 @@ export default function CardDetail() {
               </p>
             </div>
 
-            {/* Price History Table */}
+            {/* Price History Table - Horizontal Scroll */}
             <div className="bg-card rounded-lg p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-foreground">
@@ -171,39 +183,38 @@ export default function CardDetail() {
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : priceHistory.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-3 text-muted-foreground font-medium">
-                          時間
-                        </th>
-                        <th className="text-left py-3 text-muted-foreground font-medium">
-                          評級
-                        </th>
-                        <th className="text-right py-3 text-muted-foreground font-medium">
-                          價格
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {priceHistory.slice(0, 20).map((item, index) => (
-                        <tr key={index} className="hover:bg-muted/50">
-                          <td className="py-3 text-muted-foreground">
-                            {item.soldAt
-                              ? new Date(item.soldAt).toLocaleString("zh-HK")
-                              : "N/A"}
-                          </td>
-                          <td className="py-3 text-foreground">
-                            {item.grade || "未評級"}
-                          </td>
-                          <td className="py-3 text-right font-medium text-foreground">
-                            HKD ${item.price}
-                          </td>
-                        </tr>
+                <div className="relative">
+                  {/* Scroll Container */}
+                  <div className="overflow-x-auto scrollbar-hide">
+                    <div className="flex gap-3 pb-4 min-w-min">
+                      {priceHistory.slice(0, 30).map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex-shrink-0 bg-muted rounded-lg p-4 min-w-[200px] border border-border hover:border-primary transition-colors"
+                        >
+                          <div className="space-y-2">
+                            <p className="text-xs text-muted-foreground">
+                              {item.soldAt
+                                ? new Date(item.soldAt).toLocaleString("zh-HK")
+                                : "N/A"}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-foreground">
+                                {item.grade || "未評級"}
+                              </span>
+                              <span className="text-lg font-bold text-primary">
+                                HKD ${item.price}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+                  </div>
+                  {/* Scroll Indicator */}
+                  <div className="text-xs text-muted-foreground text-center mt-2">
+                    ← 向左滾動查看更多交易 →
+                  </div>
                 </div>
               ) : (
                 <p className="text-muted-foreground py-8 text-center">
