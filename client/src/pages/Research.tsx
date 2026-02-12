@@ -32,11 +32,12 @@ export default function Home() {
         {/* Hero Section */}
         <div className="text-center space-y-6 max-w-3xl">
           {/* Logo/Brand */}
-          <div className="space-y-2">
-            <h1 className="text-5xl font-bold tracking-tight">
-              <span className="text-foreground">BOXIUM</span>{" "}
-              <span className="text-primary">PTCG</span>
-            </h1>
+          <div className="space-y-4">
+            <img
+              src="/boxium-logo.png"
+              alt="BOXIUM"
+              className="h-32 mx-auto"
+            />
             <h2 className="text-3xl font-semibold text-foreground">研究</h2>
           </div>
 

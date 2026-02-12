@@ -13,21 +13,11 @@ export function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-16 border-r border-sidebar-border" style={{ backgroundColor: "#06038d" }}>
+    <aside className="fixed left-0 top-0 z-40 h-screen w-16 border-r border-sidebar-border" style={{ backgroundColor: "#000000" }}>
       <div className="flex flex-col items-center py-4 space-y-6">
-        {/* Logo */}
-        <Link href="/">
-          <div className="w-10 h-10 flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity">
-            <img
-              src="/boxium-logo-white.png"
-              alt="BOXIUM"
-              className="w-8 h-8 object-contain"
-            />
-          </div>
-        </Link>
 
         {/* Navigation Items */}
-        <nav className="flex flex-col items-center space-y-4 flex-1">
+        <nav className="flex flex-col items-center space-y-4 flex-1 mt-4">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location === item.path;
