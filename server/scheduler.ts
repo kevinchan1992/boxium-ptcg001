@@ -1,7 +1,7 @@
 import { getDb } from "./db";
-import { dataSources, scheduledTasks } from "../drizzle/schema";
+import { dataSources, scheduledTasks, priceHistory } from "../drizzle/schema";
 import { eq, and, lt } from "drizzle-orm";
-import { scrapeSnkrdunkPage } from "./snkrdunkScraper";
+import { scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
 
 /**
  * Auto-update scheduler for SNKRDUNK data sources
@@ -115,6 +115,27 @@ async function updateDataSource(db: any, source: any) {
 
     // Scrape the latest data
     const result = await scrapeSnkrdunkPage(source.sourceUrl);
+
+    // Insert price history records
+    if (result.priceHistory && result.priceHistory.length > 0) {
+      const priceRecords = result.priceHistory.map((price) => ({
+        cardId: source.cardId,
+        source: "snkrdunk",
+        price: convertJpyToHkd(price.price).toString(),
+        currency: "HKD",
+        soldAt: price.soldAt,
+        grade: price.grade || null,
+      }));
+
+      // Insert in batches to avoid query too large
+      for (let i = 0; i < priceRecords.length; i += 50) {
+        const batch = priceRecords.slice(i, i + 50);
+        await db.insert(priceHistory).values(batch);
+      }
+      console.log(
+        `[Scheduler] Inserted ${priceRecords.length} price history records`
+      );
+    }
 
     // Update the data source with new timestamps
     const nextUpdate = new Date();

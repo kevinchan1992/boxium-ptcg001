@@ -1,0 +1,20 @@
+{
+  "query": "SELECT id, isActive, nextUpdateAt FROM dataSources;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, isActive, nextUpdateAt FROM dataSources;",
+  "rows": [
+    {
+      "id": "1",
+      "isActive": "1",
+      "nextUpdateAt": "NULL"
+    },
+    {
+      "id": "2",
+      "isActive": "1",
+      "nextUpdateAt": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tisActive\tnextUpdateAt\n1\t1\tNULL\n2\t1\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1758
+}

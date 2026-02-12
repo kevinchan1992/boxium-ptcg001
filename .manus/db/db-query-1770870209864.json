@@ -1,0 +1,14 @@
+{
+  "query": "SELECT grade, COUNT(*) as count FROM priceHistory WHERE grade IS NOT NULL GROUP BY grade ORDER BY count DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT grade, COUNT(*) as count FROM priceHistory WHERE grade IS NOT NULL GROUP BY grade ORDER BY count DESC LIMIT 20;",
+  "rows": [
+    {
+      "grade": "PSA10",
+      "count": "26"
+    }
+  ],
+  "messages": [],
+  "stdout": "grade\tcount\nPSA10\t26\n",
+  "stderr": "",
+  "execution_time_ms": 1501
+}

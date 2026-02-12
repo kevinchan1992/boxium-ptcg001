@@ -129,7 +129,7 @@ export function parsePriceHistory(markdown: string): Array<{
       price,
       currency: "JPY",
       soldAt,
-      grade: grade !== "A" && grade !== "B" && grade !== "C" && grade !== "D" ? grade : undefined,
+      grade: grade === "A" || grade === "B" || grade === "C" || grade === "D" ? grade : undefined,
     });
   }
 

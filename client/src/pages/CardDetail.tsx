@@ -197,7 +197,7 @@ export default function CardDetail() {
                     <tbody className="divide-y divide-border">
                       {priceHistory.map((item, index) => {
                         // Determine display grade - show original grade (A, B, C, D) or badge for ungraded
-                        const displayGrade = item.grade || "中古";
+                        const displayGrade = item.grade;
                         const isUngraded = !item.grade;
                         
                         return (
@@ -218,7 +218,7 @@ export default function CardDetail() {
                                   中古
                                 </span>
                               ) : (
-                                <span>{displayGrade}</span>
+                                <span className="font-medium">{displayGrade}</span>
                               )}
                             </td>
                             <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
