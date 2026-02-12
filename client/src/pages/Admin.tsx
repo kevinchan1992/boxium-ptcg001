@@ -192,9 +192,9 @@ export default function Admin() {
                 {dataSourcesQuery.data.map((source: any) => (
                   <div
                     key={source.id}
-                    className="flex items-start justify-between p-4 bg-background rounded-lg border border-border"
+                    className="flex items-start justify-between gap-4 p-4 bg-background rounded-lg border border-border"
                   >
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 space-y-2 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">
                           {source.source.toUpperCase()}
@@ -241,14 +241,23 @@ export default function Admin() {
                         </p>
                       )}
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRefresh(source.id)}
-                      disabled={refreshDataSourceMutation.isPending}
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {source.card?.imageUrl && (
+                        <img
+                          src={source.card.imageUrl}
+                          alt={source.card.name || "Card"}
+                          className="w-20 h-28 object-cover rounded-md border border-border"
+                        />
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRefresh(source.id)}
+                        disabled={refreshDataSourceMutation.isPending}
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

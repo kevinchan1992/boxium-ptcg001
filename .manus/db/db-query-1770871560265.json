@@ -1,0 +1,42 @@
+{
+  "query": "SELECT * FROM dataSources;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT * FROM dataSources;",
+  "rows": [
+    {
+      "id": "1",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "sourceUrl": "https://snkrdunk.com/apparels/455596#1",
+      "sourceIdentifier": "455596",
+      "isActive": "1",
+      "lastFetchedAt": "2026-02-12 03:07:03",
+      "lastFetchStatus": "success",
+      "fetchErrorMessage": "NULL",
+      "createdAt": "2026-02-12 03:06:40",
+      "updatedAt": "2026-02-12 03:07:03",
+      "lastUpdatedAt": "NULL",
+      "nextUpdateAt": "NULL",
+      "updateCount": "0"
+    },
+    {
+      "id": "2",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "sourceUrl": "https://snkrdunk.com/apparels/455596#1",
+      "sourceIdentifier": "NULL",
+      "isActive": "1",
+      "lastFetchedAt": "2026-02-12 04:42:45",
+      "lastFetchStatus": "success",
+      "fetchErrorMessage": "NULL",
+      "createdAt": "2026-02-12 04:27:52",
+      "updatedAt": "2026-02-12 04:42:45",
+      "lastUpdatedAt": "2026-02-12 04:42:45",
+      "nextUpdateAt": "2026-02-12 16:42:45",
+      "updateCount": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tsource\tsourceUrl\tsourceIdentifier\tisActive\tlastFetchedAt\tlastFetchStatus\tfetchErrorMessage\tcreatedAt\tupdatedAt\tlastUpdatedAt\tnextUpdateAt\tupdateCount\n1\t1\tsnkrdunk\thttps://snkrdunk.com/apparels/455596#1\t455596\t1\t2026-02-12 03:07:03\tsuccess\tNULL\t2026-02-12 03:06:40\t2026-02-12 03:07:03\tNULL\tNULL\t0\n2\t1\tsnkrdunk\thttps://snkrdunk.com/apparels/455596#1\tNULL\t1\t2026-02-12 04:42:45\tsuccess\tNULL\t2026-02-12 04:27:52\t2026-02-12 04:42:45\t2026-02-12 04:42:45\t2026-02-12 16:42:45\t3\n",
+  "stderr": "",
+  "execution_time_ms": 1597
+}
