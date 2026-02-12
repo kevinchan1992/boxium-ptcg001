@@ -61,7 +61,7 @@ export default function Home() {
 
         {/* Hero Content */}
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <h1 className="text-white text-4xl md:text-6xl font-light tracking-wide mb-8 leading-relaxed">
+          <h1 className="text-white text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-light tracking-wide mb-8 leading-relaxed">
             專注於 Pokémon TCG 之價格查詢與交易的綜合平台
           </h1>
           <p className="text-white/90 text-lg md:text-xl font-light mb-12 max-w-2xl mx-auto leading-relaxed">
