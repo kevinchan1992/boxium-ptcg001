@@ -10,6 +10,7 @@ import SearchResults from "./pages/SearchResults";
 import Research from "./pages/Research";
 import Pricing from "./pages/Pricing";
 import Profile from "./pages/Profile";
+import Admin from "./pages/Admin";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/research" component={Research} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/profile" component={Profile} />
+      <Route path="/admin" component={Admin} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

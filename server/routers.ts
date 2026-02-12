@@ -2,8 +2,10 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
+import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
 
 export const appRouter = router({
   system: systemRouter,
@@ -106,6 +108,151 @@ export const appRouter = router({
           input.endDate
         );
         return trends;
+      }),
+  }),
+
+  admin: router({
+    getDataSources: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        const sources = await db.getDataSources();
+        return sources;
+      }),
+
+    addSnkrdunkSource: protectedProcedure
+      .input(z.object({
+        url: z.string().url(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+
+        const snkrdunkId = extractSnkrdunkId(input.url);
+        if (!snkrdunkId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid SNKRDUNK URL" });
+        }
+
+        try {
+          // Scrape SNKRDUNK page
+          const cardData = await scrapeSnkrdunkPage(input.url);
+
+          // Create or update card
+          const existingCard = await db.getCardByCardId(`snkrdunk-${snkrdunkId}`);
+          let cardId: number;
+
+          if (existingCard) {
+            cardId = existingCard.id;
+            // Update card with scraped data
+            await db.updateCard(cardId, {
+              name: cardData.name,
+              nameJa: cardData.nameJa,
+              imageUrl: cardData.imageUrl || undefined,
+            });
+          } else {
+            // Create new card
+            cardId = await db.createCard({
+              cardId: `snkrdunk-${snkrdunkId}`,
+              name: cardData.name,
+              nameJa: cardData.nameJa,
+              imageUrl: cardData.imageUrl || undefined,
+            });
+          }
+
+          // Add data source
+          const dataSource = await db.addDataSource({
+            cardId,
+            source: "snkrdunk",
+            sourceUrl: input.url,
+            sourceIdentifier: snkrdunkId,
+          });
+
+          // Save price history
+          for (const priceEntry of cardData.priceHistory) {
+            const priceHkd = convertJpyToHkd(priceEntry.price);
+            await db.addPriceHistory({
+              cardId,
+              source: "snkrdunk",
+              price: priceHkd.toString(),
+              currency: "HKD",
+              grade: priceEntry.grade,
+              soldAt: priceEntry.soldAt,
+              listingUrl: input.url,
+            });
+          }
+
+          // Update data source status
+          await db.updateDataSourceFetchStatus(
+            Number((dataSource as any).insertId || 0),
+            "success"
+          );
+
+          return { success: true, cardId, priceCount: cardData.priceHistory.length };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to scrape SNKRDUNK: ${error.message}`,
+          });
+        }
+      }),
+
+    refreshDataSource: protectedProcedure
+      .input(z.object({
+        dataSourceId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+
+        try {
+          // Get data source
+          const dataSource = await db.getDataSourceById(input.dataSourceId);
+          if (!dataSource) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "Data source not found" });
+          }
+
+          // Scrape SNKRDUNK page
+          const cardData = await scrapeSnkrdunkPage(dataSource.sourceUrl);
+
+          // Update card
+          await db.updateCard(dataSource.cardId, {
+            name: cardData.name,
+            nameJa: cardData.nameJa,
+            imageUrl: cardData.imageUrl || undefined,
+          });
+
+          // Save new price history
+          for (const priceEntry of cardData.priceHistory) {
+            const priceHkd = convertJpyToHkd(priceEntry.price);
+            await db.addPriceHistory({
+              cardId: dataSource.cardId,
+              source: "snkrdunk",
+              price: priceHkd.toString(),
+              currency: "HKD",
+              grade: priceEntry.grade,
+              soldAt: priceEntry.soldAt,
+              listingUrl: dataSource.sourceUrl,
+            });
+          }
+
+          // Update data source status
+          await db.updateDataSourceFetchStatus(input.dataSourceId, "success");
+
+          return { success: true, priceCount: cardData.priceHistory.length };
+        } catch (error: any) {
+          await db.updateDataSourceFetchStatus(
+            input.dataSourceId,
+            "failed",
+            error.message
+          );
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to refresh data source: ${error.message}`,
+          });
+        }
       }),
   }),
 

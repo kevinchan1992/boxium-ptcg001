@@ -1,6 +1,6 @@
 import { eq, desc, and, like, or, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends } from "../drizzle/schema";
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -259,4 +259,155 @@ export async function removeFromWatchlist(userId: number, cardId: number) {
     .where(and(eq(watchlist.userId, userId), eq(watchlist.cardId, cardId)));
 
   return result;
+}
+
+// Data source management queries
+export async function getDataSources() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(dataSources)
+    .orderBy(desc(dataSources.createdAt));
+
+  return result;
+}
+
+export async function addDataSource(data: Omit<InsertDataSource, "id" | "createdAt" | "updatedAt">) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.insert(dataSources).values({
+    ...data,
+    lastFetchStatus: "pending",
+  });
+
+  return result;
+}
+
+export async function updateDataSourceFetchStatus(
+  dataSourceId: number,
+  status: string,
+  errorMessage?: string
+) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .update(dataSources)
+    .set({
+      lastFetchedAt: new Date(),
+      lastFetchStatus: status,
+      fetchErrorMessage: errorMessage || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(dataSources.id, dataSourceId));
+
+  return result;
+}
+
+export async function getDataSourceById(dataSourceId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(dataSources)
+    .where(eq(dataSources.id, dataSourceId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function createCard(data: Omit<typeof cards.$inferInsert, "id" | "createdAt" | "updatedAt">) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(cards).values(data);
+
+  // Get the newly created card
+  const newCard = await db
+    .select()
+    .from(cards)
+    .where(eq(cards.cardId, data.cardId))
+    .limit(1);
+
+  return newCard[0].id;
+}
+
+export async function updateCard(
+  cardId: number,
+  data: Partial<Omit<typeof cards.$inferInsert, "id" | "cardId" | "createdAt">>
+) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .update(cards)
+    .set({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .where(eq(cards.id, cardId));
+
+  return result;
+}
+
+export async function addPriceHistory(data: {
+  cardId: number;
+  source: "snkrdunk" | "ebay" | "tcgplayer" | "other";
+  price: string;
+  currency: string;
+  grade?: string;
+  soldAt?: Date;
+  listingUrl?: string;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.insert(priceHistory).values({
+    cardId: data.cardId,
+    source: data.source,
+    price: data.price,
+    currency: data.currency,
+    grade: data.grade,
+    soldAt: data.soldAt,
+    listingUrl: data.listingUrl,
+  });
+
+  return result;
+}
+
+export async function createPlaceholderCard(snkrdunkId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Check if card already exists
+  const existing = await db
+    .select()
+    .from(cards)
+    .where(eq(cards.cardId, `snkrdunk-${snkrdunkId}`))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0].id;
+  }
+
+  // Create placeholder card
+  const result = await db.insert(cards).values({
+    cardId: `snkrdunk-${snkrdunkId}`,
+    name: `SNKRDUNK Card ${snkrdunkId}`,
+    nameJa: `待更新`,
+    description: "Placeholder - will be updated from SNKRDUNK",
+  });
+
+  // Get the newly created card
+  const newCard = await db
+    .select()
+    .from(cards)
+    .where(eq(cards.cardId, `snkrdunk-${snkrdunkId}`))
+    .limit(1);
+
+  return newCard[0].id;
 }

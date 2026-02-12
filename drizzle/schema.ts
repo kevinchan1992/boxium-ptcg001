@@ -98,3 +98,41 @@ export const marketTrends = mysqlTable("marketTrends", {
 
 export type MarketTrend = typeof marketTrends.$inferSelect;
 export type InsertMarketTrend = typeof marketTrends.$inferInsert;
+
+/**
+ * Data sources table - stores external data source configurations (SNKRDUNK links, etc.)
+ */
+export const dataSources = mysqlTable("dataSources", {
+  id: int("id").autoincrement().primaryKey(),
+  cardId: int("cardId").notNull(), // Foreign key to cards table
+  source: mysqlEnum("source", ["snkrdunk", "ebay", "tcgplayer", "other"]).notNull(),
+  sourceUrl: text("sourceUrl").notNull(), // URL to the source page
+  sourceIdentifier: varchar("sourceIdentifier", { length: 128 }), // External ID from source
+  isActive: int("isActive").default(1).notNull(), // 1 = active, 0 = inactive
+  lastFetchedAt: timestamp("lastFetchedAt"), // Last time data was fetched
+  lastFetchStatus: varchar("lastFetchStatus", { length: 32 }), // success, failed, pending
+  fetchErrorMessage: text("fetchErrorMessage"), // Error message if fetch failed
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DataSource = typeof dataSources.$inferSelect;
+export type InsertDataSource = typeof dataSources.$inferInsert;
+
+/**
+ * Scheduled tasks table - tracks automatic update tasks
+ */
+export const scheduledTasks = mysqlTable("scheduledTasks", {
+  id: int("id").autoincrement().primaryKey(),
+  taskType: varchar("taskType", { length: 64 }).notNull(), // e.g., "snkrdunk_update", "ebay_update"
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
+  targetId: int("targetId"), // ID of the target (e.g., cardId or dataSourceId)
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  errorMessage: text("errorMessage"),
+  metadata: text("metadata"), // JSON metadata about the task
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ScheduledTask = typeof scheduledTasks.$inferSelect;
+export type InsertScheduledTask = typeof scheduledTasks.$inferInsert;
