@@ -12,11 +12,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-md flex items-center justify-center font-bold text-lg" style={{ backgroundColor: "#fedd00", color: "#06038d" }}>
-                B
-              </div>
-              <span className="font-bold text-xl" style={{ color: "#06038d" }}>BOXIUM</span>
+            <Link href="/" className="flex items-center">
+              <img
+                src="/boxium-logo.png"
+                alt="BOXIUM Logo"
+                className="h-10"
+              />
             </Link>
 
             {/* Desktop Navigation */}
@@ -60,12 +61,7 @@ export default function Home() {
 
         {/* Hero Content */}
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <img
-            src="/boxium-logo.png"
-            alt="BOXIUM Logo"
-            className="mx-auto mb-12 w-full max-w-2xl"
-          />
-          <h1 className="text-white text-2xl md:text-3xl font-light tracking-wide mb-8 leading-relaxed">
+          <h1 className="text-white text-4xl md:text-6xl font-light tracking-wide mb-8 leading-relaxed">
             專注於 Pokémon TCG 之價格查詢與交易的綜合平台
           </h1>
           <p className="text-white/90 text-lg md:text-xl font-light mb-12 max-w-2xl mx-auto leading-relaxed">
@@ -193,11 +189,12 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-12 px-4 border-t border-gray-200">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-6 h-6 rounded-md flex items-center justify-center font-bold text-sm" style={{ backgroundColor: "#fedd00", color: "#06038d" }}>
-              B
-            </div>
-            <span className="font-bold text-lg" style={{ color: "#06038d" }}>BOXIUM</span>
+          <div className="flex items-center justify-center mb-4">
+            <img
+              src="/boxium-logo.png"
+              alt="BOXIUM Logo"
+              className="h-12"
+            />
           </div>
           <p className="text-gray-500 text-sm">
             © 2026 BOXIUM. 專注於 Pokémon TCG 價格查詢與交易的綜合平台。
