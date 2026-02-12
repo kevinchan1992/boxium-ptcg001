@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useLocation, useSearch } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ export default function SearchResults() {
   const [searchQuery, setSearchQuery] = useState(query);
   const [, setLocation] = useLocation();
 
-  // Fetch search results
+  // Fetch search results - single query, no conditional hooks
   const { data: searchResults = [], isLoading, error } = trpc.cards.search.useQuery(
     { query: query || "", limit: 50 },
     { enabled: !!query, retry: 1 }
@@ -27,29 +27,6 @@ export default function SearchResults() {
   const handleCardClick = (cardId: number) => {
     setLocation(`/card/${cardId}`);
   };
-
-  // Get price data for each card - use useMemo to avoid calling hooks conditionally
-  const cardIds = useMemo(() => searchResults.map((c: any) => c.id), [searchResults]);
-  
-  // Fetch price history for all cards at once (better approach)
-  const priceHistoryQueries = useMemo(() => {
-    return cardIds.map((id: number) =>
-      trpc.prices.getHistory.useQuery(
-        { cardId: id, limit: 1 },
-        { enabled: !!id, retry: 0 }
-      )
-    );
-  }, [cardIds]);
-
-  // Build price map from query results
-  const priceMap = useMemo(() => {
-    const map: Record<number, string> = {};
-    cardIds.forEach((id: number, index: number) => {
-      const priceData = priceHistoryQueries[index]?.data || [];
-      map[id] = priceData.length > 0 ? priceData[0].price : "N/A";
-    });
-    return map;
-  }, [cardIds, priceHistoryQueries]);
 
   return (
     <MainLayout>
@@ -98,49 +75,47 @@ export default function SearchResults() {
           </div>
         ) : searchResults.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {searchResults.map((card: any) => {
-              const latestPrice = priceMap[card.id] || "N/A";
-
-              return (
-                <div
-                  key={card.id}
-                  onClick={() => handleCardClick(card.id)}
-                  className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-105 hover:shadow-2xl"
-                >
-                  <div className="aspect-[2/3] relative bg-muted">
-                    {card.imageUrl ? (
-                      <img
-                        src={card.imageUrl}
-                        alt={card.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <p className="text-muted-foreground text-sm">無圖片</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-foreground mb-1 truncate">
-                      {card.name}
-                    </h3>
-                    {card.nameJa && (
-                      <p className="text-xs text-muted-foreground mb-2 truncate">
-                        {card.nameJa}
-                      </p>
-                    )}
-                    {card.cardNumber && (
-                      <p className="text-sm text-muted-foreground mb-2">
-                        #{card.cardNumber}
-                      </p>
-                    )}
-                    <p className="text-lg font-bold text-primary">
-                      {latestPrice !== "N/A" ? `HKD $${latestPrice}` : "暫無價格"}
-                    </p>
-                  </div>
+            {searchResults.map((card: any) => (
+              <div
+                key={card.id}
+                onClick={() => handleCardClick(card.id)}
+                className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-105 hover:shadow-2xl"
+              >
+                <div className="aspect-[2/3] relative bg-muted">
+                  {card.imageUrl ? (
+                    <img
+                      src={card.imageUrl}
+                      alt={card.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <p className="text-muted-foreground text-sm">無圖片</p>
+                    </div>
+                  )}
                 </div>
-              );
-            })}
+                <div className="p-4">
+                  <h3 className="font-semibold text-foreground mb-1 truncate">
+                    {card.name}
+                  </h3>
+                  {card.nameJa && (
+                    <p className="text-xs text-muted-foreground mb-2 truncate">
+                      {card.nameJa}
+                    </p>
+                  )}
+                  {card.cardNumber && (
+                    <p className="text-sm text-muted-foreground mb-2">
+                      #{card.cardNumber}
+                    </p>
+                  )}
+                  {card.latestPrice && (
+                    <p className="text-lg font-bold text-primary">
+                      HKD ${card.latestPrice}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="flex items-center justify-center py-12">
