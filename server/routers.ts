@@ -162,7 +162,7 @@ export const appRouter = router({
           }
 
           // Add data source
-          const dataSource = await db.addDataSource({
+          await db.addDataSource({
             cardId,
             source: "snkrdunk",
             sourceUrl: input.url,
@@ -183,11 +183,14 @@ export const appRouter = router({
             });
           }
 
-          // Update data source status
-          await db.updateDataSourceFetchStatus(
-            Number((dataSource as any).insertId || 0),
-            "success"
+          // Get and update data source status
+          const dataSources = await db.getDataSources();
+          const newDataSource = dataSources.find(
+            (ds) => ds.cardId === cardId && ds.source === "snkrdunk"
           );
+          if (newDataSource) {
+            await db.updateDataSourceFetchStatus(newDataSource.id, "success");
+          }
 
           return { success: true, cardId, priceCount: cardData.priceHistory.length };
         } catch (error: any) {

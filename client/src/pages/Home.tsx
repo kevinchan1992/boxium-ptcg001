@@ -1,41 +1,19 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
-
-// Sample card data for demonstration
-const sampleCards = [
-  {
-    id: 1,
-    name: "MEGA Charizard X ex",
-    imageUrl: "https://images.pokemontcg.io/xy2/108_hires.png",
-  },
-  {
-    id: 2,
-    name: "Pikachu",
-    imageUrl: "https://images.pokemontcg.io/base1/58_hires.png",
-  },
-  {
-    id: 3,
-    name: "Blastoise",
-    imageUrl: "https://images.pokemontcg.io/base1/2_hires.png",
-  },
-  {
-    id: 4,
-    name: "Venusaur",
-    imageUrl: "https://images.pokemontcg.io/base1/15_hires.png",
-  },
-  {
-    id: 5,
-    name: "Mewtwo",
-    imageUrl: "https://images.pokemontcg.io/base1/10_hires.png",
-  },
-];
+import { trpc } from "@/lib/trpc";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
+
+  // Fetch popular cards from database
+  const { data: popularCards = [], isLoading } = trpc.cards.getPopular.useQuery(
+    { limit: 5 },
+    { retry: 1 }
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,21 +59,37 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Sample Cards */}
+          {/* Popular Cards */}
           <div className="flex justify-center gap-4 mt-12 flex-wrap">
-            {sampleCards.map((card) => (
-              <div
-                key={card.id}
-                onClick={() => handleCardClick(card.id)}
-                className="cursor-pointer transform transition-all hover:scale-105 hover:shadow-2xl"
-              >
-                <img
-                  src={card.imageUrl}
-                  alt={card.name}
-                  className="w-32 h-44 object-cover rounded-lg shadow-lg"
-                />
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ))}
+            ) : popularCards.length > 0 ? (
+              popularCards.map((card: any) => (
+                <div
+                  key={card.id}
+                  onClick={() => handleCardClick(card.id)}
+                  className="cursor-pointer transform transition-all hover:scale-105 hover:shadow-2xl group"
+                >
+                  <div className="relative">
+                    <img
+                      src={card.imageUrl || "https://via.placeholder.com/128x176?text=No+Image"}
+                      alt={card.name}
+                      className="w-32 h-44 object-cover rounded-lg shadow-lg"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition-all" />
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2 text-center line-clamp-2">
+                    {card.name}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>暫無卡牌數據,請在管理員後台添加 SNKRDUNK 卡牌</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
