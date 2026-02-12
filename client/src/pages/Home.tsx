@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -22,7 +22,7 @@ export default function Home() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link href="/research" className="text-gray-700 hover:text-[#06038d] transition-colors">研究</Link>
+              <Link href="/research" className="text-gray-700 hover:text-[#06038d] transition-colors">卡牌搜尋</Link>
               <Link href="/admin" className="text-gray-700 hover:text-[#06038d] transition-colors">管理後台</Link>
             </div>
 
@@ -118,7 +118,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-32 px-4 bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-sm uppercase tracking-widest text-center mb-16" style={{ color: "#06038d" }}>核心服務</h2>
+          <h2 className="text-sm uppercase tracking-widest text-center mb-16" style={{ color: "#06038d", fontSize: '16px' }}>核心服務</h2>
           
           <div className="grid md:grid-cols-2 gap-16">
             {/* Feature 1 */}
@@ -173,14 +173,14 @@ export default function Home() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-light mb-8 text-gray-800">準備好開始了嗎？</h2>
           <p className="text-lg text-gray-600 mb-12 leading-relaxed">
-            立即探索我們的研究工具，發掘您的下一個收藏目標。
+            立即探索我們的搜尋工具，發掘您的下一個收藏目標。
           </p>
           <Link href="/research">
             <button
               className="px-8 py-4 text-lg font-medium rounded-full transition-all hover:scale-105 hover:shadow-2xl"
               style={{ backgroundColor: "#06038d", color: "white" }}
             >
-              前往研究頁面
+              前往搜尋卡牌頁面
             </button>
           </Link>
         </div>
