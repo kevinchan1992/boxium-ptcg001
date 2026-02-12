@@ -67,23 +67,13 @@ export default function Home() {
               </div>
             ) : popularCards.length > 0 ? (
               popularCards.map((card: any) => (
-                <div
+                <img
                   key={card.id}
+                  src={card.imageUrl || "https://via.placeholder.com/128x176?text=No+Image"}
+                  alt={card.name}
                   onClick={() => handleCardClick(card.id)}
-                  className="cursor-pointer transform transition-all hover:scale-105 hover:shadow-2xl group"
-                >
-                  <div className="relative">
-                    <img
-                      src={card.imageUrl || "https://via.placeholder.com/128x176?text=No+Image"}
-                      alt={card.name}
-                      className="w-32 h-44 object-cover rounded-lg shadow-lg"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition-all" />
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2 text-center line-clamp-2">
-                    {card.name}
-                  </p>
-                </div>
+                  className="w-32 h-44 object-cover rounded-lg shadow-lg cursor-pointer transform transition-all hover:scale-110 hover:shadow-2xl"
+                />
               ))
             ) : (
               <div className="text-center py-12 text-muted-foreground">
