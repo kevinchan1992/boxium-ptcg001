@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, cards, priceHistory, auctions, bids, offers, reviews, watchlist } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,139 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Card queries
+export async function searchCards(query: string, limit: number = 20) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(cards)
+    .where(
+      or(
+        like(cards.name, `%${query}%`),
+        like(cards.nameJa, `%${query}%`),
+        like(cards.cardNumber, `%${query}%`)
+      )
+    )
+    .limit(limit);
+
+  return result;
+}
+
+export async function getCardById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(cards).where(eq(cards.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getCardByCardId(cardId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(cards).where(eq(cards.cardId, cardId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Price history queries
+export async function getPriceHistory(cardId: number, source?: string, grade?: string, limit: number = 50) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let conditions = [eq(priceHistory.cardId, cardId)];
+  
+  if (source) {
+    conditions.push(eq(priceHistory.source, source as any));
+  }
+  
+  if (grade) {
+    conditions.push(eq(priceHistory.grade, grade));
+  }
+
+  const result = await db
+    .select()
+    .from(priceHistory)
+    .where(and(...conditions))
+    .orderBy(desc(priceHistory.soldAt))
+    .limit(limit);
+
+  return result;
+}
+
+// Auction queries
+export async function getActiveAuctions(limit: number = 20) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(auctions)
+    .where(eq(auctions.status, "active"))
+    .orderBy(desc(auctions.createdAt))
+    .limit(limit);
+
+  return result;
+}
+
+export async function getAuctionById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(auctions).where(eq(auctions.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Bid queries
+export async function getBidsByAuctionId(auctionId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(bids)
+    .where(eq(bids.auctionId, auctionId))
+    .orderBy(desc(bids.createdAt));
+
+  return result;
+}
+
+// Offer queries
+export async function getActiveOffers(cardId?: number, type?: string, limit: number = 20) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let conditions = [eq(offers.status, "active")];
+  
+  if (cardId) {
+    conditions.push(eq(offers.cardId, cardId));
+  }
+  
+  if (type) {
+    conditions.push(eq(offers.type, type as any));
+  }
+
+  const result = await db
+    .select()
+    .from(offers)
+    .where(and(...conditions))
+    .orderBy(desc(offers.createdAt))
+    .limit(limit);
+
+  return result;
+}
+
+// Watchlist queries
+export async function getUserWatchlist(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(watchlist)
+    .where(eq(watchlist.userId, userId))
+    .orderBy(desc(watchlist.createdAt));
+
+  return result;
+}
