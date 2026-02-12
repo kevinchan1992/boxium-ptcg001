@@ -186,7 +186,7 @@ export default function CardDetail() {
                         <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
                           日期
                         </th>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
+                        <th className="text-center py-3 px-4 text-muted-foreground font-medium text-sm w-24">
                           評級
                         </th>
                         <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm">
@@ -212,13 +212,13 @@ export default function CardDetail() {
                                   })
                                 : "N/A"}
                             </td>
-                            <td className="py-3 px-4 text-foreground text-sm">
+                            <td className="py-3 px-4 text-center text-foreground text-sm w-24">
                               {isUngraded ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-xs font-medium">
+                                <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-muted text-xs font-medium">
                                   中古
                                 </span>
                               ) : (
-                                <span className="font-medium">{displayGrade}</span>
+                                <span className="inline-flex items-center justify-center font-medium">{displayGrade}</span>
                               )}
                             </td>
                             <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
