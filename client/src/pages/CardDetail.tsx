@@ -6,7 +6,7 @@ import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight } from "l
 import { trpc } from "@/lib/trpc";
 
 
-const grades = ["PSA 10", "BGS 10"];
+const grades = ["PSA 10", "BGS 10", "中古"];
 
 export default function CardDetail() {
   const [, params] = useRoute("/card/:id");
@@ -24,6 +24,8 @@ export default function CardDetail() {
   // Fetch price history
   const normalizeGrade = (grade: string | null) => {
     if (!grade) return undefined;
+    // Handle special case for "中古" which should match A, B, C, D grades
+    if (grade === "中古") return "中古";
     return grade.replace(/\s+/g, '');
   };
 
@@ -193,38 +195,44 @@ export default function CardDetail() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {priceHistory.map((item, index) => (
-                        <tr key={index} className="hover:bg-muted/50 transition-colors">
-                          <td className="py-3 px-4 text-muted-foreground text-sm">
-                            {item.soldAt
-                              ? new Date(item.soldAt).toLocaleString("zh-HK", {
-                                  month: "2-digit",
-                                  day: "2-digit",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : "N/A"}
-                          </td>
-                          <td className="py-3 px-4 text-foreground text-sm">
-                            {item.grade ? (
-                              <span>{item.grade}</span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-xs font-medium">
-                                中古
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
-                            HKD ${item.price}
-                          </td>
-                        </tr>
-                      ))}
+                      {priceHistory.map((item, index) => {
+                        // Determine display grade - show original grade (A, B, C, D) or badge for ungraded
+                        const displayGrade = item.grade || "中古";
+                        const isUngraded = !item.grade;
+                        
+                        return (
+                          <tr key={index} className="hover:bg-muted/50 transition-colors">
+                            <td className="py-3 px-4 text-muted-foreground text-sm">
+                              {item.soldAt
+                                ? new Date(item.soldAt).toLocaleString("zh-HK", {
+                                    month: "2-digit",
+                                    day: "2-digit",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : "N/A"}
+                            </td>
+                            <td className="py-3 px-4 text-foreground text-sm">
+                              {isUngraded ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-xs font-medium">
+                                  中古
+                                </span>
+                              ) : (
+                                <span>{displayGrade}</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
+                              HKD ${item.price}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               ) : (
                 <p className="text-muted-foreground py-8 text-center">
-                  暫無價格歷史數據
+                  暫無符合該等級的數據
                 </p>
               )}
             </div>

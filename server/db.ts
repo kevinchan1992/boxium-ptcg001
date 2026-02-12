@@ -1,4 +1,4 @@
-import { eq, desc, and, like, or, gte, lte } from "drizzle-orm";
+import { eq, desc, and, like, or, gte, lte, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -151,7 +151,12 @@ export async function getPriceHistory(cardId: number, source?: string, grade?: s
   }
   
   if (grade) {
-    conditions.push(eq(priceHistory.grade, grade));
+    // Special handling for "中古" - should match A, B, C, D grades
+    if (grade === "中古") {
+      conditions.push(inArray(priceHistory.grade, ["A", "B", "C", "D"]));
+    } else {
+      conditions.push(eq(priceHistory.grade, grade));
+    }
   }
 
   const result = await db
