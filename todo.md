@@ -225,3 +225,12 @@
 
 - [x] 修改 CardDetail.tsx 移除基本資料中的添加時間欄位
 - [x] 驗證基本資料顯示正常
+
+## 重構: 首頁改為公司介紹，Research 頁面為卡牌搜尋 - 完成
+
+- [x] 上傳 BOXIUM LOGO 至專案目錄 (boxium-logo.png)
+- [x] 重命名原 Home.tsx 為 Research.tsx
+- [x] 設計新的 Home.tsx 公司介紹頁面（包含 LOGO、使命、服務特色）
+- [x] App.tsx 路由配置已正確
+- [x] 導航選單已正確配置
+- [x] 驗證頁面顯示正常
