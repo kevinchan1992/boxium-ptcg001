@@ -370,3 +370,11 @@
 - [x] 在結果統計中顯示失敗 URL
 - [x] 失敗 URL 顯示錯誤訊息
 - [x] 無效 URL 不重試（直接跳過）
+
+## Bug 修復: 測試模式無法成功爬取 URL - 完成
+
+- [x] 檢查伺服器日誌找出錯誤原因
+- [x] 檢查 Firecrawl MCP 調用是否正常
+- [x] 識別問題：Firecrawl 輸出格式變更（直接 JSON vs 帶前綴）
+- [x] 修復 snkrdunkScraper.ts 的解析邏輯（支援兩種格式）
+- [x] 添加 maxBuffer 參數避免大輸出截斷

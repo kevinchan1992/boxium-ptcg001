@@ -41,19 +41,27 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
       onlyMainContent: true,
     })}'`;
 
-    const { stdout, stderr } = await execAsync(command);
+    const { stdout, stderr } = await execAsync(command, { maxBuffer: 10 * 1024 * 1024 });
 
     if (stderr && !stderr.includes("Tool execution result saved")) {
       throw new Error(`Firecrawl error: ${stderr}`);
     }
 
-    // Parse the JSON output
-    const resultMatch = stdout.match(/Tool execution result:\n({[\s\S]+})/);
-    if (!resultMatch) {
-      throw new Error("Failed to parse Firecrawl output");
+    // Parse the JSON output - try multiple formats
+    let result;
+    
+    // Try format 1: Direct JSON output (new format)
+    try {
+      result = JSON.parse(stdout.trim());
+    } catch (e) {
+      // Try format 2: With "Tool execution result:" prefix (old format)
+      const resultMatch = stdout.match(/Tool execution result:\n({[\s\S]+})/);
+      if (!resultMatch) {
+        throw new Error("Failed to parse Firecrawl output");
+      }
+      result = JSON.parse(resultMatch[1]);
     }
-
-    const result = JSON.parse(resultMatch[1]);
+    
     const markdown = result.markdown;
 
     if (!markdown) {
