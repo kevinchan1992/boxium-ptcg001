@@ -16,14 +16,14 @@ export default function Home() {
               <img
                 src="/boxium-logo.png"
                 alt="BOXIUM Logo"
-                className="h-10"
+                className="h-14"
               />
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link href="/research" className="text-gray-700 hover:text-[#06038d] transition-colors">卡牌搜尋</Link>
-              <Link href="/admin" className="text-gray-700 hover:text-[#06038d] transition-colors">管理後台</Link>
+              <Link href="/research" className="text-white hover:text-[#fedd00] transition-colors">卡牌搜尋</Link>
+              <Link href="/admin" className="text-white hover:text-[#fedd00] transition-colors">管理後台</Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -56,7 +56,7 @@ export default function Home() {
             alt="Pokemon Trading Cards Collection"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#06038d]/80 via-[#06038d]/70 to-[#06038d]/90"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50"></div>
         </div>
 
         {/* Hero Content */}
