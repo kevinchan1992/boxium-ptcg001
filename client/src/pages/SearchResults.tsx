@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, useSearch } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
 import { Input } from "@/components/ui/input";
@@ -28,14 +28,28 @@ export default function SearchResults() {
     setLocation(`/card/${cardId}`);
   };
 
-  // Fetch average prices for each card
-  const cardIds = searchResults.map((c: any) => c.id);
-  const priceQueries = cardIds.map((id: number) =>
-    trpc.prices.getHistory.useQuery(
-      { cardId: id, limit: 1 },
-      { enabled: !!id, retry: 0 }
-    )
-  );
+  // Get price data for each card - use useMemo to avoid calling hooks conditionally
+  const cardIds = useMemo(() => searchResults.map((c: any) => c.id), [searchResults]);
+  
+  // Fetch price history for all cards at once (better approach)
+  const priceHistoryQueries = useMemo(() => {
+    return cardIds.map((id: number) =>
+      trpc.prices.getHistory.useQuery(
+        { cardId: id, limit: 1 },
+        { enabled: !!id, retry: 0 }
+      )
+    );
+  }, [cardIds]);
+
+  // Build price map from query results
+  const priceMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    cardIds.forEach((id: number, index: number) => {
+      const priceData = priceHistoryQueries[index]?.data || [];
+      map[id] = priceData.length > 0 ? priceData[0].price : "N/A";
+    });
+    return map;
+  }, [cardIds, priceHistoryQueries]);
 
   return (
     <MainLayout>
@@ -84,9 +98,8 @@ export default function SearchResults() {
           </div>
         ) : searchResults.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {searchResults.map((card: any, index: number) => {
-              const priceData = priceQueries[index]?.data || [];
-              const latestPrice = priceData.length > 0 ? priceData[0].price : "N/A";
+            {searchResults.map((card: any) => {
+              const latestPrice = priceMap[card.id] || "N/A";
 
               return (
                 <div
