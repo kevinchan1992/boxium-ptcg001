@@ -15,6 +15,41 @@ const UPDATE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 let schedulerInterval: NodeJS.Timeout | null = null;
 
 /**
+ * Global crawl progress tracker
+ */
+interface CrawlProgress {
+  isRunning: boolean;
+  currentPage: number;
+  totalPages: number;
+  processedUrls: number;
+  totalUrls: number;
+  successCount: number;
+  failedCount: number;
+  startTime: number;
+}
+
+let crawlProgress: CrawlProgress = {
+  isRunning: false,
+  currentPage: 0,
+  totalPages: 0,
+  processedUrls: 0,
+  totalUrls: 0,
+  successCount: 0,
+  failedCount: 0,
+  startTime: 0,
+};
+
+// Track failed URLs for retry
+let failedUrls: Array<{ url: string; error: string; retries: number }> = [];
+
+/**
+ * Get current crawl progress
+ */
+export function getCrawlProgress(): CrawlProgress {
+  return { ...crawlProgress };
+}
+
+/**
  * Start the auto-update scheduler
  */
 export function startScheduler() {
@@ -308,18 +343,33 @@ function startDailyAutoCrawl() {
 export async function autoCrawlSnkrdunk(startPage: number = 1, endPage: number = 1575) {
   console.log(`[AutoCrawl] Starting SNKRDUNK auto-crawl from page ${startPage} to ${endPage}...`);
   
+  // Initialize progress tracker
+  crawlProgress = {
+    isRunning: true,
+    currentPage: 0,
+    totalPages: endPage - startPage + 1,
+    processedUrls: 0,
+    totalUrls: 0,
+    successCount: 0,
+    failedCount: 0,
+    startTime: Date.now(),
+  };
+  
   const startTime = Date.now();
   let totalFound = 0;
   let newUrls = 0;
   let duplicates = 0;
   let successCount = 0;
   let failedCount = 0;
+  failedUrls = []; // Reset failed URLs list
 
   try {
     // Fetch all card URLs from SNKRDUNK
     console.log("[AutoCrawl] Fetching card URLs from SNKRDUNK...");
+    crawlProgress.currentPage = startPage;
     const urls = await scrapeSnkrdunkPages(startPage, endPage);
     totalFound = urls.length;
+    crawlProgress.totalUrls = totalFound;
     console.log(`[AutoCrawl] Found ${totalFound} card URLs`);
 
     // Deduplicate against existing data sources
@@ -336,21 +386,29 @@ export async function autoCrawlSnkrdunk(startPage: number = 1, endPage: number =
     for (let i = 0; i < uniqueUrls.length; i++) {
       const url = uniqueUrls[i];
       
+      // Update progress
+      crawlProgress.processedUrls = i + 1;
+      
       // Log progress every 100 URLs
       if ((i + 1) % 100 === 0) {
         console.log(`[AutoCrawl] Progress: ${i + 1}/${uniqueUrls.length} URLs processed`);
       }
 
-      try {
-        const snkrdunkId = extractSnkrdunkId(url);
-        if (!snkrdunkId) {
-          console.warn(`[AutoCrawl] Invalid URL format: ${url}`);
-          failedCount++;
-          continue;
-        }
+      let success = false;
+      let lastError: any = null;
+      
+      // Retry up to 3 times
+      for (let retryCount = 0; retryCount < 3; retryCount++) {
+        try {
+          const snkrdunkId = extractSnkrdunkId(url);
+          if (!snkrdunkId) {
+            console.warn(`[AutoCrawl] Invalid URL format: ${url}`);
+            lastError = new Error('Invalid URL format');
+            break; // Don't retry invalid URLs
+          }
 
-        // Scrape card data
-        const cardData = await scrapeSnkrdunkPage(url);
+          // Scrape card data
+          const cardData = await scrapeSnkrdunkPage(url);
         
         // Check if card already exists
         const existingCard = await db.getCardByCardId(`snkrdunk-${snkrdunkId}`);
@@ -395,10 +453,30 @@ export async function autoCrawlSnkrdunk(startPage: number = 1, endPage: number =
           });
         }
 
-        successCount++;
-      } catch (error) {
-        console.error(`[AutoCrawl] Failed to process ${url}:`, error);
+          successCount++;
+          crawlProgress.successCount = successCount;
+          success = true;
+          break; // Success, exit retry loop
+        } catch (error) {
+          lastError = error;
+          if (retryCount < 2) {
+            console.warn(`[AutoCrawl] Retry ${retryCount + 1}/3 for ${url}:`, error);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+          } else {
+            console.error(`[AutoCrawl] Failed after 3 retries for ${url}:`, error);
+          }
+        }
+      }
+      
+      // Record final failure
+      if (!success) {
         failedCount++;
+        crawlProgress.failedCount = failedCount;
+        failedUrls.push({
+          url,
+          error: lastError instanceof Error ? lastError.message : String(lastError),
+          retries: 3,
+        });
       }
 
       // Add delay to avoid overwhelming the server (500ms per URL)
@@ -410,6 +488,16 @@ export async function autoCrawlSnkrdunk(startPage: number = 1, endPage: number =
 
     console.log(`[AutoCrawl] Completed in ${duration} minutes`);
     console.log(`[AutoCrawl] Results: ${successCount} success, ${failedCount} failed, ${duplicates} duplicates`);
+    
+    if (failedUrls.length > 0) {
+      console.log(`[AutoCrawl] Failed URLs (${failedUrls.length}):`);
+      failedUrls.forEach(({ url, error }) => {
+        console.log(`  - ${url}: ${error}`);
+      });
+    }
+
+    // Mark as completed
+    crawlProgress.isRunning = false;
 
     return {
       success: true,
@@ -419,9 +507,12 @@ export async function autoCrawlSnkrdunk(startPage: number = 1, endPage: number =
       successCount,
       failedCount,
       duration: `${duration} minutes`,
+      failedUrls: failedUrls.map(f => ({ url: f.url, error: f.error })),
     };
   } catch (error) {
     console.error("[AutoCrawl] Fatal error:", error);
+    // Mark as failed
+    crawlProgress.isRunning = false;
     throw error;
   }
 }
