@@ -220,3 +220,8 @@
 - [x] 檢查後端 getDataSources API 是否返回 card 資料
 - [x] 修復後端 API 返回卡牌資料（使用 LEFT JOIN 關聯 cards 表）
 - [x] 驗證圖片正確顯示
+
+## UI 優化: 移除卡牌詳細頁面添加時間 - 完成
+
+- [x] 修改 CardDetail.tsx 移除基本資料中的添加時間欄位
+- [x] 驗證基本資料顯示正常

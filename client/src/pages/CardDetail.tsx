@@ -265,12 +265,7 @@ export default function CardDetail() {
                     <dd className="text-foreground">{card.series}</dd>
                   </div>
                 )}
-                <div className="flex">
-                  <dt className="text-muted-foreground w-32">添加時間:</dt>
-                  <dd className="text-foreground">
-                    {new Date(card.createdAt).toLocaleString("zh-HK")}
-                  </dd>
-                </div>
+
               </dl>
             </div>
           </div>
