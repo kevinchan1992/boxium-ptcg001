@@ -38,7 +38,7 @@ export default function Home() {
               alt="BOXIUM"
               className="h-32 mx-auto"
             />
-            <h2 className="text-3xl font-semibold text-foreground">研究</h2>
+            <h2 className="text-3xl font-semibold text-foreground">卡牌搜尋</h2>
           </div>
 
           {/* Subtitle */}
