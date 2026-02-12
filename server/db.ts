@@ -272,8 +272,24 @@ export async function getDataSources() {
   if (!db) return [];
 
   const result = await db
-    .select()
+    .select({
+      id: dataSources.id,
+      cardId: dataSources.cardId,
+      source: dataSources.source,
+      sourceUrl: dataSources.sourceUrl,
+      isActive: dataSources.isActive,
+      lastFetchedAt: dataSources.lastFetchedAt,
+      lastFetchStatus: dataSources.lastFetchStatus,
+      fetchErrorMessage: dataSources.fetchErrorMessage,
+      createdAt: dataSources.createdAt,
+      card: {
+        id: cards.id,
+        name: cards.name,
+        imageUrl: cards.imageUrl,
+      },
+    })
     .from(dataSources)
+    .leftJoin(cards, eq(dataSources.cardId, cards.id))
     .orderBy(desc(dataSources.createdAt));
 
   return result;
