@@ -13,12 +13,16 @@ export function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-16 bg-sidebar border-r border-sidebar-border">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-16 border-r border-sidebar-border" style={{ backgroundColor: "#06038d" }}>
       <div className="flex flex-col items-center py-4 space-y-6">
         {/* Logo */}
         <Link href="/">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity">
-            <span className="text-primary-foreground font-bold text-xl">B</span>
+          <div className="w-10 h-10 flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity">
+            <img
+              src="/boxium-logo-white.png"
+              alt="BOXIUM"
+              className="w-8 h-8 object-contain"
+            />
           </div>
         </Link>
 
@@ -33,8 +37,8 @@ export function Sidebar() {
                 <div
                   className={cn(
                     "w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-all",
-                    "hover:bg-sidebar-accent",
-                    isActive && "bg-primary text-primary-foreground"
+                    "hover:bg-white/10",
+                    isActive ? "bg-[#fedd00] text-[#06038d]" : "text-white"
                   )}
                   title={item.label}
                 >
