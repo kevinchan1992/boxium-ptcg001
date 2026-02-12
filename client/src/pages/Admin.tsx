@@ -3,6 +3,7 @@ import { MainLayout } from "@/components/MainLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]}>({ success: 0, failed: 0, errors: [] });
 
   const utils = trpc.useUtils();
   const dataSourcesQuery = trpc.admin.getDataSources.useQuery(undefined, {
@@ -48,14 +50,53 @@ export default function Admin() {
       return;
     }
 
-    if (!snkrdunkUrl.includes("snkrdunk.com")) {
-      toast.error("請輸入有效的 SNKRDUNK 連結");
+    // Split by newlines and filter out empty lines
+    const urls = snkrdunkUrl
+      .split('\n')
+      .map(url => url.trim())
+      .filter(url => url.length > 0);
+
+    if (urls.length === 0) {
+      toast.error("請輸入至少一個 SNKRDUNK 連結");
+      return;
+    }
+
+    // Validate all URLs
+    const invalidUrls = urls.filter(url => !url.includes("snkrdunk.com"));
+    if (invalidUrls.length > 0) {
+      toast.error(`發現 ${invalidUrls.length} 個無效連結，請確保所有連結都來自 snkrdunk.com`);
       return;
     }
 
     setIsSubmitting(true);
+    setBatchResults({ success: 0, failed: 0, errors: [] });
+    
+    let successCount = 0;
+    let failedCount = 0;
+    const errors: string[] = [];
+
     try {
-      await addDataSourceMutation.mutateAsync({ url: snkrdunkUrl });
+      // Process URLs sequentially to avoid overwhelming the server
+      for (const url of urls) {
+        try {
+          await addDataSourceMutation.mutateAsync({ url });
+          successCount++;
+        } catch (error: any) {
+          failedCount++;
+          errors.push(`${url}: ${error.message}`);
+        }
+      }
+
+      setBatchResults({ success: successCount, failed: failedCount, errors });
+      
+      if (successCount > 0) {
+        toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}`);
+        if (failedCount === 0) {
+          setSnkrdunkUrl("");
+        }
+      } else {
+        toast.error(`所有 ${failedCount} 個數據源添加失敗`);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -130,18 +171,33 @@ export default function Admin() {
                 <Label htmlFor="snkrdunk-url" className="text-foreground">
                   SNKRDUNK 卡牌連結
                 </Label>
-                <Input
+                <Textarea
                   id="snkrdunk-url"
-                  type="url"
-                  placeholder="https://snkrdunk.com/apparels/455596#1"
+                  placeholder="https://snkrdunk.com/apparels/455596#1&#10;https://snkrdunk.com/apparels/455597#1&#10;https://snkrdunk.com/apparels/455598#1&#10;&#10;每行一個連結，支援批量添加"
                   value={snkrdunkUrl}
                   onChange={(e) => setSnkrdunkUrl(e.target.value)}
-                  className="mt-2"
+                  className="mt-2 min-h-[120px] font-mono text-sm"
                   disabled={isSubmitting}
                 />
                 <p className="text-sm text-muted-foreground mt-2">
-                  系統將自動抓取卡牌圖片與「最近の売買履歴」價格數據
+                  系統將自動抓取卡牌圖片與「最近の売買履歴」價格數據。支援批量添加，每行一個連結。
                 </p>
+                {batchResults.success > 0 || batchResults.failed > 0 ? (
+                  <div className="mt-4 p-4 bg-muted rounded-lg space-y-2">
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-green-600 font-medium">✓ 成功: {batchResults.success}</span>
+                      <span className="text-red-600 font-medium">✗ 失敗: {batchResults.failed}</span>
+                    </div>
+                    {batchResults.errors.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground">失敗詳情:</p>
+                        {batchResults.errors.map((error, idx) => (
+                          <p key={idx} className="text-xs text-red-600 font-mono">{error}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </div>
               <Button
                 type="submit"
