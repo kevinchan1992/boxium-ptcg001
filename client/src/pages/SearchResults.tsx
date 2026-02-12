@@ -74,12 +74,12 @@ export default function SearchResults() {
             </div>
           </div>
         ) : searchResults.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {searchResults.map((card: any) => (
               <div
                 key={card.id}
                 onClick={() => handleCardClick(card.id)}
-                className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-105 hover:shadow-2xl"
+                className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-110 hover:shadow-lg"
               >
                 <div className="aspect-[2/3] relative bg-muted">
                   {card.imageUrl ? (
@@ -94,22 +94,22 @@ export default function SearchResults() {
                     </div>
                   )}
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-foreground mb-1 truncate">
+                <div className="p-2">
+                  <h3 className="font-semibold text-foreground text-xs mb-0.5 truncate">
                     {card.name}
                   </h3>
                   {card.nameJa && (
-                    <p className="text-xs text-muted-foreground mb-2 truncate">
+                    <p className="text-xs text-muted-foreground mb-1 truncate line-clamp-1">
                       {card.nameJa}
                     </p>
                   )}
                   {card.cardNumber && (
-                    <p className="text-sm text-muted-foreground mb-2">
+                    <p className="text-xs text-muted-foreground mb-1">
                       #{card.cardNumber}
                     </p>
                   )}
                   {card.latestPrice && (
-                    <p className="text-lg font-bold text-primary">
+                    <p className="text-sm font-bold text-primary">
                       HKD ${card.latestPrice}
                     </p>
                   )}
