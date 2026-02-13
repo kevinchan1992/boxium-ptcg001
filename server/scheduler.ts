@@ -2,7 +2,7 @@ import cron from "node-cron";
 import { getDb } from "./db";
 import * as db from "./db";
 import { dataSources, scheduledTasks, priceHistory } from "../drizzle/schema";
-import { eq, and, lt } from "drizzle-orm";
+import { eq, and, lt, or, isNull } from "drizzle-orm";
 import { scrapeSnkrdunkPage, convertJpyToHkd, extractSnkrdunkId } from "./snkrdunkScraper";
 import { scrapeSnkrdunkPages } from "./snkrdunkAutoCrawler";
 
@@ -109,7 +109,10 @@ async function runAutoUpdate() {
           eq(dataSources.source, "snkrdunk"),
           eq(dataSources.isActive, 1),
           // Update if nextUpdateAt is in the past or null
-          lt(dataSources.nextUpdateAt || new Date(0), new Date())
+          or(
+            isNull(dataSources.nextUpdateAt),
+            lt(dataSources.nextUpdateAt, new Date())
+          )
         )
       );
 

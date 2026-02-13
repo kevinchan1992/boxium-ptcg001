@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, sourceUrl, lastFetchedAt, nextUpdateAt, lastFetchStatus FROM dataSources WHERE source = 'snkrdunk' ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, sourceUrl, lastFetchedAt, nextUpdateAt, lastFetchStatus FROM dataSources WHERE source = 'snkrdunk' ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "90419",
+      "sourceUrl": "https://snkrdunk.com/apparels/107401",
+      "lastFetchedAt": "2026-02-13 02:03:24",
+      "nextUpdateAt": "NULL",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "90418",
+      "sourceUrl": "https://snkrdunk.com/apparels/107400",
+      "lastFetchedAt": "2026-02-13 02:03:16",
+      "nextUpdateAt": "NULL",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "90417",
+      "sourceUrl": "https://snkrdunk.com/apparels/107399",
+      "lastFetchedAt": "2026-02-13 02:03:09",
+      "nextUpdateAt": "NULL",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "90416",
+      "sourceUrl": "https://snkrdunk.com/apparels/107398",
+      "lastFetchedAt": "2026-02-13 02:03:01",
+      "nextUpdateAt": "NULL",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "90415",
+      "sourceUrl": "https://snkrdunk.com/apparels/107396",
+      "lastFetchedAt": "2026-02-13 02:02:54",
+      "nextUpdateAt": "NULL",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "90414",
+      "sourceUrl": "https://snkrdunk.com/apparels/107394",
+      "lastFetchedAt": "2026-02-13 02:02:47",
+      "nextUpdateAt": "NULL",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "90413",
+      "sourceUrl": "https://snkrdunk.com/apparels/107392",
+      "lastFetchedAt": "2026-02-13 02:02:39",
+      "nextUpdateAt": "NULL",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "90412",
+      "sourceUrl": "https://snkrdunk.com/apparels/107391",
+      "lastFetchedAt": "2026-02-13 02:02:32",
+      "nextUpdateAt": "NULL",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "90411",
+      "sourceUrl": "https://snkrdunk.com/apparels/107390",
+      "lastFetchedAt": "2026-02-13 02:02:24",
+      "nextUpdateAt": "NULL",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "90410",
+      "sourceUrl": "https://snkrdunk.com/apparels/107388",
+      "lastFetchedAt": "2026-02-13 02:02:14",
+      "nextUpdateAt": "NULL",
+      "lastFetchStatus": "success"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsourceUrl\tlastFetchedAt\tnextUpdateAt\tlastFetchStatus\n90419\thttps://snkrdunk.com/apparels/107401\t2026-02-13 02:03:24\tNULL\tsuccess\n90418\thttps://snkrdunk.com/apparels/107400\t2026-02-13 02:03:16\tNULL\tsuccess\n90417\thttps://snkrdunk.com/apparels/107399\t2026-02-13 02:03:09\tNULL\tsuccess\n90416\thttps://snkrdunk.com/apparels/107398\t2026-02-13 02:03:01\tNULL\tsuccess\n90415\thttps://snkrdunk.com/apparels/107396\t2026-02-13 02:02:54\tNULL\tsuccess\n90414\thttps://snkrdunk.com/apparels/107394\t2026-02-13 02:02:47\tNULL\tsuccess\n90413\thttps://snkrdunk.com/apparels/107392\t2026-02-13 02:02:39\tNULL\tsuccess\n90412\thttps://snkrdunk.com/apparels/107391\t2026-02-13 02:02:32\tNULL\tsuccess\n90411\thttps://snkrdunk.com/apparels/107390\t2026-02-13 02:02:24\tNULL\tsuccess\n90410\thttps://snkrdunk.com/apparels/107388\t2026-02-13 02:02:14\tNULL\tsuccess\n",
+  "stderr": "",
+  "execution_time_ms": 1577
+}
