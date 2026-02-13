@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT ds.*, c.name, c.name_ja, c.image_url \nFROM data_sources ds \nLEFT JOIN cards c ON ds.card_id = c.id \nWHERE ds.last_status = 'success' \nLIMIT 3;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT ds.*, c.name, c.name_ja, c.image_url \nFROM data_sources ds \nLEFT JOIN cards c ON ds.card_id = c.id \nWHERE ds.last_status = 'success' \nLIMIT 3;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 2: Table 'mua4eq38uvnrovhujbrepi.data_sources' doesn't exist"
+  ]
+}

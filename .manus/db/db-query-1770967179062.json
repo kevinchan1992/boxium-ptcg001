@@ -1,0 +1,50 @@
+{
+  "query": "\nSELECT c.id, c.name, c.nameJa, c.imageUrl, ds.sourceUrl, ds.lastFetchStatus\nFROM cards c\nINNER JOIN dataSources ds ON c.id = ds.cardId\nWHERE c.name != 'Unknown Card' AND c.name IS NOT NULL AND c.name != ''\nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT c.id, c.name, c.nameJa, c.imageUrl, ds.sourceUrl, ds.lastFetchStatus\nFROM cards c\nINNER JOIN dataSources ds ON c.id = ds.cardId\nWHERE c.name != 'Unknown Card' AND c.name IS NOT NULL AND c.name != ''\nLIMIT 5;\n",
+  "rows": [
+    {
+      "id": "30050",
+      "name": "Pikachu ex \\[WCS23 001/030\\](Pokemon World Championships 2023 Yokohama anniversary Deck \"Pikachu\")",
+      "nameJa": "ピカチュウex \\[WCS23 001/030\\](ポケモンワールドチャンピオンシップス2023横浜 記念デッキ「ピカチュウ」)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230914103110-0.webp",
+      "sourceUrl": "https://snkrdunk.com/apparels/131236?slide=right",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "30051",
+      "name": "Marnie (Marnie Practice): PROMO\\[S-P 140\\](S-P Promotional cards)",
+      "nameJa": "マリィ（マリィの練習）: プロモ\\[S-P 140\\](プロモーションカード「S-P」)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230628020530-0.webp",
+      "sourceUrl": "https://snkrdunk.com/apparels/91114?slide=right",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "30100",
+      "name": "Dawn SR \\[M2 106/080\\](Expansion Pack \"Inferno X\")",
+      "nameJa": "ヒカリ SR \\[M2 106/080\\](拡張パック「インフェルノX」)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20250926021606-3.webp",
+      "sourceUrl": "https://snkrdunk.com/apparels/704397?slide=right",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "30101",
+      "name": "Glaceon: PROMO \\[SV-P 069\\](SV-P Promotional cards「YU NAGABA×Pokemon Card Game」)",
+      "nameJa": "グレイシア: プロモ \\[SV-P 069\\](「YU NAGABA×ポケモンカードゲーム」プロモーションカード「SV-P」)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230523021515-0.webp",
+      "sourceUrl": "https://snkrdunk.com/apparels/122061?slide=right",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "30102",
+      "name": "Mew ex SSR \\[SV4a 327/190\\](High Class Pack \"Shiny Treasure ex\")",
+      "nameJa": "ミュウex SSR \\[SV4a 327/190\\](ハイクラスパック「シャイニートレジャーex」)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20231130111032-8.webp",
+      "sourceUrl": "https://snkrdunk.com/apparels/160147?slide=right",
+      "lastFetchStatus": "success"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tnameJa\timageUrl\tsourceUrl\tlastFetchStatus\n30050\tPikachu ex \\[WCS23 001/030\\](Pokemon World Championships 2023 Yokohama anniversary Deck \"Pikachu\")\tピカチュウex \\[WCS23 001/030\\](ポケモンワールドチャンピオンシップス2023横浜 記念デッキ「ピカチュウ」)\thttps://cdn.snkrdunk.com/upload_bg_removed/20230914103110-0.webp\thttps://snkrdunk.com/apparels/131236?slide=right\tsuccess\n30051\tMarnie (Marnie Practice): PROMO\\[S-P 140\\](S-P Promotional cards)\tマリィ（マリィの練習）: プロモ\\[S-P 140\\](プロモーションカード「S-P」)\thttps://cdn.snkrdunk.com/upload_bg_removed/20230628020530-0.webp\thttps://snkrdunk.com/apparels/91114?slide=right\tsuccess\n30100\tDawn SR \\[M2 106/080\\](Expansion Pack \"Inferno X\")\tヒカリ SR \\[M2 106/080\\](拡張パック「インフェルノX」)\thttps://cdn.snkrdunk.com/upload_bg_removed/20250926021606-3.webp\thttps://snkrdunk.com/apparels/704397?slide=right\tsuccess\n30101\tGlaceon: PROMO \\[SV-P 069\\](SV-P Promotional cards「YU NAGABA×Pokemon Card Game」)\tグレイシア: プロモ \\[SV-P 069\\](「YU NAGABA×ポケモンカードゲーム」プロモーションカード「SV-P」)\thttps://cdn.snkrdunk.com/upload_bg_removed/20230523021515-0.webp\thttps://snkrdunk.com/apparels/122061?slide=right\tsuccess\n30102\tMew ex SSR \\[SV4a 327/190\\](High Class Pack \"Shiny Treasure ex\")\tミュウex SSR \\[SV4a 327/190\\](ハイクラスパック「シャイニートレジャーex」)\thttps://cdn.snkrdunk.com/upload_bg_removed/20231130111032-8.webp\thttps://snkrdunk.com/apparels/160147?slide=right\tsuccess\n",
+  "stderr": "",
+  "execution_time_ms": 1712
+}

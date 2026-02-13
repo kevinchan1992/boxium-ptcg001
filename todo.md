@@ -635,3 +635,58 @@
 - Firecrawl MCP 網絡連接錯誤："Client network socket disconnected before secure TLS connection was established"
 - 需要聯繫 Manus 支援團隊解決 Firecrawl 服務問題
 - 手動添加 URL 無法自動抓取卡牌資料，需要手動編輯卡牌名稱
+
+
+## 恢復到早期成功的 SNKRDUNK 抓取配置
+
+### 背景
+- 用戶反映早期的批量添加功能能夠正常抓取卡牌資料
+- 當前版本的 Firecrawl MCP 遇到網絡連接錯誤
+- 需要回退到早期成功的配置版本
+
+### 實作任務
+- [ ] 檢查早期成功的 checkpoint（如 af87f586、b8a1a1e7 等）
+- [ ] 對比當前版本與早期版本的 snkrdunkScraper.ts 差異
+- [ ] 恢復早期成功的 Firecrawl 抓取邏輯
+- [ ] 確認批次大小設定為 5（BATCH_SIZE = 5）
+- [ ] 測試手動添加 URL 能否成功抓取卡牌名稱和價格
+- [ ] 驗證搜尋功能能找到新添加的卡牌
+
+## Firecrawl 配額問題診斷 - 2026-02-13
+
+### 問題描述
+- [x] 測試 Firecrawl MCP 發現 "Insufficient credits" 錯誤
+- [x] 確認 Firecrawl 配額已用完
+- [x] 失敗佇列中有 253 個失敗記錄（均為配額不足錯誤）
+- [x] 自動排程器已暫停，避免繼續累積失敗記錄
+
+### 當前系統狀態
+- [x] 數據庫中有 629 個數據源（376 個成功，253 個失敗）
+- [x] 成功的數據源包含完整的卡牌資訊和價格記錄
+- [x] 搜尋功能正常運作（測試搜尋 "Lillie" 找到 7 張卡牌）
+- [x] 卡牌詳情頁正常顯示（價格、交易記錄、評級等）
+- [x] 價格轉換功能正常（JPY → HKD）
+
+### 已驗證功能
+- [x] 卡牌搜尋：支援英文和日文名稱搜尋
+- [x] 卡牌詳情頁：顯示完整資訊、價格歷史、交易記錄
+- [x] 評級篩選：PSA 10、BGS 10、中古篩選功能正常
+- [x] 管理後台：數據源管理、批量添加、清理重複功能正常
+
+### 待解決問題
+- [ ] 聯繫 Manus 支援團隊（https://help.manus.im）詢問 Firecrawl 配額限制
+- [ ] 了解如何增加 Firecrawl 配額或升級方案
+- [ ] 探索其他網頁抓取替代方案（如果 Firecrawl 配額無法滿足需求）
+- [ ] 考慮實作配額監控功能，避免超額使用
+
+### 技術細節
+- Firecrawl 錯誤訊息：`Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing`
+- 早期成功配置已恢復（支援多種 Firecrawl 輸出格式解析）
+- 自動排程器已暫停（避免繼續產生失敗記錄）
+- 批量處理配置：5 URLs/batch, 2 秒延遲
+
+### 建議下一步
+1. 用戶聯繫 Manus 支援團隊了解配額限制和升級選項
+2. 暫時使用現有的 376 個成功數據源進行測試和展示
+3. 等待配額恢復或升級後再繼續添加新的數據源
+4. 考慮實作配額使用監控和預警機制
