@@ -89,10 +89,7 @@ export default function Admin() {
     },
   });
 
-  const firecrawlStatsQuery = trpc.admin.getFirecrawlUsageStats.useQuery(undefined, {
-    enabled: isAuthenticated && user?.role === "admin",
-    refetchInterval: 60000, // Refresh every minute
-  });
+
 
   const handleCleanDuplicates = () => {
     if (confirm('確定要清理重複的數據源嗎？系統將保留最後添加的版本（最新），刪除其他重複項。')) {
@@ -332,116 +329,7 @@ export default function Admin() {
             <p className="text-muted-foreground">管理卡牙數據源與價格更新</p>
           </div>
 
-          {/* Firecrawl Quota Monitor */}
-          {firecrawlStatsQuery.data && (
-            <Card className="p-6 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border-orange-200 dark:border-orange-800">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-foreground">Firecrawl 配額監控</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => firecrawlStatsQuery.refetch()}
-                  disabled={firecrawlStatsQuery.isRefetching}
-                >
-                  {firecrawlStatsQuery.isRefetching ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      重新整理...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      重新整理
-                    </>
-                  )}
-                </Button>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Total Calls */}
-                <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">總調用次數</h3>
-                  <p className="text-2xl font-bold text-foreground">
-                    {firecrawlStatsQuery.data.totalCalls}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    成功: {firecrawlStatsQuery.data.successCalls}
-                  </p>
-                </div>
-
-                {/* Credits Used */}
-                <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">已使用配額</h3>
-                  <p className="text-2xl font-bold text-foreground">
-                    {firecrawlStatsQuery.data.totalCreditsUsed}
-                  </p>
-                  {firecrawlStatsQuery.data.quotaLimit && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      / {firecrawlStatsQuery.data.quotaLimit}
-                    </p>
-                  )}
-                </div>
-
-                {/* Failed Calls */}
-                <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">失敗次數</h3>
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                    {firecrawlStatsQuery.data.failedCalls}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    配額超限: {firecrawlStatsQuery.data.quotaExceededCalls}
-                  </p>
-                </div>
-
-                {/* Usage Percentage */}
-                <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">使用率</h3>
-                  {firecrawlStatsQuery.data.quotaLimit ? (
-                    <>
-                      <p className="text-2xl font-bold text-foreground">
-                        {firecrawlStatsQuery.data.quotaUsagePercent?.toFixed(1)}%
-                      </p>
-                      <div className="mt-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full transition-all ${
-                            (firecrawlStatsQuery.data.quotaUsagePercent || 0) >= 90
-                              ? 'bg-red-500'
-                              : (firecrawlStatsQuery.data.quotaUsagePercent || 0) >= 80
-                              ? 'bg-orange-500'
-                              : 'bg-green-500'
-                          }`}
-                          style={{ width: `${Math.min(firecrawlStatsQuery.data.quotaUsagePercent || 0, 100)}%` }}
-                        />
-                      </div>
-                      {(firecrawlStatsQuery.data.quotaUsagePercent || 0) >= 80 && (
-                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
-                          ⚠️ 配額即將用盡
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">未設定配額限制</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Quota Exceeded Warning */}
-              {(firecrawlStatsQuery.data.quotaExceededCalls || 0) > 0 && (
-                <div className="mt-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <h3 className="font-medium text-red-900 dark:text-red-100">配額已超限</h3>
-                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                        已有 {firecrawlStatsQuery.data.quotaExceededCalls} 次調用因配額不足而失敗。
-                        請聯繫 Manus 支援團隊 (<a href="https://help.manus.im" target="_blank" rel="noopener noreferrer" className="underline">https://help.manus.im</a>) 升級配額。
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Card>
-          )}
 
           {/* Scheduler Status Panel */}
           {schedulerStatusQuery.data && (

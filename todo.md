@@ -768,3 +768,16 @@
 - [x] 更新 Admin 頁面 UI 添加暫停/繼續按鈕
 - [x] 暫停按鈕只在處理中顯示
 - [x] 點擊暫停/繼續顯示 toast 提示
+
+## UI 優化: 刪除 Firecrawl 配額監控卡片 - 完成
+
+- [x] 從 Admin.tsx 移除 Firecrawl 配額監控卡片
+- [x] 移除相關狀態管理和 query
+- [x] 清理相關 UI 組件
+
+## 功能優化: 立即更新所有數據源只更新價格數據 - 完成
+
+- [x] 創建 updatePriceHistoryOnly 函數於 snkrdunkScraper.ts
+- [x] 修改 scheduler.ts 的 updateDataSource 函數
+- [x] 只調用 SNKRDUNK API 獲取最近の売買履歴
+- [x] 不重新抓取卡牌資料和圖片

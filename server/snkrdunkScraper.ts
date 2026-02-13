@@ -173,3 +173,21 @@ export function convertJpyToTwd(jpy: number): number {
   const rate = 0.22; // Approximate rate, should fetch from API
   return Math.round(jpy * rate * 100) / 100;
 }
+
+/**
+ * Update price history only (without re-scraping card data)
+ * This function is optimized for scheduled updates where card info doesn't change
+ */
+export async function updatePriceHistoryOnly(url: string): Promise<Array<{
+  price: number;
+  currency: string;
+  soldAt: Date;
+  grade?: string;
+}>> {
+  const productId = extractSnkrdunkId(url);
+  if (!productId) {
+    throw new Error("Invalid SNKRDUNK URL: Cannot extract product ID");
+  }
+  
+  return await fetchPriceHistoryFromApi(productId);
+}

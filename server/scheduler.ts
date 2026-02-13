@@ -3,7 +3,7 @@ import { getDb } from "./db";
 import * as db from "./db";
 import { dataSources, scheduledTasks, priceHistory } from "../drizzle/schema";
 import { eq, and, lt, or, isNull } from "drizzle-orm";
-import { scrapeSnkrdunkPage, convertJpyToHkd, extractSnkrdunkId } from "./snkrdunkScraper";
+import { scrapeSnkrdunkPage, updatePriceHistoryOnly, convertJpyToHkd, extractSnkrdunkId } from "./snkrdunkScraper";
 import { scrapeSnkrdunkPages } from "./snkrdunkAutoCrawler";
 
 /**
@@ -163,15 +163,15 @@ async function updateDataSource(db: any, source: any) {
     }
 
     console.log(
-      `[Scheduler] Updating data source ${source.id} from ${source.sourceUrl}`
+      `[Scheduler] Updating price data for source ${source.id} from ${source.sourceUrl}`
     );
 
-    // Scrape the latest data
-    const result = await scrapeSnkrdunkPage(source.sourceUrl);
+    // Only update price history (not card data)
+    const priceHistory = await updatePriceHistoryOnly(source.sourceUrl);
 
     // Insert price history records
-    if (result.priceHistory && result.priceHistory.length > 0) {
-      const priceRecords = result.priceHistory.map((price) => ({
+    if (priceHistory && priceHistory.length > 0) {
+      const priceRecords = priceHistory.map((price) => ({
         cardId: source.cardId,
         source: "snkrdunk",
         price: convertJpyToHkd(price.price).toString(),
@@ -367,6 +367,7 @@ export async function getSchedulerStatus() {
 
 /**
  * Manually trigger update for all active data sources
+ * This bypasses the SCHEDULER_ENABLED check to allow manual updates
  */
 export async function triggerManualUpdateAll() {
   const db = await getDb();
@@ -375,7 +376,32 @@ export async function triggerManualUpdateAll() {
   }
 
   console.log("[Scheduler] Manual update triggered for all data sources");
-  await runAutoUpdate();
+  
+  try {
+    // Get all active SNKRDUNK data sources (no time filter for manual update)
+    const sourcesToUpdate = await db
+      .select()
+      .from(dataSources)
+      .where(
+        and(
+          eq(dataSources.source, "snkrdunk"),
+          eq(dataSources.isActive, 1)
+        )
+      );
+
+    console.log(
+      `[Scheduler] Found ${sourcesToUpdate.length} data sources to update`
+    );
+
+    for (const source of sourcesToUpdate) {
+      await updateDataSource(db, source);
+    }
+
+    console.log("[Scheduler] Manual update cycle completed");
+  } catch (error) {
+    console.error("[Scheduler] Manual update cycle failed:", error);
+    throw error;
+  }
 }
 
 /**
