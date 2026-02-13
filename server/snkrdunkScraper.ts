@@ -1,12 +1,10 @@
 /**
  * SNKRDUNK Scraper Service
- * Uses Firecrawl MCP to extract card data from SNKRDUNK pages
+ * Uses Axios + Cheerio to extract card data from SNKRDUNK pages
  */
 
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
+import axios from "axios";
+import * as cheerio from "cheerio";
 
 export interface SnkrdunkCardData {
   name: string;
@@ -30,83 +28,48 @@ export function extractSnkrdunkId(url: string): string | null {
 }
 
 /**
- * Scrape SNKRDUNK page using Firecrawl MCP
+ * Scrape SNKRDUNK page using Axios + Cheerio
  */
 export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData> {
-  const { recordFirecrawlUsage } = await import("./db");
-  
   try {
-    // Call Firecrawl MCP via manus-mcp-cli
-    const command = `manus-mcp-cli tool call firecrawl_scrape --server firecrawl --input '${JSON.stringify({
-      url,
-      formats: ["markdown"],
-      onlyMainContent: true,
-    })}'`;
-
-    const { stdout, stderr } = await execAsync(command, { maxBuffer: 10 * 1024 * 1024 });
-
-    // Check for error messages in stdout (Firecrawl errors appear here)
-    if (stdout.includes("Error: Tool") && stdout.includes("execution failed")) {
-      // Extract error message
-      const errorMatch = stdout.match(/Error: Tool '[^']+' execution failed: (.+)/);
-      const errorMsg = errorMatch ? errorMatch[1] : stdout;
-      
-      // Check if it's a quota error
-      if (errorMsg.includes("Insufficient credits")) {
-        throw new Error("Insufficient credits to perform this request. Please upgrade your Firecrawl plan or contact Manus support.");
-      }
-      
-      throw new Error(errorMsg);
-    }
-
-    if (stderr && !stderr.includes("Tool execution result saved")) {
-      throw new Error(`Firecrawl error: ${stderr}`);
-    }
-
-    // Parse the JSON output - try multiple formats
-    let result;
-    
-    // Try format 1: Direct JSON output (new format)
-    try {
-      result = JSON.parse(stdout.trim());
-    } catch (e) {
-      // Try format 2: With "Tool execution result:" prefix (old format)
-      const resultMatch = stdout.match(/Tool execution result:\n({[\s\S]+})/);
-      if (!resultMatch) {
-        // Log the actual output for debugging
-        console.error("[Scraper] Failed to parse Firecrawl output. First 500 chars:", stdout.substring(0, 500));
-        throw new Error("Failed to parse Firecrawl output. The response format is not recognized.");
-      }
-      result = JSON.parse(resultMatch[1]);
-    }
-    
-    const markdown = result.markdown;
-
-    if (!markdown) {
-      throw new Error("No markdown content returned from Firecrawl");
-    }
-
-    // Extract card name (Japanese)
-    const nameMatch = markdown.match(/# (.+)\n\n(.+)\n\n/);
-    const nameJa = nameMatch ? nameMatch[1].trim() : "Unknown Card";
-    const nameEn = nameMatch ? nameMatch[2].trim() : "";
-
-    // Extract image URL from metadata
-    const imageUrl = result.metadata?.ogImage || result.metadata?.["twitter:image"] || null;
-
-    // Parse price history from markdown
-    const priceHistory = parsePriceHistory(markdown);
-
-    // Record successful Firecrawl usage
-    await recordFirecrawlUsage({
-      operation: "scrape",
-      url,
-      status: "success",
-      creditsUsed: 1,
+    // Fetch HTML content with proper headers to avoid bot detection
+    const response = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+      },
+      timeout: 30000, // 30 seconds timeout
+      maxRedirects: 5,
     });
 
+    const html = response.data;
+    const $ = cheerio.load(html);
+
+    // Extract card name (Japanese) from meta tags or title
+    const nameJa = $('meta[property="og:title"]').attr("content") || 
+                   $("title").text().split("｜")[0].trim() ||
+                   $("h1").first().text().trim() ||
+                   "Unknown Card";
+
+    // Extract English name if available (usually in parentheses)
+    const nameEnMatch = nameJa.match(/\(([^)]+)\)/);
+    const nameEn = nameEnMatch ? nameEnMatch[1] : nameJa;
+
+    // Extract image URL from meta tags
+    const imageUrl = $('meta[property="og:image"]').attr("content") ||
+                     $('meta[name="twitter:image"]').attr("content") ||
+                     $(".product-image img").first().attr("src") ||
+                     null;
+
+    // Parse price history from the table
+    const priceHistory = parsePriceHistoryFromHtml($);
+
     return {
-      name: nameEn || nameJa,
+      name: nameEn,
       nameJa,
       imageUrl,
       priceHistory,
@@ -114,25 +77,24 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
   } catch (error: any) {
     console.error("Error scraping SNKRDUNK page:", error);
     
-    // Record failed Firecrawl usage
-    const status = error.message?.includes("Insufficient credits") ? "quota_exceeded" : "failed";
-    await recordFirecrawlUsage({
-      operation: "scrape",
-      url,
-      status,
-      errorMessage: error.message || String(error),
-      creditsUsed: status === "quota_exceeded" ? 0 : 1,
-    });
-    
-    throw error;
+    // Provide more detailed error messages
+    if (error.code === "ECONNABORTED") {
+      throw new Error("Request timeout: SNKRDUNK server took too long to respond");
+    } else if (error.response) {
+      throw new Error(`HTTP ${error.response.status}: ${error.response.statusText}`);
+    } else if (error.request) {
+      throw new Error("Network error: Unable to reach SNKRDUNK server");
+    } else {
+      throw new Error(error.message || String(error));
+    }
   }
 }
 
 /**
- * Parse price history from SNKRDUNK markdown
+ * Parse price history from SNKRDUNK HTML
  * Extracts data from "最近の売買履歴" section
  */
-export function parsePriceHistory(markdown: string): Array<{
+export function parsePriceHistoryFromHtml($: cheerio.CheerioAPI): Array<{
   price: number;
   currency: string;
   soldAt: Date;
@@ -145,38 +107,37 @@ export function parsePriceHistory(markdown: string): Array<{
     grade?: string;
   }> = [];
 
-  // Find the price history section
-  const historySection = markdown.match(/## 最近の売買履歴[\s\S]+?(?=##|$)/);
-  if (!historySection) {
-    return priceHistory;
-  }
-
-  const historyText = historySection[0];
-
-  // Extract each transaction line
-  // Format: "41分前\n\nA\n\n¥53,500"
-  // or: "4時間前\n\nPSA10\n\n¥78,000"
-  const transactionPattern = /(\d+(?:分|時間|日)前)\n\n([A-Z0-9\s]+)\n\n¥([\d,]+)/g;
-  let match;
-
-  while ((match = transactionPattern.exec(historyText)) !== null) {
-    const timeAgo = match[1];
-    const grade = match[2].trim();
-    const priceStr = match[3].replace(/,/g, "");
-    const price = parseInt(priceStr, 10);
-
-    if (isNaN(price)) continue;
-
-    // Convert time ago to Date
-    const soldAt = parseTimeAgo(timeAgo);
-
+  // Find all transaction rows in the price history section
+  // SNKRDUNK uses a table or list structure for price history
+  $("table tr, .price-history-item, .transaction-item").each((_, element) => {
+    const $row = $(element);
+    
+    // Extract time ago (e.g., "41分前", "4時間前", "1日前")
+    const timeText = $row.find("td:nth-child(1), .time, .date").text().trim();
+    
+    // Extract grade (e.g., "A", "PSA10", "PSA9")
+    const gradeText = $row.find("td:nth-child(2), .grade, .condition").text().trim();
+    
+    // Extract price (e.g., "¥53,500", "¥78,000")
+    const priceText = $row.find("td:nth-child(3), .price, .amount").text().trim();
+    
+    // Parse price
+    const priceMatch = priceText.match(/¥([\d,]+)/);
+    if (!priceMatch) return;
+    
+    const price = parseInt(priceMatch[1].replace(/,/g, ""), 10);
+    if (isNaN(price)) return;
+    
+    // Parse time ago
+    const soldAt = parseTimeAgo(timeText);
+    
     priceHistory.push({
       price,
       currency: "JPY",
       soldAt,
-      grade: grade || undefined,
+      grade: gradeText || undefined,
     });
-  }
+  });
 
   return priceHistory;
 }

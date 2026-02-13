@@ -717,3 +717,22 @@
 - [x] 正確識別配額超限錯誤並記錄為 quota_exceeded 狀態
 - [x] 顯示清晰的錯誤訊息和 Manus 支援連結
 - [x] 測試修復後的數據抓取功能
+
+## 研究替代 Firecrawl 的網頁抓取方案 - 完成
+
+### 目標
+找到不依賴 Firecrawl MCP 的網頁抓取方案，確保 SNKRDUNK 數據源能正常抓取
+
+### 研究方向
+- [x] 調查 Node.js 網頁抓取庫（Puppeteer、Playwright、Cheerio 等）
+- [x] 測試 SNKRDUNK 網頁結構，確認是否需要 JavaScript 渲柔
+- [x] 評估各方案的優缺點（性能、穩定性、維護成本）
+- [x] 實作最佳方案並替換現有的 Firecrawl 調用
+- [x] 測試新方案的抓取成功率和數據準確性
+
+### 最終方案
+使用 **Axios + Cheerio** 替代 Firecrawl MCP，優點：
+- 無配額限制
+- 速度更快
+- 資源消耗更低
+- 維護成本低
