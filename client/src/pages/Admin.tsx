@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MainLayout } from "@/components/MainLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,10 @@ export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const pausedRef = useRef(false);
 
   const utils = trpc.useUtils();
   const dataSourcesQuery = trpc.admin.getDataSources.useQuery(undefined, {
@@ -153,7 +155,15 @@ export default function Admin() {
       const BATCH_SIZE = 5; // Process 5 URLs at a time to avoid rate limits
       const DELAY_BETWEEN_BATCHES = 2000; // 2 second delay between batches
       
+      pausedRef.current = false;
+      setIsPaused(false);
+      
       for (let i = 0; i < newUrls.length; i += BATCH_SIZE) {
+        // Check if paused
+        while (pausedRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
         const batch = newUrls.slice(i, i + BATCH_SIZE);
         const batchEnd = Math.min(i + BATCH_SIZE, newUrls.length);
         setBatchResults(prev => ({ ...prev, progress: `處理中 ${batchEnd}/${newUrls.length}` }));
@@ -645,23 +655,43 @@ export default function Admin() {
                   </div>
                 ) : null}
               </div>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full sm:w-auto"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    處理中...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4 mr-2" />
-                    添加數據源
-                  </>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 sm:flex-none"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      處理中...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      添加數據源
+                    </>
+                  )}
+                </Button>
+                {isSubmitting && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      pausedRef.current = !pausedRef.current;
+                      setIsPaused(pausedRef.current);
+                      if (pausedRef.current) {
+                        toast.info("已暫停，點擊繼續按鈕恢復處理");
+                      } else {
+                        toast.info("已繼續處理");
+                      }
+                    }}
+                    className="flex-1 sm:flex-none"
+                  >
+                    {isPaused ? "繼續" : "暫停"}
+                  </Button>
                 )}
-              </Button>
+              </div>
             </form>
           </Card>
 
