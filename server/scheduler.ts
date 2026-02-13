@@ -284,6 +284,92 @@ export async function manualUpdateDataSource(dataSourceId: number) {
 }
 
 /**
+ * Get scheduler status and statistics
+ */
+export async function getSchedulerStatus() {
+  const db = await getDb();
+  if (!db) {
+    return null;
+  }
+
+  try {
+    // Get all active data sources
+    const allSources = await db
+      .select()
+      .from(dataSources)
+      .where(and(eq(dataSources.source, "snkrdunk"), eq(dataSources.isActive, 1)));
+
+    // Calculate next update time (earliest nextUpdateAt)
+    const nextUpdate = allSources
+      .map((s) => s.nextUpdateAt)
+      .filter((t): t is Date => t !== null)
+      .sort((a, b) => a.getTime() - b.getTime())[0];
+
+    // Get statistics for last 24 hours
+    const oneDayAgo = new Date();
+    oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+
+    const recentUpdates = allSources.filter(
+      (s) => s.lastFetchedAt && s.lastFetchedAt >= oneDayAgo
+    );
+
+    const successCount = recentUpdates.filter(
+      (s) => s.lastFetchStatus === "success"
+    ).length;
+    const failedCount = recentUpdates.filter(
+      (s) => s.lastFetchStatus === "failed"
+    ).length;
+
+    // Get failed sources for retry queue
+    const failedSources = allSources
+      .filter((s) => s.lastFetchStatus === "failed")
+      .map((s) => ({
+        id: s.id,
+        sourceUrl: s.sourceUrl,
+        errorMessage: s.fetchErrorMessage,
+        lastAttempt: s.lastFetchedAt,
+      }))
+      .slice(0, 10); // Limit to 10 most recent failures
+
+    return {
+      nextUpdateAt: nextUpdate || null,
+      totalActiveSources: allSources.length,
+      last24Hours: {
+        totalUpdates: recentUpdates.length,
+        successCount,
+        failedCount,
+      },
+      failedSources,
+      isRunning: crawlProgress.isRunning,
+      currentProgress: crawlProgress.isRunning
+        ? {
+            processedUrls: crawlProgress.processedUrls,
+            totalUrls: crawlProgress.totalUrls,
+            successCount: crawlProgress.successCount,
+            failedCount: crawlProgress.failedCount,
+          }
+        : null,
+    };
+  } catch (error) {
+    console.error("[Scheduler] Failed to get scheduler status:", error);
+    return null;
+  }
+}
+
+/**
+ * Manually trigger update for all active data sources
+ */
+export async function triggerManualUpdateAll() {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  console.log("[Scheduler] Manual update triggered for all data sources");
+  await runAutoUpdate();
+}
+
+/**
  * Get update status for a data source
  */
 export async function getUpdateStatus(dataSourceId: number) {

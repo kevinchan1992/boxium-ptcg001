@@ -6,7 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
-import { getUpdateStatus, manualUpdateDataSource } from "./scheduler";
+import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
 
 export const appRouter = router({
   system: systemRouter,
@@ -340,6 +340,31 @@ export const appRouter = router({
         
         const { getCrawlProgress } = await import("./scheduler");
         return getCrawlProgress();
+      }),
+
+    getSchedulerStatus: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        const status = await getSchedulerStatus();
+        return status;
+      }),
+
+    triggerManualUpdateAll: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        try {
+          await triggerManualUpdateAll();
+          return { success: true };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to trigger manual update: ${error.message}`,
+          });
+        }
       }),
 
     cleanDuplicateDataSources: protectedProcedure

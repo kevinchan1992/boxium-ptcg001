@@ -512,3 +512,21 @@
 - [x] 發現問題：查詢條件使用錯誤的 `||` 運算符處理 null 值
 - [x] 修復：添加 `or` 和 `isNull` 條件正確處理 nextUpdateAt
 - [x] 驗證：排程器現在能正確找到並更新數據源
+
+## 排程器狀態監控與管理功能 - 完成
+
+### 後端 API
+- [x] 添加 `admin.getSchedulerStatus` API 查詢排程器狀態
+- [x] 返回下次更新時間、最近更新統計、失敗重試佇列
+- [x] 添加 `admin.triggerManualUpdateAll` API 手動觸發全量更新
+- [x] 在 scheduler.ts 添加 getSchedulerStatus 和 triggerManualUpdateAll 函數
+- [x] Firecrawl 配額追蹤：透過失敗記錄顯示配額不足問題
+
+### 前端 UI
+- [x] 在管理後台頂部添加排程器狀態卡片
+- [x] 顯示下次自動更新時間（格式化為本地時間）
+- [x] 顯示最近 24 小時更新統計（479 成功 / 128 失敗）
+- [x] 顯示失敗佇列數量和詳細資訊（最近 10 筆）
+- [x] 添加「立即更新所有數據源」按鈕
+- [x] 顯示當前正在更新的數據源進度（如果正在運行）
+- [x] 每 30 秒自動刷新排程器狀態
