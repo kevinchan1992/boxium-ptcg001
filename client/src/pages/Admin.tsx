@@ -214,6 +214,19 @@ export default function Admin() {
 
 
 
+  const updateEnglishNamesMutation = trpc.admin.updateCardEnglishNames.useMutation({
+    onSuccess: (result) => {
+      toast.success(`已更新 ${result.updated} 張卡牌的英文名稱`);
+      if (result.failed > 0) {
+        toast.warning(`${result.failed} 張卡牌更新失敗`);
+      }
+      utils.admin.getDataSources.invalidate();
+    },
+    onError: (error: any) => {
+      toast.error(`更新失敗: ${error.message}`);
+    },
+  });
+
   const deleteDataSourceMutation = trpc.admin.deleteDataSource.useMutation({
     onSuccess: () => {
       toast.success("數據源已刪除");
@@ -414,6 +427,32 @@ export default function Admin() {
                 )}
               </div>
             </form>
+          </Card>
+
+          {/* Management Tools */}
+          <Card className="p-6 bg-card border-border">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
+              管理工具
+            </h2>
+            <div className="flex gap-4">
+              <Button
+                onClick={() => updateEnglishNamesMutation.mutate()}
+                disabled={updateEnglishNamesMutation.isPending}
+                variant="outline"
+              >
+                {updateEnglishNamesMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    更新中...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    更新所有卡牌英文名稱
+                  </>
+                )}
+              </Button>
+            </div>
           </Card>
 
           {/* Data Sources List */}

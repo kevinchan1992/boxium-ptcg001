@@ -462,8 +462,57 @@ export const appRouter = router({
         }
       }),
 
-    fixOrphanDataSources: protectedProcedure
-      .mutation(async ({ ctx }) => {
+  updateCardEnglishNames: protectedProcedure.mutation(async () => {
+    const dataSources = await db.getDataSources();
+    
+    let updated = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const source of dataSources) {
+      if (!source.cardId) continue;
+
+      try {
+        const productId = source.sourceUrl.match(/\/apparels\/(\d+)/);
+        if (!productId) continue;
+
+        // Fetch English name from API
+        const apiUrl = `https://snkrdunk.com/v1/apparels/${productId[1]}`;
+        const response = await fetch(apiUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          failed++;
+          continue;
+        }
+
+        const data = await response.json();
+        const nameEn = data.name;
+
+        // Update card with English name using db function
+        await db.updateCard(source.cardId, { name: nameEn });
+
+        updated++;
+        console.log(`[Update] Card ${source.cardId}: ${nameEn}`);
+      } catch (error: any) {
+        failed++;
+        errors.push(`${source.sourceUrl}: ${error.message}`);
+      }
+    }
+
+    return {
+      success: true,
+      updated,
+      failed,
+      errors: errors.slice(0, 10),
+    };
+  }),
+
+  fixOrphanDataSources: protectedProcedure.mutation(async ({ ctx }) => {
         if (ctx.user.role !== "admin") {
           throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
         }

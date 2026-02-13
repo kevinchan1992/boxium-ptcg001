@@ -28,51 +28,60 @@ export function extractSnkrdunkId(url: string): string | null {
 }
 
 /**
- * Scrape SNKRDUNK page using Axios + Cheerio
+ * Fetch card details from SNKRDUNK API
+ * API endpoint: /v1/apparels/{id}
+ */
+export async function fetchCardDetailsFromApi(productId: string): Promise<{
+  name: string;
+  nameJa: string;
+  imageUrl: string | null;
+}> {
+  try {
+    const apiUrl = `https://snkrdunk.com/v1/apparels/${productId}`;
+    
+    const response = await axios.get(apiUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+        "Referer": `https://snkrdunk.com/apparels/${productId}`,
+      },
+      timeout: 15000,
+    });
+
+    const data = response.data;
+    
+    return {
+      name: data.name || "Unknown Card",
+      nameJa: data.localizedName || data.name || "Unknown Card",
+      imageUrl: data.primaryMedia?.imageUrl || null,
+    };
+  } catch (error: any) {
+    console.error("Error fetching card details from API:", error.message);
+    throw new Error(`Failed to fetch card details: ${error.message}`);
+  }
+}
+
+/**
+ * Scrape SNKRDUNK page using API
  */
 export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData> {
   try {
-    // Fetch HTML content with proper headers to avoid bot detection
-    const response = await axios.get(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-      },
-      timeout: 30000, // 30 seconds timeout
-      maxRedirects: 5,
-    });
-
-    const html = response.data;
-    const $ = cheerio.load(html);
-
-    // Extract card name (Japanese) from meta tags or title
-    const nameJa = $('meta[property="og:title"]').attr("content") || 
-                   $("title").text().split("｜")[0].trim() ||
-                   $("h1").first().text().trim() ||
-                   "Unknown Card";
-
-    // Extract English name if available (usually in parentheses)
-    const nameEnMatch = nameJa.match(/\(([^)]+)\)/);
-    const nameEn = nameEnMatch ? nameEnMatch[1] : nameJa;
-
-    // Extract image URL from meta tags
-    const imageUrl = $('meta[property="og:image"]').attr("content") ||
-                     $('meta[name="twitter:image"]').attr("content") ||
-                     $(".product-image img").first().attr("src") ||
-                     null;
-
-    // Extract product ID from URL to fetch price history via API
+    // Extract product ID from URL
     const productId = extractSnkrdunkId(url);
-    const priceHistory = productId ? await fetchPriceHistoryFromApi(productId) : [];
+    if (!productId) {
+      throw new Error("Invalid SNKRDUNK URL: Cannot extract product ID");
+    }
+
+    // Fetch card details from API
+    const cardDetails = await fetchCardDetailsFromApi(productId);
+    
+    // Fetch price history from API
+    const priceHistory = await fetchPriceHistoryFromApi(productId);
 
     return {
-      name: nameEn,
-      nameJa,
-      imageUrl,
+      name: cardDetails.name,
+      nameJa: cardDetails.nameJa,
+      imageUrl: cardDetails.imageUrl,
       priceHistory,
     };
   } catch (error: any) {

@@ -809,3 +809,11 @@
 - [ ] 檢查 Research 頁面的搜尋邏輯
 - [ ] 確認數據源和卡牌的關聯是否正確
 - [ ] 修復問題並測試搜尋功能
+
+## 新需求: 修改爬蟲顯示英文卡牌名稱 - 已完成
+
+- [x] 分析 SNKRDUNK 網頁 HTML 結構找出英文名稱的位置
+- [x] 修改 snkrdunkScraper.ts 正確提取英文名稱（使用 SNKRDUNK API）
+- [x] 測試新的爬蟲邏輯（使用 https://snkrdunk.com/apparels/91279）
+- [x] 曰加更新現有卡牌數據英文名稱的 API 和 UI 按鈕
+- [x] 驗證前端正確顯示英文名稱
