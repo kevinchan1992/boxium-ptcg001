@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Menu, X, TrendingUp, Search, BarChart3, Trophy } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ backgroundColor: "#f8f9fa" }}>
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b" style={{ borderColor: "#e0e0e0" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -16,14 +19,14 @@ export default function Home() {
               <img
                 src="/boxium-logo.png"
                 alt="BOXIUM Logo"
-                className="h-14"
+                className="h-10"
               />
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link href="/research" className="text-white hover:text-[#fedd00] transition-colors">卡牌搜尋</Link>
-              <Link href="/admin" className="text-white hover:text-[#fedd00] transition-colors">管理後台</Link>
+              <Link href="/research" className="text-gray-700 hover:text-[#06038d] transition-colors font-medium">卡牌搜尋</Link>
+              <Link href="/admin" className="text-gray-700 hover:text-[#06038d] transition-colors font-medium">管理後台</Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -40,165 +43,260 @@ export default function Home() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-100 bg-white">
             <div className="px-4 py-4 space-y-3">
-              <Link href="/research" className="block text-gray-700 hover:text-[#06038d] transition-colors">研究</Link>
-              <Link href="/admin" className="block text-gray-700 hover:text-[#06038d] transition-colors">管理後台</Link>
+              <Link href="/research" className="block text-gray-700 hover:text-[#06038d] transition-colors font-medium">卡牌搜尋</Link>
+              <Link href="/admin" className="block text-gray-700 hover:text-[#06038d] transition-colors font-medium">管理後台</Link>
             </div>
           </div>
         )}
       </nav>
 
-      {/* Hero Section - Full Screen */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0">
-          <img
-            src="/hero-pokemon-cards.jpg"
-            alt="Pokemon Trading Cards Collection"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50"></div>
-        </div>
+      {/* Hero Section */}
+      <section className="pt-32 pb-20 px-4" style={{ backgroundColor: "#06038d" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <div className="space-y-8">
+              <div>
+                <h1 className="text-white text-4xl md:text-5xl font-bold mb-4 leading-tight">
+                  Pokémon TCG 價格查詢平台
+                </h1>
+                <p className="text-white/80 text-lg leading-relaxed">
+                  整合全球市場數據，為投資者和收藏家提供即時、準確的卡牌價格資訊。追蹤 PSA 10 評級卡牌的價格趨勢，做出明智的投資決策。
+                </p>
+              </div>
 
-        {/* Hero Content */}
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <h1 className="text-white text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-light tracking-wide mb-8 leading-relaxed">
-            專注於 Pokémon TCG 之價格查詢與交易的綜合平台
-          </h1>
-          <p className="text-white/90 text-lg md:text-xl font-light mb-12 max-w-2xl mx-auto leading-relaxed">
-            整合多個市場的價格數據，為香港及台灣的收藏家提供最權威的市場資訊
-          </p>
-          <Link href="/research">
-            <button
-              className="px-8 py-4 text-lg font-medium rounded-full transition-all hover:scale-105 hover:shadow-2xl"
-              style={{ backgroundColor: "#fedd00", color: "#06038d" }}
-            >
-              開始探索
-            </button>
-          </Link>
-        </div>
+              {/* Key Stats */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                  <div className="text-3xl font-bold text-[#ffed00] mb-2">500+</div>
+                  <div className="text-white/80 text-sm">已追蹤卡牌</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                  <div className="text-3xl font-bold text-[#ffed00] mb-2">2 個</div>
+                  <div className="text-white/80 text-sm">數據源</div>
+                </div>
+              </div>
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex items-start justify-center p-2">
-            <div className="w-1.5 h-1.5 bg-white/50 rounded-full"></div>
-          </div>
-        </div>
-      </section>
+              <Link href="/research">
+                <Button
+                  className="w-full md:w-auto px-8 py-3 text-lg font-semibold rounded-lg transition-all hover:scale-105 hover:shadow-2xl"
+                  style={{ backgroundColor: "#ffed00", color: "#06038d" }}
+                >
+                  開始搜尋 →
+                </Button>
+              </Link>
+            </div>
 
-      {/* Mission Section */}
-      <section className="py-32 px-4 bg-white">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-sm uppercase tracking-widest mb-6" style={{ color: "#06038d" }}>我們的使命</h2>
-          <p className="text-4xl md:text-5xl font-light leading-relaxed text-gray-800 mb-8">
-            為收藏家提供透明、準確的市場資訊
-          </p>
-          <p className="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
-            BOXIUM 致力於整合 SNKRDUNK、eBay 等權威數據源，提供即時更新的價格走勢與專業評級資訊，讓每一位收藏家都能做出明智的投資決策。
-          </p>
-        </div>
-      </section>
+            {/* Right - Search Preview */}
+            <div className="hidden md:block">
+              <div className="bg-white rounded-xl shadow-2xl p-8 space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">搜尋卡牌</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="輸入卡牌名稱或編號..."
+                      className="pl-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06038d] focus:border-transparent"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-      {/* Visual Divider */}
-      <section className="relative h-[60vh] overflow-hidden">
-        <img
-          src="/section-booster-packs.jpg"
-          alt="Pokemon Booster Packs Collection"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent flex items-center">
-          <div className="max-w-2xl mx-auto px-8 text-white">
-            <h3 className="text-3xl md:text-4xl font-light mb-4">專業評級，值得信賴</h3>
-            <p className="text-lg font-light leading-relaxed">
-              支援 PSA 10、BGS 10 等國際權威評級標準，精準追蹤每一張卡牌的市場價值。
-            </p>
+                {/* Filter Tags */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-semibold text-gray-700">評級篩選</label>
+                  <div className="flex flex-wrap gap-2">
+                    {["PSA 10", "BGS 10", "中古"].map((grade) => (
+                      <button
+                        key={grade}
+                        className="px-4 py-2 rounded-full text-sm font-medium border-2 transition-all hover:bg-[#06038d] hover:text-white hover:border-[#06038d]"
+                        style={{ borderColor: "#06038d", color: "#06038d" }}
+                      >
+                        {grade}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-32 px-4 bg-gray-50">
+      <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-sm uppercase tracking-widest text-center mb-16" style={{ color: "#06038d", fontSize: '16px' }}>核心服務</h2>
-          
-          <div className="grid md:grid-cols-2 gap-16">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#06038d" }}>
+              核心功能
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              BOXIUM 提供專業的卡牌價格分析工具，幫助您做出更明智的投資決策
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Feature 1 */}
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: "#fedd00" }}>
-                <span className="text-2xl font-bold" style={{ color: "#06038d" }}>1</span>
+            <div className="bg-white border-2 border-gray-100 rounded-xl p-8 hover:shadow-lg hover:border-[#ffed00] transition-all">
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-6" style={{ backgroundColor: "#ffed00" }}>
+                <Search className="h-7 w-7" style={{ color: "#06038d" }} />
               </div>
-              <h3 className="text-2xl font-light" style={{ color: "#06038d" }}>權威數據源</h3>
+              <h3 className="text-xl font-bold mb-3" style={{ color: "#06038d" }}>智能搜尋</h3>
               <p className="text-gray-600 leading-relaxed">
-                整合 SNKRDUNK、eBay 等國際知名平台的交易數據，確保價格資訊的準確性與可靠性。
+                快速搜尋數百張卡牌，支援名稱、編號、系列等多維度篩選
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: "#fedd00" }}>
-                <span className="text-2xl font-bold" style={{ color: "#06038d" }}>2</span>
+            <div className="bg-white border-2 border-gray-100 rounded-xl p-8 hover:shadow-lg hover:border-[#ffed00] transition-all">
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-6" style={{ backgroundColor: "#ffed00" }}>
+                <TrendingUp className="h-7 w-7" style={{ color: "#06038d" }} />
               </div>
-              <h3 className="text-2xl font-light" style={{ color: "#06038d" }}>即時更新</h3>
+              <h3 className="text-xl font-bold mb-3" style={{ color: "#06038d" }}>價格趨勢</h3>
               <p className="text-gray-600 leading-relaxed">
-                每 12 小時自動更新價格數據，讓您隨時掌握市場最新動態，不錯過任何投資機會。
+                查看 90 天內的價格變化，掌握市場動態和投資時機
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: "#fedd00" }}>
-                <span className="text-2xl font-bold" style={{ color: "#06038d" }}>3</span>
+            <div className="bg-white border-2 border-gray-100 rounded-xl p-8 hover:shadow-lg hover:border-[#ffed00] transition-all">
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-6" style={{ backgroundColor: "#ffed00" }}>
+                <BarChart3 className="h-7 w-7" style={{ color: "#06038d" }} />
               </div>
-              <h3 className="text-2xl font-light" style={{ color: "#06038d" }}>本地化服務</h3>
+              <h3 className="text-xl font-bold mb-3" style={{ color: "#06038d" }}>市場統計</h3>
               <p className="text-gray-600 leading-relaxed">
-                專為香港及台灣市場設計，支援港幣與台幣顯示，提供最貼近本地收藏家需求的服務。
+                實時市場數據分析，了解卡牌的平均價格和市場表現
               </p>
             </div>
 
             {/* Feature 4 */}
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: "#fedd00" }}>
-                <span className="text-2xl font-bold" style={{ color: "#06038d" }}>4</span>
+            <div className="bg-white border-2 border-gray-100 rounded-xl p-8 hover:shadow-lg hover:border-[#ffed00] transition-all">
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-6" style={{ backgroundColor: "#ffed00" }}>
+                <Trophy className="h-7 w-7" style={{ color: "#06038d" }} />
               </div>
-              <h3 className="text-2xl font-light" style={{ color: "#06038d" }}>專業評級</h3>
+              <h3 className="text-xl font-bold mb-3" style={{ color: "#06038d" }}>熱門排行</h3>
               <p className="text-gray-600 leading-relaxed">
-                支援 PSA 10、BGS 10 及中古品等多種評級標準，幫助您精準評估卡牌的真實價值。
+                發現市場上最熱門的卡牌，跟蹤投資者的選擇
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Data Sources Section */}
+      <section className="py-20 px-4" style={{ backgroundColor: "#f8f9fa" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#06038d" }}>
+              權威數據源
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              整合全球領先的卡牌交易平台，確保數據的準確性和實時性
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12">
+            {/* SNKRDUNK */}
+            <div className="bg-white rounded-xl p-8 shadow-md border-l-4" style={{ borderColor: "#06038d" }}>
+              <h3 className="text-2xl font-bold mb-4" style={{ color: "#06038d" }}>SNKRDUNK</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                日本領先的卡牌交易平台，提供最新的 PSA 10 評級卡牌交易數據和市場趨勢分析
+              </p>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div>✓ 實時交易數據</div>
+                <div>✓ PSA 評級支援</div>
+                <div>✓ 日幣價格</div>
+              </div>
+            </div>
+
+            {/* eBay */}
+            <div className="bg-white rounded-xl p-8 shadow-md border-l-4" style={{ borderColor: "#ffed00" }}>
+              <h3 className="text-2xl font-bold mb-4" style={{ color: "#06038d" }}>eBay</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                全球最大的線上拍賣平台，提供國際市場的卡牌交易記錄和價格參考
+              </p>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div>✓ 全球市場數據</div>
+                <div>✓ PSA 評級支援</div>
+                <div>✓ 美元價格</div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 px-4 bg-white">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-light mb-8 text-gray-800">準備好開始了嗎？</h2>
-          <p className="text-lg text-gray-600 mb-12 leading-relaxed">
-            立即探索我們的搜尋工具，發掘您的下一個收藏目標。
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: "#06038d" }}>
+            準備好開始投資了嗎？
+          </h2>
+          <p className="text-gray-600 text-lg mb-10 leading-relaxed">
+            使用 BOXIUM 的智能搜尋和價格分析工具，找到最有價值的卡牌投資機會。
           </p>
-          <Link href="/research">
-            <button
-              className="px-8 py-4 text-lg font-medium rounded-full transition-all hover:scale-105 hover:shadow-2xl"
-              style={{ backgroundColor: "#06038d", color: "white" }}
-            >
-              前往搜尋卡牌頁面
-            </button>
-          </Link>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/research">
+              <Button
+                className="px-8 py-3 text-lg font-semibold rounded-lg transition-all hover:scale-105"
+                style={{ backgroundColor: "#06038d", color: "white" }}
+              >
+                開始搜尋卡牌
+              </Button>
+            </Link>
+            <Link href="/research">
+              <Button
+                variant="outline"
+                className="px-8 py-3 text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
+                style={{ borderColor: "#06038d", color: "#06038d" }}
+              >
+                查看市場趨勢
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 border-t border-gray-200">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center mb-4">
-            <img
-              src="/boxium-logo.png"
-              alt="BOXIUM Logo"
-              className="h-12"
-            />
+      <footer className="py-12 px-4 border-t" style={{ backgroundColor: "#06038d" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-12 mb-8">
+            {/* Brand */}
+            <div>
+              <img
+                src="/boxium-logo.png"
+                alt="BOXIUM Logo"
+                className="h-10 mb-4"
+              />
+              <p className="text-white/80 leading-relaxed">
+                專注於 Pokémon TCG 價格查詢與交易的綜合平台
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-white font-bold mb-4">快速導航</h4>
+              <ul className="space-y-2">
+                <li><Link href="/research" className="text-white/80 hover:text-white transition-colors">卡牌搜尋</Link></li>
+                <li><Link href="/research" className="text-white/80 hover:text-white transition-colors">市場分析</Link></li>
+                <li><Link href="/admin" className="text-white/80 hover:text-white transition-colors">管理後台</Link></li>
+              </ul>
+            </div>
+
+            {/* Info */}
+            <div>
+              <h4 className="text-white font-bold mb-4">關於我們</h4>
+              <p className="text-white/80 text-sm leading-relaxed">
+                BOXIUM 致力於為 Pokémon TCG 投資者和收藏家提供最準確、最專業的市場資訊和價格分析工具。
+              </p>
+            </div>
           </div>
-          <p className="text-gray-500 text-sm">
-            © 2026 BOXIUM. 專注於 Pokémon TCG 價格查詢與交易的綜合平台。
-          </p>
+
+          <div className="border-t border-white/20 pt-8 text-center text-white/60 text-sm">
+            <p>© 2026 BOXIUM. All rights reserved. | Luck in Every Box</p>
+          </div>
         </div>
       </footer>
     </div>
