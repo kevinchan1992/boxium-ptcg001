@@ -51,76 +51,49 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4" style={{ backgroundColor: "#06038d" }}>
+      <section className="pt-20 pb-24 px-4" style={{ backgroundColor: "#06038d" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Left Content */}
-            <div className="space-y-8">
-              <div>
-                <h1 className="text-white text-4xl md:text-5xl font-bold mb-4 leading-tight">
-                  歡迎來到 Boxium ~ 遊戲迷專屬世界
-                </h1>
-                <p className="text-white/80 text-lg leading-relaxed">
-                  整合全球市場數據，為PTCG愛好者和收藏家提供即時、準確的卡牌價格資訊。追蹤卡牌的價格趨勢，做出明智的投資決策。
-                </p>
-              </div>
-
-              {/* Key Stats */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                  <div className="text-3xl font-bold text-[#ffed00] mb-2">500+</div>
-                  <div className="text-white/80 text-sm">已追蹤卡牌</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                  <div className="text-3xl font-bold text-[#ffed00] mb-2">2 個</div>
-                  <div className="text-white/80 text-sm">數據源</div>
-                </div>
-              </div>
-
-              <Link href="/research">
-                <Button
-                  className="w-full md:w-auto px-8 py-3 text-lg font-semibold rounded-lg transition-all hover:scale-105 hover:shadow-2xl"
-                  style={{ backgroundColor: "#ffed00", color: "#06038d" }}
-                >
-                  開始搜尋 →
-                </Button>
-              </Link>
+          <div className="flex flex-col items-center text-center space-y-12">
+            {/* LOGO */}
+            <div className="w-full max-w-2xl">
+              <img
+                src="/boxium-logo.png"
+                alt="BOXIUM Logo"
+                className="w-full h-auto"
+              />
             </div>
 
-            {/* Right - Search Preview */}
-            <div className="hidden md:block">
-              <div className="bg-white rounded-xl shadow-2xl p-8 space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">搜尋卡牌</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                    <Input
-                      type="text"
-                      placeholder="輸入卡牌名稱或編號..."
-                      className="pl-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#06038d] focus:border-transparent"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
+            {/* Content */}
+            <div className="space-y-6 max-w-3xl">
+              <h1 className="text-white text-3xl md:text-4xl font-bold leading-tight">
+                歡迎來到 Boxium ~ 遊戲迷專屬世界
+              </h1>
+              <p className="text-white/80 text-lg leading-relaxed">
+                整合全球市場數據，為PTCG愛好者和收藏家提供即時、準確的卡牌價格資訊。追蹤卡牌的價格趨勢，做出明智的投資決策。
+              </p>
+            </div>
 
-                {/* Filter Tags */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-semibold text-gray-700">評級篩選</label>
-                  <div className="flex flex-wrap gap-2">
-                    {["PSA 10", "BGS 10", "中古"].map((grade) => (
-                      <button
-                        key={grade}
-                        className="px-4 py-2 rounded-full text-sm font-medium border-2 transition-all hover:bg-[#06038d] hover:text-white hover:border-[#06038d]"
-                        style={{ borderColor: "#06038d", color: "#06038d" }}
-                      >
-                        {grade}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {/* Key Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-6 w-full max-w-md">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20 text-center">
+                <div className="text-3xl font-bold text-[#ffed00] mb-2">500+</div>
+                <div className="text-white/80 text-sm">已追蹤卡牌</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20 text-center">
+                <div className="text-3xl font-bold text-[#ffed00] mb-2">2 個</div>
+                <div className="text-white/80 text-sm">數據源</div>
               </div>
             </div>
+
+            {/* CTA Button */}
+            <Link href="/research">
+              <Button
+                className="px-10 py-4 text-lg font-semibold rounded-lg transition-all hover:scale-105 hover:shadow-2xl"
+                style={{ backgroundColor: "#ffed00", color: "#06038d" }}
+              >
+                開始搜尋 →
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
