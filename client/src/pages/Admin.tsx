@@ -227,6 +227,18 @@ export default function Admin() {
     },
   });
 
+  const updateEbayRecordsMutation = trpc.admin.updateAllEbayRecords.useMutation({
+    onSuccess: (result) => {
+      toast.success(`已更新 ${result.updated} 張卡牌的 eBay 交易記錄`);
+      if (result.failed > 0) {
+        toast.warning(`${result.failed} 張卡牌更新失敗`);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(`更新失敗: ${error.message}`);
+    },
+  });
+
   const deleteDataSourceMutation = trpc.admin.deleteDataSource.useMutation({
     onSuccess: () => {
       toast.success("數據源已刪除");
@@ -434,7 +446,7 @@ export default function Admin() {
             <h2 className="text-2xl font-semibold text-foreground mb-4">
               管理工具
             </h2>
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap">
               <Button
                 onClick={() => updateEnglishNamesMutation.mutate()}
                 disabled={updateEnglishNamesMutation.isPending}
@@ -449,6 +461,23 @@ export default function Admin() {
                   <>
                     <RefreshCw className="w-4 h-4 mr-2" />
                     更新所有卡牌英文名稱
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => updateEbayRecordsMutation.mutate()}
+                disabled={updateEbayRecordsMutation.isPending}
+                variant="outline"
+              >
+                {updateEbayRecordsMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    更新中...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    更新 eBay 交易記錄
                   </>
                 )}
               </Button>

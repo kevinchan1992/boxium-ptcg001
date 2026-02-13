@@ -826,3 +826,12 @@
 - [x] 在卡牌詳細頁面添加「eBay 上的最近交易」區塊
 - [x] 測試 eBay API 整合功能（發現 API 限制問題）
 - [x] 驗證搜尋結果正確顯示（UI 已完成）
+
+## 新需求: 優化 eBay API 使用，將交易記錄永久儲存到資料庫 - 已完成
+
+- [x] 修改資料庫 schema 支援 eBay 交易記錄（priceHistory 表已支援）
+- [x] 修改 eBay 服務儲存交易記錄到資料庫（searchAndSaveEbaySoldItems）
+- [x] 修改後端 API 優先從資料庫讀取 eBay 記錄（7 天內的記錄）
+- [x] 添加定期更新 eBay 交易記錄功能（updateAllEbayRecords API）
+- [x] 在 Admin 頁面添加手動更新 eBay 記錄按鈕
+- [x] 測試功能並驗證 API 調用次數減少（等待 API 限制重置）

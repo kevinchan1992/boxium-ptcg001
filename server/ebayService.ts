@@ -4,6 +4,8 @@
  */
 
 import axios from "axios";
+import { getDb } from "./db";
+import { priceHistory } from "../drizzle/schema";
 
 const EBAY_APP_ID = process.env.EBAY_APP_ID;
 const EBAY_FINDING_API_URL = "https://svcs.ebay.com/services/search/FindingService/v1";
@@ -20,6 +22,60 @@ export interface EbaySoldItem {
 
 /**
  * Search for sold PSA10 Pokemon cards on eBay
+ * @param cardName - English card name (e.g., "Solgaleo & Lunala GX Lillie")
+ * @param cardNumber - Card number (e.g., "SM11b 063/049")
+ * @param limit - Maximum number of results to return (default: 20)
+ */
+/**
+ * Search for sold PSA10 Pokemon cards on eBay and save to database
+ * @param cardId - Internal card ID
+ * @param cardName - English card name (e.g., "Solgaleo & Lunala GX Lillie")
+ * @param cardNumber - Card number (e.g., "SM11b 063/049")
+ * @param limit - Maximum number of results to return (default: 20)
+ * @param saveToDb - Whether to save results to database (default: true)
+ */
+export async function searchAndSaveEbaySoldItems(
+  cardId: number,
+  cardName: string,
+  cardNumber: string,
+  limit: number = 20,
+  saveToDb: boolean = true
+): Promise<EbaySoldItem[]> {
+  const soldItems = await searchEbaySoldItems(cardName, cardNumber, limit);
+
+  if (saveToDb && soldItems.length > 0) {
+    try {
+      const db = await getDb();
+      if (!db) {
+        console.warn("[eBay] Database not available, skipping save");
+        return soldItems;
+      }
+
+      // Save to database
+      const priceRecords = soldItems.map(item => ({
+        cardId,
+        source: "ebay" as const,
+        price: item.price.toString(),
+        currency: item.currency,
+        grade: "PSA10", // eBay search is PSA10 only
+        condition: item.condition,
+        listingUrl: item.itemUrl,
+        soldAt: item.soldDate,
+      }));
+
+      await db.insert(priceHistory).values(priceRecords);
+
+      console.log(`[eBay] Saved ${priceRecords.length} price records for card ${cardId}`);
+    } catch (error: any) {
+      console.error("[eBay] Error saving to database:", error.message);
+    }
+  }
+
+  return soldItems;
+}
+
+/**
+ * Search for sold PSA10 Pokemon cards on eBay (without saving to database)
  * @param cardName - English card name (e.g., "Solgaleo & Lunala GX Lillie")
  * @param cardNumber - Card number (e.g., "SM11b 063/049")
  * @param limit - Maximum number of results to return (default: 20)

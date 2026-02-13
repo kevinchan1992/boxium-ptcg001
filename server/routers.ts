@@ -6,7 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
-import { searchEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
+import { searchAndSaveEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
 
 export const appRouter = router({
@@ -65,10 +65,38 @@ export const appRouter = router({
       .input(z.object({
         cardId: z.number(),
         limit: z.number().optional().default(20),
+        forceRefresh: z.boolean().optional().default(false),
       }))
       .query(async ({ input }) => {
         try {
-          // Get card details
+          // First, try to get from database
+          if (!input.forceRefresh) {
+            const dbRecords = await db.getPriceHistory(input.cardId, "ebay", "PSA10", input.limit);
+            
+            // If we have recent records (within 7 days), return them
+            if (dbRecords.length > 0) {
+              const latestRecord = dbRecords[0];
+              const daysSinceUpdate = latestRecord.createdAt 
+                ? (Date.now() - new Date(latestRecord.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+                : 999;
+              
+              if (daysSinceUpdate < 7) {
+                console.log(`[eBay] Returning ${dbRecords.length} cached records for card ${input.cardId}`);
+                // Convert database records to EbaySoldItem format
+                return dbRecords.map(record => ({
+                  title: `PSA 10 - ${record.grade || "Unknown"}`,
+                  price: parseFloat(record.price),
+                  currency: record.currency,
+                  soldDate: record.soldAt || new Date(),
+                  imageUrl: null,
+                  itemUrl: record.listingUrl || "",
+                  condition: record.condition || "PSA 10",
+                }));
+              }
+            }
+          }
+
+          // If no recent records or force refresh, fetch from eBay API
           const card = await db.getCardById(input.cardId);
           if (!card) {
             throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
@@ -84,8 +112,15 @@ export const appRouter = router({
           // Clean card name for search
           const cleanedName = cleanCardNameForSearch(card.name);
 
-          // Search eBay for sold PSA10 items
-          const soldItems = await searchEbaySoldItems(cleanedName, cardNumber, input.limit);
+          // Search eBay for sold PSA10 items and save to database
+          console.log(`[eBay] Fetching fresh data from eBay API for card ${input.cardId}`);
+          const soldItems = await searchAndSaveEbaySoldItems(
+            input.cardId,
+            cleanedName,
+            cardNumber,
+            input.limit,
+            true // Save to database
+          );
           return soldItems;
         } catch (error: any) {
           console.error("[eBay] Error fetching sold items:", error.message);
@@ -542,6 +577,55 @@ export const appRouter = router({
       success: true,
       updated,
       failed,
+      errors: errors.slice(0, 10),
+    };
+  }),
+
+  updateAllEbayRecords: protectedProcedure.mutation(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+    }
+
+    // Get all data sources with cards
+    const dataSources = await db.getDataSources();
+    const uniqueCards = new Map<number, { id: number; name: string }>();
+    
+    for (const source of dataSources) {
+      if (source.cardId && source.card) {
+        uniqueCards.set(source.cardId, { id: source.cardId, name: source.card.name });
+      }
+    }
+
+    let updated = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const card of Array.from(uniqueCards.values())) {
+      try {
+        const cardNumber = extractCardNumber(card.name);
+        if (!cardNumber) {
+          console.log(`[UpdateEbay] Cannot extract card number from: ${card.name}`);
+          continue;
+        }
+
+        const cleanedName = cleanCardNameForSearch(card.name);
+        await searchAndSaveEbaySoldItems(card.id, cleanedName, cardNumber, 20, true);
+        console.log(`[UpdateEbay] Updated eBay records for card ${card.id}`);
+        updated++;
+
+        // Add delay to avoid rate limit (200ms between requests)
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch (error: any) {
+        failed++;
+        errors.push(`Card ${card.id}: ${error.message}`);
+      }
+    }
+
+    return {
+      success: true,
+      updated,
+      failed,
+      total: uniqueCards.size,
       errors: errors.slice(0, 10),
     };
   }),
