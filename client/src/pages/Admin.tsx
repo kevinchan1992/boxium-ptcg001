@@ -18,31 +18,13 @@ export default function Admin() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [isAutoCrawling, setIsAutoCrawling] = useState(false);
-  const [autoCrawlResults, setAutoCrawlResults] = useState<{totalFound: number; newUrls: number; duplicates: number; successCount: number; failedCount: number; duration?: string; failedUrls?: Array<{url: string; error: string}>} | null>(null);
-  const [crawlProgress, setCrawlProgress] = useState<{isRunning: boolean; currentPage: number; totalPages: number; processedUrls: number; totalUrls: number; successCount: number; failedCount: number; startTime: number} | null>(null);
 
   const utils = trpc.useUtils();
   const dataSourcesQuery = trpc.admin.getDataSources.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === "admin",
   });
 
-  const crawlProgressQuery = trpc.admin.getCrawlProgress.useQuery(undefined, {
-    enabled: isAuthenticated && user?.role === "admin" && isAutoCrawling,
-    refetchInterval: isAutoCrawling ? 2000 : false, // Poll every 2 seconds when crawling
-  });
 
-  // Update local progress state when query data changes
-  useEffect(() => {
-    if (crawlProgressQuery.data) {
-      setCrawlProgress(crawlProgressQuery.data);
-      
-      // Stop polling when crawl is complete
-      if (!crawlProgressQuery.data.isRunning && isAutoCrawling) {
-        setIsAutoCrawling(false);
-      }
-    }
-  }, [crawlProgressQuery.data, isAutoCrawling]);
 
   const addDataSourceMutation = trpc.admin.addSnkrdunkSource.useMutation({
     onSuccess: () => {
@@ -199,36 +181,7 @@ export default function Admin() {
     toast.info(`已填入 ${batchResults.failedUrls.length} 個失敗 URL，請點擊「添加數據源」按鈕重試`);
   };
 
-  const autoCrawlMutation = trpc.admin.autoCrawlSnkrdunk.useMutation({
-    onSuccess: (data) => {
-      setAutoCrawlResults(data);
-      toast.success(`自動抓取完成！成功添加 ${data.successCount} 個卡牌`);
-      utils.admin.getDataSources.invalidate();
-    },
-    onError: (error: any) => {
-      toast.error(`自動抓取失敗: ${error.message}`);
-    },
-  });
 
-  const handleAutoCrawl = async (testMode: boolean = false) => {
-    const endPage = testMode ? 10 : 1575;
-    const confirmMessage = testMode
-      ? '確定要開始測試模式抓取嗎？\n\n這將抓取前 10 頁的卡牌數據，約需 5-10 分鐘。'
-      : '確定要開始自動抓取所有 SNKRDUNK 卡牌嗎？\n\n這將抓取約 1575 頁的卡牌數據，可能需要較長時間（約 13-15 小時）。\n\n建議在非高峰時段執行此操作。';
-
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
-    setIsAutoCrawling(true);
-    setAutoCrawlResults(null);
-    
-    try {
-      await autoCrawlMutation.mutateAsync({ startPage: 1, endPage });
-    } finally {
-      setIsAutoCrawling(false);
-    }
-  };
 
   const deleteDataSourceMutation = trpc.admin.deleteDataSource.useMutation({
     onSuccess: () => {
@@ -329,139 +282,7 @@ export default function Admin() {
             <p className="text-muted-foreground">管理卡牌數據源與價格更新</p>
           </div>
 
-          {/* Auto Crawl SNKRDUNK */}
-          <Card className="p-6 bg-card border-border">
-            <h2 className="text-2xl font-semibold text-foreground mb-4">
-              自動抓取 SNKRDUNK
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              自動抓取所有 SNKRDUNK 寶可夢卡牌數據（約 1575 頁）。系統將自動去重，只添加新卡牌。
-            </p>
-            <div className="flex gap-3 flex-wrap">
-              <Button
-                onClick={() => handleAutoCrawl(true)}
-                disabled={isAutoCrawling}
-                variant="outline"
-                className="w-full sm:w-auto"
-              >
-                {isAutoCrawling ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    抓取中...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    測試模式（前 10 頁）
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={() => handleAutoCrawl(false)}
-                disabled={isAutoCrawling}
-                variant="default"
-                className="w-full sm:w-auto"
-              >
-                {isAutoCrawling ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    抓取中...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    完整抓取（1575 頁）
-                  </>
-                )}
-              </Button>
-            </div>
-            {crawlProgress && crawlProgress.isRunning && (
-              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg space-y-3">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-                  <p className="text-lg font-semibold text-blue-700 dark:text-blue-300">
-                    抓取中...
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-blue-700 dark:text-blue-300">已處理 URL</span>
-                    <span className="font-bold text-blue-700 dark:text-blue-300">
-                      {crawlProgress.processedUrls} / {crawlProgress.totalUrls}
-                    </span>
-                  </div>
-                  <div className="w-full bg-blue-200 dark:bg-blue-900 rounded-full h-2.5">
-                    <div
-                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                      style={{
-                        width: `${crawlProgress.totalUrls > 0 ? (crawlProgress.processedUrls / crawlProgress.totalUrls) * 100 : 0}%`,
-                      }}
-                    ></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm mt-3">
-                    <div>
-                      <p className="text-blue-600 dark:text-blue-400">成功</p>
-                      <p className="text-xl font-bold text-green-600">{crawlProgress.successCount}</p>
-                    </div>
-                    <div>
-                      <p className="text-blue-600 dark:text-blue-400">失敗</p>
-                      <p className="text-xl font-bold text-red-600">{crawlProgress.failedCount}</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                    預估剩餘時間：{Math.ceil((crawlProgress.totalUrls - crawlProgress.processedUrls) * 0.5 / 60)} 分鐘
-                  </p>
-                </div>
-              </div>
-            )}
-            {autoCrawlResults && !crawlProgress?.isRunning && (
-              <div className="mt-4 p-4 bg-muted rounded-lg space-y-2">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">總共找到</p>
-                    <p className="text-2xl font-bold text-foreground">{autoCrawlResults.totalFound}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">新增卡牌</p>
-                    <p className="text-2xl font-bold text-green-600">{autoCrawlResults.successCount}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">已過濾重複</p>
-                    <p className="text-2xl font-bold text-yellow-600">{autoCrawlResults.duplicates}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">失敗</p>
-                    <p className="text-2xl font-bold text-red-600">{autoCrawlResults.failedCount}</p>
-                  </div>
-                  {autoCrawlResults.duration && (
-                    <div className="col-span-2 sm:col-span-1">
-                      <p className="text-muted-foreground">耗時</p>
-                      <p className="text-lg font-bold text-foreground">{autoCrawlResults.duration}</p>
-                    </div>
-                  )}
-                </div>
-                {autoCrawlResults.failedUrls && autoCrawlResults.failedUrls.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <p className="text-sm font-semibold text-red-600 mb-2">
-                      失敗 URL 列表（{autoCrawlResults.failedUrls.length} 個）
-                    </p>
-                    <div className="max-h-60 overflow-y-auto space-y-2">
-                      {autoCrawlResults.failedUrls.map((failed, idx) => (
-                        <div key={idx} className="p-2 bg-red-50 dark:bg-red-950 rounded text-xs">
-                          <p className="font-mono text-red-700 dark:text-red-300 break-all">
-                            {failed.url}
-                          </p>
-                          <p className="text-red-600 dark:text-red-400 mt-1">
-                            錯誤：{failed.error}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </Card>
+
 
           {/* Add SNKRDUNK Source */}
           <Card className="p-6 bg-card border-border">

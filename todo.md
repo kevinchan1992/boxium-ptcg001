@@ -485,3 +485,12 @@
 - [x] 點擊重試按鈕自動將失敗 URL 填入輸入框
 - [x] 顯示提示訊息告知用戶已填入 URL
 - [x] 提升用戶體驗，無需手動複製貼上
+
+## 移除自動抓取 SNKRDUNK 功能 - 完成
+
+- [x] 從 Admin.tsx 移除「自動抓取 SNKRDUNK」區塊
+- [x] 移除測試模式和完整抓取按鈕
+- [x] 移除相關狀態管理（isAutoCrawling, autoCrawlResults, crawlProgress）
+- [x] 移除相關 mutation 和 query（autoCrawlMutation, crawlProgressQuery）
+- [x] 移除 handleAutoCrawl 函數
+- [x] 簡化管理後台介面，只保留手動添加功能
