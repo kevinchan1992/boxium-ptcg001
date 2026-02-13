@@ -167,11 +167,11 @@ async function updateDataSource(db: any, source: any) {
     );
 
     // Only update price history (not card data)
-    const priceHistory = await updatePriceHistoryOnly(source.sourceUrl);
+    const priceData = await updatePriceHistoryOnly(source.sourceUrl);
 
     // Insert price history records
-    if (priceHistory && priceHistory.length > 0) {
-      const priceRecords = priceHistory.map((price) => ({
+    if (priceData && priceData.length > 0) {
+      const priceRecords = priceData.map((price) => ({
         cardId: source.cardId,
         source: "snkrdunk",
         price: convertJpyToHkd(price.price).toString(),

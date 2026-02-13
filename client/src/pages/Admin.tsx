@@ -26,23 +26,6 @@ export default function Admin() {
     enabled: isAuthenticated && user?.role === "admin",
   });
 
-  const schedulerStatusQuery = trpc.admin.getSchedulerStatus.useQuery(undefined, {
-    enabled: isAuthenticated && user?.role === "admin",
-    refetchInterval: 30000, // Refresh every 30 seconds
-  });
-
-  const triggerManualUpdateMutation = trpc.admin.triggerManualUpdateAll.useMutation({
-    onSuccess: () => {
-      toast.success("已觸發全量更新，正在背景處理...");
-      schedulerStatusQuery.refetch();
-      setTimeout(() => {
-        utils.admin.getDataSources.invalidate();
-      }, 5000);
-    },
-    onError: (error: any) => {
-      toast.error(`觸發失敗: ${error.message}`);
-    },
-  });
 
 
 
@@ -82,7 +65,7 @@ export default function Admin() {
     onSuccess: (result) => {
       toast.success(result.message);
       utils.admin.getDataSources.invalidate();
-      schedulerStatusQuery.refetch();
+
     },
     onError: (error: any) => {
       toast.error(`刪除失敗: ${error.message}`);
@@ -328,157 +311,6 @@ export default function Admin() {
             <h1 className="text-4xl font-bold text-foreground mb-2">管理員後台</h1>
             <p className="text-muted-foreground">管理卡牙數據源與價格更新</p>
           </div>
-
-
-
-          {/* Scheduler Status Panel */}
-          {schedulerStatusQuery.data && (
-            <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-foreground">排程器狀態</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => triggerManualUpdateMutation.mutate()}
-                  disabled={triggerManualUpdateMutation.isPending || schedulerStatusQuery.data.isRunning}
-                >
-                  {triggerManualUpdateMutation.isPending || schedulerStatusQuery.data.isRunning ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      更新中...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      立即更新所有數據源
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Next Update Time */}
-                <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <h3 className="font-medium text-foreground">下次自動更新</h3>
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {schedulerStatusQuery.data.nextUpdateAt
-                      ? new Date(schedulerStatusQuery.data.nextUpdateAt).toLocaleString('zh-TW', {
-                          month: 'numeric',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                      : '無排程'}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    總計 {schedulerStatusQuery.data.totalActiveSources} 個活躍數據源
-                  </p>
-                </div>
-
-                {/* Last 24 Hours Stats */}
-                <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    <h3 className="font-medium text-foreground">最近 24 小時</h3>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {schedulerStatusQuery.data.last24Hours.successCount}
-                    </span>
-                    <span className="text-sm text-muted-foreground">成功</span>
-                    <span className="text-2xl font-bold text-red-600 dark:text-red-400 ml-3">
-                      {schedulerStatusQuery.data.last24Hours.failedCount}
-                    </span>
-                    <span className="text-sm text-muted-foreground">失敗</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    共 {schedulerStatusQuery.data.last24Hours.totalUpdates} 次更新
-                  </p>
-                </div>
-
-                {/* Current Progress or Failed Queue */}
-                <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4">
-                  {schedulerStatusQuery.data.currentProgress ? (
-                    <>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Loader2 className="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" />
-                        <h3 className="font-medium text-foreground">正在更新</h3>
-                      </div>
-                      <p className="text-2xl font-bold text-foreground">
-                        {schedulerStatusQuery.data.currentProgress.processedUrls} / {schedulerStatusQuery.data.currentProgress.totalUrls}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        成功: {schedulerStatusQuery.data.currentProgress.successCount} | 失敗: {schedulerStatusQuery.data.currentProgress.failedCount}
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 mb-2">
-                        <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                        <h3 className="font-medium text-foreground">失敗佇列</h3>
-                      </div>
-                      <p className="text-2xl font-bold text-foreground">
-                        {schedulerStatusQuery.data.failedSources.length}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {schedulerStatusQuery.data.failedSources.length > 0
-                          ? `最近失敗的數據源`
-                          : `無失敗記錄`}
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Failed Sources Details */}
-              {schedulerStatusQuery.data.failedSources.length > 0 && (
-                <div className="mt-4 bg-white/50 dark:bg-black/20 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-foreground">失敗詳情 (顯示最近 10 筆)</h3>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        if (confirm(`確定要刪除所有 ${schedulerStatusQuery.data?.failedSources.length || 0} 個失敗的數據源嗎？此操作無法復原。`)) {
-                          deleteFailedMutation.mutate();
-                        }
-                      }}
-                      disabled={deleteFailedMutation.isPending}
-                    >
-                      {deleteFailedMutation.isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          刪除中...
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          清理所有失敗記錄
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {schedulerStatusQuery.data.failedSources.map((failed: any) => (
-                      <div key={failed.id} className="text-sm bg-red-50 dark:bg-red-950/30 p-2 rounded">
-                        <p className="font-mono text-xs text-muted-foreground truncate">
-                          {failed.sourceUrl}
-                        </p>
-                        <p className="text-red-600 dark:text-red-400 text-xs mt-1">
-                          {failed.errorMessage || '未知錯誤'}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </Card>
-          )}
-
-
 
           {/* Add SNKRDUNK Source */}
           <Card className="p-6 bg-card border-border">

@@ -781,3 +781,16 @@
 - [x] 修改 scheduler.ts 的 updateDataSource 函數
 - [x] 只調用 SNKRDUNK API 獲取最近の売買履歴
 - [x] 不重新抓取卡牌資料和圖片
+
+## Bug Fix: 立即更新所有數據源出現 cardId undefined 錯誤 - 完成
+
+- [x] 檢查 updateDataSource 函數中的 cardId 使用
+- [x] 發現變量名衝突：priceHistory 同時作為 API 返回數據和表名
+- [x] 修復變量名衝突，將 API 返回數據重命名為 priceData
+- [ ] 測試修復後的更新功能
+
+## UI 優化: 刪除排程器狀態功能和卡片 - 完成
+
+- [x] 從 Admin.tsx 移除排程器狀態卡片
+- [x] 移除 schedulerStatusQuery 和 triggerManualUpdateMutation
+- [x] 清理相關 UI 組件
