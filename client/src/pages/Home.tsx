@@ -58,10 +58,10 @@ export default function Home() {
             <div className="space-y-8">
               <div>
                 <h1 className="text-white text-4xl md:text-5xl font-bold mb-4 leading-tight">
-                  Pokémon TCG 價格查詢平台
+                  歡迎來到 Boxium ~ 遊戲迷專屬世界
                 </h1>
                 <p className="text-white/80 text-lg leading-relaxed">
-                  整合全球市場數據，為投資者和收藏家提供即時、準確的卡牌價格資訊。追蹤 PSA 10 評級卡牌的價格趨勢，做出明智的投資決策。
+                  整合全球市場數據，為PTCG愛好者和收藏家提供即時、準確的卡牌價格資訊。追蹤卡牌的價格趨勢，做出明智的投資決策。
                 </p>
               </div>
 
@@ -231,10 +231,10 @@ export default function Home() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: "#06038d" }}>
-            準備好開始投資了嗎？
+            準備好開始你的PTCG之旅了嗎？
           </h2>
           <p className="text-gray-600 text-lg mb-10 leading-relaxed">
-            使用 BOXIUM 的智能搜尋和價格分析工具，找到最有價值的卡牌投資機會。
+            使用 BOXIUM 的智能搜尋和價格分析工具，找到你的愛好收藏品。
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -271,7 +271,7 @@ export default function Home() {
                 className="h-10 mb-4"
               />
               <p className="text-white/80 leading-relaxed">
-                專注於 Pokémon TCG 價格查詢與交易的綜合平台
+                專注於 Pokémon TCG 價格查詢與市場分析的綜合平台
               </p>
             </div>
 
