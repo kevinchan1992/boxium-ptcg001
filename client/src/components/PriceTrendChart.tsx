@@ -108,10 +108,11 @@ export function PriceTrendChart({
   return (
     <Card className="p-6 bg-card border-border">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">價格趨勢 - {cardName}</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">PSA 10 價格趨勢 - {cardName}</h3>
 
         {/* Time Range Buttons */}
         <div className="flex gap-2 mb-6">
+          <span className="text-sm text-muted-foreground self-center mr-2">PSA 10 時間範圍：</span>
           <Button
             variant={timeRange === "7d" ? "default" : "outline"}
             size="sm"
@@ -166,7 +167,7 @@ export function PriceTrendChart({
               dataKey="snkrdunkPrice"
               stroke="#3B82F6"
               dot={false}
-              name="SNKRDUNK 價格"
+              name="SNKRDUNK PSA 10 價格"
               isAnimationActive={false}
             />
             <Line
@@ -175,7 +176,7 @@ export function PriceTrendChart({
               dataKey="ebayPrice"
               stroke="#F97316"
               dot={false}
-              name="eBay 價格"
+              name="eBay PSA 10 價格"
               isAnimationActive={false}
             />
           </LineChart>
