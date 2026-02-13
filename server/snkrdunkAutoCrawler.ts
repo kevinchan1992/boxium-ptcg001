@@ -8,6 +8,7 @@ const execAsync = promisify(exec);
  */
 export async function scrapeSnkrdunkListPage(page: number): Promise<string[]> {
   const url = `https://snkrdunk.com/apparel-categories/25?isSaleOnly=false&department_name=hobby&itemCondition=new&brand_id=pokemon&page=${page}`;
+  console.log(`[scrapeSnkrdunkListPage] Fetching URL: ${url}`);
   
   try {
     const command = `manus-mcp-cli tool call firecrawl_scrape --server firecrawl --input '{"url": "${url}", "formats": ["html"], "waitFor": 3000}'`;
@@ -68,9 +69,13 @@ export async function scrapeSnkrdunkPages(
   const allUrls: string[] = [];
   const total = endPage - startPage + 1;
   
+  console.log(`[scrapeSnkrdunkPages] Starting to scrape pages ${startPage} to ${endPage} (total: ${total} pages)`);
+  
   for (let page = startPage; page <= endPage; page++) {
     try {
+      console.log(`[scrapeSnkrdunkPages] Scraping page ${page}/${endPage}...`);
       const urls = await scrapeSnkrdunkListPage(page);
+      console.log(`[scrapeSnkrdunkPages] Page ${page} returned ${urls.length} URLs`);
       allUrls.push(...urls);
       
       if (onProgress) {
@@ -80,13 +85,18 @@ export async function scrapeSnkrdunkPages(
       // 延遲 1 秒避免請求過快
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
-      console.error(`Failed to scrape page ${page}:`, error);
+      console.error(`[scrapeSnkrdunkPages] Failed to scrape page ${page}:`, error);
       // 繼續處理下一頁
     }
   }
   
+  console.log(`[scrapeSnkrdunkPages] Completed scraping ${total} pages, total URLs before dedup: ${allUrls.length}`);
+  
   // 去重
-  return Array.from(new Set(allUrls));
+  const uniqueUrls = Array.from(new Set(allUrls));
+  console.log(`[scrapeSnkrdunkPages] After deduplication: ${uniqueUrls.length} unique URLs`);
+  
+  return uniqueUrls;
 }
 
 /**

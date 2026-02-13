@@ -131,18 +131,29 @@ export default function Admin() {
     const errors: string[] = [];
 
     try {
-      // Process URLs sequentially to avoid overwhelming the server
-      for (let i = 0; i < newUrls.length; i++) {
-        const url = newUrls[i];
-        setBatchResults(prev => ({ ...prev, progress: `處理中 ${i + 1}/${newUrls.length}` }));
+      // Process URLs in parallel batches for better performance
+      const BATCH_SIZE = 10; // Process 10 URLs at a time
+      
+      for (let i = 0; i < newUrls.length; i += BATCH_SIZE) {
+        const batch = newUrls.slice(i, i + BATCH_SIZE);
+        const batchEnd = Math.min(i + BATCH_SIZE, newUrls.length);
+        setBatchResults(prev => ({ ...prev, progress: `處理中 ${batchEnd}/${newUrls.length}` }));
         
-        try {
-          await addDataSourceMutation.mutateAsync({ url });
-          successCount++;
-        } catch (error: any) {
-          failedCount++;
-          errors.push(`${url}: ${error.message}`);
-        }
+        // Process batch in parallel
+        const results = await Promise.allSettled(
+          batch.map(url => addDataSourceMutation.mutateAsync({ url }))
+        );
+        
+        // Count successes and failures
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            successCount++;
+          } else {
+            failedCount++;
+            const errorMsg = (result.reason as any)?.message || '未知錯誤';
+            errors.push(`${batch[index]}: ${errorMsg}`);
+          }
+        });
       }
 
       setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount });
