@@ -16,7 +16,7 @@ export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
+  const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isAutoCrawling, setIsAutoCrawling] = useState(false);
   const [autoCrawlResults, setAutoCrawlResults] = useState<{totalFound: number; newUrls: number; duplicates: number; successCount: number; failedCount: number; duration?: string; failedUrls?: Array<{url: string; error: string}>} | null>(null);
@@ -130,6 +130,7 @@ export default function Admin() {
     let successCount = 0;
     let failedCount = 0;
     const errors: string[] = [];
+    const failedUrls: string[] = [];
 
     try {
       // Process URLs in parallel batches for better performance
@@ -151,8 +152,10 @@ export default function Admin() {
             successCount++;
           } else {
             failedCount++;
+            const url = batch[index];
             const errorMsg = (result.reason as any)?.message || '未知錯誤';
-            errors.push(`${batch[index]}: ${errorMsg}`);
+            errors.push(`${url}: ${errorMsg}`);
+            failedUrls.push(url);
           }
         });
       }
@@ -161,7 +164,7 @@ export default function Admin() {
       const durationSeconds = ((endTime - startTime) / 1000).toFixed(1);
       const avgSpeed = (newUrls.length / (endTime - startTime) * 1000).toFixed(1);
       
-      setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount });
+      setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount, failedUrls });
       
       if (successCount > 0) {
         toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}（耗時 ${durationSeconds} 秒，平均 ${avgSpeed} URL/秒）`);
@@ -178,6 +181,22 @@ export default function Admin() {
 
   const handleRefresh = (dataSourceId: number) => {
     refreshDataSourceMutation.mutate({ dataSourceId });
+  };
+
+  const handleRetryFailed = () => {
+    if (!batchResults.failedUrls || batchResults.failedUrls.length === 0) {
+      return;
+    }
+    
+    // Fill the input with failed URLs
+    const failedUrlsText = batchResults.failedUrls.join('\n');
+    setSnkrdunkUrl(failedUrlsText);
+    
+    // Clear the batch results
+    setBatchResults({ success: 0, failed: 0, errors: [], duplicates: 0 });
+    
+    // Show a toast to inform the user
+    toast.info(`已填入 ${batchResults.failedUrls.length} 個失敗 URL，請點擊「添加數據源」按鈕重試`);
   };
 
   const autoCrawlMutation = trpc.admin.autoCrawlSnkrdunk.useMutation({
@@ -482,11 +501,26 @@ export default function Admin() {
                       )}
                     </div>
                     {batchResults.errors.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        <p className="text-xs font-medium text-muted-foreground">失敗詳情:</p>
-                        {batchResults.errors.map((error, idx) => (
-                          <p key={idx} className="text-xs text-red-600 font-mono">{error}</p>
-                        ))}
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-medium text-muted-foreground">失敗詳情:</p>
+                          {batchResults.failedUrls && batchResults.failedUrls.length > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleRetryFailed}
+                              className="text-xs h-7"
+                            >
+                              <RefreshCw className="w-3 h-3 mr-1" />
+                              重試失敗項目 ({batchResults.failedUrls.length})
+                            </Button>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          {batchResults.errors.map((error, idx) => (
+                            <p key={idx} className="text-xs text-red-600 font-mono">{error}</p>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
