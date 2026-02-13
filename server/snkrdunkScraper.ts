@@ -117,12 +117,14 @@ export function parsePriceHistory(markdown: string): Array<{
   const historyText = historySection[0];
 
   // Extract each transaction line
-  // Format: "41分前\n\nA\n\n¥53,500"
-  // or: "4時間前\n\nPSA10\n\n¥78,000"
-  const transactionPattern = /(\d+(?:分|時間|日)前)\n\n([A-Z0-9\s]+)\n\n¥([\d,]+)/g;
+  // Format 1 (relative time): "41分前\n\nA\n\n¥53,500"
+  // Format 2 (absolute date): "2026/02/08\n\nPSA10\n\n¥78,000"
+  
+  // Pattern 1: Relative time (分前, 時間前, 日前)
+  const relativePattern = /(\d+(?:分|時間|日)前)\n+([A-Z0-9\s以下]+)\n+¥([\d,]+)/g;
   let match;
 
-  while ((match = transactionPattern.exec(historyText)) !== null) {
+  while ((match = relativePattern.exec(historyText)) !== null) {
     const timeAgo = match[1];
     const grade = match[2].trim();
     const priceStr = match[3].replace(/,/g, "");
@@ -132,6 +134,28 @@ export function parsePriceHistory(markdown: string): Array<{
 
     // Convert time ago to Date
     const soldAt = parseTimeAgo(timeAgo);
+
+    priceHistory.push({
+      price,
+      currency: "JPY",
+      soldAt,
+      grade: grade || undefined,
+    });
+  }
+
+  // Pattern 2: Absolute date (YYYY/MM/DD)
+  const absolutePattern = /(\d{4}\/\d{2}\/\d{2})\n+([A-Z0-9\s]+)\n+¥([\d,]+)/g;
+  
+  while ((match = absolutePattern.exec(historyText)) !== null) {
+    const dateStr = match[1];
+    const grade = match[2].trim();
+    const priceStr = match[3].replace(/,/g, "");
+    const price = parseInt(priceStr, 10);
+
+    if (isNaN(price)) continue;
+
+    // Parse absolute date
+    const soldAt = parseAbsoluteDate(dateStr);
 
     priceHistory.push({
       price,
@@ -163,6 +187,24 @@ function parseTimeAgo(timeAgo: string): Date {
   }
 
   return now;
+}
+
+/**
+ * Parse absolute date string to Date
+ * Example: "2026/02/08" → Date object for Feb 8, 2026
+ */
+function parseAbsoluteDate(dateStr: string): Date {
+  // dateStr format: YYYY/MM/DD
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) {
+    return new Date();
+  }
+  
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // JavaScript months are 0-indexed
+  const day = parseInt(parts[2], 10);
+  
+  return new Date(year, month, day);
 }
 
 /**

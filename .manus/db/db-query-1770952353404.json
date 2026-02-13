@@ -1,0 +1,26 @@
+{
+  "query": "SELECT * FROM dataSources WHERE sourceUrl LIKE '%123526%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT * FROM dataSources WHERE sourceUrl LIKE '%123526%';",
+  "rows": [
+    {
+      "id": "30302",
+      "cardId": "30201",
+      "source": "snkrdunk",
+      "sourceUrl": "https://snkrdunk.com/apparels/123526?slide=right",
+      "sourceIdentifier": "123526",
+      "isActive": "1",
+      "lastFetchedAt": "2026-02-12 09:06:48",
+      "lastFetchStatus": "success",
+      "fetchErrorMessage": "NULL",
+      "createdAt": "2026-02-12 09:06:46",
+      "updatedAt": "2026-02-12 09:06:48",
+      "lastUpdatedAt": "NULL",
+      "nextUpdateAt": "NULL",
+      "updateCount": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tsource\tsourceUrl\tsourceIdentifier\tisActive\tlastFetchedAt\tlastFetchStatus\tfetchErrorMessage\tcreatedAt\tupdatedAt\tlastUpdatedAt\tnextUpdateAt\tupdateCount\n30302\t30201\tsnkrdunk\thttps://snkrdunk.com/apparels/123526?slide=right\t123526\t1\t2026-02-12 09:06:48\tsuccess\tNULL\t2026-02-12 09:06:46\t2026-02-12 09:06:48\tNULL\tNULL\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1674
+}

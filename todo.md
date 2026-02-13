@@ -494,3 +494,13 @@
 - [x] 移除相關 mutation 和 query（autoCrawlMutation, crawlProgressQuery）
 - [x] 移除 handleAutoCrawl 函數
 - [x] 簡化管理後台介面，只保留手動添加功能
+
+## Bug: SNKRDUNK 交易記錄顯示不完整 - 已修復
+
+- [x] 調查為何卡牙頁面只顯示 4 筆交易記錄
+- [x] 檢查 SNKRDUNK 數據抓取邏輯（scrapeSnkrdunkPage）
+- [x] 發現問題：正則表達式只支援相對時間格式，不支援絕對日期格式
+- [x] 修改 parsePriceHistory 函數支援兩種日期格式
+- [x] 添加 parseAbsoluteDate 函數解析 YYYY/MM/DD 格式
+- [x] 調整正則表達式支援單個或多個換行符
+- [x] 測試驗證：從 4 筆提升至 20 筆（100% 完整抓取）
