@@ -93,7 +93,7 @@ export default function Admin() {
   });
 
   const handleCleanDuplicates = () => {
-    if (confirm('確定要清理重複的數據源嗎？系統將保留最早添加的版本，刪除其他重複項。')) {
+    if (confirm('確定要清理重複的數據源嗎？系統將保留最後添加的版本（最新），刪除其他重複項。')) {
       cleanDuplicatesMutation.mutate();
     }
   };
@@ -706,7 +706,7 @@ export default function Admin() {
                   size="sm"
                   onClick={handleCleanDuplicates}
                   disabled={cleanDuplicatesMutation.isPending}
-                  title="清理重複的數據源（保留最早添加的）"
+                  title="清理重複的數據源（保留最後添加的）"
                 >
                   {cleanDuplicatesMutation.isPending ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

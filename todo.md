@@ -754,3 +754,9 @@
 - [ ] 分析「最近の売買履歴」表格的 CSS 選擇器
 - [ ] 修復 snkrdunkScraper.ts 中的 Cheerio 解析邏輯
 - [ ] 測試修復後的價格數據提取功能
+
+## 功能優化: 清理重複功能改為保留最新版本 - 完成
+
+- [x] 修改 cleanDuplicateDataSources 邏輯（保留最後添加的，刪除舊的）
+- [x] 更新 Admin 頁面提示文字
+- [x] 修改排序邏輯（createdAt 降序，最新的在前）

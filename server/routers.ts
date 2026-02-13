@@ -388,14 +388,14 @@ export const appRouter = router({
             urlGroups.get(normalizedUrl)!.push(source);
           }
           
-          // Delete duplicates (keep the oldest one)
+          // Delete duplicates (keep the newest one)
           let deletedCount = 0;
           for (const [normalizedUrl, sources] of Array.from(urlGroups.entries())) {
             if (sources.length > 1) {
-              // Sort by createdAt (oldest first)
-              sources.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+              // Sort by createdAt (newest first)
+              sources.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
               
-              // Delete all except the first one
+              // Delete all except the first one (which is the newest)
               for (let i = 1; i < sources.length; i++) {
                 await db.deleteDataSource(sources[i].id);
                 deletedCount++;
