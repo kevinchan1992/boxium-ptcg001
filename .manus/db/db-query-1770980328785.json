@@ -1,0 +1,43 @@
+{
+  "query": "SELECT DISTINCT grade FROM priceHistory;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT DISTINCT grade FROM priceHistory;",
+  "rows": [
+    {
+      "grade": "NULL"
+    },
+    {
+      "grade": "PSA10"
+    },
+    {
+      "grade": "ARS10"
+    },
+    {
+      "grade": "PSA9"
+    },
+    {
+      "grade": "BGS10 GL"
+    },
+    {
+      "grade": "ARS9"
+    },
+    {
+      "grade": "PSA8以下"
+    },
+    {
+      "grade": "C"
+    },
+    {
+      "grade": "A"
+    },
+    {
+      "grade": "D"
+    },
+    {
+      "grade": "B"
+    }
+  ],
+  "messages": [],
+  "stdout": "grade\nNULL\nPSA10\nARS10\nPSA9\nBGS10 GL\nARS9\nPSA8以下\nC\nA\nD\nB\n",
+  "stderr": "",
+  "execution_time_ms": 1539
+}

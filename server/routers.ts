@@ -82,7 +82,7 @@ export const appRouter = router({
           
           const recentHistory = allHistory.filter(record => 
             new Date(record.soldAt || record.createdAt) >= cutoffDate &&
-            record.grade === "PSA 10"
+            (record.grade === "PSA 10" || record.grade === "PSA10")
           );
 
           // Group by date and source
@@ -90,7 +90,7 @@ export const appRouter = router({
           
           for (const record of recentHistory) {
             // Only include PSA 10 records
-            if (record.grade !== "PSA 10") continue;
+            if (record.grade !== "PSA 10" && record.grade !== "PSA10") continue;
             
             const date = new Date(record.soldAt || record.createdAt);
             const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD

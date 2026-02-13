@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, cardId, source, grade, price, soldAt, createdAt FROM priceHistory LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, cardId, source, grade, price, soldAt, createdAt FROM priceHistory LIMIT 10;",
+  "rows": [
+    {
+      "id": "61",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "grade": "A",
+      "price": "2942.50",
+      "soldAt": "2026-02-12 04:01:45",
+      "createdAt": "2026-02-12 04:42:45"
+    },
+    {
+      "id": "62",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "price": "4290.00",
+      "soldAt": "2026-02-12 00:42:45",
+      "createdAt": "2026-02-12 04:42:45"
+    },
+    {
+      "id": "63",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "price": "4235.00",
+      "soldAt": "2026-02-11 21:42:45",
+      "createdAt": "2026-02-12 04:42:45"
+    },
+    {
+      "id": "64",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "grade": "A",
+      "price": "2860.00",
+      "soldAt": "2026-02-11 16:42:45",
+      "createdAt": "2026-02-12 04:42:45"
+    },
+    {
+      "id": "65",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "grade": "A",
+      "price": "2860.00",
+      "soldAt": "2026-02-11 15:42:45",
+      "createdAt": "2026-02-12 04:42:45"
+    },
+    {
+      "id": "66",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "price": "4345.00",
+      "soldAt": "2026-02-11 13:42:45",
+      "createdAt": "2026-02-12 04:42:45"
+    },
+    {
+      "id": "67",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "price": "4290.00",
+      "soldAt": "2026-02-11 13:42:45",
+      "createdAt": "2026-02-12 04:42:45"
+    },
+    {
+      "id": "68",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "grade": "B",
+      "price": "2200.00",
+      "soldAt": "2026-02-11 13:42:45",
+      "createdAt": "2026-02-12 04:42:45"
+    },
+    {
+      "id": "69",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "price": "4399.95",
+      "soldAt": "2026-02-11 11:42:45",
+      "createdAt": "2026-02-12 04:42:45"
+    },
+    {
+      "id": "70",
+      "cardId": "1",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "price": "4398.90",
+      "soldAt": "2026-02-11 11:42:45",
+      "createdAt": "2026-02-12 04:42:45"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tsource\tgrade\tprice\tsoldAt\tcreatedAt\n61\t1\tsnkrdunk\tA\t2942.50\t2026-02-12 04:01:45\t2026-02-12 04:42:45\n62\t1\tsnkrdunk\tPSA10\t4290.00\t2026-02-12 00:42:45\t2026-02-12 04:42:45\n63\t1\tsnkrdunk\tPSA10\t4235.00\t2026-02-11 21:42:45\t2026-02-12 04:42:45\n64\t1\tsnkrdunk\tA\t2860.00\t2026-02-11 16:42:45\t2026-02-12 04:42:45\n65\t1\tsnkrdunk\tA\t2860.00\t2026-02-11 15:42:45\t2026-02-12 04:42:45\n66\t1\tsnkrdunk\tPSA10\t4345.00\t2026-02-11 13:42:45\t2026-02-12 04:42:45\n67\t1\tsnkrdunk\tPSA10\t4290.00\t2026-02-11 13:42:45\t2026-02-12 04:42:45\n68\t1\tsnkrdunk\tB\t2200.00\t2026-02-11 13:42:45\t2026-02-12 04:42:45\n69\t1\tsnkrdunk\tPSA10\t4399.95\t2026-02-11 11:42:45\t2026-02-12 04:42:45\n70\t1\tsnkrdunk\tPSA10\t4398.90\t2026-02-11 11:42:45\t2026-02-12 04:42:45\n",
+  "stderr": "",
+  "execution_time_ms": 1668
+}
