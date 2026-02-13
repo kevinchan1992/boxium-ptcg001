@@ -343,6 +343,24 @@ export async function updateDataSourceFetchStatus(
   return result;
 }
 
+export async function updateDataSourceCardId(
+  dataSourceId: number,
+  cardId: number
+) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .update(dataSources)
+    .set({
+      cardId,
+      updatedAt: new Date(),
+    })
+    .where(eq(dataSources.id, dataSourceId));
+
+  return result;
+}
+
 export async function getDataSourceById(dataSourceId: number) {
   const db = await getDb();
   if (!db) return null;

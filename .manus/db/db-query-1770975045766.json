@@ -1,0 +1,19 @@
+{
+  "query": "SELECT ds.id, ds.sourceUrl, ds.lastFetchStatus, ds.cardId, c.id as card_id, c.name, c.imageUrl \nFROM dataSources ds \nLEFT JOIN cards c ON ds.cardId = c.id \nWHERE ds.sourceUrl LIKE '%123526%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT ds.id, ds.sourceUrl, ds.lastFetchStatus, ds.cardId, c.id as card_id, c.name, c.imageUrl \nFROM dataSources ds \nLEFT JOIN cards c ON ds.cardId = c.id \nWHERE ds.sourceUrl LIKE '%123526%';",
+  "rows": [
+    {
+      "id": "30302",
+      "sourceUrl": "https://snkrdunk.com/apparels/123526?slide=right",
+      "lastFetchStatus": "success",
+      "cardId": "30201",
+      "card_id": "30201",
+      "name": "拡張パック「コレクション ムーン」",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsourceUrl\tlastFetchStatus\tcardId\tcard_id\tname\timageUrl\n30302\thttps://snkrdunk.com/apparels/123526?slide=right\tsuccess\t30201\t30201\t拡張パック「コレクション ムーン」\thttps://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp\n",
+  "stderr": "",
+  "execution_time_ms": 9231
+}

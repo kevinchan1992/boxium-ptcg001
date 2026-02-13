@@ -501,7 +501,7 @@ export default function Admin() {
                     if (!searchQuery) return true;
                     const query = searchQuery.toLowerCase();
                     return (
-                      source.cardName?.toLowerCase().includes(query) ||
+                      source.card?.name?.toLowerCase().includes(query) ||
                       source.sourceUrl?.toLowerCase().includes(query)
                     );
                   });
@@ -527,7 +527,7 @@ export default function Admin() {
                         className="mt-1"
                       />
                       <div className="flex-1 space-y-2 min-w-0">
-                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">
                           {source.source.toUpperCase()}
                         </span>
@@ -566,12 +566,12 @@ export default function Admin() {
                             狀態: {source.lastFetchStatus}
                           </span>
                         )}
-                      </div>
-                      {source.fetchErrorMessage && (
+                        </div>
+                        {source.fetchErrorMessage && (
                         <p className="text-xs text-red-500">
                           錯誤: {source.fetchErrorMessage}
                         </p>
-                      )}
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">

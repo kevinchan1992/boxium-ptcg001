@@ -136,6 +136,23 @@ export const appRouter = router({
           throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid SNKRDUNK URL" });
         }
 
+        // Normalize URL for duplicate check
+        const normalizedUrl = input.url.split('?')[0].split('#')[0];
+        
+        // Check if data source already exists
+        const allDataSources = await db.getDataSources();
+        const existingDataSource = allDataSources.find(ds => {
+          const existingNormalized = ds.sourceUrl.split('?')[0].split('#')[0];
+          return existingNormalized === normalizedUrl;
+        });
+
+        if (existingDataSource) {
+          throw new TRPCError({ 
+            code: "BAD_REQUEST", 
+            message: `Data source already exists: ${normalizedUrl}` 
+          });
+        }
+
         try {
           // Scrape SNKRDUNK page
           const cardData = await scrapeSnkrdunkPage(input.url);
@@ -162,7 +179,7 @@ export const appRouter = router({
             });
           }
 
-          // Add data source
+          // Add data source (now guaranteed to be new)
           await db.addDataSource({
             cardId,
             source: "snkrdunk",
@@ -441,6 +458,31 @@ export const appRouter = router({
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: `Failed to delete failed data sources: ${error.message}`,
+          });
+        }
+      }),
+
+    fixOrphanDataSources: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        
+        try {
+          const { fixOrphanDataSources } = await import("./fixOrphanDataSources");
+          const result = await fixOrphanDataSources();
+          
+          return { 
+            success: true, 
+            fixed: result.fixed,
+            failed: result.failed,
+            failedUrls: result.failedUrls,
+            message: `Fixed ${result.fixed} orphan data sources, ${result.failed} failed`
+          };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to fix orphan data sources: ${error.message}`,
           });
         }
       }),
