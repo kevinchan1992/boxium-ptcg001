@@ -21,7 +21,7 @@ export default function CardDetail() {
     { enabled: !!cardId, retry: 1 }
   );
 
-  // Fetch price history
+  // Fetch price history from SNKRDUNK
   const normalizeGrade = (grade: string | null) => {
     if (!grade) return undefined;
     // Handle special case for "中古" which should match A, B, C, D grades
@@ -32,11 +32,17 @@ export default function CardDetail() {
   const { data: priceHistory = [], isLoading: priceLoading } = trpc.prices.getHistory.useQuery(
     {
       cardId: cardId!,
-      source: activeSource === "snkrdunk" ? "snkrdunk" : "ebay",
+      source: "snkrdunk",
       grade: normalizeGrade(activeGrade),
       limit: 50,
     },
-    { enabled: !!cardId, retry: 1 }
+    { enabled: !!cardId && activeSource === "snkrdunk", retry: 1 }
+  );
+
+  // Fetch eBay sold items (PSA10 only)
+  const { data: ebaySoldItems = [], isLoading: ebayLoading } = trpc.cards.getEbaySoldItems.useQuery(
+    { cardId: cardId!, limit: 20 },
+    { enabled: !!cardId && activeSource === "ebay", retry: 1 }
   );
 
   if (!cardId) {
@@ -75,10 +81,17 @@ export default function CardDetail() {
     );
   }
 
-  // Calculate average price
-  const avgPrice = priceHistory.length > 0
-    ? (priceHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / priceHistory.length).toFixed(2)
-    : "N/A";
+  // Calculate average price based on active source
+  const avgPrice = activeSource === "snkrdunk"
+    ? priceHistory.length > 0
+      ? (priceHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / priceHistory.length).toFixed(2)
+      : "N/A"
+    : ebaySoldItems.length > 0
+      ? (ebaySoldItems.reduce((sum, item) => sum + item.price, 0) / ebaySoldItems.length).toFixed(2)
+      : "N/A";
+
+  // Get record count based on active source
+  const recordCount = activeSource === "snkrdunk" ? priceHistory.length : ebaySoldItems.length;
 
   // Group prices by grade
   const pricesByGrade: Record<string, typeof priceHistory> = {};
@@ -160,10 +173,10 @@ export default function CardDetail() {
             {/* Reference Price */}
             <div className="bg-card rounded-lg p-6 border border-border">
               <h2 className="text-2xl font-bold text-foreground">
-                參考價格: HKD ${avgPrice}
+                參考價格: {activeSource === "snkrdunk" ? "HKD" : "USD"} ${avgPrice}
               </h2>
               <p className="text-sm text-muted-foreground mt-2">
-                基於 {priceHistory.length} 筆交易記錄
+                基於 {recordCount} 筆交易記錄 {activeSource === "ebay" && "(PSA 10)"}
               </p>
             </div>
 
@@ -174,11 +187,11 @@ export default function CardDetail() {
                   {activeSource === "snkrdunk" ? "SNKRDUNK" : "eBay"} 上的最近交易
                 </h3>
               </div>
-              {priceLoading ? (
+              {(activeSource === "snkrdunk" ? priceLoading : ebayLoading) ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
-              ) : priceHistory.length > 0 ? (
+              ) : activeSource === "snkrdunk" && priceHistory.length > 0 ? (
                 <div className="overflow-y-auto max-h-96 scrollbar-hide">
                   <table className="w-full">
                     <thead className="sticky top-0 bg-card border-b border-border">
@@ -230,9 +243,56 @@ export default function CardDetail() {
                     </tbody>
                   </table>
                 </div>
+              ) : activeSource === "ebay" && ebaySoldItems.length > 0 ? (
+                <div className="overflow-y-auto max-h-96 scrollbar-hide">
+                  <table className="w-full">
+                    <thead className="sticky top-0 bg-card border-b border-border">
+                      <tr>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
+                          標題
+                        </th>
+                        <th className="text-center py-3 px-4 text-muted-foreground font-medium text-sm w-32">
+                          日期
+                        </th>
+                        <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm w-24">
+                          價格
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {ebaySoldItems.map((item, index) => (
+                        <tr key={index} className="hover:bg-muted/50 transition-colors">
+                          <td className="py-3 px-4 text-foreground text-sm">
+                            <a
+                              href={item.itemUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-primary hover:underline flex items-center gap-2"
+                            >
+                              {item.title}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </td>
+                          <td className="py-3 px-4 text-center text-muted-foreground text-sm w-32">
+                            {new Date(item.soldDate).toLocaleDateString("zh-HK", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                            })}
+                          </td>
+                          <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
+                            {item.currency} ${item.price.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <p className="text-muted-foreground py-8 text-center">
-                  暫無符合該等級的數據
+                  {activeSource === "ebay" 
+                    ? "暫無 eBay 交易記錄（可能超出 API 調用限制，請稍後再試）" 
+                    : "暫無符合該等級的數據"}
                 </p>
               )}
             </div>

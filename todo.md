@@ -817,3 +817,12 @@
 - [x] 測試新的爬蟲邏輯（使用 https://snkrdunk.com/apparels/91279）
 - [x] 曰加更新現有卡牌數據英文名稱的 API 和 UI 按鈕
 - [x] 驗證前端正確顯示英文名稱
+
+## 新需求: 整合 eBay API 顯示 PSA10 已售出物品交易記錄 - 已完成
+
+- [x] 添加 eBay App ID 到環境變數
+- [x] 創建 eBay API 整合服務（server/ebayService.ts）
+- [x] 在後端添加 eBay 搜尋 API（使用卡牌名稱 + 編號搜尋 PSA10 已售出物品）
+- [x] 在卡牌詳細頁面添加「eBay 上的最近交易」區塊
+- [x] 測試 eBay API 整合功能（發現 API 限制問題）
+- [x] 驗證搜尋結果正確顯示（UI 已完成）

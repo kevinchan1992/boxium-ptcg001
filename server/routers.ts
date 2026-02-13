@@ -6,6 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
+import { searchEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
 
 export const appRouter = router({
@@ -58,6 +59,39 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const cards = await db.getPopularCards(input.limit);
         return cards;
+      }),
+
+    getEbaySoldItems: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+        limit: z.number().optional().default(20),
+      }))
+      .query(async ({ input }) => {
+        try {
+          // Get card details
+          const card = await db.getCardById(input.cardId);
+          if (!card) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
+          }
+
+          // Extract card number from card name
+          const cardNumber = extractCardNumber(card.name);
+          if (!cardNumber) {
+            console.warn(`[eBay] Cannot extract card number from: ${card.name}`);
+            return [];
+          }
+
+          // Clean card name for search
+          const cleanedName = cleanCardNameForSearch(card.name);
+
+          // Search eBay for sold PSA10 items
+          const soldItems = await searchEbaySoldItems(cleanedName, cardNumber, input.limit);
+          return soldItems;
+        } catch (error: any) {
+          console.error("[eBay] Error fetching sold items:", error.message);
+          // Return empty array instead of throwing error to avoid breaking the UI
+          return [];
+        }
       }),
   }),
 
