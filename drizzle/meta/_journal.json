@@ -36,6 +36,13 @@
       "when": 1770866463236,
       "tag": "0004_fancy_maximus",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1770967461489,
+      "tag": "0005_last_blink",
+      "breakpoints": true
     }
   ]
 }

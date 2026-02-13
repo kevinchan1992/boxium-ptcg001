@@ -33,6 +33,8 @@ export function extractSnkrdunkId(url: string): string | null {
  * Scrape SNKRDUNK page using Firecrawl MCP
  */
 export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData> {
+  const { recordFirecrawlUsage } = await import("./db");
+  
   try {
     // Call Firecrawl MCP via manus-mcp-cli
     const command = `manus-mcp-cli tool call firecrawl_scrape --server firecrawl --input '${JSON.stringify({
@@ -79,14 +81,33 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
     // Parse price history from markdown
     const priceHistory = parsePriceHistory(markdown);
 
+    // Record successful Firecrawl usage
+    await recordFirecrawlUsage({
+      operation: "scrape",
+      url,
+      status: "success",
+      creditsUsed: 1,
+    });
+
     return {
       name: nameEn || nameJa,
       nameJa,
       imageUrl,
       priceHistory,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error scraping SNKRDUNK page:", error);
+    
+    // Record failed Firecrawl usage
+    const status = error.message?.includes("Insufficient credits") ? "quota_exceeded" : "failed";
+    await recordFirecrawlUsage({
+      operation: "scrape",
+      url,
+      status,
+      errorMessage: error.message || String(error),
+      creditsUsed: status === "quota_exceeded" ? 0 : 1,
+    });
+    
     throw error;
   }
 }

@@ -1,6 +1,6 @@
 import { eq, desc, and, gte, lte, or, like, sql, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource } from "../drizzle/schema";
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertFirecrawlUsage, InsertSystemSetting } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -457,4 +457,144 @@ export async function createPlaceholderCard(snkrdunkId: string) {
     .limit(1);
 
   return newCard[0].id;
+}
+
+
+// ============================================
+// Firecrawl Usage Tracking Functions
+// ============================================
+
+/**
+ * Record Firecrawl API usage
+ */
+export async function recordFirecrawlUsage(data: {
+  operation: string;
+  url?: string;
+  status: "success" | "failed" | "quota_exceeded";
+  errorMessage?: string;
+  creditsUsed?: number;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.insert(firecrawlUsage).values({
+    operation: data.operation,
+    url: data.url,
+    status: data.status,
+    errorMessage: data.errorMessage,
+    creditsUsed: data.creditsUsed || 1,
+  });
+
+  return result;
+}
+
+/**
+ * Get Firecrawl usage statistics for a time period
+ */
+export async function getFirecrawlUsageStats(startDate?: Date, endDate?: Date) {
+  const db = await getDb();
+  if (!db) return null;
+
+  let query = db.select().from(firecrawlUsage);
+
+  if (startDate && endDate) {
+    query = query.where(
+      and(
+        gte(firecrawlUsage.createdAt, startDate),
+        lte(firecrawlUsage.createdAt, endDate)
+      )
+    ) as any;
+  } else if (startDate) {
+    query = query.where(gte(firecrawlUsage.createdAt, startDate)) as any;
+  }
+
+  const records = await query;
+
+  // Calculate statistics
+  const totalCalls = records.length;
+  const successCalls = records.filter(r => r.status === "success").length;
+  const failedCalls = records.filter(r => r.status === "failed").length;
+  const quotaExceededCalls = records.filter(r => r.status === "quota_exceeded").length;
+  const totalCreditsUsed = records.reduce((sum, r) => sum + (r.creditsUsed || 0), 0);
+
+  return {
+    totalCalls,
+    successCalls,
+    failedCalls,
+    quotaExceededCalls,
+    totalCreditsUsed,
+    records,
+  };
+}
+
+/**
+ * Get system setting by key
+ */
+export async function getSystemSetting(key: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(systemSettings)
+    .where(eq(systemSettings.settingKey, key))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Set system setting
+ */
+export async function setSystemSetting(key: string, value: string, description?: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Check if setting exists
+  const existing = await getSystemSetting(key);
+
+  if (existing) {
+    // Update existing setting
+    await db
+      .update(systemSettings)
+      .set({ settingValue: value, description: description || existing.description })
+      .where(eq(systemSettings.settingKey, key));
+  } else {
+    // Insert new setting
+    await db.insert(systemSettings).values({
+      settingKey: key,
+      settingValue: value,
+      description,
+    });
+  }
+
+  return await getSystemSetting(key);
+}
+
+/**
+ * Delete failed data sources in batch
+ */
+export async function deleteFailedDataSources() {
+  const db = await getDb();
+  if (!db) return { success: false, deletedCount: 0 };
+
+  try {
+    // Get count of failed data sources
+    const failedSources = await db
+      .select()
+      .from(dataSources)
+      .where(eq(dataSources.lastFetchStatus, "failed"));
+
+    const deletedCount = failedSources.length;
+
+    // Delete failed data sources
+    await db
+      .delete(dataSources)
+      .where(eq(dataSources.lastFetchStatus, "failed"));
+
+    return { success: true, deletedCount };
+  } catch (error) {
+    console.error("[Database] Failed to delete failed data sources:", error);
+    return { success: false, deletedCount: 0, error };
+  }
 }

@@ -415,6 +415,79 @@ export const appRouter = router({
           });
         }
       }),
+
+    deleteFailedDataSources: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        
+        try {
+          const result = await db.deleteFailedDataSources();
+          
+          if (!result.success) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to delete failed data sources",
+            });
+          }
+          
+          return { 
+            success: true, 
+            deletedCount: result.deletedCount,
+            message: `Successfully deleted ${result.deletedCount} failed data sources`
+          };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to delete failed data sources: ${error.message}`,
+          });
+        }
+      }),
+
+    getFirecrawlUsageStats: protectedProcedure
+      .input(z.object({
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        
+        const stats = await db.getFirecrawlUsageStats(
+          input?.startDate,
+          input?.endDate
+        );
+        
+        // Get quota limit from system settings
+        const quotaLimitSetting = await db.getSystemSetting("firecrawl_quota_limit");
+        const quotaLimit = quotaLimitSetting ? parseInt(quotaLimitSetting.settingValue) : null;
+        
+        return {
+          ...stats,
+          quotaLimit,
+          quotaUsagePercent: quotaLimit ? (stats!.totalCreditsUsed / quotaLimit) * 100 : null,
+        };
+      }),
+
+    setFirecrawlQuotaLimit: protectedProcedure
+      .input(z.object({
+        limit: z.number().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        
+        await db.setSystemSetting(
+          "firecrawl_quota_limit",
+          input.limit.toString(),
+          "Firecrawl monthly quota limit"
+        );
+        
+        return { success: true };
+      }),
   }),
 
   watchlist: router({

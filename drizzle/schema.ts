@@ -139,3 +139,33 @@ export const scheduledTasks = mysqlTable("scheduledTasks", {
 
 export type ScheduledTask = typeof scheduledTasks.$inferSelect;
 export type InsertScheduledTask = typeof scheduledTasks.$inferInsert;
+
+/**
+ * Firecrawl usage tracking table - tracks API usage for quota monitoring
+ */
+export const firecrawlUsage = mysqlTable("firecrawlUsage", {
+  id: int("id").autoincrement().primaryKey(),
+  operation: varchar("operation", { length: 32 }).notNull(), // scrape, crawl, search, etc.
+  url: text("url"), // Target URL
+  status: mysqlEnum("status", ["success", "failed", "quota_exceeded"]).notNull(),
+  errorMessage: text("errorMessage"), // Error message if failed
+  creditsUsed: int("creditsUsed").default(1).notNull(), // Credits consumed (default 1 per scrape)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FirecrawlUsage = typeof firecrawlUsage.$inferSelect;
+export type InsertFirecrawlUsage = typeof firecrawlUsage.$inferInsert;
+
+/**
+ * System settings table - stores configuration like quota limits
+ */
+export const systemSettings = mysqlTable("systemSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  settingKey: varchar("settingKey", { length: 64 }).notNull().unique(),
+  settingValue: text("settingValue").notNull(),
+  description: text("description"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SystemSetting = typeof systemSettings.$inferSelect;
+export type InsertSystemSetting = typeof systemSettings.$inferInsert;
