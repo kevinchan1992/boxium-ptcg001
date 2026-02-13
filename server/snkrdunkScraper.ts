@@ -45,6 +45,20 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
 
     const { stdout, stderr } = await execAsync(command, { maxBuffer: 10 * 1024 * 1024 });
 
+    // Check for error messages in stdout (Firecrawl errors appear here)
+    if (stdout.includes("Error: Tool") && stdout.includes("execution failed")) {
+      // Extract error message
+      const errorMatch = stdout.match(/Error: Tool '[^']+' execution failed: (.+)/);
+      const errorMsg = errorMatch ? errorMatch[1] : stdout;
+      
+      // Check if it's a quota error
+      if (errorMsg.includes("Insufficient credits")) {
+        throw new Error("Insufficient credits to perform this request. Please upgrade your Firecrawl plan or contact Manus support.");
+      }
+      
+      throw new Error(errorMsg);
+    }
+
     if (stderr && !stderr.includes("Tool execution result saved")) {
       throw new Error(`Firecrawl error: ${stderr}`);
     }
@@ -59,7 +73,9 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
       // Try format 2: With "Tool execution result:" prefix (old format)
       const resultMatch = stdout.match(/Tool execution result:\n({[\s\S]+})/);
       if (!resultMatch) {
-        throw new Error("Failed to parse Firecrawl output");
+        // Log the actual output for debugging
+        console.error("[Scraper] Failed to parse Firecrawl output. First 500 chars:", stdout.substring(0, 500));
+        throw new Error("Failed to parse Firecrawl output. The response format is not recognized.");
       }
       result = JSON.parse(resultMatch[1]);
     }
