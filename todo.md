@@ -498,6 +498,17 @@
 ## Bug: SNKRDUNK 交易記錄顯示不完整 - 已修復
 
 - [x] 調查為何卡牙頁面只顯示 4 筆交易記錄
+
+## Bug Fix: Cheerio 未能正確提取「最近の売買履歴」價格數據 - 完成
+
+- [x] 檢查 SNKRDUNK 網頁的 HTML 結構
+- [x] 發現 SNKRDUNK 使用 API 提供價格數據
+- [x] 修復 snkrdunkScraper.ts 添加 API 調用
+- [x] 測試修復後的價格數據提取功能
+- [x] 驗證價格數據正確顯示在卡牌詳情頁
+
+### 解決方案
+使用 SNKRDUNK API (`/v1/apparels/{id}/sales-history`) 直接獲取價格數據，替代 Cheerio 靜態 HTML 解析
 - [x] 檢查 SNKRDUNK 數據抓取邏輯（scrapeSnkrdunkPage）
 - [x] 發現問題：正則表達式只支援相對時間格式，不支援絕對日期格式
 - [x] 修改 parsePriceHistory 函數支援兩種日期格式
@@ -736,3 +747,10 @@
 - 速度更快
 - 資源消耗更低
 - 維護成本低
+
+## Bug Fix: Cheerio 未能正確提取「最近の売買履歴」價格數據
+
+- [ ] 檢查 SNKRDUNK 網頁的 HTML 結構
+- [ ] 分析「最近の売買履歴」表格的 CSS 選擇器
+- [ ] 修復 snkrdunkScraper.ts 中的 Cheerio 解析邏輯
+- [ ] 測試修復後的價格數據提取功能

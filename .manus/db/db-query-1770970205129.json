@@ -1,0 +1,9 @@
+{
+  "query": "SELECT c.*, (SELECT COUNT(*) FROM priceHistory WHERE cardId = c.id) as price_count FROM cards c WHERE c.id = 150009;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.*, (SELECT COUNT(*) FROM priceHistory WHERE cardId = c.id) as price_count FROM cards c WHERE c.id = 150009;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1784
+}

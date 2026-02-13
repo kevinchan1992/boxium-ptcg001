@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, name, nameJa, cardNumber, (SELECT COUNT(*) FROM priceHistory WHERE cardId = cards.id) as price_count FROM cards ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, nameJa, cardNumber, (SELECT COUNT(*) FROM priceHistory WHERE cardId = cards.id) as price_count FROM cards ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "150008",
+      "name": "通販",
+      "nameJa": "Kith x Needles Double Knit Track Jacket \"Black\"の新品/中古フリマ(通販)｜スニダン",
+      "cardNumber": "NULL",
+      "price_count": "5"
+    },
+    {
+      "id": "150007",
+      "name": "プロモーションカード「XY-P」",
+      "nameJa": "基本超エネルギー 20thアニバーサリー: プロモ[XY-P](プロモーションカード「XY-P」)の新品/中古フリマ(通販)｜スニダン",
+      "cardNumber": "NULL",
+      "price_count": "0"
+    },
+    {
+      "id": "150006",
+      "name": "拡張パック「金の空、銀の海」",
+      "nameJa": "スイクン☆ ◇: 再販[PCG4 032/106](拡張パック「金の空、銀の海」)の新品/中古フリマ(通販)｜スニダン",
+      "cardNumber": "NULL",
+      "price_count": "0"
+    },
+    {
+      "id": "150004",
+      "name": "プロモーションカード「XY-P」",
+      "nameJa": "基本炎エネルギー 20thアニバーサリー: プロモ[XY-P](プロモーションカード「XY-P」)の新品/中古フリマ(通販)｜スニダン",
+      "cardNumber": "NULL",
+      "price_count": "0"
+    },
+    {
+      "id": "150005",
+      "name": "プロモーションカード「XY-P」",
+      "nameJa": "基本雷エネルギー 20thアニバーサリー: プロモ[XY-P](プロモーションカード「XY-P」)の新品/中古フリマ(通販)｜スニダン",
+      "cardNumber": "NULL",
+      "price_count": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tnameJa\tcardNumber\tprice_count\n150008\t通販\tKith x Needles Double Knit Track Jacket \"Black\"の新品/中古フリマ(通販)｜スニダン\tNULL\t5\n150007\tプロモーションカード「XY-P」\t基本超エネルギー 20thアニバーサリー: プロモ[XY-P](プロモーションカード「XY-P」)の新品/中古フリマ(通販)｜スニダン\tNULL\t0\n150006\t拡張パック「金の空、銀の海」\tスイクン☆ ◇: 再販[PCG4 032/106](拡張パック「金の空、銀の海」)の新品/中古フリマ(通販)｜スニダン\tNULL\t0\n150004\tプロモーションカード「XY-P」\t基本炎エネルギー 20thアニバーサリー: プロモ[XY-P](プロモーションカード「XY-P」)の新品/中古フリマ(通販)｜スニダン\tNULL\t0\n150005\tプロモーションカード「XY-P」\t基本雷エネルギー 20thアニバーサリー: プロモ[XY-P](プロモーションカード「XY-P」)の新品/中古フリマ(通販)｜スニダン\tNULL\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1653
+}

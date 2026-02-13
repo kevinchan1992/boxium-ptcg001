@@ -65,8 +65,9 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
                      $(".product-image img").first().attr("src") ||
                      null;
 
-    // Parse price history from the table
-    const priceHistory = parsePriceHistoryFromHtml($);
+    // Extract product ID from URL to fetch price history via API
+    const productId = extractSnkrdunkId(url);
+    const priceHistory = productId ? await fetchPriceHistoryFromApi(productId) : [];
 
     return {
       name: nameEn,
@@ -91,76 +92,70 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
 }
 
 /**
- * Parse price history from SNKRDUNK HTML
- * Extracts data from "最近の売買履歴" section
+ * Fetch price history from SNKRDUNK API
+ * API endpoint: /v1/apparels/{id}/sales-history
  */
-export function parsePriceHistoryFromHtml($: cheerio.CheerioAPI): Array<{
+export async function fetchPriceHistoryFromApi(productId: string): Promise<Array<{
   price: number;
   currency: string;
   soldAt: Date;
   grade?: string;
-}> {
-  const priceHistory: Array<{
-    price: number;
-    currency: string;
-    soldAt: Date;
-    grade?: string;
-  }> = [];
-
-  // Find all transaction rows in the price history section
-  // SNKRDUNK uses a table or list structure for price history
-  $("table tr, .price-history-item, .transaction-item").each((_, element) => {
-    const $row = $(element);
+}>> {
+  try {
+    const apiUrl = `https://snkrdunk.com/v1/apparels/${productId}/sales-history?size_id=0&page=1&per_page=100`;
     
-    // Extract time ago (e.g., "41分前", "4時間前", "1日前")
-    const timeText = $row.find("td:nth-child(1), .time, .date").text().trim();
-    
-    // Extract grade (e.g., "A", "PSA10", "PSA9")
-    const gradeText = $row.find("td:nth-child(2), .grade, .condition").text().trim();
-    
-    // Extract price (e.g., "¥53,500", "¥78,000")
-    const priceText = $row.find("td:nth-child(3), .price, .amount").text().trim();
-    
-    // Parse price
-    const priceMatch = priceText.match(/¥([\d,]+)/);
-    if (!priceMatch) return;
-    
-    const price = parseInt(priceMatch[1].replace(/,/g, ""), 10);
-    if (isNaN(price)) return;
-    
-    // Parse time ago
-    const soldAt = parseTimeAgo(timeText);
-    
-    priceHistory.push({
-      price,
-      currency: "JPY",
-      soldAt,
-      grade: gradeText || undefined,
+    const response = await axios.get(apiUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+        "Referer": `https://snkrdunk.com/apparels/${productId}`,
+      },
+      timeout: 15000,
     });
-  });
 
-  return priceHistory;
+    const data = response.data;
+    const priceHistory: Array<{
+      price: number;
+      currency: string;
+      soldAt: Date;
+      grade?: string;
+    }> = [];
+
+    // Parse API response
+    if (data.history && Array.isArray(data.history)) {
+      for (const item of data.history) {
+        priceHistory.push({
+          price: item.price,
+          currency: "JPY",
+          soldAt: parseJapaneseDate(item.date),
+          grade: item.condition || undefined,
+        });
+      }
+    }
+
+    return priceHistory;
+  } catch (error: any) {
+    console.error("Error fetching price history from API:", error.message);
+    // Return empty array if API fails, don't throw error
+    return [];
+  }
 }
 
 /**
- * Convert Japanese time ago string to Date
- * Examples: "41分前" → 41 minutes ago, "4時間前" → 4 hours ago, "1日前" → 1 day ago
+ * Parse Japanese date string to Date object
+ * Examples: "2025/12/10" → Date object
  */
-function parseTimeAgo(timeAgo: string): Date {
-  const now = new Date();
-
-  if (timeAgo.includes("分前")) {
-    const minutes = parseInt(timeAgo.replace("分前", ""), 10);
-    return new Date(now.getTime() - minutes * 60 * 1000);
-  } else if (timeAgo.includes("時間前")) {
-    const hours = parseInt(timeAgo.replace("時間前", ""), 10);
-    return new Date(now.getTime() - hours * 60 * 60 * 1000);
-  } else if (timeAgo.includes("日前")) {
-    const days = parseInt(timeAgo.replace("日前", ""), 10);
-    return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+function parseJapaneseDate(dateStr: string): Date {
+  // Format: YYYY/MM/DD
+  const parts = dateStr.split("/");
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // JavaScript months are 0-indexed
+    const day = parseInt(parts[2], 10);
+    return new Date(year, month, day);
   }
-
-  return now;
+  
+  return new Date();
 }
 
 /**
