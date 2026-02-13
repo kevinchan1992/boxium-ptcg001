@@ -8,6 +8,7 @@ import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
 import { searchAndSaveEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
+import { hashPassword, comparePassword, generateToken } from "./auth";
 
 export const appRouter = router({
   system: systemRouter,
@@ -17,10 +18,115 @@ export const appRouter = router({
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie("auth_token", { ...cookieOptions, maxAge: -1 });
       return {
         success: true,
       } as const;
     }),
+    
+    // Local auth: Register
+    register: publicProcedure
+      .input(z.object({
+        username: z.string().min(3).max(64),
+        email: z.string().email(),
+        password: z.string().min(6),
+        name: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Check if username already exists
+        const existingUser = await db.getUserByUsername(input.username);
+        if (existingUser) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "使用者名稱已被使用",
+          });
+        }
+
+        // Check if email already exists
+        const existingEmail = await db.getUserByEmail(input.email);
+        if (existingEmail) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "電子郵件已被使用",
+          });
+        }
+
+        // Hash password
+        const hashedPassword = await hashPassword(input.password);
+
+        // Create user
+        const userId = await db.createUser({
+          username: input.username,
+          email: input.email,
+          password: hashedPassword,
+          name: input.name || null,
+          loginMethod: "local",
+        });
+
+        // Generate JWT token
+        const token = generateToken(userId, input.username);
+
+        // Set cookie
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie("auth_token", token, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+
+        return {
+          success: true,
+          userId,
+          username: input.username,
+        };
+      }),
+
+    // Local auth: Login
+    login: publicProcedure
+      .input(z.object({
+        username: z.string(),
+        password: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Find user by username
+        const user = await db.getUserByUsername(input.username);
+        if (!user) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "使用者名稱或密碼錯誤",
+          });
+        }
+
+        // Check if user is a local auth user
+        if (!user.password) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "此帳號使用 OAuth 登入，請使用 OAuth 方式登入",
+          });
+        }
+
+        // Verify password
+        const isValid = await comparePassword(input.password, user.password);
+        if (!isValid) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "使用者名稱或密碼錯誤",
+          });
+        }
+
+        // Update last signed in
+        await db.updateUserLastSignedIn(user.id);
+
+        // Generate JWT token
+        const token = generateToken(user.id, user.username!);
+
+        // Set cookie
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie("auth_token", token, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+
+        return {
+          success: true,
+          userId: user.id,
+          username: user.username,
+          name: user.name,
+        };
+      }),
   }),
 
   cards: router({
@@ -836,6 +942,46 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const result = await db.removeFromWatchlist(ctx.user.id, input.cardId);
         return { success: true, result };
+      }),
+  }),
+
+  // Favorites router
+  favorites: router({
+    // Get user's favorites
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        const favorites = await db.getUserFavorites(ctx.user.id);
+        return favorites;
+      }),
+
+    // Add to favorites
+    add: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.addToFavorites(ctx.user.id, input.cardId);
+        return { success: true, result };
+      }),
+
+    // Remove from favorites
+    remove: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.removeFromFavorites(ctx.user.id, input.cardId);
+        return { success: true, result };
+      }),
+
+    // Check if card is favorited
+    isFavorited: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const isFavorited = await db.isCardFavorited(ctx.user.id, input.cardId);
+        return { isFavorited };
       }),
   }),
 });

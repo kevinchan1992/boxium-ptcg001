@@ -2,13 +2,16 @@ import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "d
 
 /**
  * Core user table backing auth flow.
+ * Supports both OAuth (openId) and local auth (username/password)
  */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
+  openId: varchar("openId", { length: 64 }).unique(), // For OAuth users (nullable)
+  username: varchar("username", { length: 64 }).unique(), // For local auth users (nullable)
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  password: varchar("password", { length: 255 }), // For local auth users (nullable, bcrypt hashed)
   name: text("name"),
-  email: varchar("email", { length: 320 }),
-  loginMethod: varchar("loginMethod", { length: 64 }),
+  loginMethod: varchar("loginMethod", { length: 64 }), // "oauth" or "local"
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -169,3 +172,16 @@ export const systemSettings = mysqlTable("systemSettings", {
 
 export type SystemSetting = typeof systemSettings.$inferSelect;
 export type InsertSystemSetting = typeof systemSettings.$inferInsert;
+
+/**
+ * Favorites table - stores user's favorite cards
+ */
+export const favorites = mysqlTable("favorites", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
+  cardId: int("cardId").notNull(), // Foreign key to cards table
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Favorite = typeof favorites.$inferSelect;
+export type InsertFavorite = typeof favorites.$inferInsert;

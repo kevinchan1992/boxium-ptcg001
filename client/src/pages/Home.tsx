@@ -44,15 +44,26 @@ export default function Home() {
               </div>
             </div>
 
-            {/* CTA Button */}
-            <Link href="/research">
-              <Button
-                className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 hover:shadow-2xl"
-                style={{ backgroundColor: "#ffed00", color: "#06038d" }}
-              >
-                開始搜尋 →
-              </Button>
-            </Link>
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/research">
+                <Button
+                  className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 hover:shadow-2xl"
+                  style={{ backgroundColor: "#ffed00", color: "#06038d" }}
+                >
+                  開始搜尋 →
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button
+                  variant="outline"
+                  className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
+                  style={{ borderColor: "#ffed00", color: "white" }}
+                >
+                  登入 / 註冊
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -212,6 +223,7 @@ export default function Home() {
               <h4 className="text-white font-bold mb-4 text-sm md:text-base">快速導航</h4>
               <ul className="space-y-2">
                 <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">卡牌搜尋</Link></li>
+                <li><Link href="/favorites" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">我的收藏</Link></li>
                 <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">市場分析</Link></li>
                 <li><Link href="/admin" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">管理後台</Link></li>
               </ul>

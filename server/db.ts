@@ -1,6 +1,6 @@
 import { eq, desc, and, gte, lte, or, like, sql, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertFirecrawlUsage, InsertSystemSetting } from "../drizzle/schema";
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertFirecrawlUsage, InsertSystemSetting, favorites } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -18,9 +18,81 @@ export async function getDb() {
   return _db;
 }
 
+/**
+ * Create a new user (for registration)
+ */
+export async function createUser(user: InsertUser): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    const result = await db.insert(users).values(user);
+    return Number(result[0].insertId);
+  } catch (error) {
+    console.error("[Database] Failed to create user:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get user by username
+ */
+export async function getUserByUsername(username: string) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Get user by email
+ */
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Get user by ID
+ */
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Update user's last signed in timestamp
+ */
+export async function updateUserLastSignedIn(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    return;
+  }
+
+  await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, userId));
+}
+
+/**
+ * Upsert user (for OAuth flow)
+ */
 export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
+  if (!user.openId && !user.username) {
+    throw new Error("User openId or username is required for upsert");
   }
 
   const db = await getDb();
@@ -30,19 +102,16 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 
   try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
+    const values: Partial<InsertUser> = user.openId ? { openId: user.openId } : { username: user.username };
     const updateSet: Record<string, unknown> = {};
 
     const textFields = ["name", "email", "loginMethod"] as const;
     type TextField = (typeof textFields)[number];
-
     const assignNullable = (field: TextField) => {
       const value = user[field];
       if (value === undefined) return;
       const normalized = value ?? null;
-      values[field] = normalized;
+      (values as any)[field] = normalized;
       updateSet[field] = normalized;
     };
 
@@ -68,7 +137,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
+    await db.insert(users).values(values as InsertUser).onDuplicateKeyUpdate({
       set: updateSet,
     });
   } catch (error) {
@@ -77,6 +146,9 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 }
 
+/**
+ * Get user by openId (for OAuth flow)
+ */
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) {
@@ -628,4 +700,79 @@ export async function deleteFailedDataSources() {
     console.error("[Database] Failed to delete failed data sources:", error);
     return { success: false, deletedCount: 0, error };
   }
+}
+
+// Favorites queries
+export async function getUserFavorites(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const result = await db
+    .select({
+      id: favorites.id,
+      cardId: favorites.cardId,
+      createdAt: favorites.createdAt,
+      card: cards,
+    })
+    .from(favorites)
+    .leftJoin(cards, eq(favorites.cardId, cards.id))
+    .where(eq(favorites.userId, userId))
+    .orderBy(desc(favorites.createdAt));
+
+  return result;
+}
+
+export async function addToFavorites(userId: number, cardId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Check if already favorited
+  const existing = await db
+    .select()
+    .from(favorites)
+    .where(and(eq(favorites.userId, userId), eq(favorites.cardId, cardId)))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0];
+  }
+
+  const result = await db.insert(favorites).values({
+    userId,
+    cardId,
+  });
+
+  return { id: Number(result[0].insertId), userId, cardId };
+}
+
+export async function removeFromFavorites(userId: number, cardId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .delete(favorites)
+    .where(and(eq(favorites.userId, userId), eq(favorites.cardId, cardId)));
+
+  return { success: true };
+}
+
+export async function isCardFavorited(userId: number, cardId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    return false;
+  }
+
+  const result = await db
+    .select()
+    .from(favorites)
+    .where(and(eq(favorites.userId, userId), eq(favorites.cardId, cardId)))
+    .limit(1);
+
+  return result.length > 0;
 }

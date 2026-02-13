@@ -11,6 +11,9 @@ import Research from "./pages/Research";
 import Pricing from "./pages/Pricing";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Favorites from "./pages/Favorites";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -23,6 +26,9 @@ function Router() {
       <Route path="/pricing" component={Pricing} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin" component={Admin} />
+      <Route path="/register" component={Register} />
+      <Route path="/login" component={Login} />
+      <Route path="/favorites" component={Favorites} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

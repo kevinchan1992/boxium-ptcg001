@@ -277,10 +277,10 @@ class SDKServer {
         await db.upsertUser({
           openId: userInfo.openId,
           name: userInfo.name || null,
-          email: userInfo.email ?? null,
+          email: userInfo.email ?? "",
           loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
           lastSignedIn: signedInAt,
-        });
+        } as any);
         user = await db.getUserByOpenId(userInfo.openId);
       } catch (error) {
         console.error("[Auth] Failed to sync user from OAuth:", error);
@@ -294,8 +294,9 @@ class SDKServer {
 
     await db.upsertUser({
       openId: user.openId,
+      email: user.email,
       lastSignedIn: signedInAt,
-    });
+    } as any);
 
     return user;
   }

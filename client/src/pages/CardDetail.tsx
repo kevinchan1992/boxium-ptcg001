@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useRoute } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import { PriceTrendChart } from "@/components/PriceTrendChart";
 
 
@@ -21,6 +22,46 @@ export default function CardDetail() {
     { id: cardId! },
     { enabled: !!cardId, retry: 1 }
   );
+
+  // Check if card is favorited
+  const { data: favoriteStatus } = trpc.favorites.isFavorited.useQuery(
+    { cardId: cardId! },
+    { enabled: !!cardId, retry: false }
+  );
+
+  const utils = trpc.useUtils();
+
+  // Add to favorites mutation
+  const addFavoriteMutation = trpc.favorites.add.useMutation({
+    onSuccess: () => {
+      utils.favorites.isFavorited.invalidate({ cardId: cardId! });
+      toast.success("已添加到收藏");
+    },
+    onError: () => {
+      toast.error("添加收藏失敗，請先登入");
+    },
+  });
+
+  // Remove from favorites mutation
+  const removeFavoriteMutation = trpc.favorites.remove.useMutation({
+    onSuccess: () => {
+      utils.favorites.isFavorited.invalidate({ cardId: cardId! });
+      toast.success("已取消收藏");
+    },
+    onError: () => {
+      toast.error("取消收藏失敗");
+    },
+  });
+
+  const handleToggleFavorite = () => {
+    if (!cardId) return;
+
+    if (favoriteStatus?.isFavorited) {
+      removeFavoriteMutation.mutate({ cardId });
+    } else {
+      addFavoriteMutation.mutate({ cardId });
+    }
+  };
 
   // Fetch price history from SNKRDUNK
   const normalizeGrade = (grade: string | null) => {
@@ -124,6 +165,17 @@ export default function CardDetail() {
           <div className="flex gap-2">
             <Button variant="default" size="sm">
               格價
+            </Button>
+            <Button
+              variant={favoriteStatus?.isFavorited ? "default" : "outline"}
+              size="sm"
+              onClick={handleToggleFavorite}
+              disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
+            >
+              <Heart
+                className={`h-4 w-4 mr-2 ${favoriteStatus?.isFavorited ? "fill-current" : ""}`}
+              />
+              {favoriteStatus?.isFavorited ? "已收藏" : "收藏"}
             </Button>
           </div>
         </div>
