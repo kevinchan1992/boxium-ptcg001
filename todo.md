@@ -469,3 +469,11 @@
 - [x] 設定並行批次大小（BATCH_SIZE = 10）
 - [x] 每批 10 個 URL 同時處理
 - [x] 保留進度顯示功能
+
+## 性能優化: 進一步提升批量添加速度 - 完成
+
+- [x] 將 BATCH_SIZE 從 10 提升至 20
+- [x] 添加處理時間統計（startTime, endTime, durationSeconds）
+- [x] 計算平均處理速度（avgSpeed = URL/秒）
+- [x] 在 toast 成功提示中顯示時間統計
+- [x] 預期性能提升：100 URL 從 1 分鐘縮短至 30 秒

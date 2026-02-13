@@ -126,13 +126,14 @@ export default function Admin() {
     setIsSubmitting(true);
     setBatchResults({ success: 0, failed: 0, errors: [], duplicates: duplicateCount });
     
+    const startTime = Date.now();
     let successCount = 0;
     let failedCount = 0;
     const errors: string[] = [];
 
     try {
       // Process URLs in parallel batches for better performance
-      const BATCH_SIZE = 10; // Process 10 URLs at a time
+      const BATCH_SIZE = 20; // Process 20 URLs at a time
       
       for (let i = 0; i < newUrls.length; i += BATCH_SIZE) {
         const batch = newUrls.slice(i, i + BATCH_SIZE);
@@ -156,10 +157,14 @@ export default function Admin() {
         });
       }
 
+      const endTime = Date.now();
+      const durationSeconds = ((endTime - startTime) / 1000).toFixed(1);
+      const avgSpeed = (newUrls.length / (endTime - startTime) * 1000).toFixed(1);
+      
       setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount });
       
       if (successCount > 0) {
-        toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}`);
+        toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}（耗時 ${durationSeconds} 秒，平均 ${avgSpeed} URL/秒）`);
         if (failedCount === 0) {
           setSnkrdunkUrl("");
         }
