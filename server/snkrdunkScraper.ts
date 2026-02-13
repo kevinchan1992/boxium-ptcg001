@@ -5,6 +5,7 @@
 
 import { exec } from "child_process";
 import { promisify } from "util";
+import { scrapeWithBrowser } from "./browserScraper";
 
 const execAsync = promisify(exec);
 
@@ -30,43 +31,16 @@ export function extractSnkrdunkId(url: string): string | null {
 }
 
 /**
- * Scrape SNKRDUNK page using Firecrawl MCP
+ * Scrape SNKRDUNK page using browser scraper (axios + cheerio)
+ * Note: manus-mcp-cli is not available in production, so we use browser scraper directly
  */
 export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData> {
   try {
-    // Call Firecrawl MCP via manus-mcp-cli
-    const command = `manus-mcp-cli tool call firecrawl_scrape --server firecrawl --input '${JSON.stringify({
-      url,
-      formats: ["markdown"],
-      onlyMainContent: true,
-    })}'`;
-
-    const { stdout, stderr } = await execAsync(command, { maxBuffer: 10 * 1024 * 1024 });
-
-    if (stderr && !stderr.includes("Tool execution result saved")) {
-      throw new Error(`Firecrawl error: ${stderr}`);
-    }
-
-    // Parse the JSON output - try multiple formats
-    let result;
+    console.log(`[Scraper] Scraping ${url} using browser scraper`);
     
-    // Try format 1: Direct JSON output (new format)
-    try {
-      result = JSON.parse(stdout.trim());
-    } catch (e) {
-      // Try format 2: With "Tool execution result:" prefix (old format)
-      const resultMatch = stdout.match(/Tool execution result:\n({[\s\S]+})/);
-      if (!resultMatch) {
-        throw new Error("Failed to parse Firecrawl output");
-      }
-      result = JSON.parse(resultMatch[1]);
-    }
+    const { markdown, metadata } = await scrapeWithBrowser(url);
     
-    const markdown = result.markdown;
-
-    if (!markdown) {
-      throw new Error("No markdown content returned from Firecrawl");
-    }
+    console.log(`[Scraper] Successfully scraped ${url}`);
 
     // Extract card name (Japanese)
     const nameMatch = markdown.match(/# (.+)\n\n(.+)\n\n/);
@@ -74,10 +48,12 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
     const nameEn = nameMatch ? nameMatch[2].trim() : "";
 
     // Extract image URL from metadata
-    const imageUrl = result.metadata?.ogImage || result.metadata?.["twitter:image"] || null;
+    const imageUrl = metadata?.ogImage || metadata?.["twitter:image"] || null;
 
     // Parse price history from markdown
     const priceHistory = parsePriceHistory(markdown);
+
+    console.log(`[Scraper] Extracted ${priceHistory.length} price records`);
 
     return {
       name: nameEn || nameJa,
@@ -86,8 +62,8 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
       priceHistory,
     };
   } catch (error) {
-    console.error("Error scraping SNKRDUNK page:", error);
-    throw error;
+    console.error(`[Scraper] Failed to scrape ${url}:`, error);
+    throw new Error(`Failed to scrape ${url}: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

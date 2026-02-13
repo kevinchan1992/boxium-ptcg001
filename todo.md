@@ -530,3 +530,79 @@
 - [x] 添加「立即更新所有數據源」按鈕
 - [x] 顯示當前正在更新的數據源進度（如果正在運行）
 - [x] 每 30 秒自動刷新排程器狀態
+
+## 實作 Firecrawl 降級到瀏覽器抓取的混合策略
+
+### 背景
+- [x] 發現 Firecrawl 配額不足導致所有抓取失敗
+- [x] 並行批次大小從 10 提升至 20 後加劇配額消耗
+
+### 實作任務
+- [ ] 實作瀏覽器抓取備用方案（使用 Puppeteer）
+- [ ] 修改 scrapeSnkrdunkPage 實現混合策略：優先 Firecrawl，失敗則降級
+- [ ] 調整批次大小從 20 降回 10 或更低
+- [ ] 添加速率限制（每次請求間隔）避免觸發限制
+- [ ] 記錄使用的抓取方法（Firecrawl vs Browser）
+- [ ] 測試混合策略能正常運作
+- [x] 檢查 SNKRDUNK 數據抓取邏輯（scrapeSnkrdunkPage）
+- [x] 發現問題：正則表達式只支援相對時間格式，不支援絕對日期格式
+- [x] 修改 parsePriceHistory 函數支援兩種日期格式
+- [x] 添加 parseAbsoluteDate 函數解析 YYYY/MM/DD 格式
+- [x] 調整正則表達式支援單個或多個換行符
+- [x] 測試驗證：從 4 筆提升至 20 筆（100% 完整抓取）
+
+## Bug: 12 小時自動更新排程器未運作 - 已修復
+
+- [x] 檢查排程器是否正常啟動（排程器正常運作）
+- [x] 檢查排程器日誌：發現「Found 0 data sources to update」
+- [x] 發現問題：查詢條件使用錯誤的 `||` 運算符處理 null 值
+- [x] 修復：添加 `or` 和 `isNull` 條件正確處理 nextUpdateAt
+- [x] 驗證：排程器現在能正確找到並更新數據源
+
+## 排程器狀態監控與管理功能 - 完成
+
+### 後端 API
+- [x] 添加 `admin.getSchedulerStatus` API 查詢排程器狀態
+- [x] 返回下次更新時間、最近更新統計、失敗重試佇列
+- [x] 添加 `admin.triggerManualUpdateAll` API 手動觸發全量更新
+- [x] 在 scheduler.ts 添加 getSchedulerStatus 和 triggerManualUpdateAll 函數
+- [x] Firecrawl 配額追蹤：透過失敗記錄顯示配額不足問題
+
+### 前端 UI
+- [x] 在管理後台頂部添加排程器狀態卡片
+- [x] 顯示下次自動更新時間（格式化為本地時間）
+- [x] 顯示最近 24 小時更新統計（479 成功 / 128 失敗）
+- [x] 顯示失敗佇列數量和詳細資訊（最近 10 筆）
+- [x] 添加「立即更新所有數據源」按鈕
+- [x] 顯示當前正在更新的數據源進度（如果正在運行）
+- [x] 每 30 秒自動刷新排程器狀態
+
+## 實作 Firecrawl 降級到瀏覽器抓取的混合策略 - 進行中
+
+### 背景
+- [x] 發現 Firecrawl 配額不足導致所有抓取失敗
+- [x] 並行批次大小從 10 提升至 20 後加劇配額消耗
+- [x] 發現 Firecrawl MCP 在生產環境不可用（manus-mcp-cli: not found）
+
+### 已完成
+- [x] 移除 Firecrawl MCP 依賴，直接使用瀏覽器抓取
+- [x] 嘗試使用 axios + cheerio（失敗：無法執行 JavaScript）
+- [x] 安裝 Puppeteer 並實作 browserScraper.ts
+- [x] 調整批次大小從 20 降回 5
+- [x] 添加批次間隔 2 秒延遲避免速率限制
+
+### 當前問題
+- [ ] Puppeteer 導航超時（Navigation timeout of 30000 ms）
+- [ ] SNKRDUNK 可能有反爬蟲機制或需要更長載入時間
+- [ ] 需要調整 Puppeteer 配置（超時、等待策略、User-Agent）
+
+### 已完成優化
+- [x] 增加 Puppeteer 超時時間至 60 秒
+- [x] 改用 waitUntil: 'domcontentloaded' 代替 'networkidle2'
+- [x] 確認批次大小已設為 5
+- [x] 確認批次間延遲已設為 2 秒
+
+### 待解決問題
+- [ ] Puppeteer ConnectionClosedError（需要更複雜的反爬蟲策略）
+- [ ] 等待 Firecrawl 配額恢復或考慮第三方爬蟲服務
+- [ ] 暫時保持現有功能，暫停自動更新直到配額恢復

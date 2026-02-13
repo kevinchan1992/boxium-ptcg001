@@ -133,8 +133,9 @@ export default function Admin() {
     const failedUrls: string[] = [];
 
     try {
-      // Process URLs in parallel batches for better performance
-      const BATCH_SIZE = 20; // Process 20 URLs at a time
+      // Process URLs in parallel batches with rate limiting
+      const BATCH_SIZE = 5; // Process 5 URLs at a time to avoid rate limits
+      const DELAY_BETWEEN_BATCHES = 2000; // 2 second delay between batches
       
       for (let i = 0; i < newUrls.length; i += BATCH_SIZE) {
         const batch = newUrls.slice(i, i + BATCH_SIZE);
@@ -145,6 +146,11 @@ export default function Admin() {
         const results = await Promise.allSettled(
           batch.map(url => addDataSourceMutation.mutateAsync({ url }))
         );
+        
+        // Add delay between batches to avoid rate limits (except for last batch)
+        if (i + BATCH_SIZE < newUrls.length) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
+        }
         
         // Count successes and failures
         results.forEach((result, index) => {
