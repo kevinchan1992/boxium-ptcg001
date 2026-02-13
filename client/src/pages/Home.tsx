@@ -1,55 +1,14 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Menu, X, TrendingUp, Search, BarChart3, Trophy } from "lucide-react";
+import { TrendingUp, Search, BarChart3, Trophy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f8f9fa" }}>
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b" style={{ borderColor: "#e0e0e0" }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link href="/" className="flex items-center">
-              <img
-                src="/boxium-logo.png"
-                alt="BOXIUM Logo"
-                className="h-10"
-              />
-            </Link>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/research" className="text-gray-700 hover:text-[#06038d] transition-colors font-medium">卡牌搜尋</Link>
-              <Link href="/admin" className="text-gray-700 hover:text-[#06038d] transition-colors font-medium">管理後台</Link>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100"
-            >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white">
-            <div className="px-4 py-4 space-y-3">
-              <Link href="/research" className="block text-gray-700 hover:text-[#06038d] transition-colors font-medium">卡牌搜尋</Link>
-              <Link href="/admin" className="block text-gray-700 hover:text-[#06038d] transition-colors font-medium">管理後台</Link>
-            </div>
-          </div>
-        )}
-      </nav>
-
       {/* Hero Section */}
       <section className="pt-20 pb-24 px-4" style={{ backgroundColor: "#06038d" }}>
         <div className="max-w-6xl mx-auto">
