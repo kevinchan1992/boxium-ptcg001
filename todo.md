@@ -616,3 +616,22 @@
 - [x] 解決方案：手動更新卡牌名稱為 Lillie SR
 - [x] 暫停自動排程器避免產生更多失敗記錄
 - [x] 驗證搜尋功能正常：找到 7 張 Lillie 相關卡牌
+
+
+## 切換回 Firecrawl 抓取方式 - 完成
+
+### 背景
+- Puppeteer 抓取持續失敗（Connection closed、Detached Frame 等錯誤）
+- 新添加的卡牌顯示「Unknown Card」，無法提取有效數據
+- 用戶希望恢復使用之前成功的 Firecrawl 方式
+
+### 已完成
+- [x] 移除 Puppeteer 相關代碼和依賴
+- [x] 移除 browserScraper.ts 文件
+- [x] 恢復 snkrdunkScraper.ts 使用 Firecrawl MCP
+- [x] 停止自動排程器（SCHEDULER_ENABLED = false）
+
+### 當前問題
+- Firecrawl MCP 網絡連接錯誤："Client network socket disconnected before secure TLS connection was established"
+- 需要聯繫 Manus 支援團隊解決 Firecrawl 服務問題
+- 手動添加 URL 無法自動抓取卡牌資料，需要手動編輯卡牌名稱

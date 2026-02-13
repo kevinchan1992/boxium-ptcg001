@@ -5,7 +5,6 @@
 
 import { exec } from "child_process";
 import { promisify } from "util";
-import { scrapeWithBrowser } from "./browserScraper";
 
 const execAsync = promisify(exec);
 
@@ -31,29 +30,53 @@ export function extractSnkrdunkId(url: string): string | null {
 }
 
 /**
- * Scrape SNKRDUNK page using browser scraper (axios + cheerio)
- * Note: manus-mcp-cli is not available in production, so we use browser scraper directly
+ * Scrape SNKRDUNK page using Firecrawl MCP
  */
 export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData> {
   try {
-    console.log(`[Scraper] Scraping ${url} using browser scraper`);
+    console.log(`[Scraper] Scraping ${url} using Firecrawl MCP`);
     
-    const { markdown, metadata } = await scrapeWithBrowser(url);
+    // Call Firecrawl MCP via manus-mcp-cli
+    const { stdout, stderr } = await execAsync(
+      `manus-mcp-cli tool call firecrawl_scrape --server firecrawl --input '${JSON.stringify({
+        url,
+        formats: ["markdown"],
+        onlyMainContent: true,
+      })}'`
+    );
+
+    if (stderr) {
+      console.warn(`[Scraper] Firecrawl stderr: ${stderr}`);
+    }
+
+    // Parse Firecrawl output
+    const result = JSON.parse(stdout);
     
-    console.log(`[Scraper] Successfully scraped ${url}`);
+    if (!result.content || !Array.isArray(result.content) || result.content.length === 0) {
+      throw new Error("Failed to parse Firecrawl output");
+    }
+
+    const markdown = result.content[0].markdown || result.content[0].text || "";
+    
+    if (!markdown) {
+      throw new Error("No markdown content returned from Firecrawl");
+    }
+
+    console.log(`[Scraper] Successfully scraped ${url}, parsing content...`);
 
     // Extract card name (Japanese)
     const nameMatch = markdown.match(/# (.+)\n\n(.+)\n\n/);
     const nameJa = nameMatch ? nameMatch[1].trim() : "Unknown Card";
     const nameEn = nameMatch ? nameMatch[2].trim() : "";
 
-    // Extract image URL from metadata
-    const imageUrl = metadata?.ogImage || metadata?.["twitter:image"] || null;
+    // Extract image URL
+    const imageMatch = markdown.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+    const imageUrl = imageMatch ? imageMatch[2] : null;
 
     // Parse price history from markdown
     const priceHistory = parsePriceHistory(markdown);
 
-    console.log(`[Scraper] Extracted ${priceHistory.length} price records`);
+    console.log(`[Scraper] Extracted ${priceHistory.length} price records from ${url}`);
 
     return {
       name: nameEn || nameJa,
@@ -70,6 +93,7 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
 /**
  * Parse price history from SNKRDUNK markdown
  * Extracts data from "最近の売買履歴" section
+ * Supports both relative time (e.g., "23時間前") and absolute date (e.g., "2026/02/08")
  */
 export function parsePriceHistory(markdown: string): Array<{
   price: number;
@@ -87,6 +111,7 @@ export function parsePriceHistory(markdown: string): Array<{
   // Find the price history section
   const historySection = markdown.match(/## 最近の売買履歴[\s\S]+?(?=##|$)/);
   if (!historySection) {
+    console.warn("[Parser] No price history section found");
     return priceHistory;
   }
 
@@ -96,42 +121,27 @@ export function parsePriceHistory(markdown: string): Array<{
   // Format 1 (relative time): "41分前\n\nA\n\n¥53,500"
   // Format 2 (absolute date): "2026/02/08\n\nPSA10\n\n¥78,000"
   
-  // Pattern 1: Relative time (分前, 時間前, 日前)
-  const relativePattern = /(\d+(?:分|時間|日)前)\n+([A-Z0-9\s以下]+)\n+¥([\d,]+)/g;
-  let match;
-
-  while ((match = relativePattern.exec(historyText)) !== null) {
-    const timeAgo = match[1];
-    const grade = match[2].trim();
-    const priceStr = match[3].replace(/,/g, "");
-    const price = parseInt(priceStr, 10);
-
-    if (isNaN(price)) continue;
-
-    // Convert time ago to Date
-    const soldAt = parseTimeAgo(timeAgo);
-
-    priceHistory.push({
-      price,
-      currency: "JPY",
-      soldAt,
-      grade: grade || undefined,
-    });
-  }
-
-  // Pattern 2: Absolute date (YYYY/MM/DD)
-  const absolutePattern = /(\d{4}\/\d{2}\/\d{2})\n+([A-Z0-9\s]+)\n+¥([\d,]+)/g;
+  // Updated regex to support both single and multiple newlines
+  const priceRegex = /([0-9]{1,2}[分時日]前|[0-9]{4}\/[0-9]{2}\/[0-9]{2})\n+(PSA10|PSA9|PSA8以下|A|B|C|未鑑定|その他)\n+¥([0-9,]+)/g;
   
-  while ((match = absolutePattern.exec(historyText)) !== null) {
-    const dateStr = match[1];
-    const grade = match[2].trim();
-    const priceStr = match[3].replace(/,/g, "");
-    const price = parseInt(priceStr, 10);
+  let match;
+  while ((match = priceRegex.exec(historyText)) !== null) {
+    const [, dateStr, grade, priceStr] = match;
+    
+    // Parse date
+    let soldAt: Date;
+    if (dateStr.includes('/')) {
+      // Absolute date format: "2026/02/08"
+      soldAt = parseAbsoluteDate(dateStr);
+    } else {
+      // Relative time format: "23時間前", "1日前"
+      soldAt = parseTimeAgo(dateStr);
+    }
+    
+    // Parse price (remove commas)
+    const price = parseInt(priceStr.replace(/,/g, ""), 10);
 
     if (isNaN(price)) continue;
-
-    // Parse absolute date
-    const soldAt = parseAbsoluteDate(dateStr);
 
     priceHistory.push({
       price,

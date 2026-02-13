@@ -15,7 +15,7 @@ const UPDATE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 let schedulerInterval: NodeJS.Timeout | null = null;
 
 // Scheduler control flag - set to false to pause automatic updates
-let SCHEDULER_ENABLED = false; // Paused due to Puppeteer connection issues
+let SCHEDULER_ENABLED = false; // Paused due to Firecrawl MCP network connection issues
 
 /**
  * Global crawl progress tracker
