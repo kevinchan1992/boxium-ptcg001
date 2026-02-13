@@ -14,6 +14,9 @@ import { scrapeSnkrdunkPages } from "./snkrdunkAutoCrawler";
 const UPDATE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 let schedulerInterval: NodeJS.Timeout | null = null;
 
+// Scheduler control flag - set to false to pause automatic updates
+let SCHEDULER_ENABLED = false; // Paused due to Puppeteer connection issues
+
 /**
  * Global crawl progress tracker
  */
@@ -91,6 +94,12 @@ export function stopScheduler() {
  * Run auto-update for all active SNKRDUNK data sources
  */
 async function runAutoUpdate() {
+  // Check if scheduler is enabled
+  if (!SCHEDULER_ENABLED) {
+    console.log("[Scheduler] Automatic updates are currently paused");
+    return;
+  }
+  
   const db = await getDb();
   if (!db) {
     console.warn("[Scheduler] Database not available");

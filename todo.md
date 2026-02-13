@@ -606,3 +606,13 @@
 - [ ] Puppeteer ConnectionClosedError（需要更複雜的反爬蟲策略）
 - [ ] 等待 Firecrawl 配額恢復或考慮第三方爬蟲服務
 - [ ] 暫時保持現有功能，暫停自動更新直到配額恢復
+
+
+## Bug: Research 頁面無法搜尋到新添加的卡牌 - 已解決
+
+- [x] 檢查數據庫中是否有該卡牌的資料（apparels/123526）
+- [x] 發現問題：卡牌名稱是 placeholder（SNKRDUNK Card 123526）
+- [x] 根本原因：Puppeteer 抓取失敗，無法提取卡牌名稱
+- [x] 解決方案：手動更新卡牌名稱為 Lillie SR
+- [x] 暫停自動排程器避免產生更多失敗記錄
+- [x] 驗證搜尋功能正常：找到 7 張 Lillie 相關卡牌

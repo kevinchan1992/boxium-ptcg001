@@ -1,0 +1,8 @@
+{
+  "query": "SELECT c.*, ds.url FROM cards c LEFT JOIN dataSources ds ON c.id = ds.cardId WHERE ds.url LIKE '%123526%' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.*, ds.url FROM cards c LEFT JOIN dataSources ds ON c.id = ds.cardId WHERE ds.url LIKE '%123526%' LIMIT 1;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'ds.url' in 'where clause'"
+  ]
+}

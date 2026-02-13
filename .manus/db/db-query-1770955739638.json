@@ -1,0 +1,31 @@
+{
+  "query": "SELECT c.*, ds.sourceUrl FROM cards c LEFT JOIN dataSources ds ON c.id = ds.cardId WHERE ds.sourceUrl LIKE '%123526%' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.*, ds.sourceUrl FROM cards c LEFT JOIN dataSources ds ON c.id = ds.cardId WHERE ds.sourceUrl LIKE '%123526%' LIMIT 1;",
+  "rows": [
+    {
+      "id": "30201",
+      "cardId": "snkrdunk-123526",
+      "name": "Unknown Card",
+      "nameJa": "Unknown Card",
+      "series": "NULL",
+      "setName": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "language": "en",
+      "releaseDate": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp",
+      "imageUrlHiRes": "NULL",
+      "artist": "NULL",
+      "description": "NULL",
+      "types": "NULL",
+      "hp": "NULL",
+      "createdAt": "2026-02-12 09:06:45",
+      "updatedAt": "2026-02-13 04:06:50",
+      "sourceUrl": "https://snkrdunk.com/apparels/123526?slide=right"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tname\tnameJa\tseries\tsetName\tcardNumber\trarity\tlanguage\treleaseDate\timageUrl\timageUrlHiRes\tartist\tdescription\ttypes\thp\tcreatedAt\tupdatedAt\tsourceUrl\n30201\tsnkrdunk-123526\tUnknown Card\tUnknown Card\tNULL\tNULL\tNULL\tNULL\ten\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp\tNULL\tNULL\tNULL\tNULL\tNULL\t2026-02-12 09:06:45\t2026-02-13 04:06:50\thttps://snkrdunk.com/apparels/123526?slide=right\n",
+  "stderr": "",
+  "execution_time_ms": 1686
+}
