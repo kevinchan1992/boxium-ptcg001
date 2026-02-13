@@ -140,6 +140,19 @@ export async function getPopularCards(limit: number = 10) {
 }
 
 // Price history queries
+export async function getPriceHistoryByCardId(cardId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(priceHistory)
+    .where(eq(priceHistory.cardId, cardId))
+    .orderBy(desc(priceHistory.soldAt));
+  
+  return result;
+}
+
 export async function getPriceHistory(cardId: number, source?: string, grade?: string, limit: number = 50) {
   const db = await getDb();
   if (!db) return [];

@@ -61,6 +61,109 @@ export const appRouter = router({
         return cards;
       }),
 
+    getPriceTrendData: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+        days: z.number().optional().default(90),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const card = await db.getCardById(input.cardId);
+          if (!card) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
+          }
+
+          // Get all price history for this card
+          const allHistory = await db.getPriceHistoryByCardId(input.cardId);
+          
+          // Filter by date range (last N days)
+          const cutoffDate = new Date();
+          cutoffDate.setDate(cutoffDate.getDate() - input.days);
+          
+          const recentHistory = allHistory.filter(record => 
+            new Date(record.soldAt || record.createdAt) >= cutoffDate
+          );
+
+          // Group by date and source
+          const groupedByDate = new Map<string, { snkrdunk: any[]; ebay: any[] }>();
+          
+          for (const record of recentHistory) {
+            const date = new Date(record.soldAt || record.createdAt);
+            const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            if (!groupedByDate.has(dateStr)) {
+              groupedByDate.set(dateStr, { snkrdunk: [], ebay: [] });
+            }
+            
+            const group = groupedByDate.get(dateStr)!;
+            if (record.source === "snkrdunk") {
+              group.snkrdunk.push(record);
+            } else if (record.source === "ebay") {
+              group.ebay.push(record);
+            }
+          }
+
+          // Calculate daily averages
+          const trendData = Array.from(groupedByDate.entries())
+            .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+            .map(([date, data]) => {
+              const snkrdunkPrices = data.snkrdunk.map(r => parseFloat(r.price));
+              const ebayPrices = data.ebay.map(r => parseFloat(r.price));
+              
+              return {
+                date,
+                snkrdunkPrice: snkrdunkPrices.length > 0 
+                  ? snkrdunkPrices.reduce((a, b) => a + b, 0) / snkrdunkPrices.length 
+                  : undefined,
+                snkrdunkCount: snkrdunkPrices.length,
+                ebayPrice: ebayPrices.length > 0 
+                  ? ebayPrices.reduce((a, b) => a + b, 0) / ebayPrices.length 
+                  : undefined,
+                ebayCount: ebayPrices.length,
+              };
+            });
+
+          // Calculate statistics
+          const allSnkrdunkPrices = recentHistory
+            .filter(r => r.source === "snkrdunk")
+            .map(r => parseFloat(r.price));
+          const allEbayPrices = recentHistory
+            .filter(r => r.source === "ebay")
+            .map(r => parseFloat(r.price));
+
+          const stats = {
+            snkrdunk: allSnkrdunkPrices.length > 0 ? {
+              minPrice: Math.min(...allSnkrdunkPrices),
+              maxPrice: Math.max(...allSnkrdunkPrices),
+              avgPrice: allSnkrdunkPrices.reduce((a, b) => a + b, 0) / allSnkrdunkPrices.length,
+              latestPrice: parseFloat(recentHistory
+                .filter(r => r.source === "snkrdunk")
+                .sort((a: any, b: any) => new Date(b.soldAt || b.createdAt).getTime() - new Date(a.soldAt || a.createdAt).getTime())[0]?.price || "0"),
+            } : { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 },
+            ebay: allEbayPrices.length > 0 ? {
+              minPrice: Math.min(...allEbayPrices),
+              maxPrice: Math.max(...allEbayPrices),
+              avgPrice: allEbayPrices.reduce((a, b) => a + b, 0) / allEbayPrices.length,
+              latestPrice: parseFloat(recentHistory
+                .filter(r => r.source === "ebay")
+                .sort((a: any, b: any) => new Date(b.soldAt || b.createdAt).getTime() - new Date(a.soldAt || a.createdAt).getTime())[0]?.price || "0"),
+            } : { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 },
+          };
+
+          return {
+            cardId: card.id,
+            cardName: card.name,
+            trendData,
+            stats,
+          };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to get price trend data: ${error.message}`,
+          });
+        }
+      }),
+
     getEbaySoldItems: publicProcedure
       .input(z.object({
         cardId: z.number(),

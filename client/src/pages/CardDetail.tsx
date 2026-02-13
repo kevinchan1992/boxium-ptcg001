@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { PriceTrendChart } from "@/components/PriceTrendChart";
 
 
 const grades = ["PSA 10", "BGS 10", "中古"];
@@ -43,6 +44,12 @@ export default function CardDetail() {
   const { data: ebaySoldItems = [], isLoading: ebayLoading } = trpc.cards.getEbaySoldItems.useQuery(
     { cardId: cardId!, limit: 20 },
     { enabled: !!cardId && activeSource === "ebay", retry: 1 }
+  );
+
+  // Fetch price trend data
+  const { data: priceTrendData, isLoading: trendLoading } = trpc.cards.getPriceTrendData.useQuery(
+    { cardId: cardId!, days: 90 },
+    { enabled: !!cardId, retry: 1 }
   );
 
   if (!cardId) {
@@ -296,6 +303,16 @@ export default function CardDetail() {
                 </p>
               )}
             </div>
+
+            {/* Price Trend Chart */}
+            {priceTrendData && (
+              <PriceTrendChart
+                cardName={card.name}
+                trendData={priceTrendData.trendData}
+                stats={priceTrendData.stats}
+                isLoading={trendLoading}
+              />
+            )}
 
             {/* Basic Information */}
             <div className="bg-card rounded-lg p-6 border border-border">
