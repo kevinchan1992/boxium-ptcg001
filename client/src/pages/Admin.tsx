@@ -20,6 +20,7 @@ export default function Admin() {
   const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const pausedRef = useRef(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const utils = trpc.useUtils();
   const dataSourcesQuery = trpc.admin.getDataSources.useQuery(undefined, {
@@ -417,6 +418,15 @@ export default function Admin() {
 
           {/* Data Sources List */}
           <Card className="p-6 bg-card border-border">
+            <div className="mb-4">
+              <Input
+                type="text"
+                placeholder="搜尋卡牌名稱或 URL..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-md"
+              />
+            </div>
             <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
               <div className="flex items-center gap-4">
                 <h2 className="text-2xl font-semibold text-foreground">
@@ -486,7 +496,25 @@ export default function Admin() {
               </div>
             ) : dataSourcesQuery.data && dataSourcesQuery.data.length > 0 ? (
               <div className="space-y-4">
-                {dataSourcesQuery.data.map((source: any) => (
+                {(() => {
+                  const filteredData = dataSourcesQuery.data.filter((source: any) => {
+                    if (!searchQuery) return true;
+                    const query = searchQuery.toLowerCase();
+                    return (
+                      source.cardName?.toLowerCase().includes(query) ||
+                      source.sourceUrl?.toLowerCase().includes(query)
+                    );
+                  });
+                  
+                  if (filteredData.length === 0) {
+                    return (
+                      <div className="text-center py-12 text-muted-foreground">
+                        找不到符合「{searchQuery}」的數據源
+                      </div>
+                    );
+                  }
+                  
+                  return filteredData.map((source: any) => (
                   <div
                     key={source.id}
                     className="flex items-start justify-between gap-4 p-4 bg-background rounded-lg border border-border"
@@ -564,7 +592,8 @@ export default function Admin() {
                       </Button>
                     </div>
                   </div>
-                ))}
+                  ));
+                })()}
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">

@@ -794,3 +794,10 @@
 - [x] 從 Admin.tsx 移除排程器狀態卡片
 - [x] 移除 schedulerStatusQuery 和 triggerManualUpdateMutation
 - [x] 清理相關 UI 組件
+
+## 功能優化: 數據源列表添加搜尋列 - 完成
+
+- [x] 添加搜尋輸入框到數據源列表上方
+- [x] 實作前端搜尋邏輯（卡牌名稱、URL）
+- [x] 搜尋無結果時顯示提示訊息
+- [x] 測試搜尋功能（成功過濾 URL）
