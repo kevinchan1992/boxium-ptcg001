@@ -1,60 +1,12 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLocation } from "wouter";
-import { useAdmin } from "@/hooks/useAdmin";
-import { Loader2, LayoutDashboard, Users, Database } from "lucide-react";
+import { LayoutDashboard, Users, Database } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
 import { AdminDataSources } from "@/components/AdminDataSources";
 
 export default function Admin() {
-  const [, setLocation] = useLocation();
-  const { isAdmin, loading, user } = useAdmin();
-
-  // 使用 useEffect 處理重定向，避免在 render 階段執行
-  useEffect(() => {
-    if (!loading && !user) {
-      setLocation('/login-new?redirect=/admin');
-    }
-  }, [loading, user, setLocation]);
-
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (!user) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen flex items-center justify-center px-8">
-          <div className="text-center space-y-6">
-            <h1 className="text-4xl font-bold text-foreground">權限不足</h1>
-            <p className="text-lg text-muted-foreground">
-              您沒有訪問管理員後台的權限
-            </p>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
   return (
     <MainLayout>
       <div className="min-h-screen py-8 px-4 md:px-8">

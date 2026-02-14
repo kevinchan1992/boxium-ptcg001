@@ -1310,3 +1310,20 @@
 - [x] 創建 SessionDebug 頁面幫助用戶診斷問題
 - [ ] 用戶測試不同瀏覽器的 session 保存
 - [ ] 驗證修復效果
+
+
+## 完全移除認證系統 - 完成
+
+- [x] 刪除所有 Supabase Auth 相關檔案和代碼
+- [x] 刪除 LoginNew, AuthCallback, SessionDebug, Debug 頁面
+- [x] 刪除 useAuth, useAdmin hooks
+- [x] 刪除 supabaseClient.ts
+- [x] 修改 Admin 頁面移除所有權限檢查
+- [x] 修改 App.tsx 移除認證相關路由
+- [x] 刪除 Profile, UserProfile, SmtpSettings 頁面
+- [x] 刪除 DashboardLayout, RequireAdmin, RequireAuth 組件
+- [x] 修改 Home.tsx 移除認證相關代碼
+- [x] 修改 AdminDataSources.tsx 移除 useAdmin 引用
+- [x] 清空資料庫中的 users 表
+- [x] 所有 TypeScript 編譯錯誤已修復
+- [x] 頁面正常顯示，無需登入即可訪問

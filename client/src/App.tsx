@@ -9,18 +9,10 @@ import CardDetail from "./pages/CardDetail";
 import SearchResults from "./pages/SearchResults";
 import Research from "./pages/Research";
 import Pricing from "./pages/Pricing";
-import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
-import { LoginNew } from "./pages/LoginNew";
-import { AuthCallback } from "./pages/AuthCallback";
 import Favorites from "./pages/Favorites";
-import UserProfile from "./pages/UserProfile";
-import SmtpSettings from "./pages/SmtpSettings";
-import Debug from "./pages/Debug";
-import SessionDebug from "./pages/SessionDebug";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
@@ -28,16 +20,8 @@ function Router() {
       <Route path="/card/:id" component={CardDetail} />
       <Route path="/research" component={Research} />
       <Route path="/pricing" component={Pricing} />
-      <Route path="/profile" component={Profile} />
       <Route path="/admin" component={Admin} />
-      <Route path="/login" component={LoginNew} />
-      <Route path="/login-new" component={LoginNew} />
-      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/favorites" component={Favorites} />
-      <Route path="/user-profile" component={UserProfile} />
-      <Route path="/smtp-settings" component={SmtpSettings} />
-      <Route path="/debug" component={Debug} />
-      <Route path="/session-debug" component={SessionDebug} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
