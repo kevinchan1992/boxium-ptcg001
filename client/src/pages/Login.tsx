@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Loader2 } from "lucide-react";
+import { getLoginUrl } from "@/const";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -135,15 +136,16 @@ export default function Login() {
         </div>
 
         <div className="mt-6">
-          <Link href="/profile">
-            <Button
-              variant="outline"
-              className="w-full py-3 text-base font-semibold border-2"
-              style={{ borderColor: "#06038d", color: "#06038d" }}
-            >
-              使用 Manus OAuth 登入
-            </Button>
-          </Link>
+          <Button
+            variant="outline"
+            className="w-full py-3 text-base font-semibold border-2"
+            style={{ borderColor: "#06038d", color: "#06038d" }}
+            onClick={() => {
+              window.location.href = getLoginUrl();
+            }}
+          >
+            使用 Manus OAuth 登入
+          </Button>
         </div>
       </Card>
     </div>

@@ -1023,3 +1023,21 @@
 - [x] 修改 main.tsx 使用 /login
 - [x] 統一所有頁面使用 trpc.auth.me + /login
 - [ ] 測試所有登入流程確保一致性
+
+## Bug 修復: 登入狀態無法保持 - 進行中
+
+- [ ] 系統性檢查登入 API 的 JWT token 和 cookie 生成
+- [ ] 檢查 tRPC context 的 cookie 讀取和 token 驗證邏輯
+- [ ] 添加詳細日誌追蹤整個認證流程
+- [ ] 修復發現的問題並測試完整登入流程
+
+## Bug 修復: 登入狀態問題 - 進行中
+
+- [x] 系統性檢查登入 API 的 JWT token 和 cookie 生成
+- [x] 檢查 tRPC context 的 cookie 讀取和 token 驗證邏輯
+- [x] 修復 JWT token 驗證邏輯（統一使用 jsonwebtoken 庫）
+- [x] 修復 cookie sameSite 設置（改為 'lax'）
+- [x] 修復登出功能（點擊登出後仍然保持登入狀態）
+- [x] 確保跨裝置登入邏輯一致性（移除 secure: true 限制）
+- [x] 修復登出後重定向問題（添加延遲並返回主頁）
+- [x] 修復 Manus OAuth 登入功能（使用 getLoginUrl() 函數）

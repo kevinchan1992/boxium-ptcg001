@@ -46,10 +46,17 @@ export default function DashboardLayout({
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
+  const utils = trpc.useUtils();
   const { data: user, isLoading: loading } = trpc.auth.me.useQuery();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
-      window.location.reload();
+      // Wait for browser to process cookie clearing
+      setTimeout(() => {
+        // Clear all query cache
+        utils.invalidate();
+        // Redirect to home page
+        window.location.href = '/';
+      }, 100);
     },
   });
 
@@ -109,10 +116,17 @@ function DashboardLayoutContent({
   children,
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
+  const utils = trpc.useUtils();
   const { data: user } = trpc.auth.me.useQuery();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
-      window.location.reload();
+      // Wait for browser to process cookie clearing
+      setTimeout(() => {
+        // Clear all query cache
+        utils.invalidate();
+        // Redirect to home page
+        window.location.href = '/';
+      }, 100);
     },
   });
   const [location, setLocation] = useLocation();

@@ -17,9 +17,20 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
+      console.log("[Auth] Logout called");
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      ctx.res.clearCookie("auth_token", { ...cookieOptions, maxAge: -1 });
+      console.log("[Auth] Clearing cookies with options:", cookieOptions);
+      
+      // Clear both OAuth and local auth cookies
+      // Must use the same options as when setting the cookie (except maxAge/expires)
+      ctx.res.clearCookie(COOKIE_NAME, cookieOptions);
+      ctx.res.clearCookie("auth_token", cookieOptions);
+      
+      // Also set cookies with expired date to ensure they are cleared
+      ctx.res.cookie(COOKIE_NAME, "", { ...cookieOptions, maxAge: 0 });
+      ctx.res.cookie("auth_token", "", { ...cookieOptions, maxAge: 0 });
+      
+      console.log("[Auth] Cookies cleared");
       return {
         success: true,
       } as const;
@@ -125,7 +136,13 @@ export const appRouter = router({
 
         // Set cookie
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie("auth_token", token, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        console.log("[Auth] Setting auth_token cookie with options:", cookieOptions);
+        const finalCookieOptions = { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 };
+        console.log("[Auth] Final cookie options:", finalCookieOptions);
+        ctx.res.cookie("auth_token", token, finalCookieOptions); // 7 days
+        console.log("[Auth] Cookie set, checking response headers...");
+        console.log("[Auth] Response Set-Cookie header:", ctx.res.getHeader("Set-Cookie"));
+        console.log("[Auth] Login successful for user:", user.username);
 
         return {
           success: true,

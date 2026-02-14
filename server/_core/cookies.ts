@@ -41,11 +41,21 @@ export function getSessionCookieOptions(
 
   const isSecure = isSecureRequest(req);
   
-  return {
+  console.log("[Cookie] Request protocol:", req.protocol);
+  console.log("[Cookie] x-forwarded-proto:", req.headers["x-forwarded-proto"]);
+  console.log("[Cookie] isSecure:", isSecure);
+  console.log("[Cookie] hostname:", req.hostname);
+  console.log("[Cookie] host:", req.headers.host);
+  
+  // Simplified cookie options for debugging
+  // Remove secure requirement to test if that's causing the issue
+  const options = {
     httpOnly: true,
     path: "/",
-    // Use 'lax' for non-secure requests (development), 'none' for secure requests (production)
-    sameSite: isSecure ? "none" : "lax",
-    secure: isSecure,
+    sameSite: "lax" as const,
+    secure: false, // Temporarily disable secure requirement for testing
   };
+  
+  console.log("[Cookie] Final options:", options);
+  return options;
 }

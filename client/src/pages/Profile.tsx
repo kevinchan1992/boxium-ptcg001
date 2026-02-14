@@ -7,11 +7,18 @@ import { toast } from "sonner";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
+  const utils = trpc.useUtils();
   const { data: user, isLoading: loading } = trpc.auth.me.useQuery();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
       toast.success("已登出");
-      window.location.reload();
+      // Wait for browser to process cookie clearing
+      setTimeout(() => {
+        // Clear all query cache
+        utils.invalidate();
+        // Redirect to home page
+        window.location.href = '/';
+      }, 100);
     },
   });
   
