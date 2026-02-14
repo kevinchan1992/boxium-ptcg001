@@ -259,17 +259,44 @@ export function AdminDataSources() {
     },
   });
 
-  const updateEbayRecordsMutation = trpc.admin.updateAllEbayRecords.useMutation({
+  // 批量更新 eBay 價格
+  const [isBatchUpdating, setIsBatchUpdating] = useState(false);
+  const batchUpdateMutation = trpc.admin.batchUpdateEbayPrices.useMutation({
     onSuccess: (result) => {
-      toast.success(`已更新 ${result.updated} 張卡牌的 eBay 交易記錄`);
-      if (result.failed > 0) {
-        toast.warning(`${result.failed} 張卡牌更新失敗`);
-      }
+      setIsBatchUpdating(true);
+      toast.success(result.message);
     },
     onError: (error: any) => {
-      toast.error(`更新失敗: ${error.message}`);
+      toast.error(`啟動批量更新失敗: ${error.message}`);
     },
   });
+
+  const pauseBatchUpdateMutation = trpc.admin.pauseBatchUpdate.useMutation({
+    onSuccess: () => {
+      toast.info("批量更新已暫停");
+    },
+  });
+
+  const resumeBatchUpdateMutation = trpc.admin.resumeBatchUpdate.useMutation({
+    onSuccess: () => {
+      toast.info("批量更新已繼續");
+    },
+  });
+
+  // 輪詢批量更新進度
+  const { data: batchProgress } = trpc.admin.getBatchUpdateProgress.useQuery(undefined, {
+    enabled: isBatchUpdating,
+    refetchInterval: isBatchUpdating ? 2000 : false,
+  });
+
+  // 當批量更新完成時，停止輪詢
+  useEffect(() => {
+    if (batchProgress && !batchProgress.isRunning && isBatchUpdating) {
+      setIsBatchUpdating(false);
+      toast.success(`批量更新完成！成功: ${batchProgress.successCount}，失敗: ${batchProgress.failureCount}`);
+      utils.admin.getDataSources.invalidate();
+    }
+  }, [batchProgress, isBatchUpdating]);
 
   const deleteDataSourceMutation = trpc.admin.deleteDataSource.useMutation({
     onSuccess: () => {
@@ -449,23 +476,103 @@ export function AdminDataSources() {
                 )}
               </Button>
               <Button
-                onClick={() => updateEbayRecordsMutation.mutate()}
-                disabled={updateEbayRecordsMutation.isPending}
+                onClick={() => batchUpdateMutation.mutate()}
+                disabled={batchUpdateMutation.isPending || isBatchUpdating}
                 variant="outline"
+                className="bg-orange-500 text-white hover:bg-orange-600"
               >
-                {updateEbayRecordsMutation.isPending ? (
+                {batchUpdateMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    更新中...
+                    啟動中...
                   </>
                 ) : (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    更新 eBay 交易記錄
+                    批量更新所有卡牌 eBay 價格
                   </>
                 )}
               </Button>
+              {isBatchUpdating && batchProgress && (
+                <Button
+                  onClick={() => {
+                    if (batchProgress.isPaused) {
+                      resumeBatchUpdateMutation.mutate();
+                    } else {
+                      pauseBatchUpdateMutation.mutate();
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  {batchProgress.isPaused ? "繼續" : "暫停"}
+                </Button>
+              )}
             </div>
+
+            {/* 批量更新進度顯示 */}
+            {isBatchUpdating && batchProgress && (
+              <div className="mt-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
+                    <span className="text-lg font-semibold">
+                      批量更新進度: {batchProgress.processedCards} / {batchProgress.totalCards}
+                    </span>
+                    {batchProgress.isPaused && (
+                      <span className="text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
+                        已暫停
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {((batchProgress.processedCards / batchProgress.totalCards) * 100).toFixed(1)}%
+                  </span>
+                </div>
+
+                {/* 進度條 */}
+                <div className="w-full bg-muted rounded-full h-3">
+                  <div
+                    className="bg-orange-500 h-3 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${(batchProgress.processedCards / batchProgress.totalCards) * 100}%`,
+                    }}
+                  />
+                </div>
+
+                {/* 統計資訊 */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm text-green-600 mb-1">成功</div>
+                    <div className="text-2xl font-bold text-green-700">{batchProgress.successCount}</div>
+                  </div>
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <div className="text-sm text-red-600 mb-1">失敗</div>
+                    <div className="text-2xl font-bold text-red-700">{batchProgress.failureCount}</div>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-sm text-blue-600 mb-1">總記錄數</div>
+                    <div className="text-2xl font-bold text-blue-700">{batchProgress.totalRecordsAdded}</div>
+                  </div>
+                </div>
+
+                {/* 錯誤詳情 */}
+                {batchProgress.errors.length > 0 && (
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <h4 className="text-sm font-semibold text-red-700 mb-2">
+                      錯誤詳情（前 10 個）
+                    </h4>
+                    <div className="space-y-1 text-sm text-red-600 max-h-40 overflow-y-auto">
+                      {batchProgress.errors.slice(0, 10).map((error, index) => (
+                        <div key={index}>
+                          • {error.cardName} (ID: {error.cardId}): {error.error}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </Card>
 
           {/* Data Sources List */}

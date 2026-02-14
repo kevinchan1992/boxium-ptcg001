@@ -11,6 +11,7 @@ import { downloadAndEncodeImage, getBestImageUrl } from "./imageUtils";
 import { searchEbayByImageWithHkd } from "./ebayImageSearch";
 import { searchEbayItems, convertUsdToHkd, getUsdToHkdRate } from "./ebay";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
+import * as batchUpdateProgress from "./batchUpdateProgress";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1143,6 +1144,195 @@ try {
             message: `更新 eBay 價格失敗: ${error.message}`,
           });
         }
+      }),
+
+    // 批量更新所有卡牌 eBay 價格
+    batchUpdateEbayPrices: publicProcedure
+      .mutation(async ({ ctx }) => {
+        try {
+          // 檢查是否已經在運行
+          const currentProgress = batchUpdateProgress.getBatchUpdateProgress();
+          if (currentProgress.isRunning) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "批量更新已在運行中",
+            });
+          }
+
+          // 獲取所有數據源的唯一卡牌
+          const dataSources = await db.getDataSources();
+          const uniqueCards = new Map<number, { id: number; name: string }>();
+          
+          for (const source of dataSources) {
+            if (source.card) {
+              uniqueCards.set(source.card.id, {
+                id: source.card.id,
+                name: source.card.name,
+              });
+            }
+          }
+
+          const cardsToUpdate = Array.from(uniqueCards.values());
+          console.log(`[BatchUpdate] Starting batch update for ${cardsToUpdate.length} cards`);
+
+          // 初始化進度
+          batchUpdateProgress.initBatchUpdateProgress(cardsToUpdate.length);
+
+          // 在後台執行批量更新（異步）
+          (async () => {
+            for (const card of cardsToUpdate) {
+              try {
+                // 檢查是否暫停
+                while (batchUpdateProgress.isPaused()) {
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+
+                // 獲取卡牌資訊
+                const fullCard = await db.getCardById(card.id);
+                if (!fullCard) {
+                  batchUpdateProgress.updateProgressFailure(card.id, card.name, "卡牌不存在");
+                  continue;
+                }
+
+                // 簡化卡牌名稱
+                let simplifiedName = fullCard.name
+                  .replace(/\[.*?\]/g, '')
+                  .replace(/\(.*?\)/g, '')
+                  .replace(/[：:]/g, '')
+                  .replace(/\s+/g, ' ')
+                  .trim();
+
+                // 構建搜尋關鍵字
+                let searchQuery = simplifiedName;
+                if (fullCard.cardNumber) {
+                  const coreCardNumber = fullCard.cardNumber.match(/\d+/)?.[0] || fullCard.cardNumber;
+                  searchQuery += ` ${coreCardNumber}`;
+                }
+                searchQuery += " PSA 10 Pokemon";
+
+                let items: any[] = [];
+                let searchMethod: 'image' | 'text' = 'text';
+                const searchStartTime = Date.now();
+
+                // 優先使用圖片搜尋
+                const imageUrl = getBestImageUrl(fullCard);
+                if (imageUrl) {
+                  try {
+                    const base64Image = await downloadAndEncodeImage(imageUrl);
+                    const imageSearchResults = await searchEbayByImageWithHkd(base64Image, convertUsdToHkd, undefined, 20);
+                    
+                    if (imageSearchResults.length > 0) {
+                      items = imageSearchResults.map(item => ({
+                        price: { value: item.price.toString(), currency: item.currency },
+                        itemWebUrl: item.url,
+                      }));
+                      searchMethod = 'image';
+                    }
+                  } catch (error: any) {
+                    console.error(`[BatchUpdate] 圖片搜尋失敗: ${error.message}`);
+                  }
+                }
+
+                // 如果圖片搜尋失敗或無圖片，使用文字搜尋
+                if (items.length === 0) {
+                  items = await searchEbayItems(searchQuery, 20);
+                }
+
+                // 記錄搜尋統計
+                const searchDuration = Date.now() - searchStartTime;
+                await db.addSearchStat({
+                  cardId: card.id,
+                  searchMethod,
+                  searchDuration,
+                  resultsCount: items.length,
+                  success: items.length > 0,
+                  errorMessage: items.length === 0 ? "未找到 eBay 商品" : undefined,
+                });
+
+                if (items.length === 0) {
+                  batchUpdateProgress.updateProgressFailure(card.id, card.name, "未找到 eBay 商品");
+                  continue;
+                }
+
+                // 將 eBay 數據存入 prices 表
+                let itemsAdded = 0;
+                for (const item of items) {
+                  try {
+                    let hkdPrice: number;
+                    
+                    if (searchMethod === 'image') {
+                      hkdPrice = parseFloat(item.price.value);
+                    } else {
+                      const usdPrice = parseFloat(item.price.value);
+                      hkdPrice = await convertUsdToHkd(usdPrice);
+                    }
+
+                    await db.addPriceHistory({
+                      cardId: card.id,
+                      price: hkdPrice.toFixed(2),
+                      currency: "HKD",
+                      grade: "PSA10",
+                      source: "ebay",
+                      soldAt: new Date(),
+                      listingUrl: item.itemWebUrl,
+                    });
+                    itemsAdded++;
+                  } catch (error: any) {
+                    console.error(`[BatchUpdate] Error adding eBay price: ${error.message}`);
+                  }
+                }
+
+                batchUpdateProgress.updateProgressSuccess(itemsAdded);
+                console.log(`[BatchUpdate] Updated card ${card.id}, added ${itemsAdded} records`);
+
+                // 每處理 5 張卡片後暫停 1 秒，避免 API 限制
+                if (batchUpdateProgress.getBatchUpdateProgress().processedCards % 5 === 0) {
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+              } catch (error: any) {
+                console.error(`[BatchUpdate] Error updating card ${card.id}: ${error.message}`);
+                batchUpdateProgress.updateProgressFailure(card.id, card.name, error.message);
+              }
+            }
+
+            // 完成批量更新
+            batchUpdateProgress.completeBatchUpdate();
+            console.log(`[BatchUpdate] Batch update completed`);
+          })();
+
+          return {
+            success: true,
+            message: `批量更新已啟動，共 ${cardsToUpdate.length} 張卡牌`,
+            totalCards: cardsToUpdate.length,
+          };
+        } catch (error: any) {
+          console.error(`[BatchUpdate] Error starting batch update: ${error.message}`);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `啟動批量更新失敗: ${error.message}`,
+          });
+        }
+      }),
+
+    // 獲取批量更新進度
+    getBatchUpdateProgress: publicProcedure
+      .query(async ({ ctx }) => {
+        const progress = batchUpdateProgress.getBatchUpdateProgress();
+        return progress;
+      }),
+
+    // 暫停批量更新
+    pauseBatchUpdate: publicProcedure
+      .mutation(async ({ ctx }) => {
+        batchUpdateProgress.pauseBatchUpdate();
+        return { success: true, message: "批量更新已暫停" };
+      }),
+
+    // 繼續批量更新
+    resumeBatchUpdate: publicProcedure
+      .mutation(async ({ ctx }) => {
+        batchUpdateProgress.resumeBatchUpdate();
+        return { success: true, message: "批量更新已繼續" };
       }),
   }),
 

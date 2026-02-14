@@ -1715,3 +1715,45 @@
 - ✅ 顯示 4 個統計卡片：圖片搜尋成功率、回退次數、圖片搜尋平均耗時、文字搜尋平均耗時
 - ✅ 顯示搜尋效果分析卡片，提供建議
 - ✅ 使用 lucide-react 圖標和 Tailwind CSS 樣式
+
+## 新功能: Admin 頁面批量更新所有卡牌 eBay 價格
+
+- [ ] 創建批量更新進度追蹤機制（全局變量）
+- [ ] 創建 batchUpdateEbayPrices tRPC procedure（批量更新所有卡牌）
+- [ ] 創建 getBatchUpdateProgress tRPC query（獲取即時進度）
+- [ ] 創建 pauseBatchUpdate tRPC mutation（暫停批量更新）
+- [ ] 創建 resumeBatchUpdate tRPC mutation（繼續批量更新）
+- [ ] 替換 Admin 頁面「更新 eBay 交易記錄」按鈕為「批量更新所有卡牌 eBay 價格」
+- [ ] 添加即時進度顯示（已處理/總數、進度條）
+- [ ] 添加暫停/繼續按鈕
+- [ ] 顯示成功/失敗統計
+- [ ] 顯示錯誤詳情（前 10 個）
+- [ ] 測試批量更新功能
+
+## 新功能: Admin 頁面批量更新所有卡牌 eBay 價格 - 完成
+
+- [x] 創建批量更新進度追蹤機制（全局變量）
+- [x] 創建 batchUpdateEbayPrices tRPC procedure（批量更新所有卡牌）
+- [x] 創建 getBatchUpdateProgress tRPC query（獲取即時進度）
+- [x] 創建 pauseBatchUpdate tRPC mutation（暫停批量更新）
+- [x] 創建 resumeBatchUpdate tRPC mutation（繼續批量更新）
+- [x] 替換 Admin 頁面「更新 eBay 交易記錄」按鈕為「批量更新所有卡牌 eBay 價格」
+- [x] 添加即時進度顯示（已處理/總數、進度條）
+- [x] 添加暫停/繼續按鈕
+- [x] 顯示成功/失敗統計
+- [x] 顯示錯誤詳情（前 10 個）
+- [x] TypeScript 編譯無錯誤，開發服務器正常運行
+
+**實作結果：**
+- ✅ 創建 batchUpdateProgress.ts 模組管理批量更新進度
+- ✅ 實作批量更新 tRPC procedures（batchUpdateEbayPrices、getBatchUpdateProgress、pauseBatchUpdate、resumeBatchUpdate）
+- ✅ 替換「更新 eBay 交易記錄」按鈕為橙色「批量更新所有卡牌 eBay 價格」按鈕
+- ✅ 添加暫停/繼續按鈕（批量更新運行時顯示）
+- ✅ 實作即時進度顯示（每 2 秒輪詢一次）
+- ✅ 顯示進度條和百分比
+- ✅ 顯示成功/失敗/總記錄數統計卡片
+- ✅ 顯示錯誤詳情列表（前 10 個）
+- ✅ 批量更新完成後自動停止輪詢並顯示結果
+- ✅ 每處理 5 張卡片暫停 1 秒，避免 API 限制
+- ✅ 優先使用圖片搜尋，失敗時自動回退到文字搜尋
+- ✅ 記錄搜尋統計數據（方法、耗時、結果數量）
