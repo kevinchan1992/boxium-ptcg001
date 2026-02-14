@@ -1266,3 +1266,14 @@
 - [x] 所有頁面已改用 Supabase Auth
 - [ ] 用戶測試登入功能
 - [ ] 用戶測試 Admin 頁面認證
+
+
+## Bug 修復：useAdmin hook user profile 查詢錯誤
+
+- [x] 檢查 useAdmin hook 的錯誤日誌
+- [x] 識別問題 1：auth_id 欄位不存在
+- [x] 識別問題 2：email 欄位不存在
+- [x] 簡化 useAdmin hook，直接使用 Supabase Auth 用戶數據
+- [x] 使用 email 白名單判斷管理員權限
+- [ ] 測試 Admin 頁面認證
+- [ ] 驗證管理員權限檢查

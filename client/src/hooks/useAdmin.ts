@@ -9,7 +9,7 @@ export const useAdmin = () => {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        // 1. 獲取 Supabase Auth 用戶
+        // 獲取 Supabase Auth 用戶
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
         
         if (authError || !authUser) {
@@ -19,52 +19,18 @@ export const useAdmin = () => {
           return
         }
 
-        // 2. 從 user_profiles 表中獲取用戶資料
-        let { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('auth_id', authUser.id)
-          .single()
+        // 直接使用 Supabase Auth 用戶數據
+        // 管理員判斷：檢查 email 是否為管理員郵箱
+        const adminEmails = ['xyz.asia.co@gmail.com']
+        const isAdminUser = adminEmails.includes(authUser.email || '')
 
-        // 3. 如果 profile 不存在，自動創建
-        if (profileError && profileError.code === 'PGRST116') {
-          const { data: newProfile, error: insertError } = await supabase
-            .from('user_profiles')
-            .insert({
-              auth_id: authUser.id,
-              email: authUser.email,
-              name: authUser.user_metadata?.name || authUser.email?.split('@')[0],
-              role: authUser.email === 'xyz.asia.co@gmail.com' ? 'admin' : 'user',
-            })
-            .select()
-            .single()
-
-          if (insertError) {
-            console.error('Failed to create user profile:', insertError)
-            setUser(null)
-            setIsAdmin(false)
-            setLoading(false)
-            return
-          }
-
-          profile = newProfile
-        } else if (profileError) {
-          console.error('Failed to fetch user profile:', profileError)
-          setUser(null)
-          setIsAdmin(false)
-          setLoading(false)
-          return
-        }
-
-        // 4. 設置用戶資料和管理員狀態
         setUser({
-          id: profile.id,
-          auth_id: profile.auth_id,
-          email: profile.email,
-          name: profile.name,
-          role: profile.role,
+          id: authUser.id,
+          email: authUser.email,
+          user_metadata: authUser.user_metadata,
+          app_metadata: authUser.app_metadata,
         })
-        setIsAdmin(profile.role === 'admin')
+        setIsAdmin(isAdminUser)
       } catch (error) {
         console.error('Error checking admin status:', error)
         setUser(null)
