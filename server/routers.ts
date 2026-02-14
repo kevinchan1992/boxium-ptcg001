@@ -7,6 +7,8 @@ import { z } from "zod";
 import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
 import { searchAndSaveEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
+import { downloadAndEncodeImage, getBestImageUrl } from "./imageUtils";
+import { searchEbayByImageWithHkd } from "./ebayImageSearch";
 import { searchEbayItems, convertUsdToHkd, getUsdToHkdRate } from "./ebay";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
 
@@ -1015,11 +1017,43 @@ try {
           }
           searchQuery += " PSA 10 Pokemon";
 
-          console.log(`[Admin] Updating eBay prices for card ${input.cardId}: "${searchQuery}"`);
+          console.log(`[Admin] Updating eBay prices for card ${input.cardId}`);
 
-          // 搜尋 eBay 活躍商品
-          const items = await searchEbayItems(searchQuery, 20);
-          console.log(`[Admin] Found ${items.length} eBay items`);
+          let items: any[] = [];
+          let searchMethod = 'text';
+
+          // 優先使用圖片搜尋
+          const imageUrl = getBestImageUrl(card);
+          if (imageUrl) {
+            try {
+              console.log(`[Admin] 嘗試使用圖片搜尋: ${imageUrl}`);
+              const base64Image = await downloadAndEncodeImage(imageUrl);
+              const imageSearchResults = await searchEbayByImageWithHkd(base64Image, convertUsdToHkd, undefined, 20);
+              
+              if (imageSearchResults.length > 0) {
+                // 圖片搜尋成功，使用圖片搜尋結果
+                items = imageSearchResults.map(item => ({
+                  price: { value: item.price.toString(), currency: item.currency },
+                  itemWebUrl: item.url,
+                }));
+                searchMethod = 'image';
+                console.log(`[Admin] 圖片搜尋成功，找到 ${items.length} 個商品`);
+              } else {
+                console.log(`[Admin] 圖片搜尋未找到商品，回退到文字搜尋`);
+              }
+            } catch (error: any) {
+              console.error(`[Admin] 圖片搜尋失敗: ${error.message}，回退到文字搜尋`);
+            }
+          } else {
+            console.log(`[Admin] 無有效圖片 URL，使用文字搜尋`);
+          }
+
+          // 如果圖片搜尋失敗或無圖片，使用文字搜尋
+          if (items.length === 0) {
+            console.log(`[Admin] 使用文字搜尋: "${searchQuery}"`);
+            items = await searchEbayItems(searchQuery, 20);
+            console.log(`[Admin] 文字搜尋找到 ${items.length} 個商品`);
+          }
 
           if (items.length === 0) {
             return { success: false, message: "未找到 eBay 商品", itemsAdded: 0 };
@@ -1029,8 +1063,16 @@ try {
           let itemsAdded = 0;
           for (const item of items) {
             try {
-              const usdPrice = parseFloat(item.price.value);
-              const hkdPrice = await convertUsdToHkd(usdPrice);
+              let hkdPrice: number;
+              
+              // 如果是圖片搜尋結果，價格已經轉換為 HKD
+              if (searchMethod === 'image') {
+                hkdPrice = parseFloat(item.price.value);
+              } else {
+                // 文字搜尋結果，需要轉換價格
+                const usdPrice = parseFloat(item.price.value);
+                hkdPrice = await convertUsdToHkd(usdPrice);
+              }
 
               // 存入資料庫（標記數據來源為 "ebay"）
               await db.addPriceHistory({
