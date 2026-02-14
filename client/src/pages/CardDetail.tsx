@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRoute } from "wouter";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight, Heart, Share2 } from "lucide-react";
@@ -148,6 +149,15 @@ export default function CardDetail() {
 
   return (
     <div className="min-h-screen py-8 px-8">
+        {/* Breadcrumb */}
+        <Breadcrumb 
+          items={[
+            { label: "主頁", href: "/" },
+            { label: "搜尋", href: "/research" },
+            { label: card.name }
+          ]}
+        />
+        
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">

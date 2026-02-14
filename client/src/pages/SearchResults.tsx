@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation, useSearch } from "wouter";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -29,6 +30,14 @@ export default function SearchResults() {
 
   return (
     <div className="min-h-screen py-8 px-8">
+        {/* Breadcrumb */}
+        <Breadcrumb 
+          items={[
+            { label: "主頁", href: "/" },
+            { label: "搜尋" }
+          ]}
+        />
+        
         {/* Search Bar */}
         <div className="mb-8">
           <form onSubmit={handleSearch} className="relative max-w-2xl">
