@@ -1533,3 +1533,43 @@
 - [x] 減小首頁熱門卡牌區塊圖標（w-6 h-6 md:w-8 md:h-8）和間距（gap-2, mb-3）
 - [x] 減小搜尋頁面標題（text-base sm:text-lg）和副標題（text-xs sm:text-sm）
 - [x] 測試首頁顯示效果（TypeScript 無錯誤）
+
+## eBay API 整合和貨幣換算功能
+
+- [ ] 研究 eBay API（Browse API / Finding API）使用方式
+- [ ] 研究 eBay API 認證流程（App ID / OAuth）
+- [ ] 創建後端 eBay API 調用功能
+- [ ] 實作 USD → HKD 貨幣換算邏輯
+- [ ] 在卡牌詳情頁整合 eBay 交易數據顯示
+- [ ] 將 eBay 交易記錄存儲到資料庫
+- [ ] 測試 eBay API 整合功能
+
+## eBay 整合和貨幣換算功能（更新方案）
+
+- [x] 研究 eBay API（Browse API / Finding API）使用方式
+- [x] 研究 eBay API 認證流程（App ID / OAuth）
+- [x] 研究 Grade10 的 eBay 整合方式
+- [ ] 創建後端 USD → HKD 貨幣換算功能（使用免費匯率 API）
+- [ ] 在卡牌詳情頁添加「查看 eBay 已售出商品」按鈕
+- [ ] 構建 eBay 已售出商品搜尋 URL（使用卡牌名稱 + PSA 10）
+- [ ] 測試 eBay 整合功能
+
+## eBay Browse API 整合和貨幣換算功能（最終方案）
+
+- [x] 研究 eBay API 使用方式和限制
+- [x] 確定使用 eBay Browse API 搜尋活躍商品
+- [ ] 創建後端 eBay Browse API 調用功能（使用 EBAY_APP_ID）
+- [ ] 實作 USD → HKD 貨幣換算邏輯（使用免費匯率 API）
+- [ ] 在卡牌詳情頁顯示 eBay 市場參考價
+- [ ] 明確標示數據來源為「市場參考價」
+- [ ] 測試 eBay Browse API 整合功能
+
+## eBay Browse API 整合和貨幣換算功能（最終方案）
+
+- [x] 研究 eBay API 使用方式和限制
+- [x] 確定使用 eBay Browse API 搜尋活躍商品
+- [x] 創建後端 eBay Browse API 調用功能（使用 EBAY_APP_ID 和 EBAY_CERT_ID）
+- [x] 實作 USD → HKD 貨幣換算邏輯（使用免費匯率 API）
+- [x] 在卡牌詳情頁顯示 eBay 市場參考價
+- [x] 明確標示數據來源為「市場參考價」
+- [x] 測試 eBay Browse API 整合功能

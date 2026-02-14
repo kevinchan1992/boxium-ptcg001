@@ -7,6 +7,7 @@ import { z } from "zod";
 import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
 import { searchAndSaveEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
+import { searchEbayItems, convertUsdToHkd, getUsdToHkdRate } from "./ebay";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
 
 export const appRouter = router({
@@ -296,6 +297,56 @@ export const appRouter = router({
           console.error("[eBay] Error fetching sold items:", error.message);
           // Return empty array instead of throwing error to avoid breaking the UI
           return [];
+        }
+      }),
+
+    // eBay Browse API - 搜尋活躍商品作為市場參考價
+    searchEbayMarketPrice: publicProcedure
+      .input(z.object({
+        cardName: z.string(),
+        cardNumber: z.string().optional(),
+        limit: z.number().optional().default(10),
+      }))
+      .query(async ({ input }) => {
+        try {
+          // 構建搜尋關鍵字：卡牌名稱 + 卡號 + PSA 10
+          let searchQuery = input.cardName;
+          if (input.cardNumber) {
+            searchQuery += ` ${input.cardNumber}`;
+          }
+          searchQuery += " PSA 10";
+
+          // 搜尋 eBay 活躍商品
+          const items = await searchEbayItems(searchQuery, input.limit);
+
+          // 轉換價格為 HKD
+          const itemsWithHkd = await Promise.all(
+            items.map(async (item) => {
+              const usdPrice = parseFloat(item.price.value);
+              const hkdPrice = await convertUsdToHkd(usdPrice);
+              return {
+                ...item,
+                priceHkd: hkdPrice,
+              };
+            })
+          );
+
+          return itemsWithHkd;
+        } catch (error: any) {
+          console.error("[eBay Browse API] Error:", error.message);
+          return [];
+        }
+      }),
+
+    // 獲取當前 USD → HKD 匯率
+    getExchangeRate: publicProcedure
+      .query(async () => {
+        try {
+          const rate = await getUsdToHkdRate();
+          return { rate, lastUpdated: new Date() };
+        } catch (error: any) {
+          console.error("[Exchange Rate] Error:", error.message);
+          return { rate: 7.8, lastUpdated: new Date() }; // 後備匯率
         }
       }),
   }),

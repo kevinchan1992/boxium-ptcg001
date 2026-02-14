@@ -89,6 +89,22 @@ export default function CardDetail() {
     { enabled: !!cardId && activeSource === "ebay", retry: 1 }
   );
 
+  // Fetch eBay Browse API market price (active listings)
+  const { data: ebayMarketPrice = [], isLoading: ebayMarketLoading } = trpc.cards.searchEbayMarketPrice.useQuery(
+    { 
+      cardName: card?.name || "",
+      cardNumber: card?.cardNumber || undefined,
+      limit: 10 
+    },
+    { enabled: !!card && activeSource === "ebay", retry: 1 }
+  );
+
+  // Fetch current USD to HKD exchange rate
+  const { data: exchangeRate } = trpc.cards.getExchangeRate.useQuery(
+    undefined,
+    { enabled: activeSource === "ebay", retry: 1 }
+  );
+
   // Fetch price trend data
   const { data: priceTrendData, isLoading: trendLoading } = trpc.cards.getPriceTrendData.useQuery(
     { cardId: cardId!, days: 90 },
@@ -351,6 +367,59 @@ export default function CardDetail() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              ) : activeSource === "ebay" && ebayMarketPrice.length > 0 ? (
+                <div>
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                      ℹ️ 以下為 eBay 活躍商品的「市場參考價」，非已售出交易記錄。
+                      {exchangeRate && (
+                        <span className="ml-1">
+                          當前匯率：1 USD = {exchangeRate.rate.toFixed(4)} HKD
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="overflow-y-auto max-h-96 scrollbar-hide">
+                    <table className="w-full">
+                      <thead className="sticky top-0 bg-card border-b border-border">
+                        <tr>
+                          <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
+                            商品標題
+                          </th>
+                          <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm w-28">
+                            USD 價格
+                          </th>
+                          <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm w-28">
+                            HKD 價格
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {ebayMarketPrice.map((item, index) => (
+                          <tr key={index} className="hover:bg-muted/50 transition-colors">
+                            <td className="py-3 px-4 text-foreground text-sm">
+                              <a
+                                href={item.itemWebUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:text-primary hover:underline flex items-center gap-2"
+                              >
+                                {item.title}
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </td>
+                            <td className="py-3 px-4 text-right font-semibold text-muted-foreground text-sm">
+                              ${parseFloat(item.price.value).toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
+                              ${item.priceHkd.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
                 <p className="text-muted-foreground py-8 text-center">
