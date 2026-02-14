@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -12,6 +12,7 @@ export const users = mysqlTable("users", {
   password: varchar("password", { length: 255 }), // For local auth users (nullable, bcrypt hashed)
   name: text("name"),
   loginMethod: varchar("loginMethod", { length: 64 }), // "oauth" or "local"
+  emailVerified: boolean("emailVerified").default(false), // Email verification status
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

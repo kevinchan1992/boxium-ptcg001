@@ -1,11 +1,29 @@
 import { useState } from "react";
-import { Link } from "wouter";
-import { TrendingUp, Search, BarChart3, Trophy, Facebook, Twitter, Instagram, Mail } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { TrendingUp, Search, BarChart3, Trophy, Facebook, Twitter, Instagram, Mail, User, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 export default function Home() {
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Get current user
+  const { data: user, isLoading: userLoading } = trpc.auth.me.useQuery();
+  
+  // Logout mutation
+  const logoutMutation = trpc.auth.logout.useMutation({
+    onSuccess: () => {
+      toast.success("已登出");
+      window.location.reload();
+    },
+  });
+  
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f8f9fa" }}>
@@ -48,21 +66,48 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/research">
                 <Button
-                  className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 hover:shadow-2xl"
+                  className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
                   style={{ backgroundColor: "#ffed00", color: "#06038d" }}
                 >
-                  開始搜尋 →
+                  開始探索
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button
-                  variant="outline"
-                  className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
-                  style={{ borderColor: "#ffed00", color: "white" }}
-                >
-                  登入 / 註冊
-                </Button>
-              </Link>
+              
+              {!userLoading && (
+                user ? (
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      onClick={() => setLocation("/user-profile")}
+                      variant="outline"
+                      className="px-6 md:px-8 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
+                      style={{ borderColor: "#ffed00", color: "white" }}
+                    >
+                      <User className="mr-2 h-5 w-5" />
+                      {user.username || user.name || "用戶"}
+                    </Button>
+                    <Button
+                      onClick={handleLogout}
+                      variant="outline"
+                      className="px-6 md:px-8 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
+                      style={{ borderColor: "#ffed00", color: "white" }}
+                      disabled={logoutMutation.isPending}
+                    >
+                      <LogOut className="mr-2 h-5 w-5" />
+                      登出
+                    </Button>
+                  </div>
+                ) : (
+                  <Link href="/login">
+                    <Button
+                      variant="outline"
+                      className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
+                      style={{ borderColor: "#ffed00", color: "white" }}
+                    >
+                      登入 / 註冊
+                    </Button>
+                  </Link>
+                )
+              )}
             </div>
           </div>
         </div>

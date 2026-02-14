@@ -1,21 +1,26 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
+import * as db from "./db";
 
-// Email configuration
-// In production, these should be environment variables
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587");
-const SMTP_USER = process.env.SMTP_USER || "";
-const SMTP_PASS = process.env.SMTP_PASS || "";
-const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@boxium.com";
-const FROM_NAME = process.env.FROM_NAME || "BOXIUM PTCG";
+// Email configuration will be loaded from database
 
 let transporter: Transporter | null = null;
 
 /**
  * Initialize email transporter
  */
-function getTransporter(): Transporter {
+async function getTransporter(): Promise<Transporter> {
+  // Load SMTP settings from database
+  const smtpHost = await db.getSystemSetting("smtp_host");
+  const smtpPort = await db.getSystemSetting("smtp_port");
+  const smtpUser = await db.getSystemSetting("smtp_user");
+  const smtpPass = await db.getSystemSetting("smtp_pass");
+
+  const SMTP_HOST = smtpHost?.settingValue || "smtp.gmail.com";
+  const SMTP_PORT = parseInt(smtpPort?.settingValue || "587");
+  const SMTP_USER = smtpUser?.settingValue || "";
+  const SMTP_PASS = smtpPass?.settingValue || "";
+
   if (!transporter) {
     transporter = nodemailer.createTransport({
       host: SMTP_HOST,
@@ -38,6 +43,17 @@ export async function sendPasswordResetEmail(
   resetToken: string,
   username: string
 ): Promise<boolean> {
+  // Load SMTP settings from database
+  const smtpUser = await db.getSystemSetting("smtp_user");
+  const smtpPass = await db.getSystemSetting("smtp_pass");
+  const fromEmail = await db.getSystemSetting("from_email");
+  const fromName = await db.getSystemSetting("from_name");
+
+  const SMTP_USER = smtpUser?.settingValue || "";
+  const SMTP_PASS = smtpPass?.settingValue || "";
+  const FROM_EMAIL = fromEmail?.settingValue || "noreply@boxium.com";
+  const FROM_NAME = fromName?.settingValue || "BOXIUM PTCG";
+
   // Check if SMTP is configured
   if (!SMTP_USER || !SMTP_PASS) {
     console.warn("[Email] SMTP not configured, skipping email send");
@@ -75,7 +91,7 @@ export async function sendPasswordResetEmail(
       `,
     };
 
-    const transporter = getTransporter();
+    const transporter = await getTransporter();
     await transporter.sendMail(mailOptions);
     console.log(`[Email] Password reset email sent to ${email}`);
     return true;

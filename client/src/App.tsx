@@ -17,6 +17,7 @@ import Favorites from "./pages/Favorites";
 import UserProfile from "./pages/UserProfile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import SmtpSettings from "./pages/SmtpSettings";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/user-profile" component={UserProfile} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/smtp-settings" component={SmtpSettings} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

@@ -1076,6 +1076,83 @@ export const appRouter = router({
         
         return { success: true };
       }),
+
+    // Get SMTP settings
+    getSmtpSettings: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        
+        const settings = {
+          smtpHost: await db.getSystemSetting("smtp_host"),
+          smtpPort: await db.getSystemSetting("smtp_port"),
+          smtpUser: await db.getSystemSetting("smtp_user"),
+          fromEmail: await db.getSystemSetting("from_email"),
+          fromName: await db.getSystemSetting("from_name"),
+        };
+        
+        return {
+          smtpHost: settings.smtpHost?.settingValue || "",
+          smtpPort: settings.smtpPort?.settingValue || "587",
+          smtpUser: settings.smtpUser?.settingValue || "",
+          fromEmail: settings.fromEmail?.settingValue || "",
+          fromName: settings.fromName?.settingValue || "BOXIUM PTCG",
+        };
+      }),
+
+    // Save SMTP settings
+    saveSmtpSettings: protectedProcedure
+      .input(z.object({
+        smtpHost: z.string(),
+        smtpPort: z.string(),
+        smtpUser: z.string(),
+        smtpPass: z.string().optional(),
+        fromEmail: z.string(),
+        fromName: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        
+        await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
+        await db.setSystemSetting("smtp_port", input.smtpPort, "SMTP server port");
+        await db.setSystemSetting("smtp_user", input.smtpUser, "SMTP username");
+        if (input.smtpPass) {
+          await db.setSystemSetting("smtp_pass", input.smtpPass, "SMTP password");
+        }
+        await db.setSystemSetting("from_email", input.fromEmail, "From email address");
+        await db.setSystemSetting("from_name", input.fromName, "From name");
+        
+        return { success: true };
+      }),
+
+    // Test SMTP connection
+    testSmtpConnection: protectedProcedure
+      .input(z.object({
+        email: z.string().email(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        
+        const { sendPasswordResetEmail, generateResetToken } = await import("./emailService");
+        
+        // Send test email using password reset template
+        const testToken = generateResetToken();
+        const emailSent = await sendPasswordResetEmail(input.email, testToken, "測試用戶");
+        
+        if (!emailSent) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "SMTP 未配置或發送失敗，請檢查 SMTP 設定",
+          });
+        }
+        
+        return { success: true };
+      }),
   }),
 
   watchlist: router({
