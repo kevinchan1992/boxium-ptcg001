@@ -289,6 +289,14 @@ export async function getCardByCardId(cardId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getAllCards() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.select().from(cards);
+  return result;
+}
+
 export async function getPopularCards(limit: number = 10) {
   const db = await getDb();
   if (!db) return [];

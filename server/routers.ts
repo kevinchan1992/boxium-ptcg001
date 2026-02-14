@@ -52,6 +52,78 @@ export const appRouter = router({
         return cards;
       }),
 
+    getTrending: publicProcedure
+      .input(z.object({
+        limit: z.number().optional().default(5),
+      }))
+      .query(async ({ input }) => {
+        try {
+          // Get all cards with price history
+          const allCards = await db.getAllCards();
+          const now = new Date();
+          const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+          const trendingCards = [];
+
+          for (const card of allCards) {
+            // Get price history for this card (PSA 10 only)
+            const allHistory = await db.getPriceHistoryByCardId(card.id);
+            const psa10History = allHistory.filter(r => 
+              r.grade === "PSA 10" || r.grade === "PSA10"
+            );
+
+            if (psa10History.length === 0) continue;
+
+            // Calculate recent 7 days average (last 7 days)
+            const recentPrices = psa10History
+              .filter(r => {
+                const date = new Date(r.soldAt || r.createdAt);
+                return date >= sevenDaysAgo && date <= now;
+              })
+              .map(r => parseFloat(r.price));
+
+            // Calculate previous 7 days average (7-14 days ago)
+            const previousPrices = psa10History
+              .filter(r => {
+                const date = new Date(r.soldAt || r.createdAt);
+                return date >= fourteenDaysAgo && date < sevenDaysAgo;
+              })
+              .map(r => parseFloat(r.price));
+
+            // Need both periods to have data
+            if (recentPrices.length === 0 || previousPrices.length === 0) continue;
+
+            const recentAvg = recentPrices.reduce((a, b) => a + b, 0) / recentPrices.length;
+            const previousAvg = previousPrices.reduce((a, b) => a + b, 0) / previousPrices.length;
+            const priceChange = ((recentAvg - previousAvg) / previousAvg) * 100;
+
+            // Only include cards with positive price change
+            if (priceChange > 0) {
+              trendingCards.push({
+                ...card,
+                currentPrice: recentAvg,
+                priceChange,
+                priceChangeFormatted: `+${priceChange.toFixed(1)}%`,
+              });
+            }
+          }
+
+          // Sort by price change descending and return top N
+          const topTrending = trendingCards
+            .sort((a, b) => b.priceChange - a.priceChange)
+            .slice(0, input.limit);
+
+          return topTrending;
+        } catch (error: any) {
+          console.error("[getTrending] Error:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to get trending cards: ${error.message}`,
+          });
+        }
+      }),
+
     getPriceTrendData: publicProcedure
       .input(z.object({
         cardId: z.number(),

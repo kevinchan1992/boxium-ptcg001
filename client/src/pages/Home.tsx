@@ -1,9 +1,77 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { TrendingUp, Search, BarChart3, Trophy, Facebook, Twitter, Instagram, Mail, User, LogOut } from "lucide-react";
+import { TrendingUp, Search, BarChart3, Trophy, Facebook, Twitter, Instagram, Mail, User, LogOut, Flame } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { trpc } from "@/lib/trpc";
 
+
+function TrendingCardsGrid() {
+  const [, setLocation] = useLocation();
+  const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery({ limit: 5 });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: "#06038d" }}></div>
+      </div>
+    );
+  }
+
+  if (trendingCards.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500 text-lg">暂無熱門卡牌數據</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+      {trendingCards.map((card: any) => (
+        <div
+          key={card.id}
+          onClick={() => setLocation(`/card/${card.id}`)}
+          className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer hover:scale-105 border-2 border-transparent hover:border-[#ffed00]"
+        >
+          {/* Card Image */}
+          <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
+            {card.imageUrl ? (
+              <img
+                src={card.imageUrl}
+                alt={card.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <span className="text-sm">無圖片</span>
+              </div>
+            )}
+            {/* Price Change Badge */}
+            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-bold shadow-lg">
+              {card.priceChangeFormatted}
+            </div>
+          </div>
+
+          {/* Card Info */}
+          <div className="p-4">
+            <h3 className="font-bold text-sm mb-1 line-clamp-1" style={{ color: "#06038d" }}>
+              {card.name}
+            </h3>
+            {card.nameJa && (
+              <p className="text-xs text-gray-500 mb-2 line-clamp-1">{card.nameJa}</p>
+            )}
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold" style={{ color: "#06038d" }}>
+                HK${card.currentPrice.toFixed(0)}
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -123,8 +191,27 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Data Sources Section */}
+      {/* Trending Cards Section */}
       <section className="py-12 md:py-20 px-4" style={{ backgroundColor: "#f8f9fa" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12 md:mb-16">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Flame className="w-8 h-8 md:w-10 md:h-10" style={{ color: "#ff4500" }} />
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold" style={{ color: "#06038d" }}>
+                熱門卡牌
+              </h2>
+            </div>
+            <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto px-2">
+              近期價格漲幅最高的卡牌，掌握市場熱點
+            </p>
+          </div>
+
+          <TrendingCardsGrid />
+        </div>
+      </section>
+
+      {/* Data Sources Section */}
+      <section className="py-12 md:py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4" style={{ color: "#06038d" }}>
