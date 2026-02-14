@@ -988,6 +988,38 @@ const stats = await db.getDashboardStats();
         return stats;
       }),
 
+    // 獲取搜尋統計數據
+    getSearchStats: publicProcedure
+      .query(async ({ ctx }) => {
+        const stats = await db.getSearchStats();
+        if (!stats) {
+          return {
+            totalSearches: 0,
+            imageSearches: 0,
+            textSearches: 0,
+            avgImageDuration: 0,
+            avgTextDuration: 0,
+            successfulSearches: 0,
+            imageSuccessRate: 0,
+            fallbackToTextCount: 0,
+          };
+        }
+
+        // 計算圖片搜尋成功率
+        const imageSuccessRate = stats.imageSearches > 0 
+          ? (stats.imageSearches / stats.totalSearches) * 100 
+          : 0;
+
+        // 計算回退到文字搜尋的次數（總搜尋次數 - 圖片搜尋次數）
+        const fallbackToTextCount = stats.textSearches;
+
+        return {
+          ...stats,
+          imageSuccessRate: Math.round(imageSuccessRate * 100) / 100,
+          fallbackToTextCount,
+        };
+      }),
+
     // 更新指定卡牌的 eBay 交易記錄（存入 prices 表）
     updateEbayPrices: publicProcedure
       .input(z.object({
@@ -1020,7 +1052,8 @@ try {
           console.log(`[Admin] Updating eBay prices for card ${input.cardId}`);
 
           let items: any[] = [];
-          let searchMethod = 'text';
+          let searchMethod: 'image' | 'text' = 'text';
+          const searchStartTime = Date.now();
 
           // 優先使用圖片搜尋
           const imageUrl = getBestImageUrl(card);
@@ -1054,6 +1087,17 @@ try {
             items = await searchEbayItems(searchQuery, 20);
             console.log(`[Admin] 文字搜尋找到 ${items.length} 個商品`);
           }
+
+          // 記錄搜尋統計
+          const searchDuration = Date.now() - searchStartTime;
+          await db.addSearchStat({
+            cardId: input.cardId,
+            searchMethod,
+            searchDuration,
+            resultsCount: items.length,
+            success: items.length > 0,
+            errorMessage: items.length === 0 ? "未找到 eBay 商品" : undefined,
+          });
 
           if (items.length === 0) {
             return { success: false, message: "未找到 eBay 商品", itemsAdded: 0 };

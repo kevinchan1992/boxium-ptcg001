@@ -184,4 +184,21 @@ export const favorites = mysqlTable("favorites", {
 export type Favorite = typeof favorites.$inferSelect;
 export type InsertFavorite = typeof favorites.$inferInsert;
 
+/**
+ * Search stats table - stores eBay search statistics for monitoring
+ */
+export const searchStats = mysqlTable("searchStats", {
+  id: int("id").autoincrement().primaryKey(),
+  cardId: int("cardId").notNull(), // Foreign key to cards table
+  searchMethod: mysqlEnum("searchMethod", ["image", "text"]).notNull(), // Search method used
+  searchDuration: int("searchDuration").notNull(), // Search duration in milliseconds
+  resultsCount: int("resultsCount").notNull(), // Number of results found
+  success: boolean("success").default(true).notNull(), // Whether search was successful
+  errorMessage: text("errorMessage"), // Error message if search failed
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SearchStat = typeof searchStats.$inferSelect;
+export type InsertSearchStat = typeof searchStats.$inferInsert;
+
 

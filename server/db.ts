@@ -1,6 +1,6 @@
 import { eq, desc, and, gte, lte, or, like, sql, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites } from "../drizzle/schema";;
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat } from "../drizzle/schema";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -627,6 +627,63 @@ export async function addPriceHistory(data: {
   });
 
   return result;
+}
+
+/**
+ * Add search statistics record
+ */
+export async function addSearchStat(data: InsertSearchStat) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.insert(searchStats).values(data);
+
+  return result;
+}
+
+/**
+ * Get search statistics summary
+ */
+export async function getSearchStats() {
+  const db = await getDb();
+  if (!db) return null;
+
+  // 獲取總搜尋次數
+  const totalSearches = await db.select({ count: sql<number>`count(*)` }).from(searchStats);
+  
+  // 獲取圖片搜尋成功次數
+  const imageSearches = await db.select({ count: sql<number>`count(*)` })
+    .from(searchStats)
+    .where(eq(searchStats.searchMethod, 'image'));
+  
+  // 獲取文字搜尋次數
+  const textSearches = await db.select({ count: sql<number>`count(*)` })
+    .from(searchStats)
+    .where(eq(searchStats.searchMethod, 'text'));
+  
+  // 獲取平均搜尋時間（圖片）
+  const avgImageDuration = await db.select({ avg: sql<number>`avg(searchDuration)` })
+    .from(searchStats)
+    .where(eq(searchStats.searchMethod, 'image'));
+  
+  // 獲取平均搜尋時間（文字）
+  const avgTextDuration = await db.select({ avg: sql<number>`avg(searchDuration)` })
+    .from(searchStats)
+    .where(eq(searchStats.searchMethod, 'text'));
+  
+  // 獲取成功的搜尋次數
+  const successfulSearches = await db.select({ count: sql<number>`count(*)` })
+    .from(searchStats)
+    .where(eq(searchStats.success, true));
+
+  return {
+    totalSearches: Number(totalSearches[0]?.count || 0),
+    imageSearches: Number(imageSearches[0]?.count || 0),
+    textSearches: Number(textSearches[0]?.count || 0),
+    avgImageDuration: Number(avgImageDuration[0]?.avg || 0),
+    avgTextDuration: Number(avgTextDuration[0]?.avg || 0),
+    successfulSearches: Number(successfulSearches[0]?.count || 0),
+  };
 }
 
 export async function createPlaceholderCard(snkrdunkId: string) {

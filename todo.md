@@ -1683,3 +1683,35 @@
 **注意：**
 - 當前版本中沒有 batchUpdateEbayPrices procedure（之前的版本有，但回滾後丟失）
 - 單卡更新功能（updateEbayPrices）已整合圖片搜尋
+
+## 新功能: Admin 頁面圖片搜尋效果統計面板
+
+- [ ] 設計數據庫 schema 儲存搜尋統計數據（searchStats 表）
+- [ ] 修改 updateEbayPrices procedure 記錄搜尋統計（搜尋方法、搜尋時間、結果數量）
+- [ ] 創建獲取搜尋統計的 tRPC procedure（admin.getSearchStats）
+- [ ] 在 Admin 頁面添加統計面板 UI
+  - 顯示圖片搜尋成功率
+  - 顯示回退到文字搜尋的次數
+  - 顯示平均搜尋時間（圖片 vs 文字）
+  - 顯示搜尋方法分布圖表
+- [ ] 測試統計功能並驗證數據準確性
+
+## 新功能: Admin 頁面圖片搜尋效果統計面板 - 完成
+
+- [x] 設計數據庫 schema 儲存搜尋統計數據（searchStats 表）
+- [x] 修改 updateEbayPrices procedure 記錄搜尋統計
+- [x] 創建獲取搜尋統計的 tRPC procedure (admin.getSearchStats)
+- [x] 在 Admin 頁面添加統計面板 UI
+- [x] 顯示圖片搜尋成功率
+- [x] 顯示回退到文字搜尋的次數
+- [x] 顯示平均搜尋時間（圖片 vs 文字）
+- [x] 測試 TypeScript 編譯無錯誤，開發服務器正常運行
+
+**實作結果：**
+- ✅ 創建 searchStats 表儲存搜尋統計數據
+- ✅ updateEbayPrices procedure 記錄搜尋開始時間、結束時間、搜尋方法、結果數量
+- ✅ 創建 admin.getSearchStats procedure 返回統計數據
+- ✅ 在 AdminDashboard 添加 SearchStatsPanel 組件
+- ✅ 顯示 4 個統計卡片：圖片搜尋成功率、回退次數、圖片搜尋平均耗時、文字搜尋平均耗時
+- ✅ 顯示搜尋效果分析卡片，提供建議
+- ✅ 使用 lucide-react 圖標和 Tailwind CSS 樣式
