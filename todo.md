@@ -1290,3 +1290,11 @@
 - [x] 修復 useAdmin hook 的 onAuthStateChange 處理
 - [x] 修復 OAuth redirect 邏輯，支持 redirect 參數
 - [ ] 用戶測試修復效果
+
+
+## Bug 修復：Admin 頁面閃退問題
+
+- [x] 診斷閃退原因（用戶登入後仍被重定向）
+- [x] 識別問題：window.location.href 硬重定向在 render 階段執行
+- [x] 修復 Admin 頁面，改用 useEffect + setLocation
+- [ ] 用戶測試修復效果

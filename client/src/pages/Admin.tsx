@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { MainLayout } from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +13,13 @@ export default function Admin() {
   const [, setLocation] = useLocation();
   const { isAdmin, loading, user } = useAdmin();
 
+  // 使用 useEffect 處理重定向，避免在 render 階段執行
+  useEffect(() => {
+    if (!loading && !user) {
+      setLocation('/login-new?redirect=/admin');
+    }
+  }, [loading, user, setLocation]);
+
   if (loading) {
     return (
       <MainLayout>
@@ -23,11 +30,7 @@ export default function Admin() {
     );
   }
 
-  // 如果用戶未登入，自動重定向到登入頁面
   if (!user) {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login-new?redirect=/admin';
-    }
     return (
       <MainLayout>
         <div className="min-h-screen flex items-center justify-center">
