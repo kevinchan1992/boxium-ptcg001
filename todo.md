@@ -1275,5 +1275,7 @@
 - [x] 識別問題 2：email 欄位不存在
 - [x] 簡化 useAdmin hook，直接使用 Supabase Auth 用戶數據
 - [x] 使用 email 白名單判斷管理員權限
-- [ ] 測試 Admin 頁面認證
-- [ ] 驗證管理員權限檢查
+- [x] 測試登入頁面顯示正常
+- [x] 測試 Google OAuth 跳轉正常
+- [ ] 用戶完成登入流程
+- [ ] 用戶測試 Admin 頁面認證
