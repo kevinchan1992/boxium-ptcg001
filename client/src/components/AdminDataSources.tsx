@@ -55,6 +55,13 @@ export function AdminDataSources() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const pausedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [batchUpdateResult, setBatchUpdateResult] = useState<{
+    successCount: number;
+    failedCount: number;
+    totalItemsAdded: number;
+    totalCards: number;
+    errors: string[];
+  } | null>(null);
 
   const utils = trpc.useUtils();
   const dataSourcesQuery = trpc.admin.getDataSources.useQuery();
@@ -102,6 +109,17 @@ export function AdminDataSources() {
     },
     onError: (error: any) => {
       toast.error(`刪除失敗: ${error.message}`);
+    },
+  });
+
+  const batchUpdateEbayMutation = trpc.admin.batchUpdateEbayPrices.useMutation({
+    onSuccess: (result) => {
+      setBatchUpdateResult(result);
+      toast.success(result.message);
+      utils.admin.getDataSources.invalidate();
+    },
+    onError: (error: any) => {
+      toast.error(`批量更新失敗: ${error.message}`);
     },
   });
 
@@ -465,7 +483,54 @@ export function AdminDataSources() {
                   </>
                 )}
               </Button>
+              <Button
+                onClick={() => batchUpdateEbayMutation.mutate()}
+                disabled={batchUpdateEbayMutation.isPending}
+                variant="default"
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                {batchUpdateEbayMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    批量更新中...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    批量更新所有 eBay 價格
+                  </>
+                )}
+              </Button>
             </div>
+            {batchUpdateResult && (
+              <div className="mt-4 p-4 bg-muted rounded-lg">
+                <h3 className="text-lg font-semibold text-foreground mb-2">批量更新結果</h3>
+                <div className="space-y-2 text-sm">
+                  <p className="text-foreground">
+                    總卡牌數: {batchUpdateResult.totalCards}
+                  </p>
+                  <p className="text-green-600 dark:text-green-400">
+                    ✅ 成功: {batchUpdateResult.successCount} 張卡牌
+                  </p>
+                  <p className="text-red-600 dark:text-red-400">
+                    ❌ 失敗: {batchUpdateResult.failedCount} 張卡牌
+                  </p>
+                  <p className="text-blue-600 dark:text-blue-400">
+                    📊 總添加記錄: {batchUpdateResult.totalItemsAdded} 筆
+                  </p>
+                  {batchUpdateResult.errors && batchUpdateResult.errors.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-muted-foreground font-medium">錯誤詳情（前 10 個）:</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1">
+                        {batchUpdateResult.errors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* Data Sources List */}
