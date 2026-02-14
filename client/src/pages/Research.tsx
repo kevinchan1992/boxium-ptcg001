@@ -26,9 +26,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-8">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 md:px-8">
       {/* Hero Section */}
-      <div className="text-center space-y-6 max-w-3xl">
+      <div className="text-center space-y-6 max-w-3xl w-full">
         {/* Logo/Brand */}
         <div className="space-y-4">
           <img
@@ -36,11 +36,11 @@ export default function Home() {
             alt="BOXIUM"
             className="h-32 mx-auto"
           />
-          <h2 className="text-3xl font-semibold text-foreground">卡牌搜尋</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold text-foreground">卡牌搜尋</h2>
         </div>
 
         {/* Subtitle */}
-        <p className="text-lg text-muted-foreground">
+        <p className="text-base sm:text-lg text-muted-foreground px-4">
           取得任何卡牌的深入研究報告
         </p>
 

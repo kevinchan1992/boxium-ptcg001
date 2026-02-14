@@ -27,7 +27,7 @@ function TrendingCardsGrid() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
       {trendingCards.map((card: any) => (
         <div
           key={card.id}
@@ -48,21 +48,21 @@ function TrendingCardsGrid() {
               </div>
             )}
             {/* Price Change Badge */}
-            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-bold shadow-lg">
+            <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-red-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-lg">
               {card.priceChangeFormatted}
             </div>
           </div>
 
           {/* Card Info */}
-          <div className="p-4">
-            <h3 className="font-bold text-sm mb-1 line-clamp-1" style={{ color: "#06038d" }}>
+          <div className="p-3 sm:p-4">
+            <h3 className="font-bold text-xs sm:text-sm mb-1 line-clamp-1" style={{ color: "#06038d" }}>
               {card.name}
             </h3>
             {card.nameJa && (
-              <p className="text-xs text-gray-500 mb-2 line-clamp-1">{card.nameJa}</p>
+              <p className="text-[10px] sm:text-xs text-gray-500 mb-2 line-clamp-1">{card.nameJa}</p>
             )}
             <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold" style={{ color: "#06038d" }}>
+              <span className="text-sm sm:text-base md:text-lg font-bold" style={{ color: "#06038d" }}>
                 HK${card.currentPrice.toFixed(0)}
               </span>
             </div>
@@ -82,7 +82,7 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f8f9fa" }}>
       {/* Hero Section */}
-      <section className="pt-12 md:pt-20 pb-16 md:pb-24 px-4" style={{ backgroundColor: "#06038d" }}>
+      <section className="pt-16 md:pt-20 pb-16 md:pb-24 px-4 sm:px-6" style={{ backgroundColor: "#06038d" }}>
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center text-center space-y-8 md:space-y-12">
             {/* LOGO - Responsive sizing */}
@@ -132,7 +132,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-12 md:py-20 px-4 bg-white">
+      <section className="py-12 md:py-20 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4" style={{ color: "#06038d" }}>
@@ -192,7 +192,7 @@ export default function Home() {
       </section>
 
       {/* Trending Cards Section */}
-      <section className="py-12 md:py-20 px-4" style={{ backgroundColor: "#f8f9fa" }}>
+      <section className="py-12 md:py-20 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 md:mb-16">
             <div className="flex items-center justify-center gap-3 mb-4">
@@ -211,7 +211,7 @@ export default function Home() {
       </section>
 
       {/* Data Sources Section */}
-      <section className="py-12 md:py-20 px-4 bg-white">
+      <section className="py-12 md:py-20 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4" style={{ color: "#06038d" }}>
@@ -253,7 +253,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 md:py-20 px-4 bg-white">
+      <section className="py-12 md:py-20 px-4 sm:px-6 bg-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 md:mb-6" style={{ color: "#06038d" }}>
             準備好開始你的PTCG之旅了嗎？
@@ -285,7 +285,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 md:py-16 px-4 border-t" style={{ backgroundColor: "#06038d" }}>
+      <footer className="py-12 md:py-16 px-4 sm:px-6 border-t" style={{ backgroundColor: "#06038d" }}>
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-8">
             {/* Brand */}

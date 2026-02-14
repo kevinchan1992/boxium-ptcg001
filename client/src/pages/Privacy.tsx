@@ -1,8 +1,8 @@
 export default function Privacy() {
   return (
-    <div className="min-h-screen py-12 px-4" style={{ backgroundColor: "#f8f9fa" }}>
-          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 md:p-12">
-            <h1 className="text-4xl font-bold mb-8" style={{ color: "#06038d" }}>
+    <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
+          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6 sm:p-8 md:p-12">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8" style={{ color: "#06038d" }}>
               隱私權政策
             </h1>
             
@@ -16,14 +16,14 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   一、個人資料的收集
                 </h2>
                 <p className="mb-4">
                   當您使用本平台服務時，我們可能會收集以下類型的個人資料：
                 </p>
                 
-                <h3 className="text-xl font-semibold mb-3 mt-6">1.1 您主動提供的資料</h3>
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 mt-6">1.1 您主動提供的資料</h3>
                 <p className="mb-4">
                   當您註冊帳號、使用特定功能或與我們聯繫時，您可能會主動提供以下資料：
                 </p>
@@ -34,7 +34,7 @@ export default function Privacy() {
                   <li>您在使用本平台功能時輸入的其他資訊</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold mb-3 mt-6">1.2 自動收集的資料</h3>
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 mt-6">1.2 自動收集的資料</h3>
                 <p className="mb-4">
                   當您訪問或使用本平台時，我們會自動收集某些技術資訊，包括：
                 </p>
@@ -49,7 +49,7 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   二、個人資料的使用目的
                 </h2>
                 <p className="mb-4">
@@ -66,7 +66,7 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   三、個人資料的揭露與分享
                 </h2>
                 <p className="mb-4">
@@ -81,7 +81,7 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   四、Cookie 與追蹤技術
                 </h2>
                 <p className="mb-4">
@@ -101,7 +101,7 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   五、資料安全
                 </h2>
                 <p className="mb-4">
@@ -118,7 +118,7 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   六、資料保存期限
                 </h2>
                 <p className="mb-4">
@@ -132,7 +132,7 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   七、您的權利
                 </h2>
                 <p className="mb-4">
@@ -152,7 +152,7 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   八、兒童隱私
                 </h2>
                 <p className="mb-4">
@@ -161,7 +161,7 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   九、跨境資料傳輸
                 </h2>
                 <p className="mb-4">
@@ -170,7 +170,7 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   十、政策修改
                 </h2>
                 <p className="mb-4">
@@ -179,7 +179,7 @@ export default function Privacy() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   十一、聯絡我們
                 </h2>
                 <p className="mb-4">

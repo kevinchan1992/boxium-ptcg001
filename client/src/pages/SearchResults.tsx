@@ -29,7 +29,7 @@ export default function SearchResults() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-8">
+    <div className="min-h-screen py-6 px-4 sm:px-6 md:px-8">
         {/* Breadcrumb */}
         <Breadcrumb 
           items={[

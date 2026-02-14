@@ -1,8 +1,8 @@
 export default function Terms() {
   return (
-    <div className="min-h-screen py-12 px-4" style={{ backgroundColor: "#f8f9fa" }}>
-          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 md:p-12">
-            <h1 className="text-4xl font-bold mb-8" style={{ color: "#06038d" }}>
+    <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
+          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6 sm:p-8 md:p-12">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8" style={{ color: "#06038d" }}>
               服務條款
             </h1>
             
@@ -16,7 +16,7 @@ export default function Terms() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   一、服務內容
                 </h2>
                 <p className="mb-4">
@@ -38,7 +38,7 @@ export default function Terms() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   二、用戶責任
                 </h2>
                 <p className="mb-4">
@@ -57,7 +57,7 @@ export default function Terms() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   三、資訊準確性與免責聲明
                 </h2>
                 <p className="mb-4">
@@ -69,7 +69,7 @@ export default function Terms() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   四、智慧財產權
                 </h2>
                 <p className="mb-4">
@@ -81,7 +81,7 @@ export default function Terms() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   五、第三方連結
                 </h2>
                 <p className="mb-4">
@@ -90,7 +90,7 @@ export default function Terms() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   六、隱私權保護
                 </h2>
                 <p className="mb-4">
@@ -99,7 +99,7 @@ export default function Terms() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   七、條款修改
                 </h2>
                 <p className="mb-4">
@@ -108,7 +108,7 @@ export default function Terms() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   八、準據法與管轄權
                 </h2>
                 <p className="mb-4">
@@ -117,7 +117,7 @@ export default function Terms() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: "#06038d" }}>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
                   九、聯絡我們
                 </h2>
                 <p className="mb-4">

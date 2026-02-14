@@ -148,7 +148,7 @@ export default function CardDetail() {
   });
 
   return (
-    <div className="min-h-screen py-8 px-8">
+    <div className="min-h-screen py-6 px-4 sm:px-6 md:px-8">
         {/* Breadcrumb */}
         <Breadcrumb 
           items={[
@@ -166,7 +166,7 @@ export default function CardDetail() {
           {card.nameJa && (
             <p className="text-lg text-muted-foreground mb-4">{card.nameJa}</p>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="default" size="sm">
               格價
             </Button>
@@ -206,7 +206,7 @@ export default function CardDetail() {
           {/* Right Column - Card Information */}
           <div className="lg:col-span-2 space-y-6">
             {/* Source and Grade Filters */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-4">
               <Button
                 variant={activeSource === "snkrdunk" ? "default" : "outline"}
                 size="sm"
