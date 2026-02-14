@@ -1512,3 +1512,24 @@
 - [x] 減小所有區塊標題（text-lg sm:text-xl md:text-2xl）
 - [x] 減小所有區塊標題 margin（mb-6 md:mb-10, mb-2）
 - [x] 測試首頁顯示效果（TypeScript 無錯誤）
+
+## 進一步大幅減小手機版文字大小
+
+- [ ] 減小卡牌詳情頁標題文字（避免換行）
+- [ ] 減小卡牌詳情頁按鈕文字
+- [ ] 減小首頁 Hero Section 所有文字
+- [ ] 減小首頁所有區塊標題和內容文字
+- [ ] 減小搜尋頁面文字
+- [ ] 測試手機版顯示效果
+
+- [x] 減小卡牌詳情頁標題（text-base sm:text-xl）和日文名稱（text-sm sm:text-base）
+- [x] 減小卡牌詳情頁 header margin（mb-4, mb-1, mb-2）
+- [x] 減小首頁 Hero Section 標題（text-base sm:text-lg md:text-2xl）
+- [x] 減小首頁 Hero Section 副標題（text-[11px] sm:text-xs md:text-base）
+- [x] 減小首頁 Hero Section 間距（space-y-1.5 md:space-y-3）
+- [x] 減小首頁所有區塊標題（text-base sm:text-lg md:text-xl）
+- [x] 減小首頁所有區塊副標題（text-xs md:text-sm, text-[11px] sm:text-xs md:text-sm）
+- [x] 減小首頁所有區塊標題 margin（mb-5 md:mb-8, mb-1.5）
+- [x] 減小首頁熱門卡牌區塊圖標（w-6 h-6 md:w-8 md:h-8）和間距（gap-2, mb-3）
+- [x] 減小搜尋頁面標題（text-base sm:text-lg）和副標題（text-xs sm:text-sm）
+- [x] 測試首頁顯示效果（TypeScript 無錯誤）

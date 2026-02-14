@@ -36,11 +36,11 @@ export default function Home() {
             alt="BOXIUM"
             className="h-24 sm:h-28 mx-auto"
           />
-          <h2 className="text-xl sm:text-2xl font-semibold text-foreground">卡牌搜尋</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">卡牌搜尋</h2>
         </div>
 
         {/* Subtitle */}
-        <p className="text-sm sm:text-base text-muted-foreground px-4">
+        <p className="text-xs sm:text-sm text-muted-foreground px-4">
           取得任何卡牌的深入研究報告
         </p>
 

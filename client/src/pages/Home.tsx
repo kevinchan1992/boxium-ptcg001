@@ -95,11 +95,11 @@ export default function Home() {
             </div>
 
             {/* Content - Responsive text sizes */}
-            <div className="space-y-2 md:space-y-4 max-w-3xl px-2">
-              <h1 className="text-white text-lg sm:text-xl md:text-3xl font-bold leading-tight">
+            <div className="space-y-1.5 md:space-y-3 max-w-3xl px-2">
+              <h1 className="text-white text-base sm:text-lg md:text-2xl font-bold leading-tight">
                 歡迎來到 Boxium ~ 遊戲迷專屬世界
               </h1>
-              <p className="text-white/80 text-xs sm:text-sm md:text-lg leading-relaxed">
+              <p className="text-white/80 text-[11px] sm:text-xs md:text-base leading-relaxed">
                 整合全球市場數據，為PTCG愛好者和收藏家提供即時、準確的卡牌價格資訊。追蹤卡牌的價格趨勢，做出明智的投資決策。
               </p>
             </div>
@@ -134,11 +134,11 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-6 md:py-12 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-6 md:mb-10">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2" style={{ color: "#06038d" }}>
+          <div className="text-center mb-5 md:mb-8">
+            <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5" style={{ color: "#06038d" }}>
               核心功能
             </h2>
-            <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto px-2">
+            <p className="text-gray-600 text-xs md:text-sm max-w-2xl mx-auto px-2">
               BOXIUM 提供專業的卡牌價格分析工具，幫助您做出更明智的投資決策
             </p>
           </div>
@@ -194,14 +194,14 @@ export default function Home() {
       {/* Trending Cards Section */}
       <section className="py-6 md:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-6 md:mb-10">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Flame className="w-8 h-8 md:w-10 md:h-10" style={{ color: "#ff4500" }} />
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold" style={{ color: "#06038d" }}>
+          <div className="text-center mb-5 md:mb-8">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Flame className="w-6 h-6 md:w-8 md:h-8" style={{ color: "#ff4500" }} />
+              <h2 className="text-base sm:text-lg md:text-xl font-bold" style={{ color: "#06038d" }}>
                 熱門卡牌
               </h2>
             </div>
-            <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto px-2">
+            <p className="text-gray-600 text-xs md:text-sm max-w-2xl mx-auto px-2">
               近期價格漲幅最高的卡牌，掌握市場熱點
             </p>
           </div>
@@ -213,11 +213,11 @@ export default function Home() {
       {/* Data Sources Section */}
       <section className="py-6 md:py-12 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-6 md:mb-10">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2" style={{ color: "#06038d" }}>
+          <div className="text-center mb-5 md:mb-8">
+            <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5" style={{ color: "#06038d" }}>
               權威數據源
             </h2>
-            <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto px-2">
+            <p className="text-gray-600 text-xs md:text-sm max-w-2xl mx-auto px-2">
               整合全球領先的卡牌交易平台，確保數據的準確性和實時性
             </p>
           </div>
@@ -255,10 +255,10 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-6 md:py-12 px-4 sm:px-6 bg-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 md:mb-4" style={{ color: "#06038d" }}>
+          <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5 md:mb-3" style={{ color: "#06038d" }}>
             準備好開始你的PTCG之旅了嗎？
           </h2>
-          <p className="text-gray-600 text-xs sm:text-sm md:text-base mb-4 md:mb-6 leading-relaxed px-2">
+          <p className="text-gray-600 text-[11px] sm:text-xs md:text-sm mb-3 md:mb-5 leading-relaxed px-2">
             使用 BOXIUM 的智能搜尋和價格分析工具，找到你的愛好收藏品。
           </p>
 
