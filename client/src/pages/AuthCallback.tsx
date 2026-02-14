@@ -1,46 +1,38 @@
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { Loader2 } from 'lucide-react'
 
 export const AuthCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        window.location.href = '/login-new'
-        return
-      }
-
-      // 檢查 profile 是否存在
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (!profile) {
-        // 創建 user profile
-        await supabase.from('user_profiles').insert({
-          id: user.id,
-          username: user.user_metadata?.full_name || user.email?.split('@')[0],
-          avatar_url: user.user_metadata?.avatar_url || null,
-          locale: navigator.language || 'zh-HK',
-          region: 'HK',
-          favorite_language: 'jp'
-        })
-
-        // 建立 identity 資料（如果是 OAuth）
-        if (user.app_metadata?.provider && user.user_metadata?.sub) {
-          await supabase.from('user_identities').insert({
-            user_id: user.id,
-            provider: user.app_metadata.provider,
-            provider_user_id: user.user_metadata.sub,
-            email: user.email
-          })
+      try {
+        // 等待 Supabase 處理 OAuth callback
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Auth callback error:', error)
+          window.location.href = '/login-new?error=auth_failed'
+          return
         }
-      }
 
-      // 完成後跳回首頁
-      window.location.href = '/'
+        if (!session) {
+          console.warn('No session found after OAuth callback')
+          window.location.href = '/login-new'
+          return
+        }
+
+        console.log('Auth callback successful, user:', session.user.email)
+
+        // 檢查 URL 中是否有 redirect 參數
+        const params = new URLSearchParams(window.location.search)
+        const redirect = params.get('redirect') || '/'
+
+        // 重定向到目標頁面
+        window.location.href = redirect
+      } catch (err) {
+        console.error('Unexpected error in auth callback:', err)
+        window.location.href = '/login-new?error=unexpected'
+      }
     }
 
     handleCallback()
@@ -48,7 +40,10 @@ export const AuthCallback = () => {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-zinc-300 text-sm">登入處理中，請稍候……</div>
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+        <div className="text-zinc-300 text-sm">登入處理中，請稍候……</div>
+      </div>
     </div>
   )
 }

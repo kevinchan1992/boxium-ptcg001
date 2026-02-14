@@ -23,22 +23,15 @@ export default function Admin() {
     );
   }
 
+  // 如果用戶未登入，自動重定向到登入頁面
   if (!user) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login-new?redirect=/admin';
+    }
     return (
       <MainLayout>
-        <div className="min-h-screen flex items-center justify-center px-8">
-          <div className="text-center space-y-6">
-            <h1 className="text-4xl font-bold text-foreground">管理員後台</h1>
-            <p className="text-lg text-muted-foreground">
-              請先登入以訪問管理員功能
-            </p>
-            <Button
-              onClick={() => setLocation("/login-new")}
-              variant="default"
-            >
-              登入
-            </Button>
-          </div>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       </MainLayout>
     );

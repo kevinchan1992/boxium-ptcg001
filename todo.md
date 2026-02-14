@@ -1279,3 +1279,14 @@
 - [x] 測試 Google OAuth 跳轉正常
 - [ ] 用戶完成登入流程
 - [ ] 用戶測試 Admin 頁面認證
+
+
+## Bug 修復：Admin 頁面認證狀態丟失
+
+- [x] 診斷認證狀態丟失的原因
+- [x] 識別問題：AuthCallback 頁面嘗試查詢不存在的 user_profiles 欄位
+- [x] 簡化 AuthCallback 頁面，移除對 user_profiles 表的依賴
+- [x] 修復 Supabase client 配置（添加 auth 選項）
+- [x] 修復 useAdmin hook 的 onAuthStateChange 處理
+- [x] 修復 OAuth redirect 邏輯，支持 redirect 參數
+- [ ] 用戶測試修復效果

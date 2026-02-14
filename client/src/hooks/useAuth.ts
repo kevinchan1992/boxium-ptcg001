@@ -24,10 +24,14 @@ export const useAuth = () => {
   }, [])
 
   const signInWithProvider = async (provider: 'google' | 'facebook' | 'apple') => {
+    // 獲取 redirect 參數（如果有）
+    const params = new URLSearchParams(window.location.search)
+    const redirect = params.get('redirect') || '/'
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`
       }
     })
     if (error) throw error

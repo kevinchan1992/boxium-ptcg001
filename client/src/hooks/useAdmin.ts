@@ -43,8 +43,13 @@ export const useAdmin = () => {
     checkAdmin()
 
     // 監聽認證狀態變化
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkAdmin()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[useAdmin] Auth state changed:', event, session?.user?.email)
+      
+      // 只在特定事件時重新檢查
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
+        await checkAdmin()
+      }
     })
 
     return () => {
