@@ -1,12 +1,6 @@
-import { MainLayout } from "@/components/MainLayout";
-import { GlobalNav } from "@/components/GlobalNav";
-
 export default function Privacy() {
   return (
-    <>
-      <GlobalNav />
-      <MainLayout>
-        <div className="min-h-screen py-12 px-4" style={{ backgroundColor: "#f8f9fa" }}>
+    <div className="min-h-screen py-12 px-4" style={{ backgroundColor: "#f8f9fa" }}>
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 md:p-12">
             <h1 className="text-4xl font-bold mb-8" style={{ color: "#06038d" }}>
               隱私權政策
@@ -206,8 +200,6 @@ export default function Privacy() {
               </div>
             </div>
           </div>
-        </div>
-      </MainLayout>
-    </>
+    </div>
   );
 }

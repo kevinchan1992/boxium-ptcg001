@@ -252,8 +252,17 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="border-t border-white/20 pt-8 text-center text-white/60 text-xs md:text-sm">
-            <p>© 2026 BOXIUM. All rights reserved. | Luck in Every Box</p>
+          <div className="border-t border-white/20 pt-8 text-center">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-4">
+              <Link href="/terms" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
+                服務條款
+              </Link>
+              <span className="hidden sm:inline text-white/40">|</span>
+              <Link href="/privacy" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
+                隱私權政策
+              </Link>
+            </div>
+            <p className="text-white/60 text-xs md:text-sm">© 2026 BOXIUM. All rights reserved. | Luck in Every Box</p>
           </div>
         </div>
       </footer>

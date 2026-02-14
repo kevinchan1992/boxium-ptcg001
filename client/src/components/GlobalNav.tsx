@@ -17,7 +17,7 @@ export function GlobalNav() {
   ];
 
   return (
-    <div className="fixed top-4 left-4 z-50">
+    <div className="fixed top-4 right-4 z-50">
       {/* Menu Button */}
       <Button
         onClick={toggleMenu}
@@ -39,7 +39,7 @@ export function GlobalNav() {
 
           {/* Menu Content */}
           <div
-            className="absolute top-16 md:top-20 left-0 w-72 md:w-80 rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-top-2 duration-200"
+            className="absolute top-16 md:top-20 right-0 w-72 md:w-80 rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-top-2 duration-200"
             style={{ backgroundColor: "#ffffff" }}
           >
             <div className="p-3 md:p-4 space-y-2">
