@@ -9,6 +9,8 @@ import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdu
 import { searchAndSaveEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
 import { searchEbayItems, convertUsdToHkd, getUsdToHkdRate } from "./ebay";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
+import { downloadAndEncodeImage, getBestImageUrl } from "./imageUtils";
+import { searchEbayByImage } from "./ebayImageSearch";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1091,31 +1093,63 @@ export const appRouter = router({
             throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
           }
 
-          // 簡化卡牌名稱
-          let simplifiedName = card.name
-            .replace(/\[.*?\]/g, '')
-            .replace(/\(.*?\)/g, '')
-            .replace(/[：:]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
+          let items: any[] = [];
+          let searchMethod = "text"; // 記錄使用的搜尋方法
 
-          // 構建搜尋關鍵字
-          let searchQuery = simplifiedName;
-          if (card.cardNumber) {
-            const coreCardNumber = card.cardNumber.match(/\d+/)?.[0] || card.cardNumber;
-            searchQuery += ` ${coreCardNumber}`;
+          // 優先嘗試圖片搜尋
+          const imageUrl = getBestImageUrl(card);
+          if (imageUrl) {
+            try {
+              console.log(`[Admin] Trying image search for card ${input.cardId}`);
+              console.log(`[Admin] Image URL: ${imageUrl}`);
+              
+              // 下載圖片並轉換為 Base64
+              const base64Image = await downloadAndEncodeImage(imageUrl);
+              
+              // 使用圖片搜尋 eBay
+              items = await searchEbayByImage(base64Image, undefined, 20);
+              searchMethod = "image";
+              
+              console.log(`[Admin] Image search found ${items.length} eBay items`);
+            } catch (error: any) {
+              console.warn(`[Admin] Image search failed: ${error.message}`);
+              console.log(`[Admin] Falling back to text search...`);
+            }
+          } else {
+            console.log(`[Admin] No valid image URL found for card ${input.cardId}, using text search`);
           }
-          searchQuery += " PSA 10 Pokemon";
 
-          console.log(`[Admin] Updating eBay prices for card ${input.cardId}: "${searchQuery}"`);
+          // 如果圖片搜尋失敗或無圖片，回退到文字搜尋
+          if (items.length === 0) {
+            // 簡化卡牌名稱
+            let simplifiedName = card.name
+              .replace(/\[.*?\]/g, '')
+              .replace(/\(.*?\)/g, '')
+              .replace(/[：:]/g, '')
+              .replace(/\s+/g, ' ')
+              .trim();
 
-          // 搜尋 eBay 活躍商品
-          const items = await searchEbayItems(searchQuery, 20);
-          console.log(`[Admin] Found ${items.length} eBay items`);
+            // 構建搜尋關鍵字
+            let searchQuery = simplifiedName;
+            if (card.cardNumber) {
+              const coreCardNumber = card.cardNumber.match(/\d+/)?.[0] || card.cardNumber;
+              searchQuery += ` ${coreCardNumber}`;
+            }
+            searchQuery += " PSA 10 Pokemon";
+
+            console.log(`[Admin] Text search for card ${input.cardId}: "${searchQuery}"`);
+
+            // 搜尋 eBay 活躍商品
+            items = await searchEbayItems(searchQuery, 20);
+            searchMethod = "text";
+            console.log(`[Admin] Text search found ${items.length} eBay items`);
+          }
 
           if (items.length === 0) {
             return { success: false, message: "未找到 eBay 商品", itemsAdded: 0 };
           }
+
+          console.log(`[Admin] Using ${searchMethod} search method for card ${input.cardId}`);
 
           // 將 eBay 數據存入 prices 表
           let itemsAdded = 0;
@@ -1196,31 +1230,54 @@ export const appRouter = router({
                 continue;
               }
 
-              // 簡化卡牌名稱
-              let simplifiedName = card.name
-                .replace(/\[.*?\]/g, '')
-                .replace(/\(.*?\)/g, '')
-                .replace(/[：:]/g, '')
-                .replace(/\s+/g, ' ')
-                .trim();
+              let items: any[] = [];
+              let searchMethod = "text";
 
-              // 構建搜尋關鍵字
-              let searchQuery = simplifiedName;
-              if (card.cardNumber) {
-                const coreCardNumber = card.cardNumber.match(/\d+/)?.[0] || card.cardNumber;
-                searchQuery += ` ${coreCardNumber}`;
+              // 優先嘗試圖片搜尋
+              const imageUrl = getBestImageUrl(card);
+              if (imageUrl) {
+                try {
+                  console.log(`[Admin] Card ${cardId}: Trying image search`);
+                  const base64Image = await downloadAndEncodeImage(imageUrl);
+                  items = await searchEbayByImage(base64Image, undefined, 20);
+                  searchMethod = "image";
+                  console.log(`[Admin] Card ${cardId}: Image search found ${items.length} items`);
+                } catch (error: any) {
+                  console.warn(`[Admin] Card ${cardId}: Image search failed - ${error.message}`);
+                }
               }
-              searchQuery += " PSA 10 Pokemon";
 
-              // 搜尋 eBay 活躍商品
-              const items = await searchEbayItems(searchQuery, 20);
-              console.log(`[Admin] Card ${cardId}: Found ${items.length} eBay items`);
+              // 如果圖片搜尋失敗或無圖片，回退到文字搜尋
+              if (items.length === 0) {
+                // 簡化卡牌名稱
+                let simplifiedName = card.name
+                  .replace(/\[.*?\]/g, '')
+                  .replace(/\(.*?\)/g, '')
+                  .replace(/[：:]/g, '')
+                  .replace(/\s+/g, ' ')
+                  .trim();
+
+                // 構建搜尋關鍵字
+                let searchQuery = simplifiedName;
+                if (card.cardNumber) {
+                  const coreCardNumber = card.cardNumber.match(/\d+/)?.[0] || card.cardNumber;
+                  searchQuery += ` ${coreCardNumber}`;
+                }
+                searchQuery += " PSA 10 Pokemon";
+
+                // 搜尋 eBay 活躍商品
+                items = await searchEbayItems(searchQuery, 20);
+                searchMethod = "text";
+                console.log(`[Admin] Card ${cardId}: Text search found ${items.length} items`);
+              }
 
               if (items.length === 0) {
                 failedCount++;
                 errors.push(`${card.name}: 未找到 eBay 商品`);
                 continue;
               }
+
+              console.log(`[Admin] Card ${cardId}: Using ${searchMethod} search method`);
 
               // 將 eBay 數據存入 prices 表
               let itemsAdded = 0;

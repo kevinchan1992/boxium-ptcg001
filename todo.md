@@ -1635,3 +1635,21 @@
 - ✅ 預期搜尋準確度提升 30-50%
 - ✅ 建議採用「圖片搜尋為主，文字搜尋為輔」策略
 - ✅ 已提供完整的實作步驟和代碼範例
+
+## 新功能: 實作 eBay 以圖搜圖功能 - 完成
+
+- [x] 刪除 Admin 頁面管理工具卡片內的「更新 eBay 交易記錄」按鈕
+- [x] 創建圖片下載和 Base64 轉換函數 (server/imageUtils.ts)
+- [x] 實作 eBay searchByImage API 調用邏輯 (server/ebayImageSearch.ts)
+- [x] 整合圖片搜尋到 updateEbayPrices procedure（單卡更新）
+- [x] 整合圖片搜尋到 batchUpdateEbayPrices procedure（批量更新）
+- [x] 採用「圖片搜尋為主，文字搜尋為輔」策略
+- [x] 實作回退機制（圖片搜尋失敗時自動使用文字搜尋）
+- [x] 測試編譯無錯誤，開發服務器正常運行
+
+**實作結果：**
+- ✅ 創建 imageUtils.ts 模組：圖片下載、Base64 轉換、圖片 URL 驗證
+- ✅ 創建 ebayImageSearch.ts 模組：OAuth 認證、searchByImage API 調用
+- ✅ 整合到 updateEbayPrices 和 batchUpdateEbayPrices procedures
+- ✅ 優先使用高解析度圖片，自動回退到文字搜尋
+- ✅ 完整的錯誤處理和日誌記錄
