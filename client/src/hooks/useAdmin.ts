@@ -9,10 +9,27 @@ export const useAdmin = () => {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
+        console.log('[useAdmin] Checking admin status...')
+        
+        // 先檢查 session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        console.log('[useAdmin] Session check:', {
+          hasSession: !!session,
+          user: session?.user?.email,
+          error: sessionError?.message,
+        })
+
         // 獲取 Supabase Auth 用戶
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
         
+        console.log('[useAdmin] User check:', {
+          hasUser: !!authUser,
+          email: authUser?.email,
+          error: authError?.message,
+        })
+        
         if (authError || !authUser) {
+          console.warn('[useAdmin] No authenticated user found')
           setUser(null)
           setIsAdmin(false)
           setLoading(false)
@@ -24,6 +41,11 @@ export const useAdmin = () => {
         const adminEmails = ['xyz.asia.co@gmail.com']
         const isAdminUser = adminEmails.includes(authUser.email || '')
 
+        console.log('[useAdmin] Admin check result:', {
+          email: authUser.email,
+          isAdmin: isAdminUser,
+        })
+
         setUser({
           id: authUser.id,
           email: authUser.email,
@@ -32,7 +54,7 @@ export const useAdmin = () => {
         })
         setIsAdmin(isAdminUser)
       } catch (error) {
-        console.error('Error checking admin status:', error)
+        console.error('[useAdmin] Error checking admin status:', error)
         setUser(null)
         setIsAdmin(false)
       } finally {
@@ -44,10 +66,15 @@ export const useAdmin = () => {
 
     // 監聽認證狀態變化
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[useAdmin] Auth state changed:', event, session?.user?.email)
+      console.log('[useAdmin] Auth state changed:', {
+        event,
+        user: session?.user?.email,
+        hasSession: !!session,
+      })
       
       // 只在特定事件時重新檢查
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
+        console.log('[useAdmin] Re-checking admin status due to:', event)
         await checkAdmin()
       }
     })

@@ -1298,3 +1298,15 @@
 - [x] 識別問題：window.location.href 硬重定向在 render 階段執行
 - [x] 修復 Admin 頁面，改用 useEffect + setLocation
 - [ ] 用戶測試修復效果
+
+
+## Supabase Session 跨瀏覽器持久化問題
+
+- [x] 診斷 Supabase session 存儲問題
+- [x] 增強 Supabase client 配置（自定義 storage adapter）
+- [x] 添加 localStorage fallback 到 sessionStorage
+- [x] 添加詳細的認證狀態日誌
+- [x] 增強 useAdmin hook 的日誌輸出
+- [x] 創建 SessionDebug 頁面幫助用戶診斷問題
+- [ ] 用戶測試不同瀏覽器的 session 保存
+- [ ] 驗證修復效果
