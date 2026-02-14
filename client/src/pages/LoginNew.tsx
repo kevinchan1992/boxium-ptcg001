@@ -32,7 +32,7 @@ export const LoginNew = () => {
       <div className="w-full max-w-md bg-zinc-900 rounded-2xl p-8 shadow-xl border border-zinc-800">
         <div className="text-center mb-6">
           <div className="text-2xl font-bold text-white">BOXIUM PTCG</div>
-          <div className="text-zinc-400 mt-1 text-sm">使用 Manus 風格的快速登入體驗</div>
+          <div className="text-zinc-400 mt-1 text-sm">使用 Supabase Auth 快速登入</div>
         </div>
 
         {/* OAuth 按鈕 */}

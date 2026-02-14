@@ -1251,3 +1251,18 @@
 - [x] 提取原有數據源管理代碼到 AdminDataSources 組件
 - [x] 整合 AdminDashboard 和 AdminUserManagement 組件
 - [x] 優化移動端響應式設計
+
+
+## 徹底移除舊認證系統，統一使用 Supabase Auth - 完成
+
+- [x] 識別問題：平台混合使用兩個認證系統
+- [x] 在 Supabase 確認 user_profiles 表已存在
+- [x] 重寫 useAdmin hook 使用 Supabase Auth
+- [x] 刪除舊的 tRPC auth router
+- [x] 修改所有使用 trpc.auth 的頁面
+- [x] 刪除舊的 _core/hooks/useAuth.ts
+- [x] 修復所有 TypeScript 編譯錯誤
+- [x] 修復 LoginNew.tsx 使用 Supabase Auth UI
+- [x] 所有頁面已改用 Supabase Auth
+- [ ] 用戶測試登入功能
+- [ ] 用戶測試 Admin 頁面認證

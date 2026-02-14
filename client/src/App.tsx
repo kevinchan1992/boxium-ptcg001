@@ -16,6 +16,7 @@ import { AuthCallback } from "./pages/AuthCallback";
 import Favorites from "./pages/Favorites";
 import UserProfile from "./pages/UserProfile";
 import SmtpSettings from "./pages/SmtpSettings";
+import Debug from "./pages/Debug";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/favorites" component={Favorites} />
       <Route path="/user-profile" component={UserProfile} />
       <Route path="/smtp-settings" component={SmtpSettings} />
+      <Route path="/debug" component={Debug} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

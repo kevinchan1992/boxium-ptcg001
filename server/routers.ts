@@ -12,54 +12,7 @@ import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerMan
 export const appRouter = router({
   system: systemRouter,
   
-  auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      console.log("[Auth] Logout called");
-      
-      // Clear OAuth session cookie
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, cookieOptions);
-      ctx.res.cookie(COOKIE_NAME, "", { ...cookieOptions, maxAge: 0 });
-      
-      console.log("[Auth] Logout complete");
-      return {
-        success: true,
-      } as const;
-    }),
-
-    // Update user profile
-    updateProfile: protectedProcedure
-
-      .input(z.object({
-        name: z.string().optional(),
-        email: z.string().email().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const userId = ctx.user!.id;
-
-        // Check if email is already used by another user
-        if (input.email) {
-          const existingUser = await db.getUserByEmail(input.email);
-          if (existingUser && existingUser.id !== userId) {
-            throw new TRPCError({
-              code: "CONFLICT",
-              message: "電子郵件已被使用",
-            });
-          }
-        }
-
-        // Update user
-        await db.updateUser(userId, {
-          name: input.name,
-          email: input.email,
-        });
-
-        return {
-          success: true,
-        };
-      }),
-  }),
+  // Auth router removed - now using Supabase Auth
 
   cards: router({
     search: publicProcedure

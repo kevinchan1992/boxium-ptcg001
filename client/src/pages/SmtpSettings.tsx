@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Loader2, Mail, CheckCircle, AlertCircle } from "lucide-react";
+import { useAdmin } from "@/hooks/useAdmin";
 
 export default function SmtpSettings() {
   const [, setLocation] = useLocation();
-  const { data: user, isLoading: loading } = trpc.auth.me.useQuery();
+  const { user, loading, isAdmin } = useAdmin();
   const isAuthenticated = !!user;
   const [formData, setFormData] = useState({
     smtpHost: "",

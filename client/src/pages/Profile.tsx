@@ -1,26 +1,20 @@
 import { MainLayout } from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
-  const utils = trpc.useUtils();
-  const { data: user, isLoading: loading } = trpc.auth.me.useQuery();
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      toast.success("已登出");
-      // Wait for browser to process cookie clearing
-      setTimeout(() => {
-        // Clear all query cache
-        utils.invalidate();
-        // Redirect to home page
-        window.location.href = '/';
-      }, 100);
-    },
-  });
+  const { user, loading } = useAuth();
+  
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("已登出");
+    window.location.href = '/';
+  };
   
   const isAuthenticated = !!user;
 
@@ -69,7 +63,7 @@ export default function Profile() {
             <dl className="space-y-3">
               <div className="flex">
                 <dt className="text-muted-foreground w-32">用戶名稱:</dt>
-                <dd className="text-foreground">{user?.name || "未設定"}</dd>
+                <dd className="text-foreground">{user?.user_metadata?.name || user?.email?.split('@')[0] || "未設定"}</dd>
               </div>
               <div className="flex">
                 <dt className="text-muted-foreground w-32">電子郵件:</dt>
@@ -77,7 +71,7 @@ export default function Profile() {
               </div>
               <div className="flex">
                 <dt className="text-muted-foreground w-32">登入方式:</dt>
-                <dd className="text-foreground">{user?.loginMethod || "未知"}</dd>
+                <dd className="text-foreground">{user?.app_metadata?.provider || "未知"}</dd>
               </div>
               <div className="flex">
                 <dt className="text-muted-foreground w-32">角色:</dt>
@@ -128,9 +122,9 @@ export default function Profile() {
           {/* Logout Button */}
           <div className="flex justify-end">
             <Button
-              onClick={() => logoutMutation.mutate()}
+              onClick={handleLogout}
+              className="w-full"
               variant="destructive"
-              disabled={logoutMutation.isPending}
             >
               登出
             </Button>
