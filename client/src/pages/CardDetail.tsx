@@ -159,12 +159,12 @@ export default function CardDetail() {
         />
         
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
             {card.name}
           </h1>
           {card.nameJa && (
-            <p className="text-lg text-muted-foreground mb-4">{card.nameJa}</p>
+            <p className="text-base sm:text-lg text-muted-foreground mb-3">{card.nameJa}</p>
           )}
           <div className="flex flex-wrap gap-2">
             <Button variant="default" size="sm">

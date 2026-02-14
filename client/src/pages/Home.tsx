@@ -54,15 +54,15 @@ function TrendingCardsGrid() {
           </div>
 
           {/* Card Info */}
-          <div className="p-3 sm:p-4">
-            <h3 className="font-bold text-xs sm:text-sm mb-1 line-clamp-1" style={{ color: "#06038d" }}>
+          <div className="p-2 sm:p-3">
+            <h3 className="font-bold text-[11px] sm:text-xs mb-0.5 line-clamp-1" style={{ color: "#06038d" }}>
               {card.name}
             </h3>
             {card.nameJa && (
-              <p className="text-[10px] sm:text-xs text-gray-500 mb-2 line-clamp-1">{card.nameJa}</p>
+              <p className="text-[9px] sm:text-[10px] text-gray-500 mb-1.5 line-clamp-1">{card.nameJa}</p>
             )}
             <div className="flex items-baseline gap-1">
-              <span className="text-sm sm:text-base md:text-lg font-bold" style={{ color: "#06038d" }}>
+              <span className="text-xs sm:text-sm md:text-base font-bold" style={{ color: "#06038d" }}>
                 HK${card.currentPrice.toFixed(0)}
               </span>
             </div>
@@ -84,7 +84,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="pt-16 md:pt-20 pb-16 md:pb-24 px-4 sm:px-6" style={{ backgroundColor: "#06038d" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col items-center text-center space-y-8 md:space-y-12">
+          <div className="flex flex-col items-center text-center space-y-6 md:space-y-10">
             {/* LOGO - Responsive sizing */}
             <div className="w-full max-w-xs md:max-w-2xl">
               <img
@@ -95,29 +95,29 @@ export default function Home() {
             </div>
 
             {/* Content - Responsive text sizes */}
-            <div className="space-y-4 md:space-y-6 max-w-3xl px-2">
-              <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
+            <div className="space-y-3 md:space-y-5 max-w-3xl px-2">
+              <h1 className="text-white text-xl sm:text-2xl md:text-4xl font-bold leading-tight">
                 歡迎來到 Boxium ~ 遊戲迷專屬世界
               </h1>
-              <p className="text-white/80 text-sm sm:text-base md:text-lg leading-relaxed">
+              <p className="text-white/80 text-xs sm:text-sm md:text-lg leading-relaxed">
                 整合全球市場數據，為PTCG愛好者和收藏家提供即時、準確的卡牌價格資訊。追蹤卡牌的價格趨勢，做出明智的投資決策。
               </p>
             </div>
 
             {/* Key Stats - Responsive layout */}
-            <div className="grid grid-cols-2 gap-4 md:gap-6 w-full max-w-md px-2">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 md:p-6 border border-white/20 text-center">
-                <div className="text-2xl md:text-3xl font-bold text-[#ffed00] mb-2">500+</div>
-                <div className="text-white/80 text-xs md:text-sm">已追蹤卡牌</div>
+            <div className="grid grid-cols-2 gap-3 md:gap-6 w-full max-w-md px-2">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 md:p-6 border border-white/20 text-center">
+                <div className="text-xl md:text-3xl font-bold text-[#ffed00] mb-1">500+</div>
+                <div className="text-white/80 text-[10px] md:text-sm">已追蹤卡牌</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 md:p-6 border border-white/20 text-center">
-                <div className="text-2xl md:text-3xl font-bold text-[#ffed00] mb-2">2 個</div>
-                <div className="text-white/80 text-xs md:text-sm">數據源</div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 md:p-6 border border-white/20 text-center">
+                <div className="text-xl md:text-3xl font-bold text-[#ffed00] mb-1">2 個</div>
+                <div className="text-white/80 text-[10px] md:text-sm">數據源</div>
               </div>
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/research">
                 <Button
                   className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
@@ -132,13 +132,13 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-12 md:py-20 px-4 sm:px-6 bg-white">
+      <section className="py-8 md:py-16 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4" style={{ color: "#06038d" }}>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3" style={{ color: "#06038d" }}>
               核心功能
             </h2>
-            <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto px-2">
+            <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto px-2">
               BOXIUM 提供專業的卡牌價格分析工具，幫助您做出更明智的投資決策
             </p>
           </div>
@@ -192,16 +192,16 @@ export default function Home() {
       </section>
 
       {/* Trending Cards Section */}
-      <section className="py-12 md:py-20 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
+      <section className="py-8 md:py-16 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12 md:mb-16">
+          <div className="text-center mb-8 md:mb-12">
             <div className="flex items-center justify-center gap-3 mb-4">
               <Flame className="w-8 h-8 md:w-10 md:h-10" style={{ color: "#ff4500" }} />
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold" style={{ color: "#06038d" }}>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: "#06038d" }}>
                 熱門卡牌
               </h2>
             </div>
-            <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto px-2">
+            <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto px-2">
               近期價格漲幅最高的卡牌，掌握市場熱點
             </p>
           </div>
@@ -211,13 +211,13 @@ export default function Home() {
       </section>
 
       {/* Data Sources Section */}
-      <section className="py-12 md:py-20 px-4 sm:px-6 bg-white">
+      <section className="py-8 md:py-16 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4" style={{ color: "#06038d" }}>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3" style={{ color: "#06038d" }}>
               權威數據源
             </h2>
-            <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto px-2">
+            <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto px-2">
               整合全球領先的卡牌交易平台，確保數據的準確性和實時性
             </p>
           </div>
@@ -253,16 +253,16 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 md:py-20 px-4 sm:px-6 bg-white">
+      <section className="py-8 md:py-16 px-4 sm:px-6 bg-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 md:mb-6" style={{ color: "#06038d" }}>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 md:mb-5" style={{ color: "#06038d" }}>
             準備好開始你的PTCG之旅了嗎？
           </h2>
-          <p className="text-gray-600 text-base md:text-lg mb-8 md:mb-10 leading-relaxed px-2">
+          <p className="text-gray-600 text-sm md:text-base mb-6 md:mb-8 leading-relaxed px-2">
             使用 BOXIUM 的智能搜尋和價格分析工具，找到你的愛好收藏品。
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center px-2">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center px-2">
             <Link href="/research">
               <Button
                 className="px-6 md:px-8 py-2 md:py-3 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
@@ -285,7 +285,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 md:py-16 px-4 sm:px-6 border-t" style={{ backgroundColor: "#06038d" }}>
+      <footer className="py-8 md:py-12 px-4 sm:px-6 border-t" style={{ backgroundColor: "#06038d" }}>
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-8">
             {/* Brand */}

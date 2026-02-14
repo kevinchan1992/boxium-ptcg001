@@ -1466,3 +1466,23 @@
 - [x] 優化 Privacy 頁面的響應式設計（標題、padding）
 - [x] 測試所有頁面在桌面端正常顯示
 - [x] 驗證所有頁面的 TypeScript 編譯無錯誤
+
+## 手機端文字和間距精細優化
+
+- [ ] 減小首頁 Hero Section 標題和副標題文字大小
+- [ ] 縮小首頁各區塊的垂直間距（py, space-y）
+- [ ] 減小首頁區塊標題文字大小
+- [ ] 優化熱門卡牌區塊的卡片間距和文字大小
+- [ ] 減小卡牌詳情頁的標題和按鈕文字大小
+- [ ] 優化搜尋頁面的文字大小和間距
+- [ ] 測試手機端顯示效果（確保內容不會太擠）
+- [ ] 驗證桌面端顯示不受影響
+
+- [x] 減小首頁 Hero Section 標題（text-xl sm:text-2xl）和副標題（text-xs sm:text-sm）
+- [x] 縮小首頁各區塊的垂直間距（py-8 md:py-16，space-y-6 md:space-y-10）
+- [x] 減小首頁區塊標題（text-xl sm:text-2xl md:text-3xl）和副標題（text-sm md:text-base）
+- [x] 優化熱門卡牌卡片 padding（p-2 sm:p-3）和文字（text-[11px], text-[9px], text-xs）
+- [x] 減小卡牌詳情頁標題（text-2xl sm:text-3xl）和日文名稱（text-base sm:text-lg）
+- [x] 優化搜尋頁面 Logo 高度（h-24 sm:h-28）、標題（text-xl sm:text-2xl）和搜尋框（py-5）
+- [x] 測試首頁顯示效果（TypeScript 無錯誤）
+- [x] 驗證桌面端顯示正常

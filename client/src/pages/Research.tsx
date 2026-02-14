@@ -28,19 +28,19 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 md:px-8">
       {/* Hero Section */}
-      <div className="text-center space-y-6 max-w-3xl w-full">
+      <div className="text-center space-y-5 max-w-3xl w-full">
         {/* Logo/Brand */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <img
             src="/boxium-logo-white.png"
             alt="BOXIUM"
-            className="h-32 mx-auto"
+            className="h-24 sm:h-28 mx-auto"
           />
-          <h2 className="text-2xl sm:text-3xl font-semibold text-foreground">卡牌搜尋</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold text-foreground">卡牌搜尋</h2>
         </div>
 
         {/* Subtitle */}
-        <p className="text-base sm:text-lg text-muted-foreground px-4">
+        <p className="text-sm sm:text-base text-muted-foreground px-4">
           取得任何卡牌的深入研究報告
         </p>
 
@@ -53,7 +53,7 @@ export default function Home() {
               placeholder="MEGA Charizard X ex 110"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-6 text-lg bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
+              className="w-full pl-12 pr-4 py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
             />
           </div>
         </form>
