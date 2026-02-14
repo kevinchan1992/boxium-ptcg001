@@ -257,8 +257,39 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    // Regular authentication flow
     const cookies = this.parseCookies(req.headers.cookie);
+    const signedInAt = new Date();
+
+    // Try local auth token first
+    const authToken = cookies.get("auth_token");
+    if (authToken) {
+      try {
+        // Verify JWT token for local auth
+        const secretKey = this.getSessionSecret();
+        const { payload } = await jwtVerify(authToken, secretKey, {
+          algorithms: ["HS256"],
+        });
+        const userId = payload.userId as number;
+
+        if (userId) {
+          const user = await db.getUserById(userId);
+          if (user) {
+            // Update last signed in
+            await db.upsertUser({
+              openId: user.openId,
+              email: user.email,
+              lastSignedIn: signedInAt,
+            } as any);
+            return user;
+          }
+        }
+      } catch (error) {
+        console.warn("[Auth] Local auth token verification failed", String(error));
+        // Fall through to OAuth authentication
+      }
+    }
+
+    // Try OAuth authentication
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
 
@@ -267,7 +298,6 @@ class SDKServer {
     }
 
     const sessionUserId = session.openId;
-    const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
     // If user not in DB, sync from OAuth server automatically
