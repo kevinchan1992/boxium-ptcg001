@@ -1,12 +1,21 @@
 import { MainLayout } from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { trpc } from "@/lib/trpc";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 
 export default function Profile() {
-  const { user, isAuthenticated, loading, logout } = useAuth();
+  const [, setLocation] = useLocation();
+  const { data: user, isLoading: loading } = trpc.auth.me.useQuery();
+  const logoutMutation = trpc.auth.logout.useMutation({
+    onSuccess: () => {
+      toast.success("已登出");
+      window.location.reload();
+    },
+  });
+  
+  const isAuthenticated = !!user;
 
   if (loading) {
     return (
@@ -28,7 +37,7 @@ export default function Profile() {
               請先登入以查看您的個人資料
             </p>
             <Button
-              onClick={() => window.location.href = getLoginUrl()}
+              onClick={() => setLocation("/login")}
               variant="default"
             >
               登入
@@ -112,11 +121,9 @@ export default function Profile() {
           {/* Logout Button */}
           <div className="flex justify-end">
             <Button
-              onClick={async () => {
-                await logout();
-                toast.success("已成功登出");
-              }}
+              onClick={() => logoutMutation.mutate()}
               variant="destructive"
+              disabled={logoutMutation.isPending}
             >
               登出
             </Button>

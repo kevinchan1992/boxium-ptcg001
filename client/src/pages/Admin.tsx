@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { MainLayout } from "@/components/MainLayout";
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,10 +9,12 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Loader2, Plus, RefreshCw, ExternalLink, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getLoginUrl } from "@/const";
+import { useLocation } from "wouter";
 
 export default function Admin() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const [, setLocation] = useLocation();
+  const { data: user, isLoading: loading } = trpc.auth.me.useQuery();
+  const isAuthenticated = !!user;
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -303,7 +304,7 @@ export default function Admin() {
               請先登入以訪問管理員功能
             </p>
             <Button
-              onClick={() => window.location.href = getLoginUrl()}
+              onClick={() => setLocation("/login")}
               variant="default"
             >
               登入

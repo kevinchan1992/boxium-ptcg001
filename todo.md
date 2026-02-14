@@ -1009,3 +1009,17 @@
 - [x] 修改 cookies.ts，開發環境使用 sameSite: "lax"，生產環境使用 sameSite: "none"
 - [x] 檢查 tRPC context 的用戶認證逻輯（auth_token cookie 讀取）
 - [ ] 測試登入流程並驗證修復
+
+## 重大問題: 平台登入系統混亂 - 已完成
+
+- [x] 檢查首頁的登入入口和流程（使用 trpc.auth.me + /login）
+- [x] 檢查 /profile 頁面的登入入口和流程（使用 useAuth + Manus OAuth）
+- [x] 識別問題：兩個頁面使用不同的登入系統
+- [x] 修改 Profile 頁面使用 trpc.auth.me
+- [x] 修改 Profile 頁面登入按鈕連結到 /login
+- [x] 修改 Admin 頁面使用 trpc.auth.me
+- [x] 修改 SmtpSettings 頁面使用 trpc.auth.me
+- [x] 修改 DashboardLayout 使用 trpc.auth.me
+- [x] 修改 main.tsx 使用 /login
+- [x] 統一所有頁面使用 trpc.auth.me + /login
+- [ ] 測試所有登入流程確保一致性

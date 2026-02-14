@@ -1,17 +1,18 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/MainLayout";
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Loader2, Mail, CheckCircle, AlertCircle } from "lucide-react";
-import { getLoginUrl } from "@/const";
 
 export default function SmtpSettings() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const [, setLocation] = useLocation();
+  const { data: user, isLoading: loading } = trpc.auth.me.useQuery();
+  const isAuthenticated = !!user;
   const [formData, setFormData] = useState({
     smtpHost: "",
     smtpPort: "587",
@@ -87,7 +88,7 @@ export default function SmtpSettings() {
       <MainLayout>
         <div className="flex flex-col items-center justify-center min-h-screen">
           <p className="text-lg mb-4">請先登入</p>
-          <Button onClick={() => window.location.href = getLoginUrl()}>
+          <Button onClick={() => setLocation("/login")}>
             前往登入
           </Button>
         </div>
