@@ -1178,3 +1178,76 @@
 - [ ] 添加權限管理功能（設置管理員角色）
 - [ ] 添加系統設置功能（SMTP、OAuth providers 配置）
 - [ ] 添加數據統計卡片（用戶數量、登入統計等）
+
+
+## Bug 修復：管理員權限邏輯問題
+
+- [ ] 檢查 useAdmin hook 的實作邏輯
+- [ ] 檢查 Supabase user_profiles 表中的 role 欄位
+- [ ] 驗證管理員帳號（xyz.asia.co@gmail.com）的 role 值
+- [ ] 修復權限檢查邏輯
+- [ ] 測試管理員登入後能正常訪問 Admin 頁面
+
+## 新功能：用戶管理系統
+
+- [ ] 創建用戶列表 API（查詢所有用戶）
+- [ ] 創建用戶編輯 API（更新用戶資料）
+- [ ] 創建權限管理 API（設置用戶角色）
+- [ ] 實作用戶列表 UI（顯示所有用戶）
+- [ ] 實作用戶編輯對話框
+- [ ] 實作角色切換功能（admin/user）
+- [ ] 添加搜尋和篩選功能
+
+## 新功能：數據統計儀表板
+
+- [ ] 創建統計數據 API（用戶數量、登入統計、卡牌數據）
+- [ ] 實作總覽卡片（用戶總數、卡牌總數、數據源數量）
+- [ ] 實作登入統計圖表（每日/每週登入趨勢）
+- [ ] 實作卡牌數據圖表（價格分佈、評級分佈）
+- [ ] 優化儀表板佈局和視覺效果
+
+
+## Supabase Auth 認證系統遷移 - 完成
+
+- [x] 修復 useAdmin hook 使用 tRPC 而不是 Supabase
+- [x] 更新資料庫中管理員帳號的 role 為 'admin'
+- [x] 移除舊的 Login.tsx 文件
+- [x] 統一使用 LoginNew 組件
+
+## 管理員權限系統 - 完成
+
+- [x] 創建 useAdmin hook 用於管理員權限檢查
+- [x] 創建 RequireAdmin 組件保護管理員路由
+- [x] 更新 Admin.tsx 使用 Supabase Auth 和 useAdmin hook
+- [x] 實作管理員權限檢查邏輯
+- [x] 非管理員用戶訪問 Admin 頁面時正確重定向
+
+## 用戶管理功能 - 完成
+
+- [x] 在 server/db.ts 添加用戶查詢函數（getAllUsers, updateUserRole, updateUserProfile, deleteUser）
+- [x] 在 server/routers.ts 添加用戶管理 API
+- [x] 創建 AdminUserManagement 組件
+- [x] 實作用戶列表顯示（表格形式）
+- [x] 實作用戶編輯功能（姓名、郵箱、角色）
+- [x] 實作用戶刪除功能
+- [x] 實作角色管理功能（admin/user 切換）
+- [x] 實作用戶搜尋功能（按郵箱或姓名）
+
+## 數據統計儀表板 - 完成
+
+- [x] 在 server/db.ts 添加統計查詢函數（getUserStats, getDashboardStats）
+- [x] 在 server/routers.ts 添加統計 API
+- [x] 創建 AdminDashboard 組件
+- [x] 顯示用戶數量統計（總用戶、管理員、普通用戶）
+- [x] 顯示卡牌數量統計
+- [x] 顯示數據源統計（總數、活躍數）
+- [x] 顯示價格記錄統計
+- [x] 使用圖標和配色區分不同統計卡片
+
+## Admin 頁面重構 - 完成
+
+- [x] 重構 Admin.tsx 為 Tab 式佈局
+- [x] 創建三個 Tab：數據統計、用戶管理、數據源管理
+- [x] 提取原有數據源管理代碼到 AdminDataSources 組件
+- [x] 整合 AdminDashboard 和 AdminUserManagement 組件
+- [x] 優化移動端響應式設計

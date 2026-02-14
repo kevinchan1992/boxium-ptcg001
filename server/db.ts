@@ -1,4 +1,4 @@
-import { eq, desc, and, gte, lte, or, like, sql, inArray, lt } from "drizzle-orm";
+import { eq, desc, and, gte, lte, or, like, sql, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites } from "../drizzle/schema";;
 import { ENV } from './_core/env';
@@ -148,6 +148,109 @@ export async function getUserByOpenId(openId: string) {
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Get all users (for admin panel)
+ */
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const result = await db.select().from(users).orderBy(desc(users.createdAt));
+  return result;
+}
+
+/**
+ * Update user role (for admin panel)
+ */
+export async function updateUserRole(userId: number, role: 'admin' | 'user') {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.update(users).set({ role }).where(eq(users.id, userId));
+}
+
+/**
+ * Update user profile (for admin panel)
+ */
+export async function updateUserProfile(userId: number, data: { name?: string; email?: string }) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.update(users).set(data).where(eq(users.id, userId));
+}
+
+/**
+ * Delete user (for admin panel)
+ */
+export async function deleteUser(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.delete(users).where(eq(users.id, userId));
+}
+
+/**
+ * Get user statistics
+ */
+export async function getUserStats() {
+  const db = await getDb();
+  if (!db) {
+    return { totalUsers: 0, adminUsers: 0, regularUsers: 0 };
+  }
+
+  const allUsers = await db.select().from(users);
+  const totalUsers = allUsers.length;
+  const adminUsers = allUsers.filter(u => u.role === 'admin').length;
+  const regularUsers = allUsers.filter(u => u.role === 'user').length;
+
+  return { totalUsers, adminUsers, regularUsers };
+}
+
+/**
+ * Get dashboard statistics
+ */
+export async function getDashboardStats() {
+  const db = await getDb();
+  if (!db) {
+    return {
+      totalUsers: 0,
+      totalCards: 0,
+      totalDataSources: 0,
+      totalPriceRecords: 0,
+      activeDataSources: 0,
+    };
+  }
+
+  const [usersResult, cardsResult, dataSourcesResult, priceHistoryResult] = await Promise.all([
+    db.select().from(users),
+    db.select().from(cards),
+    db.select().from(dataSources),
+    db.select().from(priceHistory),
+  ]);
+
+  const totalUsers = usersResult.length;
+  const totalCards = cardsResult.length;
+  const totalDataSources = dataSourcesResult.length;
+  const totalPriceRecords = priceHistoryResult.length;
+  const activeDataSources = dataSourcesResult.filter(ds => ds.isActive === 1).length;
+
+  return {
+    totalUsers,
+    totalCards,
+    totalDataSources,
+    totalPriceRecords,
+    activeDataSources,
+  };
 }
 
 // Card queries
