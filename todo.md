@@ -1001,3 +1001,11 @@
 - [ ] 配置 SMTP 服務器（Gmail 或 SendGrid）
 - [ ] 測試密碼重置郵件發送
 - [ ] 測試郵箱驗證郵件發送
+
+## Bug 修復: 登入後無法保持登入狀態 - 已修復
+
+- [x] 檢查登入 API 的 cookie 設置（httpOnly, secure, sameSite, path, domain）
+- [x] 發現 sameSite: "none" 需要 secure: true，但開發環境不是 HTTPS
+- [x] 修改 cookies.ts，開發環境使用 sameSite: "lax"，生產環境使用 sameSite: "none"
+- [x] 檢查 tRPC context 的用戶認證逻輯（auth_token cookie 讀取）
+- [ ] 測試登入流程並驗證修復
