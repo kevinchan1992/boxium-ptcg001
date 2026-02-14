@@ -309,15 +309,30 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         try {
-          // 構建搜尋關鍵字：卡牌名稱 + 卡號 + PSA 10
-          let searchQuery = input.cardName;
+          // 簡化卡牌名稱以提高 eBay 搜尋成功率
+          // 移除括號內容、特殊字符，只保留核心名稱
+          let simplifiedName = input.cardName
+            .replace(/\[.*?\]/g, '') // 移除方括號內容
+            .replace(/\(.*?\)/g, '') // 移除圓括號內容
+            .replace(/[：:]/g, '') // 移除冒號
+            .replace(/\s+/g, ' ') // 合併多個空格
+            .trim();
+
+          // 構建搜尋關鍵字：簡化名稱 + 卡號 + PSA 10
+          let searchQuery = simplifiedName;
           if (input.cardNumber) {
-            searchQuery += ` ${input.cardNumber}`;
+            // 只取卡號的核心部分（例如 "085" 而不是 "SVP EN 085"）
+            const coreCardNumber = input.cardNumber.match(/\d+/)?.[0] || input.cardNumber;
+            searchQuery += ` ${coreCardNumber}`;
           }
-          searchQuery += " PSA 10";
+          searchQuery += " PSA 10 Pokemon";
+
+          console.log(`[eBay Browse API] Original name: "${input.cardName}"`);
+          console.log(`[eBay Browse API] Simplified search: "${searchQuery}"`);
 
           // 搜尋 eBay 活躍商品
           const items = await searchEbayItems(searchQuery, input.limit);
+          console.log(`[eBay Browse API] Found ${items.length} items`);
 
           // 轉換價格為 HKD
           const itemsWithHkd = await Promise.all(
@@ -1057,6 +1072,83 @@ export const appRouter = router({
         }
         const stats = await db.getDashboardStats();
         return stats;
+      }),
+
+    // 更新指定卡牌的 eBay 交易記錄（存入 prices 表）
+    updateEbayPrices: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+
+        try {
+          // 獲取卡牌資訊
+          const card = await db.getCardById(input.cardId);
+          if (!card) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
+          }
+
+          // 簡化卡牌名稱
+          let simplifiedName = card.name
+            .replace(/\[.*?\]/g, '')
+            .replace(/\(.*?\)/g, '')
+            .replace(/[：:]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          // 構建搜尋關鍵字
+          let searchQuery = simplifiedName;
+          if (card.cardNumber) {
+            const coreCardNumber = card.cardNumber.match(/\d+/)?.[0] || card.cardNumber;
+            searchQuery += ` ${coreCardNumber}`;
+          }
+          searchQuery += " PSA 10 Pokemon";
+
+          console.log(`[Admin] Updating eBay prices for card ${input.cardId}: "${searchQuery}"`);
+
+          // 搜尋 eBay 活躍商品
+          const items = await searchEbayItems(searchQuery, 20);
+          console.log(`[Admin] Found ${items.length} eBay items`);
+
+          if (items.length === 0) {
+            return { success: false, message: "未找到 eBay 商品", itemsAdded: 0 };
+          }
+
+          // 將 eBay 數據存入 prices 表
+          let itemsAdded = 0;
+          for (const item of items) {
+            try {
+              const usdPrice = parseFloat(item.price.value);
+              const hkdPrice = await convertUsdToHkd(usdPrice);
+
+              // 存入資料庫（標記數據來源為 "ebay"）
+              await db.addPriceHistory({
+                cardId: input.cardId,
+                price: hkdPrice.toFixed(2),
+                currency: "HKD",
+                grade: "PSA10", // eBay 搜尋結果都是 PSA 10
+                source: "ebay",
+                soldAt: new Date(), // 使用當前時間作為抓取時間
+                listingUrl: item.itemWebUrl,
+              });
+              itemsAdded++;
+            } catch (error: any) {
+              console.error(`[Admin] Error adding eBay price: ${error.message}`);
+            }
+          }
+
+          console.log(`[Admin] Added ${itemsAdded} eBay prices for card ${input.cardId}`);
+          return { success: true, message: `成功添加 ${itemsAdded} 筆 eBay 交易記錄`, itemsAdded };
+        } catch (error: any) {
+          console.error(`[Admin] Error updating eBay prices: ${error.message}`);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `更新 eBay 價格失敗: ${error.message}`,
+          });
+        }
       }),
   }),
 

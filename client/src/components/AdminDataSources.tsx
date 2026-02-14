@@ -12,6 +12,41 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
 
 
+// 單卡 eBay 價格更新按鈕組件
+function UpdateEbayButton({ cardId }: { cardId: number }) {
+  const utils = trpc.useUtils();
+  const updateEbayMutation = trpc.admin.updateEbayPrices.useMutation({
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(result.message);
+        utils.admin.getDataSources.invalidate();
+      } else {
+        toast.warning(result.message);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(`更新 eBay 價格失敗: ${error.message}`);
+    },
+  });
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => updateEbayMutation.mutate({ cardId })}
+      disabled={updateEbayMutation.isPending}
+      title="更新 eBay 市場參考價"
+      className="text-xs"
+    >
+      {updateEbayMutation.isPending ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        "eBay"
+      )}
+    </Button>
+  );
+}
+
 export function AdminDataSources() {
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -599,14 +634,20 @@ export function AdminDataSources() {
                           className="w-20 h-28 object-cover rounded-md border border-border"
                         />
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRefresh(source.id)}
-                        disabled={refreshDataSourceMutation.isPending}
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                      </Button>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRefresh(source.id)}
+                          disabled={refreshDataSourceMutation.isPending}
+                          title="更新 SNKRDUNK 價格"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </Button>
+                        {source.cardId && (
+                          <UpdateEbayButton cardId={source.cardId} />
+                        )}
+                      </div>
                     </div>
                   </div>
                   ));

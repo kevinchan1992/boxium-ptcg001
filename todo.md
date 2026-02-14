@@ -75,12 +75,14 @@
 - [x] 實作錯誤處理與重試機制
 
 ### 階段三: 整合 eBay API
-- [ ] 設定 eBay API 憑證 (使用 webdev_request_secrets)
-- [ ] 實作 eBay Browse API 查詢
-- [ ] 實作 eBay Finding API 查詢
-- [ ] 解析 eBay 價格數據
-- [ ] 實作貨幣換算 (USD → HKD/TWD)
-- [ ] 儲存 eBay 價格歷史
+- [x] 設定 eBay API 憑證 (使用 webdev_request_secrets)
+- [x] 實作 eBay Browse API 查詢
+- [x] 實作 eBay Finding API 查詢
+- [x] 解析 eBay 價格數據
+- [x] 實作貨幣換算 (USD → HKD/TWD)
+- [x] 儲存 eBay 價格歷史
+- [x] 實作 Admin 頁面手動更新 eBay 價格功能
+- [x] 實作卡牌詳情頁優先顯示資料庫緩存數據
 
 ### 階段四: 實作自動更新機制
 - [ ] 建立定時任務表 (scheduledTasks table)
@@ -1597,3 +1599,16 @@
 - [x] 檢查 eBay API 調用和控制台錯誤日誌（發現 500 錯誤）
 - [x] 檢查卡牌詳情頁的數據顯示邏輯
 - [x] 修復問題並測試（修復重複設置 filter 參數的問題）
+
+## 修復卡牌詳情頁 eBay 市場參考價無法顯示的問題
+
+- [ ] 檢查 CardDetail.tsx 中 eBay 數據獲取和顯示邏輯
+- [ ] 檢查後端 tRPC procedure 是否正確返回數據
+- [ ] 修復問題並測試
+
+## 在 Admin 頁面實作 eBay 數據更新功能
+
+- [ ] 創建後端 tRPC procedure 將 eBay 數據存入 prices 表
+- [ ] 在 Admin 頁面添加「更新 eBay 交易記錄」按鈕
+- [ ] 優化卡牌詳情頁優先顯示資料庫中的 eBay 數據
+- [ ] 測試並驗證功能

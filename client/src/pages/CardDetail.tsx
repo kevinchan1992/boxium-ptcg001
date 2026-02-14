@@ -83,20 +83,31 @@ export default function CardDetail() {
     { enabled: !!cardId && activeSource === "snkrdunk", retry: 1 }
   );
 
-  // Fetch eBay sold items (PSA10 only)
-  const { data: ebaySoldItems = [], isLoading: ebayLoading } = trpc.cards.getEbaySoldItems.useQuery(
-    { cardId: cardId!, limit: 20 },
+  // Fetch eBay price history from database (PSA10 only) - 優先從資料庫載入緩存數據
+  const { data: ebayPriceHistory = [], isLoading: ebayHistoryLoading } = trpc.prices.getHistory.useQuery(
+    {
+      cardId: cardId!,
+      source: "ebay",
+      grade: "PSA10",
+      limit: 50,
+    },
     { enabled: !!cardId && activeSource === "ebay", retry: 1 }
   );
 
-  // Fetch eBay Browse API market price (active listings)
+  // Fetch eBay sold items (PSA10 only) - 備用，當資料庫無數據時使用
+  const { data: ebaySoldItems = [], isLoading: ebayLoading } = trpc.cards.getEbaySoldItems.useQuery(
+    { cardId: cardId!, limit: 20 },
+    { enabled: !!cardId && activeSource === "ebay" && ebayPriceHistory.length === 0, retry: 1 }
+  );
+
+  // Fetch eBay Browse API market price (active listings) - 備用，當資料庫無數據且 API 也無數據時使用
   const { data: ebayMarketPrice = [], isLoading: ebayMarketLoading } = trpc.cards.searchEbayMarketPrice.useQuery(
     { 
       cardName: card?.name || "",
       cardNumber: card?.cardNumber || undefined,
       limit: 10 
     },
-    { enabled: !!card && activeSource === "ebay", retry: 1 }
+    { enabled: !!card && activeSource === "ebay" && ebayPriceHistory.length === 0 && ebaySoldItems.length === 0, retry: 1 }
   );
 
   // Fetch current USD to HKD exchange rate
@@ -146,12 +157,18 @@ export default function CardDetail() {
     ? priceHistory.length > 0
       ? (priceHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / priceHistory.length).toFixed(2)
       : "N/A"
-    : ebaySoldItems.length > 0
-      ? (ebaySoldItems.reduce((sum, item) => sum + item.price, 0) / ebaySoldItems.length).toFixed(2)
-      : "N/A";
+    : ebayPriceHistory.length > 0
+      ? (ebayPriceHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / ebayPriceHistory.length).toFixed(2)
+      : ebaySoldItems.length > 0
+        ? (ebaySoldItems.reduce((sum, item) => sum + item.price, 0) / ebaySoldItems.length).toFixed(2)
+        : "N/A";
 
   // Get record count based on active source
-  const recordCount = activeSource === "snkrdunk" ? priceHistory.length : ebaySoldItems.length;
+  const recordCount = activeSource === "snkrdunk" 
+    ? priceHistory.length 
+    : ebayPriceHistory.length > 0 
+      ? ebayPriceHistory.length 
+      : ebaySoldItems.length;
 
   // Group prices by grade
   const pricesByGrade: Record<string, typeof priceHistory> = {};
@@ -267,7 +284,7 @@ export default function CardDetail() {
                   {activeSource === "snkrdunk" ? "SNKRDUNK" : "eBay"} 上的最近交易
                 </h3>
               </div>
-              {(activeSource === "snkrdunk" ? priceLoading : ebayLoading) ? (
+              {(activeSource === "snkrdunk" ? priceLoading : (ebayHistoryLoading || ebayLoading)) ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
@@ -322,6 +339,53 @@ export default function CardDetail() {
                       })}
                     </tbody>
                   </table>
+                </div>
+              ) : activeSource === "ebay" && ebayPriceHistory.length > 0 ? (
+                <div>
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-green-600 dark:text-green-400">
+                      ✅ 以下為資料庫中的 eBay 市場參考價（已緩存）。
+                      最後更新時間：{new Date(ebayPriceHistory[0].createdAt).toLocaleString("zh-HK")}
+                    </p>
+                  </div>
+                  <div className="overflow-y-auto max-h-96 scrollbar-hide">
+                    <table className="w-full">
+                      <thead className="sticky top-0 bg-card border-b border-border">
+                        <tr>
+                          <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
+                            日期
+                          </th>
+                          <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm w-32">
+                            HKD 價格
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {ebayPriceHistory.map((record, index) => (
+                          <tr key={index} className="hover:bg-muted/50 transition-colors">
+                            <td className="py-3 px-4 text-foreground text-sm">
+                              {record.listingUrl ? (
+                                <a
+                                  href={record.listingUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="hover:text-primary hover:underline flex items-center gap-2"
+                                >
+                                  {new Date(record.soldAt || record.createdAt).toLocaleDateString("zh-HK")}
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              ) : (
+                                new Date(record.soldAt || record.createdAt).toLocaleDateString("zh-HK")
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-right text-foreground font-medium text-sm">
+                              ${parseFloat(record.price).toFixed(0)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : activeSource === "ebay" && ebaySoldItems.length > 0 ? (
                 <div className="overflow-y-auto max-h-96 scrollbar-hide">
