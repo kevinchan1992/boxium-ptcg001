@@ -38,11 +38,46 @@ async function getTransporter(): Promise<Transporter> {
 /**
  * Send password reset email
  */
-export async function sendPasswordResetEmail(
-  email: string,
-  resetToken: string,
-  username: string
-): Promise<boolean> {
+export async function sendEmailVerificationEmail(email: string, verificationToken: string, username: string): Promise<boolean> {
+  try {
+    const transporter = await getTransporter();
+    if (!transporter) {
+      console.error("[Email] SMTP not configured");
+      return false;
+    }
+
+    const verificationUrl = `${process.env.VITE_FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`;
+
+    const mailOptions = {
+      from: `"${process.env.SMTP_FROM_NAME || 'BOXIUM PTCG'}" <${process.env.SMTP_FROM_EMAIL || 'noreply@boxium.com'}>`,
+      to: email,
+      subject: "驗證您的電子郵件地址",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1e3a8a;">歡迎來到 BOXIUM PTCG！</h2>
+          <p>嗨 ${username}，</p>
+          <p>感謝您註冊 BOXIUM PTCG。請點擊下方按鈕驗證您的電子郵件地址：</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verificationUrl}" style="background-color: #1e3a8a; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">驗證電子郵件</a>
+          </div>
+          <p style="color: #666; font-size: 14px;">或複製以下連結到瀏覽器：</p>
+          <p style="color: #666; font-size: 14px; word-break: break-all;">${verificationUrl}</p>
+          <p style="color: #666; font-size: 14px;">此驗證連結將在 24 小時後過期。</p>
+          <p style="color: #666; font-size: 14px;">如果您沒有註冊 BOXIUM PTCG，請忽略此郵件。</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`[Email] Verification email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error("[Email] Failed to send verification email:", error);
+    return false;
+  }
+}
+
+export async function sendPasswordResetEmail(email: string, resetToken: string, username: string): Promise<boolean> {
   // Load SMTP settings from database
   const smtpUser = await db.getSystemSetting("smtp_user");
   const smtpPass = await db.getSystemSetting("smtp_pass");

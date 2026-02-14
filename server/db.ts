@@ -1,6 +1,6 @@
 import { eq, desc, and, gte, lte, or, like, sql, inArray, lt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertFirecrawlUsage, InsertSystemSetting, favorites, passwordResetTokens } from "../drizzle/schema";
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, passwordResetTokens, emailVerificationTokens } from "../drizzle/schema";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -861,4 +861,44 @@ export async function deleteExpiredPasswordResetTokens() {
   }
 
   await db.delete(passwordResetTokens).where(lt(passwordResetTokens.expiresAt, new Date()));
+}
+
+// ============================================
+// Email Verification Token Functions
+// ============================================
+
+export async function createEmailVerificationToken(userId: number, token: string, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  await db.insert(emailVerificationTokens).values({
+    userId,
+    token,
+    expiresAt,
+  });
+}
+
+export async function getEmailVerificationToken(token: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  const [result] = await db
+    .select()
+    .from(emailVerificationTokens)
+    .where(eq(emailVerificationTokens.token, token))
+    .limit(1);
+  return result || null;
+}
+
+export async function deleteEmailVerificationToken(token: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.token, token));
+}
+
+export async function markEmailAsVerified(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not initialized");
+  await db
+    .update(users)
+    .set({ emailVerified: true })
+    .where(eq(users.id, userId));
 }
