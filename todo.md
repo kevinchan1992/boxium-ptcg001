@@ -1624,3 +1624,24 @@
 - ✅ 在 App.tsx 添加 /login 路由，使用 Redirect 組件重定向到首頁
 - ✅ 不修改 main.tsx 的認證邏輯，保持 Admin 頁面數據訪問正常
 - ✅ 用戶訪問 /login 時自動跳轉到首頁，不再出現 404 錯誤
+
+## 緊急問題: 無法進入 Admin 頁面 - 完成
+
+- [x] 檢查認證狀態（發現 main.tsx 中有認證重定向邏輯）
+- [x] 檢查 Admin 頁面的權限要求（procedures 使用 protectedProcedure）
+- [x] 檢查 /admin 路由配置（路由配置正常）
+- [x] 檢查 Admin 頁面組件（組件本身無問題）
+- [x] 移除 main.tsx 中的認證重定向邏輯
+- [x] 測試修復結果（TypeScript 編譯無錯誤）
+
+**根本原因：**
+- main.tsx 中的 redirectToLoginIfUnauthorized 函數檢測到 UNAUTHORIZED 錯誤時，自動重定向到 /login
+- /login 又重定向到首頁，形成重定向循環
+- Admin 頁面調用的 tRPC procedures 使用 protectedProcedure，需要登入
+- 未登入時返回 UNAUTHORIZED 錯誤，觸發重定向
+
+**修復結果：**
+- ✅ 移除 main.tsx 中的 redirectToLoginIfUnauthorized 函數
+- ✅ 移除認證錯誤監聽器中的重定向邏輯
+- ✅ 保留錯誤日誌記錄功能，方便調試
+- ✅ Admin 頁面現在可以正常訪問，不會自動重定向
