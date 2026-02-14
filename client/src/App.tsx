@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { PageWrapper } from "./components/PageWrapper";
 import Home from "./pages/Home";
 import CardDetail from "./pages/CardDetail";
 import SearchResults from "./pages/SearchResults";
@@ -11,10 +12,13 @@ import Research from "./pages/Research";
 import Pricing from "./pages/Pricing";
 import Admin from "./pages/Admin";
 import Favorites from "./pages/Favorites";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 function Router() {
   return (
-    <Switch>
+    <PageWrapper>
+      <Switch>
       <Route path={"/"} component={Home} />
       <Route path="/search" component={SearchResults} />
       <Route path="/card/:id" component={CardDetail} />
@@ -22,10 +26,13 @@ function Router() {
       <Route path="/pricing" component={Pricing} />
       <Route path="/admin" component={Admin} />
       <Route path="/favorites" component={Favorites} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
+    </PageWrapper>
   );
 }
 
