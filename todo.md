@@ -1486,3 +1486,29 @@
 - [x] 優化搜尋頁面 Logo 高度（h-24 sm:h-28）、標題（text-xl sm:text-2xl）和搜尋框（py-5）
 - [x] 測試首頁顯示效果（TypeScript 無錯誤）
 - [x] 驗證桌面端顯示正常
+
+## 頁面調整和手機版優化
+
+- [ ] 刪除 Favorites 頁面檔案
+- [ ] 從 App.tsx 移除 Favorites 路由
+- [ ] 從 GlobalNav 移除 Favorites 連結
+- [ ] 從 Home.tsx Footer 移除 Favorites 連結
+- [ ] 在 Terms 頁面上方添加公司 Logo
+- [ ] 在 Privacy 頁面上方添加公司 Logo
+- [ ] 進一步減小手機版文字大小
+- [ ] 進一步縮小手機版間距
+- [ ] 測試所有頁面顯示效果
+
+- [x] 刪除 Favorites.tsx 頁面檔案
+- [x] 從 App.tsx 移除 Favorites 導入和路由
+- [x] 從 Home.tsx Footer 移除 Favorites 連結（改為價格查詢）
+- [x] 在 Terms.tsx 頁面上方添加公司 Logo（h-16 sm:h-20 md:h-24）
+- [x] 在 Privacy.tsx 頁面上方添加公司 Logo（h-16 sm:h-20 md:h-24）
+- [x] 減小首頁 Hero Section Logo 寬度（max-w-[280px]）
+- [x] 減小首頁 Hero Section 標題（text-lg sm:text-xl md:text-3xl）
+- [x] 減小首頁 Hero Section 間距（space-y-4 md:space-y-8, space-y-2 md:space-y-4）
+- [x] 減小首頁 Key Stats padding（p-2 md:p-5）和文字（text-base, text-[9px]）
+- [x] 減小所有區塊 padding（py-6 md:py-12）
+- [x] 減小所有區塊標題（text-lg sm:text-xl md:text-2xl）
+- [x] 減小所有區塊標題 margin（mb-6 md:mb-10, mb-2）
+- [x] 測試首頁顯示效果（TypeScript 無錯誤）

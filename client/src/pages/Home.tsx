@@ -84,9 +84,9 @@ export default function Home() {
       {/* Hero Section */}
       <section className="pt-16 md:pt-20 pb-16 md:pb-24 px-4 sm:px-6" style={{ backgroundColor: "#06038d" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col items-center text-center space-y-6 md:space-y-10">
+          <div className="flex flex-col items-center text-center space-y-4 md:space-y-8">
             {/* LOGO - Responsive sizing */}
-            <div className="w-full max-w-xs md:max-w-2xl">
+            <div className="w-full max-w-[280px] md:max-w-2xl">
               <img
                 src="/boxium-logo.png"
                 alt="BOXIUM Logo"
@@ -95,8 +95,8 @@ export default function Home() {
             </div>
 
             {/* Content - Responsive text sizes */}
-            <div className="space-y-3 md:space-y-5 max-w-3xl px-2">
-              <h1 className="text-white text-xl sm:text-2xl md:text-4xl font-bold leading-tight">
+            <div className="space-y-2 md:space-y-4 max-w-3xl px-2">
+              <h1 className="text-white text-lg sm:text-xl md:text-3xl font-bold leading-tight">
                 歡迎來到 Boxium ~ 遊戲迷專屬世界
               </h1>
               <p className="text-white/80 text-xs sm:text-sm md:text-lg leading-relaxed">
@@ -105,14 +105,14 @@ export default function Home() {
             </div>
 
             {/* Key Stats - Responsive layout */}
-            <div className="grid grid-cols-2 gap-3 md:gap-6 w-full max-w-md px-2">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 md:p-6 border border-white/20 text-center">
-                <div className="text-xl md:text-3xl font-bold text-[#ffed00] mb-1">500+</div>
-                <div className="text-white/80 text-[10px] md:text-sm">已追蹤卡牌</div>
+            <div className="grid grid-cols-2 gap-2 md:gap-5 w-full max-w-md px-2">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
+                <div className="text-base md:text-2xl font-bold text-[#ffed00] mb-0.5">500+</div>
+                <div className="text-white/80 text-[9px] md:text-xs">已追蹤卡牌</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 md:p-6 border border-white/20 text-center">
-                <div className="text-xl md:text-3xl font-bold text-[#ffed00] mb-1">2 個</div>
-                <div className="text-white/80 text-[10px] md:text-sm">數據源</div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
+                <div className="text-base md:text-2xl font-bold text-[#ffed00] mb-0.5">2 個</div>
+                <div className="text-white/80 text-[9px] md:text-xs">數據源</div>
               </div>
             </div>
 
@@ -132,10 +132,10 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-8 md:py-16 px-4 sm:px-6 bg-white">
+      <section className="py-6 md:py-12 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3" style={{ color: "#06038d" }}>
+          <div className="text-center mb-6 md:mb-10">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2" style={{ color: "#06038d" }}>
               核心功能
             </h2>
             <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto px-2">
@@ -192,12 +192,12 @@ export default function Home() {
       </section>
 
       {/* Trending Cards Section */}
-      <section className="py-8 md:py-16 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
+      <section className="py-6 md:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8 md:mb-12">
+          <div className="text-center mb-6 md:mb-10">
             <div className="flex items-center justify-center gap-3 mb-4">
               <Flame className="w-8 h-8 md:w-10 md:h-10" style={{ color: "#ff4500" }} />
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: "#06038d" }}>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold" style={{ color: "#06038d" }}>
                 熱門卡牌
               </h2>
             </div>
@@ -211,10 +211,10 @@ export default function Home() {
       </section>
 
       {/* Data Sources Section */}
-      <section className="py-8 md:py-16 px-4 sm:px-6 bg-white">
+      <section className="py-6 md:py-12 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3" style={{ color: "#06038d" }}>
+          <div className="text-center mb-6 md:mb-10">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2" style={{ color: "#06038d" }}>
               權威數據源
             </h2>
             <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto px-2">
@@ -253,12 +253,12 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-8 md:py-16 px-4 sm:px-6 bg-white">
+      <section className="py-6 md:py-12 px-4 sm:px-6 bg-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 md:mb-5" style={{ color: "#06038d" }}>
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 md:mb-4" style={{ color: "#06038d" }}>
             準備好開始你的PTCG之旅了嗎？
           </h2>
-          <p className="text-gray-600 text-sm md:text-base mb-6 md:mb-8 leading-relaxed px-2">
+          <p className="text-gray-600 text-xs sm:text-sm md:text-base mb-4 md:mb-6 leading-relaxed px-2">
             使用 BOXIUM 的智能搜尋和價格分析工具，找到你的愛好收藏品。
           </p>
 
@@ -305,8 +305,8 @@ export default function Home() {
               <h4 className="text-white font-bold mb-4 text-sm md:text-base">快速導航</h4>
               <ul className="space-y-2">
                 <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">卡牌搜尋</Link></li>
-                <li><Link href="/favorites" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">我的收藏</Link></li>
                 <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">市場分析</Link></li>
+                <li><Link href="/pricing" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">價格查詢</Link></li>
                 <li><Link href="/admin" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">管理後台</Link></li>
               </ul>
             </div>

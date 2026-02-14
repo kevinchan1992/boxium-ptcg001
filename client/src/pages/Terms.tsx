@@ -2,6 +2,15 @@ export default function Terms() {
   return (
     <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6 sm:p-8 md:p-12">
+            {/* Logo */}
+            <div className="flex justify-center mb-6 sm:mb-8">
+              <img
+                src="/boxium-logo.png"
+                alt="BOXIUM Logo"
+                className="h-16 sm:h-20 md:h-24"
+              />
+            </div>
+            
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8" style={{ color: "#06038d" }}>
               服務條款
             </h1>
