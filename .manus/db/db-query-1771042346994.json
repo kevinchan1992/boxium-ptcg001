@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, openId, email, name, loginMethod FROM users LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, openId, email, name, loginMethod FROM users LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "openId": "NULL",
+      "email": "xyz.asia.co@gmail.com",
+      "name": "Lai Jason",
+      "loginMethod": "google"
+    },
+    {
+      "id": "270001",
+      "openId": "NULL",
+      "email": "test_1770984323641@example.com",
+      "name": "Test User",
+      "loginMethod": "local"
+    },
+    {
+      "id": "270002",
+      "openId": "NULL",
+      "email": "email1_1770984326674@example.com",
+      "name": "NULL",
+      "loginMethod": "local"
+    },
+    {
+      "id": "270003",
+      "openId": "NULL",
+      "email": "duplicate_1770984327613@example.com",
+      "name": "NULL",
+      "loginMethod": "local"
+    },
+    {
+      "id": "270004",
+      "openId": "NULL",
+      "email": "logintest_1770984328768@example.com",
+      "name": "NULL",
+      "loginMethod": "local"
+    },
+    {
+      "id": "270005",
+      "openId": "NULL",
+      "email": "wrongpwd_1770984329995@example.com",
+      "name": "NULL",
+      "loginMethod": "local"
+    },
+    {
+      "id": "270006",
+      "openId": "NULL",
+      "email": "test_1770984464152@example.com",
+      "name": "Test User",
+      "loginMethod": "local"
+    },
+    {
+      "id": "270007",
+      "openId": "NULL",
+      "email": "email1_1770984466083@example.com",
+      "name": "NULL",
+      "loginMethod": "local"
+    },
+    {
+      "id": "270008",
+      "openId": "NULL",
+      "email": "duplicate_1770984467021@example.com",
+      "name": "NULL",
+      "loginMethod": "local"
+    },
+    {
+      "id": "270009",
+      "openId": "NULL",
+      "email": "logintest_1770984468174@example.com",
+      "name": "NULL",
+      "loginMethod": "local"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\temail\tname\tloginMethod\n1\tNULL\txyz.asia.co@gmail.com\tLai Jason\tgoogle\n270001\tNULL\ttest_1770984323641@example.com\tTest User\tlocal\n270002\tNULL\temail1_1770984326674@example.com\tNULL\tlocal\n270003\tNULL\tduplicate_1770984327613@example.com\tNULL\tlocal\n270004\tNULL\tlogintest_1770984328768@example.com\tNULL\tlocal\n270005\tNULL\twrongpwd_1770984329995@example.com\tNULL\tlocal\n270006\tNULL\ttest_1770984464152@example.com\tTest User\tlocal\n270007\tNULL\temail1_1770984466083@example.com\tNULL\tlocal\n270008\tNULL\tduplicate_1770984467021@example.com\tNULL\tlocal\n270009\tNULL\tlogintest_1770984468174@example.com\tNULL\tlocal\n",
+  "stderr": "",
+  "execution_time_ms": 1615
+}

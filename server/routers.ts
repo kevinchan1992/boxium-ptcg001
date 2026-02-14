@@ -8,8 +8,6 @@ import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
 import { searchAndSaveEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
-import { hashPassword, comparePassword, generateToken } from "./auth";
-import { sendPasswordResetEmail, generateResetToken } from "./emailService";
 
 export const appRouter = router({
   system: systemRouter,
@@ -18,142 +16,21 @@ export const appRouter = router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       console.log("[Auth] Logout called");
+      
+      // Clear OAuth session cookie
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      console.log("[Auth] Clearing cookies with options:", cookieOptions);
-      
-      // Clear both OAuth and local auth cookies
-      // Must use the same options as when setting the cookie (except maxAge/expires)
       ctx.res.clearCookie(COOKIE_NAME, cookieOptions);
-      ctx.res.clearCookie("auth_token", cookieOptions);
-      
-      // Also set cookies with expired date to ensure they are cleared
       ctx.res.cookie(COOKIE_NAME, "", { ...cookieOptions, maxAge: 0 });
-      ctx.res.cookie("auth_token", "", { ...cookieOptions, maxAge: 0 });
       
-      console.log("[Auth] Cookies cleared");
+      console.log("[Auth] Logout complete");
       return {
         success: true,
       } as const;
     }),
-    
-    // Local auth: Register
-    register: publicProcedure
-      .input(z.object({
-        username: z.string().min(3).max(64),
-        email: z.string().email(),
-        password: z.string().min(6),
-        name: z.string().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        // Check if username already exists
-        const existingUser = await db.getUserByUsername(input.username);
-        if (existingUser) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "使用者名稱已被使用",
-          });
-        }
-
-        // Check if email already exists
-        const existingEmail = await db.getUserByEmail(input.email);
-        if (existingEmail) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "電子郵件已被使用",
-          });
-        }
-
-        // Hash password
-        const hashedPassword = await hashPassword(input.password);
-
-        // Create user
-        const userId = await db.createUser({
-          username: input.username,
-          email: input.email,
-          password: hashedPassword,
-          name: input.name || null,
-          loginMethod: "local",
-        });
-
-        // Generate JWT token
-        const token = generateToken(userId, input.username);
-
-        // Set cookie
-        const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie("auth_token", token, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
-
-        return {
-          success: true,
-          userId,
-          username: input.username,
-        };
-      }),
-
-    // Local auth: Login
-    login: publicProcedure
-      .input(z.object({
-        username: z.string(), // Can be username or email
-        password: z.string(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        // Find user by username or email
-        let user = await db.getUserByUsername(input.username);
-        
-        // If not found by username, try email
-        if (!user) {
-          user = await db.getUserByEmail(input.username);
-        }
-        
-        if (!user) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "使用者名稱或密碼錯誤",
-          });
-        }
-
-        // Check if user is a local auth user
-        if (!user.password) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "此帳號使用 OAuth 登入，請使用 OAuth 方式登入",
-          });
-        }
-
-        // Verify password
-        const isValid = await comparePassword(input.password, user.password);
-        if (!isValid) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "使用者名稱或密碼錯誤",
-          });
-        }
-
-        // Update last signed in
-        await db.updateUserLastSignedIn(user.id);
-
-        // Generate JWT token
-        const token = generateToken(user.id, user.username!);
-
-        // Set cookie
-        const cookieOptions = getSessionCookieOptions(ctx.req);
-        console.log("[Auth] Setting auth_token cookie with options:", cookieOptions);
-        const finalCookieOptions = { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 };
-        console.log("[Auth] Final cookie options:", finalCookieOptions);
-        ctx.res.cookie("auth_token", token, finalCookieOptions); // 7 days
-        console.log("[Auth] Cookie set, checking response headers...");
-        console.log("[Auth] Response Set-Cookie header:", ctx.res.getHeader("Set-Cookie"));
-        console.log("[Auth] Login successful for user:", user.username);
-
-        return {
-          success: true,
-          userId: user.id,
-          username: user.username,
-          name: user.name,
-        };
-      }),
 
     // Update user profile
     updateProfile: protectedProcedure
+
       .input(z.object({
         name: z.string().optional(),
         email: z.string().email().optional(),
@@ -180,134 +57,6 @@ export const appRouter = router({
 
         return {
           success: true,
-        };
-      }),
-
-    // Change password (local auth only)
-    changePassword: protectedProcedure
-      .input(z.object({
-        currentPassword: z.string(),
-        newPassword: z.string().min(6),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const userId = ctx.user!.id;
-        const user = await db.getUserById(userId);
-
-        if (!user) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "用戶不存在",
-          });
-        }
-
-        // Check if user is local auth
-        if (!user.password) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "此帳號使用 OAuth 登入，無法更改密碼",
-          });
-        }
-
-        // Verify current password
-        const isValid = await comparePassword(input.currentPassword, user.password);
-        if (!isValid) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "當前密碼錯誤",
-          });
-        }
-
-        // Hash new password
-        const hashedPassword = await hashPassword(input.newPassword);
-
-        // Update password
-        await db.updateUserPassword(userId, hashedPassword);
-
-        return {
-          success: true,
-        };
-      }),
-
-    // Request password reset
-    requestPasswordReset: publicProcedure
-      .input(z.object({
-        email: z.string().email(),
-      }))
-      .mutation(async ({ input }) => {
-        // Find user by email
-        const user = await db.getUserByEmail(input.email);
-        
-        // Don't reveal if user exists for security
-        if (!user) {
-          return {
-            success: true,
-            message: "如果該電子郵件存在，我們已發送重置連結",
-          };
-        }
-
-        // Check if user is local auth
-        if (!user.password) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "此帳號使用 OAuth 登入，無法重置密碼",
-          });
-        }
-
-        // Generate reset token
-        const resetToken = generateResetToken();
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-        // Save token to database
-        await db.createPasswordResetToken(user.id, resetToken, expiresAt);
-
-        // Send email
-        const emailSent = await sendPasswordResetEmail(input.email, resetToken, user.username || user.name || "用戶");
-
-        return {
-          success: true,
-          message: "如果該電子郵件存在，我們已發送重置連結",
-          emailSent, // For debugging
-        };
-      }),
-
-    // Reset password with token
-    resetPassword: publicProcedure
-      .input(z.object({
-        token: z.string(),
-        newPassword: z.string().min(6),
-      }))
-      .mutation(async ({ input }) => {
-        // Find token
-        const resetToken = await db.getPasswordResetToken(input.token);
-
-        if (!resetToken) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "無效或已過期的重置連結",
-          });
-        }
-
-        // Check if token is expired
-        if (new Date() > resetToken.expiresAt) {
-          await db.deletePasswordResetToken(input.token);
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "重置連結已過期",
-          });
-        }
-
-        // Hash new password
-        const hashedPassword = await hashPassword(input.newPassword);
-
-        // Update password
-        await db.updateUserPassword(resetToken.userId, hashedPassword);
-
-        // Delete used token
-        await db.deletePasswordResetToken(input.token);
-
-        return {
-          success: true,
-          message: "密碼已成功重置",
         };
       }),
   }),
@@ -1155,20 +904,15 @@ export const appRouter = router({
           throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
         }
         
-        const { sendPasswordResetEmail, generateResetToken } = await import("./emailService");
+        // TODO: Implement email service
+        // const { sendPasswordResetEmail, generateResetToken } = await import("./emailService");
+        // const testToken = generateResetToken();
+        // const emailSent = await sendPasswordResetEmail(input.email, testToken, "測試用戶");
         
-        // Send test email using password reset template
-        const testToken = generateResetToken();
-        const emailSent = await sendPasswordResetEmail(input.email, testToken, "測試用戶");
-        
-        if (!emailSent) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "SMTP 未配置或發送失敗，請檢查 SMTP 設定",
-          });
-        }
-        
-        return { success: true };
+        throw new TRPCError({
+          code: "NOT_IMPLEMENTED",
+          message: "SMTP 功能尚未實作，請稍後再試",
+        });
       }),
   }),
 

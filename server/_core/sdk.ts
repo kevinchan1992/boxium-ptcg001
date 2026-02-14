@@ -264,43 +264,11 @@ class SDKServer {
     console.log("[Auth] Cookie header:", req.headers.cookie ? "present" : "missing");
     console.log("[Auth] Parsed cookies:", Array.from(cookies.keys()));
 
-    // Try local auth token first
-    const authToken = cookies.get("auth_token");
-    console.log("[Auth] auth_token cookie:", authToken ? "present" : "missing");
-    
-    if (authToken) {
-      try {
-        // Verify JWT token for local auth using jsonwebtoken library
-        const jwt = await import("jsonwebtoken");
-        const secret = ENV.cookieSecret; // JWT_SECRET is stored in cookieSecret
-        const decoded = jwt.default.verify(authToken, secret) as { userId: number; username: string };
-        const userId = decoded.userId;
-
-        console.log("[Auth] Local auth token verified, userId:", userId);
-
-        if (userId) {
-          const user = await db.getUserById(userId);
-          if (user) {
-            console.log("[Auth] User found in database:", user.username);
-            // Update last signed in
-            await db.updateUserLastSignedIn(user.id);
-            return user;
-          } else {
-            console.warn("[Auth] User not found in database for userId:", userId);
-          }
-        }
-      } catch (error) {
-        console.warn("[Auth] Local auth token verification failed:", String(error));
-        // Fall through to OAuth authentication
-      }
-    }
-
-    // Try OAuth authentication
+    // OAuth authentication only
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
 
     if (!session) {
-      // Both local auth and OAuth failed - user is not authenticated
       throw ForbiddenError("No valid authentication found");
     }
 

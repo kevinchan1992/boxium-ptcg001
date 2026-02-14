@@ -1,6 +1,6 @@
 import { eq, desc, and, gte, lte, or, like, sql, inArray, lt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, passwordResetTokens, emailVerificationTokens } from "../drizzle/schema";;
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites } from "../drizzle/schema";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -36,18 +36,7 @@ export async function createUser(user: InsertUser): Promise<number> {
   }
 }
 
-/**
- * Get user by username
- */
-export async function getUserByUsername(username: string) {
-  const db = await getDb();
-  if (!db) {
-    return undefined;
-  }
 
-  const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
 
 /**
  * Get user by email
@@ -91,8 +80,8 @@ export async function updateUserLastSignedIn(userId: number) {
  * Upsert user (for OAuth flow)
  */
 export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId && !user.username) {
-    throw new Error("User openId or username is required for upsert");
+  if (!user.openId) {
+    throw new Error("User openId is required for upsert");
   }
 
   const db = await getDb();
@@ -102,7 +91,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 
   try {
-    const values: Partial<InsertUser> = user.openId ? { openId: user.openId } : { username: user.username };
+    const values: Partial<InsertUser> = { openId: user.openId };
     const updateSet: Record<string, unknown> = {};
 
     const textFields = ["name", "email", "loginMethod"] as const;
@@ -563,9 +552,7 @@ export async function createPlaceholderCard(snkrdunkId: string) {
 }
 
 
-// ============================================
-// Firecrawl Usage Tracking Functions
-// ============================================
+
 
 /**
  * Record Firecrawl API usage
@@ -793,112 +780,9 @@ export async function updateUser(userId: number, data: { name?: string; email?: 
   await db.update(users).set(updateData).where(eq(users.id, userId));
 }
 
-/**
- * Update user password
- */
-export async function updateUserPassword(userId: number, hashedPassword: string) {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
 
-  await db.update(users).set({ password: hashedPassword }).where(eq(users.id, userId));
-}
 
-/**
- * Create password reset token
- */
-export async function createPasswordResetToken(userId: number, token: string, expiresAt: Date) {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
 
-  await db.insert(passwordResetTokens).values({
-    userId,
-    token,
-    expiresAt,
-  });
-}
 
-/**
- * Get password reset token
- */
-export async function getPasswordResetToken(token: string) {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
 
-  const [resetToken] = await db
-    .select()
-    .from(passwordResetTokens)
-    .where(eq(passwordResetTokens.token, token))
-    .limit(1);
 
-  return resetToken || null;
-}
-
-/**
- * Delete password reset token
- */
-export async function deletePasswordResetToken(token: string) {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
-
-  await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, token));
-}
-
-/**
- * Delete expired password reset tokens
- */
-export async function deleteExpiredPasswordResetTokens() {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
-
-  await db.delete(passwordResetTokens).where(lt(passwordResetTokens.expiresAt, new Date()));
-}
-
-// ============================================
-// Email Verification Token Functions
-// ============================================
-
-export async function createEmailVerificationToken(userId: number, token: string, expiresAt: Date) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not initialized");
-  await db.insert(emailVerificationTokens).values({
-    userId,
-    token,
-    expiresAt,
-  });
-}
-
-export async function getEmailVerificationToken(token: string) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not initialized");
-  const [result] = await db
-    .select()
-    .from(emailVerificationTokens)
-    .where(eq(emailVerificationTokens.token, token))
-    .limit(1);
-  return result || null;
-}
-
-export async function deleteEmailVerificationToken(token: string) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not initialized");
-  await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.token, token));
-}
-
-export async function markEmailAsVerified(userId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not initialized");
-  await db
-    .update(users)
-    .set({ emailVerified: true })
-    .where(eq(users.id, userId));
-}

@@ -3,33 +3,20 @@ import { Link, useLocation } from "wouter";
 import { TrendingUp, Search, BarChart3, Trophy, Facebook, Twitter, Instagram, Mail, User, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Get current user
-  const { data: user, isLoading: userLoading } = trpc.auth.me.useQuery();
+  // Get current user from Supabase Auth
+  const { user, loading: userLoading, signOut } = useAuth();
   
-  // Logout mutation
-  const utils = trpc.useUtils();
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      toast.success("已登出");
-      // Wait for browser to process cookie clearing
-      setTimeout(() => {
-        // Clear all query cache
-        utils.invalidate();
-        // Redirect to home page
-        window.location.href = '/';
-      }, 100);
-    },
-  });
-  
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("已登出");
+    window.location.href = '/';
   };
 
   return (
@@ -90,21 +77,21 @@ export default function Home() {
                       style={{ borderColor: "#ffed00", color: "white" }}
                     >
                       <User className="mr-2 h-5 w-5" />
-                      {user.username || user.name || "用戶"}
+                      {user.user_metadata?.name || user.email?.split('@')[0] || "用戶"}
                     </Button>
                     <Button
                       onClick={handleLogout}
                       variant="outline"
                       className="px-6 md:px-8 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
                       style={{ borderColor: "#ffed00", color: "white" }}
-                      disabled={logoutMutation.isPending}
+
                     >
                       <LogOut className="mr-2 h-5 w-5" />
                       登出
                     </Button>
                   </div>
                 ) : (
-                  <Link href="/login">
+                  <Link href="/login-new">
                     <Button
                       variant="outline"
                       className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"

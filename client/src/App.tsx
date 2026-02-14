@@ -11,12 +11,10 @@ import Research from "./pages/Research";
 import Pricing from "./pages/Pricing";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
+import { LoginNew } from "./pages/LoginNew";
+import { AuthCallback } from "./pages/AuthCallback";
 import Favorites from "./pages/Favorites";
 import UserProfile from "./pages/UserProfile";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
 import SmtpSettings from "./pages/SmtpSettings";
 
 function Router() {
@@ -30,12 +28,11 @@ function Router() {
       <Route path="/pricing" component={Pricing} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin" component={Admin} />
-      <Route path="/register" component={Register} />
-      <Route path="/login" component={Login} />
+      <Route path="/login" component={LoginNew} />
+      <Route path="/login-new" component={LoginNew} />
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/favorites" component={Favorites} />
       <Route path="/user-profile" component={UserProfile} />
-      <Route path="/forgot-password" component={ForgotPassword} />
-      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/smtp-settings" component={SmtpSettings} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

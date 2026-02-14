@@ -10,11 +10,11 @@ import { trpc } from "@/lib/trpc";
 import { Loader2, Plus, RefreshCw, ExternalLink, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
+import { useAdmin } from "@/hooks/useAdmin";
 
 export default function Admin() {
   const [, setLocation] = useLocation();
-  const { data: user, isLoading: loading } = trpc.auth.me.useQuery();
-  const isAuthenticated = !!user;
+  const { isAdmin, loading, user } = useAdmin();
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -25,7 +25,7 @@ export default function Admin() {
 
   const utils = trpc.useUtils();
   const dataSourcesQuery = trpc.admin.getDataSources.useQuery(undefined, {
-    enabled: isAuthenticated && user?.role === "admin",
+    enabled: isAdmin,
   });
 
 
@@ -294,7 +294,7 @@ export default function Admin() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <MainLayout>
         <div className="min-h-screen flex items-center justify-center px-8">
@@ -304,7 +304,7 @@ export default function Admin() {
               請先登入以訪問管理員功能
             </p>
             <Button
-              onClick={() => setLocation("/login")}
+              onClick={() => setLocation("/login-new")}
               variant="default"
             >
               登入
@@ -315,7 +315,7 @@ export default function Admin() {
     );
   }
 
-  if (user?.role !== "admin") {
+  if (!isAdmin) {
     return (
       <MainLayout>
         <div className="min-h-screen flex items-center justify-center px-8">

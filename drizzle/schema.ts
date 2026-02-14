@@ -2,17 +2,14 @@ import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean 
 
 /**
  * Core user table backing auth flow.
- * Supports both OAuth (openId) and local auth (username/password)
+ * Only supports Manus OAuth authentication
  */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
-  openId: varchar("openId", { length: 64 }).unique(), // For OAuth users (nullable)
-  username: varchar("username", { length: 64 }).unique(), // For local auth users (nullable)
+  openId: varchar("openId", { length: 64 }).notNull().unique(), // Manus OAuth user ID
   email: varchar("email", { length: 320 }).notNull().unique(),
-  password: varchar("password", { length: 255 }), // For local auth users (nullable, bcrypt hashed)
   name: text("name"),
-  loginMethod: varchar("loginMethod", { length: 64 }), // "oauth" or "local"
-  emailVerified: boolean("emailVerified").default(false), // Email verification status
+  loginMethod: varchar("loginMethod", { length: 64 }), // Always "oauth"
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -187,30 +184,4 @@ export const favorites = mysqlTable("favorites", {
 export type Favorite = typeof favorites.$inferSelect;
 export type InsertFavorite = typeof favorites.$inferInsert;
 
-/**
- * Password reset tokens table
- */
-export const passwordResetTokens = mysqlTable("password_reset_tokens", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  token: varchar("token", { length: 255 }).notNull().unique(),
-  expiresAt: timestamp("expiresAt").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
 
-export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
-export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
-
-/**
- * Email verification tokens table
- */
-export const emailVerificationTokens = mysqlTable("email_verification_tokens", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  token: varchar("token", { length: 255 }).notNull().unique(),
-  expiresAt: timestamp("expiresAt").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type EmailVerificationToken = typeof emailVerificationTokens.$inferSelect;
-export type InsertEmailVerificationToken = typeof emailVerificationTokens.$inferInsert;

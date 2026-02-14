@@ -1041,3 +1041,140 @@
 - [x] 確保跨裝置登入邏輯一致性（移除 secure: true 限制）
 - [x] 修復登出後重定向問題（添加延遲並返回主頁）
 - [x] 修復 Manus OAuth 登入功能（使用 getLoginUrl() 函數）
+
+## 認證系統重構 - 使用 Token 黑名單機制
+
+- [x] 分析當前認證系統的問題（cookie 清除不可靠）
+- [x] 設計新的認證架構（token 黑名單機制）
+- [x] 創建 revoked_tokens 數據庫表
+- [x] 實作 token 黑名單管理函數（tokenBlacklist.ts）
+- [x] 修改認證驗證邏輯，檢查 token 是否被撤銷
+- [x] 修改登出邏輯，將 token 加入黑名單
+- [ ] 測試完整的登入/登出/註冊流程
+
+## 認證系統完全重構 - 統一使用 Manus OAuth
+
+- [x] 分析當前系統問題並制定清理計劃
+- [ ] 移除數據庫表：revoked_tokens, password_reset_tokens, email_verification_tokens
+- [ ] 移除 users 表字段：password, username, emailVerified
+- [ ] 刪除服務器端文件：auth.ts, tokenBlacklist.ts, emailService.ts
+- [ ] 簡化 authenticateRequest 函數，只保留 OAuth
+- [ ] 簡化 auth.logout API
+- [ ] 刪除前端頁面：Register.tsx, ForgotPassword.tsx, ResetPassword.tsx, VerifyEmail.tsx
+- [ ] 更新 Login.tsx，只保留 OAuth 登入
+- [ ] 更新主頁和導航
+- [ ] 測試 OAuth 登入/登出功能
+
+
+## Supabase Auth 認證系統實施 - 進行中
+
+### Phase 1: 安裝 Supabase 依賴並配置環境變數
+- [x] 安裝 @supabase/supabase-js
+- [x] 配置 VITE_SUPABASE_URL 和 VITE_SUPABASE_ANON_KEY
+- [x] 測試 Supabase 連接
+
+### Phase 2: 創建數據庫 Migration
+- [x] 創建 user_profiles 表
+- [x] 創建 user_identities 表
+- [x] 執行 migration
+
+### Phase 3: 實作 Supabase 客戶端和 useAuth Hook
+- [x] 創建 client/src/lib/supabaseClient.ts
+- [x] 創建 client/src/hooks/useAuth.ts
+- [x] 實作 signInWithProvider, signInWithEmail, signUpWithEmail, signOut
+
+### Phase 4: 創建新的登入頁面
+- [x] 創建 client/src/pages/LoginNew.tsx（Manus 風格 UI）
+- [x] 實作 Google/Facebook/Apple 登入按鈕
+- [x] 實作 Email 登入/註冊表單
+
+### Phase 5: 創建 OAuth callback 和 RequireAuth
+- [x] 創建 client/src/pages/AuthCallback.tsx
+- [x] 實作首次登入自動建立 profile
+- [x] 創建 client/src/components/RequireAuth.tsx
+- [x] 更新 App.tsx 添加路由
+
+### Phase 6: 更新受保護頁面
+- [ ] 更新所有需要登入的頁面使用 RequireAuth
+- [ ] 更新導航欄顯示登入狀態
+
+### Phase 7: 移除舊認證系統
+- [ ] 移除舊的登入/註冊頁面
+- [ ] 移除舊的認證相關代碼
+- [ ] 清理數據庫舊表
+
+### Phase 8: 測試和交付
+- [ ] 測試 Email 登入/註冊
+- [ ] 測試 Google/Facebook/Apple OAuth 登入
+- [ ] 測試登出功能
+- [ ] 測試受保護頁面訪問控制
+- [ ] 保存 checkpoint
+
+
+## 緊急修復：個人資料頁面顯示錯誤用戶
+
+- [ ] 更新 UserProfile.tsx 使用 Supabase Auth
+- [ ] 更新所有使用 trpc.auth.me 的頁面
+- [ ] 清除舊的認證 cookie
+- [ ] 測試 Supabase 登入後的用戶資料顯示
+
+
+## 管理員功能實施 - 進行中
+
+### Phase 1: 創建管理員帳號
+- [ ] 在 Supabase 創建 xyz.asia.co@gmail.com 帳號
+- [ ] 設置密碼為 Aa63020887
+- [ ] 標記為管理員角色
+
+### Phase 2: 更新數據庫 Schema
+- [ ] 在 user_profiles 表添加 role 欄位（admin/user）
+- [ ] 設置 xyz.asia.co@gmail.com 為 admin
+
+### Phase 3: 實作權限檢查
+- [ ] 創建 useAdmin hook
+- [ ] 創建 RequireAdmin 組件
+- [ ] 保護 Admin 路由
+
+### Phase 4: 重新設計 Admin 頁面
+- [ ] 設計管理員儀表板卡片
+- [ ] 實作用戶管理功能
+- [ ] 實作數據源管理功能
+- [ ] 實作系統設置功能
+
+### Phase 5: 測試和交付
+- [ ] 測試管理員登入
+- [ ] 測試權限檢查
+- [ ] 保存 checkpoint
+
+
+## Supabase Auth 認證系統遷移 - 完成
+
+- [x] 從雙重認證系統遷移到統一的 Supabase Auth
+- [x] 配置 Google OAuth（Google Cloud Console + Supabase）
+- [x] 修復 cookie 設置問題（sameSite 和 secure 屬性）
+- [x] 修復登出功能（清除 cookie 並重定向）
+- [x] 更新 Home.tsx 和 UserProfile.tsx 使用 Supabase Auth
+- [x] 創建管理員帳號（xyz.asia.co@gmail.com）
+- [x] 添加 role 欄位到 user_profiles 表（admin/user）
+
+## 管理員權限系統 - 完成
+
+- [x] 創建 useAdmin hook 用於管理員權限檢查
+- [x] 創建 RequireAdmin 組件保護管理員路由
+- [x] 更新 Admin.tsx 使用 Supabase Auth 和 useAdmin hook
+- [x] 實作管理員權限檢查邏輯
+- [x] 非管理員用戶訪問 Admin 頁面時正確重定向
+
+## 管理員後台現狀
+
+- Admin 頁面已存在完整的數據源管理功能
+- 包含批量添加 SNKRDUNK URL、搜尋、批量刪除等功能
+- 已整合 Supabase Auth 認證系統
+- 使用 useAdmin hook 進行權限檢查
+
+## 未來改進建議
+
+- [ ] 添加用戶管理功能（查看、編輯、刪除用戶）
+- [ ] 添加權限管理功能（設置管理員角色）
+- [ ] 添加系統設置功能（SMTP、OAuth providers 配置）
+- [ ] 添加數據統計卡片（用戶數量、登入統計等）

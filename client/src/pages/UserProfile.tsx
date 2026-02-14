@@ -1,360 +1,185 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, User, Mail, Calendar, Heart, Lock } from "lucide-react";
+import { Loader2, User, Mail, Calendar, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export default function UserProfile() {
   const [, setLocation] = useLocation();
+  const { user, loading, signOut } = useAuth();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-
-  // Get current user
-  const { data: user, isLoading: userLoading } = trpc.auth.me.useQuery();
-
-  // Get favorites count
-  const { data: favoritesData } = trpc.favorites.list.useQuery(undefined, {
-    enabled: !!user,
-  });
+  const [profile, setProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const [profileData, setProfileData] = useState({
-    name: "",
-    email: "",
+    username: "",
+    avatar_url: "",
   });
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  // Load user profile from Supabase
+  useEffect(() => {
+    if (!user) return;
 
-  // Update profile mutation
-  const updateProfileMutation = trpc.auth.updateProfile.useMutation({
-    onSuccess: () => {
-      toast.success("個人資料已更新");
+    const loadProfile = async () => {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading profile:', error);
+      } else {
+        setProfile(data);
+        setProfileData({
+          username: data?.username || '',
+          avatar_url: data?.avatar_url || '',
+        });
+      }
+      setProfileLoading(false);
+    };
+
+    loadProfile();
+  }, [user]);
+
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({
+        username: profileData.username,
+        avatar_url: profileData.avatar_url,
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      toast.error('更新失敗：' + error.message);
+    } else {
+      toast.success('個人資料已更新');
       setIsEditingProfile(false);
-      trpc.useUtils().auth.me.invalidate();
-    },
-    onError: (error) => {
-      toast.error(error.message || "更新失敗");
-    },
-  });
-
-  // Change password mutation
-  const changePasswordMutation = trpc.auth.changePassword.useMutation({
-    onSuccess: () => {
-      toast.success("密碼已更新");
-      setIsChangingPassword(false);
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    },
-    onError: (error) => {
-      toast.error(error.message || "密碼更新失敗");
-    },
-  });
-
-  // Initialize profile data when user loads
-  useState(() => {
-    if (user) {
-      setProfileData({
-        name: user.name || "",
-        email: user.email || "",
-      });
+      // Reload profile
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      setProfile(data);
     }
-  });
-
-  const handleUpdateProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateProfileMutation.mutate(profileData);
   };
 
-  const handleChangePassword = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("新密碼與確認密碼不符");
-      return;
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      toast.error("密碼長度至少 6 個字符");
-      return;
-    }
-
-    changePasswordMutation.mutate({
-      currentPassword: passwordData.currentPassword,
-      newPassword: passwordData.newPassword,
-    });
+  const handleLogout = async () => {
+    await signOut();
+    toast.success('已登出');
+    setLocation('/');
   };
 
-  if (userLoading) {
+  if (loading || profileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-gradient-to-b from-blue-900 via-blue-800 to-blue-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
       </div>
     );
   }
 
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground mb-4">
-              請先登入以查看個人資料
-            </p>
-            <Button
-              onClick={() => setLocation("/login")}
-              className="w-full"
-            >
-              前往登入
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    setLocation('/login-new');
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="container max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">個人資料</h1>
-          <p className="text-muted-foreground mt-2">
-            管理您的帳號設定和個人信息
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-blue-900 via-blue-800 to-blue-950 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold text-yellow-400 mb-8 text-center">
+          個人資料
+        </h1>
 
-        {/* User Info Card */}
-        <Card>
+        <Card className="bg-blue-950/50 border-yellow-400/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-yellow-400">
+              <User className="w-5 h-5" />
               基本資料
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!isEditingProfile ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      用戶名
-                    </label>
-                    <p className="text-foreground mt-1">{user.username || "未設置"}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      姓名
-                    </label>
-                    <p className="text-foreground mt-1">{user.name || "未設置"}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      電子郵件
-                    </label>
-                    <p className="text-foreground mt-1">{user.email || "未設置"}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      註冊時間
-                    </label>
-                    <p className="text-foreground mt-1">
-                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString("zh-TW") : "未知"}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => setIsEditingProfile(true)}
-                  variant="outline"
-                >
-                  編輯資料
-                </Button>
-              </>
-            ) : (
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    姓名
-                  </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-zinc-400">用戶名</label>
+                {isEditingProfile ? (
                   <Input
-                    type="text"
-                    value={profileData.name}
-                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                    placeholder="輸入姓名"
+                    value={profileData.username}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, username: e.target.value })
+                    }
+                    className="bg-blue-900/50 border-yellow-400/30 text-white"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    電子郵件
-                  </label>
-                  <Input
-                    type="email"
-                    value={profileData.email}
-                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                    placeholder="輸入電子郵件"
-                  />
-                </div>
-                <div className="flex gap-2">
+                ) : (
+                  <p className="text-white">{profile?.username || '未設置'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm text-zinc-400 flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  電子郵件
+                </label>
+                <p className="text-white">{user.email}</p>
+              </div>
+
+              <div>
+                <label className="text-sm text-zinc-400 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  註冊時間
+                </label>
+                <p className="text-white">
+                  {new Date(user.created_at).toLocaleDateString('zh-TW')}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              {isEditingProfile ? (
+                <>
                   <Button
-                    type="submit"
-                    disabled={updateProfileMutation.isPending}
+                    onClick={handleUpdateProfile}
+                    className="bg-yellow-400 hover:bg-yellow-500 text-blue-950"
                   >
-                    {updateProfileMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        更新中...
-                      </>
-                    ) : (
-                      "保存"
-                    )}
+                    儲存
                   </Button>
                   <Button
-                    type="button"
-                    variant="outline"
                     onClick={() => setIsEditingProfile(false)}
+                    variant="outline"
+                    className="border-yellow-400/30 text-yellow-400"
                   >
                     取消
                   </Button>
-                </div>
-              </form>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Favorites Stats Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5" />
-              收藏統計
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <p className="text-3xl font-bold text-primary">
-                  {favoritesData?.length || 0}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">收藏卡牌</p>
-              </div>
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <p className="text-3xl font-bold text-primary">
-                  {user.loginMethod === "local" ? "本地" : "OAuth"}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">登入方式</p>
-              </div>
-              <div className="text-center p-4 bg-muted rounded-lg">
+                </>
+              ) : (
                 <Button
-                  onClick={() => setLocation("/favorites")}
-                  variant="outline"
-                  className="w-full"
+                  onClick={() => setIsEditingProfile(true)}
+                  className="bg-yellow-400 hover:bg-yellow-500 text-blue-950"
                 >
-                  查看收藏
+                  編輯資料
                 </Button>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Change Password Card (only for local auth users) */}
-        {user.loginMethod === "local" && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                更改密碼
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!isChangingPassword ? (
-                <Button
-                  onClick={() => setIsChangingPassword(true)}
-                  variant="outline"
-                >
-                  更改密碼
-                </Button>
-              ) : (
-                <form onSubmit={handleChangePassword} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      當前密碼
-                    </label>
-                    <Input
-                      type="password"
-                      value={passwordData.currentPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                      required
-                      placeholder="輸入當前密碼"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      新密碼
-                    </label>
-                    <Input
-                      type="password"
-                      value={passwordData.newPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      required
-                      placeholder="輸入新密碼（至少 6 個字符）"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      確認新密碼
-                    </label>
-                    <Input
-                      type="password"
-                      value={passwordData.confirmPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                      required
-                      placeholder="再次輸入新密碼"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="submit"
-                      disabled={changePasswordMutation.isPending}
-                    >
-                      {changePasswordMutation.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          更新中...
-                        </>
-                      ) : (
-                        "更新密碼"
-                      )}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setIsChangingPassword(false);
-                        setPasswordData({
-                          currentPassword: "",
-                          newPassword: "",
-                          confirmPassword: "",
-                        });
-                      }}
-                    >
-                      取消
-                    </Button>
-                  </div>
-                </form>
-              )}
-            </CardContent>
-          </Card>
-        )}
+        <div className="mt-6 flex justify-center">
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="border-red-400/30 text-red-400 hover:bg-red-400/10"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            登出
+          </Button>
+        </div>
       </div>
     </div>
   );
