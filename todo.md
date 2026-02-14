@@ -1672,3 +1672,16 @@
 - [ ] 移除 Admin 頁面的權限檢查
 - [ ] 移除所有 tRPC procedures 的權限檢查（protectedProcedure → publicProcedure）
 - [ ] 測試所有頁面可公開訪問
+
+## Bug 修復: Admin 頁面自動重定向到首頁 - 完成
+
+- [x] 檢查 Admin 頁面組件的認證邏輯
+- [x] 檢查 main.tsx 中的認證重定向邏輯
+- [x] 移除 main.tsx 中的認證重定向邏輯
+- [x] 測試 Admin 頁面可正常訪問（TypeScript 編譯無錯誤）
+
+**修復結果：**
+- ✅ 移除 main.tsx 中的 `redirectToLoginIfUnauthorized` 函數
+- ✅ 移除認證錯誤監聽器，不再自動重定向到 /login
+- ✅ Admin 頁面現在可以正常訪問，不會自動重定向到首頁
+- ✅ 保留錯誤日誌記錄功能，方便調試
