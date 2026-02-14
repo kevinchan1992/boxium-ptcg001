@@ -76,10 +76,8 @@ export async function searchEbayItems(
   const searchUrl = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search');
   searchUrl.searchParams.set('q', query);
   searchUrl.searchParams.set('limit', limit.toString());
-  // 只搜尋 Buy It Now 商品
-  searchUrl.searchParams.set('filter', 'buyingOptions:{FIXED_PRICE}');
-  // 只搜尋 Used 狀態（評級卡牌通常是 Used）
-  searchUrl.searchParams.set('filter', 'conditions:{USED}');
+  // 組合多個篩選條件成一個 filter 參數（用逗號分隔）
+  searchUrl.searchParams.set('filter', 'buyingOptions:{FIXED_PRICE},conditions:{USED}');
   // 按價格排序
   searchUrl.searchParams.set('sort', 'price');
 
