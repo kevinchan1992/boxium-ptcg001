@@ -1,6 +1,6 @@
-import { eq, desc, and, gte, lte, or, like, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, gte, lte, or, like, sql, inArray, lt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertFirecrawlUsage, InsertSystemSetting, favorites } from "../drizzle/schema";
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertFirecrawlUsage, InsertSystemSetting, favorites, passwordResetTokens } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -775,4 +775,90 @@ export async function isCardFavorited(userId: number, cardId: number): Promise<b
     .limit(1);
 
   return result.length > 0;
+}
+
+/**
+ * Update user profile
+ */
+export async function updateUser(userId: number, data: { name?: string; email?: string }) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const updateData: any = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.email !== undefined) updateData.email = data.email;
+
+  await db.update(users).set(updateData).where(eq(users.id, userId));
+}
+
+/**
+ * Update user password
+ */
+export async function updateUserPassword(userId: number, hashedPassword: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.update(users).set({ password: hashedPassword }).where(eq(users.id, userId));
+}
+
+/**
+ * Create password reset token
+ */
+export async function createPasswordResetToken(userId: number, token: string, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.insert(passwordResetTokens).values({
+    userId,
+    token,
+    expiresAt,
+  });
+}
+
+/**
+ * Get password reset token
+ */
+export async function getPasswordResetToken(token: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const [resetToken] = await db
+    .select()
+    .from(passwordResetTokens)
+    .where(eq(passwordResetTokens.token, token))
+    .limit(1);
+
+  return resetToken || null;
+}
+
+/**
+ * Delete password reset token
+ */
+export async function deletePasswordResetToken(token: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, token));
+}
+
+/**
+ * Delete expired password reset tokens
+ */
+export async function deleteExpiredPasswordResetTokens() {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.delete(passwordResetTokens).where(lt(passwordResetTokens.expiresAt, new Date()));
 }

@@ -57,6 +57,13 @@
       "when": 1770983203894,
       "tag": "0007_milky_cable",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1771030886469,
+      "tag": "0008_vengeful_wallflower",
+      "breakpoints": true
     }
   ]
 }

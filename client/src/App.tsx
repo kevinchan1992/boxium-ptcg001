@@ -14,6 +14,9 @@ import Admin from "./pages/Admin";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Favorites from "./pages/Favorites";
+import UserProfile from "./pages/UserProfile";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -29,6 +32,9 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/login" component={Login} />
       <Route path="/favorites" component={Favorites} />
+      <Route path="/user-profile" component={UserProfile} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

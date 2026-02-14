@@ -9,6 +9,7 @@ import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdu
 import { searchAndSaveEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
 import { hashPassword, comparePassword, generateToken } from "./auth";
+import { sendPasswordResetEmail, generateResetToken } from "./emailService";
 
 export const appRouter = router({
   system: systemRouter,
@@ -80,12 +81,18 @@ export const appRouter = router({
     // Local auth: Login
     login: publicProcedure
       .input(z.object({
-        username: z.string(),
+        username: z.string(), // Can be username or email
         password: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
-        // Find user by username
-        const user = await db.getUserByUsername(input.username);
+        // Find user by username or email
+        let user = await db.getUserByUsername(input.username);
+        
+        // If not found by username, try email
+        if (!user) {
+          user = await db.getUserByEmail(input.username);
+        }
+        
         if (!user) {
           throw new TRPCError({
             code: "UNAUTHORIZED",
@@ -125,6 +132,165 @@ export const appRouter = router({
           userId: user.id,
           username: user.username,
           name: user.name,
+        };
+      }),
+
+    // Update user profile
+    updateProfile: protectedProcedure
+      .input(z.object({
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const userId = ctx.user!.id;
+
+        // Check if email is already used by another user
+        if (input.email) {
+          const existingUser = await db.getUserByEmail(input.email);
+          if (existingUser && existingUser.id !== userId) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: "電子郵件已被使用",
+            });
+          }
+        }
+
+        // Update user
+        await db.updateUser(userId, {
+          name: input.name,
+          email: input.email,
+        });
+
+        return {
+          success: true,
+        };
+      }),
+
+    // Change password (local auth only)
+    changePassword: protectedProcedure
+      .input(z.object({
+        currentPassword: z.string(),
+        newPassword: z.string().min(6),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const userId = ctx.user!.id;
+        const user = await db.getUserById(userId);
+
+        if (!user) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "用戶不存在",
+          });
+        }
+
+        // Check if user is local auth
+        if (!user.password) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "此帳號使用 OAuth 登入，無法更改密碼",
+          });
+        }
+
+        // Verify current password
+        const isValid = await comparePassword(input.currentPassword, user.password);
+        if (!isValid) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "當前密碼錯誤",
+          });
+        }
+
+        // Hash new password
+        const hashedPassword = await hashPassword(input.newPassword);
+
+        // Update password
+        await db.updateUserPassword(userId, hashedPassword);
+
+        return {
+          success: true,
+        };
+      }),
+
+    // Request password reset
+    requestPasswordReset: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+      }))
+      .mutation(async ({ input }) => {
+        // Find user by email
+        const user = await db.getUserByEmail(input.email);
+        
+        // Don't reveal if user exists for security
+        if (!user) {
+          return {
+            success: true,
+            message: "如果該電子郵件存在，我們已發送重置連結",
+          };
+        }
+
+        // Check if user is local auth
+        if (!user.password) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "此帳號使用 OAuth 登入，無法重置密碼",
+          });
+        }
+
+        // Generate reset token
+        const resetToken = generateResetToken();
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+        // Save token to database
+        await db.createPasswordResetToken(user.id, resetToken, expiresAt);
+
+        // Send email
+        const emailSent = await sendPasswordResetEmail(input.email, resetToken, user.username || user.name || "用戶");
+
+        return {
+          success: true,
+          message: "如果該電子郵件存在，我們已發送重置連結",
+          emailSent, // For debugging
+        };
+      }),
+
+    // Reset password with token
+    resetPassword: publicProcedure
+      .input(z.object({
+        token: z.string(),
+        newPassword: z.string().min(6),
+      }))
+      .mutation(async ({ input }) => {
+        // Find token
+        const resetToken = await db.getPasswordResetToken(input.token);
+
+        if (!resetToken) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "無效或已過期的重置連結",
+          });
+        }
+
+        // Check if token is expired
+        if (new Date() > resetToken.expiresAt) {
+          await db.deletePasswordResetToken(input.token);
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "重置連結已過期",
+          });
+        }
+
+        // Hash new password
+        const hashedPassword = await hashPassword(input.newPassword);
+
+        // Update password
+        await db.updateUserPassword(resetToken.userId, hashedPassword);
+
+        // Delete used token
+        await db.deletePasswordResetToken(input.token);
+
+        return {
+          success: true,
+          message: "密碼已成功重置",
         };
       }),
   }),

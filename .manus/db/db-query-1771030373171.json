@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, username, email, name, loginMethod, createdAt FROM users WHERE email = 'tearshim1004@gmail.com' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, username, email, name, loginMethod, createdAt FROM users WHERE email = 'tearshim1004@gmail.com' LIMIT 1;",
+  "rows": [
+    {
+      "id": "300002",
+      "username": "tearshim",
+      "email": "tearshim1004@gmail.com",
+      "name": "NULL",
+      "loginMethod": "local",
+      "createdAt": "2026-02-14 00:49:59"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tusername\temail\tname\tloginMethod\tcreatedAt\n300002\ttearshim\ttearshim1004@gmail.com\tNULL\tlocal\t2026-02-14 00:49:59\n",
+  "stderr": "",
+  "execution_time_ms": 1931
+}

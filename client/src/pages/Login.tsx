@@ -63,14 +63,14 @@ export default function Login() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              使用者名稱
+              使用者名稱或電子郵件
             </label>
             <Input
               type="text"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               required
-              placeholder="輸入使用者名稱"
+              placeholder="輸入使用者名稱或電子郵件"
             />
           </div>
 
@@ -85,6 +85,16 @@ export default function Login() {
               required
               placeholder="輸入密碼"
             />
+          </div>
+
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => setLocation("/forgot-password")}
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              忘記密碼？
+            </button>
           </div>
 
           <Button

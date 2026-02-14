@@ -2,10 +2,11 @@ import { useState } from "react";
 import { useRoute } from "wouter";
 import { MainLayout } from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight, Heart, Share2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { PriceTrendChart } from "@/components/PriceTrendChart";
+import { ShareButton } from "@/components/ShareButton";
 
 
 const grades = ["PSA 10", "BGS 10", "中古"];
@@ -177,6 +178,7 @@ export default function CardDetail() {
               />
               {favoriteStatus?.isFavorited ? "已收藏" : "收藏"}
             </Button>
+            <ShareButton cardName={card.name} cardId={cardId!} />
           </div>
         </div>
 
