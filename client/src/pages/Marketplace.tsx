@@ -1,11 +1,9 @@
-import { MainLayout } from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function Marketplace() {
   return (
-    <MainLayout>
-      <div className="min-h-screen flex items-center justify-center px-8">
+    <div className="min-h-screen flex items-center justify-center px-8">
         <div className="text-center space-y-6">
           <h1 className="text-4xl font-bold text-foreground">交易市場</h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
@@ -26,7 +24,6 @@ export default function Marketplace() {
             </Button>
           </div>
         </div>
-      </div>
-    </MainLayout>
+    </div>
   );
 }

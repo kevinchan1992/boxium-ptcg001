@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRoute } from "wouter";
-import { MainLayout } from "@/components/MainLayout";
+
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight, Heart, Share2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -96,37 +96,31 @@ export default function CardDetail() {
 
   if (!cardId) {
     return (
-      <MainLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <p className="text-muted-foreground">無效的卡牌 ID</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <p className="text-muted-foreground">無效的卡牌 ID</p>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
   if (cardLoading) {
     return (
-      <MainLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </MainLayout>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
     );
   }
 
   if (cardError || !card) {
     return (
-      <MainLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <p className="text-muted-foreground">找不到卡牌</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <p className="text-muted-foreground">找不到卡牌</p>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
@@ -153,8 +147,7 @@ export default function CardDetail() {
   });
 
   return (
-    <MainLayout>
-      <div className="min-h-screen py-8 px-8">
+    <div className="min-h-screen py-8 px-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -401,7 +394,6 @@ export default function CardDetail() {
             </div>
           </div>
         </div>
-      </div>
-    </MainLayout>
+    </div>
   );
 }

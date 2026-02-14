@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { MainLayout } from "@/components/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -29,8 +28,7 @@ export default function SearchResults() {
   };
 
   return (
-    <MainLayout>
-      <div className="min-h-screen py-8 px-8">
+    <div className="min-h-screen py-8 px-8">
         {/* Search Bar */}
         <div className="mb-8">
           <form onSubmit={handleSearch} className="relative max-w-2xl">
@@ -127,7 +125,6 @@ export default function SearchResults() {
             </div>
           </div>
         )}
-      </div>
-    </MainLayout>
+    </div>
   );
 }
