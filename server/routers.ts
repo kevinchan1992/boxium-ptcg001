@@ -418,25 +418,18 @@ export const appRouter = router({
   }),
 
   admin: router({
-    getDataSources: protectedProcedure
+    getDataSources: publicProcedure
       .query(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        const sources = await db.getDataSources();
+const sources = await db.getDataSources();
         return sources;
       }),
 
-    addSnkrdunkSource: protectedProcedure
+    addSnkrdunkSource: publicProcedure
       .input(z.object({
         url: z.string().url(),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-
-        const snkrdunkId = extractSnkrdunkId(input.url);
+const snkrdunkId = extractSnkrdunkId(input.url);
         if (!snkrdunkId) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid SNKRDUNK URL" });
         }
@@ -524,16 +517,12 @@ export const appRouter = router({
         }
       }),
 
-    refreshDataSource: protectedProcedure
+    refreshDataSource: publicProcedure
       .input(z.object({
         dataSourceId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-
-        try {
+try {
           // Get data source
           const dataSource = await db.getDataSourceById(input.dataSourceId);
           if (!dataSource) {
@@ -581,27 +570,21 @@ export const appRouter = router({
         }
       }),
 
-    getUpdateStatus: protectedProcedure
+    getUpdateStatus: publicProcedure
       .input(z.object({
         dataSourceId: z.number(),
       }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        const status = await getUpdateStatus(input.dataSourceId);
+const status = await getUpdateStatus(input.dataSourceId);
         return status;
       }),
 
-    manualUpdate: protectedProcedure
+    manualUpdate: publicProcedure
       .input(z.object({
         dataSourceId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        try {
+try {
           await manualUpdateDataSource(input.dataSourceId);
           return { success: true };
         } catch (error: any) {
@@ -612,15 +595,12 @@ export const appRouter = router({
         }
       }),
 
-    deleteDataSource: protectedProcedure
+    deleteDataSource: publicProcedure
       .input(z.object({
         dataSourceId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        try {
+try {
           await db.deleteDataSource(input.dataSourceId);
           return { success: true };
         } catch (error: any) {
@@ -631,17 +611,13 @@ export const appRouter = router({
         }
       }),
 
-    autoCrawlSnkrdunk: protectedProcedure
+    autoCrawlSnkrdunk: publicProcedure
       .input(z.object({
         startPage: z.number().min(1).default(1),
         endPage: z.number().min(1).default(1575),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        
-        const { autoCrawlSnkrdunk } = await import("./scheduler");
+const { autoCrawlSnkrdunk } = await import("./scheduler");
         
         try {
           const result = await autoCrawlSnkrdunk(input.startPage, input.endPage);
@@ -654,31 +630,21 @@ export const appRouter = router({
         }
       }),
 
-    getCrawlProgress: protectedProcedure
+    getCrawlProgress: publicProcedure
       .query(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        
-        const { getCrawlProgress } = await import("./scheduler");
+const { getCrawlProgress } = await import("./scheduler");
         return getCrawlProgress();
       }),
 
-    getSchedulerStatus: protectedProcedure
+    getSchedulerStatus: publicProcedure
       .query(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        const status = await getSchedulerStatus();
+const status = await getSchedulerStatus();
         return status;
       }),
 
-    triggerManualUpdateAll: protectedProcedure
+    triggerManualUpdateAll: publicProcedure
       .mutation(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        try {
+try {
           await triggerManualUpdateAll();
           return { success: true };
         } catch (error: any) {
@@ -689,13 +655,9 @@ export const appRouter = router({
         }
       }),
 
-    cleanDuplicateDataSources: protectedProcedure
+    cleanDuplicateDataSources: publicProcedure
       .mutation(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        
-        try {
+try {
           // Get all data sources
           const allSources = await db.getDataSources();
           
@@ -738,13 +700,9 @@ export const appRouter = router({
         }
       }),
 
-    deleteFailedDataSources: protectedProcedure
+    deleteFailedDataSources: publicProcedure
       .mutation(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        
-        try {
+try {
           const result = await db.deleteFailedDataSources();
           
           if (!result.success) {
@@ -767,7 +725,7 @@ export const appRouter = router({
         }
       }),
 
-  updateCardEnglishNames: protectedProcedure.mutation(async () => {
+  updateCardEnglishNames: publicProcedure.mutation(async () => {
     const dataSources = await db.getDataSources();
     
     let updated = 0;
@@ -817,12 +775,8 @@ export const appRouter = router({
     };
   }),
 
-  updateAllEbayRecords: protectedProcedure.mutation(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-    }
-
-    // Get all data sources with cards
+  updateAllEbayRecords: publicProcedure.mutation(async ({ ctx }) => {
+// Get all data sources with cards
     const dataSources = await db.getDataSources();
     const uniqueCards = new Map<number, { id: number; name: string }>();
     
@@ -866,12 +820,8 @@ export const appRouter = router({
     };
   }),
 
-  fixOrphanDataSources: protectedProcedure.mutation(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        
-        try {
+  fixOrphanDataSources: publicProcedure.mutation(async ({ ctx }) => {
+try {
           const { fixOrphanDataSources } = await import("./fixOrphanDataSources");
           const result = await fixOrphanDataSources();
           
@@ -890,17 +840,13 @@ export const appRouter = router({
         }
       }),
 
-    getFirecrawlUsageStats: protectedProcedure
+    getFirecrawlUsageStats: publicProcedure
       .input(z.object({
         startDate: z.date().optional(),
         endDate: z.date().optional(),
       }).optional())
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        
-        const stats = await db.getFirecrawlUsageStats(
+const stats = await db.getFirecrawlUsageStats(
           input?.startDate,
           input?.endDate
         );
@@ -916,16 +862,12 @@ export const appRouter = router({
         };
       }),
 
-    setFirecrawlQuotaLimit: protectedProcedure
+    setFirecrawlQuotaLimit: publicProcedure
       .input(z.object({
         limit: z.number().min(1),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        
-        await db.setSystemSetting(
+await db.setSystemSetting(
           "firecrawl_quota_limit",
           input.limit.toString(),
           "Firecrawl monthly quota limit"
@@ -935,13 +877,9 @@ export const appRouter = router({
       }),
 
     // Get SMTP settings
-    getSmtpSettings: protectedProcedure
+    getSmtpSettings: publicProcedure
       .query(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        
-        const settings = {
+const settings = {
           smtpHost: await db.getSystemSetting("smtp_host"),
           smtpPort: await db.getSystemSetting("smtp_port"),
           smtpUser: await db.getSystemSetting("smtp_user"),
@@ -959,7 +897,7 @@ export const appRouter = router({
       }),
 
     // Save SMTP settings
-    saveSmtpSettings: protectedProcedure
+    saveSmtpSettings: publicProcedure
       .input(z.object({
         smtpHost: z.string(),
         smtpPort: z.string(),
@@ -969,11 +907,7 @@ export const appRouter = router({
         fromName: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        
-        await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
+await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         await db.setSystemSetting("smtp_port", input.smtpPort, "SMTP server port");
         await db.setSystemSetting("smtp_user", input.smtpUser, "SMTP username");
         if (input.smtpPass) {
@@ -986,16 +920,12 @@ export const appRouter = router({
       }),
 
     // Test SMTP connection
-    testSmtpConnection: protectedProcedure
+    testSmtpConnection: publicProcedure
       .input(z.object({
         email: z.string().email(),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        
-        // TODO: Implement email service
+// TODO: Implement email service
         // const { sendPasswordResetEmail, generateResetToken } = await import("./emailService");
         // const testToken = generateResetToken();
         // const emailSent = await sendPasswordResetEmail(input.email, testToken, "測試用戶");
@@ -1007,84 +937,62 @@ export const appRouter = router({
       }),
 
     // User Management APIs
-    getAllUsers: protectedProcedure
+    getAllUsers: publicProcedure
       .query(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        const users = await db.getAllUsers();
+const users = await db.getAllUsers();
         return users;
       }),
 
-    updateUserRole: protectedProcedure
+    updateUserRole: publicProcedure
       .input(z.object({
         userId: z.number(),
         role: z.enum(["admin", "user"]),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        await db.updateUserRole(input.userId, input.role);
+await db.updateUserRole(input.userId, input.role);
         return { success: true };
       }),
 
-    updateUserProfile: protectedProcedure
+    updateUserProfile: publicProcedure
       .input(z.object({
         userId: z.number(),
         name: z.string().optional(),
         email: z.string().email().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        const { userId, ...data } = input;
+const { userId, ...data } = input;
         await db.updateUserProfile(userId, data);
         return { success: true };
       }),
 
-    deleteUser: protectedProcedure
+    deleteUser: publicProcedure
       .input(z.object({
         userId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        await db.deleteUser(input.userId);
+await db.deleteUser(input.userId);
         return { success: true };
       }),
 
-    getUserStats: protectedProcedure
+    getUserStats: publicProcedure
       .query(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        const stats = await db.getUserStats();
+const stats = await db.getUserStats();
         return stats;
       }),
 
-    getDashboardStats: protectedProcedure
+    getDashboardStats: publicProcedure
       .query(async ({ ctx }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        const stats = await db.getDashboardStats();
+const stats = await db.getDashboardStats();
         return stats;
       }),
 
     // 更新指定卡牌的 eBay 交易記錄（存入 prices 表）
-    updateEbayPrices: protectedProcedure
+    updateEbayPrices: publicProcedure
       .input(z.object({
         cardId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-
-        try {
+try {
           // 獲取卡牌資訊
           const card = await db.getCardById(input.cardId);
           if (!card) {
@@ -1153,13 +1061,13 @@ export const appRouter = router({
   }),
 
   watchlist: router({
-    getUserWatchlist: protectedProcedure
+    getUserWatchlist: publicProcedure
       .query(async ({ ctx }) => {
-        const watchlist = await db.getUserWatchlist(ctx.user.id);
+        const watchlist = await db.getUserWatchlist(ctx.user?.id || 0);
         return watchlist;
       }),
 
-    addToWatchlist: protectedProcedure
+    addToWatchlist: publicProcedure
       .input(z.object({
         cardId: z.number(),
         targetPrice: z.string().optional(),
@@ -1167,7 +1075,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const result = await db.addToWatchlist(
-          ctx.user.id,
+          ctx.user?.id || 0,
           input.cardId,
           input.targetPrice,
           input.notes
@@ -1175,12 +1083,12 @@ export const appRouter = router({
         return { success: true, result };
       }),
 
-    removeFromWatchlist: protectedProcedure
+    removeFromWatchlist: publicProcedure
       .input(z.object({
         cardId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const result = await db.removeFromWatchlist(ctx.user.id, input.cardId);
+        const result = await db.removeFromWatchlist(ctx.user?.id || 0, input.cardId);
         return { success: true, result };
       }),
   }),
@@ -1188,39 +1096,39 @@ export const appRouter = router({
   // Favorites router
   favorites: router({
     // Get user's favorites
-    list: protectedProcedure
+    list: publicProcedure
       .query(async ({ ctx }) => {
-        const favorites = await db.getUserFavorites(ctx.user.id);
+        const favorites = await db.getUserFavorites(ctx.user?.id || 0);
         return favorites;
       }),
 
     // Add to favorites
-    add: protectedProcedure
+    add: publicProcedure
       .input(z.object({
         cardId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const result = await db.addToFavorites(ctx.user.id, input.cardId);
+        const result = await db.addToFavorites(ctx.user?.id || 0, input.cardId);
         return { success: true, result };
       }),
 
     // Remove from favorites
-    remove: protectedProcedure
+    remove: publicProcedure
       .input(z.object({
         cardId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const result = await db.removeFromFavorites(ctx.user.id, input.cardId);
+        const result = await db.removeFromFavorites(ctx.user?.id || 0, input.cardId);
         return { success: true, result };
       }),
 
     // Check if card is favorited
-    isFavorited: protectedProcedure
+    isFavorited: publicProcedure
       .input(z.object({
         cardId: z.number(),
       }))
       .query(async ({ ctx, input }) => {
-        const isFavorited = await db.isCardFavorited(ctx.user.id, input.cardId);
+        const isFavorited = await db.isCardFavorited(ctx.user?.id || 0, input.cardId);
         return { isFavorited };
       }),
   }),

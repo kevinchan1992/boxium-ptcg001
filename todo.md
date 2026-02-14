@@ -1645,3 +1645,19 @@
 - ✅ 移除認證錯誤監聽器中的重定向邏輯
 - ✅ 保留錯誤日誌記錄功能，方便調試
 - ✅ Admin 頁面現在可以正常訪問，不會自動重定向
+
+## 移除認證系統：將所有 protectedProcedure 改為 publicProcedure - 完成
+
+- [x] 讀取 server/routers.ts 並識別所有 protectedProcedure（35 個）
+- [x] 使用 sed 批量替換 protectedProcedure 為 publicProcedure
+- [x] 使用 Python 腳本移除所有權限檢查代碼（26 個）
+- [x] 修復 ctx.user 可能為 null 的 TypeScript 錯誤
+- [x] 修復重複的 publicProcedure import
+- [x] 測試 TypeScript 編譯無錯誤
+
+**修改結果：**
+- ✅ 所有 35 個 protectedProcedure 已改為 publicProcedure
+- ✅ 所有 26 個權限檢查代碼已移除
+- ✅ ctx.user.id 改為 ctx.user?.id || 0（使用可選鏈和預設值）
+- ✅ 修復 import 語句中重複的 publicProcedure
+- ✅ TypeScript 編譯無錯誤，LSP 檢查通過
