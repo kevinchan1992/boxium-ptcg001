@@ -1,0 +1,22 @@
+CREATE TABLE `blogArticles` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`title` text NOT NULL,
+	`slug` varchar(256) NOT NULL,
+	`summary` text,
+	`content` text NOT NULL,
+	`category` enum('market_analysis','investment_trends','card_research','news','guide') NOT NULL,
+	`featuredImageUrl` text,
+	`authorId` int,
+	`authorName` varchar(128),
+	`status` enum('draft','published','archived') NOT NULL DEFAULT 'draft',
+	`publishedAt` timestamp,
+	`viewCount` int NOT NULL DEFAULT 0,
+	`likeCount` int NOT NULL DEFAULT 0,
+	`tags` text,
+	`relatedCardIds` text,
+	`sourceData` text,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `blogArticles_id` PRIMARY KEY(`id`),
+	CONSTRAINT `blogArticles_slug_unique` UNIQUE(`slug`)
+);

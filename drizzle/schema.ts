@@ -260,4 +260,31 @@ export const userSearchLogs = mysqlTable("userSearchLogs", {
 export type UserSearchLog = typeof userSearchLogs.$inferSelect;
 export type InsertUserSearchLog = typeof userSearchLogs.$inferInsert;
 
+/**
+ * Blog articles table - stores market insight blog articles
+ */
+export const blogArticles = mysqlTable("blogArticles", {
+  id: int("id").autoincrement().primaryKey(),
+  title: text("title").notNull(), // Article title
+  slug: varchar("slug", { length: 256 }).notNull().unique(), // URL-friendly slug
+  summary: text("summary"), // Short summary/excerpt
+  content: text("content").notNull(), // Full article content (markdown)
+  category: mysqlEnum("category", ["market_analysis", "investment_trends", "card_research", "news", "guide"]).notNull(),
+  featuredImageUrl: text("featuredImageUrl"), // Featured image URL
+  authorId: int("authorId"), // Foreign key to users table (optional)
+  authorName: varchar("authorName", { length: 128 }), // Author display name
+  status: mysqlEnum("status", ["draft", "published", "archived"]).default("draft").notNull(),
+  publishedAt: timestamp("publishedAt"), // Publication date
+  viewCount: int("viewCount").default(0).notNull(), // View count
+  likeCount: int("likeCount").default(0).notNull(), // Like count
+  tags: text("tags"), // JSON array of tags
+  relatedCardIds: text("relatedCardIds"), // JSON array of related card IDs
+  sourceData: text("sourceData"), // JSON of source data (images, market data, etc.)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BlogArticle = typeof blogArticles.$inferSelect;
+export type InsertBlogArticle = typeof blogArticles.$inferInsert;
+
 

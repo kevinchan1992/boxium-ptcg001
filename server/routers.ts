@@ -1760,6 +1760,96 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         return { success: true };
       }),
   }),
+
+  // Blog router
+  blog: router({
+    // Get published articles with pagination
+    getArticles: publicProcedure
+      .input(z.object({
+        limit: z.number().optional().default(12),
+        offset: z.number().optional().default(0),
+        category: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        const articles = await db.getPublishedBlogArticles({
+          limit: input.limit,
+          offset: input.offset,
+          category: input.category,
+        });
+        const total = await db.getPublishedBlogArticlesCount(input.category);
+        return {
+          articles,
+          total,
+          hasMore: input.offset + input.limit < total,
+        };
+      }),
+
+    // Get article by slug
+    getBySlug: publicProcedure
+      .input(z.object({
+        slug: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const article = await db.getBlogArticleBySlug(input.slug);
+        if (!article) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Article not found',
+          });
+        }
+        // Increment view count
+        await db.incrementBlogArticleViewCount(article.id);
+        return article;
+      }),
+
+    // Create article (admin only)
+    create: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        summary: z.string().optional(),
+        content: z.string(),
+        category: z.enum(['market_analysis', 'investment_trends', 'card_research', 'news', 'guide']),
+        featuredImageUrl: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+        relatedCardIds: z.array(z.number()).optional(),
+        sourceData: z.any().optional(),
+        status: z.enum(['draft', 'published']).optional().default('draft'),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can create articles',
+          });
+        }
+
+        // Generate slug from title
+        const slug = input.title
+          .toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .substring(0, 200) + '-' + Date.now();
+
+        const articleId = await db.createBlogArticle({
+          title: input.title,
+          slug,
+          summary: input.summary,
+          content: input.content,
+          category: input.category,
+          featuredImageUrl: input.featuredImageUrl,
+          authorId: ctx.user.id,
+          authorName: ctx.user.name || ctx.user.email,
+          status: input.status || 'draft',
+          publishedAt: input.status === 'published' ? new Date() : undefined,
+          tags: input.tags ? JSON.stringify(input.tags) : undefined,
+          relatedCardIds: input.relatedCardIds ? JSON.stringify(input.relatedCardIds) : undefined,
+          sourceData: input.sourceData ? JSON.stringify(input.sourceData) : undefined,
+        });
+
+        return { id: articleId, slug };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

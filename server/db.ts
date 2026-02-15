@@ -1,6 +1,6 @@
 import { eq, desc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, scheduleExecutionHistory, InsertScheduleExecutionHistory, userSearchLogs } from "../drizzle/schema";;
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, scheduleExecutionHistory, InsertScheduleExecutionHistory, userSearchLogs, blogArticles, InsertBlogArticle } from "../drizzle/schema";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1263,4 +1263,133 @@ export async function logUserSearch(data: {
     resultCount: data.resultCount,
     cardId: data.cardId || null,
   });
+}
+
+/**
+ * Blog Articles Functions
+ */
+
+/**
+ * Create a new blog article
+ */
+export async function createBlogArticle(article: InsertBlogArticle): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    const result = await db.insert(blogArticles).values(article);
+    return Number(result[0].insertId);
+  } catch (error) {
+    console.error("[Database] Failed to create blog article:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get published blog articles with pagination
+ */
+export async function getPublishedBlogArticles(options: {
+  limit?: number;
+  offset?: number;
+  category?: string;
+}) {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const { limit = 12, offset = 0, category } = options;
+
+  const whereConditions = category
+    ? and(
+        eq(blogArticles.status, 'published'),
+        eq(blogArticles.category, category as any)
+      )
+    : eq(blogArticles.status, 'published');
+
+  const result = await db
+    .select({
+      id: blogArticles.id,
+      title: blogArticles.title,
+      slug: blogArticles.slug,
+      summary: blogArticles.summary,
+      category: blogArticles.category,
+      featuredImageUrl: blogArticles.featuredImageUrl,
+      authorName: blogArticles.authorName,
+      publishedAt: blogArticles.publishedAt,
+      viewCount: blogArticles.viewCount,
+      likeCount: blogArticles.likeCount,
+      tags: blogArticles.tags,
+    })
+    .from(blogArticles)
+    .where(whereConditions)
+    .orderBy(desc(blogArticles.publishedAt))
+    .limit(limit)
+    .offset(offset);
+
+  return result;
+}
+
+/**
+ * Get blog article by slug
+ */
+export async function getBlogArticleBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db
+    .select()
+    .from(blogArticles)
+    .where(
+      and(
+        eq(blogArticles.slug, slug),
+        eq(blogArticles.status, 'published')
+      )
+    )
+    .limit(1);
+
+  return result[0];
+}
+
+/**
+ * Increment blog article view count
+ */
+export async function incrementBlogArticleViewCount(articleId: number) {
+  const db = await getDb();
+  if (!db) {
+    return;
+  }
+
+  await db
+    .update(blogArticles)
+    .set({ viewCount: sql`${blogArticles.viewCount} + 1` })
+    .where(eq(blogArticles.id, articleId));
+}
+
+/**
+ * Get total count of published blog articles
+ */
+export async function getPublishedBlogArticlesCount(category?: string) {
+  const db = await getDb();
+  if (!db) {
+    return 0;
+  }
+
+  const whereConditions = category
+    ? and(
+        eq(blogArticles.status, 'published'),
+        eq(blogArticles.category, category as any)
+      )
+    : eq(blogArticles.status, 'published');
+
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(blogArticles)
+    .where(whereConditions);
+
+  return Number(result[0]?.count || 0);
 }

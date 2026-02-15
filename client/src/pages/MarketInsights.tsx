@@ -1,303 +1,190 @@
 import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Search, Activity, BarChart3 } from "lucide-react";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Calendar, Eye, Tag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 
 export default function MarketInsights() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const [, setLocation] = useLocation();
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  const [page, setPage] = useState(0);
+  const limit = 12;
 
-  // Fetch market data
-  const { data: topGainers, isLoading: loadingGainers } = trpc.marketInsights.getTopGainers.useQuery({ days: 7, limit: 5 });
-  const { data: topSearched, isLoading: loadingSearched } = trpc.marketInsights.getTopSearched.useQuery({ days: 7, limit: 5 });
-  const { data: topVolatile, isLoading: loadingVolatile } = trpc.marketInsights.getTopVolatile.useQuery({ days: 7, limit: 5 });
-  const { data: overview, isLoading: loadingOverview } = trpc.marketInsights.getMarketOverview.useQuery();
+  // Fetch blog articles
+  const { data, isLoading } = trpc.blog.getArticles.useQuery({
+    limit,
+    offset: page * limit,
+    category: selectedCategory,
+  });
 
-  // LLM market analysis
-  const [analysis, setAnalysis] = useState<string>("");
-  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
-  const generateAnalysisMutation = trpc.marketInsights.generateAnalysis.useMutation();
+  const categories = [
+    { value: undefined, label: "全部" },
+    { value: "market_analysis", label: "市場分析" },
+    { value: "investment_trends", label: "投資趨勢" },
+    { value: "card_research", label: "卡牌研究" },
+    { value: "news", label: "最新消息" },
+    { value: "guide", label: "新手指南" },
+  ];
 
-  // Generate analysis when data is loaded
-  useEffect(() => {
-    if (!loadingGainers && !loadingSearched && !loadingVolatile && !loadingOverview && !analysis) {
-      setLoadingAnalysis(true);
-      generateAnalysisMutation.mutate(
-        { language: i18n.language as "zh-TW" | "en" | "ja" },
-        {
-          onSuccess: (data) => {
-            setAnalysis(typeof data.analysis === 'string' ? data.analysis : '');
-            setLoadingAnalysis(false);
-          },
-          onError: () => {
-            setAnalysis("市場分析生成失敗，請稍後再試。");
-            setLoadingAnalysis(false);
-          },
-        }
-      );
-    }
-  }, [loadingGainers, loadingSearched, loadingVolatile, loadingOverview, analysis]);
-
-  const formatPrice = (price: number | string | null | undefined, currency: string = "HKD") => {
-    const numPrice = typeof price === 'number' ? price : parseFloat(String(price || 0));
-    return `${currency} ${numPrice.toFixed(2)}`;
+  const getCategoryLabel = (category: string) => {
+    const cat = categories.find(c => c.value === category);
+    return cat?.label || category;
   };
 
-  const formatPercentage = (value: number | string | null | undefined) => {
-    const numValue = typeof value === 'number' ? value : parseFloat(String(value || 0));
-    const sign = numValue >= 0 ? "+" : "";
-    return `${sign}${numValue.toFixed(2)}%`;
+  const formatDate = (date: Date | string | null | undefined) => {
+    if (!date) return "";
+    const d = new Date(date);
+    return d.toLocaleDateString("zh-TW", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950 text-white">
-      {/* Header Banner */}
-      <div className="bg-yellow-400 text-blue-900 py-8 px-4">
-        <div className="container mx-auto">
-          <div className="flex items-center gap-4 mb-2">
-            <BarChart3 className="w-12 h-12" />
-            <div>
-              <h1 className="text-4xl font-bold">BOXIUM 市場快報</h1>
-              <p className="text-lg">本週 PTCG 市場洞察報告</p>
-            </div>
-          </div>
-          <p className="text-sm opacity-80">
-            {new Date().toLocaleDateString("zh-TW", { 
-              year: "numeric", 
-              month: "long", 
-              day: "numeric",
-              weekday: "long"
-            })}
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+        <div className="container mx-auto px-4">
+          <h1 className="text-5xl font-bold mb-4">市場洞察</h1>
+          <p className="text-xl text-blue-100">深入分析 PTCG 市場趨勢，掌握投資先機</p>
         </div>
       </div>
 
-      {/* Market Overview */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          {loadingOverview ? (
-            <>
-              <Skeleton className="h-24 bg-blue-800" />
-              <Skeleton className="h-24 bg-blue-800" />
-              <Skeleton className="h-24 bg-blue-800" />
-              <Skeleton className="h-24 bg-blue-800" />
-            </>
-          ) : (
-            <>
-              <Card className="bg-blue-800/50 border-blue-700">
-                <CardContent className="pt-6">
-                  <div className="text-3xl font-bold text-yellow-400">{overview?.totalCards || 0}</div>
-                  <div className="text-sm text-blue-200">追蹤卡牌數量</div>
-                </CardContent>
-              </Card>
-              <Card className="bg-blue-800/50 border-blue-700">
-                <CardContent className="pt-6">
-                  <div className="text-3xl font-bold text-yellow-400">{overview?.totalPriceRecords || 0}</div>
-                  <div className="text-sm text-blue-200">價格記錄數量</div>
-                </CardContent>
-              </Card>
-              <Card className="bg-blue-800/50 border-blue-700">
-                <CardContent className="pt-6">
-                  <div className="text-3xl font-bold text-yellow-400">{overview?.totalSearches || 0}</div>
-                  <div className="text-sm text-blue-200">用戶搜尋次數</div>
-                </CardContent>
-              </Card>
-              <Card className="bg-blue-800/50 border-blue-700">
-                <CardContent className="pt-6">
-                  <div className="text-3xl font-bold text-yellow-400">
-                    {formatPercentage(overview?.avgPriceChange7d || 0)}
-                  </div>
-                  <div className="text-sm text-blue-200">7 天平均漲幅</div>
-                </CardContent>
-              </Card>
-            </>
-          )}
+      {/* Category Filter */}
+      <div className="bg-white border-b sticky top-0 z-10 shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex gap-2 overflow-x-auto">
+            {categories.map((cat) => (
+              <Button
+                key={cat.value || "all"}
+                variant={selectedCategory === cat.value ? "default" : "outline"}
+                onClick={() => {
+                  setSelectedCategory(cat.value);
+                  setPage(0);
+                }}
+                className="whitespace-nowrap"
+              >
+                {cat.label}
+              </Button>
+            ))}
+          </div>
         </div>
+      </div>
 
-        {/* Top Gainers */}
-        <Card className="bg-blue-800/30 border-blue-700 mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-400">
-              <TrendingUp className="w-6 h-6" />
-              本週漲幅 Top 5
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingGainers ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton key={i} className="h-24 bg-blue-800" />
-                ))}
-              </div>
-            ) : topGainers && topGainers.length > 0 ? (
-              <div className="space-y-4">
-                {topGainers.map((card, index) => (
-                  <div
-                    key={card.cardId}
-                    className="flex items-center gap-4 p-4 bg-blue-900/50 rounded-lg hover:bg-blue-900/70 transition-colors"
-                  >
-                    <div className="text-3xl font-bold text-yellow-400 w-12">
-                      #{index + 1}
-                    </div>
-                    {card.cardImage && (
+      {/* Articles Grid */}
+      <div className="container mx-auto px-4 py-12">
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="h-48 w-full" />
+                <CardContent className="p-6 space-y-3">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : data && data.articles.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {data.articles.map((article) => (
+                <Card
+                  key={article.id}
+                  className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group"
+                  onClick={() => setLocation(`/market-insights/${article.slug}`)}
+                >
+                  {/* Featured Image */}
+                  {article.featuredImageUrl && (
+                    <div className="relative h-48 overflow-hidden bg-slate-200">
                       <img
-                        src={card.cardImage}
-                        alt={card.cardName}
-                        className="w-20 h-28 object-cover rounded"
+                        src={article.featuredImageUrl}
+                        alt={article.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg">{card.cardName}</h3>
-                      <div className="flex items-center gap-4 mt-2 text-sm">
-                        <span className="text-blue-300">
-                          {formatPrice(card.oldestPrice, card.currency)} → {formatPrice(card.latestPrice, card.currency)}
-                        </span>
-                        <span className="text-green-400 font-bold flex items-center gap-1">
-                          <TrendingUp className="w-4 h-4" />
-                          {formatPercentage(card.priceChange)}
+                      {/* Category Badge */}
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                          {getCategoryLabel(article.category)}
                         </span>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-blue-300">
-                暫無數據，請稍後再試
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  )}
 
-        {/* Top Searched */}
-        <Card className="bg-blue-800/30 border-blue-700 mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-400">
-              <Search className="w-6 h-6" />
-              熱門搜尋 Top 5
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingSearched ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton key={i} className="h-24 bg-blue-800" />
-                ))}
-              </div>
-            ) : topSearched && topSearched.length > 0 ? (
-              <div className="space-y-4">
-                {topSearched.map((card, index) => (
-                  <div
-                    key={card.cardId}
-                    className="flex items-center gap-4 p-4 bg-blue-900/50 rounded-lg hover:bg-blue-900/70 transition-colors"
-                  >
-                    <div className="text-3xl font-bold text-yellow-400 w-12">
-                      #{index + 1}
+                  <CardContent className="p-6">
+                    {/* Date */}
+                    <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
+                      <Calendar className="w-4 h-4" />
+                      <span>{formatDate(article.publishedAt)}</span>
                     </div>
-                    {card.cardImage && (
-                      <img
-                        src={card.cardImage}
-                        alt={card.cardName}
-                        className="w-20 h-28 object-cover rounded"
-                      />
+
+                    {/* Title */}
+                    <h2 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      {article.title}
+                    </h2>
+
+                    {/* Summary */}
+                    {article.summary && (
+                      <p className="text-slate-600 text-sm line-clamp-3 mb-4">
+                        {article.summary}
+                      </p>
                     )}
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg">{card.cardName}</h3>
-                      <div className="flex items-center gap-2 mt-2 text-sm text-blue-300">
-                        <Search className="w-4 h-4" />
-                        <span>{card.searchCount} 次搜尋</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-blue-300">
-                暫無數據，請稍後再試
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Top Volatile */}
-        <Card className="bg-blue-800/30 border-blue-700 mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-400">
-              <Activity className="w-6 h-6" />
-              價格波動 Top 5
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingVolatile ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton key={i} className="h-24 bg-blue-800" />
-                ))}
-              </div>
-            ) : topVolatile && topVolatile.length > 0 ? (
-              <div className="space-y-4">
-                {topVolatile.map((card, index) => (
-                  <div
-                    key={card.cardId}
-                    className="flex items-center gap-4 p-4 bg-blue-900/50 rounded-lg hover:bg-blue-900/70 transition-colors"
-                  >
-                    <div className="text-3xl font-bold text-yellow-400 w-12">
-                      #{index + 1}
-                    </div>
-                    {card.cardImage && (
-                      <img
-                        src={card.cardImage}
-                        alt={card.cardName}
-                        className="w-20 h-28 object-cover rounded"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg">{card.cardName}</h3>
-                      <div className="flex items-center gap-4 mt-2 text-sm">
-                        <span className="text-blue-300">
-                          最低: {formatPrice(card.minPrice, card.currency)}
-                        </span>
-                        <span className="text-blue-300">
-                          最高: {formatPrice(card.maxPrice, card.currency)}
-                        </span>
-                        <span className="text-orange-400 font-bold flex items-center gap-1">
-                          <Activity className="w-4 h-4" />
-                          波動率: {formatPercentage(card.volatility)}
-                        </span>
+                    {/* Meta Info */}
+                    <div className="flex items-center gap-4 text-sm text-slate-500 pt-4 border-t">
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-4 h-4" />
+                        <span>{article.viewCount}</span>
                       </div>
+                      {article.authorName && (
+                        <div className="flex items-center gap-1">
+                          <span>作者：{article.authorName}</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-blue-300">
-                暫無數據，請稍後再試
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-        {/* Market Analysis (LLM Generated) */}
-        <Card className="bg-yellow-400/10 border-yellow-400/30">
-          <CardHeader>
-            <CardTitle className="text-yellow-400">市場分析</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingAnalysis ? (
-              <div className="space-y-2">
-                <Skeleton className="h-4 bg-blue-800" />
-                <Skeleton className="h-4 bg-blue-800" />
-                <Skeleton className="h-4 bg-blue-800" />
-                <Skeleton className="h-4 bg-blue-800 w-3/4" />
-              </div>
-            ) : (
-              <div className="text-blue-200 whitespace-pre-wrap leading-relaxed">
-                {analysis || "正在生成市場分析..."}
+            {/* Pagination */}
+            {data.total > limit && (
+              <div className="flex justify-center gap-4 mt-12">
+                <Button
+                  variant="outline"
+                  onClick={() => setPage(Math.max(0, page - 1))}
+                  disabled={page === 0}
+                >
+                  上一頁
+                </Button>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <span>第 {page + 1} 頁</span>
+                  <span>/</span>
+                  <span>共 {Math.ceil(data.total / limit)} 頁</span>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setPage(page + 1)}
+                  disabled={!data.hasMore}
+                >
+                  下一頁
+                </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </>
+        ) : (
+          <div className="text-center py-16">
+            <div className="text-slate-400 text-lg mb-4">暫無文章</div>
+            <p className="text-slate-500 text-sm">敬請期待更多市場洞察內容</p>
+          </div>
+        )}
       </div>
     </div>
   );

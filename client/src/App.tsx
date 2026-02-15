@@ -14,6 +14,8 @@ import Admin from "./pages/Admin";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import MarketInsights from "./pages/MarketInsights";
+import ArticleDetail from "./pages/ArticleDetail";
+import CreateArticle from "./pages/CreateArticle";
 
 function Router() {
   return (
@@ -28,6 +30,8 @@ function Router() {
       <Route path="/research" component={Research} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/market-insights" component={MarketInsights} />
+      <Route path="/market-insights/:slug" component={ArticleDetail} />
+      <Route path="/admin/create-article" component={CreateArticle} />
       <Route path="/admin" component={Admin} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
