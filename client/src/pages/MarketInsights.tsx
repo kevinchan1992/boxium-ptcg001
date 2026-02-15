@@ -39,13 +39,15 @@ export default function MarketInsights() {
     }
   }, [loadingGainers, loadingSearched, loadingVolatile, loadingOverview, analysis]);
 
-  const formatPrice = (price: number, currency: string = "HKD") => {
-    return `${currency} ${price.toFixed(2)}`;
+  const formatPrice = (price: number | string | null | undefined, currency: string = "HKD") => {
+    const numPrice = typeof price === 'number' ? price : parseFloat(String(price || 0));
+    return `${currency} ${numPrice.toFixed(2)}`;
   };
 
-  const formatPercentage = (value: number) => {
-    const sign = value >= 0 ? "+" : "";
-    return `${sign}${value.toFixed(2)}%`;
+  const formatPercentage = (value: number | string | null | undefined) => {
+    const numValue = typeof value === 'number' ? value : parseFloat(String(value || 0));
+    const sign = numValue >= 0 ? "+" : "";
+    return `${sign}${numValue.toFixed(2)}%`;
   };
 
   return (

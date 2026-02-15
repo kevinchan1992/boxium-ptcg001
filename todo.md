@@ -2029,3 +2029,10 @@
 - [x] 修正 getTopVolatile 查詢中的 ORDER BY 別名問題
 - [x] 修正 getTopSearched 查詢中的 ORDER BY 別名問題
 - [x] 修正 getMarketOverview 查詢中的 AVG 計算問題
+
+## Bug 修正: 市場洞察頁面 formatPrice 函數錯誤
+- [ ] 檢查 MarketInsights.tsx 中的 formatPrice 函數
+- [ ] 修正 price.toFixed is not a function 錯誤
+- [ ] 確保所有價格數據類型正確
+
+- [x] 修正市場洞察頁面 formatPrice 函數錯誤
