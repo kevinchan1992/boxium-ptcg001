@@ -1971,3 +1971,21 @@
 - ✅ 整個平台的語言切換體驗一致
 - ✅ TypeScript 編譯無錯誤
 - ✅ 開發服務器正常運行
+
+## 新任務: 全面補充所有遺漏的多語言支援
+
+- [ ] 補充首頁核心功能區塊的翻譯（智能搜尋、價格趨勢、市場統計、熱門排行）
+- [ ] 更新 Terms of Service 頁面使用多語言
+- [ ] 更新 Privacy Policy 頁面使用多語言
+- [ ] 更新 AdminDataSources 組件使用多語言
+- [ ] 更新 AdminSchedule 組件使用多語言
+- [ ] 更新 AdminDashboard 組件使用多語言
+- [ ] 檢查並補充其他遺漏的頁面和組件
+- [ ] 測試所有頁面的語言切換功能
+
+[x] 補充首頁核心功能區塊的翻譯（智能搜尋、價格趨勢、市場統計、熱門排行）
+[ ] 更新 Terms of Service 頁面使用多語言（待完成）
+[ ] 更新 Privacy Policy 頁面使用多語言（待完成）
+[ ] 更新 AdminDataSources 組件使用多語言（待完成）
+[ ] 更新 AdminSchedule 組件使用多語言（待完成）
+[ ] 更新 AdminDashboard 組件使用多語言（待完成）

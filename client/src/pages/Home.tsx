@@ -23,7 +23,7 @@ function TrendingCardsGrid() {
   if (trendingCards.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 text-lg">暂無熱門卡牌數據</p>
+        <p className="text-gray-500 text-lg">{t("home.noTrendingCards")}</p>
       </div>
     );
   }
@@ -139,10 +139,10 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-5 md:mb-8">
             <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5" style={{ color: "#06038d" }}>
-              核心功能
+              {t("home.coreFeatures")}
             </h2>
             <p className="text-gray-600 text-xs md:text-sm max-w-2xl mx-auto px-2">
-              BOXIUM 提供專業的卡牌價格分析工具，幫助您做出更明智的投資決策
+              {t("home.coreFeaturesDesc")}
             </p>
           </div>
 
@@ -152,9 +152,9 @@ export default function Home() {
               <div className="w-12 md:w-14 h-12 md:h-14 rounded-lg flex items-center justify-center mb-4 md:mb-6" style={{ backgroundColor: "#ffed00" }}>
                 <Search className="h-6 md:h-7 w-6 md:w-7" style={{ color: "#06038d" }} />
               </div>
-              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>智能搜尋</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>{t("home.smartSearch")}</h3>
               <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                快速搜尋數百張卡牌，支援名稱、編號、系列等多維度篩選
+                {t("home.smartSearchDesc")}
               </p>
             </div>
 
@@ -163,9 +163,9 @@ export default function Home() {
               <div className="w-12 md:w-14 h-12 md:h-14 rounded-lg flex items-center justify-center mb-4 md:mb-6" style={{ backgroundColor: "#ffed00" }}>
                 <TrendingUp className="h-6 md:h-7 w-6 md:w-7" style={{ color: "#06038d" }} />
               </div>
-              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>價格趨勢</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>{t("home.priceTrend")}</h3>
               <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                查看 90 天內的價格變化，掌握市場動態和投資時機
+                {t("home.priceTrendDesc")}
               </p>
             </div>
 
@@ -174,9 +174,9 @@ export default function Home() {
               <div className="w-12 md:w-14 h-12 md:h-14 rounded-lg flex items-center justify-center mb-4 md:mb-6" style={{ backgroundColor: "#ffed00" }}>
                 <BarChart3 className="h-6 md:h-7 w-6 md:w-7" style={{ color: "#06038d" }} />
               </div>
-              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>市場統計</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>{t("home.marketStats")}</h3>
               <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                實時市場數據分析，了解卡牌的平均價格和市場表現
+                {t("home.marketStatsDesc")}
               </p>
             </div>
 
@@ -185,9 +185,9 @@ export default function Home() {
               <div className="w-12 md:w-14 h-12 md:h-14 rounded-lg flex items-center justify-center mb-4 md:mb-6" style={{ backgroundColor: "#ffed00" }}>
                 <Trophy className="h-6 md:h-7 w-6 md:w-7" style={{ color: "#06038d" }} />
               </div>
-              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>熱門排行</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>{t("home.topRanking")}</h3>
               <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                發現市場上最熱門的卡牌，跟蹤投資者的選擇
+                {t("home.topRankingDesc")}
               </p>
             </div>
           </div>
@@ -201,11 +201,11 @@ export default function Home() {
             <div className="flex items-center justify-center gap-2 mb-3">
               <Flame className="w-6 h-6 md:w-8 md:h-8" style={{ color: "#ff4500" }} />
               <h2 className="text-base sm:text-lg md:text-xl font-bold" style={{ color: "#06038d" }}>
-                熱門卡牌
+                {t("home.trendingCards")}
               </h2>
             </div>
             <p className="text-gray-600 text-xs md:text-sm max-w-2xl mx-auto px-2">
-              近期價格漲幅最高的卡牌，掌握市場熱點
+              {t("home.trendingCardsDesc")}
             </p>
           </div>
 
@@ -218,10 +218,10 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-5 md:mb-8">
             <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5" style={{ color: "#06038d" }}>
-              權威數據源
+              {t("home.dataSources")}
             </h2>
             <p className="text-gray-600 text-xs md:text-sm max-w-2xl mx-auto px-2">
-              整合全球領先的卡牌交易平台，確保數據的準確性和實時性
+              {t("home.dataSourcesDesc")}
             </p>
           </div>
 
@@ -230,12 +230,12 @@ export default function Home() {
             <div className="bg-white rounded-xl p-6 md:p-8 shadow-md border-l-4" style={{ borderColor: "#06038d" }}>
               <h3 className="text-xl md:text-2xl font-bold mb-4" style={{ color: "#06038d" }}>SNKRDUNK</h3>
               <p className="text-gray-600 mb-6 text-sm md:text-base leading-relaxed">
-                日本領先的卡牌交易平台，提供最新的 PSA 10 評級卡牌交易數據和市場趨勢分析
+                {t("home.snkrdunkDesc")}
               </p>
               <div className="space-y-2 text-xs md:text-sm text-gray-600">
-                <div>✓ 實時交易數據</div>
-                <div>✓ PSA 評級支援</div>
-                <div>✓ 日幣價格</div>
+                <div>✓ {t("home.realtimeData")}</div>
+                <div>✓ {t("home.psaSupport")}</div>
+                <div>✓ {t("home.jpyPrice")}</div>
               </div>
             </div>
 
@@ -243,11 +243,11 @@ export default function Home() {
             <div className="bg-white rounded-xl p-6 md:p-8 shadow-md border-l-4" style={{ borderColor: "#ffed00" }}>
               <h3 className="text-xl md:text-2xl font-bold mb-4" style={{ color: "#06038d" }}>eBay</h3>
               <p className="text-gray-600 mb-6 text-sm md:text-base leading-relaxed">
-                全球最大的線上拍賣平台，提供國際市場的卡牌交易記錄和價格參考
+                {t("home.ebayDesc")}
               </p>
               <div className="space-y-2 text-xs md:text-sm text-gray-600">
-                <div>✓ 全球市場數據</div>
-                <div>✓ PSA 評級支援</div>
+                <div>✓ {t("home.globalMarket")}</div>
+                <div>✓ {t("home.psaSupport")}</div>
                 <div>✓ 美元價格</div>
               </div>
             </div>
