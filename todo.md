@@ -2036,3 +2036,6 @@
 - [ ] 確保所有價格數據類型正確
 
 - [x] 修正市場洞察頁面 formatPrice 函數錯誤
+
+- [ ] 修正市場洞察頁面所有 toFixed 函數錯誤（priceChange、volatility 等欄位）
+- [x] 修正市場洞察頁面所有 toFixed 函數錯誤，確保所有數值欄位都正確轉換為數字類型

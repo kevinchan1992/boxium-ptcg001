@@ -1099,7 +1099,13 @@ export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
     .orderBy(desc(sql`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / MIN(${priceHistory.price}) * 100)`))
     .limit(limit);
 
-  return result;
+  // Ensure numeric fields are properly converted
+  return result.map(row => ({
+    ...row,
+    oldestPrice: Number(row.oldestPrice),
+    latestPrice: Number(row.latestPrice),
+    priceChange: Number(row.priceChange),
+  }));
 }
 
 /**
@@ -1168,7 +1174,14 @@ export async function getTopVolatileCards(days: number = 7, limit: number = 5) {
     .orderBy(desc(sql`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / AVG(${priceHistory.price}) * 100)`))
     .limit(limit);
 
-  return result;
+  // Ensure numeric fields are properly converted
+  return result.map(row => ({
+    ...row,
+    minPrice: Number(row.minPrice),
+    maxPrice: Number(row.maxPrice),
+    avgPrice: Number(row.avgPrice),
+    volatility: Number(row.volatility),
+  }));
 }
 
 /**
