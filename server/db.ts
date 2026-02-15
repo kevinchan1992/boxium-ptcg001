@@ -1393,3 +1393,91 @@ export async function getPublishedBlogArticlesCount(category?: string) {
 
   return Number(result[0]?.count || 0);
 }
+
+/**
+ * Get all blog articles (including drafts, for admin)
+ */
+export async function getAllBlogArticles(options: {
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const result = await db
+    .select()
+    .from(blogArticles)
+    .orderBy(desc(blogArticles.createdAt))
+    .limit(options.limit || 50)
+    .offset(options.offset || 0);
+
+  return result;
+}
+
+/**
+ * Get all blog articles count (including drafts, for admin)
+ */
+export async function getAllBlogArticlesCount() {
+  const db = await getDb();
+  if (!db) {
+    return 0;
+  }
+
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(blogArticles);
+
+  return Number(result[0]?.count || 0);
+}
+
+/**
+ * Get blog article by ID
+ */
+export async function getBlogArticleById(id: number) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db
+    .select()
+    .from(blogArticles)
+    .where(eq(blogArticles.id, id))
+    .limit(1);
+
+  return result[0];
+}
+
+/**
+ * Update blog article
+ */
+export async function updateBlogArticle(
+  id: number,
+  updates: Partial<InsertBlogArticle>
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(blogArticles)
+    .set(updates)
+    .where(eq(blogArticles.id, id));
+}
+
+/**
+ * Delete blog article
+ */
+export async function deleteBlogArticle(id: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .delete(blogArticles)
+    .where(eq(blogArticles.id, id));
+}

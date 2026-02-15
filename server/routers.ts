@@ -1849,6 +1849,205 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
 
         return { id: articleId, slug };
       }),
+
+    // Generate article from image using AI (admin only)
+    generateFromImage: protectedProcedure
+      .input(z.object({
+        imageUrl: z.string(),
+        additionalContext: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can generate articles',
+          });
+        }
+
+        const { invokeLLM } = await import("./_core/llm");
+
+        // Use LLM to analyze the image and generate article content
+        const prompt = `你是一位專業的寶可夢卡牌（PTCG）市場分析師。請分析這張市場快報圖片，並生成一篇完整的博客文章。
+
+要求：
+1. 提取圖片中的所有重要資訊（卡牌名稱、價格、市場趨勢等）
+2. 生成吸引人的文章標題（繁體中文，不超過50字）
+3. 生成文章摘要（繁體中文，100-150字）
+4. 生成完整的文章內容（繁體中文，800-1200字），包含：
+   - 市場概況
+   - 重點卡牌分析
+   - 價格趨勢解讀
+   - 投資建議
+5. 建議3-5個相關標籤
+6. 建議文章分類（market_analysis, investment_trends, card_research, news, guide 之一）
+
+${input.additionalContext ? `額外背景資訊：${input.additionalContext}` : ''}
+
+請以 JSON 格式回應，包含以下欄位：
+{
+  "title": "文章標題",
+  "summary": "文章摘要",
+  "content": "完整文章內容",
+  "category": "分類",
+  "tags": ["標籤1", "標籤2", "標籤3"]
+}`;
+
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: input.imageUrl,
+                  },
+                },
+                {
+                  type: "text",
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "article_generation",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  title: { type: "string", description: "文章標題" },
+                  summary: { type: "string", description: "文章摘要" },
+                  content: { type: "string", description: "完整文章內容" },
+                  category: { 
+                    type: "string", 
+                    enum: ["market_analysis", "investment_trends", "card_research", "news", "guide"],
+                    description: "文章分類" 
+                  },
+                  tags: { 
+                    type: "array", 
+                    items: { type: "string" },
+                    description: "文章標籤" 
+                  },
+                },
+                required: ["title", "summary", "content", "category", "tags"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const content = response.choices[0].message.content;
+        const result = JSON.parse(typeof content === 'string' ? content : JSON.stringify(content));
+        return result;
+      }),
+
+    // Get all articles (admin only, including drafts)
+    getAllArticles: protectedProcedure
+      .input(z.object({
+        limit: z.number().optional().default(50),
+        offset: z.number().optional().default(0),
+      }))
+      .query(async ({ input, ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can view all articles',
+          });
+        }
+
+        const articles = await db.getAllBlogArticles({
+          limit: input.limit,
+          offset: input.offset,
+        });
+        const total = await db.getAllBlogArticlesCount();
+        return {
+          articles,
+          total,
+          hasMore: input.offset + input.limit < total,
+        };
+      }),
+
+    // Update article (admin only)
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        summary: z.string().optional(),
+        content: z.string().optional(),
+        category: z.enum(['market_analysis', 'investment_trends', 'card_research', 'news', 'guide']).optional(),
+        featuredImageUrl: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+        status: z.enum(['draft', 'published']).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can update articles',
+          });
+        }
+
+        await db.updateBlogArticle(input.id, {
+          title: input.title,
+          summary: input.summary,
+          content: input.content,
+          category: input.category,
+          featuredImageUrl: input.featuredImageUrl,
+          tags: input.tags ? JSON.stringify(input.tags) : undefined,
+          status: input.status,
+          publishedAt: input.status === 'published' ? new Date() : undefined,
+        });
+
+        return { success: true };
+      }),
+
+    // Delete article (admin only)
+    delete: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can delete articles',
+          });
+        }
+
+        await db.deleteBlogArticle(input.id);
+        return { success: true };
+      }),
+
+    // Get article by ID (admin only)
+    getById: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .query(async ({ input, ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can view article details',
+          });
+        }
+
+        const article = await db.getBlogArticleById(input.id);
+        if (!article) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Article not found',
+          });
+        }
+        return article;
+      }),
   }),
 });
 
