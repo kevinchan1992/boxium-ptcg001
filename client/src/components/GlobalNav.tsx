@@ -17,14 +17,14 @@ export function GlobalNav() {
   ];
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed top-3 right-3 z-50">
       {/* Menu Button */}
       <Button
         onClick={toggleMenu}
-        className="w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg transition-all hover:scale-110"
+        className="w-10 h-10 rounded-full shadow-md transition-all hover:scale-105"
         style={{ backgroundColor: "#ffed00", color: "#06038d" }}
       >
-        {isOpen ? <X className="w-6 h-6 md:w-7 md:h-7" /> : <Menu className="w-6 h-6 md:w-7 md:h-7" />}
+        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </Button>
 
       {/* Dropdown Menu */}
@@ -39,17 +39,17 @@ export function GlobalNav() {
 
           {/* Menu Content */}
           <div
-            className="absolute top-16 md:top-20 right-0 w-72 md:w-80 rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-top-2 duration-200"
+            className="absolute top-14 right-0 w-56 rounded-lg shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200"
             style={{ backgroundColor: "#ffffff" }}
           >
-            <div className="p-3 md:p-4 space-y-2">
+            <div className="p-2 space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link key={item.href} href={item.href}>
                     <button
                       onClick={toggleMenu}
-                      className="w-full flex items-center gap-4 px-5 py-4 md:px-6 md:py-5 rounded-md transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all hover:scale-[1.01] active:scale-[0.99]"
                       style={{
                         color: "#06038d",
                         backgroundColor: "transparent",
@@ -61,8 +61,8 @@ export function GlobalNav() {
                         e.currentTarget.style.backgroundColor = "transparent";
                       }}
                     >
-                      <Icon className="w-6 h-6 md:w-7 md:h-7" />
-                      <span className="font-medium text-base md:text-lg">{item.label}</span>
+                      <Icon className="w-4 h-4" />
+                      <span className="font-medium text-sm">{item.label}</span>
                     </button>
                   </Link>
                 );
