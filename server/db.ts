@@ -1096,7 +1096,7 @@ export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
     .where(gte(priceHistory.createdAt, cutoffDate))
     .groupBy(priceHistory.cardId, cards.name, cards.imageUrl, priceHistory.currency)
     .having(sql`COUNT(*) >= 2`) // At least 2 price records to calculate change
-    .orderBy(desc(sql`priceChange`))
+    .orderBy(desc(sql`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / MIN(${priceHistory.price}) * 100)`))
     .limit(limit);
 
   return result;
@@ -1131,7 +1131,7 @@ export async function getTopSearchedCards(days: number = 7, limit: number = 5) {
       isNotNull(userSearchLogs.cardId)
     ))
     .groupBy(userSearchLogs.cardId, cards.name, cards.imageUrl)
-    .orderBy(desc(sql`searchCount`))
+    .orderBy(desc(sql`COUNT(*)`))
     .limit(limit);
 
   return result;
@@ -1165,7 +1165,7 @@ export async function getTopVolatileCards(days: number = 7, limit: number = 5) {
     .where(gte(priceHistory.createdAt, cutoffDate))
     .groupBy(priceHistory.cardId, cards.name, cards.imageUrl, priceHistory.currency)
     .having(sql`COUNT(*) >= 3`) // At least 3 price records to calculate volatility
-    .orderBy(desc(sql`volatility`))
+    .orderBy(desc(sql`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / AVG(${priceHistory.price}) * 100)`))
     .limit(limit);
 
   return result;
@@ -1194,20 +1194,25 @@ export async function getMarketOverview() {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - 7);
 
-  const [avgChange] = await db
+  // Calculate average price change using a subquery
+  const priceChanges = await db
     .select({
-      avgChange: sql<number>`AVG((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / MIN(${priceHistory.price}) * 100)`,
+      priceChange: sql<number>`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / MIN(${priceHistory.price}) * 100)`,
     })
     .from(priceHistory)
     .where(gte(priceHistory.createdAt, cutoffDate))
     .groupBy(priceHistory.cardId)
     .having(sql`COUNT(*) >= 2`);
 
+  const avgChange = priceChanges.length > 0
+    ? priceChanges.reduce((sum, item) => sum + (item.priceChange || 0), 0) / priceChanges.length
+    : 0;
+
   return {
     totalCards: cardCount?.count || 0,
     totalPriceRecords: priceCount?.count || 0,
     totalSearches: searchCount?.count || 0,
-    avgPriceChange7d: avgChange?.avgChange || 0,
+    avgPriceChange7d: avgChange,
   };
 }
 

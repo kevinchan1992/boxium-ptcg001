@@ -2018,3 +2018,14 @@
 - [x] 整合 LLM 生成專業市場分析文字
 - [x] 在 GlobalNav 添加市場洞察選單項目
 - [x] 添加多語言支援（繁中、英文、日文）
+
+## Bug 修正: 市場洞察頁面 SQL 查詢錯誤
+- [ ] 修正 getTopGainers 查詢中的 ORDER BY 別名問題
+- [ ] 修正 getTopVolatile 查詢中的 ORDER BY 別名問題
+- [ ] 修正 getTopSearched 查詢中的 ORDER BY 別名問題
+- [ ] 修正 getMarketOverview 查詢中的 AVG 計算問題
+
+- [x] 修正 getTopGainers 查詢中的 ORDER BY 別名問題
+- [x] 修正 getTopVolatile 查詢中的 ORDER BY 別名問題
+- [x] 修正 getTopSearched 查詢中的 ORDER BY 別名問題
+- [x] 修正 getMarketOverview 查詢中的 AVG 計算問題
