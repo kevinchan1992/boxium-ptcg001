@@ -270,7 +270,7 @@ export default function CardDetail() {
             {/* Reference Price */}
             <div className="bg-card rounded-lg p-6 border border-border">
               <h2 className="text-2xl font-bold text-foreground">
-                參考價格: {activeSource === "snkrdunk" ? "HKD" : "USD"} ${avgPrice}
+                參考價格: HKD ${avgPrice}
               </h2>
               <p className="text-sm text-muted-foreground mt-2">
                 基於 {recordCount} 筆交易記錄 {activeSource === "ebay" && "(PSA 10)"}

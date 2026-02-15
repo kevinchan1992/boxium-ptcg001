@@ -1,19 +1,31 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Menu, X, FileText, Shield, TrendingUp, DollarSign, Home } from "lucide-react";
+import { Menu, X, FileText, Shield, TrendingUp, DollarSign, Home, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 export function GlobalNav() {
+  const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
+
   const navItems = [
-    { href: "/", label: "主頁", icon: Home },
-    { href: "/research", label: "卡牌研究", icon: TrendingUp },
-    { href: "/pricing", label: "價格查詢", icon: DollarSign },
-    { href: "/terms", label: "服務條款", icon: FileText },
-    { href: "/privacy", label: "隱私權政策", icon: Shield },
+    { href: "/", label: t("common.home"), icon: Home },
+    { href: "/research", label: t("common.research"), icon: TrendingUp },
+    { href: "/pricing", label: t("common.pricing"), icon: DollarSign },
+    { href: "/terms", label: t("common.terms"), icon: FileText },
+    { href: "/privacy", label: t("common.privacy"), icon: Shield },
+  ];
+
+  const languages = [
+    { code: "zh-TW", label: "繁體中文" },
+    { code: "en", label: "English" },
+    { code: "ja", label: "日本語" },
   ];
 
   return (
@@ -60,6 +72,43 @@ export function GlobalNav() {
                   </Link>
                 );
               })}
+              
+              {/* Language Divider */}
+              <div className="border-t border-gray-200 my-2" />
+              
+              {/* Language Selector */}
+              <div className="px-3 py-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Languages className="w-4 h-4" style={{ color: "#06038d" }} />
+                  <span className="font-medium text-sm" style={{ color: "#06038d" }}>{t("common.language")}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => changeLanguage(lang.code)}
+                      className="w-full text-left px-2 py-1.5 rounded text-xs transition-all hover:scale-[1.01] active:scale-[0.99]"
+                      style={{
+                        color: "#06038d",
+                        backgroundColor: i18n.language === lang.code ? "#ffed00" : "transparent",
+                        fontWeight: i18n.language === lang.code ? "600" : "normal",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (i18n.language !== lang.code) {
+                          e.currentTarget.style.backgroundColor = "#f0f0f0";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (i18n.language !== lang.code) {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                        }
+                      }}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </>

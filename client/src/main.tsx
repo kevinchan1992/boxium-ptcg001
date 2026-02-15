@@ -6,6 +6,7 @@ import superjson from "superjson";
 import App from "./App";
 
 import "./index.css";
+import "./i18n";
 
 const queryClient = new QueryClient();
 

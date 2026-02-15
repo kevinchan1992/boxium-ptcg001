@@ -4,9 +4,11 @@ import { TrendingUp, Search, BarChart3, Trophy, Facebook, Twitter, Instagram, Ma
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
+import { useTranslation } from "react-i18next";
 
 
 function TrendingCardsGrid() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery({ limit: 5 });
 
@@ -44,7 +46,7 @@ function TrendingCardsGrid() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">
-                <span className="text-sm">無圖片</span>
+                <span className="text-sm">{t("home.noImage")}</span>
               </div>
             )}
             {/* Price Change Badge */}
@@ -74,6 +76,7 @@ function TrendingCardsGrid() {
 }
 
 export default function Home() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -97,10 +100,10 @@ export default function Home() {
             {/* Content - Responsive text sizes */}
             <div className="space-y-1.5 md:space-y-3 max-w-3xl px-2">
               <h1 className="text-white text-base sm:text-lg md:text-2xl font-bold leading-tight">
-                歡迎來到 Boxium ~ 遊戲迷專屬世界
+                {t("home.welcome")}
               </h1>
               <p className="text-white/80 text-[11px] sm:text-xs md:text-base leading-relaxed">
-                整合全球市場數據，為PTCG愛好者和收藏家提供即時、準確的卡牌價格資訊。追蹤卡牌的價格趨勢，做出明智的投資決策。
+                {t("home.description")}
               </p>
             </div>
 
@@ -108,11 +111,11 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-2 md:gap-5 w-full max-w-md px-2">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
                 <div className="text-base md:text-2xl font-bold text-[#ffed00] mb-0.5">500+</div>
-                <div className="text-white/80 text-[9px] md:text-xs">已追蹤卡牌</div>
+                <div className="text-white/80 text-[9px] md:text-xs">{t("home.trackedCards")}</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
-                <div className="text-base md:text-2xl font-bold text-[#ffed00] mb-0.5">2 個</div>
-                <div className="text-white/80 text-[9px] md:text-xs">數據源</div>
+                <div className="text-base md:text-2xl font-bold text-[#ffed00] mb-0.5">2</div>
+                <div className="text-white/80 text-[9px] md:text-xs">{t("home.dataSources")}</div>
               </div>
             </div>
 
