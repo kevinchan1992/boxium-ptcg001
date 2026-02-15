@@ -247,14 +247,14 @@ export default function CardDetail() {
                 size="sm"
                 onClick={() => setActiveSource("snkrdunk")}
               >
-                SNKRDUNK
+                SNKRDUNK {t("cardDetail.actualPrice")}
               </Button>
               <Button
                 variant={activeSource === "ebay" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setActiveSource("ebay")}
               >
-                eBay
+                eBay {t("cardDetail.marketPrice")}
               </Button>
               <div className="w-px h-8 bg-border mx-2" />
               {grades.map((grade) => (
@@ -283,9 +283,18 @@ export default function CardDetail() {
             <div className="bg-card rounded-lg p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-foreground">
-                  {activeSource === "snkrdunk" ? "SNKRDUNK" : "eBay"} {t("cardDetail.priceHistory")}
+                  {activeSource === "snkrdunk" 
+                    ? `SNKRDUNK ${t("cardDetail.actualPriceHistory")}` 
+                    : `eBay ${t("cardDetail.marketPriceHistory")}`}
                 </h3>
               </div>
+              {activeSource === "ebay" && (
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    ℹ️ {t("cardDetail.ebayDisclaimer")}
+                  </p>
+                </div>
+              )}
               {(activeSource === "snkrdunk" ? priceLoading : (ebayHistoryLoading || ebayLoading)) ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -344,10 +353,9 @@ export default function CardDetail() {
                 </div>
               ) : activeSource === "ebay" && ebayPriceHistory.length > 0 ? (
                 <div>
-                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4">
-                    <p className="text-xs text-green-600 dark:text-green-400">
-                      ✅ 以下為資料庫中的 eBay 市場參考價（已緩存）。
-                      最後更新時間：{new Date(ebayPriceHistory[0].createdAt).toLocaleString("zh-HK")}
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      📊 {t("cardDetail.cachedData")} {new Date(ebayPriceHistory[0].createdAt).toLocaleString("zh-HK")}
                     </p>
                   </div>
                   <div className="overflow-y-auto max-h-96 scrollbar-hide">
@@ -436,12 +444,12 @@ export default function CardDetail() {
                 </div>
               ) : activeSource === "ebay" && ebayMarketPrice.length > 0 ? (
                 <div>
-                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
-                    <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                      ℹ️ 以下為 eBay 活躍商品的「市場參考價」，非已售出交易記錄。
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      📊 {t("cardDetail.liveMarketData")}
                       {exchangeRate && (
                         <span className="ml-1">
-                          當前匯率：1 USD = {exchangeRate.rate.toFixed(4)} HKD
+                          {t("cardDetail.exchangeRate")}: 1 USD = {exchangeRate.rate.toFixed(4)} HKD
                         </span>
                       )}
                     </p>

@@ -61,7 +61,15 @@
     "favorite": "收藏",
     "favorited": "已收藏",
     "comparePrice": "格價",
-    "share": "分享"
+    "share": "分享",
+    "actualPrice": "（實際成交價）",
+    "marketPrice": "（市場掛牌價）",
+    "actualPriceHistory": "實際成交價格歷史",
+    "marketPriceHistory": "市場掛牌價格歷史",
+    "ebayDisclaimer": "此為 eBay 市場掛牌價格（非實際成交價），僅供參考。實際成交價格可能與此不同。",
+    "cachedData": "資料庫緩存數據，最後更新：",
+    "liveMarketData": "即時市場掛牌價格（非已售出交易記錄）",
+    "exchangeRate": "當前匯率"
   },
   "admin": {
     "title": "管理後台",

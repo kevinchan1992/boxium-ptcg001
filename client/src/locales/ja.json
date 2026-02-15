@@ -61,7 +61,15 @@
     "favorite": "お気に入り",
     "favorited": "お気に入り済み",
     "comparePrice": "価格比較",
-    "share": "共有"
+    "share": "共有",
+    "actualPrice": "（実際の取引価格）",
+    "marketPrice": "（市場出品価格）",
+    "actualPriceHistory": "実際の取引価格履歴",
+    "marketPriceHistory": "市場出品価格履歴",
+    "ebayDisclaimer": "これはeBayの市場出品価格（実際の取引価格ではありません）で、参考用です。実際の取引価格は異なる場合があります。",
+    "cachedData": "キャッシュデータ、最終更新：",
+    "liveMarketData": "リアルタイム市場出品価格（販売済み取引記録ではありません）",
+    "exchangeRate": "現在の為替レート"
   },
   "admin": {
     "title": "管理パネル",

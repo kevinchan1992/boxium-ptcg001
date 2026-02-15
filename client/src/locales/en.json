@@ -61,7 +61,15 @@
     "favorite": "Favorite",
     "favorited": "Favorited",
     "comparePrice": "Compare Price",
-    "share": "Share"
+    "share": "Share",
+    "actualPrice": "(Actual Sale Price)",
+    "marketPrice": "(Market Listing Price)",
+    "actualPriceHistory": "Actual Sale Price History",
+    "marketPriceHistory": "Market Listing Price History",
+    "ebayDisclaimer": "This is eBay market listing price (not actual sale price), for reference only. Actual sale prices may differ.",
+    "cachedData": "Cached data, last updated:",
+    "liveMarketData": "Live market listing prices (not sold transaction records)",
+    "exchangeRate": "Current exchange rate"
   },
   "admin": {
     "title": "Admin Panel",
