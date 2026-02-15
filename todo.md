@@ -2058,4 +2058,12 @@
 - [x] 創建 tRPC procedure 獲取每日漲幅 Top 5 卡牌（基於過去 24 小時價格變化）
 - [x] 修改 Research 頁面使用每日漲幅 Top 5 數據替代原有的 5 張卡牌
 - [x] 測試功能正常運作
+- [x] 保存檢查點
+
+## 新需求：只使用 SNKRDUNK 數據計算漲幅和波動
+- [x] 檢查現有的價格漲幅計算邏輯（getTopPriceGainers）
+- [x] 檢查現有的價格波動計算邏輯（getTopVolatileCards）
+- [x] 修改資料庫查詢，只篩選 source = 'snkrdunk' 的數據
+- [x] 測試市場洞察頁面的數據正確性
+- [x] 測試 Research 頁面的每日漲幅 Top 5
 - [ ] 保存檢查點

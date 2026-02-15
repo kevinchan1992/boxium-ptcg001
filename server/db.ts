@@ -1080,7 +1080,7 @@ export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
 
-  // Get cards with price history in the past N days
+  // Get cards with price history in the past N days (SNKRDUNK only)
   const result = await db
     .select({
       cardId: priceHistory.cardId,
@@ -1093,7 +1093,12 @@ export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
     })
     .from(priceHistory)
     .innerJoin(cards, eq(priceHistory.cardId, cards.id))
-    .where(gte(priceHistory.createdAt, cutoffDate))
+    .where(
+      and(
+        gte(priceHistory.createdAt, cutoffDate),
+        eq(priceHistory.source, 'snkrdunk') // Only use SNKRDUNK actual transaction data
+      )
+    )
     .groupBy(priceHistory.cardId, cards.name, cards.imageUrl, priceHistory.currency)
     .having(sql`COUNT(*) >= 2`) // At least 2 price records to calculate change
     .orderBy(desc(sql`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / MIN(${priceHistory.price}) * 100)`))
@@ -1168,7 +1173,12 @@ export async function getTopVolatileCards(days: number = 7, limit: number = 5) {
     })
     .from(priceHistory)
     .innerJoin(cards, eq(priceHistory.cardId, cards.id))
-    .where(gte(priceHistory.createdAt, cutoffDate))
+    .where(
+      and(
+        gte(priceHistory.createdAt, cutoffDate),
+        eq(priceHistory.source, 'snkrdunk') // Only use SNKRDUNK actual transaction data
+      )
+    )
     .groupBy(priceHistory.cardId, cards.name, cards.imageUrl, priceHistory.currency)
     .having(sql`COUNT(*) >= 3`) // At least 3 price records to calculate volatility
     .orderBy(desc(sql`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / AVG(${priceHistory.price}) * 100)`))
