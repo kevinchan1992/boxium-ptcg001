@@ -13,6 +13,7 @@ import Pricing from "./pages/Pricing";
 import Admin from "./pages/Admin";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import MarketInsights from "./pages/MarketInsights";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/card/:id" component={CardDetail} />
       <Route path="/research" component={Research} />
       <Route path="/pricing" component={Pricing} />
+      <Route path="/market-insights" component={MarketInsights} />
       <Route path="/admin" component={Admin} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />

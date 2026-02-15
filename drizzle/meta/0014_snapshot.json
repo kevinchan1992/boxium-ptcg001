@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "43733ff8-3b40-441f-8100-c067e4e1ebca",
-  "prevId": "af1fde5c-ad3d-47dd-b2b0-8b307665f60d",
+  "id": "2105218f-53f3-4722-9d32-81b9cb0bf880",
+  "prevId": "43733ff8-3b40-441f-8100-c067e4e1ebca",
   "tables": {
     "cards": {
       "name": "cards",
@@ -1014,6 +1014,74 @@
           ]
         }
       },
+      "checkConstraint": {}
+    },
+    "userSearchLogs": {
+      "name": "userSearchLogs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "searchQuery": {
+          "name": "searchQuery",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "searchType": {
+          "name": "searchType",
+          "type": "enum('card_name','set_name','card_number','general')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "resultCount": {
+          "name": "resultCount",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "cardId": {
+          "name": "cardId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "userSearchLogs_id": {
+          "name": "userSearchLogs_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "users": {

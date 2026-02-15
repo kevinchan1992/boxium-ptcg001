@@ -1,6 +1,6 @@
-import { eq, desc, and, gte, lte, or, like, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, scheduleExecutionHistory, InsertScheduleExecutionHistory } from "../drizzle/schema";;
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, scheduleExecutionHistory, InsertScheduleExecutionHistory, userSearchLogs } from "../drizzle/schema";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1066,4 +1066,173 @@ export async function getScheduleExecutionHistory(scheduleType: string, limit: n
     .limit(limit);
 
   return result;
+}
+
+/**
+ * Get top price gainers in the past N days
+ */
+export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+
+  // Get cards with price history in the past N days
+  const result = await db
+    .select({
+      cardId: priceHistory.cardId,
+      cardName: cards.name,
+      cardImage: cards.imageUrl,
+      oldestPrice: sql<number>`MIN(${priceHistory.price})`,
+      latestPrice: sql<number>`MAX(${priceHistory.price})`,
+      priceChange: sql<number>`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / MIN(${priceHistory.price}) * 100)`,
+      currency: priceHistory.currency,
+    })
+    .from(priceHistory)
+    .innerJoin(cards, eq(priceHistory.cardId, cards.id))
+    .where(gte(priceHistory.createdAt, cutoffDate))
+    .groupBy(priceHistory.cardId, cards.name, cards.imageUrl, priceHistory.currency)
+    .having(sql`COUNT(*) >= 2`) // At least 2 price records to calculate change
+    .orderBy(desc(sql`priceChange`))
+    .limit(limit);
+
+  return result;
+}
+
+/**
+ * Get top searched cards in the past N days
+ */
+export async function getTopSearchedCards(days: number = 7, limit: number = 5) {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+
+  // Import userSearchLogs from schema
+  // userSearchLogs already imported at top
+
+  const result = await db
+    .select({
+      cardId: userSearchLogs.cardId,
+      cardName: cards.name,
+      cardImage: cards.imageUrl,
+      searchCount: sql<number>`COUNT(*)`,
+    })
+    .from(userSearchLogs)
+    .innerJoin(cards, eq(userSearchLogs.cardId, cards.id))
+    .where(and(
+      gte(userSearchLogs.createdAt, cutoffDate),
+      isNotNull(userSearchLogs.cardId)
+    ))
+    .groupBy(userSearchLogs.cardId, cards.name, cards.imageUrl)
+    .orderBy(desc(sql`searchCount`))
+    .limit(limit);
+
+  return result;
+}
+
+/**
+ * Get top volatile cards (highest price volatility) in the past N days
+ */
+export async function getTopVolatileCards(days: number = 7, limit: number = 5) {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+
+  const result = await db
+    .select({
+      cardId: priceHistory.cardId,
+      cardName: cards.name,
+      cardImage: cards.imageUrl,
+      minPrice: sql<number>`MIN(${priceHistory.price})`,
+      maxPrice: sql<number>`MAX(${priceHistory.price})`,
+      avgPrice: sql<number>`AVG(${priceHistory.price})`,
+      volatility: sql<number>`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / AVG(${priceHistory.price}) * 100)`,
+      currency: priceHistory.currency,
+    })
+    .from(priceHistory)
+    .innerJoin(cards, eq(priceHistory.cardId, cards.id))
+    .where(gte(priceHistory.createdAt, cutoffDate))
+    .groupBy(priceHistory.cardId, cards.name, cards.imageUrl, priceHistory.currency)
+    .having(sql`COUNT(*) >= 3`) // At least 3 price records to calculate volatility
+    .orderBy(desc(sql`volatility`))
+    .limit(limit);
+
+  return result;
+}
+
+/**
+ * Get market overview statistics
+ */
+export async function getMarketOverview() {
+  const db = await getDb();
+  if (!db) {
+    return {
+      totalCards: 0,
+      totalPriceRecords: 0,
+      totalSearches: 0,
+      avgPriceChange7d: 0,
+    };
+  }
+
+  // userSearchLogs already imported at top
+
+  const [cardCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(cards);
+  const [priceCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(priceHistory);
+  const [searchCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(userSearchLogs);
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - 7);
+
+  const [avgChange] = await db
+    .select({
+      avgChange: sql<number>`AVG((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / MIN(${priceHistory.price}) * 100)`,
+    })
+    .from(priceHistory)
+    .where(gte(priceHistory.createdAt, cutoffDate))
+    .groupBy(priceHistory.cardId)
+    .having(sql`COUNT(*) >= 2`);
+
+  return {
+    totalCards: cardCount?.count || 0,
+    totalPriceRecords: priceCount?.count || 0,
+    totalSearches: searchCount?.count || 0,
+    avgPriceChange7d: avgChange?.avgChange || 0,
+  };
+}
+
+/**
+ * Log user search query
+ */
+export async function logUserSearch(data: {
+  userId?: number;
+  searchQuery: string;
+  searchType: "card_name" | "set_name" | "card_number" | "general";
+  resultCount: number;
+  cardId?: number;
+}) {
+  const db = await getDb();
+  if (!db) {
+    return;
+  }
+
+  // userSearchLogs already imported at top
+
+  await db.insert(userSearchLogs).values({
+    userId: data.userId || null,
+    searchQuery: data.searchQuery,
+    searchType: data.searchType,
+    resultCount: data.resultCount,
+    cardId: data.cardId || null,
+  });
 }

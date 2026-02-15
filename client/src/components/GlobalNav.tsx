@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Menu, X, FileText, Shield, TrendingUp, DollarSign, Home, Languages } from "lucide-react";
+import { Menu, X, FileText, Shield, TrendingUp, DollarSign, Home, Languages, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 
@@ -18,6 +18,7 @@ export function GlobalNav() {
     { href: "/", label: t("common.home"), icon: Home },
     { href: "/research", label: t("common.research"), icon: TrendingUp },
     { href: "/pricing", label: t("common.pricing"), icon: DollarSign },
+    { href: "/market-insights", label: t("common.marketInsights"), icon: BarChart3 },
     { href: "/terms", label: t("common.terms"), icon: FileText },
     { href: "/privacy", label: t("common.privacy"), icon: Shield },
   ];

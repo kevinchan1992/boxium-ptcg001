@@ -244,4 +244,20 @@ export const scheduleExecutionHistory = mysqlTable("scheduleExecutionHistory", {
 export type ScheduleExecutionHistory = typeof scheduleExecutionHistory.$inferSelect;
 export type InsertScheduleExecutionHistory = typeof scheduleExecutionHistory.$inferInsert;
 
+/**
+ * User search logs table - tracks user search queries for popular search analysis
+ */
+export const userSearchLogs = mysqlTable("userSearchLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"), // Optional: Foreign key to users table (null for anonymous)
+  searchQuery: text("searchQuery").notNull(), // User's search query
+  searchType: mysqlEnum("searchType", ["card_name", "set_name", "card_number", "general"]).notNull(), // Type of search
+  resultCount: int("resultCount").default(0).notNull(), // Number of results returned
+  cardId: int("cardId"), // Optional: If user clicked on a specific card
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UserSearchLog = typeof userSearchLogs.$inferSelect;
+export type InsertUserSearchLog = typeof userSearchLogs.$inferInsert;
+
 

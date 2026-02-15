@@ -8,7 +8,8 @@
     "admin": "Admin",
     "language": "Language",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "marketInsights": "Market Insights"
   },
   "home": {
     "welcome": "Welcome to Boxium ~ Gaming Enthusiasts' World",
