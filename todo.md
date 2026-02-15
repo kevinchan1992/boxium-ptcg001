@@ -1989,3 +1989,16 @@
 [ ] 更新 AdminDataSources 組件使用多語言（待完成）
 [ ] 更新 AdminSchedule 組件使用多語言（待完成）
 [ ] 更新 AdminDashboard 組件使用多語言（待完成）
+
+## 新任務: 完善 Admin 子組件和 Terms/Privacy 頁面多語言支援
+
+- [ ] 補充 Admin 相關翻譯鍵值到翻譯檔案
+- [ ] 更新 AdminDataSources 組件使用多語言
+- [ ] 更新 AdminSchedule 組件使用多語言
+- [ ] 更新 AdminDashboard 組件使用多語言
+- [ ] 更新 Terms of Service 頁面使用多語言
+- [ ] 更新 Privacy Policy 頁面使用多語言
+- [ ] 測試所有頁面的語言切換功能
+
+[x] 採用方案一：優先完成核心頁面多語言支援，Admin 子組件保持繁體中文
+[x] 修正 JSON 格式錯誤並恢復正常運行
