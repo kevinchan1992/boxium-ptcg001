@@ -81,6 +81,19 @@
     "averageSearchTime": "平均検索時間",
     "imageSearch": "画像検索",
     "textSearch": "テキスト検索",
-    "optimization": "最適化の提案"
+    "optimization": "最適化の提案",
+    "paused": "一時停止中",
+    "processing": "処理中",
+    "completed": "完了",
+    "running": "実行中",
+    "ebayBatch": "eBay 一括更新",
+    "snkrdunkBatch": "SNKRDUNK 一括更新",
+    "scheduled": "スケジュール実行",
+    "noData": "データなし",
+    "loading": "読み込み中...",
+    "addSuccess": "追加成功",
+    "deleteSuccess": "削除成功",
+    "updateSuccess": "更新成功",
+    "confirmDelete": "このデータソースを削除しますか？"
   }
 }

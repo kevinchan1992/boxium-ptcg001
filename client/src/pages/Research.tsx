@@ -3,8 +3,10 @@ import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useTranslation } from "react-i18next";
 
 export default function Home() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
 
@@ -36,12 +38,12 @@ export default function Home() {
             alt="BOXIUM"
             className="h-24 sm:h-28 mx-auto"
           />
-          <h2 className="text-base sm:text-lg font-semibold text-foreground">卡牌搜尋</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">{t("research.title")}</h2>
         </div>
 
         {/* Subtitle */}
         <p className="text-xs sm:text-sm text-muted-foreground px-4">
-          取得任何卡牌的深入研究報告
+          {t("research.searchPlaceholder")}
         </p>
 
         {/* Search Box */}
@@ -50,7 +52,7 @@ export default function Home() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="MEGA Charizard X ex 110"
+              placeholder={t("research.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
@@ -63,6 +65,7 @@ export default function Home() {
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="ml-2 text-sm text-muted-foreground">{t("research.loading")}</span>
             </div>
           ) : popularCards.length > 0 ? (
             popularCards.map((card: any) => (
@@ -76,7 +79,7 @@ export default function Home() {
             ))
           ) : (
             <div className="text-center py-12 text-muted-foreground">
-              <p>暫無卡牌數據,請在管理員後台添加 SNKRDUNK 卡牌</p>
+              <p>{t("research.noResults")}</p>
             </div>
           )}
         </div>

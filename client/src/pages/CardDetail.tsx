@@ -8,11 +8,13 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { PriceTrendChart } from "@/components/PriceTrendChart";
 import { ShareButton } from "@/components/ShareButton";
+import { useTranslation } from "react-i18next";
 
 
 const grades = ["PSA 10", "BGS 10", "中古"];
 
 export default function CardDetail() {
+  const { t } = useTranslation();
   const [, params] = useRoute("/card/:id");
   const [activeSource, setActiveSource] = useState<"snkrdunk" | "ebay">("snkrdunk");
   const [activeGrade, setActiveGrade] = useState<string | null>(null);
@@ -37,10 +39,10 @@ export default function CardDetail() {
   const addFavoriteMutation = trpc.favorites.add.useMutation({
     onSuccess: () => {
       utils.favorites.isFavorited.invalidate({ cardId: cardId! });
-      toast.success("已添加到收藏");
+      toast.success(t("cardDetail.favorited"));
     },
     onError: () => {
-      toast.error("添加收藏失敗，請先登入");
+      toast.error(t("common.login"));
     },
   });
 
@@ -48,10 +50,10 @@ export default function CardDetail() {
   const removeFavoriteMutation = trpc.favorites.remove.useMutation({
     onSuccess: () => {
       utils.favorites.isFavorited.invalidate({ cardId: cardId! });
-      toast.success("已取消收藏");
+      toast.success(t("cardDetail.favorite"));
     },
     onError: () => {
-      toast.error("取消收藏失敗");
+      toast.error(t("cardDetail.noData"));
     },
   });
 
@@ -127,7 +129,7 @@ export default function CardDetail() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-          <p className="text-muted-foreground">無效的卡牌 ID</p>
+          <p className="text-muted-foreground">{t("cardDetail.noData")}</p>
         </div>
       </div>
     );
@@ -146,7 +148,7 @@ export default function CardDetail() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-          <p className="text-muted-foreground">找不到卡牌</p>
+          <p className="text-muted-foreground">{t("cardDetail.noData")}</p>
         </div>
       </div>
     );
@@ -185,8 +187,8 @@ export default function CardDetail() {
         {/* Breadcrumb */}
         <Breadcrumb 
           items={[
-            { label: "主頁", href: "/" },
-            { label: "搜尋", href: "/research" },
+            { label: t("common.home"), href: "/" },
+            { label: t("common.research"), href: "/research" },
             { label: card.name }
           ]}
         />
@@ -201,7 +203,7 @@ export default function CardDetail() {
           )}
           <div className="flex flex-wrap gap-2">
             <Button variant="default" size="sm">
-              格價
+              {t("cardDetail.comparePrice")}
             </Button>
             <Button
               variant={favoriteStatus?.isFavorited ? "default" : "outline"}
@@ -212,7 +214,7 @@ export default function CardDetail() {
               <Heart
                 className={`h-4 w-4 mr-2 ${favoriteStatus?.isFavorited ? "fill-current" : ""}`}
               />
-              {favoriteStatus?.isFavorited ? "已收藏" : "收藏"}
+              {favoriteStatus?.isFavorited ? t("cardDetail.favorited") : t("cardDetail.favorite")}
             </Button>
             <ShareButton cardName={card.name} cardId={cardId!} />
           </div>
@@ -230,7 +232,7 @@ export default function CardDetail() {
                 />
               ) : (
                 <div className="w-full aspect-[2/3] bg-muted rounded-lg flex items-center justify-center">
-                  <p className="text-muted-foreground">無卡牌圖片</p>
+                  <p className="text-muted-foreground">{t("home.noImage")}</p>
                 </div>
               )}
             </div>
@@ -270,10 +272,10 @@ export default function CardDetail() {
             {/* Reference Price */}
             <div className="bg-card rounded-lg p-6 border border-border">
               <h2 className="text-2xl font-bold text-foreground">
-                參考價格: HKD ${avgPrice}
+                {t("cardDetail.referencePrice")}: HKD ${avgPrice}
               </h2>
               <p className="text-sm text-muted-foreground mt-2">
-                基於 {recordCount} 筆交易記錄 {activeSource === "ebay" && "(PSA 10)"}
+                {t("cardDetail.basedOnRecords", { count: recordCount })} {activeSource === "ebay" && "(PSA 10)"}
               </p>
             </div>
 
@@ -281,7 +283,7 @@ export default function CardDetail() {
             <div className="bg-card rounded-lg p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-foreground">
-                  {activeSource === "snkrdunk" ? "SNKRDUNK" : "eBay"} 上的最近交易
+                  {activeSource === "snkrdunk" ? "SNKRDUNK" : "eBay"} {t("cardDetail.priceHistory")}
                 </h3>
               </div>
               {(activeSource === "snkrdunk" ? priceLoading : (ebayHistoryLoading || ebayLoading)) ? (
@@ -294,13 +296,13 @@ export default function CardDetail() {
                     <thead className="sticky top-0 bg-card border-b border-border">
                       <tr>
                         <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
-                          日期
+                          {t("cardDetail.date")}
                         </th>
                         <th className="text-center py-3 px-4 text-muted-foreground font-medium text-sm w-24">
-                          評級
+                          {t("cardDetail.grade")}
                         </th>
                         <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm">
-                          金額
+                          {t("cardDetail.price")}
                         </th>
                       </tr>
                     </thead>

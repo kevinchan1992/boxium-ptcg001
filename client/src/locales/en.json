@@ -81,6 +81,19 @@
     "averageSearchTime": "Average Search Time",
     "imageSearch": "Image Search",
     "textSearch": "Text Search",
-    "optimization": "Optimization Suggestions"
+    "optimization": "Optimization Suggestions",
+    "paused": "Paused",
+    "processing": "Processing",
+    "completed": "Completed",
+    "running": "Running",
+    "ebayBatch": "eBay Batch Update",
+    "snkrdunkBatch": "SNKRDUNK Batch Update",
+    "scheduled": "Scheduled",
+    "noData": "No Data",
+    "loading": "Loading...",
+    "addSuccess": "Added Successfully",
+    "deleteSuccess": "Deleted Successfully",
+    "updateSuccess": "Updated Successfully",
+    "confirmDelete": "Are you sure you want to delete this data source?"
   }
 }
