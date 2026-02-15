@@ -30,13 +30,6 @@ export function GlobalNav() {
       {/* Dropdown Menu */}
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm"
-            onClick={toggleMenu}
-            style={{ top: 0, left: 0 }}
-          />
-
           {/* Menu Content */}
           <div
             className="absolute top-14 right-0 w-56 rounded-lg shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200"
