@@ -201,4 +201,47 @@ export const searchStats = mysqlTable("searchStats", {
 export type SearchStat = typeof searchStats.$inferSelect;
 export type InsertSearchStat = typeof searchStats.$inferInsert;
 
+/**
+ * Schedule config table - stores batch update schedule configuration
+ */
+export const scheduleConfig = mysqlTable("scheduleConfig", {
+  id: int("id").autoincrement().primaryKey(),
+  scheduleType: varchar("scheduleType", { length: 64 }).notNull().unique(), // e.g., "batch_update_daily"
+  enabled: boolean("enabled").default(false).notNull(), // Whether schedule is enabled
+  cronExpression: varchar("cronExpression", { length: 64 }).notNull(), // Cron expression
+  timezone: varchar("timezone", { length: 64 }).default("Asia/Hong_Kong").notNull(), // Timezone
+  description: text("description"), // Description of the schedule
+  lastExecutedAt: timestamp("lastExecutedAt"), // Last execution time
+  nextExecutionAt: timestamp("nextExecutionAt"), // Next scheduled execution time
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ScheduleConfig = typeof scheduleConfig.$inferSelect;
+export type InsertScheduleConfig = typeof scheduleConfig.$inferInsert;
+
+/**
+ * Schedule execution history table - stores batch update execution history
+ */
+export const scheduleExecutionHistory = mysqlTable("scheduleExecutionHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  scheduleType: varchar("scheduleType", { length: 64 }).notNull(), // e.g., "batch_update_daily"
+  executionType: mysqlEnum("executionType", ["scheduled", "manual"]).notNull(), // Scheduled or manual
+  status: mysqlEnum("status", ["running", "completed", "failed"]).notNull(),
+  ebaySuccessCount: int("ebaySuccessCount").default(0).notNull(),
+  ebayFailureCount: int("ebayFailureCount").default(0).notNull(),
+  ebayRecordsAdded: int("ebayRecordsAdded").default(0).notNull(),
+  snkrdunkSuccessCount: int("snkrdunkSuccessCount").default(0).notNull(),
+  snkrdunkFailureCount: int("snkrdunkFailureCount").default(0).notNull(),
+  snkrdunkRecordsAdded: int("snkrdunkRecordsAdded").default(0).notNull(),
+  errorMessage: text("errorMessage"), // Error message if execution failed
+  startedAt: timestamp("startedAt").notNull(),
+  completedAt: timestamp("completedAt"),
+  durationMs: int("durationMs"), // Execution duration in milliseconds
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ScheduleExecutionHistory = typeof scheduleExecutionHistory.$inferSelect;
+export type InsertScheduleExecutionHistory = typeof scheduleExecutionHistory.$inferInsert;
+
 

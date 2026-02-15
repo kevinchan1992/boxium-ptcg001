@@ -1,6 +1,6 @@
 import { eq, desc, and, gte, lte, or, like, sql, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat } from "../drizzle/schema";;
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, scheduleExecutionHistory, InsertScheduleExecutionHistory } from "../drizzle/schema";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -954,3 +954,116 @@ export async function updateUser(userId: number, data: { name?: string; email?: 
 
 
 
+
+/**
+ * Get schedule config by schedule type
+ */
+export async function getScheduleConfig(scheduleType: string) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db
+    .select()
+    .from(scheduleConfig)
+    .where(eq(scheduleConfig.scheduleType, scheduleType))
+    .limit(1);
+
+  return result[0];
+}
+
+/**
+ * Update schedule config enabled status
+ */
+export async function updateScheduleEnabled(scheduleType: string, enabled: boolean) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(scheduleConfig)
+    .set({ enabled, updatedAt: new Date() })
+    .where(eq(scheduleConfig.scheduleType, scheduleType));
+}
+
+/**
+ * Update schedule config execution times
+ */
+export async function updateScheduleExecutionTimes(
+  scheduleType: string,
+  lastExecutedAt: Date,
+  nextExecutionAt: Date
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(scheduleConfig)
+    .set({ lastExecutedAt, nextExecutionAt, updatedAt: new Date() })
+    .where(eq(scheduleConfig.scheduleType, scheduleType));
+}
+
+/**
+ * Add schedule execution history
+ */
+export async function addScheduleExecutionHistory(history: InsertScheduleExecutionHistory): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.insert(scheduleExecutionHistory).values(history);
+  return Number(result[0].insertId);
+}
+
+/**
+ * Update schedule execution history
+ */
+export async function updateScheduleExecutionHistory(
+  id: number,
+  updates: {
+    status?: "running" | "completed" | "failed";
+    ebaySuccessCount?: number;
+    ebayFailureCount?: number;
+    ebayRecordsAdded?: number;
+    snkrdunkSuccessCount?: number;
+    snkrdunkFailureCount?: number;
+    snkrdunkRecordsAdded?: number;
+    errorMessage?: string;
+    completedAt?: Date;
+    durationMs?: number;
+  }
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(scheduleExecutionHistory)
+    .set(updates)
+    .where(eq(scheduleExecutionHistory.id, id));
+}
+
+/**
+ * Get schedule execution history
+ */
+export async function getScheduleExecutionHistory(scheduleType: string, limit: number = 10) {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const result = await db
+    .select()
+    .from(scheduleExecutionHistory)
+    .where(eq(scheduleExecutionHistory.scheduleType, scheduleType))
+    .orderBy(desc(scheduleExecutionHistory.createdAt))
+    .limit(limit);
+
+  return result;
+}

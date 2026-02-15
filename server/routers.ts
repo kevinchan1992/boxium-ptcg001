@@ -13,6 +13,8 @@ import { searchEbayItems, convertUsdToHkd, getUsdToHkdRate } from "./ebay";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
 import * as batchUpdateProgress from "./batchUpdateProgress";
 import * as snkrdunkBatchUpdateProgress from "./batchUpdateSnkrdunkProgress";
+import { executeEbayBatchUpdate, executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
+import { restartScheduler } from "./batchUpdateScheduler";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1471,6 +1473,95 @@ try {
       .mutation(async ({ ctx }) => {
         snkrdunkBatchUpdateProgress.resumeSnkrdunkBatchUpdate();
         return { success: true, message: "SNKRDUNK 批量更新已繼續" };
+      }),
+
+    // 獲取排程設定
+    getScheduleConfig: publicProcedure
+      .query(async ({ ctx }) => {
+        const config = await db.getScheduleConfig("batch_update_daily");
+        return config;
+      }),
+
+    // 啟用/停用排程
+    updateScheduleEnabled: publicProcedure
+      .input(z.object({
+        enabled: z.boolean(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await db.updateScheduleEnabled("batch_update_daily", input.enabled);
+        // 重新啟動排程器以應用新設定
+        await restartScheduler();
+        return {
+          success: true,
+          message: input.enabled ? "排程已啟用" : "排程已停用",
+        };
+      }),
+
+    // 立即手動觸發排程
+    triggerScheduleNow: publicProcedure
+      .mutation(async ({ ctx }) => {
+        try {
+          // 創建執行歷史記錄
+          const historyId = await db.addScheduleExecutionHistory({
+            scheduleType: "batch_update_daily",
+            executionType: "manual",
+            status: "running",
+            startedAt: new Date(),
+          });
+
+          // 在後台執行批量更新（異步）
+          (async () => {
+            const startTime = Date.now();
+            try {
+              // 啟動 eBay 批量更新
+              const ebayResult = await executeEbayBatchUpdate();
+
+              // 啟動 SNKRDUNK 批量更新
+              const snkrdunkResult = await executeSnkrdunkBatchUpdate();
+
+              // 更新執行歷史
+              const durationMs = Date.now() - startTime;
+              await db.updateScheduleExecutionHistory(historyId, {
+                status: "completed",
+                ebaySuccessCount: ebayResult.successCount,
+                ebayFailureCount: ebayResult.failureCount,
+                ebayRecordsAdded: ebayResult.totalRecordsAdded,
+                snkrdunkSuccessCount: snkrdunkResult.successCount,
+                snkrdunkFailureCount: snkrdunkResult.failureCount,
+                snkrdunkRecordsAdded: snkrdunkResult.totalRecordsAdded,
+                completedAt: new Date(),
+                durationMs,
+              });
+
+              console.log(`[Schedule] Manual execution completed in ${durationMs}ms`);
+            } catch (error: any) {
+              console.error(`[Schedule] Manual execution failed: ${error.message}`);
+              await db.updateScheduleExecutionHistory(historyId, {
+                status: "failed",
+                errorMessage: error.message,
+                completedAt: new Date(),
+                durationMs: Date.now() - startTime,
+              });
+            }
+          })();
+
+          return {
+            success: true,
+            message: "排程任務已啟動，正在後台執行",
+          };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `啟動排程任務失敗: ${error.message}`,
+          });
+        }
+      }),
+
+    // 獲取排程執行歷史
+    getScheduleExecutionHistory: publicProcedure
+      .query(async ({ ctx }) => {
+        const history = await db.getScheduleExecutionHistory("batch_update_daily", 10);
+        return history;
       }),
   }),
 

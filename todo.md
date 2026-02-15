@@ -1800,3 +1800,59 @@
 - ✅ 爬取 SNKRDUNK 頁面獲取最新價格歷史
 - ✅ 自動更新所有該卡牌的 SNKRDUNK 數據源狀態
 - ✅ eBay 和 SNKRDUNK 批量更新進度獨立追蹤，互不干擾
+
+## 新功能: 定時批量更新排程功能
+
+- [ ] 創建排程執行歷史資料表（schedule_execution_history）
+- [ ] 創建資料庫操作函數（getScheduleConfig、updateScheduleConfig、addScheduleExecutionHistory、getScheduleExecutionHistory）
+- [ ] 創建 getScheduleConfig tRPC query（獲取排程設定）
+- [ ] 創建 updateScheduleEnabled tRPC mutation（啟用/停用排程）
+- [ ] 創建 triggerScheduleNow tRPC mutation（立即手動觸發排程）
+- [ ] 創建 getScheduleExecutionHistory tRPC query（獲取執行歷史）
+- [ ] 創建 node-cron 排程任務（每日香港時間凌晨 01:00 執行）
+- [ ] 排程任務自動執行 eBay 和 SNKRDUNK 批量更新
+- [ ] 記錄每次執行的結果到資料庫
+- [ ] 在 Admin 頁面添加排程管理面板
+- [ ] 顯示排程狀態（啟用/停用）
+- [ ] 顯示下次執行時間
+- [ ] 顯示上次執行結果
+- [ ] 添加啟用/停用排程按鈕
+- [ ] 添加立即執行按鈕
+- [ ] 顯示執行歷史列表（最近 10 次）
+- [ ] 測試排程功能
+
+## 新功能: 定時批量更新排程功能 - 完成
+
+- [x] 創建排程執行歷史資料表（scheduleConfig, scheduleExecutionHistory）
+- [x] 創建資料庫操作函數（getScheduleConfig、updateScheduleEnabled、addScheduleExecutionHistory、getScheduleExecutionHistory）
+- [x] 創建 getScheduleConfig tRPC query（獲取排程設定）
+- [x] 創建 updateScheduleEnabled tRPC mutation（啟用/停用排程）
+- [x] 創建 triggerScheduleNow tRPC mutation（立即手動觸發排程）
+- [x] 創建 getScheduleExecutionHistory tRPC query（獲取執行歷史）
+- [x] 創建 node-cron 排程任務（每日香港時間凌晨 01:00 執行）
+- [x] 排程任務自動執行 eBay 和 SNKRDUNK 批量更新
+- [x] 記錄每次執行的結果到資料庫
+- [x] 在 Admin 頁面添加排程管理標籤頁
+- [x] 顯示排程狀態（啟用/停用）
+- [x] 顯示下次執行時間
+- [x] 顯示上次執行結果
+- [x] 添加啟用/停用排程開關
+- [x] 添加立即執行按鈕
+- [x] 顯示執行歷史列表（最近 10 次）
+- [x] TypeScript 編譯無錯誤，開發服務器正常運行
+
+**實作結果：**
+- ✅ 創建 scheduleConfig 和 scheduleExecutionHistory 資料表
+- ✅ 實作排程管理 tRPC procedures（getScheduleConfig、updateScheduleEnabled、triggerScheduleNow、getScheduleExecutionHistory）
+- ✅ 創建 batchUpdateExecutor.ts 模組（executeEbayBatchUpdate、executeSnkrdunkBatchUpdate）
+- ✅ 創建 batchUpdateScheduler.ts 模組（使用 node-cron 定時執行）
+- ✅ 排程設定：每日香港時間凌晨 01:00 執行（cron: '0 1 * * *'）
+- ✅ 自動執行 eBay 和 SNKRDUNK 批量更新
+- ✅ 記錄執行歷史（執行類型、狀態、成功/失敗數、記錄數、執行時間）
+- ✅ Admin 頁面添加「排程管理」標籤頁
+- ✅ 顯示排程描述、狀態、下次執行時間、上次執行時間
+- ✅ 啟用/停用排程開關（自動重啟排程器）
+- ✅ 立即執行按鈕（手動觸發批量更新）
+- ✅ 執行歷史列表（最近 10 次，顯示執行類型、狀態、統計、執行時間、錯誤訊息）
+- ✅ 即時刷新排程狀態和執行歷史
+- ✅ 服務器啟動時自動啟動排程器
