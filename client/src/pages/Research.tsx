@@ -10,11 +10,18 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
 
-  // Fetch popular cards from database
-  const { data: popularCards = [], isLoading } = trpc.cards.getPopular.useQuery(
-    { limit: 5 },
+  // Fetch top gainers (daily price increase top 5)
+  const { data: topGainers = [], isLoading } = trpc.marketInsights.getTopGainers.useQuery(
+    { days: 1, limit: 5 }, // Past 24 hours
     { retry: 1 }
   );
+
+  // Map topGainers to card format for display
+  const popularCards = topGainers.map((gainer: any) => ({
+    id: gainer.cardId,
+    name: gainer.cardName,
+    imageUrl: gainer.cardImage,
+  }));
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +67,7 @@ export default function Home() {
           </div>
         </form>
 
-        {/* Popular Cards */}
+        {/* Top Gainers - Daily Price Increase Top 5 */}
         <div className="flex justify-center gap-4 mt-12 flex-wrap">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
