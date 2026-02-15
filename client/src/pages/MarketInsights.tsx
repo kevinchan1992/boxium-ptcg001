@@ -35,17 +35,6 @@ export default function MarketInsights() {
     return cat?.label || category;
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      market_analysis: "bg-blue-600",
-      investment_trends: "bg-emerald-600",
-      card_research: "bg-purple-600",
-      news: "bg-orange-600",
-      guide: "bg-indigo-600",
-    };
-    return colors[category] || "bg-slate-600";
-  };
-
   const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return "";
     const d = new Date(date);
@@ -58,9 +47,13 @@ export default function MarketInsights() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white py-20">
-        <div className="container mx-auto px-4">
+      {/* Header with Brand Colors */}
+      <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-20 relative overflow-hidden">
+        {/* Yellow accent elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-400 opacity-10 rounded-full -translate-y-32 translate-x-32"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-yellow-400 opacity-10 rounded-full translate-y-24 -translate-x-24"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
           <h1 className="text-6xl font-bold mb-4 tracking-tight">市場洞察</h1>
           <p className="text-xl text-blue-50 font-light">深入分析 PTCG 市場趨勢，掌握投資先機</p>
         </div>
@@ -78,7 +71,11 @@ export default function MarketInsights() {
                   setSelectedCategory(cat.value);
                   setPage(0);
                 }}
-                className="whitespace-nowrap font-medium"
+                className={`whitespace-nowrap font-semibold ${
+                  selectedCategory === cat.value
+                    ? "bg-yellow-400 text-blue-900 hover:bg-yellow-500 border-yellow-400"
+                    : "border-blue-900 text-blue-900 hover:bg-blue-50"
+                }`}
                 size="lg"
               >
                 {cat.label}
@@ -95,7 +92,7 @@ export default function MarketInsights() {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i} className="overflow-hidden border-0 shadow-lg">
                 <Skeleton className="h-56 w-full" />
-                <CardContent className="p-6 space-y-3">
+                <CardContent className="p-6 space-y-3 bg-white">
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-6 w-full" />
                   <Skeleton className="h-4 w-full" />
@@ -110,11 +107,11 @@ export default function MarketInsights() {
               {data.articles.map((article) => (
                 <Card
                   key={article.id}
-                  className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group bg-white"
+                  className="overflow-hidden border-2 border-transparent hover:border-yellow-400 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group bg-white"
                   onClick={() => setLocation(`/market-insights/${article.slug}`)}
                 >
                   {/* Featured Image */}
-                  {article.featuredImageUrl && (
+                  {article.featuredImageUrl ? (
                     <div className="relative h-56 overflow-hidden bg-slate-100">
                       <img
                         src={article.featuredImageUrl}
@@ -123,7 +120,20 @@ export default function MarketInsights() {
                       />
                       {/* Category Badge */}
                       <div className="absolute top-4 left-4">
-                        <span className={`${getCategoryColor(article.category)} text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg`}>
+                        <span className="bg-yellow-400 text-blue-900 px-4 py-1.5 rounded-full text-sm font-bold shadow-lg">
+                          {getCategoryLabel(article.category)}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative h-56 bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-yellow-400 text-4xl font-bold mb-2">BOXIUM</div>
+                        <div className="text-white text-sm">LUCK IN EVERY BOX</div>
+                      </div>
+                      {/* Category Badge */}
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-yellow-400 text-blue-900 px-4 py-1.5 rounded-full text-sm font-bold shadow-lg">
                           {getCategoryLabel(article.category)}
                         </span>
                       </div>
@@ -132,27 +142,27 @@ export default function MarketInsights() {
 
                   <CardContent className="p-7 bg-white">
                     {/* Date */}
-                    <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                      <Calendar className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-sm text-slate-600 mb-4">
+                      <Calendar className="w-4 h-4 text-blue-900" />
                       <span className="font-medium">{formatDate(article.publishedAt)}</span>
                     </div>
 
                     {/* Title */}
-                    <h2 className="text-2xl font-bold text-slate-900 mb-4 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">
+                    <h2 className="text-2xl font-bold text-blue-900 mb-4 line-clamp-2 group-hover:text-yellow-600 transition-colors leading-tight">
                       {article.title}
                     </h2>
 
                     {/* Summary */}
                     {article.summary && (
-                      <p className="text-slate-600 text-base line-clamp-3 mb-6 leading-relaxed">
+                      <p className="text-slate-700 text-base line-clamp-3 mb-6 leading-relaxed">
                         {article.summary}
                       </p>
                     )}
 
                     {/* Meta Info */}
-                    <div className="flex items-center gap-6 text-sm text-slate-500 pt-5 border-t border-slate-100">
+                    <div className="flex items-center gap-6 text-sm text-slate-600 pt-5 border-t border-slate-100">
                       <div className="flex items-center gap-2">
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-4 h-4 text-blue-900" />
                         <span className="font-medium">{article.viewCount} 次閱讀</span>
                       </div>
                       {article.authorName && (
@@ -174,11 +184,11 @@ export default function MarketInsights() {
                   onClick={() => setPage(Math.max(0, page - 1))}
                   disabled={page === 0}
                   size="lg"
-                  className="font-medium"
+                  className="font-semibold border-blue-900 text-blue-900 hover:bg-blue-50 disabled:opacity-50"
                 >
                   上一頁
                 </Button>
-                <div className="flex items-center gap-2 text-base text-slate-700 font-medium">
+                <div className="flex items-center gap-2 text-base text-slate-700 font-semibold">
                   <span>第 {page + 1} 頁</span>
                   <span>/</span>
                   <span>共 {Math.ceil(data.total / limit)} 頁</span>
@@ -188,7 +198,7 @@ export default function MarketInsights() {
                   onClick={() => setPage(page + 1)}
                   disabled={!data.hasMore}
                   size="lg"
-                  className="font-medium"
+                  className="font-semibold border-blue-900 text-blue-900 hover:bg-blue-50 disabled:opacity-50"
                 >
                   下一頁
                 </Button>

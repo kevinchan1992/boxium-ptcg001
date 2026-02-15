@@ -35,17 +35,6 @@ export default function ArticleDetail() {
     return categories[category] || category;
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      market_analysis: "bg-blue-600",
-      investment_trends: "bg-emerald-600",
-      card_research: "bg-purple-600",
-      news: "bg-orange-600",
-      guide: "bg-indigo-600",
-    };
-    return colors[category] || "bg-slate-600";
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50">
@@ -69,7 +58,10 @@ export default function ArticleDetail() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-slate-900 mb-4">文章不存在</h1>
-          <Button onClick={() => setLocation("/market-insights")}>
+          <Button 
+            onClick={() => setLocation("/market-insights")}
+            className="bg-yellow-400 text-blue-900 hover:bg-yellow-500 font-semibold"
+          >
             返回市場洞察
           </Button>
         </div>
@@ -81,12 +73,15 @@ export default function ArticleDetail() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white py-10">
-        <div className="container mx-auto px-4 max-w-4xl">
+      {/* Header with Brand Colors */}
+      <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-12 relative overflow-hidden">
+        {/* Yellow accent elements */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-yellow-400 opacity-10 rounded-full -translate-y-24 translate-x-24"></div>
+        
+        <div className="container mx-auto px-4 max-w-4xl relative z-10">
           <Button
             variant="ghost"
-            className="text-white hover:bg-white/20 mb-4 font-medium"
+            className="text-white hover:bg-white/20 mb-4 font-semibold border-2 border-yellow-400"
             size="lg"
             onClick={() => setLocation("/market-insights")}
           >
@@ -98,33 +93,33 @@ export default function ArticleDetail() {
 
       {/* Article Content */}
       <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <Card className="border-0 shadow-xl">
+        <Card className="border-2 border-slate-200 shadow-2xl">
           <CardContent className="p-10 md:p-12 bg-white">
             {/* Category Badge */}
             <div className="mb-6">
-              <span className={`${getCategoryColor(article.category)} text-white px-4 py-2 rounded-full text-sm font-semibold shadow-md`}>
+              <span className="bg-yellow-400 text-blue-900 px-5 py-2 rounded-full text-sm font-bold shadow-md">
                 {getCategoryLabel(article.category)}
               </span>
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-8 leading-tight">
+            <h1 className="text-4xl md:text-5xl font-bold text-blue-900 mb-8 leading-tight">
               {article.title}
             </h1>
 
             {/* Meta Info */}
-            <div className="flex items-center gap-8 text-base text-slate-600 mb-10 pb-8 border-b border-slate-200">
+            <div className="flex items-center gap-8 text-base text-slate-700 mb-10 pb-8 border-b-2 border-yellow-400">
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                <span className="font-medium">{formatDate(article.publishedAt)}</span>
+                <Calendar className="w-5 h-5 text-blue-900" />
+                <span className="font-semibold">{formatDate(article.publishedAt)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                <span className="font-medium">{article.viewCount} 次閱讀</span>
+                <Eye className="w-5 h-5 text-blue-900" />
+                <span className="font-semibold">{article.viewCount} 次閱讀</span>
               </div>
               {article.authorName && (
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">作者：{article.authorName}</span>
+                  <span className="font-semibold">作者：{article.authorName}</span>
                 </div>
               )}
             </div>
@@ -135,15 +130,15 @@ export default function ArticleDetail() {
                 <img
                   src={article.featuredImageUrl}
                   alt={article.title}
-                  className="w-full rounded-xl shadow-2xl"
+                  className="w-full rounded-xl shadow-2xl border-4 border-yellow-400"
                 />
               </div>
             )}
 
             {/* Summary */}
             {article.summary && (
-              <div className="bg-blue-50 border-l-4 border-blue-600 p-7 mb-10 rounded-r-lg">
-                <p className="text-slate-800 text-lg leading-relaxed font-medium">
+              <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-l-4 border-yellow-400 p-7 mb-10 rounded-r-lg">
+                <p className="text-blue-900 text-lg leading-relaxed font-semibold">
                   {article.summary}
                 </p>
               </div>
@@ -151,20 +146,20 @@ export default function ArticleDetail() {
 
             {/* Content */}
             <div className="prose prose-slate prose-lg max-w-none">
-              <div className="text-slate-700 leading-relaxed whitespace-pre-wrap text-lg">
+              <div className="text-slate-800 leading-relaxed whitespace-pre-wrap text-lg">
                 {article.content}
               </div>
             </div>
 
             {/* Tags */}
             {tags.length > 0 && (
-              <div className="mt-12 pt-8 border-t border-slate-200">
+              <div className="mt-12 pt-8 border-t-2 border-yellow-400">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <Tag className="w-5 h-5 text-slate-500" />
+                  <Tag className="w-5 h-5 text-blue-900" />
                   {tags.map((tag: string, index: number) => (
                     <span
                       key={index}
-                      className="bg-slate-100 text-slate-700 px-4 py-2 rounded-full text-sm font-medium hover:bg-slate-200 transition-colors"
+                      className="bg-yellow-100 text-blue-900 px-4 py-2 rounded-full text-sm font-semibold hover:bg-yellow-200 transition-colors border-2 border-yellow-400"
                     >
                       {tag}
                     </span>
