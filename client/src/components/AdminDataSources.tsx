@@ -261,6 +261,9 @@ export function AdminDataSources() {
 
   // 批量更新 eBay 價格
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
+  
+  // 批量更新 SNKRDUNK 價格
+  const [isSnkrdunkBatchUpdating, setIsSnkrdunkBatchUpdating] = useState(false);
   const batchUpdateMutation = trpc.admin.batchUpdateEbayPrices.useMutation({
     onSuccess: (result) => {
       setIsBatchUpdating(true);
@@ -293,10 +296,47 @@ export function AdminDataSources() {
   useEffect(() => {
     if (batchProgress && !batchProgress.isRunning && isBatchUpdating) {
       setIsBatchUpdating(false);
-      toast.success(`批量更新完成！成功: ${batchProgress.successCount}，失敗: ${batchProgress.failureCount}`);
+      toast.success(`eBay 批量更新完成！成功: ${batchProgress.successCount}，失敗: ${batchProgress.failureCount}`);
       utils.admin.getDataSources.invalidate();
     }
   }, [batchProgress, isBatchUpdating]);
+
+  const snkrdunkBatchUpdateMutation = trpc.admin.batchUpdateSnkrdunkPrices.useMutation({
+    onSuccess: (result) => {
+      setIsSnkrdunkBatchUpdating(true);
+      toast.success(result.message);
+    },
+    onError: (error: any) => {
+      toast.error(`啟動 SNKRDUNK 批量更新失敗: ${error.message}`);
+    },
+  });
+
+  const pauseSnkrdunkBatchUpdateMutation = trpc.admin.pauseSnkrdunkBatchUpdate.useMutation({
+    onSuccess: () => {
+      toast.info("SNKRDUNK 批量更新已暫停");
+    },
+  });
+
+  const resumeSnkrdunkBatchUpdateMutation = trpc.admin.resumeSnkrdunkBatchUpdate.useMutation({
+    onSuccess: () => {
+      toast.info("SNKRDUNK 批量更新已繼續");
+    },
+  });
+
+  // 輪詢 SNKRDUNK 批量更新進度
+  const { data: snkrdunkBatchProgress } = trpc.admin.getSnkrdunkBatchUpdateProgress.useQuery(undefined, {
+    enabled: isSnkrdunkBatchUpdating,
+    refetchInterval: isSnkrdunkBatchUpdating ? 2000 : false,
+  });
+
+  // 當 SNKRDUNK 批量更新完成時，停止輪詢
+  useEffect(() => {
+    if (snkrdunkBatchProgress && !snkrdunkBatchProgress.isRunning && isSnkrdunkBatchUpdating) {
+      setIsSnkrdunkBatchUpdating(false);
+      toast.success(`SNKRDUNK 批量更新完成！成功: ${snkrdunkBatchProgress.successCount}，失敗: ${snkrdunkBatchProgress.failureCount}`);
+      utils.admin.getDataSources.invalidate();
+    }
+  }, [snkrdunkBatchProgress, isSnkrdunkBatchUpdating]);
 
   const deleteDataSourceMutation = trpc.admin.deleteDataSource.useMutation({
     onSuccess: () => {
@@ -459,22 +499,38 @@ export function AdminDataSources() {
             </h2>
             <div className="flex gap-4 flex-wrap">
               <Button
-                onClick={() => updateEnglishNamesMutation.mutate()}
-                disabled={updateEnglishNamesMutation.isPending}
+                onClick={() => snkrdunkBatchUpdateMutation.mutate()}
+                disabled={snkrdunkBatchUpdateMutation.isPending || isSnkrdunkBatchUpdating}
                 variant="outline"
+                className="bg-blue-500 text-white hover:bg-blue-600"
               >
-                {updateEnglishNamesMutation.isPending ? (
+                {snkrdunkBatchUpdateMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    更新中...
+                    啟動中...
                   </>
                 ) : (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    更新所有卡牌英文名稱
+                    批量更新所有卡牌 SNKRDUNK 價格
                   </>
                 )}
               </Button>
+              {isSnkrdunkBatchUpdating && snkrdunkBatchProgress && (
+                <Button
+                  onClick={() => {
+                    if (snkrdunkBatchProgress.isPaused) {
+                      resumeSnkrdunkBatchUpdateMutation.mutate();
+                    } else {
+                      pauseSnkrdunkBatchUpdateMutation.mutate();
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  {snkrdunkBatchProgress.isPaused ? "繼續" : "暫停"}
+                </Button>
+              )}
               <Button
                 onClick={() => batchUpdateMutation.mutate()}
                 disabled={batchUpdateMutation.isPending || isBatchUpdating}
@@ -510,7 +566,71 @@ export function AdminDataSources() {
               )}
             </div>
 
-            {/* 批量更新進度顯示 */}
+            {/* SNKRDUNK 批量更新進度顯示 */}
+            {isSnkrdunkBatchUpdating && snkrdunkBatchProgress && (
+              <div className="mt-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                    <span className="text-lg font-semibold">
+                      SNKRDUNK 批量更新進度: {snkrdunkBatchProgress.processedCards} / {snkrdunkBatchProgress.totalCards}
+                    </span>
+                    {snkrdunkBatchProgress.isPaused && (
+                      <span className="text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
+                        已暫停
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {((snkrdunkBatchProgress.processedCards / snkrdunkBatchProgress.totalCards) * 100).toFixed(1)}%
+                  </span>
+                </div>
+
+                {/* 進度條 */}
+                <div className="w-full bg-muted rounded-full h-3">
+                  <div
+                    className="bg-blue-500 h-3 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${(snkrdunkBatchProgress.processedCards / snkrdunkBatchProgress.totalCards) * 100}%`,
+                    }}
+                  />
+                </div>
+
+                {/* 統計資訊 */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-sm text-green-600 mb-1">成功</div>
+                    <div className="text-2xl font-bold text-green-700">{snkrdunkBatchProgress.successCount}</div>
+                  </div>
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <div className="text-sm text-red-600 mb-1">失敗</div>
+                    <div className="text-2xl font-bold text-red-700">{snkrdunkBatchProgress.failureCount}</div>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-sm text-blue-600 mb-1">總記錄數</div>
+                    <div className="text-2xl font-bold text-blue-700">{snkrdunkBatchProgress.totalRecordsAdded}</div>
+                  </div>
+                </div>
+
+                {/* 錯誤詳情 */}
+                {snkrdunkBatchProgress.errors.length > 0 && (
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <h4 className="text-sm font-semibold text-red-700 mb-2">
+                      錯誤詳情（前 10 個）
+                    </h4>
+                    <div className="space-y-1 text-sm text-red-600 max-h-40 overflow-y-auto">
+                      {snkrdunkBatchProgress.errors.slice(0, 10).map((error, index) => (
+                        <div key={index}>
+                          • {error.cardName} (ID: {error.cardId}): {error.error}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* eBay 批量更新進度顯示 */}
             {isBatchUpdating && batchProgress && (
               <div className="mt-6 space-y-4">
                 <div className="flex items-center justify-between">

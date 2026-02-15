@@ -1757,3 +1757,46 @@
 - ✅ 每處理 5 張卡片暫停 1 秒，避免 API 限制
 - ✅ 優先使用圖片搜尋，失敗時自動回退到文字搜尋
 - ✅ 記錄搜尋統計數據（方法、耗時、結果數量）
+
+## 新功能: Admin 頁面批量更新所有卡牌 SNKRDUNK 價格
+
+- [ ] 創建 SNKRDUNK 批量更新進度追蹤機制（獨立於 eBay）
+- [ ] 創建 batchUpdateSnkrdunkPrices tRPC procedure（批量更新所有卡牌）
+- [ ] 創建 getSnkrdunkBatchUpdateProgress tRPC query（獲取即時進度）
+- [ ] 創建 pauseSnkrdunkBatchUpdate tRPC mutation（暫停批量更新）
+- [ ] 創建 resumeSnkrdunkBatchUpdate tRPC mutation（繼續批量更新）
+- [ ] 替換 Admin 頁面「更新所有卡牌英文名稱」按鈕為「批量更新所有卡牌 SNKRDUNK 價格」
+- [ ] 添加即時進度顯示（已處理/總數、進度條）
+- [ ] 添加暫停/繼續按鈕
+- [ ] 顯示成功/失敗統計
+- [ ] 顯示錯誤詳情（前 10 個）
+- [ ] 測試 SNKRDUNK 批量更新功能
+
+## 新功能: Admin 頁面批量更新所有卡牌 SNKRDUNK 價格 - 完成
+
+- [x] 創建 SNKRDUNK 批量更新進度追蹤機制（獨立於 eBay）
+- [x] 創建 batchUpdateSnkrdunkPrices tRPC procedure（批量更新所有卡牌）
+- [x] 創建 getSnkrdunkBatchUpdateProgress tRPC query（獲取即時進度）
+- [x] 創建 pauseSnkrdunkBatchUpdate tRPC mutation（暫停批量更新）
+- [x] 創建 resumeSnkrdunkBatchUpdate tRPC mutation（繼續批量更新）
+- [x] 替換 Admin 頁面「更新所有卡牌英文名稱」按鈕為「批量更新所有卡牌 SNKRDUNK 價格」
+- [x] 添加即時進度顯示（已處理/總數、進度條）
+- [x] 添加暫停/繼續按鈕
+- [x] 顯示成功/失敗統計
+- [x] 顯示錯誤詳情（前 10 個）
+- [x] TypeScript 編譯無錯誤，開發服務器正常運行
+
+**實作結果：**
+- ✅ 創建 batchUpdateSnkrdunkProgress.ts 模組管理 SNKRDUNK 批量更新進度（獨立於 eBay）
+- ✅ 實作 SNKRDUNK 批量更新 tRPC procedures（batchUpdateSnkrdunkPrices、getSnkrdunkBatchUpdateProgress、pauseSnkrdunkBatchUpdate、resumeSnkrdunkBatchUpdate）
+- ✅ 替換「更新所有卡牌英文名稱」按鈕為藍色「批量更新所有卡牌 SNKRDUNK 價格」按鈕
+- ✅ 添加暫停/繼續按鈕（SNKRDUNK 批量更新運行時顯示）
+- ✅ 實作即時進度顯示（每 2 秒輪詢一次）
+- ✅ 顯示進度條和百分比（藍色主題）
+- ✅ 顯示成功/失敗/總記錄數統計卡片
+- ✅ 顯示錯誤詳情列表（前 10 個）
+- ✅ 批量更新完成後自動停止輪詢並顯示結果
+- ✅ 每處理 3 張卡片暫停 2 秒，避免 SNKRDUNK API 限制
+- ✅ 爬取 SNKRDUNK 頁面獲取最新價格歷史
+- ✅ 自動更新所有該卡牌的 SNKRDUNK 數據源狀態
+- ✅ eBay 和 SNKRDUNK 批量更新進度獨立追蹤，互不干擾
