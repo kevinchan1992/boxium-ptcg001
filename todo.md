@@ -2217,3 +2217,11 @@
 - [x] 優化首頁卡牌載入速度（使用 getPopularCards 取代複雜的價格趨勢計算）
 - [x] 測試 logo 顯示效果（SNKRDUNK 和 eBay logo 正常顯示）
 - [x] 測試載入速度改善（頁面快速載入，無長時間 loading）
+
+
+## UI 更新: 替換首頁 SNKRDUNK 和 eBay logo - 完成
+
+- [x] 複製用戶提供的 SNKRDUNK logo 到專案 public 目錄
+- [x] 複製用戶提供的 eBay logo 到專案 public 目錄
+- [x] 更新首頁 Home.tsx 的 logo 路徑（檔名相同，自動替換）
+- [x] 測試新 logo 顯示效果（SNKRDUNK 和 eBay logo 已成功顯示）
