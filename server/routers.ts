@@ -2142,7 +2142,35 @@ ${input.additionalContext ? `額外背景資訊：${input.additionalContext}` : 
           });
         }
       }),
+   }),
+
+  // Storage router for image uploads
+  storage: router({
+    uploadImage: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileData: z.string(), // base64 encoded
+        contentType: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { fileName, fileData, contentType } = input;
+        
+        // Extract base64 data (remove data:image/...;base64, prefix)
+        const base64Data = fileData.split(',')[1] || fileData;
+        const buffer = Buffer.from(base64Data, 'base64');
+        
+        // Generate unique file key
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const ext = fileName.split('.').pop() || 'jpg';
+        const fileKey = `blog-images/${timestamp}-${randomSuffix}.${ext}`;
+        
+        // Upload to S3
+        const { storagePut } = await import('./storage');
+        const { url } = await storagePut(fileKey, buffer, contentType);
+        
+        return { url, key: fileKey };
+      }),
   }),
 });
-
 export type AppRouter = typeof appRouter;
