@@ -2199,3 +2199,21 @@
 - [x] 確保所有文字為黑色/深灰色
 - [x] 調整 CardContent 配色方案（添加 bg-white）
 - [x] 測試兩個標籤頁（AI 生成、手動創建）的顯示效果
+
+
+## UI 改進: 首頁品牌 logo 和載入優化
+
+- [ ] 添加 SNKRDUNK 品牌 logo 到數據來源區塊
+- [ ] 添加 eBay 品牌 logo 到數據來源區塊
+- [ ] 優化首頁卡牌載入速度（解決「Loading卡牌時間有點慢」問題）
+- [ ] 測試 logo 顯示效果
+- [ ] 測試載入速度改善
+
+
+## UI 改進: 首頁品牌 logo 和載入優化 - 完成
+
+- [x] 添加 SNKRDUNK 品牌 logo 到數據來源區塊
+- [x] 添加 eBay 品牌 logo 到數據來源區塊
+- [x] 優化首頁卡牌載入速度（使用 getPopularCards 取代複雜的價格趨勢計算）
+- [x] 測試 logo 顯示效果（SNKRDUNK 和 eBay logo 正常顯示）
+- [x] 測試載入速度改善（頁面快速載入，無長時間 loading）

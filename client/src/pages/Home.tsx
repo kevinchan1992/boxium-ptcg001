@@ -228,7 +228,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             {/* SNKRDUNK */}
             <div className="bg-white rounded-xl p-6 md:p-8 shadow-md border-l-4" style={{ borderColor: "#06038d" }}>
-              <h3 className="text-xl md:text-2xl font-bold mb-4" style={{ color: "#06038d" }}>SNKRDUNK</h3>
+              <img src="/snkrdunk-logo.png" alt="SNKRDUNK" className="h-8 md:h-10 mb-4" />
               <p className="text-gray-600 mb-6 text-sm md:text-base leading-relaxed">
                 {t("home.snkrdunkDesc")}
               </p>
@@ -241,7 +241,7 @@ export default function Home() {
 
             {/* eBay */}
             <div className="bg-white rounded-xl p-6 md:p-8 shadow-md border-l-4" style={{ borderColor: "#ffed00" }}>
-              <h3 className="text-xl md:text-2xl font-bold mb-4" style={{ color: "#06038d" }}>eBay</h3>
+              <img src="/ebay-logo.png" alt="eBay" className="h-8 md:h-10 mb-4" />
               <p className="text-gray-600 mb-6 text-sm md:text-base leading-relaxed">
                 {t("home.ebayDesc")}
               </p>
@@ -308,7 +308,7 @@ export default function Home() {
               <h4 className="text-white font-bold mb-4 text-sm md:text-base">快速導航</h4>
               <ul className="space-y-2">
                 <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">卡牌搜尋</Link></li>
-                <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">市場分析</Link></li>
+                <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">市場報告</Link></li>
                 <li><Link href="/pricing" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">價格查詢</Link></li>
                 <li><Link href="/admin" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">管理後台</Link></li>
               </ul>
