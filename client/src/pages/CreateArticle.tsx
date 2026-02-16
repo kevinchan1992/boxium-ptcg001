@@ -115,7 +115,7 @@ export default function CreateArticle() {
 
           {/* AI Generation Tab */}
           <TabsContent value="ai" className="space-y-6">
-            <Card className="border-2 border-gray-200 shadow-sm">
+            <Card className="border border-gray-200 shadow-sm bg-white">
               <CardHeader className="bg-gradient-to-r from-yellow-50 to-blue-50 border-b border-gray-200">
                 <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                   <Sparkles className="w-7 h-7 text-yellow-500" />
@@ -125,7 +125,7 @@ export default function CreateArticle() {
                   上傳市場快報圖片，AI 將自動分析並生成完整的博客文章
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-6 space-y-6">
+              <CardContent className="p-6 space-y-6 bg-white">
                 <Alert className="bg-blue-50 border-blue-200">
                   <AlertDescription className="text-gray-700">
                     <strong>使用說明：</strong>
@@ -190,7 +190,7 @@ export default function CreateArticle() {
 
           {/* Manual Creation Tab */}
           <TabsContent value="manual" className="space-y-6">
-            <Card className="border-2 border-gray-200 shadow-sm">
+            <Card className="border border-gray-200 shadow-sm bg-white">
               <CardHeader className="bg-gray-50 border-b border-gray-200">
                 <CardTitle className="text-2xl font-bold text-gray-900">
                   {formData.title ? "編輯文章" : "手動創建文章"}
@@ -199,7 +199,7 @@ export default function CreateArticle() {
                   {formData.title ? "檢查 AI 生成的內容並進行編輯" : "手動填寫文章內容"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-6 bg-white">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Title */}
                   <div>
