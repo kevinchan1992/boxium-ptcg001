@@ -2152,3 +2152,11 @@
 - [x] 實作設定變更後自動重啟 scheduler
 - [x] 測試排程系統運作正常
 - [x] 驗證日誌顯示 scheduler 成功啟動
+
+## Bug 修復: Admin 頁面登入錯誤 - 完成
+
+- [x] 診斷 Admin 頁面的 "Please login (10001)" 錯誤
+- [x] 識別問題：全局錯誤監聽器記錄所有 API 錯誤（包括預期的登入錯誤）
+- [x] 修復 main.tsx 全局錯誤監聽器，過濾掉預期的 UNAUTHORIZED 錯誤
+- [x] 在 AdminDashboard.tsx 和 ArticleManagement.tsx 添加 retry: false 配置
+- [x] 測試修復後的登入功能，確認錯誤不再出現

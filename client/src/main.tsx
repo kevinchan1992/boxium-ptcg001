@@ -13,14 +13,22 @@ const queryClient = new QueryClient();
 // Error logging for debugging
 queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
-    const error = event.query.state.error;
+    const error = event.query.state.error as any;
+    // Filter out expected authentication errors (e.g., when loading protected routes)
+    if (error?.message?.includes("Please login") || error?.data?.code === "UNAUTHORIZED") {
+      return;
+    }
     console.error("[API Query Error]", error);
   }
 });
 
 queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
-    const error = event.mutation.state.error;
+    const error = event.mutation.state.error as any;
+    // Filter out expected authentication errors
+    if (error?.message?.includes("Please login") || error?.data?.code === "UNAUTHORIZED") {
+      return;
+    }
     console.error("[API Mutation Error]", error);
   }
 });

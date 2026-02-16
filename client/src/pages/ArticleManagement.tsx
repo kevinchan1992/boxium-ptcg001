@@ -50,10 +50,16 @@ export default function ArticleManagement() {
     status: "draft" as "draft" | "published",
   });
 
-  const { data, isLoading, refetch } = trpc.blog.getAllArticles.useQuery({
-    limit: 100,
-    offset: 0,
-  });
+  const { data, isLoading, refetch } = trpc.blog.getAllArticles.useQuery(
+    {
+      limit: 100,
+      offset: 0,
+    },
+    {
+      retry: false,
+      refetchOnWindowFocus: false,
+    }
+  );
 
   const deleteMutation = trpc.blog.delete.useMutation({
     onSuccess: () => {

@@ -5,7 +5,13 @@ import { useLocation } from "wouter";
 
 export function AdminDashboard() {
   const { data: stats, isLoading } = trpc.admin.getDashboardStats.useQuery();
-  const { data: articleStats, isLoading: isLoadingArticles } = trpc.blog.getAllArticles.useQuery({});
+  const { data: articleStats, isLoading: isLoadingArticles, error: articleError } = trpc.blog.getAllArticles.useQuery(
+    {},
+    {
+      retry: false,
+      refetchOnWindowFocus: false,
+    }
+  );
   const [, setLocation] = useLocation();
 
   if (isLoading) {
