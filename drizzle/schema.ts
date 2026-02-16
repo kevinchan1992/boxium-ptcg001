@@ -202,7 +202,26 @@ export type SearchStat = typeof searchStats.$inferSelect;
 export type InsertSearchStat = typeof searchStats.$inferInsert;
 
 /**
- * Schedule config table - stores batch update schedule configuration
+ * Price update schedule table - stores daily automatic price update schedule
+ */
+export const priceUpdateSchedule = mysqlTable("priceUpdateSchedule", {
+  id: int("id").autoincrement().primaryKey(),
+  snkrdunkEnabled: boolean("snkrdunkEnabled").default(false).notNull(), // Whether SNKRDUNK update is enabled
+  snkrdunkUpdateTime: varchar("snkrdunkUpdateTime", { length: 8 }).default("09:00").notNull(), // Daily update time (HH:mm format)
+  snkrdunkLastExecutedAt: timestamp("snkrdunkLastExecutedAt"), // Last SNKRDUNK update execution time
+  ebayEnabled: boolean("ebayEnabled").default(false).notNull(), // Whether eBay update is enabled
+  ebayUpdateTime: varchar("ebayUpdateTime", { length: 8 }).default("21:00").notNull(), // Daily update time (HH:mm format)
+  ebayLastExecutedAt: timestamp("ebayLastExecutedAt"), // Last eBay update execution time
+  timezone: varchar("timezone", { length: 64 }).default("Asia/Hong_Kong").notNull(), // Timezone
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PriceUpdateSchedule = typeof priceUpdateSchedule.$inferSelect;
+export type InsertPriceUpdateSchedule = typeof priceUpdateSchedule.$inferInsert;
+
+/**
+ * Schedule config table - stores batch update schedule configuration (DEPRECATED - use priceUpdateSchedule instead)
  */
 export const scheduleConfig = mysqlTable("scheduleConfig", {
   id: int("id").autoincrement().primaryKey(),

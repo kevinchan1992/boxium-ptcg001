@@ -1,263 +1,247 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Clock, CheckCircle, XCircle, PlayCircle } from "lucide-react";
-import { toast } from "sonner";
+// Using window.alert for notifications instead of toast
+import { Clock, RefreshCw, Calendar } from "lucide-react";
 
 export function AdminSchedule() {
-  const utils = trpc.useUtils();
-  const [isManualRunning, setIsManualRunning] = useState(false);
+  
+  // Fetch schedule config
+  const { data: config, refetch } = trpc.priceSchedule.getConfig.useQuery();
+  
+  // Local state for form inputs
+  const [snkrdunkEnabled, setSnkrdunkEnabled] = useState(false);
+  const [snkrdunkUpdateTime, setSnkrdunkUpdateTime] = useState("09:00");
+  const [ebayEnabled, setEbayEnabled] = useState(false);
+  const [ebayUpdateTime, setEbayUpdateTime] = useState("21:00");
 
-  // 獲取排程設定
-  const { data: scheduleConfig, isLoading: configLoading } = trpc.admin.getScheduleConfig.useQuery(undefined, {
-    refetchInterval: 10000, // 每 10 秒刷新一次
-  });
+  // Update local state when config is loaded
+  useEffect(() => {
+    if (config) {
+      setSnkrdunkEnabled(config.snkrdunkEnabled);
+      setSnkrdunkUpdateTime(config.snkrdunkUpdateTime);
+      setEbayEnabled(config.ebayEnabled);
+      setEbayUpdateTime(config.ebayUpdateTime);
+    }
+  }, [config]);
 
-  // 獲取執行歷史
-  const { data: executionHistory, isLoading: historyLoading } = trpc.admin.getScheduleExecutionHistory.useQuery(undefined, {
-    refetchInterval: 5000, // 每 5 秒刷新一次
-  });
-
-  // 啟用/停用排程
-  const updateScheduleEnabledMutation = trpc.admin.updateScheduleEnabled.useMutation({
-    onSuccess: (result) => {
-      toast.success(result.message);
-      utils.admin.getScheduleConfig.invalidate();
+  // Update config mutation
+  const updateConfig = trpc.priceSchedule.updateConfig.useMutation({
+    onSuccess: () => {
+      alert("設定已儲存：價格更新排程設定已成功更新");
+      refetch();
     },
-    onError: (error: any) => {
-      toast.error(`更新排程狀態失敗: ${error.message}`);
-    },
-  });
-
-  // 立即手動觸發排程
-  const triggerScheduleNowMutation = trpc.admin.triggerScheduleNow.useMutation({
-    onSuccess: (result) => {
-      setIsManualRunning(true);
-      toast.success(result.message);
-      utils.admin.getScheduleExecutionHistory.invalidate();
-    },
-    onError: (error: any) => {
-      toast.error(`觸發排程失敗: ${error.message}`);
+    onError: (error) => {
+      alert(`儲存失敗：${error.message}`);
     },
   });
 
-  // 檢查是否有正在運行的任務
-  const hasRunningTask = executionHistory?.some(h => h.status === "running");
+  // Manual trigger mutations
+  const triggerSnkrdunk = trpc.priceSchedule.triggerSnkrdunkUpdate.useMutation({
+    onSuccess: () => {
+      alert("更新完成：SNKRDUNK 價格更新已完成");
+      refetch();
+    },
+    onError: (error) => {
+      alert(`更新失敗：${error.message}`);
+    },
+  });
 
-  // 當有運行中的任務完成時，停止手動運行狀態
-  if (isManualRunning && !hasRunningTask) {
-    setIsManualRunning(false);
-  }
+  const triggerEbay = trpc.priceSchedule.triggerEbayUpdate.useMutation({
+    onSuccess: () => {
+      alert("更新完成：eBay 價格更新已完成");
+      refetch();
+    },
+    onError: (error) => {
+      alert(`更新失敗：${error.message}`);
+    },
+  });
 
-  if (configLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const handleSaveConfig = () => {
+    updateConfig.mutate({
+      snkrdunkEnabled,
+      snkrdunkUpdateTime,
+      ebayEnabled,
+      ebayUpdateTime,
+    });
+  };
 
-  if (!scheduleConfig) {
-    return (
-      <div className="text-center p-8 text-muted-foreground">
-        未找到排程設定
-      </div>
-    );
-  }
+  const formatLastExecutedTime = (timestamp: Date | null | undefined) => {
+    if (!timestamp) return "從未執行";
+    return new Date(timestamp).toLocaleString("zh-TW", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  };
 
   return (
     <div className="space-y-6">
-      {/* 排程設定卡片 */}
-      <Card className="p-6">
-        <h2 className="text-2xl font-semibold text-foreground mb-4">
-          定時批量更新排程
-        </h2>
-        
-        <div className="space-y-4">
-          {/* 排程描述 */}
-          <div className="bg-muted/50 p-4 rounded-lg">
-            <p className="text-sm text-muted-foreground">
-              {scheduleConfig.description}
-            </p>
-          </div>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">價格更新排程</h2>
+        <p className="text-gray-600">設定每日自動更新 SNKRDUNK 和 eBay 價格的時間</p>
+      </div>
 
-          {/* 排程狀態 */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">排程狀態：</span>
-              <span className={`text-sm font-semibold ${scheduleConfig.enabled ? "text-green-600" : "text-gray-500"}`}>
-                {scheduleConfig.enabled ? "已啟用" : "已停用"}
-              </span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* SNKRDUNK Schedule Card */}
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <Clock className="w-5 h-5 text-blue-600" />
+              SNKRDUNK 實際成交價
+            </CardTitle>
+            <CardDescription className="text-gray-600">
+              設定每日自動更新 SNKRDUNK 卡牌價格的時間
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Enable/Disable Switch */}
+            <div className="flex items-center justify-between">
+              <Label htmlFor="snkrdunk-enabled" className="text-gray-900">啟用自動更新</Label>
+              <Switch
+                id="snkrdunk-enabled"
+                checked={snkrdunkEnabled}
+                onCheckedChange={setSnkrdunkEnabled}
+              />
             </div>
-            <Switch
-              checked={scheduleConfig.enabled}
-              onCheckedChange={(checked) => {
-                updateScheduleEnabledMutation.mutate({ enabled: checked });
-              }}
-              disabled={updateScheduleEnabledMutation.isPending}
-            />
-          </div>
 
-          {/* 執行時間資訊 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-600">下次執行時間</span>
+            {/* Update Time Input */}
+            <div className="space-y-2">
+              <Label htmlFor="snkrdunk-time" className="text-gray-900">更新時間 (HH:mm)</Label>
+              <Input
+                id="snkrdunk-time"
+                type="time"
+                value={snkrdunkUpdateTime}
+                onChange={(e) => setSnkrdunkUpdateTime(e.target.value)}
+                disabled={!snkrdunkEnabled}
+                className="bg-white text-gray-900"
+              />
+            </div>
+
+            {/* Last Execution Time */}
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Calendar className="w-4 h-4" />
+                <span>上次執行：</span>
               </div>
-              <p className="text-sm text-blue-700">
-                {scheduleConfig.nextExecutionAt
-                  ? new Date(scheduleConfig.nextExecutionAt).toLocaleString("zh-TW", {
-                      timeZone: "Asia/Hong_Kong",
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  : "未設定"}
+              <p className="text-sm font-medium text-gray-900 mt-1">
+                {formatLastExecutedTime(config?.snkrdunkLastExecutedAt)}
               </p>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-600">上次執行時間</span>
+            {/* Manual Trigger Button */}
+            <Button
+              onClick={() => triggerSnkrdunk.mutate()}
+              disabled={triggerSnkrdunk.isPending}
+              variant="outline"
+              className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${triggerSnkrdunk.isPending ? 'animate-spin' : ''}`} />
+              {triggerSnkrdunk.isPending ? "更新中..." : "立即手動更新"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* eBay Schedule Card */}
+        <Card className="border-l-4 border-l-yellow-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <Clock className="w-5 h-5 text-yellow-600" />
+              eBay 市場掛牌價
+            </CardTitle>
+            <CardDescription className="text-gray-600">
+              設定每日自動更新 eBay 卡牌價格的時間
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Enable/Disable Switch */}
+            <div className="flex items-center justify-between">
+              <Label htmlFor="ebay-enabled" className="text-gray-900">啟用自動更新</Label>
+              <Switch
+                id="ebay-enabled"
+                checked={ebayEnabled}
+                onCheckedChange={setEbayEnabled}
+              />
+            </div>
+
+            {/* Update Time Input */}
+            <div className="space-y-2">
+              <Label htmlFor="ebay-time" className="text-gray-900">更新時間 (HH:mm)</Label>
+              <Input
+                id="ebay-time"
+                type="time"
+                value={ebayUpdateTime}
+                onChange={(e) => setEbayUpdateTime(e.target.value)}
+                disabled={!ebayEnabled}
+                className="bg-white text-gray-900"
+              />
+            </div>
+
+            {/* Last Execution Time */}
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Calendar className="w-4 h-4" />
+                <span>上次執行：</span>
               </div>
-              <p className="text-sm text-gray-700">
-                {scheduleConfig.lastExecutedAt
-                  ? new Date(scheduleConfig.lastExecutedAt).toLocaleString("zh-TW", {
-                      timeZone: "Asia/Hong_Kong",
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  : "尚未執行"}
+              <p className="text-sm font-medium text-gray-900 mt-1">
+                {formatLastExecutedTime(config?.ebayLastExecutedAt)}
               </p>
             </div>
-          </div>
 
-          {/* 立即執行按鈕 */}
-          <Button
-            onClick={() => triggerScheduleNowMutation.mutate()}
-            disabled={triggerScheduleNowMutation.isPending || hasRunningTask}
-            className="w-full"
-          >
-            {triggerScheduleNowMutation.isPending || hasRunningTask ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                執行中...
-              </>
-            ) : (
-              <>
-                <PlayCircle className="w-4 h-4 mr-2" />
-                立即執行批量更新
-              </>
-            )}
-          </Button>
-        </div>
-      </Card>
+            {/* Manual Trigger Button */}
+            <Button
+              onClick={() => triggerEbay.mutate()}
+              disabled={triggerEbay.isPending}
+              variant="outline"
+              className="w-full border-yellow-600 text-yellow-600 hover:bg-yellow-50"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${triggerEbay.isPending ? 'animate-spin' : ''}`} />
+              {triggerEbay.isPending ? "更新中..." : "立即手動更新"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* 執行歷史卡片 */}
-      <Card className="p-6">
-        <h3 className="text-xl font-semibold text-foreground mb-4">
-          執行歷史（最近 10 次）
-        </h3>
+      {/* Save Configuration Button */}
+      <div className="flex justify-end">
+        <Button
+          onClick={handleSaveConfig}
+          disabled={updateConfig.isPending}
+          className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-white px-8"
+        >
+          {updateConfig.isPending ? "儲存中..." : "儲存設定"}
+        </Button>
+      </div>
 
-        {historyLoading ? (
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          </div>
-        ) : !executionHistory || executionHistory.length === 0 ? (
-          <div className="text-center p-8 text-muted-foreground">
-            尚無執行歷史
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {executionHistory.map((history) => (
-              <div
-                key={history.id}
-                className={`p-4 rounded-lg border ${
-                  history.status === "completed"
-                    ? "bg-green-50 border-green-200"
-                    : history.status === "failed"
-                    ? "bg-red-50 border-red-200"
-                    : "bg-yellow-50 border-yellow-200"
-                }`}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    {history.status === "completed" ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    ) : history.status === "failed" ? (
-                      <XCircle className="w-5 h-5 text-red-600" />
-                    ) : (
-                      <Loader2 className="w-5 h-5 text-yellow-600 animate-spin" />
-                    )}
-                    <span className="text-sm font-semibold">
-                      {history.executionType === "manual" ? "手動執行" : "排程執行"}
-                    </span>
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      history.status === "completed"
-                        ? "bg-green-100 text-green-700"
-                        : history.status === "failed"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}>
-                      {history.status === "completed" ? "完成" : history.status === "failed" ? "失敗" : "運行中"}
-                    </span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(history.startedAt).toLocaleString("zh-TW", {
-                      timeZone: "Asia/Hong_Kong",
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-
-                {history.status !== "running" && (
-                  <div className="grid grid-cols-2 gap-4 mt-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">eBay 更新</p>
-                      <div className="flex gap-2 text-xs">
-                        <span className="text-green-600">✓ {history.ebaySuccessCount}</span>
-                        <span className="text-red-600">✗ {history.ebayFailureCount}</span>
-                        <span className="text-blue-600">📊 {history.ebayRecordsAdded} 筆</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">SNKRDUNK 更新</p>
-                      <div className="flex gap-2 text-xs">
-                        <span className="text-green-600">✓ {history.snkrdunkSuccessCount}</span>
-                        <span className="text-red-600">✗ {history.snkrdunkFailureCount}</span>
-                        <span className="text-blue-600">📊 {history.snkrdunkRecordsAdded} 筆</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {history.durationMs && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    執行時間: {(history.durationMs / 1000).toFixed(1)} 秒
-                  </p>
-                )}
-
-                {history.errorMessage && (
-                  <div className="mt-2 p-2 bg-red-100 rounded text-xs text-red-700">
-                    錯誤: {history.errorMessage}
-                  </div>
-                )}
+      {/* Info Box */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="pt-6">
+          <div className="flex gap-3">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">i</span>
               </div>
-            ))}
+            </div>
+            <div className="space-y-2 text-sm text-gray-700">
+              <p className="font-semibold text-gray-900">排程說明：</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>系統會在每天設定的時間自動執行價格更新</li>
+                <li>SNKRDUNK 更新：抓取所有卡牌的實際成交價格數據</li>
+                <li>eBay 更新：抓取所有卡牌的市場掛牌價格數據</li>
+                <li>建議將兩個更新時間設定在不同時段，避免同時執行</li>
+                <li>您也可以隨時使用「立即手動更新」按鈕來測試更新功能</li>
+              </ul>
+            </div>
           </div>
-        )}
+        </CardContent>
       </Card>
     </div>
   );

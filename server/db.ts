@@ -1,6 +1,6 @@
 import { eq, desc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, scheduleExecutionHistory, InsertScheduleExecutionHistory, userSearchLogs, blogArticles, InsertBlogArticle } from "../drizzle/schema";;
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, scheduleExecutionHistory, InsertScheduleExecutionHistory, userSearchLogs, blogArticles, InsertBlogArticle, priceUpdateSchedule } from "../drizzle/schema";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1480,4 +1480,80 @@ export async function deleteBlogArticle(id: number) {
   await db
     .delete(blogArticles)
     .where(eq(blogArticles.id, id));
+}
+
+/**
+ * Get price update schedule configuration
+ */
+export async function getPriceUpdateSchedule() {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db.select().from(priceUpdateSchedule).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Update price update schedule configuration
+ */
+export async function updatePriceUpdateSchedule(data: {
+  snkrdunkEnabled?: boolean;
+  snkrdunkUpdateTime?: string;
+  ebayEnabled?: boolean;
+  ebayUpdateTime?: string;
+}) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get the first record (we only have one schedule config)
+  const existing = await getPriceUpdateSchedule();
+  if (!existing) {
+    throw new Error("Price update schedule not found");
+  }
+
+  await db.update(priceUpdateSchedule)
+    .set(data)
+    .where(eq(priceUpdateSchedule.id, existing.id));
+}
+
+/**
+ * Update last execution time for SNKRDUNK
+ */
+export async function updateSnkrdunkLastExecutedAt() {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const existing = await getPriceUpdateSchedule();
+  if (!existing) {
+    throw new Error("Price update schedule not found");
+  }
+
+  await db.update(priceUpdateSchedule)
+    .set({ snkrdunkLastExecutedAt: new Date() })
+    .where(eq(priceUpdateSchedule.id, existing.id));
+}
+
+/**
+ * Update last execution time for eBay
+ */
+export async function updateEbayLastExecutedAt() {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const existing = await getPriceUpdateSchedule();
+  if (!existing) {
+    throw new Error("Price update schedule not found");
+  }
+
+  await db.update(priceUpdateSchedule)
+    .set({ ebayLastExecutedAt: new Date() })
+    .where(eq(priceUpdateSchedule.id, existing.id));
 }

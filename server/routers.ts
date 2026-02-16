@@ -15,6 +15,7 @@ import * as batchUpdateProgress from "./batchUpdateProgress";
 import * as snkrdunkBatchUpdateProgress from "./batchUpdateSnkrdunkProgress";
 import { executeEbayBatchUpdate, executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
 import { restartScheduler } from "./batchUpdateScheduler";
+import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
 
 export const appRouter = router({
   system: systemRouter,
@@ -2047,6 +2048,99 @@ ${input.additionalContext ? `額外背景資訊：${input.additionalContext}` : 
           });
         }
         return article;
+      }),
+  }),
+
+  // Price Schedule router - manages daily automatic price updates
+  priceSchedule: router({    
+    // Get current schedule configuration
+    getConfig: publicProcedure
+      .query(async () => {
+        const config = await db.getPriceUpdateSchedule();
+        if (!config) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Price update schedule not found',
+          });
+        }
+        return config;
+      }),
+
+    // Update schedule configuration (admin only)
+    updateConfig: protectedProcedure
+      .input(z.object({
+        snkrdunkEnabled: z.boolean().optional(),
+        snkrdunkUpdateTime: z.string().optional(),
+        ebayEnabled: z.boolean().optional(),
+        ebayUpdateTime: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can update schedule configuration',
+          });
+        }
+
+        await db.updatePriceUpdateSchedule(input);
+        
+        // Restart scheduler with new configuration
+        await restartPriceUpdateScheduler();
+        
+        return { success: true };
+      }),
+
+    // Manually trigger SNKRDUNK update (admin only)
+    triggerSnkrdunkUpdate: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can trigger manual updates',
+          });
+        }
+
+        try {
+          // Execute SNKRDUNK batch update
+          await executeSnkrdunkBatchUpdate();
+          // Update last execution time
+          await db.updateSnkrdunkLastExecutedAt();
+          return { success: true, message: 'SNKRDUNK update completed' };
+        } catch (error) {
+          console.error('[PriceSchedule] SNKRDUNK update failed:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'SNKRDUNK update failed',
+          });
+        }
+      }),
+
+    // Manually trigger eBay update (admin only)
+    triggerEbayUpdate: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can trigger manual updates',
+          });
+        }
+
+        try {
+          // Execute eBay batch update
+          await executeEbayBatchUpdate();
+          // Update last execution time
+          await db.updateEbayLastExecutedAt();
+          return { success: true, message: 'eBay update completed' };
+        } catch (error) {
+          console.error('[PriceSchedule] eBay update failed:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'eBay update failed',
+          });
+        }
       }),
   }),
 });

@@ -2123,4 +2123,32 @@
 - [x] 修改 AI 生成文章頁面（CreateArticle.tsx）配色為白底黑字
 - [x] 確保所有文字清晰可讀，對比度足夠
 - [x] 測試修改後的可讀性（文章管理、AI 生成文章頁面均清晰可讀）
+- [x] 保存檢查點
+
+## 新需求：刪除舊排程並創建每日自動化價格更新排程
+- [x] 刪除現有的定時批量更新排程功能（AdminSchedule 組件和相關代碼）
+- [ ] 創建新的排程資料庫 schema（存儲每日更新時間設定）
+- [ ] 創建 tRPC procedures（獲取排程設定、更新排程設定）
+- [ ] 在 Admin 頁面添加排程設定介面（設定每日更新時間）
+- [ ] 實現後端定時任務執行邏輯（每日在指定時間自動執行批量更新）
+- [ ] 測試排程功能正常運作
 - [ ] 保存檢查點
+
+## 新功能: 每日自動價格更新排程系統 - 完成
+
+- [x] 創建 priceUpdateSchedule 資料庫表
+- [x] 實作資料庫操作函數（getPriceUpdateSchedule, updatePriceUpdateSchedule, updateSnkrdunkLastExecutedAt, updateEbayLastExecutedAt）
+- [x] 創建 tRPC API endpoints（getConfig, updateConfig, triggerSnkrdunkUpdate, triggerEbayUpdate）
+- [x] 實作 node-cron 定時任務執行器（priceUpdateScheduler.ts）
+- [x] 創建 Admin 頁面排程管理界面（AdminSchedule.tsx）
+- [x] 添加「價格排程」tab 到 Admin 頁面
+- [x] 實作 SNKRDUNK 和 eBay 獨立排程設定
+- [x] 實作啟用/停用開關
+- [x] 實作每日更新時間設定（時間選擇器）
+- [x] 實作上次執行時間顯示
+- [x] 實作手動觸發更新按鈕
+- [x] 實作排程說明資訊框
+- [x] 在伺服器啟動時初始化 scheduler
+- [x] 實作設定變更後自動重啟 scheduler
+- [x] 測試排程系統運作正常
+- [x] 驗證日誌顯示 scheduler 成功啟動
