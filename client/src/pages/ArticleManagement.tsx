@@ -152,18 +152,18 @@ export default function ArticleManagement() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="border-2 border-blue-900 shadow-xl">
-        <CardHeader className="bg-gradient-to-r from-blue-900 to-blue-800 text-white">
+    <div className="container mx-auto px-4 py-8 bg-white min-h-screen">
+      <Card className="border border-gray-200 shadow-lg bg-white">
+        <CardHeader className="bg-white border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-3xl font-bold flex items-center gap-3">
+            <CardTitle className="text-3xl font-bold flex items-center gap-3 text-gray-900">
               <FileText className="w-8 h-8" />
               文章管理
             </CardTitle>
             <div className="flex gap-3">
               <Button
                 onClick={() => setLocation("/create-article")}
-                className="bg-yellow-400 text-blue-900 hover:bg-yellow-500 font-semibold"
+                className="bg-[#FDD835] text-[#1E3A8A] hover:bg-[#FDD835]/90 font-semibold"
                 size="lg"
               >
                 <Plus className="w-5 h-5 mr-2" />
@@ -172,7 +172,7 @@ export default function ArticleManagement() {
               <Button
                 onClick={() => setCreateDialogOpen(true)}
                 variant="outline"
-                className="bg-white text-blue-900 hover:bg-blue-50 font-semibold border-2 border-yellow-400"
+                className="bg-white text-[#1E3A8A] hover:bg-gray-50 font-semibold border-2 border-[#FDD835]"
                 size="lg"
               >
                 <Plus className="w-5 h-5 mr-2" />
@@ -192,19 +192,19 @@ export default function ArticleManagement() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-blue-50">
-                    <TableHead className="font-bold text-blue-900">標題</TableHead>
-                    <TableHead className="font-bold text-blue-900">分類</TableHead>
-                    <TableHead className="font-bold text-blue-900">狀態</TableHead>
-                    <TableHead className="font-bold text-blue-900">閱讀量</TableHead>
-                    <TableHead className="font-bold text-blue-900">發布日期</TableHead>
-                    <TableHead className="font-bold text-blue-900 text-right">操作</TableHead>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-bold text-gray-900">標題</TableHead>
+                    <TableHead className="font-bold text-gray-900">分類</TableHead>
+                    <TableHead className="font-bold text-gray-900">狀態</TableHead>
+                    <TableHead className="font-bold text-gray-900">閱讀量</TableHead>
+                    <TableHead className="font-bold text-gray-900">發布日期</TableHead>
+                    <TableHead className="font-bold text-gray-900 text-right">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.articles.map((article) => (
-                    <TableRow key={article.id} className="hover:bg-slate-50">
-                      <TableCell className="font-semibold text-blue-900 max-w-md">
+                    <TableRow key={article.id} className="hover:bg-gray-50 border-b border-gray-100">
+                      <TableCell className="font-semibold text-gray-900 max-w-md">
                         {article.title}
                       </TableCell>
                       <TableCell>

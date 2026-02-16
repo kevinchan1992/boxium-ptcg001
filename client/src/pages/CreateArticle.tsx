@@ -84,11 +84,11 @@ export default function CreateArticle() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-50">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-12 max-w-5xl">
         <Button
           variant="ghost"
-          className="mb-6 text-blue-900 hover:bg-blue-100"
+          className="mb-6 text-gray-900 hover:bg-gray-100"
           onClick={() => setLocation("/admin/articles")}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -96,22 +96,22 @@ export default function CreateArticle() {
         </Button>
 
         {/* AI Generation Section */}
-        <Card className="mb-8 border-2 border-yellow-400 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-yellow-400 to-yellow-300">
-            <CardTitle className="text-2xl font-bold text-blue-900 flex items-center gap-3">
+        <Card className="mb-8 border border-gray-200 shadow-lg bg-white">
+          <CardHeader className="bg-white border-b border-gray-200">
+            <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               <Sparkles className="w-7 h-7" />
               AI 文章生成器
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
-            <Alert className="bg-blue-50 border-blue-200">
-              <AlertDescription className="text-blue-900">
+            <Alert className="bg-gray-50 border-gray-200">
+              <AlertDescription className="text-gray-700">
                 上傳市場快報圖片，AI 將自動分析圖片內容並生成完整的博客文章（包括標題、摘要、正文）。
               </AlertDescription>
             </Alert>
 
             <div>
-              <Label htmlFor="imageUrl" className="text-blue-900 font-semibold">
+              <Label htmlFor="imageUrl" className="text-gray-900 font-semibold">
                 市場快報圖片 URL *
               </Label>
               <Input
@@ -127,7 +127,7 @@ export default function CreateArticle() {
             </div>
 
             <div>
-              <Label htmlFor="additionalContext" className="text-blue-900 font-semibold">
+              <Label htmlFor="additionalContext" className="text-gray-900 font-semibold">
                 額外背景資訊（選填）
               </Label>
               <Textarea
@@ -143,7 +143,7 @@ export default function CreateArticle() {
             <Button
               onClick={handleGenerateFromImage}
               disabled={isGenerating || !imageUrl.trim()}
-              className="w-full bg-yellow-400 text-blue-900 hover:bg-yellow-500 font-bold text-lg py-6"
+              className="w-full bg-[#FDD835] text-[#1E3A8A] hover:bg-[#FDD835]/90 font-bold text-lg py-6"
               size="lg"
             >
               {isGenerating ? (
@@ -162,9 +162,9 @@ export default function CreateArticle() {
         </Card>
 
         {/* Article Form */}
-        <Card className="border-2 border-blue-900 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-blue-900 to-blue-800 text-white">
-            <CardTitle className="text-2xl font-bold">
+        <Card className="border border-gray-200 shadow-lg bg-white">
+          <CardHeader className="bg-white border-b border-gray-200">
+            <CardTitle className="text-2xl font-bold text-gray-900">
               {formData.title ? "編輯生成的文章" : "手動創建文章"}
             </CardTitle>
           </CardHeader>
@@ -172,7 +172,7 @@ export default function CreateArticle() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Title */}
               <div>
-                <Label htmlFor="title" className="text-blue-900 font-semibold">
+                <Label htmlFor="title" className="text-gray-900 font-semibold">
                   標題 *
                 </Label>
                 <Input
@@ -187,7 +187,7 @@ export default function CreateArticle() {
 
               {/* Category */}
               <div>
-                <Label htmlFor="category" className="text-blue-900 font-semibold">
+                <Label htmlFor="category" className="text-gray-900 font-semibold">
                   分類 *
                 </Label>
                 <Select
@@ -209,7 +209,7 @@ export default function CreateArticle() {
 
               {/* Summary */}
               <div>
-                <Label htmlFor="summary" className="text-blue-900 font-semibold">
+                <Label htmlFor="summary" className="text-gray-900 font-semibold">
                   摘要
                 </Label>
                 <Textarea
@@ -224,7 +224,7 @@ export default function CreateArticle() {
 
               {/* Content */}
               <div>
-                <Label htmlFor="content" className="text-blue-900 font-semibold">
+                <Label htmlFor="content" className="text-gray-900 font-semibold">
                   內容 *
                 </Label>
                 <Textarea
@@ -240,7 +240,7 @@ export default function CreateArticle() {
 
               {/* Featured Image URL */}
               <div>
-                <Label htmlFor="featuredImageUrl" className="text-blue-900 font-semibold">
+                <Label htmlFor="featuredImageUrl" className="text-gray-900 font-semibold">
                   特色圖片 URL
                 </Label>
                 <Input
@@ -254,7 +254,7 @@ export default function CreateArticle() {
 
               {/* Status */}
               <div>
-                <Label htmlFor="status" className="text-blue-900 font-semibold">
+                <Label htmlFor="status" className="text-gray-900 font-semibold">
                   狀態 *
                 </Label>
                 <Select
@@ -284,7 +284,7 @@ export default function CreateArticle() {
                 <Button
                   type="submit"
                   disabled={createMutation.isPending}
-                  className="flex-1 bg-yellow-400 text-blue-900 hover:bg-yellow-500 font-bold"
+                  className="flex-1 bg-[#FDD835] text-[#1E3A8A] hover:bg-[#FDD835]/90 font-bold"
                 >
                   {createMutation.isPending
                     ? "創建中..."
