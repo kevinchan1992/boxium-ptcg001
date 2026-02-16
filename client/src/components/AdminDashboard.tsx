@@ -1,9 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2 } from "lucide-react";
+import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2, BookOpen, FileEdit } from "lucide-react";
+import { useLocation } from "wouter";
 
 export function AdminDashboard() {
   const { data: stats, isLoading } = trpc.admin.getDashboardStats.useQuery();
+  const { data: articleStats, isLoading: isLoadingArticles } = trpc.blog.getAllArticles.useQuery({});
+  const [, setLocation] = useLocation();
 
   if (isLoading) {
     return (
@@ -23,58 +26,62 @@ export function AdminDashboard() {
       title: "總用戶數",
       value: stats?.totalUsers || 0,
       icon: Users,
-      color: "text-blue-500",
+      color: "#3b82f6",
       bgColor: "bg-blue-50",
     },
     {
       title: "卡牌總數",
       value: stats?.totalCards || 0,
       icon: CreditCard,
-      color: "text-green-500",
+      color: "#10b981",
       bgColor: "bg-green-50",
     },
     {
       title: "數據源總數",
       value: stats?.totalDataSources || 0,
       icon: Database,
-      color: "text-purple-500",
+      color: "#a855f7",
       bgColor: "bg-purple-50",
     },
     {
       title: "活躍數據源",
       value: stats?.activeDataSources || 0,
       icon: Activity,
-      color: "text-orange-500",
+      color: "#f97316",
       bgColor: "bg-orange-50",
     },
     {
       title: "價格記錄數",
       value: stats?.totalPriceRecords || 0,
       icon: TrendingUp,
-      color: "text-pink-500",
+      color: "#ec4899",
       bgColor: "bg-pink-50",
     },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-foreground mb-2">數據統計</h2>
         <p className="text-muted-foreground">系統整體數據概覽</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+            <Card 
+              key={index} 
+              className="p-6 hover:shadow-lg transition-all hover:scale-105 border-l-4" 
+              style={{ borderLeftColor: stat.color }}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
                   <p className="text-3xl font-bold text-foreground">{stat.value.toLocaleString()}</p>
                 </div>
                 <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                  <Icon className={`w-6 h-6 ${stat.color}`} />
+                  <Icon className="w-6 h-6" style={{ color: stat.color }} />
                 </div>
               </div>
             </Card>
@@ -82,8 +89,112 @@ export function AdminDashboard() {
         })}
       </div>
 
+      {/* 文章管理面板 */}
+      <ArticleManagementPanel articleStats={articleStats} isLoading={isLoadingArticles} onNavigate={setLocation} />
+
       {/* 搜尋統計面板 */}
       <SearchStatsPanel />
+    </div>
+  );
+}
+
+// 文章管理面板組件
+function ArticleManagementPanel({ articleStats, isLoading, onNavigate }: { articleStats: any; isLoading: boolean; onNavigate: (path: string) => void }) {
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="h-6 bg-muted rounded w-1/4 animate-pulse"></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="p-6 animate-pulse">
+              <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
+              <div className="h-8 bg-muted rounded w-1/3"></div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const articles = articleStats?.articles || [];
+  const totalArticles = articles.length;
+  const publishedArticles = articles.filter((a: any) => a.status === 'published').length;
+  const draftArticles = articles.filter((a: any) => a.status === 'draft').length;
+
+  const articleStatCards = [
+    {
+      title: "文章總數",
+      value: totalArticles,
+      icon: BookOpen,
+      color: "#3b82f6",
+      bgColor: "bg-blue-50",
+      description: "所有文章數量",
+    },
+    {
+      title: "已發布文章",
+      value: publishedArticles,
+      icon: CheckCircle2,
+      color: "#10b981",
+      bgColor: "bg-green-50",
+      description: "公開可見的文章",
+    },
+    {
+      title: "草稿文章",
+      value: draftArticles,
+      icon: FileEdit,
+      color: "#f97316",
+      bgColor: "bg-orange-50",
+      description: "尚未發布的草稿",
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">文章管理</h2>
+          <p className="text-muted-foreground">市場洞察博客文章統計</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onNavigate('/admin/articles')}
+            className="px-4 py-2 bg-[#1E3A8A] text-white rounded-lg hover:bg-[#1E3A8A]/90 transition-colors font-medium"
+          >
+            管理文章
+          </button>
+          <button
+            onClick={() => onNavigate('/admin/create-article')}
+            className="px-4 py-2 bg-[#FDD835] text-[#1E3A8A] font-semibold rounded-lg hover:bg-[#FDD835]/90 transition-colors"
+          >
+            AI 生成文章
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {articleStatCards.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Card 
+              key={index} 
+              className="p-6 hover:shadow-lg transition-all hover:scale-105 cursor-pointer border-l-4" 
+              style={{ borderLeftColor: stat.color }}
+              onClick={() => onNavigate('/admin/articles')}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                  <Icon className="w-6 h-6" style={{ color: stat.color }} />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
+                <p className="text-3xl font-bold text-foreground mb-2">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.description}</p>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -113,7 +224,7 @@ function SearchStatsPanel() {
       title: "圖片搜尋成功率",
       value: `${searchStats?.imageSuccessRate.toFixed(2) || 0}%`,
       icon: Image,
-      color: "text-green-500",
+      color: "#10b981",
       bgColor: "bg-green-50",
       description: `${searchStats?.imageSearches || 0} / ${searchStats?.totalSearches || 0} 次搜尋`,
     },
@@ -121,7 +232,7 @@ function SearchStatsPanel() {
       title: "回退到文字搜尋",
       value: searchStats?.fallbackToTextCount || 0,
       icon: FileText,
-      color: "text-orange-500",
+      color: "#f97316",
       bgColor: "bg-orange-50",
       description: "圖片搜尋失敗次數",
     },
@@ -129,7 +240,7 @@ function SearchStatsPanel() {
       title: "圖片搜尋平均耗時",
       value: `${((searchStats?.avgImageDuration || 0) / 1000).toFixed(2)}s`,
       icon: Clock,
-      color: "text-blue-500",
+      color: "#3b82f6",
       bgColor: "bg-blue-50",
       description: "平均響應時間",
     },
@@ -137,7 +248,7 @@ function SearchStatsPanel() {
       title: "文字搜尋平均耗時",
       value: `${((searchStats?.avgTextDuration || 0) / 1000).toFixed(2)}s`,
       icon: Clock,
-      color: "text-purple-500",
+      color: "#a855f7",
       bgColor: "bg-purple-50",
       description: "平均響應時間",
     },
@@ -154,10 +265,14 @@ function SearchStatsPanel() {
         {searchStatCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+            <Card 
+              key={index} 
+              className="p-6 hover:shadow-lg transition-all hover:scale-105 border-l-4" 
+              style={{ borderLeftColor: stat.color }}
+            >
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                  <Icon className={`w-6 h-6 ${stat.color}`} />
+                  <Icon className="w-6 h-6" style={{ color: stat.color }} />
                 </div>
               </div>
               <div>
@@ -171,7 +286,7 @@ function SearchStatsPanel() {
       </div>
 
       {searchStats && searchStats.totalSearches > 0 && (
-        <Card className="p-6">
+        <Card className="p-6 border-l-4 border-l-green-500">
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle2 className="w-5 h-5 text-green-500" />
             <h3 className="text-lg font-semibold">搜尋效果分析</h3>
