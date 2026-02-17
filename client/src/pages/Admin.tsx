@@ -11,11 +11,11 @@ import { useTranslation } from "react-i18next";
 export default function Admin() {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen py-8 px-4 md:px-8">
+    <div className="min-h-screen bg-black py-8 px-4 md:px-8">
         <div className="max-w-7xl mx-auto space-y-8">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">{t("admin.title")}</h1>
-            <p className="text-muted-foreground">{t("admin.statistics")}</p>
+            <h1 className="text-4xl font-bold text-white mb-2">{t("admin.title")}</h1>
+            <p className="text-gray-300">{t("admin.statistics")}</p>
           </div>
 
           <Tabs defaultValue="dashboard" className="w-full">
