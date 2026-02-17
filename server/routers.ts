@@ -162,21 +162,25 @@ export const appRouter = router({
             throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
           }
 
-          // Get all price history for this card (all grades)
+          // Get all price history for this card (PSA 10 only)
           const allHistory = await db.getPriceHistoryByCardId(input.cardId);
           
-          // Filter by date range (last N days)
+          // Filter by date range (last N days) and grade (PSA 10 only)
           const cutoffDate = new Date();
           cutoffDate.setDate(cutoffDate.getDate() - input.days);
           
           const recentHistory = allHistory.filter(record => 
-            new Date(record.soldAt || record.createdAt) >= cutoffDate
+            new Date(record.soldAt || record.createdAt) >= cutoffDate &&
+            (record.grade === "PSA 10" || record.grade === "PSA10")
           );
 
           // Group by date and source
           const groupedByDate = new Map<string, { snkrdunk: any[]; ebay: any[] }>();
           
           for (const record of recentHistory) {
+            // Only include PSA 10 records
+            if (record.grade !== "PSA 10" && record.grade !== "PSA10") continue;
+            
             const date = new Date(record.soldAt || record.createdAt);
             const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
             

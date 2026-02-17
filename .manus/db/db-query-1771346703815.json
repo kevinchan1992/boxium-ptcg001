@@ -1,0 +1,58 @@
+{
+  "query": "SELECT id, soldAt, createdAt, grade, price, source FROM priceHistory WHERE cardId = 270143 AND (grade = 'PSA 10' OR grade = 'PSA10') ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, soldAt, createdAt, grade, price, source FROM priceHistory WHERE cardId = 270143 AND (grade = 'PSA 10' OR grade = 'PSA10') ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "360331",
+      "soldAt": "2024-07-19 04:00:00",
+      "createdAt": "2026-02-17 15:12:57",
+      "grade": "PSA10",
+      "price": "3399.00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "330131",
+      "soldAt": "2024-07-19 04:00:00",
+      "createdAt": "2026-02-16 18:04:27",
+      "grade": "PSA10",
+      "price": "3399.00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "330113",
+      "soldAt": "2024-07-19 00:00:00",
+      "createdAt": "2026-02-16 18:03:35",
+      "grade": "PSA10",
+      "price": "3399.00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "330031",
+      "soldAt": "2024-07-19 04:00:00",
+      "createdAt": "2026-02-16 17:39:32",
+      "grade": "PSA10",
+      "price": "3399.00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "300750",
+      "soldAt": "2024-07-19 04:00:00",
+      "createdAt": "2026-02-16 03:34:58",
+      "grade": "PSA10",
+      "price": "3399.00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "300748",
+      "soldAt": "2024-07-19 04:00:00",
+      "createdAt": "2026-02-16 03:34:58",
+      "grade": "PSA10",
+      "price": "3399.00",
+      "source": "snkrdunk"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsoldAt\tcreatedAt\tgrade\tprice\tsource\n360331\t2024-07-19 04:00:00\t2026-02-17 15:12:57\tPSA10\t3399.00\tsnkrdunk\n330131\t2024-07-19 04:00:00\t2026-02-16 18:04:27\tPSA10\t3399.00\tsnkrdunk\n330113\t2024-07-19 00:00:00\t2026-02-16 18:03:35\tPSA10\t3399.00\tsnkrdunk\n330031\t2024-07-19 04:00:00\t2026-02-16 17:39:32\tPSA10\t3399.00\tsnkrdunk\n300750\t2024-07-19 04:00:00\t2026-02-16 03:34:58\tPSA10\t3399.00\tsnkrdunk\n300748\t2024-07-19 04:00:00\t2026-02-16 03:34:58\tPSA10\t3399.00\tsnkrdunk\n",
+  "stderr": "",
+  "execution_time_ms": 1499
+}
