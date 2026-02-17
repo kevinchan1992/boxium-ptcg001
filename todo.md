@@ -2450,3 +2450,28 @@
 - [x] 移除 scheduleExecutionHistory 表相關的函數引用
 - [x] 測試 TypeScript 編譯狀態（剩餘錯誤僅影響 blog 相關頁面）
 - [x] 添加 placeholder 函數保持 API 兼容性
+
+
+## 新功能: Admin 頁面添加熱門卡牌管理區塊
+
+- [ ] 創建熱門卡牌管理區塊 UI
+- [ ] 顯示當前快取的 TOP 5 卡牌（卡牌名稱、圖片、漲幅、價格）
+- [ ] 顯示最後計算時間
+- [ ] 顯示下次更新時間（每日 06:00 HKT）
+- [ ] 添加手動重新計算按鈕
+- [ ] 實作手動計算功能並更新顯示
+- [ ] 測試功能正常運作
+
+## Bug 修復: 清理 blog 相關頁面 TypeScript 錯誤
+
+- [ ] 檢查所有 blog 相關頁面（CreateArticle.tsx, MarketInsights.tsx 等）
+- [ ] 移除或修復這些頁面中對已刪除 blog router 的引用
+- [ ] 驗證 TypeScript 錯誤已消除
+
+
+## Bug 修復: Research 頁面 marketInsights router 引用問題
+
+- [ ] 檢查 Research 頁面使用 marketInsights router 的地方
+- [ ] 移除或替換 marketInsights.getTopGainers 調用
+- [ ] 使用現有的 cards.getTrending 或其他 API 替代
+- [ ] 測試 Research 頁面功能正常

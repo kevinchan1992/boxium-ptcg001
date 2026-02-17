@@ -10,17 +10,17 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
 
-  // Fetch top gainers (daily price increase top 5)
-  const { data: topGainers = [], isLoading } = trpc.marketInsights.getTopGainers.useQuery(
-    { days: 1, limit: 5 }, // Past 24 hours
+  // Fetch trending cards (top 5 based on PSA10 price increase)
+  const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery(
+    { limit: 5 },
     { retry: 1 }
   );
 
-  // Map topGainers to card format for display
-  const popularCards = topGainers.map((gainer: any) => ({
-    id: gainer.cardId,
-    name: gainer.cardName,
-    imageUrl: gainer.cardImage,
+  // Map trending cards to card format for display
+  const popularCards = trendingCards.map((card: any) => ({
+    id: card.id,
+    name: card.name,
+    imageUrl: card.imageUrl,
   }));
 
   const handleSearch = (e: React.FormEvent) => {

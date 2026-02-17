@@ -9,13 +9,14 @@ import Home from "./pages/Home";
 import CardDetail from "./pages/CardDetail";
 import SearchResults from "./pages/SearchResults";
 import Research from "./pages/Research";
+
 import Pricing from "./pages/Pricing";
 import Admin from "./pages/Admin";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
-import MarketInsights from "./pages/MarketInsights";
+
 import ArticleDetail from "./pages/ArticleDetail";
-import CreateArticle from "./pages/CreateArticle";
+
 import ArticleManagement from "./pages/ArticleManagement";
 
 function Router() {
@@ -29,10 +30,11 @@ function Router() {
       <Route path="/search" component={SearchResults} />
       <Route path="/card/:id" component={CardDetail} />
       <Route path="/research" component={Research} />
+
       <Route path="/pricing" component={Pricing} />
-      <Route path="/market-insights" component={MarketInsights} />
+
       <Route path="/market-insights/:slug" component={ArticleDetail} />
-      <Route path="/admin/create-article" component={CreateArticle} />
+
       <Route path="/admin/articles" component={ArticleManagement} />
       <Route path="/admin" component={Admin} />
       <Route path="/terms" component={Terms} />
