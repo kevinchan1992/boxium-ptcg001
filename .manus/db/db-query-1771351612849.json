@@ -1,0 +1,35 @@
+{
+  "query": "SELECT \n  t.cardId, \n  t.rank,\n  c.id AS card_exists\nFROM trendingCardsCache t\nLEFT JOIN cards c ON t.cardId = c.id\nORDER BY t.rank",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  t.cardId, \n  t.rank,\n  c.id AS card_exists\nFROM trendingCardsCache t\nLEFT JOIN cards c ON t.cardId = c.id\nORDER BY t.rank",
+  "rows": [
+    {
+      "cardId": "150163",
+      "rank": "1",
+      "card_exists": "NULL"
+    },
+    {
+      "cardId": "270143",
+      "rank": "2",
+      "card_exists": "270143"
+    },
+    {
+      "cardId": "150158",
+      "rank": "3",
+      "card_exists": "NULL"
+    },
+    {
+      "cardId": "270139",
+      "rank": "4",
+      "card_exists": "270139"
+    },
+    {
+      "cardId": "90104",
+      "rank": "5",
+      "card_exists": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\trank\tcard_exists\n150163\t1\tNULL\n270143\t2\t270143\n150158\t3\tNULL\n270139\t4\t270139\n90104\t5\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1573
+}

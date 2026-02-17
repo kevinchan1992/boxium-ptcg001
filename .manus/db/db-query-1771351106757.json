@@ -1,0 +1,3010 @@
+{
+  "query": "SELECT \n  id, cardId, source, price, currency, grade, soldAt, createdAt\nFROM priceHistory \nWHERE cardId = 180004 AND source = 'snkrdunk'\nORDER BY soldAt DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  id, cardId, source, price, currency, grade, soldAt, createdAt\nFROM priceHistory \nWHERE cardId = 180004 AND source = 'snkrdunk'\nORDER BY soldAt DESC",
+  "rows": [
+    {
+      "id": "394019",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "7700.00",
+      "currency": "HKD",
+      "grade": "A",
+      "soldAt": "2026-02-17 17:32:06",
+      "createdAt": "2026-02-17 17:32:06"
+    },
+    {
+      "id": "394018",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14520.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-17 17:32:06",
+      "createdAt": "2026-02-17 17:32:06"
+    },
+    {
+      "id": "394020",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "6050.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-17 17:32:06",
+      "createdAt": "2026-02-17 17:32:06"
+    },
+    {
+      "id": "394021",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14712.50",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-17 17:32:06",
+      "createdAt": "2026-02-17 17:32:06"
+    },
+    {
+      "id": "243961",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-15 00:24:41",
+      "createdAt": "2026-02-15 00:24:42"
+    },
+    {
+      "id": "243960",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14135.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-15 00:24:41",
+      "createdAt": "2026-02-15 00:24:42"
+    },
+    {
+      "id": "243959",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14987.50",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-15 00:24:41",
+      "createdAt": "2026-02-15 00:24:41"
+    },
+    {
+      "id": "243958",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14849.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-15 00:24:41",
+      "createdAt": "2026-02-15 00:24:41"
+    },
+    {
+      "id": "180004",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14849.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 15:33:23",
+      "createdAt": "2026-02-14 15:33:23"
+    },
+    {
+      "id": "180008",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14987.50",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 15:33:23",
+      "createdAt": "2026-02-14 15:33:23"
+    },
+    {
+      "id": "180012",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14135.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 15:33:23",
+      "createdAt": "2026-02-14 15:33:24"
+    },
+    {
+      "id": "180016",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-14 15:33:23",
+      "createdAt": "2026-02-14 15:33:24"
+    },
+    {
+      "id": "394022",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14849.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-13 05:00:00",
+      "createdAt": "2026-02-17 17:32:07"
+    },
+    {
+      "id": "394023",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14987.50",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-13 05:00:00",
+      "createdAt": "2026-02-17 17:32:07"
+    },
+    {
+      "id": "394024",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14135.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-13 05:00:00",
+      "createdAt": "2026-02-17 17:32:07"
+    },
+    {
+      "id": "394025",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-12 05:00:00",
+      "createdAt": "2026-02-17 17:32:07"
+    },
+    {
+      "id": "243962",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4400.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2026-02-11 05:00:00",
+      "createdAt": "2026-02-15 00:24:42"
+    },
+    {
+      "id": "180020",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4400.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2026-02-11 05:00:00",
+      "createdAt": "2026-02-14 15:33:24"
+    },
+    {
+      "id": "394026",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-09 05:00:00",
+      "createdAt": "2026-02-17 17:32:08"
+    },
+    {
+      "id": "243963",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-09 05:00:00",
+      "createdAt": "2026-02-15 00:24:42"
+    },
+    {
+      "id": "180025",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-09 05:00:00",
+      "createdAt": "2026-02-14 15:33:24"
+    },
+    {
+      "id": "394027",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5170.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-08 05:00:00",
+      "createdAt": "2026-02-17 17:32:08"
+    },
+    {
+      "id": "180030",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5170.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-08 05:00:00",
+      "createdAt": "2026-02-14 15:33:25"
+    },
+    {
+      "id": "243964",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5170.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-08 05:00:00",
+      "createdAt": "2026-02-15 00:24:42"
+    },
+    {
+      "id": "394029",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12100.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-06 05:00:00",
+      "createdAt": "2026-02-17 17:32:08"
+    },
+    {
+      "id": "394030",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14190.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-06 05:00:00",
+      "createdAt": "2026-02-17 17:32:08"
+    },
+    {
+      "id": "243965",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4840.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-06 05:00:00",
+      "createdAt": "2026-02-15 00:24:43"
+    },
+    {
+      "id": "243966",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12100.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-06 05:00:00",
+      "createdAt": "2026-02-15 00:24:43"
+    },
+    {
+      "id": "180045",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14190.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-06 05:00:00",
+      "createdAt": "2026-02-14 15:33:25"
+    },
+    {
+      "id": "180040",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12100.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-06 05:00:00",
+      "createdAt": "2026-02-14 15:33:25"
+    },
+    {
+      "id": "180035",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4840.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-06 05:00:00",
+      "createdAt": "2026-02-14 15:33:25"
+    },
+    {
+      "id": "243967",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14190.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-06 05:00:00",
+      "createdAt": "2026-02-15 00:24:43"
+    },
+    {
+      "id": "394028",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4840.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2026-02-06 05:00:00",
+      "createdAt": "2026-02-17 17:32:08"
+    },
+    {
+      "id": "394031",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12650.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-05 05:00:00",
+      "createdAt": "2026-02-17 17:32:09"
+    },
+    {
+      "id": "243968",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12650.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-05 05:00:00",
+      "createdAt": "2026-02-15 00:24:43"
+    },
+    {
+      "id": "180050",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12650.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-05 05:00:00",
+      "createdAt": "2026-02-14 15:33:25"
+    },
+    {
+      "id": "243969",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13860.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-04 05:00:00",
+      "createdAt": "2026-02-15 00:24:43"
+    },
+    {
+      "id": "180054",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13860.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-04 05:00:00",
+      "createdAt": "2026-02-14 15:33:26"
+    },
+    {
+      "id": "394032",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13860.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-04 05:00:00",
+      "createdAt": "2026-02-17 17:32:09"
+    },
+    {
+      "id": "243970",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-03 05:00:00",
+      "createdAt": "2026-02-15 00:24:44"
+    },
+    {
+      "id": "394033",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-03 05:00:00",
+      "createdAt": "2026-02-17 17:32:09"
+    },
+    {
+      "id": "180059",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-03 05:00:00",
+      "createdAt": "2026-02-14 15:33:26"
+    },
+    {
+      "id": "243971",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-02 05:00:00",
+      "createdAt": "2026-02-15 00:24:44"
+    },
+    {
+      "id": "394034",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-02 05:00:00",
+      "createdAt": "2026-02-17 17:32:09"
+    },
+    {
+      "id": "180064",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-02-02 05:00:00",
+      "createdAt": "2026-02-14 15:33:26"
+    },
+    {
+      "id": "243972",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13420.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-31 05:00:00",
+      "createdAt": "2026-02-15 00:24:44"
+    },
+    {
+      "id": "394035",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13420.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-31 05:00:00",
+      "createdAt": "2026-02-17 17:32:10"
+    },
+    {
+      "id": "180069",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13420.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-31 05:00:00",
+      "createdAt": "2026-02-14 15:33:26"
+    },
+    {
+      "id": "243973",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1925.00",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2026-01-30 05:00:00",
+      "createdAt": "2026-02-15 00:24:44"
+    },
+    {
+      "id": "394036",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1925.00",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2026-01-30 05:00:00",
+      "createdAt": "2026-02-17 17:32:10"
+    },
+    {
+      "id": "180074",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1925.00",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2026-01-30 05:00:00",
+      "createdAt": "2026-02-14 15:33:26"
+    },
+    {
+      "id": "180079",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13805.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-29 05:00:00",
+      "createdAt": "2026-02-14 15:33:27"
+    },
+    {
+      "id": "394037",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13805.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-29 05:00:00",
+      "createdAt": "2026-02-17 17:32:10"
+    },
+    {
+      "id": "243974",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13805.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-29 05:00:00",
+      "createdAt": "2026-02-15 00:24:45"
+    },
+    {
+      "id": "180084",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13914.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-27 05:00:00",
+      "createdAt": "2026-02-14 15:33:27"
+    },
+    {
+      "id": "394038",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13914.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-27 05:00:00",
+      "createdAt": "2026-02-17 17:32:10"
+    },
+    {
+      "id": "243975",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13914.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-27 05:00:00",
+      "createdAt": "2026-02-15 00:24:45"
+    },
+    {
+      "id": "243976",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13915.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-26 05:00:00",
+      "createdAt": "2026-02-15 00:24:45"
+    },
+    {
+      "id": "180089",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13915.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-26 05:00:00",
+      "createdAt": "2026-02-14 15:33:27"
+    },
+    {
+      "id": "394039",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13915.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-26 05:00:00",
+      "createdAt": "2026-02-17 17:32:11"
+    },
+    {
+      "id": "243977",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14025.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-23 05:00:00",
+      "createdAt": "2026-02-15 00:24:45"
+    },
+    {
+      "id": "243978",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-23 05:00:00",
+      "createdAt": "2026-02-15 00:24:45"
+    },
+    {
+      "id": "180098",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-23 05:00:00",
+      "createdAt": "2026-02-14 15:33:28"
+    },
+    {
+      "id": "180093",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14025.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-23 05:00:00",
+      "createdAt": "2026-02-14 15:33:27"
+    },
+    {
+      "id": "394040",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14025.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-23 05:00:00",
+      "createdAt": "2026-02-17 17:32:11"
+    },
+    {
+      "id": "394041",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-23 05:00:00",
+      "createdAt": "2026-02-17 17:32:11"
+    },
+    {
+      "id": "394043",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14245.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-22 05:00:00",
+      "createdAt": "2026-02-17 17:32:11"
+    },
+    {
+      "id": "243979",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-22 05:00:00",
+      "createdAt": "2026-02-15 00:24:46"
+    },
+    {
+      "id": "243980",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14245.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-22 05:00:00",
+      "createdAt": "2026-02-15 00:24:46"
+    },
+    {
+      "id": "243981",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-22 05:00:00",
+      "createdAt": "2026-02-15 00:24:46"
+    },
+    {
+      "id": "180113",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-22 05:00:00",
+      "createdAt": "2026-02-14 15:33:28"
+    },
+    {
+      "id": "180108",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14245.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-22 05:00:00",
+      "createdAt": "2026-02-14 15:33:28"
+    },
+    {
+      "id": "180103",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-22 05:00:00",
+      "createdAt": "2026-02-14 15:33:28"
+    },
+    {
+      "id": "394042",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-22 05:00:00",
+      "createdAt": "2026-02-17 17:32:11"
+    },
+    {
+      "id": "394044",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-22 05:00:00",
+      "createdAt": "2026-02-17 17:32:12"
+    },
+    {
+      "id": "394045",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4620.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2026-01-20 05:00:00",
+      "createdAt": "2026-02-17 17:32:12"
+    },
+    {
+      "id": "180118",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4620.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2026-01-20 05:00:00",
+      "createdAt": "2026-02-14 15:33:28"
+    },
+    {
+      "id": "243982",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4620.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2026-01-20 05:00:00",
+      "createdAt": "2026-02-15 00:24:46"
+    },
+    {
+      "id": "394046",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "15015.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "createdAt": "2026-02-17 17:32:12"
+    },
+    {
+      "id": "180123",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "15015.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "createdAt": "2026-02-14 15:33:29"
+    },
+    {
+      "id": "243983",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "15015.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "createdAt": "2026-02-15 00:24:47"
+    },
+    {
+      "id": "243984",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14960.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00",
+      "createdAt": "2026-02-15 00:24:47"
+    },
+    {
+      "id": "180128",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14960.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00",
+      "createdAt": "2026-02-14 15:33:29"
+    },
+    {
+      "id": "394047",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14960.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00",
+      "createdAt": "2026-02-17 17:32:12"
+    },
+    {
+      "id": "243985",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14850.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-15 05:00:00",
+      "createdAt": "2026-02-15 00:24:47"
+    },
+    {
+      "id": "180133",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14850.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-15 05:00:00",
+      "createdAt": "2026-02-14 15:33:29"
+    },
+    {
+      "id": "394048",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14850.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-15 05:00:00",
+      "createdAt": "2026-02-17 17:32:13"
+    },
+    {
+      "id": "243986",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14795.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-14 05:00:00",
+      "createdAt": "2026-02-15 00:24:47"
+    },
+    {
+      "id": "394049",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14795.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-14 05:00:00",
+      "createdAt": "2026-02-17 17:32:13"
+    },
+    {
+      "id": "180137",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14795.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-14 05:00:00",
+      "createdAt": "2026-02-14 15:33:29"
+    },
+    {
+      "id": "180142",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13200.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-13 05:00:00",
+      "createdAt": "2026-02-14 15:33:30"
+    },
+    {
+      "id": "243987",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13200.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-13 05:00:00",
+      "createdAt": "2026-02-15 00:24:47"
+    },
+    {
+      "id": "394051",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "3410.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2026-01-13 05:00:00",
+      "createdAt": "2026-02-17 17:32:13"
+    },
+    {
+      "id": "180146",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "3410.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2026-01-13 05:00:00",
+      "createdAt": "2026-02-14 15:33:30"
+    },
+    {
+      "id": "394050",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13200.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-13 05:00:00",
+      "createdAt": "2026-02-17 17:32:13"
+    },
+    {
+      "id": "243988",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "3410.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2026-01-13 05:00:00",
+      "createdAt": "2026-02-15 00:24:48"
+    },
+    {
+      "id": "243989",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-12 05:00:00",
+      "createdAt": "2026-02-15 00:24:48"
+    },
+    {
+      "id": "243990",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-12 05:00:00",
+      "createdAt": "2026-02-15 00:24:48"
+    },
+    {
+      "id": "394053",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-12 05:00:00",
+      "createdAt": "2026-02-17 17:32:14"
+    },
+    {
+      "id": "394052",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-12 05:00:00",
+      "createdAt": "2026-02-17 17:32:14"
+    },
+    {
+      "id": "180151",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-12 05:00:00",
+      "createdAt": "2026-02-14 15:33:30"
+    },
+    {
+      "id": "180156",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13750.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-12 05:00:00",
+      "createdAt": "2026-02-14 15:33:30"
+    },
+    {
+      "id": "394054",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13200.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-11 05:00:00",
+      "createdAt": "2026-02-17 17:32:14"
+    },
+    {
+      "id": "243991",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13200.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-11 05:00:00",
+      "createdAt": "2026-02-15 00:24:48"
+    },
+    {
+      "id": "180161",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13200.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-11 05:00:00",
+      "createdAt": "2026-02-14 15:33:30"
+    },
+    {
+      "id": "180166",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-09 05:00:00",
+      "createdAt": "2026-02-14 15:33:31"
+    },
+    {
+      "id": "394055",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-09 05:00:00",
+      "createdAt": "2026-02-17 17:32:14"
+    },
+    {
+      "id": "243992",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-09 05:00:00",
+      "createdAt": "2026-02-15 00:24:48"
+    },
+    {
+      "id": "394056",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2505.53",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2026-01-09 05:00:00",
+      "createdAt": "2026-02-17 17:32:14"
+    },
+    {
+      "id": "180171",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2505.53",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2026-01-09 05:00:00",
+      "createdAt": "2026-02-14 15:33:31"
+    },
+    {
+      "id": "243993",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2505.53",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2026-01-09 05:00:00",
+      "createdAt": "2026-02-15 00:24:49"
+    },
+    {
+      "id": "180176",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-07 05:00:00",
+      "createdAt": "2026-02-14 15:33:31"
+    },
+    {
+      "id": "394057",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-07 05:00:00",
+      "createdAt": "2026-02-17 17:32:15"
+    },
+    {
+      "id": "243994",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-07 05:00:00",
+      "createdAt": "2026-02-15 00:24:49"
+    },
+    {
+      "id": "394058",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12650.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-06 05:00:00",
+      "createdAt": "2026-02-17 17:32:15"
+    },
+    {
+      "id": "180181",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12650.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-06 05:00:00",
+      "createdAt": "2026-02-14 15:33:31"
+    },
+    {
+      "id": "243995",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12650.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-06 05:00:00",
+      "createdAt": "2026-02-15 00:24:49"
+    },
+    {
+      "id": "394059",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2739.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2026-01-05 05:00:00",
+      "createdAt": "2026-02-17 17:32:15"
+    },
+    {
+      "id": "180186",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2739.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2026-01-05 05:00:00",
+      "createdAt": "2026-02-14 15:33:31"
+    },
+    {
+      "id": "243996",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2739.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2026-01-05 05:00:00",
+      "createdAt": "2026-02-15 00:24:49"
+    },
+    {
+      "id": "243997",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14465.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-04 05:00:00",
+      "createdAt": "2026-02-15 00:24:50"
+    },
+    {
+      "id": "180191",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14465.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-04 05:00:00",
+      "createdAt": "2026-02-14 15:33:32"
+    },
+    {
+      "id": "394060",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14465.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2026-01-04 05:00:00",
+      "createdAt": "2026-02-17 17:32:15"
+    },
+    {
+      "id": "243998",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1925.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2025-12-28 05:00:00",
+      "createdAt": "2026-02-15 00:24:50"
+    },
+    {
+      "id": "180196",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1925.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2025-12-28 05:00:00",
+      "createdAt": "2026-02-14 15:33:32"
+    },
+    {
+      "id": "394061",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1925.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2025-12-28 05:00:00",
+      "createdAt": "2026-02-17 17:32:16"
+    },
+    {
+      "id": "394063",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14630.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-17 17:32:16"
+    },
+    {
+      "id": "180216",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14839.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-14 15:33:33"
+    },
+    {
+      "id": "394065",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14839.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-17 17:32:17"
+    },
+    {
+      "id": "394062",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14850.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-17 17:32:16"
+    },
+    {
+      "id": "180201",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14850.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-14 15:33:32"
+    },
+    {
+      "id": "180206",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14630.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-14 15:33:32"
+    },
+    {
+      "id": "180211",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14850.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-14 15:33:33"
+    },
+    {
+      "id": "394064",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14850.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-17 17:32:16"
+    },
+    {
+      "id": "244002",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14839.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-15 00:24:51"
+    },
+    {
+      "id": "244001",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14850.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-15 00:24:50"
+    },
+    {
+      "id": "244000",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14630.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-15 00:24:50"
+    },
+    {
+      "id": "243999",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14850.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-27 05:00:00",
+      "createdAt": "2026-02-15 00:24:50"
+    },
+    {
+      "id": "244003",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14289.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-25 05:00:00",
+      "createdAt": "2026-02-15 00:24:51"
+    },
+    {
+      "id": "394066",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14289.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-25 05:00:00",
+      "createdAt": "2026-02-17 17:32:17"
+    },
+    {
+      "id": "180221",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14289.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-25 05:00:00",
+      "createdAt": "2026-02-14 15:33:33"
+    },
+    {
+      "id": "180226",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14025.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-24 05:00:00",
+      "createdAt": "2026-02-14 15:33:33"
+    },
+    {
+      "id": "394067",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14025.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-24 05:00:00",
+      "createdAt": "2026-02-17 17:32:17"
+    },
+    {
+      "id": "244004",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14025.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-24 05:00:00",
+      "createdAt": "2026-02-15 00:24:51"
+    },
+    {
+      "id": "244005",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13200.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-23 05:00:00",
+      "createdAt": "2026-02-15 00:24:51"
+    },
+    {
+      "id": "180231",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13200.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-23 05:00:00",
+      "createdAt": "2026-02-14 15:33:33"
+    },
+    {
+      "id": "394068",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13200.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-23 05:00:00",
+      "createdAt": "2026-02-17 17:32:17"
+    },
+    {
+      "id": "394069",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13640.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-22 05:00:00",
+      "createdAt": "2026-02-17 17:32:17"
+    },
+    {
+      "id": "244006",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13640.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-22 05:00:00",
+      "createdAt": "2026-02-15 00:24:52"
+    },
+    {
+      "id": "244007",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13640.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-22 05:00:00",
+      "createdAt": "2026-02-15 00:24:52"
+    },
+    {
+      "id": "394070",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13640.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-22 05:00:00",
+      "createdAt": "2026-02-17 17:32:18"
+    },
+    {
+      "id": "180241",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13640.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-22 05:00:00",
+      "createdAt": "2026-02-14 15:33:34"
+    },
+    {
+      "id": "180236",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "13640.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-22 05:00:00",
+      "createdAt": "2026-02-14 15:33:34"
+    },
+    {
+      "id": "244008",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10450.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-20 05:00:00",
+      "createdAt": "2026-02-15 00:24:52"
+    },
+    {
+      "id": "180250",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5164.50",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-20 05:00:00",
+      "createdAt": "2026-02-14 15:33:34"
+    },
+    {
+      "id": "244009",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5164.50",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-20 05:00:00",
+      "createdAt": "2026-02-15 00:24:52"
+    },
+    {
+      "id": "394072",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5164.50",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-20 05:00:00",
+      "createdAt": "2026-02-17 17:32:18"
+    },
+    {
+      "id": "394071",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10450.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-20 05:00:00",
+      "createdAt": "2026-02-17 17:32:18"
+    },
+    {
+      "id": "180245",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10450.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-20 05:00:00",
+      "createdAt": "2026-02-14 15:33:34"
+    },
+    {
+      "id": "244010",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-19 05:00:00",
+      "createdAt": "2026-02-15 00:24:52"
+    },
+    {
+      "id": "180255",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-19 05:00:00",
+      "createdAt": "2026-02-14 15:33:35"
+    },
+    {
+      "id": "394073",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14300.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-19 05:00:00",
+      "createdAt": "2026-02-17 17:32:18"
+    },
+    {
+      "id": "180260",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "11539.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-17 05:00:00",
+      "createdAt": "2026-02-14 15:33:35"
+    },
+    {
+      "id": "180265",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14025.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-17 05:00:00",
+      "createdAt": "2026-02-14 15:33:35"
+    },
+    {
+      "id": "180270",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5489.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-17 05:00:00",
+      "createdAt": "2026-02-14 15:33:35"
+    },
+    {
+      "id": "244012",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14025.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-17 05:00:00",
+      "createdAt": "2026-02-15 00:24:53"
+    },
+    {
+      "id": "244013",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5489.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-17 05:00:00",
+      "createdAt": "2026-02-15 00:24:53"
+    },
+    {
+      "id": "394076",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5489.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-17 05:00:00",
+      "createdAt": "2026-02-17 17:32:19"
+    },
+    {
+      "id": "244011",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "11539.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-17 05:00:00",
+      "createdAt": "2026-02-15 00:24:53"
+    },
+    {
+      "id": "394074",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "11539.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-17 05:00:00",
+      "createdAt": "2026-02-17 17:32:19"
+    },
+    {
+      "id": "394075",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "14025.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-17 05:00:00",
+      "createdAt": "2026-02-17 17:32:19"
+    },
+    {
+      "id": "180275",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5500.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-14 15:33:35"
+    },
+    {
+      "id": "244016",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12375.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-15 00:24:54"
+    },
+    {
+      "id": "244014",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5500.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-15 00:24:53"
+    },
+    {
+      "id": "394078",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12375.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-17 17:32:20"
+    },
+    {
+      "id": "180305",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5500.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-14 15:33:37"
+    },
+    {
+      "id": "180300",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "11824.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-14 15:33:36"
+    },
+    {
+      "id": "180295",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12222.21",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-14 15:33:36"
+    },
+    {
+      "id": "180290",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12034.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-14 15:33:36"
+    },
+    {
+      "id": "180285",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12375.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-14 15:33:36"
+    },
+    {
+      "id": "180280",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12375.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-14 15:33:36"
+    },
+    {
+      "id": "244015",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12375.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-15 00:24:54"
+    },
+    {
+      "id": "394077",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5500.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-17 17:32:19"
+    },
+    {
+      "id": "244017",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12034.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-15 00:24:54"
+    },
+    {
+      "id": "244018",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12222.21",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-15 00:24:54"
+    },
+    {
+      "id": "244019",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "11824.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-15 00:24:54"
+    },
+    {
+      "id": "244020",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5500.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-15 00:24:55"
+    },
+    {
+      "id": "394079",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12375.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-17 17:32:20"
+    },
+    {
+      "id": "394080",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12034.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-17 17:32:20"
+    },
+    {
+      "id": "394083",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5500.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-17 17:32:21"
+    },
+    {
+      "id": "394082",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "11824.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-17 17:32:20"
+    },
+    {
+      "id": "394081",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "12222.21",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-16 05:00:00",
+      "createdAt": "2026-02-17 17:32:20"
+    },
+    {
+      "id": "394084",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5445.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-14 05:00:00",
+      "createdAt": "2026-02-17 17:32:21"
+    },
+    {
+      "id": "244021",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5445.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-14 05:00:00",
+      "createdAt": "2026-02-15 00:24:55"
+    },
+    {
+      "id": "180310",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5445.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-14 05:00:00",
+      "createdAt": "2026-02-14 15:33:37"
+    },
+    {
+      "id": "394085",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10999.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-12 05:00:00",
+      "createdAt": "2026-02-17 17:32:21"
+    },
+    {
+      "id": "244023",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5225.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-12 05:00:00",
+      "createdAt": "2026-02-15 00:24:55"
+    },
+    {
+      "id": "180319",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5225.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-12 05:00:00",
+      "createdAt": "2026-02-14 15:33:37"
+    },
+    {
+      "id": "180315",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10999.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-12 05:00:00",
+      "createdAt": "2026-02-14 15:33:37"
+    },
+    {
+      "id": "394086",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5225.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-12 05:00:00",
+      "createdAt": "2026-02-17 17:32:21"
+    },
+    {
+      "id": "244022",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10999.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-12 05:00:00",
+      "createdAt": "2026-02-15 00:24:55"
+    },
+    {
+      "id": "394087",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9625.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-11 05:00:00",
+      "createdAt": "2026-02-17 17:32:22"
+    },
+    {
+      "id": "244024",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9625.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-11 05:00:00",
+      "createdAt": "2026-02-15 00:24:55"
+    },
+    {
+      "id": "180324",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9625.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-11 05:00:00",
+      "createdAt": "2026-02-14 15:33:38"
+    },
+    {
+      "id": "394089",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2200.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2025-12-10 05:00:00",
+      "createdAt": "2026-02-17 17:32:22"
+    },
+    {
+      "id": "244026",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2200.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2025-12-10 05:00:00",
+      "createdAt": "2026-02-15 00:24:56"
+    },
+    {
+      "id": "394088",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-10 05:00:00",
+      "createdAt": "2026-02-17 17:32:22"
+    },
+    {
+      "id": "180334",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2200.00",
+      "currency": "HKD",
+      "grade": "PSA8以下",
+      "soldAt": "2025-12-10 05:00:00",
+      "createdAt": "2026-02-14 15:33:38"
+    },
+    {
+      "id": "180329",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-10 05:00:00",
+      "createdAt": "2026-02-14 15:33:38"
+    },
+    {
+      "id": "244025",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-10 05:00:00",
+      "createdAt": "2026-02-15 00:24:56"
+    },
+    {
+      "id": "244027",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5390.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-09 05:00:00",
+      "createdAt": "2026-02-15 00:24:56"
+    },
+    {
+      "id": "394090",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5390.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-09 05:00:00",
+      "createdAt": "2026-02-17 17:32:22"
+    },
+    {
+      "id": "180338",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5390.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-09 05:00:00",
+      "createdAt": "2026-02-14 15:33:38"
+    },
+    {
+      "id": "180343",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "8140.00",
+      "currency": "HKD",
+      "grade": "ARS10",
+      "soldAt": "2025-12-08 05:00:00",
+      "createdAt": "2026-02-14 15:33:38"
+    },
+    {
+      "id": "394091",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "8140.00",
+      "currency": "HKD",
+      "grade": "ARS10",
+      "soldAt": "2025-12-08 05:00:00",
+      "createdAt": "2026-02-17 17:32:23"
+    },
+    {
+      "id": "244028",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "8140.00",
+      "currency": "HKD",
+      "grade": "ARS10",
+      "soldAt": "2025-12-08 05:00:00",
+      "createdAt": "2026-02-15 00:24:56"
+    },
+    {
+      "id": "244030",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10725.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-07 05:00:00",
+      "createdAt": "2026-02-15 00:24:57"
+    },
+    {
+      "id": "244029",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10835.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-07 05:00:00",
+      "createdAt": "2026-02-15 00:24:57"
+    },
+    {
+      "id": "180353",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10725.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-07 05:00:00",
+      "createdAt": "2026-02-14 15:33:39"
+    },
+    {
+      "id": "180348",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10835.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-07 05:00:00",
+      "createdAt": "2026-02-14 15:33:39"
+    },
+    {
+      "id": "394092",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10835.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-07 05:00:00",
+      "createdAt": "2026-02-17 17:32:23"
+    },
+    {
+      "id": "394093",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10725.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-07 05:00:00",
+      "createdAt": "2026-02-17 17:32:23"
+    },
+    {
+      "id": "394094",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5390.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-05 05:00:00",
+      "createdAt": "2026-02-17 17:32:23"
+    },
+    {
+      "id": "244031",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5390.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-05 05:00:00",
+      "createdAt": "2026-02-15 00:24:57"
+    },
+    {
+      "id": "180358",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5390.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-12-05 05:00:00",
+      "createdAt": "2026-02-14 15:33:39"
+    },
+    {
+      "id": "394095",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10615.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-04 05:00:00",
+      "createdAt": "2026-02-17 17:32:24"
+    },
+    {
+      "id": "180363",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10615.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-04 05:00:00",
+      "createdAt": "2026-02-14 15:33:39"
+    },
+    {
+      "id": "244032",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10615.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-04 05:00:00",
+      "createdAt": "2026-02-15 00:24:57"
+    },
+    {
+      "id": "394096",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9900.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-02 05:00:00",
+      "createdAt": "2026-02-17 17:32:24"
+    },
+    {
+      "id": "244033",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9900.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-02 05:00:00",
+      "createdAt": "2026-02-15 00:24:57"
+    },
+    {
+      "id": "180368",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9900.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-02 05:00:00",
+      "createdAt": "2026-02-14 15:33:40"
+    },
+    {
+      "id": "180378",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9515.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-01 05:00:00",
+      "createdAt": "2026-02-14 15:33:40"
+    },
+    {
+      "id": "394098",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9515.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-01 05:00:00",
+      "createdAt": "2026-02-17 17:32:24"
+    },
+    {
+      "id": "394097",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10175.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-01 05:00:00",
+      "createdAt": "2026-02-17 17:32:24"
+    },
+    {
+      "id": "180373",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10175.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-01 05:00:00",
+      "createdAt": "2026-02-14 15:33:40"
+    },
+    {
+      "id": "244034",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10175.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-01 05:00:00",
+      "createdAt": "2026-02-15 00:24:58"
+    },
+    {
+      "id": "244035",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9515.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-12-01 05:00:00",
+      "createdAt": "2026-02-15 00:24:58"
+    },
+    {
+      "id": "244036",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1375.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-11-30 05:00:00",
+      "createdAt": "2026-02-15 00:24:58"
+    },
+    {
+      "id": "180383",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1375.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-11-30 05:00:00",
+      "createdAt": "2026-02-14 15:33:40"
+    },
+    {
+      "id": "394099",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1375.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-11-30 05:00:00",
+      "createdAt": "2026-02-17 17:32:24"
+    },
+    {
+      "id": "244037",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "605.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-11-28 05:00:00",
+      "createdAt": "2026-02-15 00:24:58"
+    },
+    {
+      "id": "244038",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2200.00",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2025-11-28 05:00:00",
+      "createdAt": "2026-02-15 00:24:59"
+    },
+    {
+      "id": "180393",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2200.00",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2025-11-28 05:00:00",
+      "createdAt": "2026-02-14 15:33:41"
+    },
+    {
+      "id": "180388",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "605.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-11-28 05:00:00",
+      "createdAt": "2026-02-14 15:33:40"
+    },
+    {
+      "id": "394100",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "605.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-11-28 05:00:00",
+      "createdAt": "2026-02-17 17:32:25"
+    },
+    {
+      "id": "394101",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2200.00",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2025-11-28 05:00:00",
+      "createdAt": "2026-02-17 17:32:25"
+    },
+    {
+      "id": "394102",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9900.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-26 05:00:00",
+      "createdAt": "2026-02-17 17:32:25"
+    },
+    {
+      "id": "244039",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9900.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-26 05:00:00",
+      "createdAt": "2026-02-15 00:24:59"
+    },
+    {
+      "id": "180398",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9900.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-26 05:00:00",
+      "createdAt": "2026-02-14 15:33:41"
+    },
+    {
+      "id": "180418",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9790.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-14 15:33:42"
+    },
+    {
+      "id": "244041",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9867.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-15 00:24:59"
+    },
+    {
+      "id": "394104",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9867.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-17 17:32:26"
+    },
+    {
+      "id": "394105",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9899.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-17 17:32:26"
+    },
+    {
+      "id": "394106",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9790.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-17 17:32:26"
+    },
+    {
+      "id": "394107",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9790.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-17 17:32:26"
+    },
+    {
+      "id": "180403",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9872.50",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-14 15:33:41"
+    },
+    {
+      "id": "244044",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9790.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-15 00:25:00"
+    },
+    {
+      "id": "180423",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9790.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-14 15:33:42"
+    },
+    {
+      "id": "244043",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9790.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-15 00:25:00"
+    },
+    {
+      "id": "180413",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9899.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-14 15:33:41"
+    },
+    {
+      "id": "180408",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9867.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-14 15:33:41"
+    },
+    {
+      "id": "244040",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9872.50",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-15 00:24:59"
+    },
+    {
+      "id": "394103",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9872.50",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-17 17:32:25"
+    },
+    {
+      "id": "244042",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9899.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-21 05:00:00",
+      "createdAt": "2026-02-15 00:24:59"
+    },
+    {
+      "id": "244045",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9625.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-14 05:00:00",
+      "createdAt": "2026-02-15 00:25:00"
+    },
+    {
+      "id": "180428",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9625.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-14 05:00:00",
+      "createdAt": "2026-02-14 15:33:42"
+    },
+    {
+      "id": "394108",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "9625.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-14 05:00:00",
+      "createdAt": "2026-02-17 17:32:26"
+    },
+    {
+      "id": "244046",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5225.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-11-08 05:00:00",
+      "createdAt": "2026-02-15 00:25:00"
+    },
+    {
+      "id": "180433",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5225.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-11-08 05:00:00",
+      "createdAt": "2026-02-14 15:33:42"
+    },
+    {
+      "id": "394109",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5225.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-11-08 05:00:00",
+      "createdAt": "2026-02-17 17:32:27"
+    },
+    {
+      "id": "394110",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-11-07 05:00:00",
+      "createdAt": "2026-02-17 17:32:27"
+    },
+    {
+      "id": "244047",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-11-07 05:00:00",
+      "createdAt": "2026-02-15 00:25:01"
+    },
+    {
+      "id": "180437",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "4950.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-11-07 05:00:00",
+      "createdAt": "2026-02-14 15:33:43"
+    },
+    {
+      "id": "394111",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10285.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-02 04:00:00",
+      "createdAt": "2026-02-17 17:32:27"
+    },
+    {
+      "id": "180442",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10285.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-02 04:00:00",
+      "createdAt": "2026-02-14 15:33:43"
+    },
+    {
+      "id": "244048",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10285.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-11-02 04:00:00",
+      "createdAt": "2026-02-15 00:25:01"
+    },
+    {
+      "id": "394112",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1089.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-10-31 04:00:00",
+      "createdAt": "2026-02-17 17:32:27"
+    },
+    {
+      "id": "244049",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1089.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-10-31 04:00:00",
+      "createdAt": "2026-02-15 00:25:01"
+    },
+    {
+      "id": "180447",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1089.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-10-31 04:00:00",
+      "createdAt": "2026-02-14 15:33:43"
+    },
+    {
+      "id": "394113",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10175.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-10-28 04:00:00",
+      "createdAt": "2026-02-17 17:32:28"
+    },
+    {
+      "id": "180457",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1375.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-10-28 04:00:00",
+      "createdAt": "2026-02-14 15:33:43"
+    },
+    {
+      "id": "394114",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1375.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-10-28 04:00:00",
+      "createdAt": "2026-02-17 17:32:28"
+    },
+    {
+      "id": "244051",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "1375.00",
+      "currency": "HKD",
+      "grade": "D",
+      "soldAt": "2025-10-28 04:00:00",
+      "createdAt": "2026-02-15 00:25:01"
+    },
+    {
+      "id": "244050",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10175.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-10-28 04:00:00",
+      "createdAt": "2026-02-15 00:25:01"
+    },
+    {
+      "id": "180452",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10175.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-10-28 04:00:00",
+      "createdAt": "2026-02-14 15:33:43"
+    },
+    {
+      "id": "180462",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5005.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-10-26 04:00:00",
+      "createdAt": "2026-02-14 15:33:44"
+    },
+    {
+      "id": "394115",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5005.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-10-26 04:00:00",
+      "createdAt": "2026-02-17 17:32:28"
+    },
+    {
+      "id": "244052",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "5005.00",
+      "currency": "HKD",
+      "grade": "PSA9",
+      "soldAt": "2025-10-26 04:00:00",
+      "createdAt": "2026-02-15 00:25:02"
+    },
+    {
+      "id": "244053",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10560.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-10-25 04:00:00",
+      "createdAt": "2026-02-15 00:25:02"
+    },
+    {
+      "id": "394116",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10560.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-10-25 04:00:00",
+      "createdAt": "2026-02-17 17:32:28"
+    },
+    {
+      "id": "180467",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10560.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-10-25 04:00:00",
+      "createdAt": "2026-02-14 15:33:44"
+    },
+    {
+      "id": "180482",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10174.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-10-22 04:00:00",
+      "createdAt": "2026-02-14 15:33:45"
+    },
+    {
+      "id": "244056",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10174.95",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-10-22 04:00:00",
+      "createdAt": "2026-02-15 00:25:02"
+    },
+    {
+      "id": "244055",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10175.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-10-22 04:00:00",
+      "createdAt": "2026-02-15 00:25:02"
+    },
+    {
+      "id": "244054",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "3839.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2025-10-22 04:00:00",
+      "createdAt": "2026-02-15 00:25:02"
+    },
+    {
+      "id": "244057",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2189.00",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2025-10-22 04:00:00",
+      "createdAt": "2026-02-15 00:25:03"
+    },
+    {
+      "id": "180487",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "2189.00",
+      "currency": "HKD",
+      "grade": "C",
+      "soldAt": "2025-10-22 04:00:00",
+      "createdAt": "2026-02-14 15:33:45"
+    },
+    {
+      "id": "180477",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "10175.00",
+      "currency": "HKD",
+      "grade": "PSA10",
+      "soldAt": "2025-10-22 04:00:00",
+      "createdAt": "2026-02-14 15:33:44"
+    },
+    {
+      "id": "180472",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "3839.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2025-10-22 04:00:00",
+      "createdAt": "2026-02-14 15:33:44"
+    },
+    {
+      "id": "394117",
+      "cardId": "180004",
+      "source": "snkrdunk",
+      "price": "3839.00",
+      "currency": "HKD",
+      "grade": "B",
+      "soldAt": "2025-10-22 04:00:00",
+      "createdAt": "2026-02-17 17:32:29"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tsource\tprice\tcurrency\tgrade\tsoldAt\tcreatedAt\n394019\t180004\tsnkrdunk\t7700.00\tHKD\tA\t2026-02-17 17:32:06\t2026-02-17 17:32:06\n394018\t180004\tsnkrdunk\t14520.00\tHKD\tPSA10\t2026-02-17 17:32:06\t2026-02-17 17:32:06\n394020\t180004\tsnkrdunk\t6050.00\tHKD\tPSA9\t2026-02-17 17:32:06\t2026-02-17 17:32:06\n394021\t180004\tsnkrdunk\t14712.50\tHKD\tPSA10\t2026-02-17 17:32:06\t2026-02-17 17:32:06\n243961\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2026-02-15 00:24:41\t2026-02-15 00:24:42\n243960\t180004\tsnkrdunk\t14135.00\tHKD\tPSA10\t2026-02-15 00:24:41\t2026-02-15 00:24:42\n243959\t180004\tsnkrdunk\t14987.50\tHKD\tPSA10\t2026-02-15 00:24:41\t2026-02-15 00:24:41\n243958\t180004\tsnkrdunk\t14849.95\tHKD\tPSA10\t2026-02-15 00:24:41\t2026-02-15 00:24:41\n180004\t180004\tsnkrdunk\t14849.95\tHKD\tPSA10\t2026-02-14 15:33:23\t2026-02-14 15:33:23\n180008\t180004\tsnkrdunk\t14987.50\tHKD\tPSA10\t2026-02-14 15:33:23\t2026-02-14 15:33:23\n180012\t180004\tsnkrdunk\t14135.00\tHKD\tPSA10\t2026-02-14 15:33:23\t2026-02-14 15:33:24\n180016\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2026-02-14 15:33:23\t2026-02-14 15:33:24\n394022\t180004\tsnkrdunk\t14849.95\tHKD\tPSA10\t2026-02-13 05:00:00\t2026-02-17 17:32:07\n394023\t180004\tsnkrdunk\t14987.50\tHKD\tPSA10\t2026-02-13 05:00:00\t2026-02-17 17:32:07\n394024\t180004\tsnkrdunk\t14135.00\tHKD\tPSA10\t2026-02-13 05:00:00\t2026-02-17 17:32:07\n394025\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2026-02-12 05:00:00\t2026-02-17 17:32:07\n243962\t180004\tsnkrdunk\t4400.00\tHKD\tB\t2026-02-11 05:00:00\t2026-02-15 00:24:42\n180020\t180004\tsnkrdunk\t4400.00\tHKD\tB\t2026-02-11 05:00:00\t2026-02-14 15:33:24\n394026\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2026-02-09 05:00:00\t2026-02-17 17:32:08\n243963\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2026-02-09 05:00:00\t2026-02-15 00:24:42\n180025\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2026-02-09 05:00:00\t2026-02-14 15:33:24\n394027\t180004\tsnkrdunk\t5170.00\tHKD\tPSA9\t2026-02-08 05:00:00\t2026-02-17 17:32:08\n180030\t180004\tsnkrdunk\t5170.00\tHKD\tPSA9\t2026-02-08 05:00:00\t2026-02-14 15:33:25\n243964\t180004\tsnkrdunk\t5170.00\tHKD\tPSA9\t2026-02-08 05:00:00\t2026-02-15 00:24:42\n394029\t180004\tsnkrdunk\t12100.00\tHKD\tPSA10\t2026-02-06 05:00:00\t2026-02-17 17:32:08\n394030\t180004\tsnkrdunk\t14190.00\tHKD\tPSA10\t2026-02-06 05:00:00\t2026-02-17 17:32:08\n243965\t180004\tsnkrdunk\t4840.00\tHKD\tPSA9\t2026-02-06 05:00:00\t2026-02-15 00:24:43\n243966\t180004\tsnkrdunk\t12100.00\tHKD\tPSA10\t2026-02-06 05:00:00\t2026-02-15 00:24:43\n180045\t180004\tsnkrdunk\t14190.00\tHKD\tPSA10\t2026-02-06 05:00:00\t2026-02-14 15:33:25\n180040\t180004\tsnkrdunk\t12100.00\tHKD\tPSA10\t2026-02-06 05:00:00\t2026-02-14 15:33:25\n180035\t180004\tsnkrdunk\t4840.00\tHKD\tPSA9\t2026-02-06 05:00:00\t2026-02-14 15:33:25\n243967\t180004\tsnkrdunk\t14190.00\tHKD\tPSA10\t2026-02-06 05:00:00\t2026-02-15 00:24:43\n394028\t180004\tsnkrdunk\t4840.00\tHKD\tPSA9\t2026-02-06 05:00:00\t2026-02-17 17:32:08\n394031\t180004\tsnkrdunk\t12650.00\tHKD\tPSA10\t2026-02-05 05:00:00\t2026-02-17 17:32:09\n243968\t180004\tsnkrdunk\t12650.00\tHKD\tPSA10\t2026-02-05 05:00:00\t2026-02-15 00:24:43\n180050\t180004\tsnkrdunk\t12650.00\tHKD\tPSA10\t2026-02-05 05:00:00\t2026-02-14 15:33:25\n243969\t180004\tsnkrdunk\t13860.00\tHKD\tPSA10\t2026-02-04 05:00:00\t2026-02-15 00:24:43\n180054\t180004\tsnkrdunk\t13860.00\tHKD\tPSA10\t2026-02-04 05:00:00\t2026-02-14 15:33:26\n394032\t180004\tsnkrdunk\t13860.00\tHKD\tPSA10\t2026-02-04 05:00:00\t2026-02-17 17:32:09\n243970\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-02-03 05:00:00\t2026-02-15 00:24:44\n394033\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-02-03 05:00:00\t2026-02-17 17:32:09\n180059\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-02-03 05:00:00\t2026-02-14 15:33:26\n243971\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-02-02 05:00:00\t2026-02-15 00:24:44\n394034\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-02-02 05:00:00\t2026-02-17 17:32:09\n180064\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-02-02 05:00:00\t2026-02-14 15:33:26\n243972\t180004\tsnkrdunk\t13420.00\tHKD\tPSA10\t2026-01-31 05:00:00\t2026-02-15 00:24:44\n394035\t180004\tsnkrdunk\t13420.00\tHKD\tPSA10\t2026-01-31 05:00:00\t2026-02-17 17:32:10\n180069\t180004\tsnkrdunk\t13420.00\tHKD\tPSA10\t2026-01-31 05:00:00\t2026-02-14 15:33:26\n243973\t180004\tsnkrdunk\t1925.00\tHKD\tC\t2026-01-30 05:00:00\t2026-02-15 00:24:44\n394036\t180004\tsnkrdunk\t1925.00\tHKD\tC\t2026-01-30 05:00:00\t2026-02-17 17:32:10\n180074\t180004\tsnkrdunk\t1925.00\tHKD\tC\t2026-01-30 05:00:00\t2026-02-14 15:33:26\n180079\t180004\tsnkrdunk\t13805.00\tHKD\tPSA10\t2026-01-29 05:00:00\t2026-02-14 15:33:27\n394037\t180004\tsnkrdunk\t13805.00\tHKD\tPSA10\t2026-01-29 05:00:00\t2026-02-17 17:32:10\n243974\t180004\tsnkrdunk\t13805.00\tHKD\tPSA10\t2026-01-29 05:00:00\t2026-02-15 00:24:45\n180084\t180004\tsnkrdunk\t13914.95\tHKD\tPSA10\t2026-01-27 05:00:00\t2026-02-14 15:33:27\n394038\t180004\tsnkrdunk\t13914.95\tHKD\tPSA10\t2026-01-27 05:00:00\t2026-02-17 17:32:10\n243975\t180004\tsnkrdunk\t13914.95\tHKD\tPSA10\t2026-01-27 05:00:00\t2026-02-15 00:24:45\n243976\t180004\tsnkrdunk\t13915.00\tHKD\tPSA10\t2026-01-26 05:00:00\t2026-02-15 00:24:45\n180089\t180004\tsnkrdunk\t13915.00\tHKD\tPSA10\t2026-01-26 05:00:00\t2026-02-14 15:33:27\n394039\t180004\tsnkrdunk\t13915.00\tHKD\tPSA10\t2026-01-26 05:00:00\t2026-02-17 17:32:11\n243977\t180004\tsnkrdunk\t14025.00\tHKD\tPSA10\t2026-01-23 05:00:00\t2026-02-15 00:24:45\n243978\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-23 05:00:00\t2026-02-15 00:24:45\n180098\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-23 05:00:00\t2026-02-14 15:33:28\n180093\t180004\tsnkrdunk\t14025.00\tHKD\tPSA10\t2026-01-23 05:00:00\t2026-02-14 15:33:27\n394040\t180004\tsnkrdunk\t14025.00\tHKD\tPSA10\t2026-01-23 05:00:00\t2026-02-17 17:32:11\n394041\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-23 05:00:00\t2026-02-17 17:32:11\n394043\t180004\tsnkrdunk\t14245.00\tHKD\tPSA10\t2026-01-22 05:00:00\t2026-02-17 17:32:11\n243979\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-22 05:00:00\t2026-02-15 00:24:46\n243980\t180004\tsnkrdunk\t14245.00\tHKD\tPSA10\t2026-01-22 05:00:00\t2026-02-15 00:24:46\n243981\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-22 05:00:00\t2026-02-15 00:24:46\n180113\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-22 05:00:00\t2026-02-14 15:33:28\n180108\t180004\tsnkrdunk\t14245.00\tHKD\tPSA10\t2026-01-22 05:00:00\t2026-02-14 15:33:28\n180103\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-22 05:00:00\t2026-02-14 15:33:28\n394042\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-22 05:00:00\t2026-02-17 17:32:11\n394044\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-22 05:00:00\t2026-02-17 17:32:12\n394045\t180004\tsnkrdunk\t4620.00\tHKD\tB\t2026-01-20 05:00:00\t2026-02-17 17:32:12\n180118\t180004\tsnkrdunk\t4620.00\tHKD\tB\t2026-01-20 05:00:00\t2026-02-14 15:33:28\n243982\t180004\tsnkrdunk\t4620.00\tHKD\tB\t2026-01-20 05:00:00\t2026-02-15 00:24:46\n394046\t180004\tsnkrdunk\t15015.00\tHKD\tPSA10\t2026-01-18 05:00:00\t2026-02-17 17:32:12\n180123\t180004\tsnkrdunk\t15015.00\tHKD\tPSA10\t2026-01-18 05:00:00\t2026-02-14 15:33:29\n243983\t180004\tsnkrdunk\t15015.00\tHKD\tPSA10\t2026-01-18 05:00:00\t2026-02-15 00:24:47\n243984\t180004\tsnkrdunk\t14960.00\tHKD\tPSA10\t2026-01-16 05:00:00\t2026-02-15 00:24:47\n180128\t180004\tsnkrdunk\t14960.00\tHKD\tPSA10\t2026-01-16 05:00:00\t2026-02-14 15:33:29\n394047\t180004\tsnkrdunk\t14960.00\tHKD\tPSA10\t2026-01-16 05:00:00\t2026-02-17 17:32:12\n243985\t180004\tsnkrdunk\t14850.00\tHKD\tPSA10\t2026-01-15 05:00:00\t2026-02-15 00:24:47\n180133\t180004\tsnkrdunk\t14850.00\tHKD\tPSA10\t2026-01-15 05:00:00\t2026-02-14 15:33:29\n394048\t180004\tsnkrdunk\t14850.00\tHKD\tPSA10\t2026-01-15 05:00:00\t2026-02-17 17:32:13\n243986\t180004\tsnkrdunk\t14795.00\tHKD\tPSA10\t2026-01-14 05:00:00\t2026-02-15 00:24:47\n394049\t180004\tsnkrdunk\t14795.00\tHKD\tPSA10\t2026-01-14 05:00:00\t2026-02-17 17:32:13\n180137\t180004\tsnkrdunk\t14795.00\tHKD\tPSA10\t2026-01-14 05:00:00\t2026-02-14 15:33:29\n180142\t180004\tsnkrdunk\t13200.00\tHKD\tPSA10\t2026-01-13 05:00:00\t2026-02-14 15:33:30\n243987\t180004\tsnkrdunk\t13200.00\tHKD\tPSA10\t2026-01-13 05:00:00\t2026-02-15 00:24:47\n394051\t180004\tsnkrdunk\t3410.00\tHKD\tPSA8以下\t2026-01-13 05:00:00\t2026-02-17 17:32:13\n180146\t180004\tsnkrdunk\t3410.00\tHKD\tPSA8以下\t2026-01-13 05:00:00\t2026-02-14 15:33:30\n394050\t180004\tsnkrdunk\t13200.00\tHKD\tPSA10\t2026-01-13 05:00:00\t2026-02-17 17:32:13\n243988\t180004\tsnkrdunk\t3410.00\tHKD\tPSA8以下\t2026-01-13 05:00:00\t2026-02-15 00:24:48\n243989\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-01-12 05:00:00\t2026-02-15 00:24:48\n243990\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-01-12 05:00:00\t2026-02-15 00:24:48\n394053\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-01-12 05:00:00\t2026-02-17 17:32:14\n394052\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-01-12 05:00:00\t2026-02-17 17:32:14\n180151\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-01-12 05:00:00\t2026-02-14 15:33:30\n180156\t180004\tsnkrdunk\t13750.00\tHKD\tPSA10\t2026-01-12 05:00:00\t2026-02-14 15:33:30\n394054\t180004\tsnkrdunk\t13200.00\tHKD\tPSA10\t2026-01-11 05:00:00\t2026-02-17 17:32:14\n243991\t180004\tsnkrdunk\t13200.00\tHKD\tPSA10\t2026-01-11 05:00:00\t2026-02-15 00:24:48\n180161\t180004\tsnkrdunk\t13200.00\tHKD\tPSA10\t2026-01-11 05:00:00\t2026-02-14 15:33:30\n180166\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-09 05:00:00\t2026-02-14 15:33:31\n394055\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-09 05:00:00\t2026-02-17 17:32:14\n243992\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-09 05:00:00\t2026-02-15 00:24:48\n394056\t180004\tsnkrdunk\t2505.53\tHKD\tC\t2026-01-09 05:00:00\t2026-02-17 17:32:14\n180171\t180004\tsnkrdunk\t2505.53\tHKD\tC\t2026-01-09 05:00:00\t2026-02-14 15:33:31\n243993\t180004\tsnkrdunk\t2505.53\tHKD\tC\t2026-01-09 05:00:00\t2026-02-15 00:24:49\n180176\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-07 05:00:00\t2026-02-14 15:33:31\n394057\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-07 05:00:00\t2026-02-17 17:32:15\n243994\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2026-01-07 05:00:00\t2026-02-15 00:24:49\n394058\t180004\tsnkrdunk\t12650.00\tHKD\tPSA10\t2026-01-06 05:00:00\t2026-02-17 17:32:15\n180181\t180004\tsnkrdunk\t12650.00\tHKD\tPSA10\t2026-01-06 05:00:00\t2026-02-14 15:33:31\n243995\t180004\tsnkrdunk\t12650.00\tHKD\tPSA10\t2026-01-06 05:00:00\t2026-02-15 00:24:49\n394059\t180004\tsnkrdunk\t2739.00\tHKD\tPSA8以下\t2026-01-05 05:00:00\t2026-02-17 17:32:15\n180186\t180004\tsnkrdunk\t2739.00\tHKD\tPSA8以下\t2026-01-05 05:00:00\t2026-02-14 15:33:31\n243996\t180004\tsnkrdunk\t2739.00\tHKD\tPSA8以下\t2026-01-05 05:00:00\t2026-02-15 00:24:49\n243997\t180004\tsnkrdunk\t14465.00\tHKD\tPSA10\t2026-01-04 05:00:00\t2026-02-15 00:24:50\n180191\t180004\tsnkrdunk\t14465.00\tHKD\tPSA10\t2026-01-04 05:00:00\t2026-02-14 15:33:32\n394060\t180004\tsnkrdunk\t14465.00\tHKD\tPSA10\t2026-01-04 05:00:00\t2026-02-17 17:32:15\n243998\t180004\tsnkrdunk\t1925.00\tHKD\tPSA8以下\t2025-12-28 05:00:00\t2026-02-15 00:24:50\n180196\t180004\tsnkrdunk\t1925.00\tHKD\tPSA8以下\t2025-12-28 05:00:00\t2026-02-14 15:33:32\n394061\t180004\tsnkrdunk\t1925.00\tHKD\tPSA8以下\t2025-12-28 05:00:00\t2026-02-17 17:32:16\n394063\t180004\tsnkrdunk\t14630.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-17 17:32:16\n180216\t180004\tsnkrdunk\t14839.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-14 15:33:33\n394065\t180004\tsnkrdunk\t14839.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-17 17:32:17\n394062\t180004\tsnkrdunk\t14850.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-17 17:32:16\n180201\t180004\tsnkrdunk\t14850.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-14 15:33:32\n180206\t180004\tsnkrdunk\t14630.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-14 15:33:32\n180211\t180004\tsnkrdunk\t14850.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-14 15:33:33\n394064\t180004\tsnkrdunk\t14850.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-17 17:32:16\n244002\t180004\tsnkrdunk\t14839.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-15 00:24:51\n244001\t180004\tsnkrdunk\t14850.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-15 00:24:50\n244000\t180004\tsnkrdunk\t14630.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-15 00:24:50\n243999\t180004\tsnkrdunk\t14850.00\tHKD\tPSA10\t2025-12-27 05:00:00\t2026-02-15 00:24:50\n244003\t180004\tsnkrdunk\t14289.00\tHKD\tPSA10\t2025-12-25 05:00:00\t2026-02-15 00:24:51\n394066\t180004\tsnkrdunk\t14289.00\tHKD\tPSA10\t2025-12-25 05:00:00\t2026-02-17 17:32:17\n180221\t180004\tsnkrdunk\t14289.00\tHKD\tPSA10\t2025-12-25 05:00:00\t2026-02-14 15:33:33\n180226\t180004\tsnkrdunk\t14025.00\tHKD\tPSA10\t2025-12-24 05:00:00\t2026-02-14 15:33:33\n394067\t180004\tsnkrdunk\t14025.00\tHKD\tPSA10\t2025-12-24 05:00:00\t2026-02-17 17:32:17\n244004\t180004\tsnkrdunk\t14025.00\tHKD\tPSA10\t2025-12-24 05:00:00\t2026-02-15 00:24:51\n244005\t180004\tsnkrdunk\t13200.00\tHKD\tPSA10\t2025-12-23 05:00:00\t2026-02-15 00:24:51\n180231\t180004\tsnkrdunk\t13200.00\tHKD\tPSA10\t2025-12-23 05:00:00\t2026-02-14 15:33:33\n394068\t180004\tsnkrdunk\t13200.00\tHKD\tPSA10\t2025-12-23 05:00:00\t2026-02-17 17:32:17\n394069\t180004\tsnkrdunk\t13640.00\tHKD\tPSA10\t2025-12-22 05:00:00\t2026-02-17 17:32:17\n244006\t180004\tsnkrdunk\t13640.00\tHKD\tPSA10\t2025-12-22 05:00:00\t2026-02-15 00:24:52\n244007\t180004\tsnkrdunk\t13640.00\tHKD\tPSA10\t2025-12-22 05:00:00\t2026-02-15 00:24:52\n394070\t180004\tsnkrdunk\t13640.00\tHKD\tPSA10\t2025-12-22 05:00:00\t2026-02-17 17:32:18\n180241\t180004\tsnkrdunk\t13640.00\tHKD\tPSA10\t2025-12-22 05:00:00\t2026-02-14 15:33:34\n180236\t180004\tsnkrdunk\t13640.00\tHKD\tPSA10\t2025-12-22 05:00:00\t2026-02-14 15:33:34\n244008\t180004\tsnkrdunk\t10450.00\tHKD\tPSA10\t2025-12-20 05:00:00\t2026-02-15 00:24:52\n180250\t180004\tsnkrdunk\t5164.50\tHKD\tPSA9\t2025-12-20 05:00:00\t2026-02-14 15:33:34\n244009\t180004\tsnkrdunk\t5164.50\tHKD\tPSA9\t2025-12-20 05:00:00\t2026-02-15 00:24:52\n394072\t180004\tsnkrdunk\t5164.50\tHKD\tPSA9\t2025-12-20 05:00:00\t2026-02-17 17:32:18\n394071\t180004\tsnkrdunk\t10450.00\tHKD\tPSA10\t2025-12-20 05:00:00\t2026-02-17 17:32:18\n180245\t180004\tsnkrdunk\t10450.00\tHKD\tPSA10\t2025-12-20 05:00:00\t2026-02-14 15:33:34\n244010\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2025-12-19 05:00:00\t2026-02-15 00:24:52\n180255\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2025-12-19 05:00:00\t2026-02-14 15:33:35\n394073\t180004\tsnkrdunk\t14300.00\tHKD\tPSA10\t2025-12-19 05:00:00\t2026-02-17 17:32:18\n180260\t180004\tsnkrdunk\t11539.00\tHKD\tPSA10\t2025-12-17 05:00:00\t2026-02-14 15:33:35\n180265\t180004\tsnkrdunk\t14025.00\tHKD\tPSA10\t2025-12-17 05:00:00\t2026-02-14 15:33:35\n180270\t180004\tsnkrdunk\t5489.00\tHKD\tPSA9\t2025-12-17 05:00:00\t2026-02-14 15:33:35\n244012\t180004\tsnkrdunk\t14025.00\tHKD\tPSA10\t2025-12-17 05:00:00\t2026-02-15 00:24:53\n244013\t180004\tsnkrdunk\t5489.00\tHKD\tPSA9\t2025-12-17 05:00:00\t2026-02-15 00:24:53\n394076\t180004\tsnkrdunk\t5489.00\tHKD\tPSA9\t2025-12-17 05:00:00\t2026-02-17 17:32:19\n244011\t180004\tsnkrdunk\t11539.00\tHKD\tPSA10\t2025-12-17 05:00:00\t2026-02-15 00:24:53\n394074\t180004\tsnkrdunk\t11539.00\tHKD\tPSA10\t2025-12-17 05:00:00\t2026-02-17 17:32:19\n394075\t180004\tsnkrdunk\t14025.00\tHKD\tPSA10\t2025-12-17 05:00:00\t2026-02-17 17:32:19\n180275\t180004\tsnkrdunk\t5500.00\tHKD\tB\t2025-12-16 05:00:00\t2026-02-14 15:33:35\n244016\t180004\tsnkrdunk\t12375.00\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-15 00:24:54\n244014\t180004\tsnkrdunk\t5500.00\tHKD\tB\t2025-12-16 05:00:00\t2026-02-15 00:24:53\n394078\t180004\tsnkrdunk\t12375.00\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-17 17:32:20\n180305\t180004\tsnkrdunk\t5500.00\tHKD\tPSA9\t2025-12-16 05:00:00\t2026-02-14 15:33:37\n180300\t180004\tsnkrdunk\t11824.95\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-14 15:33:36\n180295\t180004\tsnkrdunk\t12222.21\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-14 15:33:36\n180290\t180004\tsnkrdunk\t12034.00\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-14 15:33:36\n180285\t180004\tsnkrdunk\t12375.00\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-14 15:33:36\n180280\t180004\tsnkrdunk\t12375.00\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-14 15:33:36\n244015\t180004\tsnkrdunk\t12375.00\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-15 00:24:54\n394077\t180004\tsnkrdunk\t5500.00\tHKD\tB\t2025-12-16 05:00:00\t2026-02-17 17:32:19\n244017\t180004\tsnkrdunk\t12034.00\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-15 00:24:54\n244018\t180004\tsnkrdunk\t12222.21\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-15 00:24:54\n244019\t180004\tsnkrdunk\t11824.95\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-15 00:24:54\n244020\t180004\tsnkrdunk\t5500.00\tHKD\tPSA9\t2025-12-16 05:00:00\t2026-02-15 00:24:55\n394079\t180004\tsnkrdunk\t12375.00\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-17 17:32:20\n394080\t180004\tsnkrdunk\t12034.00\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-17 17:32:20\n394083\t180004\tsnkrdunk\t5500.00\tHKD\tPSA9\t2025-12-16 05:00:00\t2026-02-17 17:32:21\n394082\t180004\tsnkrdunk\t11824.95\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-17 17:32:20\n394081\t180004\tsnkrdunk\t12222.21\tHKD\tPSA10\t2025-12-16 05:00:00\t2026-02-17 17:32:20\n394084\t180004\tsnkrdunk\t5445.00\tHKD\tPSA9\t2025-12-14 05:00:00\t2026-02-17 17:32:21\n244021\t180004\tsnkrdunk\t5445.00\tHKD\tPSA9\t2025-12-14 05:00:00\t2026-02-15 00:24:55\n180310\t180004\tsnkrdunk\t5445.00\tHKD\tPSA9\t2025-12-14 05:00:00\t2026-02-14 15:33:37\n394085\t180004\tsnkrdunk\t10999.95\tHKD\tPSA10\t2025-12-12 05:00:00\t2026-02-17 17:32:21\n244023\t180004\tsnkrdunk\t5225.00\tHKD\tPSA9\t2025-12-12 05:00:00\t2026-02-15 00:24:55\n180319\t180004\tsnkrdunk\t5225.00\tHKD\tPSA9\t2025-12-12 05:00:00\t2026-02-14 15:33:37\n180315\t180004\tsnkrdunk\t10999.95\tHKD\tPSA10\t2025-12-12 05:00:00\t2026-02-14 15:33:37\n394086\t180004\tsnkrdunk\t5225.00\tHKD\tPSA9\t2025-12-12 05:00:00\t2026-02-17 17:32:21\n244022\t180004\tsnkrdunk\t10999.95\tHKD\tPSA10\t2025-12-12 05:00:00\t2026-02-15 00:24:55\n394087\t180004\tsnkrdunk\t9625.00\tHKD\tPSA10\t2025-12-11 05:00:00\t2026-02-17 17:32:22\n244024\t180004\tsnkrdunk\t9625.00\tHKD\tPSA10\t2025-12-11 05:00:00\t2026-02-15 00:24:55\n180324\t180004\tsnkrdunk\t9625.00\tHKD\tPSA10\t2025-12-11 05:00:00\t2026-02-14 15:33:38\n394089\t180004\tsnkrdunk\t2200.00\tHKD\tPSA8以下\t2025-12-10 05:00:00\t2026-02-17 17:32:22\n244026\t180004\tsnkrdunk\t2200.00\tHKD\tPSA8以下\t2025-12-10 05:00:00\t2026-02-15 00:24:56\n394088\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2025-12-10 05:00:00\t2026-02-17 17:32:22\n180334\t180004\tsnkrdunk\t2200.00\tHKD\tPSA8以下\t2025-12-10 05:00:00\t2026-02-14 15:33:38\n180329\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2025-12-10 05:00:00\t2026-02-14 15:33:38\n244025\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2025-12-10 05:00:00\t2026-02-15 00:24:56\n244027\t180004\tsnkrdunk\t5390.00\tHKD\tPSA9\t2025-12-09 05:00:00\t2026-02-15 00:24:56\n394090\t180004\tsnkrdunk\t5390.00\tHKD\tPSA9\t2025-12-09 05:00:00\t2026-02-17 17:32:22\n180338\t180004\tsnkrdunk\t5390.00\tHKD\tPSA9\t2025-12-09 05:00:00\t2026-02-14 15:33:38\n180343\t180004\tsnkrdunk\t8140.00\tHKD\tARS10\t2025-12-08 05:00:00\t2026-02-14 15:33:38\n394091\t180004\tsnkrdunk\t8140.00\tHKD\tARS10\t2025-12-08 05:00:00\t2026-02-17 17:32:23\n244028\t180004\tsnkrdunk\t8140.00\tHKD\tARS10\t2025-12-08 05:00:00\t2026-02-15 00:24:56\n244030\t180004\tsnkrdunk\t10725.00\tHKD\tPSA10\t2025-12-07 05:00:00\t2026-02-15 00:24:57\n244029\t180004\tsnkrdunk\t10835.00\tHKD\tPSA10\t2025-12-07 05:00:00\t2026-02-15 00:24:57\n180353\t180004\tsnkrdunk\t10725.00\tHKD\tPSA10\t2025-12-07 05:00:00\t2026-02-14 15:33:39\n180348\t180004\tsnkrdunk\t10835.00\tHKD\tPSA10\t2025-12-07 05:00:00\t2026-02-14 15:33:39\n394092\t180004\tsnkrdunk\t10835.00\tHKD\tPSA10\t2025-12-07 05:00:00\t2026-02-17 17:32:23\n394093\t180004\tsnkrdunk\t10725.00\tHKD\tPSA10\t2025-12-07 05:00:00\t2026-02-17 17:32:23\n394094\t180004\tsnkrdunk\t5390.00\tHKD\tPSA9\t2025-12-05 05:00:00\t2026-02-17 17:32:23\n244031\t180004\tsnkrdunk\t5390.00\tHKD\tPSA9\t2025-12-05 05:00:00\t2026-02-15 00:24:57\n180358\t180004\tsnkrdunk\t5390.00\tHKD\tPSA9\t2025-12-05 05:00:00\t2026-02-14 15:33:39\n394095\t180004\tsnkrdunk\t10615.00\tHKD\tPSA10\t2025-12-04 05:00:00\t2026-02-17 17:32:24\n180363\t180004\tsnkrdunk\t10615.00\tHKD\tPSA10\t2025-12-04 05:00:00\t2026-02-14 15:33:39\n244032\t180004\tsnkrdunk\t10615.00\tHKD\tPSA10\t2025-12-04 05:00:00\t2026-02-15 00:24:57\n394096\t180004\tsnkrdunk\t9900.00\tHKD\tPSA10\t2025-12-02 05:00:00\t2026-02-17 17:32:24\n244033\t180004\tsnkrdunk\t9900.00\tHKD\tPSA10\t2025-12-02 05:00:00\t2026-02-15 00:24:57\n180368\t180004\tsnkrdunk\t9900.00\tHKD\tPSA10\t2025-12-02 05:00:00\t2026-02-14 15:33:40\n180378\t180004\tsnkrdunk\t9515.00\tHKD\tPSA10\t2025-12-01 05:00:00\t2026-02-14 15:33:40\n394098\t180004\tsnkrdunk\t9515.00\tHKD\tPSA10\t2025-12-01 05:00:00\t2026-02-17 17:32:24\n394097\t180004\tsnkrdunk\t10175.00\tHKD\tPSA10\t2025-12-01 05:00:00\t2026-02-17 17:32:24\n180373\t180004\tsnkrdunk\t10175.00\tHKD\tPSA10\t2025-12-01 05:00:00\t2026-02-14 15:33:40\n244034\t180004\tsnkrdunk\t10175.00\tHKD\tPSA10\t2025-12-01 05:00:00\t2026-02-15 00:24:58\n244035\t180004\tsnkrdunk\t9515.00\tHKD\tPSA10\t2025-12-01 05:00:00\t2026-02-15 00:24:58\n244036\t180004\tsnkrdunk\t1375.00\tHKD\tD\t2025-11-30 05:00:00\t2026-02-15 00:24:58\n180383\t180004\tsnkrdunk\t1375.00\tHKD\tD\t2025-11-30 05:00:00\t2026-02-14 15:33:40\n394099\t180004\tsnkrdunk\t1375.00\tHKD\tD\t2025-11-30 05:00:00\t2026-02-17 17:32:24\n244037\t180004\tsnkrdunk\t605.00\tHKD\tD\t2025-11-28 05:00:00\t2026-02-15 00:24:58\n244038\t180004\tsnkrdunk\t2200.00\tHKD\tC\t2025-11-28 05:00:00\t2026-02-15 00:24:59\n180393\t180004\tsnkrdunk\t2200.00\tHKD\tC\t2025-11-28 05:00:00\t2026-02-14 15:33:41\n180388\t180004\tsnkrdunk\t605.00\tHKD\tD\t2025-11-28 05:00:00\t2026-02-14 15:33:40\n394100\t180004\tsnkrdunk\t605.00\tHKD\tD\t2025-11-28 05:00:00\t2026-02-17 17:32:25\n394101\t180004\tsnkrdunk\t2200.00\tHKD\tC\t2025-11-28 05:00:00\t2026-02-17 17:32:25\n394102\t180004\tsnkrdunk\t9900.00\tHKD\tPSA10\t2025-11-26 05:00:00\t2026-02-17 17:32:25\n244039\t180004\tsnkrdunk\t9900.00\tHKD\tPSA10\t2025-11-26 05:00:00\t2026-02-15 00:24:59\n180398\t180004\tsnkrdunk\t9900.00\tHKD\tPSA10\t2025-11-26 05:00:00\t2026-02-14 15:33:41\n180418\t180004\tsnkrdunk\t9790.00\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-14 15:33:42\n244041\t180004\tsnkrdunk\t9867.00\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-15 00:24:59\n394104\t180004\tsnkrdunk\t9867.00\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-17 17:32:26\n394105\t180004\tsnkrdunk\t9899.95\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-17 17:32:26\n394106\t180004\tsnkrdunk\t9790.00\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-17 17:32:26\n394107\t180004\tsnkrdunk\t9790.00\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-17 17:32:26\n180403\t180004\tsnkrdunk\t9872.50\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-14 15:33:41\n244044\t180004\tsnkrdunk\t9790.00\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-15 00:25:00\n180423\t180004\tsnkrdunk\t9790.00\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-14 15:33:42\n244043\t180004\tsnkrdunk\t9790.00\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-15 00:25:00\n180413\t180004\tsnkrdunk\t9899.95\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-14 15:33:41\n180408\t180004\tsnkrdunk\t9867.00\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-14 15:33:41\n244040\t180004\tsnkrdunk\t9872.50\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-15 00:24:59\n394103\t180004\tsnkrdunk\t9872.50\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-17 17:32:25\n244042\t180004\tsnkrdunk\t9899.95\tHKD\tPSA10\t2025-11-21 05:00:00\t2026-02-15 00:24:59\n244045\t180004\tsnkrdunk\t9625.00\tHKD\tPSA10\t2025-11-14 05:00:00\t2026-02-15 00:25:00\n180428\t180004\tsnkrdunk\t9625.00\tHKD\tPSA10\t2025-11-14 05:00:00\t2026-02-14 15:33:42\n394108\t180004\tsnkrdunk\t9625.00\tHKD\tPSA10\t2025-11-14 05:00:00\t2026-02-17 17:32:26\n244046\t180004\tsnkrdunk\t5225.00\tHKD\tPSA9\t2025-11-08 05:00:00\t2026-02-15 00:25:00\n180433\t180004\tsnkrdunk\t5225.00\tHKD\tPSA9\t2025-11-08 05:00:00\t2026-02-14 15:33:42\n394109\t180004\tsnkrdunk\t5225.00\tHKD\tPSA9\t2025-11-08 05:00:00\t2026-02-17 17:32:27\n394110\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2025-11-07 05:00:00\t2026-02-17 17:32:27\n244047\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2025-11-07 05:00:00\t2026-02-15 00:25:01\n180437\t180004\tsnkrdunk\t4950.00\tHKD\tPSA9\t2025-11-07 05:00:00\t2026-02-14 15:33:43\n394111\t180004\tsnkrdunk\t10285.00\tHKD\tPSA10\t2025-11-02 04:00:00\t2026-02-17 17:32:27\n180442\t180004\tsnkrdunk\t10285.00\tHKD\tPSA10\t2025-11-02 04:00:00\t2026-02-14 15:33:43\n244048\t180004\tsnkrdunk\t10285.00\tHKD\tPSA10\t2025-11-02 04:00:00\t2026-02-15 00:25:01\n394112\t180004\tsnkrdunk\t1089.00\tHKD\tD\t2025-10-31 04:00:00\t2026-02-17 17:32:27\n244049\t180004\tsnkrdunk\t1089.00\tHKD\tD\t2025-10-31 04:00:00\t2026-02-15 00:25:01\n180447\t180004\tsnkrdunk\t1089.00\tHKD\tD\t2025-10-31 04:00:00\t2026-02-14 15:33:43\n394113\t180004\tsnkrdunk\t10175.00\tHKD\tPSA10\t2025-10-28 04:00:00\t2026-02-17 17:32:28\n180457\t180004\tsnkrdunk\t1375.00\tHKD\tD\t2025-10-28 04:00:00\t2026-02-14 15:33:43\n394114\t180004\tsnkrdunk\t1375.00\tHKD\tD\t2025-10-28 04:00:00\t2026-02-17 17:32:28\n244051\t180004\tsnkrdunk\t1375.00\tHKD\tD\t2025-10-28 04:00:00\t2026-02-15 00:25:01\n244050\t180004\tsnkrdunk\t10175.00\tHKD\tPSA10\t2025-10-28 04:00:00\t2026-02-15 00:25:01\n180452\t180004\tsnkrdunk\t10175.00\tHKD\tPSA10\t2025-10-28 04:00:00\t2026-02-14 15:33:43\n180462\t180004\tsnkrdunk\t5005.00\tHKD\tPSA9\t2025-10-26 04:00:00\t2026-02-14 15:33:44\n394115\t180004\tsnkrdunk\t5005.00\tHKD\tPSA9\t2025-10-26 04:00:00\t2026-02-17 17:32:28\n244052\t180004\tsnkrdunk\t5005.00\tHKD\tPSA9\t2025-10-26 04:00:00\t2026-02-15 00:25:02\n244053\t180004\tsnkrdunk\t10560.00\tHKD\tPSA10\t2025-10-25 04:00:00\t2026-02-15 00:25:02\n394116\t180004\tsnkrdunk\t10560.00\tHKD\tPSA10\t2025-10-25 04:00:00\t2026-02-17 17:32:28\n180467\t180004\tsnkrdunk\t10560.00\tHKD\tPSA10\t2025-10-25 04:00:00\t2026-02-14 15:33:44\n180482\t180004\tsnkrdunk\t10174.95\tHKD\tPSA10\t2025-10-22 04:00:00\t2026-02-14 15:33:45\n244056\t180004\tsnkrdunk\t10174.95\tHKD\tPSA10\t2025-10-22 04:00:00\t2026-02-15 00:25:02\n244055\t180004\tsnkrdunk\t10175.00\tHKD\tPSA10\t2025-10-22 04:00:00\t2026-02-15 00:25:02\n244054\t180004\tsnkrdunk\t3839.00\tHKD\tB\t2025-10-22 04:00:00\t2026-02-15 00:25:02\n244057\t180004\tsnkrdunk\t2189.00\tHKD\tC\t2025-10-22 04:00:00\t2026-02-15 00:25:03\n180487\t180004\tsnkrdunk\t2189.00\tHKD\tC\t2025-10-22 04:00:00\t2026-02-14 15:33:45\n180477\t180004\tsnkrdunk\t10175.00\tHKD\tPSA10\t2025-10-22 04:00:00\t2026-02-14 15:33:44\n180472\t180004\tsnkrdunk\t3839.00\tHKD\tB\t2025-10-22 04:00:00\t2026-02-14 15:33:44\n394117\t180004\tsnkrdunk\t3839.00\tHKD\tB\t2025-10-22 04:00:00\t2026-02-17 17:32:29\n",
+  "stderr": "",
+  "execution_time_ms": 1576
+}

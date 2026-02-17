@@ -1,0 +1,45 @@
+{
+  "query": "SELECT cardId, `rank`, priceChange7d, oldPrice, currentPrice FROM trendingCardsCache ORDER BY `rank`",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT cardId, `rank`, priceChange7d, oldPrice, currentPrice FROM trendingCardsCache ORDER BY `rank`",
+  "rows": [
+    {
+      "cardId": "150163",
+      "rank": "1",
+      "priceChange7d": "930.00",
+      "oldPrice": "330.00",
+      "currentPrice": "3399.00"
+    },
+    {
+      "cardId": "270143",
+      "rank": "2",
+      "priceChange7d": "930.00",
+      "oldPrice": "330.00",
+      "currentPrice": "3399.00"
+    },
+    {
+      "cardId": "150158",
+      "rank": "3",
+      "priceChange7d": "687.03",
+      "oldPrice": "594.00",
+      "currentPrice": "4674.95"
+    },
+    {
+      "cardId": "270139",
+      "rank": "4",
+      "priceChange7d": "687.03",
+      "oldPrice": "594.00",
+      "currentPrice": "4674.95"
+    },
+    {
+      "cardId": "90104",
+      "rank": "5",
+      "priceChange7d": "604.76",
+      "oldPrice": "115.50",
+      "currentPrice": "814.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\trank\tpriceChange7d\toldPrice\tcurrentPrice\n150163\t1\t930.00\t330.00\t3399.00\n270143\t2\t930.00\t330.00\t3399.00\n150158\t3\t687.03\t594.00\t4674.95\n270139\t4\t687.03\t594.00\t4674.95\n90104\t5\t604.76\t115.50\t814.00\n",
+  "stderr": "",
+  "execution_time_ms": 1515
+}

@@ -1427,7 +1427,7 @@ export async function getAllBlogArticles(options: {
 /**
  * Get all blog articles count (including drafts, for admin)
  */
-export async function getAllBlogArticlesCount() {
+export async function getTotalBlogArticlesCount() {
   const db = await getDb();
   if (!db) {
     return 0;
@@ -1600,7 +1600,8 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  // Get ALL SNKRDUNK price history (we'll filter by date range in memory)
+  // Get ALL SNKRDUNK price history for cards that exist in cards table
+  // Use INNER JOIN to ensure we only calculate for valid cards
   const cardsWithPrices = await db
     .select({
       cardId: priceHistory.cardId,
@@ -1609,6 +1610,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
       createdAt: priceHistory.createdAt,
     })
     .from(priceHistory)
+    .innerJoin(cards, eq(priceHistory.cardId, cards.id))
     .where(eq(priceHistory.source, "snkrdunk"))
     .orderBy(priceHistory.cardId);
 
@@ -1722,9 +1724,12 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
 export async function getCachedTrendingCards() {
   const db = await getDb();
   if (!db) {
+    console.log('[getCachedTrendingCards] DB connection failed');
     return [];
   }
 
+  console.log('[getCachedTrendingCards] Querying trendingCardsCache...');
+  
   const cached = await db
     .select({
       cardId: trendingCardsCache.cardId,
@@ -1741,10 +1746,13 @@ export async function getCachedTrendingCards() {
       series: cards.series,
     })
     .from(trendingCardsCache)
-    .innerJoin(cards, eq(trendingCardsCache.cardId, cards.id))
+    .leftJoin(cards, eq(trendingCardsCache.cardId, cards.id))
     .orderBy(trendingCardsCache.rank);
 
-  return cached.map(item => ({
+  console.log('[getCachedTrendingCards] Query result count:', cached.length);
+  console.log('[getCachedTrendingCards] Raw cached data:', JSON.stringify(cached, null, 2));
+
+  const result = cached.map(item => ({
     id: item.cardId,
     name: item.name,
     nameJa: item.nameJa,
@@ -1760,4 +1768,8 @@ export async function getCachedTrendingCards() {
     priceChange: parseFloat(item.priceChange7d as any),
     priceChangeFormatted: `+${parseFloat(item.priceChange7d as any).toFixed(1)}%`,
   }));
+
+  console.log('[getCachedTrendingCards] Mapped result count:', result.length);
+  console.log('[getCachedTrendingCards] Final result:', JSON.stringify(result, null, 2));
+  return result;
 }

@@ -2391,3 +2391,21 @@
 - [x] 為 eBay 表格標題添加 i18n 支持
 - [x] 測試繁體中文、英文、日文三種語言切換
 - [x] 驗證所有翻譯正確顯示
+
+
+## Bug 修復: 首頁熱門卡牌只顯示 2 張而非 TOP 5
+
+- [ ] 檢查首頁 Home.tsx 的熱門卡牌顯示邏輯
+- [ ] 檢查 getTrending API 的 limit 參數設定
+- [ ] 修正顯示邏輯確保顯示完整 5 張卡牌
+- [ ] 測試驗證首頁正確顯示 TOP 5
+
+
+## Bug 修復: 首頁熱門卡牌只顯示 2 張而非 TOP 5 - 完成
+
+- [x] 檢查首頁 Home.tsx 的熱門卡牌顯示邏輯
+- [x] 檢查 getTrending API 的 limit 參數設定
+- [x] 修正網格佈局為固定 5 列（grid-cols-5）
+- [x] 修正 getCachedTrendingCards 使用 LEFT JOIN 確保返回所有記錄
+- [x] 修正 calculateAndCacheTrendingCards 使用 INNER JOIN 只計算存在於 cards 表的卡牌
+- [x] 測試驗證首頁正確顯示 TOP 5

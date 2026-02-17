@@ -1958,7 +1958,7 @@ ${input.additionalContext ? `額外背景資訊：${input.additionalContext}` : 
           limit: input.limit,
           offset: input.offset,
         });
-        const total = await db.getAllBlogArticlesCount();
+        const total = await db.getTotalBlogArticlesCount();
         return {
           articles,
           total,
