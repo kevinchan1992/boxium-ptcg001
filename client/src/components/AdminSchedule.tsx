@@ -274,18 +274,18 @@ export function AdminSchedule() {
       {/* Execution History Section */}
       <div className="space-y-6 mt-8">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
             <History className="w-5 h-5" />
             執行歷史記錄
           </h3>
-          <p className="text-gray-600">最近 20 次排程執行記錄</p>
+          <p className="text-gray-400">最近 20 次排程執行記錄</p>
         </div>
 
         {/* SNKRDUNK History */}
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-blue-500 bg-gray-900">
           <CardHeader>
-            <CardTitle className="text-gray-900">SNKRDUNK 執行歷史</CardTitle>
-            <CardDescription className="text-gray-600">
+            <CardTitle className="text-white">SNKRDUNK 執行歷史</CardTitle>
+            <CardDescription className="text-gray-400">
               顯示 SNKRDUNK 價格更新的執行記錄
             </CardDescription>
           </CardHeader>
@@ -295,18 +295,18 @@ export function AdminSchedule() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-gray-900">執行時間</TableHead>
-                      <TableHead className="text-gray-900">狀態</TableHead>
-                      <TableHead className="text-gray-900">成功數</TableHead>
-                      <TableHead className="text-gray-900">失敗數</TableHead>
-                      <TableHead className="text-gray-900">新增記錄</TableHead>
-                      <TableHead className="text-gray-900">執行時長</TableHead>
+                      <TableHead className="text-white">執行時間</TableHead>
+                      <TableHead className="text-white">狀態</TableHead>
+                      <TableHead className="text-white">成功數</TableHead>
+                      <TableHead className="text-white">失敗數</TableHead>
+                      <TableHead className="text-white">新增記錄</TableHead>
+                      <TableHead className="text-white">執行時長</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {snkrdunkHistory.map((record) => (
                       <TableRow key={record.id}>
-                        <TableCell className="text-gray-900">
+                        <TableCell className="text-white">
                           {new Date(record.startedAt).toLocaleString('zh-TW', {
                             year: 'numeric',
                             month: '2-digit',
@@ -334,16 +334,16 @@ export function AdminSchedule() {
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="text-gray-900">
+                        <TableCell className="text-white">
                           {record.snkrdunkSuccessCount || 0}
                         </TableCell>
-                        <TableCell className="text-gray-900">
+                        <TableCell className="text-white">
                           {record.snkrdunkFailureCount || 0}
                         </TableCell>
-                        <TableCell className="text-gray-900">
+                        <TableCell className="text-white">
                           {record.snkrdunkRecordsAdded || 0}
                         </TableCell>
-                        <TableCell className="text-gray-900">
+                        <TableCell className="text-white">
                           {record.durationMs ? `${(record.durationMs / 1000).toFixed(1)}s` : '-'}
                         </TableCell>
                       </TableRow>
@@ -352,16 +352,16 @@ export function AdminSchedule() {
                 </Table>
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">尚無執行記錄</p>
+              <p className="text-gray-400 text-center py-8">尚無執行記錄</p>
             )}
           </CardContent>
         </Card>
 
         {/* eBay History */}
-        <Card className="border-l-4 border-l-yellow-500">
+        <Card className="border-l-4 border-l-yellow-500 bg-gray-900">
           <CardHeader>
-            <CardTitle className="text-gray-900">eBay 執行歷史</CardTitle>
-            <CardDescription className="text-gray-600">
+            <CardTitle className="text-white">eBay 執行歷史</CardTitle>
+            <CardDescription className="text-gray-400">
               顯示 eBay 價格更新的執行記錄
             </CardDescription>
           </CardHeader>
@@ -371,18 +371,18 @@ export function AdminSchedule() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-gray-900">執行時間</TableHead>
-                      <TableHead className="text-gray-900">狀態</TableHead>
-                      <TableHead className="text-gray-900">成功數</TableHead>
-                      <TableHead className="text-gray-900">失敗數</TableHead>
-                      <TableHead className="text-gray-900">新增記錄</TableHead>
-                      <TableHead className="text-gray-900">執行時長</TableHead>
+                      <TableHead className="text-white">執行時間</TableHead>
+                      <TableHead className="text-white">狀態</TableHead>
+                      <TableHead className="text-white">成功數</TableHead>
+                      <TableHead className="text-white">失敗數</TableHead>
+                      <TableHead className="text-white">新增記錄</TableHead>
+                      <TableHead className="text-white">執行時長</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {ebayHistory.map((record) => (
                       <TableRow key={record.id}>
-                        <TableCell className="text-gray-900">
+                        <TableCell className="text-white">
                           {new Date(record.startedAt).toLocaleString('zh-TW', {
                             year: 'numeric',
                             month: '2-digit',
@@ -410,16 +410,16 @@ export function AdminSchedule() {
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="text-gray-900">
+                        <TableCell className="text-white">
                           {record.ebaySuccessCount || 0}
                         </TableCell>
-                        <TableCell className="text-gray-900">
+                        <TableCell className="text-white">
                           {record.ebayFailureCount || 0}
                         </TableCell>
-                        <TableCell className="text-gray-900">
+                        <TableCell className="text-white">
                           {record.ebayRecordsAdded || 0}
                         </TableCell>
-                        <TableCell className="text-gray-900">
+                        <TableCell className="text-white">
                           {record.durationMs ? `${(record.durationMs / 1000).toFixed(1)}s` : '-'}
                         </TableCell>
                       </TableRow>
@@ -428,7 +428,7 @@ export function AdminSchedule() {
                 </Table>
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">尚無執行記錄</p>
+              <p className="text-gray-400 text-center py-8">尚無執行記錄</p>
             )}
           </CardContent>
         </Card>

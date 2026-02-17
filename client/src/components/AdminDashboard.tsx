@@ -68,8 +68,8 @@ export function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">數據統計</h2>
-        <p className="text-muted-foreground">系統整體數據概覽</p>
+        <h2 className="text-2xl font-bold text-white mb-2">數據統計</h2>
+        <p className="text-gray-400">系統整體數據概覽</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -83,8 +83,8 @@ export function AdminDashboard() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                  <p className="text-3xl font-bold text-foreground">{stat.value.toLocaleString()}</p>
+                  <p className="text-sm text-gray-400 mb-1">{stat.title}</p>
+                  <p className="text-3xl font-bold text-white">{stat.value.toLocaleString()}</p>
                 </div>
                 <div className={`p-3 rounded-full ${stat.bgColor}`}>
                   <Icon className="w-6 h-6" style={{ color: stat.color }} />
@@ -185,8 +185,8 @@ function DataSourceHealthPanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">數據源健康監控</h2>
-        <p className="text-muted-foreground">實時監控數據源連接狀態和性能指標</p>
+        <h2 className="text-2xl font-bold text-white mb-2">數據源健康監控</h2>
+        <p className="text-gray-400">實時監控數據源連接狀態和性能指標</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -197,12 +197,12 @@ function DataSourceHealthPanel() {
           return (
             <Card 
               key={index} 
-              className={`p-6 border-l-4 ${card.borderColor}`}
+              className={`p-6 border-l-4 ${card.borderColor} bg-gray-900`}
             >
               <div className="space-y-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">{card.title}</h3>
+                  <h3 className="text-lg font-semibold text-white">{card.title}</h3>
                   <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${statusInfo.bgColor}`}>
                     {getStatusIcon(health?.status)}
                     <span className={`text-sm font-medium ${statusInfo.color}`}>
@@ -215,45 +215,45 @@ function DataSourceHealthPanel() {
                 {health ? (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1">成功率</p>
-                      <p className="text-2xl font-bold text-foreground">
+                      <p className="text-xs text-gray-400 mb-1">成功率</p>
+                      <p className="text-2xl font-bold text-white">
                         {parseFloat(health.successRate).toFixed(1)}%
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1">平均響應時間</p>
-                      <p className="text-2xl font-bold text-foreground">
+                      <p className="text-xs text-gray-400 mb-1">平均響應時間</p>
+                      <p className="text-2xl font-bold text-white">
                         {health.avgResponseTime}ms
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1">總請求數</p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="text-xs text-gray-400 mb-1">總請求數</p>
+                      <p className="text-lg font-semibold text-white">
                         {health.totalRequests.toLocaleString()}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1">連續失敗</p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="text-xs text-gray-400 mb-1">連續失敗</p>
+                      <p className="text-lg font-semibold text-white">
                         {health.consecutiveFailures}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">暫無健康數據</p>
+                  <p className="text-sm text-gray-400">暫無健康數據</p>
                 )}
 
                 {/* Last Success Time */}
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-4 border-t border-gray-700">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">上次成功：</span>
-                    <span className="font-medium text-foreground">
+                    <span className="text-gray-400">上次成功：</span>
+                    <span className="font-medium text-white">
                       {formatTime(health?.lastSuccessAt)}
                     </span>
                   </div>
                   {health?.lastFailureAt && (
                     <div className="flex items-center justify-between text-sm mt-2">
-                      <span className="text-muted-foreground">上次失敗：</span>
+                      <span className="text-gray-400">上次失敗：</span>
                       <span className="font-medium text-red-600">
                         {formatTime(health.lastFailureAt)}
                       </span>
@@ -323,8 +323,8 @@ function ArticleManagementPanel({ articleStats, isLoading, onNavigate }: { artic
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">文章管理</h2>
-          <p className="text-muted-foreground">市場洞察博客文章統計</p>
+          <h2 className="text-2xl font-bold text-white mb-2">文章管理</h2>
+          <p className="text-gray-400">市場洞察博客文章統計</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -358,9 +358,9 @@ function ArticleManagementPanel({ articleStats, isLoading, onNavigate }: { artic
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-foreground mb-2">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
+                <p className="text-sm text-gray-400 mb-1">{stat.title}</p>
+                <p className="text-3xl font-bold text-white mb-2">{stat.value}</p>
+                <p className="text-xs text-gray-400">{stat.description}</p>
               </div>
             </Card>
           );
@@ -428,8 +428,8 @@ function SearchStatsPanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">eBay 搜尋統計</h2>
-        <p className="text-muted-foreground">圖片搜尋效果與效能分析</p>
+        <h2 className="text-2xl font-bold text-white mb-2">eBay 搜尋統計</h2>
+        <p className="text-gray-400">圖片搜尋效果與效能分析</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -447,9 +447,9 @@ function SearchStatsPanel() {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-foreground mb-2">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
+                <p className="text-sm text-gray-400 mb-1">{stat.title}</p>
+                <p className="text-3xl font-bold text-white mb-2">{stat.value}</p>
+                <p className="text-xs text-gray-400">{stat.description}</p>
               </div>
             </Card>
           );
@@ -462,8 +462,8 @@ function SearchStatsPanel() {
             <CheckCircle2 className="w-5 h-5 text-green-500" />
             <h3 className="text-lg font-semibold">搜尋效果分析</h3>
           </div>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>• 總搜尋次數：<span className="font-semibold text-foreground">{searchStats.totalSearches}</span> 次</p>
+          <div className="space-y-2 text-sm text-gray-400">
+            <p>• 總搜尋次數：<span className="font-semibold text-white">{searchStats.totalSearches}</span> 次</p>
             <p>• 圖片搜尋成功率：<span className="font-semibold text-green-600">{searchStats.imageSuccessRate.toFixed(2)}%</span></p>
             <p>• 圖片搜尋平均耗時：<span className="font-semibold text-blue-600">{(searchStats.avgImageDuration / 1000).toFixed(2)}s</span></p>
             <p>• 文字搜尋平均耗時：<span className="font-semibold text-purple-600">{(searchStats.avgTextDuration / 1000).toFixed(2)}s</span></p>
