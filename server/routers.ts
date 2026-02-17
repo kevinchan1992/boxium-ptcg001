@@ -85,27 +85,60 @@ export const appRouter = router({
           // Simple optimization: Use getPopularCards and enrich with price data
           const popularCards = await db.getPopularCards(input.limit);
           
-          // Enrich each card with latest price
+          // Enrich each card with latest price and calculate real price change
           const enrichedCards = await Promise.all(
             popularCards.map(async (card) => {
               const priceHistory = await db.getPriceHistoryByCardId(card.id);
-              const psa10History = priceHistory.filter(r => 
-                r.grade === "PSA 10" || r.grade === "PSA10"
+              
+              // Only use SNKRDUNK actual transaction data for price calculation
+              const snkrdunkHistory = priceHistory
+                .filter(r => r.source === "snkrdunk" && (r.grade === "PSA 10" || r.grade === "PSA10"))
+                .sort((a, b) => new Date(b.soldAt || b.createdAt).getTime() - new Date(a.soldAt || a.createdAt).getTime());
+              
+              if (snkrdunkHistory.length === 0) {
+                return {
+                  ...card,
+                  currentPrice: 0,
+                  priceChange: 0,
+                  priceChangeFormatted: "0.0%",
+                };
+              }
+              
+              // Get latest price (most recent transaction)
+              const latestPrice = parseFloat(snkrdunkHistory[0].price);
+              
+              // Calculate price change (compare with 30 days ago)
+              const thirtyDaysAgo = new Date();
+              thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+              
+              const oldPriceRecords = snkrdunkHistory.filter(r => 
+                new Date(r.soldAt || r.createdAt) <= thirtyDaysAgo
               );
               
-              // Get latest price
-              const latestPrice = psa10History.length > 0 
-                ? parseFloat(psa10History[0].price) 
-                : 0;
+              let priceChange = 0;
+              let priceChangeFormatted = "0.0%";
+              
+              if (oldPriceRecords.length > 0) {
+                // Use the average of old prices for more stable comparison
+                const oldPriceSum = oldPriceRecords.reduce((sum, r) => sum + parseFloat(r.price), 0);
+                const oldPriceAvg = oldPriceSum / oldPriceRecords.length;
+                
+                priceChange = ((latestPrice - oldPriceAvg) / oldPriceAvg) * 100;
+                const sign = priceChange >= 0 ? "+" : "";
+                priceChangeFormatted = `${sign}${priceChange.toFixed(1)}%`;
+              }
               
               return {
                 ...card,
                 currentPrice: latestPrice,
-                priceChange: 5.0, // Placeholder value
-                priceChangeFormatted: "+5.0%", // Placeholder value
+                priceChange,
+                priceChangeFormatted,
               };
             })
           );
+          
+          // Sort by price change (highest to lowest)
+          enrichedCards.sort((a, b) => b.priceChange - a.priceChange);
           
           return enrichedCards;
         } catch (error: any) {
