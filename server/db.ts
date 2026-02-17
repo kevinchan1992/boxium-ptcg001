@@ -297,6 +297,14 @@ export async function getAllCards() {
   return result;
 }
 
+export async function getTotalCardCount() {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const result = await db.select({ count: sql<number>`count(*)` }).from(cards);
+  return result[0]?.count || 0;
+}
+
 export async function getPopularCards(limit: number = 10) {
   const db = await getDb();
   if (!db) return [];

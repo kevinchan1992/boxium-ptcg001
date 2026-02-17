@@ -60,6 +60,22 @@ export const appRouter = router({
         return cards;
       }),
 
+    getStats: publicProcedure
+      .query(async () => {
+        try {
+          const totalCards = await db.getTotalCardCount();
+          return {
+            totalCards,
+          };
+        } catch (error: any) {
+          console.error("[getStats] Error:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to get stats: ${error.message}`,
+          });
+        }
+      }),
+
     getTrending: publicProcedure
       .input(z.object({
         limit: z.number().optional().default(5),

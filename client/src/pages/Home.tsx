@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { TrendingUp, Search, BarChart3, Trophy, Facebook, Twitter, Instagram, Mail, User, LogOut, Flame } from "lucide-react";
+import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
@@ -80,6 +80,9 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   
+  // Fetch real card count from database
+  const { data: stats } = trpc.cards.getStats.useQuery();
+  
 
 
   return (
@@ -110,7 +113,7 @@ export default function Home() {
             {/* Key Stats - Responsive layout */}
             <div className="grid grid-cols-2 gap-2 md:gap-5 w-full max-w-md px-2">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
-                <div className="text-base md:text-2xl font-bold text-[#ffed00] mb-0.5">500+</div>
+                <div className="text-base md:text-2xl font-bold text-[#ffed00] mb-0.5">{stats?.totalCards || 0}+</div>
                 <div className="text-white/80 text-[9px] md:text-xs">{t("home.trackedCards")}</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
@@ -126,7 +129,7 @@ export default function Home() {
                   className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
                   style={{ backgroundColor: "#ffed00", color: "#06038d" }}
                 >
-                  開始探索
+                  {t("home.startExploring")}
                 </Button>
               </Link>
             </div>
@@ -259,10 +262,10 @@ export default function Home() {
       <section className="py-6 md:py-12 px-4 sm:px-6 bg-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5 md:mb-3" style={{ color: "#06038d" }}>
-            準備好開始你的PTCG之旅了嗎？
+            {t("home.readyToStart")}
           </h2>
           <p className="text-gray-600 text-[11px] sm:text-xs md:text-sm mb-3 md:mb-5 leading-relaxed px-2">
-            使用 BOXIUM 的智能搜尋和價格分析工具，找到你的愛好收藏品。
+            {t("home.readyToStartDesc")}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center px-2">
@@ -271,7 +274,7 @@ export default function Home() {
                 className="px-6 md:px-8 py-2 md:py-3 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
                 style={{ backgroundColor: "#06038d", color: "white" }}
               >
-                開始搜尋卡牌
+                {t("home.startSearching")}
               </Button>
             </Link>
             <Link href="/research">
@@ -280,7 +283,7 @@ export default function Home() {
                 className="px-6 md:px-8 py-2 md:py-3 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
                 style={{ borderColor: "#06038d", color: "#06038d" }}
               >
-                查看市場趨勢
+                {t("home.viewMarketTrends")}
               </Button>
             </Link>
           </div>
@@ -299,44 +302,38 @@ export default function Home() {
                 className="h-8 md:h-10 mb-4"
               />
               <p className="text-white/80 text-sm md:text-base leading-relaxed">
-                專注於 Pokémon TCG 價格查詢與市場分析的綜合平台
+                {t("home.footerDesc")}
               </p>
             </div>
 
             {/* Quick Links */}
             <div>
-              <h4 className="text-white font-bold mb-4 text-sm md:text-base">快速導航</h4>
+              <h4 className="text-white font-bold mb-4 text-sm md:text-base">{t("home.quickLinks")}</h4>
               <ul className="space-y-2">
-                <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">卡牌搜尋</Link></li>
-                <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">市場報告</Link></li>
-                <li><Link href="/pricing" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">價格查詢</Link></li>
-                <li><Link href="/admin" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">管理後台</Link></li>
+                <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">{t("home.cardSearch")}</Link></li>
+                <li><Link href="/market-insights" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">{t("home.marketReport")}</Link></li>
+                <li><Link href="/pricing" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">{t("home.priceQuery")}</Link></li>
+                <li><Link href="/admin" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">{t("home.adminPanel")}</Link></li>
               </ul>
             </div>
 
             {/* Info */}
             <div>
-              <h4 className="text-white font-bold mb-4 text-sm md:text-base">關於我們</h4>
+              <h4 className="text-white font-bold mb-4 text-sm md:text-base">{t("home.aboutUs")}</h4>
               <p className="text-white/80 text-xs md:text-sm leading-relaxed">
-                BOXIUM 致力於為 Pokémon TCG 投資者和收藏家提供最準確、最專業的市場資訊和價格分析工具。
+                {t("home.aboutUsDesc")}
               </p>
             </div>
 
             {/* Social Links */}
             <div>
-              <h4 className="text-white font-bold mb-4 text-sm md:text-base">社交媒體</h4>
+              <h4 className="text-white font-bold mb-4 text-sm md:text-base">{t("home.socialMedia")}</h4>
               <div className="flex gap-4">
-                <a href="#" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Facebook">
+                <a href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Facebook">
                   <Facebook className="h-5 w-5" />
                 </a>
-                <a href="#" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Twitter">
-                  <Twitter className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Instagram">
+                <a href="https://www.instagram.com/boxium.gamecard?igsh=MTBha2wyNWR4d3lpcQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Instagram">
                   <Instagram className="h-5 w-5" />
-                </a>
-                <a href="#" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Email">
-                  <Mail className="h-5 w-5" />
                 </a>
               </div>
             </div>
@@ -345,11 +342,11 @@ export default function Home() {
           <div className="border-t border-white/20 pt-8 text-center">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-4">
               <Link href="/terms" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
-                服務條款
+                {t("home.termsOfService")}
               </Link>
               <span className="hidden sm:inline text-white/40">|</span>
               <Link href="/privacy" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
-                隱私權政策
+                {t("home.privacyPolicy")}
               </Link>
             </div>
             <p className="text-white/60 text-xs md:text-sm">© 2026 BOXIUM. All rights reserved. | Luck in Every Box</p>
