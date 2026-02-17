@@ -62,12 +62,13 @@ export function AdminSchedule() {
   });
 
   const handleSaveConfig = () => {
-    updateConfig.mutate({
+    const data = {
       snkrdunkEnabled,
       snkrdunkUpdateTime,
       ebayEnabled,
       ebayUpdateTime,
-    });
+    };
+    updateConfig.mutate(data);
   };
 
   const formatLastExecutedTime = (timestamp: Date | null | undefined) => {
@@ -106,11 +107,14 @@ export function AdminSchedule() {
             {/* Enable/Disable Switch */}
             <div className="flex items-center justify-between">
               <Label htmlFor="snkrdunk-enabled" className="text-gray-900">啟用自動更新</Label>
-              <Switch
-                id="snkrdunk-enabled"
-                checked={snkrdunkEnabled}
-                onCheckedChange={setSnkrdunkEnabled}
-              />
+            <Switch
+              id="snkrdunk-enabled"
+              checked={snkrdunkEnabled}
+              onCheckedChange={(checked) => {
+                console.log('[AdminSchedule] SNKRDUNK switch changed:', checked);
+                setSnkrdunkEnabled(checked);
+              }}
+            />
             </div>
 
             {/* Update Time Input */}
@@ -165,11 +169,14 @@ export function AdminSchedule() {
             {/* Enable/Disable Switch */}
             <div className="flex items-center justify-between">
               <Label htmlFor="ebay-enabled" className="text-gray-900">啟用自動更新</Label>
-              <Switch
-                id="ebay-enabled"
-                checked={ebayEnabled}
-                onCheckedChange={setEbayEnabled}
-              />
+            <Switch
+              id="ebay-enabled"
+              checked={ebayEnabled}
+              onCheckedChange={(checked) => {
+                console.log('[AdminSchedule] eBay switch changed:', checked);
+                setEbayEnabled(checked);
+              }}
+            />
             </div>
 
             {/* Update Time Input */}

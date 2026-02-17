@@ -1,0 +1,22 @@
+{
+  "query": "SELECT * FROM priceUpdateSchedule;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT * FROM priceUpdateSchedule;",
+  "rows": [
+    {
+      "id": "1",
+      "snkrdunkEnabled": "1",
+      "snkrdunkUpdateTime": "02:00",
+      "snkrdunkLastExecutedAt": "NULL",
+      "ebayEnabled": "1",
+      "ebayUpdateTime": "03:00",
+      "ebayLastExecutedAt": "2026-02-16 19:00:01",
+      "timezone": "Asia/Hong_Kong",
+      "createdAt": "2026-02-16 03:20:48",
+      "updatedAt": "2026-02-16 19:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsnkrdunkEnabled\tsnkrdunkUpdateTime\tsnkrdunkLastExecutedAt\tebayEnabled\tebayUpdateTime\tebayLastExecutedAt\ttimezone\tcreatedAt\tupdatedAt\n1\t1\t02:00\tNULL\t1\t03:00\t2026-02-16 19:00:01\tAsia/Hong_Kong\t2026-02-16 03:20:48\t2026-02-16 19:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 1552
+}
