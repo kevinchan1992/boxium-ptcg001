@@ -97,7 +97,7 @@ export function PriceTrendChart({
   if (filteredData.length === 0) {
     return (
       <Card className="p-6 bg-card border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-4">卡牌價格趨勢</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">卡牌價格趨勢（所有評級）</h3>
         <div className="flex items-center justify-center h-96 text-muted-foreground">
           暫無價格數據
         </div>
@@ -108,11 +108,11 @@ export function PriceTrendChart({
   return (
     <Card className="p-6 bg-card border-border">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">PSA 10 價格趨勢 - {cardName}</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">價格趨勢（所有評級） - {cardName}</h3>
 
         {/* Time Range Buttons */}
         <div className="flex gap-2 mb-6">
-          <span className="text-sm text-muted-foreground self-center mr-2">PSA 10 時間範圍：</span>
+          <span className="text-sm text-muted-foreground self-center mr-2">時間範圍：</span>
           <Button
             variant={timeRange === "7d" ? "default" : "outline"}
             size="sm"
