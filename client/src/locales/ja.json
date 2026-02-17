@@ -85,7 +85,27 @@
     "ebayDisclaimer": "これはeBayの市場出品価格（実際の取引価格ではありません）で、参考用です。実際の取引価格は異なる場合があります。",
     "cachedData": "キャッシュデータ、最終更新：",
     "liveMarketData": "リアルタイム市場出品価格（販売済み取引記録ではありません）",
-    "exchangeRate": "現在の為替レート"
+    "exchangeRate": "現在の為替レート",
+    "basicInfo": "基本情報",
+    "cardNumber": "カード番号",
+    "series": "シリーズ",
+    "noGradeData": "このグレードのデータがありません",
+    "noEbayData": "eBay取引記録がありません（API制限を超えた可能性があります。後で再試行してください）",
+    "hkdPrice": "HKD価格",
+    "usedGrade": "中古",
+    "chartTitle": "PSA 10 価格トレンド",
+    "timeRangeLabel": "PSA 10 期間",
+    "timeRange": {
+      "7days": "7日間",
+      "30days": "30日間",
+      "90days": "90日間",
+      "all": "すべて"
+    },
+    "cardName": "カード名",
+    "japaneseName": "日本語名",
+    "title": "タイトル",
+    "productTitle": "商品タイトル",
+    "usdPrice": "USD価格"
   },
   "admin": {
     "title": "管理パネル",

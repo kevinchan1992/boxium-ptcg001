@@ -12,6 +12,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface PriceTrendData {
   date: string;
@@ -49,6 +50,7 @@ export function PriceTrendChart({
   stats,
   isLoading = false,
 }: PriceTrendChartProps) {
+  const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("all");
 
   // Filter data based on time range
@@ -99,9 +101,9 @@ export function PriceTrendChart({
   if (filteredData.length === 0) {
     return (
       <Card className="p-6 bg-card border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-4">PSA 10 價格趨勢</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">{t("cardDetail.chartTitle")}</h3>
         <div className="flex items-center justify-center h-96 text-muted-foreground">
-          暫無 PSA 10 交易價格數據
+          {t("cardDetail.noData")}
         </div>
       </Card>
     );
@@ -110,38 +112,38 @@ export function PriceTrendChart({
   return (
     <Card className="p-6 bg-card border-border">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">PSA 10 價格趨勢 - {cardName}</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">{t("cardDetail.chartTitle")} - {cardName}</h3>
 
         {/* Time Range Buttons */}
         <div className="flex gap-2 mb-6">
-          <span className="text-sm text-muted-foreground self-center mr-2">PSA 10 時間範圍：</span>
+          <span className="text-sm text-muted-foreground self-center mr-2">{t("cardDetail.timeRangeLabel")}：</span>
           <Button
             variant={timeRange === "7d" ? "default" : "outline"}
             size="sm"
             onClick={() => setTimeRange("7d")}
           >
-            7 天
+            {t("cardDetail.timeRange.7days")}
           </Button>
           <Button
             variant={timeRange === "30d" ? "default" : "outline"}
             size="sm"
             onClick={() => setTimeRange("30d")}
           >
-            30 天
+            {t("cardDetail.timeRange.30days")}
           </Button>
           <Button
             variant={timeRange === "90d" ? "default" : "outline"}
             size="sm"
             onClick={() => setTimeRange("90d")}
           >
-            90 天
+            {t("cardDetail.timeRange.90days")}
           </Button>
           <Button
             variant={timeRange === "all" ? "default" : "outline"}
             size="sm"
             onClick={() => setTimeRange("all")}
           >
-            全部
+            {t("cardDetail.timeRange.all")}
           </Button>
         </div>
 

@@ -85,7 +85,27 @@
     "ebayDisclaimer": "This is eBay market listing price (not actual sale price), for reference only. Actual sale prices may differ.",
     "cachedData": "Cached data, last updated:",
     "liveMarketData": "Live market listing prices (not sold transaction records)",
-    "exchangeRate": "Current exchange rate"
+    "exchangeRate": "Current exchange rate",
+    "basicInfo": "Basic Information",
+    "cardNumber": "Card Number",
+    "series": "Series",
+    "noGradeData": "No data available for this grade",
+    "noEbayData": "No eBay transaction records (API limit may be exceeded, please try again later)",
+    "hkdPrice": "HKD Price",
+    "usedGrade": "Used",
+    "chartTitle": "PSA 10 Price Trend",
+    "timeRangeLabel": "PSA 10 Time Range",
+    "timeRange": {
+      "7days": "7 Days",
+      "30days": "30 Days",
+      "90days": "90 Days",
+      "all": "All"
+    },
+    "cardName": "Card Name",
+    "japaneseName": "Japanese Name",
+    "title": "Title",
+    "productTitle": "Product Title",
+    "usdPrice": "USD Price"
   },
   "admin": {
     "title": "Admin Panel",

@@ -338,7 +338,7 @@ export default function CardDetail() {
                             <td className="py-3 px-4 text-center text-foreground text-sm w-24">
                               {isUngraded ? (
                                 <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-muted text-xs font-medium">
-                                  中古
+                                  {t("cardDetail.usedGrade")}
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center justify-center font-medium">{displayGrade}</span>
@@ -365,10 +365,10 @@ export default function CardDetail() {
                       <thead className="sticky top-0 bg-card border-b border-border">
                         <tr>
                           <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
-                            日期
+                            {t("cardDetail.date")}
                           </th>
                           <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm w-32">
-                            HKD 價格
+                            {t("cardDetail.hkdPrice")}
                           </th>
                         </tr>
                       </thead>
@@ -405,13 +405,13 @@ export default function CardDetail() {
                     <thead className="sticky top-0 bg-card border-b border-border">
                       <tr>
                         <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
-                          標題
+                          {t("cardDetail.title")}
                         </th>
                         <th className="text-center py-3 px-4 text-muted-foreground font-medium text-sm w-32">
-                          日期
+                          {t("cardDetail.date")}
                         </th>
                         <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm w-24">
-                          價格
+                          {t("cardDetail.price")}
                         </th>
                       </tr>
                     </thead>
@@ -460,14 +460,14 @@ export default function CardDetail() {
                     <table className="w-full">
                       <thead className="sticky top-0 bg-card border-b border-border">
                         <tr>
-                          <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
-                            商品標題
-                          </th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
+                          {t("cardDetail.productTitle")}
+                        </th>
+                        <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm w-28">
+                          {t("cardDetail.usdPrice")}
+                        </th>
                           <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm w-28">
-                            USD 價格
-                          </th>
-                          <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm w-28">
-                            HKD 價格
+                            {t("cardDetail.hkdPrice")}
                           </th>
                         </tr>
                       </thead>
@@ -500,8 +500,8 @@ export default function CardDetail() {
               ) : (
                 <p className="text-muted-foreground py-8 text-center">
                   {activeSource === "ebay" 
-                    ? "暫無 eBay 交易記錄（可能超出 API 調用限制，請稍後再試）" 
-                    : "暫無符合該等級的數據"}
+                    ? t("cardDetail.noEbayData") 
+                    : t("cardDetail.noGradeData")}
                 </p>
               )}
             </div>
@@ -520,28 +520,28 @@ export default function CardDetail() {
             {/* Basic Information */}
             <div className="bg-card rounded-lg p-6 border border-border">
               <h3 className="text-xl font-semibold text-foreground mb-4">
-                基本資料
+                {t("cardDetail.basicInfo")}
               </h3>
               <dl className="space-y-3">
                 <div className="flex">
-                  <dt className="text-muted-foreground w-32">卡牌名稱:</dt>
+                  <dt className="text-muted-foreground w-32">{t("cardDetail.cardName")}:</dt>
                   <dd className="text-foreground">{card.name}</dd>
                 </div>
                 {card.nameJa && (
                   <div className="flex">
-                    <dt className="text-muted-foreground w-32">日文名稱:</dt>
+                    <dt className="text-muted-foreground w-32">{t("cardDetail.japaneseName")}:</dt>
                     <dd className="text-foreground">{card.nameJa}</dd>
                   </div>
                 )}
                 {card.cardNumber && (
                   <div className="flex">
-                    <dt className="text-muted-foreground w-32">卡牌編號:</dt>
+                    <dt className="text-muted-foreground w-32">{t("cardDetail.cardNumber")}:</dt>
                     <dd className="text-foreground">{card.cardNumber}</dd>
                   </div>
                 )}
                 {card.series && (
                   <div className="flex">
-                    <dt className="text-muted-foreground w-32">所屬系列:</dt>
+                    <dt className="text-muted-foreground w-32">{t("cardDetail.series")}:</dt>
                     <dd className="text-foreground">{card.series}</dd>
                   </div>
                 )}

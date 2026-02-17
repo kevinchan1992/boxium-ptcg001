@@ -85,7 +85,27 @@
     "ebayDisclaimer": "此為 eBay 市場掛牌價格（非實際成交價），僅供參考。實際成交價格可能與此不同。",
     "cachedData": "資料庫緩存數據，最後更新：",
     "liveMarketData": "即時市場掛牌價格（非已售出交易記錄）",
-    "exchangeRate": "當前匯率"
+    "exchangeRate": "當前匯率",
+    "basicInfo": "基本資料",
+    "cardNumber": "卡牌編號",
+    "series": "所屬系列",
+    "noGradeData": "暫無符合該等級的數據",
+    "noEbayData": "暫無 eBay 交易記錄（可能超出 API 調用限制，請稍後再試）",
+    "hkdPrice": "HKD 價格",
+    "usedGrade": "中古",
+    "chartTitle": "PSA 10 價格趨勢",
+    "timeRangeLabel": "PSA 10 時間範圍",
+    "timeRange": {
+      "7days": "7 天",
+      "30days": "30 天",
+      "90days": "90 天",
+      "all": "全部"
+    },
+    "cardName": "卡牌名稱",
+    "japaneseName": "日文名稱",
+    "title": "標題",
+    "productTitle": "商品標題",
+    "usdPrice": "USD 價格"
   },
   "admin": {
     "title": "管理後台",

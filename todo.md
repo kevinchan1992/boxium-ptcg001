@@ -2336,3 +2336,25 @@
 - [x] 檢查數據源管理標籤的卡片和表格樣式
 - [x] 檢查統計資訊標籤的卡片和表格樣式
 - [x] 確保全頁面黑底主題一致性
+
+## 卡牌詳細頁面多語言支持 - 進行中
+
+- [ ] 檢查卡牌詳細頁面當前的文字內容
+- [ ] 添加翻譯 key 到 zh-TW.json（時間範圍按鈕、標題、按鈕、表格標題等）
+- [ ] 添加翻譯 key 到 en.json 和 ja.json
+- [ ] 修改 CardDetail.tsx 使用 i18n
+- [ ] 修改 PriceTrendChart.tsx 使用 i18n
+- [ ] 測試語言切換功能（中文、英文、日文）
+
+## 新功能: 卡牌詳細頁面多語言支持 - 完成
+
+- [x] 添加 cardDetail 翻譯 key 到 zh-TW.json（包含時間範圍、圖表標題、基本資料等）
+- [x] 添加 cardDetail 翻譯 key 到 en.json（英文翻譯）
+- [x] 添加 cardDetail 翻譯 key 到 ja.json（日文翻譯）
+- [x] 修改 CardDetail.tsx 使用 i18n 翻譯（替換所有硬編碼中文文字）
+- [x] 修改 PriceTrendChart.tsx 使用 i18n 翻譯（時間範圍按鈕、圖表標題）
+- [x] 修正翻譯 key 結構（timeRange.7days, timeRange.30days, timeRange.90days, timeRange.all）
+- [x] 測試繁體中文語言切換（所有文字正確顯示）
+- [x] 測試英文語言切換（所有文字正確顯示）
+- [x] 測試日文語言切換（所有文字正確顯示）
+- [x] 驗證所有翻譯功能正常運作
