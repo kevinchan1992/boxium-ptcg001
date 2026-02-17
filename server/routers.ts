@@ -1752,3 +1752,5 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
   }),
 
 });
+
+export type AppRouter = typeof appRouter;

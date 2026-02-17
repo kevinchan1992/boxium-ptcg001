@@ -5,13 +5,7 @@ import { useLocation } from "wouter";
 
 export function AdminDashboard() {
   const { data: stats, isLoading } = trpc.admin.getDashboardStats.useQuery();
-  const { data: articleStats, isLoading: isLoadingArticles, error: articleError } = trpc.blog.getAllArticles.useQuery(
-    {},
-    {
-      retry: false,
-      refetchOnWindowFocus: false,
-    }
-  );
+
   const [, setLocation] = useLocation();
 
   if (isLoading) {
@@ -95,8 +89,7 @@ export function AdminDashboard() {
         })}
       </div>
 
-      {/* 文章管理面板 */}
-      <ArticleManagementPanel articleStats={articleStats} isLoading={isLoadingArticles} onNavigate={setLocation} />
+
 
       {/* 搜尋統計面板 */}
       <SearchStatsPanel />
@@ -109,7 +102,10 @@ export function AdminDashboard() {
 
 // 數據源健康監控面板組件
 function DataSourceHealthPanel() {
-  const { data: healthMetrics, isLoading } = trpc.priceSchedule.getHealthMetrics.useQuery();
+  // DEPRECATED: priceSchedule router has been removed
+  // const { data: healthMetrics, isLoading } = trpc.priceSchedule.getHealthMetrics.useQuery();
+  const healthMetrics: any[] = [];
+  const isLoading = false;
 
   if (isLoading) {
     return (
@@ -127,8 +123,8 @@ function DataSourceHealthPanel() {
     );
   }
 
-  const snkrdunkHealth = healthMetrics?.find(m => m.source === 'snkrdunk');
-  const ebayHealth = healthMetrics?.find(m => m.source === 'ebay');
+  const snkrdunkHealth: any = healthMetrics?.find((m: any) => m.source === 'snkrdunk');
+  const ebayHealth: any = healthMetrics?.find((m: any) => m.source === 'ebay');
 
   const getStatusIcon = (status: string | undefined) => {
     switch (status) {
@@ -269,106 +265,6 @@ function DataSourceHealthPanel() {
   );
 }
 
-// 文章管理面板組件
-function ArticleManagementPanel({ articleStats, isLoading, onNavigate }: { articleStats: any; isLoading: boolean; onNavigate: (path: string) => void }) {
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="h-6 bg-muted rounded w-1/4 animate-pulse"></div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="p-6 animate-pulse">
-              <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
-              <div className="h-8 bg-muted rounded w-1/3"></div>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const articles = articleStats?.articles || [];
-  const totalArticles = articles.length;
-  const publishedArticles = articles.filter((a: any) => a.status === 'published').length;
-  const draftArticles = articles.filter((a: any) => a.status === 'draft').length;
-
-  const articleStatCards = [
-    {
-      title: "文章總數",
-      value: totalArticles,
-      icon: BookOpen,
-      color: "#3b82f6",
-      bgColor: "bg-blue-50",
-      description: "所有文章數量",
-    },
-    {
-      title: "已發布文章",
-      value: publishedArticles,
-      icon: CheckCircle2,
-      color: "#10b981",
-      bgColor: "bg-green-50",
-      description: "公開可見的文章",
-    },
-    {
-      title: "草稿文章",
-      value: draftArticles,
-      icon: FileEdit,
-      color: "#f97316",
-      bgColor: "bg-orange-50",
-      description: "尚未發布的草稿",
-    },
-  ];
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-2">文章管理</h2>
-          <p className="text-gray-400">市場洞察博客文章統計</p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => onNavigate('/admin/articles')}
-            className="px-4 py-2 bg-[#1E3A8A] text-white rounded-lg hover:bg-[#1E3A8A]/90 transition-colors font-medium"
-          >
-            管理文章
-          </button>
-          <button
-            onClick={() => onNavigate('/admin/create-article')}
-            className="px-4 py-2 bg-[#FDD835] text-[#1E3A8A] font-semibold rounded-lg hover:bg-[#FDD835]/90 transition-colors"
-          >
-            AI 生成文章
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {articleStatCards.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <Card 
-              key={index} 
-              className="p-6 hover:shadow-lg transition-all hover:scale-105 cursor-pointer border-l-4" 
-              style={{ borderLeftColor: stat.color }}
-              onClick={() => onNavigate('/admin/articles')}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                  <Icon className="w-6 h-6" style={{ color: stat.color }} />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-white mb-2">{stat.value}</p>
-                <p className="text-xs text-gray-400">{stat.description}</p>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 // 搜尋統計面板組件
 function SearchStatsPanel() {

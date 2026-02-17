@@ -15,9 +15,9 @@ import Admin from "./pages/Admin";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
-import ArticleDetail from "./pages/ArticleDetail";
 
-import ArticleManagement from "./pages/ArticleManagement";
+
+
 
 function Router() {
   return (
@@ -33,9 +33,9 @@ function Router() {
 
       <Route path="/pricing" component={Pricing} />
 
-      <Route path="/market-insights/:slug" component={ArticleDetail} />
 
-      <Route path="/admin/articles" component={ArticleManagement} />
+
+
       <Route path="/admin" component={Admin} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />

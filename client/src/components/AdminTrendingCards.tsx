@@ -125,7 +125,7 @@ export function AdminTrendingCards() {
                         {card.imageUrl ? (
                           <img
                             src={card.imageUrl}
-                            alt={card.name}
+                            alt={card.name ?? ""}
                             className="w-full h-full object-cover"
                           />
                         ) : (
