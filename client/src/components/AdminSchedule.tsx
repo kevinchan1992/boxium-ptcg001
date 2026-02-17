@@ -6,12 +6,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 // Using window.alert for notifications instead of toast
-import { Clock, RefreshCw, Calendar } from "lucide-react";
+import { Clock, RefreshCw, Calendar, History, CheckCircle2, XCircle, Timer } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export function AdminSchedule() {
   
   // Fetch schedule config
   const { data: config, refetch } = trpc.priceSchedule.getConfig.useQuery();
+  
+  // Fetch execution history for SNKRDUNK
+  const { data: snkrdunkHistory } = trpc.priceSchedule.getExecutionHistory.useQuery({
+    scheduleType: 'snkrdunk_daily_update',
+    limit: 20,
+  });
+  
+  // Fetch execution history for eBay
+  const { data: ebayHistory } = trpc.priceSchedule.getExecutionHistory.useQuery({
+    scheduleType: 'ebay_daily_update',
+    limit: 20,
+  });
   
   // Local state for form inputs
   const [snkrdunkEnabled, setSnkrdunkEnabled] = useState(false);
@@ -250,6 +270,169 @@ export function AdminSchedule() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Execution History Section */}
+      <div className="space-y-6 mt-8">
+        <div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+            <History className="w-5 h-5" />
+            執行歷史記錄
+          </h3>
+          <p className="text-gray-600">最近 20 次排程執行記錄</p>
+        </div>
+
+        {/* SNKRDUNK History */}
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader>
+            <CardTitle className="text-gray-900">SNKRDUNK 執行歷史</CardTitle>
+            <CardDescription className="text-gray-600">
+              顯示 SNKRDUNK 價格更新的執行記錄
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {snkrdunkHistory && snkrdunkHistory.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-gray-900">執行時間</TableHead>
+                      <TableHead className="text-gray-900">狀態</TableHead>
+                      <TableHead className="text-gray-900">成功數</TableHead>
+                      <TableHead className="text-gray-900">失敗數</TableHead>
+                      <TableHead className="text-gray-900">新增記錄</TableHead>
+                      <TableHead className="text-gray-900">執行時長</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {snkrdunkHistory.map((record) => (
+                      <TableRow key={record.id}>
+                        <TableCell className="text-gray-900">
+                          {new Date(record.startedAt).toLocaleString('zh-TW', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          {record.status === 'completed' ? (
+                            <span className="flex items-center gap-1 text-green-600">
+                              <CheckCircle2 className="w-4 h-4" />
+                              完成
+                            </span>
+                          ) : record.status === 'failed' ? (
+                            <span className="flex items-center gap-1 text-red-600">
+                              <XCircle className="w-4 h-4" />
+                              失敗
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-blue-600">
+                              <Timer className="w-4 h-4 animate-spin" />
+                              執行中
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-gray-900">
+                          {record.snkrdunkSuccessCount || 0}
+                        </TableCell>
+                        <TableCell className="text-gray-900">
+                          {record.snkrdunkFailureCount || 0}
+                        </TableCell>
+                        <TableCell className="text-gray-900">
+                          {record.snkrdunkRecordsAdded || 0}
+                        </TableCell>
+                        <TableCell className="text-gray-900">
+                          {record.durationMs ? `${(record.durationMs / 1000).toFixed(1)}s` : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">尚無執行記錄</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* eBay History */}
+        <Card className="border-l-4 border-l-yellow-500">
+          <CardHeader>
+            <CardTitle className="text-gray-900">eBay 執行歷史</CardTitle>
+            <CardDescription className="text-gray-600">
+              顯示 eBay 價格更新的執行記錄
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {ebayHistory && ebayHistory.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-gray-900">執行時間</TableHead>
+                      <TableHead className="text-gray-900">狀態</TableHead>
+                      <TableHead className="text-gray-900">成功數</TableHead>
+                      <TableHead className="text-gray-900">失敗數</TableHead>
+                      <TableHead className="text-gray-900">新增記錄</TableHead>
+                      <TableHead className="text-gray-900">執行時長</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {ebayHistory.map((record) => (
+                      <TableRow key={record.id}>
+                        <TableCell className="text-gray-900">
+                          {new Date(record.startedAt).toLocaleString('zh-TW', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          {record.status === 'completed' ? (
+                            <span className="flex items-center gap-1 text-green-600">
+                              <CheckCircle2 className="w-4 h-4" />
+                              完成
+                            </span>
+                          ) : record.status === 'failed' ? (
+                            <span className="flex items-center gap-1 text-red-600">
+                              <XCircle className="w-4 h-4" />
+                              失敗
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-blue-600">
+                              <Timer className="w-4 h-4 animate-spin" />
+                              執行中
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-gray-900">
+                          {record.ebaySuccessCount || 0}
+                        </TableCell>
+                        <TableCell className="text-gray-900">
+                          {record.ebayFailureCount || 0}
+                        </TableCell>
+                        <TableCell className="text-gray-900">
+                          {record.ebayRecordsAdded || 0}
+                        </TableCell>
+                        <TableCell className="text-gray-900">
+                          {record.durationMs ? `${(record.durationMs / 1000).toFixed(1)}s` : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">尚無執行記錄</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

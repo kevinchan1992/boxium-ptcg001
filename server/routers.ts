@@ -2111,6 +2111,40 @@ ${input.additionalContext ? `額外背景資訊：${input.additionalContext}` : 
           });
         }
       }),
+
+    // Get execution history (admin only)
+    getExecutionHistory: protectedProcedure
+      .input(z.object({
+        scheduleType: z.enum(['snkrdunk_daily_update', 'ebay_daily_update']),
+        limit: z.number().optional().default(20),
+      }))
+      .query(async ({ input, ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can view execution history',
+          });
+        }
+
+        const history = await db.getScheduleExecutionHistory(input.scheduleType, input.limit);
+        return history;
+      }),
+
+    // Get data source health metrics (admin only)
+    getHealthMetrics: protectedProcedure
+      .query(async ({ ctx }) => {
+        // Check if user is admin
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only admins can view health metrics',
+          });
+        }
+
+        const healthMetrics = await db.getDataSourceHealth();
+        return healthMetrics;
+      }),
    }),
 
   // Storage router for image uploads

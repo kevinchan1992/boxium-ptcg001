@@ -1,5 +1,5 @@
 import * as cron from 'node-cron';
-import { getPriceUpdateSchedule, updateSnkrdunkLastExecutedAt, updateEbayLastExecutedAt } from './db';
+import { getPriceUpdateSchedule, updateSnkrdunkLastExecutedAt, updateEbayLastExecutedAt, addScheduleExecutionHistory, updateScheduleExecutionHistory } from './db';
 import { executeSnkrdunkBatchUpdate, executeEbayBatchUpdate } from './batchUpdateExecutor';
 
 let snkrdunkCronJob: ReturnType<typeof cron.schedule> | null = null;
@@ -54,12 +54,49 @@ function startSnkrdunkScheduler(updateTime: string) {
 
   snkrdunkCronJob = cron.schedule(cronExpression, async () => {
     console.log('[PriceUpdateScheduler] Executing scheduled SNKRDUNK price update...');
+    const startTime = new Date();
+    let historyId: number | null = null;
+    
     try {
-      await executeSnkrdunkBatchUpdate();
+      // Create execution history record
+      historyId = await addScheduleExecutionHistory({
+        scheduleType: 'snkrdunk_daily_update',
+        executionType: 'scheduled',
+        status: 'running',
+        startedAt: startTime,
+      });
+      
+      // Execute SNKRDUNK batch update
+      const result = await executeSnkrdunkBatchUpdate();
       await updateSnkrdunkLastExecutedAt();
+      
+      // Update execution history with success
+      const endTime = new Date();
+      if (historyId !== null) {
+        await updateScheduleExecutionHistory(historyId, {
+          status: 'completed',
+          completedAt: endTime,
+          durationMs: endTime.getTime() - startTime.getTime(),
+          snkrdunkSuccessCount: result.successCount || 0,
+          snkrdunkFailureCount: result.failureCount || 0,
+          snkrdunkRecordsAdded: result.totalRecordsAdded || 0,
+        });
+      }
+      
       console.log('[PriceUpdateScheduler] SNKRDUNK price update completed successfully');
     } catch (error) {
       console.error('[PriceUpdateScheduler] SNKRDUNK price update failed:', error);
+      
+      // Update execution history with failure
+      if (historyId !== null) {
+        const endTime = new Date();
+        await updateScheduleExecutionHistory(historyId, {
+          status: 'failed',
+          completedAt: endTime,
+          durationMs: endTime.getTime() - startTime.getTime(),
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
   }, {
     timezone: 'Asia/Hong_Kong'
@@ -86,12 +123,49 @@ function startEbayScheduler(updateTime: string) {
 
   ebayCronJob = cron.schedule(cronExpression, async () => {
     console.log('[PriceUpdateScheduler] Executing scheduled eBay price update...');
+    const startTime = new Date();
+    let historyId: number | null = null;
+    
     try {
-      await executeEbayBatchUpdate();
+      // Create execution history record
+      historyId = await addScheduleExecutionHistory({
+        scheduleType: 'ebay_daily_update',
+        executionType: 'scheduled',
+        status: 'running',
+        startedAt: startTime,
+      });
+      
+      // Execute eBay batch update
+      const result = await executeEbayBatchUpdate();
       await updateEbayLastExecutedAt();
+      
+      // Update execution history with success
+      const endTime = new Date();
+      if (historyId !== null) {
+        await updateScheduleExecutionHistory(historyId, {
+          status: 'completed',
+          completedAt: endTime,
+          durationMs: endTime.getTime() - startTime.getTime(),
+          ebaySuccessCount: result.successCount || 0,
+          ebayFailureCount: result.failureCount || 0,
+          ebayRecordsAdded: result.totalRecordsAdded || 0,
+        });
+      }
+      
       console.log('[PriceUpdateScheduler] eBay price update completed successfully');
     } catch (error) {
       console.error('[PriceUpdateScheduler] eBay price update failed:', error);
+      
+      // Update execution history with failure
+      if (historyId !== null) {
+        const endTime = new Date();
+        await updateScheduleExecutionHistory(historyId, {
+          status: 'failed',
+          completedAt: endTime,
+          durationMs: endTime.getTime() - startTime.getTime(),
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
   }, {
     timezone: 'Asia/Hong_Kong'

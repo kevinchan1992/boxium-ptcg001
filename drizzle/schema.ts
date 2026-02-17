@@ -306,4 +306,27 @@ export const blogArticles = mysqlTable("blogArticles", {
 export type BlogArticle = typeof blogArticles.$inferSelect;
 export type InsertBlogArticle = typeof blogArticles.$inferInsert;
 
+/**
+ * Data source health table - stores health metrics for data sources (SNKRDUNK, eBay)
+ */
+export const dataSourceHealth = mysqlTable("dataSourceHealth", {
+  id: int("id").autoincrement().primaryKey(),
+  source: mysqlEnum("source", ["snkrdunk", "ebay"]).notNull(), // Data source name
+  status: mysqlEnum("status", ["healthy", "degraded", "down"]).default("healthy").notNull(), // Current health status
+  successRate: decimal("successRate", { precision: 5, scale: 2 }).default("100.00").notNull(), // Success rate percentage (0-100)
+  avgResponseTime: int("avgResponseTime").default(0).notNull(), // Average response time in milliseconds
+  lastSuccessAt: timestamp("lastSuccessAt"), // Last successful fetch time
+  lastFailureAt: timestamp("lastFailureAt"), // Last failure time
+  consecutiveFailures: int("consecutiveFailures").default(0).notNull(), // Number of consecutive failures
+  totalRequests: int("totalRequests").default(0).notNull(), // Total number of requests
+  totalSuccesses: int("totalSuccesses").default(0).notNull(), // Total successful requests
+  totalFailures: int("totalFailures").default(0).notNull(), // Total failed requests
+  lastErrorMessage: text("lastErrorMessage"), // Last error message
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DataSourceHealth = typeof dataSourceHealth.$inferSelect;
+export type InsertDataSourceHealth = typeof dataSourceHealth.$inferInsert;
+
 

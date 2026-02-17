@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `dataSourceHealth` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `source` enum('snkrdunk','ebay') NOT NULL,\n  `status` enum('healthy','degraded','down') NOT NULL DEFAULT 'healthy',\n  `successRate` decimal(5,2) NOT NULL DEFAULT '100.00',\n  `avgResponseTime` int NOT NULL DEFAULT 0,\n  `lastSuccessAt` timestamp NULL,\n  `lastFailureAt` timestamp NULL,\n  `consecutiveFailures` int NOT NULL DEFAULT 0,\n  `totalRequests` int NOT NULL DEFAULT 0,\n  `totalSuccesses` int NOT NULL DEFAULT 0,\n  `totalFailures` int NOT NULL DEFAULT 0,\n  `lastErrorMessage` text,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `dataSourceHealth_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS `dataSourceHealth` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `source` enum('snkrdunk','ebay') NOT NULL,\n  `status` enum('healthy','degraded','down') NOT NULL DEFAULT 'healthy',\n  `successRate` decimal(5,2) NOT NULL DEFAULT '100.00',\n  `avgResponseTime` int NOT NULL DEFAULT 0,\n  `lastSuccessAt` timestamp NULL,\n  `lastFailureAt` timestamp NULL,\n  `consecutiveFailures` int NOT NULL DEFAULT 0,\n  `totalRequests` int NOT NULL DEFAULT 0,\n  `totalSuccesses` int NOT NULL DEFAULT 0,\n  `totalFailures` int NOT NULL DEFAULT 0,\n  `lastErrorMessage` text,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `dataSourceHealth_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1745
+}

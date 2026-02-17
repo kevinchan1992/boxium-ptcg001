@@ -1,6 +1,6 @@
 import { eq, desc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, scheduleExecutionHistory, InsertScheduleExecutionHistory, userSearchLogs, blogArticles, InsertBlogArticle, priceUpdateSchedule } from "../drizzle/schema";;
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, scheduleExecutionHistory, InsertScheduleExecutionHistory, userSearchLogs, blogArticles, InsertBlogArticle, priceUpdateSchedule, dataSourceHealth } from "../drizzle/schema";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1556,4 +1556,96 @@ export async function updateEbayLastExecutedAt() {
   await db.update(priceUpdateSchedule)
     .set({ ebayLastExecutedAt: new Date() })
     .where(eq(priceUpdateSchedule.id, existing.id));
+}
+
+
+/**
+ * Get data source health metrics
+ */
+export async function getDataSourceHealth() {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const result = await db.select().from(dataSourceHealth);
+  return result;
+}
+
+/**
+ * Update data source health metrics
+ */
+export async function updateDataSourceHealth(
+  source: "snkrdunk" | "ebay",
+  data: {
+    success: boolean;
+    responseTime?: number;
+    errorMessage?: string;
+  }
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // 先獲取當前記錄
+  const current = await db
+    .select()
+    .from(dataSourceHealth)
+    .where(eq(dataSourceHealth.source, source))
+    .limit(1);
+
+  if (current.length === 0) {
+    // 如果不存在，創建新記錄
+    await db.insert(dataSourceHealth).values({
+      source,
+      status: data.success ? "healthy" : "degraded",
+      successRate: data.success ? "100.00" : "0.00",
+      avgResponseTime: data.responseTime || 0,
+      lastSuccessAt: data.success ? new Date() : null,
+      lastFailureAt: data.success ? null : new Date(),
+      consecutiveFailures: data.success ? 0 : 1,
+      totalRequests: 1,
+      totalSuccesses: data.success ? 1 : 0,
+      totalFailures: data.success ? 0 : 1,
+      lastErrorMessage: data.errorMessage || null,
+    });
+    return;
+  }
+
+  const record = current[0];
+  const totalRequests = record.totalRequests + 1;
+  const totalSuccesses = record.totalSuccesses + (data.success ? 1 : 0);
+  const totalFailures = record.totalFailures + (data.success ? 0 : 1);
+  const successRate = ((totalSuccesses / totalRequests) * 100).toFixed(2);
+  const consecutiveFailures = data.success ? 0 : record.consecutiveFailures + 1;
+
+  // 計算平均響應時間（移動平均）
+  const avgResponseTime = data.responseTime
+    ? Math.round((record.avgResponseTime * 0.8 + data.responseTime * 0.2))
+    : record.avgResponseTime;
+
+  // 根據連續失敗次數判斷健康狀態
+  let status: "healthy" | "degraded" | "down" = "healthy";
+  if (consecutiveFailures >= 5) {
+    status = "down";
+  } else if (consecutiveFailures >= 2 || parseFloat(successRate) < 80) {
+    status = "degraded";
+  }
+
+  await db
+    .update(dataSourceHealth)
+    .set({
+      status,
+      successRate,
+      avgResponseTime,
+      lastSuccessAt: data.success ? new Date() : record.lastSuccessAt,
+      lastFailureAt: data.success ? record.lastFailureAt : new Date(),
+      consecutiveFailures,
+      totalRequests,
+      totalSuccesses,
+      totalFailures,
+      lastErrorMessage: data.errorMessage || record.lastErrorMessage,
+    })
+    .where(eq(dataSourceHealth.source, source));
 }
