@@ -29,7 +29,7 @@
     "topRanking": "熱門排行",
     "topRankingDesc": "發現市場上最熱門的卡牌，跟蹤投資者的選擇",
     "trendingCards": "熱門卡牌",
-    "trendingCardsDesc": "近期價格漲幅最高的卡牌，掌握市場熱點",
+    "trendingCardsDesc": "基於 PSA 10 評級最近成交價格漲幅",
     "dataSourcesDesc": "整合全球領先的卡牌交易平台，確保數據的準確性和實時性",
     "snkrdunkDesc": "日本領先的卡牌交易平台，提供最新的 PSA 10 評級卡牌交易數據和市場趋勢分析",
     "realtimeData": "實時交易數據",

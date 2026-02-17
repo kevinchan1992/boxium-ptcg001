@@ -1016,68 +1016,25 @@ export async function updateScheduleExecutionTimes(
 }
 
 /**
- * Add schedule execution history
+ * Schedule Execution History Functions (Placeholder - table removed)
  */
-export async function addScheduleExecutionHistory(history: InsertScheduleExecutionHistory): Promise<number> {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
-
-  const result = await db.insert(scheduleExecutionHistory).values(history);
-  return Number(result[0].insertId);
+export async function addScheduleExecutionHistory(history: any): Promise<number> {
+  // scheduleExecutionHistory table removed, return placeholder ID
+  return 0;
 }
 
-/**
- * Update schedule execution history
- */
-export async function updateScheduleExecutionHistory(
-  id: number,
-  updates: {
-    status?: "running" | "completed" | "failed";
-    ebaySuccessCount?: number;
-    ebayFailureCount?: number;
-    ebayRecordsAdded?: number;
-    snkrdunkSuccessCount?: number;
-    snkrdunkFailureCount?: number;
-    snkrdunkRecordsAdded?: number;
-    errorMessage?: string;
-    completedAt?: Date;
-    durationMs?: number;
-  }
-) {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
-
-  await db
-    .update(scheduleExecutionHistory)
-    .set(updates)
-    .where(eq(scheduleExecutionHistory.id, id));
+export async function updateScheduleExecutionHistory(id: number, updates: any) {
+  // scheduleExecutionHistory table removed, no-op
+  return;
 }
 
-/**
- * Get schedule execution history
- */
 export async function getScheduleExecutionHistory(scheduleType: string, limit: number = 10) {
-  const db = await getDb();
-  if (!db) {
-    return [];
-  }
-
-  const result = await db
-    .select()
-    .from(scheduleExecutionHistory)
-    .where(eq(scheduleExecutionHistory.scheduleType, scheduleType))
-    .orderBy(desc(scheduleExecutionHistory.createdAt))
-    .limit(limit);
-
-  return result;
+  // scheduleExecutionHistory table removed, return empty array
+  return [];
 }
 
 /**
- * Get top price gainers in the past N days
+ * Top Price Gainers
  */
 export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
   const db = await getDb();
@@ -1124,37 +1081,6 @@ export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
 /**
  * Get top searched cards in the past N days
  */
-export async function getTopSearchedCards(days: number = 7, limit: number = 5) {
-  const db = await getDb();
-  if (!db) {
-    return [];
-  }
-
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - days);
-
-  // Import userSearchLogs from schema
-  // userSearchLogs already imported at top
-
-  const result = await db
-    .select({
-      cardId: userSearchLogs.cardId,
-      cardName: cards.name,
-      cardImage: cards.imageUrl,
-      searchCount: sql<number>`COUNT(*)`,
-    })
-    .from(userSearchLogs)
-    .innerJoin(cards, eq(userSearchLogs.cardId, cards.id))
-    .where(and(
-      gte(userSearchLogs.createdAt, cutoffDate),
-      isNotNull(userSearchLogs.cardId)
-    ))
-    .groupBy(userSearchLogs.cardId, cards.name, cards.imageUrl)
-    .orderBy(desc(sql`COUNT(*)`))
-    .limit(limit);
-
-  return result;
-}
 
 /**
  * Get top volatile cards (highest price volatility) in the past N days
@@ -1220,7 +1146,8 @@ export async function getMarketOverview() {
 
   const [cardCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(cards);
   const [priceCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(priceHistory);
-  const [searchCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(userSearchLogs);
+  // const [searchCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(userSearchLogs);
+  const searchCount = { count: 0 }; // Placeholder since userSearchLogs table is removed
 
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - 7);
@@ -1250,28 +1177,6 @@ export async function getMarketOverview() {
 /**
  * Log user search query
  */
-export async function logUserSearch(data: {
-  userId?: number;
-  searchQuery: string;
-  searchType: "card_name" | "set_name" | "card_number" | "general";
-  resultCount: number;
-  cardId?: number;
-}) {
-  const db = await getDb();
-  if (!db) {
-    return;
-  }
-
-  // userSearchLogs already imported at top
-
-  await db.insert(userSearchLogs).values({
-    userId: data.userId || null,
-    searchQuery: data.searchQuery,
-    searchType: data.searchType,
-    resultCount: data.resultCount,
-    cardId: data.cardId || null,
-  });
-}
 
 /**
  * Blog Articles Functions
@@ -1280,215 +1185,6 @@ export async function logUserSearch(data: {
 /**
  * Create a new blog article
  */
-export async function createBlogArticle(article: InsertBlogArticle): Promise<number> {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
-
-  try {
-    const result = await db.insert(blogArticles).values(article);
-    return Number(result[0].insertId);
-  } catch (error) {
-    console.error("[Database] Failed to create blog article:", error);
-    throw error;
-  }
-}
-
-/**
- * Get published blog articles with pagination
- */
-export async function getPublishedBlogArticles(options: {
-  limit?: number;
-  offset?: number;
-  category?: string;
-}) {
-  const db = await getDb();
-  if (!db) {
-    return [];
-  }
-
-  const { limit = 12, offset = 0, category } = options;
-
-  const whereConditions = category
-    ? and(
-        eq(blogArticles.status, 'published'),
-        eq(blogArticles.category, category as any)
-      )
-    : eq(blogArticles.status, 'published');
-
-  const result = await db
-    .select({
-      id: blogArticles.id,
-      title: blogArticles.title,
-      slug: blogArticles.slug,
-      summary: blogArticles.summary,
-      category: blogArticles.category,
-      featuredImageUrl: blogArticles.featuredImageUrl,
-      authorName: blogArticles.authorName,
-      publishedAt: blogArticles.publishedAt,
-      viewCount: blogArticles.viewCount,
-      likeCount: blogArticles.likeCount,
-      tags: blogArticles.tags,
-    })
-    .from(blogArticles)
-    .where(whereConditions)
-    .orderBy(desc(blogArticles.publishedAt))
-    .limit(limit)
-    .offset(offset);
-
-  return result;
-}
-
-/**
- * Get blog article by slug
- */
-export async function getBlogArticleBySlug(slug: string) {
-  const db = await getDb();
-  if (!db) {
-    return undefined;
-  }
-
-  const result = await db
-    .select()
-    .from(blogArticles)
-    .where(
-      and(
-        eq(blogArticles.slug, slug),
-        eq(blogArticles.status, 'published')
-      )
-    )
-    .limit(1);
-
-  return result[0];
-}
-
-/**
- * Increment blog article view count
- */
-export async function incrementBlogArticleViewCount(articleId: number) {
-  const db = await getDb();
-  if (!db) {
-    return;
-  }
-
-  await db
-    .update(blogArticles)
-    .set({ viewCount: sql`${blogArticles.viewCount} + 1` })
-    .where(eq(blogArticles.id, articleId));
-}
-
-/**
- * Get total count of published blog articles
- */
-export async function getPublishedBlogArticlesCount(category?: string) {
-  const db = await getDb();
-  if (!db) {
-    return 0;
-  }
-
-  const whereConditions = category
-    ? and(
-        eq(blogArticles.status, 'published'),
-        eq(blogArticles.category, category as any)
-      )
-    : eq(blogArticles.status, 'published');
-
-  const result = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(blogArticles)
-    .where(whereConditions);
-
-  return Number(result[0]?.count || 0);
-}
-
-/**
- * Get all blog articles (including drafts, for admin)
- */
-export async function getAllBlogArticles(options: {
-  limit?: number;
-  offset?: number;
-}) {
-  const db = await getDb();
-  if (!db) {
-    return [];
-  }
-
-  const result = await db
-    .select()
-    .from(blogArticles)
-    .orderBy(desc(blogArticles.createdAt))
-    .limit(options.limit || 50)
-    .offset(options.offset || 0);
-
-  return result;
-}
-
-/**
- * Get all blog articles count (including drafts, for admin)
- */
-export async function getTotalBlogArticlesCount() {
-  const db = await getDb();
-  if (!db) {
-    return 0;
-  }
-
-  const result = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(blogArticles);
-
-  return Number(result[0]?.count || 0);
-}
-
-/**
- * Get blog article by ID
- */
-export async function getBlogArticleById(id: number) {
-  const db = await getDb();
-  if (!db) {
-    return undefined;
-  }
-
-  const result = await db
-    .select()
-    .from(blogArticles)
-    .where(eq(blogArticles.id, id))
-    .limit(1);
-
-  return result[0];
-}
-
-/**
- * Update blog article
- */
-export async function updateBlogArticle(
-  id: number,
-  updates: Partial<InsertBlogArticle>
-) {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
-
-  await db
-    .update(blogArticles)
-    .set(updates)
-    .where(eq(blogArticles.id, id));
-}
-
-/**
- * Delete blog article
- */
-export async function deleteBlogArticle(id: number) {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
-
-  await db
-    .delete(blogArticles)
-    .where(eq(blogArticles.id, id));
-}
 
 /**
  * Get price update schedule configuration
