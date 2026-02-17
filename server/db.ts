@@ -1585,7 +1585,7 @@ export async function updateDataSourceHealth(
 }
 
 /**
- * Calculate and cache trending cards (TOP 5 with highest 7-day price increase)
+ * Calculate and cache trending cards (TOP 5 with highest price increase based on last 20 transactions)
  * This function should be called daily at 06:00 HKT
  */
 export async function calculateAndCacheTrendingCards(): Promise<void> {
@@ -1594,13 +1594,9 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     throw new Error("Database not available");
   }
 
-  console.log("[calculateAndCacheTrendingCards] Starting calculation...");
+  console.log("[calculateAndCacheTrendingCards] Starting calculation (based on last 20 transactions)...");
 
-  // Calculate date 7 days ago
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  // Get ALL SNKRDUNK price history for cards that exist in cards table
+  // Get ALL SNKRDUNK PSA 10 price history for cards that exist in cards table
   // Use INNER JOIN to ensure we only calculate for valid cards
   const cardsWithPrices = await db
     .select({
@@ -1608,16 +1604,22 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
       price: priceHistory.price,
       soldAt: priceHistory.soldAt,
       createdAt: priceHistory.createdAt,
+      grade: priceHistory.grade,
     })
     .from(priceHistory)
     .innerJoin(cards, eq(priceHistory.cardId, cards.id))
-    .where(eq(priceHistory.source, "snkrdunk"))
-    .orderBy(priceHistory.cardId);
+    .where(
+      and(
+        eq(priceHistory.source, "snkrdunk"),
+        eq(priceHistory.grade, "PSA10")
+      )
+    )
+    .orderBy(priceHistory.cardId, priceHistory.soldAt);
 
-  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} total SNKRDUNK price records`);
+  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} total SNKRDUNK PSA 10 price records`);
 
-  // Group by cardId and calculate price change
-  const cardPriceMap = new Map<number, { prices: { price: number; date: Date }[] }>();
+  // Group by cardId
+  const cardPriceMap = new Map<number, { price: number; date: Date }[]>();
   
   for (const record of cardsWithPrices) {
     const cardId = record.cardId;
@@ -1625,78 +1627,60 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     const date = record.soldAt || record.createdAt;
 
     if (!cardPriceMap.has(cardId)) {
-      cardPriceMap.set(cardId, { prices: [] });
+      cardPriceMap.set(cardId, []);
     }
 
-    cardPriceMap.get(cardId)!.prices.push({ price, date });
+    cardPriceMap.get(cardId)!.push({ price, date });
   }
 
-  // Calculate price change for each card
+  // Calculate price change for each card based on last 20 transactions
   const trendingCards: Array<{
     cardId: number;
-    priceChange7d: number;
+    priceChange: number;
     oldPrice: number;
     currentPrice: number;
   }> = [];
 
-  for (const [cardId, data] of Array.from(cardPriceMap.entries())) {
-    const prices = data.prices.sort((a: { price: number; date: Date }, b: { price: number; date: Date }) => a.date.getTime() - b.date.getTime());
+  for (const [cardId, allPrices] of Array.from(cardPriceMap.entries())) {
+    // Sort by date (oldest first)
+    const prices = allPrices.sort((a, b) => a.date.getTime() - b.date.getTime());
     
     if (prices.length < 2) {
       continue; // Need at least 2 price points
     }
 
-    // Filter prices to only include those within the 7-day window
-    const pricesLast7Days = prices.filter(p => p.date >= sevenDaysAgo);
+    // Get the last 20 transactions (or all if less than 20)
+    const last20 = prices.slice(-20);
     
-    // Also get the price from 7 days ago (or closest before that)
-    const pricesBefore7Days = prices.filter(p => p.date < sevenDaysAgo);
+    // Current price = latest transaction
+    const currentPrice = last20[last20.length - 1].price;
     
-    // If we have both recent prices and historical prices, calculate change
-    if (pricesLast7Days.length > 0 && pricesBefore7Days.length > 0) {
-      const oldPrice = pricesBefore7Days[pricesBefore7Days.length - 1].price; // Latest price before 7 days ago
-      const currentPrice = pricesLast7Days[pricesLast7Days.length - 1].price; // Latest price in last 7 days
-      
-      // Calculate percentage change
-      const priceChange7d = ((currentPrice - oldPrice) / oldPrice) * 100;
+    // Old price = average of all previous transactions (excluding the latest)
+    const previousPrices = last20.slice(0, -1);
+    const oldPrice = previousPrices.reduce((sum, p) => sum + p.price, 0) / previousPrices.length;
+    
+    // Calculate percentage change
+    const priceChange = ((currentPrice - oldPrice) / oldPrice) * 100;
 
-      // Only include cards with positive price change
-      if (priceChange7d > 0) {
-        trendingCards.push({
-          cardId,
-          priceChange7d,
-          oldPrice,
-          currentPrice,
-        });
-      }
-    } else if (prices.length >= 2) {
-      // Fallback: if we don't have exact 7-day split, use oldest vs newest
-      const timeSpan = prices[prices.length - 1].date.getTime() - prices[0].date.getTime();
-      const daysDiff = timeSpan / (1000 * 60 * 60 * 24);
-      
-      // Only consider if we have at least 3 days of data
-      if (daysDiff >= 3) {
-        const oldPrice = prices[0].price;
-        const currentPrice = prices[prices.length - 1].price;
-        const priceChange7d = ((currentPrice - oldPrice) / oldPrice) * 100;
-
-        if (priceChange7d > 0) {
-          trendingCards.push({
-            cardId,
-            priceChange7d,
-            oldPrice,
-            currentPrice,
-          });
-        }
-      }
+    // Only include cards with positive price change
+    if (priceChange > 0) {
+      trendingCards.push({
+        cardId,
+        priceChange,
+        oldPrice,
+        currentPrice,
+      });
     }
   }
 
   // Sort by price change (highest first) and take top 5
-  trendingCards.sort((a, b) => b.priceChange7d - a.priceChange7d);
+  trendingCards.sort((a, b) => b.priceChange - a.priceChange);
   const top5 = trendingCards.slice(0, 5);
 
   console.log(`[calculateAndCacheTrendingCards] Found ${top5.length} trending cards`);
+  if (top5.length > 0) {
+    console.log(`[calculateAndCacheTrendingCards] Top card: cardId=${top5[0].cardId}, change=${top5[0].priceChange.toFixed(2)}%`);
+  }
 
   // Clear existing cache
   await db.delete(trendingCardsCache);
@@ -1708,7 +1692,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     await db.insert(trendingCardsCache).values({
       cardId: card.cardId,
       rank: i + 1,
-      priceChange7d: card.priceChange7d.toFixed(2),
+      priceChange7d: card.priceChange.toFixed(2),
       oldPrice: card.oldPrice.toFixed(2),
       currentPrice: card.currentPrice.toFixed(2),
       calculatedAt,

@@ -2409,3 +2409,15 @@
 - [x] 修正 getCachedTrendingCards 使用 LEFT JOIN 確保返回所有記錄
 - [x] 修正 calculateAndCacheTrendingCards 使用 INNER JOIN 只計算存在於 cards 表的卡牌
 - [x] 測試驗證首頁正確顯示 TOP 5
+
+
+## 功能修改: 熱門卡牌計算邏輯改為最近 20 次 PSA 10 成交價格
+
+- [x] 分析現有計算邏輯（7 日價格漲幅）
+- [x] 設計新算法：基於每張卡牌最近 20 次 SNKRDUNK 實際成交價格
+- [x] 修改 calculateAndCacheTrendingCards 函數（所有評級）
+- [x] 修改為只計算 PSA10 評級的成交記錄（無空格格式）
+- [x] 處理成交記錄少於 20 次的卡牌（使用所有可用記錄）
+- [x] 清空舊快取並重新計算
+- [x] 測試驗證新的 TOP 5 結果
+- [x] 確認首頁正確顯示新的熱門卡牌
