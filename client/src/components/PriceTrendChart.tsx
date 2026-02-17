@@ -49,12 +49,14 @@ export function PriceTrendChart({
   stats,
   isLoading = false,
 }: PriceTrendChartProps) {
-  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("90d");
+  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("all");
 
   // Filter data based on time range
-  const filteredData = trendData.slice(
-    Math.max(0, trendData.length - (timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90))
-  );
+  const filteredData = timeRange === "all" 
+    ? trendData 
+    : trendData.slice(
+        Math.max(0, trendData.length - (timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90))
+      );
 
   // Format price for display
   const formatPrice = (price: number) => {
@@ -133,6 +135,13 @@ export function PriceTrendChart({
             onClick={() => setTimeRange("90d")}
           >
             90 天
+          </Button>
+          <Button
+            variant={timeRange === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTimeRange("all")}
+          >
+            全部
           </Button>
         </div>
 

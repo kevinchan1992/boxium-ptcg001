@@ -118,9 +118,9 @@ export default function CardDetail() {
     { enabled: activeSource === "ebay", retry: 1 }
   );
 
-  // Fetch price trend data
+  // Fetch price trend data (days: 0 means all data)
   const { data: priceTrendData, isLoading: trendLoading } = trpc.cards.getPriceTrendData.useQuery(
-    { cardId: cardId!, days: 90 },
+    { cardId: cardId!, days: 0 },
     { enabled: !!cardId, retry: 1 }
   );
 

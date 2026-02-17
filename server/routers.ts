@@ -166,13 +166,19 @@ export const appRouter = router({
           const allHistory = await db.getPriceHistoryByCardId(input.cardId);
           
           // Filter by date range (last N days) and grade (PSA 10 only)
-          const cutoffDate = new Date();
-          cutoffDate.setDate(cutoffDate.getDate() - input.days);
-          
-          const recentHistory = allHistory.filter(record => 
-            new Date(record.soldAt || record.createdAt) >= cutoffDate &&
-            (record.grade === "PSA 10" || record.grade === "PSA10")
-          );
+          // If days is 0 or negative, return all PSA 10 data
+          const recentHistory = input.days > 0 
+            ? (() => {
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - input.days);
+                return allHistory.filter(record => 
+                  new Date(record.soldAt || record.createdAt) >= cutoffDate &&
+                  (record.grade === "PSA 10" || record.grade === "PSA10")
+                );
+              })()
+            : allHistory.filter(record => 
+                (record.grade === "PSA 10" || record.grade === "PSA10")
+              );
 
           // Group by date and source
           const groupedByDate = new Map<string, { snkrdunk: any[]; ebay: any[] }>();
