@@ -102,10 +102,7 @@ export function AdminDashboard() {
 
 // 數據源健康監控面板組件
 function DataSourceHealthPanel() {
-  // DEPRECATED: priceSchedule router has been removed
-  // const { data: healthMetrics, isLoading } = trpc.priceSchedule.getHealthMetrics.useQuery();
-  const healthMetrics: any[] = [];
-  const isLoading = false;
+  const { data: healthMetrics, isLoading } = trpc.admin.getHealthMetrics.useQuery();
 
   if (isLoading) {
     return (
@@ -211,27 +208,21 @@ function DataSourceHealthPanel() {
                 {health ? (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-gray-400 mb-1">成功率</p>
+                      <p className="text-xs text-gray-400 mb-1">活躍數據源</p>
                       <p className="text-2xl font-bold text-white">
-                        {parseFloat(health.successRate).toFixed(1)}%
+                        {health.activeSourcesCount}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400 mb-1">平均響應時間</p>
+                      <p className="text-xs text-gray-400 mb-1">24小時記錄</p>
                       <p className="text-2xl font-bold text-white">
-                        {health.avgResponseTime}ms
+                        {health.recentRecordsCount.toLocaleString()}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">總請求數</p>
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-400 mb-1">總記錄數</p>
                       <p className="text-lg font-semibold text-white">
-                        {health.totalRequests.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">連續失敗</p>
-                      <p className="text-lg font-semibold text-white">
-                        {health.consecutiveFailures}
+                        {health.totalRecordsCount.toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -239,22 +230,14 @@ function DataSourceHealthPanel() {
                   <p className="text-sm text-gray-400">暫無健康數據</p>
                 )}
 
-                {/* Last Success Time */}
+                {/* Last Update Time */}
                 <div className="pt-4 border-t border-gray-700">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400">上次成功：</span>
+                    <span className="text-gray-400">最後更新：</span>
                     <span className="font-medium text-white">
-                      {formatTime(health?.lastSuccessAt)}
+                      {formatTime(health?.lastUpdatedAt)}
                     </span>
                   </div>
-                  {health?.lastFailureAt && (
-                    <div className="flex items-center justify-between text-sm mt-2">
-                      <span className="text-gray-400">上次失敗：</span>
-                      <span className="font-medium text-red-600">
-                        {formatTime(health.lastFailureAt)}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
             </Card>

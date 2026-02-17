@@ -1453,3 +1453,118 @@ export async function getCachedTrendingCards() {
   console.log('[getCachedTrendingCards] Final result:', JSON.stringify(result, null, 2));
   return result;
 }
+
+/**
+ * Get health metrics for data sources (SNKRDUNK and eBay)
+ */
+export async function getDataSourceHealthMetrics() {
+  const db = await getDb();
+  if (!db) {
+    console.log('[getDataSourceHealthMetrics] DB connection failed');
+    return [];
+  }
+
+  console.log('[getDataSourceHealthMetrics] Calculating health metrics...');
+
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const threeDaysAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+
+  // Get SNKRDUNK metrics
+  const snkrdunkSources = await db
+    .select()
+    .from(dataSources)
+    .where(and(
+      eq(dataSources.source, 'snkrdunk'),
+      eq(dataSources.isActive, 1)
+    ));
+
+  const snkrdunkRecentPrices = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(priceHistory)
+    .where(and(
+      eq(priceHistory.source, 'snkrdunk'),
+      gte(priceHistory.createdAt, oneDayAgo)
+    ));
+
+  const snkrdunkTotalPrices = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(priceHistory)
+    .where(eq(priceHistory.source, 'snkrdunk'));
+
+  // Get eBay metrics
+  const ebaySources = await db
+    .select()
+    .from(dataSources)
+    .where(and(
+      eq(dataSources.source, 'ebay'),
+      eq(dataSources.isActive, 1)
+    ));
+
+  const ebayRecentPrices = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(priceHistory)
+    .where(and(
+      eq(priceHistory.source, 'ebay'),
+      gte(priceHistory.createdAt, oneDayAgo)
+    ));
+
+  const ebayTotalPrices = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(priceHistory)
+    .where(eq(priceHistory.source, 'ebay'));
+
+  // Calculate SNKRDUNK health status
+  const snkrdunkLastUpdate = snkrdunkSources.reduce((latest, source) => {
+    if (!source.lastUpdatedAt) return latest;
+    if (!latest) return source.lastUpdatedAt;
+    return source.lastUpdatedAt > latest ? source.lastUpdatedAt : latest;
+  }, null as Date | null);
+
+  let snkrdunkStatus: 'healthy' | 'degraded' | 'down' = 'down';
+  if (snkrdunkLastUpdate) {
+    if (snkrdunkLastUpdate >= oneDayAgo) {
+      snkrdunkStatus = 'healthy';
+    } else if (snkrdunkLastUpdate >= threeDaysAgo) {
+      snkrdunkStatus = 'degraded';
+    }
+  }
+
+  // Calculate eBay health status
+  const ebayLastUpdate = ebaySources.reduce((latest, source) => {
+    if (!source.lastUpdatedAt) return latest;
+    if (!latest) return source.lastUpdatedAt;
+    return source.lastUpdatedAt > latest ? source.lastUpdatedAt : latest;
+  }, null as Date | null);
+
+  let ebayStatus: 'healthy' | 'degraded' | 'down' = 'down';
+  if (ebayLastUpdate) {
+    if (ebayLastUpdate >= oneDayAgo) {
+      ebayStatus = 'healthy';
+    } else if (ebayLastUpdate >= threeDaysAgo) {
+      ebayStatus = 'degraded';
+    }
+  }
+
+  const metrics = [
+    {
+      source: 'snkrdunk',
+      status: snkrdunkStatus,
+      lastUpdatedAt: snkrdunkLastUpdate,
+      activeSourcesCount: snkrdunkSources.length,
+      recentRecordsCount: Number(snkrdunkRecentPrices[0]?.count || 0),
+      totalRecordsCount: Number(snkrdunkTotalPrices[0]?.count || 0),
+    },
+    {
+      source: 'ebay',
+      status: ebayStatus,
+      lastUpdatedAt: ebayLastUpdate,
+      activeSourcesCount: ebaySources.length,
+      recentRecordsCount: Number(ebayRecentPrices[0]?.count || 0),
+      totalRecordsCount: Number(ebayTotalPrices[0]?.count || 0),
+    },
+  ];
+
+  console.log('[getDataSourceHealthMetrics] Metrics:', JSON.stringify(metrics, null, 2));
+  return metrics;
+}

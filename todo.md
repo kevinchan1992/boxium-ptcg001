@@ -2505,3 +2505,24 @@
 - AdminSchedule 組件已刪除（引用不存在的 priceSchedule router）
 - AdminDashboard 的健康監控面板已停用（返回空數據）
 - 如需恢復價格排程功能，需重新實現 priceSchedule router
+
+## 健康監控面板功能恢復 - 完成
+
+- [x] 分析現有數據結構（dataSources 表、priceHistory 表）
+- [x] 設計健康監控 API 數據格式
+- [x] 在 server/routers.ts 創建 admin.getHealthMetrics API
+- [x] 計算 SNKRDUNK 數據源健康指標（最後更新時間、記錄數量、狀態）
+- [x] 計算 eBay 數據源健康指標（最後更新時間、記錄數量、狀態）
+- [x] 更新 AdminDashboard.tsx 組件連接新 API
+- [x] 測試健康監控面板顯示正確數據
+- [x] 驗證狀態圖標和顏色正確顯示
+
+**實現細節：**
+- 在 server/db.ts 創建 getDataSourceHealthMetrics() 函數
+- 在 server/routers.ts 添加 admin.getHealthMetrics API
+- 更新 AdminDashboard.tsx 連接新 API
+- 顯示指標：活躍數據源、 24小時記錄、總記錄數、最後更新時間
+- 狀態判斷：
+  - healthy：最近 24 小時內有更新
+  - degraded：24-72 小時內有更新
+  - down：超過 72 小時未更新或從未更新
