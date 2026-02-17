@@ -222,3 +222,65 @@ export function getPriceUpdateSchedulerStatus() {
     ebaySchedulerRunning: ebayCronJob !== null,
   };
 }
+
+/**
+ * Trending cards calculation scheduler
+ * Runs daily at 06:00 HKT to calculate TOP 5 trending cards
+ */
+let trendingCardsCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+/**
+ * Start trending cards calculation scheduler
+ * Runs daily at 06:00 HKT (Hong Kong Time)
+ */
+export function startTrendingCardsScheduler() {
+  // Stop existing job if any
+  if (trendingCardsCronJob) {
+    trendingCardsCronJob.stop();
+  }
+
+  // Cron expression for 06:00 daily (Asia/Hong_Kong timezone)
+  // Format: minute hour day month weekday
+  const cronExpression = '0 6 * * *'; // Every day at 06:00
+
+  console.log(`[TrendingCardsScheduler] Starting trending cards scheduler with cron: ${cronExpression} (06:00 HKT daily)`);
+
+  trendingCardsCronJob = cron.schedule(
+    cronExpression,
+    async () => {
+      console.log('[TrendingCardsScheduler] Executing scheduled trending cards calculation...');
+      const startTime = new Date();
+      
+      try {
+        // Import calculateAndCacheTrendingCards from db
+        const { calculateAndCacheTrendingCards } = await import('./db');
+        
+        // Execute calculation
+        await calculateAndCacheTrendingCards();
+        
+        const endTime = new Date();
+        const duration = endTime.getTime() - startTime.getTime();
+        
+        console.log(`[TrendingCardsScheduler] Trending cards calculation completed successfully in ${duration}ms`);
+      } catch (error) {
+        console.error('[TrendingCardsScheduler] Trending cards calculation failed:', error);
+      }
+    },
+    {
+      timezone: 'Asia/Hong_Kong', // Use Hong Kong timezone
+    }
+  );
+
+  console.log('[TrendingCardsScheduler] Trending cards scheduler started successfully');
+}
+
+/**
+ * Stop trending cards calculation scheduler
+ */
+export function stopTrendingCardsScheduler() {
+  if (trendingCardsCronJob) {
+    trendingCardsCronJob.stop();
+    trendingCardsCronJob = null;
+    console.log('[TrendingCardsScheduler] Trending cards scheduler stopped');
+  }
+}

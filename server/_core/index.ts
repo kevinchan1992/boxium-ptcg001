@@ -8,7 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { startScheduler } from "../scheduler";
-import { initPriceUpdateScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler } from "../priceUpdateScheduler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -67,6 +67,8 @@ async function startServer() {
     initPriceUpdateScheduler().catch(err => {
       console.error('[Server] Failed to initialize price update scheduler:', err);
     });
+    // Start the trending cards scheduler (daily at 06:00 HKT)
+    startTrendingCardsScheduler();
   });
 }
 

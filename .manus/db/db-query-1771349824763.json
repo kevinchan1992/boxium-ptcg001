@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `trendingCardsCache` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`cardId` int NOT NULL,\n\t`rank` int NOT NULL,\n\t`priceChange7d` decimal(10,2) NOT NULL,\n\t`oldPrice` decimal(10,2) NOT NULL,\n\t`currentPrice` decimal(10,2) NOT NULL,\n\t`calculatedAt` timestamp NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `trendingCardsCache_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS `trendingCardsCache` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`cardId` int NOT NULL,\n\t`rank` int NOT NULL,\n\t`priceChange7d` decimal(10,2) NOT NULL,\n\t`oldPrice` decimal(10,2) NOT NULL,\n\t`currentPrice` decimal(10,2) NOT NULL,\n\t`calculatedAt` timestamp NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `trendingCardsCache_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1836
+}

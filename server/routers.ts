@@ -82,65 +82,18 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         try {
-          // Simple optimization: Use getPopularCards and enrich with price data
-          const popularCards = await db.getPopularCards(input.limit);
+          // Use cached trending cards (calculated daily at 06:00 HKT)
+          const cachedCards = await db.getCachedTrendingCards();
           
-          // Enrich each card with latest price and calculate real price change
-          const enrichedCards = await Promise.all(
-            popularCards.map(async (card) => {
-              const priceHistory = await db.getPriceHistoryByCardId(card.id);
-              
-              // Only use SNKRDUNK actual transaction data for price calculation
-              const snkrdunkHistory = priceHistory
-                .filter(r => r.source === "snkrdunk" && (r.grade === "PSA 10" || r.grade === "PSA10"))
-                .sort((a, b) => new Date(b.soldAt || b.createdAt).getTime() - new Date(a.soldAt || a.createdAt).getTime());
-              
-              if (snkrdunkHistory.length === 0) {
-                return {
-                  ...card,
-                  currentPrice: 0,
-                  priceChange: 0,
-                  priceChangeFormatted: "0.0%",
-                };
-              }
-              
-              // Get latest price (most recent transaction)
-              const latestPrice = parseFloat(snkrdunkHistory[0].price);
-              
-              // Calculate price change (compare with 30 days ago)
-              const thirtyDaysAgo = new Date();
-              thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-              
-              const oldPriceRecords = snkrdunkHistory.filter(r => 
-                new Date(r.soldAt || r.createdAt) <= thirtyDaysAgo
-              );
-              
-              let priceChange = 0;
-              let priceChangeFormatted = "0.0%";
-              
-              if (oldPriceRecords.length > 0) {
-                // Use the average of old prices for more stable comparison
-                const oldPriceSum = oldPriceRecords.reduce((sum, r) => sum + parseFloat(r.price), 0);
-                const oldPriceAvg = oldPriceSum / oldPriceRecords.length;
-                
-                priceChange = ((latestPrice - oldPriceAvg) / oldPriceAvg) * 100;
-                const sign = priceChange >= 0 ? "+" : "";
-                priceChangeFormatted = `${sign}${priceChange.toFixed(1)}%`;
-              }
-              
-              return {
-                ...card,
-                currentPrice: latestPrice,
-                priceChange,
-                priceChangeFormatted,
-              };
-            })
-          );
+          // If cache is empty, return empty array
+          // (Cache will be populated by daily scheduler)
+          if (cachedCards.length === 0) {
+            console.warn("[getTrending] No cached trending cards found, cache may not be initialized yet");
+            return [];
+          }
           
-          // Sort by price change (highest to lowest)
-          enrichedCards.sort((a, b) => b.priceChange - a.priceChange);
-          
-          return enrichedCards;
+          // Return cached cards (already sorted by rank)
+          return cachedCards.slice(0, input.limit);
         } catch (error: any) {
           console.error("[getTrending] Error:", error);
           throw new TRPCError({
@@ -1587,6 +1540,22 @@ try {
       .query(async ({ ctx }) => {
         const history = await db.getScheduleExecutionHistory("batch_update_daily", 10);
         return history;
+      }),
+
+    // Manually trigger trending cards calculation
+    calculateTrendingCards: protectedProcedure
+      .mutation(async () => {
+        try {
+          console.log("[Admin] Manually triggering trending cards calculation...");
+          await db.calculateAndCacheTrendingCards();
+          return { success: true, message: "Trending cards calculated and cached successfully" };
+        } catch (error: any) {
+          console.error("[Admin] Failed to calculate trending cards:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to calculate trending cards: ${error.message}`,
+          });
+        }
       }),
   }),
 

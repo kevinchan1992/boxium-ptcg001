@@ -1567,11 +1567,22 @@ export async function updateEbayLastExecutedAt() {
 }
 
 
-// DEPRECATED: Functions using deleted table 'dataSourceHealth'
+/**
+ * Get data source health metrics
+ */
 export async function getDataSourceHealth() {
-  return [];
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const result = await db.select().from(dataSourceHealth);
+  return result;
 }
 
+/**
+ * Update data source health metrics
+ */
 export async function updateDataSourceHealth(
   source: "snkrdunk" | "ebay",
   data: {
@@ -1580,184 +1591,69 @@ export async function updateDataSourceHealth(
     errorMessage?: string;
   }
 ) {
-  console.warn("[updateDataSourceHealth] Function disabled - table removed");
-  return;
-}
-
-/**
- * Calculate and cache trending cards (TOP 5 with highest 7-day price increase)
- * This function should be called daily at 06:00 HKT
- */
-export async function calculateAndCacheTrendingCards(): Promise<void> {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
 
-  console.log("[calculateAndCacheTrendingCards] Starting calculation...");
+  // 先獲取當前記錄
+  const current = await db
+    .select()
+    .from(dataSourceHealth)
+    .where(eq(dataSourceHealth.source, source))
+    .limit(1);
 
-  // Calculate date 7 days ago
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  // Get ALL SNKRDUNK price history (we'll filter by date range in memory)
-  const cardsWithPrices = await db
-    .select({
-      cardId: priceHistory.cardId,
-      price: priceHistory.price,
-      soldAt: priceHistory.soldAt,
-      createdAt: priceHistory.createdAt,
-    })
-    .from(priceHistory)
-    .where(eq(priceHistory.source, "snkrdunk"))
-    .orderBy(priceHistory.cardId);
-
-  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} total SNKRDUNK price records`);
-
-  // Group by cardId and calculate price change
-  const cardPriceMap = new Map<number, { prices: { price: number; date: Date }[] }>();
-  
-  for (const record of cardsWithPrices) {
-    const cardId = record.cardId;
-    const price = parseFloat(record.price as any);
-    const date = record.soldAt || record.createdAt;
-
-    if (!cardPriceMap.has(cardId)) {
-      cardPriceMap.set(cardId, { prices: [] });
-    }
-
-    cardPriceMap.get(cardId)!.prices.push({ price, date });
-  }
-
-  // Calculate price change for each card
-  const trendingCards: Array<{
-    cardId: number;
-    priceChange7d: number;
-    oldPrice: number;
-    currentPrice: number;
-  }> = [];
-
-  for (const [cardId, data] of Array.from(cardPriceMap.entries())) {
-    const prices = data.prices.sort((a: { price: number; date: Date }, b: { price: number; date: Date }) => a.date.getTime() - b.date.getTime());
-    
-    if (prices.length < 2) {
-      continue; // Need at least 2 price points
-    }
-
-    // Filter prices to only include those within the 7-day window
-    const pricesLast7Days = prices.filter(p => p.date >= sevenDaysAgo);
-    
-    // Also get the price from 7 days ago (or closest before that)
-    const pricesBefore7Days = prices.filter(p => p.date < sevenDaysAgo);
-    
-    // If we have both recent prices and historical prices, calculate change
-    if (pricesLast7Days.length > 0 && pricesBefore7Days.length > 0) {
-      const oldPrice = pricesBefore7Days[pricesBefore7Days.length - 1].price; // Latest price before 7 days ago
-      const currentPrice = pricesLast7Days[pricesLast7Days.length - 1].price; // Latest price in last 7 days
-      
-      // Calculate percentage change
-      const priceChange7d = ((currentPrice - oldPrice) / oldPrice) * 100;
-
-      // Only include cards with positive price change
-      if (priceChange7d > 0) {
-        trendingCards.push({
-          cardId,
-          priceChange7d,
-          oldPrice,
-          currentPrice,
-        });
-      }
-    } else if (prices.length >= 2) {
-      // Fallback: if we don't have exact 7-day split, use oldest vs newest
-      const timeSpan = prices[prices.length - 1].date.getTime() - prices[0].date.getTime();
-      const daysDiff = timeSpan / (1000 * 60 * 60 * 24);
-      
-      // Only consider if we have at least 3 days of data
-      if (daysDiff >= 3) {
-        const oldPrice = prices[0].price;
-        const currentPrice = prices[prices.length - 1].price;
-        const priceChange7d = ((currentPrice - oldPrice) / oldPrice) * 100;
-
-        if (priceChange7d > 0) {
-          trendingCards.push({
-            cardId,
-            priceChange7d,
-            oldPrice,
-            currentPrice,
-          });
-        }
-      }
-    }
-  }
-
-  // Sort by price change (highest first) and take top 5
-  trendingCards.sort((a, b) => b.priceChange7d - a.priceChange7d);
-  const top5 = trendingCards.slice(0, 5);
-
-  console.log(`[calculateAndCacheTrendingCards] Found ${top5.length} trending cards`);
-
-  // Clear existing cache
-  await db.delete(trendingCardsCache);
-
-  // Insert new cache
-  const calculatedAt = new Date();
-  for (let i = 0; i < top5.length; i++) {
-    const card = top5[i];
-    await db.insert(trendingCardsCache).values({
-      cardId: card.cardId,
-      rank: i + 1,
-      priceChange7d: card.priceChange7d.toFixed(2),
-      oldPrice: card.oldPrice.toFixed(2),
-      currentPrice: card.currentPrice.toFixed(2),
-      calculatedAt,
+  if (current.length === 0) {
+    // 如果不存在，創建新記錄
+    await db.insert(dataSourceHealth).values({
+      source,
+      status: data.success ? "healthy" : "degraded",
+      successRate: data.success ? "100.00" : "0.00",
+      avgResponseTime: data.responseTime || 0,
+      lastSuccessAt: data.success ? new Date() : null,
+      lastFailureAt: data.success ? null : new Date(),
+      consecutiveFailures: data.success ? 0 : 1,
+      totalRequests: 1,
+      totalSuccesses: data.success ? 1 : 0,
+      totalFailures: data.success ? 0 : 1,
+      lastErrorMessage: data.errorMessage || null,
     });
+    return;
   }
 
-  console.log("[calculateAndCacheTrendingCards] Cache updated successfully");
-}
+  const record = current[0];
+  const totalRequests = record.totalRequests + 1;
+  const totalSuccesses = record.totalSuccesses + (data.success ? 1 : 0);
+  const totalFailures = record.totalFailures + (data.success ? 0 : 1);
+  const successRate = ((totalSuccesses / totalRequests) * 100).toFixed(2);
+  const consecutiveFailures = data.success ? 0 : record.consecutiveFailures + 1;
 
-/**
- * Get cached trending cards (TOP 5)
- */
-export async function getCachedTrendingCards() {
-  const db = await getDb();
-  if (!db) {
-    return [];
+  // 計算平均響應時間（移動平均）
+  const avgResponseTime = data.responseTime
+    ? Math.round((record.avgResponseTime * 0.8 + data.responseTime * 0.2))
+    : record.avgResponseTime;
+
+  // 根據連續失敗次數判斷健康狀態
+  let status: "healthy" | "degraded" | "down" = "healthy";
+  if (consecutiveFailures >= 5) {
+    status = "down";
+  } else if (consecutiveFailures >= 2 || parseFloat(successRate) < 80) {
+    status = "degraded";
   }
 
-  const cached = await db
-    .select({
-      cardId: trendingCardsCache.cardId,
-      rank: trendingCardsCache.rank,
-      priceChange7d: trendingCardsCache.priceChange7d,
-      oldPrice: trendingCardsCache.oldPrice,
-      currentPrice: trendingCardsCache.currentPrice,
-      calculatedAt: trendingCardsCache.calculatedAt,
-      // Join with cards table to get card details
-      name: cards.name,
-      nameJa: cards.nameJa,
-      imageUrl: cards.imageUrl,
-      cardNumber: cards.cardNumber,
-      series: cards.series,
+  await db
+    .update(dataSourceHealth)
+    .set({
+      status,
+      successRate,
+      avgResponseTime,
+      lastSuccessAt: data.success ? new Date() : record.lastSuccessAt,
+      lastFailureAt: data.success ? record.lastFailureAt : new Date(),
+      consecutiveFailures,
+      totalRequests,
+      totalSuccesses,
+      totalFailures,
+      lastErrorMessage: data.errorMessage || record.lastErrorMessage,
     })
-    .from(trendingCardsCache)
-    .innerJoin(cards, eq(trendingCardsCache.cardId, cards.id))
-    .orderBy(trendingCardsCache.rank);
-
-  return cached.map(item => ({
-    id: item.cardId,
-    name: item.name,
-    nameJa: item.nameJa,
-    imageUrl: item.imageUrl,
-    cardNumber: item.cardNumber,
-    series: item.series,
-    rank: item.rank,
-    priceChange7d: parseFloat(item.priceChange7d as any),
-    oldPrice: parseFloat(item.oldPrice as any),
-    currentPrice: parseFloat(item.currentPrice as any),
-    calculatedAt: item.calculatedAt,
-    // Format for display
-    priceChange: parseFloat(item.priceChange7d as any),
-    priceChangeFormatted: `+${parseFloat(item.priceChange7d as any).toFixed(1)}%`,
-  }));
+    .where(eq(dataSourceHealth.source, source));
 }

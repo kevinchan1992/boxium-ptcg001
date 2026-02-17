@@ -240,93 +240,18 @@ export type ScheduleConfig = typeof scheduleConfig.$inferSelect;
 export type InsertScheduleConfig = typeof scheduleConfig.$inferInsert;
 
 /**
- * Schedule execution history table - stores batch update execution history
+ * Trending cards cache table - stores daily calculated top 5 trending cards
  */
-export const scheduleExecutionHistory = mysqlTable("scheduleExecutionHistory", {
+export const trendingCardsCache = mysqlTable("trendingCardsCache", {
   id: int("id").autoincrement().primaryKey(),
-  scheduleType: varchar("scheduleType", { length: 64 }).notNull(), // e.g., "batch_update_daily"
-  executionType: mysqlEnum("executionType", ["scheduled", "manual"]).notNull(), // Scheduled or manual
-  status: mysqlEnum("status", ["running", "completed", "failed"]).notNull(),
-  ebaySuccessCount: int("ebaySuccessCount").default(0).notNull(),
-  ebayFailureCount: int("ebayFailureCount").default(0).notNull(),
-  ebayRecordsAdded: int("ebayRecordsAdded").default(0).notNull(),
-  snkrdunkSuccessCount: int("snkrdunkSuccessCount").default(0).notNull(),
-  snkrdunkFailureCount: int("snkrdunkFailureCount").default(0).notNull(),
-  snkrdunkRecordsAdded: int("snkrdunkRecordsAdded").default(0).notNull(),
-  errorMessage: text("errorMessage"), // Error message if execution failed
-  startedAt: timestamp("startedAt").notNull(),
-  completedAt: timestamp("completedAt"),
-  durationMs: int("durationMs"), // Execution duration in milliseconds
+  cardId: int("cardId").notNull(), // Foreign key to cards table
+  rank: int("rank").notNull(), // Ranking position (1-5)
+  priceChange7d: decimal("priceChange7d", { precision: 10, scale: 2 }).notNull(), // 7-day price change percentage
+  oldPrice: decimal("oldPrice", { precision: 10, scale: 2 }).notNull(), // Price 7 days ago
+  currentPrice: decimal("currentPrice", { precision: 10, scale: 2 }).notNull(), // Current price
+  calculatedAt: timestamp("calculatedAt").notNull(), // When this was calculated
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export type ScheduleExecutionHistory = typeof scheduleExecutionHistory.$inferSelect;
-export type InsertScheduleExecutionHistory = typeof scheduleExecutionHistory.$inferInsert;
-
-/**
- * User search logs table - tracks user search queries for popular search analysis
- */
-export const userSearchLogs = mysqlTable("userSearchLogs", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId"), // Optional: Foreign key to users table (null for anonymous)
-  searchQuery: text("searchQuery").notNull(), // User's search query
-  searchType: mysqlEnum("searchType", ["card_name", "set_name", "card_number", "general"]).notNull(), // Type of search
-  resultCount: int("resultCount").default(0).notNull(), // Number of results returned
-  cardId: int("cardId"), // Optional: If user clicked on a specific card
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type UserSearchLog = typeof userSearchLogs.$inferSelect;
-export type InsertUserSearchLog = typeof userSearchLogs.$inferInsert;
-
-/**
- * Blog articles table - stores market insight blog articles
- */
-export const blogArticles = mysqlTable("blogArticles", {
-  id: int("id").autoincrement().primaryKey(),
-  title: text("title").notNull(), // Article title
-  slug: varchar("slug", { length: 256 }).notNull().unique(), // URL-friendly slug
-  summary: text("summary"), // Short summary/excerpt
-  content: text("content").notNull(), // Full article content (markdown)
-  category: mysqlEnum("category", ["market_analysis", "investment_trends", "card_research", "news", "guide"]).notNull(),
-  featuredImageUrl: text("featuredImageUrl"), // Featured image URL
-  authorId: int("authorId"), // Foreign key to users table (optional)
-  authorName: varchar("authorName", { length: 128 }), // Author display name
-  status: mysqlEnum("status", ["draft", "published", "archived"]).default("draft").notNull(),
-  publishedAt: timestamp("publishedAt"), // Publication date
-  viewCount: int("viewCount").default(0).notNull(), // View count
-  likeCount: int("likeCount").default(0).notNull(), // Like count
-  tags: text("tags"), // JSON array of tags
-  relatedCardIds: text("relatedCardIds"), // JSON array of related card IDs
-  sourceData: text("sourceData"), // JSON of source data (images, market data, etc.)
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type BlogArticle = typeof blogArticles.$inferSelect;
-export type InsertBlogArticle = typeof blogArticles.$inferInsert;
-
-/**
- * Data source health table - stores health metrics for data sources (SNKRDUNK, eBay)
- */
-export const dataSourceHealth = mysqlTable("dataSourceHealth", {
-  id: int("id").autoincrement().primaryKey(),
-  source: mysqlEnum("source", ["snkrdunk", "ebay"]).notNull(), // Data source name
-  status: mysqlEnum("status", ["healthy", "degraded", "down"]).default("healthy").notNull(), // Current health status
-  successRate: decimal("successRate", { precision: 5, scale: 2 }).default("100.00").notNull(), // Success rate percentage (0-100)
-  avgResponseTime: int("avgResponseTime").default(0).notNull(), // Average response time in milliseconds
-  lastSuccessAt: timestamp("lastSuccessAt"), // Last successful fetch time
-  lastFailureAt: timestamp("lastFailureAt"), // Last failure time
-  consecutiveFailures: int("consecutiveFailures").default(0).notNull(), // Number of consecutive failures
-  totalRequests: int("totalRequests").default(0).notNull(), // Total number of requests
-  totalSuccesses: int("totalSuccesses").default(0).notNull(), // Total successful requests
-  totalFailures: int("totalFailures").default(0).notNull(), // Total failed requests
-  lastErrorMessage: text("lastErrorMessage"), // Last error message
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type DataSourceHealth = typeof dataSourceHealth.$inferSelect;
-export type InsertDataSourceHealth = typeof dataSourceHealth.$inferInsert;
-
-
+export type TrendingCardsCache = typeof trendingCardsCache.$inferSelect;
+export type InsertTrendingCardsCache = typeof trendingCardsCache.$inferInsert;
