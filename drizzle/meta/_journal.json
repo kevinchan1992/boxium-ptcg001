@@ -134,6 +134,13 @@
       "when": 1771349747531,
       "tag": "0018_lying_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1771357693779,
+      "tag": "0019_outstanding_silverclaw",
+      "breakpoints": true
     }
   ]
 }

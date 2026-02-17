@@ -13,6 +13,9 @@ import { searchEbayItems, convertUsdToHkd, getUsdToHkdRate } from "./ebay";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
 import * as batchUpdateProgress from "./batchUpdateProgress";
 import * as snkrdunkBatchUpdateProgress from "./batchUpdateSnkrdunkProgress";
+import { executePersistentEbayBatchUpdate } from "./persistentEbayBatchUpdate";
+import { executePersistentSnkrdunkBatchUpdate } from "./persistentSnkrdunkBatchUpdate";
+import * as batchTaskManager from "./batchTaskManager";
 import { executeEbayBatchUpdate, executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
 import { restartScheduler } from "./batchUpdateScheduler";
 import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
@@ -1571,6 +1574,76 @@ try {
             message: `Failed to get health metrics: ${error.message}`,
           });
         }
+      }),
+
+    // === 持久化批量更新 API ===
+
+    // 啟動持久化 eBay 批量更新
+    startPersistentEbayBatchUpdate: publicProcedure
+      .mutation(async () => {
+        try {
+          const result = await executePersistentEbayBatchUpdate();
+          return {
+            success: true,
+            message: `批量更新已啟動，共 ${result.totalCards} 張卡牌`,
+            taskId: result.taskId,
+            totalCards: result.totalCards,
+          };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message || "批量更新啟動失敗",
+          });
+        }
+      }),
+
+    // 啟動持久化 SNKRDUNK 批量更新
+    startPersistentSnkrdunkBatchUpdate: publicProcedure
+      .mutation(async () => {
+        try {
+          const result = await executePersistentSnkrdunkBatchUpdate();
+          return {
+            success: true,
+            message: `SNKRDUNK 批量更新已啟動，共 ${result.totalCards} 張卡牌`,
+            taskId: result.taskId,
+            totalCards: result.totalCards,
+          };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message || "SNKRDUNK 批量更新啟動失敗",
+          });
+        }
+      }),
+
+    // 獲取持久化任務進度
+    getPersistentTaskProgress: publicProcedure
+      .input(z.object({
+        taskType: z.enum(['batch_ebay_update', 'batch_snkrdunk_update']),
+      }))
+      .query(async ({ input }) => {
+        const task = await batchTaskManager.getLatestRunningTask(input.taskType);
+        return task;
+      }),
+
+    // 暂停持久化任務
+    pausePersistentTask: publicProcedure
+      .input(z.object({
+        taskId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        await batchTaskManager.pauseTask(input.taskId);
+        return { success: true, message: "任務已暂停" };
+      }),
+
+    // 繼續持久化任務
+    resumePersistentTask: publicProcedure
+      .input(z.object({
+        taskId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        await batchTaskManager.resumeTask(input.taskId);
+        return { success: true, message: "任務已繼續" };
       }),
   }),
 

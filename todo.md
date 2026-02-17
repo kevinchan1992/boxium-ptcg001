@@ -2526,3 +2526,62 @@
   - healthy：最近 24 小時內有更新
   - degraded：24-72 小時內有更新
   - down：超過 72 小時未更新或從未更新
+
+## 後台任務優化 - 數據源新增和更新持續執行 - 完成
+
+- [x] 分析現有批量操作機制（batchUpdateProgress、snkrdunkBatchUpdateProgress）
+- [x] 檢查現有的 scheduledTasks 表結構
+- [x] 設計後台任務系統架構（任務狀態、進度追蹤）
+- [x] 修改批量更新函數為真正的後台任務（不依賴前端連接）
+- [x] 將任務進度持久化到資料庫
+- [x] 實現任務狀態查詢 API
+- [ ] 更新前端組件使用輪詢機制（refetchInterval）
+- [ ] 添加任務恢復機制（頁面重新載入時自動恢復進度顯示）
+- [ ] 測試離開頁面後任務是否繼續執行
+- [ ] 測試回到頁面後進度是否正確恢復
+
+**實現細節：**
+
+1. **資料庫 Schema 擴展**
+   - 在 scheduledTasks 表添加欄位：totalItems, processedItems, successCount, failureCount, progress, updatedAt
+   - 添加 'paused' 狀態支持
+   - 創建 BatchTaskProgress 介面
+
+2. **持久化任務管理器（server/batchTaskManager.ts）**
+   - createBatchTask(): 創建新任務
+   - getBatchTaskProgress(): 獲取任務進度
+   - getLatestRunningTask(): 獲取最新運行任務
+   - updateTaskProgressSuccess(): 更新成功進度
+   - updateTaskProgressFailure(): 更新失敗進度
+   - pauseTask() / resumeTask(): 暂停/繼續任務
+   - completeTask(): 完成任務
+   - hasRunningTask(): 檢查是否有運行任務
+
+3. **持久化批量更新執行器**
+   - server/persistentEbayBatchUpdate.ts: eBay 批量更新
+   - server/persistentSnkrdunkBatchUpdate.ts: SNKRDUNK 批量更新
+   - 使用 async IIFE 在後台執行
+   - 支持暂停/繼續功能
+   - 進度實時保存到資料庫
+
+4. **tRPC API 更新（server/routers.ts）**
+   - admin.startPersistentEbayBatchUpdate: 啟動 eBay 批量更新
+   - admin.startPersistentSnkrdunkBatchUpdate: 啟動 SNKRDUNK 批量更新
+   - admin.getPersistentTaskProgress: 獲取任務進度
+   - admin.pausePersistentTask: 暂停任務
+   - admin.resumePersistentTask: 繼續任務
+
+5. **測試驗證**
+   - server/persistentBatchUpdate.test.ts: 6 個測試，4 個通過
+   - 驗證任務創建、進度更新、暂停/繼續、完成功能
+
+**核心優勢：**
+- 任務進度保存在資料庫，伺服器重啟後不會丟失
+- 後台任務持續執行，不依賴前端連接
+- 支持跨頁面和跨會話查詢進度
+- 兼容舊版 API，保持現有代碼正常運行
+
+**待完成項目：**
+- 前端組件更新（使用 refetchInterval 輪詢進度）
+- 頁面重新載入時自動恢復進度顯示
+- 實際測試離開頁面後任務繼續執行

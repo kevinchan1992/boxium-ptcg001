@@ -128,18 +128,39 @@ export type InsertDataSource = typeof dataSources.$inferInsert;
  */
 export const scheduledTasks = mysqlTable("scheduledTasks", {
   id: int("id").autoincrement().primaryKey(),
-  taskType: varchar("taskType", { length: 64 }).notNull(), // e.g., "snkrdunk_update", "ebay_update"
-  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
+  taskType: varchar("taskType", { length: 64 }).notNull(), // e.g., "snkrdunk_update", "ebay_update", "batch_ebay_update", "batch_snkrdunk_update"
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed", "paused"]).default("pending").notNull(),
   targetId: int("targetId"), // ID of the target (e.g., cardId or dataSourceId)
+  totalItems: int("totalItems"), // Total number of items to process (for batch tasks)
+  processedItems: int("processedItems").default(0), // Number of items processed
+  successCount: int("successCount").default(0), // Number of successful items
+  failureCount: int("failureCount").default(0), // Number of failed items
+  progress: int("progress").default(0), // Progress percentage (0-100)
   startedAt: timestamp("startedAt"),
   completedAt: timestamp("completedAt"),
   errorMessage: text("errorMessage"),
-  metadata: text("metadata"), // JSON metadata about the task
+  metadata: text("metadata"), // JSON metadata about the task (errors, details, etc.)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export type ScheduledTask = typeof scheduledTasks.$inferSelect;
 export type InsertScheduledTask = typeof scheduledTasks.$inferInsert;
+
+// Batch task progress interface
+export interface BatchTaskProgress {
+  taskId: number;
+  taskType: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'paused';
+  totalItems: number;
+  processedItems: number;
+  successCount: number;
+  failureCount: number;
+  progress: number; // 0-100
+  startedAt: Date | null;
+  completedAt: Date | null;
+  errors: Array<{ cardId: number; cardName: string; error: string }>;
+}
 
 /**
  * Firecrawl usage tracking table - tracks API usage for quota monitoring
