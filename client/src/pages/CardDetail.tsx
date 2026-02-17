@@ -154,10 +154,11 @@ export default function CardDetail() {
     );
   }
 
-  // Calculate average price based on active source
+  // Calculate average price based on active source - Only PSA 10 for reference price
+  const psa10OnlyHistory = priceHistory.filter(p => p.grade === "PSA 10" || p.grade === "PSA10");
   const avgPrice = activeSource === "snkrdunk"
-    ? priceHistory.length > 0
-      ? (priceHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / priceHistory.length).toFixed(2)
+    ? psa10OnlyHistory.length > 0
+      ? (psa10OnlyHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / psa10OnlyHistory.length).toFixed(2)
       : "N/A"
     : ebayPriceHistory.length > 0
       ? (ebayPriceHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / ebayPriceHistory.length).toFixed(2)
@@ -165,9 +166,9 @@ export default function CardDetail() {
         ? (ebaySoldItems.reduce((sum, item) => sum + item.price, 0) / ebaySoldItems.length).toFixed(2)
         : "N/A";
 
-  // Get record count based on active source
+  // Get record count based on active source - Only PSA 10 for reference price
   const recordCount = activeSource === "snkrdunk" 
-    ? priceHistory.length 
+    ? psa10OnlyHistory.length 
     : ebayPriceHistory.length > 0 
       ? ebayPriceHistory.length 
       : ebaySoldItems.length;
@@ -228,7 +229,8 @@ export default function CardDetail() {
                 <img
                   src={card.imageUrl}
                   alt={card.name}
-                  className="w-full rounded-lg shadow-2xl"
+                  className="w-full rounded-lg shadow-2xl hover:scale-105 transition-transform duration-300"
+                  style={{ maxWidth: "100%", height: "auto" }}
                 />
               ) : (
                 <div className="w-full aspect-[2/3] bg-muted rounded-lg flex items-center justify-center">
