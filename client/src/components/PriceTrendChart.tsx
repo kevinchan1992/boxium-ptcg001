@@ -97,7 +97,7 @@ export function PriceTrendChart({
   if (filteredData.length === 0) {
     return (
       <Card className="p-6 bg-card border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-4">價格趨勢</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">卡牌價格趨勢</h3>
         <div className="flex items-center justify-center h-96 text-muted-foreground">
           暫無價格數據
         </div>

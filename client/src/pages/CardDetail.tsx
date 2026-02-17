@@ -274,7 +274,7 @@ export default function CardDetail() {
             {/* Reference Price */}
             <div className="bg-card rounded-lg p-6 border border-border">
               <h2 className="text-2xl font-bold text-foreground">
-                {t("cardDetail.referencePrice")}: HKD ${avgPrice}
+                PSA 10 {t("cardDetail.referencePrice")}: HKD ${avgPrice}
               </h2>
               <p className="text-sm text-muted-foreground mt-2">
                 {t("cardDetail.basedOnRecords", { count: recordCount })} {activeSource === "ebay" && "(PSA 10)"}
@@ -507,14 +507,15 @@ export default function CardDetail() {
             </div>
 
             {/* Price Trend Chart */}
-            {priceTrendData && (
-              <PriceTrendChart
-                cardName={card.name}
-                trendData={priceTrendData.trendData}
-                stats={priceTrendData.stats}
-                isLoading={trendLoading}
-              />
-            )}
+            <PriceTrendChart
+              cardName={card.name}
+              trendData={priceTrendData?.trendData || []}
+              stats={priceTrendData?.stats || {
+                snkrdunk: { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 },
+                ebay: { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 }
+              }}
+              isLoading={trendLoading}
+            />
 
             {/* Basic Information */}
             <div className="bg-card rounded-lg p-6 border border-border">
