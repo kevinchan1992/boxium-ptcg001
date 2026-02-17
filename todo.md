@@ -2225,3 +2225,12 @@
 - [x] 複製用戶提供的 eBay logo 到專案 public 目錄
 - [x] 更新首頁 Home.tsx 的 logo 路徑（檔名相同，自動替換）
 - [x] 測試新 logo 顯示效果（SNKRDUNK 和 eBay logo 已成功顯示）
+
+
+## UI 優化: 首頁 logo 響應式設計 - 完成
+
+- [x] 為 SNKRDUNK 和 eBay logo 添加響應式尺寸調整
+- [x] 使用 Tailwind 響應式類別 (max-w-[120px] md:max-w-[180px] + object-contain)
+- [x] 測試桌面版顯示效果（通過，尺寸適中、清晰可見）
+- [x] 測試平板版顯示效果（使用 md: 斷點，自動適配）
+- [x] 測試手機版顯示效果（iPhone 12 Pro 390x844，通過）

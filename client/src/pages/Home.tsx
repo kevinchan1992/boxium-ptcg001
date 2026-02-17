@@ -228,7 +228,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             {/* SNKRDUNK */}
             <div className="bg-white rounded-xl p-6 md:p-8 shadow-md border-l-4" style={{ borderColor: "#06038d" }}>
-              <img src="/snkrdunk-logo.png" alt="SNKRDUNK" className="h-8 md:h-10 mb-4" />
+              <img src="/snkrdunk-logo.png" alt="SNKRDUNK" className="h-8 md:h-10 mb-4 max-w-[120px] md:max-w-[180px] object-contain" />
               <p className="text-gray-600 mb-6 text-sm md:text-base leading-relaxed">
                 {t("home.snkrdunkDesc")}
               </p>
@@ -241,7 +241,7 @@ export default function Home() {
 
             {/* eBay */}
             <div className="bg-white rounded-xl p-6 md:p-8 shadow-md border-l-4" style={{ borderColor: "#ffed00" }}>
-              <img src="/ebay-logo.png" alt="eBay" className="h-8 md:h-10 mb-4" />
+              <img src="/ebay-logo.png" alt="eBay" className="h-8 md:h-10 mb-4 max-w-[120px] md:max-w-[180px] object-contain" />
               <p className="text-gray-600 mb-6 text-sm md:text-base leading-relaxed">
                 {t("home.ebayDesc")}
               </p>
