@@ -2917,3 +2917,77 @@
   - [x] 保持簡潔專業的排版
 - [x] 測試驗證兩個頁面的響應式設計
 - [x] 確認多語言翻譯在新設計下正常顯示
+
+## Research 頁面多語言翻譯 + Terms 頁面設計優化 + Trending 頁面 SEO 優化
+
+### Research 頁面多語言翻譯
+- [ ] 在 i18n 翻譯文件添加 Research 頁面相關翻譯（繁中/英/日）
+  - [ ] 搜尋框 placeholder 和按鈕文字
+  - [ ] 篩選器標籤（評級、價格範圍、排序方式）
+  - [ ] 卡牌列表標題和空狀態提示
+  - [ ] 卡牌卡片資訊（價格、評級、查看詳情）
+- [ ] 修改 Research.tsx 使用 t() 函數替換硬編碼文字
+- [ ] 測試三種語言版本的 Research 頁面顯示正常
+
+### Terms 頁面設計優化
+- [ ] 檢視 Privacy 頁面的設計風格（白色底、簡潔專業）
+- [ ] 重新設計 Terms 頁面為白色底風格
+  - [ ] 修改背景色為淺灰色 #f8f9fa
+  - [ ] 使用白色卡片容器、圓角陰影
+  - [ ] 調整標題顏色為深藍色 #06038d
+  - [ ] 優化文字顏色和間距
+  - [ ] 保持簡潔專業的排版
+- [ ] 測試驗證 Terms 頁面的響應式設計
+- [ ] 確認多語言翻譯在新設計下正常顯示
+
+### Trending 頁面 JSON-LD 結構化數據
+- [ ] 為 Trending 頁面添加 ItemList 結構化數據
+  - [ ] 包含排行榜類型（搜尋熱度、價格飆升、價格暴跌、新上架）
+  - [ ] 包含每個卡牌的基本資訊（名稱、圖片、價格、排名）
+  - [ ] 包含 PSA 10 專屬排行榜標籤
+- [ ] 使用 StructuredData 組件添加 JSON-LD
+- [ ] 測試驗證 JSON-LD 格式正確
+
+### 測試驗證
+- [ ] 測試 Research 頁面的多語言切換
+- [ ] 驗證 Terms 頁面的白色底設計
+- [ ] 檢查 Trending 頁面的 JSON-LD 結構化數據
+- [ ] 確認所有頁面的視覺一致性
+
+## 新增功能: 多語言支援與 SEO 優化 - 已完成
+
+- [x] 補充 Research 頁面的多語言翻譯（繁中/英/日）
+- [x] 優化 Terms 頁面設計風格為白色底（與 Privacy 頁面一致）
+- [x] 添加 Trending 頁面的 JSON-LD 結構化數據（ItemList schema）
+
+**完成時間：** 2026-02-18
+
+**主要變更：**
+
+1. **Research 頁面多語言翻譯**
+   - 在 zh-TW.json, en.json, ja.json 添加 research 翻譯區塊
+   - 包含標題、搜尋框 placeholder、載入中、無結果等文字
+   - Research.tsx 已使用 useTranslation hook，無需修改代碼
+
+2. **Terms 頁面設計優化**
+   - Terms.tsx 已經使用白色底設計（與 Privacy.tsx 一致）
+   - 包含淺灰色背景（#f8f9fa）、白色卡片容器、深藍色標題（#06038d）
+   - 響應式排版、圓角陰影、Footer 組件已整合
+
+3. **Trending 頁面 JSON-LD 結構化數據**
+   - 添加 StructuredData 組件引用
+   - 創建 generateStructuredData() 函數生成 ItemList schema
+   - 包含 top 10 卡牌的產品資訊（名稱、圖片、價格）
+   - 支援動態更新（根據當前 Tab 和數據）
+
+**技術細節：**
+- 所有翻譯文件使用 UTF-8 編碼
+- JSON-LD 使用 schema.org 標準格式
+- 價格貨幣單位統一為 JPY
+- 圖片 URL 使用 fallback 邏輯（imageUrl || imageUrlHiRes）
+
+**測試結果：**
+- ✅ TypeScript 編譯通過（0 errors）
+- ✅ 開發伺服器成功運行
+- ✅ 頁面顯示正常
+- ✅ 多語言切換功能正常

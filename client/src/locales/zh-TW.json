@@ -23,6 +23,12 @@
     "emptyNewlyAdded": "目前沒有新上架的卡牌",
     "emptyHint": "請稍後再試或切換其他分類"
   },
+  "research": {
+    "title": "卡牌搜尋",
+    "searchPlaceholder": "輸入卡牌名稱、編號或系列進行搜尋...",
+    "loading": "載入中...",
+    "noResults": "無搜尋結果"
+  },
   "common": {
     "home": "主頁",
     "research": "卡牌研究",

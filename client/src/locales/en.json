@@ -23,6 +23,12 @@
     "emptyNewlyAdded": "No newly added cards",
     "emptyHint": "Please try again later or switch to other categories"
   },
+  "research": {
+    "title": "Card Search",
+    "searchPlaceholder": "Enter card name, number or series to search...",
+    "loading": "Loading...",
+    "noResults": "No search results"
+  },
   "common": {
     "home": "Home",
     "research": "Card Research",

@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Flame, Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
+import StructuredData from "@/components/StructuredData";
 
 type TrendingTab = 'searches' | 'priceIncrease' | 'priceDecrease' | 'newlyAdded';
 
@@ -50,6 +51,34 @@ export default function Trending() {
   const isLoading = searchLoading || priceIncreaseLoading || priceDecreaseLoading || newlyAddedLoading;
   const currentData = getCurrentData();
 
+  // Generate JSON-LD structured data for SEO
+  const generateStructuredData = () => {
+    const topCards = currentData.slice(0, 10);
+    
+    return {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": t('trending.title'),
+      "description": t('trending.subtitle'),
+      "url": "https://boxiumptcg.manus.space/trending",
+      "numberOfItems": topCards.length,
+      "itemListElement": topCards.map((card, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "item": {
+          "@type": "Product",
+          "name": card.name || "Unknown Card",
+          "image": card.imageUrl || card.imageUrlHiRes || "",
+          "offers": {
+            "@type": "Offer",
+            "price": card.currentPrice || 0,
+            "priceCurrency": "JPY"
+          }
+        }
+      }))
+    };
+  };
+
   const handleRefresh = () => {
     switch (activeTab) {
       case 'searches': refetchSearch(); break;
@@ -60,7 +89,11 @@ export default function Trending() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
+    <>
+      {/* JSON-LD Structured Data for SEO */}
+      <StructuredData data={generateStructuredData()} />
+      
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
       {/* Header */}
       <div className="container mx-auto px-4 py-4 md:py-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 md:mb-8">
@@ -163,11 +196,12 @@ export default function Trending() {
       
       {/* Footer */}
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }
 
-// Champion Card Component (Rank 1)
+// Champion Card Component (Rank 1))
 function ChampionCard({ card, rank, type }: { card: any; rank: number; type: TrendingTab }) {
   const { t } = useTranslation();
   // Better image fallback handling
