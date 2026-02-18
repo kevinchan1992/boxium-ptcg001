@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -146,6 +146,28 @@ export const scheduledTasks = mysqlTable("scheduledTasks", {
 
 export type ScheduledTask = typeof scheduledTasks.$inferSelect;
 export type InsertScheduledTask = typeof scheduledTasks.$inferInsert;
+
+/**
+ * SNKRDUNK listings cache table - stores cached Playwright scraping results
+ */
+export const snkrdunkListingsCache = mysqlTable("snkrdunkListingsCache", {
+  id: int("id").autoincrement().primaryKey(),
+  cardId: int("cardId").notNull(), // Foreign key to cards table
+  snkrdunkId: varchar("snkrdunkId", { length: 128 }).notNull(), // SNKRDUNK product ID
+  listings: text("listings").notNull(), // JSON array of listings
+  cachedAt: timestamp("cachedAt").defaultNow().notNull(), // When the cache was created
+  expiresAt: timestamp("expiresAt").notNull(), // When the cache expires (1 hour after cachedAt)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => {
+  return {
+    cardIdIdx: index("cardId_idx").on(table.cardId),
+    expiresAtIdx: index("expiresAt_idx").on(table.expiresAt),
+  };
+});
+
+export type SnkrdunkListingsCache = typeof snkrdunkListingsCache.$inferSelect;
+export type InsertSnkrdunkListingsCache = typeof snkrdunkListingsCache.$inferInsert;
 
 // Batch task progress interface
 export interface BatchTaskProgress {

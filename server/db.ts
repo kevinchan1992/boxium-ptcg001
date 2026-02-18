@@ -1990,3 +1990,50 @@ export async function getDataSourceByCardIdAndSource(cardId: number, source: 'sn
 
   return result.length > 0 ? result[0] : null;
 }
+
+
+/**
+ * Get SNKRDUNK listings cache by cardId
+ */
+export async function getSnkrdunkListingsCache(cardId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  
+  const result = await db
+    .select()
+    .from(snkrdunkListingsCache)
+    .where(eq(snkrdunkListingsCache.cardId, cardId))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Save SNKRDUNK listings cache
+ */
+export async function saveSnkrdunkListingsCache(data: {
+  cardId: number;
+  snkrdunkId: string;
+  listings: string;
+  expiresAt: Date;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  
+  // Delete existing cache for this card
+  await db
+    .delete(snkrdunkListingsCache)
+    .where(eq(snkrdunkListingsCache.cardId, data.cardId));
+  
+  // Insert new cache
+  await db.insert(snkrdunkListingsCache).values({
+    cardId: data.cardId,
+    snkrdunkId: data.snkrdunkId,
+    listings: data.listings,
+    expiresAt: data.expiresAt,
+  });
+}

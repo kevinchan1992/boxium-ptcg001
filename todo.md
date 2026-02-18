@@ -4153,5 +4153,34 @@
 
 ### Phase 3: 保存檢查點並交付
 - [x] 更新 todo.md 標記完成的任務
+- [x] 保存檢查點
+- [x] 向用戶交付修復後的功能
+
+
+## 優化: SNKRDUNK 數據緩存機制
+
+### Phase 1: 設計並創建緩存表
+- [x] 設計 snkrdunk_listings_cache 表結構
+- [x] 包含欄位：cardId, snkrdunkId, listings (JSON), cachedAt, expiresAt
+- [x] 添加索引：cardId, expiresAt
+- [x] 執行資料庫遷移
+
+### Phase 2: 修改 pricing router 集成緩存邏輯
+- [x] 修改 pricing router 檢查緩存是否存在且未過期
+- [x] 如果緩存有效，直接返回緩存數據
+- [x] 如果緩存無效或不存在，調用 Playwright 抓取
+- [x] 抓取成功後，將數據保存到緩存表
+- [x] 設置緩存過期時間為 1 小時
+- [x] 添加 getSnkrdunkListingsCache 和 saveSnkrdunkListingsCache 函數到 db.ts
+
+### Phase 3: 測試驗證緩存機制
+- [x] 第一次訪問：觸發 Playwright 抓取（較慢，約 40 秒）
+- [x] 第二次訪問：使用緩存數據（快速，<1 秒）
+- [x] 驗證緩存數據正確性（11 個 PSA 10 商品）
+- [x] 確認緩存過期時間設置為 1 小時
+- [ ] 1 小時後訪問：重新抓取並更新緩存（可選）
+
+### Phase 4: 保存檢查點並交付
+- [x] 更新 todo.md 標記完成的任務
 - [ ] 保存檢查點
-- [ ] 向用戶交付修復後的功能
+- [ ] 向用戶交付優化後的功能

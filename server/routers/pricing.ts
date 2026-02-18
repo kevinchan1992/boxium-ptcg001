@@ -100,7 +100,7 @@ export const pricingRouter = router({
           // Continue even if eBay fails
         }
 
-        // Step 3: Fetch SNKRDUNK PSA 10 listings using Playwright
+        // Step 3: Fetch SNKRDUNK PSA 10 listings using Playwright (with caching)
         console.log('[Pricing Router] Fetching from SNKRDUNK...');
         let snkrdunkListings: any[] = [];
         try {
@@ -114,19 +114,54 @@ export const pricingRouter = router({
               const snkrdunkId = snkrdunkIdMatch[1];
               console.log(`[Pricing Router] SNKRDUNK ID: ${snkrdunkId}`);
               
-              const listings = await scrapeSnkrdunkListings(snkrdunkId);
-              snkrdunkListings = listings.map((item) => ({
-                id: `snkrdunk-${item.url}`,
-                title: `${card.name} ${item.grade}`,
-                price: item.price,
-                currency: item.currency,
-                imageUrl: item.image || card.imageUrl || '',
-                source: 'snkrdunk' as const,
-                buyUrl: item.url,
-                seller: 'SNKRDUNK',
-                condition: item.grade,
-              }));
-              console.log(`[Pricing Router] SNKRDUNK returned ${snkrdunkListings.length} listings`);
+              // Check cache first
+              const cache = await db.getSnkrdunkListingsCache(cardId);
+              const now = new Date();
+              
+              if (cache && new Date(cache.expiresAt) > now) {
+                // Cache is valid, use cached data
+                console.log(`[Pricing Router] Using cached SNKRDUNK data (expires at ${cache.expiresAt})`);
+                const cachedListings = JSON.parse(cache.listings);
+                snkrdunkListings = cachedListings.map((item: any) => ({
+                  id: `snkrdunk-${item.url}`,
+                  title: `${card.name} ${item.grade}`,
+                  price: item.price,
+                  currency: item.currency,
+                  imageUrl: item.image || card.imageUrl || '',
+                  source: 'snkrdunk' as const,
+                  buyUrl: item.url,
+                  seller: 'SNKRDUNK',
+                  condition: item.grade,
+                }));
+                console.log(`[Pricing Router] SNKRDUNK cache returned ${snkrdunkListings.length} listings`);
+              } else {
+                // Cache is invalid or doesn't exist, scrape new data
+                console.log('[Pricing Router] Cache miss or expired, scraping SNKRDUNK...');
+                const listings = await scrapeSnkrdunkListings(snkrdunkId);
+                
+                // Save to cache (expires in 1 hour)
+                const expiresAt = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+                await db.saveSnkrdunkListingsCache({
+                  cardId,
+                  snkrdunkId,
+                  listings: JSON.stringify(listings),
+                  expiresAt,
+                });
+                console.log(`[Pricing Router] Saved SNKRDUNK data to cache (expires at ${expiresAt})`);
+                
+                snkrdunkListings = listings.map((item) => ({
+                  id: `snkrdunk-${item.url}`,
+                  title: `${card.name} ${item.grade}`,
+                  price: item.price,
+                  currency: item.currency,
+                  imageUrl: item.image || card.imageUrl || '',
+                  source: 'snkrdunk' as const,
+                  buyUrl: item.url,
+                  seller: 'SNKRDUNK',
+                  condition: item.grade,
+                }));
+                console.log(`[Pricing Router] SNKRDUNK returned ${snkrdunkListings.length} listings`);
+              }
             } else {
               console.log('[Pricing Router] Could not extract SNKRDUNK ID from URL');
             }

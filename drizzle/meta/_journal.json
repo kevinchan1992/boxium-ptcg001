@@ -148,6 +148,13 @@
       "when": 1771421844397,
       "tag": "0020_cultured_silver_fox",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1771440745184,
+      "tag": "0021_bored_grim_reaper",
+      "breakpoints": true
     }
   ]
 }
