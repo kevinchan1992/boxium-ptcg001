@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Loader2, Plus, RefreshCw, ExternalLink, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
+import { BatchTaskProgressBar } from "@/components/BatchTaskProgressBar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
 
@@ -259,51 +260,25 @@ export function AdminDataSources() {
     },
   });
 
-  // 批量更新 eBay 價格
-  const [isBatchUpdating, setIsBatchUpdating] = useState(false);
-  
-  // 批量更新 SNKRDUNK 價格
-  const [isSnkrdunkBatchUpdating, setIsSnkrdunkBatchUpdating] = useState(false);
-  const batchUpdateMutation = trpc.admin.batchUpdateEbayPrices.useMutation({
+  // === 持久化批量更新 ===
+  const [ebayTaskId, setEbayTaskId] = useState<number | null>(null);
+  const [snkrdunkTaskId, setSnkrdunkTaskId] = useState<number | null>(null);
+
+  // 啟動 eBay 批量更新
+  const startEbayBatchUpdateMutation = trpc.admin.startPersistentEbayBatchUpdate.useMutation({
     onSuccess: (result) => {
-      setIsBatchUpdating(true);
+      setEbayTaskId(result.taskId);
       toast.success(result.message);
     },
     onError: (error: any) => {
-      toast.error(`啟動批量更新失敗: ${error.message}`);
+      toast.error(`啟動 eBay 批量更新失敗: ${error.message}`);
     },
   });
 
-  const pauseBatchUpdateMutation = trpc.admin.pauseBatchUpdate.useMutation({
-    onSuccess: () => {
-      toast.info("批量更新已暫停");
-    },
-  });
-
-  const resumeBatchUpdateMutation = trpc.admin.resumeBatchUpdate.useMutation({
-    onSuccess: () => {
-      toast.info("批量更新已繼續");
-    },
-  });
-
-  // 輪詢批量更新進度
-  const { data: batchProgress } = trpc.admin.getBatchUpdateProgress.useQuery(undefined, {
-    enabled: isBatchUpdating,
-    refetchInterval: isBatchUpdating ? 2000 : false,
-  });
-
-  // 當批量更新完成時，停止輪詢
-  useEffect(() => {
-    if (batchProgress && !batchProgress.isRunning && isBatchUpdating) {
-      setIsBatchUpdating(false);
-      toast.success(`eBay 批量更新完成！成功: ${batchProgress.successCount}，失敗: ${batchProgress.failureCount}`);
-      utils.admin.getDataSources.invalidate();
-    }
-  }, [batchProgress, isBatchUpdating]);
-
-  const snkrdunkBatchUpdateMutation = trpc.admin.batchUpdateSnkrdunkPrices.useMutation({
+  // 啟動 SNKRDUNK 批量更新
+  const startSnkrdunkBatchUpdateMutation = trpc.admin.startPersistentSnkrdunkBatchUpdate.useMutation({
     onSuccess: (result) => {
-      setIsSnkrdunkBatchUpdating(true);
+      setSnkrdunkTaskId(result.taskId);
       toast.success(result.message);
     },
     onError: (error: any) => {
@@ -311,32 +286,66 @@ export function AdminDataSources() {
     },
   });
 
-  const pauseSnkrdunkBatchUpdateMutation = trpc.admin.pauseSnkrdunkBatchUpdate.useMutation({
+  // 輪詢 eBay 任務進度
+  const { data: ebayTaskProgress } = trpc.admin.getPersistentTaskProgress.useQuery(
+    { taskType: 'batch_ebay_update' },
+    {
+      enabled: true, // 總是啟用，以支持跨會話恢復
+      refetchInterval: 3000, // 每 3 秒輪詢
+    }
+  );
+
+  // 輪詢 SNKRDUNK 任務進度
+  const { data: snkrdunkTaskProgress } = trpc.admin.getPersistentTaskProgress.useQuery(
+    { taskType: 'batch_snkrdunk_update' },
+    {
+      enabled: true, // 總是啟用，以支持跨會話恢復
+      refetchInterval: 3000, // 每 3 秒輪詢
+    }
+  );
+
+  // 暂停/繼續 eBay 任務
+  const pauseEbayTaskMutation = trpc.admin.pausePersistentTask.useMutation({
     onSuccess: () => {
-      toast.info("SNKRDUNK 批量更新已暫停");
+      toast.info("eBay 批量更新已暂停");
     },
   });
 
-  const resumeSnkrdunkBatchUpdateMutation = trpc.admin.resumeSnkrdunkBatchUpdate.useMutation({
+  const resumeEbayTaskMutation = trpc.admin.resumePersistentTask.useMutation({
+    onSuccess: () => {
+      toast.info("eBay 批量更新已繼續");
+    },
+  });
+
+  // 暂停/繼續 SNKRDUNK 任務
+  const pauseSnkrdunkTaskMutation = trpc.admin.pausePersistentTask.useMutation({
+    onSuccess: () => {
+      toast.info("SNKRDUNK 批量更新已暂停");
+    },
+  });
+
+  const resumeSnkrdunkTaskMutation = trpc.admin.resumePersistentTask.useMutation({
     onSuccess: () => {
       toast.info("SNKRDUNK 批量更新已繼續");
     },
   });
 
-  // 輪詢 SNKRDUNK 批量更新進度
-  const { data: snkrdunkBatchProgress } = trpc.admin.getSnkrdunkBatchUpdateProgress.useQuery(undefined, {
-    enabled: isSnkrdunkBatchUpdating,
-    refetchInterval: isSnkrdunkBatchUpdating ? 2000 : false,
-  });
-
-  // 當 SNKRDUNK 批量更新完成時，停止輪詢
+  // 當任務完成時，顯示通知並刷新數據
   useEffect(() => {
-    if (snkrdunkBatchProgress && !snkrdunkBatchProgress.isRunning && isSnkrdunkBatchUpdating) {
-      setIsSnkrdunkBatchUpdating(false);
-      toast.success(`SNKRDUNK 批量更新完成！成功: ${snkrdunkBatchProgress.successCount}，失敗: ${snkrdunkBatchProgress.failureCount}`);
+    if (ebayTaskProgress && ebayTaskProgress.status === 'completed') {
+      toast.success(`eBay 批量更新完成！成功: ${ebayTaskProgress.successCount}，失敗: ${ebayTaskProgress.failureCount}`);
       utils.admin.getDataSources.invalidate();
+      setEbayTaskId(null);
     }
-  }, [snkrdunkBatchProgress, isSnkrdunkBatchUpdating]);
+  }, [ebayTaskProgress?.status]);
+
+  useEffect(() => {
+    if (snkrdunkTaskProgress && snkrdunkTaskProgress.status === 'completed') {
+      toast.success(`SNKRDUNK 批量更新完成！成功: ${snkrdunkTaskProgress.successCount}，失敗: ${snkrdunkTaskProgress.failureCount}`);
+      utils.admin.getDataSources.invalidate();
+      setSnkrdunkTaskId(null);
+    }
+  }, [snkrdunkTaskProgress?.status]);
 
   const deleteDataSourceMutation = trpc.admin.deleteDataSource.useMutation({
     onSuccess: () => {
@@ -499,12 +508,12 @@ export function AdminDataSources() {
             </h2>
             <div className="flex gap-4 flex-wrap">
               <Button
-                onClick={() => snkrdunkBatchUpdateMutation.mutate()}
-                disabled={snkrdunkBatchUpdateMutation.isPending || isSnkrdunkBatchUpdating}
+                onClick={() => startSnkrdunkBatchUpdateMutation.mutate()}
+                disabled={startSnkrdunkBatchUpdateMutation.isPending || (snkrdunkTaskProgress?.status === 'running' || snkrdunkTaskProgress?.status === 'paused')}
                 variant="outline"
                 className="bg-blue-500 text-white hover:bg-blue-600"
               >
-                {snkrdunkBatchUpdateMutation.isPending ? (
+                {startSnkrdunkBatchUpdateMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     啟動中...
@@ -516,28 +525,13 @@ export function AdminDataSources() {
                   </>
                 )}
               </Button>
-              {isSnkrdunkBatchUpdating && snkrdunkBatchProgress && (
-                <Button
-                  onClick={() => {
-                    if (snkrdunkBatchProgress.isPaused) {
-                      resumeSnkrdunkBatchUpdateMutation.mutate();
-                    } else {
-                      pauseSnkrdunkBatchUpdateMutation.mutate();
-                    }
-                  }}
-                  variant="outline"
-                  size="sm"
-                >
-                  {snkrdunkBatchProgress.isPaused ? "繼續" : "暫停"}
-                </Button>
-              )}
               <Button
-                onClick={() => batchUpdateMutation.mutate()}
-                disabled={batchUpdateMutation.isPending || isBatchUpdating}
+                onClick={() => startEbayBatchUpdateMutation.mutate()}
+                disabled={startEbayBatchUpdateMutation.isPending || (ebayTaskProgress?.status === 'running' || ebayTaskProgress?.status === 'paused')}
                 variant="outline"
                 className="bg-orange-500 text-white hover:bg-orange-600"
               >
-                {batchUpdateMutation.isPending ? (
+                {startEbayBatchUpdateMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     啟動中...
@@ -549,150 +543,31 @@ export function AdminDataSources() {
                   </>
                 )}
               </Button>
-              {isBatchUpdating && batchProgress && (
-                <Button
-                  onClick={() => {
-                    if (batchProgress.isPaused) {
-                      resumeBatchUpdateMutation.mutate();
-                    } else {
-                      pauseBatchUpdateMutation.mutate();
-                    }
-                  }}
-                  variant="outline"
-                  size="sm"
-                >
-                  {batchProgress.isPaused ? "繼續" : "暫停"}
-                </Button>
-              )}
             </div>
 
-            {/* SNKRDUNK 批量更新進度顯示 */}
-            {isSnkrdunkBatchUpdating && snkrdunkBatchProgress && (
-              <div className="mt-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                    <span className="text-lg font-semibold">
-                      SNKRDUNK 批量更新進度: {snkrdunkBatchProgress.processedCards} / {snkrdunkBatchProgress.totalCards}
-                    </span>
-                    {snkrdunkBatchProgress.isPaused && (
-                      <span className="text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
-                        已暫停
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {((snkrdunkBatchProgress.processedCards / snkrdunkBatchProgress.totalCards) * 100).toFixed(1)}%
-                  </span>
-                </div>
-
-                {/* 進度條 */}
-                <div className="w-full bg-muted rounded-full h-3">
-                  <div
-                    className="bg-blue-500 h-3 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${(snkrdunkBatchProgress.processedCards / snkrdunkBatchProgress.totalCards) * 100}%`,
-                    }}
-                  />
-                </div>
-
-                {/* 統計資訊 */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-sm text-green-600 mb-1">成功</div>
-                    <div className="text-2xl font-bold text-green-700">{snkrdunkBatchProgress.successCount}</div>
-                  </div>
-                  <div className="bg-red-50 p-4 rounded-lg">
-                    <div className="text-sm text-red-600 mb-1">失敗</div>
-                    <div className="text-2xl font-bold text-red-700">{snkrdunkBatchProgress.failureCount}</div>
-                  </div>
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm text-blue-600 mb-1">總記錄數</div>
-                    <div className="text-2xl font-bold text-blue-700">{snkrdunkBatchProgress.totalRecordsAdded}</div>
-                  </div>
-                </div>
-
-                {/* 錯誤詳情 */}
-                {snkrdunkBatchProgress.errors.length > 0 && (
-                  <div className="bg-red-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-semibold text-red-700 mb-2">
-                      錯誤詳情（前 10 個）
-                    </h4>
-                    <div className="space-y-1 text-sm text-red-600 max-h-40 overflow-y-auto">
-                      {snkrdunkBatchProgress.errors.slice(0, 10).map((error, index) => (
-                        <div key={index}>
-                          • {error.cardName} (ID: {error.cardId}): {error.error}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* eBay 批量更新進度顯示 */}
-            {isBatchUpdating && batchProgress && (
-              <div className="mt-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
-                    <span className="text-lg font-semibold">
-                      批量更新進度: {batchProgress.processedCards} / {batchProgress.totalCards}
-                    </span>
-                    {batchProgress.isPaused && (
-                      <span className="text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
-                        已暫停
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {((batchProgress.processedCards / batchProgress.totalCards) * 100).toFixed(1)}%
-                  </span>
-                </div>
-
-                {/* 進度條 */}
-                <div className="w-full bg-muted rounded-full h-3">
-                  <div
-                    className="bg-orange-500 h-3 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${(batchProgress.processedCards / batchProgress.totalCards) * 100}%`,
-                    }}
-                  />
-                </div>
-
-                {/* 統計資訊 */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-sm text-green-600 mb-1">成功</div>
-                    <div className="text-2xl font-bold text-green-700">{batchProgress.successCount}</div>
-                  </div>
-                  <div className="bg-red-50 p-4 rounded-lg">
-                    <div className="text-sm text-red-600 mb-1">失敗</div>
-                    <div className="text-2xl font-bold text-red-700">{batchProgress.failureCount}</div>
-                  </div>
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm text-blue-600 mb-1">總記錄數</div>
-                    <div className="text-2xl font-bold text-blue-700">{batchProgress.totalRecordsAdded}</div>
-                  </div>
-                </div>
-
-                {/* 錯誤詳情 */}
-                {batchProgress.errors.length > 0 && (
-                  <div className="bg-red-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-semibold text-red-700 mb-2">
-                      錯誤詳情（前 10 個）
-                    </h4>
-                    <div className="space-y-1 text-sm text-red-600 max-h-40 overflow-y-auto">
-                      {batchProgress.errors.slice(0, 10).map((error, index) => (
-                        <div key={index}>
-                          • {error.cardName} (ID: {error.cardId}): {error.error}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* 批量更新進度條 */}
+            <div className="mt-6 space-y-4">
+              {snkrdunkTaskProgress && (snkrdunkTaskProgress.status === 'running' || snkrdunkTaskProgress.status === 'paused') && (
+                <BatchTaskProgressBar
+                  taskType="SNKRDUNK"
+                  progress={snkrdunkTaskProgress}
+                  onPause={() => pauseSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
+                  onResume={() => resumeSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
+                  isPauseLoading={pauseSnkrdunkTaskMutation.isPending}
+                  isResumeLoading={resumeSnkrdunkTaskMutation.isPending}
+                />
+              )}
+              {ebayTaskProgress && (ebayTaskProgress.status === 'running' || ebayTaskProgress.status === 'paused') && (
+                <BatchTaskProgressBar
+                  taskType="eBay"
+                  progress={ebayTaskProgress}
+                  onPause={() => pauseEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
+                  onResume={() => resumeEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
+                  isPauseLoading={pauseEbayTaskMutation.isPending}
+                  isResumeLoading={resumeEbayTaskMutation.isPending}
+                />
+              )}
+            </div>
           </Card>
 
           {/* Data Sources List */}

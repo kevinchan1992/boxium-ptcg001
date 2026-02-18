@@ -2585,3 +2585,46 @@
 - 前端組件更新（使用 refetchInterval 輪詢進度）
 - 頁面重新載入時自動恢復進度顯示
 - 實際測試離開頁面後任務繼續執行
+
+## 前端組件更新 - AdminDataSources 持久化批量更新 - 完成
+
+- [x] 分析現有 AdminDataSources 組件的批量更新按鈕和進度顯示
+- [x] 創建 BatchTaskProgressBar 進度條組件
+- [x] 更新「批量更新所有卡牌 eBay 價格」按鈕調用 admin.startPersistentEbayBatchUpdate
+- [x] 更新「批量更新所有卡牌 SNKRDUNK 價格」按鈕調用 admin.startPersistentSnkrdunkBatchUpdate
+- [x] 實現 useEffect 在組件載入時檢測進行中的任務
+- [x] 使用 refetchInterval: 3000 輪詢任務進度
+- [x] 顯示實時進度條（處理數/總數、百分比、成功/失敗數）
+- [x] 添加暂停/繼續按鈕
+- [x] 測試離開頁面後返回是否自動恢復進度顯示
+- [x] 測試關閉瀏覽器後重新打開是否恢復進度
+
+**實現細節：**
+
+1. **BatchTaskProgressBar 組件** (client/src/components/BatchTaskProgressBar.tsx)
+   - 支持 eBay 和 SNKRDUNK 兩種任務類型
+   - 顯示任務狀態（running/paused/completed/failed）
+   - 實時進度條和百分比
+   - 成功/失敗計數
+   - 錯誤詳情收縮顯示
+   - 暂停/繼續按鈕
+
+2. **AdminDataSources 組件更新**
+   - 移除舊的 batchUpdateMutation 和 snkrdunkBatchUpdateMutation
+   - 添加 startEbayBatchUpdateMutation 和 startSnkrdunkBatchUpdateMutation
+   - 使用 trpc.admin.getPersistentTaskProgress 輪詢進度（refetchInterval: 3000）
+   - enabled: true 總是啟用輪詢，支持跨會話恢復
+   - 添加 pauseEbayTaskMutation/resumeEbayTaskMutation
+   - 添加 pauseSnkrdunkTaskMutation/resumeSnkrdunkTaskMutation
+   - 使用 BatchTaskProgressBar 組件顯示進度
+
+3. **跨會話恢復功能**
+   - 輪詢總是啟用，不依賴本地狀態
+   - 頁面載入時自動查詢正在運行的任務
+   - 即使關閉瀏覽器後重新打開，也會自動恢復進度顯示
+
+4. **測試驗證**
+   - 在 Admin 頁面觀察到正在運行的 SNKRDUNK 和 eBay 批量更新任務
+   - 進度條正確顯示：3/5 (60%)
+   - 成功/失敗計數正常
+   - 跨會話恢復功能正常（頁面載入時自動檢測並顯示進行中的任務）
