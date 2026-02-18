@@ -1,6 +1,7 @@
 import { router, publicProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { fetchEbayListings } from '../services/ebay';
+import { scrapeSnkrdunkListings } from '../services/snkrdunkPlaywright';
 import * as db from '../db';
 
 interface PriceListing {
@@ -99,12 +100,46 @@ export const pricingRouter = router({
           // Continue even if eBay fails
         }
 
-        // Step 3: SNKRDUNK listings are accessed via direct link (no scraping)
-        // Users will click the "View on SNKRDUNK" button to see PSA 10 listings
-        console.log('[Pricing Router] SNKRDUNK listings skipped (direct link provided in UI)');
+        // Step 3: Fetch SNKRDUNK PSA 10 listings using Playwright
+        console.log('[Pricing Router] Fetching from SNKRDUNK...');
+        let snkrdunkListings: any[] = [];
+        try {
+          // Get SNKRDUNK data source for this card
+          const dataSource = await db.getDataSourceByCardIdAndSource(cardId, 'snkrdunk');
+          
+          if (dataSource && dataSource.sourceUrl) {
+            // Extract SNKRDUNK ID from URL (e.g., https://snkrdunk.com/apparels/93009 → 93009)
+            const snkrdunkIdMatch = dataSource.sourceUrl.match(/\/(\d+)/);
+            if (snkrdunkIdMatch) {
+              const snkrdunkId = snkrdunkIdMatch[1];
+              console.log(`[Pricing Router] SNKRDUNK ID: ${snkrdunkId}`);
+              
+              const listings = await scrapeSnkrdunkListings(snkrdunkId);
+              snkrdunkListings = listings.map((item) => ({
+                id: `snkrdunk-${item.url}`,
+                title: `${card.name} ${item.grade}`,
+                price: item.price,
+                currency: item.currency,
+                imageUrl: item.image || card.imageUrl || '',
+                source: 'snkrdunk' as const,
+                buyUrl: item.url,
+                seller: 'SNKRDUNK',
+                condition: item.grade,
+              }));
+              console.log(`[Pricing Router] SNKRDUNK returned ${snkrdunkListings.length} listings`);
+            } else {
+              console.log('[Pricing Router] Could not extract SNKRDUNK ID from URL');
+            }
+          } else {
+            console.log('[Pricing Router] No SNKRDUNK data source found for this card');
+          }
+        } catch (error) {
+          console.error('[Pricing Router] SNKRDUNK fetch error:', error);
+          // Continue even if SNKRDUNK fails
+        }
 
         // Step 4: Transform eBay listings to unified format
-        const listings = ebayListings.map((item: any) => ({
+        const ebayFormattedListings = ebayListings.map((item: any) => ({
           id: item.id,
           title: item.title,
           price: item.price,
@@ -116,10 +151,13 @@ export const pricingRouter = router({
           condition: item.condition,
         }));
 
-        // Step 5: Sort by price (lowest first)
+        // Step 5: Merge eBay and SNKRDUNK listings
+        const listings = [...ebayFormattedListings, ...snkrdunkListings];
+        
+        // Step 6: Sort by price (lowest first)
         listings.sort((a, b) => a.price - b.price);
 
-        console.log(`[Pricing Router] Returning ${listings.length} total listings`);
+        console.log(`[Pricing Router] Returning ${listings.length} total listings (${ebayFormattedListings.length} eBay + ${snkrdunkListings.length} SNKRDUNK)`);
 
         return {
           card,

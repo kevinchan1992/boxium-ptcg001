@@ -4105,5 +4105,34 @@
 
 ### Phase 4: 保存檢查點並交付成果
 - [x] 更新 todo.md 標記完成的任務
-- [ ] 保存檢查點
-- [ ] 向用戶交付優化後的功能
+- [x] 保存檢查點
+- [x] 向用戶交付優化後的功能
+
+
+## 新功能: Pricing 頁面顯示 SNKRDUNK PSA 10 商品列表（使用 Playwright）
+
+### Phase 1: 使用 Playwright 實現 SNKRDUNK 商品數據抓取
+- [x] 創建 SNKRDUNK service 使用 Playwright
+- [x] 渲染 SNKRDUNK /used 頁面
+- [x] 提取商品 URL 和價格（使用 document.querySelectorAll）
+- [x] 過濾 PSA 10 商品
+- [x] 按價格從低到高排序
+
+### Phase 2: 修改 pricing router 集成 SNKRDUNK 數據
+- [x] 修改 pricing router 調用 SNKRDUNK service
+- [x] 返回 SNKRDUNK PSA 10 商品列表
+- [x] 合併 eBay 和 SNKRDUNK 數據
+
+### Phase 3: 修改 PricingDetail 頁面顯示商品列表
+- [x] 修改 PricingDetail.tsx 顯示 SNKRDUNK 商品列表
+- [x] 設計商品卡片樣式（URL + 價格）
+- [x] 移除「前往 SNKRDUNK 查看」按鈕（改為顯示列表）
+- [x] 添加 allListings 翻譯鍵
+
+### Phase 4: 測試驗證並交付成果
+- [x] 測試 SNKRDUNK 商品列表顯示
+- [x] 驗證價格排序功能（從低到高）
+- [x] 確認商品 URL 可正確跳轉
+- [x] 測試用戶提供的範例卡牌 180001 → 737036
+- [x] 成功顯示 11 個 PSA 10 商品，按價格排序
+- [ ] 保存檢查點並交付

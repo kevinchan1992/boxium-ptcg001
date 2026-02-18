@@ -260,6 +260,7 @@
     "highestPrice": "最高價",
     "psa10Listings": "PSA 10 在售商品",
     "ebayListings": "eBay PSA 10 在售商品",
+    "allListings": "PSA 10 在售商品（按價格排序）",
     "loadingListings": "載入商品中...",
     "noListings": "暫無在售商品",
     "condition": "狀況",

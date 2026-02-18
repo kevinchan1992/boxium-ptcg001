@@ -161,38 +161,12 @@ export default function PricingDetail() {
         </div>
       </div>
 
-      {/* SNKRDUNK Link Section */}
-      {snkrdunkSource?.sourceIdentifier && (
-        <div className="bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/30 rounded-lg p-6 mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-1">
-                {t("pricing.snkrdunkTitle")}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {t("pricing.snkrdunkDescription")}
-              </p>
-            </div>
-            <Button
-              variant="default"
-              size="lg"
-              className="bg-orange-500 hover:bg-orange-600 text-white whitespace-nowrap"
-              onClick={() => window.open(
-                `https://snkrdunk.com/en/trading-cards/${snkrdunkSource.sourceIdentifier}/used?sort=latest&isOnlyOnSale=true`,
-                "_blank"
-              )}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              {t("pricing.viewOnSnkrdunk")}
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Info: SNKRDUNK商品已整合到下方列表中，按價格從低到高排序 */}
 
       {/* Listings Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-foreground">
-          {t("pricing.ebayListings")}
+          {t("pricing.allListings")}
         </h2>
         <Button
           variant="outline"
