@@ -41,7 +41,8 @@
     "logout": "Logout",
     "marketInsights": "Market Insights",
     "trending": "Trending",
-    "about": "About Us"
+    "about": "About Us",
+    "blog": "Latest News"
   },
   "home": {
     "welcome": "Welcome to Boxium ~ Gaming Enthusiasts' World",
@@ -91,6 +92,7 @@
     "quickLinks": "Quick Links",
     "cardSearch": "Card Search",
     "trending": "Trending",
+    "blog": "Latest News",
     "pricing": "Pricing",
     "aboutUs": "About Us",
     "platformIntro": "Platform Introduction",

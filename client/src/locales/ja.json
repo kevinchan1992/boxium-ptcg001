@@ -41,7 +41,8 @@
     "logout": "ログアウト",
     "marketInsights": "市場洞察",
     "trending": "ランキング",
-    "about": "私たちについて"
+    "about": "私たちについて",
+    "blog": "最新ニュース"
   },
   "home": {
     "welcome": "Boxiumへようこそ〜ゲーム愛好家の世界",
@@ -91,6 +92,7 @@
     "quickLinks": "クイックリンク",
     "cardSearch": "カード検索",
     "trending": "ランキング",
+    "blog": "最新ニュース",
     "pricing": "価格検索",
     "aboutUs": "私たちについて",
     "platformIntro": "プラットフォーム紹介",

@@ -31,7 +31,7 @@
   },
   "common": {
     "home": "主頁",
-    "research": "卡牌研究",
+    "research": "卡牙研究",
     "pricing": "價格查詢",
     "terms": "服務條款",
     "privacy": "隱私權政策",
@@ -41,7 +41,8 @@
     "logout": "登出",
     "marketInsights": "市場洞察",
     "trending": "熱門排行榜",
-    "about": "關於我們"
+    "about": "關於我們",
+    "blog": "最新消息"
   },
   "home": {
     "welcome": "歡迎來到 Boxium ~ 遊戲迷專屬世界",
@@ -89,8 +90,9 @@
   "footer": {
     "description": "專注於 Pokémon TCG 價格查詢與市場分析的綜合平台",
     "quickLinks": "快速連結",
-    "cardSearch": "卡牌搜尋",
+    "cardSearch": "卡牙搜尋",
     "trending": "熱門排行榜",
+    "blog": "最新消息",
     "pricing": "價格查詢",
     "aboutUs": "關於我們",
     "platformIntro": "平台介紹",

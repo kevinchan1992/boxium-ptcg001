@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,22 +11,42 @@ import { Search, Calendar, Eye, TrendingUp, Sparkles, ArrowRight } from "lucide-
 export default function Blog() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [page, setPage] = useState(1);
+  const [allPosts, setAllPosts] = useState<any[]>([]);
+  const POSTS_PER_PAGE = 12;
 
   // Query published posts
-  const { data: posts, isLoading } = trpc.blog.getPosts.useQuery({
+  const { data: posts, isLoading, refetch } = trpc.blog.getPosts.useQuery({
     status: 'published',
     search: searchQuery || undefined,
     categoryId: selectedCategory === 'all' ? undefined : Number(selectedCategory),
     sortBy: 'newest',
-    limit: 50,
+    limit: POSTS_PER_PAGE * page,
   });
+
+  // Update allPosts when posts change
+  useEffect(() => {
+    if (posts) {
+      setAllPosts(posts);
+    }
+  }, [posts]);
+
+  // Reset page when search or category changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, selectedCategory]);
 
   // Query categories
   const { data: categories } = trpc.blog.getCategories.useQuery();
 
   // Get featured post (most recent)
-  const featuredPost = posts && posts.length > 0 ? posts[0] : null;
-  const regularPosts = posts && posts.length > 1 ? posts.slice(1) : [];
+  const featuredPost = allPosts && allPosts.length > 0 ? allPosts[0] : null;
+  const regularPosts = allPosts && allPosts.length > 1 ? allPosts.slice(1) : [];
+  const hasMore = posts && posts.length === POSTS_PER_PAGE * page;
+
+  const handleLoadMore = () => {
+    setPage(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-screen bg-black">
@@ -191,6 +211,19 @@ export default function Blog() {
                     </Link>
                   ))}
                 </div>
+
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="mt-12 text-center">
+                    <Button
+                      onClick={handleLoadMore}
+                      disabled={isLoading}
+                      className="bg-[#06038d] hover:bg-[#06038d]/90 px-8 py-6 text-lg"
+                    >
+                      {isLoading ? '載入中...' : '載入更多文章'}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </>

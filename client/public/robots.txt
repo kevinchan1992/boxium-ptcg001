@@ -1,0 +1,16 @@
+# robots.txt for BOXIUM PTCG
+User-agent: *
+Allow: /
+Allow: /blog
+Allow: /blog/*
+Allow: /research
+Allow: /trending
+Allow: /pricing
+Allow: /about
+
+# Disallow admin and API endpoints
+Disallow: /admin
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://boxium-ptcg.manus.space/sitemap.xml

@@ -29,6 +29,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.cardSearch")}</Link></li>
               <li><Link href="/trending" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.trending")}</Link></li>
+              <li><Link href="/blog" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.blog")}</Link></li>
               <li><Link href="/pricing" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.pricing")}</Link></li>
             </ul>
           </div>
