@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Flame, Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Footer from "@/components/Footer";
 
 type TrendingTab = 'searches' | 'priceIncrease' | 'priceDecrease' | 'newlyAdded';
 
@@ -157,6 +158,9 @@ export default function Trending() {
           </div>
         </Tabs>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

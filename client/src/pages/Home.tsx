@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
+import Footer from "@/components/Footer";
 
 
 function TrendingCardsGrid() {
@@ -291,76 +292,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 md:py-12 px-4 sm:px-6 border-t" style={{ backgroundColor: "#06038d" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-8">
-            {/* Brand */}
-            <div className="sm:col-span-2 md:col-span-1">
-              <img
-                src="/boxium-logo.png"
-                alt="BOXIUM Logo"
-                className="h-8 md:h-10 mb-4"
-              />
-              <p className="text-white/80 text-sm md:text-base leading-relaxed">
-                {t("home.footerDesc")}
-              </p>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h4 className="text-white font-bold mb-4 text-sm md:text-base">{t("home.quickLinks")}</h4>
-              <ul className="space-y-2">
-                <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">{t("home.cardSearch")}</Link></li>
-                <li><Link href="/market-insights" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">{t("home.marketReport")}</Link></li>
-                <li><Link href="/pricing" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">{t("home.priceQuery")}</Link></li>
-                <li><Link href="/admin" className="text-white/80 hover:text-white transition-colors text-sm md:text-base">{t("home.adminPanel")}</Link></li>
-              </ul>
-            </div>
-
-            {/* Info */}
-            <div>
-              <h4 className="text-white font-bold mb-4 text-sm md:text-base">{t("home.aboutUs")}</h4>
-              <p className="text-white/80 text-xs md:text-sm leading-relaxed">
-                {t("home.aboutUsDesc")}
-              </p>
-            </div>
-
-            {/* Social Links */}
-            <div>
-              <h4 className="text-white font-bold mb-4 text-sm md:text-base">{t("home.socialMedia")}</h4>
-              <div className="flex gap-4">
-                <a href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Facebook">
-                  <Facebook className="h-5 w-5" />
-                </a>
-                <a href="https://www.instagram.com/boxium.gamecard?igsh=MTBha2wyNWR4d3lpcQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Instagram">
-                  <Instagram className="h-5 w-5" />
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-white/20 pt-8 text-center">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-4">
-              <Link href="/terms" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
-                {t("home.termsOfService")}
-              </Link>
-              <span className="hidden sm:inline text-white/40">|</span>
-              <Link href="/privacy" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
-                {t("home.privacyPolicy")}
-              </Link>
-              <span className="hidden sm:inline text-white/40">|</span>
-              <Link href="/disclaimer" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
-                免責聲明
-              </Link>
-              <span className="hidden sm:inline text-white/40">|</span>
-              <Link href="/about" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
-                關於我們
-              </Link>
-            </div>
-            <p className="text-white/60 text-xs md:text-sm">© 2026 BOXIUM. All rights reserved. | Luck in Every Box</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

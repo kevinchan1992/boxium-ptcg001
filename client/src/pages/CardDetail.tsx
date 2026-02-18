@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { PriceTrendChart } from "@/components/PriceTrendChart";
 import { ShareButton } from "@/components/ShareButton";
 import { useTranslation } from "react-i18next";
+import Footer from "@/components/Footer";
 
 
 const grades = ["PSA 10", "BGS 10", "中古"];
@@ -550,6 +551,9 @@ export default function CardDetail() {
             </div>
           </div>
         </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

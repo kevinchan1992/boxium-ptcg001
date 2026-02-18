@@ -2812,3 +2812,15 @@
 - [x] 檢查 SEO meta 標籤
 - [x] 測試路由導航
 - [x] 驗證動態數據統計顯示
+
+## 將統一 Footer 應用到所有頁面
+
+- [x] 檢查所有頁面的 Footer 狀態（Home, Research, Trending, CardDetail, Admin）
+- [x] 將 Footer 組件應用到 Home.tsx
+- [x] 將 Footer 組件應用到 Research.tsx
+- [x] 將 Footer 組件應用到 Trending.tsx
+- [x] 將 Footer 組件應用到 CardDetail.tsx
+- [ ] 將 Footer 組件應用到 Admin.tsx（可選，Admin 頁面使用 DashboardLayout）
+- [x] 移除 Home.tsx 內聯的 Footer 代碼
+- [x] 測試所有頁面的 Footer 顯示正常
+- [x] 驗證 Footer 連結在所有頁面都正確運作

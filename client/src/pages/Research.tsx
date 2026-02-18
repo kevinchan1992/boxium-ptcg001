@@ -4,6 +4,7 @@ import { Search, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   const { t } = useTranslation();
@@ -91,6 +92,9 @@ export default function Home() {
           )}
         </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
