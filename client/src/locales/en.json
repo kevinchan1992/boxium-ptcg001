@@ -1,4 +1,28 @@
 {
+  "trending": {
+    "title": "🔥 PSA 10 Trending Leaderboard",
+    "subtitle": "PSA 10 Graded Card Market Trends within 24 Hours",
+    "searchHeat": "Search Heat",
+    "searchHeatShort": "Heat",
+    "priceSurge": "Price Surge",
+    "priceSurgeShort": "Surge",
+    "priceDrop": "Price Drop",
+    "priceDropShort": "Drop",
+    "newlyAdded": "Newly Added",
+    "newlyAddedShort": "New",
+    "currentPrice": "Current Price",
+    "priceChange": "Price Change",
+    "searchCount": "Search Count",
+    "viewDetails": "View Details",
+    "goToSnkrdunk": "Go to SNKRDUNK",
+    "fullRanking": "Full Ranking",
+    "noImage": "No Image",
+    "emptySearches": "No sufficient search data available",
+    "emptyPriceIncrease": "No cards with price surge",
+    "emptyPriceDecrease": "No cards with price drop",
+    "emptyNewlyAdded": "No newly added cards",
+    "emptyHint": "Please try again later or switch to other categories"
+  },
   "common": {
     "home": "Home",
     "research": "Card Research",

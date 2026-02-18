@@ -2867,3 +2867,39 @@
 - [x] 為 Privacy 頁面添加 JSON-LD 結構化數據（WebPage）
 - [x] 創建 StructuredData 組件統一管理結構化數據
 - [x] 測試驗證 JSON-LD 格式正確
+
+## Trending 頁面多語言翻譯 + 語言切換器優化 + Google Analytics 整合
+
+### Trending 頁面多語言翻譯
+- [x] 在 i18n 翻譯文件添加 Trending 頁面相關翻譯（繁中/英/日）
+  - [x] 頁面標題和副標題
+  - [x] Tab 按鈕文字（熱度、飆升、暴跌、新品）
+  - [x] 卡牌資訊標籤（當前價格、價格變化、查看詳情、前往 SNKRDUNK）
+  - [x] 空狀態提示文字
+  - [x] 刷新按鈕文字
+- [x] 修改 Trending.tsx 使用 t() 函數替換硬編碼文字
+- [x] 測試三種語言版本的 Trending 頁面顯示正常
+
+### 語言切換器視覺優化
+- [x] 優化 LanguageSwitcher 組件的視覺設計
+  - [x] 添加 hover 動畫效果（背景色、邊框、陰影）
+  - [x] 當前語言高亮顯示（背景色、字體粗細、左邊框）
+  - [x] 優化下拉選單的過渡動畫
+  - [x] 添加語言選項的 hover 效果
+- [x] 測試語言切換器在不同螢幕尺寸下的顯示效果
+
+### Google Analytics 和 Search Console 整合
+- [x] 創建 Google Analytics 4 組件
+  - [x] 添加 GA4 tracking code
+  - [x] 配置頁面瀏覽追蹤
+  - [x] 配置事件追蹤（語言切換、卡牌點擊、搜尋）
+- [x] 添加 Google Search Console 驗證 meta 標籤（需用戶提供驗證碼）
+- [x] 創建環境變數管理 GA4 Measurement ID
+- [x] 測試 GA4 數據追蹤正常運作（需用戶提供 GA4 ID）
+- [ ] 提供 GSC 驗證碼給用戶進行驗證（用戶操作）
+
+### 測試驗證
+- [x] 測試 Trending 頁面的多語言切換
+- [x] 驗證語言切換器的視覺效果
+- [x] 確認 GA4 追蹤代碼正確載入
+- [x] 檢查所有頁面的多語言翻譯完整性

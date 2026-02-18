@@ -4,6 +4,7 @@ import { httpBatchLink } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 
 import "./index.css";
 import "./i18n";
@@ -51,6 +52,7 @@ const trpcClient = trpc.createClient({
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
+      <GoogleAnalytics />
       <App />
     </QueryClientProvider>
   </trpc.Provider>

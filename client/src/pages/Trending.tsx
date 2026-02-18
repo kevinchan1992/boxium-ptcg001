@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +12,7 @@ import Footer from "@/components/Footer";
 type TrendingTab = 'searches' | 'priceIncrease' | 'priceDecrease' | 'newlyAdded';
 
 export default function Trending() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TrendingTab>('searches');
   const days = 1; // Fixed to 24 hours
 
@@ -64,10 +66,10 @@ export default function Trending() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 md:mb-8">
           <div>
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-1 md:mb-2">
-              🔥 PSA 10 熱門排行榜
+              {t('trending.title')}
             </h1>
             <p className="text-gray-400 text-sm md:text-lg">
-              24 小時內 PSA 10 評級卡牌市場趨勢
+              {t('trending.subtitle')}
             </p>
           </div>
 
@@ -92,32 +94,32 @@ export default function Trending() {
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 flex-col md:flex-row gap-1 md:gap-2 py-2 md:py-2.5 text-xs md:text-sm"
             >
               <Flame className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">搜尋熱度</span>
-              <span className="sm:hidden">熱度</span>
+              <span className="hidden sm:inline">{t('trending.searchHeat')}</span>
+              <span className="sm:hidden">{t('trending.searchHeatShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="priceIncrease" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-500 flex-col md:flex-row gap-1 md:gap-2 py-2 md:py-2.5 text-xs md:text-sm"
             >
               <TrendingUp className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">價格飆升</span>
-              <span className="sm:hidden">飆升</span>
+              <span className="hidden sm:inline">{t('trending.priceSurge')}</span>
+              <span className="sm:hidden">{t('trending.priceSurgeShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="priceDecrease" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 flex-col md:flex-row gap-1 md:gap-2 py-2 md:py-2.5 text-xs md:text-sm"
             >
               <TrendingDown className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">價格暴跌</span>
-              <span className="sm:hidden">暴跌</span>
+              <span className="hidden sm:inline">{t('trending.priceDrop')}</span>
+              <span className="sm:hidden">{t('trending.priceDropShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="newlyAdded" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 flex-col md:flex-row gap-1 md:gap-2 py-2 md:py-2.5 text-xs md:text-sm"
             >
               <Sparkles className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">新上架</span>
-              <span className="sm:hidden">新品</span>
+              <span className="hidden sm:inline">{t('trending.newlyAdded')}</span>
+              <span className="sm:hidden">{t('trending.newlyAddedShort')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -145,7 +147,7 @@ export default function Trending() {
                 {/* Ranking List (Top 4-10) */}
                 {currentData.length > 3 && (
                   <div className="mt-4 md:mt-6">
-                    <h2 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4">完整排行榜</h2>
+                    <h2 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4">{t('trending.fullRanking')}</h2>
                     <div className="space-y-2 md:space-y-3">
                       {currentData.slice(3).map((card, index) => (
                         <RankingListItem key={card.id} card={card} rank={index + 4} type={activeTab} />
@@ -167,6 +169,7 @@ export default function Trending() {
 
 // Champion Card Component (Rank 1)
 function ChampionCard({ card, rank, type }: { card: any; rank: number; type: TrendingTab }) {
+  const { t } = useTranslation();
   // Better image fallback handling
   const imageUrl = card.imageUrl || card.imageUrlHiRes || '';
   const hasValidImage = imageUrl && imageUrl.trim() !== '';
@@ -199,7 +202,7 @@ function ChampionCard({ card, rank, type }: { card: any; rank: number; type: Tre
               />
             ) : (
               <div className="w-40 md:w-56 h-56 md:h-80 rounded-lg shadow-xl border-2 border-yellow-500/50 bg-slate-800 flex items-center justify-center text-gray-500 text-sm">
-                無圖片
+                {t('trending.noImage')}
               </div>
             )}
           </div>
@@ -211,7 +214,7 @@ function ChampionCard({ card, rank, type }: { card: any; rank: number; type: Tre
             
             <div className="grid grid-cols-2 gap-3 md:gap-4 mb-3 md:mb-4">
               <div>
-                <p className="text-xs md:text-sm text-gray-400">當前價格</p>
+                <p className="text-xs md:text-sm text-gray-400">{t('trending.currentPrice')}</p>
                 <p className="text-lg md:text-2xl font-bold text-yellow-400">
                   {card.currentPrice ? `HKD $${card.currentPrice.toLocaleString()}` : 'N/A'}
                 </p>
@@ -219,7 +222,7 @@ function ChampionCard({ card, rank, type }: { card: any; rank: number; type: Tre
 
               {type === 'searches' && card.searchCount && (
                 <div>
-                  <p className="text-xs md:text-sm text-gray-400">搜尋次數</p>
+                  <p className="text-xs md:text-sm text-gray-400">{t('trending.searchCount')}</p>
                   <p className="text-lg md:text-2xl font-bold text-orange-400">
                     🔥 {card.searchCount} 次
                   </p>
@@ -228,7 +231,7 @@ function ChampionCard({ card, rank, type }: { card: any; rank: number; type: Tre
 
               {(type === 'priceIncrease' || type === 'priceDecrease') && card.priceChangePercent !== undefined && (
                 <div>
-                  <p className="text-xs md:text-sm text-gray-400">價格變化</p>
+                  <p className="text-xs md:text-sm text-gray-400">{t('trending.priceChange')}</p>
                   <p className={`text-lg md:text-2xl font-bold ${card.priceChangePercent > 0 ? 'text-green-400' : 'text-blue-400'}`}>
                     {card.priceChangePercent > 0 ? '↑' : '↓'} {Math.abs(card.priceChangePercent).toFixed(2)}%
                   </p>
@@ -238,10 +241,10 @@ function ChampionCard({ card, rank, type }: { card: any; rank: number; type: Tre
 
             <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
               <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-sm md:text-base">
-                查看詳情
+                {t('trending.viewDetails')}
               </Button>
               <Button variant="outline" className="border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10 text-sm md:text-base">
-                前往 SNKRDUNK
+                {t('trending.goToSnkrdunk')}
               </Button>
             </div>
           </div>
@@ -253,6 +256,7 @@ function ChampionCard({ card, rank, type }: { card: any; rank: number; type: Tre
 
 // Runner-up Card Component (Rank 2-3)
 function RunnerUpCard({ card, rank, type }: { card: any; rank: number; type: TrendingTab }) {
+  const { t } = useTranslation();
   const borderColor = rank === 2 ? 'border-gray-400/50' : 'border-amber-700/50';
   const badgeEmoji = rank === 2 ? '🥈' : '🥉';
   
@@ -276,7 +280,7 @@ function RunnerUpCard({ card, rank, type }: { card: any; rank: number; type: Tre
             />
           ) : (
               <div className="w-32 md:w-40 h-44 md:h-56 rounded-lg shadow-lg bg-slate-800 flex items-center justify-center text-gray-500 text-xs flex-shrink-0">
-              無圖片
+              {t('trending.noImage')}
             </div>
           )}
 
@@ -310,6 +314,7 @@ function RunnerUpCard({ card, rank, type }: { card: any; rank: number; type: Tre
 
 // Ranking List Item Component (Rank 4-10)
 function RankingListItem({ card, rank, type }: { card: any; rank: number; type: TrendingTab }) {
+  const { t } = useTranslation();
   const imageUrl = card.imageUrl || card.imageUrlHiRes || '';
   const hasValidImage = imageUrl && imageUrl.trim() !== '';
 
@@ -334,7 +339,7 @@ function RankingListItem({ card, rank, type }: { card: any; rank: number; type: 
             />
           ) : (
               <div className="w-16 md:w-20 h-22 md:h-28 rounded shadow-md bg-slate-800 flex items-center justify-center text-gray-500 text-[10px] flex-shrink-0">
-              無圖
+              {t('trending.noImage')}
             </div>
           )}
 
@@ -387,17 +392,18 @@ function LoadingSkeleton() {
 
 // Empty State
 function EmptyState({ activeTab }: { activeTab: TrendingTab }) {
+  const { t } = useTranslation();
   const messages = {
-    searches: '目前沒有足夠的搜尋數據',
-    priceIncrease: '目前沒有價格上漲的卡牌',
-    priceDecrease: '目前沒有價格下跌的卡牌',
-    newlyAdded: '目前沒有新上架的卡牌',
+    searches: t('trending.emptySearches'),
+    priceIncrease: t('trending.emptyPriceIncrease'),
+    priceDecrease: t('trending.emptyPriceDecrease'),
+    newlyAdded: t('trending.emptyNewlyAdded'),
   };
 
   return (
     <div className="text-center py-12 md:py-16">
       <p className="text-lg md:text-xl text-gray-400">{messages[activeTab]}</p>
-      <p className="text-sm md:text-base text-gray-500 mt-2">請稍後再試或選擇其他時間範圍</p>
+      <p className="text-sm md:text-base text-gray-500 mt-2">{t('trending.emptyHint')}</p>
     </div>
   );
 }

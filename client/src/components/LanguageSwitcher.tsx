@@ -31,20 +31,20 @@ export default function LanguageSwitcher() {
         <Button
           variant="ghost"
           size="sm"
-          className="gap-2 text-white hover:text-[#ffed00] hover:bg-white/10"
+          className="gap-2 text-white hover:text-[#ffed00] hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-yellow-500/20 active:scale-95"
         >
           <Globe className="h-4 w-4" />
           <span className="hidden sm:inline">{currentLanguage.flag} {currentLanguage.name}</span>
           <span className="sm:hidden">{currentLanguage.flag}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-48 animate-in slide-in-from-top-2 duration-200">
         {languages.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
             onClick={() => changeLanguage(lang.code)}
-            className={`cursor-pointer ${
-              i18n.language === lang.code ? "bg-accent" : ""
+            className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+              i18n.language === lang.code ? "bg-yellow-500/10 border-l-2 border-yellow-500 font-semibold" : "hover:bg-accent"
             }`}
           >
             <span className="mr-2">{lang.flag}</span>

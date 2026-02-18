@@ -1,4 +1,28 @@
 {
+  "trending": {
+    "title": "🔥 PSA 10 熱門排行槜",
+    "subtitle": "24 小時內 PSA 10 評級卡牌市場趨勢",
+    "searchHeat": "搜尋熱度",
+    "searchHeatShort": "熱度",
+    "priceSurge": "價格飆升",
+    "priceSurgeShort": "飆升",
+    "priceDrop": "價格暴跌",
+    "priceDropShort": "暴跌",
+    "newlyAdded": "新上架",
+    "newlyAddedShort": "新品",
+    "currentPrice": "當前價格",
+    "priceChange": "價格變化",
+    "searchCount": "搜尋次數",
+    "viewDetails": "查看詳情",
+    "goToSnkrdunk": "前往 SNKRDUNK",
+    "fullRanking": "完整排行槜",
+    "noImage": "無圖片",
+    "emptySearches": "目前沒有足夠的搜尋數據",
+    "emptyPriceIncrease": "目前沒有價格飆升的卡牌",
+    "emptyPriceDecrease": "目前沒有價格暴跌的卡牌",
+    "emptyNewlyAdded": "目前沒有新上架的卡牌",
+    "emptyHint": "請稍後再試或切換其他分類"
+  },
   "common": {
     "home": "主頁",
     "research": "卡牌研究",
