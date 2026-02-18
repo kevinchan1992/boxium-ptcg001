@@ -1839,6 +1839,76 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
   }),
 
+  // Trending router - hot cards rankings
+  trending: router({
+    // Get trending cards by search popularity
+    getBySearches: publicProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(20).optional(),
+        days: z.number().min(1).max(30).optional(),
+      }))
+      .query(async ({ input }) => {
+        const results = await db.getTrendingBySearches({
+          limit: input.limit,
+          days: input.days,
+        });
+        return results;
+      }),
+
+    // Get trending cards by price increase
+    getByPriceIncrease: publicProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(20).optional(),
+        days: z.number().min(1).max(30).optional(),
+      }))
+      .query(async ({ input }) => {
+        const results = await db.getTrendingByPriceIncrease({
+          limit: input.limit,
+          days: input.days,
+        });
+        return results;
+      }),
+
+    // Get trending cards by price decrease
+    getByPriceDecrease: publicProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(20).optional(),
+        days: z.number().min(1).max(30).optional(),
+      }))
+      .query(async ({ input }) => {
+        const results = await db.getTrendingByPriceDecrease({
+          limit: input.limit,
+          days: input.days,
+        });
+        return results;
+      }),
+
+    // Get newly added cards
+    getNewlyAdded: publicProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(20).optional(),
+        days: z.number().min(1).max(30).optional(),
+      }))
+      .query(async ({ input }) => {
+        const results = await db.getNewlyAddedCards({
+          limit: input.limit,
+          days: input.days,
+        });
+        return results;
+      }),
+
+    // Get price history for a card (for trend charts)
+    getPriceHistory: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+        days: z.number().min(1).max(90).optional(),
+      }))
+      .query(async ({ input }) => {
+        const history = await db.getCardPriceHistory(input.cardId, input.days);
+        return history;
+      }),
+  }),
+
 });
 
 export type AppRouter = typeof appRouter;

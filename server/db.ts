@@ -1,4 +1,4 @@
-import { eq, desc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
+import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache } from "../drizzle/schema";;
 import { ENV } from './_core/env';
@@ -1567,4 +1567,352 @@ export async function getDataSourceHealthMetrics() {
 
   console.log('[getDataSourceHealthMetrics] Metrics:', JSON.stringify(metrics, null, 2));
   return metrics;
+}
+
+/**
+ * Get trending cards by search popularity
+ * Returns cards with the most searches in the specified time range
+ */
+export async function getTrendingBySearches(options: {
+  limit?: number;
+  days?: number;
+} = {}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { limit = 10, days = 7 } = options;
+  const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const results = await db
+    .select({
+      cardId: searchStats.cardId,
+      searchCount: sql<number>`COUNT(*)`.as('searchCount'),
+    })
+    .from(searchStats)
+    .where(
+      and(
+        gte(searchStats.createdAt, cutoffDate),
+        eq(searchStats.success, true)
+      )
+    )
+    .groupBy(searchStats.cardId)
+    .having(sql`COUNT(*) >= 10`) // Minimum 10 searches to qualify
+    .orderBy(desc(sql`COUNT(*)`))
+    .limit(limit);
+
+  // Fetch card details for each trending card
+  const cardIds = results.map(r => r.cardId);
+  if (cardIds.length === 0) return [];
+
+  const cardDetails = await db
+    .select()
+    .from(cards)
+    .where(inArray(cards.id, cardIds));
+
+  // Get latest SNKRDUNK price for each card
+  const latestPrices = await db
+    .select({
+      cardId: priceHistory.cardId,
+      price: priceHistory.price,
+      currency: priceHistory.currency,
+      createdAt: priceHistory.createdAt,
+    })
+    .from(priceHistory)
+    .where(
+      and(
+        inArray(priceHistory.cardId, cardIds),
+        eq(priceHistory.source, 'snkrdunk')
+      )
+    )
+    .orderBy(desc(priceHistory.createdAt));
+
+  // Group prices by cardId and get the latest one
+  const priceMap = new Map<number, typeof latestPrices[0]>();
+  for (const price of latestPrices) {
+    if (!priceMap.has(price.cardId)) {
+      priceMap.set(price.cardId, price);
+    }
+  }
+
+  // Combine all data
+  return results.map(result => {
+    const card = cardDetails.find(c => c.id === result.cardId);
+    const price = priceMap.get(result.cardId);
+    return {
+      ...card,
+      searchCount: result.searchCount,
+      currentPrice: price?.price ? Number(price.price) : null,
+      currency: price?.currency || 'HKD',
+      priceUpdatedAt: price?.createdAt || null,
+    };
+  });
+}
+
+/**
+ * Get trending cards by price increase
+ * Returns cards with the largest price increases in the specified time range
+ */
+export async function getTrendingByPriceIncrease(options: {
+  limit?: number;
+  days?: number;
+} = {}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { limit = 10, days = 7 } = options;
+  const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  // Get all SNKRDUNK price records within the time range
+  const recentPrices = await db
+    .select()
+    .from(priceHistory)
+    .where(
+      and(
+        gte(priceHistory.createdAt, cutoffDate),
+        eq(priceHistory.source, 'snkrdunk')
+      )
+    )
+    .orderBy(asc(priceHistory.createdAt));
+
+  // Group by cardId and calculate price change
+  const priceChangeMap = new Map<number, {
+    cardId: number;
+    oldPrice: number;
+    newPrice: number;
+    priceChange: number;
+    priceChangePercent: number;
+  }>();
+
+  for (const price of recentPrices) {
+    const existing = priceChangeMap.get(price.cardId);
+    const currentPrice = Number(price.price);
+
+    if (!existing) {
+      priceChangeMap.set(price.cardId, {
+        cardId: price.cardId,
+        oldPrice: currentPrice,
+        newPrice: currentPrice,
+        priceChange: 0,
+        priceChangePercent: 0,
+      });
+    } else {
+      const change = currentPrice - existing.oldPrice;
+      const changePercent = (change / existing.oldPrice) * 100;
+      
+      // Filter out abnormal price changes (> 500%)
+      if (changePercent <= 500) {
+        priceChangeMap.set(price.cardId, {
+          ...existing,
+          newPrice: currentPrice,
+          priceChange: change,
+          priceChangePercent: changePercent,
+        });
+      }
+    }
+  }
+
+  // Sort by price change percentage and get top cards
+  const sortedChanges = Array.from(priceChangeMap.values())
+    .filter(item => item.priceChangePercent > 0) // Only positive changes
+    .sort((a, b) => b.priceChangePercent - a.priceChangePercent)
+    .slice(0, limit);
+
+  if (sortedChanges.length === 0) return [];
+
+  // Fetch card details
+  const cardIds = sortedChanges.map(c => c.cardId);
+  const cardDetails = await db
+    .select()
+    .from(cards)
+    .where(inArray(cards.id, cardIds));
+
+  // Combine all data
+  return sortedChanges.map(change => {
+    const card = cardDetails.find(c => c.id === change.cardId);
+    return {
+      ...card,
+      oldPrice: change.oldPrice,
+      currentPrice: change.newPrice,
+      priceChange: change.priceChange,
+      priceChangePercent: change.priceChangePercent,
+      currency: 'HKD',
+    };
+  });
+}
+
+/**
+ * Get trending cards by price decrease
+ * Returns cards with the largest price decreases in the specified time range
+ */
+export async function getTrendingByPriceDecrease(options: {
+  limit?: number;
+  days?: number;
+} = {}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { limit = 10, days = 7 } = options;
+  const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  // Similar logic to price increase, but filter for negative changes
+  const recentPrices = await db
+    .select()
+    .from(priceHistory)
+    .where(
+      and(
+        gte(priceHistory.createdAt, cutoffDate),
+        eq(priceHistory.source, 'snkrdunk')
+      )
+    )
+    .orderBy(asc(priceHistory.createdAt));
+
+  const priceChangeMap = new Map<number, {
+    cardId: number;
+    oldPrice: number;
+    newPrice: number;
+    priceChange: number;
+    priceChangePercent: number;
+  }>();
+
+  for (const price of recentPrices) {
+    const existing = priceChangeMap.get(price.cardId);
+    const currentPrice = Number(price.price);
+
+    if (!existing) {
+      priceChangeMap.set(price.cardId, {
+        cardId: price.cardId,
+        oldPrice: currentPrice,
+        newPrice: currentPrice,
+        priceChange: 0,
+        priceChangePercent: 0,
+      });
+    } else {
+      const change = currentPrice - existing.oldPrice;
+      const changePercent = (change / existing.oldPrice) * 100;
+      
+      // Filter out abnormal price changes (< -90%)
+      if (changePercent >= -90) {
+        priceChangeMap.set(price.cardId, {
+          ...existing,
+          newPrice: currentPrice,
+          priceChange: change,
+          priceChangePercent: changePercent,
+        });
+      }
+    }
+  }
+
+  const sortedChanges = Array.from(priceChangeMap.values())
+    .filter(item => item.priceChangePercent < 0) // Only negative changes
+    .sort((a, b) => a.priceChangePercent - b.priceChangePercent) // Most negative first
+    .slice(0, limit);
+
+  if (sortedChanges.length === 0) return [];
+
+  const cardIds = sortedChanges.map(c => c.cardId);
+  const cardDetails = await db
+    .select()
+    .from(cards)
+    .where(inArray(cards.id, cardIds));
+
+  return sortedChanges.map(change => {
+    const card = cardDetails.find(c => c.id === change.cardId);
+    return {
+      ...card,
+      oldPrice: change.oldPrice,
+      currentPrice: change.newPrice,
+      priceChange: change.priceChange,
+      priceChangePercent: change.priceChangePercent,
+      currency: 'HKD',
+    };
+  });
+}
+
+/**
+ * Get newly added cards
+ * Returns cards that were recently added to the database
+ */
+export async function getNewlyAddedCards(options: {
+  limit?: number;
+  days?: number;
+} = {}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const { limit = 10, days = 7 } = options;
+  const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const newCards = await db
+    .select()
+    .from(cards)
+    .where(gte(cards.createdAt, cutoffDate))
+    .orderBy(desc(cards.createdAt))
+    .limit(limit);
+
+  if (newCards.length === 0) return [];
+
+  // Get latest SNKRDUNK price for each card
+  const cardIds = newCards.map(c => c.id);
+  const latestPrices = await db
+    .select({
+      cardId: priceHistory.cardId,
+      price: priceHistory.price,
+      currency: priceHistory.currency,
+      createdAt: priceHistory.createdAt,
+    })
+    .from(priceHistory)
+    .where(
+      and(
+        inArray(priceHistory.cardId, cardIds),
+        eq(priceHistory.source, 'snkrdunk')
+      )
+    )
+    .orderBy(desc(priceHistory.createdAt));
+
+  const priceMap = new Map<number, typeof latestPrices[0]>();
+  for (const price of latestPrices) {
+    if (!priceMap.has(price.cardId)) {
+      priceMap.set(price.cardId, price);
+    }
+  }
+
+  return newCards.map(card => {
+    const price = priceMap.get(card.id);
+    return {
+      ...card,
+      currentPrice: price?.price ? Number(price.price) : null,
+      currency: price?.currency || 'HKD',
+      priceUpdatedAt: price?.createdAt || null,
+    };
+  });
+}
+
+/**
+ * Get price history for a specific card (for trend charts)
+ */
+export async function getCardPriceHistory(cardId: number, days: number = 7) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const history = await db
+    .select({
+      price: priceHistory.price,
+      createdAt: priceHistory.createdAt,
+    })
+    .from(priceHistory)
+    .where(
+      and(
+        eq(priceHistory.cardId, cardId),
+        eq(priceHistory.source, 'snkrdunk'),
+        gte(priceHistory.createdAt, cutoffDate)
+      )
+    )
+    .orderBy(asc(priceHistory.createdAt));
+
+  return history.map(h => ({
+    price: Number(h.price),
+    date: h.createdAt,
+  }));
 }
