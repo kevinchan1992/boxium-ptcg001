@@ -75,8 +75,12 @@ export function TopNav() {
                   }`}
                 >
                   {item.label}
-                  {/* Hover 下劃線動畫 */}
-                  <span className="absolute left-1/2 -bottom-1 w-0 h-0.5 bg-[#ffed00] transition-all duration-300 group-hover:w-full group-hover:left-0" />
+                  {/* Active 或 Hover 下劃線動畫 */}
+                  <span className={`absolute -bottom-1 h-0.5 bg-[#ffed00] transition-all duration-300 ${
+                    isActive(item.href)
+                      ? "w-full left-0"
+                      : "left-1/2 w-0 group-hover:w-full group-hover:left-0"
+                  }`} />
                 </Link>
               ))}
             </div>
@@ -110,11 +114,17 @@ export function TopNav() {
         <div className="flex flex-col h-full">
           {/* Mobile Menu Header with LOGO */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
-            <img
-              src="/boxium-logo-white.png"
-              alt="BOXIUM"
-              className="h-8 w-auto"
-            />
+            <Link
+              href="/"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="cursor-pointer"
+            >
+              <img
+                src="/boxium-logo-white.png"
+                alt="BOXIUM"
+                className="h-8 w-auto hover:opacity-80 transition-opacity"
+              />
+            </Link>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="text-white p-2"
