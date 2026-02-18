@@ -3883,3 +3883,23 @@
 
 - [x] 增加 TopNav 導航項目之間的間距 (從 gap-8 改為 gap-12)
 - [x] 測試驗證新間距在不同螢幕尺寸下的顯示效果
+
+## UI 全面優化: TopNav 和手機版體驗提升 - 完成
+
+### 手機版漢堡選單優化
+- [x] 添加從右側滑入的動畫效果 (translate-x-full → translate-x-0, 300ms)
+- [x] 實作半透明黑色遮罩層 (bg-black/60)
+- [x] 在選單頂部添加小型 LOGO (h-8)
+- [x] 優化選單項目樣式 (active 狀態顯示左側黃色邊框)
+
+### Footer LOGO 優化
+- [x] 設置響應式尺寸 (h-8 md:h-12 lg:h-14)
+- [x] 添加 hover 縮放效果 (scale-105) 和透明度變化 (opacity-90)
+
+### TopNav 動畫和行為優化
+- [x] 實作頁面載入時從上方滑入動畫 (translate-y-full → translate-y-0, 500ms)
+- [x] 實作滾動時背景透明度變化 (bg-black/80 → bg-black/95)
+- [x] 添加滾動時的陰影效果 (shadow-lg)
+
+### 導航項目互動優化
+- [x] 實作 hover 時從中心向兩側展開的下劃線動畫 (w-0 left-1/2 → w-full left-0)

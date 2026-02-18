@@ -15,7 +15,7 @@ export default function Footer() {
             <img
               src="/boxium-logo.png"
               alt="BOXIUM Logo"
-              className="h-12 md:h-14 mb-3 cursor-pointer hover:opacity-80 transition-opacity"
+              className="h-8 md:h-12 lg:h-14 mb-3 cursor-pointer hover:scale-105 hover:opacity-90 transition-all duration-300"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             />
           </Link>
