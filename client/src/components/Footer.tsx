@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 export default function Footer() {
   const { t } = useTranslation();
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer className="py-8 px-4 sm:px-6 border-t" style={{ backgroundColor: "#06038d" }}>
@@ -53,24 +54,24 @@ export default function Footer() {
 
         {/* Bottom Links - Single Row */}
         <div className="border-t border-white/20 pt-6">
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-3">
-            <Link href="/terms" className="text-white/80 hover:text-white transition-colors text-xs">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-3">
+            <Link href="/terms" className="text-white/80 hover:text-white transition-colors text-xs py-2 px-1">
               {t("footer.terms")}
             </Link>
             <span className="text-white/40">|</span>
-            <Link href="/privacy" className="text-white/80 hover:text-white transition-colors text-xs">
+            <Link href="/privacy" className="text-white/80 hover:text-white transition-colors text-xs py-2 px-1">
               {t("footer.privacy")}
             </Link>
             <span className="text-white/40">|</span>
-            <Link href="/disclaimer" className="text-white/80 hover:text-white transition-colors text-xs">
+            <Link href="/disclaimer" className="text-white/80 hover:text-white transition-colors text-xs py-2 px-1">
               {t("footer.disclaimer")}
             </Link>
             <span className="text-white/40">|</span>
-            <Link href="/about" className="text-white/80 hover:text-white transition-colors text-xs">
+            <Link href="/about" className="text-white/80 hover:text-white transition-colors text-xs py-2 px-1">
               {t("footer.about")}
             </Link>
           </div>
-          <p className="text-center text-white/60 text-xs">{t("footer.copyright")}</p>
+          <p className="text-center text-white/60 text-xs">© {currentYear} BOXIUM. All rights reserved. | Luck in Every Box</p>
         </div>
       </div>
     </footer>
