@@ -31,7 +31,7 @@ export function TopNav() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-center h-16 relative">
           {/* Desktop Navigation - Centered */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-12">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <a
