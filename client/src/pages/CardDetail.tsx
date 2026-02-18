@@ -11,6 +11,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
 import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
+import { formatShortDateTime, formatDate, formatDateTime } from "@/lib/formatDate";
 
 
 const grades = ["PSA 10", "BGS 10", "中古"];
@@ -92,7 +93,7 @@ export default function CardDetail() {
     {
       cardId: cardId!,
       source: "ebay",
-      grade: "PSA10",
+      grade: "PSA 10",
       limit: 50,
     },
     { enabled: !!cardId && activeSource === "ebay", retry: 1 }
@@ -157,7 +158,7 @@ export default function CardDetail() {
   }
 
   // Calculate average price based on active source - Only PSA 10 for reference price
-  const psa10OnlyHistory = priceHistory.filter(p => p.grade === "PSA 10" || p.grade === "PSA10");
+  const psa10OnlyHistory = priceHistory.filter(p => p.grade === "PSA 10" || p.grade === "PSA10" || p.grade === "PSA 10");
   const avgPrice = activeSource === "snkrdunk"
     ? psa10OnlyHistory.length > 0
       ? (psa10OnlyHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / psa10OnlyHistory.length).toFixed(2)
@@ -279,7 +280,7 @@ export default function CardDetail() {
                 PSA 10 {t("cardDetail.referencePrice")}: {formatCurrency(avgPrice)}
               </h2>
               <p className="text-sm text-muted-foreground mt-2">
-                {t("cardDetail.basedOnRecords", { count: recordCount })} {activeSource === "ebay" && "(PSA 10)"}
+                {t("cardDetail.basedOnRecords", { count: recordCount })}
               </p>
             </div>
 
@@ -328,14 +329,7 @@ export default function CardDetail() {
                         return (
                           <tr key={index} className="hover:bg-muted/50 transition-colors">
                             <td className="py-3 px-4 text-muted-foreground text-sm">
-                              {item.soldAt
-                                ? new Date(item.soldAt).toLocaleString("zh-HK", {
-                                    month: "2-digit",
-                                    day: "2-digit",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })
-                                : "N/A"}
+                              {item.soldAt ? formatShortDateTime(item.soldAt) : "N/A"}
                             </td>
                             <td className="py-3 px-4 text-center text-foreground text-sm w-24">
                               {isUngraded ? (
@@ -359,7 +353,7 @@ export default function CardDetail() {
                 <div>
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4">
                     <p className="text-xs text-amber-600 dark:text-amber-400">
-                      📊 {t("cardDetail.cachedData")} {new Date(ebayPriceHistory[0].createdAt).toLocaleString("zh-HK")}
+                      📊 {t("cardDetail.cachedData")} {formatDateTime(ebayPriceHistory[0].createdAt)}
                     </p>
                   </div>
                   <div className="overflow-y-auto max-h-96 scrollbar-hide">
@@ -385,11 +379,11 @@ export default function CardDetail() {
                                   rel="noopener noreferrer"
                                   className="hover:text-primary hover:underline flex items-center gap-2"
                                 >
-                                  {new Date(record.soldAt || record.createdAt).toLocaleDateString("zh-HK")}
-                                  <ExternalLink className="w-3 h-3" />
-                                </a>
-                              ) : (
-                                new Date(record.soldAt || record.createdAt).toLocaleDateString("zh-HK")
+                                   {formatDate(record.soldAt || record.createdAt)}
+                                   <ExternalLink className="w-3 h-3" />
+                                 </a>
+                               ) : (
+                                 formatDate(record.soldAt || record.createdAt)
                               )}
                             </td>
                             <td className="py-3 px-4 text-right text-foreground font-medium text-sm">
@@ -432,11 +426,7 @@ export default function CardDetail() {
                             </a>
                           </td>
                           <td className="py-3 px-4 text-center text-muted-foreground text-sm w-32">
-                            {new Date(item.soldDate).toLocaleDateString("zh-HK", {
-                              year: "numeric",
-                              month: "2-digit",
-                              day: "2-digit",
-                            })}
+                            {formatDate(item.soldDate)}
                           </td>
                           <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
                             {formatCurrency(item.price, item.currency)}
