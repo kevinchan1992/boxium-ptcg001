@@ -7,13 +7,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Flame, Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type TimeRange = '1' | '7' | '30';
 type TrendingTab = 'searches' | 'priceIncrease' | 'priceDecrease' | 'newlyAdded';
 
 export default function Trending() {
   const [activeTab, setActiveTab] = useState<TrendingTab>('searches');
-  const [timeRange, setTimeRange] = useState<TimeRange>('7');
-  const days = parseInt(timeRange);
+  const days = 1; // Fixed to 24 hours
 
   // Fetch trending data based on active tab
   const { data: searchData, isLoading: searchLoading, refetch: refetchSearch } = trpc.trending.getBySearches.useQuery(
@@ -65,26 +63,14 @@ export default function Trending() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 md:mb-8">
           <div>
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-1 md:mb-2">
-              🔥 熱門排行榜
+              🔥 PSA 10 熱門排行榜
             </h1>
             <p className="text-gray-400 text-sm md:text-lg">
-              追蹤最熱門的寶可夢卡牌市場趨勢
+              24 小時內 PSA 10 評級卡牌市場趨勢
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Time Range Selector */}
-            <Select value={timeRange} onValueChange={(value) => setTimeRange(value as TimeRange)}>
-              <SelectTrigger className="w-[110px] md:w-[140px] bg-slate-900 border-slate-700 text-sm md:text-base">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">24 小時</SelectItem>
-                <SelectItem value="7">7 天</SelectItem>
-                <SelectItem value="30">30 天</SelectItem>
-              </SelectContent>
-            </Select>
-
             {/* Refresh Button */}
             <Button
               variant="outline"
@@ -201,14 +187,14 @@ function ChampionCard({ card, rank, type }: { card: any; rank: number; type: Tre
               <img
                 src={imageUrl}
                 alt={card.name}
-                className="w-32 md:w-48 h-auto rounded-lg shadow-xl border-2 border-yellow-500/50"
+                className="w-40 md:w-56 h-auto rounded-lg shadow-xl border-2 border-yellow-500/50"
                 onError={(e) => {
                   // Fallback if image fails to load
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             ) : (
-              <div className="w-32 md:w-48 h-44 md:h-64 rounded-lg shadow-xl border-2 border-yellow-500/50 bg-slate-800 flex items-center justify-center text-gray-500 text-sm">
+              <div className="w-40 md:w-56 h-56 md:h-80 rounded-lg shadow-xl border-2 border-yellow-500/50 bg-slate-800 flex items-center justify-center text-gray-500 text-sm">
                 無圖片
               </div>
             )}
@@ -276,16 +262,16 @@ function RunnerUpCard({ card, rank, type }: { card: any; rank: number; type: Tre
           <div className="text-3xl md:text-4xl flex-shrink-0">{badgeEmoji}</div>
           
           {hasValidImage ? (
-            <img
-              src={imageUrl}
-              alt={card.name}
-              className="w-24 md:w-32 h-auto rounded-lg shadow-lg flex-shrink-0"
+              <img
+                src={imageUrl}
+                alt={card.name}
+                className="w-32 md:w-40 h-auto rounded-lg shadow-lg flex-shrink-0"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
           ) : (
-            <div className="w-24 md:w-32 h-32 md:h-44 rounded-lg shadow-lg bg-slate-800 flex items-center justify-center text-gray-500 text-xs flex-shrink-0">
+              <div className="w-32 md:w-40 h-44 md:h-56 rounded-lg shadow-lg bg-slate-800 flex items-center justify-center text-gray-500 text-xs flex-shrink-0">
               無圖片
             </div>
           )}
@@ -334,16 +320,16 @@ function RankingListItem({ card, rank, type }: { card: any; rank: number; type: 
 
           {/* Card Image */}
           {hasValidImage ? (
-            <img
-              src={imageUrl}
-              alt={card.name}
-              className="w-12 md:w-16 h-auto rounded shadow-md flex-shrink-0"
+              <img
+                src={imageUrl}
+                alt={card.name}
+                className="w-16 md:w-20 h-auto rounded shadow-md flex-shrink-0"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
           ) : (
-            <div className="w-12 md:w-16 h-16 md:h-22 rounded shadow-md bg-slate-800 flex items-center justify-center text-gray-500 text-[10px] flex-shrink-0">
+              <div className="w-16 md:w-20 h-22 md:h-28 rounded shadow-md bg-slate-800 flex items-center justify-center text-gray-500 text-[10px] flex-shrink-0">
               無圖
             </div>
           )}

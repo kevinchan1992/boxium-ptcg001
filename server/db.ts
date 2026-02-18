@@ -1609,7 +1609,7 @@ export async function getTrendingBySearches(options: {
     .from(cards)
     .where(inArray(cards.id, cardIds));
 
-  // Get latest SNKRDUNK price for each card
+  // Get latest SNKRDUNK PSA 10 price for each card
   const latestPrices = await db
     .select({
       cardId: priceHistory.cardId,
@@ -1621,7 +1621,8 @@ export async function getTrendingBySearches(options: {
     .where(
       and(
         inArray(priceHistory.cardId, cardIds),
-        eq(priceHistory.source, 'snkrdunk')
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.grade, 'PSA10')
       )
     )
     .orderBy(desc(priceHistory.createdAt));
@@ -1662,14 +1663,15 @@ export async function getTrendingByPriceIncrease(options: {
   const { limit = 10, days = 7 } = options;
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-  // Get all SNKRDUNK price records within the time range
+  // Get all SNKRDUNK PSA 10 price records within the time range
   const recentPrices = await db
     .select()
     .from(priceHistory)
     .where(
       and(
         gte(priceHistory.createdAt, cutoffDate),
-        eq(priceHistory.source, 'snkrdunk')
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.grade, 'PSA10')
       )
     )
     .orderBy(asc(priceHistory.createdAt));
@@ -1851,7 +1853,7 @@ export async function getNewlyAddedCards(options: {
 
   if (newCards.length === 0) return [];
 
-  // Get latest SNKRDUNK price for each card
+  // Get latest SNKRDUNK PSA 10 price for each card
   const cardIds = newCards.map(c => c.id);
   const latestPrices = await db
     .select({
@@ -1864,7 +1866,8 @@ export async function getNewlyAddedCards(options: {
     .where(
       and(
         inArray(priceHistory.cardId, cardIds),
-        eq(priceHistory.source, 'snkrdunk')
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.grade, 'PSA10')
       )
     )
     .orderBy(desc(priceHistory.createdAt));
