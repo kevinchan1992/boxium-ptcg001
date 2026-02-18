@@ -21,8 +21,8 @@ export function GlobalNav() {
     { href: "/trending", label: t("common.trending"), icon: Flame },
     { href: "/pricing", label: t("common.pricing"), icon: DollarSign },
     { href: "/about", label: t("common.about"), icon: Info },
-    { href: "/terms", label: t("common.terms"), icon: FileText },
-    { href: "/privacy", label: t("common.privacy"), icon: Shield },
+    // { href: "/terms", label: t("common.terms"), icon: FileText },
+    // { href: "/privacy", label: t("common.privacy"), icon: Shield },
   ];
 
   const languages = [
@@ -76,45 +76,8 @@ export function GlobalNav() {
                       <span className="font-medium text-sm">{item.label}</span>
                     </button>
                   </Link>
-                );
+                 );
               })}
-              
-              {/* Language Divider */}
-              <div className="border-t border-gray-200 my-2" />
-              
-              {/* Language Selector */}
-              <div className="px-3 py-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Languages className="w-4 h-4" style={{ color: "#06038d" }} />
-                  <span className="font-medium text-sm" style={{ color: "#06038d" }}>{t("common.language")}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  {languages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => changeLanguage(lang.code)}
-                      className="w-full text-left px-2 py-1.5 rounded text-xs transition-all hover:scale-[1.01] active:scale-[0.99]"
-                      style={{
-                        color: "#06038d",
-                        backgroundColor: i18n.language === lang.code ? "#ffed00" : "transparent",
-                        fontWeight: i18n.language === lang.code ? "600" : "normal",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (i18n.language !== lang.code) {
-                          e.currentTarget.style.backgroundColor = "#f0f0f0";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (i18n.language !== lang.code) {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                        }
-                      }}
-                    >
-                      {lang.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </>

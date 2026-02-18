@@ -4,7 +4,7 @@ import { Search, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
-import Footer from "@/components/Footer";
+// import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
 
 export default function Home() {
@@ -59,7 +59,7 @@ export default function Home() {
       {/* JSON-LD Structured Data for SEO */}
       <StructuredData data={generateSearchActionData()} />
       
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 md:px-8">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8">
       {/* Hero Section */}
       <div className="text-center space-y-5 max-w-3xl w-full">
         {/* Logo/Brand */}
@@ -115,9 +115,6 @@ export default function Home() {
           )}
         </div>
       </div>
-      
-      {/* Footer */}
-      <Footer />
     </div>
     </>
   );

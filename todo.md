@@ -3433,3 +3433,29 @@
 **驗證結果：**
 - 導航欄中正確顯示「關於我們」
 - 首頁「查看市場趨勢」按鈕正確連結到 Trending 頁面
+
+## UI 變更: 隱藏導航欄元素、頁尾和置中 Research 頁面 - 已完成
+
+- [x] 檢查 GlobalNav.tsx 的當前結構，識別需要隱藏的元素
+- [x] 隱藏 GlobalNav 中的「服務條款」、「隱私權政策」按鈕和語言選擇器區塊
+- [x] 檢查 Footer.tsx 的當前結構
+- [x] 隱藏整個 Footer 組件（在 Research 頁面不顯示）
+- [x] 檢查 Research.tsx 的當前佈局
+- [x] 將 Research 頁面的整體內容調整為垂直置中
+- [x] 驗證所有變更在前端正確顯示
+
+**更新摘要：**
+1. GlobalNav.tsx：
+   - 隱藏「服務條款」和「隱私權政策」按鈕
+   - 隱藏語言選擇器區塊（分隔線和語言按鈕）
+   - 保留主頁、卡牌研究、熱門排行榜、價格查詢、關於我們
+
+2. Research.tsx：
+   - 移除 Footer 組件引用
+   - 將主容器從 `flex-col items-center justify-center` 改為 `flex items-center justify-center`
+   - 實現完全的垂直置中效果
+
+**驗證結果：**
+- 導航欄菜單中只顯示 5 個主要頁面連結
+- Research 頁面內容完全垂直置中
+- Research 頁面不顯示頁尾
