@@ -3292,3 +3292,30 @@
 - 使用 `flex gap-4` 確保圖標之間有適當間距
 - 圖標大小為 `h-5 w-5`，顏色為 `text-white/80`，hover 時變為 `text-[#ffed00]`
 - 添加 `title` 屬性提供無障礙支援（"Facebook" 和 "Instagram"）
+
+
+## 新增功能: Home.tsx 視覺編輯變更 - 已完成
+
+- [x] 修正「趋勢」為「趨勢」（5 處）
+- [x] 修正「PTCG」為「Pokémon TCG」（2 處）
+- [x] 刪除整個「核心功能」簡介部分
+
+**目標：**
+- 修正簡體中文用詞為繁體中文
+- 使用完整的「Pokémon TCG」品牌名稱
+- 簡化 Home 頁面內容，移除「核心功能」區塊
+- 簡化 Home 頁面內容，移除「核心功能」區塊
+
+**完成時間：** 2026-02-18
+
+**主要變更：**
+- 修正 zh-TW.json 翻譯文件中的「趋勢」為「趨勢」（5 處：description, priceTrend, snkrdunkDesc, viewMarketTrends）
+- 修正 zh-TW.json 翻譯文件中的「PTCG」為「Pokémon TCG」（2 處：description, readyToStart）
+- 刪除 Home.tsx 第 165-223 行的「核心功能」section（包含智能搜尋、價格趨勢、市場統計、熱門排行四個功能卡片）
+- 簡化 Home 頁面布局，保留 Hero Section、Trending Cards Section、Data Sources Section
+
+**技術細節：**
+- Home.tsx 使用 i18n 翻譯系統（`t("home.*")`），文字內容從翻譯文件中讀取
+- 刪除的「核心功能」section 包含 4 個功能卡片（Search, TrendingUp, BarChart3, Trophy 圖標）
+- 保留的 Trending Cards Section 使用 TrendingCardsGrid 組件顯示熱門卡牌
+- 保留的 Data Sources Section 介紹 SNKRDUNK 和 eBay 兩個資料來源

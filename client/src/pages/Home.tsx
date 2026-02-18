@@ -162,65 +162,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-6 md:py-12 px-4 sm:px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-5 md:mb-8">
-            <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5" style={{ color: "#06038d" }}>
-              {t("home.coreFeatures")}
-            </h2>
-            <p className="text-gray-600 text-xs md:text-sm max-w-2xl mx-auto px-2">
-              {t("home.coreFeaturesDesc")}
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {/* Feature 1 */}
-            <div className="bg-white border-2 border-gray-100 rounded-xl p-6 md:p-8 hover:shadow-lg hover:border-[#ffed00] transition-all">
-              <div className="w-12 md:w-14 h-12 md:h-14 rounded-lg flex items-center justify-center mb-4 md:mb-6" style={{ backgroundColor: "#ffed00" }}>
-                <Search className="h-6 md:h-7 w-6 md:w-7" style={{ color: "#06038d" }} />
-              </div>
-              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>{t("home.smartSearch")}</h3>
-              <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                {t("home.smartSearchDesc")}
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="bg-white border-2 border-gray-100 rounded-xl p-6 md:p-8 hover:shadow-lg hover:border-[#ffed00] transition-all">
-              <div className="w-12 md:w-14 h-12 md:h-14 rounded-lg flex items-center justify-center mb-4 md:mb-6" style={{ backgroundColor: "#ffed00" }}>
-                <TrendingUp className="h-6 md:h-7 w-6 md:w-7" style={{ color: "#06038d" }} />
-              </div>
-              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>{t("home.priceTrend")}</h3>
-              <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                {t("home.priceTrendDesc")}
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="bg-white border-2 border-gray-100 rounded-xl p-6 md:p-8 hover:shadow-lg hover:border-[#ffed00] transition-all">
-              <div className="w-12 md:w-14 h-12 md:h-14 rounded-lg flex items-center justify-center mb-4 md:mb-6" style={{ backgroundColor: "#ffed00" }}>
-                <BarChart3 className="h-6 md:h-7 w-6 md:w-7" style={{ color: "#06038d" }} />
-              </div>
-              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>{t("home.marketStats")}</h3>
-              <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                {t("home.marketStatsDesc")}
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="bg-white border-2 border-gray-100 rounded-xl p-6 md:p-8 hover:shadow-lg hover:border-[#ffed00] transition-all">
-              <div className="w-12 md:w-14 h-12 md:h-14 rounded-lg flex items-center justify-center mb-4 md:mb-6" style={{ backgroundColor: "#ffed00" }}>
-                <Trophy className="h-6 md:h-7 w-6 md:w-7" style={{ color: "#06038d" }} />
-              </div>
-              <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: "#06038d" }}>{t("home.topRanking")}</h3>
-              <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                {t("home.topRankingDesc")}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Trending Cards Section */}
       <section className="py-6 md:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
