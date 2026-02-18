@@ -11,11 +11,14 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto">
         {/* Brand Section */}
         <div className="mb-6">
-          <img
-            src="/boxium-logo.png"
-            alt="BOXIUM Logo"
-            className="h-8 md:h-10 mb-3"
-          />
+          <Link href="/">
+            <img
+              src="/boxium-logo.png"
+              alt="BOXIUM Logo"
+              className="h-10 md:h-12 mb-3 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            />
+          </Link>
           <p className="text-white/80 text-sm leading-relaxed max-w-2xl">
             {t("footer.description")}
           </p>

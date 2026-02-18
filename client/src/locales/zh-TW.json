@@ -31,7 +31,7 @@
   },
   "common": {
     "home": "主頁",
-    "research": "卡牙研究",
+    "research": "卡牌搜尋",
     "pricing": "價格查詢",
     "terms": "服務條款",
     "privacy": "隱私權政策",
@@ -62,7 +62,7 @@
     "topRanking": "熱門排行",
     "topRankingDesc": "發現市場上最熱門的卡牌，跟蹤投資者的選擇",
     "trendingCards": "熱門卡牌",
-    "trendingCardsDesc": "基於 PSA 10 評級最近成交價格漲幅",
+    "trendingCardsDesc": "基於 PSA 10 評級最近 60 天成交價格漲幅",
     "dataSourcesDesc": "整合全球領先的卡牌交易平台，確保數據的準確性和實時性",
     "snkrdunkDesc": "日本領先的卡牌交易平台，提供最新的 PSA 10 評級卡牌交易數據和市場趨勢分析",
     "realtimeData": "實時交易數據",
@@ -90,7 +90,7 @@
   "footer": {
     "description": "專注於 Pokémon TCG 價格查詢與市場分析的綜合平台",
     "quickLinks": "快速連結",
-    "cardSearch": "卡牙搜尋",
+    "cardSearch": "卡牌搜尋",
     "trending": "熱門排行榜",
     "blog": "最新消息",
     "pricing": "價格查詢",

@@ -36,7 +36,7 @@ export function TopNav() {
               <img 
                 src="/boxium-logo-white.png" 
                 alt="BOXIUM" 
-                className="h-10 w-auto"
+                className="h-12 w-auto"
               />
             </div>
           </Link>

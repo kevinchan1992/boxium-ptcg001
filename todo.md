@@ -3861,3 +3861,13 @@
 - [x] 更新 TopNav 組件使用新的 LOGO 圖片
 - [x] 調整 LOGO 尺寸以適配導航欄高度
 - [x] 驗證所有頁面的 LOGO 顯示效果
+
+## UI 調整: 視覺編輯優化 - 完成
+
+- [x] TopNav LOGO 放大 25% (從 h-10 改為 h-12)
+- [x] TopNav LOGO 位置靠左置中 (已預設在 flex 容器中)
+- [x] TopNav 導航文字「卡牙研究」改為「卡牌搜尋」
+- [x] Footer LOGO 放大 25% (從 h-8/h-10 改為 h-10/h-12)
+- [x] Footer LOGO 點擊返回主頁頂部 (添加 Link 和 scrollTo)
+- [x] Footer 導航文字「卡牙搜尋」改為「卡牌搜尋」
+- [x] Home 頁面文字更新為「基於 PSA 10 評級最近 60 天成交價格漲幅」
