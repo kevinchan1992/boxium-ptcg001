@@ -2037,3 +2037,59 @@ export async function saveSnkrdunkListingsCache(data: {
     expiresAt: data.expiresAt,
   });
 }
+
+/**
+ * Get SNKRDUNK cache statistics
+ */
+export async function getSnkrdunkCacheStats() {
+  const db = await getDb();
+  if (!db) return { totalCount: 0, oldestCache: null, newestCache: null };
+  
+  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  
+  const caches = await db.select().from(snkrdunkListingsCache);
+  
+  if (caches.length === 0) {
+    return { totalCount: 0, oldestCache: null, newestCache: null };
+  }
+  
+  const timestamps = caches.map(c => new Date(c.createdAt).getTime());
+  const oldestCache = new Date(Math.min(...timestamps));
+  const newestCache = new Date(Math.max(...timestamps));
+  
+  return {
+    totalCount: caches.length,
+    oldestCache,
+    newestCache,
+  };
+}
+
+/**
+ * Clear SNKRDUNK cache by cardId
+ */
+export async function clearSnkrdunkCacheByCardId(cardId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  
+  const result = await db
+    .delete(snkrdunkListingsCache)
+    .where(eq(snkrdunkListingsCache.cardId, cardId));
+  
+  return result[0].affectedRows || 0;
+}
+
+/**
+ * Clear all SNKRDUNK cache
+ */
+export async function clearAllSnkrdunkCache(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  
+  const result = await db.delete(snkrdunkListingsCache);
+  
+  return result[0].affectedRows || 0;
+}

@@ -202,11 +202,15 @@ export default function PricingDetail() {
                 {/* Source Badge */}
                 <div className="absolute top-2 right-2">
                   {item.source === "ebay" ? (
-                    <span className="px-2 py-1 text-xs font-semibold rounded bg-blue-500 text-white">
-                      eBay
-                    </span>
+                    <div className="bg-white rounded px-2 py-1 shadow-md transition-all duration-300 hover:scale-110 hover:shadow-lg">
+                      <img 
+                        src="/ebay-logo.png" 
+                        alt="eBay" 
+                        className="h-6 w-auto object-contain"
+                      />
+                    </div>
                   ) : (
-                    <div className="bg-white rounded px-2 py-1 shadow-md">
+                    <div className="bg-white rounded px-2 py-1 shadow-md transition-all duration-300 hover:scale-110 hover:shadow-lg">
                       <img 
                         src="/snkrdunk-logo.png" 
                         alt="SNKRDUNK" 

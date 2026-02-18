@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, Database, TrendingUp, FileText } from "lucide-react";
+import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
 import { AdminDataSources } from "@/components/AdminDataSources";
 import { AdminTrendingCards } from "@/components/AdminTrendingCards";
 import { AdminBlogManagement } from "@/components/AdminBlogManagement";
+import { AdminCacheManagement } from "@/components/AdminCacheManagement";
 
 import { useTranslation } from "react-i18next";
 
@@ -20,7 +21,7 @@ export default function Admin() {
           </div>
 
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-6 lg:w-auto">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="hidden sm:inline">{t("admin.statistics")}</span>
@@ -40,6 +41,10 @@ export default function Admin() {
             <TabsTrigger value="blog" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">博客管理</span>
+            </TabsTrigger>
+            <TabsTrigger value="cache" className="flex items-center gap-2">
+              <HardDrive className="w-4 h-4" />
+              <span className="hidden sm:inline">緩存管理</span>
             </TabsTrigger>
           </TabsList>
 
@@ -61,6 +66,10 @@ export default function Admin() {
 
             <TabsContent value="blog" className="mt-6">
               <AdminBlogManagement />
+            </TabsContent>
+
+            <TabsContent value="cache" className="mt-6">
+              <AdminCacheManagement />
             </TabsContent>
           </Tabs>
         </div>

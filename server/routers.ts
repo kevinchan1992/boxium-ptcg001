@@ -1658,6 +1658,28 @@ try {
         await batchTaskManager.resumeTask(input.taskId);
         return { success: true, message: "任務已繼續" };
       }),
+
+    // 緩存管理 API
+    getCacheStats: publicProcedure
+      .query(async () => {
+        const stats = await db.getSnkrdunkCacheStats();
+        return stats;
+      }),
+
+    clearCardCache: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const deletedCount = await db.clearSnkrdunkCacheByCardId(input.cardId);
+        return { success: true, deletedCount };
+      }),
+
+    clearAllCache: publicProcedure
+      .mutation(async () => {
+        const deletedCount = await db.clearAllSnkrdunkCache();
+        return { success: true, deletedCount };
+      }),
   }),
 
   watchlist: router({

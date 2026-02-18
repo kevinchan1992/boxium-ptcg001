@@ -4294,3 +4294,42 @@
 - [x] 檢查商品篩選邏輯（發現缺少 US$ 支持）
 - [x] 修復識別出的問題（添加 US$ 支持 + 改進反爬蟲措施）
 - [x] 測試多張卡牌確保修復有效（180001 和 180009 均正常）
+
+
+## 新功能: Pricing 頁面 eBay Logo 整合和 Hover 效果
+
+- [ ] 搜尋並下載 eBay logo 圖片
+- [ ] 將 eBay logo 上傳到專案 public 目錄
+- [ ] 替換 PricingDetail.tsx 中的 eBay 藍色文字標籤為 logo 圖片
+- [ ] 為 eBay 和 SNKRDUNK logo 添加 hover 效果（放大、陰影加深）
+- [ ] 測試 logo 顯示和 hover 效果
+
+## 新功能: Admin 頁面緩存管理
+
+- [ ] 在 Admin 頁面新增「緩存管理」標籤頁
+- [ ] 實現後端 API：清除指定卡牌的 SNKRDUNK 緩存
+- [ ] 實現後端 API：清除所有 SNKRDUNK 緩存
+- [ ] 實現前端 UI：顯示緩存統計（總數、最舊/最新緩存時間）
+- [ ] 實現前端 UI：按卡牌 ID 清除緩存功能
+- [ ] 實現前端 UI：清除所有緩存功能
+- [ ] 添加確認對話框防止誤操作
+- [ ] 測試緩存管理功能
+
+
+## 新功能: Pricing 頁面 eBay Logo 整合和 Hover 效果 - 完成
+
+- [x] 準備 eBay Logo 資源（從搜索結果下載）
+- [x] 替換 eBay 藍色文字標籤為 eBay logo 圖片
+- [x] 為商品來源標籤添加 hover 效果（logo 放大 10%、陰影加深）
+- [x] 測試驗證 logo 顯示效果（SNKRDUNK logo 正常顯示）
+
+## 新功能: Admin 緩存管理 - 完成
+
+- [x] 創建 AdminCacheManagement 組件
+- [x] 實現緩存統計功能（總數量、最舊/最新緩存）
+- [x] 實現清除指定卡牌緩存功能（輸入卡牌 ID）
+- [x] 實現清除所有緩存功能（確認對話框）
+- [x] 在 Admin 頁面添加「緩存管理」標籤頁
+- [x] 添加後端 API（getCacheStats, clearCardCache, clearAllCache）
+- [x] 添加數據庫函數（db.ts）
+- [x] 測試驗證緩存管理功能（6 個緩存正常顯示）
