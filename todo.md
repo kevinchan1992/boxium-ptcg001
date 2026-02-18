@@ -3264,3 +3264,31 @@
 - 底部連結添加 `py-2 px-1` 增加垂直和水平的點擊區域，避免誤觸
 - 版權年份使用 JavaScript 動態生成，確保每年自動更新
 - 多語言翻譯使用 `useTranslation()` hook 和 `t("footer.*")` 函數
+
+
+## 新增功能: Footer 社交媒體連結 - 已完成
+
+- [x] 為 Footer 的 Facebook 圖標添加實際連結
+- [x] 為 Footer 的 Instagram 圖標添加實際連結
+- [x] 確保連結在新分頁中打開（target="_blank" rel="noopener noreferrer"）
+
+**目標：**
+- 提升品牌曝光度和用戶互動
+- 讓用戶可以輕鬆訪問 BOXIUM 的社交媒體帳號
+
+
+**完成時間：** 2026-02-18
+
+**主要變更：**
+- Footer 組件已經包含社交媒體連結（第 45-50 行）
+- Facebook 連結：https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr
+- Instagram 連結：https://www.instagram.com/boxium.gamecard?igsh=MTBha2wyNWR4d3lpcQ%3D%3D&utm_source=qr
+- 兩個連結都配置了 `target="_blank"` 和 `rel="noopener noreferrer"`，確保在新分頁中打開並保持安全性
+- 圖標使用 lucide-react 的 Facebook 和 Instagram 組件，hover 效果為黃色（#ffed00）
+
+**技術細節：**
+- Footer 組件位於 `client/src/components/Footer.tsx`
+- 社交媒體圖標位於「關於我們」欄位下方（第 44-51 行）
+- 使用 `flex gap-4` 確保圖標之間有適當間距
+- 圖標大小為 `h-5 w-5`，顏色為 `text-white/80`，hover 時變為 `text-[#ffed00]`
+- 添加 `title` 屬性提供無障礙支援（"Facebook" 和 "Instagram"）
