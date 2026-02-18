@@ -91,7 +91,22 @@ export async function fetchSnkrdunkListings(params: SnkrdunkSearchParams): Promi
     console.log('[SNKRDUNK Service] Firecrawl response received');
 
     // Parse the response
-    const response = JSON.parse(result);
+    // manus-mcp-cli output may contain extra text, extract JSON part
+    let response: any;
+    try {
+      // Try to find JSON in the output
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        response = JSON.parse(jsonMatch[0]);
+      } else {
+        console.error('[SNKRDUNK Service] No JSON found in Firecrawl output:', result.substring(0, 200));
+        return [];
+      }
+    } catch (e) {
+      console.error('[SNKRDUNK Service] Failed to parse Firecrawl response:', e);
+      console.error('[SNKRDUNK Service] Raw output:', result.substring(0, 200));
+      return [];
+    }
     
     // Extract the JSON data from Firecrawl response
     let scrapedData: any;
