@@ -184,25 +184,25 @@ export default function BlogPost() {
               <Markdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  h1: ({ ...props }: any) => <h1 className="text-3xl font-bold text-white mt-8 mb-4" {...props} />,
-                  h2: ({ ...props }: any) => <h2 className="text-2xl font-bold text-white mt-6 mb-3" {...props} />,
-                  h3: ({ ...props }: any) => <h3 className="text-xl font-bold text-white mt-4 mb-2" {...props} />,
-                  p: ({ ...props }: any) => <p className="text-gray-300 mb-4 leading-relaxed" {...props} />,
-                  ul: ({ ...props }: any) => <ul className="list-disc list-inside text-gray-300 mb-4 space-y-2" {...props} />,
-                  ol: ({ ...props }: any) => <ol className="list-decimal list-inside text-gray-300 mb-4 space-y-2" {...props} />,
-                  li: ({ ...props }: any) => <li className="text-gray-300" {...props} />,
+                  h1: ({ ...props }: any) => <h1 className="text-3xl font-bold text-white mt-10 mb-6" {...props} />,
+                  h2: ({ ...props }: any) => <h2 className="text-2xl font-bold text-white mt-8 mb-5" {...props} />,
+                  h3: ({ ...props }: any) => <h3 className="text-xl font-bold text-white mt-6 mb-4" {...props} />,
+                  p: ({ ...props }: any) => <p className="text-gray-300 mb-6 leading-[1.8] text-[17px]" {...props} />,
+                  ul: ({ ...props }: any) => <ul className="list-disc list-inside text-gray-300 mb-6 space-y-3 ml-4" {...props} />,
+                  ol: ({ ...props }: any) => <ol className="list-decimal list-inside text-gray-300 mb-6 space-y-3 ml-4" {...props} />,
+                  li: ({ ...props }: any) => <li className="text-gray-300 leading-[1.8]" {...props} />,
                   a: ({ ...props }: any) => <a className="text-[#06038d] hover:underline" {...props} />,
                   blockquote: ({ ...props }: any) => (
-                    <blockquote className="border-l-4 border-[#06038d] pl-4 italic text-gray-400 my-4" {...props} />
+                    <blockquote className="border-l-4 border-[#06038d] pl-6 py-3 italic text-gray-400 my-6 bg-zinc-800/50 rounded-r" {...props} />
                   ),
                   code: ({ node, inline, ...props }: any) =>
                     inline ? (
                       <code className="bg-zinc-800 px-2 py-1 rounded text-sm text-purple-400" {...props} />
                     ) : (
-                      <code className="block bg-zinc-800 p-4 rounded text-sm text-gray-300 overflow-x-auto" {...props} />
+                      <code className="block bg-zinc-800 p-5 rounded text-sm text-gray-300 overflow-x-auto my-6 leading-[1.6]" {...props} />
                     ),
                   table: ({ ...props }: any) => (
-                    <div className="overflow-x-auto my-6">
+                    <div className="overflow-x-auto my-8">
                       <table className="w-full border-collapse border border-zinc-700" {...props} />
                     </div>
                   ),

@@ -171,6 +171,7 @@ export interface GeneratedArticle {
   content: string;
   suggestedTags: string[];
   suggestedCategory: string;
+  featuredImageUrl?: string;
   seoMetadata: {
     metaTitle: string;
     metaDescription: string;
@@ -267,6 +268,14 @@ function buildArticlePrompt(
   prompt += `4. 內容格式：Markdown\n`;
   prompt += `5. 包含數據支撐，避免主觀臆測\n`;
   prompt += `6. 提供可操作的建議\n\n`;
+  
+  prompt += `【Markdown 排版要求】\n`;
+  prompt += `1. 每個段落之間用空行分隔（\\n\\n）\n`;
+  prompt += `2. 使用 ## 二級標題劃分章節，標題前後各留一個空行\n`;
+  prompt += `3. 列表項目之間不需要空行，但列表前後要留空行\n`;
+  prompt += `4. 重要數據使用 **粗體** 標記\n`;
+  prompt += `5. 引用區塊使用 > 符號，用於重點提示\n`;
+  prompt += `6. 避免過長的段落，每段 2-4 句為佳\n\n`;
 
   prompt += `請返回 JSON 格式：\n`;
   prompt += `{\n`;

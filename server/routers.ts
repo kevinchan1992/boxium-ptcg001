@@ -2031,6 +2031,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
     generateArticle: protectedProcedure
       .input(z.object({
         articleType: z.enum(['daily-report', 'card-analysis', 'market-trend', 'news']),
+        featuredImageUrl: z.string().optional(),
         dataInput: z.object({
           cardIds: z.array(z.number()).optional(),
           timeRange: z.enum(['7d', '30d', '60d', 'all']).optional(),
@@ -2053,6 +2054,10 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       .mutation(async ({ input }) => {
         const articleGenerator = await import('./articleGenerator');
         const result = await articleGenerator.generateArticle(input);
+        // Add featured image URL to result if provided
+        if (input.featuredImageUrl) {
+          result.featuredImageUrl = input.featuredImageUrl;
+        }
         return result;
       }),
   }),

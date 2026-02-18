@@ -226,6 +226,7 @@ export function AdminBlogManagement() {
               title: generatedArticle.title,
               excerpt: generatedArticle.excerpt,
               content: generatedArticle.content,
+              featuredImage: generatedArticle.featuredImageUrl || '',
               metaTitle: generatedArticle.seoMetadata.metaTitle,
               metaDescription: generatedArticle.seoMetadata.metaDescription,
               metaKeywords: generatedArticle.seoMetadata.keywords.join(', '),
@@ -474,9 +475,11 @@ function AIArticleGenerator({
 }) {
   const [inputMethod, setInputMethod] = useState<'image' | 'text' | 'data'>('text');
   const [articleType, setArticleType] = useState<'daily-report' | 'card-analysis' | 'market-trend' | 'news'>('news');
-  const [imageUrls, setImageUrls] = useState('');
+  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [textContent, setTextContent] = useState('');
   const [topic, setTopic] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const generateMutation = trpc.blog.generateArticle.useMutation({
     onSuccess: (data) => {
@@ -488,9 +491,43 @@ function AIArticleGenerator({
     },
   });
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    const newUploadedUrls: string[] = [];
+
+    try {
+      for (const file of files) {
+        // Convert file to base64 for preview
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        const base64 = await base64Promise;
+        newUploadedUrls.push(base64);
+      }
+
+      setUploadedImages([...uploadedImages, ...files]);
+      setUploadedImageUrls([...uploadedImageUrls, ...newUploadedUrls]);
+      toast.success(`已添加 ${files.length} 張圖片`);
+    } catch (error) {
+      toast.error('圖片上傳失敗');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages(uploadedImages.filter((_, i) => i !== index));
+    setUploadedImageUrls(uploadedImageUrls.filter((_, i) => i !== index));
+  };
+
   const handleGenerate = () => {
-    if (inputMethod === 'image' && !imageUrls) {
-      toast.error('請輸入圖片 URL');
+    if (inputMethod === 'image' && uploadedImageUrls.length === 0) {
+      toast.error('請上傳至少一張圖片');
       return;
     }
     if (inputMethod === 'text' && !textContent) {
@@ -504,8 +541,10 @@ function AIArticleGenerator({
 
     if (inputMethod === 'image') {
       input.imageInput = {
-        imageUrls: imageUrls.split('\n').filter((url) => url.trim()),
+        imageUrls: uploadedImageUrls,
       };
+      // Also set the first uploaded image as featured image
+      input.featuredImageUrl = uploadedImageUrls[0];
     } else if (inputMethod === 'text') {
       input.textInput = {
         content: textContent,
@@ -567,17 +606,56 @@ function AIArticleGenerator({
 
         {/* Image Input */}
         {inputMethod === 'image' && (
-          <div>
-            <Label htmlFor="imageUrls" className="text-white">圖片 URL（每行一個）</Label>
-            <Textarea
-              id="imageUrls"
-              value={imageUrls}
-              onChange={(e) => setImageUrls(e.target.value)}
-              className="bg-zinc-800 border-zinc-700 text-white"
-              placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-              rows={5}
-            />
-            <p className="text-xs text-gray-500 mt-1">AI 將自動提取圖片中的文字和卡牌資訊</p>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-white mb-2 block">上傳圖片</Label>
+              <div className="border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center hover:border-purple-500 transition-colors">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="image-upload"
+                  disabled={isUploading}
+                />
+                <label htmlFor="image-upload" className="cursor-pointer">
+                  <ImageIcon className="w-12 h-12 mx-auto mb-4 text-gray-500" />
+                  <p className="text-white mb-2">點擊上傳圖片</p>
+                  <p className="text-xs text-gray-500">支援 JPG、PNG、WEBP 格式</p>
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">AI 將自動提取圖片中的文字和卡牌資訊，第一張圖片將作為文章主題圖片</p>
+            </div>
+
+            {/* Image Preview */}
+            {uploadedImageUrls.length > 0 && (
+              <div>
+                <Label className="text-white mb-2 block">已上傳的圖片 ({uploadedImageUrls.length})</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  {uploadedImageUrls.map((url, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={url}
+                        alt={`Uploaded ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg border border-zinc-700"
+                      />
+                      {index === 0 && (
+                        <Badge className="absolute top-2 left-2 bg-purple-600">主題圖片</Badge>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
