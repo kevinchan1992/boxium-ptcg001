@@ -3459,3 +3459,19 @@
 - 導航欄菜單中只顯示 5 個主要頁面連結
 - Research 頁面內容完全垂直置中
 - Research 頁面不顯示頁尾
+
+## UI 變更: 更新 Trending 頁面標題 - 已完成
+
+- [x] 檢查 Trending.tsx 文件的當前標題
+- [x] 將標題從「🔥 PSA 10 熱門排行槜」改為「🔥 Pokemon TCG 熱門排行榜」
+- [x] 驗證變更在前端正確顯示
+
+**更新摘要：**
+- 更新了三個語言的翻譯文件：
+  - 中文：「🔥 PSA 10 熱門排行槜」→ 「🔥 Pokemon TCG 熱門排行榜」
+  - 英文：「🔥 PSA 10 Trending Leaderboard」→ 「🔥 Pokemon TCG Trending Leaderboard」
+  - 日文：「🔥 PSA 10 人気ランキング」→ 「🔥 Pokemon TCG 人気ランキング」
+
+**驗證結果：**
+- Trending 頁面標題已正確更新為「🔥 Pokemon TCG 熱門排行榜」
+- 所有語言版本均已正確顯示
