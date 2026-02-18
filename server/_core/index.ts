@@ -50,6 +50,33 @@ async function startServer() {
       res.status(500).send("Error generating sitemap");
     }
   });
+  
+  // Blog image upload API
+  const multer = (await import("multer")).default;
+  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+  
+  app.post("/api/upload-blog-image", upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      const { storagePut } = await import("../storage");
+      
+      // Get file data from multer
+      const fileBuffer = req.file.buffer;
+      const contentType = req.file.mimetype;
+      const fileName = `blog-images/${Date.now()}.${contentType.split("/")[1]}`;
+      
+      // Upload to S3
+      const { url } = await storagePut(fileName, fileBuffer, contentType);
+      
+      res.json({ url });
+    } catch (error) {
+      console.error("[Blog] Error uploading image:", error);
+      res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
   // tRPC API
   app.use(
     "/api/trpc",

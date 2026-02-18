@@ -285,17 +285,57 @@ function PostEditor({
     },
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.title || !formData.content) {
       toast.error('請填寫標題和內容');
       return;
+    }
+
+    // If featuredImage is a base64 data URL, upload it to S3 first
+    let featuredImageUrl = formData.featuredImage;
+    if (featuredImageUrl && featuredImageUrl.startsWith('data:image/')) {
+      try {
+        toast.info('正在上傳圖片...');
+        
+        // Convert base64 to blob
+        const base64Data = featuredImageUrl.split(',')[1];
+        const mimeType = featuredImageUrl.match(/data:([^;]+);/)?.[1] || 'image/png';
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+        
+        // Upload to S3 using manus-upload-file command
+        const formData2 = new FormData();
+        formData2.append('file', blob, `blog-${Date.now()}.${mimeType.split('/')[1]}`);
+        
+        // Call server to upload
+        const uploadResponse = await fetch('/api/upload-blog-image', {
+          method: 'POST',
+          body: formData2,
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error('圖片上傳失敗');
+        }
+        
+        const { url } = await uploadResponse.json();
+        featuredImageUrl = url;
+        toast.success('圖片上傳成功');
+      } catch (error) {
+        toast.error(`圖片上傳失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+        return;
+      }
     }
 
     const data = {
       title: formData.title,
       excerpt: formData.excerpt || undefined,
       content: formData.content,
-      featuredImage: formData.featuredImage || undefined,
+      featuredImage: featuredImageUrl || undefined,
       categoryId: formData.categoryId ? Number(formData.categoryId) : undefined,
       status: formData.status as 'draft' | 'published',
       dataSource: (post?.dataSource || 'manual') as 'manual' | 'ai-generated' | 'mixed',
