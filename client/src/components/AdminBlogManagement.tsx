@@ -544,7 +544,9 @@ function AIArticleGenerator({
         imageUrls: uploadedImageUrls,
       };
       // Also set the first uploaded image as featured image
-      input.featuredImageUrl = uploadedImageUrls[0];
+      if (uploadedImageUrls && uploadedImageUrls.length > 0) {
+        input.featuredImageUrl = uploadedImageUrls[0];
+      }
     } else if (inputMethod === 'text') {
       input.textInput = {
         content: textContent,

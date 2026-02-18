@@ -3747,3 +3747,12 @@
 - [x] 優化 AI 生成文章的文字間距和排版
 - [x] 調整 Markdown 渲染的段落間距
 - [x] 測試圖片上傳和 AI 生成功能
+
+
+## Bug 修復（2026-02-18）
+
+### Admin 頁面錯誤
+- [x] 修復 API Mutation Error: Cannot read properties of undefined (reading '0')
+- [x] 檢查 AdminBlogManagement 組件的數據處理
+- [x] 添加空陣列檢查
+- [x] 測試修復結果
