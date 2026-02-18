@@ -1,0 +1,100 @@
+{
+  "query": "\n-- 檢查 soldAt 和 createdAt 的差異\nSELECT \n  ph.cardId,\n  ph.price,\n  ph.grade,\n  ph.soldAt,\n  ph.createdAt,\n  CASE \n    WHEN ph.soldAt IS NULL THEN 'NULL'\n    ELSE 'HAS VALUE'\n  END as soldAt_status,\n  DATEDIFF(NOW(), COALESCE(ph.soldAt, ph.createdAt)) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\nORDER BY COALESCE(ph.soldAt, ph.createdAt) ASC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 檢查 soldAt 和 createdAt 的差異\nSELECT \n  ph.cardId,\n  ph.price,\n  ph.grade,\n  ph.soldAt,\n  ph.createdAt,\n  CASE \n    WHEN ph.soldAt IS NULL THEN 'NULL'\n    ELSE 'HAS VALUE'\n  END as soldAt_status,\n  DATEDIFF(NOW(), COALESCE(ph.soldAt, ph.createdAt)) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\nORDER BY COALESCE(ph.soldAt, ph.createdAt) ASC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 00:00:00",
+      "createdAt": "2026-02-17 18:33:27",
+      "soldAt_status": "HAS VALUE",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 00:00:00",
+      "createdAt": "2026-02-17 18:25:26",
+      "soldAt_status": "HAS VALUE",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 04:00:00",
+      "createdAt": "2026-02-17 17:28:15",
+      "soldAt_status": "HAS VALUE",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 04:00:00",
+      "createdAt": "2026-02-14 15:36:32",
+      "soldAt_status": "HAS VALUE",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 04:00:00",
+      "createdAt": "2026-02-14 15:36:58",
+      "soldAt_status": "HAS VALUE",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 04:00:00",
+      "createdAt": "2026-02-15 00:20:44",
+      "soldAt_status": "HAS VALUE",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "3574.95",
+      "grade": "PSA10",
+      "soldAt": "2023-12-14 00:00:00",
+      "createdAt": "2026-02-17 18:33:25",
+      "soldAt_status": "HAS VALUE",
+      "daysAgo": "797"
+    },
+    {
+      "cardId": "180013",
+      "price": "3574.95",
+      "grade": "PSA10",
+      "soldAt": "2023-12-14 00:00:00",
+      "createdAt": "2026-02-17 18:25:26",
+      "soldAt_status": "HAS VALUE",
+      "daysAgo": "797"
+    },
+    {
+      "cardId": "180013",
+      "price": "3574.95",
+      "grade": "PSA10",
+      "soldAt": "2023-12-14 05:00:00",
+      "createdAt": "2026-02-14 15:36:57",
+      "soldAt_status": "HAS VALUE",
+      "daysAgo": "797"
+    },
+    {
+      "cardId": "180013",
+      "price": "3574.95",
+      "grade": "PSA10",
+      "soldAt": "2023-12-14 05:00:00",
+      "createdAt": "2026-02-15 00:20:43",
+      "soldAt_status": "HAS VALUE",
+      "daysAgo": "797"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\tprice\tgrade\tsoldAt\tcreatedAt\tsoldAt_status\tdaysAgo\n180013\t4400.00\tPSA10\t2023-09-10 00:00:00\t2026-02-17 18:33:27\tHAS VALUE\t892\n180013\t4400.00\tPSA10\t2023-09-10 00:00:00\t2026-02-17 18:25:26\tHAS VALUE\t892\n180013\t4400.00\tPSA10\t2023-09-10 04:00:00\t2026-02-17 17:28:15\tHAS VALUE\t892\n180013\t4400.00\tPSA10\t2023-09-10 04:00:00\t2026-02-14 15:36:32\tHAS VALUE\t892\n180013\t4400.00\tPSA10\t2023-09-10 04:00:00\t2026-02-14 15:36:58\tHAS VALUE\t892\n180013\t4400.00\tPSA10\t2023-09-10 04:00:00\t2026-02-15 00:20:44\tHAS VALUE\t892\n180013\t3574.95\tPSA10\t2023-12-14 00:00:00\t2026-02-17 18:33:25\tHAS VALUE\t797\n180013\t3574.95\tPSA10\t2023-12-14 00:00:00\t2026-02-17 18:25:26\tHAS VALUE\t797\n180013\t3574.95\tPSA10\t2023-12-14 05:00:00\t2026-02-14 15:36:57\tHAS VALUE\t797\n180013\t3574.95\tPSA10\t2023-12-14 05:00:00\t2026-02-15 00:20:43\tHAS VALUE\t797\n",
+  "stderr": "",
+  "execution_time_ms": 1643
+}

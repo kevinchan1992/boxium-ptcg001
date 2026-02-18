@@ -1,0 +1,8 @@
+{
+  "query": "\n-- 查詢該卡牌最近 3 個月的 PSA 10 價格歷史\nSELECT \n  ph.cardId,\n  ph.price,\n  ph.grade,\n  ph.transactionDate,\n  ph.source,\n  c.name,\n  c.nameJa\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.transactionDate >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.transactionDate ASC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 查詢該卡牌最近 3 個月的 PSA 10 價格歷史\nSELECT \n  ph.cardId,\n  ph.price,\n  ph.grade,\n  ph.transactionDate,\n  ph.source,\n  c.name,\n  c.nameJa\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.transactionDate >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.transactionDate ASC\nLIMIT 20;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 3: Unknown column 'ph.transactionDate' in 'order clause'"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "query": "\n-- 查詢最近 90 天內的最後 5 筆記錄\nSELECT \n  ph.price,\n  ph.soldAt,\n  ph.createdAt,\n  COALESCE(ph.soldAt, ph.createdAt) as sortDate,\n  DATEDIFF(NOW(), ph.createdAt) as createdDaysAgo,\n  DATEDIFF(NOW(), COALESCE(ph.soldAt, ph.createdAt)) as sortDaysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.createdAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY COALESCE(ph.soldAt, ph.createdAt) DESC\nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 查詢最近 90 天內的最後 5 筆記錄\nSELECT \n  ph.price,\n  ph.soldAt,\n  ph.createdAt,\n  COALESCE(ph.soldAt, ph.createdAt) as sortDate,\n  DATEDIFF(NOW(), ph.createdAt) as createdDaysAgo,\n  DATEDIFF(NOW(), COALESCE(ph.soldAt, ph.createdAt)) as sortDaysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.createdAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY COALESCE(ph.soldAt, ph.createdAt) DESC\nLIMIT 5;\n",
+  "rows": [
+    {
+      "price": "10009.60",
+      "soldAt": "2026-02-14 19:35:58",
+      "createdAt": "2026-02-14 19:35:57",
+      "sortDate": "2026-02-14 19:35:58",
+      "createdDaysAgo": "4",
+      "sortDaysAgo": "4"
+    },
+    {
+      "price": "471.86",
+      "soldAt": "2026-02-14 19:35:58",
+      "createdAt": "2026-02-14 19:35:57",
+      "sortDate": "2026-02-14 19:35:58",
+      "createdDaysAgo": "4",
+      "sortDaysAgo": "4"
+    },
+    {
+      "price": "46920.00",
+      "soldAt": "2026-02-14 19:35:57",
+      "createdAt": "2026-02-14 19:35:56",
+      "sortDate": "2026-02-14 19:35:57",
+      "createdDaysAgo": "4",
+      "sortDaysAgo": "4"
+    },
+    {
+      "price": "10165.92",
+      "soldAt": "2026-02-14 19:35:57",
+      "createdAt": "2026-02-14 19:35:57",
+      "sortDate": "2026-02-14 19:35:57",
+      "createdDaysAgo": "4",
+      "sortDaysAgo": "4"
+    },
+    {
+      "price": "2552.21",
+      "soldAt": "2026-02-14 19:35:57",
+      "createdAt": "2026-02-14 19:35:56",
+      "sortDate": "2026-02-14 19:35:57",
+      "createdDaysAgo": "4",
+      "sortDaysAgo": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "price\tsoldAt\tcreatedAt\tsortDate\tcreatedDaysAgo\tsortDaysAgo\n10009.60\t2026-02-14 19:35:58\t2026-02-14 19:35:57\t2026-02-14 19:35:58\t4\t4\n471.86\t2026-02-14 19:35:58\t2026-02-14 19:35:57\t2026-02-14 19:35:58\t4\t4\n46920.00\t2026-02-14 19:35:57\t2026-02-14 19:35:56\t2026-02-14 19:35:57\t4\t4\n10165.92\t2026-02-14 19:35:57\t2026-02-14 19:35:57\t2026-02-14 19:35:57\t4\t4\n2552.21\t2026-02-14 19:35:57\t2026-02-14 19:35:56\t2026-02-14 19:35:57\t4\t4\n",
+  "stderr": "",
+  "execution_time_ms": 1630
+}

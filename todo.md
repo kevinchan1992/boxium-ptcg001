@@ -3350,3 +3350,28 @@
 - 確保價格趨勢計算基於足夠的交易數據（至少 2 筆交易）
 - 提升價格趨勢的準確性和可靠性
 - 統一整個平台的價格計算邏輯
+
+## Bug 修復: 熱門卡牌 Top 5 漲幅計算錯誤 - 已完成
+
+- [x] 檢查資料庫中顯示 775% 漲幅的卡牌的實際價格歷史數據
+- [x] 驗證價格計算邏輯是否正確提取最近 3 個月的 SNKRDUNK PSA 10 實際成交價格
+- [x] 分析 calculateAndCacheTrendingCards 函數的 SQL 查詢和計算邏輯
+- [x] 識別並修復價格計算錯誤的根本原因
+- [x] 測試修復後的漲幅計算結果
+- [x] 驗證所有 Top 5 卡牌的漲幅顯示合理
+
+**問題根本原因：**
+混用 `createdAt`（數據添加時間）和 `soldAt`（實際交易時間）導致計算錯誤。
+
+**修復方案：**
+1. 過濾條件改為使用 `soldAt >= cutoffDate` 並添加 `IS NOT NULL` 檢查
+2. 排序邏輯改為使用 `soldAt` 而非 `COALESCE(soldAt, createdAt)`
+3. 修復了三個函數：
+   - `calculateAndCacheTrendingCards()`
+   - `getTrendingByPriceIncrease()`
+   - `getTrendingByPriceDecrease()`
+
+**修復結果：**
+- 漲幅從錯誤的 775% 降至合理的 124.59%
+- 所有 Top 5 卡牌的漲幅都在合理範圍內（60%-130%）
+- 所有單元測試通過（8/8 測試通過）

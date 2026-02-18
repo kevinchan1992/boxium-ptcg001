@@ -1298,6 +1298,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
 
   // Get SNKRDUNK PSA 10 price history from last 3 months for cards that exist in cards table
   // Use INNER JOIN to ensure we only calculate for valid cards
+  // IMPORTANT: Filter by soldAt (actual transaction date), not createdAt (data insertion date)
   const cardsWithPrices = await db
     .select({
       cardId: priceHistory.cardId,
@@ -1312,7 +1313,8 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
       and(
         eq(priceHistory.source, "snkrdunk"),
         eq(priceHistory.grade, "PSA10"),
-        gte(priceHistory.createdAt, cutoffDate)
+        gte(priceHistory.soldAt, cutoffDate),
+        sql`${priceHistory.soldAt} IS NOT NULL`
       )
     )
     .orderBy(priceHistory.cardId, priceHistory.soldAt);
@@ -1325,7 +1327,8 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
   for (const record of cardsWithPrices) {
     const cardId = record.cardId;
     const price = parseFloat(record.price as any);
-    const date = record.soldAt || record.createdAt;
+    // Use soldAt as the transaction date (already filtered for NOT NULL)
+    const date = record.soldAt!;
 
     if (!cardPriceMap.has(cardId)) {
       cardPriceMap.set(cardId, []);
@@ -1668,17 +1671,19 @@ export async function getTrendingByPriceIncrease(options: {
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   // Get all SNKRDUNK PSA 10 price records within the time range
+  // IMPORTANT: Filter by soldAt (actual transaction date), not createdAt (data insertion date)
   const recentPrices = await db
     .select()
     .from(priceHistory)
     .where(
       and(
-        gte(priceHistory.createdAt, cutoffDate),
+        gte(priceHistory.soldAt, cutoffDate),
+        sql`${priceHistory.soldAt} IS NOT NULL`,
         eq(priceHistory.source, 'snkrdunk'),
         eq(priceHistory.grade, 'PSA10')
       )
     )
-    .orderBy(asc(priceHistory.createdAt));
+    .orderBy(asc(priceHistory.soldAt));
 
   // Group by cardId to count transactions per card
   const transactionCounts = new Map<number, number>();
@@ -1774,17 +1779,19 @@ export async function getTrendingByPriceDecrease(options: {
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   // Similar logic to price increase, but filter for negative changes
+  // IMPORTANT: Filter by soldAt (actual transaction date), not createdAt (data insertion date)
   const recentPrices = await db
     .select()
     .from(priceHistory)
     .where(
       and(
-        gte(priceHistory.createdAt, cutoffDate),
+        gte(priceHistory.soldAt, cutoffDate),
+        sql`${priceHistory.soldAt} IS NOT NULL`,
         eq(priceHistory.source, 'snkrdunk'),
         eq(priceHistory.grade, 'PSA10')
       )
     )
-    .orderBy(asc(priceHistory.createdAt));
+    .orderBy(asc(priceHistory.soldAt));
 
   // Group by cardId to count transactions per card
   const transactionCounts = new Map<number, number>();

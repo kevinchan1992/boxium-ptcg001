@@ -1,0 +1,90 @@
+{
+  "query": "\n-- 查詢最早的 10 筆記錄\n(SELECT \n  'OLDEST' as position,\n  ph.price,\n  ph.soldAt,\n  ph.createdAt,\n  COALESCE(ph.soldAt, ph.createdAt) as effectiveDate,\n  DATEDIFF(NOW(), COALESCE(ph.soldAt, ph.createdAt)) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\nORDER BY COALESCE(ph.soldAt, ph.createdAt) ASC\nLIMIT 5)\n\nUNION ALL\n\n(SELECT \n  'NEWEST' as position,\n  ph.price,\n  ph.soldAt,\n  ph.createdAt,\n  COALESCE(ph.soldAt, ph.createdAt) as effectiveDate,\n  DATEDIFF(NOW(), COALESCE(ph.soldAt, ph.createdAt)) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\nORDER BY COALESCE(ph.soldAt, ph.createdAt) DESC\nLIMIT 5);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 查詢最早的 10 筆記錄\n(SELECT \n  'OLDEST' as position,\n  ph.price,\n  ph.soldAt,\n  ph.createdAt,\n  COALESCE(ph.soldAt, ph.createdAt) as effectiveDate,\n  DATEDIFF(NOW(), COALESCE(ph.soldAt, ph.createdAt)) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\nORDER BY COALESCE(ph.soldAt, ph.createdAt) ASC\nLIMIT 5)\n\nUNION ALL\n\n(SELECT \n  'NEWEST' as position,\n  ph.price,\n  ph.soldAt,\n  ph.createdAt,\n  COALESCE(ph.soldAt, ph.createdAt) as effectiveDate,\n  DATEDIFF(NOW(), COALESCE(ph.soldAt, ph.createdAt)) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\nORDER BY COALESCE(ph.soldAt, ph.createdAt) DESC\nLIMIT 5);\n",
+  "rows": [
+    {
+      "position": "OLDEST",
+      "price": "4400.00",
+      "soldAt": "2023-09-10 00:00:00",
+      "createdAt": "2026-02-17 18:25:26",
+      "effectiveDate": "2023-09-10 00:00:00",
+      "daysAgo": "892"
+    },
+    {
+      "position": "OLDEST",
+      "price": "4400.00",
+      "soldAt": "2023-09-10 00:00:00",
+      "createdAt": "2026-02-17 18:33:27",
+      "effectiveDate": "2023-09-10 00:00:00",
+      "daysAgo": "892"
+    },
+    {
+      "position": "OLDEST",
+      "price": "4400.00",
+      "soldAt": "2023-09-10 04:00:00",
+      "createdAt": "2026-02-14 15:36:32",
+      "effectiveDate": "2023-09-10 04:00:00",
+      "daysAgo": "892"
+    },
+    {
+      "position": "OLDEST",
+      "price": "4400.00",
+      "soldAt": "2023-09-10 04:00:00",
+      "createdAt": "2026-02-15 00:20:44",
+      "effectiveDate": "2023-09-10 04:00:00",
+      "daysAgo": "892"
+    },
+    {
+      "position": "OLDEST",
+      "price": "4400.00",
+      "soldAt": "2023-09-10 04:00:00",
+      "createdAt": "2026-02-17 17:28:15",
+      "effectiveDate": "2023-09-10 04:00:00",
+      "daysAgo": "892"
+    },
+    {
+      "position": "NEWEST",
+      "price": "471.86",
+      "soldAt": "2026-02-14 19:35:58",
+      "createdAt": "2026-02-14 19:35:57",
+      "effectiveDate": "2026-02-14 19:35:58",
+      "daysAgo": "4"
+    },
+    {
+      "position": "NEWEST",
+      "price": "10009.60",
+      "soldAt": "2026-02-14 19:35:58",
+      "createdAt": "2026-02-14 19:35:57",
+      "effectiveDate": "2026-02-14 19:35:58",
+      "daysAgo": "4"
+    },
+    {
+      "position": "NEWEST",
+      "price": "2552.21",
+      "soldAt": "2026-02-14 19:35:57",
+      "createdAt": "2026-02-14 19:35:56",
+      "effectiveDate": "2026-02-14 19:35:57",
+      "daysAgo": "4"
+    },
+    {
+      "position": "NEWEST",
+      "price": "46920.00",
+      "soldAt": "2026-02-14 19:35:57",
+      "createdAt": "2026-02-14 19:35:56",
+      "effectiveDate": "2026-02-14 19:35:57",
+      "daysAgo": "4"
+    },
+    {
+      "position": "NEWEST",
+      "price": "23.07",
+      "soldAt": "2026-02-14 19:35:57",
+      "createdAt": "2026-02-14 19:35:57",
+      "effectiveDate": "2026-02-14 19:35:57",
+      "daysAgo": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "position\tprice\tsoldAt\tcreatedAt\teffectiveDate\tdaysAgo\nOLDEST\t4400.00\t2023-09-10 00:00:00\t2026-02-17 18:25:26\t2023-09-10 00:00:00\t892\nOLDEST\t4400.00\t2023-09-10 00:00:00\t2026-02-17 18:33:27\t2023-09-10 00:00:00\t892\nOLDEST\t4400.00\t2023-09-10 04:00:00\t2026-02-14 15:36:32\t2023-09-10 04:00:00\t892\nOLDEST\t4400.00\t2023-09-10 04:00:00\t2026-02-15 00:20:44\t2023-09-10 04:00:00\t892\nOLDEST\t4400.00\t2023-09-10 04:00:00\t2026-02-17 17:28:15\t2023-09-10 04:00:00\t892\nNEWEST\t471.86\t2026-02-14 19:35:58\t2026-02-14 19:35:57\t2026-02-14 19:35:58\t4\nNEWEST\t10009.60\t2026-02-14 19:35:58\t2026-02-14 19:35:57\t2026-02-14 19:35:58\t4\nNEWEST\t2552.21\t2026-02-14 19:35:57\t2026-02-14 19:35:56\t2026-02-14 19:35:57\t4\nNEWEST\t46920.00\t2026-02-14 19:35:57\t2026-02-14 19:35:56\t2026-02-14 19:35:57\t4\nNEWEST\t23.07\t2026-02-14 19:35:57\t2026-02-14 19:35:57\t2026-02-14 19:35:57\t4\n",
+  "stderr": "",
+  "execution_time_ms": 1623
+}

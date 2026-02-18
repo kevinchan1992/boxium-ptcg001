@@ -1,0 +1,210 @@
+{
+  "query": "\n-- 查詢該卡牌最近 3 個月的 PSA 10 價格歷史\nSELECT \n  ph.cardId,\n  ph.price,\n  ph.grade,\n  ph.soldAt,\n  ph.source,\n  ph.createdAt,\n  c.name,\n  c.nameJa\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.soldAt ASC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 查詢該卡牌最近 3 個月的 PSA 10 價格歷史\nSELECT \n  ph.cardId,\n  ph.price,\n  ph.grade,\n  ph.soldAt,\n  ph.source,\n  ph.createdAt,\n  c.name,\n  c.nameJa\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.soldAt ASC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-17 18:33:22",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-17 18:25:12",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-14 15:34:31",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-17 17:27:59",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-14 15:36:41",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-15 00:20:28",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-14 15:36:17",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-17 18:25:11",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-17 18:33:22",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-14 15:36:16",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-14 15:36:41",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-17 17:27:58",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-14 15:34:30",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-15 00:20:28",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-17 18:25:11",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-17 18:33:22",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-17 17:27:57",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-15 00:20:27",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-14 15:36:40",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-02-14 15:36:15",
+      "name": "Japanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)",
+      "nameJa": "日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\tprice\tgrade\tsoldAt\tsource\tcreatedAt\tname\tnameJa\n180013\t30250.00\tPSA10\t2025-12-13 00:00:00\tsnkrdunk\t2026-02-17 18:33:22\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t30250.00\tPSA10\t2025-12-13 00:00:00\tsnkrdunk\t2026-02-17 18:25:12\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t30250.00\tPSA10\t2025-12-13 05:00:00\tsnkrdunk\t2026-02-14 15:34:31\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t30250.00\tPSA10\t2025-12-13 05:00:00\tsnkrdunk\t2026-02-17 17:27:59\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t30250.00\tPSA10\t2025-12-13 05:00:00\tsnkrdunk\t2026-02-14 15:36:41\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t30250.00\tPSA10\t2025-12-13 05:00:00\tsnkrdunk\t2026-02-15 00:20:28\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t30250.00\tPSA10\t2025-12-13 05:00:00\tsnkrdunk\t2026-02-14 15:36:17\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t33000.00\tPSA10\t2026-01-03 00:00:00\tsnkrdunk\t2026-02-17 18:25:11\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t33000.00\tPSA10\t2026-01-03 00:00:00\tsnkrdunk\t2026-02-17 18:33:22\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t33000.00\tPSA10\t2026-01-03 05:00:00\tsnkrdunk\t2026-02-14 15:36:16\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t33000.00\tPSA10\t2026-01-03 05:00:00\tsnkrdunk\t2026-02-14 15:36:41\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t33000.00\tPSA10\t2026-01-03 05:00:00\tsnkrdunk\t2026-02-17 17:27:58\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t33000.00\tPSA10\t2026-01-03 05:00:00\tsnkrdunk\t2026-02-14 15:34:30\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t33000.00\tPSA10\t2026-01-03 05:00:00\tsnkrdunk\t2026-02-15 00:20:28\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t38500.00\tPSA10\t2026-01-18 00:00:00\tsnkrdunk\t2026-02-17 18:25:11\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t38500.00\tPSA10\t2026-01-18 00:00:00\tsnkrdunk\t2026-02-17 18:33:22\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t38500.00\tPSA10\t2026-01-18 05:00:00\tsnkrdunk\t2026-02-17 17:27:57\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t38500.00\tPSA10\t2026-01-18 05:00:00\tsnkrdunk\t2026-02-15 00:20:27\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t38500.00\tPSA10\t2026-01-18 05:00:00\tsnkrdunk\t2026-02-14 15:36:40\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n180013\t38500.00\tPSA10\t2026-01-18 05:00:00\tsnkrdunk\t2026-02-14 15:36:15\tJapanese National Team Pikachu: PROMO[XY-P 050/XY-P](XY-P Promotional cards)\t日本代表のピカチュウ: プロモ[XY-P 050/XY-P](プロモーションカード「XY-P」)\n",
+  "stderr": "",
+  "execution_time_ms": 1587
+}

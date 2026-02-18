@@ -1,0 +1,8 @@
+{
+  "query": "\n-- 查詢最近 90 天內的最早和最新價格\nSELECT \n  'Oldest in 90 days' as label,\n  ph.price,\n  ph.soldAt,\n  DATEDIFF(NOW(), ph.soldAt) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.soldAt ASC\nLIMIT 1\n\nUNION ALL\n\nSELECT \n  'Newest in 90 days' as label,\n  ph.price,\n  ph.soldAt,\n  DATEDIFF(NOW(), ph.soldAt) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.soldAt DESC\nLIMIT 1;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 查詢最近 90 天內的最早和最新價格\nSELECT \n  'Oldest in 90 days' as label,\n  ph.price,\n  ph.soldAt,\n  DATEDIFF(NOW(), ph.soldAt) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.soldAt ASC\nLIMIT 1\n\nUNION ALL\n\nSELECT \n  'Newest in 90 days' as label,\n  ph.price,\n  ph.soldAt,\n  DATEDIFF(NOW(), ph.soldAt) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.soldAt DESC\nLIMIT 1;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1221 (HY000) at line 3: Incorrect usage of UNION and LIMIT"
+  ]
+}

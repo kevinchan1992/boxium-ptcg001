@@ -1,0 +1,50 @@
+{
+  "query": "\n-- 模擬當前計算邏輯：按 createdAt 過濾 90 天，按 soldAt 或 createdAt 排序\nSELECT \n  ph.price,\n  ph.soldAt,\n  ph.createdAt,\n  COALESCE(ph.soldAt, ph.createdAt) as sortDate,\n  DATEDIFF(NOW(), ph.createdAt) as createdDaysAgo,\n  DATEDIFF(NOW(), COALESCE(ph.soldAt, ph.createdAt)) as sortDaysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.createdAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY COALESCE(ph.soldAt, ph.createdAt) ASC\nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 模擬當前計算邏輯：按 createdAt 過濾 90 天，按 soldAt 或 createdAt 排序\nSELECT \n  ph.price,\n  ph.soldAt,\n  ph.createdAt,\n  COALESCE(ph.soldAt, ph.createdAt) as sortDate,\n  DATEDIFF(NOW(), ph.createdAt) as createdDaysAgo,\n  DATEDIFF(NOW(), COALESCE(ph.soldAt, ph.createdAt)) as sortDaysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.createdAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY COALESCE(ph.soldAt, ph.createdAt) ASC\nLIMIT 5;\n",
+  "rows": [
+    {
+      "price": "4400.00",
+      "soldAt": "2023-09-10 00:00:00",
+      "createdAt": "2026-02-17 18:25:26",
+      "sortDate": "2023-09-10 00:00:00",
+      "createdDaysAgo": "1",
+      "sortDaysAgo": "892"
+    },
+    {
+      "price": "4400.00",
+      "soldAt": "2023-09-10 00:00:00",
+      "createdAt": "2026-02-17 18:33:27",
+      "sortDate": "2023-09-10 00:00:00",
+      "createdDaysAgo": "1",
+      "sortDaysAgo": "892"
+    },
+    {
+      "price": "4400.00",
+      "soldAt": "2023-09-10 04:00:00",
+      "createdAt": "2026-02-14 15:36:58",
+      "sortDate": "2023-09-10 04:00:00",
+      "createdDaysAgo": "4",
+      "sortDaysAgo": "892"
+    },
+    {
+      "price": "4400.00",
+      "soldAt": "2023-09-10 04:00:00",
+      "createdAt": "2026-02-17 17:28:15",
+      "sortDate": "2023-09-10 04:00:00",
+      "createdDaysAgo": "1",
+      "sortDaysAgo": "892"
+    },
+    {
+      "price": "4400.00",
+      "soldAt": "2023-09-10 04:00:00",
+      "createdAt": "2026-02-14 15:36:32",
+      "sortDate": "2023-09-10 04:00:00",
+      "createdDaysAgo": "4",
+      "sortDaysAgo": "892"
+    }
+  ],
+  "messages": [],
+  "stdout": "price\tsoldAt\tcreatedAt\tsortDate\tcreatedDaysAgo\tsortDaysAgo\n4400.00\t2023-09-10 00:00:00\t2026-02-17 18:25:26\t2023-09-10 00:00:00\t1\t892\n4400.00\t2023-09-10 00:00:00\t2026-02-17 18:33:27\t2023-09-10 00:00:00\t1\t892\n4400.00\t2023-09-10 04:00:00\t2026-02-14 15:36:58\t2023-09-10 04:00:00\t4\t892\n4400.00\t2023-09-10 04:00:00\t2026-02-17 17:28:15\t2023-09-10 04:00:00\t1\t892\n4400.00\t2023-09-10 04:00:00\t2026-02-14 15:36:32\t2023-09-10 04:00:00\t4\t892\n",
+  "stderr": "",
+  "execution_time_ms": 1574
+}

@@ -1,0 +1,22 @@
+{
+  "query": "\n-- 查詢最近 90 天內的最早價格\n(SELECT \n  'Oldest in 90 days' as label,\n  ph.price,\n  ph.soldAt,\n  DATEDIFF(NOW(), ph.soldAt) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.soldAt ASC\nLIMIT 1)\n\nUNION ALL\n\n(SELECT \n  'Newest in 90 days' as label,\n  ph.price,\n  ph.soldAt,\n  DATEDIFF(NOW(), ph.soldAt) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.soldAt DESC\nLIMIT 1);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 查詢最近 90 天內的最早價格\n(SELECT \n  'Oldest in 90 days' as label,\n  ph.price,\n  ph.soldAt,\n  DATEDIFF(NOW(), ph.soldAt) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.soldAt ASC\nLIMIT 1)\n\nUNION ALL\n\n(SELECT \n  'Newest in 90 days' as label,\n  ph.price,\n  ph.soldAt,\n  DATEDIFF(NOW(), ph.soldAt) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY ph.soldAt DESC\nLIMIT 1);\n",
+  "rows": [
+    {
+      "label": "Newest in 90 days",
+      "price": "471.86",
+      "soldAt": "2026-02-14 19:35:58",
+      "daysAgo": "4"
+    },
+    {
+      "label": "Oldest in 90 days",
+      "price": "30250.00",
+      "soldAt": "2025-12-13 00:00:00",
+      "daysAgo": "67"
+    }
+  ],
+  "messages": [],
+  "stdout": "label\tprice\tsoldAt\tdaysAgo\nNewest in 90 days\t471.86\t2026-02-14 19:35:58\t4\nOldest in 90 days\t30250.00\t2025-12-13 00:00:00\t67\n",
+  "stderr": "",
+  "execution_time_ms": 1547
+}

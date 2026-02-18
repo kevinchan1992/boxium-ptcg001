@@ -1,0 +1,1818 @@
+{
+  "query": "\n-- 查詢該卡牌的所有 PSA 10 價格歷史\nSELECT \n  ph.cardId,\n  ph.price,\n  ph.grade,\n  ph.soldAt,\n  ph.source,\n  DATEDIFF(NOW(), ph.soldAt) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\nORDER BY ph.soldAt ASC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 查詢該卡牌的所有 PSA 10 價格歷史\nSELECT \n  ph.cardId,\n  ph.price,\n  ph.grade,\n  ph.soldAt,\n  ph.source,\n  DATEDIFF(NOW(), ph.soldAt) as daysAgo\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.name LIKE '%Japanese National Team%'\n  AND ph.grade = 'PSA10'\nORDER BY ph.soldAt ASC;\n",
+  "rows": [
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2023-09-10 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "892"
+    },
+    {
+      "cardId": "180013",
+      "price": "3574.95",
+      "grade": "PSA10",
+      "soldAt": "2023-12-14 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "797"
+    },
+    {
+      "cardId": "180013",
+      "price": "3574.95",
+      "grade": "PSA10",
+      "soldAt": "2023-12-14 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "797"
+    },
+    {
+      "cardId": "180013",
+      "price": "3574.95",
+      "grade": "PSA10",
+      "soldAt": "2023-12-14 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "797"
+    },
+    {
+      "cardId": "180013",
+      "price": "3574.95",
+      "grade": "PSA10",
+      "soldAt": "2023-12-14 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "797"
+    },
+    {
+      "cardId": "180013",
+      "price": "3574.95",
+      "grade": "PSA10",
+      "soldAt": "2023-12-14 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "797"
+    },
+    {
+      "cardId": "180013",
+      "price": "3574.95",
+      "grade": "PSA10",
+      "soldAt": "2023-12-14 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "797"
+    },
+    {
+      "cardId": "180013",
+      "price": "3217.45",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3217.45",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3217.45",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3217.45",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3217.45",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3217.45",
+      "grade": "PSA10",
+      "soldAt": "2024-01-22 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "758"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-02-27 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "722"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-02-27 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "722"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-02-27 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "722"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-02-27 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "722"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-02-27 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "722"
+    },
+    {
+      "cardId": "180013",
+      "price": "3025.00",
+      "grade": "PSA10",
+      "soldAt": "2024-02-27 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "722"
+    },
+    {
+      "cardId": "180013",
+      "price": "3564.00",
+      "grade": "PSA10",
+      "soldAt": "2024-05-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "646"
+    },
+    {
+      "cardId": "180013",
+      "price": "3564.00",
+      "grade": "PSA10",
+      "soldAt": "2024-05-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "646"
+    },
+    {
+      "cardId": "180013",
+      "price": "3564.00",
+      "grade": "PSA10",
+      "soldAt": "2024-05-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "646"
+    },
+    {
+      "cardId": "180013",
+      "price": "3564.00",
+      "grade": "PSA10",
+      "soldAt": "2024-05-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "646"
+    },
+    {
+      "cardId": "180013",
+      "price": "3564.00",
+      "grade": "PSA10",
+      "soldAt": "2024-05-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "646"
+    },
+    {
+      "cardId": "180013",
+      "price": "3564.00",
+      "grade": "PSA10",
+      "soldAt": "2024-05-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "646"
+    },
+    {
+      "cardId": "180013",
+      "price": "3135.00",
+      "grade": "PSA10",
+      "soldAt": "2024-11-08 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "467"
+    },
+    {
+      "cardId": "180013",
+      "price": "3135.00",
+      "grade": "PSA10",
+      "soldAt": "2024-11-08 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "467"
+    },
+    {
+      "cardId": "180013",
+      "price": "3135.00",
+      "grade": "PSA10",
+      "soldAt": "2024-11-08 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "467"
+    },
+    {
+      "cardId": "180013",
+      "price": "3135.00",
+      "grade": "PSA10",
+      "soldAt": "2024-11-08 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "467"
+    },
+    {
+      "cardId": "180013",
+      "price": "3135.00",
+      "grade": "PSA10",
+      "soldAt": "2024-11-08 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "467"
+    },
+    {
+      "cardId": "180013",
+      "price": "3135.00",
+      "grade": "PSA10",
+      "soldAt": "2024-11-08 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "467"
+    },
+    {
+      "cardId": "180013",
+      "price": "3300.00",
+      "grade": "PSA10",
+      "soldAt": "2024-12-16 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "429"
+    },
+    {
+      "cardId": "180013",
+      "price": "3300.00",
+      "grade": "PSA10",
+      "soldAt": "2024-12-16 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "429"
+    },
+    {
+      "cardId": "180013",
+      "price": "3300.00",
+      "grade": "PSA10",
+      "soldAt": "2024-12-16 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "429"
+    },
+    {
+      "cardId": "180013",
+      "price": "3300.00",
+      "grade": "PSA10",
+      "soldAt": "2024-12-16 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "429"
+    },
+    {
+      "cardId": "180013",
+      "price": "3300.00",
+      "grade": "PSA10",
+      "soldAt": "2024-12-16 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "429"
+    },
+    {
+      "cardId": "180013",
+      "price": "3300.00",
+      "grade": "PSA10",
+      "soldAt": "2024-12-16 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "429"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-01-19 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "395"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-01-19 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "395"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-01-19 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "395"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-01-19 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "395"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-01-19 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "395"
+    },
+    {
+      "cardId": "180013",
+      "price": "4400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-01-19 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "395"
+    },
+    {
+      "cardId": "180013",
+      "price": "4609.00",
+      "grade": "PSA10",
+      "soldAt": "2025-03-08 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "347"
+    },
+    {
+      "cardId": "180013",
+      "price": "4609.00",
+      "grade": "PSA10",
+      "soldAt": "2025-03-08 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "347"
+    },
+    {
+      "cardId": "180013",
+      "price": "4609.00",
+      "grade": "PSA10",
+      "soldAt": "2025-03-08 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "347"
+    },
+    {
+      "cardId": "180013",
+      "price": "4609.00",
+      "grade": "PSA10",
+      "soldAt": "2025-03-08 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "347"
+    },
+    {
+      "cardId": "180013",
+      "price": "4609.00",
+      "grade": "PSA10",
+      "soldAt": "2025-03-08 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "347"
+    },
+    {
+      "cardId": "180013",
+      "price": "4609.00",
+      "grade": "PSA10",
+      "soldAt": "2025-03-08 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "347"
+    },
+    {
+      "cardId": "180013",
+      "price": "5775.00",
+      "grade": "PSA10",
+      "soldAt": "2025-04-21 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "303"
+    },
+    {
+      "cardId": "180013",
+      "price": "5775.00",
+      "grade": "PSA10",
+      "soldAt": "2025-04-21 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "303"
+    },
+    {
+      "cardId": "180013",
+      "price": "5775.00",
+      "grade": "PSA10",
+      "soldAt": "2025-04-21 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "303"
+    },
+    {
+      "cardId": "180013",
+      "price": "5775.00",
+      "grade": "PSA10",
+      "soldAt": "2025-04-21 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "303"
+    },
+    {
+      "cardId": "180013",
+      "price": "5775.00",
+      "grade": "PSA10",
+      "soldAt": "2025-04-21 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "303"
+    },
+    {
+      "cardId": "180013",
+      "price": "5775.00",
+      "grade": "PSA10",
+      "soldAt": "2025-04-21 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "303"
+    },
+    {
+      "cardId": "180013",
+      "price": "5500.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-03 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "291"
+    },
+    {
+      "cardId": "180013",
+      "price": "5500.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-03 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "291"
+    },
+    {
+      "cardId": "180013",
+      "price": "5500.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-03 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "291"
+    },
+    {
+      "cardId": "180013",
+      "price": "5500.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-03 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "291"
+    },
+    {
+      "cardId": "180013",
+      "price": "5500.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-03 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "291"
+    },
+    {
+      "cardId": "180013",
+      "price": "5500.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-03 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "291"
+    },
+    {
+      "cardId": "180013",
+      "price": "5984.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-05 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "289"
+    },
+    {
+      "cardId": "180013",
+      "price": "5984.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-05 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "289"
+    },
+    {
+      "cardId": "180013",
+      "price": "5984.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-05 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "289"
+    },
+    {
+      "cardId": "180013",
+      "price": "5984.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-05 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "289"
+    },
+    {
+      "cardId": "180013",
+      "price": "5984.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-05 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "289"
+    },
+    {
+      "cardId": "180013",
+      "price": "5984.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-05 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "289"
+    },
+    {
+      "cardId": "180013",
+      "price": "6050.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "281"
+    },
+    {
+      "cardId": "180013",
+      "price": "6050.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "281"
+    },
+    {
+      "cardId": "180013",
+      "price": "6050.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "281"
+    },
+    {
+      "cardId": "180013",
+      "price": "6050.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "281"
+    },
+    {
+      "cardId": "180013",
+      "price": "6050.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "281"
+    },
+    {
+      "cardId": "180013",
+      "price": "6050.00",
+      "grade": "PSA10",
+      "soldAt": "2025-05-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "281"
+    },
+    {
+      "cardId": "180013",
+      "price": "8800.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-08 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "255"
+    },
+    {
+      "cardId": "180013",
+      "price": "8800.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-08 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "255"
+    },
+    {
+      "cardId": "180013",
+      "price": "8800.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "255"
+    },
+    {
+      "cardId": "180013",
+      "price": "8800.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "255"
+    },
+    {
+      "cardId": "180013",
+      "price": "8800.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "255"
+    },
+    {
+      "cardId": "180013",
+      "price": "8800.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "255"
+    },
+    {
+      "cardId": "180013",
+      "price": "9350.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-10 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "253"
+    },
+    {
+      "cardId": "180013",
+      "price": "9350.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-10 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "253"
+    },
+    {
+      "cardId": "180013",
+      "price": "9350.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-10 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "253"
+    },
+    {
+      "cardId": "180013",
+      "price": "9350.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-10 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "253"
+    },
+    {
+      "cardId": "180013",
+      "price": "9350.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-10 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "253"
+    },
+    {
+      "cardId": "180013",
+      "price": "9350.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-10 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "253"
+    },
+    {
+      "cardId": "180013",
+      "price": "9625.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-14 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "249"
+    },
+    {
+      "cardId": "180013",
+      "price": "9625.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-14 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "249"
+    },
+    {
+      "cardId": "180013",
+      "price": "9625.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-14 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "249"
+    },
+    {
+      "cardId": "180013",
+      "price": "9625.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-14 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "249"
+    },
+    {
+      "cardId": "180013",
+      "price": "9625.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-14 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "249"
+    },
+    {
+      "cardId": "180013",
+      "price": "9625.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-14 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "249"
+    },
+    {
+      "cardId": "180013",
+      "price": "10175.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-20 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "243"
+    },
+    {
+      "cardId": "180013",
+      "price": "10175.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-20 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "243"
+    },
+    {
+      "cardId": "180013",
+      "price": "10175.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-20 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "243"
+    },
+    {
+      "cardId": "180013",
+      "price": "10175.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-20 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "243"
+    },
+    {
+      "cardId": "180013",
+      "price": "10175.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-20 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "243"
+    },
+    {
+      "cardId": "180013",
+      "price": "10175.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-20 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "243"
+    },
+    {
+      "cardId": "180013",
+      "price": "10450.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-22 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "241"
+    },
+    {
+      "cardId": "180013",
+      "price": "10450.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-22 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "241"
+    },
+    {
+      "cardId": "180013",
+      "price": "10450.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-22 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "241"
+    },
+    {
+      "cardId": "180013",
+      "price": "10450.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-22 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "241"
+    },
+    {
+      "cardId": "180013",
+      "price": "10450.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-22 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "241"
+    },
+    {
+      "cardId": "180013",
+      "price": "10450.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-22 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "241"
+    },
+    {
+      "cardId": "180013",
+      "price": "10890.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-23 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "240"
+    },
+    {
+      "cardId": "180013",
+      "price": "10890.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-23 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "240"
+    },
+    {
+      "cardId": "180013",
+      "price": "10890.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-23 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "240"
+    },
+    {
+      "cardId": "180013",
+      "price": "10890.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-23 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "240"
+    },
+    {
+      "cardId": "180013",
+      "price": "10890.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-23 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "240"
+    },
+    {
+      "cardId": "180013",
+      "price": "10890.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-23 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "240"
+    },
+    {
+      "cardId": "180013",
+      "price": "10725.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-26 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "237"
+    },
+    {
+      "cardId": "180013",
+      "price": "10725.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-26 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "237"
+    },
+    {
+      "cardId": "180013",
+      "price": "10725.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-26 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "237"
+    },
+    {
+      "cardId": "180013",
+      "price": "10725.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-26 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "237"
+    },
+    {
+      "cardId": "180013",
+      "price": "10725.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-26 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "237"
+    },
+    {
+      "cardId": "180013",
+      "price": "10725.00",
+      "grade": "PSA10",
+      "soldAt": "2025-06-26 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "237"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-08-19 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "183"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-08-19 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "183"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-08-19 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "183"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-08-19 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "183"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-08-19 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "183"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-08-19 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "183"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-08 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "163"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-08 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "163"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "163"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "163"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "163"
+    },
+    {
+      "cardId": "180013",
+      "price": "15400.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "163"
+    },
+    {
+      "cardId": "180013",
+      "price": "15950.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "158"
+    },
+    {
+      "cardId": "180013",
+      "price": "15950.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "158"
+    },
+    {
+      "cardId": "180013",
+      "price": "15950.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "158"
+    },
+    {
+      "cardId": "180013",
+      "price": "15950.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "158"
+    },
+    {
+      "cardId": "180013",
+      "price": "15950.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "158"
+    },
+    {
+      "cardId": "180013",
+      "price": "15950.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-13 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "158"
+    },
+    {
+      "cardId": "180013",
+      "price": "17875.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-26 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "145"
+    },
+    {
+      "cardId": "180013",
+      "price": "17875.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-26 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "145"
+    },
+    {
+      "cardId": "180013",
+      "price": "17875.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-26 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "145"
+    },
+    {
+      "cardId": "180013",
+      "price": "17875.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-26 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "145"
+    },
+    {
+      "cardId": "180013",
+      "price": "17875.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-26 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "145"
+    },
+    {
+      "cardId": "180013",
+      "price": "17875.00",
+      "grade": "PSA10",
+      "soldAt": "2025-09-26 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "145"
+    },
+    {
+      "cardId": "180013",
+      "price": "17710.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-02 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "139"
+    },
+    {
+      "cardId": "180013",
+      "price": "17710.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-02 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "139"
+    },
+    {
+      "cardId": "180013",
+      "price": "17710.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-02 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "139"
+    },
+    {
+      "cardId": "180013",
+      "price": "17710.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-02 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "139"
+    },
+    {
+      "cardId": "180013",
+      "price": "17710.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-02 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "139"
+    },
+    {
+      "cardId": "180013",
+      "price": "17710.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-02 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "139"
+    },
+    {
+      "cardId": "180013",
+      "price": "17710.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-02 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "139"
+    },
+    {
+      "cardId": "180013",
+      "price": "18689.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-08 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "133"
+    },
+    {
+      "cardId": "180013",
+      "price": "18689.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-08 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "133"
+    },
+    {
+      "cardId": "180013",
+      "price": "18689.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "133"
+    },
+    {
+      "cardId": "180013",
+      "price": "18689.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "133"
+    },
+    {
+      "cardId": "180013",
+      "price": "18689.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "133"
+    },
+    {
+      "cardId": "180013",
+      "price": "18689.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "133"
+    },
+    {
+      "cardId": "180013",
+      "price": "18689.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-08 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "133"
+    },
+    {
+      "cardId": "180013",
+      "price": "22000.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-12 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "129"
+    },
+    {
+      "cardId": "180013",
+      "price": "22000.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-12 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "129"
+    },
+    {
+      "cardId": "180013",
+      "price": "22000.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-12 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "129"
+    },
+    {
+      "cardId": "180013",
+      "price": "22000.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-12 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "129"
+    },
+    {
+      "cardId": "180013",
+      "price": "22000.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-12 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "129"
+    },
+    {
+      "cardId": "180013",
+      "price": "22000.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-12 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "129"
+    },
+    {
+      "cardId": "180013",
+      "price": "22000.00",
+      "grade": "PSA10",
+      "soldAt": "2025-10-12 04:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "129"
+    },
+    {
+      "cardId": "180013",
+      "price": "24420.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24640.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24640.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24420.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24420.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24640.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24640.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24420.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24640.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24420.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24640.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24640.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24420.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "24420.00",
+      "grade": "PSA10",
+      "soldAt": "2025-11-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "97"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "67"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "67"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "67"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "67"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "67"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "67"
+    },
+    {
+      "cardId": "180013",
+      "price": "30250.00",
+      "grade": "PSA10",
+      "soldAt": "2025-12-13 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "67"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "46"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "46"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "46"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "46"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "46"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "46"
+    },
+    {
+      "cardId": "180013",
+      "price": "33000.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-03 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "46"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "31"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 00:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "31"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "31"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "31"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "31"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "31"
+    },
+    {
+      "cardId": "180013",
+      "price": "38500.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-18 05:00:00",
+      "source": "snkrdunk",
+      "daysAgo": "31"
+    },
+    {
+      "cardId": "180013",
+      "price": "2854.85",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:54",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "2540.64",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:54",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "3049.80",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:54",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "5278.50",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:54",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "2658.80",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:55",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "2816.06",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:55",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "32473.41",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:55",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "4426.98",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:55",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "21896.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:55",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "3526.74",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:56",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "5786.80",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:56",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "60902.16",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:56",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "304.51",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:56",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "2552.21",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:57",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "46920.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:57",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "3797.08",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:57",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "23.07",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:57",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "10165.92",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:57",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "471.86",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:58",
+      "source": "ebay",
+      "daysAgo": "4"
+    },
+    {
+      "cardId": "180013",
+      "price": "10009.60",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 19:35:58",
+      "source": "ebay",
+      "daysAgo": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\tprice\tgrade\tsoldAt\tsource\tdaysAgo\n180013\t4400.00\tPSA10\t2023-09-10 00:00:00\tsnkrdunk\t892\n180013\t4400.00\tPSA10\t2023-09-10 00:00:00\tsnkrdunk\t892\n180013\t4400.00\tPSA10\t2023-09-10 04:00:00\tsnkrdunk\t892\n180013\t4400.00\tPSA10\t2023-09-10 04:00:00\tsnkrdunk\t892\n180013\t4400.00\tPSA10\t2023-09-10 04:00:00\tsnkrdunk\t892\n180013\t4400.00\tPSA10\t2023-09-10 04:00:00\tsnkrdunk\t892\n180013\t3574.95\tPSA10\t2023-12-14 00:00:00\tsnkrdunk\t797\n180013\t3574.95\tPSA10\t2023-12-14 00:00:00\tsnkrdunk\t797\n180013\t3574.95\tPSA10\t2023-12-14 05:00:00\tsnkrdunk\t797\n180013\t3574.95\tPSA10\t2023-12-14 05:00:00\tsnkrdunk\t797\n180013\t3574.95\tPSA10\t2023-12-14 05:00:00\tsnkrdunk\t797\n180013\t3574.95\tPSA10\t2023-12-14 05:00:00\tsnkrdunk\t797\n180013\t3217.45\tPSA10\t2024-01-22 00:00:00\tsnkrdunk\t758\n180013\t3025.00\tPSA10\t2024-01-22 00:00:00\tsnkrdunk\t758\n180013\t3025.00\tPSA10\t2024-01-22 00:00:00\tsnkrdunk\t758\n180013\t3217.45\tPSA10\t2024-01-22 00:00:00\tsnkrdunk\t758\n180013\t3217.45\tPSA10\t2024-01-22 05:00:00\tsnkrdunk\t758\n180013\t3025.00\tPSA10\t2024-01-22 05:00:00\tsnkrdunk\t758\n180013\t3025.00\tPSA10\t2024-01-22 05:00:00\tsnkrdunk\t758\n180013\t3217.45\tPSA10\t2024-01-22 05:00:00\tsnkrdunk\t758\n180013\t3025.00\tPSA10\t2024-01-22 05:00:00\tsnkrdunk\t758\n180013\t3217.45\tPSA10\t2024-01-22 05:00:00\tsnkrdunk\t758\n180013\t3025.00\tPSA10\t2024-01-22 05:00:00\tsnkrdunk\t758\n180013\t3217.45\tPSA10\t2024-01-22 05:00:00\tsnkrdunk\t758\n180013\t3025.00\tPSA10\t2024-02-27 00:00:00\tsnkrdunk\t722\n180013\t3025.00\tPSA10\t2024-02-27 00:00:00\tsnkrdunk\t722\n180013\t3025.00\tPSA10\t2024-02-27 05:00:00\tsnkrdunk\t722\n180013\t3025.00\tPSA10\t2024-02-27 05:00:00\tsnkrdunk\t722\n180013\t3025.00\tPSA10\t2024-02-27 05:00:00\tsnkrdunk\t722\n180013\t3025.00\tPSA10\t2024-02-27 05:00:00\tsnkrdunk\t722\n180013\t3564.00\tPSA10\t2024-05-13 00:00:00\tsnkrdunk\t646\n180013\t3564.00\tPSA10\t2024-05-13 00:00:00\tsnkrdunk\t646\n180013\t3564.00\tPSA10\t2024-05-13 04:00:00\tsnkrdunk\t646\n180013\t3564.00\tPSA10\t2024-05-13 04:00:00\tsnkrdunk\t646\n180013\t3564.00\tPSA10\t2024-05-13 04:00:00\tsnkrdunk\t646\n180013\t3564.00\tPSA10\t2024-05-13 04:00:00\tsnkrdunk\t646\n180013\t3135.00\tPSA10\t2024-11-08 00:00:00\tsnkrdunk\t467\n180013\t3135.00\tPSA10\t2024-11-08 00:00:00\tsnkrdunk\t467\n180013\t3135.00\tPSA10\t2024-11-08 05:00:00\tsnkrdunk\t467\n180013\t3135.00\tPSA10\t2024-11-08 05:00:00\tsnkrdunk\t467\n180013\t3135.00\tPSA10\t2024-11-08 05:00:00\tsnkrdunk\t467\n180013\t3135.00\tPSA10\t2024-11-08 05:00:00\tsnkrdunk\t467\n180013\t3300.00\tPSA10\t2024-12-16 00:00:00\tsnkrdunk\t429\n180013\t3300.00\tPSA10\t2024-12-16 00:00:00\tsnkrdunk\t429\n180013\t3300.00\tPSA10\t2024-12-16 05:00:00\tsnkrdunk\t429\n180013\t3300.00\tPSA10\t2024-12-16 05:00:00\tsnkrdunk\t429\n180013\t3300.00\tPSA10\t2024-12-16 05:00:00\tsnkrdunk\t429\n180013\t3300.00\tPSA10\t2024-12-16 05:00:00\tsnkrdunk\t429\n180013\t4400.00\tPSA10\t2025-01-19 00:00:00\tsnkrdunk\t395\n180013\t4400.00\tPSA10\t2025-01-19 00:00:00\tsnkrdunk\t395\n180013\t4400.00\tPSA10\t2025-01-19 05:00:00\tsnkrdunk\t395\n180013\t4400.00\tPSA10\t2025-01-19 05:00:00\tsnkrdunk\t395\n180013\t4400.00\tPSA10\t2025-01-19 05:00:00\tsnkrdunk\t395\n180013\t4400.00\tPSA10\t2025-01-19 05:00:00\tsnkrdunk\t395\n180013\t4609.00\tPSA10\t2025-03-08 00:00:00\tsnkrdunk\t347\n180013\t4609.00\tPSA10\t2025-03-08 00:00:00\tsnkrdunk\t347\n180013\t4609.00\tPSA10\t2025-03-08 05:00:00\tsnkrdunk\t347\n180013\t4609.00\tPSA10\t2025-03-08 05:00:00\tsnkrdunk\t347\n180013\t4609.00\tPSA10\t2025-03-08 05:00:00\tsnkrdunk\t347\n180013\t4609.00\tPSA10\t2025-03-08 05:00:00\tsnkrdunk\t347\n180013\t5775.00\tPSA10\t2025-04-21 00:00:00\tsnkrdunk\t303\n180013\t5775.00\tPSA10\t2025-04-21 00:00:00\tsnkrdunk\t303\n180013\t5775.00\tPSA10\t2025-04-21 04:00:00\tsnkrdunk\t303\n180013\t5775.00\tPSA10\t2025-04-21 04:00:00\tsnkrdunk\t303\n180013\t5775.00\tPSA10\t2025-04-21 04:00:00\tsnkrdunk\t303\n180013\t5775.00\tPSA10\t2025-04-21 04:00:00\tsnkrdunk\t303\n180013\t5500.00\tPSA10\t2025-05-03 00:00:00\tsnkrdunk\t291\n180013\t5500.00\tPSA10\t2025-05-03 00:00:00\tsnkrdunk\t291\n180013\t5500.00\tPSA10\t2025-05-03 04:00:00\tsnkrdunk\t291\n180013\t5500.00\tPSA10\t2025-05-03 04:00:00\tsnkrdunk\t291\n180013\t5500.00\tPSA10\t2025-05-03 04:00:00\tsnkrdunk\t291\n180013\t5500.00\tPSA10\t2025-05-03 04:00:00\tsnkrdunk\t291\n180013\t5984.00\tPSA10\t2025-05-05 00:00:00\tsnkrdunk\t289\n180013\t5984.00\tPSA10\t2025-05-05 00:00:00\tsnkrdunk\t289\n180013\t5984.00\tPSA10\t2025-05-05 04:00:00\tsnkrdunk\t289\n180013\t5984.00\tPSA10\t2025-05-05 04:00:00\tsnkrdunk\t289\n180013\t5984.00\tPSA10\t2025-05-05 04:00:00\tsnkrdunk\t289\n180013\t5984.00\tPSA10\t2025-05-05 04:00:00\tsnkrdunk\t289\n180013\t6050.00\tPSA10\t2025-05-13 00:00:00\tsnkrdunk\t281\n180013\t6050.00\tPSA10\t2025-05-13 00:00:00\tsnkrdunk\t281\n180013\t6050.00\tPSA10\t2025-05-13 04:00:00\tsnkrdunk\t281\n180013\t6050.00\tPSA10\t2025-05-13 04:00:00\tsnkrdunk\t281\n180013\t6050.00\tPSA10\t2025-05-13 04:00:00\tsnkrdunk\t281\n180013\t6050.00\tPSA10\t2025-05-13 04:00:00\tsnkrdunk\t281\n180013\t8800.00\tPSA10\t2025-06-08 00:00:00\tsnkrdunk\t255\n180013\t8800.00\tPSA10\t2025-06-08 00:00:00\tsnkrdunk\t255\n180013\t8800.00\tPSA10\t2025-06-08 04:00:00\tsnkrdunk\t255\n180013\t8800.00\tPSA10\t2025-06-08 04:00:00\tsnkrdunk\t255\n180013\t8800.00\tPSA10\t2025-06-08 04:00:00\tsnkrdunk\t255\n180013\t8800.00\tPSA10\t2025-06-08 04:00:00\tsnkrdunk\t255\n180013\t9350.00\tPSA10\t2025-06-10 00:00:00\tsnkrdunk\t253\n180013\t9350.00\tPSA10\t2025-06-10 00:00:00\tsnkrdunk\t253\n180013\t9350.00\tPSA10\t2025-06-10 04:00:00\tsnkrdunk\t253\n180013\t9350.00\tPSA10\t2025-06-10 04:00:00\tsnkrdunk\t253\n180013\t9350.00\tPSA10\t2025-06-10 04:00:00\tsnkrdunk\t253\n180013\t9350.00\tPSA10\t2025-06-10 04:00:00\tsnkrdunk\t253\n180013\t9625.00\tPSA10\t2025-06-14 00:00:00\tsnkrdunk\t249\n180013\t9625.00\tPSA10\t2025-06-14 00:00:00\tsnkrdunk\t249\n180013\t9625.00\tPSA10\t2025-06-14 04:00:00\tsnkrdunk\t249\n180013\t9625.00\tPSA10\t2025-06-14 04:00:00\tsnkrdunk\t249\n180013\t9625.00\tPSA10\t2025-06-14 04:00:00\tsnkrdunk\t249\n180013\t9625.00\tPSA10\t2025-06-14 04:00:00\tsnkrdunk\t249\n180013\t10175.00\tPSA10\t2025-06-20 00:00:00\tsnkrdunk\t243\n180013\t10175.00\tPSA10\t2025-06-20 00:00:00\tsnkrdunk\t243\n180013\t10175.00\tPSA10\t2025-06-20 04:00:00\tsnkrdunk\t243\n180013\t10175.00\tPSA10\t2025-06-20 04:00:00\tsnkrdunk\t243\n180013\t10175.00\tPSA10\t2025-06-20 04:00:00\tsnkrdunk\t243\n180013\t10175.00\tPSA10\t2025-06-20 04:00:00\tsnkrdunk\t243\n180013\t10450.00\tPSA10\t2025-06-22 00:00:00\tsnkrdunk\t241\n180013\t10450.00\tPSA10\t2025-06-22 00:00:00\tsnkrdunk\t241\n180013\t10450.00\tPSA10\t2025-06-22 04:00:00\tsnkrdunk\t241\n180013\t10450.00\tPSA10\t2025-06-22 04:00:00\tsnkrdunk\t241\n180013\t10450.00\tPSA10\t2025-06-22 04:00:00\tsnkrdunk\t241\n180013\t10450.00\tPSA10\t2025-06-22 04:00:00\tsnkrdunk\t241\n180013\t10890.00\tPSA10\t2025-06-23 00:00:00\tsnkrdunk\t240\n180013\t10890.00\tPSA10\t2025-06-23 00:00:00\tsnkrdunk\t240\n180013\t10890.00\tPSA10\t2025-06-23 04:00:00\tsnkrdunk\t240\n180013\t10890.00\tPSA10\t2025-06-23 04:00:00\tsnkrdunk\t240\n180013\t10890.00\tPSA10\t2025-06-23 04:00:00\tsnkrdunk\t240\n180013\t10890.00\tPSA10\t2025-06-23 04:00:00\tsnkrdunk\t240\n180013\t10725.00\tPSA10\t2025-06-26 00:00:00\tsnkrdunk\t237\n180013\t10725.00\tPSA10\t2025-06-26 00:00:00\tsnkrdunk\t237\n180013\t10725.00\tPSA10\t2025-06-26 04:00:00\tsnkrdunk\t237\n180013\t10725.00\tPSA10\t2025-06-26 04:00:00\tsnkrdunk\t237\n180013\t10725.00\tPSA10\t2025-06-26 04:00:00\tsnkrdunk\t237\n180013\t10725.00\tPSA10\t2025-06-26 04:00:00\tsnkrdunk\t237\n180013\t15400.00\tPSA10\t2025-08-19 00:00:00\tsnkrdunk\t183\n180013\t15400.00\tPSA10\t2025-08-19 00:00:00\tsnkrdunk\t183\n180013\t15400.00\tPSA10\t2025-08-19 04:00:00\tsnkrdunk\t183\n180013\t15400.00\tPSA10\t2025-08-19 04:00:00\tsnkrdunk\t183\n180013\t15400.00\tPSA10\t2025-08-19 04:00:00\tsnkrdunk\t183\n180013\t15400.00\tPSA10\t2025-08-19 04:00:00\tsnkrdunk\t183\n180013\t15400.00\tPSA10\t2025-09-08 00:00:00\tsnkrdunk\t163\n180013\t15400.00\tPSA10\t2025-09-08 00:00:00\tsnkrdunk\t163\n180013\t15400.00\tPSA10\t2025-09-08 04:00:00\tsnkrdunk\t163\n180013\t15400.00\tPSA10\t2025-09-08 04:00:00\tsnkrdunk\t163\n180013\t15400.00\tPSA10\t2025-09-08 04:00:00\tsnkrdunk\t163\n180013\t15400.00\tPSA10\t2025-09-08 04:00:00\tsnkrdunk\t163\n180013\t15950.00\tPSA10\t2025-09-13 00:00:00\tsnkrdunk\t158\n180013\t15950.00\tPSA10\t2025-09-13 00:00:00\tsnkrdunk\t158\n180013\t15950.00\tPSA10\t2025-09-13 04:00:00\tsnkrdunk\t158\n180013\t15950.00\tPSA10\t2025-09-13 04:00:00\tsnkrdunk\t158\n180013\t15950.00\tPSA10\t2025-09-13 04:00:00\tsnkrdunk\t158\n180013\t15950.00\tPSA10\t2025-09-13 04:00:00\tsnkrdunk\t158\n180013\t17875.00\tPSA10\t2025-09-26 00:00:00\tsnkrdunk\t145\n180013\t17875.00\tPSA10\t2025-09-26 00:00:00\tsnkrdunk\t145\n180013\t17875.00\tPSA10\t2025-09-26 04:00:00\tsnkrdunk\t145\n180013\t17875.00\tPSA10\t2025-09-26 04:00:00\tsnkrdunk\t145\n180013\t17875.00\tPSA10\t2025-09-26 04:00:00\tsnkrdunk\t145\n180013\t17875.00\tPSA10\t2025-09-26 04:00:00\tsnkrdunk\t145\n180013\t17710.00\tPSA10\t2025-10-02 00:00:00\tsnkrdunk\t139\n180013\t17710.00\tPSA10\t2025-10-02 00:00:00\tsnkrdunk\t139\n180013\t17710.00\tPSA10\t2025-10-02 04:00:00\tsnkrdunk\t139\n180013\t17710.00\tPSA10\t2025-10-02 04:00:00\tsnkrdunk\t139\n180013\t17710.00\tPSA10\t2025-10-02 04:00:00\tsnkrdunk\t139\n180013\t17710.00\tPSA10\t2025-10-02 04:00:00\tsnkrdunk\t139\n180013\t17710.00\tPSA10\t2025-10-02 04:00:00\tsnkrdunk\t139\n180013\t18689.00\tPSA10\t2025-10-08 00:00:00\tsnkrdunk\t133\n180013\t18689.00\tPSA10\t2025-10-08 00:00:00\tsnkrdunk\t133\n180013\t18689.00\tPSA10\t2025-10-08 04:00:00\tsnkrdunk\t133\n180013\t18689.00\tPSA10\t2025-10-08 04:00:00\tsnkrdunk\t133\n180013\t18689.00\tPSA10\t2025-10-08 04:00:00\tsnkrdunk\t133\n180013\t18689.00\tPSA10\t2025-10-08 04:00:00\tsnkrdunk\t133\n180013\t18689.00\tPSA10\t2025-10-08 04:00:00\tsnkrdunk\t133\n180013\t22000.00\tPSA10\t2025-10-12 00:00:00\tsnkrdunk\t129\n180013\t22000.00\tPSA10\t2025-10-12 00:00:00\tsnkrdunk\t129\n180013\t22000.00\tPSA10\t2025-10-12 04:00:00\tsnkrdunk\t129\n180013\t22000.00\tPSA10\t2025-10-12 04:00:00\tsnkrdunk\t129\n180013\t22000.00\tPSA10\t2025-10-12 04:00:00\tsnkrdunk\t129\n180013\t22000.00\tPSA10\t2025-10-12 04:00:00\tsnkrdunk\t129\n180013\t22000.00\tPSA10\t2025-10-12 04:00:00\tsnkrdunk\t129\n180013\t24420.00\tPSA10\t2025-11-13 00:00:00\tsnkrdunk\t97\n180013\t24640.00\tPSA10\t2025-11-13 00:00:00\tsnkrdunk\t97\n180013\t24640.00\tPSA10\t2025-11-13 00:00:00\tsnkrdunk\t97\n180013\t24420.00\tPSA10\t2025-11-13 00:00:00\tsnkrdunk\t97\n180013\t24420.00\tPSA10\t2025-11-13 05:00:00\tsnkrdunk\t97\n180013\t24640.00\tPSA10\t2025-11-13 05:00:00\tsnkrdunk\t97\n180013\t24640.00\tPSA10\t2025-11-13 05:00:00\tsnkrdunk\t97\n180013\t24420.00\tPSA10\t2025-11-13 05:00:00\tsnkrdunk\t97\n180013\t24640.00\tPSA10\t2025-11-13 05:00:00\tsnkrdunk\t97\n180013\t24420.00\tPSA10\t2025-11-13 05:00:00\tsnkrdunk\t97\n180013\t24640.00\tPSA10\t2025-11-13 05:00:00\tsnkrdunk\t97\n180013\t24640.00\tPSA10\t2025-11-13 05:00:00\tsnkrdunk\t97\n180013\t24420.00\tPSA10\t2025-11-13 05:00:00\tsnkrdunk\t97\n180013\t24420.00\tPSA10\t2025-11-13 05:00:00\tsnkrdunk\t97\n180013\t30250.00\tPSA10\t2025-12-13 00:00:00\tsnkrdunk\t67\n180013\t30250.00\tPSA10\t2025-12-13 00:00:00\tsnkrdunk\t67\n180013\t30250.00\tPSA10\t2025-12-13 05:00:00\tsnkrdunk\t67\n180013\t30250.00\tPSA10\t2025-12-13 05:00:00\tsnkrdunk\t67\n180013\t30250.00\tPSA10\t2025-12-13 05:00:00\tsnkrdunk\t67\n180013\t30250.00\tPSA10\t2025-12-13 05:00:00\tsnkrdunk\t67\n180013\t30250.00\tPSA10\t2025-12-13 05:00:00\tsnkrdunk\t67\n180013\t33000.00\tPSA10\t2026-01-03 00:00:00\tsnkrdunk\t46\n180013\t33000.00\tPSA10\t2026-01-03 00:00:00\tsnkrdunk\t46\n180013\t33000.00\tPSA10\t2026-01-03 05:00:00\tsnkrdunk\t46\n180013\t33000.00\tPSA10\t2026-01-03 05:00:00\tsnkrdunk\t46\n180013\t33000.00\tPSA10\t2026-01-03 05:00:00\tsnkrdunk\t46\n180013\t33000.00\tPSA10\t2026-01-03 05:00:00\tsnkrdunk\t46\n180013\t33000.00\tPSA10\t2026-01-03 05:00:00\tsnkrdunk\t46\n180013\t38500.00\tPSA10\t2026-01-18 00:00:00\tsnkrdunk\t31\n180013\t38500.00\tPSA10\t2026-01-18 00:00:00\tsnkrdunk\t31\n180013\t38500.00\tPSA10\t2026-01-18 05:00:00\tsnkrdunk\t31\n180013\t38500.00\tPSA10\t2026-01-18 05:00:00\tsnkrdunk\t31\n180013\t38500.00\tPSA10\t2026-01-18 05:00:00\tsnkrdunk\t31\n180013\t38500.00\tPSA10\t2026-01-18 05:00:00\tsnkrdunk\t31\n180013\t38500.00\tPSA10\t2026-01-18 05:00:00\tsnkrdunk\t31\n180013\t2854.85\tPSA10\t2026-02-14 19:35:54\tebay\t4\n180013\t2540.64\tPSA10\t2026-02-14 19:35:54\tebay\t4\n180013\t3049.80\tPSA10\t2026-02-14 19:35:54\tebay\t4\n180013\t5278.50\tPSA10\t2026-02-14 19:35:54\tebay\t4\n180013\t2658.80\tPSA10\t2026-02-14 19:35:55\tebay\t4\n180013\t2816.06\tPSA10\t2026-02-14 19:35:55\tebay\t4\n180013\t32473.41\tPSA10\t2026-02-14 19:35:55\tebay\t4\n180013\t4426.98\tPSA10\t2026-02-14 19:35:55\tebay\t4\n180013\t21896.00\tPSA10\t2026-02-14 19:35:55\tebay\t4\n180013\t3526.74\tPSA10\t2026-02-14 19:35:56\tebay\t4\n180013\t5786.80\tPSA10\t2026-02-14 19:35:56\tebay\t4\n180013\t60902.16\tPSA10\t2026-02-14 19:35:56\tebay\t4\n180013\t304.51\tPSA10\t2026-02-14 19:35:56\tebay\t4\n180013\t2552.21\tPSA10\t2026-02-14 19:35:57\tebay\t4\n180013\t46920.00\tPSA10\t2026-02-14 19:35:57\tebay\t4\n180013\t3797.08\tPSA10\t2026-02-14 19:35:57\tebay\t4\n180013\t23.07\tPSA10\t2026-02-14 19:35:57\tebay\t4\n180013\t10165.92\tPSA10\t2026-02-14 19:35:57\tebay\t4\n180013\t471.86\tPSA10\t2026-02-14 19:35:58\tebay\t4\n180013\t10009.60\tPSA10\t2026-02-14 19:35:58\tebay\t4\n",
+  "stderr": "",
+  "execution_time_ms": 1615
+}
