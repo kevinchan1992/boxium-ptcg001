@@ -225,6 +225,27 @@
     "updateSuccess": "更新成功",
     "confirmDelete": "確定要刪除這個數據源嗎？"
   },
+  "pricing": {
+    "title": "價格查詢",
+    "subtitle": "實時比較全球市場卡牌價格",
+    "searchPlaceholder": "輸入卡牌名稱、編號或系列...",
+    "searchHint": "提示: 搜尋結果僅顯示 PSA 10 評級的可購買商品",
+    "searching": "搜尋中...",
+    "priceStats": "價格統計",
+    "totalListings": "共 {{count}} 個在售商品",
+    "minPrice": "最低價",
+    "avgPrice": "平均價",
+    "maxPrice": "最高價",
+    "listings": "個",
+    "refresh": "刷新",
+    "searchResults": "搜尋結果",
+    "totalResults": "共 {{count}} 筆",
+    "available": "可購買",
+    "grade": "評級",
+    "seller": "賣家",
+    "buyNow": "前往購買",
+    "noResults": "未找到相關結果，請嘗試其他關鍵詞"
+  },
   "share": {
     "button": "分享",
     "facebook": "分享到 Facebook",
