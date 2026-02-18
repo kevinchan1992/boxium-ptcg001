@@ -1,5 +1,3 @@
-import { GlobalNav } from "./GlobalNav";
-
 interface PageWrapperProps {
   children: React.ReactNode;
 }
@@ -7,7 +5,6 @@ interface PageWrapperProps {
 export function PageWrapper({ children }: PageWrapperProps) {
   return (
     <>
-      <GlobalNav />
       {children}
     </>
   );

@@ -18,6 +18,7 @@ import Disclaimer from "./pages/Disclaimer";
 import About from "./pages/About";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import { TopNav } from "./components/TopNav";
 
 
 
@@ -26,7 +27,9 @@ import BlogPost from "./pages/BlogPost";
 function Router() {
   return (
     <PageWrapper>
-      <Switch>
+      <TopNav />
+      <div className="pt-16">
+        <Switch>
       <Route path={"/"} component={Home} />
       <Route path="/login">
         <Redirect to="/" />
@@ -51,7 +54,8 @@ function Router() {
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
-    </Switch>
+        </Switch>
+      </div>
     </PageWrapper>
   );
 }
