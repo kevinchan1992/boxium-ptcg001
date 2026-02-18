@@ -305,7 +305,7 @@ function PostEditor({
       tags: formData.tags ? formData.tags.split(',').map((t: string) => t.trim()) : undefined,
     };
 
-    if (post) {
+    if (post && post.id) {
       updatePostMutation.mutate({ id: post.id, ...data });
     } else {
       createPostMutation.mutate(data);
