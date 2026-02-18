@@ -314,7 +314,11 @@ export async function generateArticle(
   // 2. Process user input
   if (options.imageInput) {
     userInput = options.imageInput.extractedText || '';
-    userInput += `\n\n【圖片來源】\n${options.imageInput.imageUrls.join('\n')}`;
+    // Note: Do not include base64 image URLs in the prompt as they are too large
+    // The images are only used for preview in the frontend
+    if (!userInput) {
+      userInput = '用戶上傳了圖片，請根據文章類型生成相應的內容。';
+    }
   } else if (options.textInput) {
     userInput = options.textInput.content;
     if (options.textInput.topic) {
@@ -331,7 +335,12 @@ export async function generateArticle(
   );
 
   // 4. Call LLM to generate article
-  const response = await invokeLLM({
+  console.log('[ArticleGenerator] Calling LLM with prompt length:', prompt.length);
+  console.log('[ArticleGenerator] Article type:', options.articleType);
+  
+  let response;
+  try {
+    response = await invokeLLM({
     messages: [
       {
         role: 'system',
@@ -377,10 +386,23 @@ export async function generateArticle(
         },
       },
     },
-  });
+    });
+    console.log('[ArticleGenerator] LLM response received:', response ? 'success' : 'null');
+  } catch (error) {
+    console.error('[ArticleGenerator] LLM invocation failed:', error);
+    throw new Error(`AI 生成失敗：${error instanceof Error ? error.message : String(error)}`);
+  }
 
   // 5. Parse and return result
+  if (!response || !response.choices || response.choices.length === 0) {
+    throw new Error('AI 生成失敗：無法獲取 LLM 回應');
+  }
+
   const messageContent = response.choices[0].message.content;
+  if (!messageContent) {
+    throw new Error('AI 生成失敗：回應內容為空');
+  }
+
   const contentString = typeof messageContent === 'string' ? messageContent : JSON.stringify(messageContent);
   const article = JSON.parse(contentString || '{}');
 
