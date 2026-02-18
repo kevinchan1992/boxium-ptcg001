@@ -5,6 +5,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
+import StructuredData from "@/components/StructuredData";
 
 export default function Home() {
   const { t } = useTranslation();
@@ -35,7 +36,29 @@ export default function Home() {
     setLocation(`/card/${cardId}`);
   };
 
+  // Generate WebSite with SearchAction structured data for SEO
+  const generateSearchActionData = () => {
+    return {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "BOXIUM PTCG",
+      "url": "https://boxiumptcg.manus.space/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://boxiumptcg.manus.space/search?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    };
+  };
+
   return (
+    <>
+      {/* JSON-LD Structured Data for SEO */}
+      <StructuredData data={generateSearchActionData()} />
+      
     <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 md:px-8">
       {/* Hero Section */}
       <div className="text-center space-y-5 max-w-3xl w-full">
@@ -96,5 +119,6 @@ export default function Home() {
       {/* Footer */}
       <Footer />
     </div>
+    </>
   );
 }

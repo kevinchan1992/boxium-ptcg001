@@ -2991,3 +2991,53 @@
 - ✅ 開發伺服器成功運行
 - ✅ 頁面顯示正常
 - ✅ 多語言切換功能正常
+
+## 新增功能: SEO 結構化數據進階優化 - 已完成
+
+- [x] 為 Trending 頁面添加 BreadcrumbList 結構化數據（首頁 > 熱門排行槜）
+- [x] 為 Research 頁面添加 SearchAction 結構化數據（讓 Google 識別站內搜尋功能）
+
+**目標：**
+- 提升 Google 搜尋結果的豐富摘要顯示
+- 讓 Google 能夠在搜尋結果中顯示麵包屑導航
+- 讓 Google 能夠在搜尋結果中顯示站內搜尋框
+
+**技術規格：**
+- BreadcrumbList: 使用 schema.org BreadcrumbList 標準格式
+- SearchAction: 使用 schema.org SearchAction 標準格式
+- 所有結構化數據使用 JSON-LD 格式嵌入頁面
+
+**完成時間：** 2026-02-18
+
+**主要變更：**
+
+1. **Trending 頁面 BreadcrumbList 結構化數據**
+   - 創建 generateBreadcrumbData() 函數生成麵包屑導航數據
+   - 包含兩層導航：主頁 > 熱門排行榜
+   - 使用 schema.org BreadcrumbList 標準格式
+   - 支援多語言（使用 t() 函數翻譯）
+
+2. **Research 頁面 SearchAction 結構化數據**
+   - 創建 generateSearchActionData() 函數生成搜尋動作數據
+   - 使用 schema.org WebSite + SearchAction 標準格式
+   - 定義搜尋 URL 模板：/search?q={search_term_string}
+   - 讓 Google 能夠識別站內搜尋功能
+
+**技術細節：**
+- 所有結構化數據使用 JSON-LD 格式嵌入頁面
+- 使用 StructuredData 組件統一管理
+- 支援多語言動態生成
+- 符合 Google 搜尋引擎優化最佳實踐
+
+**測試結果：**
+- ✅ TypeScript 編譯通過（0 errors）
+- ✅ 開發伺服器成功運行
+- ✅ Trending 頁面 BreadcrumbList 正確插入（已驗證）
+- ✅ Research 頁面 SearchAction 正確插入（已驗證）
+- ✅ JSON-LD 格式符合 schema.org 標準
+
+**SEO 優化效果：**
+- Trending 頁面現在包含 BreadcrumbList，有助於 Google 在搜尋結果中顯示麵包屑導航
+- Research 頁面現在包含 SearchAction，讓 Google 能夠在搜尋結果中顯示站內搜尋框
+- 提升網站在 Google 搜尋結果的可見度和互動性
+- 符合 Google Rich Results 最佳實踐

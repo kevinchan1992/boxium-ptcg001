@@ -79,6 +79,28 @@ export default function Trending() {
     };
   };
 
+  // Generate BreadcrumbList structured data for SEO
+  const generateBreadcrumbData = () => {
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": t('common.home'),
+          "item": "https://boxiumptcg.manus.space/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": t('trending.title'),
+          "item": "https://boxiumptcg.manus.space/trending"
+        }
+      ]
+    };
+  };
+
   const handleRefresh = () => {
     switch (activeTab) {
       case 'searches': refetchSearch(); break;
@@ -92,6 +114,7 @@ export default function Trending() {
     <>
       {/* JSON-LD Structured Data for SEO */}
       <StructuredData data={generateStructuredData()} />
+      <StructuredData data={generateBreadcrumbData()} />
       
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
       {/* Header */}
