@@ -1845,7 +1845,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
     getBySearches: publicProcedure
       .input(z.object({
         limit: z.number().min(1).max(20).optional(),
-        days: z.number().min(1).max(30).optional(),
+        days: z.number().min(1).max(90).optional(),
       }))
       .query(async ({ input }) => {
         const results = await db.getTrendingBySearches({
@@ -1859,7 +1859,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
     getByPriceIncrease: publicProcedure
       .input(z.object({
         limit: z.number().min(1).max(20).optional(),
-        days: z.number().min(1).max(30).optional(),
+        days: z.number().min(1).max(90).optional(),
       }))
       .query(async ({ input }) => {
         const results = await db.getTrendingByPriceIncrease({
@@ -1873,7 +1873,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
     getByPriceDecrease: publicProcedure
       .input(z.object({
         limit: z.number().min(1).max(20).optional(),
-        days: z.number().min(1).max(30).optional(),
+        days: z.number().min(1).max(90).optional(),
       }))
       .query(async ({ input }) => {
         const results = await db.getTrendingByPriceDecrease({
@@ -1887,7 +1887,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
     getNewlyAdded: publicProcedure
       .input(z.object({
         limit: z.number().min(1).max(20).optional(),
-        days: z.number().min(1).max(30).optional(),
+        days: z.number().min(1).max(90).optional(),
       }))
       .query(async ({ input }) => {
         const results = await db.getNewlyAddedCards({

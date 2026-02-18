@@ -3528,3 +3528,48 @@
 - 分類標籤選中時顯示品牌黃色，形成強烈視覺對比
 - 卡牌列表佈局清晰，排名徽章顯眼
 - 所有分類（搜尋熱度、價格飆升、價格暴跌、新上架）均正常顯示
+
+## Bug 修復: Trending 頁面排名順序錯誤 - 進行中
+
+- [ ] 檢查 getTrendingByPriceIncrease 函數的排序邏輯
+- [ ] 檢查 getTrendingByPriceDecrease 函數的排序邏輯
+- [ ] 識別排序錯誤的根本原因
+- [ ] 修復排序邏輯，確保按價格變化百分比正確排序
+- [ ] 驗證修復後的排名順序是否正確
+- [ ] 確保與主頁熱門卡牌 Top 5 使用相同的計算方式
+
+## Bug 修復: Trending 頁面排名順序錯誤 - 已完成
+
+- [x] 檢查後端排序邏輯並識別問題
+- [x] 手動觸發 getTrendingByPriceIncrease 函數並查看實際輸出
+- [x] 檢查前端顯示邏輯並識別問題
+- [x] 修復 tRPC 路由驗證規則（days 參數最大值從 30 改為 90）
+- [x] 修復前端時間範圍參數（從 1 天改為 60 天）
+- [x] 修復前端價格變化百分比顯示錯誤（使用 priceChangePercent 而非 priceChange）
+- [x] 驗證修復後的排名順序和百分比顯示
+
+**問題根本原因：**
+
+1. **tRPC 路由驗證規則過於嚴格**：`days` 參數最大值設為 30 天，但前端傳遞 60 天，導致參數驗證失敗
+2. **前端時間範圍不一致**：前端固定使用 1 天，後端默認使用 60 天，導致計算結果完全不同
+3. **前端顯示錯誤的數據欄位**：使用 `priceChange`（絕對價格變化）而非 `priceChangePercent`（百分比變化）
+
+**修復方案：**
+
+1. 將 tRPC 路由的 `days` 參數最大值從 30 改為 90
+2. 將前端 Trending.tsx 的 `days` 從 1 改為 60（與後端默認值一致）
+3. 將前端 Trending.tsx 的價格變化顯示從 `card.priceChange` 改為 `card.priceChangePercent`
+4. 更新翻譯文件，將副標題從「24 小時內」改為「最近 2 個月內」
+
+**修復結果：**
+
+- 排名順序正確：
+  1. Pikachu wearing a poncho - +53.2%
+  2. Pikachu: PROMO - +50.1%
+  3. Luigi Pikachu - +50.0%
+  4. Solgaleo & Lunala GX (Lillie) SR - +47.8%
+  5. Rapid Strike Urshifu V SR - +42.9%
+  6. Mario Pikachu - +35.9%
+
+- 百分比顯示正確：所有漲幅都在合理範圍內（35%-55%）
+- 時間範圍一致：前後端都使用最近 2 個月（60 天）的數據
