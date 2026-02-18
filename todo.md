@@ -4276,3 +4276,11 @@
 - [x] 替換 PricingDetail.tsx 中的 SNKRDUNK 文字標籤為 logo 圖片
 - [x] 測試驗證 logo 顯示效果（12 個商品卡片全部正確顯示）
 - [x] 確保品牌視覺一致性（白色背景 + 黑色 logo + 陰影效果）
+
+
+## UI 調整: SNKRDUNK Logo 尺寸增加 - 完成
+
+- [x] 將 SNKRDUNK logo 尺寸從 h-4 (16px) 增加到 h-6 (24px)
+- [x] 增加幅度: 50%
+- [x] 測試驗證 logo 顯示效果（12 個商品卡片全部正確顯示）
+- [x] 確保 logo 保持原始比例（w-auto）

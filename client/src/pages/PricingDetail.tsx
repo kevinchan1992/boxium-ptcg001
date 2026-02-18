@@ -210,7 +210,7 @@ export default function PricingDetail() {
                       <img 
                         src="/snkrdunk-logo.png" 
                         alt="SNKRDUNK" 
-                        className="h-4 w-auto object-contain"
+                        className="h-6 w-auto object-contain"
                       />
                     </div>
                   )}
