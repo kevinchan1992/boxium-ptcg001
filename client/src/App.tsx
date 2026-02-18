@@ -14,6 +14,8 @@ import Pricing from "./pages/Pricing";
 import Admin from "./pages/Admin";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Disclaimer from "./pages/Disclaimer";
+import About from "./pages/About";
 
 
 
@@ -40,6 +42,8 @@ function Router() {
       <Route path="/admin" component={Admin} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
+      <Route path="/disclaimer" component={Disclaimer} />
+      <Route path="/about" component={About} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

@@ -348,6 +348,14 @@ export default function Home() {
               <Link href="/privacy" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
                 {t("home.privacyPolicy")}
               </Link>
+              <span className="hidden sm:inline text-white/40">|</span>
+              <Link href="/disclaimer" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
+                免責聲明
+              </Link>
+              <span className="hidden sm:inline text-white/40">|</span>
+              <Link href="/about" className="text-white/80 hover:text-white transition-colors text-xs md:text-sm">
+                關於我們
+              </Link>
             </div>
             <p className="text-white/60 text-xs md:text-sm">© 2026 BOXIUM. All rights reserved. | Luck in Every Box</p>
           </div>
