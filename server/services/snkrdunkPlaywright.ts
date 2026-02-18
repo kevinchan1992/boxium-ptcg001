@@ -40,8 +40,11 @@ export async function scrapeSnkrdunkListings(
 
     const page = await context.newPage();
 
-    // Navigate to page
-    await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+    // Navigate to page with increased timeout and faster load strategy
+    await page.goto(url, { 
+      waitUntil: "domcontentloaded", // Faster than networkidle
+      timeout: 60000 // Increase timeout to 60 seconds
+    });
 
     // Wait for page to load
     await page.waitForTimeout(3000);
