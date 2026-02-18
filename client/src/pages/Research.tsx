@@ -18,8 +18,12 @@ export default function Home() {
     { retry: 1 }
   );
 
-  // Map trending cards to card format for display (keep all data for display)
-  const popularCards = trendingCards;
+  // Map trending cards to card format for display
+  const popularCards = trendingCards.map((card: any) => ({
+    id: card.id,
+    name: card.name,
+    imageUrl: card.imageUrl,
+  }));
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,54 +92,25 @@ export default function Home() {
         </form>
 
         {/* Top Gainers - Daily Price Increase Top 5 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mt-12">
+        <div className="flex justify-center gap-4 mt-12 flex-wrap">
           {isLoading ? (
-            <div className="col-span-full flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <span className="ml-2 text-sm text-muted-foreground">{t("research.loading")}</span>
             </div>
           ) : popularCards.length > 0 ? (
             popularCards.map((card: any) => (
-              <div
+              <img
                 key={card.id}
+                src={card.imageUrl || "https://via.placeholder.com/128x176?text=No+Image"}
+                alt={card.name}
                 onClick={() => handleCardClick(card.id)}
-                className="bg-card border border-border rounded-lg overflow-hidden cursor-pointer transform transition-all hover:scale-105 hover:shadow-2xl"
-              >
-                <div className="aspect-[2/3] overflow-hidden">
-                  <img
-                    src={card.imageUrl || "https://via.placeholder.com/300x420?text=No+Image"}
-                    alt={card.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-4 space-y-2">
-                  <h3 className="text-sm font-semibold text-foreground line-clamp-2 min-h-[2.5rem]">
-                    {card.name}
-                  </h3>
-                  {card.avgPrice && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">PSA 10</span>
-                      <span className="text-sm font-bold text-primary">
-                        HKD {parseFloat(card.avgPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                  )}
-                  {card.priceChangePercent && (
-                    <div className={`flex items-center gap-1 text-xs font-semibold ${
-                      parseFloat(card.priceChangePercent) > 0 
-                        ? "text-green-600 dark:text-green-400" 
-                        : "text-red-600 dark:text-red-400"
-                    }`}>
-                      <span>{parseFloat(card.priceChangePercent) > 0 ? '↑' : '↓'}</span>
-                      <span>{Math.abs(parseFloat(card.priceChangePercent)).toFixed(1)}%</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+                className="w-32 h-44 object-cover rounded-lg shadow-lg cursor-pointer transform transition-all hover:scale-110 hover:shadow-2xl"
+              />
             ))
           ) : (
-            <div className="col-span-full text-center py-12 text-muted-foreground">
-              {t("research.noResults")}
+            <div className="text-center py-12 text-muted-foreground">
+              <p>{t("research.noResults")}</p>
             </div>
           )}
         </div>

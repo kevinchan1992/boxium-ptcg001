@@ -142,7 +142,6 @@
     "usedGrade": "中古",
     "chartTitle": "PSA 10 價格趨勢",
     "timeRangeLabel": "PSA 10 時間範圍",
-    "last30DaysTrend": "近 30 天趨勢",
     "timeRange": {
       "7days": "7 天",
       "30days": "30 天",

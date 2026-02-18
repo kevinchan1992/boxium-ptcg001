@@ -142,7 +142,6 @@
     "usedGrade": "Used",
     "chartTitle": "PSA 10 Price Trend",
     "timeRangeLabel": "PSA 10 Time Range",
-    "last30DaysTrend": "Last 30 days trend",
     "timeRange": {
       "7days": "7 Days",
       "30days": "30 Days",

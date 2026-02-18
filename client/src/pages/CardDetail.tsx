@@ -176,44 +176,6 @@ export default function CardDetail() {
       ? ebayPriceHistory.length 
       : ebaySoldItems.length;
 
-  // Calculate price trend (only for SNKRDUNK actual transaction data)
-  const calculatePriceTrend = () => {
-    if (activeSource !== "snkrdunk" || psa10OnlyHistory.length < 2) {
-      return null;
-    }
-    
-    // Sort by date (newest first)
-    const sortedHistory = [...psa10OnlyHistory].sort((a, b) => 
-      new Date(b.soldAt || b.createdAt).getTime() - new Date(a.soldAt || a.createdAt).getTime()
-    );
-    
-    // Get recent 30 days and previous 30 days data
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-    
-    const recentData = sortedHistory.filter(p => new Date(p.soldAt || p.createdAt) >= thirtyDaysAgo);
-    const previousData = sortedHistory.filter(p => 
-      new Date(p.soldAt || p.createdAt) >= sixtyDaysAgo && new Date(p.soldAt || p.createdAt) < thirtyDaysAgo
-    );
-    
-    if (recentData.length === 0 || previousData.length === 0) {
-      return null;
-    }
-    
-    const recentAvg = recentData.reduce((sum, p) => sum + parseFloat(p.price), 0) / recentData.length;
-    const previousAvg = previousData.reduce((sum, p) => sum + parseFloat(p.price), 0) / previousData.length;
-    
-    const changePercent = ((recentAvg - previousAvg) / previousAvg) * 100;
-    
-    return {
-      direction: changePercent > 0 ? "up" : changePercent < 0 ? "down" : "stable",
-      percent: Math.abs(changePercent).toFixed(1)
-    };
-  };
-  
-  const priceTrend = calculatePriceTrend();
-
   // Group prices by grade
   const pricesByGrade: Record<string, typeof priceHistory> = {};
   priceHistory.forEach((p) => {
@@ -314,41 +276,11 @@ export default function CardDetail() {
 
             {/* Reference Price */}
             <div className="bg-card rounded-lg p-6 border border-border">
-              <div className="flex items-center gap-3 flex-wrap">
-                <h2 className="text-2xl font-bold text-foreground">
-                  PSA 10 {t("cardDetail.referencePrice")}: {formatCurrency(avgPrice)}
-                </h2>
-                {priceTrend && (
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
-                    priceTrend.direction === "up" 
-                      ? "bg-green-500/10 text-green-600 dark:text-green-400" 
-                      : priceTrend.direction === "down"
-                      ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                      : "bg-muted text-muted-foreground"
-                  }`}>
-                    {priceTrend.direction === "up" && (
-                      <>
-                        <span className="text-lg">↑</span>
-                        <span>+{priceTrend.percent}%</span>
-                      </>
-                    )}
-                    {priceTrend.direction === "down" && (
-                      <>
-                        <span className="text-lg">↓</span>
-                        <span>-{priceTrend.percent}%</span>
-                      </>
-                    )}
-                    {priceTrend.direction === "stable" && (
-                      <span>0.0%</span>
-                    )}
-                  </div>
-                )}
-              </div>
+              <h2 className="text-2xl font-bold text-foreground">
+                PSA 10 {t("cardDetail.referencePrice")}: {formatCurrency(avgPrice)}
+              </h2>
               <p className="text-sm text-muted-foreground mt-2">
                 {t("cardDetail.basedOnRecords", { count: recordCount })}
-                {priceTrend && activeSource === "snkrdunk" && (
-                  <span className="ml-2 text-xs">({t("cardDetail.last30DaysTrend")})</span>
-                )}
               </p>
             </div>
 
