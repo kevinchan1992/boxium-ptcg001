@@ -1,5 +1,14 @@
+import Footer from "@/components/Footer";
+import PageHead from "@/components/PageHead";
+
 export default function Terms() {
   return (
+    <>
+    <PageHead 
+      title="服務條款 - BOXIUM PTCG 寶可夢卡牌市場數據平台"
+      description="BOXIUM PTCG 平台服務條款，規範用戶使用本平台服務的權利與義務，包括服務內容、用戶責任、智慧財產權、免責聲明等重要條款。"
+      keywords="服務條款, 使用條款, BOXIUM, PTCG, 寶可夢卡牌, 法律條款"
+    />
     <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6 sm:p-8 md:p-12">
             {/* Logo */}
@@ -137,13 +146,12 @@ export default function Terms() {
                 </p>
               </section>
 
-              <div className="mt-12 pt-8 border-t border-gray-200">
-                <p className="text-sm text-gray-500 text-center">
-                  © 2026 Boxium. All rights reserved.
-                </p>
-              </div>
             </div>
           </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
+    </>
   );
 }

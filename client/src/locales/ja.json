@@ -55,6 +55,22 @@
     "termsOfService": "利用規約",
     "privacyPolicy": "プライバシーポリシー"
   },
+  "footer": {
+    "description": "Pokémon TCGの価格照会と市場分析に特化した総合プラットフォーム",
+    "quickLinks": "クイックリンク",
+    "cardSearch": "カード検索",
+    "trending": "ランキング",
+    "pricing": "価格検索",
+    "aboutUs": "私たちについて",
+    "platformIntro": "プラットフォーム紹介",
+    "disclaimer": "免責事項",
+    "adminPanel": "管理パネル",
+    "socialMedia": "ソーシャルメディア",
+    "terms": "利用規約",
+    "privacy": "プライバシーポリシー",
+    "about": "私たちについて",
+    "copyright": "© 2026 BOXIUM. All rights reserved. | Luck in Every Box"
+  },
   "research": {
     "title": "カード研究",
     "searchPlaceholder": "カード名を検索...",

@@ -2824,3 +2824,21 @@
 - [x] 移除 Home.tsx 內聯的 Footer 代碼
 - [x] 測試所有頁面的 Footer 顯示正常
 - [x] 驗證 Footer 連結在所有頁面都正確運作
+
+## 創建服務條款和隱私權政策頁面 + Footer 多語言支援
+
+### 服務條款和隱私權政策頁面
+- [x] 創建 Terms.tsx 服務條款頁面（完整法律內容）
+- [x] 創建 Privacy.tsx 隱私權政策頁面（完整法律內容）
+- [x] 添加 PageHead 組件到 Terms 和 Privacy 頁面（SEO 優化）
+- [x] 應用統一 Footer 組件到 Terms 和 Privacy 頁面
+- [x] 在 App.tsx 確認路由配置（/terms, /privacy）
+- [x] 測試兩個頁面的顯示和導航
+
+### Footer 多語言支援
+- [x] 檢查現有 i18n 配置和翻譯文件結構
+- [x] 在 i18n 翻譯文件添加 Footer 相關翻譯（繁中/英/日）
+- [x] 修改 Footer.tsx 使用 useTranslation hook
+- [x] 替換所有硬編碼文字為 t() 函數調用
+- [x] 測試 Footer 在不同語言下的顯示
+- [x] 驗證所有 Footer 連結在多語言環境下正常運作

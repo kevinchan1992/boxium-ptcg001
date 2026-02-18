@@ -55,6 +55,22 @@
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy"
   },
+  "footer": {
+    "description": "A comprehensive platform focused on Pokémon TCG price inquiry and market analysis",
+    "quickLinks": "Quick Links",
+    "cardSearch": "Card Search",
+    "trending": "Trending",
+    "pricing": "Pricing",
+    "aboutUs": "About Us",
+    "platformIntro": "Platform Introduction",
+    "disclaimer": "Disclaimer",
+    "adminPanel": "Admin Panel",
+    "socialMedia": "Social Media",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "about": "About Us",
+    "copyright": "© 2026 BOXIUM. All rights reserved. | Luck in Every Box"
+  },
   "research": {
     "title": "Card Research",
     "searchPlaceholder": "Search card name...",

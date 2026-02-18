@@ -1,5 +1,14 @@
+import Footer from "@/components/Footer";
+import PageHead from "@/components/PageHead";
+
 export default function Privacy() {
   return (
+    <>
+    <PageHead 
+      title="隱私權政策 - BOXIUM PTCG 寶可夢卡牌市場數據平台"
+      description="BOXIUM PTCG 平台隱私權政策，說明我們如何收集、使用、揭露及保護您的個人資料，以及您的權利與選擇。"
+      keywords="隱私權政策, 個人資料保護, BOXIUM, PTCG, 寶可夢卡牌, 數據安全"
+    />
     <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6 sm:p-8 md:p-12">
             {/* Logo */}
@@ -202,13 +211,12 @@ export default function Privacy() {
                 </p>
               </section>
 
-              <div className="mt-12 pt-8 border-t border-gray-200">
-                <p className="text-sm text-gray-500 text-center">
-                  © 2026 Boxium. All rights reserved.
-                </p>
-              </div>
             </div>
           </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
+    </>
   );
 }
