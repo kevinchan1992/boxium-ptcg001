@@ -3,10 +3,31 @@ import { Search, TrendingUp, Flame, Award, Check, Database, RefreshCw, Globe, Sm
 import { trpc } from "@/lib/trpc";
 import Footer from "@/components/Footer";
 import PageHead from "@/components/PageHead";
+import StructuredData from "@/components/StructuredData";
 
 export default function About() {
   // 查詢平台統計數據
   const { data: stats } = trpc.cards.getStats.useQuery();
+  
+  // Structured Data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "關於我們 - BOXIUM PTCG",
+    "description": "為 Pokémon TCG 收藏家提供準確、即時的市場數據分析平台",
+    "url": "https://boxiumptcg.manus.space/about",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "BOXIUM",
+      "description": "專注於 Pokémon TCG 價格查詢與市場分析的綜合平台",
+      "logo": "https://boxiumptcg.manus.space/boxium-logo.png",
+      "url": "https://boxiumptcg.manus.space",
+      "sameAs": [
+        "https://www.facebook.com/boxium",
+        "https://www.instagram.com/boxium"
+      ]
+    }
+  };
   const coreServices = [
     {
       icon: <Search className="w-8 h-8" />,
@@ -51,8 +72,10 @@ export default function About() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
-      <PageHead 
+    <>
+      <StructuredData data={structuredData} />
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
+        <PageHead 
         title="關於我們 - BOXIUM PTCG 寶可夢卡牌市場數據平台"
         description="BOXIUM 提供專業的寶可夢卡牌市場數據分析工具，包含 PSA 10 價格追蹤、24 小時熱門排行榜、SNKRDUNK 真實交易記錄。整合全球市場數據，幫助收藏家做出明智的投資決策。"
         keywords="BOXIUM,寶可夢卡牌,PTCG,PSA 10,卡牌價格,市場數據,SNKRDUNK,關於我們"
@@ -281,6 +304,7 @@ export default function About() {
       
       {/* Footer */}
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }

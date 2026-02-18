@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Menu, X, FileText, Shield, TrendingUp, DollarSign, Home, Languages, BarChart3, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export function GlobalNav() {
   const { t, i18n } = useTranslation();
@@ -31,7 +32,10 @@ export function GlobalNav() {
   ];
 
   return (
-    <div className="fixed top-3 right-3 z-50">
+    <div className="fixed top-3 right-3 z-50 flex items-center gap-2">
+      {/* Language Switcher */}
+      <LanguageSwitcher />
+      
       {/* Menu Button */}
       <Button
         onClick={toggleMenu}

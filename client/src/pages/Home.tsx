@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
+import StructuredData from "@/components/StructuredData";
 
 
 function TrendingCardsGrid() {
@@ -78,17 +79,39 @@ function TrendingCardsGrid() {
 
 export default function Home() {
   const { t } = useTranslation();
+  
+  // Structured Data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "BOXIUM PTCG",
+    "description": "專注於 Pokémon TCG 價格查詢與市場分析的綜合平台",
+    "url": "https://boxiumptcg.manus.space",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://boxiumptcg.manus.space/research?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "BOXIUM",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://boxiumptcg.manus.space/boxium-logo.png"
+      }
+    }
+  };
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   
   // Fetch real card count from database
   const { data: stats } = trpc.cards.getStats.useQuery();
   
-
-
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f8f9fa" }}>
-      {/* Hero Section */}
+    <>
+      <StructuredData data={structuredData} />
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f8f9fa" }}>
+        {/* Hero Section */}
       <section className="pt-16 md:pt-20 pb-16 md:pb-24 px-4 sm:px-6" style={{ backgroundColor: "#06038d" }}>
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center text-center space-y-4 md:space-y-8">
@@ -293,6 +316,7 @@ export default function Home() {
 
       {/* Footer */}
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }

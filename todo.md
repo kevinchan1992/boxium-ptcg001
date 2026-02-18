@@ -2842,3 +2842,28 @@
 - [x] 替換所有硬編碼文字為 t() 函數調用
 - [x] 測試 Footer 在不同語言下的顯示
 - [x] 驗證所有 Footer 連結在多語言環境下正常運作
+
+## 國際化與 SEO 優化
+
+### 語言切換器 UI 組件
+- [x] 創建 LanguageSwitcher.tsx 組件（下拉選單樣式）
+- [x] 添加語言切換邏輯（繁中/English/日本語）
+- [x] 將 LanguageSwitcher 添加到 GlobalNav（所有頁面右上角）
+- [x] 測試語言切換功能正常運作
+- [x] 驗證切換語言後所有頁面內容正確更新
+
+### Terms 和 Privacy 頁面多語言版本
+- [x] 為 Terms.tsx 添加英文和日文完整法律條款內容
+- [x] 為 Privacy.tsx 添加英文和日文完整法律條款內容
+- [x] 創建獨立的法律條款翻譯文件（locales/terms/, locales/privacy/）
+- [x] 創建 useLegalTranslation hook 載入翻譯
+- [x] 修改 Terms.tsx 和 Privacy.tsx 使用 useLegalTranslation
+- [x] 測試三種語言版本的法律頁面顯示正常
+
+### SEO 結構化數據優化
+- [x] 為 Home 頁面添加 JSON-LD 結構化數據（Organization, WebSite）
+- [x] 為 About 頁面添加 JSON-LD 結構化數據（AboutPage）
+- [x] 為 Terms 頁面添加 JSON-LD 結構化數據（WebPage）
+- [x] 為 Privacy 頁面添加 JSON-LD 結構化數據（WebPage）
+- [x] 創建 StructuredData 組件統一管理結構化數據
+- [x] 測試驗證 JSON-LD 格式正確
