@@ -4,6 +4,7 @@
  */
 
 import { chromium } from "playwright";
+import { convertToHKD } from "../utils/currency";
 
 export interface SnkrdunkListing {
   url: string;
@@ -50,7 +51,7 @@ export async function scrapeSnkrdunkListings(
     await page.waitForTimeout(3000);
 
     // Extract product data using the same logic as the browser script
-    const listings = await page.evaluate(() => {
+    const listings: any[] = await page.evaluate(() => {
       // Find all links with price info
       // SNKRDUNK uses different patterns, so we need to be more specific
       const allLinks = Array.from(document.querySelectorAll("a"));
@@ -76,16 +77,25 @@ export async function scrapeSnkrdunkListings(
           // Examples: "HK $11999", "HK $11,999", "SG $2150", "SG $2,150"
           const priceMatch = text.match(/(?:HK|SG)\s*\$([\d,]+)/);
           let price = 0;
+          let currency = "HKD"; // Default currency
+          
           if (priceMatch) {
             // Remove commas and convert to integer
-            price = parseInt(priceMatch[1].replace(/,/g, ""));
+            const amount = parseInt(priceMatch[1].replace(/,/g, ""));
+            // Detect currency from the match
+            currency = text.includes("SG $") ? "SGD" : "HKD";
+            // Store original amount, we'll convert later
+            price = amount;
           }
           
           // If no price found, try alternative pattern (just $ followed by numbers)
           if (price === 0) {
             const altPriceMatch = text.match(/\$([\d,]+)/);
             if (altPriceMatch) {
-              price = parseInt(altPriceMatch[1].replace(/,/g, ""));
+              const amount = parseInt(altPriceMatch[1].replace(/,/g, ""));
+              // Assume SGD if no currency prefix
+              currency = "SGD";
+              price = amount;
             }
           }
 
@@ -109,15 +119,25 @@ export async function scrapeSnkrdunkListings(
               ? href
               : `https://snkrdunk.com${href}`,
             image: image || undefined,
-            currency: text.includes("HK $") ? "HKD" : "SGD",
+            currency,
             isPsa10,
           };
         })
-        .filter((item) => item.price > 0); // Filter out invalid items
+        .filter((item: any) => item.price > 0); // Filter out invalid items
+    });
+
+    // Convert all prices to HKD
+    const listingsWithConvertedPrices = listings.map((listing) => {
+      const priceInHKD = convertToHKD(listing.price, listing.currency);
+      return {
+        ...listing,
+        price: priceInHKD,
+        currency: "HKD", // All prices are now in HKD
+      };
     });
 
     // Filter only PSA 10 items
-    const psa10Listings = listings.filter((item) => item.isPsa10);
+    const psa10Listings = listingsWithConvertedPrices.filter((item) => item.isPsa10);
 
     // Sort by price (lowest first)
     psa10Listings.sort((a, b) => a.price - b.price);
