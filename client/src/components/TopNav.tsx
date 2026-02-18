@@ -65,18 +65,18 @@ export function TopNav() {
             {/* Desktop Navigation - Centered */}
             <div className="hidden md:flex items-center gap-12">
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <a
-                    className={`relative text-base font-medium transition-colors hover:text-[#ffed00] group ${
-                      isActive(item.href)
-                        ? "text-[#ffed00]"
-                        : "text-white/80"
-                    }`}
-                  >
-                    {item.label}
-                    {/* Hover 下劃線動畫 */}
-                    <span className="absolute left-1/2 -bottom-1 w-0 h-0.5 bg-[#ffed00] transition-all duration-300 group-hover:w-full group-hover:left-0" />
-                  </a>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`relative text-base font-medium transition-colors hover:text-[#ffed00] group ${
+                    isActive(item.href)
+                      ? "text-[#ffed00]"
+                      : "text-white/80"
+                  }`}
+                >
+                  {item.label}
+                  {/* Hover 下劃線動畫 */}
+                  <span className="absolute left-1/2 -bottom-1 w-0 h-0.5 bg-[#ffed00] transition-all duration-300 group-hover:w-full group-hover:left-0" />
                 </Link>
               ))}
             </div>
@@ -127,17 +127,17 @@ export function TopNav() {
           <div className="flex-1 overflow-y-auto py-4">
             <div className="flex flex-col space-y-1">
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <a
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block px-6 py-3 text-base font-medium transition-all ${
-                      isActive(item.href)
-                        ? "text-[#ffed00] bg-white/10 border-l-4 border-[#ffed00]"
-                        : "text-white/80 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    {item.label}
-                  </a>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block px-6 py-3 text-base font-medium transition-all ${
+                    isActive(item.href)
+                      ? "text-[#ffed00] bg-white/10 border-l-4 border-[#ffed00]"
+                      : "text-white/80 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {item.label}
                 </Link>
               ))}
             </div>
