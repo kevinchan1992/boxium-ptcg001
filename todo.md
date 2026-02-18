@@ -3982,3 +3982,48 @@
 - [x] 確保 LOGO、標題、搜尋框、卡片樣式一致
 - [x] 添加完整的中文翻譯
 - [x] 路由和導航已存在
+
+## 功能開發: eBay Browse API 集成
+
+- [ ] 創建 server/services/ebay.ts 模組
+- [ ] 實現 fetchEbayListings 函數
+- [ ] 處理 eBay API 認證和請求
+- [ ] 格式化 eBay 數據為統一的 PriceListing 格式
+- [ ] 集成 eBay service 到 pricing router
+- [ ] 測試 eBay API 搜尋功能
+- [ ] 處理 API 錯誤和限制
+
+
+## 功能重構: Pricing 頁面完整實現
+
+### Phase 1: 修改 Pricing 搜尋頁面
+- [x] 修改 Pricing.tsx 為搜尋結果頁面（類似 Research）
+- [x] 顯示卡牌網格（圖片、名稱）
+- [x] 點擊卡牌跳轉到價格詳情頁面 (/pricing/:cardId)
+- [ ] 創建 PricingSearch.tsx 搜尋結果頁面 (/pricing/search)
+- [ ] 實現從資料庫搜尋卡牌功能
+
+### Phase 2: 創建卡牌價格詳情頁面
+- [ ] 創建 PricingDetail.tsx 頁面組件
+- [ ] 設計頁面佈局（類似 Grade10）
+- [ ] 顯示卡牌基本信息
+- [ ] 顯示 eBay 和 SNKRDUNK 商品列表
+- [ ] 添加路由 `/pricing/:cardId`
+
+### Phase 3: 實現 eBay Browse API 集成
+- [ ] 修改 eBay service 使用正確的搜尋格式
+- [ ] 使用 `{英文名稱} {卡牌編號} PSA10` 關鍵字
+- [ ] 實現 eBay 圖片搜尋功能
+- [ ] 格式化 eBay 商品數據
+
+### Phase 4: 實現 SNKRDUNK 爬取
+- [ ] 創建 SNKRDUNK service 模組
+- [ ] 使用 Firecrawl MCP 爬取 SNKRDUNK 頁面
+- [ ] URL 格式: `https://snkrdunk.com/en/trading-cards/{snkrdunk_id}/used?sort=latest&isOnlyOnSale=true`
+- [ ] 解析並格式化 SNKRDUNK 商品數據
+
+### Phase 5: 測試驗證
+- [ ] 測試搜尋功能
+- [ ] 測試卡牌詳情頁面
+- [ ] 驗證 eBay 和 SNKRDUNK 數據顯示
+- [ ] 測試「前往購買」連結
