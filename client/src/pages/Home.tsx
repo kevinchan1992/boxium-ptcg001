@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
+import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
 
 
 function TrendingCardsGrid() {
@@ -67,7 +68,7 @@ function TrendingCardsGrid() {
             )}
             <div className="flex items-baseline gap-0.5">
               <span className="text-[10px] sm:text-xs md:text-sm lg:text-base font-bold" style={{ color: "#06038d" }}>
-                HK${card.currentPrice.toFixed(0)}
+                {formatCurrency(card.currentPrice)}
               </span>
             </div>
           </div>

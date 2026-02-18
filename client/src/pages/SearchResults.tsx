@@ -4,6 +4,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { formatCurrency } from "@/lib/formatCurrency";
 
 export default function SearchResults() {
   const searchParams = useSearch();
@@ -117,7 +118,7 @@ export default function SearchResults() {
                   )}
                   {card.latestPrice && (
                     <p className="text-sm font-bold text-primary">
-                      HKD ${card.latestPrice}
+                      {formatCurrency(card.latestPrice)}
                     </p>
                   )}
                 </div>

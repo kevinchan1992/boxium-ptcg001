@@ -3074,3 +3074,34 @@
 - Google 搜尋結果可能顯示 FAQ 豐富摘要，提升點擊率
 - Sitemap.xml 幫助 Google 快速索引所有卡牌詳情頁（1200+ 頁面）
 - 符合 schema.org 標準，提升搜尋引擎理解度
+
+## 新增功能: 分享功能優化與金額顯示統一 - 已完成
+
+- [x] 將 CardDetail 頁面的分享按鈕從 Twitter 改為 WhatsApp
+- [x] 創建金額格式化工具函數（支援千位分隔符和兩位小數）
+- [x] 更新所有頁面的金額顯示邏輯（CardDetail、Research、Trending、Admin 等）
+
+**目標：**
+- 提升分享功能的實用性（WhatsApp 在亞洲地區更常用）
+- 統一平台金額顯示格式，提升專業度和可讀性
+- 確保所有金額都正確顯示為 HKD 216,010.50 格式
+
+**完成時間：** 2026-02-18
+
+**主要變更：**
+- ShareButton 組件將 Twitter 分享改為 WhatsApp 分享（使用 MessageCircle 圖標）
+- 創建 formatCurrency 和 formatPriceChange 工具函數（/client/src/lib/formatCurrency.ts）
+- 更新 CardDetail 頁面所有金額顯示（參考價格、SNKRDUNK 價格、eBay 價格、USD 價格、HKD 價格）
+- 更新 Trending 頁面所有金額顯示（當前價格、價格變化百分比）
+- 更新 Home 頁面的熱門卡牌金額顯示
+- 更新 SearchResults 頁面的搜尋結果金額顯示
+
+**格式化規則：**
+- formatCurrency(amount, currency = "HKD"): 返回 "HKD 216,010.50" 格式（千位分隔符 + 兩位小數）
+- formatPriceChange(change): 返回 "+13.7%" 或 "-5.2%" 格式（帶正負號 + 一位小數）
+- 支援多幣別（HKD、JPY、USD、TWD 等）
+
+**用戶體驗提升：**
+- WhatsApp 分享更符合亞洲地區用戶習慣
+- 統一的金額格式提升平台專業度和可讀性
+- 千位分隔符讓大額數字更易閱讀

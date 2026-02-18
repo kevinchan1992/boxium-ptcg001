@@ -9,6 +9,7 @@ import { TrendingUp, TrendingDown, Flame, Sparkles, RefreshCw } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
+import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
 
 type TrendingTab = 'searches' | 'priceIncrease' | 'priceDecrease' | 'newlyAdded';
 
@@ -273,7 +274,7 @@ function ChampionCard({ card, rank, type }: { card: any; rank: number; type: Tre
               <div>
                 <p className="text-xs md:text-sm text-gray-400">{t('trending.currentPrice')}</p>
                 <p className="text-lg md:text-2xl font-bold text-yellow-400">
-                  {card.currentPrice ? `HKD $${card.currentPrice.toLocaleString()}` : 'N/A'}
+                  {card.currentPrice ? formatCurrency(card.currentPrice) : 'N/A'}
                 </p>
               </div>
 
@@ -290,7 +291,7 @@ function ChampionCard({ card, rank, type }: { card: any; rank: number; type: Tre
                 <div>
                   <p className="text-xs md:text-sm text-gray-400">{t('trending.priceChange')}</p>
                   <p className={`text-lg md:text-2xl font-bold ${card.priceChangePercent > 0 ? 'text-green-400' : 'text-blue-400'}`}>
-                    {card.priceChangePercent > 0 ? '↑' : '↓'} {Math.abs(card.priceChangePercent).toFixed(2)}%
+                    {card.priceChangePercent > 0 ? '↑' : '↓'} {formatPriceChange(Math.abs(card.priceChangePercent)).replace('+', '')}
                   </p>
                 </div>
               )}
@@ -347,7 +348,7 @@ function RunnerUpCard({ card, rank, type }: { card: any; rank: number; type: Tre
             
             <div className="space-y-1 md:space-y-2">
               <p className="text-base md:text-lg font-semibold text-yellow-400">
-                {card.currentPrice ? `HKD $${card.currentPrice.toLocaleString()}` : 'N/A'}
+                {card.currentPrice ? formatCurrency(card.currentPrice) : 'N/A'}
               </p>
 
               {type === 'searches' && card.searchCount && (
@@ -358,7 +359,7 @@ function RunnerUpCard({ card, rank, type }: { card: any; rank: number; type: Tre
 
               {(type === 'priceIncrease' || type === 'priceDecrease') && card.priceChangePercent !== undefined && (
                 <p className={`text-xs md:text-sm font-semibold ${card.priceChangePercent > 0 ? 'text-green-400' : 'text-blue-400'}`}>
-                  {card.priceChangePercent > 0 ? '↑' : '↓'} {Math.abs(card.priceChangePercent).toFixed(2)}%
+                  {card.priceChangePercent > 0 ? '↑' : '↓'} {formatPriceChange(Math.abs(card.priceChangePercent)).replace('+', '')}
                 </p>
               )}
             </div>
@@ -407,7 +408,7 @@ function RankingListItem({ card, rank, type }: { card: any; rank: number; type: 
             
             <div className="flex items-center gap-2 md:gap-3 flex-wrap">
               <span className="text-sm md:text-base font-semibold text-yellow-400">
-                {card.currentPrice ? `HKD $${card.currentPrice.toLocaleString()}` : 'N/A'}
+                {card.currentPrice ? formatCurrency(card.currentPrice) : 'N/A'}
               </span>
 
               {type === 'searches' && card.searchCount && (
@@ -418,7 +419,7 @@ function RankingListItem({ card, rank, type }: { card: any; rank: number; type: 
 
               {(type === 'priceIncrease' || type === 'priceDecrease') && card.priceChangePercent !== undefined && (
                 <span className={`text-xs md:text-sm font-semibold ${card.priceChangePercent > 0 ? 'text-green-400' : 'text-blue-400'}`}>
-                  {card.priceChangePercent > 0 ? '↑' : '↓'} {Math.abs(card.priceChangePercent).toFixed(2)}%
+                  {card.priceChangePercent > 0 ? '↑' : '↓'} {formatPriceChange(Math.abs(card.priceChangePercent)).replace('+', '')}
                 </span>
               )}
             </div>

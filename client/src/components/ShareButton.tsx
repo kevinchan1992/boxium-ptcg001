@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Share2, Facebook, Twitter, Link as LinkIcon } from "lucide-react";
+import { Share2, Facebook, MessageCircle, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface ShareButtonProps {
@@ -23,9 +23,9 @@ export function ShareButton({ cardName, cardId }: ShareButtonProps) {
     window.open(facebookUrl, "_blank", "width=600,height=400");
   };
 
-  const handleShareTwitter = () => {
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
-    window.open(twitterUrl, "_blank", "width=600,height=400");
+  const handleShareWhatsApp = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+    window.open(whatsappUrl, "_blank", "width=600,height=400");
   };
 
   const handleCopyLink = async () => {
@@ -50,9 +50,9 @@ export function ShareButton({ cardName, cardId }: ShareButtonProps) {
           <Facebook className="h-4 w-4 mr-2" />
           分享到 Facebook
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleShareTwitter}>
-          <Twitter className="h-4 w-4 mr-2" />
-          分享到 Twitter
+        <DropdownMenuItem onClick={handleShareWhatsApp}>
+          <MessageCircle className="h-4 w-4 mr-2" />
+          分享到 WhatsApp
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleCopyLink}>
           <LinkIcon className="h-4 w-4 mr-2" />

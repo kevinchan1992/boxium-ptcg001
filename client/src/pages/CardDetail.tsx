@@ -10,6 +10,7 @@ import { PriceTrendChart } from "@/components/PriceTrendChart";
 import { ShareButton } from "@/components/ShareButton";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
+import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
 
 
 const grades = ["PSA 10", "BGS 10", "中古"];
@@ -275,7 +276,7 @@ export default function CardDetail() {
             {/* Reference Price */}
             <div className="bg-card rounded-lg p-6 border border-border">
               <h2 className="text-2xl font-bold text-foreground">
-                PSA 10 {t("cardDetail.referencePrice")}: HKD ${avgPrice}
+                PSA 10 {t("cardDetail.referencePrice")}: {formatCurrency(avgPrice)}
               </h2>
               <p className="text-sm text-muted-foreground mt-2">
                 {t("cardDetail.basedOnRecords", { count: recordCount })} {activeSource === "ebay" && "(PSA 10)"}
@@ -346,7 +347,7 @@ export default function CardDetail() {
                               )}
                             </td>
                             <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
-                              HKD ${item.price}
+                              {formatCurrency(item.price)}
                             </td>
                           </tr>
                         );
@@ -392,7 +393,7 @@ export default function CardDetail() {
                               )}
                             </td>
                             <td className="py-3 px-4 text-right text-foreground font-medium text-sm">
-                              ${parseFloat(record.price).toFixed(0)}
+                              {formatCurrency(parseFloat(record.price), 'JPY')}
                             </td>
                           </tr>
                         ))}
@@ -438,7 +439,7 @@ export default function CardDetail() {
                             })}
                           </td>
                           <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
-                            {item.currency} ${item.price.toFixed(2)}
+                            {formatCurrency(item.price, item.currency)}
                           </td>
                         </tr>
                       ))}
@@ -487,10 +488,10 @@ export default function CardDetail() {
                               </a>
                             </td>
                             <td className="py-3 px-4 text-right font-semibold text-muted-foreground text-sm">
-                              ${parseFloat(item.price.value).toFixed(2)}
+                              {formatCurrency(parseFloat(item.price.value), 'USD')}
                             </td>
                             <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
-                              ${item.priceHkd.toFixed(2)}
+                              {formatCurrency(item.priceHkd)}
                             </td>
                           </tr>
                         ))}
