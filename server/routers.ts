@@ -1839,6 +1839,224 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
   }),
 
+  // Blog router - article management and AI generation
+  blog: router({ // Get all posts with filters
+    getPosts: publicProcedure
+      .input(z.object({
+        categoryId: z.number().optional(),
+        status: z.enum(['draft', 'published']).optional(),
+        search: z.string().optional(),
+        sortBy: z.enum(['newest', 'oldest', 'views']).optional(),
+        limit: z.number().min(1).max(50).optional(),
+        offset: z.number().min(0).optional(),
+      }))
+      .query(async ({ input }) => {
+        const blogDb = await import('./blogDb');
+        return await blogDb.getPosts(input);
+      }),
+
+    // Get post by slug
+    getPostBySlug: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        const blogDb = await import('./blogDb');
+        return await blogDb.getPostBySlug(input.slug);
+      }),
+
+    // Create new post (Admin only)
+    createPost: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        excerpt: z.string().optional(),
+        content: z.string(),
+        featuredImage: z.string().optional(),
+        categoryId: z.number().optional(),
+        status: z.enum(['draft', 'published']),
+        dataSource: z.enum(['manual', 'ai-generated', 'mixed']),
+        relatedCardIds: z.string().optional(),
+        dataSnapshot: z.string().optional(),
+        metaTitle: z.string().optional(),
+        metaDescription: z.string().optional(),
+        metaKeywords: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const blogDb = await import('./blogDb');
+        
+        // Generate slug from title
+        const slug = blogDb.generateSlug(input.title);
+        
+        // Create post
+        const postId = await blogDb.createPost({
+          title: input.title,
+          slug,
+          excerpt: input.excerpt || null,
+          content: input.content,
+          featuredImage: input.featuredImage || null,
+          categoryId: input.categoryId || null,
+          status: input.status,
+          publishedAt: input.status === 'published' ? new Date() : null,
+          viewCount: 0,
+          authorId: ctx.user.id,
+          dataSource: input.dataSource,
+          relatedCardIds: input.relatedCardIds || null,
+          dataSnapshot: input.dataSnapshot || null,
+          metaTitle: input.metaTitle || null,
+          metaDescription: input.metaDescription || null,
+          metaKeywords: input.metaKeywords || null,
+        });
+        
+        // Add tags if provided
+        if (input.tags && input.tags.length > 0) {
+          const tagIds: number[] = [];
+          for (const tagName of input.tags) {
+            const tagSlug = blogDb.generateSlug(tagName);
+            let tag = await blogDb.getTagBySlug(tagSlug);
+            if (!tag) {
+              const tagId = await blogDb.createTag({ name: tagName, slug: tagSlug });
+              tagIds.push(tagId);
+            } else {
+              tagIds.push(tag.id);
+            }
+          }
+          await blogDb.addTagsToPost(postId, tagIds);
+        }
+        
+        return { postId, slug };
+      }),
+
+    // Update post (Admin only)
+    updatePost: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        excerpt: z.string().optional(),
+        content: z.string().optional(),
+        featuredImage: z.string().optional(),
+        categoryId: z.number().optional(),
+        status: z.enum(['draft', 'published']).optional(),
+        metaTitle: z.string().optional(),
+        metaDescription: z.string().optional(),
+        metaKeywords: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const blogDb = await import('./blogDb');
+        
+        const updates: any = {};
+        if (input.title) {
+          updates.title = input.title;
+          updates.slug = blogDb.generateSlug(input.title);
+        }
+        if (input.excerpt !== undefined) updates.excerpt = input.excerpt;
+        if (input.content) updates.content = input.content;
+        if (input.featuredImage !== undefined) updates.featuredImage = input.featuredImage;
+        if (input.categoryId !== undefined) updates.categoryId = input.categoryId;
+        if (input.status) {
+          updates.status = input.status;
+          updates.publishedAt = input.status === 'published' ? new Date() : null;
+        }
+        if (input.metaTitle !== undefined) updates.metaTitle = input.metaTitle;
+        if (input.metaDescription !== undefined) updates.metaDescription = input.metaDescription;
+        if (input.metaKeywords !== undefined) updates.metaKeywords = input.metaKeywords;
+        
+        await blogDb.updatePost(input.id, updates);
+        
+        // Update tags if provided
+        if (input.tags) {
+          await blogDb.removeTagsFromPost(input.id);
+          if (input.tags.length > 0) {
+            const tagIds: number[] = [];
+            for (const tagName of input.tags) {
+              const tagSlug = blogDb.generateSlug(tagName);
+              let tag = await blogDb.getTagBySlug(tagSlug);
+              if (!tag) {
+                const tagId = await blogDb.createTag({ name: tagName, slug: tagSlug });
+                tagIds.push(tagId);
+              } else {
+                tagIds.push(tag.id);
+              }
+            }
+            await blogDb.addTagsToPost(input.id, tagIds);
+          }
+        }
+        
+        return { success: true };
+      }),
+
+    // Delete post (Admin only)
+    deletePost: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const blogDb = await import('./blogDb');
+        await blogDb.removeTagsFromPost(input.id);
+        await blogDb.deletePost(input.id);
+        return { success: true };
+      }),
+
+    // Toggle publish status (Admin only)
+    togglePublish: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const blogDb = await import('./blogDb');
+        await blogDb.togglePublishPost(input.id);
+        return { success: true };
+      }),
+
+    // Get all categories
+    getCategories: publicProcedure
+      .query(async () => {
+        const blogDb = await import('./blogDb');
+        return await blogDb.getCategories();
+      }),
+
+    // Create category (Admin only)
+    createCategory: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const blogDb = await import('./blogDb');
+        const slug = blogDb.generateSlug(input.name);
+        const categoryId = await blogDb.createCategory({
+          name: input.name,
+          slug,
+          description: input.description || null,
+        });
+        return { categoryId, slug };
+      }),
+
+    // AI generate article (Admin only)
+    generateArticle: protectedProcedure
+      .input(z.object({
+        articleType: z.enum(['daily-report', 'card-analysis', 'market-trend', 'news']),
+        dataInput: z.object({
+          cardIds: z.array(z.number()).optional(),
+          timeRange: z.enum(['7d', '30d', '60d', 'all']).optional(),
+          topic: z.string().optional(),
+        }).optional(),
+        imageInput: z.object({
+          imageUrls: z.array(z.string()),
+          extractedText: z.string().optional(),
+        }).optional(),
+        textInput: z.object({
+          content: z.string(),
+          topic: z.string(),
+        }).optional(),
+        options: z.object({
+          language: z.enum(['zh-TW', 'en', 'ja']).optional(),
+          tone: z.enum(['professional', 'casual', 'technical']).optional(),
+          length: z.enum(['short', 'medium', 'long']).optional(),
+        }).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const articleGenerator = await import('./articleGenerator');
+        const result = await articleGenerator.generateArticle(input);
+        return result;
+      }),
+  }),
+
   // Trending router - hot cards rankings
   trending: router({
     // Get trending cards by search popularity

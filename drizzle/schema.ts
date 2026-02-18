@@ -223,6 +223,77 @@ export type SearchStat = typeof searchStats.$inferSelect;
 export type InsertSearchStat = typeof searchStats.$inferInsert;
 
 /**
+ * Blog categories table - stores article categories
+ */
+export const categories = mysqlTable("categories", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = typeof categories.$inferInsert;
+
+/**
+ * Blog tags table - stores article tags
+ */
+export const tags = mysqlTable("tags", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 50 }).notNull().unique(),
+  slug: varchar("slug", { length: 50 }).notNull().unique(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Tag = typeof tags.$inferSelect;
+export type InsertTag = typeof tags.$inferInsert;
+
+/**
+ * Blog posts table - stores blog articles
+ */
+export const posts = mysqlTable("posts", {
+  id: int("id").autoincrement().primaryKey(),
+  title: text("title").notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  excerpt: text("excerpt"),
+  content: text("content").notNull(), // Markdown format
+  featuredImage: text("featuredImage"),
+  categoryId: int("categoryId"),
+  status: mysqlEnum("status", ["draft", "published"]).default("draft").notNull(),
+  publishedAt: timestamp("publishedAt"),
+  viewCount: int("viewCount").default(0).notNull(),
+  authorId: int("authorId").notNull(),
+  
+  // Data-driven related fields
+  dataSource: mysqlEnum("dataSource", ["manual", "ai-generated", "mixed"]).notNull(),
+  relatedCardIds: text("relatedCardIds"), // JSON array of card IDs
+  dataSnapshot: text("dataSnapshot"), // JSON snapshot of data used
+  
+  // SEO related fields
+  metaTitle: varchar("metaTitle", { length: 255 }),
+  metaDescription: text("metaDescription"),
+  metaKeywords: text("metaKeywords"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Post = typeof posts.$inferSelect;
+export type InsertPost = typeof posts.$inferInsert;
+
+/**
+ * Post tags relation table - many-to-many relationship between posts and tags
+ */
+export const postTags = mysqlTable("post_tags", {
+  postId: int("postId").notNull(),
+  tagId: int("tagId").notNull(),
+});
+
+export type PostTag = typeof postTags.$inferSelect;
+export type InsertPostTag = typeof postTags.$inferInsert;
+
+/**
  * Price update schedule table - stores daily automatic price update schedule
  */
 export const priceUpdateSchedule = mysqlTable("priceUpdateSchedule", {

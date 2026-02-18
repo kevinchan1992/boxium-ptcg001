@@ -11,7 +11,7 @@ import StructuredData from "@/components/StructuredData";
 import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
 import { useLocation } from "wouter";
 
-type TrendingTab = 'searches' | 'priceIncrease' | 'priceDecrease' | 'newlyAdded';
+type TrendingTab = 'searches' | 'priceIncrease' | 'priceDecrease';
 
 export default function Trending() {
   const { t } = useTranslation();
@@ -34,22 +34,19 @@ export default function Trending() {
     { enabled: activeTab === 'priceDecrease', refetchInterval: 5 * 60 * 1000 }
   );
 
-  const { data: newlyAddedData, isLoading: newlyAddedLoading, refetch: refetchNewlyAdded } = trpc.trending.getNewlyAdded.useQuery(
-    { limit: 10, days },
-    { enabled: activeTab === 'newlyAdded', refetchInterval: 5 * 60 * 1000 }
-  );
+
 
   const getCurrentData = () => {
     switch (activeTab) {
       case 'searches': return searchData || [];
       case 'priceIncrease': return priceIncreaseData || [];
       case 'priceDecrease': return priceDecreaseData || [];
-      case 'newlyAdded': return newlyAddedData || [];
+
       default: return [];
     }
   };
 
-  const isLoading = searchLoading || priceIncreaseLoading || priceDecreaseLoading || newlyAddedLoading;
+  const isLoading = searchLoading || priceIncreaseLoading || priceDecreaseLoading;
   const currentData = getCurrentData();
 
   // Generate JSON-LD structured data for SEO
@@ -107,7 +104,7 @@ export default function Trending() {
       case 'searches': refetchSearch(); break;
       case 'priceIncrease': refetchPriceIncrease(); break;
       case 'priceDecrease': refetchPriceDecrease(); break;
-      case 'newlyAdded': refetchNewlyAdded(); break;
+
     }
   };
 
@@ -151,7 +148,7 @@ export default function Trending() {
         <div className="container mx-auto px-4 py-6 md:py-8">
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TrendingTab)} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-100 border border-gray-200 h-auto p-1">
+            <TabsList className="grid w-full grid-cols-3 bg-gray-100 border border-gray-200 h-auto p-1">
               <TabsTrigger 
                 value="searches" 
                 className="flex-col md:flex-row gap-1 md:gap-2 py-3 md:py-3 text-xs md:text-sm font-medium"
@@ -188,18 +185,7 @@ export default function Trending() {
                 <span className="hidden sm:inline">{t('trending.priceDrop')}</span>
                 <span className="sm:hidden">{t('trending.priceDropShort')}</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="newlyAdded" 
-                className="flex-col md:flex-row gap-1 md:gap-2 py-3 md:py-3 text-xs md:text-sm font-medium"
-                style={{
-                  color: activeTab === 'newlyAdded' ? '#06038D' : '#6B7280',
-                  backgroundColor: activeTab === 'newlyAdded' ? '#FFED00' : 'transparent',
-                }}
-              >
-                <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">{t('trending.newlyAdded')}</span>
-                <span className="sm:hidden">{t('trending.newlyAddedShort')}</span>
-              </TabsTrigger>
+
             </TabsList>
 
             {/* Tab Content */}
@@ -312,14 +298,7 @@ function RankingCard({ card, rank, type }: { card: any; rank: number; type: Tren
                   </div>
                 </>
               )}
-              {type === 'newlyAdded' && card.currentPrice && (
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">{t('trending.currentPrice')}:</span>
-                  <span className="font-semibold" style={{ color: "#06038D" }}>
-                    {formatCurrency(card.currentPrice)}
-                  </span>
-                </div>
-              )}
+
             </div>
           </div>
 
@@ -365,7 +344,7 @@ function EmptyState({ activeTab }: { activeTab: TrendingTab }) {
       case 'searches': return t('trending.emptySearches');
       case 'priceIncrease': return t('trending.emptyPriceIncrease');
       case 'priceDecrease': return t('trending.emptyPriceDecrease');
-      case 'newlyAdded': return t('trending.emptyNewlyAdded');
+
       default: return t('trending.emptyHint');
     }
   };

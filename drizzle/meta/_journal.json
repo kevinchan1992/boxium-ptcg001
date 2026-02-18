@@ -141,6 +141,13 @@
       "when": 1771357693779,
       "tag": "0019_outstanding_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1771421844397,
+      "tag": "0020_cultured_silver_fox",
+      "breakpoints": true
     }
   ]
 }
