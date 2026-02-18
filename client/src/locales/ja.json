@@ -142,6 +142,7 @@
     "usedGrade": "中古",
     "chartTitle": "PSA 10 価格トレンド",
     "timeRangeLabel": "PSA 10 期間",
+    "last30DaysTrend": "過去30日間のトレンド",
     "timeRange": {
       "7days": "7日間",
       "30days": "30日間",
