@@ -3854,3 +3854,10 @@
 - [x] 從 PageWrapper 移除舊的 GlobalNav 組件
 - [x] 驗證 TopNav 在所有頁面正常顯示 (Home, Research, Trending, Blog)
 - [x] 驗證透明背景與不同頁面背景色搭配良好
+
+## UI 優化: TopNav 使用統一品牌 LOGO - 完成
+
+- [x] 複製用戶提供的 BOXIUM LOGO 到專案 public 目錄
+- [x] 更新 TopNav 組件使用新的 LOGO 圖片
+- [x] 調整 LOGO 尺寸以適配導航欄高度
+- [x] 驗證所有頁面的 LOGO 顯示效果

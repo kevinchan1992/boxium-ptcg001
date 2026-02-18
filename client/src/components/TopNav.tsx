@@ -34,18 +34,10 @@ export function TopNav() {
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer">
               <img 
-                src="/logo.svg" 
+                src="/boxium-logo-white.png" 
                 alt="BOXIUM" 
-                className="h-8 w-auto"
-                onError={(e) => {
-                  // Fallback to text if logo not found
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                }}
+                className="h-10 w-auto"
               />
-              <span className="hidden text-2xl font-bold text-white">
-                BOXIUM
-              </span>
             </div>
           </Link>
 
