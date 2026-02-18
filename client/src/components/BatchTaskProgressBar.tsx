@@ -1,7 +1,8 @@
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, Pause, Play, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, Pause, Play, CheckCircle, XCircle, X, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface BatchTaskProgressBarProps {
   taskType: 'eBay' | 'SNKRDUNK';
@@ -14,9 +15,12 @@ interface BatchTaskProgressBarProps {
     failureCount: number;
     progress: number;
     errors: Array<{ cardId: number; cardName: string; error: string }>;
+    createdAt?: string;
+    updatedAt?: string;
   } | null;
   onPause: () => void;
   onResume: () => void;
+  onCancel?: () => void;
   isPauseLoading?: boolean;
   isResumeLoading?: boolean;
 }
@@ -26,9 +30,15 @@ export function BatchTaskProgressBar({
   progress,
   onPause,
   onResume,
+  onCancel,
   isPauseLoading = false,
   isResumeLoading = false,
 }: BatchTaskProgressBarProps) {
+  const [startTime] = useState(Date.now());
+  const [estimatedTime, setEstimatedTime] = useState<string>("");
+  const [processingSpeed, setProcessingSpeed] = useState<string>("");
+  const [showCelebration, setShowCelebration] = useState(false);
+
   if (!progress) {
     return null;
   }
@@ -38,82 +48,184 @@ export function BatchTaskProgressBar({
   const isCompleted = progress.status === 'completed';
   const isFailed = progress.status === 'failed';
 
+  // 計算預估剩餘時間和處理速度
+  useEffect(() => {
+    if (isRunning && progress.processedItems > 0) {
+      const elapsedMs = Date.now() - startTime;
+      const elapsedMin = elapsedMs / 60000;
+      const speed = progress.processedItems / elapsedMin;
+      const remainingItems = progress.totalItems - progress.processedItems;
+      const estimatedMin = remainingItems / speed;
+
+      setProcessingSpeed(`${speed.toFixed(1)} 張/分鐘`);
+
+      if (estimatedMin < 1) {
+        setEstimatedTime("少於 1 分鐘");
+      } else if (estimatedMin < 60) {
+        setEstimatedTime(`約 ${Math.ceil(estimatedMin)} 分鐘`);
+      } else {
+        const hours = Math.floor(estimatedMin / 60);
+        const mins = Math.ceil(estimatedMin % 60);
+        setEstimatedTime(`約 ${hours} 小時 ${mins} 分鐘`);
+      }
+    }
+  }, [progress.processedItems, isRunning, startTime, progress.totalItems]);
+
+  // 完成時顯示慶祝動畫
+  useEffect(() => {
+    if (isCompleted && !showCelebration) {
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 3000);
+    }
+  }, [isCompleted]);
+
+  // 根據任務類型選擇配色
+  const colorScheme = taskType === 'eBay' 
+    ? {
+        bg: 'bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950',
+        border: 'border-orange-200 dark:border-orange-800',
+        progress: 'bg-gradient-to-r from-orange-500 to-red-500',
+        icon: 'text-orange-600',
+        pulse: 'animate-pulse'
+      }
+    : {
+        bg: 'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950',
+        border: 'border-blue-200 dark:border-blue-800',
+        progress: 'bg-gradient-to-r from-blue-500 to-cyan-500',
+        icon: 'text-blue-600',
+        pulse: 'animate-pulse'
+      };
+
   return (
-    <Card className="p-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+    <Card className={`p-4 ${colorScheme.bg} ${colorScheme.border} border-2 transition-all duration-300 ${showCelebration ? 'scale-105 shadow-2xl' : 'shadow-md'}`}>
       <div className="space-y-3">
-        {/* Header */}
+        {/* Header with Controls */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {isRunning && <Loader2 className="w-4 h-4 animate-spin text-blue-600" />}
-            {isPaused && <Pause className="w-4 h-4 text-yellow-600" />}
-            {isCompleted && <CheckCircle className="w-4 h-4 text-green-600" />}
-            {isFailed && <XCircle className="w-4 h-4 text-red-600" />}
-            <h3 className="font-semibold text-sm">
-              {taskType} 批量更新
-              {isRunning && " - 進行中"}
-              {isPaused && " - 已暫停"}
-              {isCompleted && " - 已完成"}
-              {isFailed && " - 失敗"}
-            </h3>
+          <div className="flex items-center gap-3">
+            {/* Status Icon */}
+            <div className={isRunning ? colorScheme.pulse : ''}>
+              {isRunning && <Loader2 className={`w-5 h-5 animate-spin ${colorScheme.icon}`} />}
+              {isPaused && <Pause className="w-5 h-5 text-yellow-600" />}
+              {isCompleted && <CheckCircle className="w-5 h-5 text-green-600" />}
+              {isFailed && <XCircle className="w-5 h-5 text-red-600" />}
+            </div>
+            
+            {/* Title and Status */}
+            <div>
+              <h3 className="font-bold text-base">
+                {taskType} 批量更新
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                {isRunning && "正在處理中..."}
+                {isPaused && "已暫停"}
+                {isCompleted && "✨ 完成！"}
+                {isFailed && "處理失敗"}
+              </p>
+            </div>
           </div>
           
-          {/* Pause/Resume Button */}
-          {(isRunning || isPaused) && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={isPaused ? onResume : onPause}
-              disabled={isPauseLoading || isResumeLoading}
-            >
-              {isPauseLoading || isResumeLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isPaused ? (
-                <>
-                  <Play className="w-4 h-4 mr-1" />
-                  繼續
-                </>
-              ) : (
-                <>
-                  <Pause className="w-4 h-4 mr-1" />
-                  暫停
-                </>
-              )}
-            </Button>
+          {/* Control Buttons */}
+          <div className="flex items-center gap-2">
+            {(isRunning || isPaused) && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={isPaused ? onResume : onPause}
+                  disabled={isPauseLoading || isResumeLoading}
+                  className="hover:scale-105 transition-transform"
+                >
+                  {isPauseLoading || isResumeLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : isPaused ? (
+                    <>
+                      <Play className="w-4 h-4 mr-1" />
+                      繼續
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="w-4 h-4 mr-1" />
+                      暫停
+                    </>
+                  )}
+                </Button>
+                {onCancel && (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={onCancel}
+                    className="hover:scale-105 transition-transform"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    取消
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Large Progress Percentage */}
+        <div className="flex items-center justify-between">
+          <div className="text-4xl font-bold text-gray-800 dark:text-gray-200">
+            {progress.progress}%
+          </div>
+          {isRunning && (
+            <div className="text-right text-sm text-gray-600 dark:text-gray-400">
+              <div>⚡ {processingSpeed}</div>
+              <div>⏱️ 剩餘 {estimatedTime}</div>
+            </div>
           )}
         </div>
 
-        {/* Progress Bar */}
+        {/* Progress Bar with Animation */}
         <div className="space-y-2">
-          <Progress value={progress.progress} className="h-2" />
+          <div className="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div 
+              className={`h-full ${colorScheme.progress} transition-all duration-500 ease-out ${isRunning ? 'animate-pulse' : ''}`}
+              style={{ width: `${progress.progress}%` }}
+            />
+          </div>
           <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
             <span>
-              進度: {progress.processedItems} / {progress.totalItems} ({progress.progress}%)
+              📊 進度: {progress.processedItems} / {progress.totalItems}
             </span>
             <span>
-              成功: {progress.successCount} | 失敗: {progress.failureCount}
+              ✅ {progress.successCount} | ❌ {progress.failureCount}
             </span>
           </div>
         </div>
 
-        {/* Error Summary */}
+        {/* Error Summary with Better Design */}
         {progress.errors.length > 0 && (
-          <details className="text-xs">
-            <summary className="cursor-pointer text-red-600 hover:text-red-700">
-              查看 {progress.errors.length} 個錯誤
+          <details className="text-xs bg-red-50 dark:bg-red-950 rounded-lg p-3 border border-red-200 dark:border-red-800">
+            <summary className="cursor-pointer text-red-700 dark:text-red-400 font-semibold flex items-center gap-2 hover:text-red-800 dark:hover:text-red-300">
+              <AlertCircle className="w-4 h-4" />
+              錯誤詳情 ({progress.errors.length} 個)
             </summary>
-            <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+            <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
               {progress.errors.slice(0, 10).map((error, index) => (
-                <div key={index} className="text-gray-700 dark:text-gray-300 pl-2 border-l-2 border-red-300">
-                  <span className="font-medium">{error.cardName}</span>: {error.error}
+                <div key={index} className="bg-white dark:bg-gray-900 p-2 rounded border-l-4 border-red-500">
+                  <div className="font-medium text-gray-900 dark:text-gray-100">{error.cardName}</div>
+                  <div className="text-red-600 dark:text-red-400 text-xs mt-1">{error.error}</div>
                 </div>
               ))}
               {progress.errors.length > 10 && (
-                <div className="text-gray-500 pl-2">
-                  還有 {progress.errors.length - 10} 個錯誤...
+                <div className="text-center text-gray-500 dark:text-gray-400 py-2">
+                  還有 {progress.errors.length - 10} 個錯誤未顯示
                 </div>
               )}
             </div>
           </details>
+        )}
+
+        {/* Celebration Message */}
+        {showCelebration && isCompleted && (
+          <div className="text-center py-2 bg-green-100 dark:bg-green-900 rounded-lg animate-bounce">
+            <p className="text-green-700 dark:text-green-300 font-semibold">
+              🎉 批量更新完成！成功處理 {progress.successCount} 張卡牌
+            </p>
+          </div>
         )}
       </div>
     </Card>
