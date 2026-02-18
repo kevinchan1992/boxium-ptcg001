@@ -152,7 +152,10 @@
     "japaneseName": "Japanese Name",
     "title": "Title",
     "productTitle": "Product Title",
-    "usdPrice": "USD Price"
+    "usdPrice": "USD Price",
+    "priceTrend": "30-Day Trend",
+    "priceIncrease": "↑ Up",
+    "priceDecrease": "↓ Down"
   },
   "admin": {
     "title": "Admin Panel",

@@ -152,7 +152,10 @@
     "japaneseName": "日文名稱",
     "title": "標題",
     "productTitle": "商品標題",
-    "usdPrice": "USD 價格"
+    "usdPrice": "USD 價格",
+    "priceTrend": "近 30 天趨勢",
+    "priceIncrease": "↑ 上漲",
+    "priceDecrease": "↓ 下跌"
   },
   "admin": {
     "title": "管理後台",
