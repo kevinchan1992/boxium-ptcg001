@@ -57,6 +57,16 @@ export const appRouter = router({
         return card;
       }),
 
+    getDataSource: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+        source: z.enum(["snkrdunk", "ebay", "tcgplayer", "other"]),
+      }))
+      .query(async ({ input }) => {
+        const dataSource = await db.getDataSourceByCardIdAndSource(input.cardId, input.source);
+        return dataSource;
+      }),
+
     getPopular: publicProcedure
       .input(z.object({
         limit: z.number().optional().default(10),

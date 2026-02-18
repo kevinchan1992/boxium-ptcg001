@@ -1,7 +1,6 @@
 import { router, publicProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { fetchEbayListings } from '../services/ebay';
-import { fetchSnkrdunkListings } from '../services/snkrdunk';
 import * as db from '../db';
 
 interface PriceListing {
@@ -100,48 +99,22 @@ export const pricingRouter = router({
           // Continue even if eBay fails
         }
 
-        // Step 3: Fetch from SNKRDUNK using Firecrawl MCP
-        console.log('[Pricing Router] Fetching from SNKRDUNK...');
-        let snkrdunkListings: any[] = [];
-        try {
-          // Get SNKRDUNK data source for this card
-          const snkrdunkSource = await db.getDataSourceByCardIdAndSource(cardId, 'snkrdunk');
-          if (snkrdunkSource && snkrdunkSource.sourceIdentifier) {
-            snkrdunkListings = await fetchSnkrdunkListings({ snkrdunkId: snkrdunkSource.sourceIdentifier });
-            console.log(`[Pricing Router] SNKRDUNK returned ${snkrdunkListings.length} listings`);
-          } else {
-            console.log('[Pricing Router] Card has no SNKRDUNK data source');
-          }
-        } catch (error) {
-          console.error('[Pricing Router] SNKRDUNK fetch error:', error);
-          // Continue even if SNKRDUNK fails
-        }
+        // Step 3: SNKRDUNK listings are accessed via direct link (no scraping)
+        // Users will click the "View on SNKRDUNK" button to see PSA 10 listings
+        console.log('[Pricing Router] SNKRDUNK listings skipped (direct link provided in UI)');
 
-        // Step 4: Transform to unified format
-        const listings = [
-          ...ebayListings.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            price: item.price,
-            currency: item.currency,
-            imageUrl: item.image,
-            source: 'ebay' as const,
-            buyUrl: item.productUrl,
-            seller: item.seller?.name,
-            condition: item.condition,
-          })),
-          ...snkrdunkListings.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            price: item.price,
-            currency: item.currency,
-            imageUrl: item.image,
-            source: 'snkrdunk' as const,
-            buyUrl: item.productUrl,
-            seller: item.seller?.name,
-            condition: item.condition,
-          })),
-        ];
+        // Step 4: Transform eBay listings to unified format
+        const listings = ebayListings.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          currency: item.currency,
+          imageUrl: item.image,
+          source: 'ebay' as const,
+          buyUrl: item.productUrl,
+          seller: item.seller?.name,
+          condition: item.condition,
+        }));
 
         // Step 5: Sort by price (lowest first)
         listings.sort((a, b) => a.price - b.price);

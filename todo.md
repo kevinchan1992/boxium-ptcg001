@@ -4081,3 +4081,29 @@
 - [ ] 優化商品列表顯示（添加排序、篩選功能）
 - [ ] 添加商品收藏功能
 - [ ] 寫入 vitest 測試
+
+
+## 優化: Pricing 功能提供 SNKRDUNK 直接連結
+
+### Phase 1: 修改 PricingDetail 頁面顯示 SNKRDUNK 連結
+- [x] 修改 PricingDetail.tsx 添加「前往 SNKRDUNK 查看」按鈕
+- [x] 使用 SNKRDUNK ID 構建連結：`https://snkrdunk.com/en/trading-cards/{id}/used?sort=latest&isOnlyOnSale=true`
+- [x] 按鈕在新分頁開啟連結
+- [x] 添加翻譯支持
+- [x] 添加 getDataSource procedure 到 cards router
+
+### Phase 2: 移除 SNKRDUNK service 爬取邏輯
+- [x] 修改 pricing router 移除 SNKRDUNK 爬取調用
+- [x] 簡化 getListings procedure 只返回 eBay 數據
+- [x] 保持 API 接口向後兼容
+
+### Phase 3: 測試驗證新的連結功能
+- [x] 測試 SNKRDUNK 連結是否正確生成
+- [x] 驗證連結可以正確跳轉到 SNKRDUNK 頁面
+- [x] 確認 eBay 數據正常顯示（eBay API 限流不影響功能）
+- [x] 測試用戶提供的範例卡牌 546204 → 92141 連結正確
+
+### Phase 4: 保存檢查點並交付成果
+- [x] 更新 todo.md 標記完成的任務
+- [ ] 保存檢查點
+- [ ] 向用戶交付優化後的功能

@@ -31,6 +31,12 @@ export default function PricingDetail() {
     { enabled: !!cardId, retry: 1 }
   );
 
+  // Fetch SNKRDUNK data source
+  const { data: snkrdunkSource } = trpc.cards.getDataSource.useQuery(
+    { cardId: cardId!, source: "snkrdunk" },
+    { enabled: !!cardId, retry: 1 }
+  );
+
   // Fetch pricing data (eBay + SNKRDUNK)
   const { data: pricingData, isLoading: pricingLoading, refetch } = trpc.pricing.getListings.useQuery(
     { cardId: cardId! },
@@ -155,10 +161,38 @@ export default function PricingDetail() {
         </div>
       </div>
 
+      {/* SNKRDUNK Link Section */}
+      {snkrdunkSource?.sourceIdentifier && (
+        <div className="bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/30 rounded-lg p-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-1">
+                {t("pricing.snkrdunkTitle")}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {t("pricing.snkrdunkDescription")}
+              </p>
+            </div>
+            <Button
+              variant="default"
+              size="lg"
+              className="bg-orange-500 hover:bg-orange-600 text-white whitespace-nowrap"
+              onClick={() => window.open(
+                `https://snkrdunk.com/en/trading-cards/${snkrdunkSource.sourceIdentifier}/used?sort=latest&isOnlyOnSale=true`,
+                "_blank"
+              )}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              {t("pricing.viewOnSnkrdunk")}
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Listings Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-foreground">
-          {t("pricing.psa10Listings")}
+          {t("pricing.ebayListings")}
         </h2>
         <Button
           variant="outline"
