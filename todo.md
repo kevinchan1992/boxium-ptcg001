@@ -3199,3 +3199,36 @@
 - 使用 `parseFloat(p.price)` 將字符串價格轉換為數字進行計算
 - 價格趨勢指標使用 Tailwind CSS 的條件樣式，根據 `priceTrend.isIncrease` 和 `priceTrend.isDecrease` 動態切換顏色
 - 價格趨勢指標顯示在參考價格標題旁邊，使用 `flex items-center gap-3` 布局
+
+
+## 新增功能: Footer 頁尾排版優化 - 已完成
+
+- [x] 將 Footer 改為兩欄並排布局（左邊「快速連結」，右邊「關於我們」）
+- [x] 底部連結改為一行顯示（服務條款、隱私權政策、免責聲明、關於我們）
+- [x] 調整間距和留白，確保排版美觀
+- [x] 確保響應式設計（移動端自動調整為單欄）
+- [x] 統一應用到所有頁面（Home、Research、Trending、CardDetail、About、Privacy、Terms、Disclaimer 等）
+
+**目標：**
+- 縮短頁尾高度，提升頁面視覺效果
+- 提升頁尾資訊密度和可讀性
+- 確保平台各頁面的統一性
+- 確保平台各頁面的統一性
+
+**完成時間：** 2026-02-18
+
+**主要變更：**
+- 將 Footer 從四欄布局改為兩欄並排布局（左邊「快速連結」，右邊「關於我們」+ 社交媒體圖標）
+- 移除獨立的「社交媒體」欄位，將 Facebook 和 Instagram 圖標整合到「關於我們」區塊下方
+- 底部連結從多行顯示改為一行顯示（服務條款 | 隱私權政策 | 免責聲明 | 關於我們）
+- 調整間距：使用 `gap-4` 和 `mb-3` 確保元素之間的留白適當
+- 減少 padding：從 `py-8 md:py-12` 改為 `py-8`，縮短頁尾高度
+- 確保響應式設計：使用 `grid-cols-1 md:grid-cols-2` 確保移動端自動調整為單欄布局
+- 統一應用到所有頁面：由於使用共享的 Footer 組件，所有頁面（Home、Research、Trending、CardDetail、About、Privacy、Terms、Disclaimer 等）自動繼承新的排版設計
+
+**技術細節：**
+- Footer 組件位於 `client/src/components/Footer.tsx`
+- 使用 Tailwind CSS 的 `grid` 布局系統實現兩欄並排
+- 使用 `flex flex-wrap` 確保底部連結在小螢幕上自動換行
+- 使用 `text-xs` 減小文字大小，提升資訊密度
+- 保持藍色背景（`#06038d`）和白色文字（`text-white/80`）的配色方案
