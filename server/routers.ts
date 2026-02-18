@@ -19,11 +19,14 @@ import * as batchTaskManager from "./batchTaskManager";
 import { executeEbayBatchUpdate, executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
 import { restartScheduler } from "./batchUpdateScheduler";
 import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
+import { pricingRouter } from "./routers/pricing";
 
 export const appRouter = router({
   system: systemRouter,
   
   // Auth router removed - now using Supabase Auth
+
+  pricing: pricingRouter,
 
   cards: router({
     search: publicProcedure

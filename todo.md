@@ -3921,3 +3921,56 @@
 - [x] 將「Pokemon」改為「Pokémon」 (修正拼寫)
 - [x] 删除第 133 行的 Refresh 按鈕
 - [x] 測試驗證 Trending 頁面顯示正常
+
+## 新功能開發: Pricing 頁面 Phase 1
+
+### 頁面結構和樣式
+- [x] 創建 Pricing.tsx 頁面組件
+- [x] 實現頁面標題和描述區域
+- [x] 創建搜尋框組件 (內嵌於 Pricing.tsx)
+- [x] 創建價格統計面板組件 (內嵌於 Pricing.tsx)
+- [x] 創建結果列表組件 (內嵌於 Pricing.tsx)
+- [x] 創建卡牌卡片組件 (內嵌於 Pricing.tsx)
+- [x] 應用與 Research 頁面一致的黑底白字風格
+
+### 後端 API 和數據庫
+- [x] 創建 pricing router (server/routers/pricing.ts)
+- [x] 實現 /api/pricing/search 端點 (基礎架構)
+- [ ] 設計 price_listings_cache 數據表
+- [ ] 實現緩存查詢和更新邏輯
+
+### eBay 集成
+- [ ] 創建 eBay service (server/services/ebay.ts)
+- [ ] 實現 fetchEbayListings 函數
+- [ ] 處理 eBay API 響應和錯誤
+- [ ] 格式化 eBay 數據為統一格式
+
+### SNKRDUNK 集成
+- [ ] 創建 SNKRDUNK service (server/services/snkrdunk.ts)
+- [ ] 實現 fetchSnkrdunkListings 函數 (使用 Firecrawl MCP)
+- [ ] 從數據庫獲取卡牌日文名稱
+- [ ] 解析 SNKRDUNK 頁面數據
+- [ ] 格式化 SNKRDUNK 數據為統一格式
+
+### 緩存和刷新
+- [ ] 實現 30 分鐘緩存機制
+- [ ] 添加「刷新」按鈕
+- [ ] 實現緩存失效邏輯
+
+### 翻譯和多語言
+- [ ] 添加 Pricing 頁面相關翻譯到 zh-TW.json
+- [ ] 添加 Pricing 頁面相關翻譯到 en.json
+- [ ] 添加 Pricing 頁面相關翻譯到 ja.json
+
+### 路由和導航
+- [ ] 在 App.tsx 中添加 /pricing 路由
+- [ ] 在 TopNav 中添加 Pricing 導航項目
+- [ ] 在 Research 頁面添加「查看價格」按鈕
+
+### 測試和驗證
+- [ ] 測試搜尋功能
+- [ ] 測試 eBay API 集成
+- [ ] 測試 SNKRDUNK 爬取
+- [ ] 測試緩存機制
+- [ ] 測試響應式設計
+- [ ] 編寫 vitest 測試
