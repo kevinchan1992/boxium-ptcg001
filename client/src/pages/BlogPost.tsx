@@ -88,19 +88,6 @@ export default function BlogPost() {
           </Link>
 
           <div className="max-w-4xl mx-auto">
-            {/* Badges */}
-            <div className="flex items-center gap-2 mb-6">
-              {post.dataSource === 'ai-generated' && (
-                <Badge variant="outline" className="border-purple-500 text-purple-400">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  AI 生成
-                </Badge>
-              )}
-              <Badge variant="secondary">
-                {post.status === 'published' ? '已發布' : '草稿'}
-              </Badge>
-            </div>
-
             {/* Title */}
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
               {post.title}
