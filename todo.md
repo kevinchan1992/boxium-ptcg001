@@ -3041,3 +3041,36 @@
 - Research 頁面現在包含 SearchAction，讓 Google 能夠在搜尋結果中顯示站內搜尋框
 - 提升網站在 Google 搜尋結果的可見度和互動性
 - 符合 Google Rich Results 最佳實踐
+
+## 新增功能: FAQ Schema 和 Sitemap.xml 自動生成 - 已完成
+
+- [x] 為 About 頁面添加 FAQ schema 結構化數據
+- [x] 為 Disclaimer 頁面添加 FAQ schema 結構化數據
+- [x] 實作 Sitemap.xml 自動生成功能（包含所有重要頁面和卡牌詳情頁）
+
+**目標：**
+- 讓 Google 能夠在搜尋結果中直接顯示常見問題和答案
+- 提升用戶體驗和點擊率
+- 加速 Google 索引網站內容
+- 提升網站的 SEO 排名
+
+**技術規格：**
+- FAQ schema: 使用 schema.org FAQPage 標準格式
+- Sitemap.xml: 使用 XML 格式，符合 sitemap.org 標準
+- 動態生成：從數據庫查詢所有卡牌 ID 並生成對應的 URL
+- 包含頁面：首頁、Research、Trending、About、Disclaimer、Terms、Privacy、所有卡牌詳情頁
+
+**完成時間：** 2026-02-18
+
+**主要變更：**
+- About 頁面添加 5 個常見問題的 FAQ schema（關於平台功能、數據來源、更新頻率等）
+- Disclaimer 頁面添加 5 個常見問題的 FAQ schema（價格準確性、投資風險、數據延遲、外部連結、服務中斷）
+- 實作 /sitemap.xml 動態生成功能，包含所有靜態頁面（首頁、Research、Trending、About、Disclaimer、Terms、Privacy）和所有卡牌詳情頁
+- 修改 StructuredData 組件以支援同一頁面多個結構化數據
+- 在 server/db.ts 添加 getAllCardIds 函數用於 sitemap 生成
+- 在 server/_core/index.ts 註冊 /sitemap.xml 路由
+
+**SEO 效果：**
+- Google 搜尋結果可能顯示 FAQ 豐富摘要，提升點擊率
+- Sitemap.xml 幫助 Google 快速索引所有卡牌詳情頁（1200+ 頁面）
+- 符合 schema.org 標準，提升搜尋引擎理解度

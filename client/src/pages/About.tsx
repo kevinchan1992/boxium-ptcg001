@@ -8,7 +8,55 @@ export default function About() {
   // 查詢平台統計數據
   const { data: stats } = trpc.cards.getStats.useQuery();
   
-  // Structured Data for SEO
+  // FAQ Structured Data for SEO
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "BOXIUM PTCG 是什麼？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "BOXIUM PTCG 是一個專注於 Pokémon TCG 價格查詢與市場分析的綜合平台。我們整合全球市場數據，為 PTCG 愛好者和收藏家提供準確、即時的卡牌價格資訊，幫助您追蹤卡牌的價格趨勢，做出明智的投資決策。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "BOXIUM 的數據來源是什麼？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "我們的數據主要來自兩個可靠來源：SNKRDUNK（日本最大的球鞋和卡牌交易平台，提供真實成交價格記錄）和 eBay（全球最大的拍賣平台，涵蓋國際市場的卡牌交易數據）。所有數據均為真實交易記錄，非估價。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "數據多久更新一次？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "我們的系統每 12 小時自動更新一次價格數據，確保您獲得最新鮮的市場資訊。熱門排行榜則是基於 24 小時內的數據動態生成，即時反映市場趨勢。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "BOXIUM 支援哪些評級？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "我們支援多種評級系統，包括 PSA 10、BGS 10、以及中古等級（A、B、C、D）。您可以在卡牌詳情頁面篩選不同評級的價格記錄，了解不同評級的市場價值差異。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "如何使用 BOXIUM 搜尋卡牌？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "您可以在首頁或卡牌搜尋頁面的搜尋框中輸入卡牌名稱、編號或系列名稱。我們支援中文、英文、日文多語言搜尋，涵蓋 1000+ 張熱門卡牌資訊。搜尋結果會顯示卡牌圖片、當前價格和歷史交易記錄。"
+        }
+      }
+    ]
+  };
+
+  // AboutPage Structured Data for SEO
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
@@ -73,6 +121,7 @@ export default function About() {
 
   return (
     <>
+      <StructuredData data={faqStructuredData} />
       <StructuredData data={structuredData} />
       <PageHead 
         title="關於我們 - BOXIUM PTCG 寶可夢卡牌市場數據平台"

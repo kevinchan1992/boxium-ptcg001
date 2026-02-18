@@ -6,7 +6,55 @@ import StructuredData from "@/components/StructuredData";
 export default function Disclaimer() {
   const lastUpdated = "2026年2月18日";
 
-  // Structured Data for SEO
+  // FAQ Structured Data for SEO
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "BOXIUM 的價格數據準確嗎？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "本平台所提供的卡牌價格數據來自第三方來源（SNKRDUNK、eBay 等），僅供參考之用。我們不保證價格數據的準確性、完整性或即時性。實際交易價格可能因市場波動、賣家定價策略、卡牌狀況等因素而有所不同。用戶在進行任何交易前，應自行核實價格資訊。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "投資寶可夢卡牌有風險嗎？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "是的，寶可夢卡牌收藏和交易具有投資風險。卡牌價格可能因市場供需、流行趨勢、評級變化等因素而大幅波動。本平台提供的數據和分析工具不構成投資建議。用戶應根據自身財務狀況和風險承受能力，審慎評估並自行承擔所有投資決策的責任和後果。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "為什麼價格數據會延遲？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "本平台的價格數據可能存在延遲，更新頻率取決於數據來源的可用性和系統排程（通常為 12 小時更新一次）。顯示的價格不代表即時市場價格，可能與當前實際交易價格存在差異。用戶在做出交易決策時，應參考多個來源並確認最新價格資訊。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "BOXIUM 對外部連結負責嗎？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "本平台提供連結至外部網站（如 SNKRDUNK、eBay 等）以方便用戶查詢詳細資訊或進行交易。我們對這些外部網站的內容、隱私政策、安全性或交易行為不承擔任何責任。用戶訪問外部網站並進行交易時，應自行評估風險並遵守該網站的條款和條件。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "如果服務中斷怎麼辦？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "本平台可能因系統維護、技術升級、不可抗力或其他原因而暫時中斷服務。我們保留隨時修改、暫停或終止部分或全部服務的權利，恭不另行通知。我們不對因服務中斷、數據遺失或功能變更而造成的任何損失承擔責任。建議用戶定期備份重要資料。"
+        }
+      }
+    ]
+  };
+
+  // WebPage Structured Data for SEO
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -70,6 +118,7 @@ export default function Disclaimer() {
 
   return (
     <>
+      <StructuredData data={faqStructuredData} />
       <StructuredData data={structuredData} />
       <PageHead 
         title="免責聲明 - BOXIUM PTCG 寶可夢卡牌市場數據平台"

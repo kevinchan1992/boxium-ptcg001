@@ -6,21 +6,19 @@ interface StructuredDataProps {
 
 export default function StructuredData({ data }: StructuredDataProps) {
   useEffect(() => {
+    // Generate a unique ID based on the data type
+    const dataType = data['@type'] || 'default';
+    const scriptId = `structured-data-${dataType}-${Date.now()}`;
+    
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.text = JSON.stringify(data);
-    script.id = 'structured-data';
-    
-    // Remove existing structured data script if any
-    const existing = document.getElementById('structured-data');
-    if (existing) {
-      existing.remove();
-    }
+    script.id = scriptId;
     
     document.head.appendChild(script);
     
     return () => {
-      const scriptToRemove = document.getElementById('structured-data');
+      const scriptToRemove = document.getElementById(scriptId);
       if (scriptToRemove) {
         scriptToRemove.remove();
       }

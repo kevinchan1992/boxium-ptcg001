@@ -1919,3 +1919,20 @@ export async function getCardPriceHistory(cardId: number, days: number = 7) {
     date: h.createdAt,
   }));
 }
+
+/**
+ * Get all card IDs for sitemap generation
+ */
+export async function getAllCardIds() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db
+    .select({
+      id: cards.id,
+    })
+    .from(cards)
+    .orderBy(asc(cards.id));
+
+  return result;
+}
