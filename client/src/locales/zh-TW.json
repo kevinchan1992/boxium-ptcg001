@@ -218,5 +218,13 @@
     "deleteSuccess": "刪除成功",
     "updateSuccess": "更新成功",
     "confirmDelete": "確定要刪除這個數據源嗎？"
+  },
+  "share": {
+    "button": "分享",
+    "facebook": "分享到 Facebook",
+    "whatsapp": "分享到 WhatsApp",
+    "copyLink": "複製連結",
+    "copySuccess": "連結已複製到剪貼板",
+    "copyError": "複製失敗，請手動複製"
   }
 }

@@ -3105,3 +3105,35 @@
 - WhatsApp 分享更符合亞洲地區用戶習慣
 - 統一的金額格式提升平台專業度和可讀性
 - 千位分隔符讓大額數字更易閱讀
+
+## 新增功能: ShareButton 多語言翻譯支援 - 已完成
+
+- [x] 在 i18n 翻譯文件中添加 ShareButton 相關翻譯（繁中/英/日）
+- [x] 更新 ShareButton 組件使用 i18n 翻譯
+- [x] 測試驗證多語言切換功能
+
+**目標：**
+- 支援繁體中文、英文、日文三種語言
+- 翻譯內容包括：「分享」按鈕、「分享到 Facebook」、「分享到 WhatsApp」、「複製連結」、「連結已複製到剪貼板」、「複製失敗，請手動複製」
+- 提升國際用戶體驗
+
+**完成時間：** 2026-02-18
+
+**主要變更：**
+- 在 zh-TW.json、en.json、ja.json 添加 share 命名空間翻譯
+- 更新 ShareButton 組件引入 useTranslation hook
+- 所有分享相關文字改用 t("share.*") 翻譯鍵
+- 已驗證繁體中文、英文、日文三種語言的分享功能正常運作
+
+**翻譯內容：**
+- share.button: 分享 / Share / 共有
+- share.facebook: 分享到 Facebook / Share to Facebook / Facebookで共有
+- share.whatsapp: 分享到 WhatsApp / Share to WhatsApp / WhatsAppで共有
+- share.copyLink: 複製連結 / Copy Link / リンクをコピー
+- share.copySuccess: 連結已複製到剪貼板 / Link copied to clipboard / リンクをクリップボードにコピーしました
+- share.copyError: 複製失敗，請手動複製 / Copy failed, please copy manually / コピー失敗、手動でコピーしてください
+
+**用戶體驗提升：**
+- 國際用戶可以使用母語查看分享選項
+- 提升平台的國際化程度和專業度
+- 統一的多語言體驗

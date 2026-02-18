@@ -218,5 +218,13 @@
     "deleteSuccess": "Deleted Successfully",
     "updateSuccess": "Updated Successfully",
     "confirmDelete": "Are you sure you want to delete this data source?"
+  },
+  "share": {
+    "button": "Share",
+    "facebook": "Share to Facebook",
+    "whatsapp": "Share to WhatsApp",
+    "copyLink": "Copy Link",
+    "copySuccess": "Link copied to clipboard",
+    "copyError": "Copy failed, please copy manually"
   }
 }

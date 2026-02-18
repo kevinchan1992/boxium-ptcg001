@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Share2, Facebook, MessageCircle, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface ShareButtonProps {
   cardName: string;
@@ -15,8 +16,9 @@ interface ShareButtonProps {
 }
 
 export function ShareButton({ cardName, cardId }: ShareButtonProps) {
+  const { t } = useTranslation();
   const shareUrl = `${window.location.origin}/card/${cardId}`;
-  const shareText = `查看 ${cardName} 的價格趨勢和市場數據 - BOXIUM PTCG`;
+  const shareText = `${cardName} - BOXIUM PTCG`;
 
   const handleShareFacebook = () => {
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
@@ -31,9 +33,9 @@ export function ShareButton({ cardName, cardId }: ShareButtonProps) {
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast.success("連結已複製到剪貼板");
+      toast.success(t("share.copySuccess"));
     } catch (error) {
-      toast.error("複製失敗，請手動複製");
+      toast.error(t("share.copyError"));
     }
   };
 
@@ -42,21 +44,21 @@ export function ShareButton({ cardName, cardId }: ShareButtonProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm">
           <Share2 className="h-4 w-4 mr-2" />
-          分享
+          {t("share.button")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onClick={handleShareFacebook}>
           <Facebook className="h-4 w-4 mr-2" />
-          分享到 Facebook
+          {t("share.facebook")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleShareWhatsApp}>
           <MessageCircle className="h-4 w-4 mr-2" />
-          分享到 WhatsApp
+          {t("share.whatsapp")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleCopyLink}>
           <LinkIcon className="h-4 w-4 mr-2" />
-          複製連結
+          {t("share.copyLink")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

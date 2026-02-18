@@ -218,5 +218,13 @@
     "deleteSuccess": "削除成功",
     "updateSuccess": "更新成功",
     "confirmDelete": "このデータソースを削除しますか？"
+  },
+  "share": {
+    "button": "共有",
+    "facebook": "Facebookで共有",
+    "whatsapp": "WhatsAppで共有",
+    "copyLink": "リンクをコピー",
+    "copySuccess": "リンクをクリップボードにコピーしました",
+    "copyError": "コピー失敗、手動でコピーしてください"
   }
 }
