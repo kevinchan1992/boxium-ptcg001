@@ -28,15 +28,23 @@ export async function scrapeSnkrdunkListings(
 
   let browser;
   try {
-    // Launch browser
+    // Launch browser with anti-detection measures
     browser = await chromium.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-blink-features=AutomationControlled",
+        "--disable-dev-shm-usage",
+      ],
     });
 
     const context = await browser.newContext({
       userAgent:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      viewport: { width: 1920, height: 1080 },
+      locale: "en-US",
+      timezoneId: "America/New_York",
     });
 
     const page = await context.newPage();
@@ -59,8 +67,8 @@ export async function scrapeSnkrdunkListings(
       // Filter links that contain both price and grade information
       const productLinks = allLinks.filter((link) => {
         const text = link.textContent || "";
-        // Look for links with "NEW" or "SG $" and PSA/grade info
-        const hasPrice = text.includes("SG $") || text.includes("HK $") || text.includes("NEW");
+        // Look for links with price (US $, SG $, HK $, or NEW) and PSA/grade info
+        const hasPrice = text.includes("US $") || text.includes("SG $") || text.includes("HK $") || text.includes("NEW");
         const hasGrade = text.includes("PSA") || /\b[A-D]\b/.test(text);
         return hasPrice && hasGrade;
       });
@@ -73,9 +81,9 @@ export async function scrapeSnkrdunkListings(
           const text = link.textContent || "";
           const href = link.getAttribute("href") || "";
 
-          // Extract price (support both HK$ and SG$, with or without commas)
-          // Examples: "HK $11999", "HK $11,999", "SG $2150", "SG $2,150"
-          const priceMatch = text.match(/(?:HK|SG)\s*\$([\d,]+)/);
+          // Extract price (support US$, HK$, and SG$, with or without commas)
+          // Examples: "US $12695", "HK $11999", "HK $11,999", "SG $2150", "SG $2,150"
+          const priceMatch = text.match(/(?:US|HK|SG)\s*\$([\d,]+)/);
           let price = 0;
           let currency = "HKD"; // Default currency
           
@@ -83,7 +91,13 @@ export async function scrapeSnkrdunkListings(
             // Remove commas and convert to integer
             const amount = parseInt(priceMatch[1].replace(/,/g, ""));
             // Detect currency from the match
-            currency = text.includes("SG $") ? "SGD" : "HKD";
+            if (text.includes("US $")) {
+              currency = "USD";
+            } else if (text.includes("SG $")) {
+              currency = "SGD";
+            } else {
+              currency = "HKD";
+            }
             // Store original amount, we'll convert later
             price = amount;
           }

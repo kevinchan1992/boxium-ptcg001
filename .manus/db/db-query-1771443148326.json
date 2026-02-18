@@ -1,0 +1,22 @@
+{
+  "query": "\nSELECT c.id, c.name, c.nameJa, c.cardNumber, c.imageUrl,\n       ds.id as dataSourceId, ds.source, ds.sourceIdentifier, ds.sourceUrl, ds.lastUpdatedAt\nFROM cards c\nLEFT JOIN dataSources ds ON c.id = ds.cardId\nWHERE c.id = 180009;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT c.id, c.name, c.nameJa, c.cardNumber, c.imageUrl,\n       ds.id as dataSourceId, ds.source, ds.sourceIdentifier, ds.sourceUrl, ds.lastUpdatedAt\nFROM cards c\nLEFT JOIN dataSources ds ON c.id = ds.cardId\nWHERE c.id = 180009;\n",
+  "rows": [
+    {
+      "id": "180009",
+      "name": "Gyarados Pretend Pikachu: PROMO[XY-P 151/XY-P](XY-P Promotional cards)",
+      "nameJa": "ギャラドスごっこピカチュウ: プロモ[XY-P 151/XY-P](プロモーションカード「XY-P」)",
+      "cardNumber": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7314696.webp",
+      "dataSourceId": "180009",
+      "source": "snkrdunk",
+      "sourceIdentifier": "91391",
+      "sourceUrl": "https://snkrdunk.com/apparels/91391",
+      "lastUpdatedAt": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tnameJa\tcardNumber\timageUrl\tdataSourceId\tsource\tsourceIdentifier\tsourceUrl\tlastUpdatedAt\n180009\tGyarados Pretend Pikachu: PROMO[XY-P 151/XY-P](XY-P Promotional cards)\tギャラドスごっこピカチュウ: プロモ[XY-P 151/XY-P](プロモーションカード「XY-P」)\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/7314696.webp\t180009\tsnkrdunk\t91391\thttps://snkrdunk.com/apparels/91391\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1520
+}
