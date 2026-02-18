@@ -499,6 +499,23 @@
 
 ## Bug: SNKRDUNK 交易記錄顯示不完整 - 已修復
 
+## 新增功能: Trending 價格計算邏輯更新 - 已完成
+
+- [x] 更新後端計算邏輯，僅使用最近 3 個月內的 SNKRDUNK 實際成交價格歷史（PSA 10）
+- [x] 過濾掉 3 個月內交易記錄少於 2 筆的卡牌
+- [x] 計算價格升降幅度（比較最近交易價格與 3 個月前交易價格）
+- [x] 更新主頁的熱門卡牌 Top 5 顯示邏輯
+- [x] 更新 Trending 頁面的所有排行榜（搜尋熱度、價格飆升、價格暴跌、新上架）
+- [x] 創建並通過單元測試驗證所有 Trending 計算函數
+
+**技術細節：**
+- calculateAndCacheTrendingCards(): 時間範圍從最近 20 筆交易改為最近 3 個月（90 天）
+- getTrendingByPriceIncrease(): 時間範圍從 7 天改為 90 天，添加至少 2 筆交易過濾
+- getTrendingByPriceDecrease(): 時間範圍從 7 天改為 90 天，添加至少 2 筆交易過濾，添加 PSA10 過濾
+- getTrendingBySearches(): 時間範圍從 7 天改為 90 天
+- getNewlyAddedCards(): 時間範圍從 7 天改為 90 天
+- 所有函數已通過單元測試（8/8 測試通過）
+
 - [x] 調查為何卡牙頁面只顯示 4 筆交易記錄
 
 ## Bug Fix: Cheerio 未能正確提取「最近の売買履歴」價格數據 - 完成
@@ -3319,3 +3336,17 @@
 - 刪除的「核心功能」section 包含 4 個功能卡片（Search, TrendingUp, BarChart3, Trophy 圖標）
 - 保留的 Trending Cards Section 使用 TrendingCardsGrid 組件顯示熱門卡牌
 - 保留的 Data Sources Section 介紹 SNKRDUNK 和 eBay 兩個資料來源
+
+
+## 新增功能: Trending 價格計算邏輯更新 - 進行中
+
+- [ ] 更新後端計算邏輯，僅使用最近 3 個月內的 SNKRDUNK 實際成交價格歷史（PSA 10）
+- [ ] 過濾掉 3 個月內交易記錄少於 2 筆的卡牌
+- [ ] 計算價格升降幅度（比較最近交易價格與 3 個月前交易價格）
+- [ ] 更新主頁的熱門卡牌 Top 5 顯示邏輯
+- [ ] 更新 Trending 頁面的所有排行榜（搜尋熱度、價格飆升、價格暴跌、新上架）
+
+**目標：**
+- 確保價格趨勢計算基於足夠的交易數據（至少 2 筆交易）
+- 提升價格趨勢的準確性和可靠性
+- 統一整個平台的價格計算邏輯

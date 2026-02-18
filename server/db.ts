@@ -1290,9 +1290,13 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     throw new Error("Database not available");
   }
 
-  console.log("[calculateAndCacheTrendingCards] Starting calculation (based on last 20 transactions)...");
+  console.log("[calculateAndCacheTrendingCards] Starting calculation (based on last 3 months)...");
 
-  // Get ALL SNKRDUNK PSA 10 price history for cards that exist in cards table
+  // Calculate cutoff date (3 months ago = 90 days)
+  const cutoffDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  console.log(`[calculateAndCacheTrendingCards] Cutoff date: ${cutoffDate.toISOString()}`);
+
+  // Get SNKRDUNK PSA 10 price history from last 3 months for cards that exist in cards table
   // Use INNER JOIN to ensure we only calculate for valid cards
   const cardsWithPrices = await db
     .select({
@@ -1307,12 +1311,13 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     .where(
       and(
         eq(priceHistory.source, "snkrdunk"),
-        eq(priceHistory.grade, "PSA10")
+        eq(priceHistory.grade, "PSA10"),
+        gte(priceHistory.createdAt, cutoffDate)
       )
     )
     .orderBy(priceHistory.cardId, priceHistory.soldAt);
 
-  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} total SNKRDUNK PSA 10 price records`);
+  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} SNKRDUNK PSA 10 price records in last 3 months`);
 
   // Group by cardId
   const cardPriceMap = new Map<number, { price: number; date: Date }[]>();
@@ -1329,7 +1334,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     cardPriceMap.get(cardId)!.push({ price, date });
   }
 
-  // Calculate price change for each card based on last 20 transactions
+  // Calculate price change for each card (requires at least 2 transactions in 3 months)
   const trendingCards: Array<{
     cardId: number;
     priceChange: number;
@@ -1341,22 +1346,22 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     // Sort by date (oldest first)
     const prices = allPrices.sort((a, b) => a.date.getTime() - b.date.getTime());
     
+    // Skip cards with less than 2 transactions in 3 months
     if (prices.length < 2) {
-      continue; // Need at least 2 price points
+      console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: Only ${prices.length} transaction(s) in 3 months, skipping`);
+      continue;
     }
-
-    // Get the last 20 transactions (or all if less than 20)
-    const last20 = prices.slice(-20);
     
     // Current price = latest transaction
-    const currentPrice = last20[last20.length - 1].price;
+    const currentPrice = prices[prices.length - 1].price;
     
-    // Old price = average of all previous transactions (excluding the latest)
-    const previousPrices = last20.slice(0, -1);
-    const oldPrice = previousPrices.reduce((sum, p) => sum + p.price, 0) / previousPrices.length;
+    // Old price = earliest transaction (3 months ago)
+    const oldPrice = prices[0].price;
     
     // Calculate percentage change
     const priceChange = ((currentPrice - oldPrice) / oldPrice) * 100;
+    
+    console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: ${prices.length} transactions in 3 months, change=${priceChange.toFixed(2)}%`);
 
     // Only include cards with positive price change
     if (priceChange > 0) {
@@ -1579,8 +1584,7 @@ export async function getTrendingBySearches(options: {
 } = {}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-
-  const { limit = 10, days = 7 } = options;
+  const { limit = 10, days = 90 } = options; // Default to 90 days (3 months)
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   const results = await db
@@ -1660,7 +1664,7 @@ export async function getTrendingByPriceIncrease(options: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const { limit = 10, days = 7 } = options;
+  const { limit = 10, days = 90 } = options; // Default to 90 days (3 months)
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   // Get all SNKRDUNK PSA 10 price records within the time range
@@ -1675,6 +1679,12 @@ export async function getTrendingByPriceIncrease(options: {
       )
     )
     .orderBy(asc(priceHistory.createdAt));
+
+  // Group by cardId to count transactions per card
+  const transactionCounts = new Map<number, number>();
+  for (const price of recentPrices) {
+    transactionCounts.set(price.cardId, (transactionCounts.get(price.cardId) || 0) + 1);
+  }
 
   // Group by cardId and calculate price change
   const priceChangeMap = new Map<number, {
@@ -1714,8 +1724,12 @@ export async function getTrendingByPriceIncrease(options: {
   }
 
   // Sort by price change percentage and get top cards
+  // Only include cards with at least 2 transactions in the time range
   const sortedChanges = Array.from(priceChangeMap.values())
-    .filter(item => item.priceChangePercent > 0) // Only positive changes
+    .filter(item => {
+      const txCount = transactionCounts.get(item.cardId) || 0;
+      return item.priceChangePercent > 0 && txCount >= 2;
+    })
     .sort((a, b) => b.priceChangePercent - a.priceChangePercent)
     .slice(0, limit);
 
@@ -1729,17 +1743,20 @@ export async function getTrendingByPriceIncrease(options: {
     .where(inArray(cards.id, cardIds));
 
   // Combine all data
-  return sortedChanges.map(change => {
-    const card = cardDetails.find(c => c.id === change.cardId);
-    return {
-      ...card,
-      oldPrice: change.oldPrice,
-      currentPrice: change.newPrice,
-      priceChange: change.priceChange,
-      priceChangePercent: change.priceChangePercent,
-      currency: 'HKD',
-    };
-  });
+  return sortedChanges
+    .map(change => {
+      const card = cardDetails.find(c => c.id === change.cardId);
+      if (!card) return null; // Skip if card details not found
+      return {
+        ...card,
+        oldPrice: change.oldPrice,
+        currentPrice: change.newPrice,
+        priceChange: change.priceChange,
+        priceChangePercent: change.priceChangePercent,
+        currency: 'HKD',
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 }
 
 /**
@@ -1753,7 +1770,7 @@ export async function getTrendingByPriceDecrease(options: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const { limit = 10, days = 7 } = options;
+  const { limit = 10, days = 90 } = options; // Default to 90 days (3 months)
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   // Similar logic to price increase, but filter for negative changes
@@ -1763,10 +1780,17 @@ export async function getTrendingByPriceDecrease(options: {
     .where(
       and(
         gte(priceHistory.createdAt, cutoffDate),
-        eq(priceHistory.source, 'snkrdunk')
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.grade, 'PSA10')
       )
     )
     .orderBy(asc(priceHistory.createdAt));
+
+  // Group by cardId to count transactions per card
+  const transactionCounts = new Map<number, number>();
+  for (const price of recentPrices) {
+    transactionCounts.set(price.cardId, (transactionCounts.get(price.cardId) || 0) + 1);
+  }
 
   const priceChangeMap = new Map<number, {
     cardId: number;
@@ -1804,8 +1828,12 @@ export async function getTrendingByPriceDecrease(options: {
     }
   }
 
+  // Only include cards with at least 2 transactions in the time range
   const sortedChanges = Array.from(priceChangeMap.values())
-    .filter(item => item.priceChangePercent < 0) // Only negative changes
+    .filter(item => {
+      const txCount = transactionCounts.get(item.cardId) || 0;
+      return item.priceChangePercent < 0 && txCount >= 2;
+    })
     .sort((a, b) => a.priceChangePercent - b.priceChangePercent) // Most negative first
     .slice(0, limit);
 
@@ -1817,17 +1845,20 @@ export async function getTrendingByPriceDecrease(options: {
     .from(cards)
     .where(inArray(cards.id, cardIds));
 
-  return sortedChanges.map(change => {
-    const card = cardDetails.find(c => c.id === change.cardId);
-    return {
-      ...card,
-      oldPrice: change.oldPrice,
-      currentPrice: change.newPrice,
-      priceChange: change.priceChange,
-      priceChangePercent: change.priceChangePercent,
-      currency: 'HKD',
-    };
-  });
+  return sortedChanges
+    .map(change => {
+      const card = cardDetails.find(c => c.id === change.cardId);
+      if (!card) return null; // Skip if card details not found
+      return {
+        ...card,
+        oldPrice: change.oldPrice,
+        currentPrice: change.newPrice,
+        priceChange: change.priceChange,
+        priceChangePercent: change.priceChangePercent,
+        currency: 'HKD',
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 }
 
 /**
@@ -1841,7 +1872,7 @@ export async function getNewlyAddedCards(options: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const { limit = 10, days = 7 } = options;
+  const { limit = 10, days = 90 } = options; // Default to 90 days (3 months)
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   const newCards = await db
