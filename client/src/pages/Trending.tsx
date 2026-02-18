@@ -128,18 +128,7 @@ export default function Trending() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
-                {/* Refresh Button */}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleRefresh}
-                  className="bg-white border-white hover:bg-gray-100"
-                  style={{ color: "#06038D" }}
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              </div>
+
             </div>
           </div>
         </div>

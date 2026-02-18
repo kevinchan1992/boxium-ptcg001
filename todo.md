@@ -3915,3 +3915,9 @@
 - [x] 修改下劃線 span 的條件渲染邏輯 (isActive ? w-full left-0 : w-0 left-1/2)
 - [x] 優化手機選單 LOGO 點擊返回首頁並關閉選單
 - [x] 測試驗證桌面版和手機版功能
+
+## 頁面修正: Trending 頁面文字和按鈕調整 - 完成
+
+- [x] 將「Pokemon」改為「Pokémon」 (修正拼寫)
+- [x] 删除第 133 行的 Refresh 按鈕
+- [x] 測試驗證 Trending 頁面顯示正常
