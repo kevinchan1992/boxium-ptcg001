@@ -1290,13 +1290,13 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     throw new Error("Database not available");
   }
 
-  console.log("[calculateAndCacheTrendingCards] Starting calculation (based on last 3 months)...");
+  console.log("[calculateAndCacheTrendingCards] Starting calculation (based on last 2 months)...");
 
-  // Calculate cutoff date (3 months ago = 90 days)
-  const cutoffDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  // Calculate cutoff date (2 months ago = 60 days)
+  const cutoffDate = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
   console.log(`[calculateAndCacheTrendingCards] Cutoff date: ${cutoffDate.toISOString()}`);
 
-  // Get SNKRDUNK PSA 10 price history from last 3 months for cards that exist in cards table
+  // Get SNKRDUNK PSA 10 price history from last 2 months for cards that exist in cards table
   // Use INNER JOIN to ensure we only calculate for valid cards
   // IMPORTANT: Filter by soldAt (actual transaction date), not createdAt (data insertion date)
   const cardsWithPrices = await db
@@ -1319,7 +1319,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     )
     .orderBy(priceHistory.cardId, priceHistory.soldAt);
 
-  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} SNKRDUNK PSA 10 price records in last 3 months`);
+  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} SNKRDUNK PSA 10 price records in last 2 months`);
 
   // Group by cardId
   const cardPriceMap = new Map<number, { price: number; date: Date }[]>();
@@ -1337,7 +1337,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     cardPriceMap.get(cardId)!.push({ price, date });
   }
 
-  // Calculate price change for each card (requires at least 2 transactions in 3 months)
+  // Calculate price change for each card (requires at least 2 transactions in 2 months)
   const trendingCards: Array<{
     cardId: number;
     priceChange: number;
@@ -1349,22 +1349,22 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     // Sort by date (oldest first)
     const prices = allPrices.sort((a, b) => a.date.getTime() - b.date.getTime());
     
-    // Skip cards with less than 2 transactions in 3 months
+    // Skip cards with less than 2 transactions in 2 months
     if (prices.length < 2) {
-      console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: Only ${prices.length} transaction(s) in 3 months, skipping`);
+      console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: Only ${prices.length} transaction(s) in 2 months, skipping`);
       continue;
     }
     
     // Current price = latest transaction
     const currentPrice = prices[prices.length - 1].price;
     
-    // Old price = earliest transaction (3 months ago)
+    // Old price = earliest transaction (2 months ago)
     const oldPrice = prices[0].price;
     
     // Calculate percentage change
     const priceChange = ((currentPrice - oldPrice) / oldPrice) * 100;
     
-    console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: ${prices.length} transactions in 3 months, change=${priceChange.toFixed(2)}%`);
+    console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: ${prices.length} transactions in 2 months, change=${priceChange.toFixed(2)}%`);
 
     // Only include cards with positive price change
     if (priceChange > 0) {
@@ -1587,7 +1587,7 @@ export async function getTrendingBySearches(options: {
 } = {}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const { limit = 10, days = 90 } = options; // Default to 90 days (3 months)
+  const { limit = 10, days = 60 } = options; // Default to 60 days (2 months)
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   const results = await db
@@ -1667,7 +1667,7 @@ export async function getTrendingByPriceIncrease(options: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const { limit = 10, days = 90 } = options; // Default to 90 days (3 months)
+  const { limit = 10, days = 60 } = options; // Default to 60 days (2 months)
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   // Get all SNKRDUNK PSA 10 price records within the time range
@@ -1775,7 +1775,7 @@ export async function getTrendingByPriceDecrease(options: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const { limit = 10, days = 90 } = options; // Default to 90 days (3 months)
+  const { limit = 10, days = 60 } = options; // Default to 60 days (2 months)
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   // Similar logic to price increase, but filter for negative changes
@@ -1879,7 +1879,7 @@ export async function getNewlyAddedCards(options: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const { limit = 10, days = 90 } = options; // Default to 90 days (3 months)
+  const { limit = 10, days = 60 } = options; // Default to 60 days (2 months)
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   const newCards = await db

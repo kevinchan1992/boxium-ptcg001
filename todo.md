@@ -3375,3 +3375,31 @@
 - 漲幅從錯誤的 775% 降至合理的 124.59%
 - 所有 Top 5 卡牌的漲幅都在合理範圍內（60%-130%）
 - 所有單元測試通過（8/8 測試通過）
+
+## 功能更新: 將 Trending 計算時間範圍從 3 個月改為 2 個月 - 已完成
+
+- [x] 更新 calculateAndCacheTrendingCards() 函數，將時間範圍從 90 天改為 60 天
+- [x] 更新 getTrendingByPriceIncrease() 函數，將默認時間範圍從 90 天改為 60 天
+- [x] 更新 getTrendingByPriceDecrease() 函數，將默認時間範圍從 90 天改為 60 天
+- [x] 更新 getTrendingBySearches() 函數，將默認時間範圍從 90 天改為 60 天
+- [x] 更新 getNewlyAddedCards() 函數，將默認時間範圍從 90 天改為 60 天
+- [x] 更新所有相關的測試案例（8/8 測試通過）
+- [x] 驗證修復後的計算結果
+- [x] 前端顯示已正確更新
+
+**更新摘要：**
+- 時間範圍：3 個月（90 天）→ 2 個月（60 天）
+- 過濾條件：維持至少 2 筆交易記錄
+- 計算邏輯：基於實際交易時間（soldAt），比較 2 個月內最早和最新的成交價格
+
+**更新後的 Top 5 熱門卡牌（基於最近 2 個月）：**
+1. Pikachu wearing a poncho - 53.16% ↑（HKD 104,500 → HKD 160,050）
+2. Pikachu: PROMO - 50.14% ↑（HKD 200,750 → HKD 301,400）
+3. Acerola Extra Battle Day - 46.98% ↑（HKD 163,900 → HKD 240,900）
+4. Solgaleo & Lunala GX (Lillie) SR - 44.45% ↑（HKD 4,949.95 → HKD 7,150）
+5. Rapid Strike Urshifu V SR - 42.86% ↑（HKD 384.95 → HKD 549.95）
+
+**對比 3 個月計算結果的變化：**
+- 漲幅更加保守合理（最高從 124.59% 降至 53.16%）
+- Top 5 卡牌排名有所變化（更反映近期市場趨勢）
+- 所有漲幅都在 40%-55% 的合理範圍內

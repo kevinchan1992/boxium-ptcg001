@@ -10,9 +10,9 @@ import {
 
 describe('Trending Cards Calculation Logic', () => {
   describe('calculateAndCacheTrendingCards', () => {
-    it('should calculate trending cards based on last 3 months data', async () => {
+    it('should calculate trending cards based on last 2 months data', async () => {
       // This test verifies that the function runs without errors
-      // In production, it should filter cards with at least 2 transactions in 3 months
+      // In production, it should filter cards with at least 2 transactions in 2 months
       await expect(calculateAndCacheTrendingCards()).resolves.not.toThrow();
     });
 
@@ -39,7 +39,7 @@ describe('Trending Cards Calculation Logic', () => {
   });
 
   describe('getTrendingByPriceIncrease', () => {
-    it('should return cards with price increases in last 3 months', async () => {
+    it('should return cards with price increases in last 2 months', async () => {
       const results = await getTrendingByPriceIncrease({ limit: 10 });
       
       expect(Array.isArray(results)).toBe(true);
@@ -68,19 +68,19 @@ describe('Trending Cards Calculation Logic', () => {
       }
     });
 
-    it('should use 90 days as default time range', async () => {
+    it('should use 60 days as default time range', async () => {
       // Test with explicit days parameter
-      const results90 = await getTrendingByPriceIncrease({ limit: 10, days: 90 });
+      const results60 = await getTrendingByPriceIncrease({ limit: 10, days: 60 });
       const resultsDefault = await getTrendingByPriceIncrease({ limit: 10 });
       
       // Both should return the same type of data structure
-      expect(Array.isArray(results90)).toBe(true);
+      expect(Array.isArray(results60)).toBe(true);
       expect(Array.isArray(resultsDefault)).toBe(true);
     });
   });
 
   describe('getTrendingByPriceDecrease', () => {
-    it('should return cards with price decreases in last 3 months', async () => {
+    it('should return cards with price decreases in last 2 months', async () => {
       const results = await getTrendingByPriceDecrease({ limit: 10 });
       
       expect(Array.isArray(results)).toBe(true);
@@ -118,7 +118,7 @@ describe('Trending Cards Calculation Logic', () => {
   });
 
   describe('getTrendingBySearches', () => {
-    it('should return cards with most searches in last 3 months', async () => {
+    it('should return cards with most searches in last 2 months', async () => {
       const results = await getTrendingBySearches({ limit: 10 });
       
       expect(Array.isArray(results)).toBe(true);
@@ -138,7 +138,7 @@ describe('Trending Cards Calculation Logic', () => {
   });
 
   describe('getNewlyAddedCards', () => {
-    it('should return newly added cards from last 3 months', async () => {
+    it('should return newly added cards from last 2 months', async () => {
       const results = await getNewlyAddedCards({ limit: 10 });
       
       expect(Array.isArray(results)).toBe(true);
@@ -151,10 +151,10 @@ describe('Trending Cards Calculation Logic', () => {
         expect(firstCard).toHaveProperty('id');
         expect(firstCard).toHaveProperty('createdAt');
         
-        // Verify createdAt is within last 3 months
-        const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+        // Verify createdAt is within last 2 months
+        const twoMonthsAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
         const cardCreatedAt = new Date(firstCard.createdAt);
-        expect(cardCreatedAt.getTime()).toBeGreaterThanOrEqual(threeMonthsAgo.getTime());
+        expect(cardCreatedAt.getTime()).toBeGreaterThanOrEqual(twoMonthsAgo.getTime());
       }
     });
   });
