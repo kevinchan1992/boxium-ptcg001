@@ -4267,3 +4267,12 @@
 - 修正了 `page.evaluate` 中 TypeScript 類型註解導致的編譯錯誤
 - 將貨幣轉換邏輯從瀏覽器端移到伺服器端，避免 `__name` 未定義錯誤
 - 確保所有價格在顯示前都已轉換為 HKD
+
+
+## UI 優化: Pricing 頁面 SNKRDUNK logo 統一性 - 完成
+
+- [x] 檢查 Pricing 頁面當前使用的 SNKRDUNK logo（原為文字標籤）
+- [x] 定位平台主頁使用的黑色 SNKRDUNK logo 文件（/snkrdunk-logo.png）
+- [x] 替換 PricingDetail.tsx 中的 SNKRDUNK 文字標籤為 logo 圖片
+- [x] 測試驗證 logo 顯示效果（12 個商品卡片全部正確顯示）
+- [x] 確保品牌視覺一致性（白色背景 + 黑色 logo + 陰影效果）

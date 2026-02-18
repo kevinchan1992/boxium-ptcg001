@@ -201,13 +201,19 @@ export default function PricingDetail() {
                 />
                 {/* Source Badge */}
                 <div className="absolute top-2 right-2">
-                  <span className={`px-2 py-1 text-xs font-semibold rounded ${
-                    item.source === "ebay" 
-                      ? "bg-blue-500 text-white" 
-                      : "bg-orange-500 text-white"
-                  }`}>
-                    {item.source === "ebay" ? "eBay" : "SNKRDUNK"}
-                  </span>
+                  {item.source === "ebay" ? (
+                    <span className="px-2 py-1 text-xs font-semibold rounded bg-blue-500 text-white">
+                      eBay
+                    </span>
+                  ) : (
+                    <div className="bg-white rounded px-2 py-1 shadow-md">
+                      <img 
+                        src="/snkrdunk-logo.png" 
+                        alt="SNKRDUNK" 
+                        className="h-4 w-auto object-contain"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
