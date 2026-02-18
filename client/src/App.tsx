@@ -11,6 +11,8 @@ import SearchResults from "./pages/SearchResults";
 import Research from "./pages/Research";
 import Trending from "./pages/Trending";
 import Pricing from "./pages/Pricing";
+import PricingSearch from "./pages/PricingSearch";
+import PricingDetail from "./pages/PricingDetail";
 import Admin from "./pages/Admin";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
@@ -40,6 +42,8 @@ function Router() {
       <Route path="/trending" component={Trending} />
 
       <Route path="/pricing" component={Pricing} />
+      <Route path="/pricing/search" component={PricingSearch} />
+      <Route path="/pricing/:id" component={PricingDetail} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
 

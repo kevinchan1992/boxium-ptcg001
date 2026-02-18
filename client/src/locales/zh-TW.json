@@ -42,7 +42,8 @@
     "marketInsights": "市場洞察",
     "trending": "熱門排行榜",
     "about": "關於我們",
-    "blog": "最新消息"
+    "blog": "最新消息",
+    "back": "返回"
   },
   "home": {
     "welcome": "歡迎來到 Boxium ~ 遊戲迷專屬世界",
@@ -244,7 +245,23 @@
     "grade": "評級",
     "seller": "賣家",
     "buyNow": "前往購買",
-    "noResults": "未找到相關結果，請嘗試其他關鍵詞"
+    "noResults": "未找到相關結果，請嘗試其他關鍵詞",
+    "searchResultsFor": "搜尋結果",
+    "foundCards": "找到 {{count}} 張卡牌",
+    "searchError": "搜尋出錯，請重試",
+    "noImage": "無圖片",
+    "enterKeyword": "請輸入搜尋關鍵字",
+    "loading": "載入中...",
+    "cardNotFound": "找不到該卡牌",
+    "cardNumber": "卡牌編號",
+    "series": "系列",
+    "lowestPrice": "最低價",
+    "averagePrice": "平均價",
+    "highestPrice": "最高價",
+    "psa10Listings": "PSA 10 在售商品",
+    "loadingListings": "載入商品中...",
+    "noListings": "暫無在售商品",
+    "condition": "狀況"
   },
   "share": {
     "button": "分享",

@@ -1,6 +1,8 @@
 import { router, publicProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { fetchEbayListings } from '../services/ebay';
+import { fetchSnkrdunkListings } from '../services/snkrdunk';
+import * as db from '../db';
 
 interface PriceListing {
   id: string;
@@ -68,6 +70,94 @@ function calculateStats(listings: PriceListing[]): PriceStats {
 }
 
 export const pricingRouter = router({
+  getListings: publicProcedure
+    .input(
+      z.object({
+        cardId: z.number(),
+      })
+    )
+    .query(async ({ input }) => {
+      const { cardId } = input;
+
+      console.log(`[Pricing Router] Get listings for cardId: ${cardId}`);
+
+      try {
+        // Step 1: Get card details from database
+        const card = await db.getCardById(cardId);
+        if (!card) {
+          throw new Error('Card not found');
+        }
+
+        // Step 2: Fetch from eBay API using English name + card number + PSA10
+        console.log('[Pricing Router] Fetching from eBay...');
+        let ebayListings: any[] = [];
+        try {
+          const searchQuery = `${card.name} ${card.cardNumber || ''} PSA10`.trim();
+          ebayListings = await fetchEbayListings({ cardName: searchQuery });
+          console.log(`[Pricing Router] eBay returned ${ebayListings.length} listings`);
+        } catch (error) {
+          console.error('[Pricing Router] eBay fetch error:', error);
+          // Continue even if eBay fails
+        }
+
+        // Step 3: Fetch from SNKRDUNK using Firecrawl MCP
+        console.log('[Pricing Router] Fetching from SNKRDUNK...');
+        let snkrdunkListings: any[] = [];
+        try {
+          // Get SNKRDUNK data source for this card
+          const snkrdunkSource = await db.getDataSourceByCardIdAndSource(cardId, 'snkrdunk');
+          if (snkrdunkSource && snkrdunkSource.sourceIdentifier) {
+            snkrdunkListings = await fetchSnkrdunkListings({ snkrdunkId: snkrdunkSource.sourceIdentifier });
+            console.log(`[Pricing Router] SNKRDUNK returned ${snkrdunkListings.length} listings`);
+          } else {
+            console.log('[Pricing Router] Card has no SNKRDUNK data source');
+          }
+        } catch (error) {
+          console.error('[Pricing Router] SNKRDUNK fetch error:', error);
+          // Continue even if SNKRDUNK fails
+        }
+
+        // Step 4: Transform to unified format
+        const listings = [
+          ...ebayListings.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            currency: item.currency,
+            imageUrl: item.image,
+            source: 'ebay' as const,
+            buyUrl: item.productUrl,
+            seller: item.seller?.name,
+            condition: item.condition,
+          })),
+          ...snkrdunkListings.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            currency: item.currency,
+            imageUrl: item.image,
+            source: 'snkrdunk' as const,
+            buyUrl: item.productUrl,
+            seller: item.seller?.name,
+            condition: item.condition,
+          })),
+        ];
+
+        // Step 5: Sort by price (lowest first)
+        listings.sort((a, b) => a.price - b.price);
+
+        console.log(`[Pricing Router] Returning ${listings.length} total listings`);
+
+        return {
+          card,
+          listings,
+        };
+      } catch (error) {
+        console.error('[Pricing Router] Get listings error:', error);
+        throw new Error('Failed to fetch pricing listings');
+      }
+    }),
+
   search: publicProcedure
     .input(
       z.object({

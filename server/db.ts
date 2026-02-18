@@ -1974,3 +1974,19 @@ export async function getAllCardIds() {
 
   return result;
 }
+
+/**
+ * Get data source by card ID and source type
+ */
+export async function getDataSourceByCardIdAndSource(cardId: number, source: 'snkrdunk' | 'ebay' | 'tcgplayer' | 'other') {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(dataSources)
+    .where(and(eq(dataSources.cardId, cardId), eq(dataSources.source, source)))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
