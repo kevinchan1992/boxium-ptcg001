@@ -29,24 +29,13 @@ export function TopNav() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer">
-              <img 
-                src="/boxium-logo-white.png" 
-                alt="BOXIUM" 
-                className="h-12 w-auto"
-              />
-            </div>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+        <div className="flex items-center justify-center h-16 relative">
+          {/* Desktop Navigation - Centered */}
+          <div className="hidden md:flex items-center gap-8">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <a
-                  className={`text-sm font-medium transition-colors hover:text-[#ffed00] ${
+                  className={`text-base font-medium transition-colors hover:text-[#ffed00] ${
                     isActive(item.href)
                       ? "text-[#ffed00]"
                       : "text-white/80"
@@ -58,9 +47,8 @@ export function TopNav() {
             ))}
           </div>
 
-          {/* Right Section */}
-          <div className="hidden md:flex items-center gap-4">
-            {/* Language Switcher */}
+          {/* Language Switcher - Absolute Right */}
+          <div className="hidden md:flex items-center gap-4 absolute right-0">
             <LanguageSwitcher />
           </div>
 

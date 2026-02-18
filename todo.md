@@ -3871,3 +3871,10 @@
 - [x] Footer LOGO 點擊返回主頁頂部 (添加 Link 和 scrollTo)
 - [x] Footer 導航文字「卡牙搜尋」改為「卡牌搜尋」
 - [x] Home 頁面文字更新為「基於 PSA 10 評級最近 60 天成交價格漲幅」
+
+## UI 調整: TopNav 簡化與 Footer LOGO 放大 - 完成
+
+- [x] 移除 TopNav 的 LOGO 圖片
+- [x] 調整 TopNav 導航項目置中顯示
+- [x] 優化 TopNav 導航項目間距 (從 gap-6 改為 gap-8)
+- [x] Footer LOGO 再放大 20% (從 h-10/h-12 改為 h-12/h-14)
