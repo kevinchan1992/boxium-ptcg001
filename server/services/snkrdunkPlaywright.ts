@@ -59,7 +59,7 @@ export async function scrapeSnkrdunkListings(
       const productLinks = allLinks.filter((link) => {
         const text = link.textContent || "";
         // Look for links with "NEW" or "SG $" and PSA/grade info
-        const hasPrice = text.includes("SG $") || text.includes("NEW");
+        const hasPrice = text.includes("SG $") || text.includes("HK $") || text.includes("NEW");
         const hasGrade = text.includes("PSA") || /\b[A-D]\b/.test(text);
         return hasPrice && hasGrade;
       });
@@ -72,14 +72,21 @@ export async function scrapeSnkrdunkListings(
           const text = link.textContent || "";
           const href = link.getAttribute("href") || "";
 
-          // Extract price (e.g., "SG $2150" or "NEW SG $2150")
-          const priceMatch = text.match(/SG\s*\$(\d+)/);
-          let price = priceMatch ? parseInt(priceMatch[1]) : 0;
+          // Extract price (support both HK$ and SG$, with or without commas)
+          // Examples: "HK $11999", "HK $11,999", "SG $2150", "SG $2,150"
+          const priceMatch = text.match(/(?:HK|SG)\s*\$([\d,]+)/);
+          let price = 0;
+          if (priceMatch) {
+            // Remove commas and convert to integer
+            price = parseInt(priceMatch[1].replace(/,/g, ""));
+          }
           
-          // If no price found, try alternative pattern
+          // If no price found, try alternative pattern (just $ followed by numbers)
           if (price === 0) {
-            const altPriceMatch = text.match(/\$(\d+)/);
-            price = altPriceMatch ? parseInt(altPriceMatch[1]) : 0;
+            const altPriceMatch = text.match(/\$([\d,]+)/);
+            if (altPriceMatch) {
+              price = parseInt(altPriceMatch[1].replace(/,/g, ""));
+            }
           }
 
           // Extract grade (e.g., "PSA 10", "A", "B", etc.)
@@ -102,7 +109,7 @@ export async function scrapeSnkrdunkListings(
               ? href
               : `https://snkrdunk.com${href}`,
             image: image || undefined,
-            currency: "SGD",
+            currency: text.includes("HK $") ? "HKD" : "SGD",
             isPsa10,
           };
         })
