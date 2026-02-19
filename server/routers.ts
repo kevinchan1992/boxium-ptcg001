@@ -1756,6 +1756,15 @@ try {
         return tasks;
       }),
     
+    // List background tasks (alias for listTasks, for backward compatibility)
+    listBackgroundTasks: publicProcedure
+      .input(z.object({ limit: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        const { listTasks } = await import('./services/backgroundTaskService');
+        const tasks = await listTasks(input?.limit);
+        return tasks;
+      }),
+    
     // Legacy API (deprecated, kept for compatibility)
     refreshAllCardsCache: publicProcedure
       .mutation(async () => {

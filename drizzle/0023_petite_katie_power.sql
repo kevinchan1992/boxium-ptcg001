@@ -1,0 +1,1 @@
+ALTER TABLE `backgroundTasks` ADD `failedCards` text;

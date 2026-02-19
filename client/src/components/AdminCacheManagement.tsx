@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { TaskPerformanceChart } from "./TaskPerformanceChart";
+import { TaskHistory } from "./TaskHistory";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -443,6 +445,12 @@ export function AdminCacheManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Performance Monitoring */}
+      <TaskPerformanceChart />
+
+      {/* Task History */}
+      <TaskHistory />
 
       {/* Refresh All Cards Cache Confirmation Dialog */}
       <AlertDialog open={showRefreshAllDialog} onOpenChange={setShowRefreshAllDialog}>

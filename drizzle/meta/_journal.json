@@ -162,6 +162,13 @@
       "when": 1771476600303,
       "tag": "0022_absurd_warhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1771479998356,
+      "tag": "0023_petite_katie_power",
+      "breakpoints": true
     }
   ]
 }

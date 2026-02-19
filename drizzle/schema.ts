@@ -384,6 +384,7 @@ export const backgroundTasks = mysqlTable("backgroundTasks", {
   failureCount: int("failureCount").default(0).notNull(), // Number of failed items
   currentItem: text("currentItem"), // Current item being processed (JSON)
   errorMessage: text("errorMessage"), // Error message if failed
+  failedCards: text("failedCards"), // Failed cards list (JSON array: [{cardId, name, error, retryCount}])
   startedAt: timestamp("startedAt"), // Task start time
   completedAt: timestamp("completedAt"), // Task completion time
   createdAt: timestamp("createdAt").defaultNow().notNull(),
