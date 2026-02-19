@@ -155,6 +155,34 @@
       "when": 1771440745184,
       "tag": "0021_bored_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1771476600303,
+      "tag": "0022_absurd_warhawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1771479998356,
+      "tag": "0023_petite_katie_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1771488343374,
+      "tag": "0024_secret_lionheart",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1771490557406,
+      "tag": "0025_uneven_gamma_corps",
+      "breakpoints": true
     }
   ]
 }

@@ -114,13 +114,14 @@ export const pricingRouter = router({
               const snkrdunkId = snkrdunkIdMatch[1];
               console.log(`[Pricing Router] SNKRDUNK ID: ${snkrdunkId}`);
               
-              // Check cache first
+              // Check cache first (dual-layer caching: hot cache 1h + cold cache 6h)
               const cache = await db.getSnkrdunkListingsCache(cardId);
               const now = new Date();
               
-              if (cache && new Date(cache.expiresAt) > now) {
-                // Cache is valid, use cached data
-                console.log(`[Pricing Router] Using cached SNKRDUNK data (expires at ${cache.expiresAt})`);
+              // Check hot cache first
+              if (cache && cache.hotExpiresAt && new Date(cache.hotExpiresAt) > now) {
+                // Hot cache is valid, use cached data directly
+                console.log(`[Pricing Router] Using hot cache (expires at ${cache.hotExpiresAt})`);
                 const cachedListings = JSON.parse(cache.listings);
                 snkrdunkListings = cachedListings.map((item: any) => ({
                   id: `snkrdunk-${item.url}`,
@@ -133,23 +134,38 @@ export const pricingRouter = router({
                   seller: 'SNKRDUNK',
                   condition: item.grade,
                 }));
-                console.log(`[Pricing Router] SNKRDUNK cache returned ${snkrdunkListings.length} listings`);
+                console.log(`[Pricing Router] Hot cache returned ${snkrdunkListings.length} listings`);
               } else {
-                // Cache is invalid or doesn't exist, scrape new data
-                console.log('[Pricing Router] Cache miss or expired, scraping SNKRDUNK...');
-                const listings = await scrapeSnkrdunkListings(snkrdunkId);
+                // Hot cache expired or doesn't exist, scrape new data
+                console.log('[Pricing Router] Hot cache expired, scraping SNKRDUNK...');
+                const newListings = await scrapeSnkrdunkListings(snkrdunkId);
                 
-                // Save to cache (expires in 6 hours)
-                const expiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours from now
+                // URL deduplication: merge new listings with cached listings
+                let mergedListings = newListings;
+                if (cache && new Date(cache.expiresAt) > now) {
+                  // Cold cache is still valid, merge with new listings
+                  const cachedListings = JSON.parse(cache.listings);
+                  const newUrls = new Set(newListings.map(item => item.url));
+                  const uniqueCachedListings = cachedListings.filter(
+                    (item: any) => !newUrls.has(item.url)
+                  );
+                  mergedListings = [...newListings, ...uniqueCachedListings];
+                  console.log(`[Pricing Router] Merged ${newListings.length} new + ${uniqueCachedListings.length} cached = ${mergedListings.length} total`);
+                }
+                
+                // Save to cache with dual expiration times
+                const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
+                const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
                 await db.saveSnkrdunkListingsCache({
                   cardId,
                   snkrdunkId,
-                  listings: JSON.stringify(listings),
-                  expiresAt,
+                  listings: JSON.stringify(mergedListings),
+                  hotExpiresAt,
+                  expiresAt: coldExpiresAt,
                 });
-                console.log(`[Pricing Router] Saved SNKRDUNK data to cache (expires at ${expiresAt})`);
+                console.log(`[Pricing Router] Saved SNKRDUNK data to cache (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
                 
-                snkrdunkListings = listings.map((item) => ({
+                snkrdunkListings = mergedListings.map((item) => ({
                   id: `snkrdunk-${item.url}`,
                   title: `${card.name} ${item.grade}`,
                   price: item.price,

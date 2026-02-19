@@ -1,0 +1,1 @@
+ALTER TABLE `snkrdunkListingsCache` ADD `hotExpiresAt` timestamp NOT NULL;

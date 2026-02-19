@@ -156,7 +156,8 @@ export const snkrdunkListingsCache = mysqlTable("snkrdunkListingsCache", {
   snkrdunkId: varchar("snkrdunkId", { length: 128 }).notNull(), // SNKRDUNK product ID
   listings: text("listings").notNull(), // JSON array of listings
   cachedAt: timestamp("cachedAt").defaultNow().notNull(), // When the cache was created
-  expiresAt: timestamp("expiresAt").notNull(), // When the cache expires (1 hour after cachedAt)
+  expiresAt: timestamp("expiresAt").notNull(), // When the cold cache expires (6 hours after cachedAt)
+  hotExpiresAt: timestamp("hotExpiresAt").notNull(), // When the hot cache expires (1 hour after cachedAt)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => {

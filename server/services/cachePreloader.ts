@@ -52,16 +52,18 @@ async function checkAndRefreshCaches() {
         
         console.log(`[Cache Preloader] Scraped ${listings.length} listings, ${onSaleListings.length} on sale`);
         
-        // Update cache with new data
-        const newExpiresAt = new Date(now.getTime() + CACHE_DURATION);
+        // Update cache with new data (dual-layer caching)
+        const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
+        const coldExpiresAt = new Date(now.getTime() + CACHE_DURATION); // 6 hours
         await db.saveSnkrdunkListingsCache({
           cardId: cache.cardId,
           snkrdunkId: cache.snkrdunkId,
           listings: JSON.stringify(onSaleListings),
-          expiresAt: newExpiresAt,
+          hotExpiresAt,
+          expiresAt: coldExpiresAt,
         });
         
-        console.log(`[Cache Preloader] Successfully refreshed cache for card ${cache.cardId} (expires at ${newExpiresAt})`);
+        console.log(`[Cache Preloader] Successfully refreshed cache for card ${cache.cardId} (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
         
         // Add delay between requests to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 2000));

@@ -2017,6 +2017,7 @@ export async function saveSnkrdunkListingsCache(data: {
   cardId: number;
   snkrdunkId: string;
   listings: string;
+  hotExpiresAt: Date;
   expiresAt: Date;
 }) {
   const db = await getDb();
@@ -2034,6 +2035,7 @@ export async function saveSnkrdunkListingsCache(data: {
     cardId: data.cardId,
     snkrdunkId: data.snkrdunkId,
     listings: data.listings,
+    hotExpiresAt: data.hotExpiresAt,
     expiresAt: data.expiresAt,
   });
 }
