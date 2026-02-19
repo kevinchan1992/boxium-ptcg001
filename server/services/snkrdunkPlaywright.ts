@@ -54,13 +54,13 @@ export async function scrapeSnkrdunkListings(
     const page = await context.newPage();
     console.log(`[SNKRDUNK Playwright] Browser launched, navigating to page...`);
 
-    // Navigate to page with increased timeout and faster load strategy
+    // Navigate to page with faster load strategy
     await page.goto(url, { 
-      waitUntil: "domcontentloaded", // Faster than networkidle
-      timeout: 60000 // Increase timeout to 60 seconds
+      waitUntil: "domcontentloaded", // Wait for DOM to be loaded
+      timeout: 60000
     });
 
-    // Wait for page to load - increased timeout for better reliability
+    // Wait for page to load - optimized to 6 seconds for better performance
     console.log(`[SNKRDUNK Playwright] Waiting for page to load...`);
     
     // Smart wait: wait for product links to appear
@@ -71,8 +71,8 @@ export async function scrapeSnkrdunkListings(
       console.log(`[SNKRDUNK Playwright] No links detected within 10s, proceeding anyway...`);
     }
     
-    // Additional wait for dynamic content to fully load
-    await page.waitForTimeout(8000);
+    // Optimized wait time: 6 seconds (reduced from 8 seconds)
+    await page.waitForTimeout(6000);
     console.log(`[SNKRDUNK Playwright] Page load complete, extracting data...`);
 
     // Extract product data using the same logic as the browser script

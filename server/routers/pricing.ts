@@ -166,7 +166,7 @@ export const pricingRouter = router({
           
           if (dataSource && dataSource.sourceUrl) {
             // Extract SNKRDUNK ID from URL (e.g., https://snkrdunk.com/apparels/93009 → 93009)
-            const snkrdunkIdMatch = dataSource.sourceUrl.match(/\/(\d+)/);
+            const snkrdunkIdMatch = dataSource.sourceUrl.match(/\/apparels\/(\d+)/);
             if (snkrdunkIdMatch) {
               const snkrdunkId = snkrdunkIdMatch[1];
               console.log(`[Pricing Router] SNKRDUNK ID: ${snkrdunkId}`);
