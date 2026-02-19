@@ -2093,3 +2093,25 @@ export async function clearAllSnkrdunkCache(): Promise<number> {
   
   return result[0].affectedRows || 0;
 }
+
+
+/**
+ * Get SNKRDUNK caches that are expiring soon
+ */
+export async function getExpiringSnkrdunkCaches(thresholdTime: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  
+  return await db
+    .select()
+    .from(snkrdunkListingsCache)
+    .where(
+      and(
+        lte(snkrdunkListingsCache.expiresAt, thresholdTime),
+        gte(snkrdunkListingsCache.expiresAt, new Date())
+      )
+    )
+    .execute();
+}

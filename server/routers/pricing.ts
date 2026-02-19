@@ -139,8 +139,8 @@ export const pricingRouter = router({
                 console.log('[Pricing Router] Cache miss or expired, scraping SNKRDUNK...');
                 const listings = await scrapeSnkrdunkListings(snkrdunkId);
                 
-                // Save to cache (expires in 1 hour)
-                const expiresAt = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+                // Save to cache (expires in 6 hours)
+                const expiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours from now
                 await db.saveSnkrdunkListingsCache({
                   cardId,
                   snkrdunkId,

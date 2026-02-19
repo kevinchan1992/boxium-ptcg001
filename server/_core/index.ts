@@ -109,6 +109,12 @@ async function startServer() {
     });
     // Start the trending cards scheduler (daily at 06:00 HKT)
     startTrendingCardsScheduler();
+    // Start the cache preloader service
+    import('../services/cachePreloader').then(({ startCachePreloader }) => {
+      startCachePreloader();
+    }).catch(err => {
+      console.error('[Server] Failed to start cache preloader:', err);
+    });
   });
 }
 

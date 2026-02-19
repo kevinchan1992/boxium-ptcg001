@@ -4333,3 +4333,30 @@
 - [x] 添加後端 API（getCacheStats, clearCardCache, clearAllCache）
 - [x] 添加數據庫函數（db.ts）
 - [x] 測試驗證緩存管理功能（6 個緩存正常顯示）
+
+
+## 優化: Pricing 頁面用戶體驗提升
+
+### Phase 1: 添加載入進度提示 - 完成
+- [x] 修改 PricingDetail.tsx 顯示「正在獲取最新價格...」而不是「暫無在售商品」
+- [x] 添加載入動畫效果（Loader2 旋轉動畫）
+- [x] 添加翻譯鍵（fetchingPrices, pleaseWait）
+
+### Phase 2: 延長緩存時間 - 完成
+- [x] 修改 pricing.ts 將緩存時間從 1 小時延長到 6 小時
+
+### Phase 3: 後台預加載機制 - 完成
+- [x] 創建緩存預加載服務（cachePreloader.ts）
+- [x] 實現即將過期緩存檢測（剩餘 30 分鐘）
+- [x] 實現後台自動刷新邏輯
+- [x] 實現已售出商品過濾邏輯（爬蟲已篩選 isOnlyOnSale=true）
+- [x] 添加定時任務（每 15 分鐘檢查一次）
+- [x] 在伺服器啟動時啟動服務
+- [x] 添加 getExpiringSnkrdunkCaches 數據庫函數
+
+### Phase 4: 測試驗證 - 完成
+- [x] 測試載入進度提示（清除緩存後測試，成功顯示「載入中...」）
+- [x] 測試緩存時間延長（已修改為 6 小時）
+- [x] 測試後台預加載機制（服務已啟動，每 15 分鐘檢查一次）
+- [x] 驗證已售出商品過濾（爬蟲使用 isOnlyOnSale=true）
+- [x] 驗證商品正常顯示（12 個 PSA 10 商品）
