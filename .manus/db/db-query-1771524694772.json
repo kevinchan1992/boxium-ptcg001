@@ -1,0 +1,26 @@
+{
+  "query": "SELECT * FROM dataSources WHERE cardId = 180001 AND source = 'snkrdunk' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT * FROM dataSources WHERE cardId = 180001 AND source = 'snkrdunk' LIMIT 1;",
+  "rows": [
+    {
+      "id": "180001",
+      "cardId": "180001",
+      "source": "snkrdunk",
+      "sourceUrl": "https://snkrdunk.com/apparels/737036",
+      "sourceIdentifier": "737036",
+      "isActive": "1",
+      "lastFetchedAt": "2026-02-17 18:41:11",
+      "lastFetchStatus": "success",
+      "fetchErrorMessage": "NULL",
+      "createdAt": "2026-02-14 15:33:23",
+      "updatedAt": "2026-02-17 18:41:11",
+      "lastUpdatedAt": "NULL",
+      "nextUpdateAt": "NULL",
+      "updateCount": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tsource\tsourceUrl\tsourceIdentifier\tisActive\tlastFetchedAt\tlastFetchStatus\tfetchErrorMessage\tcreatedAt\tupdatedAt\tlastUpdatedAt\tnextUpdateAt\tupdateCount\n180001\t180001\tsnkrdunk\thttps://snkrdunk.com/apparels/737036\t737036\t1\t2026-02-17 18:41:11\tsuccess\tNULL\t2026-02-14 15:33:23\t2026-02-17 18:41:11\tNULL\tNULL\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1540
+}

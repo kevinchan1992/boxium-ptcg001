@@ -20,15 +20,19 @@ export interface SnkrdunkListing {
  * @returns Array of PSA 10 listings sorted by price (lowest first)
  */
 export async function scrapeSnkrdunkListings(
-  snkrdunkId: string
+  snkrdunkId: string,
+  retryCount = 0
 ): Promise<SnkrdunkListing[]> {
   const url = `https://snkrdunk.com/en/trading-cards/${snkrdunkId}/used?sort=latest&isOnlyOnSale=true`;
+  const startTime = Date.now();
 
-  console.log(`[SNKRDUNK Playwright] Fetching URL: ${url}`);
+  console.log(`[SNKRDUNK Playwright] Starting scrape for SNKRDUNK ID: ${snkrdunkId} (attempt ${retryCount + 1}/3)`);
+  console.log(`[SNKRDUNK Playwright] Target URL: ${url}`);
 
   let browser;
   try {
     // Launch browser with anti-detection measures
+    console.log(`[SNKRDUNK Playwright] Launching browser...`);
     browser = await chromium.launch({
       headless: true,
       args: [
@@ -48,6 +52,7 @@ export async function scrapeSnkrdunkListings(
     });
 
     const page = await context.newPage();
+    console.log(`[SNKRDUNK Playwright] Browser launched, navigating to page...`);
 
     // Navigate to page with increased timeout and faster load strategy
     await page.goto(url, { 
@@ -55,8 +60,20 @@ export async function scrapeSnkrdunkListings(
       timeout: 60000 // Increase timeout to 60 seconds
     });
 
-    // Wait for page to load
-    await page.waitForTimeout(3000);
+    // Wait for page to load - increased timeout for better reliability
+    console.log(`[SNKRDUNK Playwright] Waiting for page to load...`);
+    
+    // Smart wait: wait for product links to appear
+    try {
+      await page.waitForSelector('a', { timeout: 10000 });
+      console.log(`[SNKRDUNK Playwright] Product links detected, waiting additional time for full load...`);
+    } catch (e) {
+      console.log(`[SNKRDUNK Playwright] No links detected within 10s, proceeding anyway...`);
+    }
+    
+    // Additional wait for dynamic content to fully load
+    await page.waitForTimeout(8000);
+    console.log(`[SNKRDUNK Playwright] Page load complete, extracting data...`);
 
     // Extract product data using the same logic as the browser script
     const listings: any[] = await page.evaluate(() => {
@@ -156,17 +173,58 @@ export async function scrapeSnkrdunkListings(
     // Sort by price (lowest first)
     psa10Listings.sort((a, b) => a.price - b.price);
 
+    const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(
-      `[SNKRDUNK Playwright] Extracted ${listings.length} total listings`
+      `[SNKRDUNK Playwright] Extraction complete in ${elapsedTime}s: ${listings.length} total listings, ${psa10Listings.length} PSA 10 listings`
     );
-    console.log(
-      `[SNKRDUNK Playwright] Found ${psa10Listings.length} PSA 10 listings`
-    );
+    
+    // Log price range if PSA 10 listings found
+    if (psa10Listings.length > 0) {
+      const minPrice = Math.min(...psa10Listings.map(l => l.price));
+      const maxPrice = Math.max(...psa10Listings.map(l => l.price));
+      console.log(
+        `[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD ${maxPrice.toFixed(2)}`
+      );
+    } else {
+      console.warn(`[SNKRDUNK Playwright] WARNING: No PSA 10 listings found for SNKRDUNK ID ${snkrdunkId}`);
+    }
+
+    // Retry logic: if no PSA 10 listings found and retries available
+    if (psa10Listings.length === 0 && retryCount < 2) {
+      console.log(`[SNKRDUNK Playwright] No PSA 10 listings found, retrying (${retryCount + 1}/2)...`);
+      await browser.close();
+      // Exponential backoff: wait longer between retries
+      const waitTime = 2000 * (retryCount + 1);
+      console.log(`[SNKRDUNK Playwright] Waiting ${waitTime}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      return scrapeSnkrdunkListings(snkrdunkId, retryCount + 1);
+    }
+    
+    // Don't cache empty results - let caller handle this
+    if (psa10Listings.length === 0) {
+      console.warn(`[SNKRDUNK Playwright] No PSA 10 listings found after ${retryCount + 1} attempts for SNKRDUNK ID ${snkrdunkId}`);
+    }
 
     return psa10Listings;
   } catch (error: any) {
-    console.error("[SNKRDUNK Playwright] Error:", error.message);
-    throw new Error(`Failed to scrape SNKRDUNK: ${error.message}`);
+    const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.error(`[SNKRDUNK Playwright] ERROR after ${elapsedTime}s:`, error.message);
+    console.error(`[SNKRDUNK Playwright] Error stack:`, error.stack);
+    console.error(`[SNKRDUNK Playwright] Failed SNKRDUNK ID: ${snkrdunkId}, Attempt: ${retryCount + 1}/3`);
+    
+    // Retry on error if retries available
+    if (retryCount < 2) {
+      console.log(`[SNKRDUNK Playwright] Retrying due to error (${retryCount + 1}/2)...`);
+      if (browser) {
+        await browser.close();
+      }
+      const waitTime = 2000 * (retryCount + 1);
+      console.log(`[SNKRDUNK Playwright] Waiting ${waitTime}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      return scrapeSnkrdunkListings(snkrdunkId, retryCount + 1);
+    }
+    
+    throw new Error(`Failed to scrape SNKRDUNK after ${retryCount + 1} attempts: ${error.message}`);
   } finally {
     if (browser) {
       await browser.close();

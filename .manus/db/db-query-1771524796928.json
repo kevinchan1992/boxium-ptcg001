@@ -1,0 +1,11 @@
+{
+  "query": "SELECT c.id, c.name, c.nameJa, ds.sourceUrl, ds.sourceIdentifier \nFROM cards c \nJOIN dataSources ds ON c.id = ds.cardId \nWHERE ds.source = 'snkrdunk' AND (ds.sourceUrl LIKE '%96659%' OR ds.sourceIdentifier = '96659') \nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, c.nameJa, ds.sourceUrl, ds.sourceIdentifier \nFROM cards c \nJOIN dataSources ds ON c.id = ds.cardId \nWHERE ds.source = 'snkrdunk' AND (ds.sourceUrl LIKE '%96659%' OR ds.sourceIdentifier = '96659') \nLIMIT 5;",
+  "rows": [],
+  "messages": [
+    "545542\tRayquaza VMAX UR[S8b 284/184](High Class Pack\"VMAX Climax Box\")\t\tレックウザVMAX UR[S8b 284/184](ハイクラスパック「VMAXクライマックス」)\thttps://snkrdunk.com/apparels/96659\t96659"
+  ],
+  "stdout": "id\tname\tnameJa\tsourceUrl\tsourceIdentifier\n545542\tRayquaza VMAX UR[S8b 284/184](High Class Pack\"VMAX Climax Box\")\t\tレックウザVMAX UR[S8b 284/184](ハイクラスパック「VMAXクライマックス」)\thttps://snkrdunk.com/apparels/96659\t96659\n",
+  "stderr": "",
+  "execution_time_ms": 1658
+}

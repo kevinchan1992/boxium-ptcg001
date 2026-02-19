@@ -1,0 +1,30 @@
+{
+  "query": "SELECT * FROM cards WHERE id = 180001 LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT * FROM cards WHERE id = 180001 LIMIT 1;",
+  "rows": [
+    {
+      "id": "180001",
+      "cardId": "snkrdunk-737036",
+      "name": "Pikachu ex SAR Style [MC 764/742](Start Deck 100 \"Battle Collection\")",
+      "nameJa": "ピカチュウex SAR仕様 [MC 764/742](スタートデッキ100「バトルコレクション」)",
+      "series": "NULL",
+      "setName": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "language": "en",
+      "releaseDate": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20251219023825-0.webp",
+      "imageUrlHiRes": "NULL",
+      "artist": "NULL",
+      "description": "NULL",
+      "types": "NULL",
+      "hp": "NULL",
+      "createdAt": "2026-02-14 15:33:22",
+      "updatedAt": "2026-02-17 18:40:51"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tname\tnameJa\tseries\tsetName\tcardNumber\trarity\tlanguage\treleaseDate\timageUrl\timageUrlHiRes\tartist\tdescription\ttypes\thp\tcreatedAt\tupdatedAt\n180001\tsnkrdunk-737036\tPikachu ex SAR Style [MC 764/742](Start Deck 100 \"Battle Collection\")\tピカチュウex SAR仕様 [MC 764/742](スタートデッキ100「バトルコレクション」)\tNULL\tNULL\tNULL\tNULL\ten\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20251219023825-0.webp\tNULL\tNULL\tNULL\tNULL\tNULL\t2026-02-14 15:33:22\t2026-02-17 18:40:51\n",
+  "stderr": "",
+  "execution_time_ms": 1527
+}

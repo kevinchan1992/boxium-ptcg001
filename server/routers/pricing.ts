@@ -210,17 +210,21 @@ export const pricingRouter = router({
                   console.log(`[Pricing Router] Merged ${newListings.length} new + ${uniqueCachedListings.length} cached = ${mergedListings.length} total`);
                 }
                 
-                // Save to cache with dual expiration times
-                const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
-                const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
-                await db.saveSnkrdunkListingsCache({
-                  cardId,
-                  snkrdunkId,
-                  listings: JSON.stringify(mergedListings),
-                  hotExpiresAt,
-                  expiresAt: coldExpiresAt,
-                });
-                console.log(`[Pricing Router] Saved SNKRDUNK data to cache (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
+                // Only save to cache if we have results (don't cache empty results)
+                if (mergedListings.length > 0) {
+                  const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
+                  const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
+                  await db.saveSnkrdunkListingsCache({
+                    cardId,
+                    snkrdunkId,
+                    listings: JSON.stringify(mergedListings),
+                    hotExpiresAt,
+                    expiresAt: coldExpiresAt,
+                  });
+                  console.log(`[Pricing Router] Saved ${mergedListings.length} SNKRDUNK listings to cache (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
+                } else {
+                  console.log(`[Pricing Router] Skipping SNKRDUNK cache save - no listings found`);
+                }
                 
                 snkrdunkListings = mergedListings.map((item) => ({
                   id: `snkrdunk-${item.url}`,
