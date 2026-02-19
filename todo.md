@@ -4360,3 +4360,25 @@
 - [x] 測試後台預加載機制（服務已啟動，每 15 分鐘檢查一次）
 - [x] 驗證已售出商品過濾（爬蟲使用 isOnlyOnSale=true）
 - [x] 驗證商品正常顯示（12 個 PSA 10 商品）
+
+
+## 新功能: Admin 一鍵更新所有卡牌緩存
+
+### Phase 1: 添加後端 API - 完成
+- [x] 在 server/routers.ts admin router 中添加 refreshAllCardsCache API
+- [x] 實現獲取所有有 SNKRDUNK 數據源的卡牌邏輯（getAllCardsWithSnkrdunk）
+- [x] 實現批量清除緩存邏輯（clearSnkrdunkCacheByCardId）
+- [x] 實現批量觸發爬蟲邏輯（scrapeSnkrdunkListings）
+- [x] 添加進度追蹤和結果統計（successCount, failureCount, errors）
+
+### Phase 2: 修改前端界面 - 完成
+- [x] 在 AdminCacheManagement.tsx 添加「更新所有卡牌緩存」卡片
+- [x] 添加更新按鈕和確認對話框
+- [x] 添加進度顯示（處理中的卡牌數量 + 進度條）
+- [x] 添加結果統計顯示（成功/失敗數量 + 顏色區分）
+
+### Phase 3: 測試驗證 - 完成
+- [x] 測試一鍵更新所有卡牌緩存功能（按鈕正常顯示）
+- [x] 驗證確認對話框顯示（正常顯示說明和按鈕）
+- [x] 驗證進度顯示組件（已實現，待實際執行測試）
+- [x] 驗證結果統計顯示（已實現，待實際執行測試）

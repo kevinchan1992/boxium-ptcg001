@@ -2115,3 +2115,33 @@ export async function getExpiringSnkrdunkCaches(thresholdTime: Date) {
     )
     .execute();
 }
+
+
+/**
+ * Get all cards that have SNKRDUNK data sources
+ */
+export async function getAllCardsWithSnkrdunk() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { cards, dataSources } = await import("../drizzle/schema");
+  
+  // Get all cards that have SNKRDUNK data sources
+  const result = await db
+    .select({
+      id: cards.id,
+      name: cards.name,
+      snkrdunkId: dataSources.sourceIdentifier,
+    })
+    .from(cards)
+    .innerJoin(dataSources, eq(dataSources.cardId, cards.id))
+    .where(
+      and(
+        isNotNull(dataSources.sourceIdentifier),
+        eq(dataSources.source, 'snkrdunk')
+      )
+    )
+    .execute();
+  
+  return result;
+}

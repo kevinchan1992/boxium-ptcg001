@@ -1680,6 +1680,85 @@ try {
         const deletedCount = await db.clearAllSnkrdunkCache();
         return { success: true, deletedCount };
       }),
+
+    refreshAllCardsCache: publicProcedure
+      .mutation(async () => {
+        try {
+          // Get all cards with SNKRDUNK data sources
+          const cardsWithSnkrdunk = await db.getAllCardsWithSnkrdunk();
+          
+          console.log(`[Admin] Starting cache refresh for ${cardsWithSnkrdunk.length} cards`);
+          
+          let successCount = 0;
+          let failureCount = 0;
+          const errors: Array<{ cardId: number; error: string }> = [];
+          
+          // Process each card
+          for (const card of cardsWithSnkrdunk) {
+            try {
+              // Skip if snkrdunkId is null
+              if (!card.snkrdunkId) {
+                console.log(`[Admin] Skipping card ${card.id} (${card.name}): no SNKRDUNK ID`);
+                failureCount++;
+                errors.push({
+                  cardId: card.id,
+                  error: 'No SNKRDUNK ID',
+                });
+                continue;
+              }
+              
+              // Clear existing cache
+              await db.clearSnkrdunkCacheByCardId(card.id);
+              
+              console.log(`[Admin] Cleared cache for card ${card.id} (${card.name})`);
+              
+              // The cache will be automatically refreshed on next request
+              // Or we can trigger it here by calling the scraper
+              const { scrapeSnkrdunkListings } = await import('./services/snkrdunkPlaywright');
+              const listings = await scrapeSnkrdunkListings(card.snkrdunkId);
+              
+              // Save to cache
+              const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours
+              await db.saveSnkrdunkListingsCache({
+                cardId: card.id,
+                snkrdunkId: card.snkrdunkId,
+                listings: JSON.stringify(listings),
+                expiresAt,
+              });
+              
+              console.log(`[Admin] Refreshed cache for card ${card.id} (${card.name}): ${listings.length} listings`);
+              successCount++;
+              
+              // Add delay to avoid rate limiting
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              
+            } catch (error) {
+              console.error(`[Admin] Error refreshing cache for card ${card.id}:`, error);
+              failureCount++;
+              errors.push({
+                cardId: card.id,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+          
+          console.log(`[Admin] Cache refresh completed: ${successCount} success, ${failureCount} failures`);
+          
+          return {
+            success: true,
+            totalCards: cardsWithSnkrdunk.length,
+            successCount,
+            failureCount,
+            errors,
+          };
+        } catch (error) {
+          console.error('[Admin] Error in refreshAllCardsCache:', error);
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
+        }
+      }),
   }),
 
   watchlist: router({
