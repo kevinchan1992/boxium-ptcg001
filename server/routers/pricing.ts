@@ -2,6 +2,7 @@ import { router, publicProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { fetchEbayListings } from '../services/ebay';
 import { scrapeSnkrdunkListings } from '../services/snkrdunkPlaywright';
+import { ebayRateLimiter } from '../services/rateLimiter';
 import * as db from '../db';
 
 interface PriceListing {
@@ -88,13 +89,69 @@ export const pricingRouter = router({
           throw new Error('Card not found');
         }
 
-        // Step 2: Fetch from eBay API using English name + card number + PSA10
+        // Step 2: Fetch from eBay API using English name + card number + PSA10 (with dual-layer caching and rate limiting)
         console.log('[Pricing Router] Fetching from eBay...');
         let ebayListings: any[] = [];
         try {
           const searchQuery = `${card.name} ${card.cardNumber || ''} PSA10`.trim();
-          ebayListings = await fetchEbayListings({ cardName: searchQuery });
-          console.log(`[Pricing Router] eBay returned ${ebayListings.length} listings`);
+          
+          // Check cache first (dual-layer caching: hot cache 1h + cold cache 6h)
+          const cache = await db.getEbayListingsCache(cardId, searchQuery);
+          const now = new Date();
+          
+          // Check hot cache first
+          if (cache && cache.hotExpiresAt && new Date(cache.hotExpiresAt) > now) {
+            // Hot cache is valid, use cached data directly
+            console.log(`[Pricing Router] Using eBay hot cache (expires at ${cache.hotExpiresAt})`);
+            const cachedListings = JSON.parse(cache.listings);
+            ebayListings = cachedListings;
+            console.log(`[Pricing Router] eBay hot cache returned ${ebayListings.length} listings`);
+          } else {
+            // Hot cache expired or doesn't exist, check rate limiter
+            if (ebayRateLimiter.tryConsume()) {
+              console.log('[Pricing Router] eBay hot cache expired, fetching from API...');
+              const newListings = await fetchEbayListings({ cardName: searchQuery });
+              
+              // URL deduplication: merge new listings with cached listings
+              let mergedListings = newListings;
+              if (cache && new Date(cache.expiresAt) > now) {
+                // Cold cache is still valid, merge with new listings
+                const cachedListings = JSON.parse(cache.listings);
+                const newIds = new Set(newListings.map(item => item.id));
+                const uniqueCachedListings = cachedListings.filter(
+                  (item: any) => !newIds.has(item.id)
+                );
+                mergedListings = [...newListings, ...uniqueCachedListings];
+                console.log(`[Pricing Router] Merged ${newListings.length} new + ${uniqueCachedListings.length} cached = ${mergedListings.length} total eBay listings`);
+              }
+              
+              // Save to cache with dual expiration times
+              const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
+              const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
+              await db.saveEbayListingsCache({
+                cardId,
+                searchQuery,
+                listings: JSON.stringify(mergedListings),
+                hotExpiresAt,
+                expiresAt: coldExpiresAt,
+              });
+              console.log(`[Pricing Router] Saved eBay data to cache (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
+              
+              ebayListings = mergedListings;
+              console.log(`[Pricing Router] eBay API returned ${ebayListings.length} listings`);
+            } else {
+              // Rate limit exceeded, use cold cache if available
+              console.log('[Pricing Router] eBay rate limit exceeded, checking cold cache...');
+              if (cache && new Date(cache.expiresAt) > now) {
+                console.log(`[Pricing Router] Using eBay cold cache (expires at ${cache.expiresAt})`);
+                const cachedListings = JSON.parse(cache.listings);
+                ebayListings = cachedListings;
+                console.log(`[Pricing Router] eBay cold cache returned ${ebayListings.length} listings`);
+              } else {
+                console.log('[Pricing Router] No valid eBay cache available, skipping eBay listings');
+              }
+            }
+          }
         } catch (error) {
           console.error('[Pricing Router] eBay fetch error:', error);
           // Continue even if eBay fails

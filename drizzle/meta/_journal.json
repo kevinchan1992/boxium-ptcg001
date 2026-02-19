@@ -183,6 +183,13 @@
       "when": 1771490557406,
       "tag": "0025_uneven_gamma_corps",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1771522976885,
+      "tag": "0026_lovely_sprite",
+      "breakpoints": true
     }
   ]
 }

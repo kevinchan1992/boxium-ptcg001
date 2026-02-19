@@ -2117,3 +2117,61 @@ export async function getExpiringSnkrdunkCaches(thresholdTime: Date) {
     )
     .execute();
 }
+
+/**
+ * Get eBay listings cache by cardId and searchQuery
+ */
+export async function getEbayListingsCache(cardId: number, searchQuery: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const { ebayListingsCache } = await import("../drizzle/schema");
+  
+  const result = await db
+    .select()
+    .from(ebayListingsCache)
+    .where(
+      and(
+        eq(ebayListingsCache.cardId, cardId),
+        eq(ebayListingsCache.searchQuery, searchQuery)
+      )
+    )
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Save eBay listings cache
+ */
+export async function saveEbayListingsCache(data: {
+  cardId: number;
+  searchQuery: string;
+  listings: string;
+  hotExpiresAt: Date;
+  expiresAt: Date;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const { ebayListingsCache } = await import("../drizzle/schema");
+  
+  // Delete existing cache for this card and query
+  await db
+    .delete(ebayListingsCache)
+    .where(
+      and(
+        eq(ebayListingsCache.cardId, data.cardId),
+        eq(ebayListingsCache.searchQuery, data.searchQuery)
+      )
+    );
+  
+  // Insert new cache
+  await db.insert(ebayListingsCache).values({
+    cardId: data.cardId,
+    searchQuery: data.searchQuery,
+    listings: data.listings,
+    hotExpiresAt: data.hotExpiresAt,
+    expiresAt: data.expiresAt,
+  });
+}

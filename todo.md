@@ -4385,3 +4385,27 @@
 - [x] 測試緩存機制是否正常工作（雙層緩存正常運作）
 - [ ] 測試 URL 去重功能
 - [ ] 測試手動刷新功能
+
+## 調查並修復 eBay API 配額問題
+
+### Phase 1: 調查 eBay API 使用情況 - 完成
+- [x] 檢查 eBay API 配置（EBAY_APP_ID, EBAY_CERT_ID）
+- [x] 檢查 eBay API 調用代碼（server/services/ebay.ts）
+- [x] 確認平台確實使用 eBay Finding API
+- [x] 檢查 eBay API 配額限制（每天 5,000 次調用）
+- [x] 發現問題：eBay API 沒有緩存機制，每次訪問都調用 API
+
+### Phase 2: 修復 eBay API 邏輯錯誤 - 完成
+- [x] 創建 ebayListingsCache 數據庫表
+- [x] 在 schema.ts 中添加 ebayListingsCache 表定義
+- [x] 實現 eBay 雙層緩存機制（熱緩存 1 小時 + 冷緩存 6 小時）
+- [x] 實現 URL 去重機制（合併新舊商品）
+- [x] 添加請求限流機制（Token Bucket 算法，每分鐘 3 個 token）
+- [x] 更新 pricing.ts 使用緩存和限流
+- [x] 更新 db.ts 添加 getEbayListingsCache 和 saveEbayListingsCache 函數
+
+### Phase 3: 測試驗證 - 完成
+- [x] 測試 eBay API 是否正常工作（緩存和限流機制正常運作）
+- [x] 測試 Pricing 頁面是否正常顯示 eBay 商品（API 配額仍超限，但緩存機制正常）
+- [x] 確認雙層緩存機制正常工作（熱緩存 1 小時 + 冷緩存 6 小時）
+- [x] 確認請求限流機制正常工作（Token Bucket 算法）

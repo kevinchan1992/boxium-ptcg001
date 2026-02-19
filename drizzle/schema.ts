@@ -170,6 +170,30 @@ export const snkrdunkListingsCache = mysqlTable("snkrdunkListingsCache", {
 export type SnkrdunkListingsCache = typeof snkrdunkListingsCache.$inferSelect;
 export type InsertSnkrdunkListingsCache = typeof snkrdunkListingsCache.$inferInsert;
 
+/**
+ * eBay listings cache table - stores cached eBay API results
+ */
+export const ebayListingsCache = mysqlTable("ebayListingsCache", {
+  id: int("id").autoincrement().primaryKey(),
+  cardId: int("cardId").notNull(), // Foreign key to cards table
+  searchQuery: varchar("searchQuery", { length: 500 }).notNull(), // eBay search query
+  listings: text("listings").notNull(), // JSON array of listings
+  cachedAt: timestamp("cachedAt").defaultNow().notNull(), // When the cache was created
+  expiresAt: timestamp("expiresAt").notNull(), // When the cold cache expires (6 hours after cachedAt)
+  hotExpiresAt: timestamp("hotExpiresAt").notNull(), // When the hot cache expires (1 hour after cachedAt)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => {
+  return {
+    cardIdIdx: index("cardId_idx").on(table.cardId),
+    expiresAtIdx: index("expiresAt_idx").on(table.expiresAt),
+    hotExpiresAtIdx: index("hotExpiresAt_idx").on(table.hotExpiresAt),
+  };
+});
+
+export type EbayListingsCache = typeof ebayListingsCache.$inferSelect;
+export type InsertEbayListingsCache = typeof ebayListingsCache.$inferInsert;
+
 // Batch task progress interface
 export interface BatchTaskProgress {
   taskId: number;

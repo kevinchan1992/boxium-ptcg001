@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS ebayListingsCache (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  cardId INT NOT NULL,\n  searchQuery VARCHAR(500) NOT NULL,\n  listings JSON NOT NULL,\n  hotExpiresAt TIMESTAMP NOT NULL,\n  expiresAt TIMESTAMP NOT NULL,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  UNIQUE KEY unique_card_query (cardId, searchQuery),\n  INDEX idx_card_id (cardId),\n  INDEX idx_hot_expires (hotExpiresAt),\n  INDEX idx_expires (expiresAt)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS ebayListingsCache (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  cardId INT NOT NULL,\n  searchQuery VARCHAR(500) NOT NULL,\n  listings JSON NOT NULL,\n  hotExpiresAt TIMESTAMP NOT NULL,\n  expiresAt TIMESTAMP NOT NULL,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  UNIQUE KEY unique_card_query (cardId, searchQuery),\n  INDEX idx_card_id (cardId),\n  INDEX idx_hot_expires (hotExpiresAt),\n  INDEX idx_expires (expiresAt)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1734
+}
