@@ -1,0 +1,15 @@
+{
+  "query": "SELECT cards.id, cards.name, dataSources.sourceIdentifier \nFROM cards \nINNER JOIN dataSources ON dataSources.cardId = cards.id \nWHERE dataSources.sourceIdentifier IS NOT NULL AND dataSources.source = 'snkrdunk'\nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT cards.id, cards.name, dataSources.sourceIdentifier \nFROM cards \nINNER JOIN dataSources ON dataSources.cardId = cards.id \nWHERE dataSources.sourceIdentifier IS NOT NULL AND dataSources.source = 'snkrdunk'\nLIMIT 5;",
+  "rows": [],
+  "messages": [
+    "270168\tMystery Zone [e5 085/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\t110662",
+    "270170\tMoltres [e5 018/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\t110664",
+    "270172\tArticuno [e5 030/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\t110665",
+    "270174\tPiloswine [e5 033/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\t110668",
+    "270175\tBeedrill [e5 004/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\t110670"
+  ],
+  "stdout": "id\tname\tsourceIdentifier\n270168\tMystery Zone [e5 085/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\t110662\n270170\tMoltres [e5 018/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\t110664\n270172\tArticuno [e5 030/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\t110665\n270174\tPiloswine [e5 033/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\t110668\n270175\tBeedrill [e5 004/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\t110670\n",
+  "stderr": "",
+  "execution_time_ms": 1571
+}

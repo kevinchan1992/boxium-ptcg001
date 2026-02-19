@@ -1681,9 +1681,87 @@ try {
         return { success: true, deletedCount };
       }),
 
+    // Start refresh all cards cache task (background)
+    startRefreshAllCardsCache: publicProcedure
+      .mutation(async () => {
+        try {
+          console.log('[Admin] startRefreshAllCardsCache called');
+          
+          // Get all cards with SNKRDUNK data sources
+          const cardsWithSnkrdunk = await db.getAllCardsWithSnkrdunk();
+          
+          console.log(`[Admin] Found ${cardsWithSnkrdunk.length} cards with SNKRDUNK data sources`);
+          
+          // Create background task
+          const { createTask, executeRefreshAllCardsCache } = await import('./services/backgroundTaskService');
+          const task = await createTask('refresh_all_cards_cache', cardsWithSnkrdunk.length);
+          
+          console.log(`[Admin] Created background task ${task.id}`);
+          
+          // Start task execution in background (don't await)
+          executeRefreshAllCardsCache(
+            task.id,
+            cardsWithSnkrdunk.map(card => ({
+              cardId: card.id,
+              snkrdunkId: card.snkrdunkId || '',
+              name: card.name,
+            }))
+          ).catch(error => {
+            console.error(`[Admin] Error executing task ${task.id}:`, error);
+          });
+          
+          return {
+            success: true,
+            taskId: task.id,
+            totalCards: cardsWithSnkrdunk.length,
+          };
+        } catch (error) {
+          console.error('[Admin] Error in startRefreshAllCardsCache:', error);
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
+        }
+      }),
+    
+    // Get task progress
+    getTaskProgress: publicProcedure
+      .input(z.object({ taskId: z.number() }))
+      .query(async ({ input }) => {
+        const { getTask } = await import('./services/backgroundTaskService');
+        const task = await getTask(input.taskId);
+        
+        if (!task) {
+          throw new Error('Task not found');
+        }
+        
+        return task;
+      }),
+    
+    // Cancel task
+    cancelTask: publicProcedure
+      .input(z.object({ taskId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { cancelTask } = await import('./services/backgroundTaskService');
+        await cancelTask(input.taskId);
+        return { success: true };
+      }),
+    
+    // List tasks
+    listTasks: publicProcedure
+      .input(z.object({ limit: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        const { listTasks } = await import('./services/backgroundTaskService');
+        const tasks = await listTasks(input?.limit);
+        return tasks;
+      }),
+    
+    // Legacy API (deprecated, kept for compatibility)
     refreshAllCardsCache: publicProcedure
       .mutation(async () => {
         try {
+          console.log('[Admin] refreshAllCardsCache called (deprecated, use startRefreshAllCardsCache instead)');
+          
           // Get all cards with SNKRDUNK data sources
           const cardsWithSnkrdunk = await db.getAllCardsWithSnkrdunk();
           
@@ -1693,32 +1771,21 @@ try {
           let failureCount = 0;
           const errors: Array<{ cardId: number; error: string }> = [];
           
-          // Process each card
-          for (const card of cardsWithSnkrdunk) {
+          // Process only first 10 cards to avoid timeout
+          const cardsToProcess = cardsWithSnkrdunk.slice(0, 10);
+          
+          for (const card of cardsToProcess) {
             try {
-              // Skip if snkrdunkId is null
               if (!card.snkrdunkId) {
-                console.log(`[Admin] Skipping card ${card.id} (${card.name}): no SNKRDUNK ID`);
                 failureCount++;
-                errors.push({
-                  cardId: card.id,
-                  error: 'No SNKRDUNK ID',
-                });
                 continue;
               }
               
-              // Clear existing cache
               await db.clearSnkrdunkCacheByCardId(card.id);
-              
-              console.log(`[Admin] Cleared cache for card ${card.id} (${card.name})`);
-              
-              // The cache will be automatically refreshed on next request
-              // Or we can trigger it here by calling the scraper
               const { scrapeSnkrdunkListings } = await import('./services/snkrdunkPlaywright');
               const listings = await scrapeSnkrdunkListings(card.snkrdunkId);
               
-              // Save to cache
-              const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours
+              const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000);
               await db.saveSnkrdunkListingsCache({
                 cardId: card.id,
                 snkrdunkId: card.snkrdunkId,
@@ -1726,10 +1793,7 @@ try {
                 expiresAt,
               });
               
-              console.log(`[Admin] Refreshed cache for card ${card.id} (${card.name}): ${listings.length} listings`);
               successCount++;
-              
-              // Add delay to avoid rate limiting
               await new Promise(resolve => setTimeout(resolve, 2000));
               
             } catch (error) {
@@ -1742,14 +1806,12 @@ try {
             }
           }
           
-          console.log(`[Admin] Cache refresh completed: ${successCount} success, ${failureCount} failures`);
-          
           return {
             success: true,
-            totalCards: cardsWithSnkrdunk.length,
+            totalCards: cardsToProcess.length,
             successCount,
             failureCount,
-            errors,
+            message: 'Deprecated API: Only processed first 10 cards. Use startRefreshAllCardsCache for full update.',
           };
         } catch (error) {
           console.error('[Admin] Error in refreshAllCardsCache:', error);

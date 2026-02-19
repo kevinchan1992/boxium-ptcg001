@@ -369,3 +369,26 @@ export const trendingCardsCache = mysqlTable("trendingCardsCache", {
 
 export type TrendingCardsCache = typeof trendingCardsCache.$inferSelect;
 export type InsertTrendingCardsCache = typeof trendingCardsCache.$inferInsert;
+
+
+/**
+ * Background tasks table - stores long-running background task information
+ */
+export const backgroundTasks = mysqlTable("backgroundTasks", {
+  id: int("id").autoincrement().primaryKey(),
+  taskType: varchar("taskType", { length: 64 }).notNull(), // Task type (e.g., "refresh_all_cards_cache")
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed", "cancelled"]).default("pending").notNull(),
+  totalItems: int("totalItems").default(0).notNull(), // Total number of items to process
+  processedItems: int("processedItems").default(0).notNull(), // Number of items processed
+  successCount: int("successCount").default(0).notNull(), // Number of successful items
+  failureCount: int("failureCount").default(0).notNull(), // Number of failed items
+  currentItem: text("currentItem"), // Current item being processed (JSON)
+  errorMessage: text("errorMessage"), // Error message if failed
+  startedAt: timestamp("startedAt"), // Task start time
+  completedAt: timestamp("completedAt"), // Task completion time
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BackgroundTask = typeof backgroundTasks.$inferSelect;
+export type InsertBackgroundTask = typeof backgroundTasks.$inferInsert;

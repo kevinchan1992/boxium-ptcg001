@@ -2122,9 +2122,14 @@ export async function getExpiringSnkrdunkCaches(thresholdTime: Date) {
  */
 export async function getAllCardsWithSnkrdunk() {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) {
+    console.log('[getAllCardsWithSnkrdunk] DB connection failed');
+    return [];
+  }
   
   const { cards, dataSources } = await import("../drizzle/schema");
+  
+  console.log('[getAllCardsWithSnkrdunk] Querying cards with SNKRDUNK data sources...');
   
   // Get all cards that have SNKRDUNK data sources
   const result = await db
@@ -2142,6 +2147,8 @@ export async function getAllCardsWithSnkrdunk() {
       )
     )
     .execute();
+  
+  console.log(`[getAllCardsWithSnkrdunk] Found ${result.length} cards with SNKRDUNK data sources`);
   
   return result;
 }

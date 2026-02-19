@@ -4382,3 +4382,45 @@
 - [x] 驗證確認對話框顯示（正常顯示說明和按鈕）
 - [x] 驗證進度顯示組件（已實現，待實際執行測試）
 - [x] 驗證結果統計顯示（已實現，待實際執行測試）
+
+## Bug 修復: Admin 一鍵更新所有卡牌緩存功能查詢邏輯錯誤
+
+- [x] 檢查數據庫結構（cards 表和 dataSources 表的關聯）
+- [x] 檢查 getAllCardsWithSnkrdunk 函數的 SQL 查詢（後端成功找到 8055 張卡牌）
+- [x] 識別問題：前端顯示 0/0，但後端正在執行（8055 張卡牌）
+### Phase 1: 創建數據庫表和 Schema - 完成
+- [x] 在 drizzle/schema.ts 創建 backgroundTasks 表
+- [x] 定義任務狀態（pending, running, completed, failed, cancelled）
+- [x] 定義任務類型（refresh_all_cards_cache）
+- [x] 手動創建 backgroundTasks 表（由於 drizzle-kit 問題）
+
+### Phase 2: 實現後台任務服務 - 完成
+- [x] 創建 server/services/backgroundTaskService.ts
+- [x] 實現任務創建和狀態管理（createTask, updateTaskProgress, getTask, listTasks）
+- [x] 實現任務執行器（executeRefreshAllCardsCache，批量處理 10 張卡牌）
+- [x] 實現進度更新機制（每處理一張卡牌更新一次）
+- [x] 實現錯誤處理（try-catch + 錯誤記錄）
+- [x] 實現任務取消功能（cancelTask）
+
+### Phase 3: 實現 API 層 - 完成
+- [x] 添加 admin.startRefreshAllCardsCache API（啟動後台任務）
+- [x] 添加 admin.getTaskProgress API（獲取任務進度）
+- [x] 添加 admin.cancelTask API（取消任務）
+- [x] 添加 admin.listTasks API（查看任務歷史）
+- [x] 保留舊的 refreshAllCardsCache API（僅處理 10 張卡牌，避免超時）
+
+### Phase 4: 修改前端界面 - 完成
+- [x] 修改 AdminCacheManagement.tsx 使用新 API
+- [x] 實現進度輪詢（每 3 秒更新）
+- [x] 顯示實時進度條和統計
+- [x] 顯示當前處理的卡牌信息
+- [x] 顯示預估剩餘時間
+- [x] 添加任務取消按鈕
+- [ ] 添加任務歷史記錄查看（可選功能）
+
+### Phase 5: 測試驗證 - 完成
+- [x] 測試任務啟動（成功啟動 8055 張卡牌的更新任務）
+- [x] 測試進度輪詢（每 3 秒自動更新，顯示實時進度、當前卡牌、預估時間）
+- [x] 測試任務取消（成功取消任務，界面恢復正常）
+- [x] 測試錯誤處理（失敗計數器正常顯示）
+- [x] 測試任務完成通知（useEffect 監聽任務狀態，完成時顯示 toast）

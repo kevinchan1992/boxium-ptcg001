@@ -1,0 +1,21 @@
+{
+  "query": "SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, createdAt, updatedAt FROM backgroundTasks ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, createdAt, updatedAt FROM backgroundTasks ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "taskType": "refresh_all_cards_cache",
+      "status": "cancelled",
+      "totalItems": "8055",
+      "processedItems": "6",
+      "successCount": "6",
+      "failureCount": "0",
+      "createdAt": "2026-02-19 04:58:09",
+      "updatedAt": "2026-02-19 04:59:39"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttaskType\tstatus\ttotalItems\tprocessedItems\tsuccessCount\tfailureCount\tcreatedAt\tupdatedAt\n1\trefresh_all_cards_cache\tcancelled\t8055\t6\t6\t0\t2026-02-19 04:58:09\t2026-02-19 04:59:39\n",
+  "stderr": "",
+  "execution_time_ms": 1744
+}
