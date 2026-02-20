@@ -52,24 +52,13 @@ export function AdminDataSources() {
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [isCancelled, setIsCancelled] = useState(false);
   const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const pausedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(50);
 
   const utils = trpc.useUtils();
-  const dataSourcesQuery = trpc.admin.getDataSources.useQuery({
-    page: currentPage,
-    pageSize,
-    searchQuery,
-  });
-
-  const dataSources = dataSourcesQuery.data?.data || [];
-  const totalCount = dataSourcesQuery.data?.total || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const dataSourcesQuery = trpc.admin.getDataSources.useQuery();
 
 
 
@@ -82,50 +71,6 @@ export function AdminDataSources() {
     },
     onError: (error: any) => {
       toast.error(`添加失敗: ${error.message}`);
-    },
-  });
-
-  const startPersistentBulkAddMutation = trpc.admin.startPersistentBulkAddDataSources.useMutation();
-  const bulkAddProgressQuery = trpc.admin.getBulkAddProgress.useQuery(undefined, {
-    refetchInterval: 3000, // Poll every 3 seconds
-  });
-
-  // Track if bulk add task just completed (to trigger refresh only once)
-  const [lastBulkAddTaskId, setLastBulkAddTaskId] = useState<number | null>(null);
-  
-  // Auto-refresh data sources when bulk add task completes
-  useEffect(() => {
-    const currentTask = bulkAddProgressQuery.data;
-    if (currentTask && currentTask.status === 'completed' && currentTask.taskId !== lastBulkAddTaskId) {
-      // Task just completed for the first time, refresh data sources list
-      const refreshDataSources = async () => {
-        setLastBulkAddTaskId(currentTask.taskId);
-        setCurrentPage(1);
-        setSearchQuery('');
-        await new Promise(resolve => setTimeout(resolve, 500)); // Wait for state updates
-        await utils.admin.getDataSources.invalidate();
-        toast.success("批量添加已完成，數據源列表已更新");
-      };
-      refreshDataSources();
-    }
-  }, [bulkAddProgressQuery.data?.status, bulkAddProgressQuery.data?.taskId, lastBulkAddTaskId]);
-  const pauseBulkAddTaskMutation = trpc.admin.pausePersistentTask.useMutation({
-    onSuccess: () => {
-      toast.success("批量添加已暫停");
-      utils.admin.getBulkAddProgress.invalidate();
-    },
-  });
-  const resumeBulkAddTaskMutation = trpc.admin.resumePersistentTask.useMutation({
-    onSuccess: () => {
-      toast.success("批量添加已繼續");
-      utils.admin.getBulkAddProgress.invalidate();
-    },
-  });
-  const cancelBulkAddTaskMutation = trpc.admin.cancelPersistentTask.useMutation({
-    onSuccess: () => {
-      toast.success("批量添加已取消");
-      utils.admin.getBulkAddProgress.invalidate();
-      utils.admin.getDataSources.invalidate();
     },
   });
 
@@ -195,7 +140,7 @@ export function AdminDataSources() {
     }
 
     // Deduplicate URLs
-    const existingUrls = dataSources?.map((ds: any) => ds.sourceUrl) || [];
+    const existingUrls = dataSourcesQuery.data?.map((ds: any) => ds.sourceUrl) || [];
     const uniqueUrls = Array.from(new Set(urls)); // Remove duplicates within input
     const newUrls = uniqueUrls.filter(url => !existingUrls.includes(url)); // Remove existing URLs
     const duplicateCount = urls.length - newUrls.length;
@@ -210,23 +155,71 @@ export function AdminDataSources() {
       toast.info(`已過濾 ${duplicateCount} 個重複 URL`);
     }
 
-    // Use persistent batch add API
     setIsSubmitting(true);
     setBatchResults({ success: 0, failed: 0, errors: [], duplicates: duplicateCount });
+    
+    const startTime = Date.now();
+    let successCount = 0;
+    let failedCount = 0;
+    const errors: string[] = [];
+    const failedUrls: string[] = [];
 
     try {
-      const result = await startPersistentBulkAddMutation.mutateAsync({ urls: newUrls });
-      toast.success(result.message);
-      setSnkrdunkUrl("");
-      // Reset to first page and clear search query
-      setCurrentPage(1);
-      setSearchQuery('');
-      // Wait for state updates to take effect before invalidating
-      await new Promise(resolve => setTimeout(resolve, 100));
-      // Use await to ensure invalidate completes before continuing
-      await utils.admin.getDataSources.invalidate();
-    } catch (error: any) {
-      toast.error(`批量添加啟動失敗: ${error.message}`);
+      // Process URLs in parallel batches with rate limiting
+      const BATCH_SIZE = 5; // Process 5 URLs at a time to avoid rate limits
+      const DELAY_BETWEEN_BATCHES = 2000; // 2 second delay between batches
+      
+      pausedRef.current = false;
+      setIsPaused(false);
+      
+      for (let i = 0; i < newUrls.length; i += BATCH_SIZE) {
+        // Check if paused
+        while (pausedRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        const batch = newUrls.slice(i, i + BATCH_SIZE);
+        const batchEnd = Math.min(i + BATCH_SIZE, newUrls.length);
+        setBatchResults(prev => ({ ...prev, progress: `處理中 ${batchEnd}/${newUrls.length}` }));
+        
+        // Process batch in parallel
+        const results = await Promise.allSettled(
+          batch.map(url => addDataSourceMutation.mutateAsync({ url }))
+        );
+        
+        // Add delay between batches to avoid rate limits (except for last batch)
+        if (i + BATCH_SIZE < newUrls.length) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
+        }
+        
+        // Count successes and failures
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            successCount++;
+          } else {
+            failedCount++;
+            const url = batch[index];
+            const errorMsg = (result.reason as any)?.message || '未知錯誤';
+            errors.push(`${url}: ${errorMsg}`);
+            failedUrls.push(url);
+          }
+        });
+      }
+
+      const endTime = Date.now();
+      const durationSeconds = ((endTime - startTime) / 1000).toFixed(1);
+      const avgSpeed = (newUrls.length / (endTime - startTime) * 1000).toFixed(1);
+      
+      setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount, failedUrls });
+      
+      if (successCount > 0) {
+        toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}（耗時 ${durationSeconds} 秒，平均 ${avgSpeed} URL/秒）`);
+        if (failedCount === 0) {
+          setSnkrdunkUrl("");
+        }
+      } else {
+        toast.error(`所有 ${failedCount} 個數據源添加失敗`);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -337,30 +330,6 @@ export function AdminDataSources() {
     },
   });
 
-  // 取消 eBay 任務
-  const cancelEbayTaskMutation = trpc.admin.cancelPersistentTask.useMutation({
-    onSuccess: () => {
-      toast.success("eBay 批量更新已取消");
-      utils.admin.getDataSources.invalidate();
-      setEbayTaskId(null);
-    },
-    onError: (error: any) => {
-      toast.error(`取消失敗: ${error.message}`);
-    },
-  });
-
-  // 取消 SNKRDUNK 任務
-  const cancelSnkrdunkTaskMutation = trpc.admin.cancelPersistentTask.useMutation({
-    onSuccess: () => {
-      toast.success("SNKRDUNK 批量更新已取消");
-      utils.admin.getDataSources.invalidate();
-      setSnkrdunkTaskId(null);
-    },
-    onError: (error: any) => {
-      toast.error(`取消失敗: ${error.message}`);
-    },
-  });
-
   // 當任務完成時，顯示通知並刷新數據
   useEffect(() => {
     if (ebayTaskProgress && ebayTaskProgress.status === 'completed') {
@@ -408,11 +377,11 @@ export function AdminDataSources() {
     }
   };
 
-   const toggleSelectAll = () => {
-    if (selectedIds.length === dataSources.length) {
+  const toggleSelectAll = () => {
+    if (selectedIds.length === dataSourcesQuery.data?.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(dataSources.map((ds: any) => ds.id));
+      setSelectedIds(dataSourcesQuery.data?.map((ds: any) => ds.id) || []);
     }
   };
 
@@ -511,35 +480,22 @@ export function AdminDataSources() {
                   )}
                 </Button>
                 {isSubmitting && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        pausedRef.current = !pausedRef.current;
-                        setIsPaused(pausedRef.current);
-                        if (pausedRef.current) {
-                          toast.info("已暫停，點擊繼續按鈕恢復處理");
-                        } else {
-                          toast.info("已繼續處理");
-                        }
-                      }}
-                      className="flex-1 sm:flex-none"
-                    >
-                      {isPaused ? "繼續" : "暫停"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={() => {
-                        setIsCancelled(true);
-                        toast.info("正在取消批量添加...");
-                      }}
-                      className="flex-1 sm:flex-none"
-                    >
-                      取消
-                    </Button>
-                  </>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      pausedRef.current = !pausedRef.current;
+                      setIsPaused(pausedRef.current);
+                      if (pausedRef.current) {
+                        toast.info("已暫停，點擊繼續按鈕恢復處理");
+                      } else {
+                        toast.info("已繼續處理");
+                      }
+                    }}
+                    className="flex-1 sm:flex-none"
+                  >
+                    {isPaused ? "繼續" : "暫停"}
+                  </Button>
                 )}
               </div>
             </form>
@@ -597,7 +553,6 @@ export function AdminDataSources() {
                   progress={snkrdunkTaskProgress}
                   onPause={() => pauseSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
                   onResume={() => resumeSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
-                  onCancel={() => cancelSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
                   isPauseLoading={pauseSnkrdunkTaskMutation.isPending}
                   isResumeLoading={resumeSnkrdunkTaskMutation.isPending}
                 />
@@ -608,20 +563,8 @@ export function AdminDataSources() {
                   progress={ebayTaskProgress}
                   onPause={() => pauseEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
                   onResume={() => resumeEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
-                  onCancel={() => cancelEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
                   isPauseLoading={pauseEbayTaskMutation.isPending}
                   isResumeLoading={resumeEbayTaskMutation.isPending}
-                />
-              )}
-              {bulkAddProgressQuery.data && (bulkAddProgressQuery.data.status === 'running' || bulkAddProgressQuery.data.status === 'paused') && (
-                <BatchTaskProgressBar
-                  taskType="批量添加"
-                  progress={bulkAddProgressQuery.data}
-                  onPause={() => pauseBulkAddTaskMutation.mutate({ taskId: bulkAddProgressQuery.data!.taskId })}
-                  onResume={() => resumeBulkAddTaskMutation.mutate({ taskId: bulkAddProgressQuery.data!.taskId })}
-                  onCancel={() => cancelBulkAddTaskMutation.mutate({ taskId: bulkAddProgressQuery.data!.taskId })}
-                  isPauseLoading={pauseBulkAddTaskMutation.isPending}
-                  isResumeLoading={resumeBulkAddTaskMutation.isPending}
                 />
               )}
             </div>
@@ -643,11 +586,11 @@ export function AdminDataSources() {
                 <h2 className="text-2xl font-semibold text-foreground">
                   數據源列表
                 </h2>
-                {dataSources && dataSources.length > 0 && (
+                {dataSourcesQuery.data && dataSourcesQuery.data.length > 0 && (
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="select-all"
-                      checked={selectedIds.length === dataSources.length}
+                      checked={selectedIds.length === dataSourcesQuery.data.length}
                       onCheckedChange={toggleSelectAll}
                     />
                     <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
@@ -705,9 +648,27 @@ export function AdminDataSources() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : dataSources && dataSources.length > 0 ? (
+            ) : dataSourcesQuery.data && dataSourcesQuery.data.length > 0 ? (
               <div className="space-y-4">
-                {dataSources.map((source: any) => (
+                {(() => {
+                  const filteredData = dataSourcesQuery.data.filter((source: any) => {
+                    if (!searchQuery) return true;
+                    const query = searchQuery.toLowerCase();
+                    return (
+                      source.card?.name?.toLowerCase().includes(query) ||
+                      source.sourceUrl?.toLowerCase().includes(query)
+                    );
+                  });
+                  
+                  if (filteredData.length === 0) {
+                    return (
+                      <div className="text-center py-12 text-muted-foreground">
+                        找不到符合「{searchQuery}」的數據源
+                      </div>
+                    );
+                  }
+                  
+                  return filteredData.map((source: any) => (
                   <div
                     key={source.id}
                     className="flex items-start justify-between gap-4 p-4 bg-background rounded-lg border border-border"
@@ -791,57 +752,12 @@ export function AdminDataSources() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  ));
+                })()}
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 尚未添加任何數據源
-              </div>
-            )}
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-                <div className="text-sm text-muted-foreground">
-                  顯示第 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalCount)} 筆，共 {totalCount} 筆
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                  >
-                    第一頁
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    上一頁
-                  </Button>
-                  <span className="text-sm text-muted-foreground px-4">
-                    第 {currentPage} / {totalPages} 頁
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    下一頁
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                  >
-                    最後一頁
-                  </Button>
-                </div>
               </div>
             )}
           </Card>

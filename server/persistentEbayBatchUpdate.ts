@@ -15,9 +15,8 @@ export async function executePersistentEbayBatchUpdate(): Promise<{ taskId: numb
     throw new Error('批量更新已在運行中');
   }
 
-  // Get all unique cards from data sources (without pagination limit)
-  const dataSourcesResult = await db.getDataSources({ pageSize: 999999 });
-  const dataSources = dataSourcesResult.data;
+  // Get all unique cards from data sources
+  const dataSources = await db.getDataSources();
   const uniqueCards = new Map<number, { id: number; name: string }>();
   
   for (const source of dataSources) {
@@ -42,13 +41,6 @@ export async function executePersistentEbayBatchUpdate(): Promise<{ taskId: numb
         // Check if task is paused
         while (await batchTaskManager.isTaskPaused(taskId)) {
           await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-
-        // Check if task is cancelled (status = completed)
-        const currentTask = await batchTaskManager.getBatchTaskProgress(taskId);
-        if (!currentTask || currentTask.status === 'completed') {
-          console.log(`[PersistentEbayBatchUpdate] Task ${taskId} cancelled, stopping`);
-          return;
         }
 
         // Get full card info

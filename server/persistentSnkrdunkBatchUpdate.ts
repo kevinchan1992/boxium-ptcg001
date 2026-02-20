@@ -13,9 +13,9 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
     throw new Error('SNKRDUNK 批量更新已在運行中');
   }
 
-  // Get all SNKRDUNK data sources (without pagination limit)
-  const allDataSourcesResult = await db.getDataSources({ pageSize: 999999 });
-  const snkrdunkSources = allDataSourcesResult.data.filter((ds: any) => ds.source === 'snkrdunk');
+  // Get all SNKRDUNK data sources
+  const allDataSources = await db.getDataSources();
+  const snkrdunkSources = allDataSources.filter(ds => ds.source === 'snkrdunk');
   
   // Get unique cards
   const uniqueCards = new Map<number, { id: number; name: string }>();
@@ -43,13 +43,6 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
-        // Check if task is cancelled (status = completed)
-        const currentTask = await batchTaskManager.getBatchTaskProgress(taskId);
-        if (!currentTask || currentTask.status === 'completed') {
-          console.log(`[PersistentSnkrdunkBatchUpdate] Task ${taskId} cancelled, stopping`);
-          return;
-        }
-
         // Get card's SNKRDUNK data sources
         const cardDataSources = snkrdunkSources.filter((ds: any) => ds.cardId === card.id);
         if (cardDataSources.length === 0) {
@@ -67,10 +60,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         // Scrape SNKRDUNK page
         const scrapedData = await scrapeSnkrdunkPage(dataSource.sourceUrl);
         if (!scrapedData || !scrapedData.priceHistory || scrapedData.priceHistory.length === 0) {
-          // This is a normal case: card has no price data on SNKRDUNK
-          // Skip without counting as error
-          await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
-          console.log(`[PersistentSnkrdunkBatchUpdate] Card ${card.id} has no price data, skipping`);
+          await batchTaskManager.updateTaskProgressFailure(taskId, card.id, card.name, "未找到 SNKRDUNK 價格數據");
           continue;
         }
 

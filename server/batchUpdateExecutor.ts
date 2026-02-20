@@ -26,8 +26,8 @@ export async function executeEbayBatchUpdate(): Promise<BatchUpdateResult> {
 
   try {
     // 獲取所有 eBay 數據源的唯一卡牌
-    const dataSourcesResult = await db.getDataSources();
-    const ebayDataSources = dataSourcesResult.data.filter((ds: any) => ds.source === "ebay");
+    const dataSources = await db.getDataSources();
+    const ebayDataSources = dataSources.filter(ds => ds.source === "ebay");
     const uniqueCards = new Map<number, { id: number; name: string; imageUrl: string | null }>();
     
     for (const source of ebayDataSources) {
@@ -123,8 +123,8 @@ export async function executeSnkrdunkBatchUpdate(): Promise<BatchUpdateResult> {
 
   try {
     // 獲取所有 SNKRDUNK 數據源的唯一卡牌
-    const dataSourcesResult = await db.getDataSources();
-    const snkrdunkSources = dataSourcesResult.data.filter((ds: any) => ds.source === "snkrdunk");
+    const dataSources = await db.getDataSources();
+    const snkrdunkSources = dataSources.filter(ds => ds.source === "snkrdunk");
     const uniqueCards = new Map<number, { id: number; name: string }>();
     
     for (const source of snkrdunkSources) {
