@@ -89,6 +89,26 @@ export function AdminDataSources() {
   const bulkAddProgressQuery = trpc.admin.getBulkAddProgress.useQuery(undefined, {
     refetchInterval: 3000, // Poll every 3 seconds
   });
+
+  // Track if bulk add task just completed (to trigger refresh only once)
+  const [lastBulkAddTaskId, setLastBulkAddTaskId] = useState<number | null>(null);
+  
+  // Auto-refresh data sources when bulk add task completes
+  useEffect(() => {
+    const currentTask = bulkAddProgressQuery.data;
+    if (currentTask && currentTask.status === 'completed' && currentTask.taskId !== lastBulkAddTaskId) {
+      // Task just completed for the first time, refresh data sources list
+      const refreshDataSources = async () => {
+        setLastBulkAddTaskId(currentTask.taskId);
+        setCurrentPage(1);
+        setSearchQuery('');
+        await new Promise(resolve => setTimeout(resolve, 500)); // Wait for state updates
+        await utils.admin.getDataSources.invalidate();
+        toast.success("批量添加已完成，數據源列表已更新");
+      };
+      refreshDataSources();
+    }
+  }, [bulkAddProgressQuery.data?.status, bulkAddProgressQuery.data?.taskId, lastBulkAddTaskId]);
   const pauseBulkAddTaskMutation = trpc.admin.pausePersistentTask.useMutation({
     onSuccess: () => {
       toast.success("批量添加已暫停");
