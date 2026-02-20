@@ -480,22 +480,34 @@ export async function checkDataSourceExists(url: string): Promise<boolean> {
   return result.length > 0;
 }
 
-export async function getDataSources(options?: { page?: number; pageSize?: number }) {
+export async function getDataSources(options?: { page?: number; pageSize?: number; search?: string }) {
   const db = await getDb();
   if (!db) return { data: [], total: 0, totalPages: 0 };
 
   const page = options?.page ?? 1;
   const pageSize = options?.pageSize ?? 20;
   const offset = (page - 1) * pageSize;
+  const searchQuery = options?.search?.toLowerCase();
 
-  // Get total count
+  // Build WHERE conditions for search
+  let whereConditions = undefined;
+  if (searchQuery) {
+    whereConditions = or(
+      like(cards.name, `%${searchQuery}%`),
+      like(dataSources.sourceUrl, `%${searchQuery}%`)
+    );
+  }
+
+  // Get total count with search filter
   const countResult = await db
     .select({ count: sql<number>`count(*)` })
-    .from(dataSources);
+    .from(dataSources)
+    .leftJoin(cards, eq(dataSources.cardId, cards.id))
+    .where(whereConditions);
   const total = Number(countResult[0]?.count ?? 0);
   const totalPages = Math.ceil(total / pageSize);
 
-  // Get paginated data
+  // Get paginated data with search filter
   const result = await db
     .select({
       id: dataSources.id,
@@ -515,6 +527,7 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
     })
     .from(dataSources)
     .leftJoin(cards, eq(dataSources.cardId, cards.id))
+    .where(whereConditions)
     .orderBy(desc(dataSources.createdAt))
     .limit(pageSize)
     .offset(offset);

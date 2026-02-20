@@ -60,7 +60,11 @@ export function AdminDataSources() {
   const [pageSize] = useState(20);
 
   const utils = trpc.useUtils();
-  const dataSourcesQuery = trpc.admin.getDataSources.useQuery({ page, pageSize });
+  const dataSourcesQuery = trpc.admin.getDataSources.useQuery({ 
+    page, 
+    pageSize,
+    search: searchQuery || undefined 
+  });
   const allUrlsQuery = trpc.admin.getAllDataSourceUrls.useQuery(); // Get all URLs for deduplication
 
 
@@ -621,7 +625,10 @@ export function AdminDataSources() {
                 type="text"
                 placeholder="搜尋卡牌名稱或 URL..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1); // Reset to first page when searching
+                }}
                 className="max-w-md"
               />
             </div>
@@ -696,16 +703,10 @@ export function AdminDataSources() {
             ) : dataSourcesQuery.data && dataSourcesQuery.data?.data?.length > 0 ? (
               <div className="space-y-4">
                 {(() => {
-                  const filteredData = dataSourcesQuery.data?.data?.filter((source: any) => {
-                    if (!searchQuery) return true;
-                    const query = searchQuery.toLowerCase();
-                    return (
-                      source.card?.name?.toLowerCase().includes(query) ||
-                      source.sourceUrl?.toLowerCase().includes(query)
-                    );
-                  });
+                  // Backend now handles search filtering, no need for frontend filtering
+                  const displayData = dataSourcesQuery.data?.data || [];
                   
-                  if (filteredData.length === 0) {
+                  if (displayData.length === 0 && searchQuery) {
                     return (
                       <div className="text-center py-12 text-muted-foreground">
                         找不到符合「{searchQuery}」的數據源
@@ -713,7 +714,7 @@ export function AdminDataSources() {
                     );
                   }
                   
-                  return filteredData.map((source: any) => (
+                  return displayData.map((source: any) => (
                   <div
                     key={source.id}
                     className="flex items-start justify-between gap-4 p-4 bg-background rounded-lg border border-border"

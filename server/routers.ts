@@ -422,6 +422,7 @@ export const appRouter = router({
       .input(z.object({
         page: z.number().min(1).optional(),
         pageSize: z.number().min(1).max(100).optional(),
+        search: z.string().optional(),
       }).optional())
       .query(async ({ ctx, input }) => {
         const sources = await db.getDataSources(input);
