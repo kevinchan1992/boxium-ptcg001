@@ -441,18 +441,11 @@ const snkrdunkId = extractSnkrdunkId(input.url);
         // Normalize URL for duplicate check
         const normalizedUrl = input.url.split('?')[0].split('#')[0];
         
-        // Check if data source already exists
-        const { data: allDataSources } = await db.getDataSources({ pageSize: 10000 });
-        const existingDataSource = allDataSources.find(ds => {
-          const existingNormalized = ds.sourceUrl.split('?')[0].split('#')[0];
-          return existingNormalized === normalizedUrl;
-        });
-
-        if (existingDataSource) {
-          throw new TRPCError({ 
-            code: "BAD_REQUEST", 
-            message: `Data source already exists: ${normalizedUrl}` 
-          });
+        // Check if data source already exists using database query
+        const exists = await db.checkDataSourceExists(normalizedUrl);
+        if (exists) {
+          // Return special status instead of throwing error
+          return { success: false, status: 'duplicate', message: `Data source already exists: ${normalizedUrl}` };
         }
 
         try {

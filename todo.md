@@ -4777,3 +4777,13 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 定位 AdminDataSources.tsx 中的批量處理代碼
 - [x] 將並發數量從 5 改為 15
 - [x] 測試驗證批量添加速度提升
+
+
+## Bug 修復: 批量添加 SNKRDUNK 數據源去重保護機制失效 - 已完成
+
+- [x] 實現後端 `checkDataSourceExists` 函數（數據庫查詢）
+- [x] 實現後端 `checkUrlsExist` API（批量檢查 URL 是否存在）
+- [x] 修改前端去重邏輯，調用後端 API 檢查整個數據庫
+- [x] 修改後端 `addSnkrdunkSource` procedure，將重複 URL 返回特殊狀態而非拋出錯誤
+- [x] 修改前端錯誤處理，將重複 URL 歸類為「跳過」而非「失敗」
+- [x] 測試驗證去重機制正常運作，無誤導性錯誤訊息

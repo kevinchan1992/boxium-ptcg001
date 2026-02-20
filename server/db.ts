@@ -460,6 +460,26 @@ export async function removeFromWatchlist(userId: number, cardId: number) {
 }
 
 // Data source management queries
+
+/**
+ * Check if a data source with the given URL already exists
+ */
+export async function checkDataSourceExists(url: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  // Normalize URL by removing query parameters and fragments
+  const normalizedUrl = url.split('?')[0].split('#')[0];
+
+  const result = await db
+    .select({ id: dataSources.id })
+    .from(dataSources)
+    .where(eq(dataSources.sourceUrl, normalizedUrl))
+    .limit(1);
+
+  return result.length > 0;
+}
+
 export async function getDataSources(options?: { page?: number; pageSize?: number }) {
   const db = await getDb();
   if (!db) return { data: [], total: 0, totalPages: 0 };

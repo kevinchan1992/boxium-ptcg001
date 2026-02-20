@@ -145,7 +145,7 @@ export function AdminDataSources() {
     const existingUrls = dataSourcesQuery.data?.data?.map((ds: any) => ds.sourceUrl) || [];
     const uniqueUrls = Array.from(new Set(urls)); // Remove duplicates within input
     const newUrls = uniqueUrls.filter(url => !existingUrls.includes(url)); // Remove existing URLs
-    const duplicateCount = urls.length - newUrls.length;
+    let duplicateCount = urls.length - newUrls.length;
 
     if (newUrls.length === 0) {
       toast.error(`所有 URL 都已存在，無需添加`);
@@ -194,16 +194,29 @@ export function AdminDataSources() {
           await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
         }
         
-        // Count successes and failures
+        // Count successes, failures, and duplicates
         results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
-            successCount++;
+            const response = result.value as any;
+            if (response?.status === 'duplicate') {
+              // Duplicate URL - count as skipped, not failed
+              duplicateCount++;
+            } else {
+              successCount++;
+            }
           } else {
-            failedCount++;
-            const url = batch[index];
+            // Check if error is due to duplicate
             const errorMsg = (result.reason as any)?.message || '未知錯誤';
-            errors.push(`${url}: ${errorMsg}`);
-            failedUrls.push(url);
+            if (errorMsg.includes('already exists')) {
+              // Duplicate URL - count as skipped, not failed
+              duplicateCount++;
+            } else {
+              // Real error - count as failed
+              failedCount++;
+              const url = batch[index];
+              errors.push(`${url}: ${errorMsg}`);
+              failedUrls.push(url);
+            }
           }
         });
       }
