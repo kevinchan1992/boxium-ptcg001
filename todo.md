@@ -4830,3 +4830,12 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 識別去重失效的根本原因
 - [x] 優化去重邏輯確保完全生效
 - [x] 測試驗證修復後的去重機制
+
+
+## Bug 修復: Admin 頁面 API Query Error - checkUrlsExist 返回 HTML - 已完成
+
+- [x] 檢查伺服器日誌查看具體錯誤訊息
+- [x] 檢查 checkUrlsExist API 的實現是否有問題
+- [x] 檢查 checkDataSourceExists 函數是否有錯誤
+- [x] 修復識別出的問題
+- [x] 測試驗證修復後 API 正常返回 JSON

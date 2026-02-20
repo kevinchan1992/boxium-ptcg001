@@ -471,11 +471,11 @@ export async function checkDataSourceExists(normalizedUrl: string): Promise<bool
   }
 
   try {
-    // Use LIKE to match normalized URL (without query params and fragments)
+    // Exact match on normalized URL (without query params and fragments)
     const result = await db
       .select({ id: dataSources.id })
       .from(dataSources)
-      .where(like(dataSources.sourceUrl, `${normalizedUrl}%`))
+      .where(eq(dataSources.sourceUrl, normalizedUrl))
       .limit(1);
     
     return result.length > 0;
