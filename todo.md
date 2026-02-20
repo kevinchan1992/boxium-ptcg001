@@ -4999,3 +4999,13 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 
 ### 需求說明
 在 Pricing 頁面的「返回」按鈕旁邊添加一個「查看詳情」按鈕，點擊後跳轉到該卡牌的 Research 詳細頁面（/card/:id），方便用戶查看卡牌的完整信息和價格歷史。
+
+
+## 新需求: 刪除卡牌詳細頁面的 BGS 10 評級按鈕
+
+### 任務清單
+- [x] 修改 CardDetail.tsx 的 grades 數組，移除 "BGS 10"
+- [x] 測試驗證修改後的頁面顯示
+
+### 需求說明
+從卡牌詳細頁面的評級篩選按鈕中移除 BGS 10 選項，只保留 PSA 10 和其他評級。

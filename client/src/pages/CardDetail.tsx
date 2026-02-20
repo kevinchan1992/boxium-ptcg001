@@ -15,7 +15,7 @@ import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
 import { formatShortDateTime, formatDate, formatDateTime } from "@/lib/formatDate";
 
 
-const grades = ["PSA 10", "BGS 10", "中古"];
+const grades = ["PSA 10", "中古"];
 
 export default function CardDetail() {
   const { t } = useTranslation();
