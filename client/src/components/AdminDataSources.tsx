@@ -172,7 +172,7 @@ export function AdminDataSources() {
 
     try {
       // Process URLs in parallel batches with rate limiting
-      const BATCH_SIZE = 15; // Process 15 URLs at a time to avoid rate limits
+      const BATCH_SIZE = 50; // Process 50 URLs at a time to avoid rate limits
       const DELAY_BETWEEN_BATCHES = 2000; // 2 second delay between batches
       
       pausedRef.current = false;
