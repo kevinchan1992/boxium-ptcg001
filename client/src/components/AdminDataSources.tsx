@@ -232,10 +232,11 @@ export function AdminDataSources() {
       
       if (successCount > 0) {
         toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}（耗時 ${durationSeconds} 秒，平均 ${avgSpeed} URL/秒）`);
-        // Reset to first page to show newly added data sources
+        // Reset to first page and refresh the list
         setCurrentPage(1);
-        // Invalidate data sources query to refresh the list
-        utils.admin.getDataSources.invalidate();
+        setSearchQuery('');
+        // Use await to ensure invalidate completes before continuing
+        await utils.admin.getDataSources.invalidate();
         if (failedCount === 0) {
           setSnkrdunkUrl("");
         }

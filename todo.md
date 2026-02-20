@@ -4858,3 +4858,11 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 確保新數據源顯示在第一頁頂部（添加成功後重置分頁到第一頁）
 - [x] 測試暫停/取消功能（成功顯示按鈕）
 - [x] 測試新數據源排序（成功顯示在頂部）
+
+
+## Bug 修復: 手動添加數據源後未顯示在列表第一頁頂部 - 已完成
+
+- [x] 檢查後端 getDataSources API 的排序邏輯（已按 createdAt 降序）
+- [x] 修改前端 invalidate 邏輯（添加 await 確保完成）
+- [x] 添加清空搜尋查詢邏輯（setSearchQuery('')）
+- [x] 測試修復後的排序功能（成功）
