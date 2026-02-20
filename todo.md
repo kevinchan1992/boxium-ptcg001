@@ -4701,3 +4701,18 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - ✅ 統一的深藍色 #06038d 和 Hover 效果
 - ✅ 更好的可維護性（未來修改顏色只需改 BrandButton 組件）
 - ✅ 提升品牌識別度和用戶體驗
+
+
+## About 頁面 LOGO 更換 - 完成 (2026-02-20)
+
+### 任務
+- [x] 檢查 About 頁面的 SNKRDUNK 和 eBay LOGO 顯示
+- [x] 更換 SNKRDUNK LOGO
+- [x] 更換 eBay LOGO
+
+### 完成的變更
+- 將 SNKRDUNK 和 eBay 的圖標（Database 和 Globe）替換為實際 LOGO 圖片
+- 使用與主頁相同的 LOGO 圖片：`/snkrdunk-logo.png` 和 `/ebay-logo.png`
+- 移除了公司名稱標題（因為 LOGO 已經包含公司名稱）
+- 調整了布局，LOGO 和描述文字並排顯示
+- 保持響應式設計（手機 h-6，桌面 h-8）

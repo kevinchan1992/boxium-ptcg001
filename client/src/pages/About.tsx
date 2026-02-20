@@ -110,12 +110,12 @@ export default function About() {
     {
       name: "SNKRDUNK",
       description: "日本最大的球鞋和卡牌交易平台，提供真實成交價格記錄",
-      icon: <Database className="w-5 h-5 sm:w-6 sm:h-6" />
+      logo: "/snkrdunk-logo.png"
     },
     {
       name: "eBay",
       description: "全球最大的拍賣平台，涵蓋國際市場的卡牌交易數據",
-      icon: <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
+      logo: "/ebay-logo.png"
     }
   ];
 
@@ -220,14 +220,15 @@ export default function About() {
             <div className="space-y-4">
               {dataSources.map((source, index) => (
                 <div key={index} className="flex items-start gap-3 sm:gap-4 p-4 rounded-lg" style={{ backgroundColor: "#f0f4ff" }}>
-                  <div className="flex-shrink-0 mt-1" style={{ color: "#06038d" }}>
-                    {source.icon}
+                  <div className="flex-shrink-0">
+                    <img 
+                      src={source.logo} 
+                      alt={source.name} 
+                      className="h-6 sm:h-8 object-contain"
+                    />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-semibold mb-1" style={{ color: "#06038d" }}>
-                      {source.name}
-                    </h3>
-                    <p className="text-gray-600 text-xs sm:text-sm">
+                    <p className="text-gray-600 text-xs sm:text-sm mt-1">
                       {source.description}
                     </p>
                   </div>
