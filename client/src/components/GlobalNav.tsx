@@ -18,9 +18,9 @@ export function GlobalNav() {
   const navItems = [
     { href: "/", label: t("common.home"), icon: Home },
     { href: "/research", label: t("common.research"), icon: TrendingUp },
+    { href: "/pricing", label: t("common.priceComparison"), icon: DollarSign },
     { href: "/trending", label: t("common.trending"), icon: Flame },
     { href: "/blog", label: t("common.blog"), icon: Newspaper },
-    { href: "/pricing", label: t("common.pricing"), icon: DollarSign },
     { href: "/about", label: t("common.about"), icon: Info },
     // { href: "/terms", label: t("common.terms"), icon: FileText },
     // { href: "/privacy", label: t("common.privacy"), icon: Shield },

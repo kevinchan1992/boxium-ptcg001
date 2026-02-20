@@ -15,9 +15,9 @@ export function TopNav() {
   const navItems = [
     { href: "/", label: t("common.home") },
     { href: "/research", label: t("common.research") },
+    { href: "/pricing", label: t("common.priceComparison") },
     { href: "/trending", label: t("common.trending") },
     { href: "/blog", label: t("common.blog") },
-    { href: "/pricing", label: t("common.pricing") },
     { href: "/about", label: t("common.about") },
   ];
 
