@@ -1673,6 +1673,27 @@ try {
         return { success: true, message: "任務已取消" };
       }),
 
+    // 價格更新排程 API
+    getPriceUpdateSchedule: publicProcedure
+      .query(async () => {
+        const schedule = await db.getPriceUpdateSchedule();
+        return schedule;
+      }),
+
+    updatePriceUpdateSchedule: publicProcedure
+      .input(z.object({
+        snkrdunkEnabled: z.boolean().optional(),
+        snkrdunkUpdateTime: z.string().optional(),
+        ebayEnabled: z.boolean().optional(),
+        ebayUpdateTime: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updatePriceUpdateSchedule(input);
+        // 重啟排程器以應用新設定
+        await restartPriceUpdateScheduler();
+        return { success: true, message: "排程設定已更新" };
+      }),
+
     // 緩存管理 API
     getCacheStats: publicProcedure
       .query(async () => {
