@@ -498,8 +498,8 @@ export async function autoCrawlSnkrdunk(startPage: number = 1, endPage: number =
 
     // Deduplicate against existing data sources
     console.log("[AutoCrawl] Checking for duplicates...");
-    const existingSources = await db.getDataSources();
-    const existingUrls = new Set(existingSources.map(s => s.sourceUrl));
+    const { data: existingSources } = await db.getDataSources({ pageSize: 10000 });
+    const existingUrls = new Set(existingSources.map((s: any) => s.sourceUrl));
     const uniqueUrls = urls.filter(url => !existingUrls.has(url));
     newUrls = uniqueUrls.length;
     duplicates = totalFound - newUrls;

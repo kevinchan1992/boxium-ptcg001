@@ -56,9 +56,11 @@ export function AdminDataSources() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const pausedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(20);
 
   const utils = trpc.useUtils();
-  const dataSourcesQuery = trpc.admin.getDataSources.useQuery();
+  const dataSourcesQuery = trpc.admin.getDataSources.useQuery({ page, pageSize });
 
 
 
@@ -140,7 +142,7 @@ export function AdminDataSources() {
     }
 
     // Deduplicate URLs
-    const existingUrls = dataSourcesQuery.data?.map((ds: any) => ds.sourceUrl) || [];
+    const existingUrls = dataSourcesQuery.data?.data?.map((ds: any) => ds.sourceUrl) || [];
     const uniqueUrls = Array.from(new Set(urls)); // Remove duplicates within input
     const newUrls = uniqueUrls.filter(url => !existingUrls.includes(url)); // Remove existing URLs
     const duplicateCount = urls.length - newUrls.length;
@@ -213,7 +215,8 @@ export function AdminDataSources() {
       setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount, failedUrls });
       
       if (successCount > 0) {
-        toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}（耗時 ${durationSeconds} 秒，平均 ${avgSpeed} URL/秒）`);
+        setPage(1); // 跳轉到第一頁查看新添加的數據源
+        toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}(耗時 ${durationSeconds} 秒，平均 ${avgSpeed} URL/秒)`);
         if (failedCount === 0) {
           setSnkrdunkUrl("");
         }
@@ -400,10 +403,10 @@ export function AdminDataSources() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === dataSourcesQuery.data?.length) {
+    if (selectedIds.length === dataSourcesQuery.data?.data?.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(dataSourcesQuery.data?.map((ds: any) => ds.id) || []);
+      setSelectedIds(dataSourcesQuery.data?.data?.map((ds: any) => ds.id) || []);
     }
   };
 
@@ -610,11 +613,11 @@ export function AdminDataSources() {
                 <h2 className="text-2xl font-semibold text-foreground">
                   數據源列表
                 </h2>
-                {dataSourcesQuery.data && dataSourcesQuery.data.length > 0 && (
+                {dataSourcesQuery.data && dataSourcesQuery.data?.data?.length > 0 && (
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="select-all"
-                      checked={selectedIds.length === dataSourcesQuery.data.length}
+                      checked={selectedIds.length === dataSourcesQuery.data?.data?.length}
                       onCheckedChange={toggleSelectAll}
                     />
                     <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
@@ -672,10 +675,10 @@ export function AdminDataSources() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : dataSourcesQuery.data && dataSourcesQuery.data.length > 0 ? (
+            ) : dataSourcesQuery.data && dataSourcesQuery.data?.data?.length > 0 ? (
               <div className="space-y-4">
                 {(() => {
-                  const filteredData = dataSourcesQuery.data.filter((source: any) => {
+                  const filteredData = dataSourcesQuery.data?.data?.filter((source: any) => {
                     if (!searchQuery) return true;
                     const query = searchQuery.toLowerCase();
                     return (
@@ -782,6 +785,49 @@ export function AdminDataSources() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 尚未添加任何數據源
+              </div>
+            )}
+            
+            {/* 分頁控件 */}
+            {dataSourcesQuery.data && dataSourcesQuery.data.totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                <div className="text-sm text-muted-foreground">
+                  第 {page} / {dataSourcesQuery.data.totalPages} 頁，共 {dataSourcesQuery.data.total} 筆
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                  >
+                    首頁
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    上一頁
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(dataSourcesQuery.data!.totalPages, p + 1))}
+                    disabled={page === dataSourcesQuery.data.totalPages}
+                  >
+                    下一頁
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(dataSourcesQuery.data!.totalPages)}
+                    disabled={page === dataSourcesQuery.data.totalPages}
+                  >
+                    末頁
+                  </Button>
+                </div>
               </div>
             )}
           </Card>

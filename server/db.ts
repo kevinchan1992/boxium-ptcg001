@@ -460,10 +460,22 @@ export async function removeFromWatchlist(userId: number, cardId: number) {
 }
 
 // Data source management queries
-export async function getDataSources() {
+export async function getDataSources(options?: { page?: number; pageSize?: number }) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return { data: [], total: 0, totalPages: 0 };
 
+  const page = options?.page ?? 1;
+  const pageSize = options?.pageSize ?? 20;
+  const offset = (page - 1) * pageSize;
+
+  // Get total count
+  const countResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(dataSources);
+  const total = Number(countResult[0]?.count ?? 0);
+  const totalPages = Math.ceil(total / pageSize);
+
+  // Get paginated data
   const result = await db
     .select({
       id: dataSources.id,
@@ -483,9 +495,11 @@ export async function getDataSources() {
     })
     .from(dataSources)
     .leftJoin(cards, eq(dataSources.cardId, cards.id))
-    .orderBy(desc(dataSources.createdAt));
+    .orderBy(desc(dataSources.createdAt))
+    .limit(pageSize)
+    .offset(offset);
 
-  return result;
+  return { data: result, total, totalPages };
 }
 
 export async function addDataSource(data: Omit<InsertDataSource, "id" | "createdAt" | "updatedAt">) {
