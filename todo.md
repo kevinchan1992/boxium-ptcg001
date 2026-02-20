@@ -4787,3 +4787,25 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 修改後端 `addSnkrdunkSource` procedure，將重複 URL 返回特殊狀態而非拋出錯誤
 - [x] 修改前端錯誤處理，將重複 URL 歸類為「跳過」而非「失敗」
 - [x] 測試驗證去重機制正常運作，無誤導性錯誤訊息
+
+
+## Bug 修復: 分頁導致的去重不完整問題 - 已完成
+
+- [x] 分析問題根源（分頁後只檢查 20 條而非所有數據源）
+- [x] 實現後端獲取所有 URL 的 API（不分頁）
+- [x] 修改前端去重邏輯使用完整數據
+- [x] 測試驗證修復（31652 個 URL 檢測到 15887 個重複，去重功能正常）
+
+### 修復內容
+1. 後端添加 `getAllDataSourceUrls` API，返回所有 URL（不分頁）
+2. 前端修改去重邏輯使用 `allUrlsQuery.data` 而非 `dataSourcesQuery.data.data`
+3. 添加 URL 正規化邏輯（移除查詢參數和片段）
+
+### 測試結果
+- 數據庫現有 URL 數: 10,274 個
+- 測試文件 URL 總數: 31,652 個
+- 檢測到的重複 URL: 15,887 個
+- 可添加的新 URL: 15,765 個
+- 去重率: 50.19%
+
+✅ 修復成功！去重邏輯現在檢查整個數據庫，而非僅當前頁的 20 條記錄。

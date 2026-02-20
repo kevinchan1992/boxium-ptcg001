@@ -428,6 +428,13 @@ export const appRouter = router({
         return sources;
       }),
 
+    getAllDataSourceUrls: publicProcedure
+      .query(async () => {
+        // Get all data sources without pagination to support full deduplication
+        const { data: allSources } = await db.getDataSources({ pageSize: 100000 });
+        return allSources.map(ds => ds.sourceUrl);
+      }),
+
     addSnkrdunkSource: publicProcedure
       .input(z.object({
         url: z.string().url(),

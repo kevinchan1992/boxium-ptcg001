@@ -61,6 +61,7 @@ export function AdminDataSources() {
 
   const utils = trpc.useUtils();
   const dataSourcesQuery = trpc.admin.getDataSources.useQuery({ page, pageSize });
+  const allUrlsQuery = trpc.admin.getAllDataSourceUrls.useQuery(); // Get all URLs for deduplication
 
 
 
@@ -141,10 +142,13 @@ export function AdminDataSources() {
       return;
     }
 
-    // Deduplicate URLs
-    const existingUrls = dataSourcesQuery.data?.data?.map((ds: any) => ds.sourceUrl) || [];
+    // Deduplicate URLs - use all URLs from database, not just current page
+    const existingUrls = allUrlsQuery.data || [];
     const uniqueUrls = Array.from(new Set(urls)); // Remove duplicates within input
-    const newUrls = uniqueUrls.filter(url => !existingUrls.includes(url)); // Remove existing URLs
+    // Normalize URLs for comparison (remove query params and fragments)
+    const normalizeUrl = (url: string) => url.split('?')[0].split('#')[0];
+    const normalizedExistingUrls = existingUrls.map(normalizeUrl);
+    const newUrls = uniqueUrls.filter(url => !normalizedExistingUrls.includes(normalizeUrl(url))); // Remove existing URLs
     let duplicateCount = urls.length - newUrls.length;
 
     if (newUrls.length === 0) {
