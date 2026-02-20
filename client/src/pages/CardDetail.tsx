@@ -427,11 +427,11 @@ export default function CardDetail() {
                             </td>
                             <td className="py-3 px-4 text-center text-foreground text-sm w-24">
                               {isUngraded ? (
-                                <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-muted text-xs font-medium">
+                                <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-muted text-xs font-medium whitespace-nowrap">
                                   {t("cardDetail.usedGrade")}
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center justify-center font-medium">{displayGrade}</span>
+                                <span className="inline-flex items-center justify-center font-medium whitespace-nowrap">{displayGrade}</span>
                               )}
                             </td>
                             <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
