@@ -221,42 +221,43 @@ export default function CardDetail() {
   const avgPrice = calculatePSA10ReferencePrice();
 
   // Get record count based on active source - Only PSA 10 for reference price
+  // Show count of latest 5 records used for price calculation
   const recordCount = activeSource === "snkrdunk" 
-    ? psa10OnlyHistory.length 
+    ? Math.min(psa10OnlyHistory.length, 5)
     : ebayPriceHistory.length > 0 
       ? ebayPriceHistory.length
       : ebaySoldItems.length;
 
-  // Calculate price trend (30-day comparison) - Only use SNKRDUNK data
+  // Calculate price trend (7-day comparison) - Only use SNKRDUNK data
   const calculatePriceTrend = () => {
     if (activeSource !== "snkrdunk" || psa10OnlyHistory.length < 2) {
       return null;
     }
 
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-    // Get recent 30 days data
-    const recent30Days = psa10OnlyHistory.filter(p => {
+    // Get recent 7 days data
+    const recent7Days = psa10OnlyHistory.filter(p => {
       if (!p.soldAt) return false;
       const soldDate = new Date(p.soldAt);
-      return soldDate >= thirtyDaysAgo && soldDate <= now;
+      return soldDate >= sevenDaysAgo && soldDate <= now;
     });
 
-    // Get previous 30 days data (30-60 days ago)
-    const previous30Days = psa10OnlyHistory.filter(p => {
+    // Get previous 7 days data (7-14 days ago)
+    const previous7Days = psa10OnlyHistory.filter(p => {
       if (!p.soldAt) return false;
       const soldDate = new Date(p.soldAt);
-      return soldDate >= sixtyDaysAgo && soldDate < thirtyDaysAgo;
+      return soldDate >= fourteenDaysAgo && soldDate < sevenDaysAgo;
     });
 
-    if (recent30Days.length === 0 || previous30Days.length === 0) {
+    if (recent7Days.length === 0 || previous7Days.length === 0) {
       return null;
     }
 
-    const recentAvg = recent30Days.reduce((sum, p) => sum + parseFloat(p.price), 0) / recent30Days.length;
-    const previousAvg = previous30Days.reduce((sum, p) => sum + parseFloat(p.price), 0) / previous30Days.length;
+    const recentAvg = recent7Days.reduce((sum, p) => sum + parseFloat(p.price), 0) / recent7Days.length;
+    const previousAvg = previous7Days.reduce((sum, p) => sum + parseFloat(p.price), 0) / previous7Days.length;
     const changePercent = ((recentAvg - previousAvg) / previousAvg) * 100;
 
     return {
