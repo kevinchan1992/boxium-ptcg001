@@ -16,7 +16,7 @@ export async function executePersistentEbayBatchUpdate(): Promise<{ taskId: numb
   }
 
   // Get all unique cards from data sources
-  const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });
+  const { data: dataSources } = await db.getDataSources({ pageSize: 100000 });
   const uniqueCards = new Map<number, { id: number; name: string }>();
   
   for (const source of dataSources as any[]) {

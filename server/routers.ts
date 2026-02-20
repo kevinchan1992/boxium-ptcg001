@@ -1161,7 +1161,7 @@ try {
           }
 
           // 獲取所有數據源的唯一卡牌
-          const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });
+          const { data: dataSources } = await db.getDataSources({ pageSize: 100000 });
           const uniqueCards = new Map<number, { id: number; name: string }>();
           
           for (const source of dataSources) {
@@ -1350,7 +1350,7 @@ try {
           }
 
           // 獲取所有 SNKRDUNK 數據源的唯一卡牌
-          const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });
+          const { data: dataSources } = await db.getDataSources({ pageSize: 100000 });
           const snkrdunkSources = dataSources.filter((ds: any) => ds.source === "snkrdunk");
           const uniqueCards = new Map<number, { id: number; name: string }>();
           
