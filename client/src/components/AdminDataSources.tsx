@@ -56,9 +56,15 @@ export function AdminDataSources() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const pausedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const utils = trpc.useUtils();
-  const dataSourcesQuery = trpc.admin.getDataSources.useQuery();
+  const dataSourcesQuery = trpc.admin.getDataSources.useQuery({
+    page: currentPage,
+    pageSize,
+    searchQuery: searchQuery || undefined,
+  });
 
 
 
@@ -67,6 +73,7 @@ export function AdminDataSources() {
     onSuccess: () => {
       toast.success("SNKRDUNK 數據源已添加");
       setSnkrdunkUrl("");
+      setCurrentPage(1); // Jump to first page to see new data source
       utils.admin.getDataSources.invalidate();
     },
     onError: (error: any) => {
@@ -140,7 +147,7 @@ export function AdminDataSources() {
     }
 
     // Deduplicate URLs
-    const existingUrls = dataSourcesQuery.data?.map((ds: any) => ds.sourceUrl) || [];
+    const existingUrls = dataSourcesQuery.data?.data?.map((ds: any) => ds.sourceUrl) || [];
     const uniqueUrls = Array.from(new Set(urls)); // Remove duplicates within input
     const newUrls = uniqueUrls.filter(url => !existingUrls.includes(url)); // Remove existing URLs
     const duplicateCount = urls.length - newUrls.length;
@@ -400,10 +407,10 @@ export function AdminDataSources() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === dataSourcesQuery.data?.length) {
+    if (selectedIds.length === dataSourcesQuery.data?.data?.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(dataSourcesQuery.data?.map((ds: any) => ds.id) || []);
+      setSelectedIds(dataSourcesQuery.data?.data?.map((ds: any) => ds.id) || []);
     }
   };
 
@@ -610,11 +617,11 @@ export function AdminDataSources() {
                 <h2 className="text-2xl font-semibold text-foreground">
                   數據源列表
                 </h2>
-                {dataSourcesQuery.data && dataSourcesQuery.data.length > 0 && (
+                {dataSourcesQuery.data?.data && dataSourcesQuery.data.data.length > 0 && (
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="select-all"
-                      checked={selectedIds.length === dataSourcesQuery.data.length}
+                      checked={selectedIds.length === dataSourcesQuery.data.data.length}
                       onCheckedChange={toggleSelectAll}
                     />
                     <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
@@ -672,10 +679,10 @@ export function AdminDataSources() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : dataSourcesQuery.data && dataSourcesQuery.data.length > 0 ? (
+            ) : dataSourcesQuery.data?.data && dataSourcesQuery.data.data.length > 0 ? (
               <div className="space-y-4">
                 {(() => {
-                  const filteredData = dataSourcesQuery.data.filter((source: any) => {
+                  const filteredData = dataSourcesQuery.data.data.filter((source: any) => {
                     if (!searchQuery) return true;
                     const query = searchQuery.toLowerCase();
                     return (
@@ -782,6 +789,67 @@ export function AdminDataSources() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 尚未添加任何數據源
+              </div>
+            )}
+            
+            {/* Pagination */}
+            {dataSourcesQuery.data && dataSourcesQuery.data.totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-4 border-t">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    每頁顯示
+                  </span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="border rounded px-2 py-1 text-sm"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span className="text-sm text-muted-foreground">
+                    第 {dataSourcesQuery.data.page} / {dataSourcesQuery.data.totalPages} 頁，共 {dataSourcesQuery.data.total} 筆
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                  >
+                    首頁
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    上一頁
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(dataSourcesQuery.data!.totalPages, prev + 1))}
+                    disabled={currentPage === dataSourcesQuery.data.totalPages}
+                  >
+                    下一頁
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(dataSourcesQuery.data!.totalPages)}
+                    disabled={currentPage === dataSourcesQuery.data.totalPages}
+                  >
+                    末頁
+                  </Button>
+                </div>
               </div>
             )}
           </Card>
