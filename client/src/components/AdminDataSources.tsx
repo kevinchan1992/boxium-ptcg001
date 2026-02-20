@@ -659,6 +659,7 @@ export function AdminDataSources() {
                     刪除 ({selectedIds.length})
                   </Button>
                 )}
+                {/* 調用後端 API 獲取所有數據源的 URL 列表（不分頁），確保能清理平台內重複的URL */}
                 <Button
                   variant="outline"
                   size="sm"
