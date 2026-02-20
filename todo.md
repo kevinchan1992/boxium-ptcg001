@@ -4874,3 +4874,24 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 檢查批量添加完成後的 invalidate 時機
 - [x] 修復批量添加完成後的刷新邏輯（添加 100ms 延遲確保狀態更新生效）
 - [x] 建議用戶測試修復後的大量批量添加功能
+
+
+## 新功能: 批量添加進度持久化和性能優化
+
+- [ ] 創建後端持久化批量添加 API（類似 persistentSnkrdunkBatchUpdate）
+- [ ] 修改前端使用持久化 API 替代當前的客戶端批量添加
+- [ ] 添加批量添加進度條顯示（類似 BatchTaskProgressBar）
+- [ ] 優化 BATCH_SIZE 從 5 提升至 10
+- [ ] 測試持久化批量添加功能
+- [ ] 測試性能優化效果
+
+
+## 新功能: 批量添加進度持久化和性能優化 - 已完成
+
+- [x] 創建 persistentBulkAddDataSources.ts 實現持久化批量添加
+- [x] 添加 startPersistentBulkAddDataSources procedure
+- [x] 添加 getBulkAddProgress procedure
+- [x] 修改前端使用持久化 API
+- [x] 添加批量添加進度條顯示
+- [x] 將 BATCH_SIZE 從 5 提升至 10
+- [x] 測試批量添加功能（待用戶測試）

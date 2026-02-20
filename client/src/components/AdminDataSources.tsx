@@ -85,6 +85,30 @@ export function AdminDataSources() {
     },
   });
 
+  const startPersistentBulkAddMutation = trpc.admin.startPersistentBulkAddDataSources.useMutation();
+  const bulkAddProgressQuery = trpc.admin.getBulkAddProgress.useQuery(undefined, {
+    refetchInterval: 3000, // Poll every 3 seconds
+  });
+  const pauseBulkAddTaskMutation = trpc.admin.pausePersistentTask.useMutation({
+    onSuccess: () => {
+      toast.success("批量添加已暫停");
+      utils.admin.getBulkAddProgress.invalidate();
+    },
+  });
+  const resumeBulkAddTaskMutation = trpc.admin.resumePersistentTask.useMutation({
+    onSuccess: () => {
+      toast.success("批量添加已繼續");
+      utils.admin.getBulkAddProgress.invalidate();
+    },
+  });
+  const cancelBulkAddTaskMutation = trpc.admin.cancelPersistentTask.useMutation({
+    onSuccess: () => {
+      toast.success("批量添加已取消");
+      utils.admin.getBulkAddProgress.invalidate();
+      utils.admin.getDataSources.invalidate();
+    },
+  });
+
   const refreshDataSourceMutation = trpc.admin.refreshDataSource.useMutation({
     onSuccess: () => {
       toast.success("數據源已更新");
@@ -166,85 +190,23 @@ export function AdminDataSources() {
       toast.info(`已過濾 ${duplicateCount} 個重複 URL`);
     }
 
+    // Use persistent batch add API
     setIsSubmitting(true);
     setBatchResults({ success: 0, failed: 0, errors: [], duplicates: duplicateCount });
-    
-    const startTime = Date.now();
-    let successCount = 0;
-    let failedCount = 0;
-    const errors: string[] = [];
-    const failedUrls: string[] = [];
 
     try {
-      // Process URLs in parallel batches with rate limiting
-      const BATCH_SIZE = 5; // Process 5 URLs at a time to avoid rate limits
-      const DELAY_BETWEEN_BATCHES = 2000; // 2 second delay between batches
-      
-      pausedRef.current = false;
-      setIsPaused(false);
-      setIsCancelled(false);
-      
-      for (let i = 0; i < newUrls.length; i += BATCH_SIZE) {
-        // Check if cancelled
-        if (isCancelled) {
-          toast.info(`批量添加已取消，已處理 ${successCount + failedCount}/${newUrls.length} 個 URL`);
-          break;
-        }
-        
-        // Check if paused
-        while (pausedRef.current) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-        
-        const batch = newUrls.slice(i, i + BATCH_SIZE);
-        const batchEnd = Math.min(i + BATCH_SIZE, newUrls.length);
-        setBatchResults(prev => ({ ...prev, progress: `處理中 ${batchEnd}/${newUrls.length}` }));
-        
-        // Process batch in parallel
-        const results = await Promise.allSettled(
-          batch.map(url => addDataSourceMutation.mutateAsync({ url }))
-        );
-        
-        // Add delay between batches to avoid rate limits (except for last batch)
-        if (i + BATCH_SIZE < newUrls.length) {
-          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
-        }
-        
-        // Count successes and failures
-        results.forEach((result, index) => {
-          if (result.status === 'fulfilled') {
-            successCount++;
-          } else {
-            failedCount++;
-            const url = batch[index];
-            const errorMsg = (result.reason as any)?.message || '未知錯誤';
-            errors.push(`${url}: ${errorMsg}`);
-            failedUrls.push(url);
-          }
-        });
-      }
-
-      const endTime = Date.now();
-      const durationSeconds = ((endTime - startTime) / 1000).toFixed(1);
-      const avgSpeed = (newUrls.length / (endTime - startTime) * 1000).toFixed(1);
-      
-      setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount, failedUrls });
-      
-      if (successCount > 0) {
-        toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}（耗時 ${durationSeconds} 秒，平均 ${avgSpeed} URL/秒）`);
-        // Reset to first page and clear search query
-        setCurrentPage(1);
-        setSearchQuery('');
-        // Wait for state updates to take effect before invalidating
-        await new Promise(resolve => setTimeout(resolve, 100));
-        // Use await to ensure invalidate completes before continuing
-        await utils.admin.getDataSources.invalidate();
-        if (failedCount === 0) {
-          setSnkrdunkUrl("");
-        }
-      } else {
-        toast.error(`所有 ${failedCount} 個數據源添加失敗`);
-      }
+      const result = await startPersistentBulkAddMutation.mutateAsync({ urls: newUrls });
+      toast.success(result.message);
+      setSnkrdunkUrl("");
+      // Reset to first page and clear search query
+      setCurrentPage(1);
+      setSearchQuery('');
+      // Wait for state updates to take effect before invalidating
+      await new Promise(resolve => setTimeout(resolve, 100));
+      // Use await to ensure invalidate completes before continuing
+      await utils.admin.getDataSources.invalidate();
+    } catch (error: any) {
+      toast.error(`批量添加啟動失敗: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -629,6 +591,17 @@ export function AdminDataSources() {
                   onCancel={() => cancelEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
                   isPauseLoading={pauseEbayTaskMutation.isPending}
                   isResumeLoading={resumeEbayTaskMutation.isPending}
+                />
+              )}
+              {bulkAddProgressQuery.data && (bulkAddProgressQuery.data.status === 'running' || bulkAddProgressQuery.data.status === 'paused') && (
+                <BatchTaskProgressBar
+                  taskType="批量添加"
+                  progress={bulkAddProgressQuery.data}
+                  onPause={() => pauseBulkAddTaskMutation.mutate({ taskId: bulkAddProgressQuery.data!.taskId })}
+                  onResume={() => resumeBulkAddTaskMutation.mutate({ taskId: bulkAddProgressQuery.data!.taskId })}
+                  onCancel={() => cancelBulkAddTaskMutation.mutate({ taskId: bulkAddProgressQuery.data!.taskId })}
+                  isPauseLoading={pauseBulkAddTaskMutation.isPending}
+                  isResumeLoading={resumeBulkAddTaskMutation.isPending}
                 />
               )}
             </div>

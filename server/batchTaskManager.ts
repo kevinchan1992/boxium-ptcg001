@@ -11,7 +11,7 @@ import { eq, and, or } from 'drizzle-orm';
  * Create a new batch task
  */
 export async function createBatchTask(
-  taskType: 'batch_ebay_update' | 'batch_snkrdunk_update',
+  taskType: 'batch_ebay_update' | 'batch_snkrdunk_update' | 'batch_add_data_sources',
   totalItems: number
 ): Promise<number> {
   const db = await getDb();
@@ -77,7 +77,7 @@ export async function getBatchTaskProgress(taskId: number): Promise<BatchTaskPro
  * Get the latest running task by type
  */
 export async function getLatestRunningTask(
-  taskType: 'batch_ebay_update' | 'batch_snkrdunk_update'
+  taskType: 'batch_ebay_update' | 'batch_snkrdunk_update' | 'batch_add_data_sources'
 ): Promise<BatchTaskProgress | null> {
   const db = await getDb();
   if (!db) {
@@ -280,7 +280,7 @@ export async function cancelTask(taskId: number): Promise<void> {
 /**
  * Check if there's a running task of the same type
  */
-export async function hasRunningTask(taskType: 'batch_ebay_update' | 'batch_snkrdunk_update'): Promise<boolean> {
+export async function hasRunningTask(taskType: 'batch_ebay_update' | 'batch_snkrdunk_update' | 'batch_add_data_sources'): Promise<boolean> {
   const task = await getLatestRunningTask(taskType);
   return task !== null;
 }

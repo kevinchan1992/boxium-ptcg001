@@ -1677,6 +1677,48 @@ try {
         return { success: true, message: "任務已取消" };
       }),
 
+    // 啟動持久化批量添加數據源
+    startPersistentBulkAddDataSources: publicProcedure
+      .input(z.object({
+        urls: z.array(z.string().url()),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          // Check if there's already a running task
+          const hasRunning = await batchTaskManager.hasRunningTask('batch_add_data_sources');
+          if (hasRunning) {
+            throw new Error('批量添加已在運行中');
+          }
+
+          // Create task
+          const taskId = await batchTaskManager.createBatchTask('batch_add_data_sources', input.urls.length);
+
+          // Start background process
+          import('./persistentBulkAddDataSources').then(module => {
+            module.persistentBulkAddDataSources(taskId, input.urls);
+          });
+
+          return {
+            success: true,
+            message: `批量添加已啟動，共 ${input.urls.length} 個 URL`,
+            taskId,
+            totalUrls: input.urls.length,
+          };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message || "批量添加啟動失敗",
+          });
+        }
+      }),
+
+    // 獲取批量添加任務進度
+    getBulkAddProgress: publicProcedure
+      .query(async () => {
+        const task = await batchTaskManager.getLatestRunningTask('batch_add_data_sources');
+        return task;
+      }),
+
     // 緩存管理 API
     getCacheStats: publicProcedure
       .query(async () => {

@@ -5,7 +5,7 @@ import { Loader2, Pause, Play, CheckCircle, XCircle, X, AlertCircle } from "luci
 import { useState, useEffect } from "react";
 
 interface BatchTaskProgressBarProps {
-  taskType: 'eBay' | 'SNKRDUNK';
+  taskType: 'eBay' | 'SNKRDUNK' | '批量添加';
   progress: {
     taskId: number;
     status: 'pending' | 'running' | 'paused' | 'completed' | 'failed';
