@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { PriceTrendChart } from "@/components/PriceTrendChart";
 import { ShareButton } from "@/components/ShareButton";
 import { useTranslation } from "react-i18next";
-import Footer from "@/components/Footer";
+
 import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
 import { formatShortDateTime, formatDate, formatDateTime } from "@/lib/formatDate";
 
@@ -18,6 +18,7 @@ const grades = ["PSA 10", "BGS 10", "中古"];
 
 export default function CardDetail() {
   const { t } = useTranslation();
+  const [, setLocation] = useLocation();
   const [, params] = useRoute("/card/:id");
   const [activeSource, setActiveSource] = useState<"snkrdunk" | "ebay">("snkrdunk");
   const [activeGrade, setActiveGrade] = useState<string | null>(null);
@@ -247,7 +248,12 @@ export default function CardDetail() {
             <p className="text-sm sm:text-base text-muted-foreground mb-2">{card.nameJa}</p>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button variant="default" size="sm">
+            <Button 
+              variant="default" 
+              size="sm" 
+              style={{backgroundColor: '#ea7210'}}
+              onClick={() => setLocation(`/pricing/${card.id}`)}
+            >
               {t("cardDetail.comparePrice")}
             </Button>
             <Button
@@ -605,8 +611,7 @@ export default function CardDetail() {
           </div>
         </div>
       
-      {/* Footer */}
-      <Footer />
+
     </div>
   );
 }

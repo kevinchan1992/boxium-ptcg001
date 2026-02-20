@@ -4585,3 +4585,22 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - ✅ Card 180009 現在能正確爬取（SNKRDUNK ID: 91391）
 - ✅ 成功找到 6 個 PSA 10 商品（HKD 89,731.20 - 133,551.60）
 - ✅ 所有卡牌現在都會使用正確的 SNKRDUNK ID 進行爬取
+
+
+## 視覺編輯優化 - 完成 (2026-02-20)
+
+### 任務列表
+- [x] 修復 CardDetail 頁面「比較價格」按鈕顏色（改為 #ea7210）
+- [x] 添加「比較價格」按鈕點擊事件（導航到 Pricing 頁面）
+- [x] 確認價格趋勢圖時間範圍切換功能（已存在，點擊 7天/30天/90天/全部 時圖表會自動過濾數據）
+- [x] 移除 CardDetail 頁面的 Footer 顯示
+
+### 完成的變更
+1. **CardDetail.tsx**
+   - 修復按鈕顏色：將「比較價格」按鈕顏色改為 #ea7210
+   - 添加點擊事件：點擊按鈕後導航到 `/pricing/{cardId}` 頁面
+   - 移除 Footer 組件
+
+2. **PriceTrendChart.tsx**
+   - 確認時間範圍切換功能已存在（第 54-61 行）
+   - 當用戶點擊時間範圍按鈕時，圖表會自動過濾並只顯示相應時間的數據
