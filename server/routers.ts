@@ -1659,6 +1659,16 @@ try {
         return { success: true, message: "任務已繼續" };
       }),
 
+    // 取消持久化任務
+    cancelPersistentTask: publicProcedure
+      .input(z.object({
+        taskId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        await batchTaskManager.cancelTask(input.taskId);
+        return { success: true, message: "任務已取消" };
+      }),
+
     // 緩存管理 API
     getCacheStats: publicProcedure
       .query(async () => {

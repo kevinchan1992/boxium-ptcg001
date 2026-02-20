@@ -38,29 +38,38 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
   (async () => {
     for (const card of cardsToUpdate) {
       try {
-        // Check if task is paused
+        // Check if task is paused or cancelled
         while (await batchTaskManager.isTaskPaused(taskId)) {
           await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        // Check if task is cancelled
+        if (await batchTaskManager.isTaskCancelled(taskId)) {
+          console.log(`[PersistentSnkrdunkBatchUpdate] Task ${taskId} cancelled, stopping...`);
+          return;
         }
 
         // Get card's SNKRDUNK data sources
         const cardDataSources = snkrdunkSources.filter((ds: any) => ds.cardId === card.id);
         if (cardDataSources.length === 0) {
-          await batchTaskManager.updateTaskProgressFailure(taskId, card.id, card.name, "無 SNKRDUNK 數據源");
+          // 無數據源不計入錯誤，跳過
+          await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
           continue;
         }
 
         // Use first data source URL
         const dataSource = cardDataSources[0];
         if (!dataSource.sourceUrl) {
-          await batchTaskManager.updateTaskProgressFailure(taskId, card.id, card.name, "數據源 URL 為空");
+          // URL 為空不計入錯誤，跳過
+          await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
           continue;
         }
 
         // Scrape SNKRDUNK page
         const scrapedData = await scrapeSnkrdunkPage(dataSource.sourceUrl);
         if (!scrapedData || !scrapedData.priceHistory || scrapedData.priceHistory.length === 0) {
-          await batchTaskManager.updateTaskProgressFailure(taskId, card.id, card.name, "未找到 SNKRDUNK 價格數據");
+          // 沒有價格數據是正常情況，不計入錯誤
+          await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
           continue;
         }
 

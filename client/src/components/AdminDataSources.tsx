@@ -304,10 +304,10 @@ export function AdminDataSources() {
     }
   );
 
-  // 暂停/繼續 eBay 任務
+  // 暫停/繼續/取消 eBay 任務
   const pauseEbayTaskMutation = trpc.admin.pausePersistentTask.useMutation({
     onSuccess: () => {
-      toast.info("eBay 批量更新已暂停");
+      toast.info("eBay 批量更新已暫停");
     },
   });
 
@@ -317,16 +317,38 @@ export function AdminDataSources() {
     },
   });
 
-  // 暂停/繼續 SNKRDUNK 任務
+  const cancelEbayTaskMutation = trpc.admin.cancelPersistentTask.useMutation({
+    onSuccess: () => {
+      toast.success("已取消 eBay 批量更新任務");
+      utils.admin.getDataSources.invalidate();
+      setEbayTaskId(null);
+    },
+    onError: (error: any) => {
+      toast.error(`取消任務失敗: ${error.message}`);
+    },
+  });
+
+  // 暫停/繼續/取消 SNKRDUNK 任務
   const pauseSnkrdunkTaskMutation = trpc.admin.pausePersistentTask.useMutation({
     onSuccess: () => {
-      toast.info("SNKRDUNK 批量更新已暂停");
+      toast.info("SNKRDUNK 批量更新已暫停");
     },
   });
 
   const resumeSnkrdunkTaskMutation = trpc.admin.resumePersistentTask.useMutation({
     onSuccess: () => {
       toast.info("SNKRDUNK 批量更新已繼續");
+    },
+  });
+
+  const cancelSnkrdunkTaskMutation = trpc.admin.cancelPersistentTask.useMutation({
+    onSuccess: () => {
+      toast.success("已取消 SNKRDUNK 批量更新任務");
+      utils.admin.getDataSources.invalidate();
+      setSnkrdunkTaskId(null);
+    },
+    onError: (error: any) => {
+      toast.error(`取消任務失敗: ${error.message}`);
     },
   });
 
@@ -553,6 +575,7 @@ export function AdminDataSources() {
                   progress={snkrdunkTaskProgress}
                   onPause={() => pauseSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
                   onResume={() => resumeSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
+                  onCancel={() => cancelSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
                   isPauseLoading={pauseSnkrdunkTaskMutation.isPending}
                   isResumeLoading={resumeSnkrdunkTaskMutation.isPending}
                 />
@@ -563,6 +586,7 @@ export function AdminDataSources() {
                   progress={ebayTaskProgress}
                   onPause={() => pauseEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
                   onResume={() => resumeEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
+                  onCancel={() => cancelEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
                   isPauseLoading={pauseEbayTaskMutation.isPending}
                   isResumeLoading={resumeEbayTaskMutation.isPending}
                 />

@@ -38,15 +38,22 @@ export async function executePersistentEbayBatchUpdate(): Promise<{ taskId: numb
   (async () => {
     for (const card of cardsToUpdate) {
       try {
-        // Check if task is paused
+        // Check if task is paused or cancelled
         while (await batchTaskManager.isTaskPaused(taskId)) {
           await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        // Check if task is cancelled
+        if (await batchTaskManager.isTaskCancelled(taskId)) {
+          console.log(`[PersistentEbayBatchUpdate] Task ${taskId} cancelled, stopping...`);
+          return;
         }
 
         // Get full card info
         const fullCard = await db.getCardById(card.id);
         if (!fullCard) {
-          await batchTaskManager.updateTaskProgressFailure(taskId, card.id, card.name, "卡牌不存在");
+          // 卡牙不存在是數據問題，不計入錯誤
+          await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
           continue;
         }
 
@@ -113,7 +120,8 @@ export async function executePersistentEbayBatchUpdate(): Promise<{ taskId: numb
         });
 
         if (items.length === 0) {
-          await batchTaskManager.updateTaskProgressFailure(taskId, card.id, card.name, "未找到 eBay 商品");
+          // 未找到 eBay 商品是正常情況，不計入錯誤
+          await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
           continue;
         }
 
