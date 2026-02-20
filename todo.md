@@ -4901,3 +4901,27 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 
 ### 需求說明
 修改 trending 卡牌的計算邏輯，改為基於**最近 1 個月內 PSA 10 評級卡牌的成交價格歷史**來計算排行榜名次，提升排行榜的時效性和準確性。
+
+
+## 新需求: 更新 trending 頁面和 Admin 頁面的說明文字
+
+### 任務清單
+- [x] 查找 trending 頁面的說明文字位置
+- [x] 更新 trending 頁面說明：「基於 2 個月內」→「基於 1 個月內」
+- [x] 查找 Admin 頁面的說明文字位置
+- [x] 更新 Admin 頁面說明：「基於 PSA10 評級最近 2 個月」→「基於 PSA10 評級最近 1 個月」
+- [x] 測試驗證修改後的頁面顯示
+
+### 查找結果
+**Trending 頁面**:
+- 文件: `/home/ubuntu/boxium-ptcg/client/src/locales/zh-TW.json`
+- 第 4 行: `"subtitle": "最近 2 個月內 PSA 10 評級卡牌市場趋勢"`
+- 需要修改: `2 個月` → `1 個月`
+
+**Admin 頁面**:
+- 文件: `/home/ubuntu/boxium-ptcg/client/src/locales/zh-TW.json`
+- 第 66 行: `"trendingCardsDesc": "基於 PSA 10 評級最近 60 天成交價格漲幅"`
+- 需要修改: `60 天` → `30 天`
+
+### 需求說明
+更新 trending 頁面和 Admin 頁面的說明文字，確保與實際計算邏輯一致（已改為基於最近 1 個月的 PSA 10 成交價格）。

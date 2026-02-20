@@ -16,7 +16,7 @@ type TrendingTab = 'searches' | 'priceIncrease' | 'priceDecrease';
 export default function Trending() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TrendingTab>('searches');
-  const days = 60; // Fixed to 60 days (2 months) to match backend calculation
+  const days = 30; // Fixed to 30 days (1 month) to match backend calculation
 
   // Fetch trending data based on active tab
   const { data: searchData, isLoading: searchLoading, refetch: refetchSearch } = trpc.trending.getBySearches.useQuery(
