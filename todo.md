@@ -4878,3 +4878,26 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 
 ### 需求說明
 刪除價格趨勢圖下方的統計區塊，包括 SNKRDUNK 和 eBay 的最新、平均、最低、最高價格顯示。
+
+
+## 新需求: 修改 trending 卡牌計算邏輯
+
+### 任務清單
+- [x] 查找當前 trending 卡牌的計算邏輯位置
+- [x] 修改計算邏輯為基於最近 1 個月內的 PSA 10 成交價格
+- [x] 測試驗證修改後的 trending 排行槜
+
+### 當前邏輯分析
+**位置**: `server/db.ts` 的 `calculateAndCacheTrendingCards()` 函數
+**當前邏輯**: 
+- 基於最近 **2 個月**的 SNKRDUNK PSA 10 成交價格
+- 計算方式: 最新價格 vs. 2 個月前最舊價格
+- 需要至少 2 筆交易記錄
+
+**需要修改**: 
+- 改為最近 **1 個月** (30 天)
+- 保持 PSA 10 等級的篩選
+- 保持 SNKRDUNK 數據源
+
+### 需求說明
+修改 trending 卡牌的計算邏輯，改為基於**最近 1 個月內 PSA 10 評級卡牌的成交價格歷史**來計算排行榜名次，提升排行榜的時效性和準確性。
