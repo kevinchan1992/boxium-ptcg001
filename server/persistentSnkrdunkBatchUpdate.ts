@@ -60,7 +60,10 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         // Scrape SNKRDUNK page
         const scrapedData = await scrapeSnkrdunkPage(dataSource.sourceUrl);
         if (!scrapedData || !scrapedData.priceHistory || scrapedData.priceHistory.length === 0) {
-          await batchTaskManager.updateTaskProgressFailure(taskId, card.id, card.name, "未找到 SNKRDUNK 價格數據");
+          // This is a normal case: card has no price data on SNKRDUNK
+          // Skip without counting as error
+          await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
+          console.log(`[PersistentSnkrdunkBatchUpdate] Card ${card.id} has no price data, skipping`);
           continue;
         }
 

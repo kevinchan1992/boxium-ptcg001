@@ -258,6 +258,26 @@ export async function completeTask(taskId: number, status: 'completed' | 'failed
 }
 
 /**
+ * Cancel task (mark as completed)
+ */
+export async function cancelTask(taskId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    return;
+  }
+
+  await db
+    .update(scheduledTasks)
+    .set({
+      status: 'completed',
+      completedAt: new Date(),
+    })
+    .where(eq(scheduledTasks.id, taskId));
+
+  console.log(`[BatchTaskManager] Task ${taskId} cancelled`);
+}
+
+/**
  * Check if there's a running task of the same type
  */
 export async function hasRunningTask(taskType: 'batch_ebay_update' | 'batch_snkrdunk_update'): Promise<boolean> {

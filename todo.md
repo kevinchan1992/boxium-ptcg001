@@ -4776,3 +4776,12 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - ✅ 搜尋功能正常（後端搜尋正確過濾數據）
 - ✅ 按鈕狀態正確（第一頁和上一頁在第 1 頁時禁用）
 - ✅ 頁面加載速度顯著提升（從加載 10,025 條到只加載 50 條）
+
+## Bug 修復: SNKRDUNK 批量更新錯誤處理邏輯
+
+- [x] 檢查 persistentSnkrdunkBatchUpdate.ts 的錯誤處理邏輯
+- [x] 檢查 snkrdunkScraper.ts 的返回值處理
+- [x] 修改邏輯：「未找到 SNKRDUNK 價格數據」不應計入錯誤
+- [x] 區分真正的錯誤（網絡錯誤、解析失敗）和正常情況（卡牌無價格數據）
+- [x] 更新錯誤統計和顯示邏輯
+- [x] 添加 cancelTask 功能以便測試
