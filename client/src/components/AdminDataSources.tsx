@@ -150,12 +150,16 @@ export function AdminDataSources() {
     // Normalize URL function (same as backend)
     const normalizeUrl = (url: string) => url.split('?')[0].split('#')[0];
     
-    // Deduplicate URLs with normalization
-    const existingUrls = dataSourcesQuery.data?.data?.map((ds: any) => normalizeUrl(ds.sourceUrl)) || [];
-    const uniqueUrls = Array.from(new Set(urls.map(normalizeUrl))); // Remove duplicates within input
-    const urlMap = new Map(urls.map(url => [normalizeUrl(url), url])); // Map normalized to original
-    const newNormalizedUrls = uniqueUrls.filter(normalized => !existingUrls.includes(normalized));
-    const newUrls = newNormalizedUrls.map(normalized => urlMap.get(normalized)!); // Get original URLs
+    // Remove duplicates within input first
+    const uniqueUrls = Array.from(new Set(urls.map(normalizeUrl)));
+    const urlMap = new Map(urls.map(url => [normalizeUrl(url), url]));
+    
+    // Check against database using backend API
+    const checkResults = await utils.admin.checkUrlsExist.fetch({ urls: uniqueUrls });
+    const existingUrls = new Set(checkResults.filter((r: any) => r.exists).map((r: any) => r.url));
+    
+    const newNormalizedUrls = uniqueUrls.filter(normalized => !existingUrls.has(normalized));
+    const newUrls = newNormalizedUrls.map(normalized => urlMap.get(normalized)!);
     const duplicateCount = urls.length - newUrls.length;
 
     if (newUrls.length === 0) {

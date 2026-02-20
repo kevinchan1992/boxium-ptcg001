@@ -460,6 +460,31 @@ export async function removeFromWatchlist(userId: number, cardId: number) {
 }
 
 // Data source management queries
+
+/**
+ * Check if a data source with the given normalized URL already exists
+ */
+export async function checkDataSourceExists(normalizedUrl: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    return false;
+  }
+
+  try {
+    // Use LIKE to match normalized URL (without query params and fragments)
+    const result = await db
+      .select({ id: dataSources.id })
+      .from(dataSources)
+      .where(like(dataSources.sourceUrl, `${normalizedUrl}%`))
+      .limit(1);
+    
+    return result.length > 0;
+  } catch (error) {
+    console.error("[Database] Failed to check data source exists:", error);
+    return false;
+  }
+}
+
 export async function getDataSources(options?: { page?: number; pageSize?: number; searchQuery?: string }) {
   const db = await getDb();
   if (!db) return { data: [], total: 0, page: 1, pageSize: 20, totalPages: 0 };

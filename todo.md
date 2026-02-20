@@ -4820,3 +4820,13 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 處理取消後的狀態更新（顯示已處理數量和取消提示）
 - [x] 在結果統計中顯示「任務已取消」標記
 - [x] 測試驗證取消功能正常運作（代碼邏輯已確認正確）
+
+
+## Bug 修復: Admin 頁面手動添加 SNKRDUNK 數據源去重機制優化 - 已完成
+
+- [x] 檢查前端去重邏輯（AdminDataSources.tsx 的 handleSubmit 函數）
+- [x] 檢查後端去重邏輯（server/routers.ts 的 addSnkrdunkSource procedure）
+- [x] 檢查 URL 正規化邏輯的一致性（前端 vs 後端）
+- [x] 識別去重失效的根本原因
+- [x] 優化去重邏輯確保完全生效
+- [x] 測試驗證修復後的去重機制

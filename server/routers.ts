@@ -429,6 +429,26 @@ export const appRouter = router({
         return sources;
       }),
 
+    checkUrlsExist: publicProcedure
+      .input(z.object({
+        urls: z.array(z.string()),
+      }))
+      .query(async ({ input }) => {
+        // Normalize URLs
+        const normalizeUrl = (url: string) => url.split('?')[0].split('#')[0];
+        const normalizedUrls = input.urls.map(normalizeUrl);
+        
+        // Check each URL
+        const results = await Promise.all(
+          normalizedUrls.map(async (url) => ({
+            url,
+            exists: await db.checkDataSourceExists(url),
+          }))
+        );
+        
+        return results;
+      }),
+
     addSnkrdunkSource: publicProcedure
       .input(z.object({
         url: z.string().url(),
@@ -442,15 +462,10 @@ const snkrdunkId = extractSnkrdunkId(input.url);
         // Normalize URL for duplicate check
         const normalizedUrl = input.url.split('?')[0].split('#')[0];
         
-        // Check if data source already exists
-        const allDataSourcesResult = await db.getDataSources({ pageSize: 10000 });
-        const allDataSources = allDataSourcesResult.data;
-        const existingDataSource = allDataSources.find(ds => {
-          const existingNormalized = ds.sourceUrl.split('?')[0].split('#')[0];
-          return existingNormalized === normalizedUrl;
-        });
-
-        if (existingDataSource) {
+        // Check if data source already exists using database query
+        const exists = await db.checkDataSourceExists(normalizedUrl);
+        
+        if (exists) {
           // Return a special response instead of throwing error
           return { 
             success: false, 
