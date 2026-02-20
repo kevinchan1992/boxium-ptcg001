@@ -109,12 +109,12 @@ export default function About() {
   const dataSources = [
     {
       name: "SNKRDUNK",
-      description: "日本最大的球鞋和卡牌交易平台，提供真實成交價格記錄",
+      description: "日本最大的球鞋和卡牌交易平台，提供真實成交價格記錄，專注 PSA 10 高評級市場數據",
       logo: "/snkrdunk-logo.png"
     },
     {
       name: "eBay",
-      description: "全球最大的拍賣平台，涵蓋國際市場的卡牌交易數據",
+      description: "全球最大的拍賣平台，涵蓋國際市場的卡牌交易數據，提供多元化的價格參考",
       logo: "/ebay-logo.png"
     }
   ];
@@ -224,7 +224,8 @@ export default function About() {
                     <img 
                       src={source.logo} 
                       alt={source.name} 
-                      className="h-6 sm:h-8 object-contain"
+                      className="h-10 sm:h-12 object-contain"
+                      style={{ minWidth: '120px' }}
                     />
                   </div>
                   <div>
