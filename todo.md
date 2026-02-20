@@ -4770,3 +4770,10 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 添加分頁導航組件（首頁、上一頁、下一頁、末頁）
 - [x] 設定預設每頁顯示 20 條記錄
 - [x] 測試驗證分頁功能正常運作
+
+
+## 新需求: 調整手動添加 SNKRDUNK 數據源的批量處理速度 - 已完成
+
+- [x] 定位 AdminDataSources.tsx 中的批量處理代碼
+- [x] 將並發數量從 5 改為 15
+- [x] 測試驗證批量添加速度提升
