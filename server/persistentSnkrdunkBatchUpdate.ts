@@ -14,8 +14,8 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
   }
 
   // Get all SNKRDUNK data sources
-  const allDataSources = await db.getDataSources();
-  const snkrdunkSources = allDataSources.filter(ds => ds.source === 'snkrdunk');
+  const allDataSourcesResult = await db.getDataSources();
+  const snkrdunkSources = allDataSourcesResult.data.filter((ds: any) => ds.source === 'snkrdunk');
   
   // Get unique cards
   const uniqueCards = new Map<number, { id: number; name: string }>();

@@ -460,11 +460,17 @@ export async function removeFromWatchlist(userId: number, cardId: number) {
 }
 
 // Data source management queries
-export async function getDataSources() {
+export async function getDataSources(options?: { page?: number; pageSize?: number; searchQuery?: string }) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return { data: [], total: 0 };
 
-  const result = await db
+  const page = options?.page ?? 1;
+  const pageSize = options?.pageSize ?? 50;
+  const searchQuery = options?.searchQuery ?? "";
+  const offset = (page - 1) * pageSize;
+
+  // Build base query
+  let query = db
     .select({
       id: dataSources.id,
       cardId: dataSources.cardId,
@@ -483,9 +489,32 @@ export async function getDataSources() {
     })
     .from(dataSources)
     .leftJoin(cards, eq(dataSources.cardId, cards.id))
-    .orderBy(desc(dataSources.createdAt));
+    .$dynamic();
 
-  return result;
+  // Apply search filter if provided
+  if (searchQuery) {
+    query = query.where(like(cards.name, `%${searchQuery}%`));
+  }
+
+  // Get total count
+  const countQuery = db
+    .select({ count: sql<number>`count(*)` })
+    .from(dataSources)
+    .leftJoin(cards, eq(dataSources.cardId, cards.id))
+    .$dynamic();
+
+  const totalResult = searchQuery 
+    ? await countQuery.where(like(cards.name, `%${searchQuery}%`))
+    : await countQuery;
+  const total = Number(totalResult[0]?.count ?? 0);
+
+  // Get paginated data
+  const result = await query
+    .orderBy(desc(dataSources.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  return { data: result, total };
 }
 
 export async function addDataSource(data: Omit<InsertDataSource, "id" | "createdAt" | "updatedAt">) {

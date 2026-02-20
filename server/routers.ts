@@ -419,9 +419,14 @@ export const appRouter = router({
 
   admin: router({
     getDataSources: publicProcedure
-      .query(async ({ ctx }) => {
-const sources = await db.getDataSources();
-        return sources;
+      .input(z.object({
+        page: z.number().min(1).optional().default(1),
+        pageSize: z.number().min(1).max(100).optional().default(50),
+        searchQuery: z.string().optional().default(""),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const result = await db.getDataSources(input);
+        return result;
       }),
 
     addSnkrdunkSource: publicProcedure
@@ -438,8 +443,8 @@ const snkrdunkId = extractSnkrdunkId(input.url);
         const normalizedUrl = input.url.split('?')[0].split('#')[0];
         
         // Check if data source already exists
-        const allDataSources = await db.getDataSources();
-        const existingDataSource = allDataSources.find(ds => {
+        const allDataSourcesResult = await db.getDataSources();
+        const existingDataSource = allDataSourcesResult.data.find((ds: any) => {
           const existingNormalized = ds.sourceUrl.split('?')[0].split('#')[0];
           return existingNormalized === normalizedUrl;
         });
@@ -500,8 +505,8 @@ const snkrdunkId = extractSnkrdunkId(input.url);
           }
 
           // Get and update data source status
-          const dataSources = await db.getDataSources();
-          const newDataSource = dataSources.find(
+          const dataSourcesResult = await db.getDataSources();
+          const newDataSource = dataSourcesResult.data.find(
             (ds) => ds.cardId === cardId && ds.source === "snkrdunk"
           );
           if (newDataSource) {
@@ -659,7 +664,8 @@ try {
       .mutation(async ({ ctx }) => {
 try {
           // Get all data sources
-          const allSources = await db.getDataSources();
+          const allSourcesResult = await db.getDataSources();
+          const allSources = allSourcesResult.data;
           
           // Group by normalized URL
           const urlGroups = new Map<string, typeof allSources>();
@@ -726,7 +732,8 @@ try {
       }),
 
   updateCardEnglishNames: publicProcedure.mutation(async () => {
-    const dataSources = await db.getDataSources();
+    const dataSourcesResult = await db.getDataSources();
+    const dataSources = dataSourcesResult.data;
     
     let updated = 0;
     let failed = 0;
@@ -777,7 +784,8 @@ try {
 
   updateAllEbayRecords: publicProcedure.mutation(async ({ ctx }) => {
 // Get all data sources with cards
-    const dataSources = await db.getDataSources();
+    const dataSourcesResult = await db.getDataSources();
+    const dataSources = dataSourcesResult.data;
     const uniqueCards = new Map<number, { id: number; name: string }>();
     
     for (const source of dataSources) {
@@ -1157,10 +1165,10 @@ try {
           }
 
           // 獲取所有數據源的唯一卡牌
-          const dataSources = await db.getDataSources();
+          const dataSourcesResult = await db.getDataSources();
           const uniqueCards = new Map<number, { id: number; name: string }>();
           
-          for (const source of dataSources) {
+          for (const source of dataSourcesResult.data) {
             if (source.card) {
               uniqueCards.set(source.card.id, {
                 id: source.card.id,
@@ -1346,8 +1354,8 @@ try {
           }
 
           // 獲取所有 SNKRDUNK 數據源的唯一卡牌
-          const dataSources = await db.getDataSources();
-          const snkrdunkSources = dataSources.filter(ds => ds.source === "snkrdunk");
+          const dataSourcesResult = await db.getDataSources();
+          const snkrdunkSources = dataSourcesResult.data.filter((ds: any) => ds.source === "snkrdunk");
           const uniqueCards = new Map<number, { id: number; name: string }>();
           
           for (const source of snkrdunkSources) {

@@ -56,9 +56,19 @@ export function AdminDataSources() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const pausedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(50);
 
   const utils = trpc.useUtils();
-  const dataSourcesQuery = trpc.admin.getDataSources.useQuery();
+  const dataSourcesQuery = trpc.admin.getDataSources.useQuery({
+    page: currentPage,
+    pageSize,
+    searchQuery,
+  });
+
+  const dataSources = dataSourcesQuery.data?.data || [];
+  const totalCount = dataSourcesQuery.data?.total || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
 
 
@@ -140,7 +150,7 @@ export function AdminDataSources() {
     }
 
     // Deduplicate URLs
-    const existingUrls = dataSourcesQuery.data?.map((ds: any) => ds.sourceUrl) || [];
+    const existingUrls = dataSources?.map((ds: any) => ds.sourceUrl) || [];
     const uniqueUrls = Array.from(new Set(urls)); // Remove duplicates within input
     const newUrls = uniqueUrls.filter(url => !existingUrls.includes(url)); // Remove existing URLs
     const duplicateCount = urls.length - newUrls.length;
@@ -377,11 +387,11 @@ export function AdminDataSources() {
     }
   };
 
-  const toggleSelectAll = () => {
-    if (selectedIds.length === dataSourcesQuery.data?.length) {
+   const toggleSelectAll = () => {
+    if (selectedIds.length === dataSources.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(dataSourcesQuery.data?.map((ds: any) => ds.id) || []);
+      setSelectedIds(dataSources.map((ds: any) => ds.id));
     }
   };
 
@@ -586,11 +596,11 @@ export function AdminDataSources() {
                 <h2 className="text-2xl font-semibold text-foreground">
                   數據源列表
                 </h2>
-                {dataSourcesQuery.data && dataSourcesQuery.data.length > 0 && (
+                {dataSources && dataSources.length > 0 && (
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="select-all"
-                      checked={selectedIds.length === dataSourcesQuery.data.length}
+                      checked={selectedIds.length === dataSources.length}
                       onCheckedChange={toggleSelectAll}
                     />
                     <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
@@ -648,27 +658,9 @@ export function AdminDataSources() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : dataSourcesQuery.data && dataSourcesQuery.data.length > 0 ? (
+            ) : dataSources && dataSources.length > 0 ? (
               <div className="space-y-4">
-                {(() => {
-                  const filteredData = dataSourcesQuery.data.filter((source: any) => {
-                    if (!searchQuery) return true;
-                    const query = searchQuery.toLowerCase();
-                    return (
-                      source.card?.name?.toLowerCase().includes(query) ||
-                      source.sourceUrl?.toLowerCase().includes(query)
-                    );
-                  });
-                  
-                  if (filteredData.length === 0) {
-                    return (
-                      <div className="text-center py-12 text-muted-foreground">
-                        找不到符合「{searchQuery}」的數據源
-                      </div>
-                    );
-                  }
-                  
-                  return filteredData.map((source: any) => (
+                {dataSources.map((source: any) => (
                   <div
                     key={source.id}
                     className="flex items-start justify-between gap-4 p-4 bg-background rounded-lg border border-border"
@@ -752,12 +744,57 @@ export function AdminDataSources() {
                       </div>
                     </div>
                   </div>
-                  ));
-                })()}
+                ))}
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 尚未添加任何數據源
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                <div className="text-sm text-muted-foreground">
+                  顯示第 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalCount)} 筆，共 {totalCount} 筆
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                  >
+                    第一頁
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    上一頁
+                  </Button>
+                  <span className="text-sm text-muted-foreground px-4">
+                    第 {currentPage} / {totalPages} 頁
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    下一頁
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                  >
+                    最後一頁
+                  </Button>
+                </div>
               </div>
             )}
           </Card>
