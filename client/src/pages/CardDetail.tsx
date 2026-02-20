@@ -251,7 +251,7 @@ export default function CardDetail() {
             <Button 
               variant="default" 
               size="sm" 
-              style={{backgroundColor: '#ea7210'}}
+              style={{backgroundColor: '#06038d', color: 'white'}}
               onClick={() => setLocation(`/pricing/${card.id}`)}
             >
               {t("cardDetail.comparePrice")}

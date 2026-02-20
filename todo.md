@@ -4604,3 +4604,15 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 2. **PriceTrendChart.tsx**
    - 確認時間範圍切換功能已存在（第 54-61 行）
    - 當用戶點擊時間範圍按鈕時，圖表會自動過濾並只顯示相應時間的數據
+
+
+## 按鈕顏色統一修改 - 完成 (2026-02-20)
+
+### 任務
+- [x] 將 CardDetail 頁面中所有橙色按鈕改為深藍色 #06038d（文字保持白色）
+- [x] 確認 Pricing 頁面沒有使用橙色按鈕（使用主題預設顏色）
+
+### 完成的變更
+- CardDetail.tsx: 將「比較價格」按鈕從橙色 #ea7210 改為深藍色 #06038d
+- 文字顏色明確設置為白色（color: 'white'）
+- Pricing 相關頁面（Pricing.tsx, PricingDetail.tsx）沒有使用橙色按鈕，不需修改
