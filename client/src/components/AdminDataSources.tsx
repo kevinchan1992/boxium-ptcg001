@@ -340,6 +340,30 @@ export function AdminDataSources() {
     },
   });
 
+  // 取消 eBay 任務
+  const cancelEbayTaskMutation = trpc.admin.cancelPersistentTask.useMutation({
+    onSuccess: () => {
+      toast.success("eBay 批量更新已取消");
+      utils.admin.getDataSources.invalidate();
+      setEbayTaskId(null);
+    },
+    onError: (error: any) => {
+      toast.error(`取消失敗: ${error.message}`);
+    },
+  });
+
+  // 取消 SNKRDUNK 任務
+  const cancelSnkrdunkTaskMutation = trpc.admin.cancelPersistentTask.useMutation({
+    onSuccess: () => {
+      toast.success("SNKRDUNK 批量更新已取消");
+      utils.admin.getDataSources.invalidate();
+      setSnkrdunkTaskId(null);
+    },
+    onError: (error: any) => {
+      toast.error(`取消失敗: ${error.message}`);
+    },
+  });
+
   // 當任務完成時，顯示通知並刷新數據
   useEffect(() => {
     if (ebayTaskProgress && ebayTaskProgress.status === 'completed') {
@@ -563,6 +587,7 @@ export function AdminDataSources() {
                   progress={snkrdunkTaskProgress}
                   onPause={() => pauseSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
                   onResume={() => resumeSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
+                  onCancel={() => cancelSnkrdunkTaskMutation.mutate({ taskId: snkrdunkTaskProgress.taskId })}
                   isPauseLoading={pauseSnkrdunkTaskMutation.isPending}
                   isResumeLoading={resumeSnkrdunkTaskMutation.isPending}
                 />
@@ -573,6 +598,7 @@ export function AdminDataSources() {
                   progress={ebayTaskProgress}
                   onPause={() => pauseEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
                   onResume={() => resumeEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
+                  onCancel={() => cancelEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
                   isPauseLoading={pauseEbayTaskMutation.isPending}
                   isResumeLoading={resumeEbayTaskMutation.isPending}
                 />

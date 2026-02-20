@@ -44,6 +44,13 @@ export async function executePersistentEbayBatchUpdate(): Promise<{ taskId: numb
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
+        // Check if task is cancelled (status = completed)
+        const currentTask = await batchTaskManager.getBatchTaskProgress(taskId);
+        if (!currentTask || currentTask.status === 'completed') {
+          console.log(`[PersistentEbayBatchUpdate] Task ${taskId} cancelled, stopping`);
+          return;
+        }
+
         // Get full card info
         const fullCard = await db.getCardById(card.id);
         if (!fullCard) {

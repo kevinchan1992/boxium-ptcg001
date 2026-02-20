@@ -499,6 +499,31 @@
 
 ## Bug: SNKRDUNK 交易記錄顯示不完整 - 已修復
 
+## Admin Data Sources 分頁功能實現 - 已完成
+
+- [x] 後端 API 支援分頁參數 (page, pageSize, searchQuery)
+- [x] 前端實現分頁控制組件（第一頁、上一頁、下一頁、最後一頁）
+- [x] 顯示總數統計和當前頁範圍
+- [x] 測試分頁導航功能
+- [x] 測試搜尋功能
+
+## Bug 修復: SNKRDUNK 批量更新錯誤處理邏輯 - 已完成
+
+- [x] 檢查 persistentSnkrdunkBatchUpdate.ts 的錯誤處理邏輯
+- [x] 檢查 snkrdunkScraper.ts 的返回值處理
+- [x] 修改邏輯：「未找到 SNKRDUNK 價格數據」不應計入錯誤
+- [x] 區分真正的錯誤（網絡錯誤、解析失敗）和正常情況（卡牌無價格數據）
+- [x] 更新錯誤統計和顯示邏輯
+- [x] 添加 cancelTask 功能以便測試
+
+## Admin 管理工具：添加取消任務功能 - 已完成
+
+- [x] 在 AdminDataSources 組件的批量更新進度條中添加「取消任務」按鈕
+- [x] 調用 `admin.cancelPersistentTask` API 取消任務
+- [x] 取消後刷新進度條狀態
+- [x] 修復 persistentSnkrdunkBatchUpdate 和 persistentEbayBatchUpdate 檢查取消狀態
+- [x] 測試取消任務功能
+
 ## 新增功能: Trending 價格計算邏輯更新 - 已完成
 
 - [x] 更新後端計算邏輯，僅使用最近 3 個月內的 SNKRDUNK 實際成交價格歷史（PSA 10）
@@ -4785,3 +4810,10 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 區分真正的錯誤（網絡錯誤、解析失敗）和正常情況（卡牌無價格數據）
 - [x] 更新錯誤統計和顯示邏輯
 - [x] 添加 cancelTask 功能以便測試
+
+## Admin 管理工具：添加取消任務功能
+
+- [ ] 在 AdminDataSources 組件的批量更新進度條中添加「取消任務」按鈕
+- [ ] 調用 `admin.cancelPersistentTask` API 取消任務
+- [ ] 取消後刷新進度條狀態
+- [ ] 測試取消任務功能

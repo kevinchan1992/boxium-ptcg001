@@ -43,6 +43,13 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
+        // Check if task is cancelled (status = completed)
+        const currentTask = await batchTaskManager.getBatchTaskProgress(taskId);
+        if (!currentTask || currentTask.status === 'completed') {
+          console.log(`[PersistentSnkrdunkBatchUpdate] Task ${taskId} cancelled, stopping`);
+          return;
+        }
+
         // Get card's SNKRDUNK data sources
         const cardDataSources = snkrdunkSources.filter((ds: any) => ds.cardId === card.id);
         if (cardDataSources.length === 0) {
