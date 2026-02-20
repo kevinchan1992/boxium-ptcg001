@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { BrandButton } from "@/components/ui/brand-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Trash2, RefreshCw, Database, AlertCircle } from "lucide-react";
@@ -148,7 +149,7 @@ export function AdminCacheManagement() {
                 onChange={(e) => setCardIdInput(e.target.value)}
                 className="bg-zinc-800 border-zinc-700 text-white"
               />
-              <Button
+              <BrandButton
                 onClick={handleClearCardCache}
                 disabled={clearCardCache.isPending || !cardIdInput}
                 className="whitespace-nowrap"
@@ -164,7 +165,7 @@ export function AdminCacheManagement() {
                     清除緩存
                   </>
                 )}
-              </Button>
+              </BrandButton>
             </div>
           </div>
 

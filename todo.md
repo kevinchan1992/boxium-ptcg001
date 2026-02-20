@@ -4616,3 +4616,46 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - CardDetail.tsx: 將「比較價格」按鈕從橙色 #ea7210 改為深藍色 #06038d
 - 文字顏色明確設置為白色（color: 'white'）
 - Pricing 相關頁面（Pricing.tsx, PricingDetail.tsx）沒有使用橙色按鈕，不需修改
+
+
+## 全站按鈕顏色統一 + Hover 效果 - 完成 (2026-02-20)
+
+### 任務
+- [x] 檢查全站所有頁面的主要操作按鈕
+- [x] 創建 BrandButton 組件統一品牌按鈕樣式
+- [x] 修改 CardDetail 頁面使用 BrandButton
+- [x] 修改 AdminCacheManagement 組件使用 BrandButton
+- [x] 為所有深藍色按鈕添加 hover 效果（稍微變亮）
+- [x] 確保文字顏色保持白色
+- [x] 創建 BrandButton 使用說明文檔
+
+### 完成的變更
+
+#### 1. 創建 BrandButton 組件
+- 檔案位置：`client/src/components/ui/brand-button.tsx`
+- 預設顏色：深藍色 #06038d
+- Hover 效果：變亮到 #0804b3
+- Active 效果：變暗到 #050270
+- 文字顏色：白色
+- 支持所有 Button 的 variant 和 size
+
+#### 2. 應用到頁面
+- **CardDetail.tsx**：「比較價格」按鈕
+- **AdminCacheManagement.tsx**：「清除緩存」按鈕
+
+#### 3. 使用說明文檔
+- 檔案位置：`docs/BrandButton-Usage.md`
+- 包含使用方法、示例、顏色規範、無障礙性說明
+
+### 優勢
+1. **統一性**：全站主要操作按鈕顏色一致
+2. **可維護性**：未來修改顏色只需改一個地方
+3. **用戶體驗**：Hover 和 Active 效果提供明確的視覺反饋
+4. **無障礙性**：符合 WCAG AA 標準
+
+### 待應用的頁面
+建議在以下頁面的主要操作按鈕中使用 BrandButton：
+- PricingDetail.tsx - 「Buy Now」 按鈕
+- AdminBlogManagement.tsx - 「發布文章」 按鈕
+- AdminUserManagement.tsx - 主要操作按鈕
+- SearchResults.tsx - 「查看詳情」 按鈕

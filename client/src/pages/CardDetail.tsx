@@ -3,6 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 
 import { Button } from "@/components/ui/button";
+import { BrandButton } from "@/components/ui/brand-button";
 import { ExternalLink, Loader2, AlertCircle, ChevronLeft, ChevronRight, Heart, Share2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -248,14 +249,12 @@ export default function CardDetail() {
             <p className="text-sm sm:text-base text-muted-foreground mb-2">{card.nameJa}</p>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button 
-              variant="default" 
+            <BrandButton 
               size="sm" 
-              style={{backgroundColor: '#06038d', color: 'white'}}
               onClick={() => setLocation(`/pricing/${card.id}`)}
             >
               {t("cardDetail.comparePrice")}
-            </Button>
+            </BrandButton>
             <Button
               variant={favoriteStatus?.isFavorited ? "default" : "outline"}
               size="sm"
