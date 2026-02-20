@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { BrandButton } from "@/components/ui/brand-button";
 import { toast } from "sonner";
 
 export default function Marketplace() {
@@ -10,12 +11,11 @@ export default function Marketplace() {
             安全的卡牌交易平台,支援拍賣、報價與議價功能
           </p>
           <div className="flex gap-4 justify-center">
-            <Button
+            <BrandButton
               onClick={() => toast.info("功能開發中,敬請期待!")}
-              variant="default"
             >
               瀏覽拍賣
-            </Button>
+            </BrandButton>
             <Button
               onClick={() => toast.info("功能開發中,敬請期待!")}
               variant="outline"

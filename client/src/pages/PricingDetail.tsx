@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Button } from "@/components/ui/button";
+import { BrandButton } from "@/components/ui/brand-button";
 import { ExternalLink, Loader2, AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
@@ -247,15 +248,14 @@ export default function PricingDetail() {
                 )}
 
                 {/* Buy Button */}
-                <Button
-                  variant="default"
+                <BrandButton
                   size="sm"
                   className="w-full"
                   onClick={() => window.open(item.buyUrl, "_blank")}
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   {t("pricing.buyNow")}
-                </Button>
+                </BrandButton>
               </div>
             </div>
           ))}

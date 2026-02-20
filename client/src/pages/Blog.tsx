@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BrandButton } from "@/components/ui/brand-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Calendar, Eye, TrendingUp, Sparkles, ArrowRight } from "lucide-react";
 
@@ -146,10 +147,10 @@ export default function Blog() {
                             {featuredPost.viewCount} 次瀏覽
                           </span>
                         </div>
-                        <Button className="bg-[#06038d] hover:bg-[#06038d]/90 w-fit">
+                        <BrandButton className="w-fit">
                           閱讀全文
                           <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
+                        </BrandButton>
                       </div>
                     </div>
                   </Card>
@@ -215,13 +216,13 @@ export default function Blog() {
                 {/* Load More Button */}
                 {hasMore && (
                   <div className="mt-12 text-center">
-                    <Button
+                    <BrandButton
                       onClick={handleLoadMore}
                       disabled={isLoading}
-                      className="bg-[#06038d] hover:bg-[#06038d]/90 px-8 py-6 text-lg"
+                      className="px-8 py-6 text-lg"
                     >
                       {isLoading ? '載入中...' : '載入更多文章'}
-                    </Button>
+                    </BrandButton>
                   </div>
                 )}
               </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { BrandButton } from "@/components/ui/brand-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -82,16 +83,15 @@ export function AdminBlogManagement() {
             <Sparkles className="w-4 h-4 mr-2" />
             AI 生成文章
           </Button>
-          <Button
+          <BrandButton
             onClick={() => {
               setSelectedPost(null);
               setActiveView('create');
             }}
-            className="bg-[#06038d] hover:bg-[#06038d]/90"
           >
             <Plus className="w-4 h-4 mr-2" />
-            創建文章
-          </Button>
+            新增文章
+          </BrandButton>
         </div>
       </div>
 
@@ -551,13 +551,12 @@ function PostEditor({
             <Button variant="outline" onClick={onCancel} className="border-zinc-700 text-white hover:bg-zinc-800">
               取消
             </Button>
-            <Button
+            <BrandButton
               onClick={handleSubmit}
               disabled={createPostMutation.isPending || updatePostMutation.isPending}
-              className="bg-[#06038d] hover:bg-[#06038d]/90"
             >
               {post ? '更新文章' : '創建文章'}
-            </Button>
+            </BrandButton>
           </div>
         </div>
       </CardContent>

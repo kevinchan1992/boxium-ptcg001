@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useRoute, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { BrandButton } from "@/components/ui/brand-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Calendar, Eye, ArrowLeft, Share2, Sparkles, Facebook } from "lucide-react";
@@ -65,10 +66,10 @@ export default function BlogPost() {
           <h1 className="text-4xl font-bold text-white mb-4">文章不存在</h1>
           <p className="text-gray-400 mb-8">找不到您要查看的文章</p>
           <Link href="/blog">
-            <Button className="bg-[#06038d] hover:bg-[#06038d]/90">
+            <BrandButton>
               <ArrowLeft className="w-4 h-4 mr-2" />
               返回博客
-            </Button>
+            </BrandButton>
           </Link>
         </div>
       </div>
@@ -244,10 +245,10 @@ export default function BlogPost() {
           {/* Back to Blog */}
           <div className="mt-8 text-center">
             <Link href="/blog">
-              <Button className="bg-[#06038d] hover:bg-[#06038d]/90">
+              <BrandButton>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 返回博客
-              </Button>
+              </BrandButton>
             </Link>
           </div>
         </div>

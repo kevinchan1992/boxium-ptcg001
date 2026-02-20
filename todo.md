@@ -4659,3 +4659,45 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - AdminBlogManagement.tsx - 「發布文章」 按鈕
 - AdminUserManagement.tsx - 主要操作按鈕
 - SearchResults.tsx - 「查看詳情」 按鈕
+
+
+## 剩餘橙色按鈕改為 BrandButton - 完成 (2026-02-20)
+
+### 任務
+- [x] 修改 PricingDetail 頁面的「前往購買」按鈕為 BrandButton
+- [x] 修改 AdminBlogManagement 的「新增文章」和「創建/更新文章」按鈕為 BrandButton
+- [x] 確認 SearchResults 沒有使用按鈕（使用可點擊卡片）
+- [x] 修改 Blog.tsx 的「閱讀全文」和「載入更多文章」按鈕為 BrandButton
+- [x] 修改 BlogPost.tsx 的「返回博客」按鈕為 BrandButton
+- [x] 修改 Marketplace.tsx 的「瀏覽拍賣」按鈕為 BrandButton
+
+### 完成的變更
+
+#### 已修改的頁面/組件
+1. **PricingDetail.tsx**
+   - 「前往購買」按鈕：從 `variant="default"` 改為 `BrandButton`
+   - 保留 `w-full` className 和 `ExternalLink` 圖標
+
+2. **AdminBlogManagement.tsx**
+   - 「新增文章」按鈕：從 `bg-[#06038d]` inline style 改為 `BrandButton`
+   - 「創建文章」/「更新文章」按鈕：從 `bg-[#06038d]` inline style 改為 `BrandButton`
+
+3. **Blog.tsx**
+   - 「閱讀全文」按鈕：從 `bg-[#06038d]` inline style 改為 `BrandButton`
+   - 「載入更多文章」按鈕：從 `bg-[#06038d]` inline style 改為 `BrandButton`
+
+4. **BlogPost.tsx**
+   - 「返回博客」按鈕（底部）：從 `bg-[#06038d]` inline style 改為 `BrandButton`
+   - 保留頂部的 `variant="ghost"` 按鈕（不需修改）
+
+5. **Marketplace.tsx**
+   - 「瀏覽拍賣」按鈕：從 `variant="default"` 改為 `BrandButton`
+
+6. **SearchResults.tsx**
+   - 確認沒有使用按鈕，使用可點擊卡片導航
+
+### 結果
+- ✅ 全站所有主要操作按鈕現在都使用 BrandButton
+- ✅ 統一的深藍色 #06038d 和 Hover 效果
+- ✅ 更好的可維護性（未來修改顏色只需改 BrandButton 組件）
+- ✅ 提升品牌識別度和用戶體驗
