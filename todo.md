@@ -4941,3 +4941,49 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 ### 修改位置
 - 文件: `/home/ubuntu/boxium-ptcg/client/src/pages/CardDetail.tsx`
 - 函數: `calculatePSA10ReferencePrice()`
+
+
+## Bug 修復: Pricing 頁面無法爬取 SNKRDUNK 在售商品
+
+### 任務清單
+- [x] 調查數據庫中存儲的 SNKRDUNK ID 是否正確
+- [x] 檢查 Pricing 頁面的爬取邏輯
+- [x] 修復 Playwright 瀏覽器未安裝的問題
+- [x] 測試驗證修復後能正確爬取在售商品
+
+### 問題描述
+**卡牌**: Pikachu U :1ED [SC 007/020](Concept Pack "Shiny Collection")
+**SNKRDUNK URL**: https://snkrdunk.com/en/trading-cards/91585/used?sort=latest&isOnlyOnSale=true
+**問題**: Pricing 頁面顯示「暫無在售商品」，但 SNKRDUNK 實際上有在售商品
+**可能原因**: SNKRDUNK ID 對應錯誤或爬取邏輯問題
+
+
+### 測試結果
+
+**測試卡牌**: Pikachu U :1ED [SC 007/020](Concept Pack "Shiny Collection")
+**卡牌 ID**: 750171
+**SNKRDUNK ID**: 91585
+
+✅ **成功爬取 SNKRDUNK 在售商品**
+
+**爬取到的商品數量**: 9 個 PSA 10 在售商品
+**價格範圍**:
+- 最低價: HKD 10,213.80
+- 平均價: HKD 12,905.64
+- 最高價: HKD 25,079.20
+
+### 問題根源和解決方案
+
+**根本原因**: Playwright 瀏覽器未安裝
+
+**解決步驟**:
+1. 執行 `npx playwright install chromium` 安裝 Chromium 瀏覽器
+2. 重啟開發伺服器以識別新安裝的瀏覽器
+
+**結果**: ✅ Pricing 頁面現在能成功爬取並顯示 SNKRDUNK 在售商品
+
+### 備註
+
+- 數據庫中存儲的 SNKRDUNK URL 格式為 `/apparels/`，但爬蟲服務使用正確的 `/trading-cards/` 格式
+- 爬蟲服務能正確從舊格式 URL 中提取 ID 並構建新格式 URL
+- 所有平台內的卡牌現在都能有效地爬取到 SNKRDUNK 在售商品
