@@ -451,10 +451,13 @@ const snkrdunkId = extractSnkrdunkId(input.url);
         });
 
         if (existingDataSource) {
-          throw new TRPCError({ 
-            code: "BAD_REQUEST", 
+          // Return a special response instead of throwing error
+          return { 
+            success: false, 
+            skipped: true, 
+            reason: "duplicate",
             message: `Data source already exists: ${normalizedUrl}` 
-          });
+          };
         }
 
         try {

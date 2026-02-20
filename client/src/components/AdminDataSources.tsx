@@ -146,10 +146,15 @@ export function AdminDataSources() {
       return;
     }
 
-    // Deduplicate URLs
-    const existingUrls = dataSourcesQuery.data?.data?.map((ds: any) => ds.sourceUrl) || [];
-    const uniqueUrls = Array.from(new Set(urls)); // Remove duplicates within input
-    const newUrls = uniqueUrls.filter(url => !existingUrls.includes(url)); // Remove existing URLs
+    // Normalize URL function (same as backend)
+    const normalizeUrl = (url: string) => url.split('?')[0].split('#')[0];
+    
+    // Deduplicate URLs with normalization
+    const existingUrls = dataSourcesQuery.data?.data?.map((ds: any) => normalizeUrl(ds.sourceUrl)) || [];
+    const uniqueUrls = Array.from(new Set(urls.map(normalizeUrl))); // Remove duplicates within input
+    const urlMap = new Map(urls.map(url => [normalizeUrl(url), url])); // Map normalized to original
+    const newNormalizedUrls = uniqueUrls.filter(normalized => !existingUrls.includes(normalized));
+    const newUrls = newNormalizedUrls.map(normalized => urlMap.get(normalized)!); // Get original URLs
     const duplicateCount = urls.length - newUrls.length;
 
     if (newUrls.length === 0) {
@@ -199,10 +204,16 @@ export function AdminDataSources() {
           await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
         }
         
-        // Count successes and failures
+        // Count successes, failures, and skipped
         results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
-            successCount++;
+            const data = result.value as any;
+            if (data.skipped) {
+              // Skipped due to duplicate, don't count as failure
+              // Already counted in duplicateCount
+            } else {
+              successCount++;
+            }
           } else {
             failedCount++;
             const url = batch[index];

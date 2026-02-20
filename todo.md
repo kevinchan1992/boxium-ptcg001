@@ -4792,3 +4792,12 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 添加新數據源後跳轉到第一頁
 - [x] 保持手動添加 SNKRDUNK 數據源的爬取功能正常運作
 - [x] 測試驗證分頁功能（共 10093 筆數據，505 頁）
+
+
+## Bug 修復: 批量添加數據源的錯誤處理優化 - 已完成
+
+- [x] 分析當前錯誤處理邏輯（重複 URL 被當作錯誤）
+- [x] 修改後端 addDataSource API，將重複 URL 返回特殊狀態碼而非拋出錯誤
+- [x] 修改前端批量添加邏輯，將重複 URL 歸類為「跳過」而非「失敗」
+- [x] 在批量添加結果中友好地顯示跳過的 URL 數量
+- [x] 測試驗證修復後不再有誤導性錯誤訊息
