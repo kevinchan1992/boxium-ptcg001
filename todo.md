@@ -4826,3 +4826,11 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 修復查詢邏輯，確保獲取所有 10,025 張卡牌
 - [x] 同時修復 persistentEbayBatchUpdate.ts 的相同問題
 - [x] 測試修復後的批量更新功能
+
+
+## Bug 修復: 手動添加數據源後列表未即時更新分頁資料 - 已完成
+
+- [x] 檢查 AdminDataSources.tsx 的批量添加成功後的 invalidate 邏輯
+- [x] 檢查分頁狀態是否在添加後重置
+- [x] 修復即時更新機制（添加 utils.admin.getDataSources.invalidate()）
+- [x] 測試修復後的即時更新功能（成功）
