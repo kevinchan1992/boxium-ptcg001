@@ -4868,3 +4868,13 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 ### 需求說明
 1. **recordCount 優化**: 將顯示的記錄數從「全部 24 筆」改為「最新 5 筆」，與參考價格計算邏輯保持一致
 2. **價格趨勢優化**: 將價格趨勢計算從「近 30 天」改為「近 7 天」，提升趨勢的時效性
+
+
+## 新需求: 刪除 PriceTrendChart 統計區塊
+
+### 任務清單
+- [x] 刪除 PriceTrendChart.tsx 中的統計區塊（SNKRDUNK 和 eBay 統計數據）
+- [x] 測試驗證刪除後的頁面顯示
+
+### 需求說明
+刪除價格趨勢圖下方的統計區塊，包括 SNKRDUNK 和 eBay 的最新、平均、最低、最高價格顯示。

@@ -194,50 +194,7 @@ export function PriceTrendChart({
         </ResponsiveContainer>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-2 gap-4 mt-6">
-        {/* SNKRDUNK Stats */}
-        {stats.snkrdunk.avgPrice > 0 && (
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-500 mb-2">SNKRDUNK</h4>
-            <div className="space-y-1 text-sm">
-              <p className="text-foreground">
-                最新: <span className="font-semibold">{formatPrice(stats.snkrdunk.latestPrice)}</span>
-              </p>
-              <p className="text-foreground">
-                平均: <span className="font-semibold">{formatPrice(stats.snkrdunk.avgPrice)}</span>
-              </p>
-              <p className="text-foreground">
-                最低: <span className="font-semibold">{formatPrice(stats.snkrdunk.minPrice)}</span>
-              </p>
-              <p className="text-foreground">
-                最高: <span className="font-semibold">{formatPrice(stats.snkrdunk.maxPrice)}</span>
-              </p>
-            </div>
-          </div>
-        )}
 
-        {/* eBay Stats */}
-        {stats.ebay.avgPrice > 0 && (
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-orange-500 mb-2">eBay</h4>
-            <div className="space-y-1 text-sm">
-              <p className="text-foreground">
-                最新: <span className="font-semibold">{formatPrice(stats.ebay.latestPrice)}</span>
-              </p>
-              <p className="text-foreground">
-                平均: <span className="font-semibold">{formatPrice(stats.ebay.avgPrice)}</span>
-              </p>
-              <p className="text-foreground">
-                最低: <span className="font-semibold">{formatPrice(stats.ebay.minPrice)}</span>
-              </p>
-              <p className="text-foreground">
-                最高: <span className="font-semibold">{formatPrice(stats.ebay.maxPrice)}</span>
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
     </Card>
   );
 }
