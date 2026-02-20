@@ -52,6 +52,7 @@ export function AdminDataSources() {
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isCancelled, setIsCancelled] = useState(false);
   const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const pausedRef = useRef(false);
@@ -181,8 +182,15 @@ export function AdminDataSources() {
       
       pausedRef.current = false;
       setIsPaused(false);
+      setIsCancelled(false);
       
       for (let i = 0; i < newUrls.length; i += BATCH_SIZE) {
+        // Check if cancelled
+        if (isCancelled) {
+          toast.info(`批量添加已取消，已處理 ${successCount + failedCount}/${newUrls.length} 個 URL`);
+          break;
+        }
+        
         // Check if paused
         while (pausedRef.current) {
           await new Promise(resolve => setTimeout(resolve, 500));
@@ -224,6 +232,8 @@ export function AdminDataSources() {
       
       if (successCount > 0) {
         toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}（耗時 ${durationSeconds} 秒，平均 ${avgSpeed} URL/秒）`);
+        // Reset to first page to show newly added data sources
+        setCurrentPage(1);
         // Invalidate data sources query to refresh the list
         utils.admin.getDataSources.invalidate();
         if (failedCount === 0) {
@@ -516,22 +526,35 @@ export function AdminDataSources() {
                   )}
                 </Button>
                 {isSubmitting && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      pausedRef.current = !pausedRef.current;
-                      setIsPaused(pausedRef.current);
-                      if (pausedRef.current) {
-                        toast.info("已暫停，點擊繼續按鈕恢復處理");
-                      } else {
-                        toast.info("已繼續處理");
-                      }
-                    }}
-                    className="flex-1 sm:flex-none"
-                  >
-                    {isPaused ? "繼續" : "暫停"}
-                  </Button>
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        pausedRef.current = !pausedRef.current;
+                        setIsPaused(pausedRef.current);
+                        if (pausedRef.current) {
+                          toast.info("已暫停，點擊繼續按鈕恢復處理");
+                        } else {
+                          toast.info("已繼續處理");
+                        }
+                      }}
+                      className="flex-1 sm:flex-none"
+                    >
+                      {isPaused ? "繼續" : "暫停"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => {
+                        setIsCancelled(true);
+                        toast.info("正在取消批量添加...");
+                      }}
+                      className="flex-1 sm:flex-none"
+                    >
+                      取消
+                    </Button>
+                  </>
                 )}
               </div>
             </form>
