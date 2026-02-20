@@ -4866,3 +4866,11 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [x] 修改前端 invalidate 邏輯（添加 await 確保完成）
 - [x] 添加清空搜尋查詢邏輯（setSearchQuery('')）
 - [x] 測試修復後的排序功能（成功）
+
+
+## Bug 修復: 批量添加大量 SNKRDUNK 數據源時新數據源未顯示在列表第一頁頂部 - 已完成
+
+- [x] 分析批量添加大量數據源（超過半萬個）時的問題
+- [x] 檢查批量添加完成後的 invalidate 時機
+- [x] 修復批量添加完成後的刷新邏輯（添加 100ms 延遲確保狀態更新生效）
+- [x] 建議用戶測試修復後的大量批量添加功能
