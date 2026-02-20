@@ -268,7 +268,8 @@
     "condition": "狀況",
     "snkrdunkTitle": "SNKRDUNK PSA 10 在售商品",
     "snkrdunkDescription": "點擊以下按鈕前往 SNKRDUNK 查看最新的 PSA 10 在售商品",
-    "viewOnSnkrdunk": "前往 SNKRDUNK 查看"
+    "viewOnSnkrdunk": "前往 SNKRDUNK 查看",
+    "viewDetail": "查看詳情"
   },
   "share": {
     "button": "分享",

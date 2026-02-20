@@ -56,6 +56,10 @@ export default function PricingDetail() {
     setLocation("/pricing");
   };
 
+  const handleViewDetail = () => {
+    setLocation(`/card/${cardId}`);
+  };
+
   // Calculate price statistics
   const allPrices = pricingData?.listings.map(item => item.price) || [];
   const lowestPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
@@ -98,15 +102,23 @@ export default function PricingDetail() {
         ]}
       />
 
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={handleBack}
-        className="mb-4"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        {t("common.back")}
-      </Button>
+      {/* Back Button and View Detail Button */}
+      <div className="flex gap-2 mb-4">
+        <Button
+          variant="ghost"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          {t("common.back")}
+        </Button>
+        <Button
+          onClick={handleViewDetail}
+          style={{ backgroundColor: '#0804b3', color: 'white' }}
+          className="hover:opacity-90"
+        >
+          {t("pricing.viewDetail")}
+        </Button>
+      </div>
 
       {/* Card Header */}
       <div className="bg-card rounded-lg border border-border p-6 mb-6">

@@ -4987,3 +4987,15 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - 數據庫中存儲的 SNKRDUNK URL 格式為 `/apparels/`，但爬蟲服務使用正確的 `/trading-cards/` 格式
 - 爬蟲服務能正確從舊格式 URL 中提取 ID 並構建新格式 URL
 - 所有平台內的卡牌現在都能有效地爬取到 SNKRDUNK 在售商品
+
+
+## 新需求: Pricing 頁面添加「查看詳情」按鈕
+
+### 任務清單
+- [x] 在 PricingDetail 頁面的返回按鈕旁邊添加「查看詳情」按鈕
+- [x] 點擊按鈕跳轉到該卡牌的 Research 詳細頁面（CardDetail 頁面）
+- [x] 修改按鈕顏色為 #0804b3 背景、白色文字
+- [x] 測試驗證按鈕功能
+
+### 需求說明
+在 Pricing 頁面的「返回」按鈕旁邊添加一個「查看詳情」按鈕，點擊後跳轉到該卡牌的 Research 詳細頁面（/card/:id），方便用戶查看卡牌的完整信息和價格歷史。
