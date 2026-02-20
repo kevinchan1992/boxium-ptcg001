@@ -419,34 +419,9 @@ export const appRouter = router({
 
   admin: router({
     getDataSources: publicProcedure
-      .input(z.object({
-        page: z.number().min(1).optional().default(1),
-        pageSize: z.number().min(1).max(100).optional().default(20),
-        searchQuery: z.string().optional(),
-      }).optional())
-      .query(async ({ ctx, input }) => {
-        const sources = await db.getDataSources(input);
+      .query(async ({ ctx }) => {
+const sources = await db.getDataSources();
         return sources;
-      }),
-
-    checkUrlsExist: publicProcedure
-      .input(z.object({
-        urls: z.array(z.string()),
-      }))
-      .query(async ({ input }) => {
-        // Normalize URLs
-        const normalizeUrl = (url: string) => url.split('?')[0].split('#')[0];
-        const normalizedUrls = input.urls.map(normalizeUrl);
-        
-        // Check each URL
-        const results = await Promise.all(
-          normalizedUrls.map(async (url) => ({
-            url,
-            exists: await db.checkDataSourceExists(url),
-          }))
-        );
-        
-        return results;
       }),
 
     addSnkrdunkSource: publicProcedure
@@ -462,17 +437,18 @@ const snkrdunkId = extractSnkrdunkId(input.url);
         // Normalize URL for duplicate check
         const normalizedUrl = input.url.split('?')[0].split('#')[0];
         
-        // Check if data source already exists using database query
-        const exists = await db.checkDataSourceExists(normalizedUrl);
-        
-        if (exists) {
-          // Return a special response instead of throwing error
-          return { 
-            success: false, 
-            skipped: true, 
-            reason: "duplicate",
+        // Check if data source already exists
+        const allDataSources = await db.getDataSources();
+        const existingDataSource = allDataSources.find(ds => {
+          const existingNormalized = ds.sourceUrl.split('?')[0].split('#')[0];
+          return existingNormalized === normalizedUrl;
+        });
+
+        if (existingDataSource) {
+          throw new TRPCError({ 
+            code: "BAD_REQUEST", 
             message: `Data source already exists: ${normalizedUrl}` 
-          };
+          });
         }
 
         try {
@@ -524,8 +500,7 @@ const snkrdunkId = extractSnkrdunkId(input.url);
           }
 
           // Get and update data source status
-          const dataSourcesResult = await db.getDataSources({ pageSize: 10000 });
-          const dataSources = dataSourcesResult.data;
+          const dataSources = await db.getDataSources();
           const newDataSource = dataSources.find(
             (ds) => ds.cardId === cardId && ds.source === "snkrdunk"
           );
@@ -684,8 +659,7 @@ try {
       .mutation(async ({ ctx }) => {
 try {
           // Get all data sources
-          const allSourcesResult = await db.getDataSources({ pageSize: 10000 });
-          const allSources = allSourcesResult.data;
+          const allSources = await db.getDataSources();
           
           // Group by normalized URL
           const urlGroups = new Map<string, typeof allSources>();
@@ -752,8 +726,7 @@ try {
       }),
 
   updateCardEnglishNames: publicProcedure.mutation(async () => {
-    const dataSourcesResult = await db.getDataSources({ pageSize: 10000 });
-    const dataSources = dataSourcesResult.data;
+    const dataSources = await db.getDataSources();
     
     let updated = 0;
     let failed = 0;
@@ -804,8 +777,7 @@ try {
 
   updateAllEbayRecords: publicProcedure.mutation(async ({ ctx }) => {
 // Get all data sources with cards
-    const dataSourcesResult = await db.getDataSources({ pageSize: 10000 });
-    const dataSources = dataSourcesResult.data;
+    const dataSources = await db.getDataSources();
     const uniqueCards = new Map<number, { id: number; name: string }>();
     
     for (const source of dataSources) {
@@ -1184,9 +1156,8 @@ try {
             });
           }
 
-          // 獲取所有數據源的唯一卡牙
-          const dataSourcesResult = await db.getDataSources({ pageSize: 10000 });
-          const dataSources = dataSourcesResult.data;
+          // 獲取所有數據源的唯一卡牌
+          const dataSources = await db.getDataSources();
           const uniqueCards = new Map<number, { id: number; name: string }>();
           
           for (const source of dataSources) {
@@ -1374,9 +1345,8 @@ try {
             });
           }
 
-          // 獲取所有 SNKRDUNK 數據源的唯一卡牙
-          const dataSourcesResult = await db.getDataSources({ pageSize: 10000 });
-          const dataSources = dataSourcesResult.data;
+          // 獲取所有 SNKRDUNK 數據源的唯一卡牌
+          const dataSources = await db.getDataSources();
           const snkrdunkSources = dataSources.filter(ds => ds.source === "snkrdunk");
           const uniqueCards = new Map<number, { id: number; name: string }>();
           

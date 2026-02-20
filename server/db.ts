@@ -460,67 +460,11 @@ export async function removeFromWatchlist(userId: number, cardId: number) {
 }
 
 // Data source management queries
-
-/**
- * Check if a data source with the given normalized URL already exists
- */
-export async function checkDataSourceExists(normalizedUrl: string): Promise<boolean> {
+export async function getDataSources() {
   const db = await getDb();
-  if (!db) {
-    return false;
-  }
+  if (!db) return [];
 
-  try {
-    // Exact match on normalized URL (without query params and fragments)
-    const result = await db
-      .select({ id: dataSources.id })
-      .from(dataSources)
-      .where(eq(dataSources.sourceUrl, normalizedUrl))
-      .limit(1);
-    
-    return result.length > 0;
-  } catch (error) {
-    console.error("[Database] Failed to check data source exists:", error);
-    return false;
-  }
-}
-
-export async function getDataSources(options?: { page?: number; pageSize?: number; searchQuery?: string }) {
-  const db = await getDb();
-  if (!db) return { data: [], total: 0, page: 1, pageSize: 20, totalPages: 0 };
-
-  const page = options?.page || 1;
-  const pageSize = options?.pageSize || 20;
-  const searchQuery = options?.searchQuery?.trim();
-  const offset = (page - 1) * pageSize;
-
-  // Build where conditions
-  const conditions = [];
-  if (searchQuery) {
-    conditions.push(
-      or(
-        like(cards.name, `%${searchQuery}%`),
-        like(dataSources.sourceUrl, `%${searchQuery}%`)
-      )
-    );
-  }
-
-  // Get total count
-  const countQuery = db
-    .select({ count: sql<number>`count(*)` })
-    .from(dataSources)
-    .leftJoin(cards, eq(dataSources.cardId, cards.id));
-  
-  if (conditions.length > 0) {
-    countQuery.where(and(...conditions));
-  }
-  
-  const countResult = await countQuery;
-  const total = Number(countResult[0]?.count || 0);
-  const totalPages = Math.ceil(total / pageSize);
-
-  // Get paginated data
-  const dataQuery = db
+  const result = await db
     .select({
       id: dataSources.id,
       cardId: dataSources.cardId,
@@ -539,23 +483,9 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
     })
     .from(dataSources)
     .leftJoin(cards, eq(dataSources.cardId, cards.id))
-    .orderBy(desc(dataSources.createdAt))
-    .limit(pageSize)
-    .offset(offset);
+    .orderBy(desc(dataSources.createdAt));
 
-  if (conditions.length > 0) {
-    dataQuery.where(and(...conditions));
-  }
-
-  const result = await dataQuery;
-
-  return {
-    data: result,
-    total,
-    page,
-    pageSize,
-    totalPages,
-  };
+  return result;
 }
 
 export async function addDataSource(data: Omit<InsertDataSource, "id" | "createdAt" | "updatedAt">) {

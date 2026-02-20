@@ -10,8 +10,7 @@ export async function fixOrphanDataSources() {
   console.log("🔍 Starting orphan data source fix...");
   
   // Get all data sources
-  const allDataSourcesResult = await db.getDataSources({ pageSize: 10000 });
-  const allDataSources = allDataSourcesResult.data;
+  const allDataSources = await db.getDataSources();
   console.log(`📊 Total data sources: ${allDataSources.length}`);
   
   // Find orphan data sources (those without cardId or with invalid cardId)

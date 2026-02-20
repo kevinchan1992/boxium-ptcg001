@@ -52,20 +52,13 @@ export function AdminDataSources() {
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]; cancelled?: boolean}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
+  const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const pausedRef = useRef(false);
-  const cancelledRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
 
   const utils = trpc.useUtils();
-  const dataSourcesQuery = trpc.admin.getDataSources.useQuery({
-    page: currentPage,
-    pageSize,
-    searchQuery: searchQuery || undefined,
-  });
+  const dataSourcesQuery = trpc.admin.getDataSources.useQuery();
 
 
 
@@ -74,7 +67,6 @@ export function AdminDataSources() {
     onSuccess: () => {
       toast.success("SNKRDUNK 數據源已添加");
       setSnkrdunkUrl("");
-      setCurrentPage(1); // Jump to first page to see new data source
       utils.admin.getDataSources.invalidate();
     },
     onError: (error: any) => {
@@ -147,19 +139,10 @@ export function AdminDataSources() {
       return;
     }
 
-    // Normalize URL function (same as backend)
-    const normalizeUrl = (url: string) => url.split('?')[0].split('#')[0];
-    
-    // Remove duplicates within input first
-    const uniqueUrls = Array.from(new Set(urls.map(normalizeUrl)));
-    const urlMap = new Map(urls.map(url => [normalizeUrl(url), url]));
-    
-    // Check against database using backend API
-    const checkResults = await utils.admin.checkUrlsExist.fetch({ urls: uniqueUrls });
-    const existingUrls = new Set(checkResults.filter((r: any) => r.exists).map((r: any) => r.url));
-    
-    const newNormalizedUrls = uniqueUrls.filter(normalized => !existingUrls.has(normalized));
-    const newUrls = newNormalizedUrls.map(normalized => urlMap.get(normalized)!);
+    // Deduplicate URLs
+    const existingUrls = dataSourcesQuery.data?.map((ds: any) => ds.sourceUrl) || [];
+    const uniqueUrls = Array.from(new Set(urls)); // Remove duplicates within input
+    const newUrls = uniqueUrls.filter(url => !existingUrls.includes(url)); // Remove existing URLs
     const duplicateCount = urls.length - newUrls.length;
 
     if (newUrls.length === 0) {
@@ -187,17 +170,9 @@ export function AdminDataSources() {
       const DELAY_BETWEEN_BATCHES = 2000; // 2 second delay between batches
       
       pausedRef.current = false;
-      cancelledRef.current = false;
       setIsPaused(false);
       
       for (let i = 0; i < newUrls.length; i += BATCH_SIZE) {
-        // Check if cancelled
-        if (cancelledRef.current) {
-          setBatchResults(prev => ({ ...prev, progress: undefined, cancelled: true }));
-          toast.info(`任務已取消。已處理 ${successCount + failedCount} / ${newUrls.length} 個 URL`);
-          break;
-        }
-        
         // Check if paused
         while (pausedRef.current) {
           await new Promise(resolve => setTimeout(resolve, 500));
@@ -217,16 +192,10 @@ export function AdminDataSources() {
           await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
         }
         
-        // Count successes, failures, and skipped
+        // Count successes and failures
         results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
-            const data = result.value as any;
-            if (data.skipped) {
-              // Skipped due to duplicate, don't count as failure
-              // Already counted in duplicateCount
-            } else {
-              successCount++;
-            }
+            successCount++;
           } else {
             failedCount++;
             const url = batch[index];
@@ -241,12 +210,9 @@ export function AdminDataSources() {
       const durationSeconds = ((endTime - startTime) / 1000).toFixed(1);
       const avgSpeed = (newUrls.length / (endTime - startTime) * 1000).toFixed(1);
       
-      // Only show completion message if not cancelled
-      if (!cancelledRef.current) {
-        setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount, failedUrls });
-      }
+      setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount, failedUrls });
       
-      if (successCount > 0 && !cancelledRef.current) {
+      if (successCount > 0) {
         toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}（耗時 ${durationSeconds} 秒，平均 ${avgSpeed} URL/秒）`);
         if (failedCount === 0) {
           setSnkrdunkUrl("");
@@ -434,10 +400,10 @@ export function AdminDataSources() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === dataSourcesQuery.data?.data?.length) {
+    if (selectedIds.length === dataSourcesQuery.data?.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(dataSourcesQuery.data?.data?.map((ds: any) => ds.id) || []);
+      setSelectedIds(dataSourcesQuery.data?.map((ds: any) => ds.id) || []);
     }
   };
 
@@ -477,24 +443,9 @@ export function AdminDataSources() {
                 </p>
                 {batchResults.progress && (
                   <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                        {batchResults.progress}
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          cancelledRef.current = true;
-                          toast.info("正在取消任務...");
-                        }}
-                        className="text-xs h-7 bg-white dark:bg-gray-800"
-                      >
-                        <XCircle className="w-3 h-3 mr-1" />
-                        取消
-                      </Button>
-                    </div>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                      {batchResults.progress}
+                    </p>
                   </div>
                 )}
                 {(batchResults.success > 0 || batchResults.failed > 0 || batchResults.duplicates > 0) && !batchResults.progress ? (
@@ -504,9 +455,6 @@ export function AdminDataSources() {
                       <span className="text-red-600 font-medium">✗ 失敗: {batchResults.failed}</span>
                       {batchResults.duplicates > 0 && (
                         <span className="text-yellow-600 font-medium">⚠ 已過濾重複: {batchResults.duplicates}</span>
-                      )}
-                      {batchResults.cancelled && (
-                        <span className="text-orange-600 font-medium">⚠ 任務已取消</span>
                       )}
                     </div>
                     {batchResults.errors.length > 0 && (
@@ -662,11 +610,11 @@ export function AdminDataSources() {
                 <h2 className="text-2xl font-semibold text-foreground">
                   數據源列表
                 </h2>
-                {dataSourcesQuery.data?.data && dataSourcesQuery.data.data.length > 0 && (
+                {dataSourcesQuery.data && dataSourcesQuery.data.length > 0 && (
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="select-all"
-                      checked={selectedIds.length === dataSourcesQuery.data.data.length}
+                      checked={selectedIds.length === dataSourcesQuery.data.length}
                       onCheckedChange={toggleSelectAll}
                     />
                     <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
@@ -724,10 +672,10 @@ export function AdminDataSources() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : dataSourcesQuery.data?.data && dataSourcesQuery.data.data.length > 0 ? (
+            ) : dataSourcesQuery.data && dataSourcesQuery.data.length > 0 ? (
               <div className="space-y-4">
                 {(() => {
-                  const filteredData = dataSourcesQuery.data.data.filter((source: any) => {
+                  const filteredData = dataSourcesQuery.data.filter((source: any) => {
                     if (!searchQuery) return true;
                     const query = searchQuery.toLowerCase();
                     return (
@@ -834,67 +782,6 @@ export function AdminDataSources() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 尚未添加任何數據源
-              </div>
-            )}
-            
-            {/* Pagination */}
-            {dataSourcesQuery.data && dataSourcesQuery.data.totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-4 border-t">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    每頁顯示
-                  </span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="border rounded px-2 py-1 text-sm"
-                  >
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-                  <span className="text-sm text-muted-foreground">
-                    第 {dataSourcesQuery.data.page} / {dataSourcesQuery.data.totalPages} 頁，共 {dataSourcesQuery.data.total} 筆
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                  >
-                    首頁
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    上一頁
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(dataSourcesQuery.data!.totalPages, prev + 1))}
-                    disabled={currentPage === dataSourcesQuery.data.totalPages}
-                  >
-                    下一頁
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(dataSourcesQuery.data!.totalPages)}
-                    disabled={currentPage === dataSourcesQuery.data.totalPages}
-                  >
-                    末頁
-                  </Button>
-                </div>
               </div>
             )}
           </Card>
