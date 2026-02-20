@@ -161,8 +161,8 @@ export default function CardDetail() {
 
   // Calculate average price based on active source - Only PSA 10 for reference price
   // 方案 C: 混合計算邏輯
-  // 1. 優先使用最新 10 筆 PSA 10 交易的平均值
-  // 2. 如果不足 10 筆，使用近 30 天 PSA 10 交易的加權平均
+  // 1. 優先使用最新 5 筆 PSA 10 交易的平均值
+  // 2. 如果不足 5 筆，使用近 30 天 PSA 10 交易的加權平均
   // 3. 如果 30 天內數據不足，才使用所有 PSA 10 歷史數據
   const psa10OnlyHistory = priceHistory.filter(p => p.grade === "PSA 10" || p.grade === "PSA10" || p.grade === "PSA 10");
   
@@ -177,21 +177,21 @@ export default function CardDetail() {
         return dateB - dateA;
       });
       
-      // 策略 1: 如果有 10 筆或以上，使用最新 10 筆的平均值
-      if (sortedHistory.length >= 10) {
-        const latest10 = sortedHistory.slice(0, 10);
-        const avg = latest10.reduce((sum, p) => sum + parseFloat(p.price), 0) / latest10.length;
+      // 策略 1: 如果有 5 筆或以上，使用最新 5 筆的平均值
+      if (sortedHistory.length >= 5) {
+        const latest5 = sortedHistory.slice(0, 5);
+        const avg = latest5.reduce((sum, p) => sum + parseFloat(p.price), 0) / latest5.length;
         return avg.toFixed(2);
       }
       
-      // 策略 2: 如果不足 10 筆，檢查近 30 天的數據
+      // 策略 2: 如果不足 5 筆，檢查近 30 天的數據
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const recent30Days = sortedHistory.filter(p => {
         if (!p.soldAt) return false;
         return new Date(p.soldAt) >= thirtyDaysAgo;
       });
       
-      if (recent30Days.length >= 3) {
+      if (recent30Days.length >= 2) {
         // 使用加權平均：越新的交易權重越高
         let weightedSum = 0;
         let totalWeight = 0;
