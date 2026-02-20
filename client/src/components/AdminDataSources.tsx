@@ -52,9 +52,10 @@ export function AdminDataSources() {
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
+  const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]; cancelled?: boolean}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const pausedRef = useRef(false);
+  const cancelledRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -182,9 +183,17 @@ export function AdminDataSources() {
       const DELAY_BETWEEN_BATCHES = 2000; // 2 second delay between batches
       
       pausedRef.current = false;
+      cancelledRef.current = false;
       setIsPaused(false);
       
       for (let i = 0; i < newUrls.length; i += BATCH_SIZE) {
+        // Check if cancelled
+        if (cancelledRef.current) {
+          setBatchResults(prev => ({ ...prev, progress: undefined, cancelled: true }));
+          toast.info(`任務已取消。已處理 ${successCount + failedCount} / ${newUrls.length} 個 URL`);
+          break;
+        }
+        
         // Check if paused
         while (pausedRef.current) {
           await new Promise(resolve => setTimeout(resolve, 500));
@@ -228,9 +237,12 @@ export function AdminDataSources() {
       const durationSeconds = ((endTime - startTime) / 1000).toFixed(1);
       const avgSpeed = (newUrls.length / (endTime - startTime) * 1000).toFixed(1);
       
-      setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount, failedUrls });
+      // Only show completion message if not cancelled
+      if (!cancelledRef.current) {
+        setBatchResults({ success: successCount, failed: failedCount, errors, duplicates: duplicateCount, failedUrls });
+      }
       
-      if (successCount > 0) {
+      if (successCount > 0 && !cancelledRef.current) {
         toast.success(`成功添加 ${successCount} 個數據源${failedCount > 0 ? `，失敗 ${failedCount} 個` : ''}（耗時 ${durationSeconds} 秒，平均 ${avgSpeed} URL/秒）`);
         if (failedCount === 0) {
           setSnkrdunkUrl("");
@@ -461,9 +473,24 @@ export function AdminDataSources() {
                 </p>
                 {batchResults.progress && (
                   <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                    <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                      {batchResults.progress}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                        {batchResults.progress}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          cancelledRef.current = true;
+                          toast.info("正在取消任務...");
+                        }}
+                        className="text-xs h-7 bg-white dark:bg-gray-800"
+                      >
+                        <XCircle className="w-3 h-3 mr-1" />
+                        取消
+                      </Button>
+                    </div>
                   </div>
                 )}
                 {(batchResults.success > 0 || batchResults.failed > 0 || batchResults.duplicates > 0) && !batchResults.progress ? (
@@ -473,6 +500,9 @@ export function AdminDataSources() {
                       <span className="text-red-600 font-medium">✗ 失敗: {batchResults.failed}</span>
                       {batchResults.duplicates > 0 && (
                         <span className="text-yellow-600 font-medium">⚠ 已過濾重複: {batchResults.duplicates}</span>
+                      )}
+                      {batchResults.cancelled && (
+                        <span className="text-orange-600 font-medium">⚠ 任務已取消</span>
                       )}
                     </div>
                     {batchResults.errors.length > 0 && (
