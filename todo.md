@@ -5121,3 +5121,24 @@ SNKRDUNK 批量更新顯示「進度 3 / 10000」，但平台總共有 11,728 �
 1. **價格計算邏輯文檔化**: 在 Admin 頁面或項目文檔中添加詳細的價格計算邏輯說明，包括參考價格、價格趨勢、trending 榜單等不同計算方式的區別，方便未來維護和理解。
 
 2. **批量更新排程功能**: 允許管理員在 Admin 頁面設定定時批量更新（每日凌晨 01:00 自動執行 SNKRDUNK 和 eBay 價格更新），無需手動觸發，確保價格數據始終保持最新。
+
+
+## 新需求: 統一 pricing 頁面爬取方式並修復在售商品顯示
+
+### 任務清單
+- [x] 檢查 pricing 頁面當前的爬取邏輯（Playwright vs Firecrawl）
+- [x] 移除所有 Firecrawl 相關代碼（保留配額管理功能）
+- [x] 確保統一使用 Playwright 進行 SNKRDUNK 數據爬取
+- [x] 修改 Playwright 爬蟲同時爬取已售出和在售商品
+- [x] 安裝 Playwright 瀏覽器
+- [x] 測試驗證修復效果
+
+### 需求說明
+用戶發現卡牌詳細頁面顯示「暫無在售商品」，但 SNKRDUNK 網站上明明有在售商品（例如 https://snkrdunk.com/en/trading-cards/91520/used?sort=latest&isOnlyOnSale=true）。問題原因是：
+1. 當前爬蟲只爬取了已售出的交易記錄，沒有爬取在售商品
+2. pricing 頁面可能混用了 Playwright 和 Firecrawl 兩種爬取方式
+
+解決方案：
+1. 統一使用 Playwright 進行爬取
+2. 修改爬蟲邏輯，同時爬取已售出商品（歷史價格）和在售商品（當前市場價格）
+3. 移除所有 Firecrawl 相關代碼，避免混亂

@@ -1,6 +1,7 @@
 /**
  * SNKRDUNK Service using Playwright
  * Scrapes PSA 10 used product listings from SNKRDUNK
+ * Now scrapes both on-sale and sold items for comprehensive pricing data
  */
 
 import { chromium } from "playwright";
@@ -12,21 +13,93 @@ export interface SnkrdunkListing {
   currency: string;
   grade: string;
   image?: string;
+  status?: 'on-sale' | 'sold'; // Track item status
 }
 
 /**
  * Scrape SNKRDUNK PSA 10 listings using Playwright
+ * Scrapes both on-sale and sold items to provide comprehensive pricing data
  * @param snkrdunkId - SNKRDUNK product ID (e.g., 737036)
- * @returns Array of PSA 10 listings sorted by price (lowest first)
+ * @returns Array of PSA 10 listings sorted by price (lowest first), including both on-sale and sold items
  */
 export async function scrapeSnkrdunkListings(
   snkrdunkId: string,
   retryCount = 0
 ): Promise<SnkrdunkListing[]> {
-  const url = `https://snkrdunk.com/en/trading-cards/${snkrdunkId}/used?sort=latest&isOnlyOnSale=true`;
+  // Scrape both on-sale and sold items for comprehensive data
+  const onSaleUrl = `https://snkrdunk.com/en/trading-cards/${snkrdunkId}/used?sort=latest&isOnlyOnSale=true`;
+  const soldUrl = `https://snkrdunk.com/en/trading-cards/${snkrdunkId}/used?sort=latest`;
+  
+  console.log(`[SNKRDUNK Playwright] Starting comprehensive scrape for SNKRDUNK ID: ${snkrdunkId} (attempt ${retryCount + 1}/3)`);
+  console.log(`[SNKRDUNK Playwright] Will scrape both on-sale and sold items`);
+  
+  try {
+    // Scrape both URLs in parallel for better performance
+    const [onSaleListings, soldListings] = await Promise.all([
+      scrapeSnkrdunkUrl(snkrdunkId, onSaleUrl, 'on-sale'),
+      scrapeSnkrdunkUrl(snkrdunkId, soldUrl, 'sold')
+    ]);
+    
+    // Merge and deduplicate listings
+    const allListings = [...onSaleListings, ...soldListings];
+    const uniqueListings = deduplicateListings(allListings);
+    
+    // Sort by price (lowest first)
+    uniqueListings.sort((a, b) => a.price - b.price);
+    
+    console.log(`[SNKRDUNK Playwright] Total listings: ${uniqueListings.length} (${onSaleListings.length} on-sale + ${soldListings.length} sold, after deduplication)`);
+    
+    if (uniqueListings.length > 0) {
+      const minPrice = Math.min(...uniqueListings.map(l => l.price));
+      const maxPrice = Math.max(...uniqueListings.map(l => l.price));
+      const onSaleCount = uniqueListings.filter(l => l.status === 'on-sale').length;
+      const soldCount = uniqueListings.filter(l => l.status === 'sold').length;
+      console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD ${maxPrice.toFixed(2)}`);
+      console.log(`[SNKRDUNK Playwright] Status breakdown: ${onSaleCount} on-sale, ${soldCount} sold`);
+    }
+    
+    return uniqueListings;
+  } catch (error) {
+    console.error(`[SNKRDUNK Playwright] Comprehensive scrape failed:`, error);
+    
+    // Retry logic
+    if (retryCount < 2) {
+      console.log(`[SNKRDUNK Playwright] Retrying (${retryCount + 1}/2)...`);
+      const waitTime = 2000 * (retryCount + 1);
+      console.log(`[SNKRDUNK Playwright] Waiting ${waitTime}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      return scrapeSnkrdunkListings(snkrdunkId, retryCount + 1);
+    }
+    
+    throw new Error(`Failed to scrape SNKRDUNK after 3 attempts: ${error}`);
+  }
+}
+
+/**
+ * Deduplicate listings based on URL
+ */
+function deduplicateListings(listings: SnkrdunkListing[]): SnkrdunkListing[] {
+  const seen = new Set<string>();
+  return listings.filter(listing => {
+    if (seen.has(listing.url)) {
+      return false;
+    }
+    seen.add(listing.url);
+    return true;
+  });
+}
+
+/**
+ * Scrape a single SNKRDUNK URL
+ */
+async function scrapeSnkrdunkUrl(
+  snkrdunkId: string,
+  url: string,
+  status: 'on-sale' | 'sold'
+): Promise<SnkrdunkListing[]> {
   const startTime = Date.now();
 
-  console.log(`[SNKRDUNK Playwright] Starting scrape for SNKRDUNK ID: ${snkrdunkId} (attempt ${retryCount + 1}/3)`);
+  console.log(`[SNKRDUNK Playwright] Scraping ${status} items for SNKRDUNK ID: ${snkrdunkId}`);
   console.log(`[SNKRDUNK Playwright] Target URL: ${url}`);
 
   let browser;
@@ -164,18 +237,16 @@ export async function scrapeSnkrdunkListings(
         ...listing,
         price: priceInHKD,
         currency: "HKD", // All prices are now in HKD
+        status, // Add status field
       };
     });
 
     // Filter only PSA 10 items
     const psa10Listings = listingsWithConvertedPrices.filter((item) => item.isPsa10);
 
-    // Sort by price (lowest first)
-    psa10Listings.sort((a, b) => a.price - b.price);
-
     const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(
-      `[SNKRDUNK Playwright] Extraction complete in ${elapsedTime}s: ${listings.length} total listings, ${psa10Listings.length} PSA 10 listings`
+      `[SNKRDUNK Playwright] Extraction complete in ${elapsedTime}s: ${listings.length} total listings, ${psa10Listings.length} PSA 10 ${status} listings`
     );
     
     // Log price range if PSA 10 listings found
@@ -183,26 +254,10 @@ export async function scrapeSnkrdunkListings(
       const minPrice = Math.min(...psa10Listings.map(l => l.price));
       const maxPrice = Math.max(...psa10Listings.map(l => l.price));
       console.log(
-        `[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD ${maxPrice.toFixed(2)}`
+        `[SNKRDUNK Playwright] ${status} price range: HKD ${minPrice.toFixed(2)} - HKD ${maxPrice.toFixed(2)}`
       );
     } else {
-      console.warn(`[SNKRDUNK Playwright] WARNING: No PSA 10 listings found for SNKRDUNK ID ${snkrdunkId}`);
-    }
-
-    // Retry logic: if no PSA 10 listings found and retries available
-    if (psa10Listings.length === 0 && retryCount < 2) {
-      console.log(`[SNKRDUNK Playwright] No PSA 10 listings found, retrying (${retryCount + 1}/2)...`);
-      await browser.close();
-      // Exponential backoff: wait longer between retries
-      const waitTime = 2000 * (retryCount + 1);
-      console.log(`[SNKRDUNK Playwright] Waiting ${waitTime}ms before retry...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-      return scrapeSnkrdunkListings(snkrdunkId, retryCount + 1);
-    }
-    
-    // Don't cache empty results - let caller handle this
-    if (psa10Listings.length === 0) {
-      console.warn(`[SNKRDUNK Playwright] No PSA 10 listings found after ${retryCount + 1} attempts for SNKRDUNK ID ${snkrdunkId}`);
+      console.warn(`[SNKRDUNK Playwright] WARNING: No PSA 10 ${status} listings found for SNKRDUNK ID ${snkrdunkId}`);
     }
 
     return psa10Listings;
@@ -210,21 +265,9 @@ export async function scrapeSnkrdunkListings(
     const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
     console.error(`[SNKRDUNK Playwright] ERROR after ${elapsedTime}s:`, error.message);
     console.error(`[SNKRDUNK Playwright] Error stack:`, error.stack);
-    console.error(`[SNKRDUNK Playwright] Failed SNKRDUNK ID: ${snkrdunkId}, Attempt: ${retryCount + 1}/3`);
+    console.error(`[SNKRDUNK Playwright] Failed SNKRDUNK ID: ${snkrdunkId}, Status: ${status}`);
     
-    // Retry on error if retries available
-    if (retryCount < 2) {
-      console.log(`[SNKRDUNK Playwright] Retrying due to error (${retryCount + 1}/2)...`);
-      if (browser) {
-        await browser.close();
-      }
-      const waitTime = 2000 * (retryCount + 1);
-      console.log(`[SNKRDUNK Playwright] Waiting ${waitTime}ms before retry...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-      return scrapeSnkrdunkListings(snkrdunkId, retryCount + 1);
-    }
-    
-    throw new Error(`Failed to scrape SNKRDUNK after ${retryCount + 1} attempts: ${error.message}`);
+    throw error;
   } finally {
     if (browser) {
       await browser.close();
