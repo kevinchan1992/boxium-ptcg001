@@ -160,52 +160,28 @@ export default function CardDetail() {
   }
 
   // Calculate average price based on active source - Only PSA 10 for reference price
-  // 方案 C: 混合計算邏輯
-  // 1. 優先使用最新 5 筆 PSA 10 交易的平均值
-  // 2. 如果不足 5 筆，使用近 30 天 PSA 10 交易的加權平均
-  // 3. 如果 30 天內數據不足，才使用所有 PSA 10 歷史數據
+  // 新邏輯: 使用一個月內所有 PSA 10 成交歷史的平均值
   const psa10OnlyHistory = priceHistory.filter(p => p.grade === "PSA 10" || p.grade === "PSA10" || p.grade === "PSA 10");
   
   const calculatePSA10ReferencePrice = () => {
     if (activeSource === "snkrdunk") {
       if (psa10OnlyHistory.length === 0) return "N/A";
       
-      // Sort by soldAt date (newest first)
-      const sortedHistory = [...psa10OnlyHistory].sort((a, b) => {
-        const dateA = a.soldAt ? new Date(a.soldAt).getTime() : 0;
-        const dateB = b.soldAt ? new Date(b.soldAt).getTime() : 0;
-        return dateB - dateA;
+      // 篩選一個月內的 PSA 10 交易記錄
+      const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const recentOneMonth = psa10OnlyHistory.filter(p => {
+        if (!p.soldAt) return false;
+        return new Date(p.soldAt) >= oneMonthAgo;
       });
       
-      // 策略 1: 如果有 5 筆或以上，使用最新 5 筆的平均值
-      if (sortedHistory.length >= 5) {
-        const latest5 = sortedHistory.slice(0, 5);
-        const avg = latest5.reduce((sum, p) => sum + parseFloat(p.price), 0) / latest5.length;
+      // 如果一個月內有數據，使用這些數據的平均值
+      if (recentOneMonth.length > 0) {
+        const avg = recentOneMonth.reduce((sum, p) => sum + parseFloat(p.price), 0) / recentOneMonth.length;
         return avg.toFixed(2);
       }
       
-      // 策略 2: 如果不足 5 筆，檢查近 30 天的數據
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const recent30Days = sortedHistory.filter(p => {
-        if (!p.soldAt) return false;
-        return new Date(p.soldAt) >= thirtyDaysAgo;
-      });
-      
-      if (recent30Days.length >= 2) {
-        // 使用加權平均：越新的交易權重越高
-        let weightedSum = 0;
-        let totalWeight = 0;
-        recent30Days.forEach((p, index) => {
-          const weight = recent30Days.length - index; // 最新的權重最高
-          weightedSum += parseFloat(p.price) * weight;
-          totalWeight += weight;
-        });
-        const weightedAvg = weightedSum / totalWeight;
-        return weightedAvg.toFixed(2);
-      }
-      
-      // 策略 3: 數據不足，使用所有 PSA 10 歷史數據的平均值
-      const avg = sortedHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / sortedHistory.length;
+      // 如果一個月內沒有數據，使用所有歷史數據的平均值
+      const avg = psa10OnlyHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / psa10OnlyHistory.length;
       return avg.toFixed(2);
     } else {
       // eBay 邏輯保持不變
@@ -221,9 +197,10 @@ export default function CardDetail() {
   const avgPrice = calculatePSA10ReferencePrice();
 
   // Get record count based on active source - Only PSA 10 for reference price
-  // Show count of latest 5 records used for price calculation
+  // Show count of records within one month used for price calculation
+  const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const recordCount = activeSource === "snkrdunk" 
-    ? Math.min(psa10OnlyHistory.length, 5)
+    ? psa10OnlyHistory.filter(p => p.soldAt && new Date(p.soldAt) >= oneMonthAgo).length
     : ebayPriceHistory.length > 0 
       ? ebayPriceHistory.length
       : ebaySoldItems.length;

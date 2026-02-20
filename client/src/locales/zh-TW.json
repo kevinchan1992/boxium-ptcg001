@@ -118,7 +118,7 @@
   },
   "cardDetail": {
     "referencePrice": "參考價格",
-    "basedOnRecords": "基於 {{count}} 筆交易記錄",
+    "basedOnRecords": "基於近 1 個月內 {{count}} 筆 PSA 10 交易記錄",
     "priceHistory": "價格歷史",
     "date": "日期",
     "price": "價格",
@@ -157,7 +157,7 @@
     "title": "標題",
     "productTitle": "商品標題",
     "usdPrice": "USD 價格",
-    "priceTrend": "近 30 天趨勢",
+    "priceTrend": "近 7 天趋勢",
     "priceIncrease": "↑ 上漲",
     "priceDecrease": "↓ 下跌"
   },

@@ -4925,3 +4925,19 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 
 ### 需求說明
 更新 trending 頁面和 Admin 頁面的說明文字，確保與實際計算邏輯一致（已改為基於最近 1 個月的 PSA 10 成交價格）。
+
+
+## 新需求: 修改卡牌詳細頁面 PSA 10 參考價格計算邏輯
+
+### 任務清單
+- [x] 修改價格計算邏輯：從「最新 5 筆」改為「一個月內所有 PSA 10 成交歷史的平均值」
+- [x] 更新頁面說明文字：反映新的計算方式
+- [x] 測試驗證修改後的價格計算和顯示
+
+### 需求說明
+**當前邏輯**: 使用最新 5 筆 PSA 10 交易的平均值作為參考價格
+**新邏輯**: 使用一個月內所有 PSA 10 成交歷史的平均值，提升價格時效性和穩定性
+
+### 修改位置
+- 文件: `/home/ubuntu/boxium-ptcg/client/src/pages/CardDetail.tsx`
+- 函數: `calculatePSA10ReferencePrice()`
