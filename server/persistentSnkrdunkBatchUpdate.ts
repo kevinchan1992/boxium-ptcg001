@@ -13,8 +13,8 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
     throw new Error('SNKRDUNK 批量更新已在運行中');
   }
 
-  // Get all SNKRDUNK data sources
-  const allDataSourcesResult = await db.getDataSources();
+  // Get all SNKRDUNK data sources (without pagination limit)
+  const allDataSourcesResult = await db.getDataSources({ pageSize: 999999 });
   const snkrdunkSources = allDataSourcesResult.data.filter((ds: any) => ds.source === 'snkrdunk');
   
   // Get unique cards

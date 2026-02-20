@@ -4817,3 +4817,12 @@ console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD
 - [ ] 調用 `admin.cancelPersistentTask` API 取消任務
 - [ ] 取消後刷新進度條狀態
 - [ ] 測試取消任務功能
+
+
+## Bug 修復: SNKRDUNK 批量更新只處理 50 張卡牌 - 已完成
+
+- [x] 檢查 persistentSnkrdunkBatchUpdate.ts 的卡牌查詢邏輯
+- [x] 檢查 admin.startPersistentSnkrdunkBatchUpdate procedure 的查詢參數
+- [x] 修復查詢邏輯，確保獲取所有 10,025 張卡牌
+- [x] 同時修復 persistentEbayBatchUpdate.ts 的相同問題
+- [x] 測試修復後的批量更新功能
