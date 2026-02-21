@@ -2,22 +2,72 @@ import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean,
 
 /**
  * Core user table backing auth flow.
- * Only supports Manus OAuth authentication
+ * Supports email, Google OAuth, and Facebook OAuth authentication
  */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
-  openId: varchar("openId", { length: 64 }).notNull().unique(), // Manus OAuth user ID
   email: varchar("email", { length: 320 }).notNull().unique(),
+  passwordHash: varchar("passwordHash", { length: 255 }), // Null for OAuth users
   name: text("name"),
-  loginMethod: varchar("loginMethod", { length: 64 }), // Always "oauth"
+  avatar: text("avatar"), // Profile picture URL
+  emailVerified: boolean("emailVerified").default(false).notNull(), // Email verification status
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+}, (table) => {
+  return {
+    emailIdx: index("email_idx").on(table.email),
+  };
 });
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+/**
+ * OAuth accounts table - stores OAuth provider linkages
+ */
+export const oauthAccounts = mysqlTable("oauthAccounts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
+  provider: mysqlEnum("provider", ["google", "facebook"]).notNull(), // OAuth provider
+  providerAccountId: varchar("providerAccountId", { length: 255 }).notNull(), // Provider's user ID
+  accessToken: text("accessToken"), // OAuth access token (optional, for future use)
+  refreshToken: text("refreshToken"), // OAuth refresh token (optional)
+  expiresAt: timestamp("expiresAt"), // Token expiration time
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("userId_idx").on(table.userId),
+    providerAccountIdx: index("provider_account_idx").on(table.provider, table.providerAccountId),
+  };
+});
+
+export type OAuthAccount = typeof oauthAccounts.$inferSelect;
+export type InsertOAuthAccount = typeof oauthAccounts.$inferInsert;
+
+/**
+ * Sessions table - stores user login sessions
+ */
+export const sessions = mysqlTable("sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
+  token: varchar("token", { length: 255 }).notNull().unique(), // Session token (JWT)
+  ipAddress: varchar("ipAddress", { length: 45 }), // User's IP address
+  userAgent: text("userAgent"), // User's browser/device info
+  expiresAt: timestamp("expiresAt").notNull(), // Session expiration time
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("userId_idx").on(table.userId),
+    tokenIdx: index("token_idx").on(table.token),
+    expiresAtIdx: index("expiresAt_idx").on(table.expiresAt),
+  };
+});
+
+export type Session = typeof sessions.$inferSelect;
+export type InsertSession = typeof sessions.$inferInsert;
 
 /**
  * Cards table - stores Pokémon TCG card information

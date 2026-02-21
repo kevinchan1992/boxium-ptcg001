@@ -6076,3 +6076,96 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] USD 從 $ 符號改為 USD 前綴（例如：USD 32.50）
 - [x] JPY 從 ¥ 符號改為 JPY 前綴（例如：JPY 4,600.00）
 - [x] 確保所有貨幣格式一致（HKD 313.60、USD 32.50、JPY 4,600.00）
+
+
+## 新功能: 獨立認證系統設計 - 完成
+
+- [x] 分析現有 Manus OAuth 系統架構
+- [x] 設計新認證系統架構（電郵、Google、Facebook）
+- [x] 設計數據庫 schema（users, sessions, oauth_accounts）
+- [x] 設計 API 端點和流程圖
+- [x] 設計安全機制（密碼加密、JWT、CSRF 保護）
+- [x] 撰寫完整的技術設計文檔
+- [x] 提供 Google 和 Facebook OAuth 設定步驟
+- [x] 提供實施計劃和遷移方案
+
+
+## Google OAuth 設定進度 - 進行中
+
+- [x] 登入 Google Cloud Console
+- [x] 創建專案「BOXIUM PTCG」
+- [ ] 點擊「開始」按鈕配置 OAuth 同意畫面
+- [ ] 選擇用戶類型（外部）
+- [ ] 填寫應用程式資訊
+- [ ] 添加 OAuth 範圍
+- [ ] 創建 OAuth 2.0 憑證
+- [ ] 獲取 Client ID 和 Client Secret
+
+
+## 網域更新: 從 boxiumptcg.manus.space 到 www.boxium.asia - 進行中
+
+- [x] 更新認證系統設計文檔中的網域
+- [x] 更新 Google OAuth 的授權回調 URL
+- [ ] 完成 Facebook for Developers 帳戶註冊
+- [ ] 創建 Facebook 應用程式
+- [ ] 配置 Facebook OAuth 回調 URL 為 www.boxium.asia
+- [ ] 獲取 Facebook App ID 和 App Secret
+- [ ] 將 Facebook 憑證保存到環境變數
+
+
+## 後端認證系統實施 - 進行中
+
+### 數據庫 Schema
+- [x] 創建 oauth_accounts 表（存儲 OAuth 帳號關聯）
+- [x] 創建 sessions 表（存儲用戶會話）
+- [x] 修改 users 表添加必要欄位（email, passwordHash, avatar, emailVerified）
+
+### 認證核心邏輯
+- [ ] 實現密碼加密和驗證（bcrypt）
+- [ ] 實現 JWT token 生成和驗證
+- [ ] 實現 session 管理邏輯
+
+### tRPC API 端點
+- [ ] auth.register - 電郵註冊
+- [ ] auth.login - 電郵登入
+- [ ] auth.logout - 登出
+- [ ] auth.me - 獲取當前用戶
+- [ ] auth.googleOAuth - Google OAuth 登入
+- [ ] auth.facebookOAuth - Facebook OAuth 登入
+- [ ] auth.verifyEmail - 驗證電郵
+- [ ] auth.forgotPassword - 忘記密碼
+- [ ] auth.resetPassword - 重設密碼
+
+### 安全機制
+- [ ] 實現 CSRF 保護
+- [ ] 實現 Rate Limiting
+- [ ] 實現密碼強度驗證
+
+## Google OAuth 設定進度 - 完成
+
+- [x] 登入 Google Cloud Console
+- [x] 創建 Google Cloud 專案（BOXIUM PTCG）
+- [x] 設定 OAuth 同意畫面
+- [x] 創建 OAuth 2.0 憑證（網頁應用程式）
+- [x] 獲取 Client ID: 170370228156-bn5trq8ffldr0d0gjln6uolquul6o5ko.apps.googleusercontent.com
+- [x] 獲取 Client Secret: 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
+- [x] 將憑證保存到專案環境變數
+- [x] 創建測試驗證憑證格式正確
+- [x] 更新回調 URL 為 https://www.boxium.asia/api/auth/google/callback
+
+## Facebook OAuth 設定進度 - 完成
+
+- [x] 登入 Facebook for Developers
+- [x] 完成開發人員帳戶註冊（驗證手機號碼）
+- [x] 創建 Facebook 應用（BOXIUM PTCG - 消費者類型）
+- [x] 添加 Facebook Login 產品
+- [x] 配置 OAuth 設定（回調 URL: https://www.boxium.asia/api/auth/facebook/callback）
+- [x] 獲取 App ID: 898093596548030
+- [x] 獲取 App Secret: bcb35d74c43bc3817a2ee433b4f4cc27
+- [x] 將憑證保存到專案環境變數
+
+## 網域更新: 從 boxiumptcg.manus.space 到 www.boxium.asia - 完成
+
+- [x] 更新認證系統設計文檔中的所有網域
+- [x] 更新 Google OAuth 回調 URL
+- [x] 更新 Facebook OAuth 回調 URL
