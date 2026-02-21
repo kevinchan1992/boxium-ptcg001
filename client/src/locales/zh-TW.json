@@ -60,6 +60,14 @@
     "blog": "最新消息",
     "back": "返回"
   },
+  "nav": {
+    "login": "登入/註冊",
+    "logout": "登出",
+    "favorites": "我的收藏",
+    "dashboard": "個人中心",
+    "admin": "管理後台",
+    "user": "用戶"
+  },
   "home": {
     "welcome": "歡迎來到 Boxium ~ 遊戲迷專屬世界",
     "description": "整合全球市場數據，為Pokémon TCG愛好者和收藏家提供即時、準確的卡牌價格資訊。追蹤卡牌的價格趨勢，做出明智的投資決策。",

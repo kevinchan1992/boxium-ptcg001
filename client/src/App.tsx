@@ -21,6 +21,7 @@ import About from "./pages/About";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import { TopNav } from "./components/TopNav";
+import { AdminRoute } from "./components/AdminRoute";
 
 
 
@@ -50,7 +51,11 @@ function Router() {
 
 
 
-      <Route path="/admin" component={Admin} />
+      <Route path="/admin">
+        <AdminRoute>
+          <Admin />
+        </AdminRoute>
+      </Route>
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/disclaimer" component={Disclaimer} />

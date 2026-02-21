@@ -24,7 +24,21 @@ import { pricingRouter } from "./routers/pricing";
 export const appRouter = router({
   system: systemRouter,
   
-  // Auth router removed - now using Supabase Auth
+  // Auth router
+  auth: router({
+    me: publicProcedure.query(async ({ ctx }) => {
+      return ctx.user || null;
+    }),
+    
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+      // Clear session cookie
+      ctx.res.setHeader(
+        "Set-Cookie",
+        `session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`
+      );
+      return { success: true };
+    }),
+  }),
 
   pricing: pricingRouter,
 

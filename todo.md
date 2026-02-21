@@ -5511,3 +5511,90 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [ ] 保存 checkpoint
 - [ ] 記錄遷移報告
 - [ ] （可選）清理 Manus TiDB 數據
+
+
+## 新功能: 用戶登入與權限管理系統 - 進行中
+
+### 階段一: 認證系統整合
+- [ ] 創建 TopNav 組件（替換現有導航）
+- [ ] 創建 UserMenu 下拉選單組件
+- [ ] 創建 ProtectedRoute 組件
+- [ ] 創建 AdminRoute 組件
+- [ ] 更新 App.tsx 路由配置
+- [ ] 測試 OAuth 登入流程
+- [ ] 測試登入狀態持久化
+
+### 階段二: 權限控制實作
+- [ ] 添加 adminProcedure middleware
+- [ ] 更新現有 admin API 使用 adminProcedure
+- [ ] 測試非管理員訪問 admin 路由被阻止
+- [ ] 測試管理員可以正常訪問
+- [ ] 前端隱藏管理員專屬 UI 元素
+
+### 階段三: 收藏功能
+- [ ] 檢查/創建 favorites 表
+- [ ] 實作後端 favorites API (add/remove/list/check)
+- [ ] 創建 FavoriteButton 組件
+- [ ] 在卡牌詳情頁集成 FavoriteButton
+- [ ] 創建「我的收藏」頁面
+- [ ] 測試收藏功能
+- [ ] 編寫單元測試
+
+### 階段四: 價格追蹤功能
+- [ ] 檢查 watchlist 表
+- [ ] 實作後端 watchlist API (add/remove/update/list)
+- [ ] 創建「設定價格提醒」對話框組件
+- [ ] 在卡牌詳情頁集成價格提醒按鈕
+- [ ] 創建「我的追蹤」頁面
+- [ ] 實作價格檢查定時任務
+- [ ] 測試價格提醒功能
+
+### 階段五: 通知系統
+- [ ] 創建 notifications 表
+- [ ] 實作後端 notifications API
+- [ ] 創建通知圖標和下拉列表組件
+- [ ] 在 TopNav 集成通知圖標
+- [ ] 創建通知中心頁面
+- [ ] 實作通知定時任務
+- [ ] 測試通知功能
+
+### 階段六: 個人儀表板
+- [ ] 創建個人儀表板頁面
+- [ ] 顯示用戶資訊卡片
+- [ ] 顯示收藏統計
+- [ ] 顯示最近收藏
+- [ ] 顯示價格提醒
+- [ ] 顯示搜尋歷史
+- [ ] 測試儀表板功能
+
+### 階段七: 搜尋歷史
+- [ ] 更新 searchStats 表添加 userId 欄位
+- [ ] 修改搜尋功能記錄用戶 ID
+- [ ] 實作後端搜尋歷史 API
+- [ ] 在搜尋框顯示最近搜尋建議
+- [ ] 創建搜尋歷史頁面
+- [ ] 測試搜尋歷史功能
+
+### 階段八: 測試和優化
+- [ ] 編寫所有功能的單元測試
+- [ ] 進行端到端測試
+- [ ] 修復發現的 bug
+- [ ] 優化性能（查詢優化、緩存）
+- [ ] 優化 UI/UX（響應式設計、加載狀態）
+- [ ] 編寫用戶文檔
+
+
+## 用戶登入系統實作進度更新
+
+### 階段一: 認證系統整合 - 已完成 ✅
+- [x] 創建 useAuth hook
+- [x] 更新 TopNav 組件整合用戶登入功能
+- [x] 添加 auth router (auth.me, auth.logout)
+- [x] 添加翻譯鍵 (nav.login, nav.logout, nav.favorites, nav.dashboard, nav.admin)
+
+### 階段二: 權限控制和角色管理 - 已完成 ✅
+- [x] 創建 ProtectedRoute 組件
+- [x] 創建 AdminRoute 組件
+- [x] 更新 App.tsx 添加路由保護
+- [x] 創建權限控制測試 (auth.oauth.test.ts)
+- [x] 所有測試通過 (8/8 tests passed)
