@@ -1,9 +1,9 @@
 import { invokeLLM } from "../_core/llm";
 import { createGenerationRequest, updateGenerationStatus, getGenerationById } from "../db/articleGeneration";
 import type { InsertArticleGenerationHistory } from "../../drizzle/schema";
-import { execSync } from "child_process";
 import { getTemplate, applyTemplate } from "./articleTemplates";
 import { analyzeSEO, generateMetaDescription } from "./seoAnalyzer";
+import * as cheerio from "cheerio";
 
 /**
  * Detect language from text content
@@ -21,32 +21,79 @@ function detectLanguage(text: string): string {
 }
 
 /**
- * Fetch content from URL using Firecrawl MCP
+ * Fetch content from URL using native fetch + cheerio
+ * Fallback solution when Firecrawl credits are insufficient
  */
 async function fetchUrlContent(url: string): Promise<{ content: string; title: string }> {
   try {
-    // Use manus-mcp-cli to call Firecrawl scrape tool
-    const inputJson = JSON.stringify({
-      url: url,
-      formats: ["markdown", "html"]
+    // Fetch HTML content
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
     });
     
-    const command = `manus-mcp-cli tool call firecrawl_scrape --server firecrawl --input '${inputJson.replace(/'/g, "'\\''")}' 2>&1`;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     
-    const output = execSync(command, { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 });
-    const result = JSON.parse(output);
+    const html = await response.text();
+    const $ = cheerio.load(html);
     
-    if (!result.success || !result.data) {
-      throw new Error("Failed to fetch URL content");
+    // Extract title
+    const title = $('title').text() || 
+                  $('meta[property="og:title"]').attr('content') || 
+                  $('h1').first().text() || 
+                  'Untitled';
+    
+    // Remove script, style, and other non-content elements
+    $('script, style, nav, header, footer, iframe, noscript').remove();
+    
+    // Extract main content
+    let content = '';
+    
+    // Try to find main content area
+    const mainSelectors = [
+      'article',
+      'main',
+      '[role="main"]',
+      '.post-content',
+      '.article-content',
+      '.entry-content',
+      '#content',
+      '.content'
+    ];
+    
+    for (const selector of mainSelectors) {
+      const mainContent = $(selector);
+      if (mainContent.length > 0) {
+        content = mainContent.text();
+        break;
+      }
+    }
+    
+    // If no main content found, use body
+    if (!content) {
+      content = $('body').text();
+    }
+    
+    // Clean up whitespace
+    content = content
+      .replace(/\s+/g, ' ')
+      .replace(/\n+/g, '\n')
+      .trim();
+    
+    if (!content) {
+      throw new Error('No content extracted from URL');
     }
     
     return {
-      content: result.data.markdown || result.data.html || "",
-      title: result.data.metadata?.title || "Untitled"
+      content,
+      title: title.trim()
     };
   } catch (error) {
-    console.error("Error fetching URL content:", error);
-    throw new Error(`Failed to fetch URL: ${error instanceof Error ? error.message : "Unknown error"}`);
+    console.error('Error fetching URL content:', error);
+    throw new Error(`Failed to fetch URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

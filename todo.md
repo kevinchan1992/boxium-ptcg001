@@ -5779,3 +5779,11 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 測試 SEO 分析功能（關鍵詞、標題、meta、內容）
 - [x] 測試 SEO 評分計算
 - [x] 保存 checkpoint
+
+
+## Bug 修復：Firecrawl 額度不足導致文章生成失敗 ✅
+- [x] 分析問題（Firecrawl MCP 額度不足）
+- [x] 設計備用方案（使用原生 fetch + cheerio 抓取）
+- [x] 實作備用 URL 抓取功能（智能內容提取、多種 selector 支援）
+- [x] 安裝 cheerio 依賴
+- [x] 保存 checkpoint
