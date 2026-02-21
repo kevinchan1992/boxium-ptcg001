@@ -305,6 +305,15 @@ export const posts = mysqlTable("posts", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   excerpt: text("excerpt"),
   content: text("content").notNull(), // Markdown format
+  
+  // Multi-language fields
+  titleEn: text("titleEn"),
+  titleJa: text("titleJa"),
+  excerptEn: text("excerptEn"),
+  excerptJa: text("excerptJa"),
+  contentEn: text("contentEn"), // Markdown format
+  contentJa: text("contentJa"), // Markdown format
+  
   featuredImage: text("featuredImage"),
   categoryId: int("categoryId"),
   status: mysqlEnum("status", ["draft", "published"]).default("draft").notNull(),

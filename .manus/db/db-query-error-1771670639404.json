@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE posts \nADD COLUMN titleEn TEXT AFTER content,\nADD COLUMN titleJa TEXT AFTER titleEn,\nADD COLUMN excerptEn TEXT AFTER titleJa,\nADD COLUMN excerptJa TEXT AFTER excerptEn,\nADD COLUMN contentEn TEXT AFTER excerptJa,\nADD COLUMN contentJa TEXT AFTER contentEn;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute ALTER TABLE posts \nADD COLUMN titleEn TEXT AFTER content,\nADD COLUMN titleJa TEXT AFTER titleEn,\nADD COLUMN excerptEn TEXT AFTER titleJa,\nADD COLUMN excerptJa TEXT AFTER excerptEn,\nADD COLUMN contentEn TEXT AFTER excerptJa,\nADD COLUMN contentJa TEXT AFTER contentEn;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'titleen' in 'posts'"
+  ]
+}

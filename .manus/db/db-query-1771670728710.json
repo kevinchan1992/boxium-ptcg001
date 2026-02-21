@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE posts SET \ntitleEn = 'Today''s Market Report: Charizard VSTAR (SAR) Surges +32.8%, Rare Cards Lead the Trend',\ntitleJa = '本日のマーケットレポート：リザードンVSTAR（SAR）が+32.8%急騰、レアカードが市場をリード',\nexcerptEn = 'The Pokémon TCG market continues to heat up, with daily price fluctuations affecting collectors and players alike. Today, BOXIUM PTCG brings you the latest market report, analyzing significant price changes over the past 24 hours.',\nexcerptJa = 'ポケモンTCG市場の熱気は続いており、日々の価格変動が多くのプレイヤーやコレクターの心を揺さぶっています。本日、BOXIUM PTCGは最新のマーケットレポートをお届けします。'\nWHERE id = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute UPDATE posts SET \ntitleEn = 'Today''s Market Report: Charizard VSTAR (SAR) Surges +32.8%, Rare Cards Lead the Trend',\ntitleJa = '本日のマーケットレポート：リザードンVSTAR（SAR）が+32.8%急騰、レアカードが市場をリード',\nexcerptEn = 'The Pokémon TCG market continues to heat up, with daily price fluctuations affecting collectors and players alike. Today, BOXIUM PTCG brings you the latest market report, analyzing significant price changes over the past 24 hours.',\nexcerptJa = 'ポケモンTCG市場の熱気は続いており、日々の価格変動が多くのプレイヤーやコレクターの心を揺さぶっています。本日、BOXIUM PTCGは最新のマーケットレポートをお届けします。'\nWHERE id = 1;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1475
+}

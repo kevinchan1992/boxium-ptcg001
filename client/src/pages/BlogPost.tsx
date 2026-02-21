@@ -9,8 +9,11 @@ import { Calendar, Eye, ArrowLeft, Share2, Sparkles, Facebook } from "lucide-rea
 import { toast } from "sonner";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useTranslation } from "react-i18next";
 
 export default function BlogPost() {
+  const { i18n } = useTranslation();
+  const currentLang = i18n.language;
   const [, params] = useRoute("/blog/:slug");
   const slug = params?.slug || "";
 
@@ -23,6 +26,18 @@ export default function BlogPost() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [slug]);
+
+  // Helper function to get localized post content
+  const getLocalizedContent = (field: 'title' | 'excerpt' | 'content') => {
+    if (!post) return '';
+    if (currentLang === 'en' && post[`${field}En`]) {
+      return post[`${field}En`];
+    }
+    if (currentLang === 'ja' && post[`${field}Ja`]) {
+      return post[`${field}Ja`];
+    }
+    return post[field]; // Fallback to Chinese
+  };
 
   // Social share functions
   const handleShareFacebook = () => {
@@ -91,13 +106,13 @@ export default function BlogPost() {
           <div className="max-w-4xl mx-auto">
             {/* Title - 手機版縮小字體 */}
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 md:mb-6 leading-tight">
-              {post.title}
+              {getLocalizedContent('title')}
             </h1>
 
             {/* Excerpt - 手機版縮小字體 */}
             {post.excerpt && (
               <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-4 md:mb-6">
-                {post.excerpt}
+                {getLocalizedContent('excerpt')}
               </p>
             )}
 
@@ -228,7 +243,7 @@ export default function BlogPost() {
                   ),
                 }}
               >
-                {post.content}
+                {getLocalizedContent('content')}
               </Markdown>
             </article>
           </Card>

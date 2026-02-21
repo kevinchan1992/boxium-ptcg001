@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE posts \nADD COLUMN `titleEn` TEXT,\nADD COLUMN `titleJa` TEXT,\nADD COLUMN `excerptEn` TEXT,\nADD COLUMN `excerptJa` TEXT,\nADD COLUMN `contentEn` TEXT,\nADD COLUMN `contentJa` TEXT;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute ALTER TABLE posts \nADD COLUMN `titleEn` TEXT,\nADD COLUMN `titleJa` TEXT,\nADD COLUMN `excerptEn` TEXT,\nADD COLUMN `excerptJa` TEXT,\nADD COLUMN `contentEn` TEXT,\nADD COLUMN `contentJa` TEXT;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3295
+}

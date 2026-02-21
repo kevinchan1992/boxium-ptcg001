@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE posts SET \ntitleEn = 'PTCG Market February Strong Rebound: Data Reveals Trends in Hot Rare Cards',\ntitleJa = 'PTCG市場2月の強力な反発：データが示す人気レアカードのトレンド',\nexcerptEn = 'In February 2024, the Pokémon TCG market demonstrated remarkable strong growth, shaking off the consolidation trend of the past few months. The BOXIUM database shows that most rare card prices have shown significant growth.',\nexcerptJa = '2024年2月、ポケモンTCG市場は目覚ましい強力な上昇を示し、過去数ヶ月の調整局面を一掃しました。BOXIUMデータベースによると、ほとんどのレアカード価格が顕著な成長を示しています。'\nWHERE id = 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute UPDATE posts SET \ntitleEn = 'PTCG Market February Strong Rebound: Data Reveals Trends in Hot Rare Cards',\ntitleJa = 'PTCG市場2月の強力な反発：データが示す人気レアカードのトレンド',\nexcerptEn = 'In February 2024, the Pokémon TCG market demonstrated remarkable strong growth, shaking off the consolidation trend of the past few months. The BOXIUM database shows that most rare card prices have shown significant growth.',\nexcerptJa = '2024年2月、ポケモンTCG市場は目覚ましい強力な上昇を示し、過去数ヶ月の調整局面を一掃しました。BOXIUMデータベースによると、ほとんどのレアカード価格が顕著な成長を示しています。'\nWHERE id = 3;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1512
+}

@@ -12,7 +12,8 @@ import { LazyImage } from "@/components/LazyImage";
 import { useTranslation } from "react-i18next";
 
 export default function Blog() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [page, setPage] = useState(1);
@@ -50,6 +51,17 @@ export default function Blog() {
 
   const handleLoadMore = () => {
     setPage(prev => prev + 1);
+  };
+
+  // Helper function to get localized post content
+  const getLocalizedContent = (post: any, field: 'title' | 'excerpt') => {
+    if (currentLang === 'en' && post[`${field}En`]) {
+      return post[`${field}En`];
+    }
+    if (currentLang === 'ja' && post[`${field}Ja`]) {
+      return post[`${field}Ja`];
+    }
+    return post[field]; // Fallback to Chinese
   };
 
   return (
@@ -133,11 +145,11 @@ export default function Blog() {
                           <Badge variant="secondary">精選</Badge>
                         </div>
                         <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 md:mb-3 line-clamp-2">
-                          {featuredPost.title}
+                          {getLocalizedContent(featuredPost, 'title')}
                         </h3>
                         {featuredPost.excerpt && (
                           <p className="text-sm sm:text-base text-gray-300 mb-4 md:mb-6 line-clamp-3">
-                            {featuredPost.excerpt}
+                            {getLocalizedContent(featuredPost, 'excerpt')}
                           </p>
                         )}
                         <div className="flex items-center gap-4 text-sm text-gray-400 mb-6">
@@ -188,11 +200,11 @@ export default function Blog() {
                             )}
                           </div>
                           <CardTitle className="text-white text-sm sm:text-base md:text-lg line-clamp-2 hover:text-[#06038d] transition-colors">
-                            {post.title}
+                            {getLocalizedContent(post, 'title')}
                           </CardTitle>
                           {post.excerpt && (
                             <CardDescription className="text-xs sm:text-sm line-clamp-3">
-                              {post.excerpt}
+                              {getLocalizedContent(post, 'excerpt')}
                             </CardDescription>
                           )}
                         </CardHeader>
