@@ -147,8 +147,23 @@ Requirements:
 4. Include market analysis and pricing perspectives
 5. Use professional but accessible language
 6. Format in Markdown with proper headings and structure
-7. Length: 800-1500 words
+7. **Length: 400-600 words** (concise and focused)
 8. Follow the template structure and SEO guidelines above
+
+**Writing Style Guidelines:**
+- Use short, punchy paragraphs (2-3 sentences max)
+- Lead with the most important information
+- Use bullet points for lists and key points
+- Include specific data and numbers when available
+- Avoid flowery language - be direct and factual
+- Use subheadings (##, ###) to break up content
+- **DO NOT include image markdown syntax** - describe cards with text only
+- Focus on market impact and investment insights
+
+**Structure:**
+- Opening: 1-2 sentences summarizing the main news
+- Body: 2-3 short sections with specific details
+- Closing: 1-2 sentences with market outlook or recommendation
 
 Output Format (JSON):
 {
