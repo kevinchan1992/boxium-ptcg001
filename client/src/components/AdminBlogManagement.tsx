@@ -14,11 +14,12 @@ import { ArticlePreview } from "@/components/ArticlePreview";
 import { CardImagePicker } from "@/components/CardImagePicker";
 
 export function AdminBlogManagement() {
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'generate' | 'preview'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'generate' | 'preview' | 'edit-translation'>('list');
   const [previewArticle, setPreviewArticle] = useState<any>(null);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
+  const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(true);
 
   // Query posts
   const { data: posts, isLoading, refetch } = trpc.blog.getPosts.useQuery({
@@ -195,9 +196,22 @@ export function AdminBlogManagement() {
                         variant="ghost"
                         onClick={() => handleTranslate(post.id)}
                         className="text-gray-400 hover:text-purple-400"
+                        disabled={translatePostMutation.isPending}
                         title="AI 翻譯"
                       >
                         <Languages className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setSelectedPost(post);
+                          setActiveView('edit-translation');
+                        }}
+                        className="text-gray-400 hover:text-blue-400"
+                        title="編輯翻譯"
+                      >
+                        <Edit className="w-4 h-4" />
                       </Button>
                       <Button
                         size="sm"
@@ -282,6 +296,18 @@ export function AdminBlogManagement() {
           }}
         />
       )}
+      
+      {/* Translation Editor View */}
+      {activeView === 'edit-translation' && selectedPost && (
+        <TranslationEditor
+          post={selectedPost}
+          onCancel={() => setActiveView('list')}
+          onSuccess={() => {
+            setActiveView('list');
+            refetch();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -311,9 +337,24 @@ function PostEditor({
     tags: post?.tags || '',
   });
 
+  const [autoTranslate, setAutoTranslate] = useState(true);
+  const translatePostMutation = trpc.blog.translatePost.useMutation();
+  
   const createPostMutation = trpc.blog.createPost.useMutation({
-    onSuccess: () => {
+    onSuccess: async (data) => {
       toast.success('文章已創建');
+      
+      // Auto-translate if enabled
+      if (autoTranslate && data.postId) {
+        toast.info('AI 翻譯中，請稍候...');
+        try {
+          await translatePostMutation.mutateAsync({ id: data.postId });
+          toast.success('AI 翻譯完成！');
+        } catch (error: any) {
+          toast.error(`AI 翻譯失敗：${error.message}`);
+        }
+      }
+      
       onSuccess();
     },
     onError: (error) => {
@@ -643,17 +684,34 @@ function PostEditor({
         </div>
 
         <div className="flex items-center justify-between pt-4 border-t border-zinc-700">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="status" className="text-white">狀態：</Label>
-            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-              <SelectTrigger className="w-32 bg-zinc-800 border-zinc-700 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">草稿</SelectItem>
-                <SelectItem value="published">發布</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="status" className="text-white">狀態：</Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                <SelectTrigger className="w-32 bg-zinc-800 border-zinc-700 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">草稿</SelectItem>
+                  <SelectItem value="published">發布</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {!post && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="autoTranslate"
+                  checked={autoTranslate}
+                  onChange={(e) => setAutoTranslate(e.target.checked)}
+                  className="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-[#06038d] focus:ring-[#06038d]"
+                />
+                <Label htmlFor="autoTranslate" className="text-white cursor-pointer">
+                  自動翻譯（英文/日文）
+                </Label>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -1028,6 +1086,155 @@ function AIArticleGenerator({
               {generateMutation.isPending ? '生成中...' : 'AI 生成文章'}
             </Button>
           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Translation Editor Component
+function TranslationEditor({
+  post,
+  onCancel,
+  onSuccess,
+}: {
+  post: any;
+  onCancel: () => void;
+  onSuccess: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    titleEn: post?.titleEn || '',
+    titleJa: post?.titleJa || '',
+    excerptEn: post?.excerptEn || '',
+    excerptJa: post?.excerptJa || '',
+    contentEn: post?.contentEn || '',
+    contentJa: post?.contentJa || '',
+  });
+
+  const updateTranslationMutation = trpc.blog.updatePostTranslation.useMutation({
+    onSuccess: () => {
+      toast.success('翻譯已更新');
+      onSuccess();
+    },
+    onError: (error) => {
+      toast.error(`更新失敗：${error.message}`);
+    },
+  });
+
+  const handleSubmit = () => {
+    updateTranslationMutation.mutate({
+      id: post.id,
+      ...formData,
+    });
+  };
+
+  return (
+    <Card className="bg-zinc-900 border-zinc-800">
+      <CardHeader>
+        <CardTitle className="text-white">編輯翻譯</CardTitle>
+        <CardDescription className="text-gray-400">
+          修改 AI 生成的翻譯，確保專業術語準確性
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Original Content */}
+        <div className="space-y-4 p-4 bg-zinc-800 rounded-lg">
+          <h3 className="text-white font-semibold">原文（中文）</h3>
+          <div>
+            <Label className="text-gray-400">標題</Label>
+            <p className="text-white mt-1">{post.title}</p>
+          </div>
+          <div>
+            <Label className="text-gray-400">摘要</Label>
+            <p className="text-white mt-1">{post.excerpt}</p>
+          </div>
+        </div>
+
+        {/* English Translation */}
+        <div className="space-y-4">
+          <h3 className="text-white font-semibold">英文翻譯</h3>
+          <div>
+            <Label htmlFor="titleEn" className="text-white">標題 (English)</Label>
+            <Input
+              id="titleEn"
+              value={formData.titleEn}
+              onChange={(e) => setFormData({ ...formData, titleEn: e.target.value })}
+              className="bg-zinc-800 border-zinc-700 text-white"
+              placeholder="English title"
+            />
+          </div>
+          <div>
+            <Label htmlFor="excerptEn" className="text-white">摘要 (English)</Label>
+            <Textarea
+              id="excerptEn"
+              value={formData.excerptEn}
+              onChange={(e) => setFormData({ ...formData, excerptEn: e.target.value })}
+              className="bg-zinc-800 border-zinc-700 text-white"
+              placeholder="English excerpt"
+              rows={3}
+            />
+          </div>
+          <div>
+            <Label htmlFor="contentEn" className="text-white">內容 (English)</Label>
+            <Textarea
+              id="contentEn"
+              value={formData.contentEn}
+              onChange={(e) => setFormData({ ...formData, contentEn: e.target.value })}
+              className="bg-zinc-800 border-zinc-700 text-white font-mono text-sm"
+              placeholder="English content (Markdown)"
+              rows={10}
+            />
+          </div>
+        </div>
+
+        {/* Japanese Translation */}
+        <div className="space-y-4">
+          <h3 className="text-white font-semibold">日文翻譯</h3>
+          <div>
+            <Label htmlFor="titleJa" className="text-white">標題 (日本語)</Label>
+            <Input
+              id="titleJa"
+              value={formData.titleJa}
+              onChange={(e) => setFormData({ ...formData, titleJa: e.target.value })}
+              className="bg-zinc-800 border-zinc-700 text-white"
+              placeholder="日本語タイトル"
+            />
+          </div>
+          <div>
+            <Label htmlFor="excerptJa" className="text-white">摘要 (日本語)</Label>
+            <Textarea
+              id="excerptJa"
+              value={formData.excerptJa}
+              onChange={(e) => setFormData({ ...formData, excerptJa: e.target.value })}
+              className="bg-zinc-800 border-zinc-700 text-white"
+              placeholder="日本語概要"
+              rows={3}
+            />
+          </div>
+          <div>
+            <Label htmlFor="contentJa" className="text-white">內容 (日本語)</Label>
+            <Textarea
+              id="contentJa"
+              value={formData.contentJa}
+              onChange={(e) => setFormData({ ...formData, contentJa: e.target.value })}
+              className="bg-zinc-800 border-zinc-700 text-white font-mono text-sm"
+              placeholder="日本語コンテンツ (Markdown)"
+              rows={10}
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-2 pt-4 border-t border-zinc-700">
+          <Button variant="outline" onClick={onCancel} className="border-zinc-700 text-white hover:bg-zinc-800">
+            取消
+          </Button>
+          <BrandButton
+            onClick={handleSubmit}
+            disabled={updateTranslationMutation.isPending}
+          >
+            {updateTranslationMutation.isPending ? '保存中...' : '保存翻譯'}
+          </BrandButton>
         </div>
       </CardContent>
     </Card>

@@ -1,11 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRoute, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Calendar, Eye, ArrowLeft, Share2, Sparkles, Facebook } from "lucide-react";
+import { Calendar, Eye, ArrowLeft, Share2, Sparkles, Facebook, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -16,6 +16,16 @@ export default function BlogPost() {
   const currentLang = i18n.language;
   const [, params] = useRoute("/blog/:slug");
   const slug = params?.slug || "";
+  
+  // Currency state
+  const [currency, setCurrency] = useState<'HKD' | 'USD' | 'JPY'>('HKD');
+  
+  // Exchange rates (you can fetch these from an API in production)
+  const exchangeRates = {
+    HKD: 1,
+    USD: 0.128, // 1 HKD = 0.128 USD
+    JPY: 18.5,  // 1 HKD = 18.5 JPY
+  };
 
   // Query post by slug
   const { data: post, isLoading } = trpc.blog.getPostBySlug.useQuery({ slug }, {
@@ -38,6 +48,30 @@ export default function BlogPost() {
     }
     return post[field]; // Fallback to Chinese
   };
+  
+  // Currency conversion function
+  const convertCurrency = (text: string): string => {
+    if (currency === 'HKD') return text;
+    
+    // Match HKD prices in various formats: HKD 1,234.56 or HKD1,234.56 or HKD 1234.56
+    const priceRegex = /HKD\s?([\d,]+\.?\d*)/gi;
+    
+    return text.replace(priceRegex, (match, priceStr) => {
+      const price = parseFloat(priceStr.replace(/,/g, ''));
+      const convertedPrice = price * exchangeRates[currency];
+      const formattedPrice = convertedPrice.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      return `${currency} ${formattedPrice}`;
+    });
+  };
+  
+  // Get converted content
+  const convertedContent = useMemo(() => {
+    const content = getLocalizedContent('content');
+    return content ? convertCurrency(content) : '';
+  }, [post, currentLang, currency]);
 
   // Social share functions
   const handleShareFacebook = () => {
@@ -132,6 +166,25 @@ export default function BlogPost() {
               </span>
             </div>
 
+            {/* Currency Switcher */}
+            <div className="flex items-center gap-2 mb-4">
+              <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+              <span className="text-gray-400 text-sm md:text-base">貨幣：</span>
+              <div className="flex gap-2">
+                {(['HKD', 'USD', 'JPY'] as const).map((curr) => (
+                  <Button
+                    key={curr}
+                    size="sm"
+                    variant={currency === curr ? 'default' : 'outline'}
+                    onClick={() => setCurrency(curr)}
+                    className={currency === curr ? 'bg-[#06038d] hover:bg-[#06038d]/90 text-white' : 'border-zinc-700 text-white hover:bg-zinc-800'}
+                  >
+                    {curr}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
             {/* Share Buttons - 手機版改為垂直排列 */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <span className="text-gray-400 text-sm md:text-base">分享：</span>
@@ -243,7 +296,7 @@ export default function BlogPost() {
                   ),
                 }}
               >
-                {getLocalizedContent('content')}
+                {convertedContent}
               </Markdown>
             </article>
           </Card>

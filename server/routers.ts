@@ -2273,6 +2273,27 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         };
       }),
 
+    // Update post translation (Admin only)
+    updatePostTranslation: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        titleEn: z.string().optional(),
+        titleJa: z.string().optional(),
+        excerptEn: z.string().optional(),
+        excerptJa: z.string().optional(),
+        contentEn: z.string().optional(),
+        contentJa: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const blogDb = await import('./blogDb');
+        const { id, ...translations } = input;
+        
+        // Update post with translations
+        await blogDb.updatePost(id, translations);
+        
+        return { success: true };
+      }),
+
     // Get all categories
     getCategories: publicProcedure
       .query(async () => {
