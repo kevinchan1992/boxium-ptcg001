@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Redirect } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert } from "lucide-react";
 
@@ -33,9 +32,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
 
   // 如果未登入，重定向到登入頁面
   if (!user) {
-    const loginUrl = getLoginUrl();
-    window.location.href = loginUrl;
-    return null;
+    return <Redirect to="/login" />;
   }
 
   // 如果不是管理員，顯示無權限頁面

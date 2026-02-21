@@ -1,4 +1,14 @@
 import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+/**
+ * @deprecated This file contains legacy Manus OAuth code that is no longer used.
+ * The platform now uses an independent authentication system:
+ * - server/auth/ - Authentication logic (session, OAuth, password)
+ * - server/routers/auth.ts - Authentication API endpoints
+ * - server/_core/context.ts - Request context with user authentication
+ * 
+ * This file is kept for reference only and may be removed in future updates.
+ */
+
 import { ForbiddenError } from "@shared/_core/errors";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
@@ -30,12 +40,7 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
-    console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
-    if (!ENV.oAuthServerUrl) {
-      console.error(
-        "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
-      );
-    }
+    console.log("[OAuth] Legacy OAuth service - no longer used");
   }
 
   private decodeState(state: string): string {
@@ -78,7 +83,7 @@ class OAuthService {
 
 const createOAuthHttpClient = (): AxiosInstance =>
   axios.create({
-    baseURL: ENV.oAuthServerUrl,
+    baseURL: "https://api.manus.im", // Legacy - no longer used
     timeout: AXIOS_TIMEOUT_MS,
   });
 
