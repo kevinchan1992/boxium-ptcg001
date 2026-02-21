@@ -5937,3 +5937,17 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 ## 測試和交付
 - [x] 測試所有優化效果
 - [x] 保存 checkpoint
+
+
+## Blog、Disclaimer 和 About 頁面多語言翻譯
+- [x] 檢查 Blog 頁面的硬編碼文字
+- [x] 將 Blog 頁面文字替換為 i18n 翻譯鍵
+- [x] 添加 Blog 頁面的英文和日文翻譯
+- [x] 檢查 Disclaimer 頁面的硬編碼文字
+- [x] 將 Disclaimer 頁面文字替換為 i18n 翻譯鍵
+- [x] 添加 Disclaimer 頁面的英文和日文翻譯
+- [x] 檢查 About 頁面的硬編碼文字
+- [x] 將 About 頁面文字替換為 i18n 翻譯鍵
+- [x] 添加 About 頁面的英文和日文翻譯
+- [x] 測試所有頁面的語言切換功能
+- [x] 保存 checkpoint

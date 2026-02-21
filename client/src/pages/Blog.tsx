@@ -9,8 +9,10 @@ import { BrandButton } from "@/components/ui/brand-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Calendar, Eye, TrendingUp, Sparkles, ArrowRight } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
+import { useTranslation } from "react-i18next";
 
 export default function Blog() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [page, setPage] = useState(1);
@@ -57,10 +59,10 @@ export default function Blog() {
         <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4">
-              BOXIUM PTCG 博客
+              {t('blogPage.title')}
             </h1>
             <p className="text-xs sm:text-sm md:text-base text-gray-300 mb-4 md:mb-6">
-              專業的 Pokémon TCG 市場分析、價格趨勢、投資建議
+              {t('blogPage.subtitle')}
             </p>
             
             {/* Search Bar - 手機版優化 */}
@@ -68,7 +70,7 @@ export default function Blog() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
-                  placeholder="搜尋文章..."
+                  placeholder={t('blogPage.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 bg-zinc-900 border-zinc-700 text-white min-h-[44px] text-sm md:text-base"
@@ -76,10 +78,10 @@ export default function Blog() {
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-full sm:w-48 bg-zinc-900 border-zinc-700 text-white min-h-[44px] text-sm md:text-base">
-                  <SelectValue placeholder="所有分類" />
+                  <SelectValue placeholder={t('blogPage.allCategories')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">所有分類</SelectItem>
+                  <SelectItem value="all">{t('blogPage.allCategories')}</SelectItem>
                   {categories?.map((cat) => (
                     <SelectItem key={cat.id} value={String(cat.id)}>
                       {cat.name}
@@ -97,7 +99,7 @@ export default function Blog() {
         {isLoading ? (
           <div className="text-center py-16">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#06038d]"></div>
-            <p className="text-gray-400 mt-4">載入中...</p>
+            <p className="text-gray-400 mt-4">{t('blogPage.loading')}</p>
           </div>
         ) : posts && posts.length > 0 ? (
           <>
@@ -106,7 +108,7 @@ export default function Blog() {
               <div className="mb-12">
                 <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-3 md:mb-4 flex items-center gap-2">
                   <TrendingUp className="w-6 h-6 text-[#06038d]" />
-                  精選文章
+                  {t('blogPage.featuredPost')}
                 </h2>
                 <Link href={`/blog/${featuredPost.slug}`}>
                   <Card className="bg-zinc-900 border-zinc-800 hover:border-[#06038d] transition-all cursor-pointer overflow-hidden">
@@ -145,11 +147,11 @@ export default function Blog() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Eye className="w-4 h-4" />
-                            {featuredPost.viewCount} 次瀏覽
+                            {featuredPost.viewCount} {t('blogPage.views')}
                           </span>
                         </div>
                         <BrandButton className="w-fit">
-                          閱讀全文
+                          {t('blogPage.readMore')}
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </BrandButton>
                       </div>
@@ -162,7 +164,7 @@ export default function Blog() {
             {/* Regular Posts Grid */}
             {regularPosts.length > 0 && (
               <div>
-                <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-3 md:mb-4">最新文章</h2>
+                <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-3 md:mb-4">{t('blogPage.latestPosts')}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {regularPosts.map((post) => (
                     <Link key={post.id} href={`/blog/${post.slug}`}>
@@ -222,7 +224,7 @@ export default function Blog() {
                       disabled={isLoading}
                       className="px-6 md:px-8 py-3 md:py-6 text-base md:text-lg min-h-[44px]"
                     >
-                      {isLoading ? '載入中...' : '載入更多文章'}
+                      {isLoading ? t('blogPage.loading') : t('blogPage.loadMore')}
                     </BrandButton>
                   </div>
                 )}
@@ -234,11 +236,11 @@ export default function Blog() {
             <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-zinc-900 flex items-center justify-center">
               <Search className="w-12 h-12 text-gray-600" />
             </div>
-            <h3 className="text-xl md:text-2xl font-bold text-white mb-2">沒有找到文章</h3>
+            <h3 className="text-xl md:text-2xl font-bold text-white mb-2">{t('blogPage.noPostsFound')}</h3>
             <p className="text-sm md:text-base text-gray-400">
               {searchQuery || selectedCategory !== 'all'
-                ? '請嘗試其他搜尋條件'
-                : '目前還沒有發布任何文章'}
+                ? t('blogPage.tryOtherSearch')
+                : t('blogPage.noPostsFound')}
             </p>
           </div>
         )}

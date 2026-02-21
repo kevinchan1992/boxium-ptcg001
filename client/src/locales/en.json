@@ -339,5 +339,102 @@
     "snkrdunkDescription": "Click the button below to view the latest PSA 10 listings on SNKRDUNK",
     "viewOnSnkrdunk": "View on SNKRDUNK",
     "viewDetail": "View Details"
+  },
+  "blogPage": {
+    "title": "BOXIUM PTCG Blog",
+    "subtitle": "Professional Pokémon TCG market analysis, price trends, and investment advice",
+    "searchPlaceholder": "Search articles...",
+    "allCategories": "All Categories",
+    "loading": "Loading...",
+    "featuredPost": "Featured Post",
+    "latestPosts": "Latest Posts",
+    "loadMore": "Load More Articles",
+    "noPostsFound": "No articles found",
+    "tryOtherSearch": "Please try other search criteria",
+    "readMore": "Read More",
+    "views": "views"
+  },
+  "disclaimerPage": {
+    "title": "Disclaimer",
+    "subtitle": "Please read the following terms carefully. By using this platform, you agree to and accept all contents of this disclaimer.",
+    "lastUpdated": "Last Updated",
+    "contactInfo": "If you have any questions about this disclaimer, please contact us through the contact methods provided on the platform.",
+    "sections": {
+      "priceData": {
+        "title": "Price Data Disclaimer",
+        "content": "The card price data provided on this platform comes from third-party sources (including but not limited to SNKRDUNK, eBay, etc.) and is for reference only. We do not guarantee the accuracy, completeness, or timeliness of the price data. Actual transaction prices may vary due to market fluctuations, seller pricing strategies, card conditions, and other factors. Users should verify price information on their own before making any transactions."
+      },
+      "investmentRisk": {
+        "title": "Investment Risk Warning",
+        "content": "Pokémon card collecting and trading involves investment risks. Card prices may fluctuate significantly due to market supply and demand, trends, grading changes, and other factors. The data and analysis tools provided on this platform do not constitute investment advice. Users should carefully evaluate based on their own financial situation and risk tolerance, and assume all responsibility and consequences for investment decisions. Past price performance does not represent future returns."
+      },
+      "dataDelay": {
+        "title": "Data Delay Notice",
+        "content": "The price data on this platform may be delayed, and the update frequency depends on the availability of data sources and system scheduling (usually updated every 12 hours). The displayed prices do not represent real-time market prices and may differ from current actual transaction prices. When making trading decisions, users should refer to multiple sources and confirm the latest price information."
+      },
+      "externalLinks": {
+        "title": "External Links Disclaimer",
+        "content": "This platform provides links to external websites (such as SNKRDUNK, eBay, etc.) to facilitate users in querying detailed information or conducting transactions. We are not responsible for the content, privacy policies, security, or trading behaviors of these external websites. When visiting external websites and conducting transactions, users should assess risks on their own and comply with the terms and conditions of those websites."
+      },
+      "serviceInterruption": {
+        "title": "Service Interruption and Changes",
+        "content": "This platform may temporarily interrupt service due to system maintenance, technical upgrades, force majeure, or other reasons. We reserve the right to modify, suspend, or terminate part or all of the services at any time without prior notice. We are not responsible for any losses caused by service interruptions, data loss, or feature changes."
+      },
+      "jurisdiction": {
+        "title": "Legal Jurisdiction and Dispute Resolution",
+        "content": "This disclaimer and platform services are governed by the laws of the Hong Kong Special Administrative Region. Any disputes arising from the use of this platform should first be resolved through friendly negotiation; if negotiation fails, they should be submitted to the jurisdiction of the Taipei District Court in Taiwan. If any provision of this disclaimer is deemed invalid or unenforceable, the remaining provisions shall remain valid."
+      },
+      "userConduct": {
+        "title": "User Conduct Guidelines",
+        "content": "When using this platform, users must not engage in the following behaviors: (1) Using crawlers or automated tools to scrape data in large quantities; (2) Attempting unauthorized access to systems or databases; (3) Distributing malware or conducting cyber attacks; (4) Impersonating others or providing false information; (5) Engaging in any illegal activities or infringement of others' rights. Violators will have their service usage rights terminated and may be held legally liable."
+      },
+      "dataPrivacy": {
+        "title": "Data Privacy and Protection",
+        "content": "This platform values user privacy and will not sell, rent, or otherwise disclose user personal information to third parties. We only use user data within the scope of providing services, improving user experience, and complying with legal requirements. For specific privacy policies, please refer to the 'Privacy Policy' page. Users have the right to request to view, modify, or delete their personal information."
+      },
+      "intellectualProperty": {
+        "title": "Intellectual Property Statement",
+        "content": "\"Pokémon\", \"PTCG\", and related trademarks, images, and names are owned by The Pokémon Company, Nintendo, GAME FREAK, and other original manufacturers. This platform only provides market data analysis services and does not own any card-related intellectual property rights. The original content of this platform, including design, code, and copywriting, is protected by copyright law and may not be copied or used without authorization."
+      }
+    }
+  },
+  "aboutPage": {
+    "title": "About BOXIUM",
+    "subtitle": "Providing accurate and real-time market data analysis platform for Pokémon TCG collectors",
+    "trackedCards": "Tracked Cards",
+    "dataSources": "Data Sources",
+    "ourMission": "Our Mission",
+    "missionContent": "BOXIUM is committed to providing the most accurate and timely market data for Pokémon TCG collectors and investors. We integrate real transaction records from major global trading platforms and help users understand market trends and make informed collecting and investment decisions through professional data analysis tools.",
+    "coreServices": "Core Services",
+    "platformFeatures": "Platform Features",
+    "contactInfo": "If you have any questions or suggestions, please feel free to contact us through the contact methods provided on the platform.",
+    "services": {
+      "cardSearch": {
+        "title": "Card Search",
+        "description": "Integrate global market data to quickly find target cards. Support multi-language search in Chinese, English, and Japanese, covering {{count}} popular card information."
+      },
+      "priceTracking": {
+        "title": "Price Tracking",
+        "description": "Provide SNKRDUNK real transaction records, focusing on PSA 10 high-grade market. Automatically updated every 12 hours to ensure data freshness."
+      },
+      "marketTrends": {
+        "title": "Market Trends",
+        "description": "24-hour trending leaderboard, instantly grasp price surge and drop dynamics. Search heat, price changes, and newly listed cards at a glance."
+      },
+      "gradeAnalysis": {
+        "title": "Grade Analysis",
+        "description": "Support PSA 10, BGS 10, used and other multi-grade price comparisons. Help collectors understand the market value differences of different grades."
+      }
+    },
+    "features": {
+      "realData": "Real transaction data (not estimates)",
+      "autoUpdate": "Automatic update mechanism (updated every 12 hours)",
+      "multiCurrency": "Multi-currency support (HKD/TWD/JPY/USD)",
+      "responsive": "Responsive design (perfect for mobile/desktop)"
+    },
+    "sources": {
+      "snkrdunk": "Japan's largest sneaker and card trading platform, providing real transaction price records, focusing on PSA 10 high-grade market data",
+      "ebay": "The world's largest auction platform, covering international market card transaction data, providing diversified price references"
+    }
   }
 }

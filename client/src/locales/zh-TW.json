@@ -30,23 +30,15 @@
     "emptyHint": "請稍後再試或切換其他分類"
   },
   "research": {
-    "title": "卡牌搜尋",
-    "searchPlaceholder": "輸入卡牌名稱、編號或系列進行搜尋...",
+    "title": "卡牌研究",
+    "searchPlaceholder": "搜尋卡牌名稱...",
+    "addToWatchlist": "加入觀察清單",
+    "removeFromWatchlist": "從觀察清單移除",
+    "viewDetails": "查看詳情",
+    "noResults": "找不到符合條件的卡牌",
     "loading": "載入中...",
-    "noResults": "無搜尋結果",
-    "imageSearch": "圖片搜尋",
-    "imageSearchTitle": "以圖搜圖",
-    "takePhoto": "拍照",
-    "uploadImage": "上傳圖片",
-    "searchButton": "搜尋",
-    "searching": "搜尋中...",
-    "pleaseSelectImage": "請選擇一張圖片",
-    "imageSearchSuccess": "識別成功：{{cardName}}",
-    "imageSearchFailed": "無法識別卡牌，請嘗試其他圖片",
-    "imageSearchError": "圖片搜尋失敗，請稍後再試",
-    "cropImage": "裁剪圖片",
-    "searchDirect": "直接搜尋",
-    "searchWithCrop": "裁剪後搜尋"
+    "watchlist": "觀察清單",
+    "allCards": "所有卡牌"
   },
   "notifications": {
     "title": "通知中心",
@@ -168,17 +160,6 @@
     "privacy": "隱私權政策",
     "about": "關於我們",
     "copyright": "© 2026 BOXIUM. All rights reserved. | Luck in Every Box"
-  },
-  "research": {
-    "title": "卡牌研究",
-    "searchPlaceholder": "搜尋卡牌名稱...",
-    "addToWatchlist": "加入觀察清單",
-    "removeFromWatchlist": "從觀察清單移除",
-    "viewDetails": "查看詳情",
-    "noResults": "找不到符合條件的卡牌",
-    "loading": "載入中...",
-    "watchlist": "觀察清單",
-    "allCards": "所有卡牌"
   },
   "cardDetail": {
     "referencePrice": "參考價格",
@@ -358,5 +339,102 @@
     "copyLink": "複製連結",
     "copySuccess": "連結已複製到剪貼板",
     "copyError": "複製失敗，請手動複製"
+  },
+  "blogPage": {
+    "title": "BOXIUM PTCG 博客",
+    "subtitle": "專業的 Pokémon TCG 市場分析、價格趨勢、投資建議",
+    "searchPlaceholder": "搜尋文章...",
+    "allCategories": "所有分類",
+    "loading": "載入中...",
+    "featuredPost": "精選文章",
+    "latestPosts": "最新文章",
+    "loadMore": "載入更多文章",
+    "noPostsFound": "找不到符合條件的文章",
+    "tryOtherSearch": "請嘗試其他搜尋條件",
+    "readMore": "閱讀更多",
+    "views": "次瀏覽"
+  },
+  "disclaimerPage": {
+    "title": "免責聲明",
+    "subtitle": "請仔細閱讀以下條款。使用本平台即表示您同意並接受本免責聲明的所有內容。",
+    "lastUpdated": "最後更新日期",
+    "contactInfo": "如對本免責聲明有任何疑問，請通過平台提供的聯絡方式與我們聯繫。",
+    "sections": {
+      "priceData": {
+        "title": "價格數據免責",
+        "content": "本平台所提供的卡牌價格數據來自第三方來源（包括但不限於 SNKRDUNK、eBay 等），僅供參考之用。我們不保證價格數據的準確性、完整性或即時性。實際交易價格可能因市場波動、賣家定價策略、卡牌狀況等因素而有所不同。用戶在進行任何交易前，應自行核實價格資訊。"
+      },
+      "investmentRisk": {
+        "title": "投資風險提示",
+        "content": "寶可夢卡牌收藏和交易具有投資風險。卡牌價格可能因市場供需、流行趨勢、評級變化等因素而大幅波動。本平台提供的數據和分析工具不構成投資建議。用戶應根據自身財務狀況和風險承受能力，審慎評估並自行承擔所有投資決策的責任和後果。過往價格表現不代表未來收益。"
+      },
+      "dataDelay": {
+        "title": "數據延遲說明",
+        "content": "本平台的價格數據可能存在延遲，更新頻率取決於數據來源的可用性和系統排程（通常為 12 小時更新一次）。顯示的價格不代表即時市場價格，可能與當前實際交易價格存在差異。用戶在做出交易決策時，應參考多個來源並確認最新價格資訊。"
+      },
+      "externalLinks": {
+        "title": "外部連結免責",
+        "content": "本平台提供連結至外部網站（如 SNKRDUNK、eBay 等）以方便用戶查詢詳細資訊或進行交易。我們對這些外部網站的內容、隱私政策、安全性或交易行為不承擔任何責任。用戶訪問外部網站並進行交易時，應自行評估風險並遵守該網站的條款和條件。"
+      },
+      "serviceInterruption": {
+        "title": "服務中斷與變更",
+        "content": "本平台可能因系統維護、技術升級、不可抗力或其他原因而暫時中斷服務。我們保留隨時修改、暫停或終止部分或全部服務的權利，恕不另行通知。我們不對因服務中斷、數據遺失或功能變更而造成的任何損失承擔責任。"
+      },
+      "jurisdiction": {
+        "title": "法律管轄與爭議解決",
+        "content": "本免責聲明及平台服務受香港特別行政區法律管轄。因使用本平台而產生的任何爭議，雙方應首先通過友好協商解決；協商不成的，應提交至台灣台北地方法院管轄。如本免責聲明的任何條款被認定為無效或不可執行，其餘條款仍然有效。"
+      },
+      "userConduct": {
+        "title": "用戶行為規範",
+        "content": "用戶在使用本平台時，不得進行以下行為：(1) 使用爬蟲程式或自動化工具大量抓取數據；(2) 嘗試未經授權訪問系統或數據庫；(3) 散佈惡意軟體或進行網路攻擊；(4) 冒充他人或提供虛假資訊；(5) 從事任何違法或侵害他人權益的行為。違反者將被終止服務使用權，並可能承擔法律責任。"
+      },
+      "dataPrivacy": {
+        "title": "數據隱私與保護",
+        "content": "本平台重視用戶隱私，不會販賣、出租或以其他方式向第三方披露用戶個人資訊。我們僅在提供服務、改善用戶體驗和遵守法律要求的範圍內使用用戶數據。具體隱私政策請參閱「隱私權政策」頁面。用戶有權要求查看、修改或刪除其個人資訊。"
+      },
+      "intellectualProperty": {
+        "title": "智慧財產權聲明",
+        "content": "「寶可夢」、「Pokémon」、「PTCG」及相關商標、圖像、名稱均為 The Pokémon Company、任天堂、GAME FREAK 等原廠所有。本平台僅提供市場數據分析服務，不擁有任何卡牌相關智慧財產權。本平台的設計、程式碼、文案等原創內容受著作權法保護，未經授權不得複製或使用。"
+      }
+    }
+  },
+  "aboutPage": {
+    "title": "關於 BOXIUM",
+    "subtitle": "為 Pokémon TCG 收藏家提供準確、即時的市場數據分析平台",
+    "trackedCards": "已追蹤卡牌",
+    "dataSources": "資料來源",
+    "ourMission": "我們的使命",
+    "missionContent": "BOXIUM 致力於為 Pokémon TCG 收藏家和投資者提供最準確、最即時的市場數據。我們整合全球主要交易平台的真實成交記錄，透過專業的數據分析工具，幫助用戶掌握市場趨勢，做出明智的收藏和投資決策。",
+    "coreServices": "核心服務",
+    "platformFeatures": "平台特色",
+    "contactInfo": "如有任何問題或建議，歡迎透過平台提供的聯絡方式與我們聯繫。",
+    "services": {
+      "cardSearch": {
+        "title": "卡牌搜尋",
+        "description": "整合全球市場數據，快速找到目標卡牌。支援中文、英文、日文多語言搜尋，涵蓋 {{count}} 張熱門卡牌資訊。"
+      },
+      "priceTracking": {
+        "title": "價格追蹤",
+        "description": "提供 SNKRDUNK 真實交易記錄，專注 PSA 10 高評級市場。每 12 小時自動更新，確保數據新鮮度。"
+      },
+      "marketTrends": {
+        "title": "市場趨勢",
+        "description": "24 小時熱門排行榜，即時掌握價格飆升和暴跌動態。搜尋熱度、價格變化、新上架卡牌一目了然。"
+      },
+      "gradeAnalysis": {
+        "title": "評級分析",
+        "description": "支援 PSA 10、BGS 10、中古等多評級價格比較。幫助收藏家了解不同評級的市場價值差異。"
+      }
+    },
+    "features": {
+      "realData": "真實交易數據（非估價）",
+      "autoUpdate": "自動更新機制（12 小時更新一次）",
+      "multiCurrency": "多貨幣支援（HKD/TWD/JPY/USD）",
+      "responsive": "響應式設計（手機/桌面完美適配）"
+    },
+    "sources": {
+      "snkrdunk": "日本最大的球鞋和卡牌交易平台，提供真實成交價格記錄，專注 PSA 10 高評級市場數據",
+      "ebay": "全球最大的拍賣平台，涵蓋國際市場的卡牌交易數據，提供多元化的價格參考"
+    }
   }
 }
