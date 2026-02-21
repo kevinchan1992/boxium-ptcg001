@@ -30,7 +30,7 @@ export default function Dashboard() {
         {/* Logo 和標題區域 */}
         <div className="mb-8 flex items-center gap-4">
           <img 
-            src="/logo.png" 
+            src="/boxium-logo.png" 
             alt="BOXIUM PTCG Logo" 
             className="h-16 w-auto"
           />

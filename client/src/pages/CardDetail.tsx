@@ -361,12 +361,13 @@ export default function CardDetail() {
 
           {/* Right Column - Card Information */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Source and Grade Filters */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            {/* Source and Grade Filters - 手機版優化 */}
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
               <Button
                 variant={activeSource === "snkrdunk" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setActiveSource("snkrdunk")}
+                className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 h-auto min-h-[36px] whitespace-nowrap"
               >
                 SNKRDUNK {t("cardDetail.actualPrice")}
               </Button>
@@ -374,16 +375,18 @@ export default function CardDetail() {
                 variant={activeSource === "ebay" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setActiveSource("ebay")}
+                className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 h-auto min-h-[36px] whitespace-nowrap"
               >
                 eBay {t("cardDetail.marketPrice")}
               </Button>
-              <div className="w-px h-8 bg-border mx-2" />
+              <div className="w-px h-6 sm:h-8 bg-border mx-1 sm:mx-2" />
               {grades.map((grade) => (
                 <Button
                   key={grade}
                   variant={activeGrade === grade ? "default" : "outline"}
                   size="sm"
                   onClick={() => setActiveGrade(activeGrade === grade ? null : grade)}
+                  className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 h-auto min-h-[36px] whitespace-nowrap"
                 >
                   {grade}
                 </Button>
@@ -392,12 +395,12 @@ export default function CardDetail() {
 
             {/* Reference Price */}
             <div className="bg-card rounded-lg p-6 border border-border">
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold text-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   PSA 10 {t("cardDetail.referencePrice")}: {formatCurrency(avgPrice)}
                 </h2>
                 {priceTrend && (
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
+                  <div className={`flex items-center gap-1 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${
                     priceTrend.isIncrease 
                       ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
                       : priceTrend.isDecrease 

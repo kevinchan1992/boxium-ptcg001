@@ -5890,3 +5890,15 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 驗證觸控優化效果
 - [x] 驗證性能優化效果
 - [x] 保存 checkpoint
+
+
+## UI 修復：Dashboard、Blog、Research、Pricing 頁面
+- [x] 修復 Dashboard 頁面左上角 logo 顯示錯誤
+- [x] 縮小 Blog 頁面標題字體
+- [x] 調整 Blog 頁面內容字體大小
+- [x] 修改 Research 頁面上漲圖示的字體大小和排版
+- [x] 調整 Research 頁面分層標籤字體大小
+- [x] 調整 Pricing 頁面分層標籤字體大小
+- [x] 確保分層標籤在手機和電腦上一致性一行並排顯示
+- [x] 測試所有修復效果
+- [x] 保存 checkpoint

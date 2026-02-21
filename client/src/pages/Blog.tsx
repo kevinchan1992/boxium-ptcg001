@@ -56,10 +56,10 @@ export default function Blog() {
       <div className="bg-gradient-to-b from-[#06038d]/20 to-black border-b border-zinc-800">
         <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-white mb-4 md:mb-6">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4">
               BOXIUM PTCG 博客
             </h1>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-300 mb-6 md:mb-8">
+            <p className="text-xs sm:text-sm md:text-base text-gray-300 mb-4 md:mb-6">
               專業的 Pokémon TCG 市場分析、價格趨勢、投資建議
             </p>
             
@@ -104,7 +104,7 @@ export default function Blog() {
             {/* Featured Post */}
             {featuredPost && (
               <div className="mb-12">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-4 md:mb-6 flex items-center gap-2">
+                <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-3 md:mb-4 flex items-center gap-2">
                   <TrendingUp className="w-6 h-6 text-[#06038d]" />
                   精選文章
                 </h2>
@@ -130,7 +130,7 @@ export default function Blog() {
                           )}
                           <Badge variant="secondary">精選</Badge>
                         </div>
-                        <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-3 md:mb-4 line-clamp-2">
+                        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 md:mb-3 line-clamp-2">
                           {featuredPost.title}
                         </h3>
                         {featuredPost.excerpt && (
@@ -162,7 +162,7 @@ export default function Blog() {
             {/* Regular Posts Grid */}
             {regularPosts.length > 0 && (
               <div>
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">最新文章</h2>
+                <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-3 md:mb-4">最新文章</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {regularPosts.map((post) => (
                     <Link key={post.id} href={`/blog/${post.slug}`}>
@@ -185,11 +185,11 @@ export default function Blog() {
                               </Badge>
                             )}
                           </div>
-                          <CardTitle className="text-white text-base sm:text-lg md:text-xl line-clamp-2 hover:text-[#06038d] transition-colors">
+                          <CardTitle className="text-white text-sm sm:text-base md:text-lg line-clamp-2 hover:text-[#06038d] transition-colors">
                             {post.title}
                           </CardTitle>
                           {post.excerpt && (
-                            <CardDescription className="text-sm sm:text-base line-clamp-3">
+                            <CardDescription className="text-xs sm:text-sm line-clamp-3">
                               {post.excerpt}
                             </CardDescription>
                           )}
