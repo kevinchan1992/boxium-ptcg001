@@ -30,7 +30,7 @@ export default function SearchResults() {
   };
 
   return (
-    <div className="min-h-screen py-6 px-4 sm:px-6 md:px-8">
+    <div className="min-h-screen py-4 sm:py-6 px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Breadcrumb */}
         <Breadcrumb 
           items={[
@@ -40,30 +40,30 @@ export default function SearchResults() {
         />
         
         {/* Search Bar */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-6 md:mb-8">
           <form onSubmit={handleSearch} className="relative max-w-2xl">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="搜尋卡牌..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-6 text-lg bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
+                className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-4 sm:py-5 md:py-6 text-sm sm:text-base md:text-lg bg-card border-border rounded-lg sm:rounded-xl focus:ring-2 focus:ring-primary"
               />
             </div>
           </form>
         </div>
 
         {/* Results Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-foreground">
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
             搜尋結果: "{query}"
           </h2>
           {isLoading ? (
-            <p className="text-muted-foreground mt-2">搜尋中...</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">搜尋中...</p>
           ) : (
-            <p className="text-muted-foreground mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
               找到 {searchResults.length} 張卡牌
             </p>
           )}
@@ -82,7 +82,7 @@ export default function SearchResults() {
             </div>
           </div>
         ) : searchResults.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 sm:gap-3">
             {searchResults.map((card: any) => (
               <div
                 key={card.id}
@@ -102,22 +102,22 @@ export default function SearchResults() {
                     </div>
                   )}
                 </div>
-                <div className="p-2">
-                  <h3 className="font-semibold text-foreground text-xs mb-0.5 truncate">
+                <div className="p-1.5 sm:p-2">
+                  <h3 className="font-semibold text-foreground text-[10px] sm:text-xs mb-0.5 truncate">
                     {card.name}
                   </h3>
                   {card.nameJa && (
-                    <p className="text-xs text-muted-foreground mb-1 truncate line-clamp-1">
+                    <p className="text-[9px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1 truncate line-clamp-1">
                       {card.nameJa}
                     </p>
                   )}
                   {card.cardNumber && (
-                    <p className="text-xs text-muted-foreground mb-1">
+                    <p className="text-[9px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">
                       #{card.cardNumber}
                     </p>
                   )}
                   {card.latestPrice && (
-                    <p className="text-sm font-bold text-primary">
+                    <p className="text-xs sm:text-sm font-bold text-primary">
                       {formatCurrency(card.latestPrice)}
                     </p>
                   )}

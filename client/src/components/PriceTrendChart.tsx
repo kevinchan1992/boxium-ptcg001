@@ -123,12 +123,13 @@ export function PriceTrendChart({
         <h3 className="text-lg font-semibold text-foreground mb-4">{t("cardDetail.chartTitle")} - {cardName}</h3>
 
         {/* Time Range Buttons */}
-        <div className="flex gap-2 mb-6">
-          <span className="text-sm text-muted-foreground self-center mr-2">{t("cardDetail.timeRangeLabel")}：</span>
+        <div className="flex flex-wrap gap-2 mb-6">
+          <span className="text-xs sm:text-sm text-muted-foreground self-center mr-0 sm:mr-2 w-full sm:w-auto mb-1 sm:mb-0">{t("cardDetail.timeRangeLabel")}：</span>
           <Button
             variant={timeRange === "7d" ? "default" : "outline"}
             size="sm"
             onClick={() => setTimeRange("7d")}
+            className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-8 sm:h-9"
           >
             {t("cardDetail.timeRange.7days")}
           </Button>
@@ -136,6 +137,7 @@ export function PriceTrendChart({
             variant={timeRange === "30d" ? "default" : "outline"}
             size="sm"
             onClick={() => setTimeRange("30d")}
+            className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-8 sm:h-9"
           >
             {t("cardDetail.timeRange.30days")}
           </Button>
@@ -143,6 +145,7 @@ export function PriceTrendChart({
             variant={timeRange === "90d" ? "default" : "outline"}
             size="sm"
             onClick={() => setTimeRange("90d")}
+            className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-8 sm:h-9"
           >
             {t("cardDetail.timeRange.90days")}
           </Button>
@@ -150,33 +153,37 @@ export function PriceTrendChart({
             variant={timeRange === "all" ? "default" : "outline"}
             size="sm"
             onClick={() => setTimeRange("all")}
+            className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-8 sm:h-9"
           >
             {t("cardDetail.timeRange.all")}
           </Button>
         </div>
 
         {/* Chart */}
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={300} className="sm:h-[400px]">
           <LineChart data={filteredData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis
               dataKey="date"
               stroke="#9CA3AF"
-              style={{ fontSize: "12px" }}
+              style={{ fontSize: "10px" }}
               tick={{ fill: "#9CA3AF" }}
+              className="sm:text-xs"
             />
             <YAxis
               yAxisId="left"
               stroke="#3B82F6"
-              style={{ fontSize: "12px" }}
+              style={{ fontSize: "10px" }}
               tick={{ fill: "#3B82F6" }}
+              className="sm:text-xs"
             />
             <YAxis
               yAxisId="right"
               orientation="right"
               stroke="#F97316"
-              style={{ fontSize: "12px" }}
+              style={{ fontSize: "10px" }}
               tick={{ fill: "#F97316" }}
+              className="sm:text-xs"
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />

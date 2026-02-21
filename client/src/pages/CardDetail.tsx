@@ -394,13 +394,13 @@ export default function CardDetail() {
             </div>
 
             {/* Reference Price */}
-            <div className="bg-card rounded-lg p-6 border border-border">
+            <div className="bg-card rounded-lg p-3 sm:p-4 md:p-6 border border-border">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
+                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground break-words">
                   PSA 10 {t("cardDetail.referencePrice")}: {formatCurrency(avgPrice)}
                 </h2>
                 {priceTrend && (
-                  <div className={`flex items-center gap-1 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${
+                  <div className={`flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs md:text-sm font-semibold whitespace-nowrap ${
                     priceTrend.isIncrease 
                       ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
                       : priceTrend.isDecrease 
@@ -416,7 +416,7 @@ export default function CardDetail() {
                   </div>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                 {activeSource === "snkrdunk" 
                   ? t("cardDetail.basedOnLatestRecords", { count: recordCount, months: actualMonths })
                   : t("cardDetail.basedOnRecords", { count: recordCount })}
@@ -427,9 +427,9 @@ export default function CardDetail() {
             </div>
 
             {/* Price History Table - Vertical Scroll */}
-            <div className="bg-card rounded-lg p-6 border border-border">
+            <div className="bg-card rounded-lg p-3 sm:p-4 md:p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-foreground">
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-foreground">
                   {activeSource === "snkrdunk" 
                     ? `SNKRDUNK ${t("cardDetail.actualPriceHistory")}` 
                     : `eBay ${t("cardDetail.marketPriceHistory")}`}
@@ -447,17 +447,17 @@ export default function CardDetail() {
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : activeSource === "snkrdunk" && priceHistory.length > 0 ? (
-                <div className="overflow-y-auto max-h-96 scrollbar-hide">
-                  <table className="w-full">
+                <div className="overflow-y-auto max-h-96 scrollbar-hide overflow-x-auto">
+                  <table className="w-full min-w-[300px]">
                     <thead className="sticky top-0 bg-card border-b border-border">
                       <tr>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">
+                        <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm">
                           {t("cardDetail.date")}
                         </th>
-                        <th className="text-center py-3 px-4 text-muted-foreground font-medium text-sm w-24">
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm w-16 sm:w-24">
                           {t("cardDetail.grade")}
                         </th>
-                        <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm">
+                        <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm">
                           {t("cardDetail.price")}
                         </th>
                       </tr>
@@ -470,19 +470,19 @@ export default function CardDetail() {
                         
                         return (
                           <tr key={index} className="hover:bg-muted/50 transition-colors">
-                            <td className="py-3 px-4 text-muted-foreground text-sm">
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground text-xs sm:text-sm">
                               {item.soldAt ? formatShortDateTime(item.soldAt) : "N/A"}
                             </td>
-                            <td className="py-3 px-4 text-center text-foreground text-sm w-24">
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-foreground text-xs sm:text-sm w-16 sm:w-24">
                               {isUngraded ? (
-                                <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-muted text-xs font-medium whitespace-nowrap">
+                                <span className="inline-flex items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-md bg-muted text-[10px] sm:text-xs font-medium whitespace-nowrap">
                                   {t("cardDetail.usedGrade")}
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center justify-center font-medium whitespace-nowrap">{displayGrade}</span>
+                                <span className="inline-flex items-center justify-center font-medium whitespace-nowrap text-xs sm:text-sm">{displayGrade}</span>
                               )}
                             </td>
-                            <td className="py-3 px-4 text-right font-semibold text-primary text-sm">
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-right font-semibold text-primary text-xs sm:text-sm">
                               {formatCurrency(item.price)}
                             </td>
                           </tr>
