@@ -53,12 +53,20 @@ export function PriceTrendChart({
   const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("all");
 
-  // Filter data based on time range
+  // Filter data based on time range using actual dates
   const filteredData = timeRange === "all" 
     ? trendData 
-    : trendData.slice(
-        Math.max(0, trendData.length - (timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90))
-      );
+    : (() => {
+        const now = new Date();
+        const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90;
+        const cutoffDate = new Date(now);
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        
+        return trendData.filter(item => {
+          const itemDate = new Date(item.date);
+          return itemDate >= cutoffDate;
+        });
+      })();
 
   // Format price for display
   const formatPrice = (price: number) => {
