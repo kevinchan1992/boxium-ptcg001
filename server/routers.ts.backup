@@ -1,0 +1,99 @@
+import { getSessionCookieOptions } from "./_core/cookies";
+import { systemRouter } from "./_core/systemRouter";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import * as db from "./db";
+import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
+import { searchAndSaveEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
+import { downloadAndEncodeImage, getBestImageUrl } from "./imageUtils";
+import { searchEbayByImageWithHkd } from "./ebayImageSearch";
+import { searchEbayItems, convertUsdToHkd, getUsdToHkdRate } from "./ebay";
+import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
+import * as batchUpdateProgress from "./batchUpdateProgress";
+import * as snkrdunkBatchUpdateProgress from "./batchUpdateSnkrdunkProgress";
+import { executePersistentEbayBatchUpdate } from "./persistentEbayBatchUpdate";
+import { executePersistentSnkrdunkBatchUpdate } from "./persistentSnkrdunkBatchUpdate";
+import * as batchTaskManager from "./batchTaskManager";
+import { executeEbayBatchUpdate, executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
+import { restartScheduler } from "./batchUpdateScheduler";
+import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
+import { pricingRouter } from "./routers/pricing";
+
+export const appRouter = router({
+  system: systemRouter,
+  
+  // Auth router removed - now using Supabase Auth
+
+  pricing: pricingRouter,
+
+  cards: router({
+    search: publicProcedure
+      .input(z.object({
+        query: z.string(),
+        limit: z.number().optional().default(20),
+      }))
+      .query(async ({ input }) => {
+        const results = await db.searchCards(input.query, input.limit);
+        return results;
+      }),
+
+    getById: publicProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const card = await db.getCardById(input.id);
+        return card;
+      }),
+
+    getByCardId: publicProcedure
+      .input(z.object({
+        cardId: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const card = await db.getCardByCardId(input.cardId);
+        return card;
+      }),
+
+    getDataSource: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+        source: z.enum(["snkrdunk", "ebay", "tcgplayer", "other"]),
+      }))
+      .query(async ({ input }) => {
+        const dataSource = await db.getDataSourceByCardIdAndSource(input.cardId, input.source);
+        return dataSource;
+      }),
+
+    getPopular: publicProcedure
+      .input(z.object({
+        limit: z.number().optional().default(10),
+      }))
+      .query(async ({ input }) => {
+        const cards = await db.getPopularCards(input.limit);
+        return cards;
+      }),
+
+    getStats: publicProcedure
+      .query(async () => {
+        try {
+          const totalCards = await db.getTotalCardCount();
+          return {
+            totalCards,
+          };
+        } catch (error: any) {
+          console.error("[getStats] Error:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to get stats: ${error.message}`,
+          });
+        }
+      }),
+
+    getTrending: publicProcedure
+      .input(z.object({
+        limit: z.number().optional().default(5),
+      }))
+      .query(async ({ input }) => {
+        try {

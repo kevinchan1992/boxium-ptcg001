@@ -383,6 +383,47 @@ export const appRouter = router({
           });
         }
       }),
+
+    // 獲取隨機卡牌名稱用於 placeholder 輪播
+    getRandomCardNames: publicProcedure
+      .input(z.object({
+        count: z.number().optional().default(10),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const cards = await db.getRandomCards(input.count);
+          return cards.map((card: any) => {
+            // 格式化卡牌名稱：名稱 + 稀有度 + 編號 + 系列
+            const parts = [];
+            
+            // 使用日文名稱（如果有），否則使用英文名稱
+            const displayName = card.nameJa || card.name;
+            parts.push(displayName);
+            
+            // 添加稀有度（如果有）
+            if (card.rarity) {
+              parts.push(card.rarity);
+            }
+            
+            // 添加編號和系列
+            if (card.cardNumber && card.series) {
+              parts.push(`[${card.cardNumber}](${card.series})`);
+            } else if (card.cardNumber) {
+              parts.push(`[${card.cardNumber}]`);
+            } else if (card.series) {
+              parts.push(`(${card.series})`);
+            }
+            
+            return parts.join(' ');
+          });
+        } catch (error: any) {
+          console.error("[Get Random Card Names] Error:", error.message);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to get random card names: ${error.message}`,
+          });
+        }
+      }),
   }),
 
   prices: router({

@@ -28,6 +28,12 @@ export default function Home() {
     { retry: 1 }
   );
 
+  // Fetch random card names for placeholder rotation
+  const { data: randomCardNames = [] } = trpc.cards.getRandomCardNames.useQuery(
+    { count: 10 },
+    { retry: 1 }
+  );
+
   // Map trending cards to card format for display
   const popularCards = trendingCards.map((card: any) => ({
     id: card.id,
@@ -157,29 +163,10 @@ export default function Home() {
               className="w-full pl-12 pr-16 py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
             />
             {/* Typing Animation Placeholder */}
-            {!searchQuery && (
-              <div className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+            {!searchQuery && randomCardNames.length > 0 && (
+              <div className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground text-sm">
                 <TypeAnimation
-                  sequence={[
-                    'Pikachu',
-                    2000,
-                    'ピカチュウ',
-                    2000,
-                    '皮卡丘',
-                    2000,
-                    'Charizard',
-                    2000,
-                    'リザードン',
-                    2000,
-                    '噴火龍',
-                    2000,
-                    'Mewtwo',
-                    2000,
-                    'ミュウツー',
-                    2000,
-                    '超夢',
-                    2000,
-                  ]}
+                  sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
                   wrapper="span"
                   speed={50}
                   repeat={Infinity}
@@ -225,52 +212,70 @@ export default function Home() {
 
       {/* Image Upload Dialog */}
       <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t('research.imageSearchTitle')}</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">{t('research.imageSearchTitle')}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            {/* Image Preview */}
-            {imagePreview && (
+          <div className="space-y-6">
+            {/* Image Preview or Upload Area */}
+            {imagePreview ? (
               <div className="relative">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-64 object-contain rounded-lg bg-muted"
-                />
-                <button
-                  onClick={() => {
-                    setSelectedImage(null);
-                    setImagePreview(null);
-                  }}
-                  className="absolute top-2 right-2 p-1 bg-background/80 rounded-full hover:bg-background"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="relative rounded-lg overflow-hidden bg-muted border-2 border-border">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-80 object-contain"
+                  />
+                  {/* Loading Overlay */}
+                  {isSearching && (
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center">
+                      <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+                      <p className="text-sm font-medium text-foreground">{t('research.searching')}</p>
+                      <p className="text-xs text-muted-foreground mt-2">正在識別卡牌中...</p>
+                    </div>
+                  )}
+                </div>
+                {!isSearching && (
+                  <button
+                    onClick={() => {
+                      setSelectedImage(null);
+                      setImagePreview(null);
+                    }}
+                    className="absolute -top-2 -right-2 p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-lg transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center bg-muted/30">
+                <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground mb-2">選擇一張寶可夢卡牌圖片</p>
+                <p className="text-xs text-muted-foreground">支持 JPG、PNG 格式</p>
               </div>
             )}
 
             {/* Upload Buttons */}
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                variant="outline"
-                onClick={() => cameraInputRef.current?.click()}
-                disabled={isSearching}
-                className="w-full"
-              >
-                <Camera className="w-4 h-4 mr-2" />
-                {t('research.takePhoto')}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isSearching}
-                className="w-full"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                {t('research.uploadImage')}
-              </Button>
-            </div>
+            {!isSearching && (
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="w-full h-12"
+                >
+                  <Camera className="w-5 h-5 mr-2" />
+                  {t('research.takePhoto')}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-12"
+                >
+                  <Upload className="w-5 h-5 mr-2" />
+                  {t('research.uploadImage')}
+                </Button>
+              </div>
+            )}
 
             {/* Hidden File Inputs */}
             <input
@@ -290,23 +295,16 @@ export default function Home() {
             />
 
             {/* Search Button */}
-            <Button
-              onClick={handleImageSearch}
-              disabled={!selectedImage || isSearching}
-              className="w-full"
-            >
-              {isSearching ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {t('research.searching')}
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4 mr-2" />
-                  {t('research.searchButton')}
-                </>
-              )}
-            </Button>
+            {imagePreview && !isSearching && (
+              <Button
+                onClick={handleImageSearch}
+                className="w-full h-12 text-base font-medium"
+                size="lg"
+              >
+                <Search className="w-5 h-5 mr-2" />
+                {t('research.searchButton')}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

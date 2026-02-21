@@ -2222,3 +2222,32 @@ export async function saveEbayListingsCache(data: {
     expiresAt: data.expiresAt,
   });
 }
+
+/**
+ * Get random cards for placeholder rotation
+ */
+export async function getRandomCards(count: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  try {
+    // Use SQL random function to get random cards
+    const result = await db
+      .select({
+        id: cards.id,
+        name: cards.name,
+        nameJa: cards.nameJa,
+        cardNumber: cards.cardNumber,
+        rarity: cards.rarity,
+        series: cards.series,
+      })
+      .from(cards)
+      .orderBy(sql`RAND()`)
+      .limit(count);
+    
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get random cards:", error);
+    return [];
+  }
+}
