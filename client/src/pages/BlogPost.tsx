@@ -76,14 +76,8 @@ export default function BlogPost() {
           maximumFractionDigits: 2,
         });
         
-        // Return formatted price with target currency symbol
-        if (currency === 'JPY') {
-          return `¥${formattedPrice}`;
-        } else if (currency === 'USD') {
-          return `$${formattedPrice}`;
-        } else {
-          return `${currency} ${formattedPrice}`;
-        }
+        // Return formatted price with currency code prefix
+        return `${currency} ${formattedPrice}`;
       });
     }
     
