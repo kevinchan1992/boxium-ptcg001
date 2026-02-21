@@ -1,6 +1,9 @@
 import { invokeLLM } from "../_core/llm";
 import { createGenerationRequest, updateGenerationStatus, getGenerationById } from "../db/articleGeneration";
 import type { InsertArticleGenerationHistory } from "../../drizzle/schema";
+import { execSync } from "child_process";
+import { getTemplate, applyTemplate } from "./articleTemplates";
+import { analyzeSEO, generateMetaDescription } from "./seoAnalyzer";
 
 /**
  * Detect language from text content
@@ -23,12 +26,12 @@ function detectLanguage(text: string): string {
 async function fetchUrlContent(url: string): Promise<{ content: string; title: string }> {
   try {
     // Use manus-mcp-cli to call Firecrawl scrape tool
-    const { execSync } = require("child_process");
-    
-    const command = `manus-mcp-cli tool call scrape_url --server firecrawl --input '${JSON.stringify({
+    const inputJson = JSON.stringify({
       url: url,
       formats: ["markdown", "html"]
-    })}'`;
+    });
+    
+    const command = `manus-mcp-cli tool call firecrawl_scrape --server firecrawl --input '${inputJson.replace(/'/g, "'\\''")}' 2>&1`;
     
     const output = execSync(command, { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 });
     const result = JSON.parse(output);
@@ -64,12 +67,31 @@ async function generateArticleWithAI(params: {
   const { content, detectedLanguage, targetLanguage, style } = params;
   
   // Prepare system prompt based on style and language
+  // Get template based on style
+  const templateMap: Record<string, string> = {
+    "news": "news-brief",
+    "analysis": "market-report",
+    "review": "card-review"
+  };
+  const templateId = templateMap[style] || "news-brief";
+  const template = getTemplate(templateId);
+  
   const systemPrompt = `You are a professional Pokémon TCG content writer for BOXIUM platform. 
 Your task is to analyze the provided content and create an original, engaging article in ${targetLanguage}.
 
 Article Style: ${style}
 Target Audience: Pokémon TCG collectors and investors
 Platform Focus: Card pricing, market trends, investment insights
+
+${template ? `Template Structure:
+${JSON.stringify(template.structure, null, 2)}
+
+SEO Guidelines:
+- Target keyword density: ${template.seoGuidelines.targetKeywordDensity}%
+- Title length: ${template.seoGuidelines.titleLength.min}-${template.seoGuidelines.titleLength.max} characters
+- Meta description length: ${template.seoGuidelines.metaDescLength.min}-${template.seoGuidelines.metaDescLength.max} characters
+- Use heading structure: ${template.seoGuidelines.headingStructure.join(", ")}
+` : ""}
 
 Requirements:
 1. Write in ${targetLanguage} (${targetLanguage === "zh-TW" ? "Traditional Chinese" : targetLanguage === "ja" ? "Japanese" : "English"})
@@ -79,6 +101,7 @@ Requirements:
 5. Use professional but accessible language
 6. Format in Markdown with proper headings and structure
 7. Length: 800-1500 words
+8. Follow the template structure and SEO guidelines above
 
 Output Format (JSON):
 {
@@ -204,17 +227,32 @@ export async function generateArticle(params: {
       style
     });
 
+    // Perform SEO analysis on generated content
+    const seoAnalysis = analyzeSEO(
+      generated.title,
+      generated.content,
+      generated.excerpt
+    );
+
+    // Generate optimized meta description if needed
+    let metaDescription = generated.excerpt;
+    if (metaDescription.length < 120 || metaDescription.length > 170) {
+      metaDescription = generateMetaDescription(generated.content, 160);
+    }
+
     // Calculate processing time
     const processingTime = Date.now() - startTime;
 
-    // Update with generated results
+    // Update with generated results (including SEO data)
     await updateGenerationStatus(generationId, {
       status: "completed",
       generatedTitle: generated.title,
       generatedContent: generated.content,
-      generatedExcerpt: generated.excerpt,
+      generatedExcerpt: metaDescription,
       generatedSlug: generated.slug,
-      processingTimeMs: processingTime
+      processingTimeMs: processingTime,
+      // Store SEO analysis in metadata (if you want to persist it)
+      // metadata: JSON.stringify({ seoScore: seoAnalysis.score, seoSuggestions: seoAnalysis.overallSuggestions })
     });
 
     return generationId;

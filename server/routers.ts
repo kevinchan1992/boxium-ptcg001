@@ -22,6 +22,7 @@ import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
 import { pricingRouter } from "./routers/pricing";
 import { notificationsRouter } from "./routers/notifications";
 import { articleGenerationRouter } from "./routers/articleGeneration";
+import { templatesRouter } from "./routers/templates";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1856,6 +1857,7 @@ try {
 
   // Article generation router
   articleGeneration: articleGenerationRouter,
+  templates: templatesRouter,
 
   favorites: router({
     // Get user's favorites
