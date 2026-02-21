@@ -54,6 +54,8 @@ export function AdminDataSources() {
   const [isPaused, setIsPaused] = useState(false);
   const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [batchUpdateStatus, setBatchUpdateStatus] = useState<Record<number, 'pending' | 'updating' | 'success' | 'failed'>>({});
+  const [isBatchUpdating, setIsBatchUpdating] = useState(false);
   const pausedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -437,6 +439,69 @@ export function AdminDataSources() {
     );
   };
 
+  // 批量更新選中的數據源
+  const handleBatchUpdate = async () => {
+    if (selectedIds.length === 0) {
+      toast.error("請選擇要更新的數據源");
+      return;
+    }
+
+    toast.info(`開始批量更新 ${selectedIds.length} 個數據源...`);
+
+
+    setIsBatchUpdating(true);
+    
+    // 初始化所有選中項目的狀態為 pending
+    const initialStatus: Record<number, 'pending' | 'updating' | 'success' | 'failed'> = {};
+    selectedIds.forEach(id => {
+      initialStatus[id] = 'pending';
+    });
+    setBatchUpdateStatus(initialStatus);
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    // 逐個更新數據源
+    for (const id of selectedIds) {
+      try {
+        // 更新狀態為 updating
+        setBatchUpdateStatus(prev => ({ ...prev, [id]: 'updating' }));
+
+        // 調用更新 API
+        await refreshDataSourceMutation.mutateAsync({ dataSourceId: id });
+        
+        // 更新狀態為 success
+        setBatchUpdateStatus(prev => ({ ...prev, [id]: 'success' }));
+        successCount++;
+
+        // 每次更新後延遲 500ms，避免 API 限制
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error: any) {
+        console.error(`Failed to update data source ${id}:`, error);
+        // 更新狀態為 failed
+        setBatchUpdateStatus(prev => ({ ...prev, [id]: 'failed' }));
+        failedCount++;
+      }
+    }
+
+    setIsBatchUpdating(false);
+    
+    // 刷新數據源列表
+    utils.admin.getDataSources.invalidate();
+
+    // 顯示結果
+    if (failedCount === 0) {
+      toast.success(`成功更新 ${successCount} 個數據源`);
+    } else {
+      toast.warning(`更新完成：成功 ${successCount} 個，失敗 ${failedCount} 個`);
+    }
+
+    // 3 秒後清除狀態
+    setTimeout(() => {
+      setBatchUpdateStatus({});
+    }, 3000);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -652,19 +717,34 @@ export function AdminDataSources() {
               </div>
               <div className="flex items-center gap-2">
                 {selectedIds.length > 0 && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleBatchDelete}
-                    disabled={deleteDataSourceMutation.isPending}
-                  >
-                    {deleteDataSourceMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4 mr-2" />
-                    )}
-                    刪除 ({selectedIds.length})
-                  </Button>
+                  <>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleBatchUpdate}
+                      disabled={isBatchUpdating}
+                    >
+                      {isBatchUpdating ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      )}
+                      批量更新 ({selectedIds.length})
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBatchDelete}
+                      disabled={deleteDataSourceMutation.isPending}
+                    >
+                      {deleteDataSourceMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 mr-2" />
+                      )}
+                      刪除 ({selectedIds.length})
+                    </Button>
+                  </>
                 )}
                 {/* 調用後端 API 獲取所有數據源的 URL 列表（不分頁），確保能清理平台內重複的URL */}
                 <Button
@@ -735,6 +815,28 @@ export function AdminDataSources() {
                           <CheckCircle className="w-4 h-4 text-green-500" />
                         ) : (
                           <XCircle className="w-4 h-4 text-red-500" />
+                        )}
+                        {/* 更新狀態顯示 */}
+                        {batchUpdateStatus[source.id] && (
+                          <span className={
+                            batchUpdateStatus[source.id] === 'pending'
+                              ? "text-xs text-yellow-500 font-medium"
+                              : batchUpdateStatus[source.id] === 'updating'
+                              ? "text-xs text-blue-500 font-medium flex items-center gap-1"
+                              : batchUpdateStatus[source.id] === 'success'
+                              ? "text-xs text-green-500 font-medium"
+                              : "text-xs text-red-500 font-medium"
+                          }>
+                            {batchUpdateStatus[source.id] === 'pending' && '待處理'}
+                            {batchUpdateStatus[source.id] === 'updating' && (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                更新中
+                              </>
+                            )}
+                            {batchUpdateStatus[source.id] === 'success' && '✓ 成功'}
+                            {batchUpdateStatus[source.id] === 'failed' && '✗ 失敗'}
+                          </span>
                         )}
                       </div>
                       <a
