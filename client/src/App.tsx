@@ -26,6 +26,7 @@ import { AdminRoute } from "./components/AdminRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { OAuthErrorToast } from "./components/OAuthErrorToast";
 import { GenerateArticle } from "./pages/GenerateArticle";
+import Dashboard from "./pages/Dashboard";
 
 
 
@@ -56,6 +57,12 @@ function Router() {
       <Route path="/favorites">
         <ProtectedRoute>
           <Favorites />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/dashboard">
+        <ProtectedRoute>
+          <Dashboard />
         </ProtectedRoute>
       </Route>
 

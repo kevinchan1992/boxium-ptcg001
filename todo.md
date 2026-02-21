@@ -5820,3 +5820,19 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 自動插入圖片 Markdown 語法到文章內容
 - [x] 添加檔案大小驗證（最大 10MB）
 - [x] 保存 checkpoint
+
+
+## UI 優化：修改登入註冊方式和添加 logo
+- [ ] 移除 Microsoft 和 Apple 登入選項
+- [ ] 只保留 Google 和 Facebook 登入
+- [ ] 在登入視窗標題上方添加公司 logo
+- [ ] 測試登入功能
+- [ ] 保存 checkpoint
+
+
+## Bug 修復：/dashboard 路由 404 錯誤 ✅
+- [x] 檢查 App.tsx 路由配置（缺少 /dashboard 路由）
+- [x] 創建 Dashboard 頁面
+- [x] 添加 /dashboard 路由配置（使用 ProtectedRoute）
+- [x] 修復 TypeScript 錯誤
+- [x] 保存 checkpoint
