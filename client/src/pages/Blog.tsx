@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Calendar, Eye, TrendingUp, Sparkles, ArrowRight } from "lucide-react";
+import { LazyImage } from "@/components/LazyImage";
 
 export default function Blog() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,28 +54,28 @@ export default function Blog() {
     <div className="min-h-screen bg-black">
       {/* Hero Section */}
       <div className="bg-gradient-to-b from-[#06038d]/20 to-black border-b border-zinc-800">
-        <div className="container mx-auto px-4 py-16 md:py-24">
+        <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-white mb-4 md:mb-6">
               BOXIUM PTCG 博客
             </h1>
-            <p className="text-xl text-gray-300 mb-8">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-300 mb-6 md:mb-8">
               專業的 Pokémon TCG 市場分析、價格趨勢、投資建議
             </p>
             
-            {/* Search Bar */}
-            <div className="flex gap-2 max-w-2xl mx-auto">
+            {/* Search Bar - 手機版優化 */}
+            <div className="flex flex-col sm:flex-row gap-2 max-w-2xl mx-auto">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   placeholder="搜尋文章..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-zinc-900 border-zinc-700 text-white"
+                  className="pl-10 bg-zinc-900 border-zinc-700 text-white min-h-[44px] text-sm md:text-base"
                 />
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-48 bg-zinc-900 border-zinc-700 text-white">
+                <SelectTrigger className="w-full sm:w-48 bg-zinc-900 border-zinc-700 text-white min-h-[44px] text-sm md:text-base">
                   <SelectValue placeholder="所有分類" />
                 </SelectTrigger>
                 <SelectContent>
@@ -103,23 +104,23 @@ export default function Blog() {
             {/* Featured Post */}
             {featuredPost && (
               <div className="mb-12">
-                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-4 md:mb-6 flex items-center gap-2">
                   <TrendingUp className="w-6 h-6 text-[#06038d]" />
                   精選文章
                 </h2>
                 <Link href={`/blog/${featuredPost.slug}`}>
                   <Card className="bg-zinc-900 border-zinc-800 hover:border-[#06038d] transition-all cursor-pointer overflow-hidden">
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-2 gap-0 md:gap-6">
                       {featuredPost.featuredImage && (
-                        <div className="relative h-64 md:h-auto">
-                          <img
+                        <div className="relative h-48 sm:h-64 md:h-auto">
+                          <LazyImage
                             src={featuredPost.featuredImage}
                             alt={featuredPost.title}
                             className="absolute inset-0 w-full h-full object-cover"
                           />
                         </div>
                       )}
-                      <div className="p-6 flex flex-col justify-center">
+                      <div className="p-4 sm:p-6 flex flex-col justify-center">
                         <div className="flex items-center gap-2 mb-4">
                           {featuredPost.dataSource === 'ai-generated' && (
                             <Badge variant="outline" className="border-purple-500 text-purple-400">
@@ -129,11 +130,11 @@ export default function Blog() {
                           )}
                           <Badge variant="secondary">精選</Badge>
                         </div>
-                        <h3 className="text-3xl font-bold text-white mb-4 line-clamp-2">
+                        <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-3 md:mb-4 line-clamp-2">
                           {featuredPost.title}
                         </h3>
                         {featuredPost.excerpt && (
-                          <p className="text-gray-300 mb-6 line-clamp-3">
+                          <p className="text-sm sm:text-base text-gray-300 mb-4 md:mb-6 line-clamp-3">
                             {featuredPost.excerpt}
                           </p>
                         )}
@@ -161,21 +162,21 @@ export default function Blog() {
             {/* Regular Posts Grid */}
             {regularPosts.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-6">最新文章</h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">最新文章</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {regularPosts.map((post) => (
                     <Link key={post.id} href={`/blog/${post.slug}`}>
                       <Card className="bg-zinc-900 border-zinc-800 hover:border-[#06038d] transition-all cursor-pointer h-full flex flex-col">
                         {post.featuredImage && (
-                          <div className="relative h-48 overflow-hidden">
-                            <img
+                          <div className="relative h-40 sm:h-48 overflow-hidden">
+                            <LazyImage
                               src={post.featuredImage}
                               alt={post.title}
                               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             />
                           </div>
                         )}
-                        <CardHeader>
+                        <CardHeader className="p-4 sm:p-6">
                           <div className="flex items-center gap-2 mb-2">
                             {post.dataSource === 'ai-generated' && (
                               <Badge variant="outline" className="border-purple-500 text-purple-400">
@@ -184,17 +185,17 @@ export default function Blog() {
                               </Badge>
                             )}
                           </div>
-                          <CardTitle className="text-white line-clamp-2 hover:text-[#06038d] transition-colors">
+                          <CardTitle className="text-white text-base sm:text-lg md:text-xl line-clamp-2 hover:text-[#06038d] transition-colors">
                             {post.title}
                           </CardTitle>
                           {post.excerpt && (
-                            <CardDescription className="line-clamp-3">
+                            <CardDescription className="text-sm sm:text-base line-clamp-3">
                               {post.excerpt}
                             </CardDescription>
                           )}
                         </CardHeader>
-                        <CardContent className="mt-auto">
-                          <div className="flex items-center gap-4 text-sm text-gray-400">
+                        <CardContent className="mt-auto p-4 sm:p-6">
+                          <div className="flex items-center gap-3 md:gap-4 text-xs sm:text-sm text-gray-400">
                             <span className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
                               {new Date(post.publishedAt || post.createdAt).toLocaleDateString('zh-TW', {
@@ -215,11 +216,11 @@ export default function Blog() {
 
                 {/* Load More Button */}
                 {hasMore && (
-                  <div className="mt-12 text-center">
+                  <div className="mt-8 md:mt-12 text-center">
                     <BrandButton
                       onClick={handleLoadMore}
                       disabled={isLoading}
-                      className="px-8 py-6 text-lg"
+                      className="px-6 md:px-8 py-3 md:py-6 text-base md:text-lg min-h-[44px]"
                     >
                       {isLoading ? '載入中...' : '載入更多文章'}
                     </BrandButton>
@@ -233,8 +234,8 @@ export default function Blog() {
             <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-zinc-900 flex items-center justify-center">
               <Search className="w-12 h-12 text-gray-600" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">沒有找到文章</h3>
-            <p className="text-gray-400">
+            <h3 className="text-xl md:text-2xl font-bold text-white mb-2">沒有找到文章</h3>
+            <p className="text-sm md:text-base text-gray-400">
               {searchQuery || selectedCategory !== 'all'
                 ? '請嘗試其他搜尋條件'
                 : '目前還沒有發布任何文章'}

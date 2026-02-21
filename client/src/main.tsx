@@ -7,6 +7,7 @@ import App from "./App";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 
 import "./index.css";
+import "./mobile-touch-optimization.css";
 import "./i18n";
 
 const queryClient = new QueryClient();

@@ -1,0 +1,98 @@
+/* 手機觸控優化 - 確保所有可點擊元素至少 44x44px */
+
+/* 按鈕觸控優化 */
+button,
+.button,
+[role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* 小按鈕特殊處理 - 使用 padding 擴大觸控區域 */
+button[class*="size-sm"],
+button[class*="icon-"] {
+  padding: 12px;
+}
+
+/* 連結觸控優化 */
+a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 輸入框觸控優化 */
+input,
+textarea,
+select {
+  min-height: 44px;
+}
+
+/* Select 下拉選單觸控優化 */
+[role="combobox"],
+[role="listbox"] {
+  min-height: 44px;
+}
+
+/* 卡片可點擊區域優化 */
+.card-clickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 移除點擊高亮（但保留觸控反饋） */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 觸控反饋 */
+button:active,
+a:active,
+[role="button"]:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+  transition: all 0.1s ease;
+}
+
+/* 確保圖標按鈕有足夠的觸控區域 */
+button:has(svg:only-child),
+a:has(svg:only-child) {
+  padding: 12px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* 手機版間距優化 - 防止誤觸 */
+@media (max-width: 768px) {
+  /* 增加按鈕之間的間距 */
+  button + button,
+  a + a {
+    margin-left: 8px;
+  }
+  
+  /* 列表項目間距 */
+  li + li {
+    margin-top: 4px;
+  }
+  
+  /* 表單元素間距 */
+  input + input,
+  input + button,
+  button + input {
+    margin-top: 8px;
+  }
+}
+
+/* 確保 shadcn/ui 按鈕符合觸控標準 */
+.btn,
+.btn-sm,
+.btn-lg {
+  min-height: 44px !important;
+}
+
+/* 確保下拉選單項目符合觸控標準 */
+[role="menuitem"],
+[role="option"] {
+  min-height: 44px;
+  padding: 12px 16px;
+}
