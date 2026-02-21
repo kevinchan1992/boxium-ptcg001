@@ -11,6 +11,7 @@ import { Loader2, Plus, RefreshCw, ExternalLink, CheckCircle, XCircle, Clock, Tr
 import { BatchTaskProgressBar } from "@/components/BatchTaskProgressBar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 // 單卡 eBay 價格更新按鈕組件
@@ -58,6 +59,12 @@ export function AdminDataSources() {
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
   const pausedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "success" | "pending" | "failed">("all");
+
+  // Clear selected items when filter changes
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [statusFilter, searchQuery]);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
 
@@ -65,7 +72,13 @@ export function AdminDataSources() {
   const dataSourcesQuery = trpc.admin.getDataSources.useQuery({ 
     page, 
     pageSize,
-    search: searchQuery || undefined 
+    search: searchQuery || undefined,
+    status: statusFilter,
+  });
+  const statsQuery = trpc.admin.getDataSourceStats.useQuery();
+  const allFilteredIdsQuery = trpc.admin.getAllFilteredDataSourceIds.useQuery({
+    search: searchQuery || undefined,
+    status: statusFilter,
   });
   const allUrlsQuery = trpc.admin.getAllDataSourceUrls.useQuery(); // Get all URLs for deduplication
 
@@ -423,13 +436,26 @@ export function AdminDataSources() {
         console.error(`Failed to delete data source ${id}:`, error);
       }
     }
+
+    toast.success(`已刪除 ${selectedIds.length} 個數據源`);
+    setSelectedIds([]);
+    utils.admin.getDataSources.invalidate();
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === dataSourcesQuery.data?.data?.length) {
+    if (!allFilteredIdsQuery.data) return;
+    
+    // Check if all filtered items are selected
+    const allFilteredIds = allFilteredIdsQuery.data;
+    const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.includes(id));
+    
+    if (allSelected) {
+      // Deselect all
       setSelectedIds([]);
     } else {
-      setSelectedIds(dataSourcesQuery.data?.data?.map((ds: any) => ds.id) || []);
+      // Select all filtered items
+      setSelectedIds(allFilteredIds);
+      toast.success(`已選擇 ${allFilteredIds.length} 個數據源`);
     }
   };
 
@@ -685,7 +711,7 @@ export function AdminDataSources() {
 
           {/* Data Sources List */}
           <Card className="p-6 bg-card border-border">
-            <div className="mb-4">
+            <div className="mb-4 flex items-center gap-4 flex-wrap">
               <Input
                 type="text"
                 placeholder="搜尋卡牌名稱或 URL..."
@@ -696,6 +722,31 @@ export function AdminDataSources() {
                 }}
                 className="max-w-md"
               />
+              <div className="flex items-center gap-2">
+                <Label className="text-sm text-muted-foreground">狀態篩選：</Label>
+                <Select value={statusFilter} onValueChange={(value: any) => {
+                  setStatusFilter(value);
+                  setPage(1); // Reset to first page when filtering
+                }}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      全部 {statsQuery.data ? `(${statsQuery.data.total})` : ''}
+                    </SelectItem>
+                    <SelectItem value="success">
+                      成功 {statsQuery.data ? `(${statsQuery.data.success})` : ''}
+                    </SelectItem>
+                    <SelectItem value="pending">
+                      待處理 {statsQuery.data ? `(${statsQuery.data.pending})` : ''}
+                    </SelectItem>
+                    <SelectItem value="failed">
+                      失敗 {statsQuery.data ? `(${statsQuery.data.failed})` : ''}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
               <div className="flex items-center gap-4">

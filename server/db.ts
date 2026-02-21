@@ -487,7 +487,7 @@ export async function checkDataSourceExists(url: string): Promise<boolean> {
   return result.length > 0;
 }
 
-export async function getDataSources(options?: { page?: number; pageSize?: number; search?: string }) {
+export async function getDataSources(options?: { page?: number; pageSize?: number; search?: string; status?: "all" | "success" | "pending" | "failed" }) {
   const db = await getDb();
   if (!db) return { data: [], total: 0, totalPages: 0 };
 
@@ -495,15 +495,22 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
   const pageSize = options?.pageSize ?? 20;
   const offset = (page - 1) * pageSize;
   const searchQuery = options?.search?.toLowerCase();
+  const statusFilter = options?.status ?? "all";
 
-  // Build WHERE conditions for search
-  let whereConditions = undefined;
+  // Build WHERE conditions for search and status
+  const conditions = [];
   if (searchQuery) {
-    whereConditions = or(
-      like(cards.name, `%${searchQuery}%`),
-      like(dataSources.sourceUrl, `%${searchQuery}%`)
+    conditions.push(
+      or(
+        like(cards.name, `%${searchQuery}%`),
+        like(dataSources.sourceUrl, `%${searchQuery}%`)
+      )
     );
   }
+  if (statusFilter !== "all") {
+    conditions.push(eq(dataSources.lastFetchStatus, statusFilter));
+  }
+  const whereConditions = conditions.length > 0 ? and(...conditions) : undefined;
 
   // Get total count with search filter
   const countResult = await db
@@ -2255,6 +2262,90 @@ export async function getRandomCards(count: number = 10) {
     return result;
   } catch (error) {
     console.error("[Database] Failed to get random cards:", error);
+    return [];
+  }
+}
+
+/**
+ * Get data source statistics (count by status)
+ */
+export async function getDataSourceStats() {
+  const db = await getDb();
+  if (!db) return { total: 0, success: 0, pending: 0, failed: 0 };
+
+  try {
+    const result = await db
+      .select({
+        status: dataSources.lastFetchStatus,
+        count: sql<number>`count(*)`,
+      })
+      .from(dataSources)
+      .groupBy(dataSources.lastFetchStatus);
+
+    const stats = {
+      total: 0,
+      success: 0,
+      pending: 0,
+      failed: 0,
+    };
+
+    for (const row of result) {
+      const count = Number(row.count);
+      stats.total += count;
+      
+      if (row.status === "success") {
+        stats.success = count;
+      } else if (row.status === "pending") {
+        stats.pending = count;
+      } else if (row.status === "failed") {
+        stats.failed = count;
+      }
+    }
+
+    return stats;
+  } catch (error) {
+    console.error("[Database] Failed to get data source stats:", error);
+    return { total: 0, success: 0, pending: 0, failed: 0 };
+  }
+}
+
+/**
+ * Get all data source IDs that match the filter criteria
+ */
+export async function getAllFilteredDataSourceIds(options?: { search?: string; status?: "all" | "success" | "pending" | "failed" }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const searchQuery = options?.search?.toLowerCase();
+  const statusFilter = options?.status ?? "all";
+
+  // Build WHERE conditions for search and status
+  const conditions = [];
+  if (searchQuery) {
+    conditions.push(
+      or(
+        like(cards.name, `%${searchQuery}%`),
+        like(dataSources.sourceUrl, `%${searchQuery}%`)
+      )
+    );
+  }
+  if (statusFilter !== "all") {
+    conditions.push(eq(dataSources.lastFetchStatus, statusFilter));
+  }
+  const whereConditions = conditions.length > 0 ? and(...conditions) : undefined;
+
+  try {
+    const result = await db
+      .select({
+        id: dataSources.id,
+      })
+      .from(dataSources)
+      .leftJoin(cards, eq(dataSources.cardId, cards.id))
+      .where(whereConditions);
+
+    return result.map(row => row.id);
+  } catch (error) {
+    console.error("[Database] Failed to get filtered data source IDs:", error);
     return [];
   }
 }

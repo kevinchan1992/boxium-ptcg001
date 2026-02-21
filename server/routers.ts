@@ -487,10 +487,27 @@ export const appRouter = router({
         page: z.number().min(1).optional(),
         pageSize: z.number().min(1).max(100).optional(),
         search: z.string().optional(),
+        status: z.enum(["all", "success", "pending", "failed"]).optional(),
       }).optional())
       .query(async ({ ctx, input }) => {
         const sources = await db.getDataSources(input);
         return sources;
+      }),
+
+    getDataSourceStats: publicProcedure
+      .query(async () => {
+        const stats = await db.getDataSourceStats();
+        return stats;
+      }),
+
+    getAllFilteredDataSourceIds: publicProcedure
+      .input(z.object({
+        search: z.string().optional(),
+        status: z.enum(["all", "success", "pending", "failed"]).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const ids = await db.getAllFilteredDataSourceIds(input);
+        return ids;
       }),
 
     getAllDataSourceUrls: publicProcedure
