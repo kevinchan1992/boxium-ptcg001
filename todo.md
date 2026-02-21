@@ -5836,3 +5836,20 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 添加 /dashboard 路由配置（使用 ProtectedRoute）
 - [x] 修復 TypeScript 錯誤
 - [x] 保存 checkpoint
+
+
+## UI 重新設計：Dashboard 頁面配色
+- [ ] 修改背景色為白色
+- [ ] 使用公司 logo 的藍色和黃色配色
+- [ ] 調整文字顏色以適應白色背景
+- [x] 測試視覺效果
+- [ ] 保存 checkpoint
+
+
+## UI 重新設計：Dashboard 頁面配色和 logo
+- [x] 修改背景色為白色
+- [x] 使用公司 logo 的藍色和黃色配色
+- [x] 在左上角添加公司 logo
+- [x] 調整文字顏色以適應白色背景
+- [x] 測試視覺效果
+- [ ] 保存 checkpoint
