@@ -24,6 +24,7 @@ export default function Home() {
   const [showCropView, setShowCropView] = useState(false);
   const [crop, setCrop] = useState<CropType>();
   const [completedCrop, setCompletedCrop] = useState<CropType>();
+  const [isDragging, setIsDragging] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -62,18 +63,22 @@ export default function Home() {
     setShowImageDialog(true);
   };
 
+  const processImageFile = (file: File) => {
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+      setShowCropView(false); // 重置裁剪視圖
+      setCrop(undefined);
+      setCompletedCrop(undefined);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        setShowCropView(false); // 重置裁剪視圖
-        setCrop(undefined);
-        setCompletedCrop(undefined);
-      };
-      reader.readAsDataURL(file);
+      processImageFile(file);
     }
   };
 
@@ -243,7 +248,7 @@ export default function Home() {
               type="button"
               onClick={handleCameraClick}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              title={t('research.imageSearch')}
+              title="圖片搜尋"
             >
               <Camera className="w-5 h-5" />
             </button>
@@ -326,30 +331,69 @@ export default function Home() {
                 )}
               </div>
             ) : (
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center bg-muted/30">
-                <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-2">選擇一張寶可夢卡牌圖片</p>
-                <p className="text-xs text-muted-foreground">支持 JPG、PNG 格式</p>
+              <div 
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragging 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border bg-muted/30'
+                }`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  const files = e.dataTransfer.files;
+                  if (files && files[0]) {
+                    const file = files[0];
+                    if (file.type.startsWith('image/')) {
+                      processImageFile(file);
+                    } else {
+                      toast.error('請上傳圖片檔案（JPG、PNG）');
+                    }
+                  }
+                }}
+              >
+                <Upload className={`w-12 h-12 mx-auto mb-4 transition-colors ${
+                  isDragging ? 'text-primary' : 'text-muted-foreground'
+                }`} />
+                <p className="text-sm text-muted-foreground mb-2">
+                  {isDragging ? '釋放以上傳圖片' : '選擇或拖放一張寶可夢卡牌圖片'}
+                </p>
+                <p className="text-xs text-muted-foreground mb-3">支持 JPG、PNG 格式</p>
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">💡 拍攝技巧：</p>
+                  <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 text-left">
+                    <li>• 確保卡牌名稱清晰可見</li>
+                    <li>• 避免反光和陰影</li>
+                    <li>• 建議使用裁剪功能框選卡牌主體</li>
+                  </ul>
+                </div>
               </div>
             )}
 
             {/* Upload Buttons */}
             {!isSearching && !imagePreview && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Button
                   variant="outline"
                   onClick={() => cameraInputRef.current?.click()}
-                  className="w-full h-12"
+                  className="w-full h-12 sm:h-14 group"
                 >
-                  <Camera className="w-5 h-5 mr-2" />
+                  <Camera className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
                   拍攝照片
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-12"
+                  className="w-full h-12 sm:h-14 group"
                 >
-                  <Upload className="w-5 h-5 mr-2" />
+                  <Upload className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
                   上傳照片
                 </Button>
               </div>
@@ -393,7 +437,7 @@ export default function Home() {
                         disabled={!completedCrop}
                       >
                         <Search className="w-5 h-5 mr-2" />
-                        {t('research.searchWithCrop')}
+                        裁剪後搜尋
                       </Button>
                     </div>
                   </>
@@ -406,7 +450,7 @@ export default function Home() {
                         className="w-full h-12"
                       >
                         <Crop className="w-5 h-5 mr-2" />
-                        {t('research.cropImage')}
+                        裁剪圖片
                       </Button>
                       <Button
                         onClick={() => handleImageSearch(false)}
@@ -414,7 +458,7 @@ export default function Home() {
                         size="lg"
                       >
                         <Search className="w-5 h-5 mr-2" />
-                        {t('research.searchDirect')}
+                        直接搜尋
                       </Button>
                     </div>
                   </>
