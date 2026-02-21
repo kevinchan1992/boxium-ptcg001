@@ -5796,3 +5796,19 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 移除示例圖片語法，改為純文字描述
 - [x] 縮短文章長度（400-600 字）
 - [x] 保存 checkpoint
+
+
+## 重新實現：AI 輔助修改、文章預覽和卡牌圖片插入
+
+### 階段一：實作後端 AI 輔助修改 API ✅
+- [x] 創建 articleRevision 服務
+- [x] 添加 articleGeneration.revise API 端點
+
+### 階段二：實作前端預覽和編輯組件 ✅
+- [x] 創建 ArticlePreview 組件
+- [x] 創建 CardImagePicker 組件
+- [x] 整合到 AdminBlogManagement（preview view + 卡牌選擇器按鈕）
+
+### 階段三：測試並保存 checkpoint ✅
+- [x] 檢查項目狀態（TypeScript 無錯誤、LSP 無錯誤）
+- [x] 保存 checkpoint

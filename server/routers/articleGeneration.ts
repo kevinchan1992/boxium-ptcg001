@@ -2,6 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { generateArticle, getGenerationResult } from "../services/articleGenerator";
+import { reviseArticle } from "../services/articleRevision";
 import { getUserGenerationHistory, getAllGenerationHistory, deleteGenerationHistory } from "../db/articleGeneration";
 import * as blogDb from "../blogDb";
 
@@ -92,9 +93,42 @@ export const articleGenerationRouter = router({
     }),
 
   /**
+   * Revise article with AI assistance
+   */
+  revise: protectedProcedure
+    .input(
+      z.object({
+        originalTitle: z.string(),
+        originalContent: z.string(),
+        originalExcerpt: z.string(),
+        revisionRequest: z.string().min(1, "Revision request is required"),
+        targetLanguage: z.string().optional().default("zh-TW"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const result = await reviseArticle({
+          originalTitle: input.originalTitle,
+          originalContent: input.originalContent,
+          originalExcerpt: input.originalExcerpt,
+          revisionRequest: input.revisionRequest,
+          targetLanguage: input.targetLanguage,
+        });
+
+        return result;
+      } catch (error) {
+        console.error("Error revising article:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to revise article",
+        });
+      }
+    }),
+
+  /**
    * Delete generation history
    */
-  delete: protectedProcedure
+  deleteHistory: protectedProcedure
     .input(z.object({ generationId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       // Check if user owns this generation or is admin

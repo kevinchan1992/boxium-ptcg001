@@ -10,9 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Eye, EyeOff, FileText, Image as ImageIcon, Sparkles } from "lucide-react";
+import { ArticlePreview } from "@/components/ArticlePreview";
+import { CardImagePicker } from "@/components/CardImagePicker";
 
 export function AdminBlogManagement() {
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'generate'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'generate' | 'preview'>('list');
+  const [previewArticle, setPreviewArticle] = useState<any>(null);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
@@ -215,24 +218,43 @@ export function AdminBlogManagement() {
         />
       )}
 
+      {/* Preview View */}
+      {activeView === 'preview' && previewArticle && (
+        <ArticlePreview
+          article={previewArticle}
+          onAccept={() => {
+            // Fill the editor with generated content
+            setSelectedPost({
+              title: previewArticle.title,
+              excerpt: previewArticle.excerpt,
+              content: previewArticle.content,
+              featuredImage: previewArticle.featuredImageUrl || '',
+              metaTitle: previewArticle.seoMetadata?.metaTitle || '',
+              metaDescription: previewArticle.seoMetadata?.metaDescription || '',
+              metaKeywords: previewArticle.seoMetadata?.keywords?.join(', ') || '',
+              dataSource: 'ai-generated',
+            });
+            setActiveView('create');
+          }}
+          onCancel={() => {
+            setActiveView('generate');
+            setPreviewArticle(null);
+          }}
+          onRevise={(revisedArticle) => {
+            setPreviewArticle(revisedArticle);
+          }}
+        />
+      )}
+
       {/* AI Generate View */}
       {activeView === 'generate' && (
         <AIArticleGenerator
           categories={categories || []}
           onCancel={() => setActiveView('list')}
           onSuccess={(generatedArticle) => {
-            // Fill the editor with generated content
-            setSelectedPost({
-              title: generatedArticle.title,
-              excerpt: generatedArticle.excerpt,
-              content: generatedArticle.content,
-              featuredImage: generatedArticle.featuredImageUrl || '',
-              metaTitle: generatedArticle.seoMetadata.metaTitle,
-              metaDescription: generatedArticle.seoMetadata.metaDescription,
-              metaKeywords: generatedArticle.seoMetadata.keywords.join(', '),
-              dataSource: 'ai-generated',
-            });
-            setActiveView('create');
+            // Show preview first
+            setPreviewArticle(generatedArticle);
+            setActiveView('preview');
           }}
         />
       )}
@@ -383,7 +405,15 @@ function PostEditor({
         </div>
 
         <div>
-          <Label htmlFor="content" className="text-white">內容 * (Markdown)</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label htmlFor="content" className="text-white">內容 * (Markdown)</Label>
+            <CardImagePicker
+              onInsert={(imageUrl, cardName) => {
+                const markdownImage = `![${cardName}](${imageUrl})`;
+                setFormData({ ...formData, content: formData.content + '\n\n' + markdownImage });
+              }}
+            />
+          </div>
           <Textarea
             id="content"
             value={formData.content}
