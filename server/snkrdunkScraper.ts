@@ -20,10 +20,18 @@ export interface SnkrdunkCardData {
 
 /**
  * Extract SNKRDUNK product ID from URL
- * Example: https://snkrdunk.com/apparels/455596#1 → 455596
+ * Supports both /apparels/ and /trading-cards/ paths
+ * Examples:
+ *   https://snkrdunk.com/apparels/455596#1 → 455596
+ *   https://snkrdunk.com/en/trading-cards/91520/used?sort=latest → 91520
  */
 export function extractSnkrdunkId(url: string): string | null {
-  const match = url.match(/\/apparels\/(\d+)/);
+  // Try /trading-cards/ path first (newer format)
+  let match = url.match(/\/trading-cards\/(\d+)/);
+  if (match) return match[1];
+  
+  // Fallback to /apparels/ path (older format)
+  match = url.match(/\/apparels\/(\d+)/);
   return match ? match[1] : null;
 }
 
