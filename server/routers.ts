@@ -433,14 +433,26 @@ export const appRouter = router({
         source: z.enum(["snkrdunk", "ebay", "tcgplayer", "other"]).optional(),
         grade: z.string().optional(),
         limit: z.number().optional().default(50),
+        days: z.number().optional(), // 添加時間範圍篩選（最近 N 天）
       }))
       .query(async ({ input }) => {
-        const history = await db.getPriceHistory(
+        let history = await db.getPriceHistory(
           input.cardId,
           input.source,
           input.grade,
           input.limit
         );
+        
+        // 如果指定了 days 參數，篩選最近 N 天的記錄
+        if (input.days && input.days > 0) {
+          const cutoffDate = new Date();
+          cutoffDate.setDate(cutoffDate.getDate() - input.days);
+          history = history.filter(record => {
+            const recordDate = new Date(record.soldAt || record.createdAt);
+            return recordDate >= cutoffDate;
+          });
+        }
+        
         return history;
       }),
 

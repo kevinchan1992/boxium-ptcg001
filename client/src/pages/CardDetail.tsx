@@ -90,13 +90,14 @@ export default function CardDetail() {
     { enabled: !!cardId && activeSource === "snkrdunk", retry: 1 }
   );
 
-  // 獨立查詢 PSA 10 價格歷史用於計算參考價格（只查詢 SNKRDUNK 最近 10 筆 PSA 10 記錄）
+  // 獨立查詢 PSA 10 價格歷史用於計算參考價格（查詢 SNKRDUNK 最近 2 個月內的 10 筆 PSA 10 記錄）
   const { data: psa10PriceHistory = [] } = trpc.prices.getHistory.useQuery(
     {
       cardId: cardId!,
       source: "snkrdunk",
       grade: "PSA10",
-      limit: 10,  // 只查詢最近 10 筆記錄
+      limit: 10,  // 最多 10 筆記錄
+      days: 60,   // 最近 60 天（2 個月）
     },
     { enabled: !!cardId, retry: 1 }
   );
