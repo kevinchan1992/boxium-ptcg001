@@ -70,6 +70,44 @@ export type Session = typeof sessions.$inferSelect;
 export type InsertSession = typeof sessions.$inferInsert;
 
 /**
+ * Email verification tokens table - stores tokens for email verification
+ */
+export const emailVerificationTokens = mysqlTable("emailVerificationTokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
+  token: varchar("token", { length: 255 }).notNull().unique(), // Verification token
+  expiresAt: timestamp("expiresAt").notNull(), // Token expiration time (24 hours)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("userId_idx").on(table.userId),
+    tokenIdx: index("token_idx").on(table.token),
+  };
+});
+
+export type EmailVerificationToken = typeof emailVerificationTokens.$inferSelect;
+export type InsertEmailVerificationToken = typeof emailVerificationTokens.$inferInsert;
+
+/**
+ * Password reset tokens table - stores tokens for password reset
+ */
+export const passwordResetTokens = mysqlTable("passwordResetTokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
+  token: varchar("token", { length: 255 }).notNull().unique(), // Reset token
+  expiresAt: timestamp("expiresAt").notNull(), // Token expiration time (1 hour)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("userId_idx").on(table.userId),
+    tokenIdx: index("token_idx").on(table.token),
+  };
+});
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+
+/**
  * Cards table - stores Pokémon TCG card information
  */
 export const cards = mysqlTable("cards", {

@@ -1,6 +1,6 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, sessions, InsertSession, oauthAccounts, InsertOAuthAccount } from "../drizzle/schema";;
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, sessions, InsertSession, oauthAccounts, InsertOAuthAccount, emailVerificationTokens, passwordResetTokens } from "../drizzle/schema";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -2395,4 +2395,117 @@ export async function getUserOAuthAccounts(userId: number) {
   }
 
   return db.select().from(oauthAccounts).where(eq(oauthAccounts.userId, userId));
+}
+
+
+/**
+ * Email verification token functions
+ */
+
+/**
+ * Create email verification token
+ */
+export async function createEmailVerificationToken(userId: number, token: string, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.insert(emailVerificationTokens).values({
+    userId,
+    token,
+    expiresAt,
+  });
+}
+
+/**
+ * Get email verification token
+ */
+export async function getEmailVerificationToken(token: string) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db
+    .select()
+    .from(emailVerificationTokens)
+    .where(eq(emailVerificationTokens.token, token))
+    .limit(1);
+
+  return result[0];
+}
+
+/**
+ * Delete email verification token
+ */
+export async function deleteEmailVerificationToken(token: string) {
+  const db = await getDb();
+  if (!db) {
+    return;
+  }
+
+  await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.token, token));
+}
+
+/**
+ * Mark user email as verified
+ */
+export async function markEmailAsVerified(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.update(users).set({ emailVerified: true }).where(eq(users.id, userId));
+}
+
+/**
+ * Password reset token functions
+ */
+
+/**
+ * Create password reset token
+ */
+export async function createPasswordResetToken(userId: number, token: string, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.insert(passwordResetTokens).values({
+    userId,
+    token,
+    expiresAt,
+  });
+}
+
+/**
+ * Get password reset token
+ */
+export async function getPasswordResetToken(token: string) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db
+    .select()
+    .from(passwordResetTokens)
+    .where(eq(passwordResetTokens.token, token))
+    .limit(1);
+
+  return result[0];
+}
+
+/**
+ * Delete password reset token
+ */
+export async function deletePasswordResetToken(token: string) {
+  const db = await getDb();
+  if (!db) {
+    return;
+  }
+
+  await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, token));
 }

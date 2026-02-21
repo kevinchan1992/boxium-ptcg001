@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `emailVerificationTokens` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `token` varchar(255) NOT NULL UNIQUE,\n  `expiresAt` timestamp NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `emailVerificationTokens_id` PRIMARY KEY(`id`),\n  INDEX `userId_idx` (`userId`),\n  INDEX `token_idx` (`token`)\n);\n\nCREATE TABLE IF NOT EXISTS `passwordResetTokens` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `token` varchar(255) NOT NULL UNIQUE,\n  `expiresAt` timestamp NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `passwordResetTokens_id` PRIMARY KEY(`id`),\n  INDEX `userId_idx` (`userId`),\n  INDEX `token_idx` (`token`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS `emailVerificationTokens` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `token` varchar(255) NOT NULL UNIQUE,\n  `expiresAt` timestamp NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `emailVerificationTokens_id` PRIMARY KEY(`id`),\n  INDEX `userId_idx` (`userId`),\n  INDEX `token_idx` (`token`)\n);\n\nCREATE TABLE IF NOT EXISTS `passwordResetTokens` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `token` varchar(255) NOT NULL UNIQUE,\n  `expiresAt` timestamp NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `passwordResetTokens_id` PRIMARY KEY(`id`),\n  INDEX `userId_idx` (`userId`),\n  INDEX `token_idx` (`token`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2187
+}
