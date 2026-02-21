@@ -5812,3 +5812,11 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 ### 階段三：測試並保存 checkpoint ✅
 - [x] 檢查項目狀態（TypeScript 無錯誤、LSP 無錯誤）
 - [x] 保存 checkpoint
+
+
+## 新功能：文章編輯器上傳圖片 ✅
+- [x] 在編輯器中添加「上傳圖片」按鈕
+- [x] 實作圖片上傳到 S3 功能（使用 /api/upload-blog-image）
+- [x] 自動插入圖片 Markdown 語法到文章內容
+- [x] 添加檔案大小驗證（最大 10MB）
+- [x] 保存 checkpoint

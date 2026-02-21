@@ -407,12 +407,67 @@ function PostEditor({
         <div>
           <div className="flex items-center justify-between mb-2">
             <Label htmlFor="content" className="text-white">內容 * (Markdown)</Label>
-            <CardImagePicker
-              onInsert={(imageUrl, cardName) => {
-                const markdownImage = `![${cardName}](${imageUrl})`;
-                setFormData({ ...formData, content: formData.content + '\n\n' + markdownImage });
-              }}
-            />
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-zinc-700 text-white hover:bg-zinc-800"
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.onchange = async (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (!file) return;
+                    
+                    // Check file size (max 10MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                      toast.error('圖片大小不能超過 10MB');
+                      return;
+                    }
+                    
+                    try {
+                      toast.info('正在上傳圖片...');
+                      
+                      // Upload to S3
+                      const formData2 = new FormData();
+                      formData2.append('file', file);
+                      
+                      const uploadResponse = await fetch('/api/upload-blog-image', {
+                        method: 'POST',
+                        body: formData2,
+                      });
+                      
+                      if (!uploadResponse.ok) {
+                        throw new Error('圖片上傳失敗');
+                      }
+                      
+                      const { url } = await uploadResponse.json();
+                      
+                      // Insert markdown image syntax
+                      const imageName = file.name.replace(/\.[^/.]+$/, '');
+                      const markdownImage = `![${imageName}](${url})`;
+                      setFormData({ ...formData, content: formData.content + '\n\n' + markdownImage });
+                      
+                      toast.success('圖片上傳成功');
+                    } catch (error) {
+                      toast.error(`圖片上傳失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+                    }
+                  };
+                  input.click();
+                }}
+              >
+                <ImageIcon className="w-4 h-4 mr-2" />
+                上傳圖片
+              </Button>
+              <CardImagePicker
+                onInsert={(imageUrl, cardName) => {
+                  const markdownImage = `![${cardName}](${imageUrl})`;
+                  setFormData({ ...formData, content: formData.content + '\n\n' + markdownImage });
+                }}
+              />
+            </div>
           </div>
           <Textarea
             id="content"
