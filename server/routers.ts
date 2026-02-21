@@ -33,10 +33,10 @@ export const appRouter = router({
     logout: publicProcedure.mutation(async ({ ctx }) => {
       // Clear session cookie with multiple strategies for browser compatibility
       const cookieOptions = [
-        // Strategy 1: Standard cookie deletion
-        `session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`,
+        // Strategy 1: Standard cookie deletion with Max-Age=0
+        `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`,
         // Strategy 2: Set expiration to past date (for Safari compatibility)
-        `session=; Path=/; HttpOnly; Secure; SameSite=Strict; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+        `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
       ];
       ctx.res.setHeader("Set-Cookie", cookieOptions);
       return { success: true };

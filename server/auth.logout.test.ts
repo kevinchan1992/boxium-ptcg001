@@ -41,8 +41,9 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
           // Store the cookie headers for verification
           const cookies = Array.isArray(value) ? value : [value];
           cookies.forEach(cookie => {
-            if (cookie.includes("session=")) {
-              clearedCookies.push({ name: "session", options: {} });
+            // Check for the actual cookie name (app_session_id)
+            if (cookie.includes(`${COOKIE_NAME}=`)) {
+              clearedCookies.push({ name: COOKIE_NAME, options: {} });
             }
           });
         }
@@ -61,12 +62,12 @@ describe("auth.logout", () => {
     const result = await caller.auth.logout();
 
     expect(result).toEqual({ success: true });
-    // Should have 2 session cookie clearing attempts (Max-Age=0 and Expires strategies)
+    // Should have 2 cookie clearing attempts (Max-Age=0 and Expires strategies)
     expect(clearedCookies).toHaveLength(2);
     
-    // Check that session cookies are cleared
+    // Check that the correct cookie (app_session_id) is cleared
     const cookieNames = clearedCookies.map(c => c.name);
-    expect(cookieNames).toContain("session");
-    expect(cookieNames.filter(n => n === "session")).toHaveLength(2);
+    expect(cookieNames).toContain(COOKIE_NAME);
+    expect(cookieNames.filter(n => n === COOKIE_NAME)).toHaveLength(2);
   });
 });

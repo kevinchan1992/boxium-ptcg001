@@ -5621,3 +5621,19 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 測試跨瀏覽器兼容性（Chrome、Safari、Firefox）
 - [x] 驗證登出後用戶狀態正確更新
 - [x] 所有測試通過 (1/1 tests passed)
+
+
+## Bug 修復: 登出功能仍無法正常運作（深度診斷）- 已完成 ✅
+
+- [x] 檢查瀏覽器 Console 日誌（是否有錯誤）
+- [x] 檢查 Network 請求（logout API 是否被調用）
+- [x] 檢查 Cookie 是否被正確清除
+- [x] 檢查 OAuth 回調流程
+- [x] 檢查 session 管理邏輯
+- [x] 檢查前端狀態更新機制
+- [x] 修復識別出的所有問題（cookie 名稱錯誤）
+- [x] 更新測試驗證修復
+- [x] 所有測試通過 (1/1 tests passed)
+
+**根本原因：** 登出 API 清除的 cookie 名稱是 `"session"`，但系統實際使用的 cookie 名稱是 `"app_session_id"`（`COOKIE_NAME` 常量）。
+**修復方案：** 修改登出 API 使用正確的 `COOKIE_NAME` 常量，確保清除正確的 session cookie。
