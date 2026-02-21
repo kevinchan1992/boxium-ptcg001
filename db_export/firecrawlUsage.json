@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "operation": "scrape",
+    "url": "https://snkrdunk.com/apparels/107443",
+    "status": "failed",
+    "errorMessage": "Failed to parse Firecrawl output",
+    "creditsUsed": 1,
+    "createdAt": "2026-02-13T12:32:08.000Z"
+  },
+  {
+    "id": 2,
+    "operation": "scrape",
+    "url": "https://snkrdunk.com/apparels/107443",
+    "status": "failed",
+    "errorMessage": "Failed to parse Firecrawl output",
+    "creditsUsed": 1,
+    "createdAt": "2026-02-13T12:32:19.000Z"
+  },
+  {
+    "id": 3,
+    "operation": "scrape",
+    "url": "https://snkrdunk.com/apparels/999999",
+    "status": "quota_exceeded",
+    "errorMessage": "Insufficient credits to perform this request. Please upgrade your Firecrawl plan or contact Manus support.",
+    "creditsUsed": 1,
+    "createdAt": "2026-02-13T12:34:44.000Z"
+  },
+  {
+    "id": 4,
+    "operation": "scrape",
+    "url": "https://snkrdunk.com/apparels/107443",
+    "status": "quota_exceeded",
+    "errorMessage": "Insufficient credits to perform this request. Please upgrade your Firecrawl plan or contact Manus support.",
+    "creditsUsed": 1,
+    "createdAt": "2026-02-13T12:40:37.000Z"
+  }
+]

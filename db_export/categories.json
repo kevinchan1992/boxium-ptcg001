@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "name": "市場快報",
+    "slug": "market-news",
+    "description": "每日市場動態、價格變化",
+    "createdAt": "2026-02-18T18:44:50.000Z"
+  },
+  {
+    "id": 2,
+    "name": "卡牌研究",
+    "slug": "card-analysis",
+    "description": "深度分析熱門卡牌的投資價值",
+    "createdAt": "2026-02-18T18:44:50.000Z"
+  },
+  {
+    "id": 3,
+    "name": "市場趨勢",
+    "slug": "market-trends",
+    "description": "市場走勢分析和投資策略",
+    "createdAt": "2026-02-18T18:44:50.000Z"
+  },
+  {
+    "id": 4,
+    "name": "新聞快訊",
+    "slug": "news",
+    "description": "行業新聞、產品發布、活動資訊",
+    "createdAt": "2026-02-18T18:44:51.000Z"
+  },
+  {
+    "id": 5,
+    "name": "Test Category",
+    "slug": "test-category",
+    "description": "This is a test category",
+    "createdAt": "2026-02-18T18:46:01.000Z"
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "source": "snkrdunk",
+    "status": "healthy",
+    "successRate": "100.00",
+    "avgResponseTime": 0,
+    "lastSuccessAt": null,
+    "lastFailureAt": null,
+    "consecutiveFailures": 0,
+    "totalRequests": 0,
+    "totalSuccesses": 0,
+    "totalFailures": 0,
+    "lastErrorMessage": null,
+    "createdAt": "2026-02-17T20:32:11.000Z",
+    "updatedAt": "2026-02-17T20:32:11.000Z"
+  },
+  {
+    "id": 2,
+    "source": "ebay",
+    "status": "healthy",
+    "successRate": "100.00",
+    "avgResponseTime": 0,
+    "lastSuccessAt": null,
+    "lastFailureAt": null,
+    "consecutiveFailures": 0,
+    "totalRequests": 0,
+    "totalSuccesses": 0,
+    "totalFailures": 0,
+    "lastErrorMessage": null,
+    "createdAt": "2026-02-17T20:32:11.000Z",
+    "updatedAt": "2026-02-17T20:32:11.000Z"
+  }
+]

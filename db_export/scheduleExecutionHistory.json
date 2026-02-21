@@ -1,0 +1,36 @@
+[
+  {
+    "id": 1,
+    "scheduleType": "batch_update_daily",
+    "executionType": "scheduled",
+    "status": "running",
+    "ebaySuccessCount": 0,
+    "ebayFailureCount": 0,
+    "ebayRecordsAdded": 0,
+    "snkrdunkSuccessCount": 0,
+    "snkrdunkFailureCount": 0,
+    "snkrdunkRecordsAdded": 0,
+    "errorMessage": null,
+    "startedAt": "2026-02-17T22:00:00.000Z",
+    "completedAt": null,
+    "durationMs": null,
+    "createdAt": "2026-02-17T22:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "scheduleType": "snkrdunk_daily_update",
+    "executionType": "scheduled",
+    "status": "running",
+    "ebaySuccessCount": 0,
+    "ebayFailureCount": 0,
+    "ebayRecordsAdded": 0,
+    "snkrdunkSuccessCount": 0,
+    "snkrdunkFailureCount": 0,
+    "snkrdunkRecordsAdded": 0,
+    "errorMessage": null,
+    "startedAt": "2026-02-17T23:00:01.000Z",
+    "completedAt": null,
+    "durationMs": null,
+    "createdAt": "2026-02-17T23:00:01.000Z"
+  }
+]

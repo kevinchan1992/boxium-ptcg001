@@ -1,0 +1,135 @@
+{
+  "exportDate": "2026-02-21T03:28:06.145Z",
+  "tables": [
+    {
+      "name": "__drizzle_migrations",
+      "filename": "__drizzle_migrations.json",
+      "recordCount": 12
+    },
+    {
+      "name": "backgroundTasks",
+      "filename": "backgroundTasks.json",
+      "recordCount": 2
+    },
+    {
+      "name": "blogArticles",
+      "filename": "blogArticles.json",
+      "recordCount": 0
+    },
+    {
+      "name": "cards",
+      "filename": "cards.json",
+      "recordCount": 16339
+    },
+    {
+      "name": "categories",
+      "filename": "categories.json",
+      "recordCount": 5
+    },
+    {
+      "name": "dataSourceHealth",
+      "filename": "dataSourceHealth.json",
+      "recordCount": 2
+    },
+    {
+      "name": "dataSources",
+      "filename": "dataSources.json",
+      "recordCount": 15344
+    },
+    {
+      "name": "ebayListingsCache",
+      "filename": "ebayListingsCache.json",
+      "recordCount": 33
+    },
+    {
+      "name": "favorites",
+      "filename": "favorites.json",
+      "recordCount": 0
+    },
+    {
+      "name": "firecrawlUsage",
+      "filename": "firecrawlUsage.json",
+      "recordCount": 4
+    },
+    {
+      "name": "marketTrends",
+      "filename": "marketTrends.json",
+      "recordCount": 0
+    },
+    {
+      "name": "post_tags",
+      "filename": "post_tags.json",
+      "recordCount": 0
+    },
+    {
+      "name": "posts",
+      "filename": "posts.json",
+      "recordCount": 1
+    },
+    {
+      "name": "priceHistory",
+      "filename": "priceHistory.json",
+      "recordCount": 91232
+    },
+    {
+      "name": "priceUpdateSchedule",
+      "filename": "priceUpdateSchedule.json",
+      "recordCount": 1
+    },
+    {
+      "name": "scheduleConfig",
+      "filename": "scheduleConfig.json",
+      "recordCount": 1
+    },
+    {
+      "name": "scheduleExecutionHistory",
+      "filename": "scheduleExecutionHistory.json",
+      "recordCount": 2
+    },
+    {
+      "name": "scheduledTasks",
+      "filename": "scheduledTasks.json",
+      "recordCount": 2519
+    },
+    {
+      "name": "searchStats",
+      "filename": "searchStats.json",
+      "recordCount": 151
+    },
+    {
+      "name": "snkrdunkListingsCache",
+      "filename": "snkrdunkListingsCache.json",
+      "recordCount": 26
+    },
+    {
+      "name": "systemSettings",
+      "filename": "systemSettings.json",
+      "recordCount": 0
+    },
+    {
+      "name": "tags",
+      "filename": "tags.json",
+      "recordCount": 1
+    },
+    {
+      "name": "trendingCardsCache",
+      "filename": "trendingCardsCache.json",
+      "recordCount": 5
+    },
+    {
+      "name": "userSearchLogs",
+      "filename": "userSearchLogs.json",
+      "recordCount": 0
+    },
+    {
+      "name": "users",
+      "filename": "users.json",
+      "recordCount": 1
+    },
+    {
+      "name": "watchlist",
+      "filename": "watchlist.json",
+      "recordCount": 0
+    }
+  ]
+}

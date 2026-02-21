@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "snkrdunkEnabled": 1,
+    "snkrdunkUpdateTime": "02:00",
+    "snkrdunkLastExecutedAt": "2026-02-17T23:31:20.000Z",
+    "ebayEnabled": 1,
+    "ebayUpdateTime": "03:00",
+    "ebayLastExecutedAt": "2026-02-21T00:01:40.000Z",
+    "timezone": "Asia/Hong_Kong",
+    "createdAt": "2026-02-16T08:20:48.000Z",
+    "updatedAt": "2026-02-21T00:01:39.000Z"
+  }
+]

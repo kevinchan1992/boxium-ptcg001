@@ -1,0 +1,14 @@
+/home/ubuntu/boxium-ptcg/node_modules/.pnpm/drizzle-orm@0.44.6_mysql2@3.15.1/node_modules/src/mysql2/driver.ts:82
+			throw new DrizzleError({
+			      ^
+
+
+DrizzleError: You need to specify "mode": "planetscale" or "default" when providing a schema. Read more: https://orm.drizzle.team/docs/rqb#modes
+    at construct (/home/ubuntu/boxium-ptcg/node_modules/.pnpm/drizzle-orm@0.44.6_mysql2@3.15.1/node_modules/src/mysql2/driver.ts:82:10)
+    at drizzle (/home/ubuntu/boxium-ptcg/node_modules/.pnpm/drizzle-orm@0.44.6_mysql2@3.15.1/node_modules/src/mysql2/driver.ts:172:9)
+    at file:///home/ubuntu/boxium-ptcg/check_db_status.mjs:6:12
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  cause: undefined
+}
+
+Node.js v22.13.0
