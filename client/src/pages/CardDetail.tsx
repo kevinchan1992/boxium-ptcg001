@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 
@@ -90,17 +90,43 @@ export default function CardDetail() {
     { enabled: !!cardId && activeSource === "snkrdunk", retry: 1 }
   );
 
-  // 獨立查詢 PSA 10 價格歷史用於計算參考價格（查詢 SNKRDUNK 最近 2 個月內的 10 筆 PSA 10 記錄）
+  // 動態時間範圍調整：2個月 → 3個月 → 6個月
+  const [timeRangeDays, setTimeRangeDays] = useState(60); // 預設 2 個月
+  const [actualMonths, setActualMonths] = useState(2); // 實際使用的月份數
+
+  // 獨立查詢 PSA 10 價格歷史用於計算參考價格
   const { data: psa10PriceHistory = [] } = trpc.prices.getHistory.useQuery(
     {
       cardId: cardId!,
       source: "snkrdunk",
       grade: "PSA10",
-      limit: 10,  // 最多 10 筆記錄
-      days: 60,   // 最近 60 天（2 個月）
+      limit: 10,
+      days: timeRangeDays,
     },
     { enabled: !!cardId, retry: 1 }
   );
+
+  // 動態調整時間範圍：如果記錄不足 3 筆，擴展時間範圍
+  useEffect(() => {
+    if (psa10PriceHistory.length < 3 && timeRangeDays === 60) {
+      // 2個月不足 3 筆，擴展到3個月
+      setTimeRangeDays(90);
+      setActualMonths(3);
+    } else if (psa10PriceHistory.length < 3 && timeRangeDays === 90) {
+      // 3個月仍不足 3 筆，擴展到6個月
+      setTimeRangeDays(180);
+      setActualMonths(6);
+    } else if (psa10PriceHistory.length >= 3 && timeRangeDays === 60) {
+      // 2個月內有足夠數據
+      setActualMonths(2);
+    } else if (psa10PriceHistory.length >= 3 && timeRangeDays === 90) {
+      // 3個月內有足夠數據
+      setActualMonths(3);
+    } else if (timeRangeDays === 180) {
+      // 6個月（最大範圍）
+      setActualMonths(6);
+    }
+  }, [psa10PriceHistory.length, timeRangeDays]);
 
   // Fetch eBay price history from database (PSA10 only) - 優先從資料庫載入緩存數據
   const { data: ebayPriceHistory = [], isLoading: ebayHistoryLoading } = trpc.prices.getHistory.useQuery(
@@ -371,7 +397,7 @@ export default function CardDetail() {
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 {activeSource === "snkrdunk" 
-                  ? t("cardDetail.basedOnLatestRecords", { count: recordCount })
+                  ? t("cardDetail.basedOnLatestRecords", { count: recordCount, months: actualMonths })
                   : t("cardDetail.basedOnRecords", { count: recordCount })}
                 {priceTrend && (
                   <span className="ml-2">· {t("cardDetail.priceTrend")}</span>
