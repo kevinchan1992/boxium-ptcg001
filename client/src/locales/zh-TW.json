@@ -37,7 +37,10 @@
     "pleaseSelectImage": "請選擇一張圖片",
     "imageSearchSuccess": "識別成功：{{cardName}}",
     "imageSearchFailed": "無法識別卡牌，請嘗試其他圖片",
-    "imageSearchError": "圖片搜尋失敗，請稍後再試"
+    "imageSearchError": "圖片搜尋失敗，請稍後再試",
+    "cropImage": "裁剪圖片",
+    "searchDirect": "直接搜尋",
+    "searchWithCrop": "裁剪後搜尋"
   },
   "common": {
     "home": "主頁",
@@ -48,6 +51,7 @@
     "privacy": "隱私權政策",
     "admin": "管理後台",
     "language": "語言",
+    "cancel": "取消",
     "login": "登入",
     "logout": "登出",
     "marketInsights": "市場洞察",

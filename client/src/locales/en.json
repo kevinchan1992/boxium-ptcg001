@@ -37,7 +37,10 @@
     "pleaseSelectImage": "Please select an image",
     "imageSearchSuccess": "Identified: {{cardName}}",
     "imageSearchFailed": "Unable to identify card, please try another image",
-    "imageSearchError": "Image search failed, please try again later"
+    "imageSearchError": "Image search failed, please try again later",
+    "cropImage": "Crop Image",
+    "searchDirect": "Search Directly",
+    "searchWithCrop": "Search with Crop"
   },
   "common": {
     "home": "Home",
@@ -48,6 +51,7 @@
     "privacy": "Privacy Policy",
     "admin": "Admin",
     "language": "Language",
+    "cancel": "Cancel",
     "login": "Login",
     "logout": "Logout",
     "marketInsights": "Market Insights",

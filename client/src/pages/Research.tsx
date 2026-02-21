@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Camera, Upload, X } from "lucide-react";
+import { Search, Loader2, Camera, Upload, X, Crop } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
@@ -8,6 +8,8 @@ import { TypeAnimation } from 'react-type-animation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import ReactCrop, { type Crop as CropType } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 // import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
 
@@ -19,6 +21,10 @@ export default function Home() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [showCropView, setShowCropView] = useState(false);
+  const [crop, setCrop] = useState<CropType>();
+  const [completedCrop, setCompletedCrop] = useState<CropType>();
+  const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,6 +69,9 @@ export default function Home() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
+        setShowCropView(false); // 重置裁剪視圖
+        setCrop(undefined);
+        setCompletedCrop(undefined);
       };
       reader.readAsDataURL(file);
     }
@@ -70,7 +79,35 @@ export default function Home() {
 
   const imageSearchMutation = trpc.cards.searchByImage.useMutation();
 
-  const handleImageSearch = async () => {
+  // 裁剪圖片並轉換為 base64
+  const getCroppedImg = async (image: HTMLImageElement, crop: CropType): Promise<string> => {
+    const canvas = document.createElement('canvas');
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = crop.width!;
+    canvas.height = crop.height!;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      throw new Error('No 2d context');
+    }
+
+    ctx.drawImage(
+      image,
+      crop.x! * scaleX,
+      crop.y! * scaleY,
+      crop.width! * scaleX,
+      crop.height! * scaleY,
+      0,
+      0,
+      crop.width!,
+      crop.height!
+    );
+
+    return canvas.toDataURL('image/jpeg', 0.9);
+  };
+
+  const handleImageSearch = async (useCrop: boolean = false) => {
     if (!selectedImage) {
       toast.error(t('research.pleaseSelectImage'));
       return;
@@ -78,24 +115,31 @@ export default function Home() {
 
     setIsSearching(true);
     try {
-      // Convert image to base64
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Image = reader.result as string;
-        
-        // Call image search API
-        const result = await imageSearchMutation.mutateAsync({ image: base64Image });
-        
-        if (result.success && result.cardName) {
-          toast.success(t('research.imageSearchSuccess', { cardName: result.cardName }));
-          setShowImageDialog(false);
-          setSearchQuery(result.cardName);
-          setLocation(`/search?q=${encodeURIComponent(result.cardName)}`);
-        } else {
-          toast.error(t('research.imageSearchFailed'));
-        }
-      };
-      reader.readAsDataURL(selectedImage);
+      let base64Image: string;
+
+      // 如果用戶選擇裁剪且有完成的裁剪區域
+      if (useCrop && completedCrop && imgRef.current) {
+        base64Image = await getCroppedImg(imgRef.current, completedCrop);
+      } else {
+        // 使用原圖
+        const reader = new FileReader();
+        base64Image = await new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(selectedImage);
+        });
+      }
+      
+      // Call image search API
+      const result = await imageSearchMutation.mutateAsync({ image: base64Image });
+      
+      if (result.success && result.cardName) {
+        toast.success(t('research.imageSearchSuccess', { cardName: result.cardName }));
+        setShowImageDialog(false);
+        setSearchQuery(result.cardName);
+        setLocation(`/search?q=${encodeURIComponent(result.cardName)}`);
+      } else {
+        toast.error(t('research.imageSearchFailed'));
+      }
     } catch (error) {
       console.error('Image search error:', error);
       toast.error(t('research.imageSearchError'));
@@ -108,6 +152,27 @@ export default function Home() {
     setShowImageDialog(false);
     setSelectedImage(null);
     setImagePreview(null);
+    setShowCropView(false);
+    setCrop(undefined);
+    setCompletedCrop(undefined);
+  };
+
+  const handleStartCrop = () => {
+    setShowCropView(true);
+    // 設定預設裁剪區域（居中 80% 大小）
+    setCrop({
+      unit: '%',
+      x: 10,
+      y: 10,
+      width: 80,
+      height: 80,
+    });
+  };
+
+  const handleCancelCrop = () => {
+    setShowCropView(false);
+    setCrop(undefined);
+    setCompletedCrop(undefined);
   };
 
   // Generate WebSite with SearchAction structured data for SEO
@@ -221,14 +286,30 @@ export default function Home() {
             {imagePreview ? (
               <div className="relative">
                 <div className="relative rounded-lg overflow-hidden bg-muted border-2 border-border">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-80 object-contain"
-                  />
+                  {showCropView ? (
+                    <ReactCrop
+                      crop={crop}
+                      onChange={(c) => setCrop(c)}
+                      onComplete={(c) => setCompletedCrop(c)}
+                      aspect={undefined}
+                    >
+                      <img
+                        ref={imgRef}
+                        src={imagePreview}
+                        alt="Crop preview"
+                        className="max-h-96 w-full object-contain"
+                      />
+                    </ReactCrop>
+                  ) : (
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-80 object-contain"
+                    />
+                  )}
                   {/* Loading Overlay */}
                   {isSearching && (
-                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center">
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
                       <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
                       <p className="text-sm font-medium text-foreground">{t('research.searching')}</p>
                       <p className="text-xs text-muted-foreground mt-2">正在識別卡牌中...</p>
@@ -237,11 +318,8 @@ export default function Home() {
                 </div>
                 {!isSearching && (
                   <button
-                    onClick={() => {
-                      setSelectedImage(null);
-                      setImagePreview(null);
-                    }}
-                    className="absolute -top-2 -right-2 p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-lg transition-colors"
+                    onClick={handleCloseDialog}
+                    className="absolute -top-2 -right-2 p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-lg transition-colors z-20"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -256,7 +334,7 @@ export default function Home() {
             )}
 
             {/* Upload Buttons */}
-            {!isSearching && (
+            {!isSearching && !imagePreview && (
               <div className="grid grid-cols-2 gap-4">
                 <Button
                   variant="outline"
@@ -294,16 +372,54 @@ export default function Home() {
               className="hidden"
             />
 
-            {/* Search Button */}
+            {/* Crop and Search Buttons */}
             {imagePreview && !isSearching && (
-              <Button
-                onClick={handleImageSearch}
-                className="w-full h-12 text-base font-medium"
-                size="lg"
-              >
-                <Search className="w-5 h-5 mr-2" />
-                {t('research.searchButton')}
-              </Button>
+              <div className="space-y-3">
+                {showCropView ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={handleCancelCrop}
+                        className="w-full h-12"
+                      >
+                        <X className="w-5 h-5 mr-2" />
+                        {t('common.cancel')}
+                      </Button>
+                      <Button
+                        onClick={() => handleImageSearch(true)}
+                        className="w-full h-12 text-base font-medium"
+                        size="lg"
+                        disabled={!completedCrop}
+                      >
+                        <Search className="w-5 h-5 mr-2" />
+                        {t('research.searchWithCrop')}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={handleStartCrop}
+                        className="w-full h-12"
+                      >
+                        <Crop className="w-5 h-5 mr-2" />
+                        {t('research.cropImage')}
+                      </Button>
+                      <Button
+                        onClick={() => handleImageSearch(false)}
+                        className="w-full h-12 text-base font-medium"
+                        size="lg"
+                      >
+                        <Search className="w-5 h-5 mr-2" />
+                        {t('research.searchDirect')}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </DialogContent>

@@ -37,7 +37,10 @@
     "pleaseSelectImage": "画像を選択してください",
     "imageSearchSuccess": "識別成功：{{cardName}}",
     "imageSearchFailed": "カードを識別できませんでした。別の画像を試してください",
-    "imageSearchError": "画像検索に失敗しました。後で再試行してください"
+    "imageSearchError": "画像検索に失敗しました。後で再試行してください",
+    "cropImage": "画像をトリミング",
+    "searchDirect": "直接検索",
+    "searchWithCrop": "トリミング後に検索"
   },
   "common": {
     "home": "ホーム",
@@ -48,6 +51,7 @@
     "privacy": "プライバシーポリシー",
     "admin": "管理画面",
     "language": "言語",
+    "cancel": "キャンセル",
     "login": "ログイン",
     "logout": "ログアウト",
     "marketInsights": "市場洞察",
