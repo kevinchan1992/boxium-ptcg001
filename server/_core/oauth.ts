@@ -24,7 +24,9 @@ export function registerOAuthRoutes(app: Express) {
       const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
 
       if (!userInfo.openId) {
-        res.status(400).json({ error: "openId missing from user info" });
+        console.error("[OAuth] openId missing from user info");
+        // Redirect to home page with error message instead of showing permission error
+        res.redirect(302, "/?error=oauth_failed&reason=missing_openid");
         return;
       }
 
@@ -47,7 +49,9 @@ export function registerOAuthRoutes(app: Express) {
       res.redirect(302, "/");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
-      res.status(500).json({ error: "OAuth callback failed" });
+      // Redirect to home page with error message instead of showing permission error
+      // This ensures the public home page is always accessible
+      res.redirect(302, "/?error=oauth_failed&reason=callback_error");
     }
   });
 }

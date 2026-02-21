@@ -24,6 +24,7 @@ import Favorites from "./pages/Favorites";
 import { TopNav } from "./components/TopNav";
 import { AdminRoute } from "./components/AdminRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { OAuthErrorToast } from "./components/OAuthErrorToast";
 
 
 
@@ -32,6 +33,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 function Router() {
   return (
     <PageWrapper>
+      <OAuthErrorToast />
       <TopNav />
       <div className="pt-16">
         <Switch>
