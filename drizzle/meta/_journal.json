@@ -197,6 +197,13 @@
       "when": 1771655116996,
       "tag": "0027_thick_the_enforcers",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1771658614085,
+      "tag": "0028_serious_mac_gargan",
+      "breakpoints": true
     }
   ]
 }

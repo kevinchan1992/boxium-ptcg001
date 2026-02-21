@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `articleGenerationHistory` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `inputType` enum('url','text') NOT NULL,\n  `inputContent` text NOT NULL,\n  `detectedLanguage` varchar(10),\n  `targetLanguage` varchar(10),\n  `style` varchar(50),\n  `status` enum('pending','processing','completed','failed') NOT NULL DEFAULT 'pending',\n  `generatedTitle` text,\n  `generatedContent` text,\n  `generatedExcerpt` text,\n  `generatedSlug` varchar(255),\n  `postId` int,\n  `errorMessage` text,\n  `processingTimeMs` int,\n  `tokensUsed` int,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `articleGenerationHistory_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS `articleGenerationHistory` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `inputType` enum('url','text') NOT NULL,\n  `inputContent` text NOT NULL,\n  `detectedLanguage` varchar(10),\n  `targetLanguage` varchar(10),\n  `style` varchar(50),\n  `status` enum('pending','processing','completed','failed') NOT NULL DEFAULT 'pending',\n  `generatedTitle` text,\n  `generatedContent` text,\n  `generatedExcerpt` text,\n  `generatedSlug` varchar(255),\n  `postId` int,\n  `errorMessage` text,\n  `processingTimeMs` int,\n  `tokensUsed` int,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `articleGenerationHistory_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2009
+}

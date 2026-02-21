@@ -1,0 +1,21 @@
+CREATE TABLE `articleGenerationHistory` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`inputType` enum('url','text') NOT NULL,
+	`inputContent` text NOT NULL,
+	`detectedLanguage` varchar(10),
+	`targetLanguage` varchar(10),
+	`style` varchar(50),
+	`status` enum('pending','processing','completed','failed') NOT NULL DEFAULT 'pending',
+	`generatedTitle` text,
+	`generatedContent` text,
+	`generatedExcerpt` text,
+	`generatedSlug` varchar(255),
+	`postId` int,
+	`errorMessage` text,
+	`processingTimeMs` int,
+	`tokensUsed` int,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `articleGenerationHistory_id` PRIMARY KEY(`id`)
+);

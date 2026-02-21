@@ -574,14 +574,18 @@ function AIArticleGenerator({
   onCancel: () => void;
   onSuccess: (article: any) => void;
 }) {
-  const [inputMethod, setInputMethod] = useState<'image' | 'text' | 'data'>('text');
+  const [inputMethod, setInputMethod] = useState<'image' | 'text' | 'url'>('url');
   const [articleType, setArticleType] = useState<'daily-report' | 'card-analysis' | 'market-trend' | 'news'>('news');
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [textContent, setTextContent] = useState('');
+  const [urlInput, setUrlInput] = useState('');
   const [topic, setTopic] = useState('');
+  const [targetLanguage, setTargetLanguage] = useState('zh-TW');
   const [isUploading, setIsUploading] = useState(false);
+  const [generationId, setGenerationId] = useState<number | null>(null);
 
+  // Original blog generate mutation (for image/text input)
   const generateMutation = trpc.blog.generateArticle.useMutation({
     onSuccess: (data) => {
       toast.success('文章生成成功！');
@@ -591,6 +595,47 @@ function AIArticleGenerator({
       toast.error(`生成失敗：${error.message}`);
     },
   });
+
+  // New article generation mutation (for URL input)
+  const urlGenerateMutation = trpc.articleGeneration.generate.useMutation({
+    onSuccess: (data) => {
+      setGenerationId(data.generationId);
+      toast.success('文章生成已開始，請稍候...');
+    },
+    onError: (error) => {
+      toast.error(`生成失敗：${error.message}`);
+    },
+  });
+
+  // Get generation result
+  const { data: generationResult } = trpc.articleGeneration.getResult.useQuery(
+    { generationId: generationId! },
+    {
+      enabled: generationId !== null,
+      refetchInterval: (query) => {
+        const data = query.state.data;
+        if (data?.status === "pending" || data?.status === "processing") {
+          return 2000;
+        }
+        // When completed, trigger onSuccess
+        if (data?.status === "completed" && data.generatedTitle) {
+          onSuccess({
+            title: data.generatedTitle,
+            excerpt: data.generatedExcerpt || '',
+            content: data.generatedContent || '',
+            featuredImageUrl: '',
+            seoMetadata: {
+              metaTitle: data.generatedTitle,
+              metaDescription: data.generatedExcerpt || '',
+              keywords: []
+            }
+          });
+          setGenerationId(null);
+        }
+        return false;
+      },
+    }
+  );
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -627,6 +672,22 @@ function AIArticleGenerator({
   };
 
   const handleGenerate = () => {
+    // Handle URL input with new API
+    if (inputMethod === 'url') {
+      if (!urlInput.trim()) {
+        toast.error('請輸入網址');
+        return;
+      }
+      urlGenerateMutation.mutate({
+        inputType: 'url',
+        inputContent: urlInput,
+        targetLanguage,
+        style: articleType === 'news' ? 'news' : articleType === 'card-analysis' ? 'review' : 'analysis'
+      });
+      return;
+    }
+
+    // Handle image/text input with original API
     if (inputMethod === 'image' && uploadedImageUrls.length === 0) {
       toast.error('請上傳至少一張圖片');
       return;
@@ -644,7 +705,6 @@ function AIArticleGenerator({
       input.imageInput = {
         imageUrls: uploadedImageUrls,
       };
-      // Also set the first uploaded image as featured image
       if (uploadedImageUrls && uploadedImageUrls.length > 0) {
         input.featuredImageUrl = uploadedImageUrls[0];
       }
@@ -671,14 +731,22 @@ function AIArticleGenerator({
         {/* Input Method Selection */}
         <div>
           <Label className="text-white mb-2 block">輸入方式</Label>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <Button
+              variant={inputMethod === 'url' ? 'default' : 'outline'}
+              onClick={() => setInputMethod('url')}
+              className={inputMethod === 'url' ? 'bg-purple-600 hover:bg-purple-700' : 'border-zinc-700 text-white hover:bg-zinc-800'}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              網址
+            </Button>
             <Button
               variant={inputMethod === 'image' ? 'default' : 'outline'}
               onClick={() => setInputMethod('image')}
               className={inputMethod === 'image' ? 'bg-purple-600 hover:bg-purple-700' : 'border-zinc-700 text-white hover:bg-zinc-800'}
             >
               <ImageIcon className="w-4 h-4 mr-2" />
-              上傳圖片
+              圖片
             </Button>
             <Button
               variant={inputMethod === 'text' ? 'default' : 'outline'}
@@ -686,7 +754,7 @@ function AIArticleGenerator({
               className={inputMethod === 'text' ? 'bg-purple-600 hover:bg-purple-700' : 'border-zinc-700 text-white hover:bg-zinc-800'}
             >
               <FileText className="w-4 h-4 mr-2" />
-              輸入文字
+              文字
             </Button>
           </div>
         </div>
@@ -706,6 +774,50 @@ function AIArticleGenerator({
             </SelectContent>
           </Select>
         </div>
+
+        {/* URL Input */}
+        {inputMethod === 'url' && (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="url-input" className="text-white">網址</Label>
+              <Input
+                id="url-input"
+                placeholder="https://example.com/article"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-white"
+                disabled={urlGenerateMutation.isPending || generationId !== null}
+              />
+              <p className="text-xs text-gray-500 mt-1">支援日文/英文/中文網站，AI 將自動抓取並分析內容</p>
+            </div>
+            <div>
+              <Label htmlFor="target-language" className="text-white">目標語言</Label>
+              <Select value={targetLanguage} onValueChange={setTargetLanguage} disabled={urlGenerateMutation.isPending || generationId !== null}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="zh-TW">繁體中文</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="ja">日本語</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {generationResult && (
+              <div className="p-4 bg-zinc-800 rounded-lg">
+                <p className="text-white text-sm mb-2">
+                  {generationResult.status === 'pending' && '⏳ 準備中...'}
+                  {generationResult.status === 'processing' && '🔄 生成中，請稍候...'}
+                  {generationResult.status === 'completed' && '✅ 生成完成！'}
+                  {generationResult.status === 'failed' && '❌ 生成失敗'}
+                </p>
+                {generationResult.status === 'failed' && generationResult.errorMessage && (
+                  <p className="text-red-400 text-xs">{generationResult.errorMessage}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Image Input */}
         {inputMethod === 'image' && (

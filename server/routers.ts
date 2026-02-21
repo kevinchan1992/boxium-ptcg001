@@ -21,6 +21,7 @@ import { restartScheduler } from "./batchUpdateScheduler";
 import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
 import { pricingRouter } from "./routers/pricing";
 import { notificationsRouter } from "./routers/notifications";
+import { articleGenerationRouter } from "./routers/articleGeneration";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1852,6 +1853,9 @@ try {
 
   // Favorites router
   notifications: notificationsRouter,
+
+  // Article generation router
+  articleGeneration: articleGenerationRouter,
 
   favorites: router({
     // Get user's favorites

@@ -25,6 +25,7 @@ import { TopNav } from "./components/TopNav";
 import { AdminRoute } from "./components/AdminRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { OAuthErrorToast } from "./components/OAuthErrorToast";
+import { GenerateArticle } from "./pages/GenerateArticle";
 
 
 
@@ -61,6 +62,11 @@ function Router() {
       <Route path="/admin">
         <AdminRoute>
           <Admin />
+        </AdminRoute>
+      </Route>
+      <Route path="/admin/generate-article">
+        <AdminRoute>
+          <GenerateArticle />
         </AdminRoute>
       </Route>
       <Route path="/terms" component={Terms} />

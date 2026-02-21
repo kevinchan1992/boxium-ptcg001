@@ -341,6 +341,44 @@ export type PostTag = typeof postTags.$inferSelect;
 export type InsertPostTag = typeof postTags.$inferInsert;
 
 /**
+ * Article generation history table - stores AI article generation requests and results
+ */
+export const articleGenerationHistory = mysqlTable("articleGenerationHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // User who initiated the generation
+  
+  // Input information
+  inputType: mysqlEnum("inputType", ["url", "text"]).notNull(), // Input type: URL or text
+  inputContent: text("inputContent").notNull(), // URL or original text content
+  detectedLanguage: varchar("detectedLanguage", { length: 10 }), // Detected language (zh-TW, en, ja)
+  
+  // Generation settings
+  targetLanguage: varchar("targetLanguage", { length: 10 }), // Target language for generated article
+  style: varchar("style", { length: 50 }), // Article style (news, analysis, guide, etc.)
+  
+  // Generation results
+  status: mysqlEnum("status", ["pending", "processing", "completed", "failed"]).default("pending").notNull(),
+  generatedTitle: text("generatedTitle"), // Generated article title
+  generatedContent: text("generatedContent"), // Generated article content (Markdown)
+  generatedExcerpt: text("generatedExcerpt"), // Generated excerpt
+  generatedSlug: varchar("generatedSlug", { length: 255 }), // Generated URL slug
+  
+  // Related information
+  postId: int("postId"), // If saved as a post, store the post ID
+  errorMessage: text("errorMessage"), // Error message if generation failed
+  
+  // Metadata
+  processingTimeMs: int("processingTimeMs"), // Processing time in milliseconds
+  tokensUsed: int("tokensUsed"), // Number of tokens used for generation
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ArticleGenerationHistory = typeof articleGenerationHistory.$inferSelect;
+export type InsertArticleGenerationHistory = typeof articleGenerationHistory.$inferInsert;
+
+/**
  * Price update schedule table - stores daily automatic price update schedule
  */
 export const priceUpdateSchedule = mysqlTable("priceUpdateSchedule", {
