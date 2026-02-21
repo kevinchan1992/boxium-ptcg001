@@ -6372,3 +6372,33 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 添加登入成功後的頁面刷新或重新獲取用戶狀態
 - [x] 修改登入成功後跳轉到主頁
 - [ ] 測試登入流程確認問題已修復
+
+
+## 緊急修復: Manus OAuth 殘留和登入 session 問題
+
+### 問題描述
+1. 進入平台時仍然要求登入 Manus 認證系統
+2. 使用新認證系統登入後，返回主頁仍然顯示「登入/註冊」按鈕
+3. Session/cookie 無法正確保持登入狀態
+
+### 修復任務
+- [x] 檢查並移除所有 Manus OAuth 殘留代碼（ProtectedRoute, FavoriteButton）
+- [ ] 檢查 server/_core/context.ts 的認證邏輯
+- [ ] 檢查 cookie 設置和讀取邏輯
+- [ ] 測試登入流程確認 session 正確保持
+
+
+## 認證系統完全移除 Manus OAuth - 已完成 ✅
+
+### 修復任務
+- [x] 檢查並移除所有 Manus OAuth 殘留代碼（ProtectedRoute, FavoriteButton）
+- [x] 檢查 server/_core/context.ts 的認證邏輯
+- [x] 檢查 cookie 設置和讀取邏輯（添加 cookie-parser 中間件）
+- [x] 測試登入流程確認 session 正確保持
+
+### 完成內容
+- 移除 ProtectedRoute.tsx 中的 Manus OAuth getLoginUrl() 函數，改為導向 /login
+- 移除 FavoriteButton.tsx 中的 Manus OAuth getLoginUrl() 函數，改為導向 /login
+- 安裝 cookie-parser 套件並在 Express 服務器中配置
+- 修復 req.cookies undefined 導致的認證失敗問題
+- 測試確認登入功能完全正常，session 正確保持，導航欄正確顯示用戶資訊
