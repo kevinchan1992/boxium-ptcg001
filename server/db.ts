@@ -932,7 +932,7 @@ export async function isCardFavorited(userId: number, cardId: number): Promise<b
 /**
  * Update user profile
  */
-export async function updateUser(userId: number, data: { name?: string; email?: string }) {
+export async function updateUser(userId: number, data: { name?: string; email?: string; passwordHash?: string }) {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
@@ -941,6 +941,7 @@ export async function updateUser(userId: number, data: { name?: string; email?: 
   const updateData: any = {};
   if (data.name !== undefined) updateData.name = data.name;
   if (data.email !== undefined) updateData.email = data.email;
+  if (data.passwordHash !== undefined) updateData.passwordHash = data.passwordHash;
 
   await db.update(users).set(updateData).where(eq(users.id, userId));
 }

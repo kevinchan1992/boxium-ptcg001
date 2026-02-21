@@ -23,13 +23,16 @@ import { pricingRouter } from "./routers/pricing";
 import { notificationsRouter } from "./routers/notifications";
 import { articleGenerationRouter } from "./routers/articleGeneration";
 import { templatesRouter } from "./routers/templates";
-import { authRouter } from "./routers/auth";
+import { authRouter, userRouter } from "./routers/auth";
 
 export const appRouter = router({
   system: systemRouter,
   
   // Auth router (new independent auth system)
   auth: authRouter,
+  
+  // User profile management
+  user: userRouter,
 
   pricing: pricingRouter,
 

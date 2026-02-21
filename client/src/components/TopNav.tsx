@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+
 import { trpc } from "@/lib/trpc";
 import { NotificationCenter } from "@/components/NotificationCenter";
 
@@ -38,7 +38,7 @@ export function TopNav() {
 
   // Notification center is now handled by NotificationCenter component
 
-  const loginUrl = getLoginUrl();
+
 
   const navItems = [
     { href: "/", label: t("common.home") },
@@ -177,10 +177,10 @@ export function TopNav() {
                     <DropdownMenuSeparator />
                     
                     <DropdownMenuItem asChild>
-                      <Link href="/dashboard">
+                      <Link href="/profile">
                         <a className="flex items-center cursor-pointer w-full">
                           <User className="w-4 h-4 mr-2" />
-                          {t("nav.dashboard")}
+                          個人資料
                         </a>
                       </Link>
                     </DropdownMenuItem>
@@ -226,7 +226,7 @@ export function TopNav() {
                   asChild
                   className="bg-[#ffed00] text-[#06038d] hover:bg-[#ffed00]/90 border-none font-bold"
                 >
-                  <a href={loginUrl}>{t("nav.login")}</a>
+                  <Link href="/login">{t("nav.login")}</Link>
                 </Button>
               )}
             </div>
@@ -304,7 +304,7 @@ export function TopNav() {
                 asChild
                 className="w-full bg-[#ffed00] text-[#06038d] hover:bg-[#ffed00]/90 font-bold"
               >
-                <a href={loginUrl}>{t("nav.login")}</a>
+                <Link href="/login">{t("nav.login")}</Link>
               </Button>
             )}
           </div>

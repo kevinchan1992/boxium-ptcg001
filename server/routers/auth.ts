@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { publicProcedure, router } from '../_core/trpc';
+import { publicProcedure, protectedProcedure, router } from '../_core/trpc';
 import { TRPCError } from '@trpc/server';
 import * as db from '../db';
 import { hashPassword, comparePassword, isValidEmail, isValidPassword } from '../auth/utils';
@@ -279,5 +279,79 @@ export const authRouter = router({
           message: error.message || 'Failed to authenticate with Facebook',
         });
       }
+    }),
+});
+
+/**
+ * User profile management router
+ */
+export const userRouter = router({
+  /**
+   * Update user profile (name)
+   */
+  updateProfile: protectedProcedure
+    .input(z.object({
+      name: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.user.id;
+
+      await db.updateUser(userId, {
+        name: input.name || undefined,
+      });
+
+      return {
+        success: true,
+      };
+    }),
+
+  /**
+   * Change password
+   */
+  changePassword: protectedProcedure
+    .input(z.object({
+      currentPassword: z.string(),
+      newPassword: z.string().min(8),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.user.id;
+
+      // Get user with password hash
+      const user = await db.getUserById(userId);
+      if (!user || !user.passwordHash) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cannot change password for OAuth-only accounts',
+        });
+      }
+
+      // Verify current password
+      const isValid = await comparePassword(input.currentPassword, user.passwordHash);
+      if (!isValid) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Current password is incorrect',
+        });
+      }
+
+      // Validate new password strength
+      if (!isValidPassword(input.newPassword)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Password must be at least 8 characters and contain uppercase, lowercase, and numbers',
+        });
+      }
+
+      // Hash new password
+      const newPasswordHash = await hashPassword(input.newPassword);
+
+      // Update password
+      await db.updateUser(userId, {
+        passwordHash: newPasswordHash,
+      });
+
+      return {
+        success: true,
+      };
     }),
 });
