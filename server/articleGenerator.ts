@@ -198,7 +198,7 @@ function buildArticlePrompt(
     long: '2000-3000字',
   };
 
-  let prompt = `你是 BOXIUM PTCG 的專業內容創作者，負責撰寫 Pokémon TCG 相關文章。\n\n`;
+  let prompt = `你是 BOXIUM PTCG 的專業內容創作者，負責撰寫 Pokémon TCG 相關文章。\n\n【重要】本網站主要服務香港地區用戶，所有價格和金錢相關內容必須使用港幣（HKD）為預設貨幣單位。\n\n`;
 
   // Add article type specific instructions
   if (articleType === 'daily-report') {
@@ -267,7 +267,8 @@ function buildArticlePrompt(
   prompt += `3. 語氣：${tone === 'professional' ? '專業' : tone === 'casual' ? '輕鬆' : '技術性'}\n`;
   prompt += `4. 內容格式：Markdown\n`;
   prompt += `5. 包含數據支撐，避免主觀臆測\n`;
-  prompt += `6. 提供可操作的建議\n\n`;
+  prompt += `6. 提供可操作的建議\n`;
+  prompt += `7. **所有價格和金錢相關內容必須使用港幣（HKD）**，格式範例：HKD 1,234.56\n\n`;
   
   prompt += `【Markdown 排版要求】\n`;
   prompt += `1. 每個段落之間用空行分隔（\\n\\n）\n`;
@@ -344,7 +345,7 @@ export async function generateArticle(
     messages: [
       {
         role: 'system',
-        content: 'You are a professional Pokémon TCG market analyst and content writer for BOXIUM PTCG. You generate data-driven, professional articles in Traditional Chinese.',
+        content: 'You are a professional Pokémon TCG market analyst and content writer for BOXIUM PTCG. You generate data-driven, professional articles in Traditional Chinese. IMPORTANT: This website primarily serves Hong Kong users, so all prices and monetary values MUST use Hong Kong Dollars (HKD) as the default currency. Always format prices as "HKD X,XXX.XX".',
       },
       {
         role: 'user',
