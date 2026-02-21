@@ -94,8 +94,14 @@ export default function CardDetail() {
   const [timeRangeDays, setTimeRangeDays] = useState(60); // 預設 2 個月
   const [actualMonths, setActualMonths] = useState(2); // 實際使用的月份數
 
+  // 當 cardId 變化時，重置時間範圍為初始值
+  useEffect(() => {
+    setTimeRangeDays(60);
+    setActualMonths(2);
+  }, [cardId]);
+
   // 獨立查詢 PSA 10 價格歷史用於計算參考價格
-  const { data: psa10PriceHistory = [] } = trpc.prices.getHistory.useQuery(
+  const { data: psa10PriceHistory = [], isLoading: psa10Loading } = trpc.prices.getHistory.useQuery(
     {
       cardId: cardId!,
       source: "snkrdunk",
@@ -106,27 +112,39 @@ export default function CardDetail() {
     { enabled: !!cardId, retry: 1 }
   );
 
-  // 動態調整時間範圍：如果記錄不足 3 筆，擴展時間範圍
+  // 動態調整時間範圍：根據記錄數量動態調整
   useEffect(() => {
-    if (psa10PriceHistory.length < 3 && timeRangeDays === 60) {
-      // 2個月不足 3 筆，擴展到3個月
-      setTimeRangeDays(90);
-      setActualMonths(3);
-    } else if (psa10PriceHistory.length < 3 && timeRangeDays === 90) {
-      // 3個月仍不足 3 筆，擴展到6個月
-      setTimeRangeDays(180);
-      setActualMonths(6);
-    } else if (psa10PriceHistory.length >= 3 && timeRangeDays === 60) {
-      // 2個月內有足夠數據
-      setActualMonths(2);
-    } else if (psa10PriceHistory.length >= 3 && timeRangeDays === 90) {
-      // 3個月內有足夠數據
-      setActualMonths(3);
-    } else if (timeRangeDays === 180) {
-      // 6個月（最大範圍）
-      setActualMonths(6);
+    // 等待數據載入完成後才進行調整
+    if (psa10Loading) return;
+    
+    const recordCount = psa10PriceHistory.length;
+    
+    // 如果當前時間範圍內有足夠數據，不需要擴展
+    if (recordCount >= 3) {
+      // 根據當前 timeRangeDays 設置 actualMonths
+      if (timeRangeDays === 60) {
+        setActualMonths(2);
+      } else if (timeRangeDays === 90) {
+        setActualMonths(3);
+      } else if (timeRangeDays === 180) {
+        setActualMonths(6);
+      }
+    } else {
+      // 記錄不足 3 筆，需要擴展時間範圍
+      if (timeRangeDays === 60) {
+        // 2個月不足，擴展到3個月
+        setTimeRangeDays(90);
+        setActualMonths(3);
+      } else if (timeRangeDays === 90) {
+        // 3個月不足，擴展到6個月
+        setTimeRangeDays(180);
+        setActualMonths(6);
+      } else if (timeRangeDays === 180) {
+        // 6個月仍不足 3 筆，維持 6 個月
+        setActualMonths(6);
+      }
     }
-  }, [psa10PriceHistory.length, timeRangeDays]);
+  }, [psa10PriceHistory.length, timeRangeDays, psa10Loading]);
 
   // Fetch eBay price history from database (PSA10 only) - 優先從資料庫載入緩存數據
   const { data: ebayPriceHistory = [], isLoading: ebayHistoryLoading } = trpc.prices.getHistory.useQuery(

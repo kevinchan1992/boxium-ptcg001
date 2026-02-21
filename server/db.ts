@@ -333,7 +333,7 @@ export async function getPriceHistoryByCardId(cardId: number) {
   return result;
 }
 
-export async function getPriceHistory(cardId: number, source?: string, grade?: string, limit: number = 50) {
+export async function getPriceHistory(cardId: number, source?: string, grade?: string, limit: number = 50, days?: number) {
   const db = await getDb();
   if (!db) return [];
 
@@ -350,6 +350,13 @@ export async function getPriceHistory(cardId: number, source?: string, grade?: s
     } else {
       conditions.push(eq(priceHistory.grade, grade));
     }
+  }
+
+  // 如果指定了 days 參數，篩選最近 N 天的記錄
+  if (days && days > 0) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    conditions.push(gte(priceHistory.soldAt, cutoffDate));
   }
 
   const result = await db

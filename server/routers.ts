@@ -436,22 +436,14 @@ export const appRouter = router({
         days: z.number().optional(), // 添加時間範圍篩選（最近 N 天）
       }))
       .query(async ({ input }) => {
-        let history = await db.getPriceHistory(
+        // 直接將 days 參數傳遞給 db.getPriceHistory，在數據庫層面篩選
+        const history = await db.getPriceHistory(
           input.cardId,
           input.source,
           input.grade,
-          input.limit
+          input.limit,
+          input.days
         );
-        
-        // 如果指定了 days 參數，篩選最近 N 天的記錄
-        if (input.days && input.days > 0) {
-          const cutoffDate = new Date();
-          cutoffDate.setDate(cutoffDate.getDate() - input.days);
-          history = history.filter(record => {
-            const recordDate = new Date(record.soldAt || record.createdAt);
-            return recordDate >= cutoffDate;
-          });
-        }
         
         return history;
       }),
