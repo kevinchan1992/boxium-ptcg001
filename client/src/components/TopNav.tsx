@@ -124,26 +124,6 @@ export function TopNav() {
                 </Link>
               ))}
               
-              {/* 登入用戶顯示我的收藏 */}
-              {user && (
-                <Link
-                  href="/favorites"
-                  className={`relative text-base font-medium transition-colors hover:text-[#ffed00] group flex items-center gap-1 ${
-                    isActive("/favorites")
-                      ? "text-[#ffed00]"
-                      : "text-white/80"
-                  }`}
-                >
-                  <Heart className="w-4 h-4" />
-                  {t("nav.favorites")}
-                  <span className={`absolute -bottom-1 h-0.5 bg-[#ffed00] transition-all duration-300 ${
-                    isActive("/favorites")
-                      ? "w-full left-0"
-                      : "left-1/2 w-0 group-hover:w-full group-hover:left-0"
-                  }`} />
-                </Link>
-              )}
-
               {/* 管理員顯示 */}
               {user?.role === "admin" && (
                 <Link
