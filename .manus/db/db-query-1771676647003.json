@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, title, titleEn, titleJa, LENGTH(contentEn) as contentEnLength, LENGTH(contentJa) as contentJaLength FROM posts WHERE id = 30004;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, titleEn, titleJa, LENGTH(contentEn) as contentEnLength, LENGTH(contentJa) as contentJaLength FROM posts WHERE id = 30004;",
+  "rows": [
+    {
+      "id": "30004",
+      "title": "PTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢",
+      "titleEn": "PTCG Market Rebounds Strongly in February: Data Reveals Leading Cards and Future Trends",
+      "titleJa": "PTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢",
+      "contentEnLength": "8722",
+      "contentJaLength": "11786"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\ttitleEn\ttitleJa\tcontentEnLength\tcontentJaLength\n30004\tPTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢\tPTCG Market Rebounds Strongly in February: Data Reveals Leading Cards and Future Trends\tPTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢\t8722\t11786\n",
+  "stderr": "",
+  "execution_time_ms": 1569
+}

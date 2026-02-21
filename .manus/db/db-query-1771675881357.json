@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, title, slug, status FROM posts ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, slug, status FROM posts ORDER BY id;",
+  "rows": [
+    {
+      "id": "7",
+      "title": "07/26 TCG 快報 🔥 | 噴火龍VSTAR (SAR) 領漲，市場波動加劇",
+      "slug": "07-26-tcg-快報-噴火龍vstar-sar-領漲-市場波動加劇",
+      "status": "published"
+    },
+    {
+      "id": "30003",
+      "title": "【快訊】寶可夢卡牌30週年展望：市場潛力與投資機會分析",
+      "slug": "快訊-寶可夢卡牌30週年展望-市場潛力與投資機會分析",
+      "status": "published"
+    },
+    {
+      "id": "30004",
+      "title": "PTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢",
+      "slug": "ptcg市場二月強勁反彈-數據揭示漲勢領跑卡牌與未來趨勢",
+      "status": "published"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tslug\tstatus\n7\t07/26 TCG 快報 🔥 | 噴火龍VSTAR (SAR) 領漲，市場波動加劇\t07-26-tcg-快報-噴火龍vstar-sar-領漲-市場波動加劇\tpublished\n30003\t【快訊】寶可夢卡牌30週年展望：市場潛力與投資機會分析\t快訊-寶可夢卡牌30週年展望-市場潛力與投資機會分析\tpublished\n30004\tPTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢\tptcg市場二月強勁反彈-數據揭示漲勢領跑卡牌與未來趨勢\tpublished\n",
+  "stderr": "",
+  "execution_time_ms": 1515
+}

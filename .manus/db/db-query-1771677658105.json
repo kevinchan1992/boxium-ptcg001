@@ -1,0 +1,55 @@
+{
+  "query": "SELECT * FROM categories;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT * FROM categories;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "市場快報",
+      "slug": "market-news",
+      "description": "每日市場動態、價格變化",
+      "createdAt": "2026-02-18 13:44:50",
+      "nameEn": "NULL",
+      "nameJa": "NULL"
+    },
+    {
+      "id": "2",
+      "name": "卡牌研究",
+      "slug": "card-analysis",
+      "description": "深度分析熱門卡牌的投資價值",
+      "createdAt": "2026-02-18 13:44:50",
+      "nameEn": "NULL",
+      "nameJa": "NULL"
+    },
+    {
+      "id": "3",
+      "name": "市場趨勢",
+      "slug": "market-trends",
+      "description": "市場走勢分析和投資策略",
+      "createdAt": "2026-02-18 13:44:50",
+      "nameEn": "NULL",
+      "nameJa": "NULL"
+    },
+    {
+      "id": "4",
+      "name": "新聞快訊",
+      "slug": "news",
+      "description": "行業新聞、產品發布、活動資訊",
+      "createdAt": "2026-02-18 13:44:51",
+      "nameEn": "NULL",
+      "nameJa": "NULL"
+    },
+    {
+      "id": "5",
+      "name": "Test Category",
+      "slug": "test-category",
+      "description": "This is a test category",
+      "createdAt": "2026-02-18 13:46:01",
+      "nameEn": "NULL",
+      "nameJa": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tslug\tdescription\tcreatedAt\tnameEn\tnameJa\n1\t市場快報\tmarket-news\t每日市場動態、價格變化\t2026-02-18 13:44:50\tNULL\tNULL\n2\t卡牌研究\tcard-analysis\t深度分析熱門卡牌的投資價值\t2026-02-18 13:44:50\tNULL\tNULL\n3\t市場趨勢\tmarket-trends\t市場走勢分析和投資策略\t2026-02-18 13:44:50\tNULL\tNULL\n4\t新聞快訊\tnews\t行業新聞、產品發布、活動資訊\t2026-02-18 13:44:51\tNULL\tNULL\n5\tTest Category\ttest-category\tThis is a test category\t2026-02-18 13:46:01\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1589
+}

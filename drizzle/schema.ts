@@ -275,6 +275,8 @@ export type InsertSearchStat = typeof searchStats.$inferInsert;
 export const categories = mysqlTable("categories", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
+  nameEn: varchar("nameEn", { length: 100 }),
+  nameJa: varchar("nameJa", { length: 100 }),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   description: text("description"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

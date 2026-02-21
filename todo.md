@@ -5963,3 +5963,67 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 更新 BlogPost 詳情頁面根據當前語言顯示對應內容
 - [x] 測試語言切換功能
 - [x] 保存 checkpoint
+
+
+## 修復 Blog 文章多語言翻譯顯示問題
+- [ ] 檢查數據庫中文章的翻譯數據是否正確儲存
+- [ ] 檢查 Blog.tsx 的多語言顯示邏輯
+- [ ] 檢查 BlogPost.tsx 的多語言顯示邏輯
+- [ ] 修復翻譯顯示問題
+- [ ] 測試語言切換功能
+
+## 整合 AI 翻譯功能到後台
+- [ ] 在後台添加「生成翻譯」按鈕
+- [ ] 創建 AI 翻譯 API endpoint
+- [ ] 整合 LLM 服務生成英文和日文翻譯
+- [ ] 測試 AI 翻譯功能
+- [ ] 保存 checkpoint
+
+
+## 整合 AI 翻譯功能到後台
+- [x] 創建 tRPC API 端點用於 AI 翻譯（translatePost）
+- [x] 使用 invokeLLM 生成英文和日文翻譯
+- [x] 在後台文章編輯頁面添加「AI 翻譯」按鈕
+- [ ] 為現有三篇文章手動觸發 AI 翻譯
+- [ ] 測試翻譯功能
+- [ ] 保存 checkpoint
+
+## 新功能: Blog 多語言 AI 翻譯 - 完成
+
+- [x] 為 blog posts 表添加英文和日文翻譯欄位（titleEn, titleJa, contentEn, contentJa, excerptEn, excerptJa）
+- [x] 實作 AI 翻譯 tRPC procedure（blog.translatePost）
+- [x] 整合 invokeLLM 生成英文和日文翻譯
+- [x] 在 AdminBlogManagement 組件添加「AI 翻譯」按鈕
+- [x] 為現有 3 篇文章生成 AI 翻譯
+- [x] 驗證多語言顯示功能（繁中/英文/日文）
+- [x] 測試翻譯質量和準確性
+
+## Bug 修復: 第一篇文章日文翻譯未正確顯示
+
+- [ ] 檢查數據庫中第一篇文章的日文翻譯欄位（titleJa, contentJa, excerptJa）
+- [ ] 診斷 AI 翻譯邏輯是否正確保存日文翻譯
+- [ ] 重新為第一篇文章生成日文翻譯
+- [ ] 驗證日文翻譯正確保存到數據庫
+- [ ] 測試 Blog 頁面日文模式顯示第一篇文章
+- [ ] 確保所有 3 篇文章的多語言翻譯完整
+
+## 新功能: Blog 分類欄多語言翻譯
+
+- [ ] 為 categories 表添加英文和日文翻譯欄位（nameEn, nameJa）
+- [ ] 更新 Blog 頁面分類下拉選單支援多語言顯示
+- [ ] 為現有分類添加英文和日文翻譯
+- [ ] 測試分類欄在不同語言下的顯示效果
+- [ ] 驗證分類篩選功能正常運作
+
+
+## 新功能: Blog 多語言 AI 翻譯 - 完成
+
+- [x] 為 posts 表添加多語言欄位（titleEn, titleJa, contentEn, contentJa, excerptEn, excerptJa）
+- [x] 實作 AI 翻譯功能（使用 JSON schema 確保翻譯正確解析）
+- [x] 在 Admin 博客管理頁面添加「AI 翻譯」按鈕
+- [x] 為所有 3 篇文章生成英文和日文翻譯
+- [x] 更新 Blog 頁面支援多語言顯示（根據當前語言切換）
+- [x] 為 categories 表添加多語言欄位（nameEn, nameJa）
+- [x] 為所有分類添加英文和日文翻譯
+- [x] 更新 Blog 頁面分類下拉選單支援多語言顯示
+- [x] 驗證所有文章和分類在中文/英文/日文模式下正確顯示

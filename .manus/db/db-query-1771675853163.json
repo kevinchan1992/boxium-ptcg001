@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, title FROM posts;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title FROM posts;",
+  "rows": [
+    {
+      "id": "7",
+      "title": "07/26 TCG 快報 🔥 | 噴火龍VSTAR (SAR) 領漲，市場波動加劇"
+    },
+    {
+      "id": "30003",
+      "title": "【快訊】寶可夢卡牌30週年展望：市場潛力與投資機會分析"
+    },
+    {
+      "id": "30004",
+      "title": "PTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\n7\t07/26 TCG 快報 🔥 | 噴火龍VSTAR (SAR) 領漲，市場波動加劇\n30003\t【快訊】寶可夢卡牌30週年展望：市場潛力與投資機會分析\n30004\tPTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢\n",
+  "stderr": "",
+  "execution_time_ms": 1494
+}

@@ -64,6 +64,17 @@ export default function Blog() {
     return post[field]; // Fallback to Chinese
   };
 
+  // Helper function to get localized category name
+  const getLocalizedCategory = (category: any) => {
+    if (currentLang === 'en' && category.nameEn) {
+      return category.nameEn;
+    }
+    if (currentLang === 'ja' && category.nameJa) {
+      return category.nameJa;
+    }
+    return category.name; // Fallback to Chinese
+  };
+
   return (
     <div className="min-h-screen bg-black">
       {/* Hero Section */}
@@ -96,7 +107,7 @@ export default function Blog() {
                   <SelectItem value="all">{t('blogPage.allCategories')}</SelectItem>
                   {categories?.map((cat) => (
                     <SelectItem key={cat.id} value={String(cat.id)}>
-                      {cat.name}
+                      {getLocalizedCategory(cat)}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -2181,6 +2181,98 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         return { success: true };
       }),
 
+    // AI translate post (Admin only)
+    translatePost: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const blogDb = await import('./blogDb');
+        const { invokeLLM } = await import('./_core/llm');
+        
+        // Get post data
+        const post = await blogDb.getPostById(input.id);
+        if (!post) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Post not found' });
+        }
+        
+        // Generate English translation using JSON schema
+        const enResponse = await invokeLLM({
+          messages: [
+            { role: 'system', content: 'You are a professional translator. Translate the Chinese blog post to English. Maintain markdown formatting.' },
+            { role: 'user', content: `Translate this blog post to English:\n\nTitle: ${post.title}\n\nExcerpt: ${post.excerpt || ''}\n\nContent:\n${post.content}` }
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'blog_translation',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string', description: 'Translated title' },
+                  excerpt: { type: 'string', description: 'Translated excerpt' },
+                  content: { type: 'string', description: 'Translated content with markdown' }
+                },
+                required: ['title', 'excerpt', 'content'],
+                additionalProperties: false
+              }
+            }
+          }
+        });
+        
+        const enData = JSON.parse(enResponse.choices[0].message.content as string);
+        const titleEn = enData.title;
+        const excerptEn = enData.excerpt;
+        const contentEn = enData.content;
+        
+        // Generate Japanese translation using JSON schema
+        const jaResponse = await invokeLLM({
+          messages: [
+            { role: 'system', content: 'You are a professional translator. Translate the Chinese blog post to Japanese. Maintain markdown formatting.' },
+            { role: 'user', content: `Translate this blog post to Japanese:\n\nTitle: ${post.title}\n\nExcerpt: ${post.excerpt || ''}\n\nContent:\n${post.content}` }
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'blog_translation',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string', description: 'Translated title' },
+                  excerpt: { type: 'string', description: 'Translated excerpt' },
+                  content: { type: 'string', description: 'Translated content with markdown' }
+                },
+                required: ['title', 'excerpt', 'content'],
+                additionalProperties: false
+              }
+            }
+          }
+        });
+        
+        const jaData = JSON.parse(jaResponse.choices[0].message.content as string);
+        const titleJa = jaData.title;
+        const excerptJa = jaData.excerpt;
+        const contentJa = jaData.content;
+        
+        // Update post with translations
+        await blogDb.updatePost(input.id, {
+          titleEn,
+          excerptEn,
+          contentEn,
+          titleJa,
+          excerptJa,
+          contentJa,
+        });
+        
+        return { 
+          success: true,
+          translations: {
+            en: { title: titleEn, excerpt: excerptEn },
+            ja: { title: titleJa, excerpt: excerptJa }
+          }
+        };
+      }),
+
     // Get all categories
     getCategories: publicProcedure
       .query(async () => {

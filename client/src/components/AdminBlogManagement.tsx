@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Eye, EyeOff, FileText, Image as ImageIcon, Sparkles } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, FileText, Image as ImageIcon, Sparkles, Languages } from "lucide-react";
 import { ArticlePreview } from "@/components/ArticlePreview";
 import { CardImagePicker } from "@/components/CardImagePicker";
 
@@ -52,6 +52,16 @@ export function AdminBlogManagement() {
     },
   });
 
+  const translatePostMutation = trpc.blog.translatePost.useMutation({
+    onSuccess: (data) => {
+      toast.success(`AI 翻譯完成！\n英文標題：${data.translations.en.title}\n日文標題：${data.translations.ja.title}`);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`AI 翻譯失敗：${error.message}`);
+    },
+  });
+
   const handleDelete = (id: number) => {
     if (confirm('確定要刪除這篇文章嗎？')) {
       deletePostMutation.mutate({ id });
@@ -60,6 +70,11 @@ export function AdminBlogManagement() {
 
   const handleTogglePublish = (id: number) => {
     togglePublishMutation.mutate({ id });
+  };
+
+  const handleTranslate = (id: number) => {
+    toast.info('AI 翻譯中，請稍候...');
+    translatePostMutation.mutate({ id });
   };
 
   const handleEdit = (post: any) => {
@@ -174,6 +189,15 @@ export function AdminBlogManagement() {
                         ) : (
                           <Eye className="w-4 h-4" />
                         )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleTranslate(post.id)}
+                        className="text-gray-400 hover:text-purple-400"
+                        title="AI 翻譯"
+                      >
+                        <Languages className="w-4 h-4" />
                       </Button>
                       <Button
                         size="sm"

@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE categories SET nameEn = 'Card Research', nameJa = 'カード研究' WHERE name = '卡牌研究';\nUPDATE categories SET nameEn = 'Market Flash Report', nameJa = '市場速報' WHERE name = '市場快報';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute UPDATE categories SET nameEn = 'Card Research', nameJa = 'カード研究' WHERE name = '卡牌研究';\nUPDATE categories SET nameEn = 'Market Flash Report', nameJa = '市場速報' WHERE name = '市場快報';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1806
+}

@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, title, titleEn, titleJa FROM posts ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, titleEn, titleJa FROM posts ORDER BY id;",
+  "rows": [
+    {
+      "id": "7",
+      "title": "07/26 TCG 快報 🔥 | 噴火龍VSTAR (SAR) 領漲，市場波動加劇",
+      "titleEn": "NULL",
+      "titleJa": "NULL"
+    },
+    {
+      "id": "30003",
+      "title": "【快訊】寶可夢卡牌30週年展望：市場潛力與投資機會分析",
+      "titleEn": "NULL",
+      "titleJa": "NULL"
+    },
+    {
+      "id": "30004",
+      "title": "PTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢",
+      "titleEn": "PTCG Market Rebounds Strongly in February: Data Reveals Leading Cards and Future Trends",
+      "titleJa": "PTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\ttitleEn\ttitleJa\n7\t07/26 TCG 快報 🔥 | 噴火龍VSTAR (SAR) 領漲，市場波動加劇\tNULL\tNULL\n30003\t【快訊】寶可夢卡牌30週年展望：市場潛力與投資機會分析\tNULL\tNULL\n30004\tPTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢\tPTCG Market Rebounds Strongly in February: Data Reveals Leading Cards and Future Trends\tPTCG市場二月強勁反彈：數據揭示漲勢領跑卡牌與未來趨勢\n",
+  "stderr": "",
+  "execution_time_ms": 1595
+}
