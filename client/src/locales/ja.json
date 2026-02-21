@@ -133,6 +133,7 @@
   "cardDetail": {
     "referencePrice": "参考価格",
     "basedOnRecords": "{{count}}件の取引記録に基づく",
+    "basedOnLatestRecords": "最新の{{count}}件のPSA 10取引記録に基づく",
     "priceHistory": "価格履歴",
     "date": "日付",
     "price": "価格",

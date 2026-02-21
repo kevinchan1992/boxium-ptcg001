@@ -90,6 +90,17 @@ export default function CardDetail() {
     { enabled: !!cardId && activeSource === "snkrdunk", retry: 1 }
   );
 
+  // 獨立查詢 PSA 10 價格歷史用於計算參考價格（只查詢 SNKRDUNK 最近 10 筆 PSA 10 記錄）
+  const { data: psa10PriceHistory = [] } = trpc.prices.getHistory.useQuery(
+    {
+      cardId: cardId!,
+      source: "snkrdunk",
+      grade: "PSA10",
+      limit: 10,  // 只查詢最近 10 筆記錄
+    },
+    { enabled: !!cardId, retry: 1 }
+  );
+
   // Fetch eBay price history from database (PSA10 only) - 優先從資料庫載入緩存數據
   const { data: ebayPriceHistory = [], isLoading: ebayHistoryLoading } = trpc.prices.getHistory.useQuery(
     {
@@ -160,35 +171,23 @@ export default function CardDetail() {
   }
 
   // Calculate average price based on active source - Only PSA 10 for reference price
-  // 新邏輯: 使用一個月內所有 PSA 10 成交歷史的平均值
-  const psa10OnlyHistory = priceHistory.filter(p => p.grade === "PSA 10" || p.grade === "PSA10" || p.grade === "PSA 10");
-  
+  // 新邏輯: 使用最近 10 筆 PSA 10 成交記錄的平均值（根據 knowledge base 建議）
   const calculatePSA10ReferencePrice = () => {
     if (activeSource === "snkrdunk") {
-      if (psa10OnlyHistory.length === 0) return "N/A";
+      // 使用獨立查詢的 PSA 10 價格歷史（最近 10 筆）
+      if (psa10PriceHistory.length === 0) return "N/A";
       
-      // 篩選一個月內的 PSA 10 交易記錄
-      const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const recentOneMonth = psa10OnlyHistory.filter(p => {
-        if (!p.soldAt) return false;
-        return new Date(p.soldAt) >= oneMonthAgo;
-      });
-      
-      // 如果一個月內有數據，使用這些數據的平均值
-      if (recentOneMonth.length > 0) {
-        const avg = recentOneMonth.reduce((sum, p) => sum + parseFloat(p.price), 0) / recentOneMonth.length;
-        return avg.toFixed(2);
-      }
-      
-      // 如果一個月內沒有數據，使用所有歷史數據的平均值
-      const avg = psa10OnlyHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / psa10OnlyHistory.length;
+      // 計算最近 10 筆 PSA 10 記錄的平均值
+      const avg = psa10PriceHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / psa10PriceHistory.length;
       return avg.toFixed(2);
     } else {
-      // eBay 邏輯保持不變
+      // eBay 邏輯：使用最近 10 筆記錄
       if (ebayPriceHistory.length > 0) {
-        return (ebayPriceHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / ebayPriceHistory.length).toFixed(2);
+        const recentEbay = ebayPriceHistory.slice(0, 10);
+        return (recentEbay.reduce((sum, p) => sum + parseFloat(p.price), 0) / recentEbay.length).toFixed(2);
       } else if (ebaySoldItems.length > 0) {
-        return (ebaySoldItems.reduce((sum, item) => sum + item.price, 0) / ebaySoldItems.length).toFixed(2);
+        const recentEbay = ebaySoldItems.slice(0, 10);
+        return (recentEbay.reduce((sum, item) => sum + item.price, 0) / recentEbay.length).toFixed(2);
       }
       return "N/A";
     }
@@ -197,17 +196,16 @@ export default function CardDetail() {
   const avgPrice = calculatePSA10ReferencePrice();
 
   // Get record count based on active source - Only PSA 10 for reference price
-  // Show count of records within one month used for price calculation
-  const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  // Show count of records used for price calculation (latest 10 records)
   const recordCount = activeSource === "snkrdunk" 
-    ? psa10OnlyHistory.filter(p => p.soldAt && new Date(p.soldAt) >= oneMonthAgo).length
+    ? psa10PriceHistory.length
     : ebayPriceHistory.length > 0 
-      ? ebayPriceHistory.length
-      : ebaySoldItems.length;
+      ? Math.min(ebayPriceHistory.length, 10)
+      : Math.min(ebaySoldItems.length, 10);
 
   // Calculate price trend (7-day comparison) - Only use SNKRDUNK data
   const calculatePriceTrend = () => {
-    if (activeSource !== "snkrdunk" || psa10OnlyHistory.length < 2) {
+    if (activeSource !== "snkrdunk" || psa10PriceHistory.length < 2) {
       return null;
     }
 
@@ -216,14 +214,14 @@ export default function CardDetail() {
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
     // Get recent 7 days data
-    const recent7Days = psa10OnlyHistory.filter(p => {
+    const recent7Days = psa10PriceHistory.filter(p => {
       if (!p.soldAt) return false;
       const soldDate = new Date(p.soldAt);
       return soldDate >= sevenDaysAgo && soldDate <= now;
     });
 
     // Get previous 7 days data (7-14 days ago)
-    const previous7Days = psa10OnlyHistory.filter(p => {
+    const previous7Days = psa10PriceHistory.filter(p => {
       if (!p.soldAt) return false;
       const soldDate = new Date(p.soldAt);
       return soldDate >= fourteenDaysAgo && soldDate < sevenDaysAgo;
@@ -233,8 +231,8 @@ export default function CardDetail() {
       return null;
     }
 
-    const recentAvg = recent7Days.reduce((sum, p) => sum + parseFloat(p.price), 0) / recent7Days.length;
-    const previousAvg = previous7Days.reduce((sum, p) => sum + parseFloat(p.price), 0) / previous7Days.length;
+    const recentAvg = recent7Days.reduce((sum: number, p: any) => sum + parseFloat(p.price), 0) / recent7Days.length;
+    const previousAvg = previous7Days.reduce((sum: number, p: any) => sum + parseFloat(p.price), 0) / previous7Days.length;
     const changePercent = ((recentAvg - previousAvg) / previousAvg) * 100;
 
     return {
@@ -371,7 +369,9 @@ export default function CardDetail() {
                 )}
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                {t("cardDetail.basedOnRecords", { count: recordCount })}
+                {activeSource === "snkrdunk" 
+                  ? t("cardDetail.basedOnLatestRecords", { count: recordCount })
+                  : t("cardDetail.basedOnRecords", { count: recordCount })}
                 {priceTrend && (
                   <span className="ml-2">· {t("cardDetail.priceTrend")}</span>
                 )}

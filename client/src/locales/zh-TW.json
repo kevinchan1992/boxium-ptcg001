@@ -134,6 +134,7 @@
   "cardDetail": {
     "referencePrice": "參考價格",
     "basedOnRecords": "基於近 1 個月內 PSA 10 交易記錄",
+    "basedOnLatestRecords": "基於最近 {{count}} 筆 PSA 10 成交記錄",
     "priceHistory": "價格歷史",
     "date": "日期",
     "price": "價格",
