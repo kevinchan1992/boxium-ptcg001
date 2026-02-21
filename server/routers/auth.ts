@@ -4,7 +4,7 @@ import { TRPCError } from '@trpc/server';
 import * as db from '../db';
 import { hashPassword, comparePassword, isValidEmail, isValidPassword } from '../auth/utils';
 import { createSession, deleteSession, getUserBySession } from '../auth/session';
-import { handleGoogleCallback, handleFacebookCallback, getGoogleAuthUrl, getFacebookAuthUrl } from '../auth/oauth';
+import { handleGoogleCallback, getGoogleAuthUrl } from '../auth/oauth';
 import { COOKIE_NAME } from '@shared/const';
 
 const SESSION_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -240,46 +240,7 @@ export const authRouter = router({
       }
     }),
 
-  /**
-   * Get Facebook OAuth URL
-   */
-  getFacebookAuthUrl: publicProcedure
-    .input(z.object({
-      redirectUri: z.string().url(),
-      state: z.string().optional(),
-    }))
-    .query(({ input }) => {
-      const url = getFacebookAuthUrl(input.redirectUri, input.state);
-      return { url };
-    }),
 
-  /**
-   * Handle Facebook OAuth callback
-   */
-  facebookCallback: publicProcedure
-    .input(z.object({
-      code: z.string(),
-      redirectUri: z.string().url(),
-    }))
-    .mutation(async ({ input, ctx }) => {
-      try {
-        const { sessionToken, userId } = await handleFacebookCallback(input.code, input.redirectUri);
-
-        // Set session cookie
-        setSessionCookie(ctx.res, sessionToken);
-
-        return {
-          success: true,
-          userId,
-        };
-      } catch (error: any) {
-        console.error('[Auth] Facebook OAuth callback error:', error);
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Failed to authenticate with Facebook',
-        });
-      }
-    }),
 });
 
 /**

@@ -6245,3 +6245,92 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [ ] 測試電郵驗證流程
 - [ ] 測試密碼重置流程
 - [ ] 保存 checkpoint
+
+
+## 緊急修復: OAuth 認證失效問題
+
+### Google OAuth 修復
+- [ ] 檢查 Google OAuth redirect URI 配置
+- [ ] 修復「已封鎖存取權：授權錯誤」問題
+- [ ] 驗證 Google OAuth 流程
+
+### Facebook OAuth 修復
+- [ ] 檢查 Facebook App ID 和 Secret 配置
+- [ ] 修復「應用程式編號無效」問題
+- [ ] 驗證 Facebook OAuth 流程
+
+### 電郵註冊/登入修復
+- [ ] 測試電郵註冊流程
+- [ ] 測試電郵登入流程
+- [ ] 檢查後端 API 錯誤
+
+### 測試與驗證
+- [ ] 測試所有三種登入方法
+- [ ] 保存修復後的 checkpoint
+
+
+## 緊急修復: 重新創建 OAuth 應用
+
+### Google OAuth
+- [x] 切換到 xyz.asia.co@gmail.com 帳號
+- [x] 創建新的 Google Cloud 專案
+- [x] 啟用 Google+ API
+- [x] 創建 OAuth 2.0 用戶端 ID
+- [x] 配置授權重新導向 URI
+- [x] 取得新的 Client ID 和 Client Secret
+
+### Facebook OAuth
+- [ ] 登入 Facebook Developer Console
+- [ ] 創建新的 Facebook 應用
+- [ ] 配置 OAuth 重新導向 URI
+- [ ] 取得新的 App ID 和 App Secret
+
+### 更新系統
+- [ ] 更新環境變數（GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, FACEBOOK_APP_ID, FACEBOOK_APP_SECRET）
+- [ ] 更新前端環境變數（VITE_GOOGLE_CLIENT_ID, VITE_FACEBOOK_APP_ID）
+- [ ] 重啟開發伺服器
+- [ ] 測試所有登入方法
+
+
+## 緊急修復: OAuth 認證失效問題 - 完成
+
+### Google OAuth
+- [x] 重新創建 Google Cloud 專案
+- [x] 創建新的 OAuth 2.0 用戶端 ID
+- [x] 配置授權重新導向 URI
+- [x] 更新系統 Google OAuth 憑證
+- [x] 通過憑證驗證測試
+
+### Facebook OAuth
+- [x] 創建新的 Facebook 應用程式
+- [x] 取得新的 App ID 和 App Secret
+- [x] 更新系統 Facebook OAuth 憑證
+- [x] 通過憑證驗證測試
+
+### 待完成
+- [ ] 配置 Facebook 登入產品的 OAuth 重新導向 URI
+- [ ] 測試完整的 Google 和 Facebook 登入流程
+- [ ] 測試電郵註冊/登入功能
+
+
+## 新需求: 移除 Facebook OAuth - 進行中
+
+### 後端代碼清理
+- [x] 移除 server/auth/oauth.ts 中的 Facebook OAuth 處理函數
+- [x] 移除 server/routers/auth.ts 中的 Facebook OAuth 端點
+- [x] 移除 server/_core/oauth.ts 中的 Facebook OAuth 路由
+- [x] 移除 server/auth/facebook-oauth.test.ts 測試檔案
+
+### 前端代碼清理
+- [x] 移除 Login.tsx 中的 Facebook 登入按鈕
+- [x] 移除 Register.tsx 中的 Facebook 註冊按鈕
+
+### 環境變數清理
+- [ ] 移除 FACEBOOK_APP_ID 環境變數（保留不影響系統運作）
+- [ ] 移除 FACEBOOK_APP_SECRET 環境變數（保留不影響系統運作）
+- [ ] 移除 VITE_FACEBOOK_APP_ID 環境變數（保留不影響系統運作）
+
+### 測試
+- [x] 測試 Google OAuth 登入功能（頁面顯示正常）
+- [x] 測試電郵註冊/登入功能（頁面顯示正常）
+- [x] 確認所有 TypeScript 錯誤已修復
