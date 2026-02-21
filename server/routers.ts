@@ -364,6 +364,25 @@ export const appRouter = router({
           return { rate: 7.8, lastUpdated: new Date() }; // 後備匯率
         }
       }),
+
+    // 圖片搜尋卡牌
+    searchByImage: publicProcedure
+      .input(z.object({
+        image: z.string(), // base64 encoded image
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { searchCardByImage } = await import("./imageCardSearch");
+          const result = await searchCardByImage(input.image);
+          return result;
+        } catch (error: any) {
+          console.error("[Image Search] Error:", error.message);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to search by image: ${error.message}`,
+          });
+        }
+      }),
   }),
 
   prices: router({

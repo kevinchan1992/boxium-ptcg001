@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Camera, Upload, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
+import { TypeAnimation } from 'react-type-animation';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 // import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
 
@@ -11,6 +15,12 @@ export default function Home() {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch trending cards (top 5 based on PSA10 price increase)
   const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery(
@@ -34,6 +44,64 @@ export default function Home() {
 
   const handleCardClick = (cardId: number) => {
     setLocation(`/card/${cardId}`);
+  };
+
+  const handleCameraClick = () => {
+    setShowImageDialog(true);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const imageSearchMutation = trpc.cards.searchByImage.useMutation();
+
+  const handleImageSearch = async () => {
+    if (!selectedImage) {
+      toast.error(t('research.pleaseSelectImage'));
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      // Convert image to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string;
+        
+        // Call image search API
+        const result = await imageSearchMutation.mutateAsync({ image: base64Image });
+        
+        if (result.success && result.cardName) {
+          toast.success(t('research.imageSearchSuccess', { cardName: result.cardName }));
+          setShowImageDialog(false);
+          setSearchQuery(result.cardName);
+          setLocation(`/search?q=${encodeURIComponent(result.cardName)}`);
+        } else {
+          toast.error(t('research.imageSearchFailed'));
+        }
+      };
+      reader.readAsDataURL(selectedImage);
+    } catch (error) {
+      console.error('Image search error:', error);
+      toast.error(t('research.imageSearchError'));
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setShowImageDialog(false);
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   // Generate WebSite with SearchAction structured data for SEO
@@ -83,11 +151,50 @@ export default function Home() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder={t("research.searchPlaceholder")}
+              placeholder=""
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
+              className="w-full pl-12 pr-16 py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
             />
+            {/* Typing Animation Placeholder */}
+            {!searchQuery && (
+              <div className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                <TypeAnimation
+                  sequence={[
+                    'Pikachu',
+                    2000,
+                    'ピカチュウ',
+                    2000,
+                    '皮卡丘',
+                    2000,
+                    'Charizard',
+                    2000,
+                    'リザードン',
+                    2000,
+                    '噴火龍',
+                    2000,
+                    'Mewtwo',
+                    2000,
+                    'ミュウツー',
+                    2000,
+                    '超夢',
+                    2000,
+                  ]}
+                  wrapper="span"
+                  speed={50}
+                  repeat={Infinity}
+                />
+              </div>
+            )}
+            {/* Camera Button */}
+            <button
+              type="button"
+              onClick={handleCameraClick}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              title={t('research.imageSearch')}
+            >
+              <Camera className="w-5 h-5" />
+            </button>
           </div>
         </form>
 
@@ -115,6 +222,94 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Image Upload Dialog */}
+      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('research.imageSearchTitle')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="relative">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-64 object-contain rounded-lg bg-muted"
+                />
+                <button
+                  onClick={() => {
+                    setSelectedImage(null);
+                    setImagePreview(null);
+                  }}
+                  className="absolute top-2 right-2 p-1 bg-background/80 rounded-full hover:bg-background"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Upload Buttons */}
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                variant="outline"
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={isSearching}
+                className="w-full"
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                {t('research.takePhoto')}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isSearching}
+                className="w-full"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {t('research.uploadImage')}
+              </Button>
+            </div>
+
+            {/* Hidden File Inputs */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            {/* Search Button */}
+            <Button
+              onClick={handleImageSearch}
+              disabled={!selectedImage || isSearching}
+              className="w-full"
+            >
+              {isSearching ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {t('research.searching')}
+                </>
+              ) : (
+                <>
+                  <Search className="w-4 h-4 mr-2" />
+                  {t('research.searchButton')}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
     </>
   );

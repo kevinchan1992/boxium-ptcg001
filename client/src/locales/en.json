@@ -27,7 +27,17 @@
     "title": "Card Search",
     "searchPlaceholder": "Enter card name, number or series to search...",
     "loading": "Loading...",
-    "noResults": "No search results"
+    "noResults": "No search results",
+    "imageSearch": "Image Search",
+    "imageSearchTitle": "Search by Image",
+    "takePhoto": "Take Photo",
+    "uploadImage": "Upload Image",
+    "searchButton": "Search",
+    "searching": "Searching...",
+    "pleaseSelectImage": "Please select an image",
+    "imageSearchSuccess": "Identified: {{cardName}}",
+    "imageSearchFailed": "Unable to identify card, please try another image",
+    "imageSearchError": "Image search failed, please try again later"
   },
   "common": {
     "home": "Home",

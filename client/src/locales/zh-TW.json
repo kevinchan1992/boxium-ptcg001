@@ -27,7 +27,17 @@
     "title": "卡牌搜尋",
     "searchPlaceholder": "輸入卡牌名稱、編號或系列進行搜尋...",
     "loading": "載入中...",
-    "noResults": "無搜尋結果"
+    "noResults": "無搜尋結果",
+    "imageSearch": "圖片搜尋",
+    "imageSearchTitle": "以圖搜圖",
+    "takePhoto": "拍照",
+    "uploadImage": "上傳圖片",
+    "searchButton": "搜尋",
+    "searching": "搜尋中...",
+    "pleaseSelectImage": "請選擇一張圖片",
+    "imageSearchSuccess": "識別成功：{{cardName}}",
+    "imageSearchFailed": "無法識別卡牌，請嘗試其他圖片",
+    "imageSearchError": "圖片搜尋失敗，請稍後再試"
   },
   "common": {
     "home": "主頁",
