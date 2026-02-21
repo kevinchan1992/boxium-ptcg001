@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `notifications` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `type` enum('price_alert','system','trade','announcement') NOT NULL,\n  `title` text NOT NULL,\n  `content` text NOT NULL,\n  `priority` enum('low','medium','high') NOT NULL DEFAULT 'medium',\n  `isRead` boolean NOT NULL DEFAULT false,\n  `relatedCardId` int,\n  `relatedUrl` text,\n  `metadata` text,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `readAt` timestamp,\n  CONSTRAINT `notifications_id` PRIMARY KEY(`id`),\n  INDEX `userId_idx` (`userId`),\n  INDEX `isRead_idx` (`isRead`),\n  INDEX `createdAt_idx` (`createdAt`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS `notifications` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `userId` int NOT NULL,\n  `type` enum('price_alert','system','trade','announcement') NOT NULL,\n  `title` text NOT NULL,\n  `content` text NOT NULL,\n  `priority` enum('low','medium','high') NOT NULL DEFAULT 'medium',\n  `isRead` boolean NOT NULL DEFAULT false,\n  `relatedCardId` int,\n  `relatedUrl` text,\n  `metadata` text,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `readAt` timestamp,\n  CONSTRAINT `notifications_id` PRIMARY KEY(`id`),\n  INDEX `userId_idx` (`userId`),\n  INDEX `isRead_idx` (`isRead`),\n  INDEX `createdAt_idx` (`createdAt`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1817
+}

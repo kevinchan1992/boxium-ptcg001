@@ -17,6 +17,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 export function TopNav() {
   const { t } = useTranslation();
@@ -35,9 +36,7 @@ export function TopNav() {
     },
   });
 
-  // 獲取未讀通知數量（如果用戶已登入）
-  // TODO: 實作 notifications API
-  const unreadCount = 0;
+  // Notification center is now handled by NotificationCenter component
 
   const loginUrl = getLoginUrl();
 
@@ -163,22 +162,8 @@ export function TopNav() {
                 <LanguageSwitcher />
               </div>
 
-              {/* 通知圖標（僅登入用戶顯示） */}
-              {user && (
-                <Link href="/notifications">
-                  <a className="relative hover:text-[#ffed00] transition-colors text-white">
-                    <Bell className="w-5 h-5" />
-                    {unreadCount > 0 && (
-                      <Badge
-                        variant="destructive"
-                        className="absolute -top-2 -right-2 px-1.5 py-0.5 text-xs min-w-[20px] h-5 flex items-center justify-center"
-                      >
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </Badge>
-                    )}
-                  </a>
-                </Link>
-              )}
+              {/* Notification Center（僅登入用戶顯示） */}
+              {user && <NotificationCenter />}
 
               {/* Loading State */}
               {isLoading && (

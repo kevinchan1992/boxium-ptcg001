@@ -48,6 +48,25 @@
     "searchDirect": "直接搜尋",
     "searchWithCrop": "裁剪後搜尋"
   },
+  "notifications": {
+    "title": "通知中心",
+    "all": "全部",
+    "unread": "未讀",
+    "markAsRead": "標記已讀",
+    "markAllAsRead": "全部標記已讀",
+    "delete": "刪除",
+    "deleteAllRead": "刪除已讀",
+    "noNotifications": "無通知",
+    "noUnreadNotifications": "無未讀通知",
+    "markAsReadSuccess": "已標記為已讀",
+    "markAsReadError": "標記失敗",
+    "markAllAsReadSuccess": "已全部標記為已讀",
+    "markAllAsReadError": "全部標記失敗",
+    "deleteSuccess": "刪除成功",
+    "deleteError": "刪除失敗",
+    "deleteAllReadSuccess": "已刪除所有已讀通知",
+    "deleteAllReadError": "刪除失敗"
+  },
   "common": {
     "home": "主頁",
     "research": "卡牌搜尋",
@@ -64,7 +83,9 @@
     "trending": "熱門排行榜",
     "about": "關於我們",
     "blog": "最新消息",
-    "back": "返回"
+    "back": "返回",
+    "close": "關閉",
+    "loading": "載入中..."
   },
   "nav": {
     "login": "登入/註冊",

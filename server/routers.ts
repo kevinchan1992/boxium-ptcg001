@@ -20,6 +20,7 @@ import { executeEbayBatchUpdate, executeSnkrdunkBatchUpdate } from "./batchUpdat
 import { restartScheduler } from "./batchUpdateScheduler";
 import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
 import { pricingRouter } from "./routers/pricing";
+import { notificationsRouter } from "./routers/notifications";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1850,6 +1851,8 @@ try {
   }),
 
   // Favorites router
+  notifications: notificationsRouter,
+
   favorites: router({
     // Get user's favorites
     list: protectedProcedure

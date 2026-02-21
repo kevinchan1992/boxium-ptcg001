@@ -394,3 +394,30 @@ export const trendingCardsCache = mysqlTable("trendingCardsCache", {
 
 export type TrendingCardsCache = typeof trendingCardsCache.$inferSelect;
 export type InsertTrendingCardsCache = typeof trendingCardsCache.$inferInsert;
+
+/**
+ * Notifications table - stores user notifications
+ */
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
+  type: mysqlEnum("type", ["price_alert", "system", "trade", "announcement"]).notNull(), // Notification type
+  title: text("title").notNull(), // Notification title
+  content: text("content").notNull(), // Notification content
+  priority: mysqlEnum("priority", ["low", "medium", "high"]).default("medium").notNull(), // Notification priority
+  isRead: boolean("isRead").default(false).notNull(), // Whether notification has been read
+  relatedCardId: int("relatedCardId"), // Optional: related card ID for price alerts
+  relatedUrl: text("relatedUrl"), // Optional: URL to navigate when clicked
+  metadata: text("metadata"), // Optional: JSON metadata (e.g., old price, new price)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  readAt: timestamp("readAt"), // When notification was read
+}, (table) => {
+  return {
+    userIdIdx: index("userId_idx").on(table.userId),
+    isReadIdx: index("isRead_idx").on(table.isRead),
+    createdAtIdx: index("createdAt_idx").on(table.createdAt),
+  };
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
