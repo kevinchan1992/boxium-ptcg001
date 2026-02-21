@@ -280,21 +280,7 @@ export function TopNav() {
                 </Link>
               ))}
               
-              {/* 登入用戶顯示我的收藏 */}
-              {user && (
-                <Link
-                  href="/favorites"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block px-6 py-3 text-base font-medium transition-all flex items-center gap-2 ${
-                    isActive("/favorites")
-                      ? "text-[#ffed00] bg-white/10 border-l-4 border-[#ffed00]"
-                      : "text-white/80 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <Heart className="w-4 h-4" />
-                  {t("nav.favorites")}
-                </Link>
-              )}
+
 
               {/* 管理員顯示 */}
               {user?.role === "admin" && (
