@@ -342,7 +342,7 @@ export default function Home() {
                   className="w-full h-12"
                 >
                   <Camera className="w-5 h-5 mr-2" />
-                  {t('research.takePhoto')}
+                  拍攝照片
                 </Button>
                 <Button
                   variant="outline"
