@@ -20,11 +20,12 @@ export default function BlogPost() {
   // Currency state
   const [currency, setCurrency] = useState<'HKD' | 'USD' | 'JPY'>('HKD');
   
-  // Exchange rates (you can fetch these from an API in production)
+  // Exchange rates (base: HKD)
   const exchangeRates = {
-    HKD: 1,
-    USD: 0.128, // 1 HKD = 0.128 USD
-    JPY: 18.5,  // 1 HKD = 18.5 JPY
+    HKD: { HKD: 1, USD: 0.128, JPY: 18.5 },
+    TWD: { HKD: 0.25, USD: 0.032, JPY: 4.6 },  // 1 TWD = 0.25 HKD
+    USD: { HKD: 7.8, USD: 1, JPY: 144.5 },
+    JPY: { HKD: 0.054, USD: 0.0069, JPY: 1 },
   };
 
   // Query post by slug
@@ -51,20 +52,42 @@ export default function BlogPost() {
   
   // Currency conversion function
   const convertCurrency = (text: string): string => {
-    if (currency === 'HKD') return text;
+    // Define currency patterns and their standard codes
+    const currencyPatterns = [
+      { regex: /HKD\s?([\d,]+\.?\d*)/gi, code: 'HKD' as const },
+      { regex: /NT\$\s?([\d,]+\.?\d*)/gi, code: 'TWD' as const },
+      { regex: /TWD\s?([\d,]+\.?\d*)/gi, code: 'TWD' as const },
+      { regex: /USD\s?([\d,]+\.?\d*)/gi, code: 'USD' as const },
+      { regex: /\$\s?([\d,]+\.?\d*)/gi, code: 'USD' as const },
+      { regex: /JPY\s?([\d,]+\.?\d*)/gi, code: 'JPY' as const },
+      { regex: /¥\s?([\d,]+\.?\d*)/gi, code: 'JPY' as const },
+    ];
     
-    // Match HKD prices in various formats: HKD 1,234.56 or HKD1,234.56 or HKD 1234.56
-    const priceRegex = /HKD\s?([\d,]+\.?\d*)/gi;
+    let result = text;
     
-    return text.replace(priceRegex, (match, priceStr) => {
-      const price = parseFloat(priceStr.replace(/,/g, ''));
-      const convertedPrice = price * exchangeRates[currency];
-      const formattedPrice = convertedPrice.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+    // Process each currency pattern
+    for (const pattern of currencyPatterns) {
+      result = result.replace(pattern.regex, (match, priceStr) => {
+        const price = parseFloat(priceStr.replace(/,/g, ''));
+        const rate = exchangeRates[pattern.code][currency];
+        const convertedPrice = price * rate;
+        const formattedPrice = convertedPrice.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        
+        // Return formatted price with target currency symbol
+        if (currency === 'JPY') {
+          return `¥${formattedPrice}`;
+        } else if (currency === 'USD') {
+          return `$${formattedPrice}`;
+        } else {
+          return `${currency} ${formattedPrice}`;
+        }
       });
-      return `${currency} ${formattedPrice}`;
-    });
+    }
+    
+    return result;
   };
   
   // Get converted content
