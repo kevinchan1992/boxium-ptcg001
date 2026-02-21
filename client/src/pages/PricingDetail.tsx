@@ -199,7 +199,7 @@ export default function PricingDetail() {
           <span className="ml-2 text-sm text-muted-foreground">{t("pricing.loadingListings")}</span>
         </div>
       ) : pricingData && pricingData.listings.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
           {pricingData.listings.map((item: PricingItem) => (
             <div
               key={item.id}
@@ -235,26 +235,26 @@ export default function PricingDetail() {
               </div>
 
               {/* Item Info */}
-              <div className="p-4">
-                <h3 className="font-semibold text-foreground text-sm mb-2 line-clamp-2 min-h-[2.5rem]">
+              <div className="p-2 sm:p-3 md:p-4">
+                <h3 className="font-semibold text-foreground text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
                   {item.title}
                 </h3>
                 
                 {/* Price */}
-                <p className="text-2xl font-bold text-primary mb-2">
+                <p className="text-sm sm:text-lg md:text-xl font-bold text-primary mb-1 sm:mb-2">
                   {item.currency === "USD" ? `$${item.price.toFixed(2)}` : formatCurrency(item.price)}
                 </p>
 
                 {/* Seller Info */}
                 {item.seller && (
-                  <p className="text-xs text-muted-foreground mb-1">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1 line-clamp-1">
                     {t("pricing.seller")}: {item.seller}
                   </p>
                 )}
 
                 {/* Condition */}
                 {item.condition && (
-                  <p className="text-xs text-muted-foreground mb-3">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-1 sm:mb-3">
                     {t("pricing.condition")}: {item.condition}
                   </p>
                 )}
@@ -262,11 +262,12 @@ export default function PricingDetail() {
                 {/* Buy Button */}
                 <BrandButton
                   size="sm"
-                  className="w-full"
+                  className="w-full text-[10px] sm:text-xs md:text-sm px-1 sm:px-2 py-1 sm:py-1.5 h-auto"
                   onClick={() => window.open(item.buyUrl, "_blank")}
                 >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  {t("pricing.buyNow")}
+                  <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">{t("pricing.buyNow")}</span>
+                  <span className="sm:hidden">{t("pricing.buy")}</span>
                 </BrandButton>
               </div>
             </div>
