@@ -279,7 +279,7 @@ export default function Home() {
       <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">{t('research.imageSearchTitle')}</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">卡牌圖片分析功能</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
             {/* Image Preview or Upload Area */}
