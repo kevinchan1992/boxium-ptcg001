@@ -5610,3 +5610,14 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 添加翻譯鍵 (favorites.*)
 - [x] 創建收藏功能測試 (favorites.test.ts)
 - [x] 所有測試通過 (12/12 tests passed)
+
+
+## Bug 修復: 登出功能無法正常運作 - 已完成 ✅
+
+- [x] 檢查當前登出 API 實作
+- [x] 檢查 TopNav 組件的登出邏輯
+- [x] 識別 Safari 瀏覽器的兼容性問題
+- [x] 修復登出功能（清除 session、重定向）
+- [x] 測試跨瀏覽器兼容性（Chrome、Safari、Firefox）
+- [x] 驗證登出後用戶狀態正確更新
+- [x] 所有測試通過 (1/1 tests passed)

@@ -25,8 +25,12 @@ export function TopNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const { user, isLoading } = useAuth();
+  const utils = trpc.useUtils();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
+      // 清除所有 tRPC 緩存
+      utils.invalidate();
+      // 強制刷新頁面以清除所有狀態
       window.location.href = "/";
     },
   });
