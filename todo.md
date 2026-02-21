@@ -6115,6 +6115,13 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 
 ## 後端認證系統實施 - 進行中
 
+### 移除 Manus OAuth
+- [ ] 移除 server/_core/oauth.ts 中的 Manus OAuth 代碼
+- [ ] 移除 server/_core/context.ts 中的 Manus OAuth 代碼
+- [ ] 修改 server/db.ts 移除 openId 相關代碼
+- [ ] 修改 server/routers.ts 移除 Manus OAuth 相關的 auth 端點
+- [ ] 修復所有 TypeScript 錯誤
+
 ### 數據庫 Schema
 - [x] 創建 oauth_accounts 表（存儲 OAuth 帳號關聯）
 - [x] 創建 sessions 表（存儲用戶會話）
@@ -6169,3 +6176,22 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 更新認證系統設計文檔中的所有網域
 - [x] 更新 Google OAuth 回調 URL
 - [x] 更新 Facebook OAuth 回調 URL
+
+
+## 新功能: 獨立認證系統 - 完成
+
+### 移除 Manus OAuth 並實施獨立認證
+- [x] 創建認證核心邏輯（密碼加密、JWT、Session 管理）
+- [x] 創建 OAuth 處理（Google、Facebook）
+- [x] 添加數據庫函數（sessions、oauthAccounts）
+- [x] 創建 tRPC 認證 API（register, login, logout, me, OAuth）
+- [x] 修改 server/_core/context.ts 使用新認證系統
+- [x] 重寫 server/_core/oauth.ts 為新的 OAuth 回調
+- [x] 移除 server/db.ts 中的 Manus OAuth 函數
+- [x] 移除 server/_core/sdk.ts 中的 authenticateRequest 方法
+- [x] 創建前端登入頁面（支援電郵和 OAuth）
+- [x] 創建前端註冊頁面（支援電郵和 OAuth）
+- [x] 添加路由配置
+- [x] 設置環境變數（Facebook OAuth 憑證）
+- [x] 編寫並通過單元測試（8 個測試全部通過）
+- [x] 所有 TypeScript 錯誤已修復

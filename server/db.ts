@@ -1,6 +1,6 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache } from "../drizzle/schema";;
+import { InsertUser, users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, favorites, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, sessions, InsertSession, oauthAccounts, InsertOAuthAccount } from "../drizzle/schema";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -76,79 +76,7 @@ export async function updateUserLastSignedIn(userId: number) {
   await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, userId));
 }
 
-/**
- * Upsert user (for OAuth flow)
- */
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
 
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
-  }
-
-  try {
-    const values: Partial<InsertUser> = { openId: user.openId };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email"] as const;
-    type TextField = (typeof textFields)[number];
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      (values as any)[field] = normalized;
-      updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
-
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values as InsertUser).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
-  } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
-  }
-}
-
-/**
- * Get user by openId (for OAuth flow)
- */
-export async function getUserByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
-
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
-}
 
 /**
  * Get all users (for admin panel)
@@ -2348,4 +2276,122 @@ export async function getAllFilteredDataSourceIds(options?: { search?: string; s
     console.error("[Database] Failed to get filtered data source IDs:", error);
     return [];
   }
+}
+
+// ============= Session Management (for new auth system) =============
+
+/**
+ * Create a new session
+ */
+export async function createSession(session: InsertSession): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.insert(sessions).values(session);
+  return Number(result[0].insertId);
+}
+
+/**
+ * Get session by token
+ */
+export async function getSessionByToken(token: string) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db.select().from(sessions).where(eq(sessions.token, token)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Delete a session by ID
+ */
+export async function deleteSession(sessionId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    return;
+  }
+
+  await db.delete(sessions).where(eq(sessions.id, sessionId));
+}
+
+/**
+ * Delete all sessions for a user
+ */
+export async function deleteAllUserSessions(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    return;
+  }
+
+  await db.delete(sessions).where(eq(sessions.userId, userId));
+}
+
+/**
+ * Delete expired sessions
+ */
+export async function deleteExpiredSessions(): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    return;
+  }
+
+  await db.delete(sessions).where(lte(sessions.expiresAt, new Date()));
+}
+
+// ============= OAuth Accounts Management (for new auth system) =============
+
+/**
+ * Create or update OAuth account
+ */
+export async function upsertOAuthAccount(account: InsertOAuthAccount): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.insert(oauthAccounts).values(account).onDuplicateKeyUpdate({
+    set: {
+      accessToken: account.accessToken,
+      refreshToken: account.refreshToken,
+      expiresAt: account.expiresAt,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * Get OAuth account by provider and provider account ID
+ */
+export async function getOAuthAccount(provider: 'google' | 'facebook', providerAccountId: string) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+
+  const result = await db
+    .select()
+    .from(oauthAccounts)
+    .where(and(
+      eq(oauthAccounts.provider, provider),
+      eq(oauthAccounts.providerAccountId, providerAccountId)
+    ))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Get all OAuth accounts for a user
+ */
+export async function getUserOAuthAccounts(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  return db.select().from(oauthAccounts).where(eq(oauthAccounts.userId, userId));
 }

@@ -23,28 +23,13 @@ import { pricingRouter } from "./routers/pricing";
 import { notificationsRouter } from "./routers/notifications";
 import { articleGenerationRouter } from "./routers/articleGeneration";
 import { templatesRouter } from "./routers/templates";
+import { authRouter } from "./routers/auth";
 
 export const appRouter = router({
   system: systemRouter,
   
-  // Auth router
-  auth: router({
-    me: publicProcedure.query(async ({ ctx }) => {
-      return ctx.user || null;
-    }),
-    
-    logout: publicProcedure.mutation(async ({ ctx }) => {
-      // Clear session cookie with multiple strategies for browser compatibility
-      const cookieOptions = [
-        // Strategy 1: Standard cookie deletion with Max-Age=0
-        `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`,
-        // Strategy 2: Set expiration to past date (for Safari compatibility)
-        `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
-      ];
-      ctx.res.setHeader("Set-Cookie", cookieOptions);
-      return { success: true };
-    }),
-  }),
+  // Auth router (new independent auth system)
+  auth: authRouter,
 
   pricing: pricingRouter,
 

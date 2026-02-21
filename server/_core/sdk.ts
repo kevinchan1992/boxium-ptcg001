@@ -256,55 +256,7 @@ class SDKServer {
     } as GetUserInfoWithJwtResponse;
   }
 
-  async authenticateRequest(req: Request): Promise<User> {
-    const cookies = this.parseCookies(req.headers.cookie);
-    const signedInAt = new Date();
-
-    console.log("[Auth] authenticateRequest called");
-    console.log("[Auth] Cookie header:", req.headers.cookie ? "present" : "missing");
-    console.log("[Auth] Parsed cookies:", Array.from(cookies.keys()));
-
-    // OAuth authentication only
-    const sessionCookie = cookies.get(COOKIE_NAME);
-    const session = await this.verifySession(sessionCookie);
-
-    if (!session) {
-      throw ForbiddenError("No valid authentication found");
-    }
-
-    const sessionUserId = session.openId;
-    let user = await db.getUserByOpenId(sessionUserId);
-
-    // If user not in DB, sync from OAuth server automatically
-    if (!user) {
-      try {
-        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
-        await db.upsertUser({
-          openId: userInfo.openId,
-          name: userInfo.name || null,
-          email: userInfo.email ?? "",
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-          lastSignedIn: signedInAt,
-        } as any);
-        user = await db.getUserByOpenId(userInfo.openId);
-      } catch (error) {
-        console.error("[Auth] Failed to sync user from OAuth:", error);
-        throw ForbiddenError("Failed to sync user info");
-      }
-    }
-
-    if (!user) {
-      throw ForbiddenError("User not found");
-    }
-
-    await db.upsertUser({
-      openId: user.openId,
-      email: user.email,
-      lastSignedIn: signedInAt,
-    } as any);
-
-    return user;
-  }
+  // authenticateRequest method removed - now using new auth system in context.ts
 }
 
 export const sdk = new SDKServer();
