@@ -1849,39 +1849,39 @@ try {
   // Favorites router
   favorites: router({
     // Get user's favorites
-    list: publicProcedure
+    list: protectedProcedure
       .query(async ({ ctx }) => {
-        const favorites = await db.getUserFavorites(ctx.user?.id || 0);
+        const favorites = await db.getUserFavorites(ctx.user.id);
         return favorites;
       }),
 
     // Add to favorites
-    add: publicProcedure
+    add: protectedProcedure
       .input(z.object({
         cardId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const result = await db.addToFavorites(ctx.user?.id || 0, input.cardId);
+        const result = await db.addToFavorites(ctx.user.id, input.cardId);
         return { success: true, result };
       }),
 
     // Remove from favorites
-    remove: publicProcedure
+    remove: protectedProcedure
       .input(z.object({
         cardId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const result = await db.removeFromFavorites(ctx.user?.id || 0, input.cardId);
+        const result = await db.removeFromFavorites(ctx.user.id, input.cardId);
         return { success: true, result };
       }),
 
     // Check if card is favorited
-    isFavorited: publicProcedure
+    isFavorited: protectedProcedure
       .input(z.object({
         cardId: z.number(),
       }))
       .query(async ({ ctx, input }) => {
-        const isFavorited = await db.isCardFavorited(ctx.user?.id || 0, input.cardId);
+        const isFavorited = await db.isCardFavorited(ctx.user.id, input.cardId);
         return { isFavorited };
       }),
   }),

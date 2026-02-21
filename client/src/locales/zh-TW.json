@@ -68,6 +68,20 @@
     "admin": "管理後台",
     "user": "用戶"
   },
+  "favorites": {
+    "title": "我的收藏",
+    "items": "項目",
+    "empty": "尚無收藏",
+    "emptyDescription": "開始收藏您喜愛的卡牌，方便日後快速查看",
+    "startBrowsing": "開始瀏覽",
+    "favorite": "收藏",
+    "unfavorite": "取消收藏",
+    "added": "已加入收藏",
+    "removed": "已移除收藏",
+    "addError": "加入收藏失敗",
+    "removeError": "移除收藏失敗",
+    "confirmRemove": "確定要移除此收藏嗎？"
+  },
   "home": {
     "welcome": "歡迎來到 Boxium ~ 遊戲迷專屬世界",
     "description": "整合全球市場數據，為Pokémon TCG愛好者和收藏家提供即時、準確的卡牌價格資訊。追蹤卡牌的價格趨勢，做出明智的投資決策。",

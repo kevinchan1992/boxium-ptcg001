@@ -20,8 +20,10 @@ import Disclaimer from "./pages/Disclaimer";
 import About from "./pages/About";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Favorites from "./pages/Favorites";
 import { TopNav } from "./components/TopNav";
 import { AdminRoute } from "./components/AdminRoute";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 
 
@@ -48,8 +50,11 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
 
-
-
+      <Route path="/favorites">
+        <ProtectedRoute>
+          <Favorites />
+        </ProtectedRoute>
+      </Route>
 
       <Route path="/admin">
         <AdminRoute>

@@ -5598,3 +5598,15 @@ useEffect 的依賴項和調整邏輯有問題，導致時間範圍不會回退�
 - [x] 更新 App.tsx 添加路由保護
 - [x] 創建權限控制測試 (auth.oauth.test.ts)
 - [x] 所有測試通過 (8/8 tests passed)
+
+
+### 階段三: 收藏功能 - 已完成 ✅
+- [x] 後端 API 已存在 (favorites.add, favorites.remove, favorites.isFavorited, favorites.list)
+- [x] 修改 favorites router 使用 protectedProcedure
+- [x] 創建 FavoriteButton 組件
+- [x] 創建 Favorites 頁面
+- [x] 添加 /favorites 路由並使用 ProtectedRoute 保護
+- [x] CardDetail 頁面已有收藏按鈕
+- [x] 添加翻譯鍵 (favorites.*)
+- [x] 創建收藏功能測試 (favorites.test.ts)
+- [x] 所有測試通過 (12/12 tests passed)
