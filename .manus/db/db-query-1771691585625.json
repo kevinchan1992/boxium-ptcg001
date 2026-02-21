@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO users (email, passwordHash, name, emailVerified, role, createdAt, updatedAt) \nVALUES ('xyz.asia.co@gmail.com', '$2b$10$0gf0U/IdhK/RWu4ip9Y/2OXsKem5ju6l0tg2LRTsci9duK7RNi352', 'Admin', true, 'admin', NOW(), NOW())\nON DUPLICATE KEY UPDATE \n  passwordHash = '$2b$10$0gf0U/IdhK/RWu4ip9Y/2OXsKem5ju6l0tg2LRTsci9duK7RNi352',\n  role = 'admin',\n  emailVerified = true,\n  updatedAt = NOW();",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute INSERT INTO users (email, passwordHash, name, emailVerified, role, createdAt, updatedAt) \nVALUES ('xyz.asia.co@gmail.com', '$2b$10$0gf0U/IdhK/RWu4ip9Y/2OXsKem5ju6l0tg2LRTsci9duK7RNi352', 'Admin', true, 'admin', NOW(), NOW())\nON DUPLICATE KEY UPDATE \n  passwordHash = '$2b$10$0gf0U/IdhK/RWu4ip9Y/2OXsKem5ju6l0tg2LRTsci9duK7RNi352',\n  role = 'admin',\n  emailVerified = true,\n  updatedAt = NOW();",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1623
+}

@@ -18,7 +18,8 @@ export default function Login() {
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: () => {
       toast.success('登入成功！歡迎回來！');
-      setLocation('/research');
+      // Redirect to home page and force reload to update user state
+      window.location.href = '/';
     },
     onError: (error) => {
       toast.error(`登入失敗：${error.message}`);
@@ -39,7 +40,7 @@ export default function Login() {
 
   const handleGoogleLogin = () => {
     const redirectUri = `${window.location.origin}/api/oauth/google/callback`;
-    const state = encodeURIComponent('/research');
+    const state = encodeURIComponent('/');
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${import.meta.env.VITE_GOOGLE_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=consent&state=${state}`;
   };
 
