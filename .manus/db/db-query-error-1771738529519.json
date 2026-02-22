@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE `users` ADD `openId` varchar(64) NOT NULL DEFAULT ''; ALTER TABLE `users` ADD `loginMethod` varchar(64); ALTER TABLE `users` ADD CONSTRAINT `users_openId_unique` UNIQUE(`openId`); ALTER TABLE `users` DROP COLUMN `passwordHash`; ALTER TABLE `users` DROP COLUMN `avatar`; ALTER TABLE `users` DROP COLUMN `emailVerified`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute ALTER TABLE `users` ADD `openId` varchar(64) NOT NULL DEFAULT ''; ALTER TABLE `users` ADD `loginMethod` varchar(64); ALTER TABLE `users` ADD CONSTRAINT `users_openId_unique` UNIQUE(`openId`); ALTER TABLE `users` DROP COLUMN `passwordHash`; ALTER TABLE `users` DROP COLUMN `avatar`; ALTER TABLE `users` DROP COLUMN `emailVerified`;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1062 (23000) at line 1: Duplicate entry '?' for key 'users.users_openId_unique'"
+  ]
+}
