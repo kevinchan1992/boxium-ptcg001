@@ -30,12 +30,19 @@ function createOAuth2Client(origin: string) {
 router.get("/google", (req: Request, res: Response) => {
   // Get origin from request
   const origin = req.query.origin as string || `${req.protocol}://${req.get('host')}`;
+  console.log('[Google OAuth] Initiating OAuth flow');
+  console.log('[Google OAuth] Origin from query:', req.query.origin);
+  console.log('[Google OAuth] Fallback origin:', `${req.protocol}://${req.get('host')}`);
+  console.log('[Google OAuth] Final origin:', origin);
   const oauth2Client = createOAuth2Client(origin);
   
   if (!oauth2Client) {
     return res.status(500).json({ error: 'Google OAuth not configured' });
   }
 
+  const redirectUri = `${origin}/api/auth/google/callback`;
+  console.log('[Google OAuth] Redirect URI:', redirectUri);
+  
   const authorizeUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: [

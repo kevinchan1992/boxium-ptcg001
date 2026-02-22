@@ -436,3 +436,46 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [x] 修復 email 驗證錯誤（添加 .trim().toLowerCase()）
 - [ ] 測試登入狀態持久化（等待用戶測試）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🐛 排查 Google OAuth 登入失敗問題
+
+### 問題描述
+用戶點擊「使用 Google 登入」後出現「錯誤 400：redirect_uri_mismatch」，Google 收到的 redirect_uri 是 `https://forge.manus.ai/api/auth/google/callback`，但應該是應用的實際域名。
+
+### 根本原因
+後端 googleOAuth.ts 中的 redirect_uri 仍然使用環境變量 `VITE_FRONTEND_FORGE_API_URL`（指向 forge.manus.ai），而不是動態獲取請求的 origin。
+
+### 任務清單
+- [x] 檢查 googleOAuth.ts 中的 redirect_uri 構建邏輯（代碼正確）
+- [x] 添加調試日誌到 googleOAuth.ts
+- [x] 修復 cookie domain 設置（取消註釋 domain 邏輯）
+- [x] 修復 cookie secure 設置（根據 HTTPS 動態設置）
+- [ ] 測試 Google OAuth 完整流程（等待用戶測試）
+- [ ] 測試登入狀態持久化（等待用戶測試）
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🔧 移除 Manus OAuth，使用平台自己的認證系統
+
+### 問題描述
+平台目前有兩層認證：
+1. Manus OAuth（必須先登入 Manus 才能訪問應用）
+2. 平台自己的認證系統（帳號密碼 + Google OAuth）
+
+這導致用戶體驗不佳，需要先登入 Manus，然後再登入平台。
+
+### 解決方案
+移除 Manus OAuth，讓平台只使用自己的認證系統（帳號密碼 + Google OAuth）。
+
+### 任務清單
+- [x] 檢查 Manus OAuth 實現（sdk.authenticateRequest 已被禁用）
+- [x] 創建新的 session 驗證函數（authenticateSession.ts）
+- [x] 更新 context.ts，使用平台自己的 session 驗證
+- [ ] 測試註冊和登入功能（等待用戶測試）
+- [ ] 測試 Google OAuth 功能（等待用戶測試）
+- [ ] 保存 checkpoint

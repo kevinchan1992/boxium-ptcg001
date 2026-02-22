@@ -24,20 +24,17 @@ function isSecureRequest(req: Request) {
 export function getSessionCookieOptions(
   req: Request
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
-  // const hostname = req.hostname;
-  // const shouldSetDomain =
-  //   hostname &&
-  //   !LOCAL_HOSTS.has(hostname) &&
-  //   !isIpAddress(hostname) &&
-  //   hostname !== "127.0.0.1" &&
-  //   hostname !== "::1";
+  const hostname = req.hostname;
+  
+  // Don't set domain for localhost or IP addresses
+  const shouldSetDomain =
+    hostname &&
+    !LOCAL_HOSTS.has(hostname) &&
+    !isIpAddress(hostname);
 
-  // const domain =
-  //   shouldSetDomain && !hostname.startsWith(".")
-  //     ? `.${hostname}`
-  //     : shouldSetDomain
-  //       ? hostname
-  //       : undefined;
+  // For subdomains like "3000-xxx.sg1.manus.computer", don't add leading dot
+  // Just use the hostname as-is
+  const domain = shouldSetDomain ? hostname : undefined;
 
   const isSecure = isSecureRequest(req);
   
@@ -46,16 +43,17 @@ export function getSessionCookieOptions(
   console.log("[Cookie] isSecure:", isSecure);
   console.log("[Cookie] hostname:", req.hostname);
   console.log("[Cookie] host:", req.headers.host);
+  console.log("[Cookie] domain:", domain);
   
-  // Simplified cookie options for debugging
-  // Remove secure requirement to test if that's causing the issue
   const options = {
+    domain,
     httpOnly: true,
     path: "/",
     sameSite: "lax" as const,
-    secure: false, // Temporarily disable secure requirement for testing
+    // Use secure in production (HTTPS), but allow HTTP for local development
+    secure: isSecure,
   };
   
-  console.log("[Cookie] Final options:", options);
+  console.log("[Cookie] Final options:", JSON.stringify(options));
   return options;
 }
