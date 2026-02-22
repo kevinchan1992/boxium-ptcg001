@@ -6,7 +6,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Clock, Save, RefreshCw, Play } from "lucide-react";
+import { Clock, Save, RefreshCw, Play, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "react-i18next";
 
 export function AdminScheduleManagement() {
@@ -14,6 +15,18 @@ export function AdminScheduleManagement() {
   
   // 獲取當前排程設定
   const { data: schedule, refetch } = trpc.admin.getPriceUpdateSchedule.useQuery();
+  
+  // 獲取批量更新進度（輪詢）
+  const { data: progress } = trpc.admin.getBatchUpdateProgress.useQuery(undefined, {
+    refetchInterval: (query) => {
+      // 如果正在運行，每 3 秒輪詢一次
+      if (query.state.data?.isRunning) {
+        return 3000;
+      }
+      // 否則停止輪詢
+      return false;
+    },
+  });
   
   // 本地狀態
   const [snkrdunkEnabled, setSnkrdunkEnabled] = useState(schedule?.snkrdunkEnabled ?? false);
@@ -141,11 +154,11 @@ export function AdminScheduleManagement() {
             <div className="pt-2">
               <Button
                 onClick={() => triggerSnkrdunkUpdate.mutate()}
-                disabled={triggerSnkrdunkUpdate.isPending}
+                disabled={triggerSnkrdunkUpdate.isPending || progress?.isRunning}
                 variant="outline"
                 className="w-full bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
               >
-                {triggerSnkrdunkUpdate.isPending ? (
+                {triggerSnkrdunkUpdate.isPending || progress?.isRunning ? (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                     更新中...
@@ -158,6 +171,37 @@ export function AdminScheduleManagement() {
                 )}
               </Button>
             </div>
+            
+            {/* 進度條 */}
+            {progress?.isRunning && (
+              <div className="space-y-3 p-4 bg-gray-700 rounded-lg">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-300">更新進度</span>
+                  <span className="text-white font-medium">
+                    {progress.processedCards} / {progress.totalCards}
+                  </span>
+                </div>
+                <Progress 
+                  value={(progress.processedCards / progress.totalCards) * 100} 
+                  className="h-2"
+                />
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-green-500" />
+                      成功: {progress.successCount}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 text-red-500" />
+                      失敗: {progress.failureCount}
+                    </span>
+                  </div>
+                  <span>
+                    {Math.round((progress.processedCards / progress.totalCards) * 100)}%
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
           
           {/* eBay 排程設定 */}

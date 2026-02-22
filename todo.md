@@ -168,4 +168,21 @@
 - [x] 在 AdminScheduleManagement 組件添加手動更新按鈕
 - [ ] 測試 SNKRDUNK 手動更新功能（待生產環境測試）
 - [ ] 測試 eBay 手動更新功能（待生產環境測試）
+- [x] 保存 checkpoint（version: 2b56e00b）
+
+
+---
+
+## 📊 添加批量更新進度條顯示
+
+### 目標
+在排程管理頁面添加實時進度條，顯示批量更新的處理進度（例如：已處理 50/1000 張卡牌），讓用戶了解更新狀態。
+
+### 任務清單
+- [x] 檢查後端是否有進度 API（已有 admin.getBatchUpdateProgress）
+- [x] 在 AdminScheduleManagement 組件添加進度條 UI
+- [x] 實現輪詢機制自動更新進度（每 3 秒）
+- [x] 顯示進度百分比和已處理/總數
+- [x] 更新完成後自動停止輪詢
+- [ ] 測試進度顯示功能（待生產環境測試）
 - [ ] 保存 checkpoint
