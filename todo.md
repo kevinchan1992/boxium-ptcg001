@@ -414,3 +414,25 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [x] 修復 auth.register API 中的 getSessionCookieOptions 調用（添加 ctx.req 檢查）
 - [ ] 測試登入功能（等待用戶測試）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🐛 修復登入狀態持久化問題
+
+### 問題描述
+用戶使用管理員帳號登入成功，但前端沒有保持登入狀態（導航欄仍顯示「登入」按鈕而不是用戶名）
+
+### 可能原因
+1. Session cookie 沒有正確設置
+2. 前端沒有正確讀取 session 狀態
+3. Cookie 的 domain/path/sameSite 設置不正確
+4. 登入後沒有刷新前端狀態
+
+### 任務清單
+- [x] 檢查瀏覽器中的 session cookie
+- [x] 檢查前端如何獲取當前用戶狀態（使用 trpc.auth.me.useQuery）
+- [x] 修復 CORS 配置（添加 credentials: true）
+- [x] 修復 email 驗證錯誤（添加 .trim().toLowerCase()）
+- [ ] 測試登入狀態持久化（等待用戶測試）
+- [ ] 保存 checkpoint
