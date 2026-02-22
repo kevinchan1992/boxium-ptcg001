@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Clock, Save, RefreshCw } from "lucide-react";
+import { Clock, Save, RefreshCw, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export function AdminScheduleManagement() {
@@ -54,6 +54,36 @@ export function AdminScheduleManagement() {
       ebayUpdateTime: ebayTime,
     });
   };
+  
+  // 手動觸發 SNKRDUNK 批量更新
+  const triggerSnkrdunkUpdate = trpc.admin.batchUpdateSnkrdunkPrices.useMutation({
+    onSuccess: (data) => {
+      toast.success("SNKRDUNK 批量更新已啟動", {
+        description: data.message,
+      });
+      refetch();
+    },
+    onError: (error) => {
+      toast.error("啟動失敗", {
+        description: error.message,
+      });
+    },
+  });
+  
+  // 手動觸發 eBay 批量更新
+  const triggerEbayUpdate = trpc.admin.batchUpdateEbayPrices.useMutation({
+    onSuccess: (data) => {
+      toast.success("eBay 批量更新已啟動", {
+        description: data.message,
+      });
+      refetch();
+    },
+    onError: (error) => {
+      toast.error("啟動失敗", {
+        description: error.message,
+      });
+    },
+  });
   
   return (
     <div className="space-y-6">
@@ -106,6 +136,28 @@ export function AdminScheduleManagement() {
                 </p>
               </div>
             )}
+            
+            {/* 手動更新按鈕 */}
+            <div className="pt-2">
+              <Button
+                onClick={() => triggerSnkrdunkUpdate.mutate()}
+                disabled={triggerSnkrdunkUpdate.isPending}
+                variant="outline"
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+              >
+                {triggerSnkrdunkUpdate.isPending ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    更新中...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    立即更新所有 SNKRDUNK 卡牌
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
           
           {/* eBay 排程設定 */}
@@ -146,6 +198,28 @@ export function AdminScheduleManagement() {
                 </p>
               </div>
             )}
+            
+            {/* 手動更新按鈕 */}
+            <div className="pt-2">
+              <Button
+                onClick={() => triggerEbayUpdate.mutate()}
+                disabled={triggerEbayUpdate.isPending}
+                variant="outline"
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+              >
+                {triggerEbayUpdate.isPending ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    更新中...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    立即更新所有 eBay 卡牌
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
           
           {/* 保存按鈕 */}

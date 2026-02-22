@@ -153,4 +153,19 @@
 - [x] 檢查 Admin 頁面的價格更新排程設定（已確認有 AdminScheduleManagement 組件）
 - [x] 確認 SNKRDUNK 批量更新功能（已實現，可設定每日自動更新時間）
 - [x] 文檔說明和用戶指引（已創建 PRICING_SCHEDULER_GUIDE.md）
+- [x] 保存 checkpoint（version: 4bd8b8af）
+
+
+---
+
+## 🔘 添加手動更新按鈕功能
+
+### 目標
+在排程管理頁面添加「立即更新所有卡牌」按鈕，讓用戶可以手動觸發批量更新，無需等待排程時間。
+
+### 任務清單
+- [x] 添加後端 API（已存在 batchUpdateSnkrdunkPrices 和 batchUpdateEbayPrices）
+- [x] 在 AdminScheduleManagement 組件添加手動更新按鈕
+- [ ] 測試 SNKRDUNK 手動更新功能（待生產環境測試）
+- [ ] 測試 eBay 手動更新功能（待生產環境測試）
 - [ ] 保存 checkpoint
