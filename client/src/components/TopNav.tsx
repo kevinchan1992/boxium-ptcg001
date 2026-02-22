@@ -31,7 +31,7 @@ import {
 
 export function TopNav() {
   const { t } = useTranslation();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -42,8 +42,12 @@ export function TopNav() {
     onSuccess: () => {
       // 清除所有 tRPC 緩存
       utils.invalidate();
-      // 強制刷新頁面以清除所有狀態
-      window.location.href = "/";
+      // 使用 router navigate 而不是 window.location 避免觸發完整頁面重新加載
+      navigate("/", { replace: true });
+      // 延遲刷新以確保導航完成
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     },
   });
 
