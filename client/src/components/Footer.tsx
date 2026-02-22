@@ -43,7 +43,6 @@ export default function Footer() {
             <ul className="space-y-2 mb-4">
               <li><Link href="/about" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.platformIntro")}</Link></li>
               <li><Link href="/disclaimer" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.disclaimer")}</Link></li>
-              <li><Link href="/admin" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.adminPanel")}</Link></li>
             </ul>
             <div className="flex gap-4">
               <a href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Facebook">

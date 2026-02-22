@@ -119,13 +119,15 @@ export function TopNav() {
                 </Link>
               ))}
               
-              {/* 管理後台連結 - 公開訪問 */}
-              <Link
-                href="/admin"
-                className="text-base font-medium bg-red-600 px-3 py-1 rounded hover:bg-red-700 transition-colors"
-              >
-                {t("nav.admin")}
-              </Link>
+              {/* 管理後台連結 - 僅管理員可見 */}
+              {user?.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="text-base font-medium bg-red-600 px-3 py-1 rounded hover:bg-red-700 transition-colors"
+                >
+                  {t("nav.admin")}
+                </Link>
+              )}
             </div>
 
             {/* Right Side: Language Switcher + Auth */}
@@ -201,14 +203,16 @@ export function TopNav() {
             </Link>
           ))}
           
-          {/* 管理後台連結 - 公開訪問 */}
-          <Link
-            href="/admin"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="block text-base font-medium text-red-400 hover:text-red-300"
-          >
-            {t("nav.admin")}
-          </Link>
+          {/* 管理後台連結 - 僅管理員可見 */}
+          {user?.role === "admin" && (
+            <Link
+              href="/admin"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block text-base font-medium text-red-400 hover:text-red-300"
+            >
+              {t("nav.admin")}
+            </Link>
+          )}
 
           {/* Language Switcher for Mobile */}
           <div className="pt-4 border-t border-white/10">
