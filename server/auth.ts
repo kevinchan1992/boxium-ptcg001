@@ -88,7 +88,7 @@ export async function registerUser(
   email: string,
   password: string,
   name?: string
-): Promise<{ success: boolean; user?: User; error?: string }> {
+): Promise<{ success: boolean; user?: User; token?: string; error?: string }> {
   const db = await getDb();
   if (!db) {
     return { success: false, error: "數據庫連接失敗" };
@@ -132,7 +132,10 @@ export async function registerUser(
     return { success: false, error: "創建用戶失敗" };
   }
 
-  return { success: true, user: createdUser[0] };
+  // Generate token for automatic login after registration
+  const token = generateToken(createdUser[0]);
+
+  return { success: true, user: createdUser[0], token };
 }
 
 /**

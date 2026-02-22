@@ -366,4 +366,33 @@
 - [x] 實施 Google OAuth 回調處理路由（/api/auth/google/callback）
 - [x] 更新前端登入頁面，啟用 Google 登入按鈕
 - [x] 測試 Google OAuth 完整流程（登入、用戶創建、session 設置）
+- [x] 保存 checkpoint
+
+
+---
+
+## 🐛 修復註冊和登入失敗問題
+
+### 問題描述
+用戶嘗試註冊時出現 SQL 查詢錯誤：
+```
+Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`, `loginMethod`, `role`, `emailVerified`, `createdAt`, `updatedAt`, `lastSignedIn` from `users` where `users`.`email` = ? limit ?
+```
+
+### 診斷結果
+數據庫欄位名稱大小寫不一致：
+- Drizzle schema 使用 `openId`（駝峰命名）
+- 數據庫實際欄位可能是 `openid`（全小寫）
+
+### 任務清單
+- [x] 檢查數據庫中 users 表的實際欄位名稱
+- [x] 統一欄位名稱（schema 和數據庫）
+- [x] 修復 registerUser 函數（添加 token 生成）
+- [x] 修復 auth.register API（添加 session cookie 設置）
+- [x] 修復 auth.login API（修正 getSessionCookieOptions 調用）
+- [x] 修復 loginMethod enum（添加 'manus' 選項）
+- [x] 後端註冊功能測試通過（內部測試腳本）
+- [ ] 瀏覽器端到端測試（等待用戶測試）
+- [x] 修復 Google OAuth redirect_uri 問題（使用動態 origin）
+- [x] 更新前端 Google 登入按鈕（添加 origin 參數）
 - [ ] 保存 checkpoint

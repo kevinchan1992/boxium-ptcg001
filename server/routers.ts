@@ -39,7 +39,7 @@ export const appRouter = router({
         password: z.string().min(8),
         name: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { registerUser } = await import('./auth');
         const result = await registerUser(input.email, input.password, input.name);
         
@@ -50,9 +50,15 @@ export const appRouter = router({
           });
         }
         
+        // Set session cookie for automatic login after registration
+        if (result.token && ctx.res) {
+          ctx.res.cookie('session', result.token, getSessionCookieOptions(ctx.req));
+        }
+        
         return {
           success: true,
           user: result.user,
+          token: result.token,
         };
       }),
     
@@ -74,7 +80,7 @@ export const appRouter = router({
         
         // Set session cookie
         if (result.token && ctx.res) {
-          ctx.res.cookie('session', result.token, getSessionCookieOptions());
+          ctx.res.cookie('session', result.token, getSessionCookieOptions(ctx.req));
         }
         
         return {

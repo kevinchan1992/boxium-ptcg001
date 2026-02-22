@@ -37,8 +37,10 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    // Redirect to Google OAuth flow
-    window.location.href = `/api/auth/google?returnTo=${encodeURIComponent(window.location.pathname)}`;
+    // Redirect to Google OAuth flow with origin parameter
+    const origin = window.location.origin;
+    const returnTo = window.location.pathname;
+    window.location.href = `/api/auth/google?origin=${encodeURIComponent(origin)}&returnTo=${encodeURIComponent(returnTo)}`;
   };
 
   return (
