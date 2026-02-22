@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Clock, Save, RefreshCw, Play, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Clock, Save, RefreshCw, Play, AlertCircle, CheckCircle2, Pause, PlayCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "react-i18next";
 
@@ -33,6 +33,7 @@ export function AdminScheduleManagement() {
   const [snkrdunkTime, setSnkrdunkTime] = useState(schedule?.snkrdunkUpdateTime ?? "01:00");
   const [ebayEnabled, setEbayEnabled] = useState(schedule?.ebayEnabled ?? false);
   const [ebayTime, setEbayTime] = useState(schedule?.ebayUpdateTime ?? "01:00");
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
   
   // 當 schedule 數據載入時同步更新本地狀態
   useEffect(() => {
@@ -93,6 +94,30 @@ export function AdminScheduleManagement() {
     },
     onError: (error) => {
       toast.error("啟動失敗", {
+        description: error.message,
+      });
+    },
+  });
+  
+  // 暫停批量更新
+  const pauseUpdate = trpc.admin.pauseBatchUpdate.useMutation({
+    onSuccess: () => {
+      toast.success("批量更新已暫停");
+    },
+    onError: (error) => {
+      toast.error("暫停失敗", {
+        description: error.message,
+      });
+    },
+  });
+  
+  // 繼續批量更新
+  const resumeUpdate = trpc.admin.resumeBatchUpdate.useMutation({
+    onSuccess: () => {
+      toast.success("批量更新已繼續");
+    },
+    onError: (error) => {
+      toast.error("繼續失敗", {
         description: error.message,
       });
     },
@@ -177,9 +202,34 @@ export function AdminScheduleManagement() {
               <div className="space-y-3 p-4 bg-gray-700 rounded-lg">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-300">更新進度</span>
-                  <span className="text-white font-medium">
-                    {progress.processedCards} / {progress.totalCards}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-medium">
+                      {progress.processedCards} / {progress.totalCards}
+                    </span>
+                    {progress.isPaused ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => resumeUpdate.mutate()}
+                        disabled={resumeUpdate.isPending}
+                        className="h-7 px-2 bg-green-600 hover:bg-green-700 text-white border-green-500"
+                      >
+                        <PlayCircle className="w-3 h-3 mr-1" />
+                        繼續
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => pauseUpdate.mutate()}
+                        disabled={pauseUpdate.isPending}
+                        className="h-7 px-2 bg-orange-600 hover:bg-orange-700 text-white border-orange-500"
+                      >
+                        <Pause className="w-3 h-3 mr-1" />
+                        暫停
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <Progress 
                   value={(progress.processedCards / progress.totalCards) * 100} 
@@ -195,11 +245,66 @@ export function AdminScheduleManagement() {
                       <AlertCircle className="w-3 h-3 text-red-500" />
                       失敗: {progress.failureCount}
                     </span>
+                    {progress.isPaused && (
+                      <span className="flex items-center gap-1 text-orange-400">
+                        <Pause className="w-3 h-3" />
+                        已暫停
+                      </span>
+                    )}
                   </div>
                   <span>
                     {Math.round((progress.processedCards / progress.totalCards) * 100)}%
                   </span>
                 </div>
+              </div>
+            )}
+            
+            {/* 錯誤詳情 */}
+            {progress?.failureCount && progress.failureCount > 0 && !progress?.isRunning && (
+              <div className="space-y-2 p-4 bg-red-900/20 border border-red-800 rounded-lg">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowErrorDetails(!showErrorDetails)}
+                  className="w-full justify-between text-red-300 hover:text-red-200 hover:bg-red-900/30"
+                >
+                  <span className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    查看錯誤詳情 ({progress?.failureCount} 個失敗)
+                  </span>
+                  {showErrorDetails ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </Button>
+                
+                {showErrorDetails && progress?.errors && progress.errors.length > 0 && (
+                  <div className="space-y-2 mt-2">
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                      {progress.errors.map((error, index) => (
+                        <div key={index} className="p-3 bg-gray-800 rounded text-xs">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 space-y-1">
+                              <div className="text-white font-medium">
+                                卡牌 ID: {error.cardId}
+                              </div>
+                              {error.cardName && (
+                                <div className="text-gray-400">
+                                  {error.cardName}
+                                </div>
+                              )}
+                              <div className="text-red-300">
+                                {error.error}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
