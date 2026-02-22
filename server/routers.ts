@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, router, adminProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
@@ -26,6 +26,13 @@ export const appRouter = router({
   system: systemRouter,
 
   pricing: pricingRouter,
+
+  auth: router({
+    me: publicProcedure
+      .query(async ({ ctx }) => {
+        return ctx.user || null;
+      }),
+  }),
 
   cards: router({
     search: publicProcedure
@@ -516,7 +523,7 @@ export const appRouter = router({
         return allSources.map(ds => ds.sourceUrl);
       }),
 
-    addSnkrdunkSource: publicProcedure
+    addSnkrdunkSource: adminProcedure
       .input(z.object({
         url: z.string().url(),
       }))
@@ -602,7 +609,7 @@ const snkrdunkId = extractSnkrdunkId(input.url);
         }
       }),
 
-    refreshDataSource: publicProcedure
+    refreshDataSource: adminProcedure
       .input(z.object({
         dataSourceId: z.number(),
       }))
@@ -664,7 +671,7 @@ const status = await getUpdateStatus(input.dataSourceId);
         return status;
       }),
 
-    manualUpdate: publicProcedure
+    manualUpdate: adminProcedure
       .input(z.object({
         dataSourceId: z.number(),
       }))
@@ -680,7 +687,7 @@ try {
         }
       }),
 
-    deleteDataSource: publicProcedure
+    deleteDataSource: adminProcedure
       .input(z.object({
         dataSourceId: z.number(),
       }))
@@ -696,7 +703,7 @@ try {
         }
       }),
 
-    autoCrawlSnkrdunk: publicProcedure
+    autoCrawlSnkrdunk: adminProcedure
       .input(z.object({
         startPage: z.number().min(1).default(1),
         endPage: z.number().min(1).default(1575),
@@ -727,7 +734,7 @@ const status = await getSchedulerStatus();
         return status;
       }),
 
-    triggerManualUpdateAll: publicProcedure
+    triggerManualUpdateAll: adminProcedure
       .mutation(async ({ ctx }) => {
 try {
           await triggerManualUpdateAll();
@@ -740,7 +747,7 @@ try {
         }
       }),
 
-    cleanDuplicateDataSources: publicProcedure
+    cleanDuplicateDataSources: adminProcedure
       .mutation(async ({ ctx }) => {
 try {
           // Get all data sources
@@ -785,7 +792,7 @@ try {
         }
       }),
 
-    deleteFailedDataSources: publicProcedure
+    deleteFailedDataSources: adminProcedure
       .mutation(async ({ ctx }) => {
 try {
           const result = await db.deleteFailedDataSources();
@@ -810,7 +817,7 @@ try {
         }
       }),
 
-  updateCardEnglishNames: publicProcedure.mutation(async () => {
+  updateCardEnglishNames: adminProcedure.mutation(async () => {
     const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });
     
     let updated = 0;
@@ -860,7 +867,7 @@ try {
     };
   }),
 
-  updateAllEbayRecords: publicProcedure.mutation(async ({ ctx }) => {
+  updateAllEbayRecords: adminProcedure.mutation(async ({ ctx }) => {
 // Get all data sources with cards
     const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });
     const uniqueCards = new Map<number, { id: number; name: string }>();
@@ -905,7 +912,7 @@ try {
     };
   }),
 
-  fixOrphanDataSources: publicProcedure.mutation(async ({ ctx }) => {
+  fixOrphanDataSources: adminProcedure.mutation(async ({ ctx }) => {
 try {
           const { fixOrphanDataSources } = await import("./fixOrphanDataSources");
           const result = await fixOrphanDataSources();
@@ -947,7 +954,7 @@ const stats = await db.getFirecrawlUsageStats(
         };
       }),
 
-    setFirecrawlQuotaLimit: publicProcedure
+    setFirecrawlQuotaLimit: adminProcedure
       .input(z.object({
         limit: z.number().min(1),
       }))
@@ -982,7 +989,7 @@ const settings = {
       }),
 
     // Save SMTP settings
-    saveSmtpSettings: publicProcedure
+    saveSmtpSettings: adminProcedure
       .input(z.object({
         smtpHost: z.string(),
         smtpPort: z.string(),
@@ -1005,7 +1012,7 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       }),
 
     // Test SMTP connection
-    testSmtpConnection: publicProcedure
+    testSmtpConnection: adminProcedure
       .input(z.object({
         email: z.string().email(),
       }))
@@ -1056,7 +1063,7 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       }),
 
     // 更新指定卡牌的 eBay 交易記錄（存入 prices 表）
-    updateEbayPrices: publicProcedure
+    updateEbayPrices: adminProcedure
       .input(z.object({
         cardId: z.number(),
       }))
@@ -1181,7 +1188,7 @@ try {
       }),
 
     // 批量更新所有卡牌 eBay 價格
-    batchUpdateEbayPrices: publicProcedure
+    batchUpdateEbayPrices: adminProcedure
       .mutation(async ({ ctx }) => {
         try {
           // 檢查是否已經在運行
@@ -1368,7 +1375,7 @@ try {
       }),
 
     // 暫停批量更新（同時操作 eBay 和 SNKRDUNK）
-    pauseBatchUpdate: publicProcedure
+    pauseBatchUpdate: adminProcedure
       .mutation(async ({ ctx }) => {
         // 暫停 eBay 批量更新
         batchUpdateProgress.pauseBatchUpdate();
@@ -1378,7 +1385,7 @@ try {
       }),
 
     // 繼續批量更新（同時操作 eBay 和 SNKRDUNK）
-    resumeBatchUpdate: publicProcedure
+    resumeBatchUpdate: adminProcedure
       .mutation(async ({ ctx }) => {
         // 繼續 eBay 批量更新
         batchUpdateProgress.resumeBatchUpdate();
@@ -1388,7 +1395,7 @@ try {
       }),
 
     // 批量更新所有卡牌 SNKRDUNK 價格
-    batchUpdateSnkrdunkPrices: publicProcedure
+    batchUpdateSnkrdunkPrices: adminProcedure
       .mutation(async ({ ctx }) => {
         try {
           // 檢查是否已經在運行
@@ -1511,14 +1518,14 @@ try {
       }),
 
     // 暫停 SNKRDUNK 批量更新
-    pauseSnkrdunkBatchUpdate: publicProcedure
+    pauseSnkrdunkBatchUpdate: adminProcedure
       .mutation(async ({ ctx }) => {
         snkrdunkBatchUpdateProgress.pauseSnkrdunkBatchUpdate();
         return { success: true, message: "SNKRDUNK 批量更新已暫停" };
       }),
 
     // 繼續 SNKRDUNK 批量更新
-    resumeSnkrdunkBatchUpdate: publicProcedure
+    resumeSnkrdunkBatchUpdate: adminProcedure
       .mutation(async ({ ctx }) => {
         snkrdunkBatchUpdateProgress.resumeSnkrdunkBatchUpdate();
         return { success: true, message: "SNKRDUNK 批量更新已繼續" };
@@ -1532,7 +1539,7 @@ try {
       }),
 
     // 啟用/停用排程
-    updateScheduleEnabled: publicProcedure
+    updateScheduleEnabled: adminProcedure
       .input(z.object({
         enabled: z.boolean(),
       }))
@@ -1547,7 +1554,7 @@ try {
       }),
 
     // 立即手動觸發排程
-    triggerScheduleNow: publicProcedure
+    triggerScheduleNow: adminProcedure
       .mutation(async ({ ctx }) => {
         try {
           // 創建執行歷史記錄
@@ -1614,7 +1621,7 @@ try {
       }),
 
     // Manually trigger trending cards calculation
-    calculateTrendingCards: publicProcedure
+    calculateTrendingCards: adminProcedure
       .mutation(async () => {
         try {
           console.log("[Admin] Manually triggering trending cards calculation...");
@@ -1673,7 +1680,7 @@ try {
     // === 持久化批量更新 API ===
 
     // 啟動持久化 eBay 批量更新
-    startPersistentEbayBatchUpdate: publicProcedure
+    startPersistentEbayBatchUpdate: adminProcedure
       .mutation(async () => {
         try {
           const result = await executePersistentEbayBatchUpdate();
@@ -1692,7 +1699,7 @@ try {
       }),
 
     // 啟動持久化 SNKRDUNK 批量更新
-    startPersistentSnkrdunkBatchUpdate: publicProcedure
+    startPersistentSnkrdunkBatchUpdate: adminProcedure
       .mutation(async () => {
         try {
           const result = await executePersistentSnkrdunkBatchUpdate();
@@ -1721,7 +1728,7 @@ try {
       }),
 
     // 暂停持久化任務
-    pausePersistentTask: publicProcedure
+    pausePersistentTask: adminProcedure
       .input(z.object({
         taskId: z.number(),
       }))
@@ -1731,7 +1738,7 @@ try {
       }),
 
     // 繼續持久化任務
-    resumePersistentTask: publicProcedure
+    resumePersistentTask: adminProcedure
       .input(z.object({
         taskId: z.number(),
       }))
@@ -1741,7 +1748,7 @@ try {
       }),
 
     // 取消持久化任務
-    cancelPersistentTask: publicProcedure
+    cancelPersistentTask: adminProcedure
       .input(z.object({
         taskId: z.number(),
       }))
@@ -1757,7 +1764,7 @@ try {
         return schedule;
       }),
 
-    updatePriceUpdateSchedule: publicProcedure
+    updatePriceUpdateSchedule: adminProcedure
       .input(z.object({
         snkrdunkEnabled: z.boolean().optional(),
         snkrdunkUpdateTime: z.string().optional(),
@@ -1778,7 +1785,7 @@ try {
         return stats;
       }),
 
-    clearCardCache: publicProcedure
+    clearCardCache: adminProcedure
       .input(z.object({
         cardId: z.number(),
       }))
@@ -1787,7 +1794,7 @@ try {
         return { success: true, deletedCount };
       }),
 
-    clearAllCache: publicProcedure
+    clearAllCache: adminProcedure
       .mutation(async () => {
         const deletedCount = await db.clearAllSnkrdunkCache();
         return { success: true, deletedCount };
@@ -1973,7 +1980,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Create new post (Admin only)
-    createPost: publicProcedure
+    createPost: adminProcedure
       .input(z.object({
         title: z.string(),
         excerpt: z.string().optional(),
@@ -2035,7 +2042,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Update post (Admin only)
-    updatePost: publicProcedure
+    updatePost: adminProcedure
       .input(z.object({
         id: z.number(),
         title: z.string().optional(),
@@ -2094,7 +2101,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Delete post (Admin only)
-    deletePost: publicProcedure
+    deletePost: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const blogDb = await import('./blogDb');
@@ -2104,7 +2111,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Toggle publish status (Admin only)
-    togglePublish: publicProcedure
+    togglePublish: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const blogDb = await import('./blogDb');
@@ -2113,7 +2120,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // AI translate post (Admin only)
-    translatePost: publicProcedure
+    translatePost: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const blogDb = await import('./blogDb');
@@ -2205,7 +2212,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Update post translation (Admin only)
-    updatePostTranslation: publicProcedure
+    updatePostTranslation: adminProcedure
       .input(z.object({
         id: z.number(),
         titleEn: z.string().optional(),
@@ -2233,7 +2240,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Create category (Admin only)
-    createCategory: publicProcedure
+    createCategory: adminProcedure
       .input(z.object({
         name: z.string(),
         description: z.string().optional(),
@@ -2250,7 +2257,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // AI generate article (Admin only)
-    generateArticle: publicProcedure
+    generateArticle: adminProcedure
       .input(z.object({
         articleType: z.enum(['daily-report', 'card-analysis', 'market-trend', 'news']),
         featuredImageUrl: z.string().optional(),
