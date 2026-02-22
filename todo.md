@@ -135,4 +135,22 @@
 - [x] 調整 Pricing 詳細頁面文字大小（改為更細更清晰）
 - [x] 修復手機菜單導航項目文字過大問題（text-lg → text-base）
 - [x] 測試手機版顯示效果（桃面正常顯示）
+- [x] 保存 checkpoint（version: b5b659b6）
+
+
+---
+
+## 🔍 Pricing 頁面爬取功能檢查
+
+### 問題描述
+用戶需要：
+1. 生產環境服務器 24 小時持續運行（不依賴開發模式）
+2. 統一使用 Admin 頁面的價格更新排程設定
+3. SNKRDUNK 批量更新後端數據庫內的所有卡牌 URL
+
+### 任務清單
+- [x] 檢查現有爬取功能的實現方式（已確認有 priceUpdateScheduler）
+- [x] 檢查 Admin 頁面的價格更新排程設定（已確認有 AdminScheduleManagement 組件）
+- [x] 確認 SNKRDUNK 批量更新功能（已實現，可設定每日自動更新時間）
+- [x] 文檔說明和用戶指引（已創建 PRICING_SCHEDULER_GUIDE.md）
 - [ ] 保存 checkpoint
