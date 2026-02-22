@@ -127,11 +127,11 @@ export function AdminScheduleManagement() {
     <div className="space-y-6">
       <Card className="bg-gray-900 border-gray-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Clock className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             價格更新排程設定
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-gray-400 text-xs sm:text-sm">
             設定 SNKRDUNK 和 eBay 價格的自動更新時間
           </CardDescription>
         </CardHeader>
@@ -140,7 +140,7 @@ export function AdminScheduleManagement() {
           <div className="space-y-4 p-4 bg-gray-800 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label className="text-white font-medium">SNKRDUNK 批量更新</Label>
+                <Label className="text-white font-medium text-sm sm:text-base">SNKRDUNK 批量更新</Label>
                 <p className="text-sm text-gray-400">
                   每日自動更新所有卡牌的 SNKRDUNK 價格
                 </p>
@@ -313,7 +313,7 @@ export function AdminScheduleManagement() {
           <div className="space-y-4 p-4 bg-gray-800 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label className="text-white font-medium">eBay 批量更新</Label>
+                <Label className="text-white font-medium text-sm sm:text-base">eBay 批量更新</Label>
                 <p className="text-sm text-gray-400">
                   每日自動更新所有卡牌的 eBay 價格
                 </p>

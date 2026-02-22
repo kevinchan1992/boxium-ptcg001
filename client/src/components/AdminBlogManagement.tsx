@@ -88,8 +88,8 @@ export function AdminBlogManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">博客管理</h2>
-          <p className="text-gray-400 mt-1">管理文章、創建內容、AI 自動生成</p>
+          <h2 className="text-lg sm:text-xl font-bold text-white">博客管理</h2>
+          <p className="text-xs sm:text-sm text-gray-400 mt-1">管理文章、創建內容、AI 自動生成</p>
         </div>
         <div className="flex gap-2">
           <Button

@@ -531,13 +531,13 @@ export function AdminDataSources() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">數據源管理</h2>
-        <p className="text-muted-foreground">管理卡牌數據源與價格更新</p>
+        <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1">數據源管理</h2>
+        <p className="text-xs sm:text-sm text-muted-foreground">管理卡牌數據源與價格更新</p>
       </div>
 
           {/* Add SNKRDUNK Source */}
           <Card className="p-6 bg-card border-border">
-            <h2 className="text-2xl font-semibold text-foreground mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3">
               手動添加 SNKRDUNK 數據源
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -640,7 +640,7 @@ export function AdminDataSources() {
 
           {/* Management Tools */}
           <Card className="p-6 bg-card border-border">
-            <h2 className="text-2xl font-semibold text-foreground mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3">
               管理工具
             </h2>
             <div className="flex gap-4 flex-wrap">
@@ -750,7 +750,7 @@ export function AdminDataSources() {
             </div>
             <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
               <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-semibold text-foreground">
+                <h2 className="text-base sm:text-lg font-semibold text-foreground">
                   數據源列表
                 </h2>
                 {dataSourcesQuery.data && dataSourcesQuery.data?.data?.length > 0 && (

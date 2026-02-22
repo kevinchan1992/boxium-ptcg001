@@ -72,8 +72,8 @@ export function AdminDashboard() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">數據統計</h2>
-          <p className="text-gray-400">系統整體數據概覽</p>
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-1">數據統計</h2>
+          <p className="text-xs sm:text-sm text-gray-400">系統整體數據概覽</p>
         </div>
         <Button
           onClick={handleRefresh}
@@ -98,11 +98,11 @@ export function AdminDashboard() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">{stat.title}</p>
-                  <p className="text-3xl font-bold text-white">{stat.value.toLocaleString()}</p>
+                  <p className="text-xs sm:text-sm text-gray-400 mb-0.5 sm:mb-1">{stat.title}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white">{stat.value.toLocaleString()}</p>
                 </div>
-                <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                  <Icon className="w-6 h-6" style={{ color: stat.color }} />
+                <div className={`p-2 sm:p-3 rounded-full ${stat.bgColor}`}>
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: stat.color }} />
                 </div>
               </div>
             </Card>
@@ -337,13 +337,13 @@ function SearchStatsPanel() {
           const Icon = stat.icon;
           return (
             <Card 
-              key={index} 
-              className="p-6 hover:shadow-lg transition-all hover:scale-105 border-l-4" 
+              key={index}
+              className="p-3 sm:p-4 hover:shadow-lg transition-all hover:scale-105 border-l-4"
               style={{ borderLeftColor: stat.color }}
             >
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                  <Icon className="w-6 h-6" style={{ color: stat.color }} />
+                <div className={`p-2 sm:p-3 rounded-full ${stat.bgColor}`}>
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: stat.color }} />
                 </div>
               </div>
               <div>

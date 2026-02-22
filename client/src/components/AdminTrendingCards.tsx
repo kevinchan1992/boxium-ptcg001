@@ -61,11 +61,11 @@ export function AdminTrendingCards() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-white flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
+              <CardTitle className="text-white flex items-center gap-2 text-base sm:text-lg">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
                 {t("admin.trendingCards.title")}
               </CardTitle>
-              <CardDescription className="text-gray-400">
+              <CardDescription className="text-gray-400 text-xs sm:text-sm">
                 {t("admin.trendingCards.description")}
               </CardDescription>
             </div>
@@ -84,17 +84,17 @@ export function AdminTrendingCards() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-800 rounded-lg">
             <div>
               <p className="text-sm text-gray-400">{t("admin.trendingCards.nextUpdate")}</p>
-              <p className="text-lg font-semibold text-white">{getNextUpdateTime()}</p>
+              <p className="text-base sm:text-lg font-semibold text-white">{getNextUpdateTime()}</p>
             </div>
             <div>
               <p className="text-sm text-gray-400">{t("admin.trendingCards.updateFrequency")}</p>
-              <p className="text-lg font-semibold text-white">{t("admin.trendingCards.daily6am")}</p>
+              <p className="text-base sm:text-lg font-semibold text-white">{t("admin.trendingCards.daily6am")}</p>
             </div>
           </div>
 
           {/* TOP 5 卡牌列表 */}
           <div>
-            <h3 className="text-lg font-semibold text-white mb-4">{t("admin.trendingCards.currentTop5")}</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">{t("admin.trendingCards.currentTop5")}</h3>
             {isLoading ? (
               <div className="text-center py-8 text-gray-400">
                 {t("common.loading")}
@@ -140,7 +140,7 @@ export function AdminTrendingCards() {
                         <p className="text-sm font-medium text-white line-clamp-2">
                           {card.name}
                         </p>
-                        <p className="text-lg font-bold text-orange-500">
+                        <p className="text-base sm:text-lg font-bold text-orange-500">
                           HK${card.currentPrice?.toLocaleString()}
                         </p>
                       </div>

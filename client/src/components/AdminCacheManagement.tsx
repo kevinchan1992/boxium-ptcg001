@@ -78,11 +78,11 @@ export function AdminCacheManagement() {
       {/* Cache Statistics */}
       <Card className="bg-zinc-900 border-zinc-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Database className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+            <Database className="w-4 h-4 sm:w-5 sm:h-5" />
             緩存統計
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-gray-400 text-xs sm:text-sm">
             查看當前 SNKRDUNK 價格緩存狀態
           </CardDescription>
         </CardHeader>
@@ -91,7 +91,7 @@ export function AdminCacheManagement() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-zinc-800 p-4 rounded-lg">
                 <p className="text-sm text-gray-400 mb-1">總緩存數量</p>
-                <p className="text-2xl font-bold text-white">{cacheStats.totalCount}</p>
+                <p className="text-xl sm:text-2xl font-bold text-white">{cacheStats.totalCount}</p>
               </div>
               <div className="bg-zinc-800 p-4 rounded-lg">
                 <p className="text-sm text-gray-400 mb-1">最舊緩存</p>
