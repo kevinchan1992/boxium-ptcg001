@@ -16,8 +16,10 @@ export default function Login() {
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: () => {
       toast.success("登入成功");
-      // Reload to update auth state
-      window.location.href = "/";
+      // Wait a bit to ensure cookie is set before redirecting
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
     },
     onError: (error) => {
       toast.error(error.message || "登入失敗");

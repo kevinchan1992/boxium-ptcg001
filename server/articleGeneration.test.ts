@@ -6,7 +6,6 @@ import type { Context } from "./_core/context";
 const mockAdminContext: Context = {
   user: {
     id: 1,
-    openId: "test-admin",
     name: "Test Admin",
     email: "admin@test.com",
     avatar: null,
@@ -19,7 +18,6 @@ const mockAdminContext: Context = {
 const mockUserContext: Context = {
   user: {
     id: 2,
-    openId: "test-user",
     name: "Test User",
     email: "user@test.com",
     avatar: null,

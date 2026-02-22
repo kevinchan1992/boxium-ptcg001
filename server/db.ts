@@ -1,6 +1,6 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache } from "../drizzle/schema";;
+import { users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache } from "../drizzle/schema_new";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1736,7 +1736,7 @@ export async function getSnkrdunkListingsCache(cardId: number) {
   const db = await getDb();
   if (!db) return null;
   
-  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  const { snkrdunkListingsCache } = await import("../drizzle/schema_new");
   
   const result = await db
     .select()
@@ -1760,7 +1760,7 @@ export async function saveSnkrdunkListingsCache(data: {
   const db = await getDb();
   if (!db) return;
   
-  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  const { snkrdunkListingsCache } = await import("../drizzle/schema_new");
   
   // Delete existing cache for this card
   await db
@@ -1784,7 +1784,7 @@ export async function getSnkrdunkCacheStats() {
   const db = await getDb();
   if (!db) return { totalCount: 0, oldestCache: null, newestCache: null };
   
-  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  const { snkrdunkListingsCache } = await import("../drizzle/schema_new");
   
   const caches = await db.select().from(snkrdunkListingsCache);
   
@@ -1810,7 +1810,7 @@ export async function clearSnkrdunkCacheByCardId(cardId: number): Promise<number
   const db = await getDb();
   if (!db) return 0;
   
-  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  const { snkrdunkListingsCache } = await import("../drizzle/schema_new");
   
   const result = await db
     .delete(snkrdunkListingsCache)
@@ -1826,7 +1826,7 @@ export async function clearAllSnkrdunkCache(): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
   
-  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  const { snkrdunkListingsCache } = await import("../drizzle/schema_new");
   
   const result = await db.delete(snkrdunkListingsCache);
   
@@ -1841,7 +1841,7 @@ export async function getExpiringSnkrdunkCaches(thresholdTime: Date) {
   const db = await getDb();
   if (!db) return [];
   
-  const { snkrdunkListingsCache } = await import("../drizzle/schema");
+  const { snkrdunkListingsCache } = await import("../drizzle/schema_new");
   
   return await db
     .select()
@@ -1862,7 +1862,7 @@ export async function getEbayListingsCache(cardId: number, searchQuery: string) 
   const db = await getDb();
   if (!db) return null;
   
-  const { ebayListingsCache } = await import("../drizzle/schema");
+  const { ebayListingsCache } = await import("../drizzle/schema_new");
   
   const result = await db
     .select()
@@ -1891,7 +1891,7 @@ export async function saveEbayListingsCache(data: {
   const db = await getDb();
   if (!db) return;
   
-  const { ebayListingsCache } = await import("../drizzle/schema");
+  const { ebayListingsCache } = await import("../drizzle/schema_new");
   
   // Delete existing cache for this card and query
   await db

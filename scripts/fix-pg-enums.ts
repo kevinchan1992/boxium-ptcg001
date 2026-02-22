@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const schemaPath = path.join(process.cwd(), 'drizzle/schema.ts');
+const schemaPath = path.join(process.cwd(), 'drizzle/schema_new.ts');
 let content = fs.readFileSync(schemaPath, 'utf-8');
 
 console.log('🔄 Fixing PostgreSQL enum definitions...\n');

@@ -8,7 +8,6 @@ type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 function createAdminContext(): { ctx: TrpcContext } {
   const user: AuthenticatedUser = {
     id: 1,
-    openId: "admin-user",
     email: "admin@example.com",
     name: "Admin User",
     loginMethod: "manus",
@@ -33,7 +32,6 @@ function createAdminContext(): { ctx: TrpcContext } {
 function createNonAdminContext(): { ctx: TrpcContext } {
   const user: AuthenticatedUser = {
     id: 2,
-    openId: "regular-user",
     email: "user@example.com",
     name: "Regular User",
     loginMethod: "manus",

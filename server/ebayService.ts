@@ -5,7 +5,7 @@
 
 import axios from "axios";
 import { getDb } from "./db";
-import { priceHistory } from "../drizzle/schema";
+import { priceHistory } from "../drizzle/schema_new";
 
 const EBAY_APP_ID = process.env.EBAY_APP_ID;
 const EBAY_FINDING_API_URL = "https://svcs.ebay.com/services/search/FindingService/v1";

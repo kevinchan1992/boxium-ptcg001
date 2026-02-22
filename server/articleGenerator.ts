@@ -1,6 +1,6 @@
 import { invokeLLM } from "./_core/llm";
 import { getDb } from "./db";
-import { cards, priceHistory } from "../drizzle/schema";
+import { cards, priceHistory } from "../drizzle/schema_new";
 import { eq, inArray, gte, desc, and, sql } from "drizzle-orm";
 
 /**

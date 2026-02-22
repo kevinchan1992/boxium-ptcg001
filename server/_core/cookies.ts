@@ -25,17 +25,6 @@ export function getSessionCookieOptions(
   req: Request
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
   const hostname = req.hostname;
-  
-  // Don't set domain for localhost or IP addresses
-  const shouldSetDomain =
-    hostname &&
-    !LOCAL_HOSTS.has(hostname) &&
-    !isIpAddress(hostname);
-
-  // For subdomains like "3000-xxx.sg1.manus.computer", don't add leading dot
-  // Just use the hostname as-is
-  const domain = shouldSetDomain ? hostname : undefined;
-
   const isSecure = isSecureRequest(req);
   
   console.log("[Cookie] Request protocol:", req.protocol);
@@ -43,10 +32,10 @@ export function getSessionCookieOptions(
   console.log("[Cookie] isSecure:", isSecure);
   console.log("[Cookie] hostname:", req.hostname);
   console.log("[Cookie] host:", req.headers.host);
-  console.log("[Cookie] domain:", domain);
   
+  // Don't set domain at all - let the browser handle it automatically
+  // This is the most reliable approach for complex subdomain scenarios
   const options = {
-    domain,
     httpOnly: true,
     path: "/",
     sameSite: "lax" as const,

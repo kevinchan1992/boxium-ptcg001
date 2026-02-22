@@ -15,7 +15,6 @@ function createGuestContext(): TrpcContext {
 function createUserContext(): TrpcContext {
   const user: AuthenticatedUser = {
     id: 1,
-    openId: "regular-user",
     email: "user@example.com",
     name: "Regular User",
     loginMethod: "manus",
@@ -35,7 +34,6 @@ function createUserContext(): TrpcContext {
 function createAdminContext(): TrpcContext {
   const user: AuthenticatedUser = {
     id: 2,
-    openId: "admin-user",
     email: "admin@example.com",
     name: "Admin User",
     loginMethod: "manus",

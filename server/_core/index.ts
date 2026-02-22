@@ -1,10 +1,11 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "./oauth";
+// Manus OAuth removed
 import { appRouter } from "../routers";
 import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
@@ -42,11 +43,13 @@ async function startServer() {
     credentials: true,
   }));
   
+  // Add cookie parser middleware
+  app.use(cookieParser());
+  
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  // OAuth callback under /api/oauth/callback
-  registerOAuthRoutes(app);
+  // Manus OAuth removed
   
   // Google OAuth routes under /api/auth/google
   app.use("/api/auth", googleOAuthRouter);

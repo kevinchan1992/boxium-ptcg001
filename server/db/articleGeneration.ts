@@ -1,6 +1,6 @@
 import { eq, desc } from "drizzle-orm";
 import { getDb } from "../db";
-import { articleGenerationHistory, type ArticleGenerationHistory, type InsertArticleGenerationHistory } from "../../drizzle/schema";
+import { articleGenerationHistory, type ArticleGenerationHistory, type InsertArticleGenerationHistory } from "../../drizzle/schema_new";
 
 /**
  * Create a new article generation request

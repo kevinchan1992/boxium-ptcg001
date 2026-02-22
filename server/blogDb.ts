@@ -1,5 +1,5 @@
 import { getDb } from "./db";
-import { posts, categories, tags, postTags, type InsertPost, type InsertCategory, type InsertTag } from "../drizzle/schema";
+import { posts, categories, tags, postTags, type InsertPost, type InsertCategory, type InsertTag } from "../drizzle/schema_new";
 import { eq, like, or, desc, and, inArray } from "drizzle-orm";
 
 /**

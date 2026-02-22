@@ -1,16 +1,17 @@
 import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index } from "drizzle-orm/mysql-core";
 
 /**
- * Core user table backing auth flow.
- * Only supports Manus OAuth authentication
+ * Users table - supports password and Google OAuth authentication
  */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
-  openId: varchar("openId", { length: 64 }).notNull().unique(), // Manus OAuth user ID
   email: varchar("email", { length: 320 }).notNull().unique(),
   name: text("name"),
-  loginMethod: varchar("loginMethod", { length: 64 }), // Always "oauth"
+  passwordHash: varchar("passwordHash", { length: 255 }), // bcrypt hash (nullable for OAuth users)
+  googleId: varchar("googleId", { length: 128 }), // Google OAuth ID (nullable)
+  loginMethod: mysqlEnum("loginMethod", ["password", "google"]).notNull(),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  emailVerified: boolean("emailVerified").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -275,6 +276,8 @@ export type InsertSearchStat = typeof searchStats.$inferInsert;
 export const categories = mysqlTable("categories", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
+  nameEn: varchar("nameEn", { length: 100 }),
+  nameJa: varchar("nameJa", { length: 100 }),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   description: text("description"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -305,6 +308,15 @@ export const posts = mysqlTable("posts", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   excerpt: text("excerpt"),
   content: text("content").notNull(), // Markdown format
+  
+  // Multi-language fields
+  titleEn: text("titleEn"),
+  titleJa: text("titleJa"),
+  excerptEn: text("excerptEn"),
+  excerptJa: text("excerptJa"),
+  contentEn: text("contentEn"), // Markdown format
+  contentJa: text("contentJa"), // Markdown format
+  
   featuredImage: text("featuredImage"),
   categoryId: int("categoryId"),
   status: mysqlEnum("status", ["draft", "published"]).default("draft").notNull(),
@@ -339,6 +351,44 @@ export const postTags = mysqlTable("post_tags", {
 
 export type PostTag = typeof postTags.$inferSelect;
 export type InsertPostTag = typeof postTags.$inferInsert;
+
+/**
+ * Article generation history table - stores AI article generation requests and results
+ */
+export const articleGenerationHistory = mysqlTable("articleGenerationHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // User who initiated the generation
+  
+  // Input information
+  inputType: mysqlEnum("inputType", ["url", "text"]).notNull(), // Input type: URL or text
+  inputContent: text("inputContent").notNull(), // URL or original text content
+  detectedLanguage: varchar("detectedLanguage", { length: 10 }), // Detected language (zh-TW, en, ja)
+  
+  // Generation settings
+  targetLanguage: varchar("targetLanguage", { length: 10 }), // Target language for generated article
+  style: varchar("style", { length: 50 }), // Article style (news, analysis, guide, etc.)
+  
+  // Generation results
+  status: mysqlEnum("status", ["pending", "processing", "completed", "failed"]).default("pending").notNull(),
+  generatedTitle: text("generatedTitle"), // Generated article title
+  generatedContent: text("generatedContent"), // Generated article content (Markdown)
+  generatedExcerpt: text("generatedExcerpt"), // Generated excerpt
+  generatedSlug: varchar("generatedSlug", { length: 255 }), // Generated URL slug
+  
+  // Related information
+  postId: int("postId"), // If saved as a post, store the post ID
+  errorMessage: text("errorMessage"), // Error message if generation failed
+  
+  // Metadata
+  processingTimeMs: int("processingTimeMs"), // Processing time in milliseconds
+  tokensUsed: int("tokensUsed"), // Number of tokens used for generation
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ArticleGenerationHistory = typeof articleGenerationHistory.$inferSelect;
+export type InsertArticleGenerationHistory = typeof articleGenerationHistory.$inferInsert;
 
 /**
  * Price update schedule table - stores daily automatic price update schedule
@@ -394,3 +444,30 @@ export const trendingCardsCache = mysqlTable("trendingCardsCache", {
 
 export type TrendingCardsCache = typeof trendingCardsCache.$inferSelect;
 export type InsertTrendingCardsCache = typeof trendingCardsCache.$inferInsert;
+
+/**
+ * Notifications table - stores user notifications
+ */
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
+  type: mysqlEnum("type", ["price_alert", "system", "trade", "announcement"]).notNull(), // Notification type
+  title: text("title").notNull(), // Notification title
+  content: text("content").notNull(), // Notification content
+  priority: mysqlEnum("priority", ["low", "medium", "high"]).default("medium").notNull(), // Notification priority
+  isRead: boolean("isRead").default(false).notNull(), // Whether notification has been read
+  relatedCardId: int("relatedCardId"), // Optional: related card ID for price alerts
+  relatedUrl: text("relatedUrl"), // Optional: URL to navigate when clicked
+  metadata: text("metadata"), // Optional: JSON metadata (e.g., old price, new price)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  readAt: timestamp("readAt"), // When notification was read
+}, (table) => {
+  return {
+    userIdIdx: index("userId_idx").on(table.userId),
+    isReadIdx: index("isRead_idx").on(table.isRead),
+    createdAtIdx: index("createdAt_idx").on(table.createdAt),
+  };
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;

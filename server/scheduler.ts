@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import { getDb } from "./db";
 import * as db from "./db";
-import { dataSources, scheduledTasks, priceHistory } from "../drizzle/schema";
+import { dataSources, scheduledTasks, priceHistory } from "../drizzle/schema_new";
 import { eq, and, lt, or, isNull } from "drizzle-orm";
 import { scrapeSnkrdunkPage, updatePriceHistoryOnly, convertJpyToHkd, extractSnkrdunkId } from "./snkrdunkScraper";
 import { scrapeSnkrdunkPages } from "./snkrdunkAutoCrawler";

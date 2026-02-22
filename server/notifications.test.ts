@@ -7,7 +7,6 @@ const createMockContext = (userId?: number): Context => ({
   user: userId
     ? {
         id: userId,
-        openId: `test-openid-${userId}`,
         email: `test${userId}@example.com`,
         name: `Test User ${userId}`,
         role: "user" as const,

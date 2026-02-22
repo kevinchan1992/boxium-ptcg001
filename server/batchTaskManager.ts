@@ -1,5 +1,5 @@
 import { getDb } from './db';
-import { scheduledTasks, BatchTaskProgress } from '../drizzle/schema';
+import { scheduledTasks, BatchTaskProgress } from '../drizzle/schema_new';
 import { eq, and, or } from 'drizzle-orm';
 
 /**

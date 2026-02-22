@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { findOrCreateGoogleUser } from "./auth";
 import { getDb } from "./db";
-import { users } from "../drizzle/schema";
+import { users } from "../drizzle/schema_new";
 import { eq } from "drizzle-orm";
 
 describe("Google OAuth Authentication", () => {

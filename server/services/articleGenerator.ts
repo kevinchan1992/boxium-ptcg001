@@ -1,6 +1,6 @@
 import { invokeLLM } from "../_core/llm";
 import { createGenerationRequest, updateGenerationStatus, getGenerationById } from "../db/articleGeneration";
-import type { InsertArticleGenerationHistory } from "../../drizzle/schema";
+import type { InsertArticleGenerationHistory } from "../../drizzle/schema_new";
 import { getTemplate, applyTemplate } from "./articleTemplates";
 import { analyzeSEO, generateMetaDescription } from "./seoAnalyzer";
 import * as cheerio from "cheerio";

@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import pg from "pg";
-import * as schema from "../drizzle/schema.js";
+import * as schema from "../drizzle/schema_new.js";
 
 const { Pool } = pg;
 

@@ -2,8 +2,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { eq } from "drizzle-orm";
 import { getDb } from "./db";
-import { users } from "../drizzle/schema";
-import type { User } from "../drizzle/schema";
+import { users } from "../drizzle/schema_new";
+import type { User } from "../drizzle/schema_new";
 
 const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";

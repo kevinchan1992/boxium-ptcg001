@@ -21,7 +21,6 @@ function createMockContext(user?: any): TrpcContext {
 // 測試用戶
 const mockUser = {
   id: 1,
-  openId: "test-open-id",
   name: "Test User",
   email: "test@example.com",
   role: "user" as const,

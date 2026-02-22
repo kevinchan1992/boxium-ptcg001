@@ -1,5 +1,5 @@
 import { getDb } from "../db";
-import { notifications, type Notification, type InsertNotification } from "../../drizzle/schema";
+import { notifications, type Notification, type InsertNotification } from "../../drizzle/schema_new";
 import { eq, and, desc, count } from "drizzle-orm";
 
 /**

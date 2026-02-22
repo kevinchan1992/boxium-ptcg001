@@ -30,6 +30,17 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure
       .query(async ({ ctx }) => {
+        console.log('[Auth.me] Checking current user...');
+        console.log('[Auth.me] ctx.user exists:', !!ctx.user);
+        if (ctx.user) {
+          console.log('[Auth.me] User found:', {
+            id: ctx.user.id,
+            email: ctx.user.email,
+            role: ctx.user.role,
+          });
+        } else {
+          console.log('[Auth.me] No user in context');
+        }
         return ctx.user || null;
       }),
     
@@ -68,10 +79,22 @@ export const appRouter = router({
         password: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
+        console.log('[Login API] Starting login process for:', input.email);
+        console.log('[Login API] ctx.req exists:', !!ctx.req);
+        console.log('[Login API] ctx.res exists:', !!ctx.res);
+        
         const { loginUser } = await import('./auth');
         const result = await loginUser(input.email, input.password);
         
+        console.log('[Login API] Login result:', {
+          success: result.success,
+          hasToken: !!result.token,
+          hasUser: !!result.user,
+          userId: result.user?.id,
+        });
+        
         if (!result.success) {
+          console.log('[Login API] Login failed:', result.error);
           throw new TRPCError({
             code: 'UNAUTHORIZED',
             message: result.error || '登入失敗',
@@ -80,7 +103,17 @@ export const appRouter = router({
         
         // Set session cookie
         if (result.token && ctx.res && ctx.req) {
-          ctx.res.cookie('session', result.token, getSessionCookieOptions(ctx.req));
+          console.log('[Login API] Setting session cookie...');
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          console.log('[Login API] Cookie options:', cookieOptions);
+          ctx.res.cookie('session', result.token, cookieOptions);
+          console.log('[Login API] Session cookie set successfully');
+        } else {
+          console.warn('[Login API] Cannot set cookie - missing token, req, or res:', {
+            hasToken: !!result.token,
+            hasReq: !!ctx.req,
+            hasRes: !!ctx.res,
+          });
         }
         
         return {
