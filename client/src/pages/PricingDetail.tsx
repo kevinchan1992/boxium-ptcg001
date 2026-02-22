@@ -134,17 +134,17 @@ export default function PricingDetail() {
 
           {/* Card Info */}
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-foreground mb-2">{card.name}</h1>
+            <h1 className="text-base sm:text-xl font-bold text-foreground mb-2">{card.name}</h1>
             {card.nameJa && (
-              <p className="text-lg text-muted-foreground mb-2">{card.nameJa}</p>
+              <p className="text-sm sm:text-base text-muted-foreground mb-2">{card.nameJa}</p>
             )}
             {card.cardNumber && (
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                 {t("pricing.cardNumber")}: {card.cardNumber}
               </p>
             )}
             {card.series && (
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                 {t("pricing.series")}: {card.series}
               </p>
             )}
@@ -152,20 +152,20 @@ export default function PricingDetail() {
             {/* Price Statistics */}
             <div className="grid grid-cols-3 gap-4 mt-6">
               <div className="bg-muted rounded-lg p-4">
-                <p className="text-xs text-muted-foreground mb-1">{t("pricing.lowestPrice")}</p>
-                <p className="text-xl font-bold text-green-500">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{t("pricing.lowestPrice")}</p>
+                <p className="text-sm sm:text-lg font-bold text-green-500">
                   {lowestPrice > 0 ? formatCurrency(lowestPrice) : "N/A"}
                 </p>
               </div>
               <div className="bg-muted rounded-lg p-4">
-                <p className="text-xs text-muted-foreground mb-1">{t("pricing.averagePrice")}</p>
-                <p className="text-xl font-bold text-primary">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{t("pricing.averagePrice")}</p>
+                <p className="text-sm sm:text-lg font-bold text-primary">
                   {averagePrice > 0 ? formatCurrency(averagePrice) : "N/A"}
                 </p>
               </div>
               <div className="bg-muted rounded-lg p-4">
-                <p className="text-xs text-muted-foreground mb-1">{t("pricing.highestPrice")}</p>
-                <p className="text-xl font-bold text-red-500">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{t("pricing.highestPrice")}</p>
+                <p className="text-sm sm:text-lg font-bold text-red-500">
                   {highestPrice > 0 ? formatCurrency(highestPrice) : "N/A"}
                 </p>
               </div>
@@ -178,7 +178,7 @@ export default function PricingDetail() {
 
       {/* Listings Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-foreground">
+        <h2 className="text-base sm:text-xl font-bold text-foreground">
           {t("pricing.allListings")}
         </h2>
         <Button

@@ -129,7 +129,7 @@ export function TopNav() {
               key={item.href}
               href={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`block text-lg font-medium transition-colors ${
+              className={`block text-base font-medium transition-colors ${
                 isActive(item.href)
                   ? "text-[#ffed00]"
                   : "text-white/80 hover:text-[#ffed00]"
@@ -143,7 +143,7 @@ export function TopNav() {
           <Link
             href="/admin"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="block text-lg font-medium text-red-400 hover:text-red-300"
+            className="block text-base font-medium text-red-400 hover:text-red-300"
           >
             {t("nav.admin")}
           </Link>
