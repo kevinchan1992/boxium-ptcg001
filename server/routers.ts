@@ -32,6 +32,57 @@ export const appRouter = router({
       .query(async ({ ctx }) => {
         return ctx.user || null;
       }),
+    
+    register: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string().min(8),
+        name: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { registerUser } = await import('./auth');
+        const result = await registerUser(input.email, input.password, input.name);
+        
+        if (!result.success) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: result.error || '註冊失敗',
+          });
+        }
+        
+        return {
+          success: true,
+          user: result.user,
+        };
+      }),
+    
+    login: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { loginUser } = await import('./auth');
+        const result = await loginUser(input.email, input.password);
+        
+        if (!result.success) {
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: result.error || '登入失敗',
+          });
+        }
+        
+        // Set session cookie
+        if (result.token && ctx.res) {
+          ctx.res.cookie('session', result.token, getSessionCookieOptions());
+        }
+        
+        return {
+          success: true,
+          user: result.user,
+          token: result.token,
+        };
+      }),
   }),
 
   cards: router({
@@ -2013,7 +2064,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
           status: input.status,
           publishedAt: input.status === 'published' ? new Date() : null,
           viewCount: 0,
-          authorId: null,
+          authorId: ctx.user.id,
           dataSource: input.dataSource,
           relatedCardIds: input.relatedCardIds || null,
           dataSnapshot: input.dataSnapshot || null,

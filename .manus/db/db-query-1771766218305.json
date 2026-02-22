@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, email, name, role, loginMethod, emailVerified FROM users WHERE email = 'xyz.asia.co@gmail.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, email, name, role, loginMethod, emailVerified FROM users WHERE email = 'xyz.asia.co@gmail.com';",
+  "rows": [
+    {
+      "id": "1",
+      "email": "xyz.asia.co@gmail.com",
+      "name": "Admin",
+      "role": "admin",
+      "loginMethod": "password",
+      "emailVerified": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\trole\tloginMethod\temailVerified\n1\txyz.asia.co@gmail.com\tAdmin\tadmin\tpassword\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1589
+}

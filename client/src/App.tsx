@@ -20,6 +20,8 @@ import Disclaimer from "./pages/Disclaimer";
 import About from "./pages/About";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import { TopNav } from "./components/TopNav";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 
@@ -46,7 +48,8 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
 
-
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
 
       <Route path="/admin">
         <ProtectedAdminRoute>

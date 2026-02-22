@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'loginMethod' AND TABLE_SCHEMA = DATABASE();",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'loginMethod' AND TABLE_SCHEMA = DATABASE();",
+  "rows": [
+    {
+      "COLUMN_TYPE": "enum('password','google')"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_TYPE\nenum('password','google')\n",
+  "stderr": "",
+  "execution_time_ms": 1535
+}

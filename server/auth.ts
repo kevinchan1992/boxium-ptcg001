@@ -106,9 +106,8 @@ export async function registerUser(
   }
 
   // Check if user already exists
-  const existingUser = await db.query.users.findFirst({
-    where: eq(users.email, email),
-  });
+  const existingUsers = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const existingUser = existingUsers.length > 0 ? existingUsers[0] : null;
 
   if (existingUser) {
     return { success: false, error: "此 email 已被註冊" };
@@ -128,15 +127,12 @@ export async function registerUser(
   });
 
   // Fetch the created user
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, newUser.insertId),
-  });
-
-  if (!user) {
+  const createdUser = await db.select().from(users).where(eq(users.id, newUser.insertId)).limit(1);
+  if (createdUser.length === 0) {
     return { success: false, error: "創建用戶失敗" };
   }
 
-  return { success: true, user };
+  return { success: true, user: createdUser[0] };
 }
 
 /**
@@ -152,9 +148,8 @@ export async function loginUser(
   }
   
   // Find user by email
-  const user = await db.query.users.findFirst({
-    where: eq(users.email, email),
-  });
+  const userResults = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const user = userResults.length > 0 ? userResults[0] : null;
 
   if (!user) {
     return { success: false, error: "email 或密碼錯誤" };

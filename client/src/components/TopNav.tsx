@@ -1,15 +1,39 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "wouter";
+import { Menu, X, LogOut, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { trpc } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 export function TopNav() {
   const { t } = useTranslation();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  
+  // Get current user
+  const { data: user } = trpc.auth.me.useQuery();
+  const logoutMutation = trpc.system.logout.useMutation({
+    onSuccess: () => {
+      toast.success("登出成功");
+      window.location.href = "/";
+    },
+  });
+  
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   const navItems = [
     { href: "/", label: t("common.home") },
@@ -104,12 +128,50 @@ export function TopNav() {
               </Link>
             </div>
 
-            {/* Right Side: Language Switcher */}
+            {/* Right Side: Language Switcher + Auth */}
             <div className="flex items-center gap-3">
               {/* Language Switcher */}
               <div className="hidden md:block">
                 <LanguageSwitcher />
               </div>
+              
+              {/* Auth Buttons */}
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00]">
+                      <User className="w-4 h-4 mr-2" />
+                      {user.name || user.email}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>我的帳號</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      登出
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="hidden md:flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:text-[#ffed00]"
+                    onClick={() => setLocation("/login")}
+                  >
+                    登入
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-[#ffed00] text-black hover:bg-[#ffed00]/90"
+                    onClick={() => setLocation("/register")}
+                  >
+                    註冊
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

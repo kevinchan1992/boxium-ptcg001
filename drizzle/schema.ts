@@ -5,11 +5,12 @@ import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean,
  */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
+  openId: varchar("openId", { length: 64 }).unique(), // Manus OAuth ID (nullable)
   email: varchar("email", { length: 320 }).notNull().unique(),
   name: text("name"),
   passwordHash: varchar("passwordHash", { length: 255 }), // bcrypt hash (nullable for OAuth users)
-  googleId: varchar("googleId", { length: 128 }), // Google OAuth ID (nullable for password users)
-  loginMethod: mysqlEnum("loginMethod", ["password", "google"]).notNull(),
+  googleId: varchar("googleId", { length: 128 }), // Google OAuth ID (nullable)
+  loginMethod: mysqlEnum("loginMethod", ["password", "google", "manus"]).notNull(),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   emailVerified: boolean("emailVerified").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
