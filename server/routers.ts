@@ -2530,6 +2530,17 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         return watchlist;
       }),
 
+    // Check if card is in watchlist
+    isInWatchlist: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const { isCardInWatchlist } = await import("./profile");
+        const isInWatchlist = await isCardInWatchlist(ctx.user.id, input.cardId);
+        return { isInWatchlist };
+      }),
+
     // Add card to watchlist
     addToWatchlist: protectedProcedure
       .input(z.object({

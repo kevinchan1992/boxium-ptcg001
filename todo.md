@@ -653,3 +653,22 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - 不包含價格提醒功能（根據用戶需求）
 - UI 配色使用平台主題（藍色 #06038d + 黃色 #ffed00）
 - 所有組件需要響應式設計，適配手機端
+
+
+---
+
+## ❤️ 卡牌詳情頁面添加收藏按鈕
+
+### 目標
+在卡牌詳情頁面添加「加入收藏」按鈕，讓用戶可以快速收藏卡牌，並顯示操作成功提示
+
+### 任務清單
+- [x] 檢查現有卡牌詳情頁面（CardDetail.tsx）
+- [x] 檢查後端收藏 API（profile.addToWatchlist）
+- [x] 添加後端 API 檢查收藏狀態（profile.isInWatchlist）
+- [x] 在卡牌詳情頁面添加「加入收藏」按鈕
+- [x] 實施收藏狀態檢查（已收藏顯示紅色心形）
+- [x] 實施收藏功能（未登入提示、重複收藏防護）
+- [x] 添加操作成功提示（toast）
+- [x] 測試收藏功能（Vitest - 5/5 測試通過）
+- [ ] 保存 checkpoint

@@ -56,6 +56,20 @@ export async function getUserWatchlist(userId: number) {
   return watchlistWithPrices;
 }
 
+// Check if card is in user's watchlist
+export async function isCardInWatchlist(userId: number, cardId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  
+  const result = await db
+    .select()
+    .from(watchlist)
+    .where(and(eq(watchlist.userId, userId), eq(watchlist.cardId, cardId)))
+    .limit(1);
+
+  return result.length > 0;
+}
+
 // Add card to watchlist
 export async function addToWatchlist(userId: number, cardId: number, notes?: string) {
   const db = await getDb();

@@ -32,7 +32,39 @@ export default function CardDetail() {
     { enabled: !!cardId, retry: 1 }
   );
 
-  // Favorites feature removed
+  // Get current user
+  const { data: user } = trpc.auth.me.useQuery();
+
+  // Check if card is in watchlist
+  const { data: watchlistStatus, refetch: refetchWatchlistStatus } = trpc.profile.isInWatchlist.useQuery(
+    { cardId: cardId! },
+    { enabled: !!cardId && !!user, retry: 1 }
+  );
+
+  // Add to watchlist mutation
+  const addToWatchlist = trpc.profile.addToWatchlist.useMutation({
+    onSuccess: () => {
+      toast.success("已加入收藏");
+      refetchWatchlistStatus();
+    },
+    onError: (error) => {
+      if (error.message.includes("already in watchlist")) {
+        toast.error("此卡牌已在收藏列表中");
+      } else {
+        toast.error("加入收藏失敗：" + error.message);
+      }
+    },
+  });
+
+  // Handle add to watchlist
+  const handleAddToWatchlist = () => {
+    if (!user) {
+      toast.error("請先登入才能使用收藏功能");
+      setLocation("/login");
+      return;
+    }
+    addToWatchlist.mutate({ cardId: cardId! });
+  };
 
   // Fetch price history from SNKRDUNK
   const normalizeGrade = (grade: string | null) => {
@@ -287,6 +319,16 @@ export default function CardDetail() {
             >
               {t("cardDetail.comparePrice")}
             </BrandButton>
+            <Button
+              size="sm"
+              variant={watchlistStatus?.isInWatchlist ? "default" : "outline"}
+              onClick={handleAddToWatchlist}
+              disabled={addToWatchlist.isPending}
+              className={watchlistStatus?.isInWatchlist ? "bg-red-600 hover:bg-red-700" : ""}
+            >
+              <Heart className={`w-4 h-4 mr-1 ${watchlistStatus?.isInWatchlist ? "fill-current" : ""}`} />
+              {watchlistStatus?.isInWatchlist ? "已收藏" : "加入收藏"}
+            </Button>
             <ShareButton cardName={card.name} cardId={cardId!} />
           </div>
         </div>
