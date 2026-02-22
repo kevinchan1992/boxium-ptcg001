@@ -66,6 +66,16 @@ export default function CardDetail() {
     addToWatchlist.mutate({ cardId: cardId! });
   };
 
+  // Add view history mutation
+  const addViewHistory = trpc.profile.addViewHistory.useMutation();
+
+  // Auto-record view history when user visits card detail page
+  useEffect(() => {
+    if (user && cardId) {
+      addViewHistory.mutate({ cardId });
+    }
+  }, [user, cardId]);
+
   // Fetch price history from SNKRDUNK
   const normalizeGrade = (grade: string | null) => {
     if (!grade) return undefined;

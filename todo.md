@@ -672,3 +672,18 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [x] 添加操作成功提示（toast）
 - [x] 測試收藏功能（Vitest - 5/5 測試通過）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 📜 自動記錄瀏覽歷史
+
+### 目標
+當用戶進入卡牌詳情頁面時，自動將該卡牌加入瀏覽歷史記錄
+
+### 任務清單
+- [x] 在 CardDetail.tsx 添加 useEffect 自動調用 addViewHistory API
+- [x] 確保只有登入用戶才記錄瀏覽歷史
+- [x] 測試瀏覽歷史記錄功能（Vitest - 5/5 測試通過）
+- [ ] 驗證個人中心的瀏覽歷史列表更新（等待用戶測試）
+- [ ] 保存 checkpoint
