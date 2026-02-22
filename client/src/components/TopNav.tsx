@@ -149,6 +149,10 @@ export function TopNav() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>我的帳號</DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setLocation("/profile")}>
+                      <User className="w-4 h-4 mr-2" />
+                      個人中心
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="w-4 h-4 mr-2" />
                       登出

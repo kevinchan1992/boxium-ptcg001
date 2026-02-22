@@ -22,6 +22,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Profile from "./pages/Profile";
 import { TopNav } from "./components/TopNav";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 
@@ -50,6 +51,7 @@ function Router() {
 
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/profile" component={Profile} />
 
       <Route path="/admin">
         <ProtectedAdminRoute>

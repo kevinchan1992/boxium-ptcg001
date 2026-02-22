@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router, adminProcedure } from "./_core/trpc";
+import { publicProcedure, router, adminProcedure, protectedProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
@@ -2517,6 +2517,90 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       .query(async ({ input }) => {
         const history = await db.getCardPriceHistory(input.cardId, input.days);
         return history;
+      }),
+  }),
+
+  // Profile router - user personal page APIs
+  profile: router({
+    // Get user's watchlist
+    getWatchlist: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getUserWatchlist } = await import("./profile");
+        const watchlist = await getUserWatchlist(ctx.user.id);
+        return watchlist;
+      }),
+
+    // Add card to watchlist
+    addToWatchlist: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { addToWatchlist } = await import("./profile");
+        await addToWatchlist(ctx.user.id, input.cardId, input.notes);
+        return { success: true };
+      }),
+
+    // Update watchlist notes
+    updateWatchlistNotes: protectedProcedure
+      .input(z.object({
+        watchlistId: z.number(),
+        notes: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { updateWatchlistNotes } = await import("./profile");
+        await updateWatchlistNotes(ctx.user.id, input.watchlistId, input.notes);
+        return { success: true };
+      }),
+
+    // Remove from watchlist
+    removeFromWatchlist: protectedProcedure
+      .input(z.object({
+        watchlistId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { removeFromWatchlist } = await import("./profile");
+        await removeFromWatchlist(ctx.user.id, input.watchlistId);
+        return { success: true };
+      }),
+
+    // Get view history
+    getViewHistory: protectedProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).optional(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const { getUserViewHistory } = await import("./profile");
+        const history = await getUserViewHistory(ctx.user.id, input.limit);
+        return history;
+      }),
+
+    // Add view history record
+    addViewHistory: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { addViewHistory } = await import("./profile");
+        await addViewHistory(ctx.user.id, input.cardId);
+        return { success: true };
+      }),
+
+    // Clear view history
+    clearViewHistory: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const { clearViewHistory } = await import("./profile");
+        await clearViewHistory(ctx.user.id);
+        return { success: true };
+      }),
+
+    // Get watchlist statistics
+    getWatchlistStats: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getUserWatchlistStats } = await import("./profile");
+        const stats = await getUserWatchlistStats(ctx.user.id);
+        return stats;
       }),
   }),
 

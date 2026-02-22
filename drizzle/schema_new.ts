@@ -83,6 +83,19 @@ export type Watchlist = typeof watchlist.$inferSelect;
 export type InsertWatchlist = typeof watchlist.$inferInsert;
 
 /**
+ * View history table - stores user's card viewing history
+ */
+export const viewHistory = mysqlTable("viewHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
+  cardId: int("cardId").notNull(), // Foreign key to cards table
+  viewedAt: timestamp("viewedAt").defaultNow().notNull(), // Viewing timestamp
+});
+
+export type ViewHistory = typeof viewHistory.$inferSelect;
+export type InsertViewHistory = typeof viewHistory.$inferInsert;
+
+/**
  * Market trends table - stores aggregated market data for analysis
  */
 export const marketTrends = mysqlTable("marketTrends", {
