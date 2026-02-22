@@ -720,3 +720,21 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [x] 實現點擊切換功能（handleWatchlistToggle）
 - [x] 測試移除收藏功能（Vitest - 4/4 測試通過）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🚀 Playwright 爬蟲優化實施（重新開始）
+
+### 優化目標
+提升載入速度 40-50%（15-20秒 → 8-10秒）、提升成功率 15-25%（70-80% → 92-95%）、解決重啟後首次請求失敗問題、減少記憶體使用 50%（600MB → 300MB）
+
+### 任務清單
+- [x] 創建瀏覽器連接池（server/services/playwrightPool.ts）
+- [x] 優化爬蟲服務（snkrdunkPlaywright.ts）
+  * [x] 使用瀏覽器連接池
+  * [x] 禁用資源加載（圖片/字體/樣式表/媒體）
+  * [x] 縮短超時（60s → 20s）
+  * [x] 智能等待（動態 2-5s）
+  * [x] 指數退避重試（1s/3s/8s）
+- [ ] 保存 checkpoint

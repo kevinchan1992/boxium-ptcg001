@@ -4,7 +4,7 @@
  * Now scrapes both on-sale and sold items for comprehensive pricing data
  */
 
-import { chromium } from "playwright";
+import { playwrightPool } from "./playwrightPool";
 import { convertToHKD } from "../utils/currency";
 
 export interface SnkrdunkListing {
@@ -62,11 +62,11 @@ export async function scrapeSnkrdunkListings(
   } catch (error) {
     console.error(`[SNKRDUNK Playwright] Comprehensive scrape failed:`, error);
     
-    // Retry logic
+    // Exponential backoff retry
     if (retryCount < 2) {
-      console.log(`[SNKRDUNK Playwright] Retrying (${retryCount + 1}/2)...`);
-      const waitTime = 2000 * (retryCount + 1);
-      console.log(`[SNKRDUNK Playwright] Waiting ${waitTime}ms before retry...`);
+      const retryDelays = [1000, 3000, 8000];
+      const waitTime = retryDelays[retryCount];
+      console.log(`[SNKRDUNK Playwright] Retrying (${retryCount + 1}/3), waiting ${waitTime}ms...`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
       return scrapeSnkrdunkListings(snkrdunkId, retryCount + 1);
     }
@@ -102,21 +102,14 @@ async function scrapeSnkrdunkUrl(
   console.log(`[SNKRDUNK Playwright] Scraping ${status} items for SNKRDUNK ID: ${snkrdunkId}`);
   console.log(`[SNKRDUNK Playwright] Target URL: ${url}`);
 
-  let browser;
-  try {
-    // Launch browser with anti-detection measures
-    console.log(`[SNKRDUNK Playwright] Launching browser...`);
-    browser = await chromium.launch({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-blink-features=AutomationControlled",
-        "--disable-dev-shm-usage",
-      ],
-    });
+  let page: any = null;
+  let context: any = null;
 
-    const context = await browser.newContext({
+  try {
+    console.log(`[SNKRDUNK Playwright] Getting browser from pool...`);
+    const browser = await playwrightPool.getBrowser();
+
+    context = await browser.newContext({
       userAgent:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       viewport: { width: 1920, height: 1080 },
@@ -124,28 +117,43 @@ async function scrapeSnkrdunkUrl(
       timezoneId: "America/New_York",
     });
 
-    const page = await context.newPage();
-    console.log(`[SNKRDUNK Playwright] Browser launched, navigating to page...`);
+    page = await context.newPage();
+    console.log(`[SNKRDUNK Playwright] Browser ready, navigating to page...`);
 
-    // Navigate to page with faster load strategy
-    await page.goto(url, { 
-      waitUntil: "domcontentloaded", // Wait for DOM to be loaded
-      timeout: 60000
+    // Block unnecessary resources
+    await page.route('**/*', (route: any) => {
+      const resourceType = route.request().resourceType();
+      if (['image', 'font', 'stylesheet', 'media'].includes(resourceType)) {
+        route.abort();
+      } else {
+        route.continue();
+      }
     });
 
-    // Wait for page to load - optimized to 6 seconds for better performance
+    // Navigate with optimized timeout
+    await page.goto(url, { 
+      waitUntil: "domcontentloaded",
+      timeout: 20000
+    });
+
     console.log(`[SNKRDUNK Playwright] Waiting for page to load...`);
     
-    // Smart wait: wait for product links to appear
+    // Smart wait for product links
     try {
-      await page.waitForSelector('a', { timeout: 10000 });
-      console.log(`[SNKRDUNK Playwright] Product links detected, waiting additional time for full load...`);
+      await page.waitForSelector('a[href*="/trading-cards/"]', { 
+        timeout: 8000,
+        state: 'attached'
+      });
+      console.log(`[SNKRDUNK Playwright] Product links detected`);
     } catch (e) {
-      console.log(`[SNKRDUNK Playwright] No links detected within 10s, proceeding anyway...`);
+      console.log(`[SNKRDUNK Playwright] No product links detected within 8s, proceeding...`);
     }
     
-    // Optimized wait time: 6 seconds (reduced from 8 seconds)
-    await page.waitForTimeout(6000);
+    // Dynamic wait based on page complexity
+    const linkCount = await page.locator('a').count();
+    const waitTime = Math.min(2000 + linkCount * 30, 5000);
+    console.log(`[SNKRDUNK Playwright] Detected ${linkCount} links, waiting ${waitTime}ms...`);
+    await page.waitForTimeout(waitTime);
     console.log(`[SNKRDUNK Playwright] Page load complete, extracting data...`);
 
     // Extract product data using the same logic as the browser script
@@ -269,8 +277,12 @@ async function scrapeSnkrdunkUrl(
     
     throw error;
   } finally {
-    if (browser) {
-      await browser.close();
+    // Don't close browser (managed by pool), just close page and context
+    try {
+      if (page) await page.close();
+      if (context) await context.close();
+    } catch (e) {
+      console.log(`[SNKRDUNK Playwright] Error closing page/context:`, e);
     }
   }
 }
