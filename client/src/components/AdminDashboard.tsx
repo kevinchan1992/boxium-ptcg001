@@ -1,10 +1,19 @@
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2, BookOpen, FileEdit, AlertCircle, XCircle, Server } from "lucide-react";
+import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2, BookOpen, FileEdit, AlertCircle, XCircle, Server, RefreshCw } from "lucide-react";
 import { useLocation } from "wouter";
+import { toast } from "sonner";
 
 export function AdminDashboard() {
-  const { data: stats, isLoading } = trpc.admin.getDashboardStats.useQuery();
+  const utils = trpc.useUtils();
+  const { data: stats, isLoading, refetch } = trpc.admin.getDashboardStats.useQuery();
+  
+  const handleRefresh = async () => {
+    toast.info("正在刷新統計數據...");
+    await refetch();
+    toast.success("統計數據已更新");
+  };
 
   const [, setLocation] = useLocation();
 
@@ -61,9 +70,21 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-2">數據統計</h2>
-        <p className="text-gray-400">系統整體數據概覽</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-2">數據統計</h2>
+          <p className="text-gray-400">系統整體數據概覽</p>
+        </div>
+        <Button
+          onClick={handleRefresh}
+          disabled={isLoading}
+          variant="outline"
+          size="sm"
+          className="bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          刷新數據
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

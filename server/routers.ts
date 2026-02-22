@@ -1189,7 +1189,7 @@ try {
           if (currentProgress.isRunning) {
             throw new TRPCError({
               code: "BAD_REQUEST",
-              message: "批量更新已在運行中",
+              message: "批量更新正在進行中，請稍候。已處理 " + currentProgress.processedCards + "/" + currentProgress.totalCards + " 張卡牌。",
             });
           }
 
@@ -1348,24 +1348,42 @@ try {
         }
       }),
 
-    // 獲取批量更新進度
+    // 獲取批量更新進度（同時檢查 eBay 和 SNKRDUNK）
     getBatchUpdateProgress: publicProcedure
       .query(async ({ ctx }) => {
-        const progress = batchUpdateProgress.getBatchUpdateProgress();
-        return progress;
+        // 檢查 eBay 進度
+        const ebayProgress = batchUpdateProgress.getBatchUpdateProgress();
+        if (ebayProgress.isRunning) {
+          return ebayProgress;
+        }
+        
+        // 檢查 SNKRDUNK 進度
+        const snkrdunkProgress = snkrdunkBatchUpdateProgress.getSnkrdunkBatchUpdateProgress();
+        if (snkrdunkProgress.isRunning) {
+          return snkrdunkProgress;
+        }
+        
+        // 如果都沒有運行，返回 eBay 進度（預設）
+        return ebayProgress;
       }),
 
-    // 暫停批量更新
+    // 暫停批量更新（同時操作 eBay 和 SNKRDUNK）
     pauseBatchUpdate: publicProcedure
       .mutation(async ({ ctx }) => {
+        // 暫停 eBay 批量更新
         batchUpdateProgress.pauseBatchUpdate();
+        // 暫停 SNKRDUNK 批量更新
+        snkrdunkBatchUpdateProgress.pauseSnkrdunkBatchUpdate();
         return { success: true, message: "批量更新已暫停" };
       }),
 
-    // 繼續批量更新
+    // 繼續批量更新（同時操作 eBay 和 SNKRDUNK）
     resumeBatchUpdate: publicProcedure
       .mutation(async ({ ctx }) => {
+        // 繼續 eBay 批量更新
         batchUpdateProgress.resumeBatchUpdate();
+        // 繼續 SNKRDUNK 批量更新
+        snkrdunkBatchUpdateProgress.resumeSnkrdunkBatchUpdate();
         return { success: true, message: "批量更新已繼續" };
       }),
 
@@ -1378,7 +1396,7 @@ try {
           if (currentProgress.isRunning) {
             throw new TRPCError({
               code: "BAD_REQUEST",
-              message: "SNKRDUNK 批量更新已在運行中",
+              message: "批量更新正在進行中，請稍候。已處理 " + currentProgress.processedCards + "/" + currentProgress.totalCards + " 張卡牌。",
             });
           }
 
