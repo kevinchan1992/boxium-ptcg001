@@ -1889,6 +1889,75 @@ try {
         const deletedCount = await db.clearAllSnkrdunkCache();
         return { success: true, deletedCount };
       }),
+    // User Management APIs
+    getUserList: adminProcedure
+      .input(z.object({
+        page: z.number().min(1).optional(),
+        pageSize: z.number().min(1).max(100).optional(),
+        search: z.string().optional(),
+        role: z.enum(["admin", "user"]).optional(),
+        loginMethod: z.enum(["password", "google"]).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { getUserList } = await import('./userManagement');
+        return await getUserList(input || {});
+      }),
+
+    getUserStats: adminProcedure
+      .query(async () => {
+        const { getUserStats } = await import('./userManagement');
+        return await getUserStats();
+      }),
+
+    updateUserRole: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        role: z.enum(["admin", "user"]),
+      }))
+      .mutation(async ({ input }) => {
+        const { updateUserRole } = await import('./userManagement');
+        return await updateUserRole(input.userId, input.role);
+      }),
+
+    updateUser: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { updateUser } = await import('./userManagement');
+        const { userId, ...data } = input;
+        return await updateUser(userId, data);
+      }),
+
+    resetUserPassword: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        newPassword: z.string().min(8),
+      }))
+      .mutation(async ({ input }) => {
+        const { resetUserPassword } = await import('./userManagement');
+        return await resetUserPassword(input.userId, input.newPassword);
+      }),
+
+    deleteUser: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const { deleteUser } = await import('./userManagement');
+        return await deleteUser(input.userId);
+      }),
+
+    getUserById: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const { getUserById } = await import('./userManagement');
+        return await getUserById(input.userId);
+      }),
   }),
 
   watchlist: router({

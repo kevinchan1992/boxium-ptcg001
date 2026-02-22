@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
-
+import { AdminUserManagement } from "@/components/AdminUserManagement";
 import { AdminDataSources } from "@/components/AdminDataSources";
 import { AdminTrendingCards } from "@/components/AdminTrendingCards";
 import { AdminBlogManagement } from "@/components/AdminBlogManagement";
@@ -22,11 +22,15 @@ export default function Admin() {
           </div>
 
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-7 lg:w-auto">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="hidden sm:inline">{t("admin.statistics")}</span>
               </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">帳號管理</span>
+            </TabsTrigger>
             <TabsTrigger value="datasources" className="flex items-center gap-2">
               <Database className="w-4 h-4" />
               {t("admin.dataSources")}
@@ -53,7 +57,9 @@ export default function Admin() {
               <AdminDashboard />
             </TabsContent>
 
-
+            <TabsContent value="users" className="mt-6">
+              <AdminUserManagement />
+            </TabsContent>
 
             <TabsContent value="datasources" className="mt-6">
               <AdminDataSources />
