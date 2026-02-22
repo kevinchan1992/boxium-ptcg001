@@ -2565,7 +2565,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         return { success: true };
       }),
 
-    // Remove from watchlist
+    // Remove from watchlist by watchlist ID
     removeFromWatchlist: protectedProcedure
       .input(z.object({
         watchlistId: z.number(),
@@ -2573,6 +2573,17 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       .mutation(async ({ ctx, input }) => {
         const { removeFromWatchlist } = await import("./profile");
         await removeFromWatchlist(ctx.user.id, input.watchlistId);
+        return { success: true };
+      }),
+
+    // Remove from watchlist by card ID
+    removeFromWatchlistByCardId: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { removeFromWatchlistByCardId } = await import("./profile");
+        await removeFromWatchlistByCardId(ctx.user.id, input.cardId);
         return { success: true };
       }),
 

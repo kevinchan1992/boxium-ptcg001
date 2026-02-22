@@ -56,14 +56,32 @@ export default function CardDetail() {
     },
   });
 
-  // Handle add to watchlist
-  const handleAddToWatchlist = () => {
+  // Remove from watchlist mutation
+  const removeFromWatchlist = trpc.profile.removeFromWatchlistByCardId.useMutation({
+    onSuccess: () => {
+      toast.success("已從收藏中移除");
+      refetchWatchlistStatus();
+    },
+    onError: (error) => {
+      toast.error("移除收藏失敗：" + error.message);
+    },
+  });
+
+  // Handle watchlist toggle (add or remove)
+  const handleWatchlistToggle = () => {
     if (!user) {
       toast.error("請先登入才能使用收藏功能");
       setLocation("/login");
       return;
     }
-    addToWatchlist.mutate({ cardId: cardId! });
+    
+    if (watchlistStatus?.isInWatchlist) {
+      // Remove from watchlist
+      removeFromWatchlist.mutate({ cardId: cardId! });
+    } else {
+      // Add to watchlist
+      addToWatchlist.mutate({ cardId: cardId! });
+    }
   };
 
   // Add view history mutation
@@ -332,12 +350,12 @@ export default function CardDetail() {
             <Button
               size="sm"
               variant={watchlistStatus?.isInWatchlist ? "default" : "outline"}
-              onClick={handleAddToWatchlist}
-              disabled={addToWatchlist.isPending}
+              onClick={handleWatchlistToggle}
+              disabled={addToWatchlist.isPending || removeFromWatchlist.isPending}
               className={watchlistStatus?.isInWatchlist ? "bg-red-600 hover:bg-red-700" : ""}
             >
               <Heart className={`w-4 h-4 mr-1 ${watchlistStatus?.isInWatchlist ? "fill-current" : ""}`} />
-              {watchlistStatus?.isInWatchlist ? "已收藏" : "加入收藏"}
+              {watchlistStatus?.isInWatchlist ? "從收藏中移除" : "加入收藏"}
             </Button>
             <ShareButton cardName={card.name} cardId={cardId!} />
           </div>

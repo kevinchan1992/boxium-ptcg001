@@ -703,3 +703,20 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [x] 調整導航間距（平板 gap-6，桌面 lg:gap-12）
 - [ ] 測試 iPad 尺寸顯示效果（等待用戶測試）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🗑️ 卡牌詳情頁面移除收藏功能
+
+### 目標
+在卡牌詳情頁面實現收藏/取消收藏的一鍵切換功能，已收藏的卡牌顯示「從收藏中移除」按鈕
+
+### 任務清單
+- [x] 添加後端 API 移除收藏功能（removeFromWatchlistByCardId）
+- [x] 在 CardDetail.tsx 修改收藏按鈕邏輯
+  * 已收藏：顯示「從收藏中移除」+ 紅色實心愛心
+  * 未收藏：顯示「加入收藏」+ 空心愛心
+- [x] 實現點擊切換功能（handleWatchlistToggle）
+- [x] 測試移除收藏功能（Vitest - 4/4 測試通過）
+- [ ] 保存 checkpoint

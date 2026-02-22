@@ -109,7 +109,7 @@ export async function updateWatchlistNotes(userId: number, watchlistId: number, 
   return result;
 }
 
-// Remove from watchlist
+// Remove from watchlist by watchlist ID
 export async function removeFromWatchlist(userId: number, watchlistId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -117,6 +117,18 @@ export async function removeFromWatchlist(userId: number, watchlistId: number) {
   const result = await db
     .delete(watchlist)
     .where(and(eq(watchlist.id, watchlistId), eq(watchlist.userId, userId)));
+
+  return result;
+}
+
+// Remove from watchlist by card ID
+export async function removeFromWatchlistByCardId(userId: number, cardId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db
+    .delete(watchlist)
+    .where(and(eq(watchlist.userId, userId), eq(watchlist.cardId, cardId)));
 
   return result;
 }
