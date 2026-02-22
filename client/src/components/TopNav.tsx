@@ -98,12 +98,12 @@ export function TopNav() {
             </button>
 
             {/* Desktop Navigation - Center */}
-            <div className="hidden md:flex items-center gap-12 flex-1 justify-center">
+            <div className="hidden md:flex items-center gap-6 lg:gap-12 flex-1 justify-center">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative text-base font-medium transition-colors hover:text-[#ffed00] group ${
+                  className={`relative text-sm lg:text-base font-medium transition-colors hover:text-[#ffed00] group ${
                     isActive(item.href)
                       ? "text-[#ffed00]"
                       : "text-white/80"
@@ -123,7 +123,7 @@ export function TopNav() {
               {user?.role === "admin" && (
                 <Link
                   href="/admin"
-                  className="text-base font-medium bg-red-600 px-3 py-1 rounded hover:bg-red-700 transition-colors"
+                  className="text-sm lg:text-base font-medium bg-red-600 px-2 lg:px-3 py-1 rounded hover:bg-red-700 transition-colors"
                 >
                   {t("nav.admin")}
                 </Link>
@@ -141,9 +141,9 @@ export function TopNav() {
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00]">
-                      <User className="w-4 h-4 mr-2" />
-                      {user.name || user.email}
+                    <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00] text-xs lg:text-sm">
+                      <User className="w-3 h-3 lg:w-4 lg:h-4 mr-1 lg:mr-2" />
+                      <span className="max-w-[80px] lg:max-w-none truncate">{user.name || user.email}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -164,14 +164,14 @@ export function TopNav() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-white hover:text-[#ffed00]"
+                    className="text-white hover:text-[#ffed00] text-xs lg:text-sm"
                     onClick={() => setLocation("/login")}
                   >
                     登入
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-[#ffed00] text-black hover:bg-[#ffed00]/90"
+                    className="bg-[#ffed00] text-black hover:bg-[#ffed00]/90 text-xs lg:text-sm"
                     onClick={() => setLocation("/register")}
                   >
                     註冊

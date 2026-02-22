@@ -687,3 +687,19 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [x] 測試瀏覽歷史記錄功能（Vitest - 5/5 測試通過）
 - [ ] 驗證個人中心的瀏覽歷史列表更新（等待用戶測試）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 📱 TopNav iPad 尺寸優化
+
+### 目標
+調整 TopNav 導航欄在 iPad 尺寸下的文字大小，解決頂部文字過大的問題
+
+### 任務清單
+- [x] 檢查 TopNav.tsx 的當前樣式
+- [x] 調整導航連結文字大小（平板 text-sm，桌面 lg:text-base）
+- [x] 調整語言切換和用戶按鈕大小（平板 text-xs，桌面 lg:text-sm）
+- [x] 調整導航間距（平板 gap-6，桌面 lg:gap-12）
+- [ ] 測試 iPad 尺寸顯示效果（等待用戶測試）
+- [ ] 保存 checkpoint
