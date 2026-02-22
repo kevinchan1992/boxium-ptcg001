@@ -3,7 +3,12 @@
     "loginFailed": "登入失敗",
     "loginFailedGeneric": "登入過程中發生錯誤，請稍後再試。",
     "loginFailedMissingInfo": "無法獲取您的帳戶資訊，請嘗試使用其他登入方式。",
-    "loginFailedCallback": "OAuth 認證失敗，請檢查網絡連接後重試。"
+    "loginFailedCallback": "OAuth 認證失敗，請檢查網絡連接後重試。",
+    "loginSuccess": "登入成功！",
+    "logoutConfirmTitle": "確認登出",
+    "logoutConfirmDescription": "您確定要登出嗎？",
+    "logoutConfirmButton": "確認登出",
+    "logoutCancelButton": "取消"
   },
   "trending": {
     "title": "🔥 Pokémon TCG 熱門排行榜",

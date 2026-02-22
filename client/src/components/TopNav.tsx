@@ -18,6 +18,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function TopNav() {
   const { t } = useTranslation();
@@ -25,6 +35,7 @@ export function TopNav() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const { user, isLoading } = useAuth();
   const utils = trpc.useUtils();
   const logoutMutation = trpc.auth.logout.useMutation({
@@ -210,7 +221,7 @@ export function TopNav() {
 
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => logoutMutation.mutate()}
+                      onClick={() => setShowLogoutDialog(true)}
                       className="cursor-pointer"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
@@ -310,6 +321,30 @@ export function TopNav() {
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("auth.logoutConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("auth.logoutConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("auth.logoutCancelButton")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowLogoutDialog(false);
+                logoutMutation.mutate();
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t("auth.logoutConfirmButton")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

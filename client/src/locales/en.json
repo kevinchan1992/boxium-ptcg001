@@ -237,7 +237,12 @@
     "loginFailed": "Login Failed",
     "loginFailedGeneric": "An error occurred during login. Please try again later.",
     "loginFailedMissingInfo": "Unable to retrieve your account information. Please try another login method.",
-    "loginFailedCallback": "OAuth authentication failed. Please check your network connection and try again."
+    "loginFailedCallback": "OAuth authentication failed. Please check your network connection and try again.",
+    "loginSuccess": "Login successful!",
+    "logoutConfirmTitle": "Confirm Logout",
+    "logoutConfirmDescription": "Are you sure you want to logout?",
+    "logoutConfirmButton": "Confirm Logout",
+    "logoutCancelButton": "Cancel"
   },
   "notifications": {
     "title": "Notification Center",

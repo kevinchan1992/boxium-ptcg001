@@ -54,17 +54,9 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
 
-      <Route path="/favorites">
-        <ProtectedRoute>
-          <Favorites />
-        </ProtectedRoute>
-      </Route>
+      <Route path="/favorites" component={Favorites} />
 
-      <Route path="/dashboard">
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      </Route>
+      <Route path="/dashboard" component={Dashboard} />
 
       <Route path="/admin">
         <AdminRoute>

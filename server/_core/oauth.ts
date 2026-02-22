@@ -46,7 +46,8 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      res.redirect(302, "/");
+      // Add login_success query parameter for success message
+      res.redirect(302, "/?login_success=true");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       // Redirect to home page with error message instead of showing permission error
