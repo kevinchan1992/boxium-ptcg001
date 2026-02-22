@@ -2025,3 +2025,54 @@ export async function getAllFilteredDataSourceIds(options?: { search?: string; s
     return [];
   }
 }
+
+/**
+ * Get total data source count
+ */
+export async function getTotalDataSourceCount() {
+  const db = await getDb();
+  if (!db) return 0;
+
+  try {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(dataSources);
+    return result[0]?.count || 0;
+  } catch (error) {
+    console.error("[Database] Failed to get total data source count:", error);
+    return 0;
+  }
+}
+
+/**
+ * Get active data source count (success status)
+ */
+export async function getActiveDataSourceCount() {
+  const db = await getDb();
+  if (!db) return 0;
+
+  try {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(dataSources)
+      .where(eq(dataSources.lastFetchStatus, "success"));
+    return result[0]?.count || 0;
+  } catch (error) {
+    console.error("[Database] Failed to get active data source count:", error);
+    return 0;
+  }
+}
+
+/**
+ * Get total price record count
+ */
+export async function getTotalPriceRecordCount() {
+  const db = await getDb();
+  if (!db) return 0;
+
+  try {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(priceHistory);
+    return result[0]?.count || 0;
+  } catch (error) {
+    console.error("[Database] Failed to get total price record count:", error);
+    return 0;
+  }
+}

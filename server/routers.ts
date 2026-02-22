@@ -1626,6 +1626,32 @@ try {
         }
       }),
 
+    // 獲取儀表板統計數據
+    getDashboardStats: publicProcedure
+      .query(async () => {
+        try {
+          // 獲取各種統計數據
+          const totalCards = await db.getTotalCardCount();
+          const totalDataSources = await db.getTotalDataSourceCount();
+          const activeDataSources = await db.getActiveDataSourceCount();
+          const totalPriceRecords = await db.getTotalPriceRecordCount();
+          
+          return {
+            totalUsers: 0, // 平台已公開，無用戶系統
+            totalCards,
+            totalDataSources,
+            activeDataSources,
+            totalPriceRecords,
+          };
+        } catch (error: any) {
+          console.error("[Admin] Failed to get dashboard stats:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to get dashboard stats: ${error.message}`,
+          });
+        }
+      }),
+
     // === 持久化批量更新 API ===
 
     // 啟動持久化 eBay 批量更新

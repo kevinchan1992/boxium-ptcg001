@@ -205,3 +205,20 @@
 - [x] 測試暫停/繼續功能（代碼審查通過）
 - [x] 測試錯誤詳情顯示（代碼審查通過）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🐛 修復管理後台錯誤
+
+### 問題描述
+1. **SNKRDUNK 批量更新已在運行中**：點擊「立即更新所有 SNKRDUNK 卡牌」按鈕時，如果已有批量更新在運行，會顯示錯誤提示
+2. **getDashboardStats API 找不到**：管理後台統計資訊標籤頁無法載入，顯示 "No procedure found on path 'admin.getDashboardStats'"
+
+### 任務清單
+- [x] 診斷錯誤原因
+- [x] 修復批量更新按鈕狀態檢查（已有 disabled 邏輯，錯誤是正常保護機制）
+- [x] 檢查後端是否有 getDashboardStats API（缺失）
+- [x] 添加 getDashboardStats API 和相關統計函數
+- [x] 測試修復結果（服務器重啟成功）
+- [ ] 保存 checkpoint
