@@ -37,7 +37,8 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    toast.info("Google OAuth 功能即將推出");
+    // Redirect to Google OAuth flow
+    window.location.href = `/api/auth/google?returnTo=${encodeURIComponent(window.location.pathname)}`;
   };
 
   return (

@@ -352,3 +352,18 @@
 
 #### 9. 保存 checkpoint
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🔐 配置 Google OAuth 登入功能
+
+### 目標
+實施 Google OAuth 一鍵登入，讓用戶可以使用 Google 帳號快速登入平台
+
+### 任務清單
+- [x] 檢查並配置 Google OAuth 環境變量（GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET）
+- [x] 實施 Google OAuth 回調處理路由（/api/auth/google/callback）
+- [x] 更新前端登入頁面，啟用 Google 登入按鈕
+- [x] 測試 Google OAuth 完整流程（登入、用戶創建、session 設置）
+- [ ] 保存 checkpoint
