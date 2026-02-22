@@ -301,3 +301,54 @@
 - [x] 測試管理後台認證功能（所有測試通過）
 - [x] 測試公開頁面仍然可以訪問（首頁、搜尋、卡牌詳情等）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🔐 保留 Manus OAuth 並添加新認證系統
+
+### 目標
+保留 Manus OAuth，添加傳統帳號密碼系統 + Google OAuth（混合方案）
+
+### 任務清單
+
+#### 1. 安裝依賴套件
+- [x] 安裝 bcrypt（密碼加密）
+- [x] 安裝 jsonwebtoken（JWT token 生成）
+- [x] 安裝 Google OAuth 相關套件
+
+#### 2. 實施帳號密碼認證系統
+- [x] 更新 user 表結構（添加 passwordHash 欄位）
+- [x] 創建認證輔助函數（server/auth.ts）
+- [ ] 修復數據庫 schema 不一致問題（openId vs googleId）
+- [ ] 更新 auth router 添加註冊和登入 API
+- [ ] 實施 JWT session 管理
+- [ ] 創建登出 API
+
+#### 3. 實施 Google OAuth
+- [ ] 配置 Google OAuth 客戶端
+- [ ] 創建 Google OAuth 回調處理
+- [ ] 實施 Google 登入流程
+
+#### 4. 創建登入和註冊頁面
+- [ ] 創建註冊頁面（/register）
+- [ ] 創建登入頁面（/login）
+- [ ] 添加「使用 Google 登入」按鈕
+- [ ] 添加表單驗證
+
+#### 6. 更新導航欄
+- [ ] 添加「登入」和「註冊」按鈕（未登入時）
+- [ ] 顯示用戶名和「登出」按鈕（登入後）
+
+#### 7. 創建管理員帳號
+- [ ] 在數據庫創建 xyz.asia.co@gmail.com 管理員帳號
+
+#### 8. 測試認證系統
+- [ ] 測試註冊功能
+- [ ] 測試登入功能
+- [ ] 測試 Google OAuth 登入
+- [ ] 測試登出功能
+- [ ] 測試管理員權限
+
+#### 9. 保存 checkpoint
+- [ ] 保存 checkpoint

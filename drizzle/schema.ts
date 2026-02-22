@@ -1,6 +1,24 @@
 import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index } from "drizzle-orm/mysql-core";
 
-// Users table removed - authentication system disabled
+/**
+ * Users table - supports password and Google OAuth authentication
+ */
+export const users = mysqlTable("users", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  name: text("name"),
+  passwordHash: varchar("passwordHash", { length: 255 }), // bcrypt hash (nullable for OAuth users)
+  googleId: varchar("googleId", { length: 128 }), // Google OAuth ID (nullable for password users)
+  loginMethod: mysqlEnum("loginMethod", ["password", "google"]).notNull(),
+  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  emailVerified: boolean("emailVerified").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+});
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
 
 /**
  * Cards table - stores Pokémon TCG card information

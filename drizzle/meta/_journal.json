@@ -253,6 +253,13 @@
       "when": 1771743724363,
       "tag": "0035_whole_madame_web",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "5",
+      "when": 1771764704239,
+      "tag": "0036_nasty_groot",
+      "breakpoints": true
     }
   ]
 }
