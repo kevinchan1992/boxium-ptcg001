@@ -1,23 +1,6 @@
 import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index } from "drizzle-orm/mysql-core";
 
-/**
- * Core user table backing auth flow.
- * Only supports Manus OAuth authentication
- */
-export const users = mysqlTable("users", {
-  id: int("id").autoincrement().primaryKey(),
-  openId: varchar("openId", { length: 64 }).notNull().unique(), // Manus OAuth user ID
-  email: varchar("email", { length: 320 }).notNull().unique(),
-  name: text("name"),
-  loginMethod: varchar("loginMethod", { length: 64 }), // Always "oauth"
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
-});
-
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
+// Users table removed - authentication system disabled
 
 /**
  * Cards table - stores Pokémon TCG card information

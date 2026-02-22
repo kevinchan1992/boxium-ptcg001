@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
@@ -20,31 +20,10 @@ import { executeEbayBatchUpdate, executeSnkrdunkBatchUpdate } from "./batchUpdat
 import { restartScheduler } from "./batchUpdateScheduler";
 import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
 import { pricingRouter } from "./routers/pricing";
-import { notificationsRouter } from "./routers/notifications";
-import { articleGenerationRouter } from "./routers/articleGeneration";
 import { templatesRouter } from "./routers/templates";
 
 export const appRouter = router({
   system: systemRouter,
-  
-  // Auth router
-  auth: router({
-    me: publicProcedure.query(async ({ ctx }) => {
-      return ctx.user || null;
-    }),
-    
-    logout: publicProcedure.mutation(async ({ ctx }) => {
-      // Clear session cookie with multiple strategies for browser compatibility
-      const cookieOptions = [
-        // Strategy 1: Standard cookie deletion with Max-Age=0
-        `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`,
-        // Strategy 2: Set expiration to past date (for Safari compatibility)
-        `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
-      ];
-      ctx.res.setHeader("Set-Cookie", cookieOptions);
-      return { success: true };
-    }),
-  }),
 
   pricing: pricingRouter,
 
@@ -1042,55 +1021,7 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         });
       }),
 
-    // User Management APIs
-    getAllUsers: publicProcedure
-      .query(async ({ ctx }) => {
-const users = await db.getAllUsers();
-        return users;
-      }),
-
-    updateUserRole: publicProcedure
-      .input(z.object({
-        userId: z.number(),
-        role: z.enum(["admin", "user"]),
-      }))
-      .mutation(async ({ ctx, input }) => {
-await db.updateUserRole(input.userId, input.role);
-        return { success: true };
-      }),
-
-    updateUserProfile: publicProcedure
-      .input(z.object({
-        userId: z.number(),
-        name: z.string().optional(),
-        email: z.string().email().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-const { userId, ...data } = input;
-        await db.updateUserProfile(userId, data);
-        return { success: true };
-      }),
-
-    deleteUser: publicProcedure
-      .input(z.object({
-        userId: z.number(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-await db.deleteUser(input.userId);
-        return { success: true };
-      }),
-
-    getUserStats: publicProcedure
-      .query(async ({ ctx }) => {
-const stats = await db.getUserStats();
-        return stats;
-      }),
-
-    getDashboardStats: publicProcedure
-      .query(async ({ ctx }) => {
-const stats = await db.getDashboardStats();
-        return stats;
-      }),
+    // User management removed - no authentication system
 
     // 獲取搜尋統計數據
     getSearchStats: publicProcedure
@@ -1665,7 +1596,7 @@ try {
       }),
 
     // Manually trigger trending cards calculation
-    calculateTrendingCards: protectedProcedure
+    calculateTrendingCards: publicProcedure
       .mutation(async () => {
         try {
           console.log("[Admin] Manually triggering trending cards calculation...");
@@ -1852,51 +1783,7 @@ try {
       }),
   }),
 
-  // Favorites router
-  notifications: notificationsRouter,
-
-  // Article generation router
-  articleGeneration: articleGenerationRouter,
   templates: templatesRouter,
-
-  favorites: router({
-    // Get user's favorites
-    list: protectedProcedure
-      .query(async ({ ctx }) => {
-        const favorites = await db.getUserFavorites(ctx.user.id);
-        return favorites;
-      }),
-
-    // Add to favorites
-    add: protectedProcedure
-      .input(z.object({
-        cardId: z.number(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const result = await db.addToFavorites(ctx.user.id, input.cardId);
-        return { success: true, result };
-      }),
-
-    // Remove from favorites
-    remove: protectedProcedure
-      .input(z.object({
-        cardId: z.number(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const result = await db.removeFromFavorites(ctx.user.id, input.cardId);
-        return { success: true, result };
-      }),
-
-    // Check if card is favorited
-    isFavorited: protectedProcedure
-      .input(z.object({
-        cardId: z.number(),
-      }))
-      .query(async ({ ctx, input }) => {
-        const isFavorited = await db.isCardFavorited(ctx.user.id, input.cardId);
-        return { isFavorited };
-      }),
-  }),
 
   // Market Insights router - provides market analysis data
   marketInsights: router({
@@ -2042,7 +1929,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Create new post (Admin only)
-    createPost: protectedProcedure
+    createPost: publicProcedure
       .input(z.object({
         title: z.string(),
         excerpt: z.string().optional(),
@@ -2075,7 +1962,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
           status: input.status,
           publishedAt: input.status === 'published' ? new Date() : null,
           viewCount: 0,
-          authorId: ctx.user.id,
+          authorId: null,
           dataSource: input.dataSource,
           relatedCardIds: input.relatedCardIds || null,
           dataSnapshot: input.dataSnapshot || null,
@@ -2104,7 +1991,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Update post (Admin only)
-    updatePost: protectedProcedure
+    updatePost: publicProcedure
       .input(z.object({
         id: z.number(),
         title: z.string().optional(),
@@ -2163,7 +2050,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Delete post (Admin only)
-    deletePost: protectedProcedure
+    deletePost: publicProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const blogDb = await import('./blogDb');
@@ -2173,7 +2060,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Toggle publish status (Admin only)
-    togglePublish: protectedProcedure
+    togglePublish: publicProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const blogDb = await import('./blogDb');
@@ -2182,7 +2069,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // AI translate post (Admin only)
-    translatePost: protectedProcedure
+    translatePost: publicProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const blogDb = await import('./blogDb');
@@ -2274,7 +2161,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Update post translation (Admin only)
-    updatePostTranslation: protectedProcedure
+    updatePostTranslation: publicProcedure
       .input(z.object({
         id: z.number(),
         titleEn: z.string().optional(),
@@ -2302,7 +2189,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // Create category (Admin only)
-    createCategory: protectedProcedure
+    createCategory: publicProcedure
       .input(z.object({
         name: z.string(),
         description: z.string().optional(),
@@ -2319,7 +2206,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
 
     // AI generate article (Admin only)
-    generateArticle: protectedProcedure
+    generateArticle: publicProcedure
       .input(z.object({
         articleType: z.enum(['daily-report', 'card-analysis', 'market-trend', 'news']),
         featuredImageUrl: z.string().optional(),

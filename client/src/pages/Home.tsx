@@ -8,8 +8,7 @@ import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
 import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
-import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
+
 
 
 function TrendingCardsGrid() {
@@ -82,20 +81,6 @@ function TrendingCardsGrid() {
 
 export default function Home() {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  
-  // Check for login success and show message
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('login_success') === 'true' && user) {
-      toast.success(t('auth.loginSuccess'), {
-        duration: 3000,
-        position: 'top-center',
-      });
-      // Remove the query parameter from URL
-      window.history.replaceState({}, '', '/');
-    }
-  }, [user, t]);
   
   // Structured Data for SEO
   const structuredData = {

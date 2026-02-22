@@ -23,31 +23,8 @@ export function registerOAuthRoutes(app: Express) {
       const tokenResponse = await sdk.exchangeCodeForToken(code, state);
       const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
 
-      if (!userInfo.openId) {
-        console.error("[OAuth] openId missing from user info");
-        // Redirect to home page with error message instead of showing permission error
-        res.redirect(302, "/?error=oauth_failed&reason=missing_openid");
-        return;
-      }
-
-      await db.upsertUser({
-        openId: userInfo.openId,
-        name: userInfo.name || null,
-        email: userInfo.email ?? "",
-        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-        lastSignedIn: new Date(),
-      } as any);
-
-      const sessionToken = await sdk.createSessionToken(userInfo.openId, {
-        name: userInfo.name || "",
-        expiresInMs: ONE_YEAR_MS,
-      });
-
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-
-      // Add login_success query parameter for success message
-      res.redirect(302, "/?login_success=true");
+      // Authentication system disabled - redirect to home
+      res.redirect(302, "/?info=auth_disabled");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       // Redirect to home page with error message instead of showing permission error

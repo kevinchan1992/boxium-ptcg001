@@ -20,13 +20,7 @@ import Disclaimer from "./pages/Disclaimer";
 import About from "./pages/About";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
-import Favorites from "./pages/Favorites";
 import { TopNav } from "./components/TopNav";
-import { AdminRoute } from "./components/AdminRoute";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { OAuthErrorToast } from "./components/OAuthErrorToast";
-import { GenerateArticle } from "./pages/GenerateArticle";
-import Dashboard from "./pages/Dashboard";
 
 
 
@@ -35,14 +29,11 @@ import Dashboard from "./pages/Dashboard";
 function Router() {
   return (
     <PageWrapper>
-      <OAuthErrorToast />
       <TopNav />
       <div className="pt-16">
         <Switch>
       <Route path={"/"} component={Home} />
-      <Route path="/login">
-        <Redirect to="/" />
-      </Route>
+
       <Route path="/search" component={SearchResults} />
       <Route path="/card/:id" component={CardDetail} />
       <Route path="/research" component={Research} />
@@ -54,20 +45,9 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
 
-      <Route path="/favorites" component={Favorites} />
 
-      <Route path="/dashboard" component={Dashboard} />
 
-      <Route path="/admin">
-        <AdminRoute>
-          <Admin />
-        </AdminRoute>
-      </Route>
-      <Route path="/admin/generate-article">
-        <AdminRoute>
-          <GenerateArticle />
-        </AdminRoute>
-      </Route>
+      <Route path="/admin" component={Admin} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/disclaimer" component={Disclaimer} />

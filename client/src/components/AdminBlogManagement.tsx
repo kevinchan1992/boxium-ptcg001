@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Eye, EyeOff, FileText, Image as ImageIcon, Sparkles, Languages } from "lucide-react";
-import { ArticlePreview } from "@/components/ArticlePreview";
+
 import { CardImagePicker } from "@/components/CardImagePicker";
 
 export function AdminBlogManagement() {
@@ -256,32 +256,12 @@ export function AdminBlogManagement() {
         />
       )}
 
-      {/* Preview View */}
-      {activeView === 'preview' && previewArticle && (
-        <ArticlePreview
-          article={previewArticle}
-          onAccept={() => {
-            // Fill the editor with generated content
-            setSelectedPost({
-              title: previewArticle.title,
-              excerpt: previewArticle.excerpt,
-              content: previewArticle.content,
-              featuredImage: previewArticle.featuredImageUrl || '',
-              metaTitle: previewArticle.seoMetadata?.metaTitle || '',
-              metaDescription: previewArticle.seoMetadata?.metaDescription || '',
-              metaKeywords: previewArticle.seoMetadata?.keywords?.join(', ') || '',
-              dataSource: 'ai-generated',
-            });
-            setActiveView('create');
-          }}
-          onCancel={() => {
-            setActiveView('generate');
-            setPreviewArticle(null);
-          }}
-          onRevise={(revisedArticle) => {
-            setPreviewArticle(revisedArticle);
-          }}
-        />
+      {/* Preview View - Removed (article generation feature disabled) */}
+      {activeView === 'preview' && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">文章預覽功能已停用</p>
+          <Button onClick={() => setActiveView('list')} className="mt-4">返回列表</Button>
+        </div>
       )}
 
       {/* AI Generate View */}

@@ -32,45 +32,7 @@ export default function CardDetail() {
     { enabled: !!cardId, retry: 1 }
   );
 
-  // Check if card is favorited
-  const { data: favoriteStatus } = trpc.favorites.isFavorited.useQuery(
-    { cardId: cardId! },
-    { enabled: !!cardId, retry: false }
-  );
-
-  const utils = trpc.useUtils();
-
-  // Add to favorites mutation
-  const addFavoriteMutation = trpc.favorites.add.useMutation({
-    onSuccess: () => {
-      utils.favorites.isFavorited.invalidate({ cardId: cardId! });
-      toast.success(t("cardDetail.favorited"));
-    },
-    onError: () => {
-      toast.error(t("common.login"));
-    },
-  });
-
-  // Remove from favorites mutation
-  const removeFavoriteMutation = trpc.favorites.remove.useMutation({
-    onSuccess: () => {
-      utils.favorites.isFavorited.invalidate({ cardId: cardId! });
-      toast.success(t("cardDetail.favorite"));
-    },
-    onError: () => {
-      toast.error(t("cardDetail.noData"));
-    },
-  });
-
-  const handleToggleFavorite = () => {
-    if (!cardId) return;
-
-    if (favoriteStatus?.isFavorited) {
-      removeFavoriteMutation.mutate({ cardId });
-    } else {
-      addFavoriteMutation.mutate({ cardId });
-    }
-  };
+  // Favorites feature removed
 
   // Fetch price history from SNKRDUNK
   const normalizeGrade = (grade: string | null) => {
@@ -325,17 +287,6 @@ export default function CardDetail() {
             >
               {t("cardDetail.comparePrice")}
             </BrandButton>
-            <Button
-              variant={favoriteStatus?.isFavorited ? "default" : "outline"}
-              size="sm"
-              onClick={handleToggleFavorite}
-              disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
-            >
-              <Heart
-                className={`h-4 w-4 mr-2 ${favoriteStatus?.isFavorited ? "fill-current" : ""}`}
-              />
-              {favoriteStatus?.isFavorited ? t("cardDetail.favorited") : t("cardDetail.favorite")}
-            </Button>
             <ShareButton cardName={card.name} cardId={cardId!} />
           </div>
         </div>

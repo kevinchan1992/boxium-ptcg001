@@ -1,59 +1,15 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, Bell, Heart, User, LogOut, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Menu, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { useAuth } from "@/hooks/useAuth";
-import { getLoginUrl } from "@/const";
-import { trpc } from "@/lib/trpc";
-import { NotificationCenter } from "@/components/NotificationCenter";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 export function TopNav() {
   const { t } = useTranslation();
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const { user, isLoading } = useAuth();
-  const utils = trpc.useUtils();
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      // 清除所有 tRPC 緩存
-      utils.invalidate();
-      // 使用 router navigate 而不是 window.location 避免觸發完整頁面重新加載
-      navigate("/", { replace: true });
-      // 延遲刷新以確保導航完成
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
-    },
-  });
-
-  // Notification center is now handled by NotificationCenter component
-
-  const loginUrl = getLoginUrl();
 
   const navItems = [
     { href: "/", label: t("common.home") },
@@ -139,216 +95,65 @@ export function TopNav() {
                 </Link>
               ))}
               
-              {/* 管理員顯示 */}
-              {user?.role === "admin" && (
-                <Link
-                  href="/admin"
-                  className="text-base font-medium bg-red-600 px-3 py-1 rounded hover:bg-red-700 transition-colors"
-                >
-                  {t("nav.admin")}
-                </Link>
-              )}
+              {/* 管理後台連結 - 公開訪問 */}
+              <Link
+                href="/admin"
+                className="text-base font-medium bg-red-600 px-3 py-1 rounded hover:bg-red-700 transition-colors"
+              >
+                {t("nav.admin")}
+              </Link>
             </div>
 
-            {/* Right Side: Language + Notifications + User Menu / Login */}
+            {/* Right Side: Language Switcher */}
             <div className="flex items-center gap-3">
               {/* Language Switcher */}
               <div className="hidden md:block">
                 <LanguageSwitcher />
               </div>
-
-              {/* Notification Center（僅登入用戶顯示） */}
-              {user && <NotificationCenter />}
-
-              {/* Loading State */}
-              {isLoading && (
-                <Skeleton className="w-24 h-10 bg-white/20 rounded" />
-              )}
-
-              {/* User Menu */}
-              {!isLoading && user && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="flex items-center gap-2 hover:bg-white/10 text-white"
-                    >
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="bg-[#ffed00] text-[#06038d] font-bold">
-                          {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="hidden lg:inline font-medium">
-                        {user.name || user.email}
-                      </span>
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent align="end" className="w-56">
-                    <div className="px-2 py-1.5 text-sm">
-                      <p className="font-medium">{user.name || t("nav.user")}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                    </div>
-                    <DropdownMenuSeparator />
-                    
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard">
-                        <a className="flex items-center cursor-pointer w-full">
-                          <User className="w-4 h-4 mr-2" />
-                          {t("nav.dashboard")}
-                        </a>
-                      </Link>
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuItem asChild>
-                      <Link href="/favorites">
-                        <a className="flex items-center cursor-pointer w-full">
-                          <Heart className="w-4 h-4 mr-2" />
-                          {t("nav.favorites")}
-                        </a>
-                      </Link>
-                    </DropdownMenuItem>
-
-                    {user.role === "admin" && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link href="/admin">
-                            <a className="flex items-center cursor-pointer w-full text-red-600">
-                              <Settings className="w-4 h-4 mr-2" />
-                              {t("nav.admin")}
-                            </a>
-                          </Link>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setShowLogoutDialog(true)}
-                      className="cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      {t("nav.logout")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-
-              {/* Login Button */}
-              {!isLoading && !user && (
-                <Button
-                  asChild
-                  className="bg-[#ffed00] text-[#06038d] hover:bg-[#ffed00]/90 border-none font-bold"
-                >
-                  <a href={loginUrl}>{t("nav.login")}</a>
-                </Button>
-              )}
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Menu - 從右側滑入 */}
+      {/* Mobile Menu */}
       <div
-        className={`fixed top-0 right-0 h-full w-80 bg-black/95 backdrop-blur-md z-50 md:hidden transform transition-transform duration-300 ease-in-out ${
-          isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+        className={`fixed top-16 left-0 right-0 bg-black/95 backdrop-blur-md border-b border-white/10 z-40 md:hidden transition-all duration-300 ${
+          isMobileMenuOpen
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-full opacity-0 pointer-events-none"
         }`}
       >
-        <div className="flex flex-col h-full">
-          {/* Mobile Menu Header with LOGO */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <div className="container mx-auto px-4 py-6 space-y-4">
+          {navItems.map((item) => (
             <Link
-              href="/"
+              key={item.href}
+              href={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="cursor-pointer"
+              className={`block text-lg font-medium transition-colors ${
+                isActive(item.href)
+                  ? "text-[#ffed00]"
+                  : "text-white/80 hover:text-[#ffed00]"
+              }`}
             >
-              <img
-                src="/boxium-logo-white.png"
-                alt="BOXIUM"
-                className="h-8 w-auto hover:opacity-80 transition-opacity"
-              />
+              {item.label}
             </Link>
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-white p-2"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+          ))}
+          
+          {/* 管理後台連結 - 公開訪問 */}
+          <Link
+            href="/admin"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="block text-lg font-medium text-red-400 hover:text-red-300"
+          >
+            {t("nav.admin")}
+          </Link>
 
-          {/* Mobile Menu Items */}
-          <div className="flex-1 overflow-y-auto py-4">
-            <div className="flex flex-col space-y-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block px-6 py-3 text-base font-medium transition-all ${
-                    isActive(item.href)
-                      ? "text-[#ffed00] bg-white/10 border-l-4 border-[#ffed00]"
-                      : "text-white/80 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-              
-
-
-              {/* 管理員顯示 */}
-              {user?.role === "admin" && (
-                <Link
-                  href="/admin"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block px-6 py-3 text-base font-medium transition-all bg-red-600 text-white hover:bg-red-700"
-                >
-                  {t("nav.admin")}
-                </Link>
-              )}
-            </div>
-          </div>
-
-          {/* Language Switcher + Login/User Menu in Mobile */}
-          <div className="p-4 border-t border-white/10 space-y-3">
+          {/* Language Switcher for Mobile */}
+          <div className="pt-4 border-t border-white/10">
             <LanguageSwitcher />
-            
-            {!isLoading && !user && (
-              <Button
-                asChild
-                className="w-full bg-[#ffed00] text-[#06038d] hover:bg-[#ffed00]/90 font-bold"
-              >
-                <a href={loginUrl}>{t("nav.login")}</a>
-              </Button>
-            )}
           </div>
         </div>
       </div>
-
-      {/* Logout Confirmation Dialog */}
-      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("auth.logoutConfirmTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("auth.logoutConfirmDescription")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("auth.logoutCancelButton")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setShowLogoutDialog(false);
-                logoutMutation.mutate();
-              }}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {t("auth.logoutConfirmButton")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

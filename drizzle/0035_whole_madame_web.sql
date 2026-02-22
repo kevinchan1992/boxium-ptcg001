@@ -1,0 +1,1 @@
+ALTER TABLE `posts` MODIFY COLUMN `authorId` int NOT NULL;

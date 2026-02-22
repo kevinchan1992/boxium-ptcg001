@@ -239,6 +239,20 @@
       "when": 1771738433158,
       "tag": "0033_chunky_the_hunter",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "5",
+      "when": 1771742944223,
+      "tag": "0034_sad_magneto",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "5",
+      "when": 1771743724363,
+      "tag": "0035_whole_madame_web",
+      "breakpoints": true
     }
   ]
 }
