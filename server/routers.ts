@@ -51,7 +51,7 @@ export const appRouter = router({
         }
         
         // Set session cookie for automatic login after registration
-        if (result.token && ctx.res) {
+        if (result.token && ctx.res && ctx.req) {
           ctx.res.cookie('session', result.token, getSessionCookieOptions(ctx.req));
         }
         
@@ -79,7 +79,7 @@ export const appRouter = router({
         }
         
         // Set session cookie
-        if (result.token && ctx.res) {
+        if (result.token && ctx.res && ctx.req) {
           ctx.res.cookie('session', result.token, getSessionCookieOptions(ctx.req));
         }
         

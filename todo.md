@@ -396,3 +396,21 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [x] 修復 Google OAuth redirect_uri 問題（使用動態 origin）
 - [x] 更新前端 Google 登入按鈕（添加 origin 參數）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🐛 修復登入錯誤
+
+### 問題描述
+用戶嘗試登入時出現錯誤：`Cannot read properties of undefined (reading 'protocol')`
+
+### 診斷結果
+`getSessionCookieOptions(ctx.req)` 調用時，`ctx.req` 是 `undefined`。這是因為 tRPC context 中的 request 對象命名可能不同。
+
+### 任務清單
+- [x] 檢查 tRPC context 的結構
+- [x] 修復 auth.login API 中的 getSessionCookieOptions 調用（添加 ctx.req 檢查）
+- [x] 修復 auth.register API 中的 getSessionCookieOptions 調用（添加 ctx.req 檢查）
+- [ ] 測試登入功能（等待用戶測試）
+- [ ] 保存 checkpoint
