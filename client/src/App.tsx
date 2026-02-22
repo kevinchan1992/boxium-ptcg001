@@ -27,9 +27,6 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { OAuthErrorToast } from "./components/OAuthErrorToast";
 import { GenerateArticle } from "./pages/GenerateArticle";
 import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Profile from "./pages/Profile";
 
 
 
@@ -43,9 +40,9 @@ function Router() {
       <div className="pt-16">
         <Switch>
       <Route path={"/"} component={Home} />
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route path="/profile" component={Profile} />
+      <Route path="/login">
+        <Redirect to="/" />
+      </Route>
       <Route path="/search" component={SearchResults} />
       <Route path="/card/:id" component={CardDetail} />
       <Route path="/research" component={Research} />

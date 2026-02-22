@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
-import { useLocation, Redirect } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { getLoginUrl } from "@/const";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -30,9 +31,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // 如果未登入，重定向到登入頁面
   if (!user) {
-    // 保存當前路徑，登入後可以返回
-    const returnPath = encodeURIComponent(location);
-    return <Redirect to={`/login?return=${returnPath}`} />;
+    // TODO: 實作登入後返回原頁面功能
+    const loginUrl = getLoginUrl();
+    window.location.href = loginUrl;
+    return null;
   }
 
   // 已登入，顯示內容

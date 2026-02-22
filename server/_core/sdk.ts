@@ -1,14 +1,4 @@
 import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-/**
- * @deprecated This file contains legacy Manus OAuth code that is no longer used.
- * The platform now uses an independent authentication system:
- * - server/auth/ - Authentication logic (session, OAuth, password)
- * - server/routers/auth.ts - Authentication API endpoints
- * - server/_core/context.ts - Request context with user authentication
- * 
- * This file is kept for reference only and may be removed in future updates.
- */
-
 import { ForbiddenError } from "@shared/_core/errors";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
@@ -40,7 +30,12 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
-    console.log("[OAuth] Legacy OAuth service - no longer used");
+    console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
+    if (!ENV.oAuthServerUrl) {
+      console.error(
+        "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
+      );
+    }
   }
 
   private decodeState(state: string): string {
@@ -83,7 +78,7 @@ class OAuthService {
 
 const createOAuthHttpClient = (): AxiosInstance =>
   axios.create({
-    baseURL: "https://api.manus.im", // Legacy - no longer used
+    baseURL: ENV.oAuthServerUrl,
     timeout: AXIOS_TIMEOUT_MS,
   });
 
@@ -261,7 +256,55 @@ class SDKServer {
     } as GetUserInfoWithJwtResponse;
   }
 
-  // authenticateRequest method removed - now using new auth system in context.ts
+  async authenticateRequest(req: Request): Promise<User> {
+    const cookies = this.parseCookies(req.headers.cookie);
+    const signedInAt = new Date();
+
+    console.log("[Auth] authenticateRequest called");
+    console.log("[Auth] Cookie header:", req.headers.cookie ? "present" : "missing");
+    console.log("[Auth] Parsed cookies:", Array.from(cookies.keys()));
+
+    // OAuth authentication only
+    const sessionCookie = cookies.get(COOKIE_NAME);
+    const session = await this.verifySession(sessionCookie);
+
+    if (!session) {
+      throw ForbiddenError("No valid authentication found");
+    }
+
+    const sessionUserId = session.openId;
+    let user = await db.getUserByOpenId(sessionUserId);
+
+    // If user not in DB, sync from OAuth server automatically
+    if (!user) {
+      try {
+        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
+        await db.upsertUser({
+          openId: userInfo.openId,
+          name: userInfo.name || null,
+          email: userInfo.email ?? "",
+          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          lastSignedIn: signedInAt,
+        } as any);
+        user = await db.getUserByOpenId(userInfo.openId);
+      } catch (error) {
+        console.error("[Auth] Failed to sync user from OAuth:", error);
+        throw ForbiddenError("Failed to sync user info");
+      }
+    }
+
+    if (!user) {
+      throw ForbiddenError("User not found");
+    }
+
+    await db.upsertUser({
+      openId: user.openId,
+      email: user.email,
+      lastSignedIn: signedInAt,
+    } as any);
+
+    return user;
+  }
 }
 
 export const sdk = new SDKServer();

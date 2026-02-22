@@ -1,54 +1,57 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
-import { handleGoogleCallback } from "../auth/oauth";
-
-const SESSION_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+import * as db from "../db";
+import { getSessionCookieOptions } from "./cookies";
+import { sdk } from "./sdk";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
 }
 
-/**
- * Register OAuth callback routes for Google
- */
 export function registerOAuthRoutes(app: Express) {
-  /**
-   * Google OAuth callback
-   */
-  app.get("/api/oauth/google/callback", async (req: Request, res: Response) => {
+  app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");
 
-    if (!code) {
-      res.status(400).json({ error: "code is required" });
+    if (!code || !state) {
+      res.status(400).json({ error: "code and state are required" });
       return;
     }
 
     try {
-      // Build redirect URI
-      const redirectUri = `${req.protocol}://${req.get("host")}/api/oauth/google/callback`;
+      const tokenResponse = await sdk.exchangeCodeForToken(code, state);
+      const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
 
-      // Handle Google OAuth callback
-      const { sessionToken } = await handleGoogleCallback(code, redirectUri);
+      if (!userInfo.openId) {
+        console.error("[OAuth] openId missing from user info");
+        // Redirect to home page with error message instead of showing permission error
+        res.redirect(302, "/?error=oauth_failed&reason=missing_openid");
+        return;
+      }
 
-      // Set session cookie
-      res.cookie(COOKIE_NAME, sessionToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: SESSION_COOKIE_MAX_AGE,
-        path: '/',
+      await db.upsertUser({
+        openId: userInfo.openId,
+        name: userInfo.name || null,
+        email: userInfo.email ?? "",
+        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+        lastSignedIn: new Date(),
+      } as any);
+
+      const sessionToken = await sdk.createSessionToken(userInfo.openId, {
+        name: userInfo.name || "",
+        expiresInMs: ONE_YEAR_MS,
       });
 
-      // Redirect to home page or state URL
-      const redirectUrl = state ? decodeURIComponent(state) : "/";
-      res.redirect(302, redirectUrl);
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+      res.redirect(302, "/");
     } catch (error) {
-      console.error("[OAuth] Google callback failed", error);
-      res.redirect(302, "/?error=google_oauth_failed");
+      console.error("[OAuth] Callback failed", error);
+      // Redirect to home page with error message instead of showing permission error
+      // This ensures the public home page is always accessible
+      res.redirect(302, "/?error=oauth_failed&reason=callback_error");
     }
   });
-
-
 }

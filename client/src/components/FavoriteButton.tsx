@@ -2,7 +2,7 @@ import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/hooks/useAuth";
-import { useLocation } from "wouter";
+import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -57,12 +57,10 @@ export function FavoriteButton({
     },
   });
 
-  const [, setLocation] = useLocation();
-
   const handleClick = () => {
     // Redirect to login if not authenticated
     if (!user) {
-      setLocation('/login');
+      window.location.href = getLoginUrl();
       return;
     }
 

@@ -9,20 +9,14 @@ import type { TrpcContext } from "./_core/context";
  */
 
 // 創建 mock context
-function createMockContext(user?: any, sessionToken?: string): TrpcContext {
+function createMockContext(user?: any): TrpcContext {
   const mockRes = {
     setHeader: vi.fn(),
-    clearCookie: vi.fn(),
-    cookie: vi.fn(),
-  };
-
-  const mockReq = {
-    cookies: sessionToken ? { app_session_id: sessionToken } : {},
   };
 
   return {
     user: user || null,
-    req: mockReq as any,
+    req: {} as any,
     res: mockRes as any,
   };
 }
@@ -64,12 +58,13 @@ describe("OAuth Auth System", () => {
       const result = await caller.auth.logout();
       
       expect(result).toEqual({ success: true });
-      expect(ctx.res.clearCookie).toHaveBeenCalledWith(
-        "app_session_id",
-        expect.objectContaining({
-          httpOnly: true,
-          path: "/",
-        })
+      expect(ctx.res.setHeader).toHaveBeenCalledWith(
+        "Set-Cookie",
+        expect.stringContaining("session=")
+      );
+      expect(ctx.res.setHeader).toHaveBeenCalledWith(
+        "Set-Cookie",
+        expect.stringContaining("Max-Age=0")
       );
     });
   });
