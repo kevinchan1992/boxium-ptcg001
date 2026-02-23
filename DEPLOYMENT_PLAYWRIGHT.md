@@ -21,9 +21,16 @@ Executable doesn't exist at /home/ubuntu/.cache/ms-playwright/chromium_headless_
 
 首先，將最新的代碼部署到生產環境（包含快取修復和診斷工具）。
 
-### 步驟 2：安裝 Playwright 瀏覽器
+### 步驟 2：重啟服務器（自動安裝 Playwright）
 
-在生產環境服務器上執行以下命令：
+**重要：已內建自動安裝機制，無需手動安裝！**
+
+當您重啟服務器時，`scripts/ensure-playwright.sh` 腳本會自動：
+1. 檢查 Playwright 瀏覽器是否已安裝
+2. 如果未安裝，自動下載並安裝（需要 2-3 分鐘）
+3. 如果已安裝，直接跳過（只需 1 秒）
+
+**如果您想手動安裝（可選）：**
 
 ```bash
 cd /path/to/boxium-ptcg
@@ -43,11 +50,7 @@ Chrome Headless Shell downloaded to /home/ubuntu/.cache/ms-playwright/chromium_h
 **安裝時間：** 約 2-3 分鐘（取決於網絡速度）
 **所需磁盤空間：** 約 280 MB
 
-### 步驟 3：重啟服務器
-
-安裝完成後，重啟 Node.js 服務器以確保所有更改生效。
-
-### 步驟 4：測試驗證
+### 步驟 3：測試驗證
 
 1. **訪問 Pricing 頁面**
    - 打開 https://boxium.asia/pricing
