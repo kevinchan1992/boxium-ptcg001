@@ -83,4 +83,42 @@ describe("Trending Search Functionality", () => {
     // Should return array (may be empty or have recent searches)
     expect(Array.isArray(trendingCards)).toBe(true);
   });
+
+  it("should log card click from home page", async () => {
+    const result = await db.logUserSearch({
+      cardId: testCardId,
+      source: "home_page",
+    });
+
+    expect(result).toBeTruthy();
+  });
+
+  it("should track clicks from different sources", async () => {
+    // Log clicks from different pages
+    await db.logUserSearch({
+      cardId: testCardId,
+      source: "home_page",
+    });
+
+    await db.logUserSearch({
+      cardId: testCardId,
+      source: "trending_page",
+    });
+
+    await db.logUserSearch({
+      cardId: testCardId,
+      source: "search_page",
+      searchQuery: "test query",
+    });
+
+    // Verify all clicks are recorded
+    const trendingCards = await db.getTrendingBySearches({ limit: 10, days: 30 });
+    const foundCard = trendingCards.find((card: any) => card.id === testCardId);
+    
+    expect(foundCard).toBeTruthy();
+    if (foundCard) {
+      // Should have at least 3 searches from different sources
+      expect(foundCard.searchCount).toBeGreaterThanOrEqual(3);
+    }
+  });
 });

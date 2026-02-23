@@ -15,6 +15,7 @@ function TrendingCardsGrid() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery({ limit: 5 });
+  const logSearchMutation = trpc.cards.logSearch.useMutation();
 
   if (isLoading) {
     return (
@@ -37,7 +38,14 @@ function TrendingCardsGrid() {
       {trendingCards.map((card: any) => (
         <div
           key={card.id}
-          onClick={() => setLocation(`/card/${card.id}`)}
+          onClick={() => {
+            // Log user click behavior for trending cards
+            logSearchMutation.mutate({
+              cardId: card.id,
+              source: "home_page",
+            });
+            setLocation(`/card/${card.id}`);
+          }}
           className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer hover:scale-105 border-2 border-transparent hover:border-[#ffed00]"
         >
           {/* Card Image */}

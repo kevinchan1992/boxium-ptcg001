@@ -205,10 +205,16 @@ export default function Trending() {
 function RankingCard({ card, rank, type }: { card: any; rank: number; type: TrendingTab }) {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
+  const logSearchMutation = trpc.cards.logSearch.useMutation();
   const imageUrl = card.imageUrl || card.imageUrlHiRes || '';
   const hasValidImage = imageUrl && imageUrl.trim() !== '';
 
   const handleCardClick = () => {
+    // Log user click behavior for trending cards
+    logSearchMutation.mutate({
+      cardId: card.id,
+      source: "trending_page",
+    });
     setLocation(`/card/${card.id}`);
   };
 
