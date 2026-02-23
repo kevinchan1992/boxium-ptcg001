@@ -38,6 +38,30 @@ export function AdminPlaywrightTest() {
     },
   });
 
+  const installFromCDNMutation = trpc.diagnostics.installPlaywrightFromCDN.useMutation({
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success("Playwright 安裝成功", {
+          description: `安裝完成，耗時 ${Math.round(result.duration / 1000)}秒`,
+        });
+        // 安裝成功後自動重新測試
+        setTimeout(() => {
+          setEnabled(true);
+          refetch();
+        }, 1000);
+      } else {
+        toast.error("Playwright 安裝失敗", {
+          description: result.error || "未知錯誤",
+        });
+      }
+    },
+    onError: (error) => {
+      toast.error("安裝失敗", {
+        description: error.message,
+      });
+    },
+  });
+
   // Handle test results
   useState(() => {
     if (testResult && enabled) {
@@ -64,8 +88,14 @@ export function AdminPlaywrightTest() {
   };
 
   const installPlaywright = () => {
-    if (confirm("確定要安裝 Playwright 瀏覽器嗎？\n\n這將下載約 280MB 的文件，需要 2-3 分鐘。\n安裝過程中請勿關閉頁面。")) {
+    if (confirm("確定要安裝 Playwright 瀏覽器嗎？\n\n這將下載約 280MB 的檔案，需要 2-3 分鐘。\n安裝過程中請勿關閉頁面。")) {
       installMutation.mutate();
+    }
+  };
+
+  const installFromCDN = () => {
+    if (confirm("確定要從 CDN 安裝 Playwright 瀏覽器嗎？\n\n這將從 Manus CDN 下載預打包的瀏覽器檔案（257MB），\n繞過外部網絡限制，需要 2-3 分鐘。\n安裝過程中請勿關閉頁面。")) {
+      installFromCDNMutation.mutate();
     }
   };
 
@@ -81,30 +111,98 @@ export function AdminPlaywrightTest() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-2">
+        <div className="space-y-2">
           <BrandButton
             onClick={testPlaywright}
-            disabled={testing || installMutation.isPending}
-            className="flex-1"
+            disabled={testing || installMutation.isPending || installFromCDNMutation.isPending}
+            className="w-full"
           >
             <Play className="w-4 h-4 mr-2" />
             {testing ? "測試中..." : "開始測試"}
           </BrandButton>
 
-          <Button
-            onClick={installPlaywright}
-            disabled={testing || installMutation.isPending}
-            variant="outline"
-            className="flex-1 bg-amber-500 hover:bg-amber-600 text-white border-amber-600"
-          >
-            {installMutation.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4 mr-2" />
-            )}
-            {installMutation.isPending ? "安裝中..." : "安裝 Playwright"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={installFromCDN}
+              disabled={testing || installMutation.isPending || installFromCDNMutation.isPending}
+              variant="outline"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-700"
+            >
+              {installFromCDNMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              {installFromCDNMutation.isPending ? "安裝中..." : "從 CDN 安裝（推薦）"}
+            </Button>
+
+            <Button
+              onClick={installPlaywright}
+              disabled={testing || installMutation.isPending || installFromCDNMutation.isPending}
+              variant="outline"
+              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white border-amber-600"
+            >
+              {installMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              {installMutation.isPending ? "安裝中..." : "直接安裝"}
+            </Button>
+          </div>
         </div>
+
+        {/* CDN 安裝結果 */}
+        {installFromCDNMutation.data && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+              {installFromCDNMutation.data.success ? (
+                <CheckCircle className="w-5 h-5 text-green-500" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-500" />
+              )}
+              <div className="flex-1">
+                <p className="text-sm font-medium">
+                  {installFromCDNMutation.data.success ? "✅ CDN 安裝成功" : "❌ CDN 安裝失敗"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  耗時: {Math.round(installFromCDNMutation.data.duration / 1000)}秒
+                </p>
+              </div>
+            </div>
+
+            {/* CDN 安裝錯誤信息 */}
+            {installFromCDNMutation.data.error && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-500 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-700">錯誤信息</p>
+                    <p className="text-xs text-red-600 mt-1 font-mono">
+                      {installFromCDNMutation.data.error}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CDN 安裝日誌 */}
+            {installFromCDNMutation.data.logs && installFromCDNMutation.data.logs.length > 0 && (
+              <details className="text-xs">
+                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                  查看 CDN 安裝日誌 ({installFromCDNMutation.data.logs.length} 條)
+                </summary>
+                <div className="mt-2 p-3 rounded-lg bg-muted font-mono text-xs space-y-1 max-h-64 overflow-y-auto">
+                  {installFromCDNMutation.data.logs.map((log: string, index: number) => (
+                    <div key={index} className="text-xs">
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
+        )}
 
         {/* 安裝結果 */}
         {installMutation.data && (

@@ -1664,3 +1664,35 @@ Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1
 4. 等待 2-3 分鐘（下載約 280MB）
 5. 安裝成功後自動測試 Playwright 狀態
 6. 測試成功後，SNKRDUNK 爬蟲功能恢復正常
+
+
+---
+
+## 🚨 Playwright 安裝失敗 - Supabase Storage 方案（第四階段）
+
+### 問題分析
+手動安裝 API 失敗，錯誤信息：「The string did not match the expected pattern」
+
+**可能原因：**
+1. 生產環境無法訪問外部網絡（cdn.playwright.dev）
+2. `pnpm` 命令在生產環境不可用或配置不正確
+3. 網絡防火牆阻止下載
+
+### 新方案：通過 Supabase Storage 分發 Playwright
+1. 在開發環境打包 Playwright 瀏覽器文件（~280MB）
+2. 上傳到 Supabase Storage（使用 MCP）
+3. 創建新的 API 從 Supabase 下載並解壓到 `/root/.cache/ms-playwright/`
+4. 繞過外部網絡限制和 pnpm 依賴
+
+### 任務清單
+- [x] 打包開發環境的 Playwright 瀏覽器目錄（622MB → 257MB）
+- [x] 壓縮為 tar.gz 檔案（playwright-browsers.tar.gz）
+- [x] 上傳到 Manus CDN（使用 manus-upload-file）
+- [x] 創建 `diagnostics.installPlaywrightFromCDN` API
+- [x] API 從 CDN 下載 tar.gz 檔案（fetch）
+- [x] 解壓到 `/root/.cache/ms-playwright/`（tar -xzf）
+- [x] 驗證安裝（檢查 Chromium 和 Headless Shell 目錄）
+- [x] 更新 AdminPlaywrightTest 組件添加「從 CDN 安裝（推薦）」按鈕（綠色）
+- [x] 寫測試（server/playwright.cdn.install.test.ts - ✅ 11/11 通過）
+- [ ] 保存 checkpoint
+- [ ] 部署到生產環境並測試 CDN 安裝功能

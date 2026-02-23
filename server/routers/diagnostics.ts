@@ -227,6 +227,128 @@ export const diagnosticsRouter = router({
   }),
 
   /**
+   * Install Playwright from CDN (pre-packaged browsers)
+   * This bypasses network restrictions by downloading from Manus CDN
+   */
+  installPlaywrightFromCDN: adminProcedure.mutation(async () => {
+    const result: any = {
+      success: false,
+      error: null,
+      logs: [],
+      duration: 0,
+    };
+
+    const startTime = Date.now();
+    const CDN_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663320884517/uGDgObfxThbgKrfL.gz";
+
+    try {
+      result.logs.push(`[${new Date().toISOString()}] Starting Playwright installation from CDN...`);
+      result.logs.push(`[${new Date().toISOString()}] CDN URL: ${CDN_URL}`);
+      result.logs.push(`[${new Date().toISOString()}] This may take 2-3 minutes (downloading 257MB)`);
+
+      const fs = await import("fs");
+      const path = await import("path");
+      const os = await import("os");
+      const { exec } = await import("child_process");
+      const { promisify } = await import("util");
+      const execAsync = promisify(exec);
+
+      const homeDir = os.homedir();
+      const cacheDir = path.join(homeDir, ".cache");
+      const playwrightCache = path.join(cacheDir, "ms-playwright");
+      const tempFile = path.join(homeDir, "playwright-browsers.tar.gz");
+
+      result.logs.push(`[${new Date().toISOString()}] Home directory: ${homeDir}`);
+      result.logs.push(`[${new Date().toISOString()}] Target directory: ${playwrightCache}`);
+
+      // Create cache directory if it doesn't exist
+      if (!fs.existsSync(cacheDir)) {
+        fs.mkdirSync(cacheDir, { recursive: true });
+        result.logs.push(`[${new Date().toISOString()}] Created cache directory: ${cacheDir}`);
+      }
+
+      // Download file from CDN
+      result.logs.push(`[${new Date().toISOString()}] Downloading from CDN...`);
+      const downloadStart = Date.now();
+
+      const response = await fetch(CDN_URL);
+      if (!response.ok) {
+        throw new Error(`Failed to download: ${response.status} ${response.statusText}`);
+      }
+
+      const buffer = await response.arrayBuffer();
+      fs.writeFileSync(tempFile, Buffer.from(buffer));
+
+      const downloadDuration = Date.now() - downloadStart;
+      result.logs.push(`[${new Date().toISOString()}] Downloaded ${(buffer.byteLength / 1024 / 1024).toFixed(2)}MB in ${downloadDuration}ms`);
+
+      // Extract tar.gz
+      result.logs.push(`[${new Date().toISOString()}] Extracting archive...`);
+      const extractStart = Date.now();
+
+      const { stdout, stderr } = await execAsync(
+        `cd ${cacheDir} && tar -xzf ${tempFile}`,
+        { timeout: 180000 } // 3 minutes
+      );
+
+      const extractDuration = Date.now() - extractStart;
+      result.logs.push(`[${new Date().toISOString()}] Extraction completed in ${extractDuration}ms`);
+
+      if (stdout) result.logs.push(`[${new Date().toISOString()}] Stdout: ${stdout}`);
+      if (stderr) result.logs.push(`[${new Date().toISOString()}] Stderr: ${stderr}`);
+
+      // Clean up temp file
+      fs.unlinkSync(tempFile);
+      result.logs.push(`[${new Date().toISOString()}] Cleaned up temp file`);
+
+      // Verify installation
+      const chromiumDir = path.join(playwrightCache, "chromium-1208");
+      const headlessShellDir = path.join(playwrightCache, "chromium_headless_shell-1208");
+
+      result.logs.push(`[${new Date().toISOString()}] Verifying installation...`);
+
+      const chromiumExists = fs.existsSync(chromiumDir);
+      const headlessShellExists = fs.existsSync(headlessShellDir);
+
+      if (chromiumExists) {
+        result.logs.push(`[${new Date().toISOString()}] ✅ Chromium found at: ${chromiumDir}`);
+      } else {
+        result.logs.push(`[${new Date().toISOString()}] ❌ Chromium NOT found at: ${chromiumDir}`);
+      }
+
+      if (headlessShellExists) {
+        result.logs.push(`[${new Date().toISOString()}] ✅ Headless Shell found at: ${headlessShellDir}`);
+      } else {
+        result.logs.push(`[${new Date().toISOString()}] ❌ Headless Shell NOT found at: ${headlessShellDir}`);
+      }
+
+      if (chromiumExists && headlessShellExists) {
+        result.success = true;
+        result.logs.push(`[${new Date().toISOString()}] ✅ Installation verified successfully`);
+      } else {
+        result.success = false;
+        result.error = "Installation completed but browsers not found in expected locations";
+        result.logs.push(`[${new Date().toISOString()}] ⚠️ Installation completed but verification failed`);
+      }
+
+      result.duration = Date.now() - startTime;
+      result.logs.push(`[${new Date().toISOString()}] Total duration: ${result.duration}ms`);
+
+    } catch (error: any) {
+      result.success = false;
+      result.error = error.message;
+      result.duration = Date.now() - startTime;
+      result.logs.push(`[${new Date().toISOString()}] ❌ Installation failed: ${error.message}`);
+      
+      if (error.stack) {
+        result.logs.push(`[${new Date().toISOString()}] Stack trace: ${error.stack}`);
+      }
+    }
+
+    return result;
+  }),
+
+  /**
    * Get system information
    */
   getSystemInfo: adminProcedure.query(async () => {
