@@ -52,7 +52,7 @@ export default function Login() {
           {/* Company Logo */}
           <div className="flex justify-center">
             <img 
-              src="/boxium-logo.svg" 
+              src="/boxium-logo.png" 
               alt="BOXIUM LOGO" 
               className="h-20 w-auto"
             />

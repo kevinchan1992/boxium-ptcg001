@@ -579,3 +579,19 @@ TRPCClientError: You do not have required permission (10002)
 - [x] 測試登入視窗顯示效果（✅ LOGO 正常顯示）
 - [x] 測試註冊視窗顯示效果（✅ LOGO 正常顯示）
 - [x] 保存 checkpoint
+
+
+---
+
+## 🐛 修復登入視窗 LOGO 顯示錯誤
+
+### 問題描述
+登入視窗的 LOGO 只顯示文字「BOXIUM LOGO」而不是實際的圖片，圖片路徑可能不正確。
+
+### 任務清單
+- [x] 檢查 LOGO 檔案在 public 目錄的實際位置（找到 /boxium-logo.png）
+- [x] 修復 Login.tsx 的圖片路徑（.svg → .png）
+- [x] 修復 Register.tsx 的圖片路徑（.svg → .png）
+- [x] 測試登入視窗 LOGO 顯示（✅ 正常顯示）
+- [x] 測試註冊視窗 LOGO 顯示（✅ 正常顯示）
+- [x] 保存 checkpoint
