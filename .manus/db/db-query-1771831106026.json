@@ -1,0 +1,15 @@
+{
+  "query": "SELECT COUNT(*) as total, MIN(id) as min_id, MAX(id) as max_id FROM cards;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT COUNT(*) as total, MIN(id) as min_id, MAX(id) as max_id FROM cards;",
+  "rows": [
+    {
+      "total": "28127",
+      "min_id": "150822",
+      "max_id": "902085"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tmin_id\tmax_id\n28127\t150822\t902085\n",
+  "stderr": "",
+  "execution_time_ms": 1523
+}

@@ -1,0 +1,35 @@
+{
+  "query": "SELECT c.id, c.name, ds.sourceUrl \nFROM cards c \nINNER JOIN dataSources ds ON c.id = ds.cardId \nWHERE ds.source = 'snkrdunk' \nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, ds.sourceUrl \nFROM cards c \nINNER JOIN dataSources ds ON c.id = ds.cardId \nWHERE ds.source = 'snkrdunk' \nLIMIT 5;",
+  "rows": [
+    {
+      "id": "540198",
+      "name": "Zubat C[s5I 038/070](Expansion Pack \"Single Strike Master\")",
+      "sourceUrl": "https://snkrdunk.com/apparels/144180"
+    },
+    {
+      "id": "540199",
+      "name": "Galarian Slowbro U[s5I 041/070](Expansion Pack \"Single Strike Master\")",
+      "sourceUrl": "https://snkrdunk.com/apparels/144183"
+    },
+    {
+      "id": "540200",
+      "name": "Crobat R[s5I 040/070](Expansion Pack \"Single Strike Master\")",
+      "sourceUrl": "https://snkrdunk.com/apparels/144182"
+    },
+    {
+      "id": "540201",
+      "name": "Morpeko C[s5I 047/070](Expansion Pack \"Single Strike Master\")",
+      "sourceUrl": "https://snkrdunk.com/apparels/144189"
+    },
+    {
+      "id": "540202",
+      "name": "Houndour C[s5I 044/070](Expansion Pack \"Single Strike Master\")",
+      "sourceUrl": "https://snkrdunk.com/apparels/144186"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsourceUrl\n540198\tZubat C[s5I 038/070](Expansion Pack \"Single Strike Master\")\thttps://snkrdunk.com/apparels/144180\n540199\tGalarian Slowbro U[s5I 041/070](Expansion Pack \"Single Strike Master\")\thttps://snkrdunk.com/apparels/144183\n540200\tCrobat R[s5I 040/070](Expansion Pack \"Single Strike Master\")\thttps://snkrdunk.com/apparels/144182\n540201\tMorpeko C[s5I 047/070](Expansion Pack \"Single Strike Master\")\thttps://snkrdunk.com/apparels/144189\n540202\tHoundour C[s5I 044/070](Expansion Pack \"Single Strike Master\")\thttps://snkrdunk.com/apparels/144186\n",
+  "stderr": "",
+  "execution_time_ms": 1513
+}

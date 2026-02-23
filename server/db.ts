@@ -54,6 +54,19 @@ export async function getCardByCardId(cardId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+/**
+ * Get card by SNKRDUNK ID
+ */
+export async function getCardBySnkrdunkId(snkrdunkId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(cards).where(eq(cards.snkrdunkId, snkrdunkId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+
+
 export async function getAllCards() {
   const db = await getDb();
   if (!db) return [];

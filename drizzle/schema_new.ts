@@ -26,6 +26,7 @@ export type InsertUser = typeof users.$inferInsert;
 export const cards = mysqlTable("cards", {
   id: int("id").autoincrement().primaryKey(),
   cardId: varchar("cardId", { length: 128 }).notNull().unique(), // External API card ID
+  snkrdunkId: varchar("snkrdunkId", { length: 32 }).unique(), // SNKRDUNK ID (extracted from SNKRDUNK URL)
   name: text("name").notNull(),
   nameJa: text("nameJa"), // Japanese name
   series: text("series"), // Expansion Pack series

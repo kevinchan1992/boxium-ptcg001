@@ -24,29 +24,27 @@ export default function PricingDetail() {
   const { t } = useTranslation();
   const [, params] = useRoute("/pricing/:id");
   const [, setLocation] = useLocation();
-  const cardId = params?.id ? parseInt(params.id, 10) : null;
+  const idParam = params?.id;
+  
+  // Determine if the ID is a database ID (number) or SNKRDUNK ID (string)
+  const isNumericId = idParam && !isNaN(parseInt(idParam, 10));
+  const cardId = isNumericId ? parseInt(idParam!, 10) : null;
+  const snkrdunkId = !isNumericId ? idParam : null;
 
-  // Fetch card details
-  const { data: card, isLoading: cardLoading, error: cardError } = trpc.cards.getById.useQuery(
-    { id: cardId! },
-    { enabled: !!cardId, retry: 1 }
-  );
-
-  // Fetch SNKRDUNK data source
-  const { data: snkrdunkSource } = trpc.cards.getDataSource.useQuery(
-    { cardId: cardId!, source: "snkrdunk" },
-    { enabled: !!cardId, retry: 1 }
-  );
-
-  // Fetch pricing data (eBay + SNKRDUNK)
-  const { data: pricingData, isLoading: pricingLoading, refetch } = trpc.pricing.getListings.useQuery(
-    { cardId: cardId! },
+  // Fetch pricing data (eBay + SNKRDUNK) - supports both cardId and snkrdunkId
+  const { data: pricingData, isLoading: pricingLoading, refetch, error: pricingError } = trpc.pricing.getListings.useQuery(
+    cardId ? { cardId } : { snkrdunkId: snkrdunkId! },
     { 
-      enabled: !!cardId, 
+      enabled: !!(cardId || snkrdunkId), 
       retry: 1,
       staleTime: 30 * 60 * 1000, // 30 minutes cache
     }
   );
+  
+  // Extract card info from pricing data
+  const card = pricingData?.card;
+  const cardLoading = pricingLoading;
+  const cardError = pricingError;
 
   const handleRefresh = () => {
     refetch();
@@ -57,7 +55,9 @@ export default function PricingDetail() {
   };
 
   const handleViewDetail = () => {
-    setLocation(`/card/${cardId}`);
+    if (card?.id) {
+      setLocation(`/card/${card.id}`);
+    }
   };
 
   // Calculate price statistics

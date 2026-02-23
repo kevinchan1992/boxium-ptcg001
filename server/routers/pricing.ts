@@ -74,20 +74,31 @@ export const pricingRouter = router({
   getListings: publicProcedure
     .input(
       z.object({
-        cardId: z.number(),
+        cardId: z.number().optional(),
+        snkrdunkId: z.string().optional(),
+      }).refine(data => data.cardId || data.snkrdunkId, {
+        message: 'Either cardId or snkrdunkId must be provided',
       })
     )
     .query(async ({ input }) => {
-      const { cardId } = input;
+      const { cardId, snkrdunkId } = input;
 
-      console.log(`[Pricing Router] Get listings for cardId: ${cardId}`);
+      console.log(`[Pricing Router] Get listings for cardId: ${cardId}, snkrdunkId: ${snkrdunkId}`);
 
       try {
-        // Step 1: Get card details from database
-        const card = await db.getCardById(cardId);
+        // Step 1: Get card details from database (support both cardId and snkrdunkId)
+        let card;
+        if (cardId) {
+          card = await db.getCardById(cardId);
+        } else if (snkrdunkId) {
+          card = await db.getCardBySnkrdunkId(snkrdunkId);
+        }
+        
         if (!card) {
           throw new Error('Card not found');
         }
+        
+        const actualCardId = card.id;
 
         // Step 2: Fetch from eBay API using English name + card number + PSA10 (with dual-layer caching and rate limiting)
         console.log('[Pricing Router] Fetching from eBay...');
@@ -96,7 +107,7 @@ export const pricingRouter = router({
           const searchQuery = `${card.name} ${card.cardNumber || ''} PSA10`.trim();
           
           // Check cache first (dual-layer caching: hot cache 1h + cold cache 6h)
-          const cache = await db.getEbayListingsCache(cardId, searchQuery);
+          const cache = await db.getEbayListingsCache(actualCardId, searchQuery);
           const now = new Date();
           
           // Check hot cache first
@@ -129,7 +140,7 @@ export const pricingRouter = router({
               const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
               const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
               await db.saveEbayListingsCache({
-                cardId,
+                cardId: actualCardId,
                 searchQuery,
                 listings: JSON.stringify(mergedListings),
                 hotExpiresAt,
@@ -162,7 +173,7 @@ export const pricingRouter = router({
         let snkrdunkListings: any[] = [];
         try {
           // Get SNKRDUNK data source for this card
-          const dataSource = await db.getDataSourceByCardIdAndSource(cardId, 'snkrdunk');
+          const dataSource = await db.getDataSourceByCardIdAndSource(actualCardId, 'snkrdunk');
           
           if (dataSource && dataSource.sourceUrl) {
             // Extract SNKRDUNK ID from URL (e.g., https://snkrdunk.com/apparels/93009 → 93009)
@@ -172,7 +183,7 @@ export const pricingRouter = router({
               console.log(`[Pricing Router] SNKRDUNK ID: ${snkrdunkId}`);
               
               // Check cache first (dual-layer caching: hot cache 1h + cold cache 6h)
-              const cache = await db.getSnkrdunkListingsCache(cardId);
+              const cache = await db.getSnkrdunkListingsCache(actualCardId);
               const now = new Date();
               
               // Check hot cache first
@@ -215,7 +226,7 @@ export const pricingRouter = router({
                   const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
                   const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
                   await db.saveSnkrdunkListingsCache({
-                    cardId,
+                    cardId: actualCardId,
                     snkrdunkId,
                     listings: JSON.stringify(mergedListings),
                     hotExpiresAt,
