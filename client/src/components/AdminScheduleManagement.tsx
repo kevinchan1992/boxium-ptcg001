@@ -10,6 +10,229 @@ import { Clock, Save, RefreshCw, Play, AlertCircle, CheckCircle2, Pause, PlayCir
 import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "react-i18next";
 
+/**
+ * ExecutionHistory component - displays schedule execution history
+ */
+function ExecutionHistory() {
+  const { data: history } = trpc.admin.getScheduleExecutionHistory.useQuery() as { data: { snkrdunk: any[], ebay: any[], trending: any[] } | undefined };
+  
+  if (!history) {
+    return (
+      <Card className="bg-gray-900 border-gray-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg lg:text-xl">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+            排程執行歷史
+          </CardTitle>
+          <CardDescription className="text-gray-400 text-xs sm:text-sm lg:text-base">
+            查看排程任務的執行記錄
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8 text-gray-400">
+            <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+            載入中...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  const formatDuration = (ms: number | null) => {
+    if (!ms) return 'N/A';
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours}小時 ${minutes % 60}分鐘`;
+    } else if (minutes > 0) {
+      return `${minutes}分鐘 ${seconds % 60}秒`;
+    } else {
+      return `${seconds}秒`;
+    }
+  };
+  
+  const formatDate = (date: Date | string | null) => {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleString('zh-TW', {
+      timeZone: 'Asia/Hong_Kong',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+  
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-400';
+      case 'failed':
+        return 'text-red-400';
+      case 'running':
+        return 'text-blue-400';
+      default:
+        return 'text-gray-400';
+    }
+  };
+  
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return '完成';
+      case 'failed':
+        return '失敗';
+      case 'running':
+        return '運行中';
+      default:
+        return status;
+    }
+  };
+  
+  return (
+    <Card className="bg-gray-900 border-gray-800">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg lg:text-xl">
+          <Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+          排程執行歷史
+        </CardTitle>
+        <CardDescription className="text-gray-400 text-xs sm:text-sm lg:text-base">
+          查看排程任務的執行記錄
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* SNKRDUNK 執行歷史 */}
+        <div className="space-y-3">
+          <h3 className="text-white font-medium text-sm sm:text-base lg:text-lg">🐞 SNKRDUNK 更新歷史</h3>
+          {history.snkrdunk && history.snkrdunk.length > 0 ? (
+            <div className="space-y-2">
+              {history.snkrdunk.map((record: any) => (
+                <div key={record.id} className="p-3 lg:p-4 bg-gray-800 rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className={`font-medium text-xs sm:text-sm lg:text-base ${getStatusColor(record.status)}`}>
+                      {getStatusText(record.status)}
+                    </span>
+                    <span className="text-xs sm:text-sm text-gray-400">
+                      {record.executionType === 'manual' ? '手動觸發' : '自動排程'}
+                    </span>
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-300 space-y-1">
+                    <div>開始時間：{formatDate(record.startedAt)}</div>
+                    {record.completedAt && (
+                      <div>完成時間：{formatDate(record.completedAt)}</div>
+                    )}
+                    {record.durationMs && (
+                      <div>耗時：{formatDuration(record.durationMs)}</div>
+                    )}
+                    {record.snkrdunkSuccessCount !== null && (
+                      <div className="flex gap-4">
+                        <span className="text-green-400">成功：{record.snkrdunkSuccessCount}</span>
+                        <span className="text-red-400">失敗：{record.snkrdunkFailureCount || 0}</span>
+                        <span className="text-blue-400">新增記錄：{record.snkrdunkRecordsAdded || 0}</span>
+                      </div>
+                    )}
+                    {record.errorMessage && (
+                      <div className="text-red-400 mt-2">錯誤：{record.errorMessage}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-gray-400 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
+              尚無執行記錄
+            </div>
+          )}
+        </div>
+        
+        {/* eBay 執行歷史 */}
+        <div className="space-y-3">
+          <h3 className="text-white font-medium text-sm sm:text-base lg:text-lg">🛒 eBay 更新歷史</h3>
+          {history.ebay && history.ebay.length > 0 ? (
+            <div className="space-y-2">
+              {history.ebay.map((record: any) => (
+                <div key={record.id} className="p-3 lg:p-4 bg-gray-800 rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className={`font-medium text-xs sm:text-sm lg:text-base ${getStatusColor(record.status)}`}>
+                      {getStatusText(record.status)}
+                    </span>
+                    <span className="text-xs sm:text-sm text-gray-400">
+                      {record.executionType === 'manual' ? '手動觸發' : '自動排程'}
+                    </span>
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-300 space-y-1">
+                    <div>開始時間：{formatDate(record.startedAt)}</div>
+                    {record.completedAt && (
+                      <div>完成時間：{formatDate(record.completedAt)}</div>
+                    )}
+                    {record.durationMs && (
+                      <div>耗時：{formatDuration(record.durationMs)}</div>
+                    )}
+                    {record.ebaySuccessCount !== null && (
+                      <div className="flex gap-4">
+                        <span className="text-green-400">成功：{record.ebaySuccessCount}</span>
+                        <span className="text-red-400">失敗：{record.ebayFailureCount || 0}</span>
+                        <span className="text-blue-400">新增記錄：{record.ebayRecordsAdded || 0}</span>
+                      </div>
+                    )}
+                    {record.errorMessage && (
+                      <div className="text-red-400 mt-2">錯誤：{record.errorMessage}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-gray-400 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
+              尚無執行記錄
+            </div>
+          )}
+        </div>
+        
+        {/* Trending 執行歷史 */}
+        <div className="space-y-3">
+          <h3 className="text-white font-medium text-sm sm:text-base lg:text-lg">🔥 熱門卡牌計算歷史</h3>
+          {history.trending && history.trending.length > 0 ? (
+            <div className="space-y-2">
+              {history.trending.map((record: any) => (
+                <div key={record.id} className="p-3 lg:p-4 bg-gray-800 rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className={`font-medium text-xs sm:text-sm lg:text-base ${getStatusColor(record.status)}`}>
+                      {getStatusText(record.status)}
+                    </span>
+                    <span className="text-xs sm:text-sm text-gray-400">
+                      {record.executionType === 'manual' ? '手動觸發' : '自動排程'}
+                    </span>
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-300 space-y-1">
+                    <div>開始時間：{formatDate(record.startedAt)}</div>
+                    {record.completedAt && (
+                      <div>完成時間：{formatDate(record.completedAt)}</div>
+                    )}
+                    {record.durationMs && (
+                      <div>耗時：{formatDuration(record.durationMs)}</div>
+                    )}
+                    {record.errorMessage && (
+                      <div className="text-red-400 mt-2">錯誤：{record.errorMessage}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-gray-400 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
+              尚無執行記錄
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function AdminScheduleManagement() {
   const { t } = useTranslation();
   
@@ -407,6 +630,9 @@ export function AdminScheduleManagement() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 排程執行歷史 */}
+      <ExecutionHistory />
     </div>
   );
 }

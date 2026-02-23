@@ -502,3 +502,32 @@ export const notifications = mysqlTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+
+/**
+ * Schedule Execution History table - stores price update schedule execution records
+ */
+export const scheduleExecutionHistory = mysqlTable("scheduleExecutionHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  scheduleType: varchar("scheduleType", { length: 50 }).notNull(), // e.g., "snkrdunk_daily_update", "ebay_daily_update"
+  executionType: mysqlEnum("executionType", ["scheduled", "manual"]).notNull(), // Scheduled or manual trigger
+  status: mysqlEnum("status", ["running", "completed", "failed"]).notNull(),
+  startedAt: timestamp("startedAt").notNull(),
+  completedAt: timestamp("completedAt"),
+  durationMs: int("durationMs"), // Execution duration in milliseconds
+  snkrdunkSuccessCount: int("snkrdunkSuccessCount").default(0),
+  snkrdunkFailureCount: int("snkrdunkFailureCount").default(0),
+  snkrdunkRecordsAdded: int("snkrdunkRecordsAdded").default(0),
+  ebaySuccessCount: int("ebaySuccessCount").default(0),
+  ebayFailureCount: int("ebayFailureCount").default(0),
+  ebayRecordsAdded: int("ebayRecordsAdded").default(0),
+  errorMessage: text("errorMessage"),
+}, (table) => {
+  return {
+    scheduleTypeIdx: index("scheduleType_idx").on(table.scheduleType),
+    startedAtIdx: index("startedAt_idx").on(table.startedAt),
+  };
+});
+
+export type ScheduleExecutionHistory = typeof scheduleExecutionHistory.$inferSelect;
+export type InsertScheduleExecutionHistory = typeof scheduleExecutionHistory.$inferInsert;

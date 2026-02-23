@@ -60,7 +60,7 @@ function startSnkrdunkScheduler(updateTime: string) {
     try {
       // Create execution history record
       historyId = await addScheduleExecutionHistory({
-        scheduleType: 'snkrdunk_daily_update',
+        scheduleType: 'snkrdunk_update',
         executionType: 'scheduled',
         status: 'running',
         startedAt: startTime,
@@ -129,7 +129,7 @@ function startEbayScheduler(updateTime: string) {
     try {
       // Create execution history record
       historyId = await addScheduleExecutionHistory({
-        scheduleType: 'ebay_daily_update',
+        scheduleType: 'ebay_update',
         executionType: 'scheduled',
         status: 'running',
         startedAt: startTime,
@@ -250,8 +250,17 @@ export function startTrendingCardsScheduler() {
     async () => {
       console.log('[TrendingCardsScheduler] Executing scheduled trending cards calculation...');
       const startTime = new Date();
+      let historyId: number | null = null;
       
       try {
+        // Create execution history record
+        historyId = await addScheduleExecutionHistory({
+          scheduleType: 'trending_update',
+          executionType: 'scheduled',
+          status: 'running',
+          startedAt: startTime,
+        });
+        
         // Import calculateAndCacheTrendingCards from db
         const { calculateAndCacheTrendingCards } = await import('./db');
         
@@ -261,9 +270,29 @@ export function startTrendingCardsScheduler() {
         const endTime = new Date();
         const duration = endTime.getTime() - startTime.getTime();
         
+        // Update execution history with success
+        if (historyId !== null) {
+          await updateScheduleExecutionHistory(historyId, {
+            status: 'completed',
+            completedAt: endTime,
+            durationMs: duration,
+          });
+        }
+        
         console.log(`[TrendingCardsScheduler] Trending cards calculation completed successfully in ${duration}ms`);
       } catch (error) {
         console.error('[TrendingCardsScheduler] Trending cards calculation failed:', error);
+        
+        // Update execution history with failure
+        if (historyId !== null) {
+          const endTime = new Date();
+          await updateScheduleExecutionHistory(historyId, {
+            status: 'failed',
+            completedAt: endTime,
+            durationMs: endTime.getTime() - startTime.getTime(),
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
     },
     {

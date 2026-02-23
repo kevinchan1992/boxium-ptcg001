@@ -884,3 +884,80 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 - [ ] 修復登出邏輯
 - [ ] 測試登出功能
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🐛 修復電腦網頁排版文字顯示問題
+
+### 問題描述
+電腦網頁使用時，排版文字顯示太差，需要優化桌面版的排版和文字顯示。
+
+### 任務清單
+- [ ] 檢查桌面版排版問題
+- [ ] 優化文字大小和間距
+- [ ] 優化卡片和容器佈局
+- [ ] 測試桌面版顯示效果
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🐛 診斷和修復價格更新排程功能問題
+
+### 問題描述
+排程管理內的價格更新排程設定功能，測試後發現並沒有按照設定的時間進行更新，可能自動取消或暫停。
+
+### 任務清單
+- [ ] 檢查排程設定功能代碼
+- [ ] 檢查排程執行日誌
+- [ ] 診斷排程為何自動取消或暫停
+- [ ] 修復排程功能問題
+- [ ] 測試排程功能
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🖥️ 修復電腦網頁排版文字顯示問題
+
+### 問題描述
+用戶報告電腦網頁版本的排版和文字顯示不佳（截圖顯示 Admin 頁面）
+
+### 診斷結果
+1. 標籤頁文字過小（8 個標籤擠在一起）
+2. 標題文字偏小（「管理後台」和「統計資訊」）
+3. 內容區域沒有充分利用桌面空間
+
+### 任務清單
+- [x] 優化 Admin 頁面標題文字大小（lg:text-4xl）
+- [x] 優化標籤頁佈局（flex wrap 替代 grid-cols-8）
+- [x] 增大標籤頁文字和圖標（lg:text-base, lg:w-5 lg:h-5）
+- [x] 增加容器最大寬度（max-w-[1400px]）
+- [x] 增加左右 padding（lg:px-12）
+- [ ] 測試桌面排版效果
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🔧 修復價格更新排程功能問題
+
+### 問題描述
+用戶設定了價格更新排程，但無法驗證排程是否真的執行了。調查發現：
+1. 排程器確實在運行（日誌顯示 SNKRDUNK 02:00, eBay 03:00, Trending 06:00）
+2. `scheduleExecutionHistory` 表被移除，導致執行歷史沒有記錄
+3. 用戶無法查看排程執行記錄
+
+### 任務清單
+- [x] 恢復 scheduleExecutionHistory 表到 schema
+- [x] 添加 schedule execution history 相關數據庫函數（addScheduleExecutionHistory, updateScheduleExecutionHistory, getScheduleExecutionHistory）
+- [x] 修正 priceUpdateScheduler.ts 中的 scheduleType 值（snkrdunk_update, ebay_update, trending_update）
+- [x] 在 SNKRDUNK scheduler 添加執行歷史記錄
+- [x] 在 eBay scheduler 添加執行歷史記錄
+- [x] 在 Trending scheduler 添加執行歷史記錄
+- [x] 創建 getScheduleExecutionHistory API（支持查詢不同排程類型）
+- [x] 在 AdminScheduleManagement 添加 ExecutionHistory 組件
+- [x] 顯示 SNKRDUNK/eBay/Trending 執行歷史（開始時間、完成時間、耗時、成功/失敗數、錯誤訊息）
+- [ ] 測試排程執行歷史記錄功能
+- [ ] 保存 checkpoint

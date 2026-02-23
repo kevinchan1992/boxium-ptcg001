@@ -15,45 +15,45 @@ import { useTranslation } from "react-i18next";
 export default function Admin() {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-black py-8 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-black py-8 px-4 md:px-8 lg:px-12">
+        <div className="max-w-[1400px] mx-auto space-y-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">{t("admin.title")}</h1>
-            <p className="text-sm sm:text-base text-gray-300">{t("admin.statistics")}</p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2">{t("admin.title")}</h1>
+            <p className="text-sm sm:text-base lg:text-lg text-gray-300">{t("admin.statistics")}</p>
           </div>
 
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-8 lg:w-auto">
-              <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                <LayoutDashboard className="w-4 h-4" />
+            <TabsList className="grid w-full grid-cols-8 lg:flex lg:flex-wrap lg:w-auto lg:gap-2">
+              <TabsTrigger value="dashboard" className="flex items-center gap-1 lg:gap-2 text-xs lg:text-base lg:px-4 lg:py-2.5">
+                <LayoutDashboard className="w-4 h-4 lg:w-5 lg:h-5" />
                 <span className="hidden sm:inline">{t("admin.statistics")}</span>
               </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
+            <TabsTrigger value="users" className="flex items-center gap-1 lg:gap-2 text-xs lg:text-base lg:px-4 lg:py-2.5">
+              <Users className="w-4 h-4 lg:w-5 lg:h-5" />
               <span className="hidden sm:inline">帳號管理</span>
             </TabsTrigger>
-            <TabsTrigger value="datasources" className="flex items-center gap-2">
-              <Database className="w-4 h-4" />
-              {t("admin.dataSources")}
+            <TabsTrigger value="datasources" className="flex items-center gap-1 lg:gap-2 text-xs lg:text-base lg:px-4 lg:py-2.5">
+              <Database className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="hidden sm:inline">{t("admin.dataSources")}</span>
             </TabsTrigger>
-            <TabsTrigger value="trending" className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
+            <TabsTrigger value="trending" className="flex items-center gap-1 lg:gap-2 text-xs lg:text-base lg:px-4 lg:py-2.5">
+              <TrendingUp className="w-4 h-4 lg:w-5 lg:h-5" />
               <span className="hidden sm:inline">熱門卡牌</span>
             </TabsTrigger>
-            <TabsTrigger value="blog" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
+            <TabsTrigger value="blog" className="flex items-center gap-1 lg:gap-2 text-xs lg:text-base lg:px-4 lg:py-2.5">
+              <FileText className="w-4 h-4 lg:w-5 lg:h-5" />
               <span className="hidden sm:inline">博客管理</span>
             </TabsTrigger>
-            <TabsTrigger value="cache" className="flex items-center gap-2">
-              <HardDrive className="w-4 h-4" />
+            <TabsTrigger value="cache" className="flex items-center gap-1 lg:gap-2 text-xs lg:text-base lg:px-4 lg:py-2.5">
+              <HardDrive className="w-4 h-4 lg:w-5 lg:h-5" />
               <span className="hidden sm:inline">緩存管理</span>
             </TabsTrigger>
-            <TabsTrigger value="schedule" className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+            <TabsTrigger value="schedule" className="flex items-center gap-1 lg:gap-2 text-xs lg:text-base lg:px-4 lg:py-2.5">
+              <Clock className="w-4 h-4 lg:w-5 lg:h-5" />
               <span className="hidden sm:inline">排程管理</span>
             </TabsTrigger>
-            <TabsTrigger value="performance" className="flex items-center gap-2">
-              <Activity className="w-4 h-4" />
+            <TabsTrigger value="performance" className="flex items-center gap-1 lg:gap-2 text-xs lg:text-base lg:px-4 lg:py-2.5">
+              <Activity className="w-4 h-4 lg:w-5 lg:h-5" />
               <span className="hidden sm:inline">性能監控</span>
             </TabsTrigger>
           </TabsList>

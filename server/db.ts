@@ -1,6 +1,6 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache } from "../drizzle/schema_new";;
+import { users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory } from "../drizzle/schema_new";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -753,21 +753,28 @@ export async function updateScheduleExecutionTimes(
 }
 
 /**
- * Schedule Execution History Functions (Placeholder - table removed)
+ * Schedule Execution History Functions
  */
 export async function addScheduleExecutionHistory(history: any): Promise<number> {
-  // scheduleExecutionHistory table removed, return placeholder ID
-  return 0;
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.insert(scheduleExecutionHistory).values(history);
+  return Number(result[0].insertId);
 }
 
 export async function updateScheduleExecutionHistory(id: number, updates: any) {
-  // scheduleExecutionHistory table removed, no-op
-  return;
+  const db = await getDb();
+  if (!db) return;
+  await db.update(scheduleExecutionHistory).set(updates).where(eq(scheduleExecutionHistory.id, id));
 }
 
 export async function getScheduleExecutionHistory(scheduleType: string, limit: number = 10) {
-  // scheduleExecutionHistory table removed, return empty array
-  return [];
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(scheduleExecutionHistory)
+    .where(eq(scheduleExecutionHistory.scheduleType, scheduleType))
+    .orderBy(desc(scheduleExecutionHistory.startedAt))
+    .limit(limit);
 }
 
 /**

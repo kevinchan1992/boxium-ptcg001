@@ -1818,9 +1818,29 @@ try {
 
     // 獲取排程執行歷史
     getScheduleExecutionHistory: publicProcedure
-      .query(async ({ ctx }) => {
-        const history = await db.getScheduleExecutionHistory("batch_update_daily", 10);
-        return history;
+      .input(z.object({
+        scheduleType: z.enum(["snkrdunk_update", "ebay_update", "trending_update"]).optional(),
+        limit: z.number().min(1).max(50).optional().default(10),
+      }).optional())
+      .query(async ({ input }) => {
+        const scheduleType = input?.scheduleType;
+        const limit = input?.limit ?? 10;
+        
+        if (scheduleType) {
+          // 查詢特定類型的排程歷史
+          return await db.getScheduleExecutionHistory(scheduleType, limit);
+        } else {
+          // 查詢所有類型的排程歷史
+          const snkrdunk = await db.getScheduleExecutionHistory("snkrdunk_update", limit);
+          const ebay = await db.getScheduleExecutionHistory("ebay_update", limit);
+          const trending = await db.getScheduleExecutionHistory("trending_update", limit);
+          
+          return {
+            snkrdunk,
+            ebay,
+            trending,
+          };
+        }
       }),
 
     // Manually trigger trending cards calculation
