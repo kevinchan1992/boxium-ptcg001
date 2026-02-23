@@ -1063,7 +1063,7 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 - [x] 修改 zh-TW.json 中的 emptyPriceDecrease
 - [x] 修改 en.json 和 ja.json 對應翻譯
 - [x] 測試修改後的顯示效果
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -1077,4 +1077,32 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 - [x] 檢查 Disclaimer.tsx 文件（使用國際化翻譯鍵值）
 - [x] 找到語言文件位置（zh-TW.json）
 - [x] 修改 zh-TW.json 中的 jurisdiction.content
+- [x] 保存 checkpoint
+
+
+---
+
+## 🌐 修改語言選擇器文字
+
+### 問題描述
+用戶希望將語言選擇器的「TW 繁體中文」改為「HK 繁體中文」。
+
+### 修改任務
+- [x] 找到語言選擇器組件位置（LanguageSwitcher.tsx）
+- [x] 修改語言顯示文字（「TW 繁體中文」→「HK 繁體中文」）
+- [x] 修改旗幟（🇹🇼 → 🇭🇰）
+- [ ] 測試修改後的顯示效果
+- [ ] 保存 checkpoint
+
+---
+
+## 💰 刪除 BlogPost 頁面貨幣切換器
+
+### 問題描述
+用戶透過視覺編輯器請求刪除 BlogPost 頁面的貨幣切換器。
+
+### 修改任務
+- [ ] 刪除 BlogPost.tsx 第 187-205 行的貨幣切換器
+- [ ] 刪除相關的 currency state 和邏輯
+- [ ] 測試修改後的顯示效果
 - [ ] 保存 checkpoint
