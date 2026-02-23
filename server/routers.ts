@@ -2548,6 +2548,15 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         return { categoryId, slug };
       }),
 
+    // Increment post view count
+    incrementViewCount: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .mutation(async ({ input }) => {
+        const blogDb = await import('./blogDb');
+        await blogDb.incrementPostViewCount(input.slug);
+        return { success: true };
+      }),
+
     // AI generate article (Admin only)
     generateArticle: adminProcedure
       .input(z.object({

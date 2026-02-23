@@ -148,22 +148,22 @@ export async function togglePublishPost(id: number) {
 }
 
 /**
- * Increment post view count
+ * Increment post view count by slug
  */
-export async function incrementPostViewCount(id: number) {
+export async function incrementPostViewCount(slug: string) {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
 
-  const post = await getPostById(id);
+  const post = await getPostBySlug(slug);
   if (!post) {
     throw new Error("Post not found");
   }
 
   await db.update(posts).set({
     viewCount: post.viewCount + 1,
-  }).where(eq(posts.id, id));
+  }).where(eq(posts.id, post.id));
 }
 
 /**

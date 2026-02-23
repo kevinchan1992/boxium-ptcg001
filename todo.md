@@ -1129,4 +1129,26 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 - [x] 優化文字內容和排版
 - [x] 確保響應式設計（桌面、平板、手機）
 - [x] 測試修改後的顯示效果
+- [x] 保存 checkpoint
+
+
+---
+
+## 🐛 修復 BlogPost 頁面瀏覽次數計算功能未生效
+
+### 問題描述
+用戶報告多次進入觀看文章，但瀏覽次數沒有增加，功能沒有生效。
+
+### 診斷任務
+- [x] 檢查 BlogPost.tsx 中的瀏覽次數計算邏輯（沒有調用 API）
+- [x] 檢查是否調用了增加瀏覽次數的 API（沒有）
+- [x] 檢查 API 是否正常執行（API 不存在）
+- [x] 檢查數據庫中的瀏覽次數記錄
+
+### 修復任務
+- [x] 在 routers.ts 添加 incrementViewCount mutation
+- [x] 修改 blogDb.ts 的 incrementPostViewCount 函數支持 slug 參數
+- [x] 在 BlogPost.tsx 添加 useEffect 調用 incrementViewCount API
+- [x] 測試修復後的功能（數據庫中有 3 篇文章）
+- [x] 驗證瀏覽次數是否正確增加（功能已修復）
 - [ ] 保存 checkpoint

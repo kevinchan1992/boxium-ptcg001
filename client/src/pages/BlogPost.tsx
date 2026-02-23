@@ -22,10 +22,18 @@ export default function BlogPost() {
     enabled: !!slug,
   });
 
-  // Scroll to top on mount
+  // Increment view count mutation
+  const incrementViewCount = trpc.blog.incrementViewCount.useMutation();
+
+  // Scroll to top on mount and increment view count
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [slug]);
+    
+    // Increment view count when post is loaded
+    if (slug && post) {
+      incrementViewCount.mutate({ slug });
+    }
+  }, [slug, post]);
 
   // Helper function to get localized post content
   const getLocalizedContent = (field: 'title' | 'excerpt' | 'content') => {
