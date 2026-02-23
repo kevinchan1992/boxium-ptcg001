@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Calendar, Eye, ArrowLeft, Share2, Sparkles, Facebook, DollarSign } from "lucide-react";
+import { Calendar, Eye, ArrowLeft, Share2, Sparkles, Facebook } from "lucide-react";
 import { toast } from "sonner";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -16,17 +16,6 @@ export default function BlogPost() {
   const currentLang = i18n.language;
   const [, params] = useRoute("/blog/:slug");
   const slug = params?.slug || "";
-  
-  // Currency state
-  const [currency, setCurrency] = useState<'HKD' | 'USD' | 'JPY'>('HKD');
-  
-  // Exchange rates (base: HKD)
-  const exchangeRates = {
-    HKD: { HKD: 1, USD: 0.128, JPY: 18.5 },
-    TWD: { HKD: 0.25, USD: 0.032, JPY: 4.6 },  // 1 TWD = 0.25 HKD
-    USD: { HKD: 7.8, USD: 1, JPY: 144.5 },
-    JPY: { HKD: 0.054, USD: 0.0069, JPY: 1 },
-  };
 
   // Query post by slug
   const { data: post, isLoading } = trpc.blog.getPostBySlug.useQuery({ slug }, {
@@ -50,45 +39,7 @@ export default function BlogPost() {
     return post[field]; // Fallback to Chinese
   };
   
-  // Currency conversion function
-  const convertCurrency = (text: string): string => {
-    // Define currency patterns and their standard codes
-    const currencyPatterns = [
-      { regex: /HKD\s?([\d,]+\.?\d*)/gi, code: 'HKD' as const },
-      { regex: /NT\$\s?([\d,]+\.?\d*)/gi, code: 'TWD' as const },
-      { regex: /TWD\s?([\d,]+\.?\d*)/gi, code: 'TWD' as const },
-      { regex: /USD\s?([\d,]+\.?\d*)/gi, code: 'USD' as const },
-      { regex: /\$\s?([\d,]+\.?\d*)/gi, code: 'USD' as const },
-      { regex: /JPY\s?([\d,]+\.?\d*)/gi, code: 'JPY' as const },
-      { regex: /¥\s?([\d,]+\.?\d*)/gi, code: 'JPY' as const },
-    ];
-    
-    let result = text;
-    
-    // Process each currency pattern
-    for (const pattern of currencyPatterns) {
-      result = result.replace(pattern.regex, (match, priceStr) => {
-        const price = parseFloat(priceStr.replace(/,/g, ''));
-        const rate = exchangeRates[pattern.code][currency];
-        const convertedPrice = price * rate;
-        const formattedPrice = convertedPrice.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
-        
-        // Return formatted price with currency code prefix
-        return `${currency} ${formattedPrice}`;
-      });
-    }
-    
-    return result;
-  };
-  
-  // Get converted content
-  const convertedContent = useMemo(() => {
-    const content = getLocalizedContent('content');
-    return content ? convertCurrency(content) : '';
-  }, [post, currentLang, currency]);
+
 
   // Social share functions
   const handleShareFacebook = () => {
@@ -183,25 +134,7 @@ export default function BlogPost() {
               </span>
             </div>
 
-            {/* Currency Switcher */}
-            <div className="flex items-center gap-2 mb-4">
-              <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
-              <span className="text-gray-400 text-sm md:text-base">貨幣：</span>
-              <div className="flex gap-2">
-                {(['HKD', 'USD', 'JPY'] as const).map((curr) => (
-                  <Button
-                    key={curr}
-                    size="sm"
-                    variant={currency === curr ? 'default' : 'outline'}
-                    onClick={() => setCurrency(curr)}
-                    className={currency === curr ? 'bg-[#06038d] hover:bg-[#06038d]/90 text-white' : 'border-zinc-700 text-white hover:bg-zinc-800'}
-                  >
-                    {curr}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            
+
             {/* Share Buttons - 手機版改為垂直排列 */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <span className="text-gray-400 text-sm md:text-base">分享：</span>
@@ -313,7 +246,7 @@ export default function BlogPost() {
                   ),
                 }}
               >
-                {convertedContent}
+                {getLocalizedContent('content')}
               </Markdown>
             </article>
           </Card>
