@@ -1551,3 +1551,23 @@ pnpm exec playwright install chromium
 - Playwright 是二進制可執行文件（約 280 MB），不是數據
 - 數據庫用於存儲數據（卡牌、價格、用戶等），不是存儲程序
 - 目前的自動安裝方案是業界標準做法
+
+
+## 🚨 生產環境仍然無法爬取 SNKRDUNK 數據（緊急）
+
+### 問題描述
+部署了 Playwright 自動安裝機制後，生產環境仍然顯示「暫無在售商品」。Admin 後台的「緩存管理」標籤頁沒有該卡牌的快取狀態，說明系統從未成功爬取過該卡牌的 SNKRDUNK 數據。
+
+### 測試卡牌
+- 卡牌名稱：Pikachu ex SAR [M2a 234/193](High Class Pack "MEGA Dream ex")
+- 卡牌 ID：210008
+- URL：https://boxium.asia/pricing/210008
+
+### 任務清單
+- [ ] 檢查卡牌 210008 的 `snkrdunk_id` 是否正確設置
+- [ ] 檢查數據庫中其他卡牌的 `snkrdunk_id` 配置
+- [ ] 創建測試工具直接測試該卡牌的爬取功能
+- [ ] 檢查生產環境的 Playwright 是否成功安裝
+- [ ] 檢查生產環境的錯誤日誌
+- [ ] 修復問題
+- [ ] 保存 checkpoint
