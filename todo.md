@@ -961,3 +961,47 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 - [x] 顯示 SNKRDUNK/eBay/Trending 執行歷史（開始時間、完成時間、耗時、成功/失敗數、錯誤訊息）
 - [ ] 測試排程執行歷史記錄功能
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🐛 修復熱門卡牌自動更新排程未運作問題
+
+### 問題描述
+用戶報告熱門卡牌的自動更新排程（每日 06:00 HKT）並沒有自動運作
+
+### 診斷任務
+- [ ] 檢查 priceUpdateScheduler.ts 中的 trending cards scheduler 是否啟動
+- [ ] 檢查 server 啟動時是否調用 startTrendingCardsScheduler()
+- [ ] 檢查排程執行歷史記錄（scheduleExecutionHistory 表）
+- [ ] 檢查 cron 表達式是否正確
+- [ ] 檢查時區設置是否正確
+
+### 修復任務
+- [ ] 確保 startTrendingCardsScheduler() 在 server 啟動時被調用
+- [ ] 修復排程配置問題
+- [ ] 測試手動觸發熱門卡牌計算
+- [ ] 驗證排程執行歷史記錄
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🔧 修復排程功能使用錯誤的爬取技術
+
+### 問題描述
+用戶報告排程功能被手動暫停，原因是「Firecrawl MCP 網絡連接問題」。但用戶的手動添加 SNKRDUNK 數據源功能並不是使用 Firecrawl 爬取，而是使用其他技術。需要讓排程功能使用與手動添加相同的爬取技術。
+
+### 診斷任務
+- [x] 檢查手動添加 SNKRDUNK 數據源功能使用的爬取技術（Axios + API）
+- [x] 檢查排程功能（SNKRDUNK 批量更新）使用的爬取技術（相同）
+- [x] 對比兩者的差異（沒有差異）
+- [x] 找出為什麼排程使用 Firecrawl（錯誤註釋）
+
+### 修復任務
+- [x] 修改排程功能使用與手動添加相同的爬取技術（已是相同）
+- [x] 移除排程功能對 Firecrawl 的依賴（從未依賴）
+- [x] 啟用 scheduler.ts 中的 SCHEDULER_ENABLED
+- [x] 測試修復後的排程功能（日誌顯示正在運行）
+- [x] 驗證排程可以正常執行（正在更新數據源）
+- [ ] 保存 checkpoint

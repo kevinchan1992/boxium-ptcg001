@@ -15,7 +15,8 @@ const UPDATE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 let schedulerInterval: NodeJS.Timeout | null = null;
 
 // Scheduler control flag - set to false to pause automatic updates
-let SCHEDULER_ENABLED = false; // Paused due to Firecrawl MCP network connection issues
+// Note: This scheduler uses Axios + API calls (snkrdunkScraper.ts), NOT Firecrawl
+let SCHEDULER_ENABLED = true; // Enabled - uses direct API calls
 
 /**
  * Global crawl progress tracker
