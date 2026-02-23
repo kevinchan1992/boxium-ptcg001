@@ -31,7 +31,7 @@ export async function getUserWatchlist(userId: number) {
     .where(eq(watchlist.userId, userId))
     .orderBy(desc(watchlist.createdAt));
 
-  // Fetch latest prices for each card
+  // Fetch latest prices for each card and restructure data
   const watchlistWithPrices = await Promise.all(
     result.map(async (item) => {
       const latestPrice = await db
@@ -46,9 +46,22 @@ export async function getUserWatchlist(userId: number) {
         .orderBy(desc(priceHistory.soldAt))
         .limit(1);
 
+      // Restructure to match frontend expectations
       return {
-        ...item,
-        latestPrice: latestPrice[0] || null,
+        id: item.id,
+        notes: item.notes,
+        createdAt: item.createdAt,
+        card: {
+          id: item.cardId,
+          name: item.cardName,
+          cardNumber: item.cardNumber,
+          series: item.series,
+          setName: item.setName,
+          rarity: item.rarity,
+          imageUrl: item.imageUrl,
+        },
+        latestPrice: latestPrice[0]?.price || null,
+        currency: latestPrice[0]?.currency || 'HKD',
       };
     })
   );

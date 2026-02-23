@@ -1387,3 +1387,61 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 - ✅ should clear cache when scraping fails
 - ✅ should save cache when listings are not empty
 
+
+
+## 🐛 Profile 頁面出現 TypeError 錯誤
+
+### 問題描述
+訪問 `/profile` 頁面時出現錯誤：
+```
+TypeError: Cannot read properties of undefined (reading 'id')
+```
+
+錯誤堆疊顯示問題出現在 `Array.map` 調用中，可能是嘗試讀取未定義對象的 `id` 屬性。
+
+### 診斷任務
+- [x] 檢查 Profile 頁面組件代碼
+- [x] 檢查是否有未定義的數據訪問
+- [x] 檢查 API 調用是否返回正確的數據結構
+- [x] 檢查是否有空值檢查缺失
+
+**問題根本原因：**
+`getUserWatchlist` 函數返回的數據結構是扁平的（`cardName`, `cardNumber` 等），但前端代碼期望的是嵌套結構（`item.card.id`, `item.card.name` 等）。當前端嘗試訪問 `item.card.id` 時，因為 `item.card` 是 `undefined`，所以拋出 `TypeError: Cannot read properties of undefined (reading 'id')`。
+
+### 修復任務
+- [x] 修復 undefined 訪問問題（修改 `getUserWatchlist` 函數返回嵌套結構）
+- [x] 修復 Profile.tsx 中的 `cardName` 屬性訪問（改為 `card.name`）
+- [x] 測試修復結果（✅ 3/3 測試通過）
+- [ ] 保存 checkpoint
+
+### 修復詳情
+
+**後端修復（server/profile.ts）：**
+修改 `getUserWatchlist` 函數，返回嵌套結構：
+```typescript
+return {
+  id: item.id,
+  notes: item.notes,
+  createdAt: item.createdAt,
+  card: {
+    id: item.cardId,
+    name: item.cardName,
+    cardNumber: item.cardNumber,
+    series: item.series,
+    setName: item.setName,
+    rarity: item.rarity,
+    imageUrl: item.imageUrl,
+  },
+  latestPrice: latestPrice[0]?.price || null,
+  currency: latestPrice[0]?.currency || 'HKD',
+};
+```
+
+**前端修復（client/src/pages/Profile.tsx）：**
+修改第 552 行，將 `stats.top5Cards[0].cardName` 改為 `stats.top5Cards[0].card.name`
+
+**測試結果：**
+- ✅ should return watchlist with correct nested card structure
+- ✅ should not have flat card properties (old structure)
+- ✅ should handle empty watchlist without errors
+

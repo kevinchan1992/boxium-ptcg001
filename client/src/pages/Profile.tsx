@@ -549,7 +549,7 @@ function StatisticsSection() {
               <span className="text-gray-300">{t('profile.statsSection.highestCard')}</span>
               <span className="text-[#ffed00] font-bold text-lg">
                 {stats.top5Cards && stats.top5Cards.length > 0
-                  ? stats.top5Cards[0].cardName
+                  ? stats.top5Cards[0].card.name
                   : t('profile.statsSection.noRecord')}
               </span>
             </div>
