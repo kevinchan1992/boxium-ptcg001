@@ -1036,6 +1036,21 @@ try {
       };
     }),
 
+  // Trigger cache warming
+  triggerCacheWarming: adminProcedure
+    .input(z.object({
+      cardLimit: z.number().min(1).max(100).optional(), // Number of cards to warm (default: 20)
+    }).optional())
+    .mutation(async ({ input }) => {
+      const { warmCache } = await import("./services/cacheWarmer");
+      const cardLimit = input?.cardLimit || 20;
+      
+      console.log(`[Admin] Triggering cache warming for ${cardLimit} cards...`);
+      const result = await warmCache(cardLimit);
+      
+      return result;
+    }),
+
   updateAllEbayRecords: adminProcedure.mutation(async ({ ctx }) => {
 // Get all data sources with cards
     const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });

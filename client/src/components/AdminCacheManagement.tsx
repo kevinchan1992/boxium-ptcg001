@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, RefreshCw, Database, AlertCircle } from "lucide-react";
+import { Trash2, RefreshCw, Database, AlertCircle, Flame } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
@@ -21,6 +21,7 @@ import {
 export function AdminCacheManagement() {
   const [cardIdInput, setCardIdInput] = useState("");
   const [showClearAllDialog, setShowClearAllDialog] = useState(false);
+  const [warmingInProgress, setWarmingInProgress] = useState(false);
 
   // Fetch cache statistics
   const { data: cacheStats, refetch: refetchStats } = trpc.admin.getCacheStats.useQuery();
@@ -36,6 +37,23 @@ export function AdminCacheManagement() {
     },
     onError: (error) => {
       toast.error("清除失敗", {
+        description: error.message,
+      });
+    },
+  });
+
+  // Trigger cache warming mutation
+  const triggerCacheWarming = trpc.admin.triggerCacheWarming.useMutation({
+    onSuccess: (result) => {
+      setWarmingInProgress(false);
+      toast.success("快取預熱完成", {
+        description: `成功: ${result.successCount}/${result.totalCards}, 失敗: ${result.failureCount}, 耗時: ${(result.duration / 1000).toFixed(2)}秒`,
+      });
+      refetchStats();
+    },
+    onError: (error) => {
+      setWarmingInProgress(false);
+      toast.error("快取預熱失敗", {
         description: error.message,
       });
     },
@@ -71,6 +89,11 @@ export function AdminCacheManagement() {
 
   const handleClearAllCache = () => {
     clearAllCache.mutate();
+  };
+
+  const handleTriggerCacheWarming = () => {
+    setWarmingInProgress(true);
+    triggerCacheWarming.mutate({ cardLimit: 20 });
   };
 
   return (
@@ -126,6 +149,46 @@ export function AdminCacheManagement() {
             <RefreshCw className="w-4 h-4 mr-2" />
             刷新統計
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Cache Warming */}
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+            <Flame className="w-4 h-4 sm:w-5 sm:h-5" />
+            快取預熱
+          </CardTitle>
+          <CardDescription className="text-gray-400 text-xs sm:text-sm">
+            預先爬取熱門卡牌數據，減少用戶首次查詢等待時間
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-start gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+            <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-orange-300">
+              <p className="font-medium mb-1">使用說明</p>
+              <p>快取預熱將自動爬取最近更新的 20 張卡牌的 SNKRDUNK 價格數據，預計需要 3-5 分鐘。預熱完成後，用戶訪問這些卡牌時將立即顯示價格數據，無需等待爬取。</p>
+            </div>
+          </div>
+
+          <BrandButton
+            onClick={handleTriggerCacheWarming}
+            disabled={warmingInProgress}
+            className="w-full md:w-auto"
+          >
+            {warmingInProgress ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                預熱中...
+              </>
+            ) : (
+              <>
+                <Flame className="w-4 h-4 mr-2" />
+                開始快取預熱
+              </>
+            )}
+          </BrandButton>
         </CardContent>
       </Card>
 

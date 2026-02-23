@@ -779,3 +779,76 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
   * [ ] 添加預熱進度日誌
 - [ ] 測試快取預熱功能
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🔗 整合性能追蹤到爬蟲服務
+
+### 目標
+在 snkrdunkPlaywright.ts 和 eBay 服務中調用 performanceTracker，記錄每次爬取的性能數據
+
+### 任務清單
+- [ ] 在 snkrdunkPlaywright.ts 整合 performanceTracker
+  * [ ] 記錄開始時間
+  * [ ] 記錄成功/失敗狀態
+  * [ ] 記錄響應時間
+  * [ ] 記錄處理項目數
+  * [ ] 記錄錯誤訊息（如果失敗）
+- [ ] 在 eBay 服務整合 performanceTracker
+  * [ ] 記錄開始時間
+  * [ ] 記錄成功/失敗狀態
+  * [ ] 記錄響應時間
+  * [ ] 記錄處理項目數
+  * [ ] 記錄錯誤訊息（如果失敗）
+- [ ] 測試性能追蹤功能
+- [ ] 保存 checkpoint
+
+---
+
+## 🔥 快取預熱機制
+
+### 目標
+系統啟動時自動爬取熱門卡牌數據（Top 20），減少用戶首次查詢等待時間
+
+### 任務清單
+- [ ] 創建快取預熱服務（cacheWarmer.ts）
+  * [ ] 查詢熱門卡牌列表（Top 20）
+  * [ ] 並行爬取卡牌價格數據
+  * [ ] 記錄預熱進度和結果
+- [ ] 在系統啟動時自動觸發預熱
+- [ ] 在 Admin 頁面添加手動觸發按鈕
+  * [ ] 添加 admin.triggerCacheWarming API
+  * [ ] 在 AdminCacheManagement 組件添加按鈕
+  * [ ] 顯示預熱進度和結果
+- [ ] 測試快取預熱功能
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🔗 整合性能追蹤到爬蟲服務
+
+### 目標
+在 snkrdunkPlaywright.ts 和 eBay 服務中調用 performanceTracker 記錄每次爬取的性能數據，讓監控儀表板顯示真實數據。
+
+### 任務清單
+- [x] 整合 performanceTracker 到 snkrdunkPlaywright.ts
+- [x] 整合 performanceTracker 到 ebay.ts
+- [ ] 測試性能追蹤功能（等待用戶測試）
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🔥 實施快取預熱機制
+
+### 目標
+系統啟動時自動爬取熱門卡牌數據（Top 20），減少用戶首次查詢等待時間，並在 Admin 頁面添加手動觸發按鈕。
+
+### 任務清單
+- [x] 創建快取預熱服務（cacheWarmer.ts）
+- [x] 添加 Admin API（triggerCacheWarming）
+- [x] 在 AdminCacheManagement 添加手動觸發按鈕
+- [ ] 測試快取預熱功能（等待用戶測試）
+- [ ] 保存 checkpoint

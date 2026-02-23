@@ -6,6 +6,7 @@
 
 import { playwrightPool } from "./playwrightPool";
 import { convertToHKD } from "../utils/currency";
+import { logPerformance } from "./performanceTracker";
 
 export interface SnkrdunkListing {
   url: string;
@@ -98,6 +99,7 @@ async function scrapeSnkrdunkUrl(
   status: 'on-sale' | 'sold'
 ): Promise<SnkrdunkListing[]> {
   const startTime = Date.now();
+  let performanceLogged = false;
 
   console.log(`[SNKRDUNK Playwright] Scraping ${status} items for SNKRDUNK ID: ${snkrdunkId}`);
   console.log(`[SNKRDUNK Playwright] Target URL: ${url}`);
@@ -268,12 +270,36 @@ async function scrapeSnkrdunkUrl(
       console.warn(`[SNKRDUNK Playwright] WARNING: No PSA 10 ${status} listings found for SNKRDUNK ID ${snkrdunkId}`);
     }
 
+    // Log performance
+    const responseTime = Date.now() - startTime;
+    await logPerformance({
+      source: 'snkrdunk',
+      operationType: 'single',
+      status: 'success',
+      responseTime,
+      itemsProcessed: psa10Listings.length
+    }).catch(e => console.error('[SNKRDUNK Playwright] Failed to log performance:', e));
+    performanceLogged = true;
+    
     return psa10Listings;
   } catch (error: any) {
     const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
     console.error(`[SNKRDUNK Playwright] ERROR after ${elapsedTime}s:`, error.message);
     console.error(`[SNKRDUNK Playwright] Error stack:`, error.stack);
     console.error(`[SNKRDUNK Playwright] Failed SNKRDUNK ID: ${snkrdunkId}, Status: ${status}`);
+    
+    // Log performance failure
+    if (!performanceLogged) {
+      const responseTime = Date.now() - startTime;
+      await logPerformance({
+        source: 'snkrdunk',
+        operationType: 'single',
+        status: error.name === 'TimeoutError' ? 'timeout' : 'error',
+        responseTime,
+        itemsProcessed: 0,
+        errorMessage: error.message
+      }).catch(e => console.error('[SNKRDUNK Playwright] Failed to log performance:', e));
+    }
     
     throw error;
   } finally {

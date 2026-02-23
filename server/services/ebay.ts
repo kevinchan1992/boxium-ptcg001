@@ -7,6 +7,8 @@
  * API Documentation: https://developer.ebay.com/devzone/finding/callref/findItemsAdvanced.html
  */
 
+import { logPerformance } from "./performanceTracker";
+
 interface EbayListing {
   id: string;
   market: 'ebay';
@@ -37,6 +39,8 @@ interface EbaySearchParams {
  * @returns Array of formatted eBay listings
  */
 export async function fetchEbayListings(params: EbaySearchParams): Promise<EbayListing[]> {
+  const startTime = Date.now();
+  let performanceLogged = false;
   const { cardName, cardNumber, series } = params;
 
   // Construct search query
@@ -149,9 +153,35 @@ export async function fetchEbayListings(params: EbaySearchParams): Promise<EbayL
     );
 
     console.log(`[eBay Service] Returning ${validListings.length} valid listings`);
+    
+    // Log performance
+    const responseTime = Date.now() - startTime;
+    await logPerformance({
+      source: 'ebay',
+      operationType: 'single',
+      status: 'success',
+      responseTime,
+      itemsProcessed: validListings.length
+    }).catch(e => console.error('[eBay Service] Failed to log performance:', e));
+    performanceLogged = true;
+    
     return validListings;
-  } catch (error) {
+  } catch (error: any) {
     console.error('[eBay Service] Error fetching listings:', error);
+    
+    // Log performance failure
+    if (!performanceLogged) {
+      const responseTime = Date.now() - startTime;
+      await logPerformance({
+        source: 'ebay',
+        operationType: 'single',
+        status: 'error',
+        responseTime,
+        itemsProcessed: 0,
+        errorMessage: error.message || String(error)
+      }).catch(e => console.error('[eBay Service] Failed to log performance:', e));
+    }
+    
     // Return empty array instead of throwing to allow graceful degradation
     return [];
   }
