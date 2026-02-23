@@ -1,6 +1,6 @@
 import { hashPassword } from './server/auth.ts';
 import { getDb } from './server/db.ts';
-import { users } from './drizzle/schema.ts';
+import { users } from './drizzle/schema_new.ts';
 
 async function createAdmin() {
   const db = await getDb();

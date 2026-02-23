@@ -11,21 +11,37 @@ export function ProtectedAdminRoute({ children }: ProtectedAdminRouteProps) {
   const [, setLocation] = useLocation();
   const [isChecking, setIsChecking] = useState(true);
   
-  const { data: user, isLoading } = trpc.auth.me.useQuery();
+  // 🔧 開發環境跳過認證檢查（不影響生產環境）
+  const isDevelopment = import.meta.env.DEV;
+  
+  const { data: user, isLoading } = trpc.auth.me.useQuery(undefined, {
+    enabled: !isDevelopment, // 開發環境不查詢用戶
+  });
 
   useEffect(() => {
+    // 開發環境直接允許訪問
+    if (isDevelopment) {
+      setIsChecking(false);
+      return;
+    }
+
     if (isLoading) {
       return;
     }
 
-    // If no user or not admin, redirect to home
+    // 生產環境：如果沒有用戶或不是管理員，重定向到首頁
     if (!user || user.role !== 'admin') {
       setLocation("/");
       return;
     }
 
     setIsChecking(false);
-  }, [user, isLoading, setLocation]);
+  }, [user, isLoading, setLocation, isDevelopment]);
+
+  // 開發環境直接渲染內容
+  if (isDevelopment) {
+    return <>{children}</>;
+  }
 
   // Show loading state while checking auth
   if (isLoading || isChecking) {
