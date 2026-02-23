@@ -556,3 +556,26 @@ TRPCClientError: You do not have required permission (10002)
 - [x] 測試 Admin 後台在開發環境是否可以正常訪問（✅ 成功）
 - [x] 確認生產環境的權限保護不受影響（只在 development 環境跳過）
 - [x] 保存 checkpoint
+
+
+---
+
+## 🎨 在登入視窗添加公司 LOGO
+
+### 需求描述
+在登入視窗的上方添加 BOXIUM 公司 LOGO，提升品牌識別度和視覺一致性。
+
+### 設計要求
+- LOGO 顯示在「登入」標題上方
+- 使用與首頁相同的 LOGO 圖片
+- 適當的間距和大小
+- 保持視覺平衡和美觀
+
+### 任務清單
+- [x] 檢查登入頁面組件位置（client/src/pages/Login.tsx）
+- [x] 添加 LOGO 圖片到登入視窗（使用 /boxium-logo.svg）
+- [x] 添加 LOGO 圖片到註冊視窗（client/src/pages/Register.tsx）
+- [x] 調整樣式和間距（h-20 w-auto）
+- [x] 測試登入視窗顯示效果（✅ LOGO 正常顯示）
+- [x] 測試註冊視窗顯示效果（✅ LOGO 正常顯示）
+- [x] 保存 checkpoint
