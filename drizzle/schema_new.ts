@@ -96,6 +96,24 @@ export type ViewHistory = typeof viewHistory.$inferSelect;
 export type InsertViewHistory = typeof viewHistory.$inferInsert;
 
 /**
+ * Scraper performance logs table - stores performance metrics for scraper operations
+ */
+export const scraperPerformanceLogs = mysqlTable("scraperPerformanceLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  source: mysqlEnum("source", ["snkrdunk", "ebay"]).notNull(), // Scraper source
+  cardId: int("cardId"), // Foreign key to cards table (nullable for batch operations)
+  operationType: mysqlEnum("operationType", ["single", "batch"]).notNull(), // Single card or batch update
+  status: mysqlEnum("status", ["success", "error", "timeout"]).notNull(), // Operation status
+  responseTime: int("responseTime").notNull(), // Response time in milliseconds
+  itemsProcessed: int("itemsProcessed").default(0), // Number of items processed
+  errorMessage: text("errorMessage"), // Error message if failed
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ScraperPerformanceLog = typeof scraperPerformanceLogs.$inferSelect;
+export type InsertScraperPerformanceLog = typeof scraperPerformanceLogs.$inferInsert;
+
+/**
  * Market trends table - stores aggregated market data for analysis
  */
 export const marketTrends = mysqlTable("marketTrends", {

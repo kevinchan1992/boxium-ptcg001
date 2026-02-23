@@ -957,6 +957,85 @@ try {
     };
   }),
 
+  // Get scraper performance metrics
+  getScraperPerformance: adminProcedure
+    .input(z.object({
+      source: z.enum(["snkrdunk", "ebay", "all"]).optional(),
+      hours: z.number().min(1).max(168).optional(), // Last N hours (default 24)
+    }).optional())
+    .query(async ({ input }) => {
+      const { getDb } = await import("./db");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      const { scraperPerformanceLogs } = await import("../drizzle/schema_new");
+      const { sql, eq, and, gte } = await import("drizzle-orm");
+
+      const hours = input?.hours || 24;
+      const cutoffTime = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+      // Build query conditions
+      const conditions = [gte(scraperPerformanceLogs.createdAt, cutoffTime)];
+      if (input?.source && input.source !== "all") {
+        conditions.push(eq(scraperPerformanceLogs.source, input.source));
+      }
+
+      // Get recent logs
+      const logs = await db
+        .select()
+        .from(scraperPerformanceLogs)
+        .where(and(...conditions))
+        .orderBy(sql`${scraperPerformanceLogs.createdAt} DESC`)
+        .limit(100);
+
+      // Calculate metrics
+      const totalRequests = logs.length;
+      const successCount = logs.filter((l: any) => l.status === "success").length;
+      const errorCount = logs.filter((l: any) => l.status === "error").length;
+      const timeoutCount = logs.filter((l: any) => l.status === "timeout").length;
+      const successRate = totalRequests > 0 ? (successCount / totalRequests) * 100 : 0;
+
+      const avgResponseTime = totalRequests > 0
+        ? logs.reduce((sum: number, l: any) => sum + l.responseTime, 0) / totalRequests
+        : 0;
+
+      const totalItemsProcessed = logs.reduce((sum: number, l: any) => sum + (l.itemsProcessed || 0), 0);
+
+      // Get error logs
+      const errorLogs = logs
+        .filter((l: any) => l.status === "error" || l.status === "timeout")
+        .slice(0, 20)
+        .map((l: any) => ({
+          id: l.id,
+          source: l.source,
+          cardId: l.cardId,
+          status: l.status,
+          errorMessage: l.errorMessage,
+          createdAt: l.createdAt,
+        }));
+
+      return {
+        totalRequests,
+        successCount,
+        errorCount,
+        timeoutCount,
+        successRate: Math.round(successRate * 100) / 100,
+        avgResponseTime: Math.round(avgResponseTime),
+        totalItemsProcessed,
+        recentLogs: logs.slice(0, 10).map((l: any) => ({
+          id: l.id,
+          source: l.source,
+          cardId: l.cardId,
+          operationType: l.operationType,
+          status: l.status,
+          responseTime: l.responseTime,
+          itemsProcessed: l.itemsProcessed,
+          createdAt: l.createdAt,
+        })),
+        errorLogs,
+      };
+    }),
+
   updateAllEbayRecords: adminProcedure.mutation(async ({ ctx }) => {
 // Get all data sources with cards
     const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });

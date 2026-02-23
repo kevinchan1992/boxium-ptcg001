@@ -281,6 +281,13 @@
       "when": 1771776537135,
       "tag": "0039_workable_human_torch",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1771811260991,
+      "tag": "0040_low_komodo",
+      "breakpoints": true
     }
   ]
 }

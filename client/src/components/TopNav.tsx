@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Menu, X, LogOut, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -24,7 +24,7 @@ export function TopNav() {
   
   // Get current user
   const { data: user } = trpc.auth.me.useQuery();
-  const logoutMutation = trpc.system.logout.useMutation({
+  const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
       toast.success("登出成功");
       window.location.href = "/";

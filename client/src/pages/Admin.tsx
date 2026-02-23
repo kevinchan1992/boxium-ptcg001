@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock } from "lucide-react";
+import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock, Activity } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
 import { AdminDataSources } from "@/components/AdminDataSources";
@@ -8,6 +8,7 @@ import { AdminTrendingCards } from "@/components/AdminTrendingCards";
 import { AdminBlogManagement } from "@/components/AdminBlogManagement";
 import { AdminCacheManagement } from "@/components/AdminCacheManagement";
 import { AdminScheduleManagement } from "@/components/AdminScheduleManagement";
+import { AdminScraperPerformance } from "@/components/AdminScraperPerformance";
 
 import { useTranslation } from "react-i18next";
 
@@ -22,7 +23,7 @@ export default function Admin() {
           </div>
 
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-7 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-8 lg:w-auto">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="hidden sm:inline">{t("admin.statistics")}</span>
@@ -50,6 +51,10 @@ export default function Admin() {
             <TabsTrigger value="schedule" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span className="hidden sm:inline">排程管理</span>
+            </TabsTrigger>
+            <TabsTrigger value="performance" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              <span className="hidden sm:inline">性能監控</span>
             </TabsTrigger>
           </TabsList>
 
@@ -79,6 +84,10 @@ export default function Admin() {
 
             <TabsContent value="schedule" className="mt-6">
               <AdminScheduleManagement />
+            </TabsContent>
+
+            <TabsContent value="performance" className="mt-6">
+              <AdminScraperPerformance />
             </TabsContent>
           </Tabs>
         </div>
