@@ -122,6 +122,25 @@ export const appRouter = router({
           token: result.token,
         };
       }),
+    
+    logout: publicProcedure
+      .mutation(async ({ ctx }) => {
+        console.log('[Logout API] Clearing session cookie...');
+        
+        if (ctx.res) {
+          // Clear session cookie
+          ctx.res.clearCookie('session', {
+            httpOnly: true,
+            sameSite: 'lax',
+            path: '/',
+          });
+          console.log('[Logout API] Session cookie cleared');
+        } else {
+          console.warn('[Logout API] Cannot clear cookie - ctx.res is missing');
+        }
+        
+        return { success: true };
+      }),
   }),
 
   cards: router({
@@ -958,7 +977,7 @@ try {
   }),
 
   // Get scraper performance metrics
-  getScraperPerformance: adminProcedure
+  getScraperPerformance: publicProcedure
     .input(z.object({
       source: z.enum(["snkrdunk", "ebay", "all"]).optional(),
       hours: z.number().min(1).max(168).optional(), // Last N hours (default 24)

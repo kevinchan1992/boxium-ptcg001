@@ -852,3 +852,35 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [x] 在 AdminCacheManagement 添加手動觸發按鈕
 - [ ] 測試快取預熱功能（等待用戶測試）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🐛 修復爬蟲性能監控載入問題
+
+### 問題描述
+Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無法顯示性能數據。
+
+### 任務清單
+- [ ] 檢查瀏覽器控制台錯誤
+- [ ] 檢查 admin.getScraperPerformance API 是否正常
+- [ ] 檢查數據庫 scraperPerformanceLogs 表是否有數據
+- [ ] 修復 API 或前端組件問題
+- [ ] 測試修復效果
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🐛 修復登出功能問題
+
+### 問題描述
+用戶點擊登出後無法正常登出，可能仍然保持登入狀態。
+
+### 任務清單
+- [ ] 檢查登出按鈕的點擊處理邏輯
+- [ ] 檢查 auth.logout API 是否存在
+- [ ] 檢查 session cookie 是否正確清除
+- [ ] 修復登出邏輯
+- [ ] 測試登出功能
+- [ ] 保存 checkpoint
