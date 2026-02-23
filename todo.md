@@ -1266,3 +1266,4 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 
 - [x] 添加 snkrdunkId 欄位並支持兩種 ID 查詢（修復市場格價頁面「暫無在售商品」問題）
 - [x] 優化 PricingDetail.tsx 優先使用 SNKRDUNK ID 進行查詢（測試通過：成功爬取 14 個商品）
+- [x] 修復 PricingDetail.tsx 使用數據庫 ID 查詢卡牌（列表頁面傳遞數據庫 ID，內部使用 SNKRDUNK ID 爬取價格）

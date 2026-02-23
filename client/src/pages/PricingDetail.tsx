@@ -25,16 +25,14 @@ export default function PricingDetail() {
   const [, params] = useRoute("/pricing/:id");
   const [, setLocation] = useLocation();
   const idParam = params?.id;
-  
-  // Priority: Try SNKRDUNK ID first (all numeric IDs from external sources)
-  // Only use database ID if explicitly needed (internal navigation)
-  const snkrdunkId = idParam;
+  const cardId = idParam ? parseInt(idParam, 10) : null;
 
-  // Fetch pricing data (eBay + SNKRDUNK) - prioritize SNKRDUNK ID
+  // Fetch pricing data (eBay + SNKRDUNK) - use database ID
+  // API will internally use SNKRDUNK ID for scraping
   const { data: pricingData, isLoading: pricingLoading, refetch, error: pricingError } = trpc.pricing.getListings.useQuery(
-    { snkrdunkId: snkrdunkId! },
+    { cardId: cardId! },
     { 
-      enabled: !!snkrdunkId, 
+      enabled: !!cardId, 
       retry: 1,
       staleTime: 30 * 60 * 1000, // 30 minutes cache
     }
