@@ -1878,6 +1878,64 @@ export async function clearAllSnkrdunkCache(): Promise<number> {
   return result[0].affectedRows || 0;
 }
 
+/**
+ * Get all SNKRDUNK cache list with card information
+ */
+export async function getAllSnkrdunkCacheList(page: number = 1, pageSize: number = 20) {
+  const db = await getDb();
+  if (!db) return { data: [], total: 0, page, pageSize };
+  
+  const { snkrdunkListingsCache } = await import("../drizzle/schema_new");
+  
+  // Get total count
+  const countResult = await db.select({ count: sql<number>`COUNT(*)` }).from(snkrdunkListingsCache);
+  const total = countResult[0]?.count || 0;
+  
+  // Get paginated data with card information
+  const offset = (page - 1) * pageSize;
+  const caches = await db
+    .select({
+      id: snkrdunkListingsCache.id,
+      cardId: snkrdunkListingsCache.cardId,
+      snkrdunkId: snkrdunkListingsCache.snkrdunkId,
+      listings: snkrdunkListingsCache.listings,
+      hotExpiresAt: snkrdunkListingsCache.hotExpiresAt,
+      expiresAt: snkrdunkListingsCache.expiresAt,
+      createdAt: snkrdunkListingsCache.createdAt,
+      cardName: cards.name,
+      cardNumber: cards.cardNumber,
+      cardImageUrl: cards.imageUrl,
+    })
+    .from(snkrdunkListingsCache)
+    .leftJoin(cards, eq(snkrdunkListingsCache.cardId, cards.id))
+    .orderBy(desc(snkrdunkListingsCache.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+  
+  // Parse listings to count items
+  const dataWithItemCount = caches.map(cache => {
+    let itemCount = 0;
+    try {
+      const parsedListings = JSON.parse(cache.listings);
+      itemCount = Array.isArray(parsedListings) ? parsedListings.length : 0;
+    } catch (e) {
+      itemCount = 0;
+    }
+    
+    return {
+      ...cache,
+      itemCount,
+    };
+  });
+  
+  return {
+    data: dataWithItemCount,
+    total,
+    page,
+    pageSize,
+  };
+}
+
 
 /**
  * Get SNKRDUNK caches that are expiring soon

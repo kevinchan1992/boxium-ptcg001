@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, name, snkrdunkId FROM cards WHERE id = 781620 LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, snkrdunkId FROM cards WHERE id = 781620 LIMIT 1;",
+  "rows": [
+    {
+      "id": "781620",
+      "name": "Rapid Strike Urshifu VMAX HR: SA[S5R 084/070](Expansion Pack \"Rapid Strike Master\")",
+      "snkrdunkId": "91188"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsnkrdunkId\n781620\tRapid Strike Urshifu VMAX HR: SA[S5R 084/070](Expansion Pack \"Rapid Strike Master\")\t91188\n",
+  "stderr": "",
+  "execution_time_ms": 1573
+}

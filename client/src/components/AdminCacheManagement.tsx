@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, RefreshCw, Database, AlertCircle, Flame } from "lucide-react";
+import { Trash2, RefreshCw, Database, AlertCircle, Flame, List, ExternalLink } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
@@ -17,14 +17,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Link } from "wouter";
 
 export function AdminCacheManagement() {
   const [cardIdInput, setCardIdInput] = useState("");
   const [showClearAllDialog, setShowClearAllDialog] = useState(false);
   const [warmingInProgress, setWarmingInProgress] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
 
   // Fetch cache statistics
   const { data: cacheStats, refetch: refetchStats } = trpc.admin.getCacheStats.useQuery();
+
+  // Fetch cache list
+  const { data: cacheList, refetch: refetchList, isLoading: isLoadingList } = trpc.admin.getAllCacheList.useQuery({
+    page: currentPage,
+    pageSize,
+  });
 
   // Clear specific card cache mutation
   const clearCardCache = trpc.admin.clearCardCache.useMutation({
@@ -34,6 +51,21 @@ export function AdminCacheManagement() {
       });
       setCardIdInput("");
       refetchStats();
+      refetchList();
+    },
+    onError: (error) => {
+      toast.error("清除失敗", {
+        description: error.message,
+      });
+    },
+  });
+
+  // Clear single card cache mutation (from list)
+  const clearSingleCardCache = trpc.admin.clearSingleCardCache.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message);
+      refetchStats();
+      refetchList();
     },
     onError: (error) => {
       toast.error("清除失敗", {
@@ -50,6 +82,7 @@ export function AdminCacheManagement() {
         description: `成功: ${result.successCount}/${result.totalCards}, 失敗: ${result.failureCount}, 耗時: ${(result.duration / 1000).toFixed(2)}秒`,
       });
       refetchStats();
+      refetchList();
     },
     onError: (error) => {
       setWarmingInProgress(false);
@@ -60,12 +93,11 @@ export function AdminCacheManagement() {
   });
 
   // Clear all cache mutation
-  const clearAllCache = trpc.admin.clearAllCache.useMutation({
+  const clearAllCacheBatch = trpc.admin.clearAllCacheBatch.useMutation({
     onSuccess: (result) => {
-      toast.success("所有緩存已清除", {
-        description: `已清除 ${result.deletedCount} 條緩存記錄`,
-      });
+      toast.success(result.message);
       refetchStats();
+      refetchList();
       setShowClearAllDialog(false);
     },
     onError: (error) => {
@@ -88,13 +120,19 @@ export function AdminCacheManagement() {
   };
 
   const handleClearAllCache = () => {
-    clearAllCache.mutate();
+    clearAllCacheBatch.mutate();
   };
 
   const handleTriggerCacheWarming = () => {
     setWarmingInProgress(true);
     triggerCacheWarming.mutate({ cardLimit: 20 });
   };
+
+  const handleClearSingleCache = (cardId: number) => {
+    clearSingleCardCache.mutate({ cardId });
+  };
+
+  const totalPages = cacheList ? Math.ceil(cacheList.total / pageSize) : 0;
 
   return (
     <div className="space-y-6">
@@ -143,12 +181,169 @@ export function AdminCacheManagement() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => refetchStats()}
+            onClick={() => {
+              refetchStats();
+              refetchList();
+            }}
             className="w-full md:w-auto"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             刷新統計
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Cache List */}
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+            <List className="w-4 h-4 sm:w-5 sm:h-5" />
+            緩存列表
+          </CardTitle>
+          <CardDescription className="text-gray-400 text-xs sm:text-sm">
+            查看所有卡牌的緩存狀態，包含過期時間和商品數量
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoadingList ? (
+            <div className="flex items-center justify-center py-8">
+              <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+              <span className="ml-2 text-gray-400">載入中...</span>
+            </div>
+          ) : cacheList && cacheList.data.length > 0 ? (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-zinc-800 hover:bg-zinc-800/50">
+                      <TableHead className="text-gray-300">卡牌圖片</TableHead>
+                      <TableHead className="text-gray-300">卡牌名稱</TableHead>
+                      <TableHead className="text-gray-300">卡號</TableHead>
+                      <TableHead className="text-gray-300">商品數量</TableHead>
+                      <TableHead className="text-gray-300">熱快取過期</TableHead>
+                      <TableHead className="text-gray-300">冷快取過期</TableHead>
+                      <TableHead className="text-gray-300">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cacheList.data.map((cache) => {
+                      const now = new Date();
+                      const hotExpired = new Date(cache.hotExpiresAt) < now;
+                      const coldExpired = new Date(cache.expiresAt) < now;
+
+                      return (
+                        <TableRow key={cache.id} className="border-zinc-800 hover:bg-zinc-800/50">
+                          <TableCell>
+                            {cache.cardImageUrl ? (
+                              <img 
+                                src={cache.cardImageUrl} 
+                                alt={cache.cardName || "Card"} 
+                                className="w-12 h-16 object-cover rounded"
+                              />
+                            ) : (
+                              <div className="w-12 h-16 bg-zinc-700 rounded flex items-center justify-center text-gray-500 text-xs">
+                                無圖
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-white font-medium">
+                            {cache.cardName || "未知卡牌"}
+                          </TableCell>
+                          <TableCell className="text-gray-400">
+                            {cache.cardNumber || "N/A"}
+                          </TableCell>
+                          <TableCell className="text-white">
+                            {cache.itemCount} 個
+                          </TableCell>
+                          <TableCell>
+                            <span className={hotExpired ? "text-red-400" : "text-green-400"}>
+                              {hotExpired ? "已過期" : "有效"}
+                            </span>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {new Date(cache.hotExpiresAt).toLocaleString("zh-TW", {
+                                month: "2-digit",
+                                day: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className={coldExpired ? "text-red-400" : "text-green-400"}>
+                              {coldExpired ? "已過期" : "有效"}
+                            </span>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {new Date(cache.expiresAt).toLocaleString("zh-TW", {
+                                month: "2-digit",
+                                day: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleClearSingleCache(cache.cardId)}
+                                disabled={clearSingleCardCache.isPending}
+                                className="text-xs"
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                清除
+                              </Button>
+                              <Link href={`/pricing/${cache.cardId}`}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs"
+                                >
+                                  <ExternalLink className="w-3 h-3 mr-1" />
+                                  查看
+                                </Button>
+                              </Link>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-400">
+                    第 {currentPage} 頁，共 {totalPages} 頁（總共 {cacheList.total} 條記錄）
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      上一頁
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      下一頁
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-8 text-gray-400">
+              目前沒有任何緩存記錄
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -262,10 +457,10 @@ export function AdminCacheManagement() {
           <Button
             variant="destructive"
             onClick={() => setShowClearAllDialog(true)}
-            disabled={clearAllCache.isPending}
+            disabled={clearAllCacheBatch.isPending}
             className="w-full md:w-auto"
           >
-            {clearAllCache.isPending ? (
+            {clearAllCacheBatch.isPending ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                 清除中...

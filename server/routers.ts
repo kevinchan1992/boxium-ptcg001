@@ -2041,6 +2041,37 @@ try {
         const deletedCount = await db.clearAllSnkrdunkCache();
         return { success: true, deletedCount };
       }),
+
+    // 獲取所有快取列表（包含卡牌信息、過期時間、商品數量）
+    getAllCacheList: adminProcedure
+      .input(z.object({
+        page: z.number().min(1).default(1),
+        pageSize: z.number().min(1).max(100).default(20),
+      }))
+      .query(async ({ input }) => {
+        const { getAllSnkrdunkCacheList } = await import('./db');
+        const result = await getAllSnkrdunkCacheList(input.page, input.pageSize);
+        return result;
+      }),
+
+    // 清除單個卡牌快取（通過卡牌 ID）
+    clearSingleCardCache: adminProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const { clearSnkrdunkCacheByCardId } = await import('./db');
+        const deletedCount = await clearSnkrdunkCacheByCardId(input.cardId);
+        return { success: true, deletedCount, message: `已清除卡牌 ${input.cardId} 的快取` };
+      }),
+
+    // 批量清除所有快取
+    clearAllCacheBatch: adminProcedure
+      .mutation(async () => {
+        const { clearAllSnkrdunkCache } = await import('./db');
+        const deletedCount = await clearAllSnkrdunkCache();
+        return { success: true, deletedCount, message: `已清除 ${deletedCount} 個快取記錄` };
+      }),
     // User Management APIs
     getUserList: adminProcedure
       .input(z.object({

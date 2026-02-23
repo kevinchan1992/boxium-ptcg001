@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, name, snkrdunkId FROM cards WHERE id = 813809 OR snkrdunkId = '813809' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, snkrdunkId FROM cards WHERE id = 813809 OR snkrdunkId = '813809' LIMIT 1;",
+  "rows": [
+    {
+      "id": "813809",
+      "name": "Gardevoir CHR[s8b 196/184](High Class Pack\"VMAX Climax\")",
+      "snkrdunkId": "126681"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsnkrdunkId\n813809\tGardevoir CHR[s8b 196/184](High Class Pack\"VMAX Climax\")\t126681\n",
+  "stderr": "",
+  "execution_time_ms": 1557
+}
