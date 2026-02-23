@@ -1631,3 +1631,36 @@ Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1
 [Playwright Setup] ✅ Setup complete. Playwright is ready.
 [Playwright Setup] ========================================
 ```
+
+
+---
+
+## 🚨 Playwright 手動安裝 API（第三階段 - 最終解決方案）
+
+### 問題確認
+經過測試確認：**自動安裝腳本在生產環境根本沒有執行**。
+
+**原因：** 生產環境不使用 `package.json` 的 `start` 命令，而是直接運行 `node /usr/src/app/dist/index.js`，繞過了 `bash scripts/ensure-playwright.sh &&` 前綴。
+
+### 最終解決方案
+創建 Admin API 讓用戶可以在生產環境直接點擊按鈕安裝 Playwright。
+
+### 任務清單
+- [x] 創建 `diagnostics.installPlaywright` API（mutation）
+- [x] API 執行 `pnpm exec playwright install chromium` 命令
+- [x] 添加 5 分鐘超時和詳細日誌輸出
+- [x] 添加安裝後驗證（檢查 Chromium 和 Headless Shell 目錄）
+- [x] 更新 AdminPlaywrightTest 組件添加「安裝 Playwright」按鈕
+- [x] 添加安裝進度顯示（Loading 狀態、日誌輸出）
+- [x] 安裝成功後自動觸發 Playwright 測試
+- [x] 寫測試（server/playwright.install.test.ts - ✅ 7/7 通過）
+- [ ] 保存 checkpoint
+- [ ] 部署到生產環境並測試安裝功能
+
+### 使用方法
+1. 登入 Admin 後台（https://boxium.asia/admin）
+2. 進入「性能監控」標籤頁
+3. 點擊「安裝 Playwright」按鈕
+4. 等待 2-3 分鐘（下載約 280MB）
+5. 安裝成功後自動測試 Playwright 狀態
+6. 測試成功後，SNKRDUNK 爬蟲功能恢復正常

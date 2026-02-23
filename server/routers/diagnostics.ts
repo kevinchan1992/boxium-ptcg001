@@ -123,6 +123,110 @@ export const diagnosticsRouter = router({
 
 
   /**
+   * Install Playwright browsers manually
+   * This is a fallback solution when automatic installation fails
+   */
+  installPlaywright: adminProcedure.mutation(async () => {
+    const { exec } = await import("child_process");
+    const { promisify } = await import("util");
+    const execAsync = promisify(exec);
+    
+    const result: any = {
+      success: false,
+      error: null,
+      logs: [],
+      duration: 0,
+    };
+
+    const startTime = Date.now();
+
+    try {
+      result.logs.push(`[${new Date().toISOString()}] Starting Playwright installation...`);
+      result.logs.push(`[${new Date().toISOString()}] This may take 2-3 minutes (downloading ~280MB)`);
+      result.logs.push(`[${new Date().toISOString()}] Command: pnpm exec playwright install chromium`);
+
+      // Execute installation command with 5 minute timeout
+      const { stdout, stderr } = await execAsync(
+        "pnpm exec playwright install chromium",
+        { 
+          timeout: 300000, // 5 minutes
+          maxBuffer: 10 * 1024 * 1024, // 10MB buffer for output
+        }
+      );
+
+      result.logs.push(`[${new Date().toISOString()}] Installation output:`);
+      if (stdout) {
+        stdout.split('\n').forEach(line => {
+          if (line.trim()) result.logs.push(`  ${line}`);
+        });
+      }
+
+      if (stderr) {
+        result.logs.push(`[${new Date().toISOString()}] Installation warnings:`);
+        stderr.split('\n').forEach(line => {
+          if (line.trim()) result.logs.push(`  ${line}`);
+        });
+      }
+
+      // Verify installation
+      const fs = await import("fs");
+      const path = await import("path");
+      const os = await import("os");
+      
+      const homeDir = os.homedir();
+      const playwrightCache = path.join(homeDir, ".cache", "ms-playwright");
+      const chromiumDir = path.join(playwrightCache, "chromium-1208");
+      const headlessShellDir = path.join(playwrightCache, "chromium_headless_shell-1208");
+
+      result.logs.push(`[${new Date().toISOString()}] Verifying installation...`);
+      result.logs.push(`[${new Date().toISOString()}] Home directory: ${homeDir}`);
+      result.logs.push(`[${new Date().toISOString()}] Playwright cache: ${playwrightCache}`);
+
+      const chromiumExists = fs.existsSync(chromiumDir);
+      const headlessShellExists = fs.existsSync(headlessShellDir);
+
+      if (chromiumExists) {
+        result.logs.push(`[${new Date().toISOString()}] ✅ Chromium found at: ${chromiumDir}`);
+      } else {
+        result.logs.push(`[${new Date().toISOString()}] ❌ Chromium NOT found at: ${chromiumDir}`);
+      }
+
+      if (headlessShellExists) {
+        result.logs.push(`[${new Date().toISOString()}] ✅ Headless Shell found at: ${headlessShellDir}`);
+      } else {
+        result.logs.push(`[${new Date().toISOString()}] ❌ Headless Shell NOT found at: ${headlessShellDir}`);
+      }
+
+      if (chromiumExists && headlessShellExists) {
+        result.success = true;
+        result.logs.push(`[${new Date().toISOString()}] ✅ Installation verified successfully`);
+      } else {
+        result.success = false;
+        result.error = "Installation completed but browsers not found in expected locations";
+        result.logs.push(`[${new Date().toISOString()}] ⚠️ Installation completed but verification failed`);
+      }
+
+      result.duration = Date.now() - startTime;
+      result.logs.push(`[${new Date().toISOString()}] Total duration: ${result.duration}ms`);
+
+    } catch (error: any) {
+      result.success = false;
+      result.error = error.message;
+      result.duration = Date.now() - startTime;
+      result.logs.push(`[${new Date().toISOString()}] ❌ Installation failed: ${error.message}`);
+      
+      if (error.stdout) {
+        result.logs.push(`[${new Date().toISOString()}] Stdout: ${error.stdout}`);
+      }
+      if (error.stderr) {
+        result.logs.push(`[${new Date().toISOString()}] Stderr: ${error.stderr}`);
+      }
+    }
+
+    return result;
+  }),
+
+  /**
    * Get system information
    */
   getSystemInfo: adminProcedure.query(async () => {
