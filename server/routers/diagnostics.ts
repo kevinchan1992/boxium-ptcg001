@@ -5,13 +5,13 @@
 
 import { router, adminProcedure } from "../_core/trpc";
 import { z } from "zod";
-import { playwrightPool } from "../services/playwrightPool";
+import { puppeteerPool } from "../services/puppeteerPool";
 
 export const diagnosticsRouter = router({
   /**
-   * Test if Playwright can launch a browser
+   * Test if Puppeteer can launch a browser
    */
-  testPlaywright: adminProcedure.query(async () => {
+  testPuppeteer: adminProcedure.query(async () => {
     const startTime = Date.now();
     const result: any = {
       success: false,
@@ -24,11 +24,11 @@ export const diagnosticsRouter = router({
     };
 
     try {
-      result.logs.push(`[${new Date().toISOString()}] Starting Playwright test...`);
+      result.logs.push(`[${new Date().toISOString()}] Starting Puppeteer test...`);
 
       // Test 1: Launch browser
       result.logs.push(`[${new Date().toISOString()}] Attempting to launch browser...`);
-      const browser = await playwrightPool.getBrowser();
+      const browser = await puppeteerPool.getBrowser();
       result.browserLaunched = true;
       result.logs.push(`[${new Date().toISOString()}] ✅ Browser launched successfully`);
 
@@ -99,7 +99,7 @@ export const diagnosticsRouter = router({
         result.logs.push(`[${new Date().toISOString()}] Testing SNKRDUNK scraping for ID: ${input.snkrdunkId}`);
 
         // Import scraping function
-        const { scrapeSnkrdunkListings } = await import("../services/snkrdunkPlaywright");
+        const { scrapeSnkrdunkListings } = await import("../services/snkrdunkPuppeteer");
 
         // Attempt to scrape
         const listings = await scrapeSnkrdunkListings(input.snkrdunkId);
@@ -123,10 +123,10 @@ export const diagnosticsRouter = router({
 
 
   /**
-   * Install Playwright browsers manually
+   * Install Puppeteer browsers manually
    * This is a fallback solution when automatic installation fails
    */
-  installPlaywright: adminProcedure.mutation(async () => {
+  installPuppeteer: adminProcedure.mutation(async () => {
     const { exec } = await import("child_process");
     const { promisify } = await import("util");
     const execAsync = promisify(exec);
@@ -141,13 +141,13 @@ export const diagnosticsRouter = router({
     const startTime = Date.now();
 
     try {
-      result.logs.push(`[${new Date().toISOString()}] Starting Playwright installation...`);
+      result.logs.push(`[${new Date().toISOString()}] Starting Puppeteer installation...`);
       result.logs.push(`[${new Date().toISOString()}] This may take 2-3 minutes (downloading ~280MB)`);
-      result.logs.push(`[${new Date().toISOString()}] Command: pnpm exec playwright install chromium`);
+      result.logs.push(`[${new Date().toISOString()}] Command: pnpm exec puppeteer install chromium`);
 
       // Execute installation command with 5 minute timeout
       const { stdout, stderr } = await execAsync(
-        "pnpm exec playwright install chromium",
+        "pnpm exec puppeteer install chromium",
         { 
           timeout: 300000, // 5 minutes
           maxBuffer: 10 * 1024 * 1024, // 10MB buffer for output
@@ -174,13 +174,13 @@ export const diagnosticsRouter = router({
       const os = await import("os");
       
       const homeDir = os.homedir();
-      const playwrightCache = path.join(homeDir, ".cache", "ms-playwright");
-      const chromiumDir = path.join(playwrightCache, "chromium-1208");
-      const headlessShellDir = path.join(playwrightCache, "chromium_headless_shell-1208");
+      const puppeteerCache = path.join(homeDir, ".cache", "ms-puppeteer");
+      const chromiumDir = path.join(puppeteerCache, "chromium-1208");
+      const headlessShellDir = path.join(puppeteerCache, "chromium_headless_shell-1208");
 
       result.logs.push(`[${new Date().toISOString()}] Verifying installation...`);
       result.logs.push(`[${new Date().toISOString()}] Home directory: ${homeDir}`);
-      result.logs.push(`[${new Date().toISOString()}] Playwright cache: ${playwrightCache}`);
+      result.logs.push(`[${new Date().toISOString()}] Puppeteer cache: ${puppeteerCache}`);
 
       const chromiumExists = fs.existsSync(chromiumDir);
       const headlessShellExists = fs.existsSync(headlessShellDir);
@@ -227,10 +227,10 @@ export const diagnosticsRouter = router({
   }),
 
   /**
-   * Install Playwright from CDN (pre-packaged browsers)
+   * Install Puppeteer from CDN (pre-packaged browsers)
    * This bypasses network restrictions by downloading from Manus CDN
    */
-  installPlaywrightFromCDN: adminProcedure.mutation(async () => {
+  installPuppeteerFromCDN: adminProcedure.mutation(async () => {
     const result: any = {
       success: false,
       error: null,
@@ -242,7 +242,7 @@ export const diagnosticsRouter = router({
     const CDN_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663320884517/uGDgObfxThbgKrfL.gz";
 
     try {
-      result.logs.push(`[${new Date().toISOString()}] Starting Playwright installation from CDN...`);
+      result.logs.push(`[${new Date().toISOString()}] Starting Puppeteer installation from CDN...`);
       result.logs.push(`[${new Date().toISOString()}] CDN URL: ${CDN_URL}`);
       result.logs.push(`[${new Date().toISOString()}] This may take 2-3 minutes (downloading 257MB)`);
 
@@ -255,11 +255,11 @@ export const diagnosticsRouter = router({
 
       const homeDir = os.homedir();
       const cacheDir = path.join(homeDir, ".cache");
-      const playwrightCache = path.join(cacheDir, "ms-playwright");
-      const tempFile = path.join(homeDir, "playwright-browsers.tar.gz");
+      const puppeteerCache = path.join(cacheDir, "ms-puppeteer");
+      const tempFile = path.join(homeDir, "puppeteer-browsers.tar.gz");
 
       result.logs.push(`[${new Date().toISOString()}] Home directory: ${homeDir}`);
-      result.logs.push(`[${new Date().toISOString()}] Target directory: ${playwrightCache}`);
+      result.logs.push(`[${new Date().toISOString()}] Target directory: ${puppeteerCache}`);
 
       // Create cache directory if it doesn't exist
       if (!fs.existsSync(cacheDir)) {
@@ -302,8 +302,8 @@ export const diagnosticsRouter = router({
       result.logs.push(`[${new Date().toISOString()}] Cleaned up temp file`);
 
       // Verify installation
-      const chromiumDir = path.join(playwrightCache, "chromium-1208");
-      const headlessShellDir = path.join(playwrightCache, "chromium_headless_shell-1208");
+      const chromiumDir = path.join(puppeteerCache, "chromium-1208");
+      const headlessShellDir = path.join(puppeteerCache, "chromium_headless_shell-1208");
 
       result.logs.push(`[${new Date().toISOString()}] Verifying installation...`);
 
@@ -349,10 +349,10 @@ export const diagnosticsRouter = router({
   }),
 
   /**
-   * Diagnose Playwright installation environment
+   * Diagnose Puppeteer installation environment
    * Check system commands, file permissions, disk space, and download capabilities
    */
-  diagnosePlaywrightInstallation: adminProcedure.mutation(async () => {
+  diagnosePuppeteerInstallation: adminProcedure.mutation(async () => {
     const result: any = {
       success: true,
       checks: [],
@@ -371,8 +371,8 @@ export const diagnosticsRouter = router({
 
       const homeDir = os.homedir();
       const cacheDir = path.join(homeDir, ".cache");
-      const playwrightCache = path.join(cacheDir, "ms-playwright");
-      const tempFile = path.join(homeDir, "playwright-test.tar.gz");
+      const puppeteerCache = path.join(cacheDir, "ms-puppeteer");
+      const tempFile = path.join(homeDir, "puppeteer-test.tar.gz");
 
       result.checks.push({
         name: "System Information",
@@ -382,7 +382,7 @@ export const diagnosticsRouter = router({
           arch: os.arch(),
           homeDir: homeDir,
           cacheDir: cacheDir,
-          playwrightCache: playwrightCache,
+          puppeteerCache: puppeteerCache,
         },
       });
 
@@ -576,21 +576,21 @@ export const diagnosticsRouter = router({
         }
       }
 
-      // Check 7: Check if Playwright is already installed
-      const chromiumDir = path.join(playwrightCache, "chromium-1208");
-      const headlessShellDir = path.join(playwrightCache, "chromium_headless_shell-1208");
+      // Check 7: Check if Puppeteer is already installed
+      const chromiumDir = path.join(puppeteerCache, "chromium-1208");
+      const headlessShellDir = path.join(puppeteerCache, "chromium_headless_shell-1208");
       
       if (fs.existsSync(chromiumDir) && fs.existsSync(headlessShellDir)) {
         result.checks.push({
-          name: "Playwright installation status",
+          name: "Puppeteer installation status",
           status: "success",
-          details: "Playwright is already installed",
+          details: "Puppeteer is already installed",
         });
       } else {
         result.checks.push({
-          name: "Playwright installation status",
+          name: "Puppeteer installation status",
           status: "warning",
-          details: "Playwright is NOT installed",
+          details: "Puppeteer is NOT installed",
         });
       }
 

@@ -1,13 +1,13 @@
 /**
- * Playwright Installation API Tests
+ * Puppeteer Installation API Tests
  * 
- * Tests the manual Playwright installation API
+ * Tests the manual Puppeteer installation API
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-describe('Playwright Installation API', () => {
-  describe('installPlaywright mutation', () => {
+describe('Puppeteer Installation API', () => {
+  describe('installPuppeteer mutation', () => {
     it('should have correct API structure', () => {
       // This test verifies the API exists and has the correct structure
       // Actual installation is tested manually in production
@@ -16,21 +16,21 @@ describe('Playwright Installation API', () => {
         success: true,
         error: null,
         logs: [
-          '[2026-02-23T12:00:00.000Z] Starting Playwright installation...',
+          '[2026-02-23T12:00:00.000Z] Starting Puppeteer installation...',
           '[2026-02-23T12:00:00.001Z] This may take 2-3 minutes (downloading ~280MB)',
-          '[2026-02-23T12:00:00.002Z] Command: pnpm exec playwright install chromium',
+          '[2026-02-23T12:00:00.002Z] Command: pnpm exec puppeteer install chromium',
           '[2026-02-23T12:02:30.000Z] Installation output:',
           '  Downloading Chrome for Testing 145.0.7632.6...',
-          '  Chrome for Testing downloaded to /root/.cache/ms-playwright/chromium-1208',
+          '  Chrome for Testing downloaded to /root/.cache/ms-puppeteer/chromium-1208',
           '  Downloading FFmpeg...',
-          '  FFmpeg downloaded to /root/.cache/ms-playwright/ffmpeg-1011',
+          '  FFmpeg downloaded to /root/.cache/ms-puppeteer/ffmpeg-1011',
           '  Downloading Chrome Headless Shell...',
-          '  Chrome Headless Shell downloaded to /root/.cache/ms-playwright/chromium_headless_shell-1208',
+          '  Chrome Headless Shell downloaded to /root/.cache/ms-puppeteer/chromium_headless_shell-1208',
           '[2026-02-23T12:02:30.100Z] Verifying installation...',
           '[2026-02-23T12:02:30.101Z] Home directory: /root',
-          '[2026-02-23T12:02:30.102Z] Playwright cache: /root/.cache/ms-playwright',
-          '[2026-02-23T12:02:30.103Z] ✅ Chromium found at: /root/.cache/ms-playwright/chromium-1208',
-          '[2026-02-23T12:02:30.104Z] ✅ Headless Shell found at: /root/.cache/ms-playwright/chromium_headless_shell-1208',
+          '[2026-02-23T12:02:30.102Z] Puppeteer cache: /root/.cache/ms-puppeteer',
+          '[2026-02-23T12:02:30.103Z] ✅ Chromium found at: /root/.cache/ms-puppeteer/chromium-1208',
+          '[2026-02-23T12:02:30.104Z] ✅ Headless Shell found at: /root/.cache/ms-puppeteer/chromium_headless_shell-1208',
           '[2026-02-23T12:02:30.105Z] ✅ Installation verified successfully',
           '[2026-02-23T12:02:30.106Z] Total duration: 150000ms',
         ],
@@ -55,9 +55,9 @@ describe('Playwright Installation API', () => {
         success: false,
         error: 'Installation failed: Network timeout',
         logs: [
-          '[2026-02-23T12:00:00.000Z] Starting Playwright installation...',
+          '[2026-02-23T12:00:00.000Z] Starting Puppeteer installation...',
           '[2026-02-23T12:00:00.001Z] This may take 2-3 minutes (downloading ~280MB)',
-          '[2026-02-23T12:00:00.002Z] Command: pnpm exec playwright install chromium',
+          '[2026-02-23T12:00:00.002Z] Command: pnpm exec puppeteer install chromium',
           '[2026-02-23T12:01:00.000Z] ❌ Installation failed: Network timeout',
         ],
         duration: 60000,
@@ -75,12 +75,12 @@ describe('Playwright Installation API', () => {
         success: true,
         error: null,
         logs: [
-          '[2026-02-23T12:00:00.000Z] Starting Playwright installation...',
+          '[2026-02-23T12:00:00.000Z] Starting Puppeteer installation...',
           '[2026-02-23T12:02:30.100Z] Verifying installation...',
           '[2026-02-23T12:02:30.101Z] Home directory: /root',
-          '[2026-02-23T12:02:30.102Z] Playwright cache: /root/.cache/ms-playwright',
-          '[2026-02-23T12:02:30.103Z] ✅ Chromium found at: /root/.cache/ms-playwright/chromium-1208',
-          '[2026-02-23T12:02:30.104Z] ✅ Headless Shell found at: /root/.cache/ms-playwright/chromium_headless_shell-1208',
+          '[2026-02-23T12:02:30.102Z] Puppeteer cache: /root/.cache/ms-puppeteer',
+          '[2026-02-23T12:02:30.103Z] ✅ Chromium found at: /root/.cache/ms-puppeteer/chromium-1208',
+          '[2026-02-23T12:02:30.104Z] ✅ Headless Shell found at: /root/.cache/ms-puppeteer/chromium_headless_shell-1208',
           '[2026-02-23T12:02:30.105Z] ✅ Installation verified successfully',
         ],
         duration: 150000,
@@ -102,12 +102,12 @@ describe('Playwright Installation API', () => {
         success: false,
         error: 'Installation completed but browsers not found in expected locations',
         logs: [
-          '[2026-02-23T12:00:00.000Z] Starting Playwright installation...',
+          '[2026-02-23T12:00:00.000Z] Starting Puppeteer installation...',
           '[2026-02-23T12:02:30.100Z] Verifying installation...',
           '[2026-02-23T12:02:30.101Z] Home directory: /root',
-          '[2026-02-23T12:02:30.102Z] Playwright cache: /root/.cache/ms-playwright',
-          '[2026-02-23T12:02:30.103Z] ❌ Chromium NOT found at: /root/.cache/ms-playwright/chromium-1208',
-          '[2026-02-23T12:02:30.104Z] ❌ Headless Shell NOT found at: /root/.cache/ms-playwright/chromium_headless_shell-1208',
+          '[2026-02-23T12:02:30.102Z] Puppeteer cache: /root/.cache/ms-puppeteer',
+          '[2026-02-23T12:02:30.103Z] ❌ Chromium NOT found at: /root/.cache/ms-puppeteer/chromium-1208',
+          '[2026-02-23T12:02:30.104Z] ❌ Headless Shell NOT found at: /root/.cache/ms-puppeteer/chromium_headless_shell-1208',
           '[2026-02-23T12:02:30.105Z] ⚠️ Installation completed but verification failed',
         ],
         duration: 150000,
@@ -132,7 +132,7 @@ describe('Playwright Installation API', () => {
     });
   });
 
-  describe('Integration with AdminPlaywrightTest component', () => {
+  describe('Integration with AdminPuppeteerTest component', () => {
     it('should trigger re-test after successful installation', () => {
       // Mock successful installation
       const installResult = {
@@ -145,7 +145,7 @@ describe('Playwright Installation API', () => {
       // After successful installation, the component should:
       // 1. Show success toast
       // 2. Wait 1 second
-      // 3. Automatically trigger testPlaywright
+      // 3. Automatically trigger testPuppeteer
       
       expect(installResult.success).toBe(true);
       

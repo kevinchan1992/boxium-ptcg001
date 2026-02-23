@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { playwrightPool } from './services/playwrightPool';
-import { scrapeSnkrdunkListings } from './services/snkrdunkPlaywright';
+import { puppeteerPool } from './services/puppeteerPool';
+import { scrapeSnkrdunkListings } from './services/snkrdunkPuppeteer';
 
 describe('Production Environment Diagnostics', () => {
-  it('should successfully launch Playwright browser', async () => {
-    console.log('Testing Playwright browser launch...');
+  it('should successfully launch Puppeteer browser', async () => {
+    console.log('Testing Puppeteer browser launch...');
     
-    const browser = await playwrightPool.getBrowser();
+    const browser = await puppeteerPool.getBrowser();
     
     expect(browser).toBeDefined();
     expect(browser.isConnected()).toBe(true);
@@ -17,7 +17,7 @@ describe('Production Environment Diagnostics', () => {
   it('should successfully create a page and navigate', async () => {
     console.log('Testing page creation and navigation...');
     
-    const browser = await playwrightPool.getBrowser();
+    const browser = await puppeteerPool.getBrowser();
     const page = await browser.newPage();
     
     expect(page).toBeDefined();

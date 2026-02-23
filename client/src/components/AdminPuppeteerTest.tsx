@@ -6,18 +6,18 @@ import { Play, CheckCircle, XCircle, AlertCircle, Activity, Download, Loader2 } 
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
-export function AdminPlaywrightTest() {
+export function AdminPuppeteerTest() {
   const [enabled, setEnabled] = useState(false);
 
-  const { data: testResult, isLoading: testing, refetch, error } = trpc.diagnostics.testPlaywright.useQuery(
+  const { data: testResult, isLoading: testing, refetch, error } = trpc.diagnostics.testPuppeteer.useQuery(
     undefined,
     { enabled }
   );
 
-  const installMutation = trpc.diagnostics.installPlaywright.useMutation({
+  const installMutation = trpc.diagnostics.installPuppeteer.useMutation({
     onSuccess: (result) => {
       if (result.success) {
-        toast.success("Playwright 安裝成功", {
+        toast.success("Puppeteer 安裝成功", {
           description: `安裝完成，耗時 ${Math.round(result.duration / 1000)}秒`,
         });
         // 安裝成功後自動重新測試
@@ -26,7 +26,7 @@ export function AdminPlaywrightTest() {
           refetch();
         }, 1000);
       } else {
-        toast.error("Playwright 安裝失敗", {
+        toast.error("Puppeteer 安裝失敗", {
           description: result.error || "未知錯誤",
         });
       }
@@ -38,7 +38,7 @@ export function AdminPlaywrightTest() {
     },
   });
 
-  const diagnoseMutation = trpc.diagnostics.diagnosePlaywrightInstallation.useMutation({
+  const diagnoseMutation = trpc.diagnostics.diagnosePuppeteerInstallation.useMutation({
     onSuccess: (result) => {
       if (result.success) {
         toast.success("診斷完成", {
@@ -57,10 +57,10 @@ export function AdminPlaywrightTest() {
     },
   });
 
-  const installFromCDNMutation = trpc.diagnostics.installPlaywrightFromCDN.useMutation({
+  const installFromCDNMutation = trpc.diagnostics.installPuppeteerFromCDN.useMutation({
     onSuccess: (result) => {
       if (result.success) {
-        toast.success("Playwright 安裝成功", {
+        toast.success("Puppeteer 安裝成功", {
           description: `安裝完成，耗時 ${Math.round(result.duration / 1000)}秒`,
         });
         // 安裝成功後自動重新測試
@@ -69,7 +69,7 @@ export function AdminPlaywrightTest() {
           refetch();
         }, 1000);
       } else {
-        toast.error("Playwright 安裝失敗", {
+        toast.error("Puppeteer 安裝失敗", {
           description: result.error || "未知錯誤",
         });
       }
@@ -85,11 +85,11 @@ export function AdminPlaywrightTest() {
   useState(() => {
     if (testResult && enabled) {
       if (testResult.success) {
-        toast.success("Playwright 測試成功", {
+        toast.success("Puppeteer 測試成功", {
           description: `瀏覽器啟動成功，耗時 ${testResult.duration}ms`,
         });
       } else {
-        toast.error("Playwright 測試失敗", {
+        toast.error("Puppeteer 測試失敗", {
           description: testResult.error || "未知錯誤",
         });
       }
@@ -101,19 +101,19 @@ export function AdminPlaywrightTest() {
     }
   });
 
-  const testPlaywright = () => {
+  const testPuppeteer = () => {
     setEnabled(true);
     refetch();
   };
 
-  const installPlaywright = () => {
-    if (confirm("確定要安裝 Playwright 瀏覽器嗎？\n\n這將下載約 280MB 的檔案，需要 2-3 分鐘。\n安裝過程中請勿關閉頁面。")) {
+  const installPuppeteer = () => {
+    if (confirm("確定要安裝 Puppeteer 瀏覽器嗎？\n\n這將下載約 280MB 的檔案，需要 2-3 分鐘。\n安裝過程中請勿關閉頁面。")) {
       installMutation.mutate();
     }
   };
 
   const installFromCDN = () => {
-    if (confirm("確定要從 CDN 安裝 Playwright 瀏覽器嗎？\n\n這將從 Manus CDN 下載預打包的瀏覽器檔案（257MB），\n繞過外部網絡限制，需要 2-3 分鐘。\n安裝過程中請勿關閉頁面。")) {
+    if (confirm("確定要從 CDN 安裝 Puppeteer 瀏覽器嗎？\n\n這將從 Manus CDN 下載預打包的瀏覽器檔案（257MB），\n繞過外部網絡限制，需要 2-3 分鐘。\n安裝過程中請勿關閉頁面。")) {
       installFromCDNMutation.mutate();
     }
   };
@@ -123,17 +123,17 @@ export function AdminPlaywrightTest() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
           <Activity className="w-4 h-4 sm:w-5 sm:h-5" />
-          Playwright 狀態測試
+          Puppeteer 狀態測試
         </CardTitle>
         <CardDescription className="text-xs md:text-sm">
-          測試生產環境的 Playwright 瀏覽器是否正常運行
+          測試生產環境的 Puppeteer 瀏覽器是否正常運行
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <div className="flex gap-2">
             <BrandButton
-              onClick={testPlaywright}
+              onClick={testPuppeteer}
               disabled={testing || installMutation.isPending || installFromCDNMutation.isPending || diagnoseMutation.isPending}
               className="flex-1"
             >
@@ -172,7 +172,7 @@ export function AdminPlaywrightTest() {
             </Button>
 
             <Button
-              onClick={installPlaywright}
+              onClick={installPuppeteer}
               disabled={testing || installMutation.isPending || installFromCDNMutation.isPending || diagnoseMutation.isPending}
               variant="outline"
               className="flex-1 bg-amber-500 hover:bg-amber-600 text-white border-amber-600"

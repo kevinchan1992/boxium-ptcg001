@@ -1,7 +1,7 @@
 import { router, publicProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { fetchEbayListings } from '../services/ebay';
-import { scrapeSnkrdunkListings } from '../services/snkrdunkPlaywright';
+import { scrapeSnkrdunkListings } from '../services/snkrdunkPuppeteer';
 import { ebayRateLimiter } from '../services/rateLimiter';
 import * as db from '../db';
 
@@ -168,7 +168,7 @@ export const pricingRouter = router({
           // Continue even if eBay fails
         }
 
-        // Step 3: Fetch SNKRDUNK PSA 10 listings using Playwright (with caching)
+        // Step 3: Fetch SNKRDUNK PSA 10 listings using Puppeteer (with caching)
         console.log('[Pricing Router] Fetching from SNKRDUNK...');
         let snkrdunkListings: any[] = [];
         try {

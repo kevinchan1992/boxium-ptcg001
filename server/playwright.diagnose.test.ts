@@ -1,13 +1,13 @@
 /**
- * Playwright Diagnostic API Tests
+ * Puppeteer Diagnostic API Tests
  * 
  * Tests the diagnostic API that checks production environment
  */
 
 import { describe, it, expect } from 'vitest';
 
-describe('Playwright Diagnostic API', () => {
-  describe('diagnosePlaywrightInstallation mutation', () => {
+describe('Puppeteer Diagnostic API', () => {
+  describe('diagnosePuppeteerInstallation mutation', () => {
     it('should have correct API structure', () => {
       const mockResult = {
         success: true,
@@ -20,7 +20,7 @@ describe('Playwright Diagnostic API', () => {
               arch: "x64",
               homeDir: "/root",
               cacheDir: "/root/.cache",
-              playwrightCache: "/root/.cache/ms-playwright",
+              puppeteerCache: "/root/.cache/ms-puppeteer",
             },
           },
           {
@@ -182,7 +182,7 @@ describe('Playwright Diagnostic API', () => {
         {
           name: "Extraction test",
           status: "success",
-          details: "Can list archive contents in 1000ms. First 10 files:\nms-playwright/chromium-1208/\nms-playwright/chromium_headless_shell-1208/",
+          details: "Can list archive contents in 1000ms. First 10 files:\nms-puppeteer/chromium-1208/\nms-puppeteer/chromium_headless_shell-1208/",
         },
       ];
 
@@ -221,16 +221,16 @@ describe('Playwright Diagnostic API', () => {
       expect(mockResult.recommendations.some(rec => rec.includes("Node.js native decompression"))).toBe(true);
     });
 
-    it('should check Playwright installation status', () => {
+    it('should check Puppeteer installation status', () => {
       const mockChecks = [
         {
-          name: "Playwright installation status",
+          name: "Puppeteer installation status",
           status: "warning",
-          details: "Playwright is NOT installed",
+          details: "Puppeteer is NOT installed",
         },
       ];
 
-      const statusCheck = mockChecks.find(check => check.name === "Playwright installation status");
+      const statusCheck = mockChecks.find(check => check.name === "Puppeteer installation status");
       expect(statusCheck).toBeTruthy();
       expect(statusCheck?.status).toBe("warning");
     });
@@ -245,7 +245,7 @@ describe('Playwright Diagnostic API', () => {
             arch: "x64",
             homeDir: "/root",
             cacheDir: "/root/.cache",
-            playwrightCache: "/root/.cache/ms-playwright",
+            puppeteerCache: "/root/.cache/ms-puppeteer",
           },
         },
       ];
@@ -254,7 +254,7 @@ describe('Playwright Diagnostic API', () => {
       expect(sysInfo).toBeTruthy();
       expect(sysInfo?.details).toHaveProperty('platform');
       expect(sysInfo?.details).toHaveProperty('homeDir');
-      expect(sysInfo?.details).toHaveProperty('playwrightCache');
+      expect(sysInfo?.details).toHaveProperty('puppeteerCache');
     });
   });
 });

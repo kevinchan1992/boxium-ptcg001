@@ -56,7 +56,7 @@ export async function warmCache(cardLimit: number = 20): Promise<CacheWarmingRes
     console.log(`[Cache Warmer] Found ${hotDataSources.length} data sources to warm`);
     
     // Import scraper to trigger cache population
-    const { scrapeSnkrdunkListings } = await import("./snkrdunkPlaywright");
+    const { scrapeSnkrdunkListings } = await import("./snkrdunkPuppeteer");
     
     // Warm cache for each data source (sequential to avoid overwhelming the system)
     for (const dataSource of hotDataSources) {
