@@ -1,11 +1,11 @@
 /**
- * Puppeteer Browser Pool
+ * Playwright Browser Pool
  * Manages a single shared browser instance to reduce startup overhead
  */
 
-import puppeteer, { Browser } from "puppeteer";
+import { chromium, Browser } from "playwright";
 
-class PuppeteerPool {
+class PlaywrightPool {
   private browser: Browser | null = null;
   private initPromise: Promise<Browser> | null = null;
   private lastUsed: number = Date.now();
@@ -20,27 +20,27 @@ class PuppeteerPool {
     }
 
     if (this.initPromise) {
-      console.log("[Puppeteer Pool] Waiting for browser initialization...");
+      console.log("[Playwright Pool] Waiting for browser initialization...");
       return this.initPromise;
     }
 
-    if (this.browser && this.browser.connected) {
-      console.log("[Puppeteer Pool] Reusing existing browser instance");
+    if (this.browser && this.browser.isConnected()) {
+      console.log("[Playwright Pool] Reusing existing browser instance");
       return this.browser;
     }
 
-    console.log("[Puppeteer Pool] Initializing new browser instance...");
+    console.log("[Playwright Pool] Initializing new browser instance...");
 
     if (this.browser) {
       try {
         await this.browser.close();
       } catch (e) {
-        console.log("[Puppeteer Pool] Failed to close old browser");
+        console.log("[Playwright Pool] Failed to close old browser");
       }
       this.browser = null;
     }
 
-    this.initPromise = puppeteer.launch({
+    this.initPromise = chromium.launch({
       headless: true,
       args: [
         "--no-sandbox",
@@ -51,13 +51,12 @@ class PuppeteerPool {
     });
 
     try {
-      const browser = await this.initPromise;
-      this.browser = browser;
-      console.log("[Puppeteer Pool] Browser initialized successfully");
+      this.browser = await this.initPromise;
+      console.log("[Playwright Pool] Browser initialized successfully");
       this.scheduleIdleTimeout();
       return this.browser;
     } catch (error) {
-      console.error("[Puppeteer Pool] Failed to initialize browser:", error);
+      console.error("[Playwright Pool] Failed to initialize browser:", error);
       throw error;
     } finally {
       this.initPromise = null;
@@ -69,7 +68,7 @@ class PuppeteerPool {
     this.idleTimeout = setTimeout(async () => {
       const idleTime = Date.now() - this.lastUsed;
       if (idleTime >= IDLE_TIMEOUT) {
-        console.log("[Puppeteer Pool] Browser idle for 5 minutes, closing...");
+        console.log("[Playwright Pool] Browser idle for 5 minutes, closing...");
         await this.closeBrowser();
       }
     }, IDLE_TIMEOUT);
@@ -83,27 +82,27 @@ class PuppeteerPool {
     if (this.browser) {
       try {
         await this.browser.close();
-        console.log("[Puppeteer Pool] Browser closed");
+        console.log("[Playwright Pool] Browser closed");
       } catch (error) {
-        console.error("[Puppeteer Pool] Error closing browser:", error);
+        console.error("[Playwright Pool] Error closing browser:", error);
       }
       this.browser = null;
     }
   }
 
   isConnected(): boolean {
-    return this.browser !== null && this.browser.connected;
+    return this.browser !== null && this.browser.isConnected();
   }
 }
 
-export const puppeteerPool = new PuppeteerPool();
+export const playwrightPool = new PlaywrightPool();
 
 process.on("SIGINT", async () => {
-  await puppeteerPool.closeBrowser();
+  await playwrightPool.closeBrowser();
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  await puppeteerPool.closeBrowser();
+  await playwrightPool.closeBrowser();
   process.exit(0);
 });

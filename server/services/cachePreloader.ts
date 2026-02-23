@@ -6,7 +6,7 @@
  */
 
 import * as db from "../db";
-import { scrapeSnkrdunkListings } from "./snkrdunkPuppeteer";
+import { scrapeSnkrdunkListings } from "./snkrdunkPlaywright";
 
 const PRELOAD_THRESHOLD = 30 * 60 * 1000; // 30 minutes in milliseconds
 const CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes in milliseconds

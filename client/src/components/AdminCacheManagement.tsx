@@ -26,7 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Link } from "wouter";
-import { AdminPuppeteerTest } from "./AdminPuppeteerTest";
+import { AdminPlaywrightTest } from "./AdminPlaywrightTest";
 
 export function AdminCacheManagement() {
   const [cardIdInput, setCardIdInput] = useState("");
@@ -137,8 +137,8 @@ export function AdminCacheManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Puppeteer Test */}
-      <AdminPuppeteerTest />
+      {/* Playwright Test */}
+      <AdminPlaywrightTest />
 
       {/* Cache Statistics */}
       <Card className="bg-zinc-900 border-zinc-800">

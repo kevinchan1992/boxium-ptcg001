@@ -4,7 +4,7 @@
  * Now scrapes both on-sale and sold items for comprehensive pricing data
  */
 
-import { puppeteerPool } from "./puppeteerPool";
+import { playwrightPool } from "./playwrightPool";
 import { convertToHKD } from "../utils/currency";
 import { logPerformance } from "./performanceTracker";
 
@@ -31,8 +31,8 @@ export async function scrapeSnkrdunkListings(
   const onSaleUrl = `https://snkrdunk.com/en/trading-cards/${snkrdunkId}/used?sort=latest&isOnlyOnSale=true`;
   const soldUrl = `https://snkrdunk.com/en/trading-cards/${snkrdunkId}/used?sort=latest`;
   
-  console.log(`[SNKRDUNK Puppeteer] Starting comprehensive scrape for SNKRDUNK ID: ${snkrdunkId} (attempt ${retryCount + 1}/3)`);
-  console.log(`[SNKRDUNK Puppeteer] Will scrape both on-sale and sold items`);
+  console.log(`[SNKRDUNK Playwright] Starting comprehensive scrape for SNKRDUNK ID: ${snkrdunkId} (attempt ${retryCount + 1}/3)`);
+  console.log(`[SNKRDUNK Playwright] Will scrape both on-sale and sold items`);
   
   try {
     // Scrape both URLs in parallel for better performance
@@ -48,26 +48,26 @@ export async function scrapeSnkrdunkListings(
     // Sort by price (lowest first)
     uniqueListings.sort((a, b) => a.price - b.price);
     
-    console.log(`[SNKRDUNK Puppeteer] Total listings: ${uniqueListings.length} (${onSaleListings.length} on-sale + ${soldListings.length} sold, after deduplication)`);
+    console.log(`[SNKRDUNK Playwright] Total listings: ${uniqueListings.length} (${onSaleListings.length} on-sale + ${soldListings.length} sold, after deduplication)`);
     
     if (uniqueListings.length > 0) {
       const minPrice = Math.min(...uniqueListings.map(l => l.price));
       const maxPrice = Math.max(...uniqueListings.map(l => l.price));
       const onSaleCount = uniqueListings.filter(l => l.status === 'on-sale').length;
       const soldCount = uniqueListings.filter(l => l.status === 'sold').length;
-      console.log(`[SNKRDUNK Puppeteer] Price range: HKD ${minPrice.toFixed(2)} - HKD ${maxPrice.toFixed(2)}`);
-      console.log(`[SNKRDUNK Puppeteer] Status breakdown: ${onSaleCount} on-sale, ${soldCount} sold`);
+      console.log(`[SNKRDUNK Playwright] Price range: HKD ${minPrice.toFixed(2)} - HKD ${maxPrice.toFixed(2)}`);
+      console.log(`[SNKRDUNK Playwright] Status breakdown: ${onSaleCount} on-sale, ${soldCount} sold`);
     }
     
     return uniqueListings;
   } catch (error) {
-    console.error(`[SNKRDUNK Puppeteer] Comprehensive scrape failed:`, error);
+    console.error(`[SNKRDUNK Playwright] Comprehensive scrape failed:`, error);
     
     // Exponential backoff retry
     if (retryCount < 2) {
       const retryDelays = [1000, 3000, 8000];
       const waitTime = retryDelays[retryCount];
-      console.log(`[SNKRDUNK Puppeteer] Retrying (${retryCount + 1}/3), waiting ${waitTime}ms...`);
+      console.log(`[SNKRDUNK Playwright] Retrying (${retryCount + 1}/3), waiting ${waitTime}ms...`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
       return scrapeSnkrdunkListings(snkrdunkId, retryCount + 1);
     }
@@ -101,29 +101,34 @@ async function scrapeSnkrdunkUrl(
   const startTime = Date.now();
   let performanceLogged = false;
 
-  console.log(`[SNKRDUNK Puppeteer] Scraping ${status} items for SNKRDUNK ID: ${snkrdunkId}`);
-  console.log(`[SNKRDUNK Puppeteer] Target URL: ${url}`);
+  console.log(`[SNKRDUNK Playwright] Scraping ${status} items for SNKRDUNK ID: ${snkrdunkId}`);
+  console.log(`[SNKRDUNK Playwright] Target URL: ${url}`);
 
   let page: any = null;
+  let context: any = null;
 
   try {
-    console.log(`[SNKRDUNK Puppeteer] Getting browser from pool...`);
-    const browser = await puppeteerPool.getBrowser();
+    console.log(`[SNKRDUNK Playwright] Getting browser from pool...`);
+    const browser = await playwrightPool.getBrowser();
 
-    // Puppeteer doesn't use context, create page directly
-    page = await browser.newPage();
-    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-    await page.setViewport({ width: 1920, height: 1080 });
-    console.log(`[SNKRDUNK Puppeteer] Browser ready, navigating to page...`);
+    context = await browser.newContext({
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      viewport: { width: 1920, height: 1080 },
+      locale: "en-US",
+      timezoneId: "America/New_York",
+    });
+
+    page = await context.newPage();
+    console.log(`[SNKRDUNK Playwright] Browser ready, navigating to page...`);
 
     // Block unnecessary resources
-    await page.setRequestInterception(true);
-    page.on('request', (request: any) => {
-      const resourceType = request.resourceType();
+    await page.route('**/*', (route: any) => {
+      const resourceType = route.request().resourceType();
       if (['image', 'font', 'stylesheet', 'media'].includes(resourceType)) {
-        request.abort();
+        route.abort();
       } else {
-        request.continue();
+        route.continue();
       }
     });
 
@@ -133,7 +138,7 @@ async function scrapeSnkrdunkUrl(
       timeout: 20000
     });
 
-    console.log(`[SNKRDUNK Puppeteer] Waiting for page to load...`);
+    console.log(`[SNKRDUNK Playwright] Waiting for page to load...`);
     
     // Smart wait for product links
     try {
@@ -141,17 +146,17 @@ async function scrapeSnkrdunkUrl(
         timeout: 8000,
         state: 'attached'
       });
-      console.log(`[SNKRDUNK Puppeteer] Product links detected`);
+      console.log(`[SNKRDUNK Playwright] Product links detected`);
     } catch (e) {
-      console.log(`[SNKRDUNK Puppeteer] No product links detected within 8s, proceeding...`);
+      console.log(`[SNKRDUNK Playwright] No product links detected within 8s, proceeding...`);
     }
     
     // Dynamic wait based on page complexity
-    const linkCount = (await page.$$('a')).length;
+    const linkCount = await page.locator('a').count();
     const waitTime = Math.min(2000 + linkCount * 30, 5000);
-    console.log(`[SNKRDUNK Puppeteer] Detected ${linkCount} links, waiting ${waitTime}ms...`);
-    await new Promise(resolve => setTimeout(resolve, waitTime));
-    console.log(`[SNKRDUNK Puppeteer] Page load complete, extracting data...`);
+    console.log(`[SNKRDUNK Playwright] Detected ${linkCount} links, waiting ${waitTime}ms...`);
+    await page.waitForTimeout(waitTime);
+    console.log(`[SNKRDUNK Playwright] Page load complete, extracting data...`);
 
     // Extract product data using the same logic as the browser script
     const listings: any[] = await page.evaluate(() => {
@@ -251,7 +256,7 @@ async function scrapeSnkrdunkUrl(
 
     const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(
-      `[SNKRDUNK Puppeteer] Extraction complete in ${elapsedTime}s: ${listings.length} total listings, ${psa10Listings.length} PSA 10 ${status} listings`
+      `[SNKRDUNK Playwright] Extraction complete in ${elapsedTime}s: ${listings.length} total listings, ${psa10Listings.length} PSA 10 ${status} listings`
     );
     
     // Log price range if PSA 10 listings found
@@ -259,10 +264,10 @@ async function scrapeSnkrdunkUrl(
       const minPrice = Math.min(...psa10Listings.map(l => l.price));
       const maxPrice = Math.max(...psa10Listings.map(l => l.price));
       console.log(
-        `[SNKRDUNK Puppeteer] ${status} price range: HKD ${minPrice.toFixed(2)} - HKD ${maxPrice.toFixed(2)}`
+        `[SNKRDUNK Playwright] ${status} price range: HKD ${minPrice.toFixed(2)} - HKD ${maxPrice.toFixed(2)}`
       );
     } else {
-      console.warn(`[SNKRDUNK Puppeteer] WARNING: No PSA 10 ${status} listings found for SNKRDUNK ID ${snkrdunkId}`);
+      console.warn(`[SNKRDUNK Playwright] WARNING: No PSA 10 ${status} listings found for SNKRDUNK ID ${snkrdunkId}`);
     }
 
     // Log performance
@@ -273,15 +278,15 @@ async function scrapeSnkrdunkUrl(
       status: 'success',
       responseTime,
       itemsProcessed: psa10Listings.length
-    }).catch(e => console.error('[SNKRDUNK Puppeteer] Failed to log performance:', e));
+    }).catch(e => console.error('[SNKRDUNK Playwright] Failed to log performance:', e));
     performanceLogged = true;
     
     return psa10Listings;
   } catch (error: any) {
     const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.error(`[SNKRDUNK Puppeteer] ERROR after ${elapsedTime}s:`, error.message);
-    console.error(`[SNKRDUNK Puppeteer] Error stack:`, error.stack);
-    console.error(`[SNKRDUNK Puppeteer] Failed SNKRDUNK ID: ${snkrdunkId}, Status: ${status}`);
+    console.error(`[SNKRDUNK Playwright] ERROR after ${elapsedTime}s:`, error.message);
+    console.error(`[SNKRDUNK Playwright] Error stack:`, error.stack);
+    console.error(`[SNKRDUNK Playwright] Failed SNKRDUNK ID: ${snkrdunkId}, Status: ${status}`);
     
     // Log performance failure
     if (!performanceLogged) {
@@ -293,7 +298,7 @@ async function scrapeSnkrdunkUrl(
         responseTime,
         itemsProcessed: 0,
         errorMessage: error.message
-      }).catch(e => console.error('[SNKRDUNK Puppeteer] Failed to log performance:', e));
+      }).catch(e => console.error('[SNKRDUNK Playwright] Failed to log performance:', e));
     }
     
     throw error;
@@ -301,9 +306,9 @@ async function scrapeSnkrdunkUrl(
     // Don't close browser (managed by pool), just close page and context
     try {
       if (page) await page.close();
-      // Puppeteer doesn't use context
+      if (context) await context.close();
     } catch (e) {
-      console.log(`[SNKRDUNK Puppeteer] Error closing page/context:`, e);
+      console.log(`[SNKRDUNK Playwright] Error closing page/context:`, e);
     }
   }
 }

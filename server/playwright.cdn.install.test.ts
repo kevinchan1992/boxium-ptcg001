@@ -1,31 +1,31 @@
 /**
- * Puppeteer CDN Installation API Tests
+ * Playwright CDN Installation API Tests
  * 
- * Tests the CDN-based Puppeteer installation API
+ * Tests the CDN-based Playwright installation API
  */
 
 import { describe, it, expect } from 'vitest';
 
-describe('Puppeteer CDN Installation API', () => {
-  describe('installPuppeteerFromCDN mutation', () => {
+describe('Playwright CDN Installation API', () => {
+  describe('installPlaywrightFromCDN mutation', () => {
     it('should have correct API structure', () => {
       const mockResult = {
         success: true,
         error: null,
         logs: [
-          '[2026-02-23T12:00:00.000Z] Starting Puppeteer installation from CDN...',
+          '[2026-02-23T12:00:00.000Z] Starting Playwright installation from CDN...',
           '[2026-02-23T12:00:00.001Z] CDN URL: https://files.manuscdn.com/user_upload_by_module/session_file/310519663320884517/uGDgObfxThbgKrfL.gz',
           '[2026-02-23T12:00:00.002Z] This may take 2-3 minutes (downloading 257MB)',
           '[2026-02-23T12:00:00.003Z] Home directory: /root',
-          '[2026-02-23T12:00:00.004Z] Target directory: /root/.cache/ms-puppeteer',
+          '[2026-02-23T12:00:00.004Z] Target directory: /root/.cache/ms-playwright',
           '[2026-02-23T12:00:30.000Z] Downloading from CDN...',
           '[2026-02-23T12:01:00.000Z] Downloaded 257.00MB in 30000ms',
           '[2026-02-23T12:01:00.001Z] Extracting archive...',
           '[2026-02-23T12:01:30.000Z] Extraction completed in 30000ms',
           '[2026-02-23T12:01:30.001Z] Cleaned up temp file',
           '[2026-02-23T12:01:30.002Z] Verifying installation...',
-          '[2026-02-23T12:01:30.003Z] ✅ Chromium found at: /root/.cache/ms-puppeteer/chromium-1208',
-          '[2026-02-23T12:01:30.004Z] ✅ Headless Shell found at: /root/.cache/ms-puppeteer/chromium_headless_shell-1208',
+          '[2026-02-23T12:01:30.003Z] ✅ Chromium found at: /root/.cache/ms-playwright/chromium-1208',
+          '[2026-02-23T12:01:30.004Z] ✅ Headless Shell found at: /root/.cache/ms-playwright/chromium_headless_shell-1208',
           '[2026-02-23T12:01:30.005Z] ✅ Installation verified successfully',
           '[2026-02-23T12:01:30.006Z] Total duration: 90000ms',
         ],
@@ -114,8 +114,8 @@ describe('Puppeteer CDN Installation API', () => {
         error: null,
         logs: [
           '[2026-02-23T12:01:30.002Z] Verifying installation...',
-          '[2026-02-23T12:01:30.003Z] ✅ Chromium found at: /root/.cache/ms-puppeteer/chromium-1208',
-          '[2026-02-23T12:01:30.004Z] ✅ Headless Shell found at: /root/.cache/ms-puppeteer/chromium_headless_shell-1208',
+          '[2026-02-23T12:01:30.003Z] ✅ Chromium found at: /root/.cache/ms-playwright/chromium-1208',
+          '[2026-02-23T12:01:30.004Z] ✅ Headless Shell found at: /root/.cache/ms-playwright/chromium_headless_shell-1208',
           '[2026-02-23T12:01:30.005Z] ✅ Installation verified successfully',
         ],
         duration: 90000,
@@ -136,7 +136,7 @@ describe('Puppeteer CDN Installation API', () => {
         success: false,
         error: 'Failed to download: 404 Not Found',
         logs: [
-          '[2026-02-23T12:00:00.000Z] Starting Puppeteer installation from CDN...',
+          '[2026-02-23T12:00:00.000Z] Starting Playwright installation from CDN...',
           '[2026-02-23T12:00:00.001Z] CDN URL: https://files.manuscdn.com/user_upload_by_module/session_file/310519663320884517/uGDgObfxThbgKrfL.gz',
           '[2026-02-23T12:00:30.000Z] Downloading from CDN...',
           '[2026-02-23T12:00:35.000Z] ❌ Installation failed: Failed to download: 404 Not Found',
@@ -155,7 +155,7 @@ describe('Puppeteer CDN Installation API', () => {
         success: false,
         error: 'tar: Error is not recoverable',
         logs: [
-          '[2026-02-23T12:00:00.000Z] Starting Puppeteer installation from CDN...',
+          '[2026-02-23T12:00:00.000Z] Starting Playwright installation from CDN...',
           '[2026-02-23T12:01:00.000Z] Downloaded 257.00MB in 30000ms',
           '[2026-02-23T12:01:00.001Z] Extracting archive...',
           '[2026-02-23T12:01:05.000Z] ❌ Installation failed: tar: Error is not recoverable',
@@ -174,8 +174,8 @@ describe('Puppeteer CDN Installation API', () => {
         error: 'Installation completed but browsers not found in expected locations',
         logs: [
           '[2026-02-23T12:01:30.002Z] Verifying installation...',
-          '[2026-02-23T12:01:30.003Z] ❌ Chromium NOT found at: /root/.cache/ms-puppeteer/chromium-1208',
-          '[2026-02-23T12:01:30.004Z] ❌ Headless Shell NOT found at: /root/.cache/ms-puppeteer/chromium_headless_shell-1208',
+          '[2026-02-23T12:01:30.003Z] ❌ Chromium NOT found at: /root/.cache/ms-playwright/chromium-1208',
+          '[2026-02-23T12:01:30.004Z] ❌ Headless Shell NOT found at: /root/.cache/ms-playwright/chromium_headless_shell-1208',
           '[2026-02-23T12:01:30.005Z] ⚠️ Installation completed but verification failed',
         ],
         duration: 90000,
@@ -197,15 +197,15 @@ describe('Puppeteer CDN Installation API', () => {
       const cdnUrl = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663320884517/uGDgObfxThbgKrfL.gz';
       
       expect(cdnUrl).toContain('manuscdn.com');
-      expect(cdnUrl).not.toContain('cdn.puppeteer.dev'); // Not using external Puppeteer CDN
+      expect(cdnUrl).not.toContain('cdn.playwright.dev'); // Not using external Playwright CDN
     });
 
     it('CDN installation should not require pnpm', () => {
       // CDN installation downloads pre-packaged browsers directly
-      // It doesn't need to run 'pnpm exec puppeteer install chromium'
+      // It doesn't need to run 'pnpm exec playwright install chromium'
       
       const mockLogs = [
-        '[2026-02-23T12:00:00.000Z] Starting Puppeteer installation from CDN...',
+        '[2026-02-23T12:00:00.000Z] Starting Playwright installation from CDN...',
         '[2026-02-23T12:00:30.000Z] Downloading from CDN...',
         '[2026-02-23T12:01:00.001Z] Extracting archive...',
       ];

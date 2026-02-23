@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as db from './db';
 import { fetchEbayListings } from './services/ebay';
-import { scrapeSnkrdunkListings } from './services/snkrdunkPuppeteer';
+import { scrapeSnkrdunkListings } from './services/snkrdunkPlaywright';
 
 describe('Pricing API Functionality', () => {
   it('should find cards with SNKRDUNK data source', async () => {
