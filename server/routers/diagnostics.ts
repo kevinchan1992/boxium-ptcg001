@@ -349,6 +349,265 @@ export const diagnosticsRouter = router({
   }),
 
   /**
+   * Diagnose Playwright installation environment
+   * Check system commands, file permissions, disk space, and download capabilities
+   */
+  diagnosePlaywrightInstallation: adminProcedure.mutation(async () => {
+    const result: any = {
+      success: true,
+      checks: [],
+      recommendations: [],
+    };
+
+    const CDN_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663320884517/uGDgObfxThbgKrfL.gz";
+
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const os = await import("os");
+      const { exec } = await import("child_process");
+      const { promisify } = await import("util");
+      const execAsync = promisify(exec);
+
+      const homeDir = os.homedir();
+      const cacheDir = path.join(homeDir, ".cache");
+      const playwrightCache = path.join(cacheDir, "ms-playwright");
+      const tempFile = path.join(homeDir, "playwright-test.tar.gz");
+
+      result.checks.push({
+        name: "System Information",
+        status: "info",
+        details: {
+          platform: os.platform(),
+          arch: os.arch(),
+          homeDir: homeDir,
+          cacheDir: cacheDir,
+          playwrightCache: playwrightCache,
+        },
+      });
+
+      // Check 1: tar command availability
+      try {
+        const { stdout: tarVersion } = await execAsync("tar --version", { timeout: 5000 });
+        result.checks.push({
+          name: "tar command",
+          status: "success",
+          details: tarVersion.split('\n')[0],
+        });
+      } catch (error: any) {
+        result.checks.push({
+          name: "tar command",
+          status: "error",
+          details: `tar command not found or failed: ${error.message}`,
+        });
+        result.success = false;
+        result.recommendations.push("Install tar command or use Node.js native decompression");
+      }
+
+      // Check 2: gzip command availability
+      try {
+        const { stdout: gzipVersion } = await execAsync("gzip --version", { timeout: 5000 });
+        result.checks.push({
+          name: "gzip command",
+          status: "success",
+          details: gzipVersion.split('\n')[0],
+        });
+      } catch (error: any) {
+        result.checks.push({
+          name: "gzip command",
+          status: "error",
+          details: `gzip command not found or failed: ${error.message}`,
+        });
+        result.recommendations.push("Install gzip command or use Node.js native decompression");
+      }
+
+      // Check 3: Directory creation and write permissions
+      try {
+        if (!fs.existsSync(cacheDir)) {
+          fs.mkdirSync(cacheDir, { recursive: true });
+        }
+        const testFile = path.join(cacheDir, "test-write.txt");
+        fs.writeFileSync(testFile, "test");
+        fs.unlinkSync(testFile);
+        result.checks.push({
+          name: "Cache directory write permission",
+          status: "success",
+          details: `Can write to ${cacheDir}`,
+        });
+      } catch (error: any) {
+        result.checks.push({
+          name: "Cache directory write permission",
+          status: "error",
+          details: `Cannot write to ${cacheDir}: ${error.message}`,
+        });
+        result.success = false;
+        result.recommendations.push("Check file system permissions");
+      }
+
+      // Check 4: Disk space
+      try {
+        const { stdout: dfOutput } = await execAsync(`df -h ${homeDir}`, { timeout: 5000 });
+        result.checks.push({
+          name: "Disk space",
+          status: "info",
+          details: dfOutput,
+        });
+      } catch (error: any) {
+        result.checks.push({
+          name: "Disk space",
+          status: "warning",
+          details: `Cannot check disk space: ${error.message}`,
+        });
+      }
+
+      // Check 5: Download test (first 1MB only)
+      try {
+        result.checks.push({
+          name: "CDN download test",
+          status: "info",
+          details: "Starting download test (first 1MB)...",
+        });
+
+        const downloadStart = Date.now();
+        const response = await fetch(CDN_URL, {
+          headers: {
+            'Range': 'bytes=0-1048575', // First 1MB only
+          },
+        });
+
+        if (!response.ok && response.status !== 206) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const buffer = await response.arrayBuffer();
+        const downloadDuration = Date.now() - downloadStart;
+
+        result.checks.push({
+          name: "CDN download test",
+          status: "success",
+          details: `Downloaded ${(buffer.byteLength / 1024).toFixed(2)}KB in ${downloadDuration}ms (${((buffer.byteLength / 1024) / (downloadDuration / 1000)).toFixed(2)}KB/s)`,
+        });
+      } catch (error: any) {
+        result.checks.push({
+          name: "CDN download test",
+          status: "error",
+          details: `Download failed: ${error.message}`,
+        });
+        result.success = false;
+        result.recommendations.push("Check network connectivity to Manus CDN");
+      }
+
+      // Check 6: Full download and extraction test
+      if (result.success) {
+        try {
+          result.checks.push({
+            name: "Full download and extraction test",
+            status: "info",
+            details: "Starting full download (257MB)...",
+          });
+
+          const downloadStart = Date.now();
+          const response = await fetch(CDN_URL);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const buffer = await response.arrayBuffer();
+          fs.writeFileSync(tempFile, Buffer.from(buffer));
+          const downloadDuration = Date.now() - downloadStart;
+
+          result.checks.push({
+            name: "Full download",
+            status: "success",
+            details: `Downloaded ${(buffer.byteLength / 1024 / 1024).toFixed(2)}MB in ${downloadDuration}ms`,
+          });
+
+          // Test extraction
+          result.checks.push({
+            name: "Extraction test",
+            status: "info",
+            details: "Testing tar extraction...",
+          });
+
+          const extractStart = Date.now();
+          const { stdout, stderr } = await execAsync(
+            `cd ${cacheDir} && tar -tzf ${tempFile} | head -10`,
+            { timeout: 30000 }
+          );
+          const extractDuration = Date.now() - extractStart;
+
+          result.checks.push({
+            name: "Extraction test",
+            status: "success",
+            details: `Can list archive contents in ${extractDuration}ms. First 10 files:\n${stdout}`,
+          });
+
+          // Clean up
+          fs.unlinkSync(tempFile);
+          result.checks.push({
+            name: "Cleanup",
+            status: "success",
+            details: "Temp file cleaned up",
+          });
+
+        } catch (error: any) {
+          result.checks.push({
+            name: "Full download and extraction test",
+            status: "error",
+            details: `Failed: ${error.message}`,
+            stderr: error.stderr || null,
+            stdout: error.stdout || null,
+          });
+          result.success = false;
+
+          // Clean up on error
+          try {
+            if (fs.existsSync(tempFile)) {
+              fs.unlinkSync(tempFile);
+            }
+          } catch {}
+
+          if (error.message.includes("tar")) {
+            result.recommendations.push("tar command failed. Consider using Node.js native decompression (tar-stream + zlib)");
+          }
+          if (error.message.includes("pattern")) {
+            result.recommendations.push("Pattern matching error suggests shell command execution issue. May need alternative approach.");
+          }
+        }
+      }
+
+      // Check 7: Check if Playwright is already installed
+      const chromiumDir = path.join(playwrightCache, "chromium-1208");
+      const headlessShellDir = path.join(playwrightCache, "chromium_headless_shell-1208");
+      
+      if (fs.existsSync(chromiumDir) && fs.existsSync(headlessShellDir)) {
+        result.checks.push({
+          name: "Playwright installation status",
+          status: "success",
+          details: "Playwright is already installed",
+        });
+      } else {
+        result.checks.push({
+          name: "Playwright installation status",
+          status: "warning",
+          details: "Playwright is NOT installed",
+        });
+      }
+
+    } catch (error: any) {
+      result.success = false;
+      result.checks.push({
+        name: "Diagnostic error",
+        status: "error",
+        details: error.message,
+        stack: error.stack,
+      });
+    }
+
+    return result;
+  }),
+
+  /**
    * Get system information
    */
   getSystemInfo: adminProcedure.query(async () => {

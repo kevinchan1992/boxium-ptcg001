@@ -38,6 +38,25 @@ export function AdminPlaywrightTest() {
     },
   });
 
+  const diagnoseMutation = trpc.diagnostics.diagnosePlaywrightInstallation.useMutation({
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success("診斷完成", {
+          description: "所有檢查通過，查看詳細結果",
+        });
+      } else {
+        toast.error("診斷發現問題", {
+          description: "查看建議解決方案",
+        });
+      }
+    },
+    onError: (error) => {
+      toast.error("診斷失敗", {
+        description: error.message,
+      });
+    },
+  });
+
   const installFromCDNMutation = trpc.diagnostics.installPlaywrightFromCDN.useMutation({
     onSuccess: (result) => {
       if (result.success) {
@@ -112,19 +131,35 @@ export function AdminPlaywrightTest() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <BrandButton
-            onClick={testPlaywright}
-            disabled={testing || installMutation.isPending || installFromCDNMutation.isPending}
-            className="w-full"
-          >
-            <Play className="w-4 h-4 mr-2" />
-            {testing ? "測試中..." : "開始測試"}
-          </BrandButton>
+          <div className="flex gap-2">
+            <BrandButton
+              onClick={testPlaywright}
+              disabled={testing || installMutation.isPending || installFromCDNMutation.isPending || diagnoseMutation.isPending}
+              className="flex-1"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              {testing ? "測試中..." : "開始測試"}
+            </BrandButton>
+
+            <Button
+              onClick={() => diagnoseMutation.mutate()}
+              disabled={testing || installMutation.isPending || installFromCDNMutation.isPending || diagnoseMutation.isPending}
+              variant="outline"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-700"
+            >
+              {diagnoseMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Activity className="w-4 h-4 mr-2" />
+              )}
+              {diagnoseMutation.isPending ? "診斷中..." : "環境診斷"}
+            </Button>
+          </div>
 
           <div className="flex gap-2">
             <Button
               onClick={installFromCDN}
-              disabled={testing || installMutation.isPending || installFromCDNMutation.isPending}
+              disabled={testing || installMutation.isPending || installFromCDNMutation.isPending || diagnoseMutation.isPending}
               variant="outline"
               className="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-700"
             >
@@ -138,7 +173,7 @@ export function AdminPlaywrightTest() {
 
             <Button
               onClick={installPlaywright}
-              disabled={testing || installMutation.isPending || installFromCDNMutation.isPending}
+              disabled={testing || installMutation.isPending || installFromCDNMutation.isPending || diagnoseMutation.isPending}
               variant="outline"
               className="flex-1 bg-amber-500 hover:bg-amber-600 text-white border-amber-600"
             >
@@ -151,6 +186,79 @@ export function AdminPlaywrightTest() {
             </Button>
           </div>
         </div>
+
+        {/* 診斷結果 */}
+        {diagnoseMutation.data && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+              {diagnoseMutation.data.success ? (
+                <CheckCircle className="w-5 h-5 text-green-500" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-500" />
+              )}
+              <div className="flex-1">
+                <p className="text-sm font-medium">
+                  {diagnoseMutation.data.success ? "✅ 診斷完成" : "❌ 發現問題"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {diagnoseMutation.data.checks.length} 個檢查項目
+                </p>
+              </div>
+            </div>
+
+            {/* 建議 */}
+            {diagnoseMutation.data.recommendations && diagnoseMutation.data.recommendations.length > 0 && (
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-amber-700">建議解決方案</p>
+                    <ul className="text-xs text-amber-600 mt-1 space-y-1">
+                      {diagnoseMutation.data.recommendations.map((rec: string, index: number) => (
+                        <li key={index}>• {rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 檢查結果 */}
+            {diagnoseMutation.data.checks && diagnoseMutation.data.checks.length > 0 && (
+              <details className="text-xs">
+                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                  查看詳細檢查結果 ({diagnoseMutation.data.checks.length} 個項目)
+                </summary>
+                <div className="mt-2 space-y-2">
+                  {diagnoseMutation.data.checks.map((check: any, index: number) => (
+                    <div key={index} className="p-2 rounded bg-muted">
+                      <div className="flex items-center gap-2">
+                        {check.status === "success" && <CheckCircle className="w-3 h-3 text-green-500" />}
+                        {check.status === "error" && <XCircle className="w-3 h-3 text-red-500" />}
+                        {check.status === "warning" && <AlertCircle className="w-3 h-3 text-amber-500" />}
+                        {check.status === "info" && <Activity className="w-3 h-3 text-blue-500" />}
+                        <span className="text-xs font-medium">{check.name}</span>
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground font-mono whitespace-pre-wrap">
+                        {typeof check.details === "string" ? check.details : JSON.stringify(check.details, null, 2)}
+                      </div>
+                      {check.stdout && (
+                        <div className="mt-1 text-xs text-muted-foreground font-mono">
+                          <strong>stdout:</strong> {check.stdout}
+                        </div>
+                      )}
+                      {check.stderr && (
+                        <div className="mt-1 text-xs text-red-600 font-mono">
+                          <strong>stderr:</strong> {check.stderr}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
+        )}
 
         {/* CDN 安裝結果 */}
         {installFromCDNMutation.data && (

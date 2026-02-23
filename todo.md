@@ -1696,3 +1696,34 @@ Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1
 - [x] 寫測試（server/playwright.cdn.install.test.ts - ✅ 11/11 通過）
 - [ ] 保存 checkpoint
 - [ ] 部署到生產環境並測試 CDN 安裝功能
+
+
+---
+
+## 🔍 Playwright 安裝失敗診斷（第五階段）
+
+### 問題現狀
+CDN 安裝也失敗，同樣的錯誤：「The string did not match the expected pattern」
+
+### 診斷目標
+1. 檢查生產環境是否有 `tar` 命令
+2. 檢查臨時文件是否成功下載
+3. 獲取解壓命令的具體錯誤信息
+4. 檢查文件系統權限
+5. 檢查可用磁盤空間
+
+### 任務清單
+- [x] 創建 `diagnostics.diagnosePlaywrightInstallation` API
+- [x] 檢查系統命令可用性（tar, gzip）
+- [x] 測試 CDN 檔案下載（先下載 1MB 測試）
+- [x] 測試檔案寫入權限
+- [x] 測試完整下載和解壓命令執行
+- [x] 收集詳細錯誤日誌（stdout, stderr, stack trace）
+- [x] 檢查磁碟空間
+- [x] 檢查 Playwright 安裝狀態
+- [x] 更新 AdminPlaywrightTest 組件添加「環境診斷」按鈕（藍色）
+- [x] 顯示詳細檢查結果和建議解決方案
+- [x] 寫測試（server/playwright.diagnose.test.ts - ✅ 12/12 通過）
+- [ ] 保存 checkpoint
+- [ ] 部署到生產環境並執行診斷
+- [ ] 根據診斷結果決定解決方案
