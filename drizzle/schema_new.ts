@@ -302,6 +302,23 @@ export type SearchStat = typeof searchStats.$inferSelect;
 export type InsertSearchStat = typeof searchStats.$inferInsert;
 
 /**
+ * User search logs table - stores user search behavior on the platform
+ * Used for trending cards by search popularity
+ */
+export const userSearchLogs = mysqlTable("userSearchLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  cardId: int("cardId").notNull(), // Card that was searched/clicked
+  searchQuery: varchar("searchQuery", { length: 255 }), // Search query (if from search page)
+  source: mysqlEnum("source", ["search_page", "card_click", "trending_page", "home_page"]).notNull(), // Where the search came from
+  userId: int("userId"), // Optional: user ID if logged in
+  sessionId: varchar("sessionId", { length: 100 }), // Session ID for anonymous users
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UserSearchLog = typeof userSearchLogs.$inferSelect;
+export type InsertUserSearchLog = typeof userSearchLogs.$inferInsert;
+
+/**
  * Blog categories table - stores article categories
  */
 export const categories = mysqlTable("categories", {

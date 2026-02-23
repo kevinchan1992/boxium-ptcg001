@@ -476,6 +476,32 @@ export async function addSearchStat(data: InsertSearchStat) {
 }
 
 /**
+ * Log user search behavior (for trending cards by search popularity)
+ */
+export async function logUserSearch(data: {
+  cardId: number;
+  searchQuery?: string;
+  source: 'search_page' | 'card_click' | 'trending_page' | 'home_page';
+  userId?: number;
+  sessionId?: string;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const { userSearchLogs } = await import("../drizzle/schema_new");
+  
+  const result = await db.insert(userSearchLogs).values({
+    cardId: data.cardId,
+    searchQuery: data.searchQuery || null,
+    source: data.source,
+    userId: data.userId || null,
+    sessionId: data.sessionId || null,
+  });
+
+  return result;
+}
+
+/**
  * Get search statistics summary
  */
 export async function getSearchStats() {
@@ -1334,20 +1360,19 @@ export async function getTrendingBySearches(options: {
   const { limit = 10, days = 60 } = options; // Default to 60 days (2 months)
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
+  const { userSearchLogs } = await import("../drizzle/schema_new");
+  
   const results = await db
     .select({
-      cardId: searchStats.cardId,
+      cardId: userSearchLogs.cardId,
       searchCount: sql<number>`COUNT(*)`.as('searchCount'),
     })
-    .from(searchStats)
+    .from(userSearchLogs)
     .where(
-      and(
-        gte(searchStats.createdAt, cutoffDate),
-        eq(searchStats.success, true)
-      )
+      gte(userSearchLogs.createdAt, cutoffDate)
     )
-    .groupBy(searchStats.cardId)
-    .having(sql`COUNT(*) >= 10`) // Minimum 10 searches to qualify
+    .groupBy(userSearchLogs.cardId)
+    .having(sql`COUNT(*) >= 3`) // Minimum 3 searches to qualify (lowered from 10)
     .orderBy(desc(sql`COUNT(*)`))
     .limit(limit);
 

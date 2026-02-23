@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `userSearchLogs` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `cardId` int NOT NULL,\n  `searchQuery` varchar(255),\n  `source` enum('search_page','card_click','trending_page','home_page') NOT NULL,\n  `userId` int,\n  `sessionId` varchar(100),\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  CONSTRAINT `userSearchLogs_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS `userSearchLogs` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `cardId` int NOT NULL,\n  `searchQuery` varchar(255),\n  `source` enum('search_page','card_click','trending_page','home_page') NOT NULL,\n  `userId` int,\n  `sessionId` varchar(100),\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  CONSTRAINT `userSearchLogs_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1760
+}

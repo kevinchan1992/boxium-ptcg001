@@ -46,7 +46,15 @@ export default function SearchResults() {
     }
   };
 
+  const logSearchMutation = trpc.cards.logSearch.useMutation();
+
   const handleCardClick = (cardId: number) => {
+    // Log user search behavior for trending cards
+    logSearchMutation.mutate({
+      cardId,
+      searchQuery: query,
+      source: "search_page",
+    });
     setLocation(`/card/${cardId}`);
   };
 

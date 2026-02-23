@@ -539,6 +539,25 @@ export const appRouter = router({
           });
         }
       }),
+
+    // Log user search query
+    logSearch: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+        searchQuery: z.string().optional(),
+        source: z.enum(["search_page", "card_click", "trending_page", "home_page"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Log user search behavior for trending cards
+        await db.logUserSearch({
+          cardId: input.cardId,
+          searchQuery: input.searchQuery,
+          source: input.source,
+          userId: ctx.user?.id,
+          sessionId: undefined, // Session ID tracking not implemented yet
+        });
+        return { success: true };
+      }),
   }),
 
   prices: router({
@@ -2230,20 +2249,6 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
           console.error("[LLM] Failed to generate market analysis:", error);
           return { analysis: "市場分析生成失敗，請稍後再試。" };
         }
-      }),
-
-    // Log user search query
-    logSearch: publicProcedure
-      .input(z.object({
-        searchQuery: z.string(),
-        searchType: z.enum(["card_name", "set_name", "card_number", "general"]),
-        resultCount: z.number(),
-        cardId: z.number().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        // userSearchLogs table removed, no longer logging searches
-        // await db.logUserSearch({ ... });
-        return { success: true };
       }),
   }),
 
