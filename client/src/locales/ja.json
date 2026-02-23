@@ -354,6 +354,94 @@
     "readMore": "詳しく読む",
     "views": "閲覧"
   },
+  "profile": {
+    "loading": "読み込み中...",
+    "pleaseLogin": "ログインしてください",
+    "loginRequired": "プロフィールを表示するにはログインが必要です",
+    "goToLogin": "ログインへ",
+    "welcome": "お帰りなさい！ここでカードコレクションと閲覧履歴を管理できます 🎴",
+    "user": "ユーザー",
+    "admin": "🎖️ 管理者",
+    "collector": "📦 コレクター",
+    "joinedAt": "登録日：",
+    "tabs": {
+      "info": "プロフィール",
+      "infoShort": "情報",
+      "watchlist": "ウォッチリスト",
+      "watchlistShort": "ウォッチ",
+      "history": "閲覧履歴",
+      "historyShort": "履歴",
+      "stats": "統計",
+      "statsShort": "統計"
+    },
+    "infoSection": {
+      "title": "個人情報",
+      "description": "個人情報を表示・編集",
+      "username": "ユーザー名",
+      "notSet": "未設定",
+      "email": "メールアドレス",
+      "role": "役割",
+      "adminRole": "🎖️ 管理者",
+      "normalUser": "📦 一般ユーザー",
+      "loginMethod": "ログイン方法",
+      "passwordLogin": "🔑 パスワードログイン",
+      "googleOAuth": "🔐 Google OAuth",
+      "registeredAt": "登録日時",
+      "lastLogin": "最終ログイン",
+      "noRecord": "記録なし",
+      "changePassword": "パスワード変更"
+    },
+    "watchlistSection": {
+      "title": "マイウォッチリスト",
+      "count": "合計 {{count}} 枚のカード",
+      "empty": "まだカードを追加していません",
+      "goToResearch": "カードを検索",
+      "removeSuccess": "ウォッチリストから削除しました",
+      "removeFailed": "削除失敗：{{error}}",
+      "table": {
+        "card": "カード",
+        "series": "シリーズ",
+        "latestPrice": "最新価格",
+        "notes": "備考",
+        "addedAt": "追加日時",
+        "actions": "操作",
+        "remove": "削除",
+        "noPrice": "価格なし"
+      }
+    },
+    "historySection": {
+      "title": "閲覧履歴",
+      "count": "最近 {{count}} 件の記録",
+      "empty": "閲覧履歴がありません",
+      "clearHistory": "履歴をクリア",
+      "clearSuccess": "閲覧履歴をクリアしました",
+      "clearFailed": "クリア失敗：{{error}}",
+      "confirmClear": "クリア確認",
+      "confirmDescription": "この操作はすべての閲覧履歴を削除し、復元できません。",
+      "cancel": "キャンセル",
+      "confirm": "確認",
+      "table": {
+        "card": "カード",
+        "series": "シリーズ",
+        "viewedAt": "閲覧日時"
+      }
+    },
+    "statsSection": {
+      "title": "コレクション統計",
+      "description": "カードコレクションのデータ分析",
+      "empty": "統計データがありません",
+      "watchlistCards": "ウォッチリスト",
+      "cardsCount": "枚",
+      "viewHistory": "閲覧履歴",
+      "recordsCount": "件",
+      "activity": "アクティビティ",
+      "activityLevel": "コレクション活動度",
+      "totalCount": "ウォッチリスト総数",
+      "totalValue": "総価値",
+      "highestCard": "最高価格カード",
+      "noRecord": "記録なし"
+    }
+  },
   "disclaimerPage": {
     "title": "免責事項",
     "subtitle": "以下の条項をよくお読みください。本プラットフォームを使用することにより、本免責事項のすべての内容に同意し、受け入れることになります。",

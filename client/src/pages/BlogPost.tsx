@@ -25,6 +25,9 @@ export default function BlogPost() {
   // Increment view count mutation
   const incrementViewCount = trpc.blog.incrementViewCount.useMutation();
 
+  // Record share mutation
+  const recordShare = trpc.blog.recordShare.useMutation();
+
   // Scroll to top on mount and increment view count
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -57,6 +60,8 @@ export default function BlogPost() {
       '_blank',
       'width=600,height=400'
     );
+    // Record share event
+    recordShare.mutate({ slug, shareType: 'facebook' });
   };
 
   const handleShareWhatsApp = () => {
@@ -66,11 +71,15 @@ export default function BlogPost() {
       `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`,
       '_blank'
     );
+    // Record share event
+    recordShare.mutate({ slug, shareType: 'whatsapp' });
   };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success('連結已複製到剪貼簿');
+    // Record share event
+    recordShare.mutate({ slug, shareType: 'copy_link' });
   };
 
   if (isLoading) {

@@ -2557,6 +2557,23 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         return { success: true };
       }),
 
+    // Record share event
+    recordShare: publicProcedure
+      .input(z.object({
+        slug: z.string(),
+        shareType: z.enum(['facebook', 'whatsapp', 'copy_link']),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const blogDb = await import('./blogDb');
+        await blogDb.recordPostShare({
+          slug: input.slug,
+          shareType: input.shareType,
+          userAgent: ctx.req?.headers['user-agent'],
+          ipAddress: ctx.req?.ip || ctx.req?.socket?.remoteAddress,
+        });
+        return { success: true };
+      }),
+
     // AI generate article (Admin only)
     generateArticle: adminProcedure
       .input(z.object({

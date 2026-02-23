@@ -359,6 +359,94 @@
     "readMore": "閱讀更多",
     "views": "次瀏覽"
   },
+  "profile": {
+    "loading": "載入中...",
+    "pleaseLogin": "請先登入",
+    "loginRequired": "您需要登入才能查看個人頁面",
+    "goToLogin": "前往登入",
+    "welcome": "歡迎回來！在這裡管理您的卡牌收藏和瀏覽記錄 🎴",
+    "user": "用戶",
+    "admin": "🎖️ 管理員",
+    "collector": "📦 收藏家",
+    "joinedAt": "加入時間：",
+    "tabs": {
+      "info": "個人資訊",
+      "infoShort": "資訊",
+      "watchlist": "關注清單",
+      "watchlistShort": "關注",
+      "history": "瀏覽歷史",
+      "historyShort": "歷史",
+      "stats": "收藏統計",
+      "statsShort": "統計"
+    },
+    "infoSection": {
+      "title": "個人資訊",
+      "description": "查看和編輯您的個人資料",
+      "username": "用戶名稱",
+      "notSet": "未設置",
+      "email": "電子郵件",
+      "role": "角色",
+      "adminRole": "🎖️ 管理員",
+      "normalUser": "📦 普通用戶",
+      "loginMethod": "登入方式",
+      "passwordLogin": "🔑 密碼登入",
+      "googleOAuth": "🔐 Google OAuth",
+      "registeredAt": "註冊時間",
+      "lastLogin": "最後登入",
+      "noRecord": "未記錄",
+      "changePassword": "修改密碼"
+    },
+    "watchlistSection": {
+      "title": "我的關注清單",
+      "count": "共 {{count}} 張卡牌",
+      "empty": "您還沒有關注任何卡牌",
+      "goToResearch": "前往搜尋卡牌",
+      "removeSuccess": "已從關注清單中移除",
+      "removeFailed": "移除失敗：{{error}}",
+      "table": {
+        "card": "卡牌",
+        "series": "系列",
+        "latestPrice": "最新價格",
+        "notes": "備註",
+        "addedAt": "添加時間",
+        "actions": "操作",
+        "remove": "移除",
+        "noPrice": "暫無價格"
+      }
+    },
+    "historySection": {
+      "title": "瀏覽歷史",
+      "count": "最近 {{count}} 筆記錄",
+      "empty": "暫無瀏覽記錄",
+      "clearHistory": "清除歷史",
+      "clearSuccess": "瀏覽歷史已清除",
+      "clearFailed": "清除失敗：{{error}}",
+      "confirmClear": "確認清除",
+      "confirmDescription": "此操作將清除所有瀏覽歷史記錄，且無法復原。",
+      "cancel": "取消",
+      "confirm": "確認清除",
+      "table": {
+        "card": "卡牌",
+        "series": "系列",
+        "viewedAt": "瀏覽時間"
+      }
+    },
+    "statsSection": {
+      "title": "收藏統計",
+      "description": "您的卡牌收藏數據分析",
+      "empty": "暫無統計數據",
+      "watchlistCards": "關注卡牌",
+      "cardsCount": "張卡牌",
+      "viewHistory": "瀏覽記錄",
+      "recordsCount": "筆記錄",
+      "activity": "活躍度",
+      "activityLevel": "收藏活躍度",
+      "totalCount": "關注清單總數",
+      "totalValue": "總價值",
+      "highestCard": "最高價卡牌",
+      "noRecord": "暫無記錄"
+    }
+  },
   "disclaimerPage": {
     "title": "免責聲明",
     "subtitle": "請仔細閱讀以下條款。使用本平台即表示您同意並接受本免責聲明的所有內容。",

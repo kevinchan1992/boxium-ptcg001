@@ -359,6 +359,94 @@
     "readMore": "Read More",
     "views": "views"
   },
+  "profile": {
+    "loading": "Loading...",
+    "pleaseLogin": "Please Login",
+    "loginRequired": "You need to login to view your profile",
+    "goToLogin": "Go to Login",
+    "welcome": "Welcome back! Manage your card collection and browsing history here 🎴",
+    "user": "User",
+    "admin": "🎖️ Admin",
+    "collector": "📦 Collector",
+    "joinedAt": "Joined: ",
+    "tabs": {
+      "info": "Profile",
+      "infoShort": "Info",
+      "watchlist": "Watchlist",
+      "watchlistShort": "Watch",
+      "history": "History",
+      "historyShort": "History",
+      "stats": "Statistics",
+      "statsShort": "Stats"
+    },
+    "infoSection": {
+      "title": "Profile Information",
+      "description": "View and edit your personal information",
+      "username": "Username",
+      "notSet": "Not Set",
+      "email": "Email",
+      "role": "Role",
+      "adminRole": "🎖️ Admin",
+      "normalUser": "📦 Normal User",
+      "loginMethod": "Login Method",
+      "passwordLogin": "🔑 Password Login",
+      "googleOAuth": "🔐 Google OAuth",
+      "registeredAt": "Registered At",
+      "lastLogin": "Last Login",
+      "noRecord": "No Record",
+      "changePassword": "Change Password"
+    },
+    "watchlistSection": {
+      "title": "My Watchlist",
+      "count": "{{count}} cards total",
+      "empty": "You haven't added any cards to your watchlist yet",
+      "goToResearch": "Search Cards",
+      "removeSuccess": "Removed from watchlist",
+      "removeFailed": "Remove failed: {{error}}",
+      "table": {
+        "card": "Card",
+        "series": "Series",
+        "latestPrice": "Latest Price",
+        "notes": "Notes",
+        "addedAt": "Added At",
+        "actions": "Actions",
+        "remove": "Remove",
+        "noPrice": "No Price"
+      }
+    },
+    "historySection": {
+      "title": "Browsing History",
+      "count": "Recent {{count}} records",
+      "empty": "No browsing history",
+      "clearHistory": "Clear History",
+      "clearSuccess": "Browsing history cleared",
+      "clearFailed": "Clear failed: {{error}}",
+      "confirmClear": "Confirm Clear",
+      "confirmDescription": "This action will clear all browsing history and cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Confirm Clear",
+      "table": {
+        "card": "Card",
+        "series": "Series",
+        "viewedAt": "Viewed At"
+      }
+    },
+    "statsSection": {
+      "title": "Collection Statistics",
+      "description": "Your card collection data analysis",
+      "empty": "No statistics data",
+      "watchlistCards": "Watchlist Cards",
+      "cardsCount": "cards",
+      "viewHistory": "View History",
+      "recordsCount": "records",
+      "activity": "Activity",
+      "activityLevel": "Collection Activity",
+      "totalCount": "Total Watchlist",
+      "totalValue": "Total Value",
+      "highestCard": "Highest Value Card",
+      "noRecord": "No Record"
+    }
+  },
   "disclaimerPage": {
     "title": "Disclaimer",
     "subtitle": "Please read the following terms carefully. By using this platform, you agree to and accept all contents of this disclaimer.",

@@ -531,3 +531,25 @@ export const scheduleExecutionHistory = mysqlTable("scheduleExecutionHistory", {
 
 export type ScheduleExecutionHistory = typeof scheduleExecutionHistory.$inferSelect;
 export type InsertScheduleExecutionHistory = typeof scheduleExecutionHistory.$inferInsert;
+
+
+/**
+ * Post Shares table - tracks article share statistics
+ */
+export const postShares = mysqlTable("postShares", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull(), // Foreign key to posts table
+  shareType: mysqlEnum("shareType", ["facebook", "whatsapp", "copy_link"]).notNull(), // Share platform
+  sharedAt: timestamp("sharedAt").defaultNow().notNull(), // When the share occurred
+  userAgent: text("userAgent"), // Optional: browser user agent for analytics
+  ipAddress: varchar("ipAddress", { length: 45 }), // Optional: IP address (IPv4/IPv6)
+}, (table) => {
+  return {
+    postIdIdx: index("postId_idx").on(table.postId),
+    shareTypeIdx: index("shareType_idx").on(table.shareType),
+    sharedAtIdx: index("sharedAt_idx").on(table.sharedAt),
+  };
+});
+
+export type PostShare = typeof postShares.$inferSelect;
+export type InsertPostShare = typeof postShares.$inferInsert;

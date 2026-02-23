@@ -295,6 +295,13 @@
       "when": 1771816293330,
       "tag": "0041_crazy_tempest",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1771825559000,
+      "tag": "0042_wild_lord_hawal",
+      "breakpoints": true
     }
   ]
 }

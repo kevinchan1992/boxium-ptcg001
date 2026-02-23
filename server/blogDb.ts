@@ -306,3 +306,63 @@ export function generateSlug(title: string): string {
     .replace(/^-+|-+$/g, '')
     .substring(0, 200);
 }
+
+
+/**
+ * Record post share event
+ */
+export async function recordPostShare(params: {
+  slug: string;
+  shareType: 'facebook' | 'whatsapp' | 'copy_link';
+  userAgent?: string;
+  ipAddress?: string;
+}) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Get post ID from slug
+  const post = await db.select({ id: posts.id }).from(posts).where(eq(posts.slug, params.slug)).limit(1);
+  if (!post || post.length === 0) {
+    throw new Error(`Post not found with slug: ${params.slug}`);
+  }
+
+  const { postShares } = await import("../drizzle/schema_new");
+  
+  await db.insert(postShares).values({
+    postId: post[0].id,
+    shareType: params.shareType,
+    userAgent: params.userAgent || null,
+    ipAddress: params.ipAddress || null,
+  });
+}
+
+/**
+ * Get post share statistics
+ */
+export async function getPostShareStats(postId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const { postShares } = await import("../drizzle/schema_new");
+  const { sql } = await import("drizzle-orm");
+  
+  const result = await db
+    .select({
+      shareType: postShares.shareType,
+      count: sql<number>`COUNT(*)`.as('count'),
+    })
+    .from(postShares)
+    .where(eq(postShares.postId, postId))
+    .groupBy(postShares.shareType);
+
+  return {
+    facebook: result.find(r => r.shareType === 'facebook')?.count || 0,
+    whatsapp: result.find(r => r.shareType === 'whatsapp')?.count || 0,
+    copyLink: result.find(r => r.shareType === 'copy_link')?.count || 0,
+    total: result.reduce((sum, r) => sum + Number(r.count), 0),
+  };
+}

@@ -1151,4 +1151,37 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 - [x] 在 BlogPost.tsx 添加 useEffect 調用 incrementViewCount API
 - [x] 測試修復後的功能（數據庫中有 3 篇文章）
 - [x] 驗證瀏覽次數是否正確增加（功能已修復）
+- [x] 保存 checkpoint
+
+
+---
+
+## 🌐 Profile 頁面多語言支持
+
+### 問題描述
+為 Profile 頁面的所有文字添加英文和日文翻譯，包括標籤頁標題、表格表頭、統計數據標籤等，提升國際用戶體驗。
+
+### 任務清單
+- [ ] 檢查 Profile.tsx 中所有硬編碼的中文文字
+- [ ] 在 zh-TW.json 添加 Profile 頁面的翻譯鍵值
+- [ ] 在 en.json 添加英文翻譯
+- [ ] 在 ja.json 添加日文翻譯
+- [ ] 修改 Profile.tsx 使用 i18n 翻譯
+- [ ] 測試多語言切換功能
+- [ ] 保存 checkpoint
+
+---
+
+## 📊 文章分享統計功能
+
+### 問題描述
+記錄每篇文章的分享次數（Facebook、WhatsApp、複製連結），在 Admin 後台博客管理內新增卡片顯示分享數據，幫助分析文章傳播效果。
+
+### 任務清單
+- [ ] 在 drizzle schema 添加 postShareStats 表
+- [ ] 在 blogDb.ts 添加記錄分享次數的函數
+- [ ] 在 routers.ts 添加 recordShare API
+- [ ] 修改 ShareButton 組件調用 recordShare API
+- [ ] 在 Admin 後台添加分享數據卡片
+- [ ] 測試分享統計功能
 - [ ] 保存 checkpoint

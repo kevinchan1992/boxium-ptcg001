@@ -25,15 +25,17 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { User, Heart, History, TrendingUp, Edit, Trash2, X, Package } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Profile() {
+  const { t, i18n } = useTranslation();
   const { data: user, isLoading: userLoading } = trpc.auth.me.useQuery();
   const [activeTab, setActiveTab] = useState("watchlist");
 
   if (userLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#06038d] to-[#030156] flex items-center justify-center">
-        <div className="text-white text-xl">載入中...</div>
+        <div className="text-white text-xl">{t('profile.loading')}</div>
       </div>
     );
   }
@@ -41,17 +43,17 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#06038d] to-[#030156] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-zinc-900 border-zinc-800">
+        <Card className="max-w-md w-full bg-zinc-900 border-zinc-800">
           <CardHeader className="text-center">
-            <div className="w-20 h-20 bg-[#ffed00] rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 bg-[#ffed00] rounded-full mx-auto mb-4 flex items-center justify-center">
               <Package className="w-10 h-10 text-[#06038d]" />
             </div>
-            <CardTitle className="text-white text-2xl">請先登入</CardTitle>
-            <CardDescription className="text-gray-400">您需要登入才能查看個人頁面</CardDescription>
+            <CardTitle className="text-white text-2xl">{t('profile.pleaseLogin')}</CardTitle>
+            <CardDescription className="text-gray-400">{t('profile.loginRequired')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full bg-[#ffed00] hover:bg-[#ffed00]/90 text-[#06038d] font-bold">
-              <a href="/login">前往登入</a>
+              <a href="/login">{t('profile.goToLogin')}</a>
             </Button>
           </CardContent>
         </Card>
@@ -60,91 +62,82 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#06038d] to-[#030156] py-8 md:py-12">
-      <div className="container max-w-7xl px-4">
-        {/* Page Header with User Avatar */}
-        <div className="mb-8 md:mb-12">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-6">
-            {/* User Avatar */}
-            <div className="w-24 h-24 md:w-32 md:h-32 bg-[#ffed00] rounded-full flex items-center justify-center shadow-lg">
-              <User className="w-12 h-12 md:w-16 md:h-16 text-[#06038d]" />
-            </div>
-            
-            {/* User Info */}
-            <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                {user.name || "用戶"}
-              </h1>
-              <p className="text-[#ffed00] text-lg md:text-xl font-medium mb-2">
-                {user.role === "admin" ? "🎖️ 管理員" : "📦 收藏家"}
-              </p>
-              <p className="text-gray-300 text-sm md:text-base">
-                加入時間：{new Date(user.createdAt).toLocaleDateString("zh-TW")}
-              </p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-b from-[#06038d] to-[#030156] py-8 px-4">
+      <div className="container max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="bg-zinc-900/50 border border-[#ffed00]/20 rounded-lg p-6 md:p-8 mb-6 flex flex-col md:flex-row items-center gap-6">
+          <div className="w-24 h-24 md:w-32 md:h-32 bg-[#ffed00] rounded-full flex items-center justify-center flex-shrink-0">
+            <User className="w-12 h-12 md:w-16 md:h-16 text-[#06038d]" />
           </div>
-          
-          {/* Welcome Message */}
-          <div className="bg-zinc-900/50 border border-[#ffed00]/20 rounded-lg p-4 md:p-6">
-            <p className="text-white text-base md:text-lg">
-              歡迎回來！在這裡管理您的卡牌收藏和瀏覽記錄 🎴
+          <div className="flex-1 text-center md:text-left">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              {user.name || t('profile.user')}
+            </h1>
+            <p className="text-[#ffed00] text-lg md:text-xl font-medium mb-2">
+              {user.role === "admin" ? t('profile.admin') : t('profile.collector')}
+            </p>
+            <p className="text-gray-300 text-sm md:text-base">
+              {t('profile.joinedAt')}{new Date(user.createdAt).toLocaleDateString(i18n.language === 'ja' ? 'ja-JP' : i18n.language === 'en' ? 'en-US' : 'zh-TW')}
             </p>
           </div>
         </div>
 
+        {/* Welcome Message */}
+        <div className="bg-zinc-900/50 border border-[#ffed00]/20 rounded-lg p-4 md:p-6 mb-6">
+          <p className="text-white text-base md:text-lg">
+            {t('profile.welcome')}
+          </p>
+        </div>
+
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-8 bg-zinc-900 border border-zinc-800 p-1">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid grid-cols-4 w-full bg-zinc-900 border border-zinc-800 p-1">
             <TabsTrigger 
               value="info" 
-              className="flex items-center gap-2 data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-sm md:text-base"
+              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center gap-2"
             >
               <User className="w-4 h-4" />
-              <span className="hidden sm:inline">個人資訊</span>
-              <span className="sm:hidden">資訊</span>
+              <span className="hidden sm:inline">{t('profile.tabs.info')}</span>
+              <span className="sm:hidden">{t('profile.tabs.infoShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="watchlist" 
-              className="flex items-center gap-2 data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-sm md:text-base"
+              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center gap-2"
             >
               <Heart className="w-4 h-4" />
-              <span className="hidden sm:inline">關注清單</span>
-              <span className="sm:hidden">關注</span>
+              <span className="hidden sm:inline">{t('profile.tabs.watchlist')}</span>
+              <span className="sm:hidden">{t('profile.tabs.watchlistShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
-              className="flex items-center gap-2 data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-sm md:text-base"
+              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center gap-2"
             >
               <History className="w-4 h-4" />
-              <span className="hidden sm:inline">瀏覽歷史</span>
-              <span className="sm:hidden">歷史</span>
+              <span className="hidden sm:inline">{t('profile.tabs.history')}</span>
+              <span className="sm:hidden">{t('profile.tabs.historyShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="stats" 
-              className="flex items-center gap-2 data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-sm md:text-base"
+              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center gap-2"
             >
               <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">收藏統計</span>
-              <span className="sm:hidden">統計</span>
+              <span className="hidden sm:inline">{t('profile.tabs.stats')}</span>
+              <span className="sm:hidden">{t('profile.tabs.statsShort')}</span>
             </TabsTrigger>
           </TabsList>
 
-          {/* Personal Info Tab */}
           <TabsContent value="info">
-            <PersonalInfoSection user={user} />
+            <InfoSection user={user} />
           </TabsContent>
 
-          {/* Watchlist Tab */}
           <TabsContent value="watchlist">
             <WatchlistSection />
           </TabsContent>
 
-          {/* View History Tab */}
           <TabsContent value="history">
-            <ViewHistorySection />
+            <HistorySection />
           </TabsContent>
 
-          {/* Statistics Tab */}
           <TabsContent value="stats">
             <StatisticsSection />
           </TabsContent>
@@ -154,100 +147,99 @@ export default function Profile() {
   );
 }
 
-// Personal Info Section Component
-function PersonalInfoSection({ user }: { user: any }) {
+function InfoSection({ user }: { user: any }) {
+  const { t, i18n } = useTranslation();
+  
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader>
-        <CardTitle className="text-white text-2xl flex items-center gap-2">
+        <CardTitle className="text-[#ffed00] flex items-center gap-2">
           <div className="w-8 h-8 bg-[#ffed00] rounded-full flex items-center justify-center">
             <User className="w-4 h-4 text-[#06038d]" />
           </div>
-          個人資訊
+          {t('profile.infoSection.title')}
         </CardTitle>
-        <CardDescription className="text-gray-400">查看和編輯您的個人資料</CardDescription>
+        <CardDescription className="text-gray-400">{t('profile.infoSection.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <Label className="text-[#ffed00] font-medium">用戶名稱</Label>
+            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.username')}</Label>
             <Input 
-              value={user.name || "未設置"} 
+              value={user.name || t('profile.infoSection.notSet')} 
               disabled 
               className="mt-2 bg-zinc-800 border-zinc-700 text-white" 
             />
           </div>
           <div>
-            <Label className="text-[#ffed00] font-medium">Email</Label>
-            <Input 
-              value={user.email} 
-              disabled 
-              className="mt-2 bg-zinc-800 border-zinc-700 text-white" 
-            />
-          </div>
-          <div>
-            <Label className="text-[#ffed00] font-medium">角色</Label>
+            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.email')}</Label>
             <Input
-              value={user.role === "admin" ? "🎖️ 管理員" : "📦 普通用戶"}
+              value={user.email || t('profile.infoSection.notSet')}
               disabled
               className="mt-2 bg-zinc-800 border-zinc-700 text-white"
             />
           </div>
           <div>
-            <Label className="text-[#ffed00] font-medium">登入方式</Label>
+            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.role')}</Label>
             <Input
-              value={user.loginMethod === "password" ? "🔑 密碼登入" : "🔐 Google OAuth"}
+              value={user.role === "admin" ? t('profile.infoSection.adminRole') : t('profile.infoSection.normalUser')}
               disabled
               className="mt-2 bg-zinc-800 border-zinc-700 text-white"
             />
           </div>
           <div>
-            <Label className="text-[#ffed00] font-medium">註冊時間</Label>
+            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.loginMethod')}</Label>
             <Input
-              value={new Date(user.createdAt).toLocaleString("zh-TW")}
+              value={user.loginMethod === "password" ? t('profile.infoSection.passwordLogin') : t('profile.infoSection.googleOAuth')}
               disabled
               className="mt-2 bg-zinc-800 border-zinc-700 text-white"
             />
           </div>
           <div>
-            <Label className="text-[#ffed00] font-medium">最後登入</Label>
+            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.registeredAt')}</Label>
+            <Input
+              value={new Date(user.createdAt).toLocaleString(i18n.language === 'ja' ? 'ja-JP' : i18n.language === 'en' ? 'en-US' : 'zh-TW')}
+              disabled
+              className="mt-2 bg-zinc-800 border-zinc-700 text-white"
+            />
+          </div>
+          <div>
+            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.lastLogin')}</Label>
             <Input
               value={
                 user.lastSignedIn
-                  ? new Date(user.lastSignedIn).toLocaleString("zh-TW")
-                  : "未記錄"
+                  ? new Date(user.lastSignedIn).toLocaleString(i18n.language === 'ja' ? 'ja-JP' : i18n.language === 'en' ? 'en-US' : 'zh-TW')
+                  : t('profile.infoSection.noRecord')
               }
               disabled
               className="mt-2 bg-zinc-800 border-zinc-700 text-white"
             />
           </div>
         </div>
-
-        {user.loginMethod === "password" && (
-          <div className="pt-4 border-t border-zinc-800">
-            <Button 
-              variant="outline" 
-              className="border-[#ffed00] text-[#ffed00] hover:bg-[#ffed00] hover:text-[#06038d]"
-            >
-              修改密碼
-            </Button>
-          </div>
-        )}
+        <div className="pt-4">
+          <Button 
+            variant="outline" 
+            className="border-[#ffed00] text-[#ffed00] hover:bg-[#ffed00] hover:text-[#06038d]"
+          >
+            {t('profile.infoSection.changePassword')}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
 }
 
-// Watchlist Section Component
 function WatchlistSection() {
+  const { t } = useTranslation();
   const { data: watchlist, isLoading, refetch } = trpc.profile.getWatchlist.useQuery();
+
   const removeFromWatchlist = trpc.profile.removeFromWatchlist.useMutation({
     onSuccess: () => {
-      toast.success("已從關注清單中移除");
+      toast.success(t('profile.watchlistSection.removeSuccess'));
       refetch();
     },
     onError: (error) => {
-      toast.error(`移除失敗：${error.message}`);
+      toast.error(t('profile.watchlistSection.removeFailed', { error: error.message }));
     },
   });
 
@@ -255,7 +247,7 @@ function WatchlistSection() {
     return (
       <Card className="bg-zinc-900 border-zinc-800">
         <CardContent className="py-12 text-center text-gray-400">
-          載入中...
+          {t('profile.loading')}
         </CardContent>
       </Card>
     );
@@ -266,12 +258,12 @@ function WatchlistSection() {
       <Card className="bg-zinc-900 border-zinc-800">
         <CardContent className="py-12 text-center">
           <Heart className="w-16 h-16 text-[#ffed00]/30 mx-auto mb-4" />
-          <p className="text-gray-400 mb-4 text-lg">您還沒有關注任何卡牌</p>
+          <p className="text-gray-400 mb-4 text-lg">{t('profile.watchlistSection.empty')}</p>
           <Button 
             asChild 
             className="bg-[#ffed00] hover:bg-[#ffed00]/90 text-[#06038d] font-bold"
           >
-            <a href="/research">前往搜尋卡牌</a>
+            <a href="/research">{t('profile.watchlistSection.goToResearch')}</a>
           </Button>
         </CardContent>
       </Card>
@@ -281,72 +273,59 @@ function WatchlistSection() {
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader>
-        <CardTitle className="text-white text-2xl flex items-center gap-2">
+        <CardTitle className="text-[#ffed00] flex items-center gap-2">
           <div className="w-8 h-8 bg-[#ffed00] rounded-full flex items-center justify-center">
             <Heart className="w-4 h-4 text-[#06038d]" />
           </div>
-          我的關注清單
+          {t('profile.watchlistSection.title')}
         </CardTitle>
-        <CardDescription className="text-gray-400">共 {watchlist.length} 張卡牌</CardDescription>
+        <CardDescription className="text-gray-400">{t('profile.watchlistSection.count', { count: watchlist.length })}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-zinc-800 hover:bg-zinc-800/50">
-                <TableHead className="text-[#ffed00]">卡牌</TableHead>
-                <TableHead className="text-[#ffed00]">系列</TableHead>
-                <TableHead className="text-[#ffed00]">最新價格</TableHead>
-                <TableHead className="text-[#ffed00]">備註</TableHead>
-                <TableHead className="text-[#ffed00]">添加時間</TableHead>
-                <TableHead className="text-right text-[#ffed00]">操作</TableHead>
+                <TableHead className="text-[#ffed00]">{t('profile.watchlistSection.table.card')}</TableHead>
+                <TableHead className="text-[#ffed00]">{t('profile.watchlistSection.table.series')}</TableHead>
+                <TableHead className="text-[#ffed00]">{t('profile.watchlistSection.table.latestPrice')}</TableHead>
+                <TableHead className="text-[#ffed00]">{t('profile.watchlistSection.table.notes')}</TableHead>
+                <TableHead className="text-[#ffed00]">{t('profile.watchlistSection.table.addedAt')}</TableHead>
+                <TableHead className="text-right text-[#ffed00]">{t('profile.watchlistSection.table.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {watchlist.map((item: any) => (
                 <TableRow key={item.id} className="border-zinc-800 hover:bg-zinc-800/50">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      {item.imageUrl && (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.cardName || ""}
-                          className="w-12 h-16 object-cover rounded border-2 border-[#ffed00]/20"
-                        />
-                      )}
-                      <div>
-                        <div className="font-medium text-white">{item.cardName}</div>
-                        <div className="text-sm text-gray-400">{item.cardNumber}</div>
-                      </div>
-                    </div>
+                  <TableCell className="font-medium text-white">
+                    <a href={`/card/${item.card.id}`} className="hover:text-[#ffed00] transition-colors">
+                      {item.card.name}
+                    </a>
                   </TableCell>
-                  <TableCell className="text-gray-300">{item.series || "-"}</TableCell>
+                  <TableCell className="text-gray-300">{item.card.series || "-"}</TableCell>
                   <TableCell>
                     {item.latestPrice ? (
-                      <div>
-                        <div className="font-medium text-[#ffed00]">
-                          {item.latestPrice.currency} {parseFloat(item.latestPrice.price).toLocaleString()}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {item.latestPrice.source}
-                        </div>
+                      <div className="flex flex-col">
+                        <span className="text-[#ffed00] font-semibold">
+                          {item.currency} {item.latestPrice.toLocaleString()}
+                        </span>
                       </div>
                     ) : (
-                      <span className="text-gray-500">暫無價格</span>
+                      <span className="text-gray-500">{t('profile.watchlistSection.table.noPrice')}</span>
                     )}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate text-gray-300">{item.notes || "-"}</TableCell>
+                  <TableCell className="text-gray-300">{item.notes || "-"}</TableCell>
                   <TableCell className="text-gray-300">
-                    {new Date(item.createdAt).toLocaleDateString("zh-TW")}
+                    {new Date(item.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFromWatchlist.mutate({ watchlistId: item.id })}
-                      className="hover:bg-red-500/20"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
                     >
-                      <Trash2 className="w-4 h-4 text-red-500" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -359,16 +338,17 @@ function WatchlistSection() {
   );
 }
 
-// View History Section Component
-function ViewHistorySection() {
-  const { data: history, isLoading, refetch } = trpc.profile.getViewHistory.useQuery({ limit: 50 });
+function HistorySection() {
+  const { t } = useTranslation();
+  const { data: history, isLoading, refetch } = trpc.profile.getViewHistory.useQuery({});
+
   const clearHistory = trpc.profile.clearViewHistory.useMutation({
     onSuccess: () => {
-      toast.success("瀏覽歷史已清除");
+      toast.success(t('profile.historySection.clearSuccess'));
       refetch();
     },
     onError: (error) => {
-      toast.error(`清除失敗：${error.message}`);
+      toast.error(t('profile.historySection.clearFailed', { error: error.message }));
     },
   });
 
@@ -376,7 +356,7 @@ function ViewHistorySection() {
     return (
       <Card className="bg-zinc-900 border-zinc-800">
         <CardContent className="py-12 text-center text-gray-400">
-          載入中...
+          {t('profile.loading')}
         </CardContent>
       </Card>
     );
@@ -387,7 +367,7 @@ function ViewHistorySection() {
       <Card className="bg-zinc-900 border-zinc-800">
         <CardContent className="py-12 text-center">
           <History className="w-16 h-16 text-[#ffed00]/30 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">暫無瀏覽記錄</p>
+          <p className="text-gray-400 text-lg">{t('profile.historySection.empty')}</p>
         </CardContent>
       </Card>
     );
@@ -395,48 +375,47 @@ function ViewHistorySection() {
 
   return (
     <Card className="bg-zinc-900 border-zinc-800">
-      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-white text-2xl flex items-center gap-2">
+          <CardTitle className="text-[#ffed00] flex items-center gap-2">
             <div className="w-8 h-8 bg-[#ffed00] rounded-full flex items-center justify-center">
               <History className="w-4 h-4 text-[#06038d]" />
             </div>
-            瀏覽歷史
+            {t('profile.historySection.title')}
           </CardTitle>
-          <CardDescription className="text-gray-400">最近 {history.length} 筆記錄</CardDescription>
+          <CardDescription className="text-gray-400">{t('profile.historySection.count', { count: history.length })}</CardDescription>
         </div>
         <Dialog>
           <DialogTrigger asChild>
             <Button 
               variant="outline" 
-              size="sm"
+              size="sm" 
               className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              清除歷史
+              {t('profile.historySection.clearHistory')}
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-zinc-900 border-zinc-800">
             <DialogHeader>
-              <DialogTitle className="text-white">確認清除</DialogTitle>
+              <DialogTitle className="text-white">{t('profile.historySection.confirmClear')}</DialogTitle>
               <DialogDescription className="text-gray-400">
-                此操作將清除所有瀏覽歷史記錄，且無法復原。
+                {t('profile.historySection.confirmDescription')}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button 
                 variant="outline" 
-                onClick={() => {}}
                 className="border-zinc-700 text-white hover:bg-zinc-800"
               >
-                取消
+                {t('profile.historySection.cancel')}
               </Button>
-              <Button
-                variant="destructive"
-                onClick={() => clearHistory.mutate()}
-                className="bg-red-500 hover:bg-red-600"
-              >
-                確認清除
+            <Button
+              onClick={() => clearHistory.mutate(undefined)}
+              disabled={clearHistory.isPending}
+              className="bg-red-500 hover:bg-red-600"
+            >
+                {t('profile.historySection.confirm')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -447,32 +426,22 @@ function ViewHistorySection() {
           <Table>
             <TableHeader>
               <TableRow className="border-zinc-800 hover:bg-zinc-800/50">
-                <TableHead className="text-[#ffed00]">卡牌</TableHead>
-                <TableHead className="text-[#ffed00]">系列</TableHead>
-                <TableHead className="text-[#ffed00]">瀏覽時間</TableHead>
+                <TableHead className="text-[#ffed00]">{t('profile.historySection.table.card')}</TableHead>
+                <TableHead className="text-[#ffed00]">{t('profile.historySection.table.series')}</TableHead>
+                <TableHead className="text-[#ffed00]">{t('profile.historySection.table.viewedAt')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {history.map((item: any) => (
                 <TableRow key={item.id} className="border-zinc-800 hover:bg-zinc-800/50">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      {item.imageUrl && (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.cardName || ""}
-                          className="w-12 h-16 object-cover rounded border-2 border-[#ffed00]/20"
-                        />
-                      )}
-                      <div>
-                        <div className="font-medium text-white">{item.cardName}</div>
-                        <div className="text-sm text-gray-400">{item.cardNumber}</div>
-                      </div>
-                    </div>
+                  <TableCell className="font-medium text-white">
+                    <a href={`/card/${item.card.id}`} className="hover:text-[#ffed00] transition-colors">
+                      {item.card.name}
+                    </a>
                   </TableCell>
-                  <TableCell className="text-gray-300">{item.series || "-"}</TableCell>
+                  <TableCell className="text-gray-300">{item.card.series || "-"}</TableCell>
                   <TableCell className="text-gray-300">
-                    {new Date(item.viewedAt).toLocaleString("zh-TW")}
+                    {new Date(item.viewedAt).toLocaleString()}
                   </TableCell>
                 </TableRow>
               ))}
@@ -484,15 +453,15 @@ function ViewHistorySection() {
   );
 }
 
-// Statistics Section Component
 function StatisticsSection() {
+  const { t } = useTranslation();
   const { data: stats, isLoading } = trpc.profile.getWatchlistStats.useQuery();
 
   if (isLoading) {
     return (
       <Card className="bg-zinc-900 border-zinc-800">
         <CardContent className="py-12 text-center text-gray-400">
-          載入中...
+          {t('profile.loading')}
         </CardContent>
       </Card>
     );
@@ -503,7 +472,7 @@ function StatisticsSection() {
       <Card className="bg-zinc-900 border-zinc-800">
         <CardContent className="py-12 text-center">
           <TrendingUp className="w-16 h-16 text-[#ffed00]/30 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">暫無統計數據</p>
+          <p className="text-gray-400 text-lg">{t('profile.statsSection.empty')}</p>
         </CardContent>
       </Card>
     );
@@ -511,46 +480,46 @@ function StatisticsSection() {
 
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-gradient-to-br from-[#ffed00] to-[#ffed00]/80 border-none">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-gradient-to-br from-[#ffed00]/10 to-[#ffed00]/5 border-[#ffed00]/20">
           <CardHeader>
             <CardTitle className="text-[#06038d] flex items-center gap-2">
               <Heart className="w-5 h-5" />
-              關注卡牌
+              {t('profile.statsSection.watchlistCards')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-[#06038d]">{stats.totalCount || 0}</div>
-            <p className="text-[#06038d]/70 text-sm mt-1">張卡牌</p>
+            <p className="text-[#06038d]/70 text-sm mt-1">{t('profile.statsSection.cardsCount')}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-[#06038d] to-[#06038d]/80 border-[#ffed00]/20">
+        <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-[#ffed00] flex items-center gap-2">
               <History className="w-5 h-5" />
-              瀏覽記錄
+              {t('profile.statsSection.viewHistory')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-white">-</div>
-            <p className="text-gray-300 text-sm mt-1">筆記錄</p>
+            <p className="text-gray-300 text-sm mt-1">{t('profile.statsSection.recordsCount')}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-zinc-800 to-zinc-900 border-zinc-700">
+        <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-[#ffed00] flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
-              活躍度
+              {t('profile.statsSection.activity')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-white">
               {stats.totalCount > 0 ? Math.min(100, stats.totalCount * 5) : 0}%
             </div>
-            <p className="text-gray-300 text-sm mt-1">收藏活躍度</p>
+            <p className="text-gray-300 text-sm mt-1">{t('profile.statsSection.activityLevel')}</p>
           </CardContent>
         </Card>
       </div>
@@ -558,30 +527,30 @@ function StatisticsSection() {
       {/* Detailed Stats */}
       <Card className="bg-zinc-900 border-zinc-800">
         <CardHeader>
-          <CardTitle className="text-white text-2xl flex items-center gap-2">
+          <CardTitle className="text-[#ffed00] flex items-center gap-2">
             <div className="w-8 h-8 bg-[#ffed00] rounded-full flex items-center justify-center">
               <TrendingUp className="w-4 h-4 text-[#06038d]" />
             </div>
-            收藏統計
+            {t('profile.statsSection.title')}
           </CardTitle>
-          <CardDescription className="text-gray-400">您的卡牌收藏數據分析</CardDescription>
+          <CardDescription className="text-gray-400">{t('profile.statsSection.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
-              <span className="text-gray-300">關注清單總數</span>
-              <span className="text-[#ffed00] font-bold text-lg">{stats.totalCount || 0} 張</span>
+              <span className="text-gray-300">{t('profile.statsSection.totalCount')}</span>
+              <span className="text-[#ffed00] font-bold text-lg">{stats.totalCount || 0} {t('profile.statsSection.cardsCount')}</span>
             </div>
             <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
-              <span className="text-gray-300">總價值</span>
+              <span className="text-gray-300">{t('profile.statsSection.totalValue')}</span>
               <span className="text-[#ffed00] font-bold text-lg">{stats.currency} {stats.totalValue.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
-              <span className="text-gray-300">最高價卡牌</span>
+              <span className="text-gray-300">{t('profile.statsSection.highestCard')}</span>
               <span className="text-[#ffed00] font-bold text-lg">
                 {stats.top5Cards && stats.top5Cards.length > 0
                   ? stats.top5Cards[0].cardName
-                  : "暫無記錄"}
+                  : t('profile.statsSection.noRecord')}
               </span>
             </div>
           </div>
