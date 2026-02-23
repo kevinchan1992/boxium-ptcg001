@@ -21,11 +21,14 @@ import { restartScheduler } from "./batchUpdateScheduler";
 import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
 import { pricingRouter } from "./routers/pricing";
 import { templatesRouter } from "./routers/templates";
+import { diagnosticsRouter } from "./routers/diagnostics";
 
 export const appRouter = router({
   system: systemRouter,
 
   pricing: pricingRouter,
+
+  diagnostics: diagnosticsRouter,
 
   auth: router({
     me: publicProcedure

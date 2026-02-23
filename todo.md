@@ -1445,3 +1445,70 @@ return {
 - ✅ should not have flat card properties (old structure)
 - ✅ should handle empty watchlist without errors
 
+
+
+## 🔍 生產環境 Pricing 頁面無法更新 SNKRDUNK 數據（開發環境正常）
+
+### 問題描述
+- **開發環境**：Pricing 頁面能成功爬取 SNKRDUNK 數據，顯示 PSA 10 在售商品 ✅
+- **生產環境（boxium.asia）**：Pricing 頁面無法更新，持續顯示「暫無在售商品」 ❌
+- **已完成的修復**：修改了快取清除邏輯（當爬取失敗或返回 0 個商品時清除舊快取）
+
+### 可能的環境差異
+1. **Playwright 瀏覽器環境**
+   - 開發環境：本地沙盒，資源充足
+   - 生產環境：可能資源受限、網絡限制、或瀏覽器無法啟動
+
+2. **網絡訪問限制**
+   - 開發環境：可能有不同的 IP 地址
+   - 生產環境：可能被 SNKRDUNK 封鎖或限流
+
+3. **超時設置**
+   - 開發環境：可能有更長的超時時間
+   - 生產環境：可能因為超時而失敗
+
+4. **錯誤日誌**
+   - 生產環境的錯誤日誌可能沒有被正確記錄或查看
+
+### 診斷任務
+- [x] 檢查生產環境的 Playwright 是否能正常啟動
+- [x] 檢查生產環境是否能訪問 SNKRDUNK 網站
+- [x] 檢查生產環境的錯誤日誌（查找 SNKRDUNK 爬取失敗的具體錯誤）
+- [x] 比較開發環境和生產環境的 Playwright 配置
+- [x] 找到問題根本原因：**Playwright 瀏覽器二進制文件未安裝**
+
+**診斷結果：**
+錯誤信息：`Executable doesn't exist at /home/ubuntu/.cache/ms-playwright/chromium_headless_shell-1208/chrome-headless-shell-linux64/chrome-headless-shell`
+
+這表示 Playwright 瀏覽器沒有安裝。開發環境能工作是因為我的開發沙盒已經安裝了 Playwright 瀏覽器，但生產環境沒有。
+
+**測試結果（安裝後）：**
+- ✅ Browser launched successfully
+- ✅ Page navigation successful (訪問 SNKRDUNK 網站)
+- ✅ SNKRDUNK scraping successful (成功爬取 17 個 PSA 10 在售商品)
+
+### 修復任務
+- [x] 創建診斷 API（diagnostics router）
+- [x] 創建診斷測試（diagnostics.test.ts）
+- [x] 安裝 Playwright 瀏覽器（`pnpm exec playwright install chromium`）
+- [x] 測試修復結果（✅ 3/3 測試通過）
+- [ ] 創建部署說明文檔
+- [ ] 保存 checkpoint
+
+### 部署說明
+
+**生產環境需要執行的命令：**
+```bash
+# 1. 部署新版本代碼
+# 2. 在生產環境服務器上執行：
+pnpm exec playwright install chromium
+
+# 3. 重啟服務器
+# 4. 測試 Pricing 頁面是否能正常顯示 PSA 10 在售商品
+```
+
+**注意事項：**
+- Playwright 瀏覽器文件較大（約 280 MB），安裝需要幾分鐘
+- 確保生產環境有足夠的磁盤空間（至少 500 MB）
+- 安裝完成後，Pricing 頁面應該能正常爬取 SNKRDUNK 數據
+
