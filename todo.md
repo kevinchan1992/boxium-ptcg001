@@ -525,3 +525,34 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 
 ### 根本原因
 後端 googleOAuth.ts 中的 redirect_uri 仍然使用環境變量 `VITE_FRONTEND_FORGE_API_URL`（指向 forge.manus.ai），而不是動態獲取請求的 origin。
+
+
+---
+
+## 🐛 修復開發環境 Admin 後台權限錯誤
+
+### 問題描述
+開發環境訪問 Admin 後台時出現權限錯誤：
+```
+Error: You do not have required permission (10002)
+TRPCClientError: You do not have required permission (10002)
+```
+
+### 根本原因
+- 前端的 ProtectedAdminRoute 組件在開發環境跳過認證檢查（正常工作）
+- 但後端的 adminProcedure 仍然要求管理員權限
+- 開發環境沒有登入用戶，所以後端 API 拒絕訪問
+
+### 解決方案
+修改後端的 adminProcedure，在開發環境跳過權限檢查：
+- 檢查 `process.env.NODE_ENV === 'development'`
+- 如果是開發環境，允許所有請求通過
+- 如果是生產環境，保持原有的管理員權限檢查
+
+### 任務清單
+- [x] 檢查 adminProcedure 的實現位置（server/_core/trpc.ts）
+- [x] 修改 adminProcedure 添加開發環境檢查
+- [x] 修復 TypeScript 錯誤（ctx.user 可能為 null）
+- [x] 測試 Admin 後台在開發環境是否可以正常訪問（✅ 成功）
+- [x] 確認生產環境的權限保護不受影響（只在 development 環境跳過）
+- [x] 保存 checkpoint

@@ -2344,7 +2344,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
           status: input.status,
           publishedAt: input.status === 'published' ? new Date() : null,
           viewCount: 0,
-          authorId: ctx.user.id,
+          authorId: ctx.user?.id || 0,
           dataSource: input.dataSource,
           relatedCardIds: input.relatedCardIds || null,
           dataSnapshot: input.dataSnapshot || null,
