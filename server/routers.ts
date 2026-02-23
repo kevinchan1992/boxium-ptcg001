@@ -2574,6 +2574,13 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         return { success: true };
       }),
 
+    // Get all posts share statistics (Admin only)
+    getAllPostsShareStats: adminProcedure
+      .query(async () => {
+        const blogDb = await import('./blogDb');
+        return await blogDb.getAllPostsShareStats();
+      }),
+
     // AI generate article (Admin only)
     generateArticle: adminProcedure
       .input(z.object({

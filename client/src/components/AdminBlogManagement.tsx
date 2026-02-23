@@ -9,9 +9,155 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Eye, EyeOff, FileText, Image as ImageIcon, Sparkles, Languages } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, FileText, Image as ImageIcon, Sparkles, Languages, Share2, Facebook, MessageCircle, Link2, TrendingUp } from "lucide-react";
 
 import { CardImagePicker } from "@/components/CardImagePicker";
+
+// Share Statistics Card Component
+function ShareStatisticsCard() {
+  const { data: shareStats, isLoading } = trpc.blog.getAllPostsShareStats.useQuery();
+  const [sortBy, setSortBy] = useState<'total' | 'facebook' | 'whatsapp' | 'copyLink'>('total');
+
+  const sortedStats = shareStats ? [...shareStats].sort((a, b) => {
+    return b[sortBy] - a[sortBy];
+  }) : [];
+
+  return (
+    <Card className="bg-zinc-900 border-zinc-800">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-[#ffed00]" />
+              分享統計
+            </CardTitle>
+            <CardDescription>追蹤文章分享數據，了解內容傳播效果</CardDescription>
+          </div>
+          <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+            <SelectTrigger className="w-40 bg-zinc-800 border-zinc-700 text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="total">總分享數</SelectItem>
+              <SelectItem value="facebook">Facebook</SelectItem>
+              <SelectItem value="whatsapp">WhatsApp</SelectItem>
+              <SelectItem value="copyLink">複製連結</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-center py-8 text-gray-400">載入中...</div>
+        ) : sortedStats && sortedStats.length > 0 ? (
+          <div className="space-y-4">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 p-4 rounded-lg border border-zinc-700">
+                <div className="flex items-center gap-2 text-gray-400 text-sm mb-2">
+                  <TrendingUp className="w-4 h-4" />
+                  總分享
+                </div>
+                <div className="text-2xl font-bold text-white">
+                  {sortedStats.reduce((sum, s) => sum + s.total, 0)}
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-blue-900/20 to-zinc-900 p-4 rounded-lg border border-blue-800/30">
+                <div className="flex items-center gap-2 text-blue-400 text-sm mb-2">
+                  <Facebook className="w-4 h-4" />
+                  Facebook
+                </div>
+                <div className="text-2xl font-bold text-white">
+                  {sortedStats.reduce((sum, s) => sum + s.facebook, 0)}
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-green-900/20 to-zinc-900 p-4 rounded-lg border border-green-800/30">
+                <div className="flex items-center gap-2 text-green-400 text-sm mb-2">
+                  <MessageCircle className="w-4 h-4" />
+                  WhatsApp
+                </div>
+                <div className="text-2xl font-bold text-white">
+                  {sortedStats.reduce((sum, s) => sum + s.whatsapp, 0)}
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-yellow-900/20 to-zinc-900 p-4 rounded-lg border border-yellow-800/30">
+                <div className="flex items-center gap-2 text-yellow-400 text-sm mb-2">
+                  <Link2 className="w-4 h-4" />
+                  複製連結
+                </div>
+                <div className="text-2xl font-bold text-white">
+                  {sortedStats.reduce((sum, s) => sum + s.copyLink, 0)}
+                </div>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[#ffed00] text-[#06038d]">
+                    <th className="px-4 py-3 text-left font-semibold">文章標題</th>
+                    <th className="px-4 py-3 text-center font-semibold">總分享</th>
+                    <th className="px-4 py-3 text-center font-semibold">
+                      <Facebook className="w-4 h-4 inline" />
+                    </th>
+                    <th className="px-4 py-3 text-center font-semibold">
+                      <MessageCircle className="w-4 h-4 inline" />
+                    </th>
+                    <th className="px-4 py-3 text-center font-semibold">
+                      <Link2 className="w-4 h-4 inline" />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedStats.slice(0, 10).map((stat, index) => (
+                    <tr
+                      key={stat.postId}
+                      className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors"
+                    >
+                      <td className="px-4 py-3 text-white">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 text-sm">#{index + 1}</span>
+                          <a
+                            href={`/blog/${stat.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-[#ffed00] transition-colors"
+                          >
+                            {stat.title}
+                          </a>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Badge className="bg-[#ffed00] text-[#06038d] hover:bg-[#ffed00]/90">
+                          {stat.total}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-center text-blue-400">
+                        {stat.facebook}
+                      </td>
+                      <td className="px-4 py-3 text-center text-green-400">
+                        {stat.whatsapp}
+                      </td>
+                      <td className="px-4 py-3 text-center text-yellow-400">
+                        {stat.copyLink}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-400">
+            <Share2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>還沒有分享數據</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export function AdminBlogManagement() {
   const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'generate' | 'preview' | 'edit-translation'>('list');
@@ -116,6 +262,10 @@ export function AdminBlogManagement() {
 
       {/* List View */}
       {activeView === 'list' && (
+        <>
+        {/* Share Statistics Card */}
+        <ShareStatisticsCard />
+        
         <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -241,6 +391,7 @@ export function AdminBlogManagement() {
             )}
           </CardContent>
         </Card>
+        </>
       )}
 
       {/* Create/Edit View */}
@@ -743,46 +894,8 @@ function AIArticleGenerator({
     },
   });
 
-  // New article generation mutation (for URL input)
-  const urlGenerateMutation = trpc.articleGeneration.generate.useMutation({
-    onSuccess: (data) => {
-      setGenerationId(data.generationId);
-      toast.success('文章生成已開始，請稍候...');
-    },
-    onError: (error) => {
-      toast.error(`生成失敗：${error.message}`);
-    },
-  });
-
-  // Get generation result
-  const { data: generationResult } = trpc.articleGeneration.getResult.useQuery(
-    { generationId: generationId! },
-    {
-      enabled: generationId !== null,
-      refetchInterval: (query) => {
-        const data = query.state.data;
-        if (data?.status === "pending" || data?.status === "processing") {
-          return 2000;
-        }
-        // When completed, trigger onSuccess
-        if (data?.status === "completed" && data.generatedTitle) {
-          onSuccess({
-            title: data.generatedTitle,
-            excerpt: data.generatedExcerpt || '',
-            content: data.generatedContent || '',
-            featuredImageUrl: '',
-            seoMetadata: {
-              metaTitle: data.generatedTitle,
-              metaDescription: data.generatedExcerpt || '',
-              keywords: []
-            }
-          });
-          setGenerationId(null);
-        }
-        return false;
-      },
-    }
-  );
+  // Note: articleGeneration API has been disabled
+  // Using direct LLM generation instead
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -819,18 +932,9 @@ function AIArticleGenerator({
   };
 
   const handleGenerate = () => {
-    // Handle URL input with new API
+    // URL input method has been disabled
     if (inputMethod === 'url') {
-      if (!urlInput.trim()) {
-        toast.error('請輸入網址');
-        return;
-      }
-      urlGenerateMutation.mutate({
-        inputType: 'url',
-        inputContent: urlInput,
-        targetLanguage,
-        style: articleType === 'news' ? 'news' : articleType === 'card-analysis' ? 'review' : 'analysis'
-      });
+      toast.error('網址輸入功能暫時停用');
       return;
     }
 
@@ -933,13 +1037,13 @@ function AIArticleGenerator({
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
                 className="bg-zinc-800 border-zinc-700 text-white"
-                disabled={urlGenerateMutation.isPending || generationId !== null}
+                disabled={true}
               />
               <p className="text-xs text-gray-500 mt-1">支援日文/英文/中文網站，AI 將自動抓取並分析內容</p>
             </div>
             <div>
               <Label htmlFor="target-language" className="text-white">目標語言</Label>
-              <Select value={targetLanguage} onValueChange={setTargetLanguage} disabled={urlGenerateMutation.isPending || generationId !== null}>
+              <Select value={targetLanguage} onValueChange={setTargetLanguage} disabled={true}>
                 <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                   <SelectValue />
                 </SelectTrigger>
@@ -950,19 +1054,6 @@ function AIArticleGenerator({
                 </SelectContent>
               </Select>
             </div>
-            {generationResult && (
-              <div className="p-4 bg-zinc-800 rounded-lg">
-                <p className="text-white text-sm mb-2">
-                  {generationResult.status === 'pending' && '⏳ 準備中...'}
-                  {generationResult.status === 'processing' && '🔄 生成中，請稍候...'}
-                  {generationResult.status === 'completed' && '✅ 生成完成！'}
-                  {generationResult.status === 'failed' && '❌ 生成失敗'}
-                </p>
-                {generationResult.status === 'failed' && generationResult.errorMessage && (
-                  <p className="text-red-400 text-xs">{generationResult.errorMessage}</p>
-                )}
-              </div>
-            )}
           </div>
         )}
 

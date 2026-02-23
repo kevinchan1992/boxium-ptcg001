@@ -1185,3 +1185,57 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 - [ ] 在 Admin 後台添加分享數據卡片
 - [ ] 測試分享統計功能
 - [ ] 保存 checkpoint
+
+
+---
+
+## 📊 Admin 後台分享數據顯示卡片
+
+### 目標
+在博客管理標籤頁添加「分享統計」卡片，顯示每篇文章的 Facebook、WhatsApp、複製連結分享次數和總分享數，並支持按分享次數排序
+
+### 任務清單
+- [ ] 在 routers.ts 添加獲取所有文章分享統計的 API
+- [ ] 在 AdminBlogManagement 組件添加分享統計卡片
+- [ ] 顯示每篇文章的分享數據（Facebook、WhatsApp、複製連結、總數）
+- [ ] 添加按分享次數排序功能
+- [ ] 測試分享統計顯示
+- [ ] 保存 checkpoint
+
+---
+
+## 📢 添加 Google AdSense 廣告代碼
+
+### 目標
+在所有頁面（除了 Admin 頁面）的 `<head>` 添加 Google AdSense 廣告代碼
+
+### 廣告代碼
+```html
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4115864525536921"
+     crossorigin="anonymous"></script>
+```
+
+### 任務清單
+- [ ] 在 client/index.html 添加 Google AdSense 代碼
+- [ ] 檢查 Admin 頁面是否使用不同的 HTML 模板
+- [ ] 如果 Admin 使用相同模板，添加條件判斷排除 Admin 頁面
+- [ ] 測試廣告代碼是否正確載入
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🔍 修復 /search 頁面的 SEO 問題
+
+### 問題描述
+/search 頁面存在以下 SEO 問題：
+1. 關鍵字過多（10 個），應以 3-8 個核心關鍵字為目標
+2. 未找到 H1 標題
+3. 標題只有 11 個字元，應介於 30-60 個字元之間
+
+### 任務清單
+- [ ] 減少 meta keywords 到 3-8 個核心關鍵字
+- [ ] 添加 H1 標題到頁面
+- [ ] 使用 document.title 設置 30-60 字元的標題
+- [ ] 測試 SEO 優化效果
+- [ ] 保存 checkpoint

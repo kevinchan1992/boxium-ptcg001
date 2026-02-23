@@ -366,3 +366,69 @@ export async function getPostShareStats(postId: number) {
     total: result.reduce((sum, r) => sum + Number(r.count), 0),
   };
 }
+
+/**
+ * Get all posts share statistics (Admin only)
+ */
+export async function getAllPostsShareStats() {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const { postShares } = await import("../drizzle/schema_new");
+  const { sql } = await import("drizzle-orm");
+  
+  // Get all posts with their share counts
+  const result = await db
+    .select({
+      postId: postShares.postId,
+      postTitle: posts.title,
+      postSlug: posts.slug,
+      shareType: postShares.shareType,
+      count: sql<number>`COUNT(*)`.as('count'),
+    })
+    .from(postShares)
+    .innerJoin(posts, eq(postShares.postId, posts.id))
+    .groupBy(postShares.postId, posts.title, posts.slug, postShares.shareType);
+
+  // Transform to grouped format
+  const grouped = new Map<number, {
+    postId: number;
+    title: string;
+    slug: string;
+    facebook: number;
+    whatsapp: number;
+    copyLink: number;
+    total: number;
+  }>();
+
+  for (const row of result) {
+    if (!grouped.has(row.postId)) {
+      grouped.set(row.postId, {
+        postId: row.postId,
+        title: row.postTitle,
+        slug: row.postSlug,
+        facebook: 0,
+        whatsapp: 0,
+        copyLink: 0,
+        total: 0,
+      });
+    }
+
+    const stats = grouped.get(row.postId)!;
+    const count = Number(row.count);
+    
+    if (row.shareType === 'facebook') {
+      stats.facebook = count;
+    } else if (row.shareType === 'whatsapp') {
+      stats.whatsapp = count;
+    } else if (row.shareType === 'copy_link') {
+      stats.copyLink = count;
+    }
+    stats.total += count;
+  }
+
+  return Array.from(grouped.values()).sort((a, b) => b.total - a.total);
+}
+

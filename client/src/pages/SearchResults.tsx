@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,27 @@ export default function SearchResults() {
     { query: query || "", limit: 50 },
     { enabled: !!query, retry: 1 }
   );
+
+  // SEO: Update document title and meta tags
+  useEffect(() => {
+    if (query) {
+      document.title = `搜尋「${query}」的寶可夢卡牌價格 - BOXIUM PTCG 市場格價平台`;
+      
+      // Update meta description
+      let metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute('content', `在 BOXIUM 搜尋「${query}」相關的寶可夢卡牌，查看 PSA 10 價格、SNKRDUNK 交易記錄和市場趨勢分析。`);
+      }
+      
+      // Update meta keywords (3-8 core keywords)
+      let metaKeywords = document.querySelector('meta[name="keywords"]');
+      if (metaKeywords) {
+        metaKeywords.setAttribute('content', `${query},寶可夢卡牌,PSA 10,卡牌價格,SNKRDUNK,市場格價`);
+      }
+    } else {
+      document.title = '搜尋寶可夢卡牌價格 - BOXIUM PTCG 市場格價平台';
+    }
+  }, [query]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,11 +76,11 @@ export default function SearchResults() {
           </form>
         </div>
 
-        {/* Results Header */}
+        {/* Results Header with H1 */}
         <div className="mb-4 sm:mb-6">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
-            搜尋結果: "{query}"
-          </h2>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
+            {query ? `搜尋「${query}」的寶可夢卡牌價格` : '搜尋寶可夢卡牌價格'}
+          </h1>
           {isLoading ? (
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">搜尋中...</p>
           ) : (
