@@ -147,10 +147,10 @@ async function scrapeSnkrdunkUrl(
     }
     
     // Dynamic wait based on page complexity
-    const linkCount = await page.locator('a').count();
+    const linkCount = (await page.$$('a')).length;
     const waitTime = Math.min(2000 + linkCount * 30, 5000);
     console.log(`[SNKRDUNK Puppeteer] Detected ${linkCount} links, waiting ${waitTime}ms...`);
-    await page.waitForTimeout(waitTime);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
     console.log(`[SNKRDUNK Puppeteer] Page load complete, extracting data...`);
 
     // Extract product data using the same logic as the browser script

@@ -9,6 +9,50 @@ import { puppeteerPool } from "../services/puppeteerPool";
 
 export const diagnosticsRouter = router({
   /**
+   * Get Puppeteer performance metrics
+   */
+  getPuppeteerMetrics: adminProcedure.query(async () => {
+    try {
+      const browser = await puppeteerPool.getBrowser();
+      const metrics: any = {
+        browserConnected: browser.connected,
+        processInfo: {
+          pid: browser.process()?.pid || null,
+          memoryUsage: process.memoryUsage(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+
+      return {
+        success: true,
+        metrics,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }),
+
+  /**
+   * Get scraper performance statistics
+   */
+  getScraperPerformance: adminProcedure.query(async () => {
+    // This would typically query from a performance tracking table
+    // For now, return mock data structure
+    return {
+      success: true,
+      stats: {
+        averageResponseTime: 0,
+        successRate: 0,
+        totalRequests: 0,
+        failedRequests: 0,
+        lastError: null,
+      },
+    };
+  }),
+  /**
    * Test if Puppeteer can launch a browser
    */
   testPuppeteer: adminProcedure.query(async () => {

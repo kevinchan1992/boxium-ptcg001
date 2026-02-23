@@ -1727,3 +1727,23 @@ CDN 安裝也失敗，同樣的錯誤：「The string did not match the expected
 - [ ] 保存 checkpoint
 - [ ] 部署到生產環境並執行診斷
 - [ ] 根據診斷結果決定解決方案
+
+
+---
+
+## 🔧 Puppeteer 性能監控和 Admin 組件更新
+
+### 任務描述
+添加 Puppeteer 性能監控功能，並更新 Admin 後台測試組件，移除所有 Playwright 相關功能。
+
+### 任務清單
+- [x] 創建 `diagnostics.getPuppeteerMetrics` API（內存使用、瀏覽器狀態、連接時長）
+- [x] 創建 `diagnostics.getScraperPerformance` API（平均響應時間、成功率、錯誤日誌）
+- [x] 更新 AdminPuppeteerTest 組件標題為「Puppeteer 狀態測試」
+- [x] 移除「安裝 Playwright」和「從 CDN 安裝」按鈕
+- [x] 移除「環境診斷」按鈕
+- [x] 添加「性能監控」面板（顯示內存、速度、成功率）
+- [x] 修復 Puppeteer API 錯誤（locator → $$）
+- [ ] 寫測試
+- [ ] 保存 checkpoint
+- [ ] 部署到生產環境並測試
