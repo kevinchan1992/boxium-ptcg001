@@ -26,16 +26,15 @@ export default function PricingDetail() {
   const [, setLocation] = useLocation();
   const idParam = params?.id;
   
-  // Determine if the ID is a database ID (number) or SNKRDUNK ID (string)
-  const isNumericId = idParam && !isNaN(parseInt(idParam, 10));
-  const cardId = isNumericId ? parseInt(idParam!, 10) : null;
-  const snkrdunkId = !isNumericId ? idParam : null;
+  // Priority: Try SNKRDUNK ID first (all numeric IDs from external sources)
+  // Only use database ID if explicitly needed (internal navigation)
+  const snkrdunkId = idParam;
 
-  // Fetch pricing data (eBay + SNKRDUNK) - supports both cardId and snkrdunkId
+  // Fetch pricing data (eBay + SNKRDUNK) - prioritize SNKRDUNK ID
   const { data: pricingData, isLoading: pricingLoading, refetch, error: pricingError } = trpc.pricing.getListings.useQuery(
-    cardId ? { cardId } : { snkrdunkId: snkrdunkId! },
+    { snkrdunkId: snkrdunkId! },
     { 
-      enabled: !!(cardId || snkrdunkId), 
+      enabled: !!snkrdunkId, 
       retry: 1,
       staleTime: 30 * 60 * 1000, // 30 minutes cache
     }
