@@ -1571,3 +1571,63 @@ pnpm exec playwright install chromium
 - [ ] 檢查生產環境的錯誤日誌
 - [ ] 修復問題
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🔧 修復 ensure-playwright.sh 腳本路徑檢查邏輯
+
+### 問題描述
+診斷工具確認生產環境 Playwright 未安裝，錯誤信息：
+```
+Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1208/chrome-headless-shell-linux64/chrome-headless-shell
+```
+
+**問題根本原因：**
+- 生產環境以 `root` 用戶運行，Playwright 路徑是 `/root/.cache/ms-playwright/`
+- 開發環境以 `ubuntu` 用戶運行，Playwright 路徑是 `/home/ubuntu/.cache/ms-playwright/`
+- 自動安裝腳本 `ensure-playwright.sh` 檢查的是固定路徑 `/home/ubuntu/.cache/ms-playwright/`
+- 導致生產環境即使 Playwright 未安裝，腳本也認為已安裝，不會觸發自動安裝
+
+### 任務清單
+- [x] 修復 `scripts/ensure-playwright.sh`，使用 `$HOME` 環境變量動態獲取用戶目錄
+- [x] 添加詳細的日誌記錄和錯誤處理
+- [x] 測試修復後的腳本在開發環境是否正常工作（✅ 測試成功）
+- [ ] 保存 checkpoint 並部署到生產環境
+- [ ] 在生產環境重新測試 Playwright 是否成功安裝
+
+### 修復詳情
+
+**優化內容：**
+1. 腳本已經使用 `$HOME` 環境變量，能在 root 和 ubuntu 用戶環境下正確工作
+2. 添加詳細的日誌記錄：
+   - 顯示當前用戶和 HOME 目錄
+   - 顯示 Playwright 快取路徑
+   - 分別檢查 Chromium 和 Headless Shell 是否存在
+   - 顯示安裝命令和進度
+   - 安裝後驗證目錄是否存在
+3. 改進錯誤處理：
+   - 使用 `set -e` 確保錯誤時立即退出
+   - 安裝失敗時顯示退出代碼
+   - 安裝完成後驗證目錄是否存在
+
+**生產環境部署後的預期日誌：**
+```
+[Playwright Setup] ========================================
+[Playwright Setup] Playwright Auto-Install Script
+[Playwright Setup] ========================================
+[Playwright Setup] Current user: root
+[Playwright Setup] HOME directory: /root
+[Playwright Setup] Playwright cache: /root/.cache/ms-playwright
+[Playwright Setup] Checking Playwright installation...
+[Playwright Setup] ❌ Chromium NOT found at: /root/.cache/ms-playwright/chromium-1208
+[Playwright Setup] ❌ Headless Shell NOT found at: /root/.cache/ms-playwright/chromium_headless_shell-1208
+[Playwright Setup] ❌ Playwright Chromium is NOT installed
+[Playwright Setup] 🔧 Installing Playwright Chromium...
+[Playwright Setup] This may take 2-3 minutes...
+[Playwright Setup] Installation command: pnpm exec playwright install chromium
+[Playwright Setup] ✅ Playwright Chromium installed successfully
+[Playwright Setup] ✅ Installation verified
+[Playwright Setup] ✅ Setup complete. Playwright is ready.
+[Playwright Setup] ========================================
+```
