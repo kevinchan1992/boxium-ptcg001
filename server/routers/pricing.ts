@@ -206,49 +206,63 @@ export const pricingRouter = router({
               } else {
                 // Hot cache expired or doesn't exist, scrape new data
                 console.log('[Pricing Router] Hot cache expired, scraping SNKRDUNK...');
-                const newListings = await scrapeSnkrdunkListings(snkrdunkId);
                 
-                // URL deduplication: merge new listings with cached listings
-                let mergedListings = newListings;
-                if (cache && new Date(cache.expiresAt) > now) {
-                  // Cold cache is still valid, merge with new listings
-                  const cachedListings = JSON.parse(cache.listings);
-                  const newUrls = new Set(newListings.map(item => item.url));
-                  const uniqueCachedListings = cachedListings.filter(
-                    (item: any) => !newUrls.has(item.url)
-                  );
-                  mergedListings = [...newListings, ...uniqueCachedListings];
-                  console.log(`[Pricing Router] Merged ${newListings.length} new + ${uniqueCachedListings.length} cached = ${mergedListings.length} total`);
+                try {
+                  const newListings = await scrapeSnkrdunkListings(snkrdunkId);
+                  
+                  // URL deduplication: merge new listings with cached listings
+                  let mergedListings = newListings;
+                  if (cache && new Date(cache.expiresAt) > now) {
+                    // Cold cache is still valid, merge with new listings
+                    const cachedListings = JSON.parse(cache.listings);
+                    const newUrls = new Set(newListings.map(item => item.url));
+                    const uniqueCachedListings = cachedListings.filter(
+                      (item: any) => !newUrls.has(item.url)
+                    );
+                    mergedListings = [...newListings, ...uniqueCachedListings];
+                    console.log(`[Pricing Router] Merged ${newListings.length} new + ${uniqueCachedListings.length} cached = ${mergedListings.length} total`);
+                  }
+                  
+                  // Only save to cache if we have results (don't cache empty results)
+                  if (mergedListings.length > 0) {
+                    const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
+                    const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
+                    await db.saveSnkrdunkListingsCache({
+                      cardId: actualCardId,
+                      snkrdunkId,
+                      listings: JSON.stringify(mergedListings),
+                      hotExpiresAt,
+                      expiresAt: coldExpiresAt,
+                    });
+                    console.log(`[Pricing Router] Saved ${mergedListings.length} SNKRDUNK listings to cache (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
+                  } else {
+                    // If scraping returned no results, clear the old cache to force retry next time
+                    console.log(`[Pricing Router] WARNING: Scraping returned 0 listings, clearing old cache to force retry`);
+                    await db.clearSnkrdunkCacheByCardId(actualCardId);
+                  }
+                  
+                  snkrdunkListings = mergedListings.map((item) => ({
+                    id: `snkrdunk-${item.url}`,
+                    title: `${card.name} ${item.grade}`,
+                    price: item.price,
+                    currency: item.currency,
+                    imageUrl: item.image || card.imageUrl || '',
+                    source: 'snkrdunk' as const,
+                    buyUrl: item.url,
+                    seller: 'SNKRDUNK',
+                    condition: item.grade,
+                  }));
+                  console.log(`[Pricing Router] SNKRDUNK returned ${snkrdunkListings.length} listings`);
+                } catch (scrapeError) {
+                  // If scraping fails, clear the old cache and log detailed error
+                  console.error(`[Pricing Router] SNKRDUNK scraping failed for cardId ${actualCardId}, snkrdunkId ${snkrdunkId}:`, scrapeError);
+                  console.log(`[Pricing Router] Clearing old cache due to scraping failure`);
+                  await db.clearSnkrdunkCacheByCardId(actualCardId);
+                  
+                  // Re-throw error to be caught by outer catch block
+                  throw scrapeError;
                 }
                 
-                // Only save to cache if we have results (don't cache empty results)
-                if (mergedListings.length > 0) {
-                  const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
-                  const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
-                  await db.saveSnkrdunkListingsCache({
-                    cardId: actualCardId,
-                    snkrdunkId,
-                    listings: JSON.stringify(mergedListings),
-                    hotExpiresAt,
-                    expiresAt: coldExpiresAt,
-                  });
-                  console.log(`[Pricing Router] Saved ${mergedListings.length} SNKRDUNK listings to cache (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
-                } else {
-                  console.log(`[Pricing Router] Skipping SNKRDUNK cache save - no listings found`);
-                }
-                
-                snkrdunkListings = mergedListings.map((item) => ({
-                  id: `snkrdunk-${item.url}`,
-                  title: `${card.name} ${item.grade}`,
-                  price: item.price,
-                  currency: item.currency,
-                  imageUrl: item.image || card.imageUrl || '',
-                  source: 'snkrdunk' as const,
-                  buyUrl: item.url,
-                  seller: 'SNKRDUNK',
-                  condition: item.grade,
-                }));
-                console.log(`[Pricing Router] SNKRDUNK returned ${snkrdunkListings.length} listings`);
               }
             } else {
               console.log('[Pricing Router] Could not extract SNKRDUNK ID from URL');

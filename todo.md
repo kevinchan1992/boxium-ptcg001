@@ -1352,3 +1352,38 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 - [ ] 清除錯誤的快取記錄
 - [ ] 測試生產環境爬蟲功能
 - [ ] 保存 checkpoint
+
+## 🐛 生產環境 Pricing 頁面無法重新爬取 SNKRDUNK 數據
+
+### 問題描述
+生產環境（boxium.asia）持續顯示「暫無在售商品」，即使使用快取管理工具清除快取後，用戶點擊 Pricing 頁面的卡牌仍然無法重新爬取 SNKRDUNK 數據。設計應該是當用戶點擊 Pricing 頁面的卡牌後會自動重新爬取 SNKRDUNK 數據，確保能成功顯示 PSA 10 在售商品。
+
+### 診斷任務
+- [x] 檢查 Pricing 頁面的爬取邏輯（routers.ts 中的 pricing.getCardPricing API）
+- [x] 檢查快取過期判斷邏輯（是否正確觸發重新爬取）
+- [x] 檢查 SNKRDUNK 爬取函數（是否有錯誤或超時）
+- [x] 檢查生產環境的錯誤日誌（查找爬取失敗的具體原因）
+- [x] 找到根本原因：爬取失敗或返回空結果時，舊快取仍然存在且未過期
+
+### 修復任務
+- [x] 修復爬取邏輯問題（當爬取失敗或返回 0 個商品時，清除舊快取）
+- [x] 添加詳細的錯誤日誌（記錄 cardId 和 snkrdunkId）
+- [x] 爬取重試機制已存在（snkrdunkPlaywright.ts 中有 3 次重試）
+- [x] 測試修復結果（✅ 4/4 測試通過）
+- [ ] 保存 checkpoint
+
+### 修復詳情
+**問題根本原因：**
+當 SNKRDUNK 爬取失敗或返回 0 個商品時，系統不會保存新快取（正確），但舊的空快取仍然存在且未過期，導致下次訪問時仍然使用舊的空快取。
+
+**修復方案：**
+1. 當爬取返回 0 個商品時，清除舊快取（強制下次重新爬取）
+2. 當爬取失敗拋出錯誤時，清除舊快取並記錄詳細錯誤
+3. 重新拋出錯誤，讓外層 catch 區塊處理
+
+**測試結果：**
+- ✅ should clear cache when saving empty listings
+- ✅ should not save cache when listings are empty
+- ✅ should clear cache when scraping fails
+- ✅ should save cache when listings are not empty
+
