@@ -595,3 +595,23 @@ TRPCClientError: You do not have required permission (10002)
 - [x] 測試登入視窗 LOGO 顯示（✅ 正常顯示）
 - [x] 測試註冊視窗 LOGO 顯示（✅ 正常顯示）
 - [x] 保存 checkpoint
+
+
+---
+
+## 🔧 修改 Research 頁面搜尋結果排序
+
+### 需求描述
+Research 頁面的搜尋結果需要按照卡牌的參考價格由高至低排序，讓用戶可以優先看到高價值的卡牌。
+
+### 實現方式
+- 在後端 API 或前端排序邏輯中添加價格排序
+- 使用卡牌的 `referencePrice` 欄位進行排序
+- 降序排列（DESC）：價格高的卡牌排在前面
+
+### 任務清單
+- [x] 檢查 Research 頁面的搜尋 API 位置（server/db.ts searchCards 函數）
+- [x] 修改排序邏輯：按照 SNKRDUNK PSA 10 最新價格 DESC（使用 JOIN 和 priceMap）
+- [x] 測試搜尋「pikachu」的結果排序（✅ 開發環境和生產環境都正常工作）
+- [x] 測試其他關鍵字的結果排序（排序邏輯已驗證）
+- [x] 保存 checkpoint

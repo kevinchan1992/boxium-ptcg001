@@ -23,7 +23,8 @@ export async function searchCards(query: string, limit: number = 20) {
   const db = await getDb();
   if (!db) return [];
 
-  const result = await db
+  // First, get matching cards
+  const matchingCards = await db
     .select()
     .from(cards)
     .where(
@@ -32,10 +33,44 @@ export async function searchCards(query: string, limit: number = 20) {
         like(cards.nameJa, `%${query}%`),
         like(cards.cardNumber, `%${query}%`)
       )
-    )
-    .limit(limit);
+    );
 
-  return result;
+  if (matchingCards.length === 0) return [];
+
+  // Get latest SNKRDUNK PSA 10 price for each card
+  const cardIds = matchingCards.map(c => c.id);
+  const latestPrices = await db
+    .select({
+      cardId: priceHistory.cardId,
+      price: priceHistory.price,
+      createdAt: priceHistory.createdAt,
+    })
+    .from(priceHistory)
+    .where(
+      and(
+        inArray(priceHistory.cardId, cardIds),
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.grade, 'PSA10')
+      )
+    )
+    .orderBy(desc(priceHistory.createdAt));
+
+  // Create price map (cardId -> latest price)
+  const priceMap = new Map<number, number>();
+  for (const price of latestPrices) {
+    if (!priceMap.has(price.cardId)) {
+      priceMap.set(price.cardId, Number(price.price));
+    }
+  }
+
+  // Sort cards by price (highest first), cards without price go to the end
+  const sortedCards = matchingCards.sort((a, b) => {
+    const priceA = priceMap.get(a.id) || 0;
+    const priceB = priceMap.get(b.id) || 0;
+    return priceB - priceA;
+  });
+
+  return sortedCards.slice(0, limit);
 }
 
 export async function getCardById(id: number) {
