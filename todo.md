@@ -1004,4 +1004,77 @@ Admin 頁面的「性能監控」標籤頁一直顯示「載入中...」，無�
 - [x] 啟用 scheduler.ts 中的 SCHEDULER_ENABLED
 - [x] 測試修復後的排程功能（日誌顯示正在運行）
 - [x] 驗證排程可以正常執行（正在更新數據源）
+- [x] 保存 checkpoint
+
+
+---
+
+## 🔄 統一排程管理
+
+### 問題描述
+目前有兩個排程器同時運行：
+1. `scheduler.ts`：每 12 小時自動更新所有 SNKRDUNK 數據源
+2. `priceUpdateScheduler.ts`：每日指定時間執行 SNKRDUNK、eBay 批量更新和 Trending 計算
+
+兩者功能重疊，造成資源浪費和重複更新。需要統一使用 `priceUpdateScheduler.ts`。
+
+### 診斷任務
+- [ ] 檢查 scheduler.ts 在哪裡被調用
+- [ ] 檢查 scheduler.ts 提供的功能是否已被 priceUpdateScheduler.ts 覆蓋
+- [ ] 檢查是否有其他代碼依賴 scheduler.ts 的函數
+
+### 移除任務
+- [ ] 移除 server/_core/index.ts 中的 startScheduler() 調用
+- [ ] 保留 scheduler.ts 中的手動功能（manualUpdateDataSource, triggerManualUpdateAll, autoCrawlSnkrdunk）
+- [ ] 測試排程功能是否正常運行
+- [ ] 保存 checkpoint
+
+---
+
+## 🔢 修復價格更新排程卡牌數量不符問題
+
+### 問題描述
+用戶報告價格更新排程只處理 24,290 張卡牌，但平台內應該有 27,394 張卡牌。數據不符合。
+
+### 診斷任務
+- [ ] 檢查 batchUpdateExecutor.ts 中的 executeSnkrdunkBatchUpdate 函數
+- [ ] 檢查如何獲取卡牌清單（是否有篩選條件）
+- [ ] 檢查是否有卡牌沒有 SNKRDUNK 數據源
+- [ ] 檢查是否有卡牌被跳過
+
+### 修復任務
+- [ ] 修改獲取卡牌清單的邏輯以包含所有卡牌
+- [ ] 測試修復後的排程功能
+- [ ] 驗證卡牌數量是否正確
+- [ ] 保存 checkpoint
+
+
+---
+
+## 📝 修改 Trending 頁面文字
+
+### 問題描述
+用戶透過視覺編輯器請求將 Trending 頁面的「價格暴跌」文字修改為「價格回落」。
+
+### 修改任務
+- [x] 檢查 Trending.tsx 文件（使用國際化翻譯鍵值）
+- [x] 找到語言文件位置（zh-TW.json, en.json, ja.json）
+- [x] 修改 zh-TW.json 中的 priceDrop 和 priceDropShort
+- [x] 修改 zh-TW.json 中的 emptyPriceDecrease
+- [x] 修改 en.json 和 ja.json 對應翻譯
+- [x] 測試修改後的顯示效果
+- [ ] 保存 checkpoint
+
+
+---
+
+## 📝 修改 Disclaimer 頁面法院管轄地
+
+### 問題描述
+用戶透過視覺編輯器請求將 Disclaimer 頁面的法院管轄地從「台灣台北地方法院」修改為「香港特別行政區法院」。
+
+### 修改任務
+- [x] 檢查 Disclaimer.tsx 文件（使用國際化翻譯鍵值）
+- [x] 找到語言文件位置（zh-TW.json）
+- [x] 修改 zh-TW.json 中的 jurisdiction.content
 - [ ] 保存 checkpoint

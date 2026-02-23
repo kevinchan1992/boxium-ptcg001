@@ -6,7 +6,7 @@
     "searchHeatShort": "人気",
     "priceSurge": "価格急上昇",
     "priceSurgeShort": "上昇",
-    "priceDrop": "価格急落",
+    "priceDrop": "価格下落",
     "priceDropShort": "下落",
     "newlyAdded": "新規追加",
     "newlyAddedShort": "新規",
@@ -19,7 +19,7 @@
     "noImage": "画像なし",
     "emptySearches": "十分な検索データがありません",
     "emptyPriceIncrease": "価格急上昇のカードがありません",
-    "emptyPriceDecrease": "価格急落のカードがありません",
+    "emptyPriceDecrease": "価格下落のカードがありません",
     "emptyNewlyAdded": "新規追加のカードがありません",
     "emptyHint": "後で再試行するか、他のカテゴリに切り替えてください"
   },

@@ -10,7 +10,7 @@ import { appRouter } from "../routers";
 import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { startScheduler } from "../scheduler";
+// import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
 import { initPriceUpdateScheduler, startTrendingCardsScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
 
@@ -117,7 +117,7 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
     // Start the auto-update scheduler
-    startScheduler();
+    // startScheduler(); // Disabled: use priceUpdateScheduler instead
     // Start the price update scheduler
     initPriceUpdateScheduler().catch(err => {
       console.error('[Server] Failed to initialize price update scheduler:', err);

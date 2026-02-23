@@ -17,8 +17,8 @@
     "searchHeatShort": "熱度",
     "priceSurge": "價格飆升",
     "priceSurgeShort": "飆升",
-    "priceDrop": "價格暴跌",
-    "priceDropShort": "暴跌",
+    "priceDrop": "價格回落",
+    "priceDropShort": "回落",
     "newlyAdded": "新上架",
     "newlyAddedShort": "新品",
     "currentPrice": "當前價格",
@@ -30,7 +30,7 @@
     "noImage": "無圖片",
     "emptySearches": "目前沒有足夠的搜尋數據",
     "emptyPriceIncrease": "目前沒有價格飆升的卡牌",
-    "emptyPriceDecrease": "目前沒有價格暴跌的卡牌",
+    "emptyPriceDecrease": "目前沒有價格回落的卡牌",
     "emptyNewlyAdded": "目前沒有新上架的卡牌",
     "emptyHint": "請稍後再試或切換其他分類"
   },
@@ -387,7 +387,7 @@
       },
       "jurisdiction": {
         "title": "法律管轄與爭議解決",
-        "content": "本免責聲明及平台服務受香港特別行政區法律管轄。因使用本平台而產生的任何爭議，雙方應首先通過友好協商解決；協商不成的，應提交至台灣台北地方法院管轄。如本免責聲明的任何條款被認定為無效或不可執行，其餘條款仍然有效。"
+        "content": "本免責聲明及平台服務受香港特別行政區法律管轄。因使用本平台而產生的任何爭議，雙方應首先通過友好協商解決；協商不成的，應提交至香港特別行政區法院管轄。如本免責聲明的任何條款被認定為無效或不可執行，其餘條款仍然有效。"
       },
       "userConduct": {
         "title": "用戶行為規範",
