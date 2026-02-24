@@ -5,7 +5,7 @@ import { BrandButton } from "@/components/ui/brand-button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Eye, Edit, X, Calendar, Tag, Sparkles, Wand2, Loader2 } from "lucide-react";
+import { Eye, Edit, X, Calendar, Tag, Sparkles, Wand2, Loader2, FileText, MessageSquare, Layout, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -232,9 +232,84 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
           </DialogHeader>
 
           <div className="space-y-4 mt-4">
+            {/* Quick Options */}
             <div>
               <label className="text-sm text-gray-400 mb-2 block">
-                修改要求
+                快速選項
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditInstruction('讓標題更吸引人，增加一些關鍵字和數字')}
+                  className="border-zinc-700 text-white hover:bg-zinc-800 text-xs"
+                  disabled={isAIEditing}
+                >
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  優化標題
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditInstruction('擴充文章內容，增加更多細節、數據和例子，讓文章更豐富')}
+                  className="border-zinc-700 text-white hover:bg-zinc-800 text-xs"
+                  disabled={isAIEditing}
+                >
+                  <FileText className="w-3 h-3 mr-1" />
+                  擴充內容
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditInstruction('調整文章語氣，讓它更專業、正式，適合商業場合')}
+                  className="border-zinc-700 text-white hover:bg-zinc-800 text-xs"
+                  disabled={isAIEditing}
+                >
+                  <MessageSquare className="w-3 h-3 mr-1" />
+                  調整語氣
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditInstruction('改善文章可讀性，簡化複雜句子，使用更清晰的段落結構')}
+                  className="border-zinc-700 text-white hover:bg-zinc-800 text-xs"
+                  disabled={isAIEditing}
+                >
+                  <Eye className="w-3 h-3 mr-1" />
+                  改善可讀性
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditInstruction('優化文章結構，重新組織段落順序，讓邏輯更清晰')}
+                  className="border-zinc-700 text-white hover:bg-zinc-800 text-xs"
+                  disabled={isAIEditing}
+                >
+                  <Layout className="w-3 h-3 mr-1" />
+                  優化結構
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditInstruction('增強文章的 SEO 優化，添加相關關鍵字和內部連結建議')}
+                  className="border-zinc-700 text-white hover:bg-zinc-800 text-xs"
+                  disabled={isAIEditing}
+                >
+                  <Search className="w-3 h-3 mr-1" />
+                  SEO 優化
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-400 mb-2 block">
+                修改要求（可直接編輯或使用上方快速選項）
               </label>
               <Textarea
                 value={editInstruction}
