@@ -777,3 +777,30 @@ const cachedListings = JSON.parse(cache.listings);
 - `admin.getSnkrdunkCacheBatchUpdateProgress` - 查詢進度
 - `admin.completeBatchUpdateTask` - 完成任務
 - `admin.stopBatchUpdateTask` - 停止任務
+
+
+---
+
+## 🐛 修復 Admin 頁面 SQL 錯誤
+
+### 錯誤描述
+在 Admin 頁面（/admin?from_webdev=1）中，postShares 和 posts 表的 JOIN 查詢失敗：
+```
+Failed query: select `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`shareType`, COUNT(*) as `count` 
+from `postShares` 
+inner join `posts` on `postShares`.`postId` = `posts`.`id` 
+group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`shareType`
+```
+
+### 任務清單
+- [x] 定位錯誤來源（blogDb.ts 中的 getAllPostsShareStats 函數）
+- [x] 分析問題原因（postShares 表不存在於數據庫）
+- [x] 修復 SQL 查詢（手動創建 postShares 表）
+- [x] 測試修復（API 測試成功，返回空數組）
+- [ ] 保存 checkpoint
+
+### 修復結果
+- ✅ 創建 postShares 表（6 個欄位）
+- ✅ SQL 查詢正常工作
+- ✅ API 正常返回數據（空數組）
+- ✅ TypeScript 編譯通過

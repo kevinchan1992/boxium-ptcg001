@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `postShares` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `postId` int NOT NULL,\n  `shareType` enum('facebook','whatsapp','copy_link') NOT NULL,\n  `sharedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `userAgent` text,\n  `ipAddress` varchar(45),\n  CONSTRAINT `postShares_id` PRIMARY KEY(`id`),\n  INDEX `postId_idx` (`postId`),\n  INDEX `shareType_idx` (`shareType`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE `postShares` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `postId` int NOT NULL,\n  `shareType` enum('facebook','whatsapp','copy_link') NOT NULL,\n  `sharedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `userAgent` text,\n  `ipAddress` varchar(45),\n  CONSTRAINT `postShares_id` PRIMARY KEY(`id`),\n  INDEX `postId_idx` (`postId`),\n  INDEX `shareType_idx` (`shareType`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1792
+}
