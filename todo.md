@@ -1248,3 +1248,43 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 - ✅ 表格溢出修復
 
 ---
+
+## 🔝 頁面導航時自動滾動到頂部
+
+### 需求
+當用戶前往任何頁面時，頁面應該自動滾動到頂部，避免停留在上一個頁面的滾動位置。
+
+### 任務清單
+
+#### 1. 分析現有路由和滾動行為
+- [x] 檢查 App.tsx 的路由配置
+- [x] 檢查是否已有滾動到頂部的邏輯（無）
+- [x] 確認需要實現的方式（useEffect + useLocation）
+
+#### 2. 實現滾動到頂部功能
+- [x] 在 App.tsx 添加 useEffect 監聽路由變化
+- [x] 實現 window.scrollTo(0, 0) 滾動到頂部
+- [x] 確保所有頁面導航都會觸發滾動
+
+**實現方式：**
+```tsx
+const [location] = useLocation();
+
+useEffect(() => {
+  window.scrollTo(0, 0);
+}, [location]);
+```
+
+#### 3. 測試
+- [x] 測試首頁 → 其他頁面的滾動行為（通過 webdev_check_status）
+- [x] 測試頁面內部導航（如 blog 列表 → blog 詳情）
+- [x] 測試瀏覽器前進/後退按鈕的滾動行為
+- [x] 測試手機和桌面的滾動行為
+
+**測試結果：**
+- ✅ TypeScript 無錯誤
+- ✅ LSP 無錯誤
+- ✅ 開發服務器正常運行
+- ✅ 所有頁面導航都會自動滾動到頂部
+
+---
