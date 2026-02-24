@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Calendar, Eye, TrendingUp, Sparkles, ArrowRight } from "lucide-react";
+import { Search, Calendar, Eye, TrendingUp, Sparkles, ArrowRight, Tag } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
 import { useTranslation } from "react-i18next";
 
@@ -76,31 +76,32 @@ export default function Blog() {
   };
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-b from-[#06038d]/20 to-black border-b border-zinc-800">
-        <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4">
+    <div className="min-h-screen bg-white">
+      {/* Hero Section - 白色底色 + 藍色漸變 */}
+      <div className="bg-gradient-to-br from-blue-50 via-white to-yellow-50 border-b border-gray-200">
+        <div className="container mx-auto px-4 py-12 md:py-20 lg:py-24">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Title - 使用 logo 藍色 */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[#0033CC] mb-4 md:mb-6 leading-tight">
               {t('blogPage.title')}
             </h1>
-            <p className="text-xs sm:text-sm md:text-base text-gray-300 mb-4 md:mb-6">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 md:mb-10 leading-relaxed">
               {t('blogPage.subtitle')}
             </p>
             
-            {/* Search Bar - 手機版優化 */}
-            <div className="flex flex-col sm:flex-row gap-2 max-w-2xl mx-auto">
+            {/* Search Bar - 專業設計 */}
+            <div className="flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   placeholder={t('blogPage.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-zinc-900 border-zinc-700 text-white min-h-[44px] text-sm md:text-base"
+                  className="pl-12 bg-white border-gray-300 text-gray-900 min-h-[52px] text-base shadow-sm focus:border-[#0033CC] focus:ring-[#0033CC]"
                 />
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-48 bg-zinc-900 border-zinc-700 text-white min-h-[44px] text-sm md:text-base">
+                <SelectTrigger className="w-full sm:w-56 bg-white border-gray-300 text-gray-900 min-h-[52px] text-base shadow-sm">
                   <SelectValue placeholder={t('blogPage.allCategories')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -118,65 +119,67 @@ export default function Blog() {
       </div>
 
       {/* Content Section */}
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-12 md:py-16">
         {isLoading ? (
-          <div className="text-center py-16">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#06038d]"></div>
-            <p className="text-gray-400 mt-4">{t('blogPage.loading')}</p>
+          <div className="text-center py-20">
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#0033CC]"></div>
+            <p className="text-gray-600 mt-6 text-lg">{t('blogPage.loading')}</p>
           </div>
         ) : posts && posts.length > 0 ? (
           <>
-            {/* Featured Post */}
+            {/* Featured Post - 大型卡片設計 */}
             {featuredPost && (
-              <div className="mb-12">
-                <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-3 md:mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-6 h-6 text-[#06038d]" />
-                  {t('blogPage.featuredPost')}
-                </h2>
+              <div className="mb-16">
+                <div className="flex items-center gap-3 mb-6">
+                  <TrendingUp className="w-7 h-7 text-[#FFD700]" />
+                  <h2 className="text-2xl md:text-3xl font-bold text-[#0033CC]">
+                    {t('blogPage.featuredPost')}
+                  </h2>
+                </div>
                 <Link href={`/blog/${featuredPost.slug}`}>
-                  <Card className="bg-zinc-900 border-zinc-800 hover:border-[#06038d] transition-all cursor-pointer overflow-hidden">
-                    <div className="grid md:grid-cols-2 gap-0 md:gap-6">
+                  <Card className="bg-white border-2 border-gray-200 hover:border-[#0033CC] hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden group">
+                    <div className="grid md:grid-cols-5 gap-0">
                       {featuredPost.featuredImage && (
-                        <div className="relative h-48 sm:h-64 md:h-auto">
+                        <div className="relative h-64 sm:h-80 md:h-auto md:col-span-2 overflow-hidden">
                           <LazyImage
                             src={featuredPost.featuredImage}
                             alt={featuredPost.title}
-                            className="absolute inset-0 w-full h-full object-cover"
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         </div>
                       )}
-                      <div className="p-4 sm:p-6 flex flex-col justify-center">
+                      <div className="p-6 sm:p-8 md:p-10 flex flex-col justify-center md:col-span-3">
                         <div className="flex items-center gap-2 mb-4">
                           {featuredPost.dataSource === 'ai-generated' && (
-                            <Badge variant="outline" className="border-purple-500 text-purple-400">
+                            <Badge variant="outline" className="border-purple-500 text-purple-600 bg-purple-50">
                               <Sparkles className="w-3 h-3 mr-1" />
                               AI 生成
                             </Badge>
                           )}
-                          <Badge variant="secondary">精選</Badge>
+                          <Badge className="bg-[#FFD700] text-[#0033CC] hover:bg-[#FFD700]/90">精選文章</Badge>
                         </div>
-                        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 md:mb-3 line-clamp-2">
+                        <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 line-clamp-2 group-hover:text-[#0033CC] transition-colors">
                           {getLocalizedContent(featuredPost, 'title')}
                         </h3>
                         {featuredPost.excerpt && (
-                          <p className="text-sm sm:text-base text-gray-300 mb-4 md:mb-6 line-clamp-3">
+                          <p className="text-base sm:text-lg text-gray-600 mb-6 line-clamp-3 leading-relaxed">
                             {getLocalizedContent(featuredPost, 'excerpt')}
                           </p>
                         )}
-                        <div className="flex items-center gap-4 text-sm text-gray-400 mb-6">
-                          <span className="flex items-center gap-1">
+                        <div className="flex items-center gap-6 text-sm text-gray-500 mb-6">
+                          <span className="flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
                             {new Date(featuredPost.publishedAt || featuredPost.createdAt).toLocaleDateString('zh-TW')}
                           </span>
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-2">
                             <Eye className="w-4 h-4" />
                             {featuredPost.viewCount} {t('blogPage.views')}
                           </span>
                         </div>
-                        <BrandButton className="w-fit">
+                        <div className="flex items-center gap-2 text-[#0033CC] font-semibold group-hover:gap-4 transition-all">
                           {t('blogPage.readMore')}
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </BrandButton>
+                          <ArrowRight className="w-5 h-5" />
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -184,51 +187,53 @@ export default function Blog() {
               </div>
             )}
 
-            {/* Regular Posts Grid */}
+            {/* Regular Posts Grid - 專業卡片設計 */}
             {regularPosts.length > 0 && (
               <div>
-                <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-3 md:mb-4">{t('blogPage.latestPosts')}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-[#0033CC] mb-8">
+                  {t('blogPage.latestPosts')}
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                   {regularPosts.map((post) => (
                     <Link key={post.id} href={`/blog/${post.slug}`}>
-                      <Card className="bg-zinc-900 border-zinc-800 hover:border-[#06038d] transition-all cursor-pointer h-full flex flex-col">
+                      <Card className="bg-white border-2 border-gray-200 hover:border-[#0033CC] hover:shadow-xl transition-all duration-300 cursor-pointer h-full flex flex-col group overflow-hidden">
                         {post.featuredImage && (
-                          <div className="relative h-40 sm:h-48 overflow-hidden">
+                          <div className="relative h-48 sm:h-56 overflow-hidden">
                             <LazyImage
                               src={post.featuredImage}
                               alt={post.title}
-                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />
                           </div>
                         )}
-                        <CardHeader className="p-4 sm:p-6">
-                          <div className="flex items-center gap-2 mb-2">
+                        <CardHeader className="p-5 sm:p-6 flex-1">
+                          <div className="flex items-center gap-2 mb-3">
                             {post.dataSource === 'ai-generated' && (
-                              <Badge variant="outline" className="border-purple-500 text-purple-400">
+                              <Badge variant="outline" className="border-purple-500 text-purple-600 bg-purple-50">
                                 <Sparkles className="w-3 h-3 mr-1" />
                                 AI
                               </Badge>
                             )}
                           </div>
-                          <CardTitle className="text-white text-sm sm:text-base md:text-lg line-clamp-2 hover:text-[#06038d] transition-colors">
+                          <CardTitle className="text-gray-900 text-lg sm:text-xl md:text-2xl line-clamp-2 group-hover:text-[#0033CC] transition-colors mb-3 leading-tight font-bold">
                             {getLocalizedContent(post, 'title')}
                           </CardTitle>
                           {post.excerpt && (
-                            <CardDescription className="text-xs sm:text-sm line-clamp-3">
+                            <CardDescription className="text-sm sm:text-base line-clamp-3 text-gray-600 leading-relaxed">
                               {getLocalizedContent(post, 'excerpt')}
                             </CardDescription>
                           )}
                         </CardHeader>
-                        <CardContent className="mt-auto p-4 sm:p-6">
-                          <div className="flex items-center gap-3 md:gap-4 text-xs sm:text-sm text-gray-400">
-                            <span className="flex items-center gap-1">
+                        <CardContent className="p-5 sm:p-6 pt-0">
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span className="flex items-center gap-1.5">
                               <Calendar className="w-4 h-4" />
                               {new Date(post.publishedAt || post.createdAt).toLocaleDateString('zh-TW', {
                                 month: 'short',
                                 day: 'numeric',
                               })}
                             </span>
-                            <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1.5">
                               <Eye className="w-4 h-4" />
                               {post.viewCount}
                             </span>
@@ -241,11 +246,11 @@ export default function Blog() {
 
                 {/* Load More Button */}
                 {hasMore && (
-                  <div className="mt-8 md:mt-12 text-center">
+                  <div className="mt-12 md:mt-16 text-center">
                     <BrandButton
                       onClick={handleLoadMore}
                       disabled={isLoading}
-                      className="px-6 md:px-8 py-3 md:py-6 text-base md:text-lg min-h-[44px]"
+                      className="px-8 md:px-10 py-4 md:py-6 text-lg md:text-xl min-h-[56px] shadow-lg hover:shadow-xl transition-shadow"
                     >
                       {isLoading ? t('blogPage.loading') : t('blogPage.loadMore')}
                     </BrandButton>
@@ -255,12 +260,12 @@ export default function Blog() {
             )}
           </>
         ) : (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-zinc-900 flex items-center justify-center">
-              <Search className="w-12 h-12 text-gray-600" />
+          <div className="text-center py-20">
+            <div className="w-32 h-32 mx-auto mb-8 rounded-full bg-gray-100 flex items-center justify-center">
+              <Search className="w-16 h-16 text-gray-400" />
             </div>
-            <h3 className="text-xl md:text-2xl font-bold text-white mb-2">{t('blogPage.noPostsFound')}</h3>
-            <p className="text-sm md:text-base text-gray-400">
+            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">{t('blogPage.noPostsFound')}</h3>
+            <p className="text-base md:text-lg text-gray-600">
               {searchQuery || selectedCategory !== 'all'
                 ? t('blogPage.tryOtherSearch')
                 : t('blogPage.noPostsFound')}
