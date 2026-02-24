@@ -58,6 +58,7 @@ export function AdminCacheManagement() {
   const processBatch = trpc.admin.processBatch.useMutation();
   
   // Task management mutations
+  const startPersistentTask = trpc.admin.startPersistentSnkrdunkBatchUpdate.useMutation();
   const startTask = trpc.admin.startBatchUpdateTask.useMutation();
   const updateProgress = trpc.admin.updateBatchUpdateProgress.useMutation();
   const completeTask = trpc.admin.completeBatchUpdateTask.useMutation();
@@ -72,6 +73,7 @@ export function AdminCacheManagement() {
   // Restore progress from database on mount
   useEffect(() => {
     if (taskProgress && taskProgress.status === 'running') {
+      // Only update UI state, don't restart processing
       setCurrentTaskId(taskProgress.taskId);
       setIsBatchUpdating(true);
       setBatchProgress({
@@ -82,11 +84,22 @@ export function AdminCacheManagement() {
         skipped: 0, // Not tracked separately
       });
       
-      // Resume processing from where it left off
-      const currentBatchIndex = Math.floor(taskProgress.processedItems / 50);
-      processBatches(currentBatchIndex);
+      // Start heartbeat to keep sandbox alive
+      if (!heartbeatInterval) {
+        startHeartbeat();
+      }
+    } else if (taskProgress && taskProgress.status === 'completed') {
+      // Task completed, update final state
+      setIsBatchUpdating(false);
+      setCurrentTaskId(null);
+      stopHeartbeat();
+      toast.success("批量更新已完成", {
+        description: `成功: ${taskProgress.successCount}, 失敗: ${taskProgress.failureCount}`,
+      });
+      refetchDetailedStats();
+      refetchList();
     }
-  }, [taskProgress]);
+  }, [taskProgress?.taskId, taskProgress?.status, taskProgress?.processedItems]);
 
   // Fetch cache list
   const { data: cacheList, refetch: refetchList, isLoading: isLoadingList } = trpc.admin.getAllCacheList.useQuery({
@@ -204,32 +217,29 @@ export function AdminCacheManagement() {
     if (!detailedStats) return;
     
     try {
-      // Create task record in database
-      const result = await startTask.mutateAsync();
-      
-      if (result.existing) {
-        toast.info("已有批量更新任務運行中", {
-          description: "將從上次位置繼續",
-        });
-        return;
-      }
+      // Call backend persistent task API
+      const result = await startPersistentTask.mutateAsync();
       
       setCurrentTaskId(result.taskId);
       setIsBatchUpdating(true);
       setIsPaused(false);
       setBatchProgress({
         current: 0,
-        total: result.totalItems || 0,
+        total: result.totalCards || 0,
         success: 0,
         failed: 0,
         skipped: 0,
       });
       
-      // Start heartbeat
+      toast.success("批量更新已啟動", {
+        description: `共 ${result.totalCards} 張卡片，後端持續處理中`,
+      });
+      
+      // Start heartbeat to keep sandbox alive
       startHeartbeat();
       
-      // Start processing batches
-      processBatches(0);
+      // Backend will handle processing automatically
+      // Frontend just polls for progress updates
     } catch (error: any) {
       toast.error("啟動批量更新失敗", {
         description: error.message,
