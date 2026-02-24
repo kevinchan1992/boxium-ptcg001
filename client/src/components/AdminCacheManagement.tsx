@@ -63,6 +63,13 @@ export function AdminCacheManagement() {
   const updateProgress = trpc.admin.updateBatchUpdateProgress.useMutation();
   const completeTask = trpc.admin.completeBatchUpdateTask.useMutation();
   const stopTask = trpc.admin.stopBatchUpdateTask.useMutation();
+  const cancelTask = trpc.admin.cancelPersistentTask.useMutation();
+  
+  // Cancel confirmation dialog state
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  
+  // Task start time for estimating remaining time
+  const [taskStartTime, setTaskStartTime] = useState<number | null>(null);
   
   // Query task progress (poll every 3 seconds)
   const { data: taskProgress } = trpc.admin.getSnkrdunkCacheBatchUpdateProgress.useQuery(undefined, {
@@ -223,6 +230,7 @@ export function AdminCacheManagement() {
       setCurrentTaskId(result.taskId);
       setIsBatchUpdating(true);
       setIsPaused(false);
+      setTaskStartTime(Date.now()); // Record start time
       setBatchProgress({
         current: 0,
         total: result.totalCards || 0,
@@ -232,7 +240,7 @@ export function AdminCacheManagement() {
       });
       
       toast.success("批量更新已啟動", {
-        description: `共 ${result.totalCards} 張卡片，後端持續處理中`,
+        description: `共 ${result.totalCards} 张卡片，后端持续处理中`,
       });
       
       // Start heartbeat to keep sandbox alive
@@ -353,10 +361,32 @@ export function AdminCacheManagement() {
   };
   
   const stopBatchUpdate = () => {
-    setIsBatchUpdating(false);
-    setIsPaused(false);
-    stopHeartbeat();
-    toast.info("已停止批量更新");
+    // Show cancel confirmation dialog
+    setShowCancelDialog(true);
+  };
+  
+  const confirmCancelTask = async () => {
+    if (!currentTaskId) return;
+    
+    try {
+      await cancelTask.mutateAsync({ taskId: currentTaskId });
+      
+      setIsBatchUpdating(false);
+      setIsPaused(false);
+      setCurrentTaskId(null);
+      setTaskStartTime(null);
+      stopHeartbeat();
+      
+      toast.success("任務已取消", {
+        description: "批量更新任務已停止",
+      });
+      
+      setShowCancelDialog(false);
+    } catch (error: any) {
+      toast.error("取消任務失敗", {
+        description: error.message,
+      });
+    }
   };
 
   const totalPages = cacheList ? Math.ceil(cacheList.total / pageSize) : 0;
@@ -478,6 +508,31 @@ export function AdminCacheManagement() {
                         style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }}
                       />
                     </div>
+                    {/* Estimated Time Remaining */}
+                    {taskStartTime && batchProgress.current > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-400">預估剩餘時間</span>
+                        <span className="text-white font-medium">
+                          {(() => {
+                            const elapsedMs = Date.now() - taskStartTime;
+                            const elapsedMinutes = elapsedMs / 1000 / 60;
+                            const itemsPerMinute = batchProgress.current / elapsedMinutes;
+                            const remainingItems = batchProgress.total - batchProgress.current;
+                            const remainingMinutes = remainingItems / itemsPerMinute;
+                            
+                            if (remainingMinutes < 1) {
+                              return '不到 1 分鐘';
+                            } else if (remainingMinutes < 60) {
+                              return `${Math.round(remainingMinutes)} 分鐘`;
+                            } else {
+                              const hours = Math.floor(remainingMinutes / 60);
+                              const minutes = Math.round(remainingMinutes % 60);
+                              return `${hours} 小時 ${minutes} 分鐘`;
+                            }
+                          })()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Statistics */}
@@ -850,6 +905,29 @@ export function AdminCacheManagement() {
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               確認清除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Cancel Task Confirmation Dialog */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">確認取消任務</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              您確定要取消批量更新任務嗎？此操作將停止所有正在進行的更新。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700">
+              取消
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmCancelTask}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              確認取消
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

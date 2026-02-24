@@ -849,3 +849,36 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 - ✅ 顯示 info toast 而不是 error toast
 - ✅ 自動查詢任務進度並更新 UI
 - ✅ 啟動心跳保活機制
+
+
+---
+
+## ✨ 添加批量更新任務取消功能和優化進度顯示
+
+### 功能需求
+
+#### 1. 任務取消功能
+- [x] 檢查後端是否有 cancelTask API（✅ admin.cancelPersistentTask）
+- [x] 在前端添加 cancelTask mutation
+- [x] 修改 stopBatchUpdate 函數顯示確認對話框
+- [x] 實施 confirmCancelTask 函數調用 API
+- [x] 添加取消確認對話框組件
+- [x] 更新 UI 狀態（清除 taskId, 停止心跳）
+
+#### 2. 進度顯示優化
+- [x] 添加百分比顯示（✅ 已在進度條中顯示）
+- [x] 記錄任務開始時間（✅ taskStartTime state）
+- [x] 計算處理速度（✅ itemsPerMinute）
+- [x] 計算並顯示預估剩餘時間（✅ 小時 + 分鐘）
+- [x] TypeScript 編譯通過
+
+#### 3. 測試和交付
+- [x] 測試取消功能（✅ 邏輯正確，對話框正常顯示）
+- [x] 測試進度顯示（✅ 百分比和預估時間正常計算）
+- [ ] 保存 checkpoint
+
+### 實施結果
+- ✅ 取消任務功能：點擊「停止」按鈕顯示確認對話框，確認後調用 admin.cancelPersistentTask API
+- ✅ 進度百分比：在進度條旁顯示百分比（例：4.2%）
+- ✅ 預估剩餘時間：基於當前處理速度計算，顯示格式為「X 小時 Y 分鐘」或「X 分鐘」
+- ✅ TypeScript 編譯通過，無錯誤
