@@ -160,8 +160,7 @@ function ShareStatisticsCard() {
 }
 
 export function AdminBlogManagement() {
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'generate' | 'preview' | 'edit-translation'>('list');
-  const [previewArticle, setPreviewArticle] = useState<any>(null);
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'generate' | 'edit-translation'>('list');
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
@@ -407,13 +406,7 @@ export function AdminBlogManagement() {
         />
       )}
 
-      {/* Preview View - Removed (article generation feature disabled) */}
-      {activeView === 'preview' && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">文章預覽功能已停用</p>
-          <Button onClick={() => setActiveView('list')} className="mt-4">返回列表</Button>
-        </div>
-      )}
+
 
       {/* AI Generate View */}
       {activeView === 'generate' && (
@@ -421,9 +414,10 @@ export function AdminBlogManagement() {
           categories={categories || []}
           onCancel={() => setActiveView('list')}
           onSuccess={(generatedArticle) => {
-            // Show preview first
-            setPreviewArticle(generatedArticle);
-            setActiveView('preview');
+            // Refresh list and return to list view
+            toast.success('AI 文章生成成功！');
+            refetch();
+            setActiveView('list');
           }}
         />
       )}
