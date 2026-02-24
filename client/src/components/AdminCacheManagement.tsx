@@ -241,9 +241,35 @@ export function AdminCacheManagement() {
       // Backend will handle processing automatically
       // Frontend just polls for progress updates
     } catch (error: any) {
-      toast.error("啟動批量更新失敗", {
-        description: error.message,
-      });
+      // Check if error is due to existing running task
+      if (error.message && error.message.includes("已在運行中")) {
+        // Task is already running, show info toast and recover progress
+        toast.info("批量更新已在運行中", {
+          description: "將從上次位置繼續，進度每 3 秒自動更新",
+        });
+        
+        // Query current task progress and update UI
+        if (taskProgress) {
+          setCurrentTaskId(taskProgress.taskId);
+          setIsBatchUpdating(true);
+          setIsPaused(taskProgress.status === 'paused');
+          setBatchProgress({
+            current: taskProgress.processedItems || 0,
+            total: taskProgress.totalItems || 0,
+            success: taskProgress.successCount || 0,
+            failed: taskProgress.failureCount || 0,
+            skipped: 0,
+          });
+          
+          // Start heartbeat to keep sandbox alive
+          startHeartbeat();
+        }
+      } else {
+        // Other errors
+        toast.error("啟動批量更新失敗", {
+          description: error.message,
+        });
+      }
     }
   };
   

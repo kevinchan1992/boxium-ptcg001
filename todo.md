@@ -827,3 +827,25 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 - ✅ 前端只負責顯示進度（每 3 秒輪詢）
 - ✅ 後端自動處理批量更新，不受頁面影響
 - ✅ TypeScript 編譯通過
+
+
+---
+
+## 🐛 修復批量更新按鈕錯誤處理
+
+### 問題描述
+用戶點擊「開始批量更新 SNKRDUNK 數據」按鈕時，如果已有任務在運行中，系統會拋出錯誤：「SNKRDUNK 批量更新已在運行中」。這會導致用戶體驗不佳。
+
+### 任務清單
+- [x] 修改前端 startBatchUpdate 函數的錯誤處理
+- [x] 當檢測到已有任務時，顯示友好提示而不是錯誤
+- [x] 自動恢復進度顯示
+- [x] TypeScript 編譯通過
+- [x] 測試修復（✅ 邏輯正確，會顯示 info toast 並恢復進度）
+- [ ] 保存 checkpoint
+
+### 修復結果
+- ✅ 檢查錯誤訊息是否包含「已在運行中」
+- ✅ 顯示 info toast 而不是 error toast
+- ✅ 自動查詢任務進度並更新 UI
+- ✅ 啟動心跳保活機制
