@@ -66,6 +66,61 @@ async function startServer() {
     }
   });
   
+  // Development environment scraper API (only available in development)
+  if (process.env.NODE_ENV === "development") {
+    const { verifyDevScraperAuth } = await import("../middleware/devScraperAuth");
+    const { devScraperLimiter } = await import("../middleware/rateLimiter");
+    const { scrapeSnkrdunkListings } = await import("../services/snkrdunkPlaywright");
+
+    // Health check endpoint
+    app.get("/api/dev/health", (req, res) => {
+      res.json({
+        status: "healthy",
+        playwrightReady: true,
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Scrape endpoint
+    app.post(
+      "/api/dev/scrape",
+      devScraperLimiter,
+      verifyDevScraperAuth,
+      async (req, res) => {
+        const { snkrdunkId } = req.body;
+
+        if (!snkrdunkId) {
+          return res.status(400).json({
+            success: false,
+            error: "Missing snkrdunkId parameter"
+          });
+        }
+
+        try {
+          console.log(`[DevScraper] Scraping ${snkrdunkId}...`);
+          const listings = await scrapeSnkrdunkListings(snkrdunkId);
+          
+          res.json({
+            success: true,
+            snkrdunkId,
+            listings,
+            scrapedAt: new Date().toISOString(),
+            totalListings: listings.length
+          });
+        } catch (error: any) {
+          console.error(`[DevScraper] Error scraping ${snkrdunkId}:`, error);
+          res.status(500).json({
+            success: false,
+            error: error.message || "Scraping failed",
+            snkrdunkId
+          });
+        }
+      }
+    );
+
+    console.log("[DevScraper] Development scraper API enabled");
+  }
+
   // Blog image upload API
   const multer = (await import("multer")).default;
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });

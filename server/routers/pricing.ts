@@ -1,7 +1,7 @@
 import { router, publicProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { fetchEbayListings } from '../services/ebay';
-import { scrapeSnkrdunkListings } from '../services/snkrdunkPlaywright';
+import { scrapeSnkrdunkListings } from '../services/snkrdunkScraperService';
 import { ebayRateLimiter } from '../services/rateLimiter';
 import * as db from '../db';
 
