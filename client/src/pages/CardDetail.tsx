@@ -468,8 +468,8 @@ export default function CardDetail() {
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : activeSource === "snkrdunk" && priceHistory.length > 0 ? (
-                <div className="overflow-y-auto max-h-96 scrollbar-hide overflow-x-auto">
-                  <table className="w-full min-w-[300px]">
+                <div className="overflow-y-auto max-h-96 scrollbar-hide overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full min-w-full sm:min-w-[300px]">
                     <thead className="sticky top-0 bg-card border-b border-border">
                       <tr>
                         <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm">

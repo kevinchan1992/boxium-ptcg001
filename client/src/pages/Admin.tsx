@@ -15,15 +15,15 @@ import { useTranslation } from "react-i18next";
 export default function Admin() {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-black py-8 px-4 md:px-8 lg:px-12">
-        <div className="max-w-[1400px] mx-auto space-y-8">
+    <div className="min-h-screen bg-black py-4 sm:py-6 md:py-8 px-4 md:px-6 lg:px-8 xl:px-12">
+        <div className="max-w-full sm:max-w-[640px] md:max-w-[768px] lg:max-w-[1024px] xl:max-w-[1280px] 2xl:max-w-[1400px] mx-auto space-y-4 sm:space-y-6 md:space-y-8">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2">{t("admin.title")}</h1>
             <p className="text-sm sm:text-base lg:text-lg text-gray-300">{t("admin.statistics")}</p>
           </div>
 
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-8 lg:flex lg:flex-wrap lg:w-auto lg:gap-2">
+            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 md:grid-cols-8 lg:flex lg:flex-wrap lg:w-auto lg:gap-2 overflow-x-auto">
               <TabsTrigger value="dashboard" className="flex items-center gap-1 lg:gap-2 text-xs lg:text-base lg:px-4 lg:py-2.5">
                 <LayoutDashboard className="w-4 h-4 lg:w-5 lg:h-5" />
                 <span className="hidden sm:inline">{t("admin.statistics")}</span>
