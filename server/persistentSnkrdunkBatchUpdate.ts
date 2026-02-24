@@ -34,9 +34,10 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
   // Create persistent task
   const taskId = await batchTaskManager.createBatchTask('batch_snkrdunk_update', cardsToUpdate.length);
 
-  // Execute batch update in background (async IIFE) with parallel processing
+  // Execute batch update in background (async IIFE) with sequential processing
   (async () => {
-    const BATCH_SIZE = 50; // Process 50 cards in parallel
+    const BATCH_SIZE = 80; // Process 80 cards per batch (sequential)
+    const CARD_DELAY = 150; // 150ms delay between cards to avoid rate limiting
     
     // Split cards into batches
     for (let i = 0; i < cardsToUpdate.length; i += BATCH_SIZE) {
@@ -54,8 +55,8 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
       
       console.log(`[PersistentSnkrdunkBatchUpdate] Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(cardsToUpdate.length / BATCH_SIZE)} (${batch.length} cards)`);
       
-      // Process batch in parallel
-      await Promise.all(batch.map(async (card) => {
+      // Process batch sequentially to avoid overwhelming SNKRDUNK and Playwright
+      for (const card of batch) {
         try {
 
           // Get card's SNKRDUNK data sources
@@ -108,7 +109,10 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
           console.error(`[PersistentSnkrdunkBatchUpdate] Error updating card ${card.id}: ${error.message}`);
           await batchTaskManager.updateTaskProgressFailure(taskId, card.id, card.name, error.message);
         }
-      }));
+        
+        // Small delay between cards to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, CARD_DELAY));
+      }
       
       // Rate limiting: pause between batches
       if (i + BATCH_SIZE < cardsToUpdate.length) {
