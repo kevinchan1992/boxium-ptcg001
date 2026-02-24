@@ -2030,6 +2030,83 @@ try {
         return stats;
       }),
 
+    // 獲取詳細快取統計（按快取狀態分類）
+    getDetailedCacheStats: publicProcedure
+      .query(async () => {
+        const stats = await db.getDetailedSnkrdunkCacheStats();
+        return stats;
+      }),
+
+    // 批量更新 SNKRDUNK 數據（處理一個批次）
+    processBatch: adminProcedure
+      .input(z.object({
+        batchIndex: z.number(),
+        batchSize: z.number().default(50),
+      }))
+      .mutation(async ({ input }) => {
+        const { batchIndex, batchSize } = input;
+        const offset = batchIndex * batchSize;
+        
+        // 獲取這一批次的卡牌（只獲取有 SNKRDUNK ID 的卡牌）
+        const cardsToProcess = await db.getCardsWithSnkrdunkId({ limit: batchSize, offset });
+        
+        const results = {
+          success: 0,
+          failed: 0,
+          skipped: 0,
+          errors: [] as Array<{ cardId: number; error: string }>
+        };
+        
+        const HOT_CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+        const COLD_CACHE_DURATION = 6 * 60 * 60 * 1000; // 6 hours
+        
+        for (const card of cardsToProcess) {
+          try {
+            // 檢查快取狀態
+            const cache = await db.getSnkrdunkListingsCache(card.id);
+            
+            if (cache) {
+              const cacheAge = Date.now() - new Date(cache.createdAt).getTime();
+              
+              // 跳過熱快取和冷快取
+              if (cacheAge < COLD_CACHE_DURATION) {
+                results.skipped++;
+                continue;
+              }
+            }
+            
+            // 爬取並更新快取
+            const { scrapeSnkrdunkListings } = await import('./services/snkrdunkPlaywright');
+            const listings = await scrapeSnkrdunkListings(card.snkrdunkId!);
+            
+            // 保存快取
+            const now = new Date();
+            await db.saveSnkrdunkListingsCache({
+              cardId: card.id,
+              snkrdunkId: card.snkrdunkId!,
+              listings: JSON.stringify(listings),
+              hotExpiresAt: new Date(now.getTime() + HOT_CACHE_DURATION),
+              expiresAt: new Date(now.getTime() + COLD_CACHE_DURATION),
+            });
+            
+            results.success++;
+          } catch (error: any) {
+            results.failed++;
+            results.errors.push({
+              cardId: card.id,
+              error: error.message || String(error)
+            });
+          }
+        }
+        
+        return {
+          batchIndex,
+          processed: cardsToProcess.length,
+          results,
+          hasMore: cardsToProcess.length === batchSize
+        };
+      }),
+
     clearCardCache: adminProcedure
       .input(z.object({
         cardId: z.number(),

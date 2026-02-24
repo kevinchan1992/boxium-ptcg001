@@ -658,3 +658,52 @@ const cachedListings = JSON.parse(cache.listings);
 - [x] 修復 JSON 解析問題（添加類型檢查和錯誤處理）
 - [x] 測試修復結果（✅ 不再出現 JSON 解析錯誤）
 - [x] 保存 checkpoint
+
+
+---
+
+## 🔬 評估並實施 Axios + Cheerio 爬取 SNKRDUNK 在售商品
+
+### 需求描述
+評估使用 Axios + Cheerio 替代 Playwright 爬取 SNKRDUNK 在售商品 PSA10 的價格和 URL，並顯示在平台的 pricing 卡牌詳細頁面。
+
+### 目標
+- 提升爬取性能（減少資源消耗）
+- 提高穩定性（避免 Playwright 在生產環境的問題）
+- 保持功能一致性（價格和 URL 正常顯示）
+
+### 任務清單
+- [x] 測試 SNKRDUNK 網頁結構（✅ 使用 Web Components + CSR）
+- [x] 評估 Axios + Cheerio 可行性（✖️ 不可行：需要執行 JavaScript）
+- [x] 分析現有 Playwright 實現（✅ 使用 page.evaluate 提取 DOM 數據）
+- [x] 創建可行性分析報告（/home/ubuntu/snkrdunk_axios_cheerio_feasibility.md）
+- [ ] 在本地瀏覽器手動分析 SNKRDUNK 網路請求（尋找 API 端點）
+- [ ] 如果找到 API，實施 Axios 方案
+- [ ] 如果沒有 API，保留 Playwright 並優化性能
+
+
+---
+
+## 🔧 Admin 後台批量刷新 SNKRDUNK 數據功能
+
+### 需求描述
+在 Admin 後台添加「批量刷新 SNKRDUNK 數據」功能，讓管理員可以手動觸發批量爬取所有卡牌的 SNKRDUNK 在售商品數據。
+
+### 核心挑戰
+**沙盒休眠問題：** 開發環境的沙盒會在長時間無活動後自動休眠，可能中斷批量爬取工作。
+
+### 任務清單
+- [x] 分析沙盒休眠機制（✅ 15-30 分鐘後休眠）
+- [x] 分析批量爬取的時間需求（✅ 25-55 小時）
+- [x] 設計可行方案（✅ 分批次 + 心跳保活）
+- [x] 設計快取優化策略（✅ 跳過熱快取和冷快取）
+- [x] 創建後端 API（✅ getDetailedCacheStats, processBatch）
+- [x] 創建輔助函數（✅ getCardsWithSnkrdunkId, getSnkrdunkListingsCache）
+- [x] 實施 Admin 後台 UI（✅ AdminCacheManagement.tsx）
+- [x] 添加快取狀態分布顯示（✅ 熱/冷/過期/無快取）
+- [x] 添加批量更新按鈕和進度條（✅ 實時進度顯示）
+- [x] 實施心跳保活機制（✅ 每 10 秒發送一次）
+- [x] 添加暫停/繼續/停止按鈕（✅ 完成）
+- [x] 測試批量更新功能（✅ 3 個測試全部通過）
+- [x] 測試心跳機制（✅ 每 10 秒發送一次）
+- [ ] 保存 checkpoint

@@ -1884,6 +1884,88 @@ export async function getSnkrdunkCacheStats() {
 }
 
 /**
+ * Get cards with SNKRDUNK ID (for batch processing)
+ */
+export async function getCardsWithSnkrdunkId(options: { limit: number; offset: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const results = await db
+    .select()
+    .from(cards)
+    .where(isNotNull(cards.snkrdunkId))
+    .limit(options.limit)
+    .offset(options.offset);
+  
+  return results;
+}
+
+/**
+ * Get detailed SNKRDUNK cache statistics with breakdown by cache status
+ */
+export async function getDetailedSnkrdunkCacheStats() {
+  const db = await getDb();
+  if (!db) return {
+    total: 0,
+    hotCache: 0,
+    coldCache: 0,
+    expiredCache: 0,
+    noCache: 0,
+    needUpdate: 0,
+    estimatedTimeMinutes: 0
+  };
+  
+  const { snkrdunkListingsCache } = await import("../drizzle/schema_new");
+  
+  // Get total cards with SNKRDUNK ID
+  const totalCards = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(cards)
+    .where(isNotNull(cards.snkrdunkId));
+  
+  const total = Number(totalCards[0]?.count || 0);
+  
+  // Get all caches
+  const allCaches = await db.select().from(snkrdunkListingsCache);
+  
+  const now = Date.now();
+  const HOT_CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+  const COLD_CACHE_DURATION = 6 * 60 * 60 * 1000; // 6 hours
+  
+  let hotCache = 0;
+  let coldCache = 0;
+  let expiredCache = 0;
+  
+  for (const cache of allCaches) {
+    const cacheAge = now - new Date(cache.createdAt).getTime();
+    
+    if (cacheAge < HOT_CACHE_DURATION) {
+      hotCache++;
+    } else if (cacheAge < COLD_CACHE_DURATION) {
+      coldCache++;
+    } else {
+      expiredCache++;
+    }
+  }
+  
+  const noCache = total - allCaches.length;
+  const needUpdate = expiredCache + noCache;
+  
+  // Estimate time: 50 cards per batch, 6 minutes per batch
+  const estimatedTimeMinutes = Math.ceil(needUpdate / 50 * 6);
+  
+  return {
+    total,
+    hotCache,
+    coldCache,
+    expiredCache,
+    noCache,
+    needUpdate,
+    estimatedTimeMinutes
+  };
+}
+
+/**
  * Clear SNKRDUNK cache by cardId
  */
 export async function clearSnkrdunkCacheByCardId(cardId: number): Promise<number> {

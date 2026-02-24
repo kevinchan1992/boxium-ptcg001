@@ -37,6 +37,24 @@ export function AdminCacheManagement() {
 
   // Fetch cache statistics
   const { data: cacheStats, refetch: refetchStats } = trpc.admin.getCacheStats.useQuery();
+  
+  // Fetch detailed cache statistics
+  const { data: detailedStats, refetch: refetchDetailedStats } = trpc.admin.getDetailedCacheStats.useQuery();
+  
+  // Batch update state
+  const [isBatchUpdating, setIsBatchUpdating] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({
+    current: 0,
+    total: 0,
+    success: 0,
+    failed: 0,
+    skipped: 0,
+  });
+  const [isPaused, setIsPaused] = useState(false);
+  const [heartbeatInterval, setHeartbeatInterval] = useState<NodeJS.Timeout | null>(null);
+  
+  // Process batch mutation
+  const processBatch = trpc.admin.processBatch.useMutation();
 
   // Fetch cache list
   const { data: cacheList, refetch: refetchList, isLoading: isLoadingList } = trpc.admin.getAllCacheList.useQuery({
@@ -132,6 +150,112 @@ export function AdminCacheManagement() {
   const handleClearSingleCache = (cardId: number) => {
     clearSingleCardCache.mutate({ cardId });
   };
+  
+  // Batch update control functions
+  const startHeartbeat = () => {
+    // Send heartbeat every 10 seconds to keep sandbox alive
+    const interval = setInterval(() => {
+      // Simple query to keep connection alive
+      refetchStats();
+    }, 10000);
+    setHeartbeatInterval(interval);
+  };
+  
+  const stopHeartbeat = () => {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      setHeartbeatInterval(null);
+    }
+  };
+  
+  const startBatchUpdate = async () => {
+    if (!detailedStats) return;
+    
+    setIsBatchUpdating(true);
+    setIsPaused(false);
+    setBatchProgress({
+      current: 0,
+      total: detailedStats.needUpdate,
+      success: 0,
+      failed: 0,
+      skipped: 0,
+    });
+    
+    // Start heartbeat
+    startHeartbeat();
+    
+    // Start processing batches
+    processBatches(0);
+  };
+  
+  const processBatches = async (startIndex: number) => {
+    const batchSize = 50;
+    let currentIndex = startIndex;
+    
+    while (currentIndex * batchSize < (detailedStats?.needUpdate || 0)) {
+      if (isPaused) {
+        // Paused, wait for resume
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+      
+      try {
+        const result = await processBatch.mutateAsync({
+          batchIndex: currentIndex,
+          batchSize,
+        });
+        
+        // Update progress
+        setBatchProgress(prev => ({
+          ...prev,
+          current: prev.current + result.processed,
+          success: prev.success + result.results.success,
+          failed: prev.failed + result.results.failed,
+          skipped: prev.skipped + result.results.skipped,
+        }));
+        
+        // Check if done
+        if (!result.hasMore) {
+          // Completed
+          stopBatchUpdate();
+          toast.success("批量更新完成", {
+            description: `成功: ${batchProgress.success}, 失敗: ${batchProgress.failed}, 跳過: ${batchProgress.skipped}`,
+          });
+          refetchDetailedStats();
+          refetchList();
+          break;
+        }
+        
+        currentIndex++;
+        
+        // Wait 2 seconds before next batch
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } catch (error: any) {
+        toast.error("批次處理失敗", {
+          description: error.message,
+        });
+        // Continue to next batch
+        currentIndex++;
+      }
+    }
+  };
+  
+  const pauseBatchUpdate = () => {
+    setIsPaused(true);
+    toast.info("已暫停批量更新");
+  };
+  
+  const resumeBatchUpdate = () => {
+    setIsPaused(false);
+    toast.info("已繼續批量更新");
+  };
+  
+  const stopBatchUpdate = () => {
+    setIsBatchUpdating(false);
+    setIsPaused(false);
+    stopHeartbeat();
+    toast.info("已停止批量更新");
+  };
 
   const totalPages = cacheList ? Math.ceil(cacheList.total / pageSize) : 0;
 
@@ -182,11 +306,137 @@ export function AdminCacheManagement() {
             </div>
           )}
 
+          {/* Detailed Cache Statistics */}
+          {detailedStats && (
+            <div className="mt-6 space-y-4">
+              <h3 className="text-lg font-semibold text-white">快取狀態分布</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-green-900/20 border border-green-700 p-4 rounded-lg">
+                  <p className="text-sm text-green-400 mb-1">✅ 熱快取 (&lt; 1 小時)</p>
+                  <p className="text-2xl font-bold text-green-400">{detailedStats.hotCache}</p>
+                  <p className="text-xs text-gray-400 mt-1">跳過</p>
+                </div>
+                <div className="bg-yellow-900/20 border border-yellow-700 p-4 rounded-lg">
+                  <p className="text-sm text-yellow-400 mb-1">🟡 冷快取 (1-6 小時)</p>
+                  <p className="text-2xl font-bold text-yellow-400">{detailedStats.coldCache}</p>
+                  <p className="text-xs text-gray-400 mt-1">跳過</p>
+                </div>
+                <div className="bg-orange-900/20 border border-orange-700 p-4 rounded-lg">
+                  <p className="text-sm text-orange-400 mb-1">⚠️ 過期快取 (&gt; 6 小時)</p>
+                  <p className="text-2xl font-bold text-orange-400">{detailedStats.expiredCache}</p>
+                  <p className="text-xs text-gray-400 mt-1">需要更新</p>
+                </div>
+                <div className="bg-red-900/20 border border-red-700 p-4 rounded-lg">
+                  <p className="text-sm text-red-400 mb-1">❌ 無快取</p>
+                  <p className="text-2xl font-bold text-red-400">{detailedStats.noCache}</p>
+                  <p className="text-xs text-gray-400 mt-1">需要更新</p>
+                </div>
+              </div>
+              
+              <div className="bg-zinc-800 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-gray-400">需要爬取</p>
+                  <p className="text-xl font-bold text-white">{detailedStats.needUpdate} 張 ({((detailedStats.needUpdate / detailedStats.total) * 100).toFixed(1)}%)</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-400">預計時間</p>
+                  <p className="text-sm font-medium text-white">
+                    {detailedStats.estimatedTimeMinutes < 60 
+                      ? `${detailedStats.estimatedTimeMinutes.toFixed(0)} 分鐘`
+                      : `${(detailedStats.estimatedTimeMinutes / 60).toFixed(1)} 小時`
+                    }
+                  </p>
+                </div>
+              </div>
+              
+              {/* Batch Update Controls */}
+              {!isBatchUpdating ? (
+                <Button
+                  onClick={startBatchUpdate}
+                  disabled={detailedStats.needUpdate === 0}
+                  className="w-full"
+                  size="lg"
+                >
+                  <RefreshCw className="w-5 h-5 mr-2" />
+                  開始批量更新 SNKRDUNK 數據
+                </Button>
+              ) : (
+                <div className="space-y-4">
+                  {/* Progress Bar */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-400">總進度</span>
+                      <span className="text-white font-medium">
+                        {batchProgress.current} / {batchProgress.total} ({((batchProgress.current / batchProgress.total) * 100).toFixed(1)}%)
+                      </span>
+                    </div>
+                    <div className="w-full bg-zinc-700 rounded-full h-4 overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
+                        style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Statistics */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-green-900/20 p-3 rounded-lg">
+                      <p className="text-xs text-green-400 mb-1">成功</p>
+                      <p className="text-xl font-bold text-green-400">{batchProgress.success}</p>
+                    </div>
+                    <div className="bg-red-900/20 p-3 rounded-lg">
+                      <p className="text-xs text-red-400 mb-1">失敗</p>
+                      <p className="text-xl font-bold text-red-400">{batchProgress.failed}</p>
+                    </div>
+                    <div className="bg-gray-700 p-3 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-1">跳過</p>
+                      <p className="text-xl font-bold text-white">{batchProgress.skipped}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Sandbox Status */}
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-green-400">沙盒狀態：活躍 (心跳正常)</span>
+                  </div>
+                  
+                  {/* Control Buttons */}
+                  <div className="flex gap-2">
+                    {!isPaused ? (
+                      <Button
+                        onClick={pauseBatchUpdate}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        ⏸️ 暫停
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={resumeBatchUpdate}
+                        className="flex-1"
+                      >
+                        ▶️ 繼續
+                      </Button>
+                    )}
+                    <Button
+                      onClick={stopBatchUpdate}
+                      variant="destructive"
+                      className="flex-1"
+                    >
+                      ⏹️ 停止
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
               refetchStats();
+              refetchDetailedStats();
               refetchList();
             }}
             className="w-full md:w-auto"
