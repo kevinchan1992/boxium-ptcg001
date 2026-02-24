@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
@@ -52,9 +52,41 @@ export function AdminCacheManagement() {
   });
   const [isPaused, setIsPaused] = useState(false);
   const [heartbeatInterval, setHeartbeatInterval] = useState<NodeJS.Timeout | null>(null);
+  const [currentTaskId, setCurrentTaskId] = useState<number | null>(null);
   
   // Process batch mutation
   const processBatch = trpc.admin.processBatch.useMutation();
+  
+  // Task management mutations
+  const startTask = trpc.admin.startBatchUpdateTask.useMutation();
+  const updateProgress = trpc.admin.updateBatchUpdateProgress.useMutation();
+  const completeTask = trpc.admin.completeBatchUpdateTask.useMutation();
+  const stopTask = trpc.admin.stopBatchUpdateTask.useMutation();
+  
+  // Query task progress (poll every 3 seconds)
+  const { data: taskProgress } = trpc.admin.getSnkrdunkCacheBatchUpdateProgress.useQuery(undefined, {
+    refetchInterval: 3000,
+    enabled: isBatchUpdating || currentTaskId !== null,
+  });
+  
+  // Restore progress from database on mount
+  useEffect(() => {
+    if (taskProgress && taskProgress.status === 'running') {
+      setCurrentTaskId(taskProgress.taskId);
+      setIsBatchUpdating(true);
+      setBatchProgress({
+        current: taskProgress.processedItems,
+        total: taskProgress.totalItems,
+        success: taskProgress.successCount,
+        failed: taskProgress.failureCount,
+        skipped: 0, // Not tracked separately
+      });
+      
+      // Resume processing from where it left off
+      const currentBatchIndex = Math.floor(taskProgress.processedItems / 50);
+      processBatches(currentBatchIndex);
+    }
+  }, [taskProgress]);
 
   // Fetch cache list
   const { data: cacheList, refetch: refetchList, isLoading: isLoadingList } = trpc.admin.getAllCacheList.useQuery({
@@ -171,21 +203,38 @@ export function AdminCacheManagement() {
   const startBatchUpdate = async () => {
     if (!detailedStats) return;
     
-    setIsBatchUpdating(true);
-    setIsPaused(false);
-    setBatchProgress({
-      current: 0,
-      total: detailedStats.needUpdate,
-      success: 0,
-      failed: 0,
-      skipped: 0,
-    });
-    
-    // Start heartbeat
-    startHeartbeat();
-    
-    // Start processing batches
-    processBatches(0);
+    try {
+      // Create task record in database
+      const result = await startTask.mutateAsync();
+      
+      if (result.existing) {
+        toast.info("已有批量更新任務運行中", {
+          description: "將從上次位置繼續",
+        });
+        return;
+      }
+      
+      setCurrentTaskId(result.taskId);
+      setIsBatchUpdating(true);
+      setIsPaused(false);
+      setBatchProgress({
+        current: 0,
+        total: result.totalItems || 0,
+        success: 0,
+        failed: 0,
+        skipped: 0,
+      });
+      
+      // Start heartbeat
+      startHeartbeat();
+      
+      // Start processing batches
+      processBatches(0);
+    } catch (error: any) {
+      toast.error("啟動批量更新失敗", {
+        description: error.message,
+      });
+    }
   };
   
   const processBatches = async (startIndex: number) => {
@@ -205,7 +254,7 @@ export function AdminCacheManagement() {
           batchSize,
         });
         
-        // Update progress
+        // Update progress in state
         setBatchProgress(prev => ({
           ...prev,
           current: prev.current + result.processed,
@@ -214,8 +263,25 @@ export function AdminCacheManagement() {
           skipped: prev.skipped + result.results.skipped,
         }));
         
+        // Save progress to database
+        if (currentTaskId) {
+          await updateProgress.mutateAsync({
+            taskId: currentTaskId,
+            processed: result.processed,
+            success: result.results.success,
+            failed: result.results.failed,
+            skipped: result.results.skipped,
+            errors: result.results.errors,
+          });
+        }
+        
         // Check if done
         if (!result.hasMore) {
+          // Mark task as completed
+          if (currentTaskId) {
+            await completeTask.mutateAsync({ taskId: currentTaskId });
+          }
+          
           // Completed
           stopBatchUpdate();
           toast.success("批量更新完成", {

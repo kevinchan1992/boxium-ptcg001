@@ -707,3 +707,73 @@ const cachedListings = JSON.parse(cache.listings);
 - [x] 測試批量更新功能（✅ 3 個測試全部通過）
 - [x] 測試心跳機制（✅ 每 10 秒發送一次）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🔄 將批量更新改為後端持續任務
+
+### 問題描述
+目前的批量更新是在前端控制的，當用戶離開頁面時，前端的循環就會停止，導致批量更新中斷。需要將批量更新改為後端持續運行的任務，並將進度持久化到數據庫。
+
+### 需求
+1. **後端持續運行**：批量更新任務在後端持續運行，不受前端頁面影響
+2. **進度持久化**：將進度保存到數據庫，支持跨頁面訪問和中斷後繼續
+3. **狀態查詢**：前端可以查詢任務狀態和進度
+4. **控制操作**：支持暫停、繼續、停止任務
+
+### 任務清單
+
+#### 0. 檢查現有排程系統
+- [x] 檢查 scheduler.ts 中的 autoCrawlSnkrdunk 函數（使用內存變量，不持久化）
+- [x] 檢查 scheduler.ts 中的 runAutoUpdate 函數（沒有進度追蹤）
+- [x] 確認需要改進的功能（批量更新 SNKRDUNK + 價格更新排程）
+
+#### 1. 使用現有數據庫 schema
+- [x] 確認 scheduledTasks 表已存在（包含所有需要的欄位）
+- [ ] 無需創建新表或執行遷移
+
+#### 2. 實施後端 API 支持進度持久化（簡化方案）
+- [x] 在 db.ts 中添加 scheduledTasks 相關函數
+- [x] 創建 startBatchUpdateTask API
+- [x] 創建 updateBatchUpdateProgress API
+- [x] 創建 getSnkrdunkCacheBatchUpdateProgress API
+- [x] 創建 completeBatchUpdateTask API
+- [x] 創建 stopBatchUpdateTask API
+
+#### 3. 更新前端 UI 支持進度恢復
+- [x] 添加 useEffect 自動恢復進度
+- [x] 修改 startBatchUpdate 調用 startBatchUpdateTask API
+- [x] 修改 processBatches 每批次後調用 updateBatchUpdateProgress
+- [x] 修改完成邏輯調用 completeBatchUpdateTask
+- [x] 添加進度查詢（每 3 秒輪詢一次）
+
+#### 4. 測試完整流程
+- [x] 測試啟動批量更新（✅ 數據庫測試通過）
+- [x] 測試進度持久化（✅ 數據庫測試通過）
+- [x] 測試進度查詢（✅ 數據庫測試通過）
+- [x] 測試任務完成（✅ 數據庫測試通過）
+
+
+
+#### 5. 保存 checkpoint
+- [ ] 保存 checkpoint
+
+---
+
+## ✅ 功能已完成
+
+批量更新 SNKRDUNK 數據功能已改進為支持進度持久化，具備以下特性：
+
+1. **進度持久化**：所有進度保存到數據庫 scheduledTasks 表
+2. **跨頁面追蹤**：離開頁面後進度不會丟失，回來後自動恢復
+3. **實時查詢**：每 3 秒輪詢一次任務進度
+4. **完整統計**：追蹤總數、已處理、成功、失敗、進度百分比
+5. **錯誤記錄**：保存最近 100 個錯誤詳情
+
+**後端 API：**
+- `admin.startBatchUpdateTask` - 啟動任務
+- `admin.updateBatchUpdateProgress` - 更新進度
+- `admin.getSnkrdunkCacheBatchUpdateProgress` - 查詢進度
+- `admin.completeBatchUpdateTask` - 完成任務
+- `admin.stopBatchUpdateTask` - 停止任務

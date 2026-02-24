@@ -1,6 +1,6 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory } from "../drizzle/schema_new";;
+import { users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -2294,5 +2294,152 @@ export async function getTotalPriceRecordCount() {
   } catch (error) {
     console.error("[Database] Failed to get total price record count:", error);
     return 0;
+  }
+}
+
+/**
+ * ===========================
+ * Scheduled Tasks Functions
+ * ===========================
+ */
+
+/**
+ * Create a new scheduled task
+ */
+export async function createScheduledTask(task: {
+  taskType: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'paused';
+  targetId?: number;
+  totalItems?: number;
+  processedItems?: number;
+  successCount?: number;
+  failureCount?: number;
+  progress?: number;
+  metadata?: string;
+}): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    const result = await db.insert(scheduledTasks).values({
+      taskType: task.taskType,
+      status: task.status,
+      targetId: task.targetId || null,
+      totalItems: task.totalItems || null,
+      processedItems: task.processedItems || 0,
+      successCount: task.successCount || 0,
+      failureCount: task.failureCount || 0,
+      progress: task.progress || 0,
+      metadata: task.metadata || null,
+    });
+
+    // MySQL returns insertId in result
+    return (result as any).insertId || (result as any)[0]?.insertId || 0;
+  } catch (error) {
+    console.error("[Database] Failed to create scheduled task:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update a scheduled task
+ */
+export async function updateScheduledTask(
+  taskId: number,
+  updates: {
+    status?: 'pending' | 'running' | 'completed' | 'failed' | 'paused';
+    processedItems?: number;
+    successCount?: number;
+    failureCount?: number;
+    progress?: number;
+    startedAt?: Date;
+    completedAt?: Date;
+    errorMessage?: string;
+    metadata?: string;
+  }
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    await db
+      .update(scheduledTasks)
+      .set(updates)
+      .where(eq(scheduledTasks.id, taskId));
+  } catch (error) {
+    console.error("[Database] Failed to update scheduled task:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get a scheduled task by ID
+ */
+export async function getScheduledTask(taskId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db
+      .select()
+      .from(scheduledTasks)
+      .where(eq(scheduledTasks.id, taskId))
+      .limit(1);
+
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get scheduled task:", error);
+    return null;
+  }
+}
+
+/**
+ * Get the latest batch update task of a specific type
+ */
+export async function getLatestBatchUpdateTask(taskType: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db
+      .select()
+      .from(scheduledTasks)
+      .where(eq(scheduledTasks.taskType, taskType))
+      .orderBy(desc(scheduledTasks.createdAt))
+      .limit(1);
+
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get latest batch update task:", error);
+    return null;
+  }
+}
+
+/**
+ * Get running batch update task of a specific type
+ */
+export async function getRunningBatchUpdateTask(taskType: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db
+      .select()
+      .from(scheduledTasks)
+      .where(
+        and(
+          eq(scheduledTasks.taskType, taskType),
+          or(
+            eq(scheduledTasks.status, 'running'),
+            eq(scheduledTasks.status, 'paused')
+          )
+        )
+      )
+      .limit(1);
+
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get running batch update task:", error);
+    return null;
   }
 }

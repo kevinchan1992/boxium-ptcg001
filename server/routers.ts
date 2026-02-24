@@ -2152,6 +2152,161 @@ try {
         const deletedCount = await clearAllSnkrdunkCache();
         return { success: true, deletedCount, message: `已清除 ${deletedCount} 個快取記錄` };
       }),
+
+    // 啟動批量更新任務（創建任務記錄）
+    startBatchUpdateTask: adminProcedure
+      .mutation(async () => {
+        // 檢查是否已有運行中的任務
+        const existingTask = await db.getRunningBatchUpdateTask('batch_snkrdunk_update');
+        if (existingTask) {
+          return {
+            taskId: existingTask.id,
+            message: '已有批量更新任務運行中',
+            existing: true,
+          };
+        }
+
+        // 獲取總卡牌數
+        const stats = await db.getDetailedSnkrdunkCacheStats();
+        const totalItems = stats.needUpdate;
+
+        // 創建新任務
+        const taskId = await db.createScheduledTask({
+          taskType: 'batch_snkrdunk_update',
+          status: 'running',
+          totalItems,
+          processedItems: 0,
+          successCount: 0,
+          failureCount: 0,
+          progress: 0,
+          metadata: JSON.stringify({ errors: [] }),
+        });
+
+        return {
+          taskId,
+          totalItems,
+          message: '批量更新任務已啟動',
+          existing: false,
+        };
+      }),
+
+    // 更新批量更新任務進度
+    updateBatchUpdateProgress: adminProcedure
+      .input(z.object({
+        taskId: z.number(),
+        processed: z.number(),
+        success: z.number(),
+        failed: z.number(),
+        skipped: z.number(),
+        errors: z.array(z.object({
+          cardId: z.number(),
+          error: z.string(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        const task = await db.getScheduledTask(input.taskId);
+        if (!task) {
+          throw new Error(`Task ${input.taskId} not found`);
+        }
+
+        const newProcessedItems = (task.processedItems || 0) + input.processed;
+        const newSuccessCount = (task.successCount || 0) + input.success;
+        const newFailureCount = (task.failureCount || 0) + input.failed;
+        const progress = task.totalItems ? Math.round((newProcessedItems / task.totalItems) * 100) : 0;
+
+        // 更新錯誤信息
+        let metadata: any = {};
+        try {
+          metadata = task.metadata ? JSON.parse(task.metadata) : {};
+        } catch (e) {
+          metadata = {};
+        }
+
+        if (!metadata.errors) {
+          metadata.errors = [];
+        }
+        metadata.errors.push(...input.errors);
+
+        // 只保留最近 100 個錯誤
+        if (metadata.errors.length > 100) {
+          metadata.errors = metadata.errors.slice(-100);
+        }
+
+        await db.updateScheduledTask(input.taskId, {
+          processedItems: newProcessedItems,
+          successCount: newSuccessCount,
+          failureCount: newFailureCount,
+          progress,
+          metadata: JSON.stringify(metadata),
+        });
+
+        return {
+          success: true,
+          progress,
+          processedItems: newProcessedItems,
+        };
+      }),
+
+    // 獲取 SNKRDUNK 快取批量更新任務進度
+    getSnkrdunkCacheBatchUpdateProgress: adminProcedure
+      .query(async () => {
+        const task = await db.getLatestBatchUpdateTask('batch_snkrdunk_update');
+        if (!task) {
+          return null;
+        }
+
+        // 解析錯誤信息
+        let errors: Array<{ cardId: number; error: string }> = [];
+        try {
+          const metadata = task.metadata ? JSON.parse(task.metadata) : {};
+          errors = metadata.errors || [];
+        } catch (e) {
+          console.error('Failed to parse task metadata:', e);
+        }
+
+        return {
+          taskId: task.id,
+          taskType: task.taskType,
+          status: task.status,
+          totalItems: task.totalItems || 0,
+          processedItems: task.processedItems || 0,
+          successCount: task.successCount || 0,
+          failureCount: task.failureCount || 0,
+          progress: task.progress || 0,
+          startedAt: task.startedAt,
+          completedAt: task.completedAt,
+          errors,
+        };
+      }),
+
+    // 完成批量更新任務
+    completeBatchUpdateTask: adminProcedure
+      .input(z.object({
+        taskId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateScheduledTask(input.taskId, {
+          status: 'completed',
+          completedAt: new Date(),
+          progress: 100,
+        });
+
+        return { success: true };
+      }),
+
+    // 停止批量更新任務
+    stopBatchUpdateTask: adminProcedure
+      .input(z.object({
+        taskId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateScheduledTask(input.taskId, {
+          status: 'completed',
+          completedAt: new Date(),
+        });
+
+        return { success: true };
+      }),
     // User Management APIs
     getUserList: adminProcedure
       .input(z.object({
