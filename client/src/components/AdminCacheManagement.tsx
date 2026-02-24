@@ -71,15 +71,20 @@ export function AdminCacheManagement() {
   // Task start time for estimating remaining time
   const [taskStartTime, setTaskStartTime] = useState<number | null>(null);
   
-  // Query task progress (poll every 3 seconds)
+  // Query task progress (always enabled to detect running tasks on page load)
+  // Poll every 3 seconds when task is running, otherwise poll every 10 seconds
   const { data: taskProgress } = trpc.admin.getSnkrdunkCacheBatchUpdateProgress.useQuery(undefined, {
-    refetchInterval: 3000,
-    enabled: isBatchUpdating || currentTaskId !== null,
+    refetchInterval: isBatchUpdating ? 3000 : 10000,
   });
   
   // Restore progress from database on mount
   useEffect(() => {
+    console.log('[useEffect] taskProgress:', taskProgress);
+    console.log('[useEffect] isBatchUpdating:', isBatchUpdating);
+    console.log('[useEffect] currentTaskId:', currentTaskId);
+    
     if (taskProgress && taskProgress.status === 'running') {
+      console.log('[useEffect] Task is running, updating UI state');
       // Only update UI state, don't restart processing
       setCurrentTaskId(taskProgress.taskId);
       setIsBatchUpdating(true);
@@ -93,9 +98,11 @@ export function AdminCacheManagement() {
       
       // Start heartbeat to keep sandbox alive
       if (!heartbeatInterval) {
+        console.log('[useEffect] Starting heartbeat');
         startHeartbeat();
       }
     } else if (taskProgress && taskProgress.status === 'completed') {
+      console.log('[useEffect] Task completed');
       // Task completed, update final state
       setIsBatchUpdating(false);
       setCurrentTaskId(null);
@@ -105,8 +112,10 @@ export function AdminCacheManagement() {
       });
       refetchDetailedStats();
       refetchList();
+    } else if (taskProgress) {
+      console.log('[useEffect] Task status:', taskProgress.status);
     }
-  }, [taskProgress?.taskId, taskProgress?.status, taskProgress?.processedItems]);
+  }, [taskProgress]);
 
   // Fetch cache list
   const { data: cacheList, refetch: refetchList, isLoading: isLoadingList } = trpc.admin.getAllCacheList.useQuery({
@@ -249,29 +258,30 @@ export function AdminCacheManagement() {
       // Backend will handle processing automatically
       // Frontend just polls for progress updates
     } catch (error: any) {
+      console.log('[startBatchUpdate] Error caught:', error);
+      console.log('[startBatchUpdate] Error message:', error.message);
+      console.log('[startBatchUpdate] taskProgress:', taskProgress);
+      
       // Check if error is due to existing running task
-      if (error.message && error.message.includes("已在運行中")) {
-        // Task is already running, show info toast and recover progress
+      // Match both "SNKRDUNK 批量更新已在運行中" and "批量更新已在運行中"
+      const isRunningError = error.message && (
+        error.message.includes("已在運行中") || 
+        error.message.includes("運行中")
+      );
+      
+      if (isRunningError) {
+        // Task is already running, show info toast
         toast.info("批量更新已在運行中", {
           description: "將從上次位置繼續，進度每 3 秒自動更新",
         });
         
-        // Query current task progress and update UI
-        if (taskProgress) {
-          setCurrentTaskId(taskProgress.taskId);
-          setIsBatchUpdating(true);
-          setIsPaused(taskProgress.status === 'paused');
-          setBatchProgress({
-            current: taskProgress.processedItems || 0,
-            total: taskProgress.totalItems || 0,
-            success: taskProgress.successCount || 0,
-            failed: taskProgress.failureCount || 0,
-            skipped: 0,
-          });
-          
-          // Start heartbeat to keep sandbox alive
-          startHeartbeat();
-        }
+        // Set a dummy taskId to enable progress query
+        // The actual taskId will be updated by useEffect when taskProgress is fetched
+        setCurrentTaskId(1); // Dummy value to enable query
+        setIsBatchUpdating(true); // Enable query
+        
+        // useEffect will handle the rest when taskProgress is fetched
+        console.log('[startBatchUpdate] Set currentTaskId=1 to enable progress query');
       } else {
         // Other errors
         toast.error("啟動批量更新失敗", {
