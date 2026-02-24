@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Plus, Edit, Trash2, Eye, EyeOff, FileText, Image as ImageIcon, Sparkles, Languages, Share2, Facebook, MessageCircle, Link2, TrendingUp } from "lucide-react";
 
 import { CardImagePicker } from "@/components/CardImagePicker";
+import { ArticlePreview } from "@/components/ArticlePreview";
 
 // Share Statistics Card Component
 function ShareStatisticsCard() {
@@ -160,7 +161,8 @@ function ShareStatisticsCard() {
 }
 
 export function AdminBlogManagement() {
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'generate' | 'edit-translation'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'generate' | 'preview' | 'edit-translation'>('list');
+  const [previewArticle, setPreviewArticle] = useState<any>(null);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
@@ -408,16 +410,32 @@ export function AdminBlogManagement() {
 
 
 
+      {/* Preview View */}
+      {activeView === 'preview' && previewArticle && (
+        <ArticlePreview
+          article={previewArticle}
+          onPublish={async () => {
+            toast.success('AI 文章生成成功！');
+            refetch();
+            setActiveView('list');
+          }}
+          onEdit={() => {
+            // TODO: 實現編輯功能
+            toast.info('編輯功能尚未實現');
+          }}
+          onCancel={() => setActiveView('list')}
+        />
+      )}
+
       {/* AI Generate View */}
       {activeView === 'generate' && (
         <AIArticleGenerator
           categories={categories || []}
           onCancel={() => setActiveView('list')}
           onSuccess={(generatedArticle) => {
-            // Refresh list and return to list view
-            toast.success('AI 文章生成成功！');
-            refetch();
-            setActiveView('list');
+            // Show preview first
+            setPreviewArticle(generatedArticle);
+            setActiveView('preview');
           }}
         />
       )}
