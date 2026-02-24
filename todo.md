@@ -615,3 +615,46 @@ Research 頁面的搜尋結果需要按照卡牌的參考價格由高至低排�
 - [x] 測試搜尋「pikachu」的結果排序（✅ 開發環境和生產環境都正常工作）
 - [x] 測試其他關鍵字的結果排序（排序邏輯已驗證）
 - [x] 保存 checkpoint
+
+
+---
+
+## 🐛 修復 Pricing 頁面 JSON 解析錯誤
+
+### 問題描述
+訪問 `/pricing/818700` 頁面時出現錯誤：
+```
+[API Query Error] Unexpected token '<', "<!doctype "... is not valid JSON
+```
+
+這表示 API 返回了 HTML 而不是預期的 JSON 數據。
+
+### 可能原因
+1. API 端點返回錯誤頁面（404/500）
+2. 路由配置問題
+3. tRPC 請求被重定向到 HTML 頁面
+4. 卡牌 ID 不存在或格式錯誤
+
+### 根本原因
+錯誤不是 "Unexpected token '<'"(這是誤導性的錯誤信息)，而是 **"Unexpected end of JSON input"**。
+
+問題出在 `server/routers/pricing.ts` 第 117 行：
+```javascript
+const cachedListings = JSON.parse(cache.listings);
+```
+
+`cache.listings` 的類型是 **`object`** 而不是 `string`，Drizzle ORM 可能自動解析了 JSON，導致 `JSON.parse` 失敗。
+
+### 解決方案
+添加類型檢查和錯誤處理：
+- 如果 `cache.listings` 是 `string`，使用 `JSON.parse`
+- 如果 `cache.listings` 是 `array`，直接使用
+- 其他情況拋出錯誤並跳過
+
+### 任務清單
+- [x] 檢查 Pricing 頁面的 API 調用代碼（client/src/pages/PricingDetail.tsx）
+- [x] 檢查後端 tRPC router 的 pricing 相關 procedures（server/routers/pricing.ts）
+- [x] 檢查服務器日誌找出根本原因（cache.listings 類型錯誤）
+- [x] 修復 JSON 解析問題（添加類型檢查和錯誤處理）
+- [x] 測試修復結果（✅ 不再出現 JSON 解析錯誤）
+- [x] 保存 checkpoint

@@ -114,9 +114,27 @@ export const pricingRouter = router({
           if (cache && cache.hotExpiresAt && new Date(cache.hotExpiresAt) > now) {
             // Hot cache is valid, use cached data directly
             console.log(`[Pricing Router] Using eBay hot cache (expires at ${cache.hotExpiresAt})`);
-            const cachedListings = JSON.parse(cache.listings);
-            ebayListings = cachedListings;
-            console.log(`[Pricing Router] eBay hot cache returned ${ebayListings.length} listings`);
+            
+            try {
+              // Handle both string and object types (Drizzle may auto-parse JSON)
+              let cachedListings;
+              if (typeof cache.listings === 'string') {
+                cachedListings = JSON.parse(cache.listings);
+              } else if (Array.isArray(cache.listings)) {
+                cachedListings = cache.listings;
+              } else {
+                throw new Error(`Unexpected cache.listings type: ${typeof cache.listings}`);
+              }
+              
+              ebayListings = cachedListings;
+              console.log(`[Pricing Router] eBay hot cache returned ${ebayListings.length} listings`);
+            } catch (parseError) {
+              console.error(`[Pricing Router] Failed to parse eBay cache listings:`, parseError);
+              console.error(`[Pricing Router] cache.listings type: ${typeof cache.listings}`);
+              console.error(`[Pricing Router] cache.listings value:`, cache.listings);
+              // Clear invalid cache and continue without eBay listings
+              ebayListings = [];
+            }
           } else {
             // Hot cache expired or doesn't exist, check rate limiter
             if (ebayRateLimiter.tryConsume()) {
