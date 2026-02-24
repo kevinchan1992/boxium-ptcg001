@@ -1074,7 +1074,14 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 #### 4. 配置環境變量
 - [x] 生成 API Key（openssl rand -hex 32）
 - [x] 開發環境：配置 DEV_SCRAPER_API_KEY
-- [ ] 生產環境：配置 DEV_SCRAPER_URL 和 DEV_SCRAPER_API_KEY（需要部署後才能配置）
+- [x] 生產環境：配置 DEV_SCRAPER_URL 和 DEV_SCRAPER_API_KEY
+- [x] 驗證配置（所有測試通過 4/4）
+
+**配置結果：**
+- ✅ DEV_SCRAPER_URL 配置正確
+- ✅ DEV_SCRAPER_API_KEY 配置正確
+- ✅ 開發環境健康檢查通過
+- ✅ 認證測試通過（成功爬取 12 個商品）
 
 #### 5. 測試
 - [x] 測試開發環境 API（所有測試通過 6/6）
