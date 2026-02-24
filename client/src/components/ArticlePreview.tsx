@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, X, Calendar, Tag, Sparkles } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Eye, Edit, X, Calendar, Tag, Sparkles, Wand2, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 interface ArticlePreviewProps {
   article: {
@@ -21,6 +26,46 @@ interface ArticlePreviewProps {
 }
 
 export function ArticlePreview({ article, onPublish, onEdit, onCancel }: ArticlePreviewProps) {
+  const [currentArticle, setCurrentArticle] = useState(article);
+  const [showAIEditDialog, setShowAIEditDialog] = useState(false);
+  const [editInstruction, setEditInstruction] = useState('');
+  const [isAIEditing, setIsAIEditing] = useState(false);
+
+  const editWithAIMutation = trpc.blog.editArticleWithAI.useMutation({
+    onSuccess: (data: { title: string; excerpt: string; content: string }) => {
+      setCurrentArticle({
+        ...currentArticle,
+        title: data.title,
+        excerpt: data.excerpt,
+        content: data.content,
+      });
+      toast.success('AI 編輯完成！');
+      setShowAIEditDialog(false);
+      setEditInstruction('');
+      setIsAIEditing(false);
+    },
+    onError: (error: any) => {
+      toast.error(`AI 編輯失敗：${error.message}`);
+      setIsAIEditing(false);
+    },
+  });
+
+  const handleAIEdit = () => {
+    if (!editInstruction.trim()) {
+      toast.error('請輸入修改要求');
+      return;
+    }
+    setIsAIEditing(true);
+    editWithAIMutation.mutate({
+      article: {
+        title: currentArticle.title,
+        excerpt: currentArticle.excerpt || '',
+        content: currentArticle.content,
+      },
+      instruction: editInstruction,
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -43,11 +88,11 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
           </Button>
           <Button
             variant="outline"
-            onClick={onEdit}
+            onClick={() => setShowAIEditDialog(true)}
             className="border-zinc-700 text-white hover:bg-zinc-800"
           >
-            <Edit className="w-4 h-4 mr-2" />
-            編輯
+            <Wand2 className="w-4 h-4 mr-2" />
+            AI 編輯
           </Button>
           <BrandButton onClick={onPublish}>
             <Sparkles className="w-4 h-4 mr-2" />
@@ -60,11 +105,11 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
       <Card className="bg-white border-gray-200">
         <CardHeader className="space-y-4">
           {/* Featured Image */}
-          {article.featuredImage && (
+          {currentArticle.featuredImage && (
             <div className="w-full aspect-video rounded-lg overflow-hidden bg-gray-100">
               <img
-                src={article.featuredImage}
-                alt={article.title}
+                src={currentArticle.featuredImage}
+                alt={currentArticle.title}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -76,12 +121,12 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
               <Calendar className="w-4 h-4" />
               <span>{new Date().toLocaleDateString('zh-TW')}</span>
             </div>
-            {article.category && (
+            {currentArticle.category && (
               <Badge className="bg-[#0033CC] text-white hover:bg-[#0033CC]/90">
-                {article.category}
+                {currentArticle.category}
               </Badge>
             )}
-            {article.dataSource === 'ai-generated' && (
+            {currentArticle.dataSource === 'ai-generated' && (
               <Badge variant="outline" className="border-purple-500 text-purple-600">
                 <Sparkles className="w-3 h-3 mr-1" />
                 AI 生成
@@ -91,21 +136,21 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
 
           {/* Title */}
           <h1 className="text-3xl md:text-4xl font-bold text-[#0033CC] leading-tight">
-            {article.title}
+            {currentArticle.title}
           </h1>
 
           {/* Excerpt */}
-          {article.excerpt && (
+          {currentArticle.excerpt && (
             <p className="text-lg text-gray-600 leading-relaxed border-l-4 border-[#FFD700] pl-4 py-2 bg-yellow-50">
-              {article.excerpt}
+              {currentArticle.excerpt}
             </p>
           )}
 
           {/* Tags */}
-          {article.tags && (
+          {currentArticle.tags && (
             <div className="flex flex-wrap items-center gap-2">
               <Tag className="w-4 h-4 text-gray-400" />
-              {article.tags.split(',').map((tag, index) => (
+              {currentArticle.tags.split(',').map((tag, index) => (
                 <Badge key={index} variant="secondary" className="bg-gray-100 text-gray-700">
                   {tag.trim()}
                 </Badge>
@@ -143,7 +188,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
                 td: ({ node, ...props }) => <td className="border border-gray-300 px-4 py-2" {...props} />,
               }}
             >
-              {article.content}
+              {currentArticle.content}
             </ReactMarkdown>
           </div>
         </CardContent>
@@ -161,17 +206,79 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
         </Button>
         <Button
           variant="outline"
-          onClick={onEdit}
+          onClick={() => setShowAIEditDialog(true)}
           className="border-zinc-700 text-white hover:bg-zinc-800"
         >
-          <Edit className="w-4 h-4 mr-2" />
-          編輯
+          <Wand2 className="w-4 h-4 mr-2" />
+          AI 編輯
         </Button>
         <BrandButton onClick={onPublish}>
           <Sparkles className="w-4 h-4 mr-2" />
           發布文章
         </BrandButton>
       </div>
+
+      {/* AI Edit Dialog */}
+      <Dialog open={showAIEditDialog} onOpenChange={setShowAIEditDialog}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Wand2 className="w-5 h-5 text-[#ffed00]" />
+              AI 編輯文章
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              向 AI 描述你想要的修改，AI 會根據你的要求修正文章內容
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="text-sm text-gray-400 mb-2 block">
+                修改要求
+              </label>
+              <Textarea
+                value={editInstruction}
+                onChange={(e) => setEditInstruction(e.target.value)}
+                placeholder="例如：&#10;- 讓標題更吸引人&#10;- 在第二段增加更多細節&#10;- 改寫結尾段落，讓它更有力&#10;- 調整語氣，讓它更專業/輕鬆/正式"
+                className="bg-zinc-800 border-zinc-700 text-white min-h-[150px]"
+                disabled={isAIEditing}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <Sparkles className="w-4 h-4" />
+              <span>AI 會保留文章的原有風格和結構，只根據你的要求進行修改</span>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAIEditDialog(false);
+                  setEditInstruction('');
+                }}
+                className="border-zinc-700 text-white hover:bg-zinc-800"
+                disabled={isAIEditing}
+              >
+                取消
+              </Button>
+              <BrandButton onClick={handleAIEdit} disabled={isAIEditing}>
+                {isAIEditing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    AI 編輯中...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    開始編輯
+                  </>
+                )}
+              </BrandButton>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

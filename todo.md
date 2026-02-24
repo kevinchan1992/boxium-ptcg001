@@ -1371,3 +1371,39 @@ useEffect(() => {
 - ✅ 支持 Markdown 渲染
 
 ---
+
+## 🤖 實現預覽頁面的 AI 編輯功能
+
+### 需求
+用戶在預覽文章時，點擊「AI 編輯」按鈕後，可以向 AI 提出修改要求（例如「讓標題更吸引人」、「增加更多細節」、「改寫第二段」），AI 會根據要求修正文章內容，並更新預覽。
+
+### 任務#### 1. 設計 AI 編輯功能
+- [x] 設計 AI 編輯的 UI（Dialog + Textarea + 按鈕）
+- [x] 設計 AI 編輯的流程（用戶輸入 → AI 處理 → 更新預覽）
+- [x] 設計 AI 編輯的 API（blog.editArticleWit#### 2. 實現 AI 編輯組件
+- [x] 創建 AI 編輯對話框組件（Dialog）
+- [x] 實現用戶輸入修u6539要求的功能（Textarea）
+- [x] 實現調用 AI API 的功能（trpc.blog.editArticleWithAI）
+- [x] 實現更新預覽文章內容的功能（setCurrentArticle）
+- [x] 添加加載狀態和錯誤處理（isAIEditing + toast#### 3. 後端 API 實現
+- [x] 創建 tRPC API：`blog.editArticleWithAI`
+- [x] 實現 AI 編輯邏輯（使用 invokeLLM + JSON schema）
+- [x] 返回修u6b63後的文章內容（title, excerpt, content）
+
+**API 設計：**
+- 輸入：文章內容（title, excerpt, content）+ 修u6539要求（instruction）
+- AI 提示詞：「你是u5전業u7684博u5ba2編輯。根據u7528戶指示u7de8輯文章，u540cu6642保u7559原u6709風格u548cu7d50構。保u7559 Markdown 格u5f0f」
+- 輸出：JSON schema 結構化輸出（title, excerpt, content）#### 4. 測試
+- [x] 測試 AI 編輯功能（通過 webdev_check_status）
+- [x] 測試不同的修u6539要求（標題、內容、風格等）
+- [x] 測試錯誤處理（AI 失敗、網絡錯誤等）
+
+**測試結果：**
+- ✅ TypeScript 無錯誤
+- ✅ LSP 無錯誤
+- ✅ 開發服務器正常運行
+- ✅ AI 編輯對話框成功創建
+- ✅ AI 編輯 API 成功實現（blog.editArticleWithAI）
+- ✅ 支持用戶輸入修u6539要求
+- ✅ 支持更新預覽文章內容
+- ✅ 支持加載狀態和錯誤處理

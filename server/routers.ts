@@ -2885,6 +2885,59 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         }
         return result;
       }),
+
+    // AI edit article (Admin only)
+    editArticleWithAI: adminProcedure
+      .input(z.object({
+        article: z.object({
+          title: z.string(),
+          excerpt: z.string(),
+          content: z.string(),
+        }),
+        instruction: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { invokeLLM } = await import('./_core/llm');
+        
+        // Call LLM to edit the article based on user instruction
+        const response = await invokeLLM({
+          messages: [
+            { 
+              role: 'system', 
+              content: 'You are a professional blog editor. Edit the article based on user instructions while maintaining the original style and structure. Return the edited article in JSON format with title, excerpt, and content fields. Keep markdown formatting.' 
+            },
+            { 
+              role: 'user', 
+              content: `Edit this article based on the following instruction:\n\nInstruction: ${input.instruction}\n\nCurrent Article:\nTitle: ${input.article.title}\n\nExcerpt: ${input.article.excerpt}\n\nContent:\n${input.article.content}` 
+            }
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'edited_article',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string', description: 'Edited title' },
+                  excerpt: { type: 'string', description: 'Edited excerpt' },
+                  content: { type: 'string', description: 'Edited content with markdown' }
+                },
+                required: ['title', 'excerpt', 'content'],
+                additionalProperties: false
+              }
+            }
+          }
+        });
+        
+        const editedData = JSON.parse(response.choices[0].message.content as string);
+        
+        return {
+          title: editedData.title,
+          excerpt: editedData.excerpt,
+          content: editedData.content,
+        };
+      }),
   }),
 
   // Trending router - hot cards rankings
