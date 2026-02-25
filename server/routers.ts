@@ -3097,6 +3097,90 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
           content: editedData.content,
         };
       }),
+
+    // List all uploaded images (Admin only)
+    listUploadedImages: adminProcedure
+      .input(z.object({
+        search: z.string().optional(),
+        limit: z.number().default(50),
+        offset: z.number().default(0),
+      }))
+      .query(async ({ input }) => {
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        const { uploadedImages, users } = await import('../drizzle/schema_new');
+        const { eq, like, desc } = await import('drizzle-orm');
+        
+        let query = db.select({
+          id: uploadedImages.id,
+          url: uploadedImages.url,
+          fileKey: uploadedImages.fileKey,
+          fileName: uploadedImages.fileName,
+          fileSize: uploadedImages.fileSize,
+          mimeType: uploadedImages.mimeType,
+          uploadedBy: uploadedImages.uploadedBy,
+          createdAt: uploadedImages.createdAt,
+          uploaderName: users.name,
+        })
+        .from(uploadedImages)
+        .leftJoin(users, eq(uploadedImages.uploadedBy, users.id))
+        .orderBy(desc(uploadedImages.createdAt))
+        .limit(input.limit)
+        .offset(input.offset);
+        
+        if (input.search) {
+          query = query.where(like(uploadedImages.fileName, `%${input.search}%`)) as any;
+        }
+        
+        const images = await query;
+        return images;
+      }),
+
+    // Delete uploaded image (Admin only)
+    deleteUploadedImage: adminProcedure
+      .input(z.object({ imageId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        const { uploadedImages } = await import('../drizzle/schema_new');
+        const { eq } = await import('drizzle-orm');
+        
+        // TODO: Also delete from S3 if needed
+        await db.delete(uploadedImages).where(eq(uploadedImages.id, input.imageId));
+        
+        return { success: true };
+      }),
+
+    // Record uploaded image (Admin only)
+    recordUploadedImage: adminProcedure
+      .input(z.object({
+        url: z.string(),
+        fileKey: z.string(),
+        fileName: z.string(),
+        fileSize: z.number(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        const { uploadedImages } = await import('../drizzle/schema_new');
+        
+        const [image] = await db.insert(uploadedImages).values({
+          url: input.url,
+          fileKey: input.fileKey,
+          fileName: input.fileName,
+          fileSize: input.fileSize,
+          mimeType: input.mimeType,
+          uploadedBy: ctx.user.id,
+        });
+        
+        return { success: true, imageId: image.insertId };
+      }),
   }),
 
   // Trending router - hot cards rankings

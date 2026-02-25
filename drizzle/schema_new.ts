@@ -423,6 +423,23 @@ export type PostVersion = typeof postVersions.$inferSelect;
 export type InsertPostVersion = typeof postVersions.$inferInsert;
 
 /**
+ * Uploaded images table - stores uploaded image information for blog posts
+ */
+export const uploadedImages = mysqlTable("uploaded_images", {
+  id: int("id").autoincrement().primaryKey(),
+  url: text("url").notNull(), // S3 URL
+  fileKey: varchar("fileKey", { length: 512 }).notNull(), // S3 file key
+  fileName: varchar("fileName", { length: 255 }).notNull(), // Original file name
+  fileSize: int("fileSize").notNull(), // File size in bytes
+  mimeType: varchar("mimeType", { length: 100 }).notNull(), // MIME type (e.g., "image/png")
+  uploadedBy: int("uploadedBy").notNull(), // User ID who uploaded the image
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UploadedImage = typeof uploadedImages.$inferSelect;
+export type InsertUploadedImage = typeof uploadedImages.$inferInsert;
+
+/**
  * Article generation history table - stores AI article generation requests and results
  */
 export const articleGenerationHistory = mysqlTable("articleGenerationHistory", {

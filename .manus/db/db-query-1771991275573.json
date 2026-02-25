@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `uploaded_images` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `url` text NOT NULL,\n  `fileKey` varchar(512) NOT NULL,\n  `fileName` varchar(255) NOT NULL,\n  `fileSize` int NOT NULL,\n  `mimeType` varchar(100) NOT NULL,\n  `uploadedBy` int NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `uploaded_images_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS `uploaded_images` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `url` text NOT NULL,\n  `fileKey` varchar(512) NOT NULL,\n  `fileName` varchar(255) NOT NULL,\n  `fileSize` int NOT NULL,\n  `mimeType` varchar(100) NOT NULL,\n  `uploadedBy` int NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `uploaded_images_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1636
+}
