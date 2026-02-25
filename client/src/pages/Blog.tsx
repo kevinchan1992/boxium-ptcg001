@@ -77,7 +77,7 @@ export default function Blog() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white md:text-[80%]">
       {/* Hero Section - 白色底色 + 藍色漸變 */}
       <div className="bg-gradient-to-br from-blue-50 via-white to-yellow-50 border-b border-gray-200">
         <div className="container mx-auto px-4 py-12 md:py-20 lg:py-24">
