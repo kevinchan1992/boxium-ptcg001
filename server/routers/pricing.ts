@@ -161,16 +161,46 @@ export const pricingRouter = router({
                   50 // Limit
                 );
                 
-                // Filter for PSA 10 items only (check title)
+                // Filter for PSA 10 items only (strict filtering)
                 const psa10Items = (imageSearchResponse.itemSummaries || []).filter(item => {
                   const title = item.title.toLowerCase();
-                  // Must contain "psa" and "10" (or "psa 10" or "psa10")
-                  return (title.includes('psa') && title.includes('10')) || 
-                         title.includes('psa 10') || 
-                         title.includes('psa10');
+                  
+                  // Must contain "psa" and "10"
+                  const hasPSA = title.includes('psa');
+                  const has10 = title.includes('10');
+                  
+                  if (!hasPSA || !has10) {
+                    return false; // Exclude if doesn't contain both "psa" and "10"
+                  }
+                  
+                  // Exclude other PSA grades (PSA 9, PSA 8, PSA 7, etc.)
+                  const excludePatterns = [
+                    'psa 9', 'psa9', 'psa 8', 'psa8', 'psa 7', 'psa7',
+                    'psa 6', 'psa6', 'psa 5', 'psa5', 'psa 4', 'psa4',
+                    'psa 3', 'psa3', 'psa 2', 'psa2', 'psa 1', 'psa1',
+                    'bgs', 'cgc', 'sgc', 'beckett', // Other grading companies
+                    'raw', 'ungraded', 'not graded', // Ungraded cards
+                  ];
+                  
+                  for (const pattern of excludePatterns) {
+                    if (title.includes(pattern)) {
+                      return false; // Exclude if matches any exclude pattern
+                    }
+                  }
+                  
+                  return true; // Only PSA 10 items pass
                 });
                 
-                console.log(`[Pricing Router] Filtered ${psa10Items.length}/${imageSearchResponse.itemSummaries?.length || 0} PSA 10 items from eBay image search`);
+                console.log(`[Pricing Router] Filtered ${psa10Items.length}/${imageSearchResponse.itemSummaries?.length || 0} PSA 10 items from eBay image search (strict filtering)`);
+                
+                // Log filtered out items for debugging (first 3)
+                const filteredOut = (imageSearchResponse.itemSummaries || []).filter(item => !psa10Items.includes(item));
+                if (filteredOut.length > 0) {
+                  console.log(`[Pricing Router] Filtered out ${filteredOut.length} non-PSA 10 items:`);
+                  filteredOut.slice(0, 3).forEach(item => {
+                    console.log(`  - ${item.title}`);
+                  });
+                }
                 
                 // Transform to expected format and convert prices to HKD
                 const newListings = await Promise.all(
