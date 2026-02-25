@@ -297,24 +297,28 @@ function buildArticlePrompt(
     });
 
     prompt += `\n【PSA10 價格數據】（來源：SNKRDUNK 實際交易記錄）\n`;
-    prompt += `- 平均價格：HKD ${dataContext.psa10Stats.avgPrice.toFixed(2)}\n`;
-    prompt += `- 最低價格：HKD ${dataContext.psa10Stats.minPrice.toFixed(2)}\n`;
-    prompt += `- 最高價格：HKD ${dataContext.psa10Stats.maxPrice.toFixed(2)}\n`;
-    prompt += `- 7日漲跌：${dataContext.psa10Stats.priceChange7d.toFixed(2)}%\n`;
-    prompt += `- 30日漲跌：${dataContext.psa10Stats.priceChange30d.toFixed(2)}%\n`;
-    prompt += `- 60日漲跌：${dataContext.psa10Stats.priceChange60d.toFixed(2)}%\n`;
-    prompt += `- 總交易量：${dataContext.psa10Stats.totalVolume} 筆\n`;
+    prompt += `**重要：以下是系統提供的唯一真實數據，文章中所有價格引用必須直接使用這些數值，不可創造其他價格數據**\n`;
+    prompt += `- 當前參考價格（最近交易平均值）：HKD ${dataContext.psa10Stats.avgPrice.toFixed(2)}\n`;
+    prompt += `- 價格區間最低值：HKD ${dataContext.psa10Stats.minPrice.toFixed(2)}\n`;
+    prompt += `- 價格區間最高值：HKD ${dataContext.psa10Stats.maxPrice.toFixed(2)}\n`;
+    prompt += `- 7日價格變化：${dataContext.psa10Stats.priceChange7d.toFixed(2)}%\n`;
+    prompt += `- 30日價格變化：${dataContext.psa10Stats.priceChange30d.toFixed(2)}%\n`;
+    prompt += `- 60日價格變化：${dataContext.psa10Stats.priceChange60d.toFixed(2)}%\n`;
+    prompt += `- 總交易筆數：${dataContext.psa10Stats.totalVolume} 筆\n`;
     prompt += `- 日均交易量：${dataContext.psa10Stats.avgDailyVolume.toFixed(1)} 筆\n`;
+    prompt += `**注意：不要創造「月初」、「月底」、「上週」等時間點的價格，只使用上述數據**\n`;
 
     prompt += `\n【中古品 A 價格數據】（來源：SNKRDUNK 實際交易記錄）\n`;
-    prompt += `- 平均價格：HKD ${dataContext.usedGradeAStats.avgPrice.toFixed(2)}\n`;
-    prompt += `- 最低價格：HKD ${dataContext.usedGradeAStats.minPrice.toFixed(2)}\n`;
-    prompt += `- 最高價格：HKD ${dataContext.usedGradeAStats.maxPrice.toFixed(2)}\n`;
-    prompt += `- 7日漲跌：${dataContext.usedGradeAStats.priceChange7d.toFixed(2)}%\n`;
-    prompt += `- 30日漲跌：${dataContext.usedGradeAStats.priceChange30d.toFixed(2)}%\n`;
-    prompt += `- 60日漲跌：${dataContext.usedGradeAStats.priceChange60d.toFixed(2)}%\n`;
-    prompt += `- 總交易量：${dataContext.usedGradeAStats.totalVolume} 筆\n`;
+    prompt += `**重要：以下是系統提供的唯一真實數據，文章中所有價格引用必須直接使用這些數值，不可創造其他價格數據**\n`;
+    prompt += `- 當前參考價格（最近交易平均值）：HKD ${dataContext.usedGradeAStats.avgPrice.toFixed(2)}\n`;
+    prompt += `- 價格區間最低值：HKD ${dataContext.usedGradeAStats.minPrice.toFixed(2)}\n`;
+    prompt += `- 價格區間最高值：HKD ${dataContext.usedGradeAStats.maxPrice.toFixed(2)}\n`;
+    prompt += `- 7日價格變化：${dataContext.usedGradeAStats.priceChange7d.toFixed(2)}%\n`;
+    prompt += `- 30日價格變化：${dataContext.usedGradeAStats.priceChange30d.toFixed(2)}%\n`;
+    prompt += `- 60日價格變化：${dataContext.usedGradeAStats.priceChange60d.toFixed(2)}%\n`;
+    prompt += `- 總交易筆數：${dataContext.usedGradeAStats.totalVolume} 筆\n`;
     prompt += `- 日均交易量：${dataContext.usedGradeAStats.avgDailyVolume.toFixed(1)} 筆\n`;
+    prompt += `**注意：不要創造「月初」、「月底」、「上週」等時間點的價格，只使用上述數據**\n`;
 
     prompt += `\n【交易統計】\n`;
     prompt += `- 歷史最高價：HKD ${dataContext.transactionStats.peakPrice.toFixed(2)}\n`;
@@ -331,9 +335,11 @@ function buildArticlePrompt(
   prompt += `2. 文章長度：${lengthMap[length]}\n`;
   prompt += `3. 語氣：${tone === 'professional' ? '專業' : tone === 'casual' ? '輕鬆' : '技術性'}\n`;
   prompt += `4. 內容格式：Markdown\n`;
-  prompt += `5. 包含數據支撐，避免主觀臆測\n`;
-  prompt += `6. 提供可操作的建議\n`;
-  prompt += `7. **所有價格和金錢相關內容必須使用港幣（HKD）**，格式範例：HKD 1,234.56\n\n`;
+  prompt += `5. **【嚴格要求】所有價格數據必須直接使用上方【PSA10 價格數據】和【中古品 A 價格數據】中提供的數值，絕對不可以創造、估算或推測任何價格數據**\n`;
+  prompt += `6. **【嚴格要求】不要創造「月初價格」、「月底價格」、「上週價格」等系統未提供的數據。只使用「平均價格」、「最低價格」、「最高價格」和「漲跌幅」**\n`;
+  prompt += `7. **【嚴格要求】如果系統提供的數據不足以支撐某個論點，明確說明「數據不足」，而不是猜測或創造數據**\n`;
+  prompt += `8. 提供可操作的建議\n`;
+  prompt += `9. **所有價格和金錢相關內容必須使用港幣（HKD）**，格式範例：HKD 1,234.56\n\n`;
   
   prompt += `【Markdown 排版要求】\n`;
   prompt += `1. 每個段落之間用空行分隔（\\n\\n）\n`;

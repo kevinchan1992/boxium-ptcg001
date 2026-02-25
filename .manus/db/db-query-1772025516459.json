@@ -1,0 +1,52 @@
+{
+  "query": "SELECT \n  id,\n  name,\n  cardNumber,\n  rarity,\n  setName\nFROM cards\nWHERE id IN (210022, 781745, 819562, 150847, 781727, 210012)\nORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  id,\n  name,\n  cardNumber,\n  rarity,\n  setName\nFROM cards\nWHERE id IN (210022, 781745, 819562, 150847, 781727, 210012)\nORDER BY id;",
+  "rows": [
+    {
+      "id": "150847",
+      "name": "Solgaleo & Lunala GX (Lillie) SR :SA [SM11b 063/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "setName": "NULL"
+    },
+    {
+      "id": "210012",
+      "name": "Lillie's Determination SAR [M1L 091/063](Expansion Pack \"Mega Brave\")",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "setName": "NULL"
+    },
+    {
+      "id": "210022",
+      "name": "Lillie Extra Battle Day: PROMO[SM-P 397](SM-P Promotional cards)",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "setName": "NULL"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "setName": "NULL"
+    },
+    {
+      "id": "781745",
+      "name": "Lillie (Ganba Lillie) SR[SM4+ 119/114](High Class Pack \"GX Battle Boost\")",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "setName": "NULL"
+    },
+    {
+      "id": "819562",
+      "name": "Lillie's Clefairy ex SAR Style [MC 765/742](Start Deck 100 \"Battle Collection\")",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "setName": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\trarity\tsetName\n150847\tSolgaleo & Lunala GX (Lillie) SR :SA [SM11b 063/049](Enhanced Expansion Pack \"Dream League\")\tNULL\tNULL\tNULL\n210012\tLillie's Determination SAR [M1L 091/063](Expansion Pack \"Mega Brave\")\tNULL\tNULL\tNULL\n210022\tLillie Extra Battle Day: PROMO[SM-P 397](SM-P Promotional cards)\tNULL\tNULL\tNULL\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\tNULL\tNULL\n781745\tLillie (Ganba Lillie) SR[SM4+ 119/114](High Class Pack \"GX Battle Boost\")\tNULL\tNULL\tNULL\n819562\tLillie's Clefairy ex SAR Style [MC 765/742](Start Deck 100 \"Battle Collection\")\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1627
+}

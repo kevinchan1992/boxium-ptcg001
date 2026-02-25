@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  id,\n  title,\n  slug,\n  createdAt,\n  updatedAt\nFROM posts\nWHERE slug = '莉莉艾卡牌驚人漲幅-2026年2月市場分析與投資洞察'\nLIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  id,\n  title,\n  slug,\n  createdAt,\n  updatedAt\nFROM posts\nWHERE slug = '莉莉艾卡牌驚人漲幅-2026年2月市場分析與投資洞察'\nLIMIT 1;",
+  "rows": [
+    {
+      "id": "120002",
+      "title": "莉莉艾卡牌驚人漲幅！2026年2月市場分析與投資洞察",
+      "slug": "莉莉艾卡牌驚人漲幅-2026年2月市場分析與投資洞察",
+      "createdAt": "2026-02-25 13:14:43",
+      "updatedAt": "2026-02-25 13:19:54"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tslug\tcreatedAt\tupdatedAt\n120002\t莉莉艾卡牌驚人漲幅！2026年2月市場分析與投資洞察\t莉莉艾卡牌驚人漲幅-2026年2月市場分析與投資洞察\t2026-02-25 13:14:43\t2026-02-25 13:19:54\n",
+  "stderr": "",
+  "execution_time_ms": 1585
+}

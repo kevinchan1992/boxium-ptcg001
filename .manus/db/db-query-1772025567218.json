@@ -1,0 +1,70 @@
+{
+  "query": "SELECT \n  ph.cardId,\n  c.name,\n  COUNT(*) as transactionCount,\n  AVG(ph.price) as avgPrice,\n  MIN(ph.price) as minPrice,\n  MAX(ph.price) as maxPrice,\n  MIN(ph.soldAt) as earliestDate,\n  MAX(ph.soldAt) as latestDate\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE ph.cardId IN (210022, 781745, 819562, 150847, 781727, 210012)\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)\nGROUP BY ph.cardId, c.name\nORDER BY ph.cardId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  ph.cardId,\n  c.name,\n  COUNT(*) as transactionCount,\n  AVG(ph.price) as avgPrice,\n  MIN(ph.price) as minPrice,\n  MAX(ph.price) as maxPrice,\n  MIN(ph.soldAt) as earliestDate,\n  MAX(ph.soldAt) as latestDate\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE ph.cardId IN (210022, 781745, 819562, 150847, 781727, 210012)\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)\nGROUP BY ph.cardId, c.name\nORDER BY ph.cardId;",
+  "rows": [
+    {
+      "cardId": "150847",
+      "name": "Solgaleo & Lunala GX (Lillie) SR :SA [SM11b 063/049](Enhanced Expansion Pack \"Dream League\")",
+      "transactionCount": "1360",
+      "avgPrice": "7243.424272",
+      "minPrice": "1067.35",
+      "maxPrice": "14630.00",
+      "earliestDate": "2026-02-05 05:00:00",
+      "latestDate": "2026-02-23 06:50:22"
+    },
+    {
+      "cardId": "210012",
+      "name": "Lillie's Determination SAR [M1L 091/063](Expansion Pack \"Mega Brave\")",
+      "transactionCount": "471",
+      "avgPrice": "4740.446030",
+      "minPrice": "1251.20",
+      "maxPrice": "17312.70",
+      "earliestDate": "2026-02-07 05:00:00",
+      "latestDate": "2026-02-23 06:51:28"
+    },
+    {
+      "cardId": "210022",
+      "name": "Lillie Extra Battle Day: PROMO[SM-P 397](SM-P Promotional cards)",
+      "transactionCount": "21",
+      "avgPrice": "51668.367143",
+      "minPrice": "31.28",
+      "maxPrice": "687500.00",
+      "earliestDate": "2026-02-14 19:32:54",
+      "latestDate": "2026-02-23 06:51:50"
+    },
+    {
+      "cardId": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "transactionCount": "53",
+      "avgPrice": "4945.188491",
+      "minPrice": "4565.00",
+      "maxPrice": "5060.00",
+      "earliestDate": "2026-01-27 05:00:00",
+      "latestDate": "2026-02-20 23:35:26"
+    },
+    {
+      "cardId": "781745",
+      "name": "Lillie (Ganba Lillie) SR[SM4+ 119/114](High Class Pack \"GX Battle Boost\")",
+      "transactionCount": "17",
+      "avgPrice": "163835.294118",
+      "minPrice": "159500.00",
+      "maxPrice": "165000.00",
+      "earliestDate": "2026-02-06 00:00:00",
+      "latestDate": "2026-02-23 14:38:37"
+    },
+    {
+      "cardId": "819562",
+      "name": "Lillie's Clefairy ex SAR Style [MC 765/742](Start Deck 100 \"Battle Collection\")",
+      "transactionCount": "150",
+      "avgPrice": "9214.758800",
+      "minPrice": "7590.00",
+      "maxPrice": "16390.00",
+      "earliestDate": "2026-01-30 00:00:00",
+      "latestDate": "2026-02-21 13:34:32"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\tname\ttransactionCount\tavgPrice\tminPrice\tmaxPrice\tearliestDate\tlatestDate\n150847\tSolgaleo & Lunala GX (Lillie) SR :SA [SM11b 063/049](Enhanced Expansion Pack \"Dream League\")\t1360\t7243.424272\t1067.35\t14630.00\t2026-02-05 05:00:00\t2026-02-23 06:50:22\n210012\tLillie's Determination SAR [M1L 091/063](Expansion Pack \"Mega Brave\")\t471\t4740.446030\t1251.20\t17312.70\t2026-02-07 05:00:00\t2026-02-23 06:51:28\n210022\tLillie Extra Battle Day: PROMO[SM-P 397](SM-P Promotional cards)\t21\t51668.367143\t31.28\t687500.00\t2026-02-14 19:32:54\t2026-02-23 06:51:50\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\t53\t4945.188491\t4565.00\t5060.00\t2026-01-27 05:00:00\t2026-02-20 23:35:26\n781745\tLillie (Ganba Lillie) SR[SM4+ 119/114](High Class Pack \"GX Battle Boost\")\t17\t163835.294118\t159500.00\t165000.00\t2026-02-06 00:00:00\t2026-02-23 14:38:37\n819562\tLillie's Clefairy ex SAR Style [MC 765/742](Start Deck 100 \"Battle Collection\")\t150\t9214.758800\t7590.00\t16390.00\t2026-01-30 00:00:00\t2026-02-21 13:34:32\n",
+  "stderr": "",
+  "execution_time_ms": 1561
+}
