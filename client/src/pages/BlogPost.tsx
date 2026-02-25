@@ -134,19 +134,19 @@ export default function BlogPost() {
             )}
 
             {/* Title - 專業大標題 */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[#0033CC] mb-6 md:mb-8 leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold text-[#0033CC] mb-6 md:mb-8 leading-tight">
               {getLocalizedContent('title')}
             </h1>
 
             {/* Excerpt - 副標題 */}
             {post.excerpt && (
-              <p className="text-lg sm:text-xl md:text-2xl text-gray-600 mb-6 md:mb-8 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-lg text-gray-600 mb-6 md:mb-8 leading-relaxed">
                 {getLocalizedContent('excerpt')}
               </p>
             )}
 
             {/* Meta Info - 專業設計 */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 text-base md:text-lg text-gray-600 mb-8 md:mb-10">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 text-sm md:text-base text-gray-600 mb-8 md:mb-10">
               <span className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 md:w-6 md:h-6 text-[#0033CC]" />
                 {new Date(post.publishedAt || post.createdAt).toLocaleDateString('zh-TW', {
@@ -163,7 +163,7 @@ export default function BlogPost() {
 
             {/* Share Buttons - 專業設計 */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="text-gray-700 font-semibold text-base md:text-lg">分享文章：</span>
+              <span className="text-gray-700 font-semibold text-sm md:text-base">分享文章：</span>
               <div className="flex flex-wrap items-center gap-3">
                 <Button
                   size="lg"
@@ -220,30 +220,30 @@ export default function BlogPost() {
               components={{
                 // 專業標題設計
                 h1: ({ ...props }: any) => (
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#0033CC] mt-12 md:mt-16 mb-6 md:mb-8 leading-tight" {...props} />
+                  <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold text-[#0033CC] mt-12 md:mt-16 mb-6 md:mb-8 leading-tight" {...props} />
                 ),
                 h2: ({ ...props }: any) => (
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0033CC] mt-10 md:mt-14 mb-5 md:mb-7 leading-tight border-b-4 border-[#FFD700] pb-3" {...props} />
+                  <h2 className="text-xl sm:text-2xl md:text-2xl font-bold text-[#0033CC] mt-10 md:mt-14 mb-5 md:mb-7 leading-tight border-b-4 border-[#FFD700] pb-3" {...props} />
                 ),
                 h3: ({ ...props }: any) => (
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mt-8 md:mt-12 mb-4 md:mb-6 leading-tight" {...props} />
+                  <h3 className="text-lg sm:text-xl md:text-xl font-bold text-gray-900 mt-8 md:mt-12 mb-4 md:mb-6 leading-tight" {...props} />
                 ),
                 h4: ({ ...props }: any) => (
-                  <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-6 md:mt-10 mb-3 md:mb-5 leading-tight" {...props} />
+                  <h4 className="text-base sm:text-lg md:text-lg font-bold text-gray-900 mt-6 md:mt-10 mb-3 md:mb-5 leading-tight" {...props} />
                 ),
                 // 專業段落設計 - 更大字體、更好行距
                 p: ({ ...props }: any) => (
-                  <p className="text-gray-700 mb-6 md:mb-8 leading-[1.8] md:leading-[2] text-base sm:text-lg md:text-xl" {...props} />
+                  <p className="text-gray-700 mb-6 md:mb-8 leading-[1.8] md:leading-[2] text-sm sm:text-base md:text-base" {...props} />
                 ),
                 // 專業列表設計
                 ul: ({ ...props }: any) => (
-                  <ul className="list-disc list-outside text-gray-700 mb-6 md:mb-8 space-y-3 md:space-y-4 ml-6 md:ml-8 text-base sm:text-lg md:text-xl" {...props} />
+                  <ul className="list-disc list-outside text-gray-700 mb-6 md:mb-8 space-y-3 md:space-y-4 ml-6 md:ml-8 text-sm sm:text-base md:text-base" {...props} />
                 ),
                 ol: ({ ...props }: any) => (
-                  <ol className="list-decimal list-outside text-gray-700 mb-6 md:mb-8 space-y-3 md:space-y-4 ml-6 md:ml-8 text-base sm:text-lg md:text-xl" {...props} />
+                  <ol className="list-decimal list-outside text-gray-700 mb-6 md:mb-8 space-y-3 md:space-y-4 ml-6 md:ml-8 text-sm sm:text-base md:text-base" {...props} />
                 ),
                 li: ({ ...props }: any) => (
-                  <li className="text-gray-700 leading-[1.8] md:leading-[2] text-base sm:text-lg md:text-xl pl-2" {...props} />
+                  <li className="text-gray-700 leading-[1.8] md:leading-[2] text-sm sm:text-base md:text-base pl-2" {...props} />
                 ),
                 // 連結設計 - 使用 logo 藍色
                 a: ({ ...props }: any) => (
@@ -251,7 +251,7 @@ export default function BlogPost() {
                 ),
                 // 引用區塊設計 - 使用 logo 黃色
                 blockquote: ({ ...props }: any) => (
-                  <blockquote className="border-l-8 border-[#FFD700] pl-6 md:pl-8 py-4 md:py-6 italic text-gray-600 my-8 md:my-10 bg-yellow-50 rounded-r-lg text-base sm:text-lg md:text-xl leading-relaxed" {...props} />
+                  <blockquote className="border-l-8 border-[#FFD700] pl-6 md:pl-8 py-4 md:py-6 italic text-gray-600 my-8 md:my-10 bg-yellow-50 rounded-r-lg text-sm sm:text-base md:text-base leading-relaxed" {...props} />
                 ),
                 // 程式碼設計
                 code: ({ node, inline, ...props }: any) =>
@@ -263,14 +263,14 @@ export default function BlogPost() {
                 // 表格設計
                 table: ({ ...props }: any) => (
                   <div className="overflow-x-auto my-8 md:my-10 -mx-4 sm:mx-0 shadow-lg rounded-lg">
-                    <table className="w-full border-collapse border-2 border-gray-300 text-base md:text-lg" {...props} />
+                    <table className="w-full border-collapse border-2 border-gray-300 text-sm md:text-base" {...props} />
                   </div>
                 ),
                 th: ({ ...props }: any) => (
-                  <th className="border-2 border-gray-300 bg-[#0033CC] px-4 md:px-6 py-3 md:py-4 text-left text-white font-bold text-base md:text-lg" {...props} />
+                  <th className="border-2 border-gray-300 bg-[#0033CC] px-4 md:px-6 py-3 md:py-4 text-left text-white font-bold text-sm md:text-base" {...props} />
                 ),
                 td: ({ ...props }: any) => (
-                  <td className="border-2 border-gray-300 px-4 md:px-6 py-3 md:py-4 text-gray-700 text-base md:text-lg bg-white" {...props} />
+                  <td className="border-2 border-gray-300 px-4 md:px-6 py-3 md:py-4 text-gray-700 text-sm md:text-base bg-white" {...props} />
                 ),
                 // 圖片設計
                 img: ({ ...props }: any) => (
@@ -297,8 +297,8 @@ export default function BlogPost() {
           <div className="mt-12 md:mt-16 p-6 md:p-8 bg-gradient-to-br from-blue-50 to-yellow-50 border-2 border-gray-200 rounded-2xl shadow-lg">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div>
-                <p className="text-gray-900 font-bold text-lg md:text-xl mb-2">覺得這篇文章有幫助嗎？</p>
-                <p className="text-gray-600 text-base md:text-lg">分享給朋友，讓更多人受益！</p>
+                <p className="text-gray-900 font-bold text-base md:text-lg mb-2">覺得這篇文章有幫助嗎？</p>
+                <p className="text-gray-600 text-sm md:text-base">分享給朋友，讓更多人受益！</p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <Button
