@@ -5,10 +5,13 @@ import { BrandButton } from "@/components/ui/brand-button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Eye, Edit, X, Calendar, Tag, Sparkles, Wand2, Loader2, FileText, MessageSquare, Layout, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Eye, Edit, X, Calendar, Tag, Sparkles, Wand2, Loader2, FileText, MessageSquare, Layout, Search, ImageIcon, Save } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { CardImagePicker } from "@/components/CardImagePicker";
 
 interface ArticlePreviewProps {
   article: {
@@ -30,6 +33,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
   const [showAIEditDialog, setShowAIEditDialog] = useState(false);
   const [editInstruction, setEditInstruction] = useState('');
   const [isAIEditing, setIsAIEditing] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const editWithAIMutation = trpc.blog.editArticleWithAI.useMutation({
     onSuccess: (data: { title: string; excerpt: string; content: string }) => {
@@ -88,6 +92,23 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
           </Button>
           <Button
             variant="outline"
+            onClick={() => setIsEditMode(!isEditMode)}
+            className="border-zinc-700 text-white hover:bg-zinc-800"
+          >
+            {isEditMode ? (
+              <>
+                <Eye className="w-4 h-4 mr-2" />
+                預覽
+              </>
+            ) : (
+              <>
+                <Edit className="w-4 h-4 mr-2" />
+                編輯
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => setShowAIEditDialog(true)}
             className="border-zinc-700 text-white hover:bg-zinc-800"
           >
@@ -101,7 +122,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
         </div>
       </div>
 
-      {/* Preview Card - 使用白色底色配合 Blog 頁面風格 */}
+      {/* Preview/Edit Card - 使用白色底色配合 Blog 頁面風格 */}
       <Card className="bg-white border-gray-200">
         <CardHeader className="space-y-4">
           {/* Featured Image */}
@@ -160,8 +181,208 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
         </CardHeader>
 
         <CardContent className="prose prose-lg max-w-none">
-          {/* Content - Markdown 渲染 */}
-          <div className="text-gray-800 leading-relaxed">
+          {isEditMode ? (
+            /* Edit Mode */
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <Label htmlFor="edit-title" className="text-gray-700">標題 *</Label>
+                <Input
+                  id="edit-title"
+                  value={currentArticle.title}
+                  onChange={(e) => setCurrentArticle({ ...currentArticle, title: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900"
+                  placeholder="輸入文章標題..."
+                />
+              </div>
+
+              {/* Excerpt */}
+              <div>
+                <Label htmlFor="edit-excerpt" className="text-gray-700">摘要</Label>
+                <Textarea
+                  id="edit-excerpt"
+                  value={currentArticle.excerpt || ''}
+                  onChange={(e) => setCurrentArticle({ ...currentArticle, excerpt: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900"
+                  placeholder="輸入文章摘要（150-200字）..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Content with Image Upload Buttons */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="edit-content" className="text-gray-700">內容 * (Markdown)</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (!file) return;
+                          
+                          // Check file size (max 10MB)
+                          if (file.size > 10 * 1024 * 1024) {
+                            toast.error('圖片大小不能超過 10MB');
+                            return;
+                          }
+                          
+                          try {
+                            toast.info('正在上傳圖片...');
+                            
+                            // Upload to S3
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            
+                            const uploadResponse = await fetch('/api/upload-blog-image', {
+                              method: 'POST',
+                              body: formData,
+                            });
+                            
+                            if (!uploadResponse.ok) {
+                              throw new Error('圖片上傳失敗');
+                            }
+                            
+                            const { url } = await uploadResponse.json();
+                            
+                            // Insert markdown image syntax
+                            const imageName = file.name.replace(/\.[^/.]+$/, '');
+                            const markdownImage = `![${imageName}](${url})`;
+                            setCurrentArticle({ 
+                              ...currentArticle, 
+                              content: currentArticle.content + '\n\n' + markdownImage 
+                            });
+                            
+                            toast.success('圖片上傳成功');
+                          } catch (error) {
+                            toast.error(`圖片上傳失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+                          }
+                        };
+                        input.click();
+                      }}
+                    >
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      上傳圖片
+                    </Button>
+                    <CardImagePicker
+                      variant="light"
+                      onInsert={(imageUrl, cardName) => {
+                        const markdownImage = `![${cardName}](${imageUrl})`;
+                        setCurrentArticle({ 
+                          ...currentArticle, 
+                          content: currentArticle.content + '\n\n' + markdownImage 
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
+                <Textarea
+                  id="edit-content"
+                  value={currentArticle.content}
+                  onChange={(e) => setCurrentArticle({ ...currentArticle, content: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900 font-mono"
+                  placeholder="輸入文章內容（支援 Markdown 格式）..."
+                  rows={20}
+                />
+              </div>
+
+              {/* Featured Image */}
+              <div>
+                <Label htmlFor="edit-featuredImage" className="text-gray-700">特色圖片</Label>
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <Input
+                      id="edit-featuredImage"
+                      value={currentArticle.featuredImage || ''}
+                      onChange={(e) => setCurrentArticle({ ...currentArticle, featuredImage: e.target.value })}
+                      className="bg-white border-gray-300 text-gray-900"
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = async (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (!file) return;
+                        
+                        // Check file size (max 10MB)
+                        if (file.size > 10 * 1024 * 1024) {
+                          toast.error('圖片大小不能超過 10MB');
+                          return;
+                        }
+                        
+                        try {
+                          toast.info('正在上傳圖片...');
+                          
+                          // Upload to S3
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          
+                          const uploadResponse = await fetch('/api/upload-blog-image', {
+                            method: 'POST',
+                            body: formData,
+                          });
+                          
+                          if (!uploadResponse.ok) {
+                            throw new Error('圖片上傳失敗');
+                          }
+                          
+                          const { url } = await uploadResponse.json();
+                          setCurrentArticle({ ...currentArticle, featuredImage: url });
+                          
+                          toast.success('圖片上傳成功');
+                        } catch (error) {
+                          toast.error(`圖片上傳失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+                        }
+                      };
+                      input.click();
+                    }}
+                  >
+                    <ImageIcon className="w-4 h-4 mr-2" />
+                    上傳
+                  </Button>
+                </div>
+              </div>
+
+              {/* Category */}
+              <div>
+                <Label htmlFor="edit-category" className="text-gray-700">分類</Label>
+                <Input
+                  id="edit-category"
+                  value={currentArticle.category || ''}
+                  onChange={(e) => setCurrentArticle({ ...currentArticle, category: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900"
+                  placeholder="例如：市場分析"
+                />
+              </div>
+
+              {/* Tags */}
+              <div>
+                <Label htmlFor="edit-tags" className="text-gray-700">標籤</Label>
+                <Input
+                  id="edit-tags"
+                  value={currentArticle.tags || ''}
+                  onChange={(e) => setCurrentArticle({ ...currentArticle, tags: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900"
+                  placeholder="用逗號分隔，例如：寶可夢, TCG, 投資"
+                />
+              </div>
+            </div>
+          ) : (
+            /* Preview Mode - Content - Markdown 渲染 */
+            <div className="text-gray-800 leading-relaxed">
             <ReactMarkdown
               components={{
                 h1: ({ node, ...props }) => <h1 className="text-3xl font-bold text-[#0033CC] mt-8 mb-4" {...props} />,
@@ -191,6 +412,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
               {currentArticle.content}
             </ReactMarkdown>
           </div>
+          )}
         </CardContent>
       </Card>
 
@@ -203,6 +425,23 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel }: Article
         >
           <X className="w-4 h-4 mr-2" />
           取消
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setIsEditMode(!isEditMode)}
+          className="border-zinc-700 text-white hover:bg-zinc-800"
+        >
+          {isEditMode ? (
+            <>
+              <Eye className="w-4 h-4 mr-2" />
+              預覽
+            </>
+          ) : (
+            <>
+              <Edit className="w-4 h-4 mr-2" />
+              編輯
+            </>
+          )}
         </Button>
         <Button
           variant="outline"

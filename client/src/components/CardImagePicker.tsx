@@ -10,9 +10,10 @@ import { ImageIcon, Search, Loader2 } from "lucide-react";
 
 interface CardImagePickerProps {
   onInsert: (imageUrl: string, cardName: string) => void;
+  variant?: 'dark' | 'light';
 }
 
-export function CardImagePicker({ onInsert }: CardImagePickerProps) {
+export function CardImagePicker({ onInsert, variant = 'dark' }: CardImagePickerProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -55,7 +56,10 @@ export function CardImagePicker({ onInsert }: CardImagePickerProps) {
         <Button
           variant="outline"
           size="sm"
-          className="border-zinc-700 text-white hover:bg-zinc-800"
+          className={variant === 'light' 
+            ? "border-gray-300 text-gray-700 hover:bg-gray-100" 
+            : "border-zinc-700 text-white hover:bg-zinc-800"
+          }
         >
           <ImageIcon className="w-4 h-4 mr-2" />
           插入卡牌圖片
