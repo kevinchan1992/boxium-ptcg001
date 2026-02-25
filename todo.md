@@ -1730,7 +1730,7 @@ useEffect(() => {
 - [ ] 修改 updatePost API，在更新前保存當前版本到 post_versions 表
 - [x] 創建 getPostVersions API，返回文章的所有歷史版本
 - [x] 創建 restorePostVersion API，恢復指定版本
-- [ ] 在 ArticlePreview 組件添加「查看歷史」按鈕和歷史版本列表
+- [x] 在 ArticlePreview 組件添加「查看歷史」按鈕和歷史版本列表
 - [ ] 測試編輯歷史記錄和恢復功能
 
 #### 4. 優化圖片管理功能
@@ -1797,8 +1797,8 @@ useEffect(() => {
 ### 2. 完成編輯歷史記錄前端 UI
 - [x] 創建 getPostVersions API，返回文章的所有歷史版本
 - [x] 創建 restorePostVersion API，恢復指定版本
-- [ ] 在 ArticlePreview 組件添加「查看歷史」按鈕
-- [ ] 創建歷史版本列表對話框，顯示版本時間和創建者
+- [x] 在 ArticlePreview 組件添加「查看歷史」按鈕
+- [x] 創建歷史版本列表對話框，顯示版本時間和創建者
 - [ ] 添加「恢復此版本」按鈕
 - [ ] 測試編輯歷史記錄和恢復功能
 
@@ -1819,8 +1819,8 @@ useEffect(() => {
 ### 編輯歷史記錄
 - [x] 創建 getPostVersions API（查詢文章的所有歷史版本）
 - [x] 創建 restorePostVersion API（恢復到指定版本）
-- [ ] 在 ArticlePreview 組件添加「查看歷史」按鈕
-- [ ] 創建歷史版本列表對話框
+- [x] 在 ArticlePreview 組件添加「查看歷史」按鈕
+- [x] 創建歷史版本列表對話框
 - [ ] 實施版本比較功能（顯示差異）
 - [ ] 測試歷史記錄功能
 

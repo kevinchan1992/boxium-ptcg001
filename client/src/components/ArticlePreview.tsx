@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, Edit, X, Calendar, Tag, Sparkles, Wand2, Loader2, FileText, MessageSquare, Layout, Search, ImageIcon, Save } from "lucide-react";
+import { Eye, Edit, X, Calendar, Tag, Sparkles, Wand2, Loader2, FileText, MessageSquare, Layout, Search, ImageIcon, Save, History, RotateCcw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -38,6 +38,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
   const [isAIEditing, setIsAIEditing] = useState(false);
   const [isEditMode, setIsEditMode] = useState(initialEditMode);
   const [showDraftDialog, setShowDraftDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
 
   // Draft auto-save key
   const draftKey = `article-draft-${article.id || 'new'}`;
@@ -198,6 +199,16 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
             <Wand2 className="w-4 h-4 mr-2" />
             AI 編輯
           </Button>
+          {article.id && (
+            <Button
+              variant="outline"
+              onClick={() => setShowHistoryDialog(true)}
+              className="border-zinc-700 text-white hover:bg-zinc-800"
+            >
+              <History className="w-4 h-4 mr-2" />
+              查看歷史
+            </Button>
+          )}
           <BrandButton onClick={handlePublish}>
             <Sparkles className="w-4 h-4 mr-2" />
             發布文章
@@ -735,7 +746,125 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* History Dialog */}
+      <HistoryDialog 
+        postId={article.id} 
+        open={showHistoryDialog} 
+        onOpenChange={setShowHistoryDialog}
+        onRestore={(version) => {
+          setCurrentArticle({
+            ...currentArticle,
+            title: version.title,
+            excerpt: version.excerpt || '',
+            content: version.content,
+            featuredImage: version.featuredImage || '',
+            category: version.category || '',
+            seoKeywords: version.metaKeywords || '',
+            tags: version.tags || '',
+          });
+          toast.success('已恢復到歷史版本');
+          setShowHistoryDialog(false);
+        }}
+      />
       </div>
     </>
+  );
+}
+
+// History Dialog Component
+interface HistoryDialogProps {
+  postId?: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onRestore: (version: any) => void;
+}
+
+function HistoryDialog({ postId, open, onOpenChange, onRestore }: HistoryDialogProps) {
+  const { data: versions, isLoading } = trpc.blog.getPostVersions.useQuery(
+    { postId: postId! },
+    { enabled: !!postId && open }
+  );
+  const restoreMutation = trpc.blog.restorePostVersion.useMutation({
+    onSuccess: () => {
+      toast.success('版本恢復成功');
+    },
+    onError: (error) => {
+      toast.error(`版本恢復失敗：${error.message}`);
+    },
+  });
+
+  const handleRestore = async (versionId: number) => {
+    if (!postId) return;
+    
+    await restoreMutation.mutateAsync({ postId, versionId });
+    const version = versions?.find(v => v.id === versionId);
+    if (version) {
+      onRestore(version);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-white">歷史版本</DialogTitle>
+          <DialogDescription className="text-zinc-400">
+            查看文章的所有歷史版本，點擊「恢復」可以回到之前的版本
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          </div>
+        ) : versions && versions.length > 0 ? (
+          <div className="space-y-4">
+            {versions.map((version) => (
+              <Card key={version.id} className="bg-zinc-800 border-zinc-700">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-white mb-2">{version.title}</h3>
+                      {version.excerpt && (
+                        <p className="text-sm text-zinc-400 mb-2">{version.excerpt}</p>
+                      )}
+                      <div className="flex items-center gap-4 text-xs text-zinc-500">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(version.createdAt).toLocaleString('zh-TW')}
+                        </span>
+                        {version.createdByName && (
+                          <span>編輯者：{version.createdByName}</span>
+                        )}
+                        {version.category && (
+                          <Badge variant="outline" className="text-xs">
+                            {version.category}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRestore(version.id)}
+                      disabled={restoreMutation.isPending}
+                      className="border-zinc-700 text-white hover:bg-zinc-700"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      恢復
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-zinc-400">
+            沒有歷史版本
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
