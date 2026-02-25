@@ -13,6 +13,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { CardImagePicker } from "@/components/CardImagePicker";
 import { ImageLibrary } from "@/components/ImageLibrary";
+import { SEOScorePanel } from "@/components/SEOScorePanel";
 
 interface ArticlePreviewProps {
   article: {
@@ -305,6 +306,14 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
                 />
               </div>
 
+              {/* SEO Score Panel */}
+              <SEOScorePanel
+                title={currentArticle.title}
+                excerpt={currentArticle.excerpt || ''}
+                content={currentArticle.content}
+                seoKeywords={currentArticle.seoKeywords || ''}
+              />
+
               {/* Content with Image Upload Buttons */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -458,19 +467,64 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
                     <ImageIcon className="w-4 h-4 mr-2" />
                     上傳
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                    onClick={async () => {
+                      try {
+                        toast.info('AI 正在生成圖片，這可能需要 10-20 秒...');
+                        
+                        // Generate prompt based on article title and excerpt
+                        const prompt = `Create a professional and visually appealing featured image for a Pokémon TCG blog article titled "${currentArticle.title}". ${currentArticle.excerpt ? `The article is about: ${currentArticle.excerpt}` : ''} The image should be eye-catching, modern, and related to Pokémon trading cards. Include vibrant colors and a clean design suitable for a blog header.`;
+                        
+                        // Call tRPC API to generate image
+                        const response = await fetch('/api/trpc/blog.generateThemeImage', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            json: { prompt },
+                          }),
+                        });
+                        
+                        if (!response.ok) {
+                          throw new Error('AI 圖片生成失敗');
+                        }
+                        
+                        const { result } = await response.json();
+                        setCurrentArticle({ ...currentArticle, featuredImage: result.data.url });
+                        
+                        toast.success('AI 圖片生成成功！');
+                      } catch (error: any) {
+                        toast.error(`AI 圖片生成失敗：${error.message}`);
+                      }
+                    }}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    AI 生成
+                  </Button>
                 </div>
               </div>
 
               {/* Category */}
               <div>
                 <Label htmlFor="edit-category" className="text-gray-700">分類</Label>
-                <Input
+                <select
                   id="edit-category"
                   value={currentArticle.category || ''}
                   onChange={(e) => setCurrentArticle({ ...currentArticle, category: e.target.value })}
-                  className="bg-white border-gray-300 text-gray-900"
-                  placeholder="例如：市場分析"
-                />
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0033CC]"
+                >
+                  <option value="">選擇分類...</option>
+                  <option value="市場分析">市場分析</option>
+                  <option value="卡牌價格">卡牌價格</option>
+                  <option value="投資指南">投資指南</option>
+                  <option value="新品發布">新品發布</option>
+                  <option value="收藏心得">收藏心得</option>
+                  <option value="賽事報導">賽事報導</option>
+                  <option value="開箱評測">開箱評測</option>
+                  <option value="交易技巧">交易技巧</option>
+                </select>
               </div>
 
               {/* Tags */}

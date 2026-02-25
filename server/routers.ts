@@ -2911,6 +2911,15 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         return result;
       }),
 
+    // Generate theme image using AI (Admin only)
+    generateThemeImage: adminProcedure
+      .input(z.object({ prompt: z.string() }))
+      .mutation(async ({ input }) => {
+        const { generateImage } = await import('./_core/imageGeneration');
+        const result = await generateImage({ prompt: input.prompt });
+        return result;
+      }),
+
     // Get post versions (Admin only)
     getPostVersions: adminProcedure
       .input(z.object({ postId: z.number() }))

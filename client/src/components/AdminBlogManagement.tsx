@@ -167,6 +167,8 @@ export function AdminBlogManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
   const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(true);
+  const [selectedPostIds, setSelectedPostIds] = useState<number[]>([]);
+  const [isSelectMode, setIsSelectMode] = useState(false);
 
   // Query posts
   const { data: posts, isLoading, refetch } = trpc.blog.getPosts.useQuery({
@@ -332,6 +334,17 @@ export function AdminBlogManagement() {
                     <SelectItem value="published">已發布</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsSelectMode(!isSelectMode);
+                    setSelectedPostIds([]);
+                  }}
+                  className="border-zinc-700 text-white hover:bg-zinc-800"
+                >
+                  {isSelectMode ? '取消選擇' : '批量操作'}
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -340,11 +353,112 @@ export function AdminBlogManagement() {
               <div className="text-center py-8 text-gray-400">載入中...</div>
             ) : posts && posts.length > 0 ? (
               <div className="space-y-4">
+                {/* Batch Operations Toolbar */}
+                {isSelectMode && (
+                  <div className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg border border-zinc-700">
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 text-white cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedPostIds.length === posts.length}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedPostIds(posts.map(p => p.id));
+                            } else {
+                              setSelectedPostIds([]);
+                            }
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span>全選 ({selectedPostIds.length}/{posts.length})</span>
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (selectedPostIds.length === 0) {
+                            toast.error('請選擇至少一篇文章');
+                            return;
+                          }
+                          if (confirm(`確定要發布 ${selectedPostIds.length} 篇文章嗎？`)) {
+                            // Note: togglePublish API automatically switches status
+                            // We need to check each post's current status and only toggle drafts
+                            const drafts = posts.filter(p => selectedPostIds.includes(p.id) && p.status === 'draft');
+                            drafts.forEach(post => togglePublishMutation.mutate({ id: post.id }));
+                            setSelectedPostIds([]);
+                          }
+                        }}
+                        className="border-zinc-700 text-green-400 hover:bg-zinc-700"
+                        disabled={selectedPostIds.length === 0}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        批量發布
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (selectedPostIds.length === 0) {
+                            toast.error('請選擇至少一篇文章');
+                            return;
+                          }
+                          if (confirm(`確定要取消發布 ${selectedPostIds.length} 篇文章嗎？`)) {
+                            // Note: togglePublish API automatically switches status
+                            // We need to check each post's current status and only toggle published ones
+                            const published = posts.filter(p => selectedPostIds.includes(p.id) && p.status === 'published');
+                            published.forEach(post => togglePublishMutation.mutate({ id: post.id }));
+                            setSelectedPostIds([]);
+                          }
+                        }}
+                        className="border-zinc-700 text-yellow-400 hover:bg-zinc-700"
+                        disabled={selectedPostIds.length === 0}
+                      >
+                        <EyeOff className="w-4 h-4 mr-2" />
+                        取消發布
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (selectedPostIds.length === 0) {
+                            toast.error('請選擇至少一篇文章');
+                            return;
+                          }
+                          if (confirm(`確定要刪除 ${selectedPostIds.length} 篇文章嗎？此操作無法復原！`)) {
+                            selectedPostIds.forEach(id => deletePostMutation.mutate({ id }));
+                            setSelectedPostIds([]);
+                          }
+                        }}
+                        className="border-zinc-700 text-red-400 hover:bg-zinc-700"
+                        disabled={selectedPostIds.length === 0}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        批量刪除
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {posts.map((post) => (
                   <div
                     key={post.id}
                     className="flex items-center justify-between p-4 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
                   >
+                    {isSelectMode && (
+                      <input
+                        type="checkbox"
+                        checked={selectedPostIds.includes(post.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedPostIds([...selectedPostIds, post.id]);
+                          } else {
+                            setSelectedPostIds(selectedPostIds.filter(id => id !== post.id));
+                          }
+                        }}
+                        className="w-4 h-4 mr-4"
+                      />
+                    )}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="text-white font-semibold">{post.title}</h3>
