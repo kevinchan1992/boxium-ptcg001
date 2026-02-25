@@ -710,13 +710,11 @@ function AIArticleGenerator({
   };
 
   const handleGenerate = () => {
-    // URL input method has been disabled
-    if (inputMethod === 'url') {
-      toast.error('網址輸入功能暫時停用');
+    // Validate input based on method
+    if (inputMethod === 'url' && !urlInput) {
+      toast.error('請輸入網址');
       return;
     }
-
-    // Handle image/text input with original API
     if (inputMethod === 'image' && uploadedImageUrls.length === 0) {
       toast.error('請上傳至少一張圖片');
       return;
@@ -730,7 +728,12 @@ function AIArticleGenerator({
       articleType,
     };
 
-    if (inputMethod === 'image') {
+    if (inputMethod === 'url') {
+      input.urlInput = {
+        url: urlInput,
+        targetLanguage,
+      };
+    } else if (inputMethod === 'image') {
       input.imageInput = {
         imageUrls: uploadedImageUrls,
       };
@@ -815,13 +818,12 @@ function AIArticleGenerator({
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
                 className="bg-zinc-800 border-zinc-700 text-white"
-                disabled={true}
               />
               <p className="text-xs text-gray-500 mt-1">支援日文/英文/中文網站，AI 將自動抓取並分析內容</p>
             </div>
             <div>
               <Label htmlFor="target-language" className="text-white">目標語言</Label>
-              <Select value={targetLanguage} onValueChange={setTargetLanguage} disabled={true}>
+              <Select value={targetLanguage} onValueChange={setTargetLanguage}>
                 <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                   <SelectValue />
                 </SelectTrigger>

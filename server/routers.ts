@@ -2935,6 +2935,10 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
           content: z.string(),
           topic: z.string(),
         }).optional(),
+        urlInput: z.object({
+          url: z.string(),
+          targetLanguage: z.enum(['zh-TW', 'en', 'ja']).optional(),
+        }).optional(),
         options: z.object({
           language: z.enum(['zh-TW', 'en', 'ja']).optional(),
           tone: z.enum(['professional', 'casual', 'technical']).optional(),

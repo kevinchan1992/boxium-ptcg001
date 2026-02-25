@@ -306,6 +306,10 @@ export interface ArticleGenerationOptions {
     content: string;
     topic: string;
   };
+  urlInput?: {
+    url: string;
+    targetLanguage?: 'zh-TW' | 'en' | 'ja';
+  };
   options?: {
     language?: 'zh-TW' | 'en' | 'ja';
     tone?: 'professional' | 'casual' | 'technical';
@@ -556,7 +560,61 @@ export async function generateArticle(
   }
 
   // 2. Process user input
-  if (options.imageInput) {
+  if (options.urlInput) {
+    // Use Firecrawl MCP to scrape URL content
+    try {
+      console.log('[ArticleGenerator] Scraping URL:', options.urlInput.url);
+      const { execSync } = await import('child_process');
+      let scrapResult: string;
+      try {
+        scrapResult = execSync(
+          `manus-mcp-cli tool call firecrawl_scrape --server firecrawl --input '${JSON.stringify({ url: options.urlInput.url, formats: ['markdown'], onlyMainContent: true })}'`,
+          { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 }
+        );
+      } catch (cmdError: any) {
+        // If execSync throws, the command failed
+        const errorOutput = cmdError.stderr || cmdError.stdout || cmdError.message;
+        console.error('[ArticleGenerator] Firecrawl command failed:', errorOutput);
+        throw new Error(`Firecrawl 抓取失敗：${errorOutput}`);
+      }
+      
+      // Check if the result starts with "Tool execution result" (error format)
+      if (scrapResult.startsWith('Tool execution result')) {
+        console.error('[ArticleGenerator] Firecrawl returned error:', scrapResult);
+        throw new Error(`Firecrawl 抓取失敗：${scrapResult}`);
+      }
+      
+      let scrapData: any;
+      try {
+        scrapData = JSON.parse(scrapResult);
+      } catch (parseError) {
+        console.error('[ArticleGenerator] Failed to parse Firecrawl result:', scrapResult.substring(0, 500));
+        throw new Error(`無法解析 Firecrawl 返回結果：${scrapResult.substring(0, 200)}`);
+      }
+      
+      if (scrapData.content && scrapData.content[0]?.markdown) {
+        userInput = scrapData.content[0].markdown;
+        console.log('[ArticleGenerator] Scraped content length:', userInput.length);
+        
+        // Add language instruction if target language is specified
+        if (options.urlInput.targetLanguage) {
+          const langMap = {
+            'zh-TW': '繁體中文',
+            'en': 'English',
+            'ja': '日本語'
+          };
+          userInput = `【原文內容】\n${userInput}\n\n【要求】請根據以上內容生成 ${langMap[options.urlInput.targetLanguage]} 文章。`;
+        } else {
+          userInput = `【原文內容】\n${userInput}`;
+        }
+      } else {
+        throw new Error('Failed to extract content from URL');
+      }
+    } catch (error) {
+      console.error('[ArticleGenerator] Failed to scrape URL:', error);
+      throw new Error(`無法抓取網址內容：${error instanceof Error ? error.message : String(error)}`);
+    }
+  } else if (options.imageInput) {
     userInput = options.imageInput.extractedText || '';
     // Note: Do not include base64 image URLs in the prompt as they are too large
     // The images are only used for preview in the frontend
