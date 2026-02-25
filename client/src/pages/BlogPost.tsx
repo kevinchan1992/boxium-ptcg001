@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTranslation } from "react-i18next";
+import { ResponsiveBlogImage } from "@/components/ResponsiveBlogImage";
 
 export default function BlogPost() {
   const { i18n } = useTranslation();
@@ -200,8 +201,9 @@ export default function BlogPost() {
       {post.featuredImage && (
         <div className="container mx-auto px-4 py-8 md:py-12">
           <div className="max-w-5xl mx-auto">
-            <img
-              src={post.featuredImage}
+            <ResponsiveBlogImage
+              imageData={post.featuredImage}
+              size="medium"
               alt={post.title}
               className="w-full rounded-2xl shadow-2xl"
             />

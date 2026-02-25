@@ -453,8 +453,10 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
                             throw new Error('圖片上傳失敗');
                           }
                           
-                          const { url } = await uploadResponse.json();
-                          setCurrentArticle({ ...currentArticle, featuredImage: url });
+                          const { url, urls } = await uploadResponse.json();
+                          // Save multi-size URLs as JSON string (for backward compatibility, also save medium URL)
+                          const featuredImageData = urls ? JSON.stringify(urls) : url;
+                          setCurrentArticle({ ...currentArticle, featuredImage: featuredImageData });
                           
                           toast.success('圖片上傳成功');
                         } catch (error) {

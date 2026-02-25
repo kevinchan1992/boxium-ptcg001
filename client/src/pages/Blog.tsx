@@ -9,6 +9,7 @@ import { BrandButton } from "@/components/ui/brand-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Calendar, Eye, TrendingUp, Sparkles, ArrowRight, Tag } from "lucide-react";
 import { LazyImage } from "@/components/LazyImage";
+import { ResponsiveBlogImage } from "@/components/ResponsiveBlogImage";
 import { useTranslation } from "react-i18next";
 
 export default function Blog() {
@@ -141,8 +142,9 @@ export default function Blog() {
                     <div className="grid md:grid-cols-5 gap-0">
                       {featuredPost.featuredImage && (
                         <div className="relative h-64 sm:h-80 md:h-auto md:col-span-2 overflow-hidden">
-                          <LazyImage
-                            src={featuredPost.featuredImage}
+                          <ResponsiveBlogImage
+                            imageData={featuredPost.featuredImage}
+                            size="medium"
                             alt={featuredPost.title}
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
@@ -199,8 +201,9 @@ export default function Blog() {
                       <Card className="bg-white border-2 border-gray-200 hover:border-[#0033CC] hover:shadow-xl transition-all duration-300 cursor-pointer h-full flex flex-col group overflow-hidden">
                         {post.featuredImage && (
                           <div className="relative h-48 sm:h-56 overflow-hidden">
-                            <LazyImage
-                              src={post.featuredImage}
+                            <ResponsiveBlogImage
+                              imageData={post.featuredImage}
+                              size="thumbnail"
                               alt={post.title}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />

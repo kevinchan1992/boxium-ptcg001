@@ -131,17 +131,21 @@ async function startServer() {
         return res.status(400).json({ error: "No file uploaded" });
       }
       
-      const { storagePut } = await import("../storage");
+      const { processAndUploadMultiSizeImages } = await import("../imageProcessor");
       
       // Get file data from multer
       const fileBuffer = req.file.buffer;
-      const contentType = req.file.mimetype;
-      const fileName = `blog-images/${Date.now()}.${contentType.split("/")[1]}`;
+      const originalFilename = req.file.originalname || 'image';
       
-      // Upload to S3
-      const { url } = await storagePut(fileName, fileBuffer, contentType);
+      // Process and upload multi-size images
+      const urls = await processAndUploadMultiSizeImages(
+        fileBuffer,
+        'blog-images',
+        originalFilename
+      );
       
-      res.json({ url });
+      // Return multi-size URLs (and also return medium URL as 'url' for backward compatibility)
+      res.json({ url: urls.medium, urls });
     } catch (error) {
       console.error("[Blog] Error uploading image:", error);
       res.status(500).json({ error: "Failed to upload image" });
