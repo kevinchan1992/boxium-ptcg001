@@ -1,0 +1,46 @@
+{
+  "query": "SELECT \n  id,\n  name,\n  cardNumber,\n  imageUrl\nFROM cards\nWHERE id IN (210022, 781745, 819562, 150847, 781727, 210012)\nORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  id,\n  name,\n  cardNumber,\n  imageUrl\nFROM cards\nWHERE id IN (210022, 781745, 819562, 150847, 781727, 210012)\nORDER BY id;",
+  "rows": [
+    {
+      "id": "150847",
+      "name": "Solgaleo & Lunala GX (Lillie) SR :SA [SM11b 063/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230831075830-0.webp"
+    },
+    {
+      "id": "210012",
+      "name": "Lillie's Determination SAR [M1L 091/063](Expansion Pack \"Mega Brave\")",
+      "cardNumber": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20250731010923-1.webp"
+    },
+    {
+      "id": "210022",
+      "name": "Lillie Extra Battle Day: PROMO[SM-P 397](SM-P Promotional cards)",
+      "cardNumber": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230725032752-0.webp"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230701005024-0.webp"
+    },
+    {
+      "id": "781745",
+      "name": "Lillie (Ganba Lillie) SR[SM4+ 119/114](High Class Pack \"GX Battle Boost\")",
+      "cardNumber": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20240730032455-0.webp"
+    },
+    {
+      "id": "819562",
+      "name": "Lillie's Clefairy ex SAR Style [MC 765/742](Start Deck 100 \"Battle Collection\")",
+      "cardNumber": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20251218014854-1.webp"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\timageUrl\n150847\tSolgaleo & Lunala GX (Lillie) SR :SA [SM11b 063/049](Enhanced Expansion Pack \"Dream League\")\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20230831075830-0.webp\n210012\tLillie's Determination SAR [M1L 091/063](Expansion Pack \"Mega Brave\")\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20250731010923-1.webp\n210022\tLillie Extra Battle Day: PROMO[SM-P 397](SM-P Promotional cards)\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20230725032752-0.webp\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20230701005024-0.webp\n781745\tLillie (Ganba Lillie) SR[SM4+ 119/114](High Class Pack \"GX Battle Boost\")\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20240730032455-0.webp\n819562\tLillie's Clefairy ex SAR Style [MC 765/742](Start Deck 100 \"Battle Collection\")\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20251218014854-1.webp\n",
+  "stderr": "",
+  "execution_time_ms": 1522
+}

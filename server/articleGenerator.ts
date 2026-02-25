@@ -287,14 +287,16 @@ function buildArticlePrompt(
   // Add data context if available
   if (dataContext && dataContext.cards.length > 0) {
     prompt += `\n【卡牌資訊】\n`;
+    prompt += `**重要：以下是系統提供的卡牌資訊，文章中必須使用這些圖片 URL，不可以創造或尋找其他來源的圖片**\n\n`;
     dataContext.cards.forEach(card => {
       prompt += `- ${card.name}${card.nameJa ? ` (${card.nameJa})` : ''}\n`;
       if (card.cardNumber) prompt += `  編號：${card.cardNumber}\n`;
       if (card.series) prompt += `  系列：${card.series}\n`;
       if (card.setName) prompt += `  套裝：${card.setName}\n`;
       if (card.rarity) prompt += `  稀有度：${card.rarity}\n`;
-      if (card.imageUrl) prompt += `  圖片：${card.imageUrl}\n`;
+      if (card.imageUrl) prompt += `  **圖片 URL（必須使用）**：${card.imageUrl}\n`;
     });
+    prompt += `\n**注意：在 Markdown 中插入圖片時，必須使用上述提供的圖片 URL，不要創造或使用其他來源的圖片連結**\n`;
 
     prompt += `\n【PSA10 價格數據】（來源：SNKRDUNK 實際交易記錄）\n`;
     prompt += `**重要：以下是系統提供的唯一真實數據，文章中所有價格引用必須直接使用這些數值，不可創造其他價格數據**\n`;
@@ -336,6 +338,7 @@ function buildArticlePrompt(
   prompt += `3. 語氣：${tone === 'professional' ? '專業' : tone === 'casual' ? '輕鬆' : '技術性'}\n`;
   prompt += `4. 內容格式：Markdown\n`;
   prompt += `5. **【嚴格要求】所有價格數據必須直接使用上方【PSA10 價格數據】和【中古品 A 價格數據】中提供的數值，絕對不可以創造、估算或推測任何價格數據**\n`;
+  prompt += `5.1. **【嚴格要求】所有卡牌圖片必須使用上方【卡牌資訊】中提供的圖片 URL，絕對不可以創造或使用其他來源的圖片連結**\n`;
   prompt += `6. **【嚴格要求】不要創造「月初價格」、「月底價格」、「上週價格」等系統未提供的數據。只使用「平均價格」、「最低價格」、「最高價格」和「漲跌幅」**\n`;
   prompt += `7. **【嚴格要求】如果系統提供的數據不足以支撐某個論點，明確說明「數據不足」，而不是猜測或創造數據**\n`;
   prompt += `8. 提供可操作的建議\n`;

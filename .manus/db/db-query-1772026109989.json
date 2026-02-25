@@ -1,0 +1,45 @@
+{
+  "query": "SELECT \n  id,\n  title,\n  SUBSTRING(content, 1, 2000) as content_preview\nFROM posts\nWHERE slug = '莉莉艾卡牌驚人漲幅-2026年2月市場分析與投資洞察'\nLIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  id,\n  title,\n  SUBSTRING(content, 1, 2000) as content_preview\nFROM posts\nWHERE slug = '莉莉艾卡牌驚人漲幅-2026年2月市場分析與投資洞察'\nLIMIT 1;",
+  "rows": [
+    {
+      "id": "120002",
+      "title": "莉莉艾卡牌驚人漲幅！2026年2月市場分析與投資洞察",
+      "content_preview": "# 莉莉艾卡牌驚人漲幅！2026年2月市場分析與投資洞察"
+    }
+  ],
+  "messages": [
+    "## 引言：莉莉艾熱潮再起，市場關注度飆升",
+    "2026年2月，寶可夢集換式卡牌遊戲（PTCG）的收藏市場再次聚焦於一位經典角色——莉莉艾（Lillie）。作為《太陽&月亮》系列動畫及遊戲中的核心人物，莉莉艾不僅擁有廣大粉絲基礎，其支援者卡牌在PTCG市場上也一直備受追捧。本月，多張莉莉艾卡牌錄得了令人矚目的價格升幅，再次證明了其在收藏界的強大號召力。BOXIUM PTCG將為您帶來詳細的市場分析，剖析這些卡牌的漲幅數據，並探討其背後的原因及對未來市場的影響。",
+    "## 數據分析：2026年2月莉莉艾卡牌漲幅一覽",
+    "根據BOXIUM PTCG平台數據顯示，以下六張具代表性的莉莉艾卡牌在2026年2月期間呈現出顯著的價格增長。我們將逐一分析其表現，並提供最新的市場參考價。",
+    "### 1. 莉莉艾 (Lillie - SM4+) - 210022",
+    "**莉莉艾 (Lillie - SM4+)**",
+    "![莉莉艾 (Lillie - SM4+)](https://tcg.pokemon.com/assets/img/cards/en-us/sm4plus_en_Lillie.png)",
+    "這張來自《GX對戰藝術家》擴充包的莉莉艾卡牌（卡號：210022）因其精美的全圖（Full Art）設計和稀有度，一直是收藏家們的目標。在2026年2月，其市場表現尤為突出。",
+    "> 數據洞察：本月該卡牌的平均價格從月初的約 **HKD 3,800.00** 上漲至月底的約 **HKD 4,500.00**，錄得約 **18.4%** 的漲幅。",
+    "### 2. 莉莉艾的全力 (Lillie's Full Force - SM11b) - 781745",
+    "**莉莉艾的全力 (Lillie's Full Force - SM11b)**",
+    "![莉莉艾的全力 (Lillie's Full Force - SM11b)](https://tcg.pokemon.com/assets/img/cards/en-us/sm11b_en_LilliesFullForce.png)",
+    "這張卡牌（卡號：781745）以其獨特的藝術風格和在對戰中的實用性而聞名。作為《夢幻閃光》擴充包中的稀有卡，其市場價值持續攀升。",
+    "> 數據洞察：2026年2月，該卡牌的平均價格從 **HKD 2,500.00** 躍升至 **HKD 3,050.00**，漲幅達到約 **22.0%**。",
+    "### 3. 莉莉艾 (Lillie - SM1M) - 819562",
+    "**莉莉艾 (Lillie - SM1M)**",
+    "![莉莉艾 (Lillie - SM1M)](https://tcg.pokemon.com/assets/img/cards/en-us/sm1m_en_Lillie.png)",
+    "這張來自《Collection Moon》的莉莉艾卡牌（卡號：819562）是莉莉艾系列中較早期的版本之一，具有重要的歷史意義。其全圖版本更是收藏家們的夢幻逸品。",
+    "> 數據洞察：本月該卡牌的價格從 **HKD 5,200.00** 飆升至 **HKD 6,150.00**，漲幅高達約 **18.3%**。",
+    "### 4. 莉莉艾 (Lillie - SM6) - 150847",
+    "**莉莉艾 (Lillie - SM6)**",
+    "![莉莉艾 (Lillie - SM6)](https://tcg.pokemon.com/assets/img/cards/en-us/sm6_en_Lillie.png)",
+    "《禁斷之光》擴充包中的莉莉艾（卡號：150847）以其清新的畫風吸引了眾多粉絲。儘管不是最稀有的版本，但其穩定增長的趨勢顯示了市場對其的認可。",
+    "> 數據洞察：該卡牌的平均價格從 **HKD 1,800.00** 增長至 **HKD 2,100.00**，漲幅約為 **16.7%**。",
+    "### 5. 莉莉艾的全力 (Lillie's Full Force - SM11b) - 781727",
+    "**莉莉艾的全力 (Lillie's Full Force - SM11b)**",
+    "![莉莉艾的全力 (Lillie's Full Force - SM11b)](https://tcg.pokemon.com/assets/img/cards/en-us/sm11b_en_LilliesFullForce_alt.png)",
+    "這張與卡號781745同屬《夢幻閃光》擴充包，但可能為不同版本或稀有度的莉莉艾的全力卡牌（卡號：781727）同樣表現強勁。",
+    "> 數據洞察：本月其價格從 **HKD 2,300.00** 上漲至 **HKD 2,750.00**，漲"
+  ],
+  "stdout": "id\ttitle\tcontent_preview\n120002\t莉莉艾卡牌驚人漲幅！2026年2月市場分析與投資洞察\t# 莉莉艾卡牌驚人漲幅！2026年2月市場分析與投資洞察\n\n## 引言：莉莉艾熱潮再起，市場關注度飆升\n\n2026年2月，寶可夢集換式卡牌遊戲（PTCG）的收藏市場再次聚焦於一位經典角色——莉莉艾（Lillie）。作為《太陽&月亮》系列動畫及遊戲中的核心人物，莉莉艾不僅擁有廣大粉絲基礎，其支援者卡牌在PTCG市場上也一直備受追捧。本月，多張莉莉艾卡牌錄得了令人矚目的價格升幅，再次證明了其在收藏界的強大號召力。BOXIUM PTCG將為您帶來詳細的市場分析，剖析這些卡牌的漲幅數據，並探討其背後的原因及對未來市場的影響。\n\n## 數據分析：2026年2月莉莉艾卡牌漲幅一覽\n\n根據BOXIUM PTCG平台數據顯示，以下六張具代表性的莉莉艾卡牌在2026年2月期間呈現出顯著的價格增長。我們將逐一分析其表現，並提供最新的市場參考價。\n\n### 1. 莉莉艾 (Lillie - SM4+) - 210022\n\n**莉莉艾 (Lillie - SM4+)**\n\n![莉莉艾 (Lillie - SM4+)](https://tcg.pokemon.com/assets/img/cards/en-us/sm4plus_en_Lillie.png)\n\n這張來自《GX對戰藝術家》擴充包的莉莉艾卡牌（卡號：210022）因其精美的全圖（Full Art）設計和稀有度，一直是收藏家們的目標。在2026年2月，其市場表現尤為突出。\n\n> 數據洞察：本月該卡牌的平均價格從月初的約 **HKD 3,800.00** 上漲至月底的約 **HKD 4,500.00**，錄得約 **18.4%** 的漲幅。\n\n### 2. 莉莉艾的全力 (Lillie's Full Force - SM11b) - 781745\n\n**莉莉艾的全力 (Lillie's Full Force - SM11b)**\n\n![莉莉艾的全力 (Lillie's Full Force - SM11b)](https://tcg.pokemon.com/assets/img/cards/en-us/sm11b_en_LilliesFullForce.png)\n\n這張卡牌（卡號：781745）以其獨特的藝術風格和在對戰中的實用性而聞名。作為《夢幻閃光》擴充包中的稀有卡，其市場價值持續攀升。\n\n> 數據洞察：2026年2月，該卡牌的平均價格從 **HKD 2,500.00** 躍升至 **HKD 3,050.00**，漲幅達到約 **22.0%**。\n\n### 3. 莉莉艾 (Lillie - SM1M) - 819562\n\n**莉莉艾 (Lillie - SM1M)**\n\n![莉莉艾 (Lillie - SM1M)](https://tcg.pokemon.com/assets/img/cards/en-us/sm1m_en_Lillie.png)\n\n這張來自《Collection Moon》的莉莉艾卡牌（卡號：819562）是莉莉艾系列中較早期的版本之一，具有重要的歷史意義。其全圖版本更是收藏家們的夢幻逸品。\n\n> 數據洞察：本月該卡牌的價格從 **HKD 5,200.00** 飆升至 **HKD 6,150.00**，漲幅高達約 **18.3%**。\n\n### 4. 莉莉艾 (Lillie - SM6) - 150847\n\n**莉莉艾 (Lillie - SM6)**\n\n![莉莉艾 (Lillie - SM6)](https://tcg.pokemon.com/assets/img/cards/en-us/sm6_en_Lillie.png)\n\n《禁斷之光》擴充包中的莉莉艾（卡號：150847）以其清新的畫風吸引了眾多粉絲。儘管不是最稀有的版本，但其穩定增長的趨勢顯示了市場對其的認可。\n\n> 數據洞察：該卡牌的平均價格從 **HKD 1,800.00** 增長至 **HKD 2,100.00**，漲幅約為 **16.7%**。\n\n### 5. 莉莉艾的全力 (Lillie's Full Force - SM11b) - 781727\n\n**莉莉艾的全力 (Lillie's Full Force - SM11b)**\n\n![莉莉艾的全力 (Lillie's Full Force - SM11b)](https://tcg.pokemon.com/assets/img/cards/en-us/sm11b_en_LilliesFullForce_alt.png)\n\n這張與卡號781745同屬《夢幻閃光》擴充包，但可能為不同版本或稀有度的莉莉艾的全力卡牌（卡號：781727）同樣表現強勁。\n\n> 數據洞察：本月其價格從 **HKD 2,300.00** 上漲至 **HKD 2,750.00**，漲\n",
+  "stderr": "",
+  "execution_time_ms": 1573
+}
