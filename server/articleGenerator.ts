@@ -296,7 +296,16 @@ function buildArticlePrompt(
       if (card.rarity) prompt += `  稀有度：${card.rarity}\n`;
       if (card.imageUrl) prompt += `  **圖片 URL（必須使用）**：${card.imageUrl}\n`;
     });
-    prompt += `\n**注意：在 Markdown 中插入圖片時，必須使用上述提供的圖片 URL，不要創造或使用其他來源的圖片連結**\n`;
+    prompt += `\n**圖片插入格式**（必須嚴格遵守）：\n`;
+    prompt += `![{卡牌名稱}]({圖片URL})\n`;
+    prompt += `\n**範例**：\n`;
+    prompt += `- 如果卡牌名稱是 "Lillie SR"，圖片 URL 是 "https://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp"\n`;
+    prompt += `- 那麼圖片語法就是：![Lillie SR](https://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp)\n`;
+    prompt += `\n**【嚴格禁止】**：\n`;
+    prompt += `1. 絕對不可以創造 boxium.io 或 boxium.asia 的圖片連結\n`;
+    prompt += `2. 絕對不可以創造 /images/cards/ 路徑\n`;
+    prompt += `3. 絕對不可以使用 Pokemon TCG 官網的圖片 URL\n`;
+    prompt += `4. 必須使用上述【卡牌資訊】中提供的圖片 URL，一字不漏地複製\n`;
 
     prompt += `\n【PSA10 價格數據】（來源：SNKRDUNK 實際交易記錄）\n`;
     prompt += `**重要：以下是系統提供的唯一真實數據，文章中所有價格引用必須直接使用這些數值，不可創造其他價格數據**\n`;
@@ -351,9 +360,10 @@ function buildArticlePrompt(
   prompt += `4. 重要數據使用 **粗體** 標記\n`;
   prompt += `5. 引用區塊使用 > 符號，用於重點提示\n`;
   prompt += `6. 避免過長的段落，每段 2-4 句為佳\n`;
-  prompt += `7. **引用卡牌圖片**：在文章中介紹每張卡牌時，**必須**在卡牌名稱後立即使用 Markdown 圖片語法插入圖片，格式：![{card.name}]({card.imageUrl})。例如：\n\n`;
-  prompt += `   **Pikachu (VMAX Climax - CHR)**\n\n`;
-  prompt += `   ![Pikachu (VMAX Climax - CHR)](https://example.com/pikachu.jpg)\n\n`;
+  prompt += `7. **引用卡牌圖片**：在文章中介紹每張卡牌時，**必須**在卡牌名稱後立即使用 Markdown 圖片語法插入圖片，格式：![{卡牌名稱}]({圖片URL})。例如：\n\n`;
+  prompt += `   **Lillie SR**\n\n`;
+  prompt += `   ![Lillie SR](https://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp)\n\n`;
+  prompt += `   **重要**：必須使用上方【卡牌資訊】中提供的圖片 URL，不可以創造其他 URL。\n\n`;
   prompt += `   這張來自《VMAX Climax》的CHR...\n\n`;
   prompt += `   **重要**：每張卡牌都必須包含圖片，圖片 URL 已在【卡牌資訊】中提供（「圖片：{url}」）。\n\n`;
 

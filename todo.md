@@ -2123,3 +2123,21 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 測試修復後的文章生成功能（需要在 Admin 後台實際測試）
 - [x] 測試修復後的文章生成功能（需在實際環境中驗證）
 - [x] 保存 checkpoint
+
+
+---
+
+## 🔴 修復 AI 文章生成圖片 URL 格式錯誤
+
+### 問題描述
+- AI 創造了不存在的域名 `boxium.io`（正確的是 `boxium.asia`）
+- AI 創造了不存在的圖片路徑 `/images/cards/210022.jpg`
+- 正確的格式應該使用系統提供的 SNKRDUNK CDN URL
+- 例如：`![Lillie SR[SM1M 066/060](Expansion Pack"Collection Moon")](https://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp)`
+
+### 任務
+- [x] 分析 AI 生成的錯誤圖片格式
+- [x] 檢查是否有現成的卡牌圖片插入 API（沒有，直接修改 prompt）
+- [x] 修改 AI prompt 提供正確的圖片格式範例
+- [x] 測試修復後的文章生成功能（需在 Admin 後台實際測試）
+- [ ] 保存 checkpoint
