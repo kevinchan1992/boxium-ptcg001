@@ -5,6 +5,7 @@ import { dataSources, scheduledTasks, priceHistory } from "../drizzle/schema_new
 import { eq, and, lt, or, isNull } from "drizzle-orm";
 import { scrapeSnkrdunkPage, updatePriceHistoryOnly, convertJpyToHkd, extractSnkrdunkId } from "./snkrdunkScraper";
 import { scrapeSnkrdunkPages } from "./snkrdunkAutoCrawler";
+import { calculateAndCacheTrendingRankings } from "./trendingCacheManager";
 
 /**
  * Auto-update scheduler for SNKRDUNK data sources
@@ -78,6 +79,9 @@ export function startScheduler() {
 
   // Start daily auto-crawl task
   startDailyAutoCrawl();
+  
+  // Start daily trending rankings cache refresh task
+  startDailyTrendingCacheRefresh();
 }
 
 /**
@@ -459,6 +463,30 @@ function startDailyAutoCrawl() {
   });
 
   console.log("[Scheduler] Daily auto-crawl task registered");
+}
+
+/**
+ * Start daily trending rankings cache refresh task
+ * Runs at 07:00 AM Hong Kong time every day
+ */
+function startDailyTrendingCacheRefresh() {
+  console.log("[Scheduler] Registering daily trending rankings cache refresh task (07:00 AM HKT)");
+
+  // Schedule: Every day at 07:00 AM Hong Kong time
+  cron.schedule("0 7 * * *", async () => {
+    console.log("[TrendingCache] Starting daily trending rankings cache refresh at", new Date().toISOString());
+    
+    try {
+      const result = await calculateAndCacheTrendingRankings();
+      console.log("[TrendingCache] Daily cache refresh completed:", result);
+    } catch (error) {
+      console.error("[TrendingCache] Daily cache refresh failed:", error);
+    }
+  }, {
+    timezone: "Asia/Hong_Kong"
+  });
+
+  console.log("[Scheduler] Daily trending cache refresh task registered");
 }
 
 /**

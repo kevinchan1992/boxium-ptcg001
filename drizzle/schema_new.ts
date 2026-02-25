@@ -62,7 +62,20 @@ export const priceHistory = mysqlTable("priceHistory", {
   listingUrl: text("listingUrl"), // URL to the listing
   soldAt: timestamp("soldAt"), // Transaction timestamp
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Composite index for trending calculations (cardId + soldAt + source + grade)
+  // Optimizes queries that filter by cardId, time range, source, and grade
+  cardIdSoldAtSourceGradeIdx: index("cardId_soldAt_source_grade_idx").on(
+    table.cardId,
+    table.soldAt,
+    table.source,
+    table.grade
+  ),
+  // Index for soldAt to optimize time-based queries
+  soldAtIdx: index("soldAt_idx").on(table.soldAt),
+  // Index for source to optimize source-specific queries
+  sourceIdx: index("source_idx").on(table.source),
+}));
 
 export type PriceHistory = typeof priceHistory.$inferSelect;
 export type InsertPriceHistory = typeof priceHistory.$inferInsert;
@@ -609,3 +622,25 @@ export const postShares = mysqlTable("postShares", {
 
 export type PostShare = typeof postShares.$inferSelect;
 export type InsertPostShare = typeof postShares.$inferInsert;
+
+/**
+ * Trending Rankings Cache table - stores cached trending rankings data
+ * Reduces database query pressure by caching calculated rankings
+ */
+export const trendingRankingsCache = mysqlTable("trendingRankingsCache", {
+  id: int("id").autoincrement().primaryKey(),
+  rankingType: mysqlEnum("rankingType", ["price_increase", "price_decrease", "search_popularity"]).notNull(), // Type of ranking
+  timeRange: int("timeRange").notNull(), // Time range in days (e.g., 30)
+  rankingData: text("rankingData").notNull(), // JSON array of ranked cards with full details
+  calculatedAt: timestamp("calculatedAt").notNull(), // When this ranking was calculated
+  expiresAt: timestamp("expiresAt").notNull(), // When this cache expires
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => {
+  return {
+    rankingTypeTimeRangeIdx: index("rankingType_timeRange_idx").on(table.rankingType, table.timeRange),
+    calculatedAtIdx: index("calculatedAt_idx").on(table.calculatedAt),
+  };
+});
+
+export type TrendingRankingsCache = typeof trendingRankingsCache.$inferSelect;
+export type InsertTrendingRankingsCache = typeof trendingRankingsCache.$inferInsert;

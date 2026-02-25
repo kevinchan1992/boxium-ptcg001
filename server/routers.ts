@@ -2376,6 +2376,22 @@ try {
         const { getUserById } = await import('./userManagement');
         return await getUserById(input.userId);
       }),
+    
+    // Get trending rankings cache status
+    getTrendingCacheStatus: adminProcedure
+      .query(async () => {
+        const { getTrendingCacheStatus } = await import('./trendingCacheManager');
+        const status = await getTrendingCacheStatus();
+        return status || [];
+      }),
+    
+    // Manually refresh trending rankings cache
+    refreshTrendingCache: adminProcedure
+      .mutation(async () => {
+        const { manualRefreshTrendingCache } = await import('./trendingCacheManager');
+        const result = await manualRefreshTrendingCache();
+        return result;
+      }),
   }),
 
   watchlist: router({
@@ -3225,6 +3241,18 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         days: z.number().min(1).max(90).optional(),
       }))
       .query(async ({ input }) => {
+        // Try to get from cache first (only for default 30-day range)
+        if (input.days === 30 || input.days === undefined) {
+          const { getTrendingFromCache } = await import("./trendingCacheManager");
+          const cachedData = await getTrendingFromCache("search_popularity", 30);
+          if (cachedData) {
+            console.log("[Trending API] Serving from cache: search_popularity");
+            return input.limit ? cachedData.slice(0, input.limit) : cachedData;
+          }
+        }
+        
+        // Fall back to real-time calculation
+        console.log("[Trending API] Cache miss, calculating in real-time: search_popularity");
         const results = await db.getTrendingBySearches({
           limit: input.limit,
           days: input.days,
@@ -3239,6 +3267,18 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         days: z.number().min(1).max(90).optional(),
       }))
       .query(async ({ input }) => {
+        // Try to get from cache first (only for default 30-day range)
+        if (input.days === 30 || input.days === undefined) {
+          const { getTrendingFromCache } = await import("./trendingCacheManager");
+          const cachedData = await getTrendingFromCache("price_increase", 30);
+          if (cachedData) {
+            console.log("[Trending API] Serving from cache: price_increase");
+            return input.limit ? cachedData.slice(0, input.limit) : cachedData;
+          }
+        }
+        
+        // Fall back to real-time calculation
+        console.log("[Trending API] Cache miss, calculating in real-time: price_increase");
         const results = await db.getTrendingByPriceIncrease({
           limit: input.limit,
           days: input.days,
@@ -3253,6 +3293,18 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         days: z.number().min(1).max(90).optional(),
       }))
       .query(async ({ input }) => {
+        // Try to get from cache first (only for default 30-day range)
+        if (input.days === 30 || input.days === undefined) {
+          const { getTrendingFromCache } = await import("./trendingCacheManager");
+          const cachedData = await getTrendingFromCache("price_decrease", 30);
+          if (cachedData) {
+            console.log("[Trending API] Serving from cache: price_decrease");
+            return input.limit ? cachedData.slice(0, input.limit) : cachedData;
+          }
+        }
+        
+        // Fall back to real-time calculation
+        console.log("[Trending API] Cache miss, calculating in real-time: price_decrease");
         const results = await db.getTrendingByPriceDecrease({
           limit: input.limit,
           days: input.days,

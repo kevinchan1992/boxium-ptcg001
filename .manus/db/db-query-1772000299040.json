@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Add composite index for trending calculations\nCREATE INDEX IF NOT EXISTS cardId_soldAt_source_grade_idx ON priceHistory (cardId, soldAt, source, grade);\n\n-- Add index for soldAt to optimize time-based queries\nCREATE INDEX IF NOT EXISTS soldAt_idx ON priceHistory (soldAt);\n\n-- Add index for source to optimize source-specific queries\nCREATE INDEX IF NOT EXISTS source_idx ON priceHistory (source);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- Add composite index for trending calculations\nCREATE INDEX IF NOT EXISTS cardId_soldAt_source_grade_idx ON priceHistory (cardId, soldAt, source, grade);\n\n-- Add index for soldAt to optimize time-based queries\nCREATE INDEX IF NOT EXISTS soldAt_idx ON priceHistory (soldAt);\n\n-- Add index for source to optimize source-specific queries\nCREATE INDEX IF NOT EXISTS source_idx ON priceHistory (source);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 94701
+}
