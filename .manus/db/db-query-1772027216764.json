@@ -1,0 +1,120 @@
+{
+  "query": "SELECT id, cardId, snkrdunkId, name, nameJa, series, cardNumber, rarity, imageUrl \nFROM cards \nWHERE name LIKE '%Lillie%' OR nameJa LIKE '%リーリエ%'\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, cardId, snkrdunkId, name, nameJa, series, cardNumber, rarity, imageUrl \nFROM cards \nWHERE name LIKE '%Lillie%' OR nameJa LIKE '%リーリエ%'\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "150827",
+      "cardId": "snkrdunk-123526",
+      "snkrdunkId": "123526",
+      "name": "Lillie SR[SM1M 066/060](Expansion Pack\"Collection Moon\")",
+      "nameJa": "リーリエ（帽子リーリエ）SR[SM1M 066/060](拡張パック「コレクション ムーン」)",
+      "series": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp"
+    },
+    {
+      "id": "150847",
+      "cardId": "snkrdunk-91279",
+      "snkrdunkId": "91279",
+      "name": "Solgaleo & Lunala GX (Lillie) SR :SA [SM11b 063/049](Enhanced Expansion Pack \"Dream League\")",
+      "nameJa": "ソルガレオ&ルナアーラGX (リーリエ) SR :SA (ソルルナGX) [SM11b 063/049](強化拡張パック「ドリームリーグ」)",
+      "series": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230831075830-0.webp"
+    },
+    {
+      "id": "210012",
+      "cardId": "snkrdunk-663637",
+      "snkrdunkId": "663637",
+      "name": "Lillie's Determination SAR [M1L 091/063](Expansion Pack \"Mega Brave\")",
+      "nameJa": "リーリエの決心 SAR [M1L 091/063](拡張パック「メガブレイブ」)",
+      "series": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20250731010923-1.webp"
+    },
+    {
+      "id": "210014",
+      "cardId": "snkrdunk-663636",
+      "snkrdunkId": "663636",
+      "name": "Lillie's Determination SR [M1L 086/063](Expansion Pack \"Mega Brave\")",
+      "nameJa": "リーリエの決心 SR [M1L 086/063](拡張パック「メガブレイブ」)",
+      "series": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20250731112413-11.webp"
+    },
+    {
+      "id": "210022",
+      "cardId": "snkrdunk-93051",
+      "snkrdunkId": "93051",
+      "name": "Lillie Extra Battle Day: PROMO[SM-P 397](SM-P Promotional cards)",
+      "nameJa": "リーリエ エクストラバトルの日: プロモ[SM-P 397](プロモーションカード「SM-P」)",
+      "series": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230725032752-0.webp"
+    },
+    {
+      "id": "210023",
+      "cardId": "snkrdunk-93048",
+      "snkrdunkId": "93048",
+      "name": "Clefairy (Lillie) : PROMO[SM-P 381](SM-P Promotional cards)",
+      "nameJa": "ピッピ (リーリエ) : プロモ[SM-P 381](プロモーションカード「SM-P」)",
+      "series": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230706053136-0.webp"
+    },
+    {
+      "id": "542429",
+      "cardId": "snkrdunk-391870",
+      "snkrdunkId": "391870",
+      "name": "Lillie [SMF 008/020](Premium Trainer Box \"Ultra Sun Ultra Moon\")",
+      "nameJa": "リーリエ [SMF 008/020](プレミアムトレーナーボックス「ウルトラサン・ウルトラムーン」)",
+      "series": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/pkmn-tcg-7324556-yu.webp"
+    },
+    {
+      "id": "542542",
+      "cardId": "snkrdunk-392878",
+      "snkrdunkId": "392878",
+      "name": "Lillie [SMK 028/031](Trainer Battle Deck \"Misty of Cerulean City Gim / Brock of Pewter City Gim\")",
+      "nameJa": "リーリエ [SMK 028/031](トレーナーバトルデッキ「ハナダシティジムのカスミ・ニビシティジムのタケシ」)",
+      "series": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/pkmn-tcg-7326637-yu.webp"
+    },
+    {
+      "id": "720270",
+      "cardId": "snkrdunk-705534",
+      "snkrdunkId": "705534",
+      "name": "Lillie's Determination UR [MEG 169/132][EN](Mega Evolution)",
+      "nameJa": "リーリエの決心 UR [MEG 169/132]【英語版】(メガエボリューション)",
+      "series": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/pkmn-tcg-en-MEG-169-of.webp"
+    },
+    {
+      "id": "720281",
+      "cardId": "snkrdunk-705549",
+      "snkrdunkId": "705549",
+      "name": "Lillie's Determination SIR [MEG 184/132][EN](Mega Evolution)",
+      "nameJa": "リーリエの決心 SIR [MEG 184/132]【英語版】(メガエボリューション)",
+      "series": "NULL",
+      "cardNumber": "NULL",
+      "rarity": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/pkmn-tcg-en-MEG-184-of.webp"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tsnkrdunkId\tname\tnameJa\tseries\tcardNumber\trarity\timageUrl\n150827\tsnkrdunk-123526\t123526\tLillie SR[SM1M 066/060](Expansion Pack\"Collection Moon\")\tリーリエ（帽子リーリエ）SR[SM1M 066/060](拡張パック「コレクション ムーン」)\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp\n150847\tsnkrdunk-91279\t91279\tSolgaleo & Lunala GX (Lillie) SR :SA [SM11b 063/049](Enhanced Expansion Pack \"Dream League\")\tソルガレオ&ルナアーラGX (リーリエ) SR :SA (ソルルナGX) [SM11b 063/049](強化拡張パック「ドリームリーグ」)\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20230831075830-0.webp\n210012\tsnkrdunk-663637\t663637\tLillie's Determination SAR [M1L 091/063](Expansion Pack \"Mega Brave\")\tリーリエの決心 SAR [M1L 091/063](拡張パック「メガブレイブ」)\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20250731010923-1.webp\n210014\tsnkrdunk-663636\t663636\tLillie's Determination SR [M1L 086/063](Expansion Pack \"Mega Brave\")\tリーリエの決心 SR [M1L 086/063](拡張パック「メガブレイブ」)\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20250731112413-11.webp\n210022\tsnkrdunk-93051\t93051\tLillie Extra Battle Day: PROMO[SM-P 397](SM-P Promotional cards)\tリーリエ エクストラバトルの日: プロモ[SM-P 397](プロモーションカード「SM-P」)\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20230725032752-0.webp\n210023\tsnkrdunk-93048\t93048\tClefairy (Lillie) : PROMO[SM-P 381](SM-P Promotional cards)\tピッピ (リーリエ) : プロモ[SM-P 381](プロモーションカード「SM-P」)\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20230706053136-0.webp\n542429\tsnkrdunk-391870\t391870\tLillie [SMF 008/020](Premium Trainer Box \"Ultra Sun Ultra Moon\")\tリーリエ [SMF 008/020](プレミアムトレーナーボックス「ウルトラサン・ウルトラムーン」)\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/pkmn-tcg-7324556-yu.webp\n542542\tsnkrdunk-392878\t392878\tLillie [SMK 028/031](Trainer Battle Deck \"Misty of Cerulean City Gim / Brock of Pewter City Gim\")\tリーリエ [SMK 028/031](トレーナーバトルデッキ「ハナダシティジムのカスミ・ニビシティジムのタケシ」)\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/pkmn-tcg-7326637-yu.webp\n720270\tsnkrdunk-705534\t705534\tLillie's Determination UR [MEG 169/132][EN](Mega Evolution)\tリーリエの決心 UR [MEG 169/132]【英語版】(メガエボリューション)\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/pkmn-tcg-en-MEG-169-of.webp\n720281\tsnkrdunk-705549\t705549\tLillie's Determination SIR [MEG 184/132][EN](Mega Evolution)\tリーリエの決心 SIR [MEG 184/132]【英語版】(メガエボリューション)\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/pkmn-tcg-en-MEG-184-of.webp\n",
+  "stderr": "",
+  "execution_time_ms": 1549
+}

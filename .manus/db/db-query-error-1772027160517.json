@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  ph.cardId,\n  c.name_en,\n  COUNT(*) as transaction_count,\n  ROUND(AVG(ph.price), 2) as avg_price,\n  ROUND(MIN(ph.price), 2) as min_price,\n  ROUND(MAX(ph.price), 2) as max_price\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE ph.cardId IN ('210022', '781745', '819562', '150847')\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)\nGROUP BY ph.cardId, c.name_en\nORDER BY ph.cardId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  ph.cardId,\n  c.name_en,\n  COUNT(*) as transaction_count,\n  ROUND(AVG(ph.price), 2) as avg_price,\n  ROUND(MIN(ph.price), 2) as min_price,\n  ROUND(MAX(ph.price), 2) as max_price\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE ph.cardId IN ('210022', '781745', '819562', '150847')\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)\nGROUP BY ph.cardId, c.name_en\nORDER BY ph.cardId;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'c.name_en' in 'group statement'"
+  ]
+}

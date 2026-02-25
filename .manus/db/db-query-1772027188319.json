@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  ph.cardId,\n  c.name,\n  COUNT(*) as transaction_count,\n  ROUND(AVG(ph.price), 2) as avg_price,\n  ROUND(MIN(ph.price), 2) as min_price,\n  ROUND(MAX(ph.price), 2) as max_price\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.snkrdunkId IN ('210022', '781745', '819562', '150847')\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)\nGROUP BY ph.cardId, c.name\nORDER BY c.snkrdunkId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  ph.cardId,\n  c.name,\n  COUNT(*) as transaction_count,\n  ROUND(AVG(ph.price), 2) as avg_price,\n  ROUND(MIN(ph.price), 2) as min_price,\n  ROUND(MAX(ph.price), 2) as max_price\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.snkrdunkId IN ('210022', '781745', '819562', '150847')\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)\nGROUP BY ph.cardId, c.name\nORDER BY c.snkrdunkId;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1586
+}

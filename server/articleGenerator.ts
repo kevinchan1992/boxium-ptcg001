@@ -4,7 +4,22 @@ import { cards, priceHistory } from "../drizzle/schema_new";
 import { eq, inArray, gte, desc, and, sql } from "drizzle-orm";
 
 /**
+ * Price statistics for a single card
+ */
+export interface CardPriceStats {
+  avgPrice: number;
+  minPrice: number;
+  maxPrice: number;
+  priceChange7d: number;
+  priceChange30d: number;
+  priceChange60d: number;
+  totalVolume: number;
+  avgDailyVolume: number;
+}
+
+/**
  * Article data context for AI generation
+ * NEW: Each card now has its own price statistics
  */
 export interface ArticleDataContext {
   cards: Array<{
@@ -16,7 +31,13 @@ export interface ArticleDataContext {
     cardNumber: string | null;
     rarity: string | null;
     imageUrl: string | null;
+    // NEW: Individual price statistics for each card
+    psa10Stats: CardPriceStats;
+    usedGradeAStats: CardPriceStats;
+    peakPrice: number;
+    peakDate: Date | null;
   }>;
+  // DEPRECATED: Global aggregated stats (kept for backward compatibility)
   psa10Stats: {
     avgPrice: number;
     minPrice: number;
@@ -44,7 +65,60 @@ export interface ArticleDataContext {
 }
 
 /**
+ * Calculate price statistics for a single card
+ */
+async function calculateCardPriceStats(
+  db: any,
+  cardId: number,
+  grade: 'PSA10' | 'A',
+  timeRange: '7d' | '30d' | '60d' | 'all'
+): Promise<CardPriceStats> {
+  const daysMap = { '7d': 7, '30d': 30, '60d': 60, 'all': 365 * 10 };
+  const days = daysMap[timeRange];
+  const now = new Date();
+  const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+  // Query price history for this card
+  const priceData = await db.select({
+    price: priceHistory.price,
+    soldAt: priceHistory.soldAt,
+  }).from(priceHistory)
+    .where(
+      and(
+        eq(priceHistory.cardId, cardId),
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.grade, grade),
+        gte(priceHistory.soldAt, startDate)
+      )
+    )
+    .orderBy(desc(priceHistory.soldAt));
+
+  // Calculate statistics
+  const prices = priceData.map((p: { price: string }) => parseFloat(p.price));
+  const avgPrice = prices.length > 0 ? prices.reduce((a: number, b: number) => a + b, 0) / prices.length : 0;
+  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+  const priceChange7d = calculatePriceChange(priceData, 7);
+  const priceChange30d = calculatePriceChange(priceData, 30);
+  const priceChange60d = calculatePriceChange(priceData, 60);
+  const totalVolume = priceData.length;
+  const avgDailyVolume = totalVolume / days;
+
+  return {
+    avgPrice,
+    minPrice,
+    maxPrice,
+    priceChange7d,
+    priceChange30d,
+    priceChange60d,
+    totalVolume,
+    avgDailyVolume,
+  };
+}
+
+/**
  * Get article data context from database
+ * NEW: Calculates individual price statistics for each card
  */
 export async function getArticleDataContext(
   cardIds: number[],
@@ -67,13 +141,46 @@ export async function getArticleDataContext(
     imageUrl: cards.imageUrl,
   }).from(cards).where(inArray(cards.id, cardIds));
 
-  // 2. Calculate date range
-  const now = new Date();
+  // 2. Calculate individual price statistics for each card
+  const cardsWithStats = await Promise.all(
+    cardData.map(async (card) => {
+      const psa10Stats = await calculateCardPriceStats(db, card.id, 'PSA10', timeRange);
+      const usedGradeAStats = await calculateCardPriceStats(db, card.id, 'A', timeRange);
+      
+      // Calculate peak price for this card
+      const peakPrice = Math.max(psa10Stats.maxPrice, usedGradeAStats.maxPrice);
+      
+      // Get peak date (most recent transaction)
+      const peakDateQuery = await db.select({
+        soldAt: priceHistory.soldAt,
+      }).from(priceHistory)
+        .where(
+          and(
+            eq(priceHistory.cardId, card.id),
+            eq(priceHistory.source, 'snkrdunk')
+          )
+        )
+        .orderBy(desc(priceHistory.soldAt))
+        .limit(1);
+      
+      const peakDate = peakDateQuery.length > 0 ? peakDateQuery[0].soldAt : null;
+
+      return {
+        ...card,
+        psa10Stats,
+        usedGradeAStats,
+        peakPrice,
+        peakDate,
+      };
+    })
+  );
+
+  // 3. Calculate global aggregated statistics (for backward compatibility)
   const daysMap = { '7d': 7, '30d': 30, '60d': 60, 'all': 365 * 10 };
   const days = daysMap[timeRange];
-  const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-  // 3. Query PSA10 price history
+  // Query all PSA10 transactions
   const psa10Data = await db.select({
     price: priceHistory.price,
     soldAt: priceHistory.soldAt,
@@ -88,7 +195,7 @@ export async function getArticleDataContext(
     )
     .orderBy(desc(priceHistory.soldAt));
 
-  // 4. Query 中古品 A price history
+  // Query all Grade A transactions
   const usedGradeAData = await db.select({
     price: priceHistory.price,
     soldAt: priceHistory.soldAt,
@@ -103,7 +210,7 @@ export async function getArticleDataContext(
     )
     .orderBy(desc(priceHistory.soldAt));
 
-  // 5. Calculate PSA10 statistics
+  // Calculate global PSA10 statistics
   const psa10Prices = psa10Data.map(p => parseFloat(p.price));
   const psa10AvgPrice = psa10Prices.length > 0 ? psa10Prices.reduce((a, b) => a + b, 0) / psa10Prices.length : 0;
   const psa10MinPrice = psa10Prices.length > 0 ? Math.min(...psa10Prices) : 0;
@@ -114,7 +221,7 @@ export async function getArticleDataContext(
   const psa10TotalVolume = psa10Data.length;
   const psa10AvgDailyVolume = psa10TotalVolume / days;
 
-  // 6. Calculate 中古品 A statistics
+  // Calculate global Grade A statistics
   const usedGradeAPrices = usedGradeAData.map(p => parseFloat(p.price));
   const usedGradeAAvgPrice = usedGradeAPrices.length > 0 ? usedGradeAPrices.reduce((a, b) => a + b, 0) / usedGradeAPrices.length : 0;
   const usedGradeAMinPrice = usedGradeAPrices.length > 0 ? Math.min(...usedGradeAPrices) : 0;
@@ -125,12 +232,12 @@ export async function getArticleDataContext(
   const usedGradeATotalVolume = usedGradeAData.length;
   const usedGradeAAvgDailyVolume = usedGradeATotalVolume / days;
 
-  // 7. Calculate overall transaction statistics
+  // Calculate global transaction statistics
   const peakPrice = Math.max(psa10MaxPrice, usedGradeAMaxPrice);
   const peakDate = psa10Data.length > 0 ? psa10Data[0].soldAt : (usedGradeAData.length > 0 ? usedGradeAData[0].soldAt : null);
 
   return {
-    cards: cardData,
+    cards: cardsWithStats,
     psa10Stats: {
       avgPrice: psa10AvgPrice,
       minPrice: psa10MinPrice,
@@ -286,17 +393,55 @@ function buildArticlePrompt(
 
   // Add data context if available
   if (dataContext && dataContext.cards.length > 0) {
-    prompt += `\n【卡牌資訊】\n`;
-    prompt += `**重要：以下是系統提供的卡牌資訊，文章中必須使用這些圖片 URL，不可以創造或尋找其他來源的圖片**\n\n`;
-    dataContext.cards.forEach(card => {
-      prompt += `- ${card.name}${card.nameJa ? ` (${card.nameJa})` : ''}\n`;
-      if (card.cardNumber) prompt += `  編號：${card.cardNumber}\n`;
-      if (card.series) prompt += `  系列：${card.series}\n`;
-      if (card.setName) prompt += `  套裝：${card.setName}\n`;
-      if (card.rarity) prompt += `  稀有度：${card.rarity}\n`;
-      if (card.imageUrl) prompt += `  **圖片 URL（必須使用）**：${card.imageUrl}\n`;
+    prompt += `\n【卡牌資訊與價格數據】\n`;
+    prompt += `**重要：以下是系統為每張卡牌提供的完整資訊和價格數據，文章中必須使用這些數據，不可以創造或估算任何價格**\n\n`;
+    
+    // NEW: Provide individual price data for each card
+    dataContext.cards.forEach((card, index) => {
+      prompt += `\n### 卡牌 ${index + 1}: ${card.name}${card.nameJa ? ` (${card.nameJa})` : ''}\n`;
+      if (card.cardNumber) prompt += `- 編號：${card.cardNumber}\n`;
+      if (card.series) prompt += `- 系列：${card.series}\n`;
+      if (card.setName) prompt += `- 套裝：${card.setName}\n`;
+      if (card.rarity) prompt += `- 稀有度：${card.rarity}\n`;
+      if (card.imageUrl) prompt += `- **圖片 URL（必須使用）**：${card.imageUrl}\n`;
+      
+      // PSA10 price data for this card
+      prompt += `\n**PSA10 價格數據**（此卡牌專屬）：\n`;
+      if (card.psa10Stats.totalVolume > 0) {
+        prompt += `- 當前參考價格（最近交易平均值）：HKD ${card.psa10Stats.avgPrice.toFixed(2)}\n`;
+        prompt += `- 價格區間最低值：HKD ${card.psa10Stats.minPrice.toFixed(2)}\n`;
+        prompt += `- 價格區間最高值：HKD ${card.psa10Stats.maxPrice.toFixed(2)}\n`;
+        prompt += `- 7日價格變化：${card.psa10Stats.priceChange7d.toFixed(2)}%\n`;
+        prompt += `- 30日價格變化：${card.psa10Stats.priceChange30d.toFixed(2)}%\n`;
+        prompt += `- 60日價格變化：${card.psa10Stats.priceChange60d.toFixed(2)}%\n`;
+        prompt += `- 總交易筆數：${card.psa10Stats.totalVolume} 筆\n`;
+        prompt += `- 日均交易量：${card.psa10Stats.avgDailyVolume.toFixed(1)} 筆\n`;
+      } else {
+        prompt += `- **數據不足**：此卡牌在查詢時間範圍內沒有 PSA10 交易記錄\n`;
+      }
+      
+      // Grade A price data for this card
+      prompt += `\n**中古品 A 價格數據**（此卡牌專屬）：\n`;
+      if (card.usedGradeAStats.totalVolume > 0) {
+        prompt += `- 當前參考價格（最近交易平均值）：HKD ${card.usedGradeAStats.avgPrice.toFixed(2)}\n`;
+        prompt += `- 價格區間最低值：HKD ${card.usedGradeAStats.minPrice.toFixed(2)}\n`;
+        prompt += `- 價格區間最高值：HKD ${card.usedGradeAStats.maxPrice.toFixed(2)}\n`;
+        prompt += `- 7日價格變化：${card.usedGradeAStats.priceChange7d.toFixed(2)}%\n`;
+        prompt += `- 30日價格變化：${card.usedGradeAStats.priceChange30d.toFixed(2)}%\n`;
+        prompt += `- 60日價格變化：${card.usedGradeAStats.priceChange60d.toFixed(2)}%\n`;
+        prompt += `- 總交易筆數：${card.usedGradeAStats.totalVolume} 筆\n`;
+        prompt += `- 日均交易量：${card.usedGradeAStats.avgDailyVolume.toFixed(1)} 筆\n`;
+      } else {
+        prompt += `- **數據不足**：此卡牌在查詢時間範圍內沒有中古品 A 交易記錄\n`;
+      }
+      
+      // Peak price for this card
+      if (card.peakPrice > 0) {
+        prompt += `\n**歷史最高價**：HKD ${card.peakPrice.toFixed(2)}\n`;
+      }
     });
-    prompt += `\n**圖片插入格式**（必須嚴格遵守）：\n`;
+    
+    prompt += `\n\n**圖片插入格式**（必須嚴格遵守）：\n`;
     prompt += `![{卡牌名稱}]({圖片URL})\n`;
     prompt += `\n**範例**：\n`;
     prompt += `- 如果卡牌名稱是 "Lillie SR"，圖片 URL 是 "https://cdn.snkrdunk.com/upload_bg_removed/20230508074833-0.webp"\n`;
@@ -305,34 +450,19 @@ function buildArticlePrompt(
     prompt += `1. 絕對不可以創造 boxium.io 或 boxium.asia 的圖片連結\n`;
     prompt += `2. 絕對不可以創造 /images/cards/ 路徑\n`;
     prompt += `3. 絕對不可以使用 Pokemon TCG 官網的圖片 URL\n`;
-    prompt += `4. 必須使用上述【卡牌資訊】中提供的圖片 URL，一字不漏地複製\n`;
+    prompt += `4. 必須使用上述【卡牌資訊與價格數據】中提供的圖片 URL，一字不漏地複製\n`;
+    prompt += `5. **絕對不可以創造、估算或推測任何價格數據**，只能使用上述為每張卡牌提供的具體價格數值\n`;
+    prompt += `6. 如果某張卡牌顯示「數據不足」，文章中必須明確說明該卡牌數據不足，不可猜測價格\n`;
 
-    prompt += `\n【PSA10 價格數據】（來源：SNKRDUNK 實際交易記錄）\n`;
-    prompt += `**重要：以下是系統提供的唯一真實數據，文章中所有價格引用必須直接使用這些數值，不可創造其他價格數據**\n`;
-    prompt += `- 當前參考價格（最近交易平均值）：HKD ${dataContext.psa10Stats.avgPrice.toFixed(2)}\n`;
-    prompt += `- 價格區間最低值：HKD ${dataContext.psa10Stats.minPrice.toFixed(2)}\n`;
-    prompt += `- 價格區間最高值：HKD ${dataContext.psa10Stats.maxPrice.toFixed(2)}\n`;
-    prompt += `- 7日價格變化：${dataContext.psa10Stats.priceChange7d.toFixed(2)}%\n`;
-    prompt += `- 30日價格變化：${dataContext.psa10Stats.priceChange30d.toFixed(2)}%\n`;
-    prompt += `- 60日價格變化：${dataContext.psa10Stats.priceChange60d.toFixed(2)}%\n`;
+    // DEPRECATED: Keep global stats for backward compatibility, but add warning
+    prompt += `\n【全局聚合統計】（僅供參考，不要用於個別卡牌描述）\n`;
+    prompt += `**警告：以下是所有卡牌的聚合統計，不代表任何單一卡牌的價格。描述個別卡牌時，必須使用上方為每張卡牌提供的專屬價格數據**\n\n`;
+    prompt += `PSA10 全局統計：\n`;
+    prompt += `- 平均價格：HKD ${dataContext.psa10Stats.avgPrice.toFixed(2)}\n`;
     prompt += `- 總交易筆數：${dataContext.psa10Stats.totalVolume} 筆\n`;
-    prompt += `- 日均交易量：${dataContext.psa10Stats.avgDailyVolume.toFixed(1)} 筆\n`;
-    prompt += `**注意：不要創造「月初」、「月底」、「上週」等時間點的價格，只使用上述數據**\n`;
-
-    prompt += `\n【中古品 A 價格數據】（來源：SNKRDUNK 實際交易記錄）\n`;
-    prompt += `**重要：以下是系統提供的唯一真實數據，文章中所有價格引用必須直接使用這些數值，不可創造其他價格數據**\n`;
-    prompt += `- 當前參考價格（最近交易平均值）：HKD ${dataContext.usedGradeAStats.avgPrice.toFixed(2)}\n`;
-    prompt += `- 價格區間最低值：HKD ${dataContext.usedGradeAStats.minPrice.toFixed(2)}\n`;
-    prompt += `- 價格區間最高值：HKD ${dataContext.usedGradeAStats.maxPrice.toFixed(2)}\n`;
-    prompt += `- 7日價格變化：${dataContext.usedGradeAStats.priceChange7d.toFixed(2)}%\n`;
-    prompt += `- 30日價格變化：${dataContext.usedGradeAStats.priceChange30d.toFixed(2)}%\n`;
-    prompt += `- 60日價格變化：${dataContext.usedGradeAStats.priceChange60d.toFixed(2)}%\n`;
+    prompt += `\n中古品 A 全局統計：\n`;
+    prompt += `- 平均價格：HKD ${dataContext.usedGradeAStats.avgPrice.toFixed(2)}\n`;
     prompt += `- 總交易筆數：${dataContext.usedGradeAStats.totalVolume} 筆\n`;
-    prompt += `- 日均交易量：${dataContext.usedGradeAStats.avgDailyVolume.toFixed(1)} 筆\n`;
-    prompt += `**注意：不要創造「月初」、「月底」、「上週」等時間點的價格，只使用上述數據**\n`;
-
-    prompt += `\n【交易統計】\n`;
-    prompt += `- 歷史最高價：HKD ${dataContext.transactionStats.peakPrice.toFixed(2)}\n`;
   }
 
   // Add user input
