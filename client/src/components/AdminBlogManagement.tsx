@@ -210,6 +210,16 @@ export function AdminBlogManagement() {
     },
   });
 
+  const createPostMutation = trpc.blog.createPost.useMutation({
+    onSuccess: () => {
+      toast.success('文章發布成功！');
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`發布失敗：${error.message}`);
+    },
+  });
+
   const handleDelete = (id: number) => {
     if (confirm('確定要刪除這篇文章嗎？')) {
       deletePostMutation.mutate({ id });
@@ -415,9 +425,28 @@ export function AdminBlogManagement() {
         <ArticlePreview
           article={previewArticle}
           onPublish={async () => {
-            toast.success('AI 文章生成成功！');
-            refetch();
-            setActiveView('list');
+            try {
+              // 解析 tags 字串為陣列
+              const tagsArray = previewArticle.tags 
+                ? previewArticle.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+                : [];
+
+              // 調用 createPost API 將文章保存到數據庫
+              await createPostMutation.mutateAsync({
+                title: previewArticle.title,
+                excerpt: previewArticle.excerpt || '',
+                content: previewArticle.content,
+                featuredImage: previewArticle.featuredImage,
+                status: 'published',
+                dataSource: previewArticle.dataSource as 'manual' | 'ai-generated' | 'mixed' || 'ai-generated',
+                tags: tagsArray,
+              });
+
+              // 成功提示已在 createPostMutation.onSuccess 中處理
+              setActiveView('list');
+            } catch (error: any) {
+              // 錯誤提示已在 createPostMutation.onError 中處理
+            }
           }}
           onEdit={() => {
             // TODO: 實現編輯功能
