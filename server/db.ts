@@ -1476,6 +1476,7 @@ export async function getTrendingBySearches(options: {
 /**
  * Get trending cards by price increase
  * Returns cards with the largest price increases in the specified time range
+ * Uses average of latest 10 transactions for current price and average of earliest 10 for old price
  */
 export async function getTrendingByPriceIncrease(options: {
   limit?: number;
@@ -1484,17 +1485,18 @@ export async function getTrendingByPriceIncrease(options: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const { limit = 10, days = 60 } = options; // Default to 60 days (2 months)
+  const { limit = 10, days = 30 } = options; // Default to 30 days
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const now = new Date();
 
   // Get all SNKRDUNK PSA 10 price records within the time range
-  // IMPORTANT: Filter by soldAt (actual transaction date), not createdAt (data insertion date)
-  const recentPrices = await db
+  const allPrices = await db
     .select()
     .from(priceHistory)
     .where(
       and(
         gte(priceHistory.soldAt, cutoffDate),
+        lte(priceHistory.soldAt, now),
         sql`${priceHistory.soldAt} IS NOT NULL`,
         eq(priceHistory.source, 'snkrdunk'),
         eq(priceHistory.grade, 'PSA10')
@@ -1502,56 +1504,65 @@ export async function getTrendingByPriceIncrease(options: {
     )
     .orderBy(asc(priceHistory.soldAt));
 
-  // Group by cardId to count transactions per card
-  const transactionCounts = new Map<number, number>();
-  for (const price of recentPrices) {
-    transactionCounts.set(price.cardId, (transactionCounts.get(price.cardId) || 0) + 1);
+  // Group prices by cardId
+  const pricesByCard = new Map<number, Array<{ price: number; soldAt: Date }>>();
+  for (const price of allPrices) {
+    if (!pricesByCard.has(price.cardId)) {
+      pricesByCard.set(price.cardId, []);
+    }
+    pricesByCard.get(price.cardId)!.push({
+      price: Number(price.price),
+      soldAt: new Date(price.soldAt!),
+    });
   }
 
-  // Group by cardId and calculate price change
-  const priceChangeMap = new Map<number, {
+  // Calculate price changes for each card
+  const priceChanges: Array<{
     cardId: number;
     oldPrice: number;
-    newPrice: number;
+    currentPrice: number;
     priceChange: number;
     priceChangePercent: number;
-  }>();
+  }> = [];
 
-  for (const price of recentPrices) {
-    const existing = priceChangeMap.get(price.cardId);
-    const currentPrice = Number(price.price);
+  for (const [cardId, prices] of Array.from(pricesByCard.entries())) {
+    // Need at least 5 transactions to calculate meaningful trend
+    if (prices.length < 5) continue;
 
-    if (!existing) {
-      priceChangeMap.set(price.cardId, {
-        cardId: price.cardId,
-        oldPrice: currentPrice,
-        newPrice: currentPrice,
-        priceChange: 0,
-        priceChangePercent: 0,
+    // Sort by date (oldest first)
+    prices.sort((a: { soldAt: Date }, b: { soldAt: Date }) => a.soldAt.getTime() - b.soldAt.getTime());
+
+    // Calculate old price: average of earliest 10 transactions (or all if less than 10)
+    const oldPriceCount = Math.min(10, Math.floor(prices.length / 2));
+    const oldPrices = prices.slice(0, oldPriceCount);
+    const oldPrice = oldPrices.reduce((sum: number, p: { price: number }) => sum + p.price, 0) / oldPrices.length;
+
+    // Calculate current price: average of latest 10 transactions (or all remaining)
+    const currentPriceCount = Math.min(10, Math.floor(prices.length / 2));
+    const currentPrices = prices.slice(-currentPriceCount);
+    const currentPrice = currentPrices.reduce((sum: number, p: { price: number }) => sum + p.price, 0) / currentPrices.length;
+
+    // Calculate price change
+    const priceChange = currentPrice - oldPrice;
+    const priceChangePercent = (priceChange / oldPrice) * 100;
+
+    // Filter out abnormal changes (> 500% or < -90%)
+    if (priceChangePercent > 500 || priceChangePercent < -90) continue;
+
+    // Only include cards with positive price change
+    if (priceChangePercent > 0) {
+      priceChanges.push({
+        cardId,
+        oldPrice,
+        currentPrice,
+        priceChange,
+        priceChangePercent,
       });
-    } else {
-      const change = currentPrice - existing.oldPrice;
-      const changePercent = (change / existing.oldPrice) * 100;
-      
-      // Filter out abnormal price changes (> 500%)
-      if (changePercent <= 500) {
-        priceChangeMap.set(price.cardId, {
-          ...existing,
-          newPrice: currentPrice,
-          priceChange: change,
-          priceChangePercent: changePercent,
-        });
-      }
     }
   }
 
-  // Sort by price change percentage and get top cards
-  // Only include cards with at least 2 transactions in the time range
-  const sortedChanges = Array.from(priceChangeMap.values())
-    .filter(item => {
-      const txCount = transactionCounts.get(item.cardId) || 0;
-      return item.priceChangePercent > 0 && txCount >= 2;
-    })
+  // Sort by price change percentage (highest first) and limit
+  const sortedChanges = priceChanges
     .sort((a, b) => b.priceChangePercent - a.priceChangePercent)
     .slice(0, limit);
 
@@ -1568,11 +1579,11 @@ export async function getTrendingByPriceIncrease(options: {
   return sortedChanges
     .map(change => {
       const card = cardDetails.find(c => c.id === change.cardId);
-      if (!card) return null; // Skip if card details not found
+      if (!card) return null;
       return {
         ...card,
         oldPrice: change.oldPrice,
-        currentPrice: change.newPrice,
+        currentPrice: change.currentPrice,
         priceChange: change.priceChange,
         priceChangePercent: change.priceChangePercent,
         currency: 'HKD',
@@ -1584,6 +1595,7 @@ export async function getTrendingByPriceIncrease(options: {
 /**
  * Get trending cards by price decrease
  * Returns cards with the largest price decreases in the specified time range
+ * Uses average of latest 10 transactions for current price and average of earliest 10 for old price
  */
 export async function getTrendingByPriceDecrease(options: {
   limit?: number;
@@ -1592,17 +1604,18 @@ export async function getTrendingByPriceDecrease(options: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const { limit = 10, days = 60 } = options; // Default to 60 days (2 months)
+  const { limit = 10, days = 30 } = options; // Default to 30 days
   const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const now = new Date();
 
-  // Similar logic to price increase, but filter for negative changes
-  // IMPORTANT: Filter by soldAt (actual transaction date), not createdAt (data insertion date)
-  const recentPrices = await db
+  // Get all SNKRDUNK PSA 10 price records within the time range
+  const allPrices = await db
     .select()
     .from(priceHistory)
     .where(
       and(
         gte(priceHistory.soldAt, cutoffDate),
+        lte(priceHistory.soldAt, now),
         sql`${priceHistory.soldAt} IS NOT NULL`,
         eq(priceHistory.source, 'snkrdunk'),
         eq(priceHistory.grade, 'PSA10')
@@ -1610,73 +1623,86 @@ export async function getTrendingByPriceDecrease(options: {
     )
     .orderBy(asc(priceHistory.soldAt));
 
-  // Group by cardId to count transactions per card
-  const transactionCounts = new Map<number, number>();
-  for (const price of recentPrices) {
-    transactionCounts.set(price.cardId, (transactionCounts.get(price.cardId) || 0) + 1);
+  // Group prices by cardId
+  const pricesByCard = new Map<number, Array<{ price: number; soldAt: Date }>>();
+  for (const price of allPrices) {
+    if (!pricesByCard.has(price.cardId)) {
+      pricesByCard.set(price.cardId, []);
+    }
+    pricesByCard.get(price.cardId)!.push({
+      price: Number(price.price),
+      soldAt: new Date(price.soldAt!),
+    });
   }
 
-  const priceChangeMap = new Map<number, {
+  // Calculate price changes for each card
+  const priceChanges: Array<{
     cardId: number;
     oldPrice: number;
-    newPrice: number;
+    currentPrice: number;
     priceChange: number;
     priceChangePercent: number;
-  }>();
+  }> = [];
 
-  for (const price of recentPrices) {
-    const existing = priceChangeMap.get(price.cardId);
-    const currentPrice = Number(price.price);
+  for (const [cardId, prices] of Array.from(pricesByCard.entries())) {
+    // Need at least 5 transactions to calculate meaningful trend
+    if (prices.length < 5) continue;
 
-    if (!existing) {
-      priceChangeMap.set(price.cardId, {
-        cardId: price.cardId,
-        oldPrice: currentPrice,
-        newPrice: currentPrice,
-        priceChange: 0,
-        priceChangePercent: 0,
+    // Sort by date (oldest first)
+    prices.sort((a: { soldAt: Date }, b: { soldAt: Date }) => a.soldAt.getTime() - b.soldAt.getTime());
+
+    // Calculate old price: average of earliest 10 transactions (or all if less than 10)
+    const oldPriceCount = Math.min(10, Math.floor(prices.length / 2));
+    const oldPrices = prices.slice(0, oldPriceCount);
+    const oldPrice = oldPrices.reduce((sum: number, p: { price: number }) => sum + p.price, 0) / oldPrices.length;
+
+    // Calculate current price: average of latest 10 transactions (or all remaining)
+    const currentPriceCount = Math.min(10, Math.floor(prices.length / 2));
+    const currentPrices = prices.slice(-currentPriceCount);
+    const currentPrice = currentPrices.reduce((sum: number, p: { price: number }) => sum + p.price, 0) / currentPrices.length;
+
+    // Calculate price change
+    const priceChange = currentPrice - oldPrice;
+    const priceChangePercent = (priceChange / oldPrice) * 100;
+
+    // Filter out abnormal changes (> 500% or < -90%)
+    if (priceChangePercent > 500 || priceChangePercent < -90) continue;
+
+    // Only include cards with negative price change
+    if (priceChangePercent < 0) {
+      priceChanges.push({
+        cardId,
+        oldPrice,
+        currentPrice,
+        priceChange,
+        priceChangePercent,
       });
-    } else {
-      const change = currentPrice - existing.oldPrice;
-      const changePercent = (change / existing.oldPrice) * 100;
-      
-      // Filter out abnormal price changes (< -90%)
-      if (changePercent >= -90) {
-        priceChangeMap.set(price.cardId, {
-          ...existing,
-          newPrice: currentPrice,
-          priceChange: change,
-          priceChangePercent: changePercent,
-        });
-      }
     }
   }
 
-  // Only include cards with at least 2 transactions in the time range
-  const sortedChanges = Array.from(priceChangeMap.values())
-    .filter(item => {
-      const txCount = transactionCounts.get(item.cardId) || 0;
-      return item.priceChangePercent < 0 && txCount >= 2;
-    })
-    .sort((a, b) => a.priceChangePercent - b.priceChangePercent) // Most negative first
+  // Sort by price change percentage (most negative first) and limit
+  const sortedChanges = priceChanges
+    .sort((a, b) => a.priceChangePercent - b.priceChangePercent)
     .slice(0, limit);
 
   if (sortedChanges.length === 0) return [];
 
+  // Fetch card details
   const cardIds = sortedChanges.map(c => c.cardId);
   const cardDetails = await db
     .select()
     .from(cards)
     .where(inArray(cards.id, cardIds));
 
+  // Combine all data
   return sortedChanges
     .map(change => {
       const card = cardDetails.find(c => c.id === change.cardId);
-      if (!card) return null; // Skip if card details not found
+      if (!card) return null;
       return {
         ...card,
         oldPrice: change.oldPrice,
-        currentPrice: change.newPrice,
+        currentPrice: change.currentPrice,
         priceChange: change.priceChange,
         priceChangePercent: change.priceChangePercent,
         currency: 'HKD',

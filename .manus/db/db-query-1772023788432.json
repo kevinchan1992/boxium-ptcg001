@@ -1,0 +1,9 @@
+{
+  "query": "SELECT c.id, c.name, c.nameJa, c.cardNumber, c.setName,\n       COUNT(ph.id) as psa10Count,\n       AVG(CAST(ph.price AS DECIMAL(10,2))) as psa10AvgPrice,\n       MIN(CAST(ph.price AS DECIMAL(10,2))) as psa10MinPrice,\n       MAX(CAST(ph.price AS DECIMAL(10,2))) as psa10MaxPrice,\n       MIN(ph.soldAt) as earliestDate,\n       MAX(ph.soldAt) as latestDate\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId \n  AND ph.source = 'snkrdunk' \n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nWHERE c.cardNumber LIKE '%068/049%'\nGROUP BY c.id, c.name, c.nameJa, c.cardNumber, c.setName;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, c.nameJa, c.cardNumber, c.setName,\n       COUNT(ph.id) as psa10Count,\n       AVG(CAST(ph.price AS DECIMAL(10,2))) as psa10AvgPrice,\n       MIN(CAST(ph.price AS DECIMAL(10,2))) as psa10MinPrice,\n       MAX(CAST(ph.price AS DECIMAL(10,2))) as psa10MaxPrice,\n       MIN(ph.soldAt) as earliestDate,\n       MAX(ph.soldAt) as latestDate\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId \n  AND ph.source = 'snkrdunk' \n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nWHERE c.cardNumber LIKE '%068/049%'\nGROUP BY c.id, c.name, c.nameJa, c.cardNumber, c.setName;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2257
+}

@@ -1,0 +1,43 @@
+{
+  "query": "SELECT c.id, c.name, c.cardNumber,\n       COUNT(ph.id) as totalCount,\n       AVG(CAST(ph.price AS DECIMAL(10,2))) as avgPrice,\n       MIN(CAST(ph.price AS DECIMAL(10,2))) as minPrice,\n       MAX(CAST(ph.price AS DECIMAL(10,2))) as maxPrice,\n       MIN(ph.soldAt) as earliestDate,\n       MAX(ph.soldAt) as latestDate\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId \n  AND ph.source = 'snkrdunk' \n  AND ph.grade = 'PSA10'\nWHERE c.name LIKE '%Lillie%Full Force%' OR c.nameJa LIKE '%リーリエの全力%'\nGROUP BY c.id, c.name, c.cardNumber\nORDER BY c.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, c.cardNumber,\n       COUNT(ph.id) as totalCount,\n       AVG(CAST(ph.price AS DECIMAL(10,2))) as avgPrice,\n       MIN(CAST(ph.price AS DECIMAL(10,2))) as minPrice,\n       MAX(CAST(ph.price AS DECIMAL(10,2))) as maxPrice,\n       MIN(ph.soldAt) as earliestDate,\n       MAX(ph.soldAt) as latestDate\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId \n  AND ph.source = 'snkrdunk' \n  AND ph.grade = 'PSA10'\nWHERE c.name LIKE '%Lillie%Full Force%' OR c.nameJa LIKE '%リーリエの全力%'\nGROUP BY c.id, c.name, c.cardNumber\nORDER BY c.id;",
+  "rows": [
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "totalCount": "80",
+      "avgPrice": "4955.321000",
+      "minPrice": "4565.00",
+      "maxPrice": "5225.00",
+      "earliestDate": "2026-01-14 05:00:00",
+      "latestDate": "2026-02-20 23:35:26"
+    },
+    {
+      "id": "813754",
+      "name": "Lillie's Full Force U[SM11b 049/049](Enhanced Expansion\"Dream League\")",
+      "cardNumber": "NULL",
+      "totalCount": "18",
+      "avgPrice": "420.380556",
+      "minPrice": "275.00",
+      "maxPrice": "659.95",
+      "earliestDate": "2023-07-27 04:00:00",
+      "latestDate": "2025-12-29 05:00:00"
+    },
+    {
+      "id": "1052719",
+      "name": "Lillie's Full Force UR [230/236](Sun & Moon \"Cosmic Eclipse\")",
+      "cardNumber": "NULL",
+      "totalCount": "0",
+      "avgPrice": "NULL",
+      "minPrice": "NULL",
+      "maxPrice": "NULL",
+      "earliestDate": "NULL",
+      "latestDate": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\ttotalCount\tavgPrice\tminPrice\tmaxPrice\tearliestDate\tlatestDate\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t80\t4955.321000\t4565.00\t5225.00\t2026-01-14 05:00:00\t2026-02-20 23:35:26\n813754\tLillie's Full Force U[SM11b 049/049](Enhanced Expansion\"Dream League\")\tNULL\t18\t420.380556\t275.00\t659.95\t2023-07-27 04:00:00\t2025-12-29 05:00:00\n1052719\tLillie's Full Force UR [230/236](Sun & Moon \"Cosmic Eclipse\")\tNULL\t0\tNULL\tNULL\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 2330
+}

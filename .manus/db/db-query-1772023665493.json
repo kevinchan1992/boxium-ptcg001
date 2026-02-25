@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, slug, title, excerpt, createdAt \nFROM posts \nORDER BY createdAt DESC \nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, slug, title, excerpt, createdAt \nFROM posts \nORDER BY createdAt DESC \nLIMIT 10;",
+  "rows": [
+    {
+      "id": "120001",
+      "slug": "ptcg市場速報-2026年2月人氣卡牌價格異動分析與未來展望",
+      "title": "PTCG市場速報：2026年2月人氣卡牌價格異動分析與未來展望",
+      "excerpt": "2026年2月，PTCG市場持續活躍，多張人氣卡牌價格出現顯著波動。本報告將深入分析「莉莉艾的全力 (莉莉艾)」SR (119/114 SR)、「瑪俐的練習」SR (198/190 SR)、「莎莉娜」SR (081/068 SR)、「伊布家族」CHR (205/172 CHR)以及「皮卡丘」CHR (223/172 CHR)等焦點卡牌的最新價格走勢，並結合BOXIUM PTCG平台數據，探討這些變化背後的原因。同時，我們也將評估這些趨勢對收藏家和投資者的影響，並提供專業的市場預測，助您在瞬息萬變的PTCG市場中掌握先機。",
+      "createdAt": "2026-02-25 12:42:34"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tslug\ttitle\texcerpt\tcreatedAt\n120001\tptcg市場速報-2026年2月人氣卡牌價格異動分析與未來展望\tPTCG市場速報：2026年2月人氣卡牌價格異動分析與未來展望\t2026年2月，PTCG市場持續活躍，多張人氣卡牌價格出現顯著波動。本報告將深入分析「莉莉艾的全力 (莉莉艾)」SR (119/114 SR)、「瑪俐的練習」SR (198/190 SR)、「莎莉娜」SR (081/068 SR)、「伊布家族」CHR (205/172 CHR)以及「皮卡丘」CHR (223/172 CHR)等焦點卡牌的最新價格走勢，並結合BOXIUM PTCG平台數據，探討這些變化背後的原因。同時，我們也將評估這些趨勢對收藏家和投資者的影響，並提供專業的市場預測，助您在瞬息萬變的PTCG市場中掌握先機。\t2026-02-25 12:42:34\n",
+  "stderr": "",
+  "execution_time_ms": 1645
+}

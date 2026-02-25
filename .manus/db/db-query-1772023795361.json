@@ -1,0 +1,34 @@
+{
+  "query": "SELECT id, name, nameJa, cardNumber, setName, rarity\nFROM cards\nWHERE name LIKE '%Lillie%Full Force%' OR nameJa LIKE '%リーリエの全力%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, nameJa, cardNumber, setName, rarity\nFROM cards\nWHERE name LIKE '%Lillie%Full Force%' OR nameJa LIKE '%リーリエの全力%';",
+  "rows": [
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "nameJa": "リーリエの全力 SR[SM11b 068/049](強化拡張パック「ドリームリーグ」)",
+      "cardNumber": "NULL",
+      "setName": "NULL",
+      "rarity": "NULL"
+    },
+    {
+      "id": "813754",
+      "name": "Lillie's Full Force U[SM11b 049/049](Enhanced Expansion\"Dream League\")",
+      "nameJa": "リーリエの全力 U[SM11b 049/049](強化拡張パック「ドリームリーグ」)",
+      "cardNumber": "NULL",
+      "setName": "NULL",
+      "rarity": "NULL"
+    },
+    {
+      "id": "1052719",
+      "name": "Lillie's Full Force UR [230/236](Sun & Moon \"Cosmic Eclipse\")",
+      "nameJa": "リーリエの全力 UR [230/236]【英語版】(サン&ムーン「コズミックエクリプス」)",
+      "cardNumber": "NULL",
+      "setName": "NULL",
+      "rarity": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tnameJa\tcardNumber\tsetName\trarity\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tリーリエの全力 SR[SM11b 068/049](強化拡張パック「ドリームリーグ」)\tNULL\tNULL\tNULL\n813754\tLillie's Full Force U[SM11b 049/049](Enhanced Expansion\"Dream League\")\tリーリエの全力 U[SM11b 049/049](強化拡張パック「ドリームリーグ」)\tNULL\tNULL\tNULL\n1052719\tLillie's Full Force UR [230/236](Sun & Moon \"Cosmic Eclipse\")\tリーリエの全力 UR [230/236]【英語版】(サン&ムーン「コズミックエクリプス」)\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1668
+}

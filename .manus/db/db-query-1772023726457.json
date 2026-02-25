@@ -1,0 +1,43 @@
+{
+  "query": "SELECT c.id, c.name, c.nameJa, c.cardNumber, c.setName,\n       COUNT(ph.id) as transactionCount,\n       AVG(CAST(ph.price AS DECIMAL(10,2))) as avgPrice,\n       MIN(CAST(ph.price AS DECIMAL(10,2))) as minPrice,\n       MAX(CAST(ph.price AS DECIMAL(10,2))) as maxPrice\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId AND ph.source = 'snkrdunk' AND ph.grade = 'PSA10' AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 60 DAY)\nWHERE c.name LIKE '%Lillie%Full Force%' OR c.nameJa LIKE '%リーリエの全力%'\nGROUP BY c.id, c.name, c.nameJa, c.cardNumber, c.setName;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, c.nameJa, c.cardNumber, c.setName,\n       COUNT(ph.id) as transactionCount,\n       AVG(CAST(ph.price AS DECIMAL(10,2))) as avgPrice,\n       MIN(CAST(ph.price AS DECIMAL(10,2))) as minPrice,\n       MAX(CAST(ph.price AS DECIMAL(10,2))) as maxPrice\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId AND ph.source = 'snkrdunk' AND ph.grade = 'PSA10' AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 60 DAY)\nWHERE c.name LIKE '%Lillie%Full Force%' OR c.nameJa LIKE '%リーリエの全力%'\nGROUP BY c.id, c.name, c.nameJa, c.cardNumber, c.setName;",
+  "rows": [
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "nameJa": "リーリエの全力 SR[SM11b 068/049](強化拡張パック「ドリームリーグ」)",
+      "cardNumber": "NULL",
+      "setName": "NULL",
+      "transactionCount": "80",
+      "avgPrice": "4955.321000",
+      "minPrice": "4565.00",
+      "maxPrice": "5225.00"
+    },
+    {
+      "id": "1052719",
+      "name": "Lillie's Full Force UR [230/236](Sun & Moon \"Cosmic Eclipse\")",
+      "nameJa": "リーリエの全力 UR [230/236]【英語版】(サン&ムーン「コズミックエクリプス」)",
+      "cardNumber": "NULL",
+      "setName": "NULL",
+      "transactionCount": "0",
+      "avgPrice": "NULL",
+      "minPrice": "NULL",
+      "maxPrice": "NULL"
+    },
+    {
+      "id": "813754",
+      "name": "Lillie's Full Force U[SM11b 049/049](Enhanced Expansion\"Dream League\")",
+      "nameJa": "リーリエの全力 U[SM11b 049/049](強化拡張パック「ドリームリーグ」)",
+      "cardNumber": "NULL",
+      "setName": "NULL",
+      "transactionCount": "1",
+      "avgPrice": "659.950000",
+      "minPrice": "659.95",
+      "maxPrice": "659.95"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tnameJa\tcardNumber\tsetName\ttransactionCount\tavgPrice\tminPrice\tmaxPrice\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tリーリエの全力 SR[SM11b 068/049](強化拡張パック「ドリームリーグ」)\tNULL\tNULL\t80\t4955.321000\t4565.00\t5225.00\n1052719\tLillie's Full Force UR [230/236](Sun & Moon \"Cosmic Eclipse\")\tリーリエの全力 UR [230/236]【英語版】(サン&ムーン「コズミックエクリプス」)\tNULL\tNULL\t0\tNULL\tNULL\tNULL\n813754\tLillie's Full Force U[SM11b 049/049](Enhanced Expansion\"Dream League\")\tリーリエの全力 U[SM11b 049/049](強化拡張パック「ドリームリーグ」)\tNULL\tNULL\t1\t659.950000\t659.95\t659.95\n",
+  "stderr": "",
+  "execution_time_ms": 1959
+}

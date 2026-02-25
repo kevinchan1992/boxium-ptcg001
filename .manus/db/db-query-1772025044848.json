@@ -1,0 +1,46 @@
+{
+  "query": "SELECT \n  rankingType,\n  timeRange,\n  JSON_LENGTH(rankingData) as cardCount,\n  JSON_EXTRACT(rankingData, '$[0].name') as topCardName,\n  JSON_EXTRACT(rankingData, '$[0].currentPrice') as topCardCurrentPrice,\n  JSON_EXTRACT(rankingData, '$[0].priceChangePercent') as topCardPriceChange,\n  calculatedAt\nFROM trendingRankingsCache\nORDER BY rankingType, timeRange;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  rankingType,\n  timeRange,\n  JSON_LENGTH(rankingData) as cardCount,\n  JSON_EXTRACT(rankingData, '$[0].name') as topCardName,\n  JSON_EXTRACT(rankingData, '$[0].currentPrice') as topCardCurrentPrice,\n  JSON_EXTRACT(rankingData, '$[0].priceChangePercent') as topCardPriceChange,\n  calculatedAt\nFROM trendingRankingsCache\nORDER BY rankingType, timeRange;",
+  "rows": [
+    {
+      "rankingType": "price_increase",
+      "timeRange": "7",
+      "cardCount": "1",
+      "topCardName": "NULL",
+      "topCardCurrentPrice": "NULL",
+      "topCardPriceChange": "NULL",
+      "calculatedAt": "2026-02-24 05:11:43"
+    },
+    {
+      "rankingType": "price_increase",
+      "timeRange": "30",
+      "cardCount": "7",
+      "topCardName": "\"Haunter [MBG 022/021](Starter Set MEGA \\\"MEGA Gengar ex\\\")\"",
+      "topCardCurrentPrice": "946.363",
+      "topCardPriceChange": "146.16343039966708",
+      "calculatedAt": "2026-02-25 13:10:35"
+    },
+    {
+      "rankingType": "price_decrease",
+      "timeRange": "30",
+      "cardCount": "8",
+      "topCardName": "\"Pikachu Berkemeja Batik (Staryu Pattern) P [SV-P 155] [IDN] (Pikachu’s Indonesia Journey)\"",
+      "topCardCurrentPrice": "876.3333333333334",
+      "topCardPriceChange": "-70.75737183408785",
+      "calculatedAt": "2026-02-25 13:10:36"
+    },
+    {
+      "rankingType": "search_popularity",
+      "timeRange": "30",
+      "cardCount": "8",
+      "topCardName": "\"Spidops P [SVP EN 009](Scarlet & Violet \\\"Promotional Card\\\")\"",
+      "topCardCurrentPrice": "null",
+      "topCardPriceChange": "NULL",
+      "calculatedAt": "2026-02-25 13:10:36"
+    }
+  ],
+  "messages": [],
+  "stdout": "rankingType\ttimeRange\tcardCount\ttopCardName\ttopCardCurrentPrice\ttopCardPriceChange\tcalculatedAt\nprice_increase\t7\t1\tNULL\tNULL\tNULL\t2026-02-24 05:11:43\nprice_increase\t30\t7\t\"Haunter [MBG 022/021](Starter Set MEGA \\\"MEGA Gengar ex\\\")\"\t946.363\t146.16343039966708\t2026-02-25 13:10:35\nprice_decrease\t30\t8\t\"Pikachu Berkemeja Batik (Staryu Pattern) P [SV-P 155] [IDN] (Pikachu’s Indonesia Journey)\"\t876.3333333333334\t-70.75737183408785\t2026-02-25 13:10:36\nsearch_popularity\t30\t8\t\"Spidops P [SVP EN 009](Scarlet & Violet \\\"Promotional Card\\\")\"\tnull\tNULL\t2026-02-25 13:10:36\n",
+  "stderr": "",
+  "execution_time_ms": 1556
+}

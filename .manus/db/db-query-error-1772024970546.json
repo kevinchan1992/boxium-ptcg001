@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  rankingType,\n  timeRange,\n  JSON_LENGTH(data) as cardCount,\n  JSON_EXTRACT(data, '$[0].name') as topCardName,\n  JSON_EXTRACT(data, '$[0].currentPrice') as topCardCurrentPrice,\n  JSON_EXTRACT(data, '$[0].priceChangePercent') as topCardPriceChange,\n  updatedAt\nFROM trending_cache\nORDER BY rankingType, timeRange;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  rankingType,\n  timeRange,\n  JSON_LENGTH(data) as cardCount,\n  JSON_EXTRACT(data, '$[0].name') as topCardName,\n  JSON_EXTRACT(data, '$[0].currentPrice') as topCardCurrentPrice,\n  JSON_EXTRACT(data, '$[0].priceChangePercent') as topCardPriceChange,\n  updatedAt\nFROM trending_cache\nORDER BY rankingType, timeRange;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'mua4eq38uvnrovhujbrepi.trending_cache' doesn't exist"
+  ]
+}

@@ -1,0 +1,810 @@
+{
+  "query": "SELECT c.id, c.name, c.cardNumber, ph.price, ph.grade, ph.soldAt\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId\nWHERE (c.name LIKE '%Lillie%Full Force%' OR c.nameJa LIKE '%リーリエの全力%')\n  AND ph.source = 'snkrdunk'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY c.id, ph.soldAt DESC\nLIMIT 100;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, c.cardNumber, ph.price, ph.grade, ph.soldAt\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId\nWHERE (c.name LIKE '%Lillie%Full Force%' OR c.nameJa LIKE '%リーリエの全力%')\n  AND ph.source = 'snkrdunk'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 90 DAY)\nORDER BY c.id, ph.soldAt DESC\nLIMIT 100;",
+  "rows": [
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "1815.00",
+      "grade": "B",
+      "soldAt": "2026-02-20 23:35:26"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-20 23:35:26"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4867.50",
+      "grade": "PSA10",
+      "soldAt": "2026-02-20 23:35:26"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4878.50",
+      "grade": "PSA10",
+      "soldAt": "2026-02-20 23:35:26"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2254.95",
+      "grade": "A",
+      "soldAt": "2026-02-20 23:35:26"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2035.00",
+      "grade": "PSA9",
+      "soldAt": "2026-02-20 23:35:26"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-20 23:35:26"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2035.00",
+      "grade": "PSA9",
+      "soldAt": "2026-02-20 23:35:26"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4888.84",
+      "grade": "PSA10",
+      "soldAt": "2026-02-17 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4867.50",
+      "grade": "PSA10",
+      "soldAt": "2026-02-17 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-15 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2035.00",
+      "grade": "PSA9",
+      "soldAt": "2026-02-12 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "1925.00",
+      "grade": "PSA8以下",
+      "soldAt": "2026-02-12 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "1925.00",
+      "grade": "PSA9",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2419.95",
+      "grade": "A",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-11 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4938.45",
+      "grade": "PSA10",
+      "soldAt": "2026-02-10 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4949.45",
+      "grade": "PSA10",
+      "soldAt": "2026-02-10 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4922.50",
+      "grade": "PSA10",
+      "soldAt": "2026-02-10 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4922.50",
+      "grade": "PSA10",
+      "soldAt": "2026-02-10 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-10 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4840.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-09 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4939.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-09 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "1209.45",
+      "grade": "PSA8以下",
+      "soldAt": "2026-02-08 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-07 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-07 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-06 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-06 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2035.00",
+      "grade": "PSA9",
+      "soldAt": "2026-02-06 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4894.95",
+      "grade": "PSA10",
+      "soldAt": "2026-02-06 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "1980.00",
+      "grade": "PSA9",
+      "soldAt": "2026-02-05 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-05 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4977.45",
+      "grade": "PSA10",
+      "soldAt": "2026-02-04 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4840.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-04 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5060.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-04 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4949.95",
+      "grade": "PSA10",
+      "soldAt": "2026-02-04 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-04 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4972.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-04 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-03 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5005.00",
+      "grade": "PSA10",
+      "soldAt": "2026-02-02 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "1980.00",
+      "grade": "PSA9",
+      "soldAt": "2026-02-02 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4999.50",
+      "grade": "PSA10",
+      "soldAt": "2026-02-02 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4999.50",
+      "grade": "PSA10",
+      "soldAt": "2026-02-02 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "1980.00",
+      "grade": "B",
+      "soldAt": "2026-02-01 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5005.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-31 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4999.50",
+      "grade": "PSA10",
+      "soldAt": "2026-01-31 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4565.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-31 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5060.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-30 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5060.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-30 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5059.95",
+      "grade": "PSA10",
+      "soldAt": "2026-01-30 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5060.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-30 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5005.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-30 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5060.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-30 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5049.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-30 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-29 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "1980.00",
+      "grade": "PSA9",
+      "soldAt": "2026-01-29 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2557.50",
+      "grade": "A",
+      "soldAt": "2026-01-29 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5059.95",
+      "grade": "PSA10",
+      "soldAt": "2026-01-28 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4994.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-27 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-27 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5004.95",
+      "grade": "PSA10",
+      "soldAt": "2026-01-26 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2084.50",
+      "grade": "PSA9",
+      "soldAt": "2026-01-25 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2035.00",
+      "grade": "PSA9",
+      "soldAt": "2026-01-25 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5225.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-23 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2079.00",
+      "grade": "PSA9",
+      "soldAt": "2026-01-21 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5225.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-21 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5170.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-20 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5005.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-20 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5060.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-20 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5168.90",
+      "grade": "PSA10",
+      "soldAt": "2026-01-20 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-20 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "2089.95",
+      "grade": "PSA9",
+      "soldAt": "2026-01-19 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5060.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-19 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5115.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-19 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5060.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-19 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5060.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-19 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "5060.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-19 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "1540.00",
+      "grade": "B",
+      "soldAt": "2026-01-18 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4801.50",
+      "grade": "PSA10",
+      "soldAt": "2026-01-17 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-17 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4785.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4949.95",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4949.89",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4790.50",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4950.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4829.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4812.50",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4796.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-16 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4867.50",
+      "grade": "PSA10",
+      "soldAt": "2026-01-14 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-14 05:00:00"
+    },
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "price": "4895.00",
+      "grade": "PSA10",
+      "soldAt": "2026-01-14 05:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\tprice\tgrade\tsoldAt\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t1815.00\tB\t2026-02-20 23:35:26\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-02-20 23:35:26\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4867.50\tPSA10\t2026-02-20 23:35:26\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4878.50\tPSA10\t2026-02-20 23:35:26\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2254.95\tA\t2026-02-20 23:35:26\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2035.00\tPSA9\t2026-02-20 23:35:26\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-02-20 23:35:26\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2035.00\tPSA9\t2026-02-20 23:35:26\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4888.84\tPSA10\t2026-02-17 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4867.50\tPSA10\t2026-02-17 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-02-15 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2035.00\tPSA9\t2026-02-12 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t1925.00\tPSA8以下\t2026-02-12 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t1925.00\tPSA9\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2419.95\tA\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-11 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4938.45\tPSA10\t2026-02-10 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4949.45\tPSA10\t2026-02-10 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4922.50\tPSA10\t2026-02-10 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4922.50\tPSA10\t2026-02-10 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-10 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4840.00\tPSA10\t2026-02-09 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4939.00\tPSA10\t2026-02-09 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t1209.45\tPSA8以下\t2026-02-08 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-02-07 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-07 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-02-06 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-06 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2035.00\tPSA9\t2026-02-06 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4894.95\tPSA10\t2026-02-06 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t1980.00\tPSA9\t2026-02-05 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-05 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4977.45\tPSA10\t2026-02-04 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4840.00\tPSA10\t2026-02-04 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5060.00\tPSA10\t2026-02-04 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4949.95\tPSA10\t2026-02-04 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-04 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4972.00\tPSA10\t2026-02-04 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-02-03 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5005.00\tPSA10\t2026-02-02 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t1980.00\tPSA9\t2026-02-02 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4999.50\tPSA10\t2026-02-02 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4999.50\tPSA10\t2026-02-02 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t1980.00\tB\t2026-02-01 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5005.00\tPSA10\t2026-01-31 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4999.50\tPSA10\t2026-01-31 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4565.00\tPSA10\t2026-01-31 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5060.00\tPSA10\t2026-01-30 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5060.00\tPSA10\t2026-01-30 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5059.95\tPSA10\t2026-01-30 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5060.00\tPSA10\t2026-01-30 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5005.00\tPSA10\t2026-01-30 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5060.00\tPSA10\t2026-01-30 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5049.00\tPSA10\t2026-01-30 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-01-29 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t1980.00\tPSA9\t2026-01-29 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2557.50\tA\t2026-01-29 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5059.95\tPSA10\t2026-01-28 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4994.00\tPSA10\t2026-01-27 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-01-27 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5004.95\tPSA10\t2026-01-26 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2084.50\tPSA9\t2026-01-25 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2035.00\tPSA9\t2026-01-25 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5225.00\tPSA10\t2026-01-23 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2079.00\tPSA9\t2026-01-21 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5225.00\tPSA10\t2026-01-21 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5170.00\tPSA10\t2026-01-20 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5005.00\tPSA10\t2026-01-20 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5060.00\tPSA10\t2026-01-20 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5168.90\tPSA10\t2026-01-20 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-01-20 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t2089.95\tPSA9\t2026-01-19 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5060.00\tPSA10\t2026-01-19 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5115.00\tPSA10\t2026-01-19 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5060.00\tPSA10\t2026-01-19 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5060.00\tPSA10\t2026-01-19 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t5060.00\tPSA10\t2026-01-19 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t1540.00\tB\t2026-01-18 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4801.50\tPSA10\t2026-01-17 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-01-17 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4785.00\tPSA10\t2026-01-16 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4949.95\tPSA10\t2026-01-16 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4949.89\tPSA10\t2026-01-16 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4790.50\tPSA10\t2026-01-16 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4950.00\tPSA10\t2026-01-16 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4829.00\tPSA10\t2026-01-16 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-01-16 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4812.50\tPSA10\t2026-01-16 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4796.00\tPSA10\t2026-01-16 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4867.50\tPSA10\t2026-01-14 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-01-14 05:00:00\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t4895.00\tPSA10\t2026-01-14 05:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 2050
+}

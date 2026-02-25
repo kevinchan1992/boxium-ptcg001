@@ -1,0 +1,37 @@
+{
+  "query": "SELECT c.id, c.name, c.cardNumber,\n       COUNT(ph.id) as psa10Count30d,\n       AVG(CAST(ph.price AS DECIMAL(10,2))) as psa10Avg30d,\n       MIN(CAST(ph.price AS DECIMAL(10,2))) as psa10Min30d,\n       MAX(CAST(ph.price AS DECIMAL(10,2))) as psa10Max30d\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId \n  AND ph.source = 'snkrdunk' \n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)\nWHERE c.name LIKE '%Lillie%Full Force%' OR c.nameJa LIKE '%リーリエの全力%'\nGROUP BY c.id, c.name, c.cardNumber\nORDER BY c.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, c.cardNumber,\n       COUNT(ph.id) as psa10Count30d,\n       AVG(CAST(ph.price AS DECIMAL(10,2))) as psa10Avg30d,\n       MIN(CAST(ph.price AS DECIMAL(10,2))) as psa10Min30d,\n       MAX(CAST(ph.price AS DECIMAL(10,2))) as psa10Max30d\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId \n  AND ph.source = 'snkrdunk' \n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)\nWHERE c.name LIKE '%Lillie%Full Force%' OR c.nameJa LIKE '%リーリエの全力%'\nGROUP BY c.id, c.name, c.cardNumber\nORDER BY c.id;",
+  "rows": [
+    {
+      "id": "781727",
+      "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+      "cardNumber": "NULL",
+      "psa10Count30d": "53",
+      "psa10Avg30d": "4945.188491",
+      "psa10Min30d": "4565.00",
+      "psa10Max30d": "5060.00"
+    },
+    {
+      "id": "813754",
+      "name": "Lillie's Full Force U[SM11b 049/049](Enhanced Expansion\"Dream League\")",
+      "cardNumber": "NULL",
+      "psa10Count30d": "0",
+      "psa10Avg30d": "NULL",
+      "psa10Min30d": "NULL",
+      "psa10Max30d": "NULL"
+    },
+    {
+      "id": "1052719",
+      "name": "Lillie's Full Force UR [230/236](Sun & Moon \"Cosmic Eclipse\")",
+      "cardNumber": "NULL",
+      "psa10Count30d": "0",
+      "psa10Avg30d": "NULL",
+      "psa10Min30d": "NULL",
+      "psa10Max30d": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\tpsa10Count30d\tpsa10Avg30d\tpsa10Min30d\tpsa10Max30d\n781727\tLillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")\tNULL\t53\t4945.188491\t4565.00\t5060.00\n813754\tLillie's Full Force U[SM11b 049/049](Enhanced Expansion\"Dream League\")\tNULL\t0\tNULL\tNULL\tNULL\n1052719\tLillie's Full Force UR [230/236](Sun & Moon \"Cosmic Eclipse\")\tNULL\t0\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1982
+}

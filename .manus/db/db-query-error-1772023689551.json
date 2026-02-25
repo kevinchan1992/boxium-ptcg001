@@ -1,0 +1,8 @@
+{
+  "query": "SELECT c.id, c.name, c.nameJa, c.cardNumber, \n       AVG(CAST(ph.price AS DECIMAL(10,2))) as avgPrice,\n       MIN(CAST(ph.price AS DECIMAL(10,2))) as minPrice,\n       MAX(CAST(ph.price AS DECIMAL(10,2))) as maxPrice,\n       COUNT(*) as transactionCount\nFROM cards c\nLEFT JOIN price_history ph ON c.id = ph.cardId\nWHERE (c.name LIKE '%Lillie%Full Force%' OR c.nameJa LIKE '%リーリエの全力%')\n  AND ph.source = 'snkrdunk'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 60 DAY)\nGROUP BY c.id, c.name, c.nameJa, c.cardNumber\nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, c.nameJa, c.cardNumber, \n       AVG(CAST(ph.price AS DECIMAL(10,2))) as avgPrice,\n       MIN(CAST(ph.price AS DECIMAL(10,2))) as minPrice,\n       MAX(CAST(ph.price AS DECIMAL(10,2))) as maxPrice,\n       COUNT(*) as transactionCount\nFROM cards c\nLEFT JOIN price_history ph ON c.id = ph.cardId\nWHERE (c.name LIKE '%Lillie%Full Force%' OR c.nameJa LIKE '%リーリエの全力%')\n  AND ph.source = 'snkrdunk'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 60 DAY)\nGROUP BY c.id, c.name, c.nameJa, c.cardNumber\nLIMIT 5;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'mua4eq38uvnrovhujbrepi.price_history' doesn't exist"
+  ]
+}
