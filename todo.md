@@ -1625,3 +1625,20 @@ useEffect(() => {
 - [x] 測試編輯功能（編輯標題、內容、圖片等）
 - [x] 測試保存功能 （✅ 15/15 測試通過）
 - [ ] 保存 checkpoint（準備中）
+
+
+---
+
+## 🗑️ 移除 PostEditor 組件
+
+### 需求
+既然已經統一使用 ArticlePreview 組件作為唯一的文章編輯模板，可以完全移除 PostEditor 組件和相關代碼，簡化代碼庫。
+
+### 任務
+- [x] 檢查 PostEditor 組件的使用情況（搜尋所有引用）
+- [x] 確認 AdminBlogManagement 中不再使用 PostEditor
+- [x] 移除 PostEditor 組件文件（第 521-939 行）
+- [x] 修改「新增文章」按鈕使用 ArticlePreview 組件
+- [x] 移除 'create' 和 'edit' activeView 相關的渲染邏輯
+- [x] 測試博客管理功能（創建、編輯、預覽、發布）（✅ 14/14 測試通過）
+- [ ] 保存 checkpoint
