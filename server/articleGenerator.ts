@@ -17,17 +17,27 @@ export interface ArticleDataContext {
     rarity: string | null;
     imageUrl: string | null;
   }>;
-  priceStats: {
+  psa10Stats: {
     avgPrice: number;
     minPrice: number;
     maxPrice: number;
     priceChange7d: number;
     priceChange30d: number;
     priceChange60d: number;
-  };
-  transactionStats: {
     totalVolume: number;
     avgDailyVolume: number;
+  };
+  usedGradeAStats: {
+    avgPrice: number;
+    minPrice: number;
+    maxPrice: number;
+    priceChange7d: number;
+    priceChange30d: number;
+    priceChange60d: number;
+    totalVolume: number;
+    avgDailyVolume: number;
+  };
+  transactionStats: {
     peakPrice: number;
     peakDate: Date | null;
   };
@@ -63,8 +73,8 @@ export async function getArticleDataContext(
   const days = daysMap[timeRange];
   const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
-  // 3. Query price history (SNKRDUNK PSA 10 only)
-  const priceData = await db.select({
+  // 3. Query PSA10 price history
+  const psa10Data = await db.select({
     price: priceHistory.price,
     soldAt: priceHistory.soldAt,
   }).from(priceHistory)
@@ -78,36 +88,70 @@ export async function getArticleDataContext(
     )
     .orderBy(desc(priceHistory.soldAt));
 
-  // 4. Calculate price statistics
-  const prices = priceData.map(p => parseFloat(p.price));
-  const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
-  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+  // 4. Query 中古品 A price history
+  const usedGradeAData = await db.select({
+    price: priceHistory.price,
+    soldAt: priceHistory.soldAt,
+  }).from(priceHistory)
+    .where(
+      and(
+        inArray(priceHistory.cardId, cardIds),
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.grade, 'A'),
+        gte(priceHistory.soldAt, startDate)
+      )
+    )
+    .orderBy(desc(priceHistory.soldAt));
 
-  // Calculate price changes
-  const priceChange7d = calculatePriceChange(priceData, 7);
-  const priceChange30d = calculatePriceChange(priceData, 30);
-  const priceChange60d = calculatePriceChange(priceData, 60);
+  // 5. Calculate PSA10 statistics
+  const psa10Prices = psa10Data.map(p => parseFloat(p.price));
+  const psa10AvgPrice = psa10Prices.length > 0 ? psa10Prices.reduce((a, b) => a + b, 0) / psa10Prices.length : 0;
+  const psa10MinPrice = psa10Prices.length > 0 ? Math.min(...psa10Prices) : 0;
+  const psa10MaxPrice = psa10Prices.length > 0 ? Math.max(...psa10Prices) : 0;
+  const psa10Change7d = calculatePriceChange(psa10Data, 7);
+  const psa10Change30d = calculatePriceChange(psa10Data, 30);
+  const psa10Change60d = calculatePriceChange(psa10Data, 60);
+  const psa10TotalVolume = psa10Data.length;
+  const psa10AvgDailyVolume = psa10TotalVolume / days;
 
-  // 5. Calculate transaction statistics
-  const totalVolume = priceData.length;
-  const avgDailyVolume = totalVolume / days;
-  const peakPrice = maxPrice;
-  const peakDate = priceData.length > 0 ? priceData[0].soldAt : null;
+  // 6. Calculate 中古品 A statistics
+  const usedGradeAPrices = usedGradeAData.map(p => parseFloat(p.price));
+  const usedGradeAAvgPrice = usedGradeAPrices.length > 0 ? usedGradeAPrices.reduce((a, b) => a + b, 0) / usedGradeAPrices.length : 0;
+  const usedGradeAMinPrice = usedGradeAPrices.length > 0 ? Math.min(...usedGradeAPrices) : 0;
+  const usedGradeAMaxPrice = usedGradeAPrices.length > 0 ? Math.max(...usedGradeAPrices) : 0;
+  const usedGradeAChange7d = calculatePriceChange(usedGradeAData, 7);
+  const usedGradeAChange30d = calculatePriceChange(usedGradeAData, 30);
+  const usedGradeAChange60d = calculatePriceChange(usedGradeAData, 60);
+  const usedGradeATotalVolume = usedGradeAData.length;
+  const usedGradeAAvgDailyVolume = usedGradeATotalVolume / days;
+
+  // 7. Calculate overall transaction statistics
+  const peakPrice = Math.max(psa10MaxPrice, usedGradeAMaxPrice);
+  const peakDate = psa10Data.length > 0 ? psa10Data[0].soldAt : (usedGradeAData.length > 0 ? usedGradeAData[0].soldAt : null);
 
   return {
     cards: cardData,
-    priceStats: {
-      avgPrice,
-      minPrice,
-      maxPrice,
-      priceChange7d,
-      priceChange30d,
-      priceChange60d,
+    psa10Stats: {
+      avgPrice: psa10AvgPrice,
+      minPrice: psa10MinPrice,
+      maxPrice: psa10MaxPrice,
+      priceChange7d: psa10Change7d,
+      priceChange30d: psa10Change30d,
+      priceChange60d: psa10Change60d,
+      totalVolume: psa10TotalVolume,
+      avgDailyVolume: psa10AvgDailyVolume,
+    },
+    usedGradeAStats: {
+      avgPrice: usedGradeAAvgPrice,
+      minPrice: usedGradeAMinPrice,
+      maxPrice: usedGradeAMaxPrice,
+      priceChange7d: usedGradeAChange7d,
+      priceChange30d: usedGradeAChange30d,
+      priceChange60d: usedGradeAChange60d,
+      totalVolume: usedGradeATotalVolume,
+      avgDailyVolume: usedGradeAAvgDailyVolume,
     },
     transactionStats: {
-      totalVolume,
-      avgDailyVolume,
       peakPrice,
       peakDate,
     },
@@ -241,17 +285,27 @@ function buildArticlePrompt(
       if (card.rarity) prompt += `  稀有度：${card.rarity}\n`;
     });
 
-    prompt += `\n【價格數據】\n`;
-    prompt += `- 平均價格：HKD ${dataContext.priceStats.avgPrice.toFixed(2)}\n`;
-    prompt += `- 最低價格：HKD ${dataContext.priceStats.minPrice.toFixed(2)}\n`;
-    prompt += `- 最高價格：HKD ${dataContext.priceStats.maxPrice.toFixed(2)}\n`;
-    prompt += `- 7日漲跌：${dataContext.priceStats.priceChange7d.toFixed(2)}%\n`;
-    prompt += `- 30日漲跌：${dataContext.priceStats.priceChange30d.toFixed(2)}%\n`;
-    prompt += `- 60日漲跌：${dataContext.priceStats.priceChange60d.toFixed(2)}%\n`;
+    prompt += `\n【PSA10 價格數據】（來源：SNKRDUNK 實際交易記錄）\n`;
+    prompt += `- 平均價格：HKD ${dataContext.psa10Stats.avgPrice.toFixed(2)}\n`;
+    prompt += `- 最低價格：HKD ${dataContext.psa10Stats.minPrice.toFixed(2)}\n`;
+    prompt += `- 最高價格：HKD ${dataContext.psa10Stats.maxPrice.toFixed(2)}\n`;
+    prompt += `- 7日漲跌：${dataContext.psa10Stats.priceChange7d.toFixed(2)}%\n`;
+    prompt += `- 30日漲跌：${dataContext.psa10Stats.priceChange30d.toFixed(2)}%\n`;
+    prompt += `- 60日漲跌：${dataContext.psa10Stats.priceChange60d.toFixed(2)}%\n`;
+    prompt += `- 總交易量：${dataContext.psa10Stats.totalVolume} 筆\n`;
+    prompt += `- 日均交易量：${dataContext.psa10Stats.avgDailyVolume.toFixed(1)} 筆\n`;
+
+    prompt += `\n【中古品 A 價格數據】（來源：SNKRDUNK 實際交易記錄）\n`;
+    prompt += `- 平均價格：HKD ${dataContext.usedGradeAStats.avgPrice.toFixed(2)}\n`;
+    prompt += `- 最低價格：HKD ${dataContext.usedGradeAStats.minPrice.toFixed(2)}\n`;
+    prompt += `- 最高價格：HKD ${dataContext.usedGradeAStats.maxPrice.toFixed(2)}\n`;
+    prompt += `- 7日漲跌：${dataContext.usedGradeAStats.priceChange7d.toFixed(2)}%\n`;
+    prompt += `- 30日漲跌：${dataContext.usedGradeAStats.priceChange30d.toFixed(2)}%\n`;
+    prompt += `- 60日漲跌：${dataContext.usedGradeAStats.priceChange60d.toFixed(2)}%\n`;
+    prompt += `- 總交易量：${dataContext.usedGradeAStats.totalVolume} 筆\n`;
+    prompt += `- 日均交易量：${dataContext.usedGradeAStats.avgDailyVolume.toFixed(1)} 筆\n`;
 
     prompt += `\n【交易統計】\n`;
-    prompt += `- 總交易量：${dataContext.transactionStats.totalVolume} 筆\n`;
-    prompt += `- 日均交易量：${dataContext.transactionStats.avgDailyVolume.toFixed(1)} 筆\n`;
     prompt += `- 歷史最高價：HKD ${dataContext.transactionStats.peakPrice.toFixed(2)}\n`;
   }
 
