@@ -280,9 +280,11 @@ function buildArticlePrompt(
     prompt += `\n【卡牌資訊】\n`;
     dataContext.cards.forEach(card => {
       prompt += `- ${card.name}${card.nameJa ? ` (${card.nameJa})` : ''}\n`;
+      if (card.cardNumber) prompt += `  編號：${card.cardNumber}\n`;
       if (card.series) prompt += `  系列：${card.series}\n`;
       if (card.setName) prompt += `  套裝：${card.setName}\n`;
       if (card.rarity) prompt += `  稀有度：${card.rarity}\n`;
+      if (card.imageUrl) prompt += `  圖片：${card.imageUrl}\n`;
     });
 
     prompt += `\n【PSA10 價格數據】（來源：SNKRDUNK 實際交易記錄）\n`;
@@ -330,7 +332,8 @@ function buildArticlePrompt(
   prompt += `3. 列表項目之間不需要空行，但列表前後要留空行\n`;
   prompt += `4. 重要數據使用 **粗體** 標記\n`;
   prompt += `5. 引用區塊使用 > 符號，用於重點提示\n`;
-  prompt += `6. 避免過長的段落，每段 2-4 句為佳\n\n`;
+  prompt += `6. 避免過長的段落，每段 2-4 句為佳\n`;
+  prompt += `7. **引用卡牌圖片**：在文章中介紹卡牌時，使用 Markdown 圖片語法引用卡牌圖片，格式：![{card.name}]({card.imageUrl})\n\n`;
 
   prompt += `請返回 JSON 格式：\n`;
   prompt += `{\n`;
@@ -359,10 +362,24 @@ export async function generateArticle(
   let userInput = '';
 
   // 1. Extract data context if data-driven
-  if (options.dataInput && options.dataInput.cardIds && options.dataInput.cardIds.length > 0) {
+  let cardIds = options.dataInput?.cardIds || [];
+  
+  // Auto-select cards if not provided
+  if (cardIds.length === 0 && (options.articleType === 'daily-report' || options.articleType === 'market-trend')) {
+    const { autoSelectCardsForArticle } = await import('./articleDataHelper');
+    const timeRange = options.dataInput?.timeRange;
+    const autoTimeRange: '7d' | '30d' = (timeRange === '7d' || timeRange === '30d') ? timeRange : '7d';
+    cardIds = await autoSelectCardsForArticle(
+      options.articleType,
+      autoTimeRange
+    );
+    console.log('[ArticleGenerator] Auto-selected cards:', cardIds);
+  }
+  
+  if (cardIds.length > 0) {
     dataContext = await getArticleDataContext(
-      options.dataInput.cardIds,
-      options.dataInput.timeRange || '30d'
+      cardIds,
+      options.dataInput?.timeRange || '30d'
     );
   }
 
