@@ -22,6 +22,7 @@ interface ArticlePreviewProps {
     featuredImage?: string;
     category?: string;
     tags?: string;
+    seoKeywords?: string;
     dataSource?: string;
   };
   onPublish: () => void;
@@ -294,9 +295,9 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
                 />
               </div>
 
-              {/* Featured Image */}
+              {/* Article Theme Image */}
               <div>
-                <Label htmlFor="edit-featuredImage" className="text-gray-700">特色圖片</Label>
+                <Label htmlFor="edit-featuredImage" className="text-gray-700">文章主題圖片</Label>
                 <div className="flex gap-2 items-end">
                   <div className="flex-1">
                     <Input
@@ -380,6 +381,19 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
                   className="bg-white border-gray-300 text-gray-900"
                   placeholder="用逗號分隔，例如：寶可夢, TCG, 投資"
                 />
+              </div>
+
+              {/* SEO Keywords */}
+              <div>
+                <Label htmlFor="edit-seoKeywords" className="text-gray-700">SEO 關鍵字</Label>
+                <Input
+                  id="edit-seoKeywords"
+                  value={currentArticle.seoKeywords || ''}
+                  onChange={(e) => setCurrentArticle({ ...currentArticle, seoKeywords: e.target.value })}
+                  className="bg-white border-gray-300 text-gray-900"
+                  placeholder="例如：Pokémon TCG, 卡牌價格, 市場分析（以逗號分隔）"
+                />
+                <p className="text-xs text-gray-500 mt-1">用於搜尋引擎優化，幫助文章被更多人找到</p>
               </div>
             </div>
           ) : (

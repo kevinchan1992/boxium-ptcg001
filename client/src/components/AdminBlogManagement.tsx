@@ -462,6 +462,7 @@ export function AdminBlogManagement() {
                   featuredImage: previewArticle.featuredImage,
                   status: 'published',
                   tags: tagsArray,
+                  metaKeywords: previewArticle.seoKeywords,
                 });
               } else {
                 // 新增文章 - 調用 createPost API
@@ -473,6 +474,7 @@ export function AdminBlogManagement() {
                   status: 'published',
                   dataSource: previewArticle.dataSource as 'manual' | 'ai-generated' | 'mixed' || 'ai-generated',
                   tags: tagsArray,
+                  metaKeywords: previewArticle.seoKeywords,
                 });
               }
 

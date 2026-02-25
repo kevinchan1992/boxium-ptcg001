@@ -1642,3 +1642,25 @@ useEffect(() => {
 - [x] 移除 'create' 和 'edit' activeView 相關的渲染邏輯
 - [x] 測試博客管理功能（創建、編輯、預覽、發布）（✅ 14/14 測試通過）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🔍 新增 SEO 關鍵字和文章主題圖片功能
+
+### 需求
+1. 在博客文章編輯功能中新增 SEO 關鍵字輸入欄位
+2. 將「特色圖片」重新命名為「文章主題圖片」
+3. 添加圖片上傳功能，讓用戶可以直接上傳圖片作為文章主題圖片
+
+### 任務
+- [x] 更新數據庫 schema 添加 `seoKeywords` 欄位（✅ 已存在 metaKeywords 欄位）
+- [x] 運行數據庫遷移（pnpm db:push）（✅ 不需要，欄位已存在）
+- [x] 修改 ArticlePreview 組件添加 SEO 關鍵字輸入欄位
+- [x] 修改 ArticlePreview 組件將「特色圖片」改為「文章主題圖片」
+- [x] 添加圖片上傳功能（調用 S3 API）（✅ 已存在）
+- [x] 更新 createPost API 支持 seoKeywords（✅ 已支持 metaKeywords）
+- [x] 更新 updatePost API 支持 seoKeywords（✅ 已支持 metaKeywords）
+- [x] 測試 SEO 關鍵字功能（✅ 15/15 測試通過）
+- [x] 測試圖片上傳功能（✅ 15/15 測試通過）
+- [ ] 保存 checkpoint
