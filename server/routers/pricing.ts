@@ -4,6 +4,9 @@ import { fetchEbayListings } from '../services/ebay';
 import { scrapeSnkrdunkListings } from '../services/snkrdunkScraperService';
 import { ebayRateLimiter } from '../services/rateLimiter';
 import * as db from '../db';
+import { searchEbayByImage } from '../ebayImageSearch';
+import { convertUsdToHkd } from '../ebay';
+import { downloadAndEncodeImage, getBestImageUrl } from '../imageUtils';
 
 interface PriceListing {
   id: string;
@@ -100,11 +103,11 @@ export const pricingRouter = router({
         
         const actualCardId = card.id;
 
-        // Step 2: Fetch from eBay API using English name + card number + PSA10 (with dual-layer caching and rate limiting)
-        console.log('[Pricing Router] Fetching from eBay...');
+        // Step 2: Fetch from eBay API using image search for PSA10 (with dual-layer caching and rate limiting)
+        console.log('[Pricing Router] Fetching from eBay using image search...');
         let ebayListings: any[] = [];
         try {
-          const searchQuery = `${card.name} ${card.cardNumber || ''} PSA10`.trim();
+          const searchQuery = `image-search-${actualCardId}`; // Use cardId as cache key for image search
           
           // Check cache first (dual-layer caching: hot cache 1h + cold cache 6h)
           const cache = await db.getEbayListingsCache(actualCardId, searchQuery);
@@ -138,36 +141,78 @@ export const pricingRouter = router({
           } else {
             // Hot cache expired or doesn't exist, check rate limiter
             if (ebayRateLimiter.tryConsume()) {
-              console.log('[Pricing Router] eBay hot cache expired, fetching from API...');
-              const newListings = await fetchEbayListings({ cardName: searchQuery });
+              console.log('[Pricing Router] eBay hot cache expired, using image search...');
               
-              // URL deduplication: merge new listings with cached listings
-              let mergedListings = newListings;
-              if (cache && new Date(cache.expiresAt) > now) {
-                // Cold cache is still valid, merge with new listings
-                const cachedListings = JSON.parse(cache.listings);
-                const newIds = new Set(newListings.map(item => item.id));
-                const uniqueCachedListings = cachedListings.filter(
-                  (item: any) => !newIds.has(item.id)
+              // Get best image URL for the card
+              const imageUrl = getBestImageUrl(card);
+              if (!imageUrl) {
+                console.log('[Pricing Router] No image URL available for eBay image search');
+                ebayListings = [];
+              } else {
+                // Download and encode image
+                console.log(`[Pricing Router] Downloading image: ${imageUrl}`);
+                const base64Image = await downloadAndEncodeImage(imageUrl);
+                
+                // Search eBay by image
+                console.log('[Pricing Router] Searching eBay by image...');
+                const imageSearchResponse = await searchEbayByImage(
+                  base64Image,
+                  '183454', // Pokemon TCG category
+                  50 // Limit
                 );
-                mergedListings = [...newListings, ...uniqueCachedListings];
-                console.log(`[Pricing Router] Merged ${newListings.length} new + ${uniqueCachedListings.length} cached = ${mergedListings.length} total eBay listings`);
+                
+                // Transform to expected format and convert prices to HKD
+                const newListings = await Promise.all(
+                  (imageSearchResponse.itemSummaries || []).map(async (item) => {
+                    try {
+                      const usdPrice = parseFloat(item.price.value);
+                      const hkdPrice = await convertUsdToHkd(usdPrice);
+                      
+                      return {
+                        id: `ebay-${item.itemId}`,
+                        title: item.title,
+                        price: hkdPrice,
+                        currency: 'HKD',
+                        image: item.image?.imageUrl || '',
+                        productUrl: item.itemWebUrl,
+                        seller: { name: 'eBay Seller' },
+                        condition: 'PSA 10',
+                      };
+                    } catch (error) {
+                      console.error(`[Pricing Router] Error converting price for item ${item.itemId}:`, error);
+                      return null;
+                    }
+                  })
+                ).then(results => results.filter((item): item is NonNullable<typeof item> => item !== null));
+                
+                // URL deduplication: merge new listings with cached listings
+                let mergedListings = newListings;
+                if (cache && new Date(cache.expiresAt) > now) {
+                  // Cold cache is still valid, merge with new listings
+                  const cachedListings = JSON.parse(cache.listings);
+                  const newIds = new Set(newListings.map(item => item.id));
+                  const uniqueCachedListings = cachedListings.filter(
+                    (item: any) => !newIds.has(item.id)
+                  );
+                  mergedListings = [...newListings, ...uniqueCachedListings];
+                  console.log(`[Pricing Router] Merged ${newListings.length} new + ${uniqueCachedListings.length} cached = ${mergedListings.length} total eBay listings`);
+                }
+                
+                // Save to cache with dual expiration times
+                const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
+                const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
+                await db.saveEbayListingsCache({
+                  cardId: actualCardId,
+                  searchQuery,
+                  listings: JSON.stringify(mergedListings),
+                  hotExpiresAt,
+                  expiresAt: coldExpiresAt,
+                });
+                console.log(`[Pricing Router] Saved eBay data to cache (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
+                
+                ebayListings = mergedListings;
+                console.log(`[Pricing Router] eBay image search returned ${ebayListings.length} listings`);
               }
-              
-              // Save to cache with dual expiration times
-              const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
-              const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
-              await db.saveEbayListingsCache({
-                cardId: actualCardId,
-                searchQuery,
-                listings: JSON.stringify(mergedListings),
-                hotExpiresAt,
-                expiresAt: coldExpiresAt,
-              });
-              console.log(`[Pricing Router] Saved eBay data to cache (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
-              
-              ebayListings = mergedListings;
-              console.log(`[Pricing Router] eBay API returned ${ebayListings.length} listings`);
             } else {
               // Rate limit exceeded, use cold cache if available
               console.log('[Pricing Router] eBay rate limit exceeded, checking cold cache...');

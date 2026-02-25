@@ -1,0 +1,20 @@
+{
+  "query": "SELECT id, name, cardNumber FROM cards WHERE name LIKE '%Gardevoir%' AND name LIKE '%CHR%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, cardNumber FROM cards WHERE name LIKE '%Gardevoir%' AND name LIKE '%CHR%' LIMIT 10;",
+  "rows": [
+    {
+      "id": "545930",
+      "name": "Gardevoir CHR[s11a 072/068](Enhanced Expansion\"Silver Tempest\")",
+      "cardNumber": "NULL"
+    },
+    {
+      "id": "813809",
+      "name": "Gardevoir CHR[s8b 196/184](High Class Pack\"VMAX Climax\")",
+      "cardNumber": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\n545930\tGardevoir CHR[s11a 072/068](Enhanced Expansion\"Silver Tempest\")\tNULL\n813809\tGardevoir CHR[s8b 196/184](High Class Pack\"VMAX Climax\")\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1701
+}
