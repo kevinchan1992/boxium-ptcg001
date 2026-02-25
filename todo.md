@@ -1702,3 +1702,81 @@ useEffect(() => {
 - [x] 優化博客管理功能的用戶體驗（✅ 已完成分析報告）
 - [x] 測試完整的創建和編輯流程（✅ 15/15 測試通過）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🚀 全面優化博客管理系統
+
+### 高優先級優化
+
+#### 1. 自動化 AI 自動填寫流程
+- [x] 修改 generateArticle API，在生成文章後自動調用 generateMetadata
+- [x] 將生成的 category、tags、seoKeywords 添加到返回結果中
+- [x] 修改 AIArticleGenerator 組件，將生成的分類和標籤傳遞給 ArticlePreview 組件
+- [x] 測試 AI 生成文章後自動填寫分類和標籤
+
+#### 2. 添加草稿自動保存功能
+- [x] 在 ArticlePreview 組件添加 useEffect hook，每隔 30 秒保存到 localStorage
+- [x] 在組件初始化時檢查 localStorage 是否有草稿
+- [x] 顯示提示框詢問用戶是否恢復草稿
+- [x] 用戶點擊「發布文章」或「取消」後清除草稿
+- [x] 測試草稿自動保存和恢復功能
+
+### 中優先級優化
+
+#### 3. 實施編輯歷史記錄功能
+- [ ] 創建 post_versions 表（id, postId, title, excerpt, content, featuredImage, category, tags, metaKeywords, createdAt, createdBy）
+- [ ] 修改 updatePost API，在更新前保存當前版本到 post_versions 表
+- [ ] 創建 getPostVersions API，返回文章的所有歷史版本
+- [ ] 創建 restorePostVersion API，恢復指定版本
+- [ ] 在 ArticlePreview 組件添加「查看歷史」按鈕和歷史版本列表
+- [ ] 測試編輯歷史記錄和恢復功能
+
+#### 4. 優化圖片管理功能
+- [ ] 創建 media_library 表（id, url, filename, mimeType, size, uploadedBy, createdAt）
+- [ ] 修改圖片上傳功能，保存圖片信息到 media_library 表
+- [ ] 創建 getMediaLibrary API，返回所有圖片
+- [ ] 創建 deleteMedia API，刪除圖片
+- [ ] 在 ArticlePreview 組件添加「圖片庫」按鈕，顯示圖片列表
+- [ ] 支持點擊圖片插入到文章中
+- [ ] 測試圖片庫功能
+
+### 低優先級優化
+
+#### 5. 添加 SEO 評分和建議功能
+- [ ] 創建 analyzeSEO 函數，分析標題長度、摘要長度、內容長度、關鍵字密度等
+- [ ] 在 ArticlePreview 組件添加 SEO 評分顯示區域
+- [ ] 顯示評分和改進建議
+- [ ] 用戶修改文章後即時更新評分
+- [ ] 測試 SEO 評分功能
+
+#### 6. 實施分類和標籤管理功能
+- [ ] 創建 categories 表（id, name, slug, description, createdAt）
+- [ ] 在 Admin 頁面添加「分類管理」標籤
+- [ ] 支持創建、編輯、刪除分類
+- [ ] 修改 generateMetadata API，優先使用預定義的分類
+- [ ] 在 ArticlePreview 組件的分類欄位添加下拉選單
+- [ ] 測試分類管理功能
+
+#### 7. 添加 AI 自動生成主題圖片功能
+- [ ] 在 ArticlePreview 組件添加「AI 生成圖片」按鈕
+- [ ] 調用 generateImage API，傳遞文章標題和摘要作為 prompt
+- [ ] 生成的圖片 URL 自動填入主題圖片欄位
+- [ ] 測試 AI 生成主題圖片功能
+
+#### 8. 優化文章列表顯示
+- [ ] 修改 getPosts API，返回文章的分類和標籤
+- [ ] 在 AdminBlogManagement 組件的文章列表中顯示分類和標籤
+- [ ] 添加分類和標籤篩選下拉選單
+- [ ] 顯示文章的 SEO 評分（如果已計算）
+- [ ] 測試文章列表篩選功能
+
+### AI 文章生成邏輯修改
+
+#### 9. 使用數據庫價格數據生成文章
+- [ ] 分析現有 AI 文章生成邏輯
+- [ ] 創建查詢卡牌價格歷史數據的 API（PSA10 和中古品 A）
+- [ ] 修改 generateArticle API，查詢數據庫價格數據並傳遞給 LLM
+- [ ] 統一使用港幣（HKD）顯示價格
+- [ ] 測試 AI 文章生成使用數據庫價格數據

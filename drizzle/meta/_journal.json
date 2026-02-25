@@ -323,6 +323,13 @@
       "when": 1771987814531,
       "tag": "0045_fair_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "5",
+      "when": 1771988874930,
+      "tag": "0046_wealthy_rage",
+      "breakpoints": true
     }
   ]
 }

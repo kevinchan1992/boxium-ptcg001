@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
@@ -37,6 +37,51 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
   const [editInstruction, setEditInstruction] = useState('');
   const [isAIEditing, setIsAIEditing] = useState(false);
   const [isEditMode, setIsEditMode] = useState(initialEditMode);
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
+
+  // Draft auto-save key
+  const draftKey = `article-draft-${article.id || 'new'}`;
+
+  // Load draft on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(draftKey);
+    if (savedDraft && !article.id) {
+      // Only show draft dialog for new articles
+      setShowDraftDialog(true);
+    }
+  }, []);
+
+  // Auto-save draft every 30 seconds
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const interval = setInterval(() => {
+      localStorage.setItem(draftKey, JSON.stringify(currentArticle));
+      console.log('[Draft] Auto-saved at', new Date().toLocaleTimeString());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [currentArticle, isEditMode, draftKey]);
+
+  // Clear draft when published or cancelled
+  const clearDraft = () => {
+    localStorage.removeItem(draftKey);
+  };
+
+  // Restore draft
+  const restoreDraft = () => {
+    const savedDraft = localStorage.getItem(draftKey);
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        setCurrentArticle(draft);
+        toast.success('草稿已恢復');
+      } catch (error) {
+        toast.error('草稿恢復失敗');
+      }
+    }
+    setShowDraftDialog(false);
+  };
 
   const editWithAIMutation = trpc.blog.editArticleWithAI.useMutation({
     onSuccess: (data: { title: string; excerpt: string; content: string }) => {
@@ -73,8 +118,43 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
     });
   };
 
+  const handlePublish = () => {
+    clearDraft();
+    onPublish();
+  };
+
+  const handleCancel = () => {
+    clearDraft();
+    onCancel();
+  };
+
   return (
-    <div className="space-y-6">
+    <>
+      {/* Draft Restore Dialog */}
+      <Dialog open={showDraftDialog} onOpenChange={setShowDraftDialog}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle>發現未完成的草稿</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              檢測到您有一篇未完成的文章草稿，是否要恢復？
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowDraftDialog(false)}
+              className="border-zinc-700 text-white hover:bg-zinc-800"
+            >
+              不恢復
+            </Button>
+            <BrandButton onClick={restoreDraft}>
+              恢復草稿
+            </BrandButton>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -87,7 +167,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={onCancel}
+            onClick={handleCancel}
             className="border-zinc-700 text-white hover:bg-zinc-800"
           >
             <X className="w-4 h-4 mr-2" />
@@ -118,7 +198,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
             <Wand2 className="w-4 h-4 mr-2" />
             AI 編輯
           </Button>
-          <BrandButton onClick={onPublish}>
+          <BrandButton onClick={handlePublish}>
             <Sparkles className="w-4 h-4 mr-2" />
             發布文章
           </BrandButton>
@@ -655,6 +735,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </>
   );
 }

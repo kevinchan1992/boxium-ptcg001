@@ -2622,8 +2622,29 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         metaKeywords: z.string().optional(),
         tags: z.array(z.string()).optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const blogDb = await import('./blogDb');
+        
+        // Save current version before updating
+        const currentPost = await blogDb.getPostById(input.id);
+        if (currentPost && ctx.user) {
+          const { getDb } = await import('./db');
+          const db = await getDb();
+          if (db) {
+            const { postVersions } = await import('../drizzle/schema_new');
+            await db.insert(postVersions).values({
+              postId: input.id,
+              title: currentPost.title,
+              excerpt: currentPost.excerpt || null,
+              content: currentPost.content,
+              featuredImage: currentPost.featuredImage || null,
+              category: currentPost.category || null,
+              tags: '', // Will be populated from postTags relation if needed
+              metaKeywords: currentPost.metaKeywords || null,
+              createdBy: ctx.user.id,
+            });
+          }
+        }
         
         const updates: any = {};
         if (input.title) {

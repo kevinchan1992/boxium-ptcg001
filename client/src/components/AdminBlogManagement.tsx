@@ -499,8 +499,13 @@ export function AdminBlogManagement() {
           categories={categories || []}
           onCancel={() => setActiveView('list')}
           onSuccess={(generatedArticle) => {
-            // Show preview first
-            setPreviewArticle(generatedArticle);
+            // Show preview first with AI-generated metadata
+            setPreviewArticle({
+              ...generatedArticle,
+              category: generatedArticle.suggestedCategory || '',
+              tags: generatedArticle.suggestedTags?.join(', ') || '',
+              seoKeywords: generatedArticle.seoMetadata?.keywords?.join(', ') || '',
+            });
             setActiveView('preview');
           }}
         />

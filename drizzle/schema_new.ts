@@ -403,6 +403,26 @@ export type PostTag = typeof postTags.$inferSelect;
 export type InsertPostTag = typeof postTags.$inferInsert;
 
 /**
+ * Post versions table - stores historical versions of posts for version control
+ */
+export const postVersions = mysqlTable("post_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  excerpt: text("excerpt"),
+  content: text("content").notNull(), // Markdown format
+  featuredImage: text("featuredImage"),
+  category: varchar("category", { length: 100 }),
+  tags: text("tags"), // Comma-separated tags
+  metaKeywords: text("metaKeywords"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  createdBy: int("createdBy").notNull(), // User ID who created this version
+});
+
+export type PostVersion = typeof postVersions.$inferSelect;
+export type InsertPostVersion = typeof postVersions.$inferInsert;
+
+/**
  * Article generation history table - stores AI article generation requests and results
  */
 export const articleGenerationHistory = mysqlTable("articleGenerationHistory", {
