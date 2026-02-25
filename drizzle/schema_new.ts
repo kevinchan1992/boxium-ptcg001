@@ -367,6 +367,7 @@ export const posts = mysqlTable("posts", {
   contentJa: text("contentJa"), // Markdown format
   
   featuredImage: text("featuredImage"),
+  category: varchar("category", { length: 100 }), // Category name (e.g., "市場分析", "卡牌評測")
   categoryId: int("categoryId"),
   status: mysqlEnum("status", ["draft", "published"]).default("draft").notNull(),
   publishedAt: timestamp("publishedAt"),

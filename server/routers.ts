@@ -2549,6 +2549,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         excerpt: z.string().optional(),
         content: z.string(),
         featuredImage: z.string().optional(),
+        category: z.string().optional(), // Category name (e.g., "市場分析", "卡牌評測")
         categoryId: z.number().optional(),
         status: z.enum(['draft', 'published']),
         dataSource: z.enum(['manual', 'ai-generated', 'mixed']),
@@ -2572,6 +2573,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
           excerpt: input.excerpt || null,
           content: input.content,
           featuredImage: input.featuredImage || null,
+          category: input.category || null,
           categoryId: input.categoryId || null,
           status: input.status,
           publishedAt: input.status === 'published' ? new Date() : null,
@@ -2612,6 +2614,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         excerpt: z.string().optional(),
         content: z.string().optional(),
         featuredImage: z.string().optional(),
+        category: z.string().optional(), // Category name (e.g., "市場分析", "卡牌評測")
         categoryId: z.number().optional(),
         status: z.enum(['draft', 'published']).optional(),
         metaTitle: z.string().optional(),
@@ -2630,6 +2633,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         if (input.excerpt !== undefined) updates.excerpt = input.excerpt;
         if (input.content) updates.content = input.content;
         if (input.featuredImage !== undefined) updates.featuredImage = input.featuredImage;
+        if (input.category !== undefined) updates.category = input.category;
         if (input.categoryId !== undefined) updates.categoryId = input.categoryId;
         if (input.status) {
           updates.status = input.status;

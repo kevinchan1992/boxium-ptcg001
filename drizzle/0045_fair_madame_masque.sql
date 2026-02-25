@@ -1,0 +1,1 @@
+ALTER TABLE `posts` ADD `category` varchar(100);
