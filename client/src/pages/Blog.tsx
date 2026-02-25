@@ -83,10 +83,10 @@ export default function Blog() {
         <div className="container mx-auto px-4 py-12 md:py-20 lg:py-24">
           <div className="max-w-4xl mx-auto text-center">
             {/* Title - 使用 logo 藍色 */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[#0033CC] mb-4 md:mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-bold text-[#0033CC] mb-4 md:mb-6 leading-tight">
               {t('blogPage.title')}
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 md:mb-10 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-lg text-gray-600 mb-8 md:mb-10 leading-relaxed">
               {t('blogPage.subtitle')}
             </p>
             
@@ -133,7 +133,7 @@ export default function Blog() {
               <div className="mb-16">
                 <div className="flex items-center gap-3 mb-6">
                   <TrendingUp className="w-7 h-7 text-[#FFD700]" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-[#0033CC]">
+                  <h2 className="text-2xl md:text-2xl font-bold text-[#0033CC]">
                     {t('blogPage.featuredPost')}
                   </h2>
                 </div>
@@ -160,11 +160,11 @@ export default function Blog() {
                           )}
                           <Badge className="bg-[#FFD700] text-[#0033CC] hover:bg-[#FFD700]/90">精選文章</Badge>
                         </div>
-                        <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 line-clamp-2 group-hover:text-[#0033CC] transition-colors">
+                        <h3 className="text-2xl sm:text-3xl md:text-3xl font-bold text-gray-900 mb-4 line-clamp-2 group-hover:text-[#0033CC] transition-colors">
                           {getLocalizedContent(featuredPost, 'title')}
                         </h3>
                         {featuredPost.excerpt && (
-                          <p className="text-base sm:text-lg text-gray-600 mb-6 line-clamp-3 leading-relaxed">
+                          <p className="text-base sm:text-base text-gray-600 mb-6 line-clamp-3 leading-relaxed">
                             {getLocalizedContent(featuredPost, 'excerpt')}
                           </p>
                         )}
@@ -192,7 +192,7 @@ export default function Blog() {
             {/* Regular Posts Grid - 專業卡片設計 */}
             {regularPosts.length > 0 && (
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-[#0033CC] mb-8">
+                <h2 className="text-2xl md:text-2xl font-bold text-[#0033CC] mb-8">
                   {t('blogPage.latestPosts')}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
@@ -218,11 +218,11 @@ export default function Blog() {
                               </Badge>
                             )}
                           </div>
-                          <CardTitle className="text-gray-900 text-lg sm:text-xl md:text-2xl line-clamp-2 group-hover:text-[#0033CC] transition-colors mb-3 leading-tight font-bold">
+                          <CardTitle className="text-gray-900 text-lg sm:text-xl md:text-xl line-clamp-2 group-hover:text-[#0033CC] transition-colors mb-3 leading-tight font-bold">
                             {getLocalizedContent(post, 'title')}
                           </CardTitle>
                           {post.excerpt && (
-                            <CardDescription className="text-sm sm:text-base line-clamp-3 text-gray-600 leading-relaxed">
+                            <CardDescription className="text-sm sm:text-sm line-clamp-3 text-gray-600 leading-relaxed">
                               {getLocalizedContent(post, 'excerpt')}
                             </CardDescription>
                           )}
