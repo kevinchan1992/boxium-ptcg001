@@ -161,9 +161,20 @@ export const pricingRouter = router({
                   50 // Limit
                 );
                 
+                // Filter for PSA 10 items only (check title)
+                const psa10Items = (imageSearchResponse.itemSummaries || []).filter(item => {
+                  const title = item.title.toLowerCase();
+                  // Must contain "psa" and "10" (or "psa 10" or "psa10")
+                  return (title.includes('psa') && title.includes('10')) || 
+                         title.includes('psa 10') || 
+                         title.includes('psa10');
+                });
+                
+                console.log(`[Pricing Router] Filtered ${psa10Items.length}/${imageSearchResponse.itemSummaries?.length || 0} PSA 10 items from eBay image search`);
+                
                 // Transform to expected format and convert prices to HKD
                 const newListings = await Promise.all(
-                  (imageSearchResponse.itemSummaries || []).map(async (item) => {
+                  psa10Items.map(async (item) => {
                     try {
                       const usdPrice = parseFloat(item.price.value);
                       const hkdPrice = await convertUsdToHkd(usdPrice);
