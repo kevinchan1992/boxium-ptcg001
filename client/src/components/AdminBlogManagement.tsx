@@ -559,38 +559,38 @@ export function AdminBlogManagement() {
         <ArticlePreview
           article={previewArticle}
           initialEditMode={!!previewArticle.id} // 如果有 id 表示是編輯現有文章，預設為編輯模式
-          onPublish={async () => {
+          onPublish={async (article) => {
             try {
               // 解析 tags 字串為陣列
-              const tagsArray = previewArticle.tags 
-                ? previewArticle.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+              const tagsArray = article.tags 
+                ? article.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
                 : [];
 
-              if (previewArticle.id) {
+              if (article.id) {
                 // 編輯現有文章 - 調用 updatePost API
                 await updatePostMutation.mutateAsync({
-                  id: previewArticle.id,
-                  title: previewArticle.title,
-                  excerpt: previewArticle.excerpt || '',
-                  content: previewArticle.content,
-                  featuredImage: previewArticle.featuredImage,
-                  category: previewArticle.category,
+                  id: article.id,
+                  title: article.title,
+                  excerpt: article.excerpt || '',
+                  content: article.content,
+                  featuredImage: article.featuredImage,
+                  category: article.category,
                   status: 'published',
                   tags: tagsArray,
-                  metaKeywords: previewArticle.seoKeywords,
+                  metaKeywords: article.seoKeywords,
                 });
               } else {
                 // 新增文章 - 調用 createPost API
                 await createPostMutation.mutateAsync({
-                  title: previewArticle.title,
-                  excerpt: previewArticle.excerpt || '',
-                  content: previewArticle.content,
-                  featuredImage: previewArticle.featuredImage,
-                  category: previewArticle.category,
+                  title: article.title,
+                  excerpt: article.excerpt || '',
+                  content: article.content,
+                  featuredImage: article.featuredImage,
+                  category: article.category,
                   status: 'published',
-                  dataSource: previewArticle.dataSource as 'manual' | 'ai-generated' | 'mixed' || 'ai-generated',
+                  dataSource: article.dataSource as 'manual' | 'ai-generated' | 'mixed' || 'ai-generated',
                   tags: tagsArray,
-                  metaKeywords: previewArticle.seoKeywords,
+                  metaKeywords: article.seoKeywords,
                 });
               }
 

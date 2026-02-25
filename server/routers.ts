@@ -2519,7 +2519,31 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
   }),
 
   // Blog router - article management and AI generation
-  blog: router({ // Get all posts with filters
+  blog: router({
+    // Debug: Get post data for troubleshooting
+    debugGetPost: publicProcedure
+      .input(z.object({ id: z.number().optional() }))
+      .query(async ({ input }) => {
+        const blogDb = await import('./blogDb');
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        const { posts } = await import('../drizzle/schema_new');
+        const { desc } = await import('drizzle-orm');
+        
+        let query = db.select().from(posts);
+        if (input.id) {
+          const { eq } = await import('drizzle-orm');
+          query = query.where(eq(posts.id, input.id)) as any;
+        } else {
+          query = query.orderBy(desc(posts.createdAt)).limit(1) as any;
+        }
+        
+        const result = await query;
+        return result.length > 0 ? result[0] : null;
+      }),
+
+    // Get all posts with filters
     getPosts: publicProcedure
       .input(z.object({
         categoryId: z.number().optional(),

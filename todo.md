@@ -76,7 +76,7 @@ Cannot find package 'playwright' imported from /home/ubuntu/boxium-ptcg/server/s
 - [ ] 修復 OAuth 回調邏輯
 - [ ] 確保新用戶正確創建並有訪問權限
 - [ ] 測試新用戶註冊和登入流程
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ## 🔥 重大變更：完全移除登入認證系統
 
@@ -122,7 +122,7 @@ Cannot find package 'playwright' imported from /home/ubuntu/boxium-ptcg/server/s
 - [ ] 確認無認證相關錯誤
 
 #### 完成
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 - [ ] 部署到生產環境
 
 
@@ -232,7 +232,7 @@ Cannot find package 'playwright' imported from /home/ubuntu/boxium-ptcg/server/s
 - [x] 顯示失敗卡牌列表（卡牌 ID、名稱、錯誤原因）
 - [x] 測試暫停/繼續功能（代碼審查通過）
 - [x] 測試錯誤詳情顯示（代碼審查通過）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -249,7 +249,7 @@ Cannot find package 'playwright' imported from /home/ubuntu/boxium-ptcg/server/s
 - [x] 檢查後端是否有 getDashboardStats API（缺失）
 - [x] 添加 getDashboardStats API 和相關統計函數
 - [x] 測試修復結果（服務器重啟成功）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -268,7 +268,7 @@ Cannot find package 'playwright' imported from /home/ubuntu/boxium-ptcg/server/s
 - [x] 修復暫停/繼續按鈕顯示問題（統一進度查詢 API）
 - [x] 修復錯誤詳情顯示問題（進度 API 已包含 errors 欄位）
 - [x] 測試所有修復（服務器重啟成功）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -337,7 +337,7 @@ Cannot find package 'playwright' imported from /home/ubuntu/boxium-ptcg/server/s
   - [x] 測試分頁功能（✅ 通過）
   - [x] 測試商品數量計算（✅ 通過）
 - [ ] 使用快取管理工具診斷生產環境問題
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -378,7 +378,7 @@ Cannot find package 'playwright' imported from /home/ubuntu/boxium-ptcg/server/s
 - [x] 將所有管理 API 從 publicProcedure 改為 adminProcedure（已批量替換）
 - [x] 測試管理後台認證功能（所有測試通過）
 - [x] 測試公開頁面仍然可以訪問（首頁、搜尋、卡牌詳情等）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -429,7 +429,7 @@ Cannot find package 'playwright' imported from /home/ubuntu/boxium-ptcg/server/s
 - [ ] 測試管理員權限
 
 #### 9. 保存 checkpoint
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -473,7 +473,7 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [ ] 瀏覽器端到端測試（等待用戶測試）
 - [x] 修復 Google OAuth redirect_uri 問題（使用動態 origin）
 - [x] 更新前端 Google 登入按鈕（添加 origin 參數）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -491,7 +491,7 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [x] 修復 auth.login API 中的 getSessionCookieOptions 調用（添加 ctx.req 檢查）
 - [x] 修復 auth.register API 中的 getSessionCookieOptions 調用（添加 ctx.req 檢查）
 - [ ] 測試登入功能（等待用戶測試）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -513,7 +513,7 @@ Failed query: select `id`, `openId`, `email`, `name`, `passwordHash`, `googleId`
 - [x] 修復 CORS 配置（添加 credentials: true）
 - [x] 修復 email 驗證錯誤（添加 .trim().toLowerCase()）
 - [ ] 測試登入狀態持久化（等待用戶測試）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -706,7 +706,7 @@ const cachedListings = JSON.parse(cache.listings);
 - [x] 添加暫停/繼續/停止按鈕（✅ 完成）
 - [x] 測試批量更新功能（✅ 3 個測試全部通過）
 - [x] 測試心跳機制（✅ 每 10 秒發送一次）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -757,7 +757,7 @@ const cachedListings = JSON.parse(cache.listings);
 
 
 #### 5. 保存 checkpoint
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ---
 
@@ -797,7 +797,7 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 - [x] 分析問題原因（postShares 表不存在於數據庫）
 - [x] 修復 SQL 查詢（手動創建 postShares 表）
 - [x] 測試修復（API 測試成功，返回空數組）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ### 修復結果
 - ✅ 創建 postShares 表（6 個欄位）
@@ -820,7 +820,7 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 - [x] 修復前端邏輯：只顯示進度，不重新啟動任務
 - [x] TypeScript 編譯通過
 - [x] 測試完整流程（✅ API 測試成功，任務正在運行）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ### 修復結果
 - ✅ 前端改為調用後端持續任務 API
@@ -842,7 +842,7 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 - [x] 自動恢復進度顯示
 - [x] TypeScript 編譯通過
 - [x] 測試修復（✅ 邏輯正確，會顯示 info toast 並恢復進度）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ### 修復結果
 - ✅ 檢查錯誤訊息是否包含「已在運行中」
@@ -875,7 +875,7 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 #### 3. 測試和交付
 - [x] 測試取消功能（✅ 邏輯正確，對話框正常顯示）
 - [x] 測試進度顯示（✅ 百分比和預估時間正常計算）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ### 實施結果
 - ✅ 取消任務功能：點擊「停止」按鈕顯示確認對話框，確認後調用 admin.cancelPersistentTask API
@@ -905,7 +905,7 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 - [x] 測試修復（發現 taskProgress 為 undefined）
 - [x] 修復根本問題：設置 currentTaskId=1 啟用查詢
 - [ ] 再次測試（重新整理頁面並點擊按鈕）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ### 發現的問題
 1. **錯誤匹配正確**：`error.message.includes("已在運行中")` 可以匹配「SNKRDUNK 批量更新已在運行中」
@@ -939,7 +939,7 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 - [x] useEffect 已存在自動恢復邏輯
 - [x] TypeScript 編譯通過
 - [x] 測試頁面刷新後進度顯示（✅ 邏輯正確，應該會自動顯示）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ### 修復結果
 - ✅ 移除 taskProgress 查詢的 `enabled` 條件，改為始終啟用
@@ -965,7 +965,7 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 - [x] TypeScript 編譯通過
 - [x] 取消舊任務（✅ 任務 #270002 已取消）
 - [x] 測試性能提升（✅ 需要用戶重新啟動任務測試）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ### 實施結果
 - ✅ 將 BATCH_SIZE 從 50 改為 80
@@ -1097,7 +1097,7 @@ group by `postShares`.`postId`, `posts`.`title`, `posts`.`slug`, `postShares`.`s
 - [ ] 添加錯誤提示（開發環境不可用時）
 
 #### 7. 部署
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 - [ ] 部署到生產環境
 - [ ] 更新生產環境的 DEV_SCRAPER_URL（指向開發環境）
 - [ ] 測試生產環境功能
@@ -1624,7 +1624,7 @@ useEffect(() => {
 - [x] 確保 ArticlePreview 組件在編輯現有文章時預設為編輯模式
 - [x] 測試編輯功能（編輯標題、內容、圖片等）
 - [x] 測試保存功能 （✅ 15/15 測試通過）
-- [ ] 保存 checkpoint（準備中）
+- [x] 保存 checkpoint（準備中）
 
 
 ---
@@ -1641,7 +1641,7 @@ useEffect(() => {
 - [x] 修改「新增文章」按鈕使用 ArticlePreview 組件
 - [x] 移除 'create' 和 'edit' activeView 相關的渲染邏輯
 - [x] 測試博客管理功能（創建、編輯、預覽、發布）（✅ 14/14 測試通過）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -1663,7 +1663,7 @@ useEffect(() => {
 - [x] 更新 updatePost API 支持 seoKeywords（✅ 已支持 metaKeywords）
 - [x] 測試 SEO 關鍵字功能（✅ 15/15 測試通過）
 - [x] 測試圖片上傳功能（✅ 15/15 測試通過）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -1683,7 +1683,7 @@ useEffect(() => {
 - [x] 實施 AI 自動生成 SEO 關鍵字功能（✅ generateMetadata API）
 - [x] 在編輯模式添加「AI 自動填寫」按鈕（✅ SEO 關鍵字欄位旁）
 - [x] 測試 AI 自動填寫功能（✅ 16/16 測試通過）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -1701,7 +1701,7 @@ useEffect(() => {
 - [x] 修復 AI 自動填寫內容未保存的問題（✅ 15/15 測試通過）
 - [x] 優化博客管理功能的用戶體驗（✅ 已完成分析報告）
 - [x] 測試完整的創建和編輯流程（✅ 15/15 測試通過）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -1914,3 +1914,17 @@ useEffect(() => {
 - [ ] 測試分類和標籤管理
 - [ ] 測試 AI 生成圖片功能
 - [ ] 測試文章列表優化
+
+---
+
+## 🐛 修復博客文章列表主題圖片不顯示問題
+
+### 問題描述
+用戶上傳主題圖片後，文章列表中沒有顯示圖片。
+
+### 任務
+- [x] 檢查 Blog.tsx 頁面的文章列表渲染代碼
+- [x] 檢查 getPosts API 是否返回 featuredImage 欄位
+- [x] 在文章列表卡片中添加主題圖片顯示
+- [x] 測試圖片顯示功能
+- [x] 保存 checkpoint

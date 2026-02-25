@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, title, featuredImage, status FROM posts LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, featuredImage, status FROM posts LIMIT 5;",
+  "rows": [
+    {
+      "id": "90003",
+      "title": "2月皮卡丘市場回顧：經典卡牌價格波動分析與未來展望",
+      "featuredImage": "NULL",
+      "status": "published"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tfeaturedImage\tstatus\n90003\t2月皮卡丘市場回顧：經典卡牌價格波動分析與未來展望\tNULL\tpublished\n",
+  "stderr": "",
+  "execution_time_ms": 1577
+}

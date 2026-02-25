@@ -27,7 +27,7 @@ interface ArticlePreviewProps {
     seoKeywords?: string;
     dataSource?: string;
   };
-  onPublish: () => void;
+  onPublish: (article: ArticlePreviewProps['article']) => void;
   onEdit: () => void;
   onCancel: () => void;
   initialEditMode?: boolean;
@@ -124,7 +124,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
 
   const handlePublish = () => {
     clearDraft();
-    onPublish();
+    onPublish(currentArticle);
   };
 
   const handleCancel = () => {
@@ -669,7 +669,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
           <Wand2 className="w-4 h-4 mr-2" />
           AI 編輯
         </Button>
-        <BrandButton onClick={onPublish}>
+        <BrandButton onClick={handlePublish}>
           <Sparkles className="w-4 h-4 mr-2" />
           發布文章
         </BrandButton>

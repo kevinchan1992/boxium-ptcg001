@@ -21,6 +21,7 @@ import Disclaimer from "./pages/Disclaimer";
 import About from "./pages/About";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import DebugBlog from "./pages/DebugBlog";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/pricing/:id" component={PricingDetail} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
+      <Route path="/debug-blog" component={DebugBlog} />
 
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />

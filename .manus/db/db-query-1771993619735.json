@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, title, CHAR_LENGTH(featuredImage) as image_url_length, SUBSTRING(featuredImage, 1, 100) as image_url_preview, status FROM posts LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, CHAR_LENGTH(featuredImage) as image_url_length, SUBSTRING(featuredImage, 1, 100) as image_url_preview, status FROM posts LIMIT 1;",
+  "rows": [
+    {
+      "id": "90003",
+      "title": "2月皮卡丘市場回顧：經典卡牌價格波動分析與未來展望",
+      "image_url_length": "NULL",
+      "image_url_preview": "NULL",
+      "status": "published"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\timage_url_length\timage_url_preview\tstatus\n90003\t2月皮卡丘市場回顧：經典卡牌價格波動分析與未來展望\tNULL\tNULL\tpublished\n",
+  "stderr": "",
+  "execution_time_ms": 1496
+}
