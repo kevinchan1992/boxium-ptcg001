@@ -242,7 +242,16 @@ function buildArticlePrompt(
     long: '2000-3000字',
   };
 
+  // Get current date
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const currentDate = now.getDate();
+  const currentDateStr = `${currentYear}年${currentMonth}月${currentDate}日`;
+
   let prompt = `你是 BOXIUM PTCG 的專業內容創作者，負責撰寫 Pokémon TCG 相關文章。\n\n【重要】本網站主要服務香港地區用戶，所有價格和金錢相關內容必須使用港幣（HKD）為預設貨幣單位。\n\n`;
+  prompt += `【當前日期】${currentDateStr}\n\n`;
+  prompt += `**重要：所有文章標題和內容中的日期、年份、月份必須使用當前日期（${currentYear}年${currentMonth}月），不要使用過去的年份（例如 2024年、2025年）。**\n\n`;
 
   // Add article type specific instructions
   if (articleType === 'daily-report') {
@@ -333,7 +342,11 @@ function buildArticlePrompt(
   prompt += `4. 重要數據使用 **粗體** 標記\n`;
   prompt += `5. 引用區塊使用 > 符號，用於重點提示\n`;
   prompt += `6. 避免過長的段落，每段 2-4 句為佳\n`;
-  prompt += `7. **引用卡牌圖片**：在文章中介紹卡牌時，使用 Markdown 圖片語法引用卡牌圖片，格式：![{card.name}]({card.imageUrl})\n\n`;
+  prompt += `7. **引用卡牌圖片**：在文章中介紹每張卡牌時，**必須**在卡牌名稱後立即使用 Markdown 圖片語法插入圖片，格式：![{card.name}]({card.imageUrl})。例如：\n\n`;
+  prompt += `   **Pikachu (VMAX Climax - CHR)**\n\n`;
+  prompt += `   ![Pikachu (VMAX Climax - CHR)](https://example.com/pikachu.jpg)\n\n`;
+  prompt += `   這張來自《VMAX Climax》的CHR...\n\n`;
+  prompt += `   **重要**：每張卡牌都必須包含圖片，圖片 URL 已在【卡牌資訊】中提供（「圖片：{url}」）。\n\n`;
 
   prompt += `請返回 JSON 格式：\n`;
   prompt += `{\n`;
