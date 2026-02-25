@@ -165,7 +165,7 @@ export const pricingRouter = router({
                 const psa10Items = (imageSearchResponse.itemSummaries || []).filter(item => {
                   const title = item.title.toLowerCase();
                   
-                  // Must contain "psa" and "10"
+                  // Step 1: Must contain "psa" and "10"
                   const hasPSA = title.includes('psa');
                   const has10 = title.includes('10');
                   
@@ -173,8 +173,20 @@ export const pricingRouter = router({
                     return false; // Exclude if doesn't contain both "psa" and "10"
                   }
                   
-                  // Exclude other PSA grades (PSA 9, PSA 8, PSA 7, etc.)
-                  const excludePatterns = [
+                  // Step 2: Must contain card name (to filter out unrelated cards)
+                  const cardNameWords = card.name.toLowerCase().split(/\s+/);
+                  const hasCardName = cardNameWords.some((word: string) => {
+                    // Skip very short words (like "ex", "v", "gx") as they may cause false positives
+                    if (word.length <= 2) return false;
+                    return title.includes(word);
+                  });
+                  
+                  if (!hasCardName) {
+                    return false; // Exclude if doesn't contain card name
+                  }
+                  
+                  // Step 3: Exclude other PSA grades (PSA 9, PSA 8, PSA 7, etc.)
+                  const excludeGrades = [
                     'psa 9', 'psa9', 'psa 8', 'psa8', 'psa 7', 'psa7',
                     'psa 6', 'psa6', 'psa 5', 'psa5', 'psa 4', 'psa4',
                     'psa 3', 'psa3', 'psa 2', 'psa2', 'psa 1', 'psa1',
@@ -182,13 +194,26 @@ export const pricingRouter = router({
                     'raw', 'ungraded', 'not graded', // Ungraded cards
                   ];
                   
-                  for (const pattern of excludePatterns) {
+                  for (const pattern of excludeGrades) {
                     if (title.includes(pattern)) {
                       return false; // Exclude if matches any exclude pattern
                     }
                   }
                   
-                  return true; // Only PSA 10 items pass
+                  // Step 4: Exclude non-card items (sleeves, boxes, accessories)
+                  const excludeTypes = [
+                    'sleeve', 'sleeves', 'deck box', 'deckbox', 'playmat',
+                    'binder', 'case', 'holder', 'toploader', 'protector',
+                    'lot', 'bundle', 'collection', // Multi-card listings
+                  ];
+                  
+                  for (const pattern of excludeTypes) {
+                    if (title.includes(pattern)) {
+                      return false; // Exclude if matches any exclude pattern
+                    }
+                  }
+                  
+                  return true; // Only PSA 10 items of the correct card pass
                 });
                 
                 console.log(`[Pricing Router] Filtered ${psa10Items.length}/${imageSearchResponse.itemSummaries?.length || 0} PSA 10 items from eBay image search (strict filtering)`);
