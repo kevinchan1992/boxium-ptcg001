@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, name, cardNumber FROM cards LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, cardNumber FROM cards LIMIT 5;",
+  "rows": [
+    {
+      "id": "150822",
+      "name": "Skuntank V SR[s12 105/098](Expansion Pack \"Paradigm Trigger\")",
+      "cardNumber": "NULL"
+    },
+    {
+      "id": "150823",
+      "name": "Rotom Phone[SC 011/020](Starter Set VMAX \"Orongue\")",
+      "cardNumber": "NULL"
+    },
+    {
+      "id": "150824",
+      "name": "Rotom Phone[SC-C 011/021](Starter Set VMAX \"Charizard\")",
+      "cardNumber": "NULL"
+    },
+    {
+      "id": "150825",
+      "name": "Piers HR[S3 115/100](Expansion Pack \"Infinity Zone\")",
+      "cardNumber": "NULL"
+    },
+    {
+      "id": "150826",
+      "name": "Frosmoth UR[S1a 084/070](Enhanced Expansion Pack \"VMAX Rising\")",
+      "cardNumber": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\n150822\tSkuntank V SR[s12 105/098](Expansion Pack \"Paradigm Trigger\")\tNULL\n150823\tRotom Phone[SC 011/020](Starter Set VMAX \"Orongue\")\tNULL\n150824\tRotom Phone[SC-C 011/021](Starter Set VMAX \"Charizard\")\tNULL\n150825\tPiers HR[S3 115/100](Expansion Pack \"Infinity Zone\")\tNULL\n150826\tFrosmoth UR[S1a 084/070](Enhanced Expansion Pack \"VMAX Rising\")\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1655
+}

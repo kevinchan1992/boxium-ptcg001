@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COUNT(*) as total, SUM(CASE WHEN cardNumber IS NULL OR cardNumber = '' THEN 1 ELSE 0 END) as without_number FROM cards;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT COUNT(*) as total, SUM(CASE WHEN cardNumber IS NULL OR cardNumber = '' THEN 1 ELSE 0 END) as without_number FROM cards;",
+  "rows": [
+    {
+      "total": "36259",
+      "without_number": "36255"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\twithout_number\n36259\t36255\n",
+  "stderr": "",
+  "execution_time_ms": 1632
+}

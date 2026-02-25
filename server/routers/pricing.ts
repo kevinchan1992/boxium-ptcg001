@@ -103,14 +103,19 @@ export const pricingRouter = router({
         
         const actualCardId = card.id;
 
-        // Step 2: Fetch from eBay API using image search for PSA10 (with dual-layer caching and rate limiting)
-        console.log('[Pricing Router] Fetching from eBay using image search...');
+        // Step 2: Fetch from eBay API using text search (card number + PSA10) for better accuracy
+        console.log('[Pricing Router] Fetching from eBay using text search...');
         let ebayListings: any[] = [];
         try {
-          const searchQuery = `image-search-${actualCardId}`; // Use cardId as cache key for image search
+          // Build search query: card number + PSA10
+          const cardNumber = card.cardNumber || '';
+          const searchQuery = cardNumber ? `${cardNumber} PSA10` : `${card.name} PSA10`;
+          console.log(`[Pricing Router] eBay search query: "${searchQuery}"`);
+          
+          const cacheKey = `text-search-${actualCardId}`; // Use cardId as cache key for text search
           
           // Check cache first (dual-layer caching: hot cache 1h + cold cache 6h)
-          const cache = await db.getEbayListingsCache(actualCardId, searchQuery);
+          const cache = await db.getEbayListingsCache(actualCardId, cacheKey);
           const now = new Date();
           
           // Check hot cache first
@@ -141,28 +146,19 @@ export const pricingRouter = router({
           } else {
             // Hot cache expired or doesn't exist, check rate limiter
             if (ebayRateLimiter.tryConsume()) {
-              console.log('[Pricing Router] eBay hot cache expired, using image search...');
+              console.log('[Pricing Router] eBay hot cache expired, using text search...');
               
-              // Get best image URL for the card
-              const imageUrl = getBestImageUrl(card);
-              if (!imageUrl) {
-                console.log('[Pricing Router] No image URL available for eBay image search');
+              // Check if card has card number
+              if (!cardNumber) {
+                console.log('[Pricing Router] No card number available for eBay text search, skipping...');
                 ebayListings = [];
               } else {
-                // Download and encode image
-                console.log(`[Pricing Router] Downloading image: ${imageUrl}`);
-                const base64Image = await downloadAndEncodeImage(imageUrl);
+                // Search eBay by text (card number + PSA10)
+                console.log(`[Pricing Router] Searching eBay with query: "${searchQuery}"`);
+                const textSearchResponse = await fetchEbayListings({ cardName: searchQuery });
                 
-                // Search eBay by image
-                console.log('[Pricing Router] Searching eBay by image...');
-                const imageSearchResponse = await searchEbayByImage(
-                  base64Image,
-                  '183454', // Pokemon TCG category
-                  50 // Limit
-                );
-                
-                // Filter for PSA 10 items only (strict filtering)
-                const psa10Items = (imageSearchResponse.itemSummaries || []).filter(item => {
+                // Filter for PSA 10 items only (simplified filtering)
+                const psa10Items = (textSearchResponse || []).filter((item: any) => {
                   const title = item.title.toLowerCase();
                   
                   // Step 1: Must contain "psa" and "10"
@@ -173,17 +169,6 @@ export const pricingRouter = router({
                     return false; // Exclude if doesn't contain both "psa" and "10"
                   }
                   
-                  // Step 2: Must contain card name (to filter out unrelated cards)
-                  const cardNameWords = card.name.toLowerCase().split(/\s+/);
-                  const hasCardName = cardNameWords.some((word: string) => {
-                    // Skip very short words (like "ex", "v", "gx") as they may cause false positives
-                    if (word.length <= 2) return false;
-                    return title.includes(word);
-                  });
-                  
-                  if (!hasCardName) {
-                    return false; // Exclude if doesn't contain card name
-                  }
                   
                   // Step 3: Exclude other PSA grades (PSA 9, PSA 8, PSA 7, etc.)
                   const excludeGrades = [
@@ -216,40 +201,11 @@ export const pricingRouter = router({
                   return true; // Only PSA 10 items of the correct card pass
                 });
                 
-                console.log(`[Pricing Router] Filtered ${psa10Items.length}/${imageSearchResponse.itemSummaries?.length || 0} PSA 10 items from eBay image search (strict filtering)`);
+                console.log(`[Pricing Router] Filtered ${psa10Items.length}/${textSearchResponse?.length || 0} PSA 10 items from eBay text search`);
                 
-                // Log filtered out items for debugging (first 3)
-                const filteredOut = (imageSearchResponse.itemSummaries || []).filter(item => !psa10Items.includes(item));
-                if (filteredOut.length > 0) {
-                  console.log(`[Pricing Router] Filtered out ${filteredOut.length} non-PSA 10 items:`);
-                  filteredOut.slice(0, 3).forEach(item => {
-                    console.log(`  - ${item.title}`);
-                  });
-                }
-                
-                // Transform to expected format and convert prices to HKD
-                const newListings = await Promise.all(
-                  psa10Items.map(async (item) => {
-                    try {
-                      const usdPrice = parseFloat(item.price.value);
-                      const hkdPrice = await convertUsdToHkd(usdPrice);
-                      
-                      return {
-                        id: `ebay-${item.itemId}`,
-                        title: item.title,
-                        price: hkdPrice,
-                        currency: 'HKD',
-                        image: item.image?.imageUrl || '',
-                        productUrl: item.itemWebUrl,
-                        seller: { name: 'eBay Seller' },
-                        condition: 'PSA 10',
-                      };
-                    } catch (error) {
-                      console.error(`[Pricing Router] Error converting price for item ${item.itemId}:`, error);
-                      return null;
-                    }
-                  })
-                ).then(results => results.filter((item): item is NonNullable<typeof item> => item !== null));
+                // fetchEbayListings already returns formatted EbayListing[], no need to transform
+                // Prices are already in the original currency (USD), will be converted later if needed
+                const newListings = psa10Items;
                 
                 // URL deduplication: merge new listings with cached listings
                 let mergedListings = newListings;
