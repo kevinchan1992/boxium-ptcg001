@@ -364,7 +364,17 @@ export async function generateArticle(
   // 1. Extract data context if data-driven
   let cardIds = options.dataInput?.cardIds || [];
   
-  // Auto-select cards if not provided
+  // Try to extract card IDs from topic if provided
+  if (cardIds.length === 0 && options.dataInput?.topic) {
+    const { extractCardIdsFromTopic } = await import('./topicCardSearch');
+    cardIds = await extractCardIdsFromTopic(
+      options.dataInput.topic,
+      20 // Limit to 20 cards
+    );
+    console.log('[ArticleGenerator] Extracted cards from topic:', cardIds.length, 'cards');
+  }
+  
+  // Auto-select cards if still not provided
   if (cardIds.length === 0 && (options.articleType === 'daily-report' || options.articleType === 'market-trend')) {
     const { autoSelectCardsForArticle } = await import('./articleDataHelper');
     const timeRange = options.dataInput?.timeRange;
