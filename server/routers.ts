@@ -2881,9 +2881,69 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         const result = await articleGenerator.generateArticle(input);
         // Add featured image URL to result if provided
         if (input.featuredImageUrl) {
-          result.featuredImageUrl = input.featuredImageUrl;
+          result.featuredImage = input.featuredImageUrl;
         }
         return result;
+      }),
+
+    // AI generate metadata (category, tags, SEO keywords) for article (Admin only)
+    generateMetadata: adminProcedure
+      .input(z.object({
+        title: z.string(),
+        excerpt: z.string(),
+        content: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { invokeLLM } = await import('./_core/llm');
+        
+        // Call LLM to generate metadata
+        const response = await invokeLLM({
+          messages: [
+            { 
+              role: 'system', 
+              content: 'You are a professional SEO specialist and content categorizer. Analyze the article and generate appropriate category, tags, and SEO keywords. Return the result in JSON format.' 
+            },
+            { 
+              role: 'user', 
+              content: `Analyze this article and generate metadata:\n\nTitle: ${input.title}\n\nExcerpt: ${input.excerpt}\n\nContent:\n${input.content.substring(0, 2000)}...\n\nPlease generate:\n1. A single category (e.g., "市場分析", "卡牌評測", "新聞資訊", "投資指南")\n2. 3-5 relevant tags (e.g., "Pokémon TCG", "卡牌價格", "市場趨勢")\n3. 5-8 SEO keywords (e.g., "Pokémon TCG", "寶可夢卡牌", "市場分析", "投資指南")` 
+            }
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'article_metadata',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  category: { type: 'string', description: 'Single category for the article' },
+                  tags: { 
+                    type: 'array', 
+                    items: { type: 'string' },
+                    description: '3-5 relevant tags'
+                  },
+                  seoKeywords: { 
+                    type: 'array', 
+                    items: { type: 'string' },
+                    description: '5-8 SEO keywords'
+                  },
+                },
+                required: ['category', 'tags', 'seoKeywords'],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        
+        const messageContent = response.choices[0]?.message?.content;
+        if (!messageContent) {
+          throw new Error('生成失敗');
+        }
+        
+        const contentString = typeof messageContent === 'string' ? messageContent : JSON.stringify(messageContent);
+        const metadata = JSON.parse(contentString || '{}');
+        
+        return metadata;
       }),
 
     // AI edit article (Admin only)

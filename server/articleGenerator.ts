@@ -171,7 +171,7 @@ export interface GeneratedArticle {
   content: string;
   suggestedTags: string[];
   suggestedCategory: string;
-  featuredImageUrl?: string;
+  featuredImage?: string;
   seoMetadata: {
     metaTitle: string;
     metaDescription: string;

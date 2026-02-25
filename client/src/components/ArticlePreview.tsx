@@ -385,7 +385,53 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
 
               {/* SEO Keywords */}
               <div>
-                <Label htmlFor="edit-seoKeywords" className="text-gray-700">SEO 關鍵字</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="edit-seoKeywords" className="text-gray-700">SEO 關鍵字</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                    onClick={async () => {
+                      try {
+                        toast.info('正在生成分類、標籤和 SEO 關鍵字...');
+                        
+                        // Call tRPC API to generate metadata
+                        const response = await fetch('/api/trpc/blog.generateMetadata', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            json: {
+                              title: currentArticle.title,
+                              excerpt: currentArticle.excerpt,
+                              content: currentArticle.content,
+                            },
+                          }),
+                        });
+                        
+                        if (!response.ok) throw new Error('生成失敗');
+                        
+                        const data = await response.json();
+                        const result = data.result.data.json;
+                        
+                        // Update article with generated metadata
+                        setCurrentArticle({
+                          ...currentArticle,
+                          category: result.category || currentArticle.category,
+                          tags: result.tags ? result.tags.join(', ') : currentArticle.tags,
+                          seoKeywords: result.seoKeywords ? result.seoKeywords.join(', ') : currentArticle.seoKeywords,
+                        });
+                        
+                        toast.success('生成成功！');
+                      } catch (error: any) {
+                        toast.error(`生成失敗：${error.message}`);
+                      }
+                    }}
+                  >
+                    <Sparkles className="w-4 h-4 mr-1" />
+                    AI 自動填寫
+                  </Button>
+                </div>
                 <Input
                   id="edit-seoKeywords"
                   value={currentArticle.seoKeywords || ''}

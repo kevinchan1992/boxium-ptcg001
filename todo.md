@@ -1664,3 +1664,23 @@ useEffect(() => {
 - [x] 測試 SEO 關鍵字功能（✅ 15/15 測試通過）
 - [x] 測試圖片上傳功能（✅ 15/15 測試通過）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🤖 AI 自動填寫和主題圖片修復
+
+### 需求
+1. AI 根據文章內容自動填寫分類、標籤和 SEO 關鍵字
+2. 修復主題圖片儲存問題，確保上傳的圖片正確顯示在文章中
+
+### 任務
+- [x] 檢查主題圖片儲存邏輯（✅ 已修復 featuredImage 命名）
+- [x] 修復 createPost/updatePost API 的 featuredImage 儲存（✅ API 已正確處理）
+- [x] 測試主題圖片上傳和顯示（✅ 16/16 測試通過）
+- [x] 實施 AI 自動生成分類功能（✅ generateMetadata API）
+- [x] 實施 AI 自動生成標籤功能（✅ generateMetadata API）
+- [x] 實施 AI 自動生成 SEO 關鍵字功能（✅ generateMetadata API）
+- [x] 在編輯模式添加「AI 自動填寫」按鈕（✅ SEO 關鍵字欄位旁）
+- [x] 測試 AI 自動填寫功能（✅ 16/16 測試通過）
+- [ ] 保存 checkpoint
