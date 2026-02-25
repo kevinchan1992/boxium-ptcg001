@@ -7,11 +7,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, Edit, X, Calendar, Tag, Sparkles, Wand2, Loader2, FileText, MessageSquare, Layout, Search, ImageIcon, Save, History, RotateCcw } from "lucide-react";
+import { Eye, Edit, X, Calendar, Tag, Sparkles, Wand2, Loader2, FileText, MessageSquare, Layout, Search, ImageIcon, Save, History, RotateCcw, FileImage } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { CardImagePicker } from "@/components/CardImagePicker";
+import { ImageLibrary } from "@/components/ImageLibrary";
 
 interface ArticlePreviewProps {
   article: {
@@ -39,6 +40,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
   const [isEditMode, setIsEditMode] = useState(initialEditMode);
   const [showDraftDialog, setShowDraftDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [showImageLibrary, setShowImageLibrary] = useState(false);
 
   // Draft auto-save key
   const draftKey = `article-draft-${article.id || 'new'}`;
@@ -363,6 +365,15 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
                     >
                       <ImageIcon className="w-4 h-4 mr-2" />
                       上傳圖片
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowImageLibrary(true)}
+                    >
+                      <FileImage className="w-4 h-4 mr-2" />
+                      選擇圖片
                     </Button>
                     <CardImagePicker
                       variant="light"
@@ -765,6 +776,20 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
           });
           toast.success('已恢復到歷史版本');
           setShowHistoryDialog(false);
+        }}
+      />
+
+      {/* Image Library Dialog */}
+      <ImageLibrary
+        open={showImageLibrary}
+        onClose={() => setShowImageLibrary(false)}
+        onSelectImage={(imageUrl) => {
+          const markdownImage = `![Image](${imageUrl})`;
+          setCurrentArticle({ 
+            ...currentArticle, 
+            content: currentArticle.content + '\n\n' + markdownImage 
+          });
+          toast.success('圖片已插入');
         }}
       />
       </div>
