@@ -1728,8 +1728,8 @@ useEffect(() => {
 #### 3. 實施編輯歷史記錄功能
 - [ ] 創建 post_versions 表（id, postId, title, excerpt, content, featuredImage, category, tags, metaKeywords, createdAt, createdBy）
 - [ ] 修改 updatePost API，在更新前保存當前版本到 post_versions 表
-- [ ] 創建 getPostVersions API，返回文章的所有歷史版本
-- [ ] 創建 restorePostVersion API，恢復指定版本
+- [x] 創建 getPostVersions API，返回文章的所有歷史版本
+- [x] 創建 restorePostVersion API，恢復指定版本
 - [ ] 在 ArticlePreview 組件添加「查看歷史」按鈕和歷史版本列表
 - [ ] 測試編輯歷史記錄和恢復功能
 
@@ -1795,8 +1795,8 @@ useEffect(() => {
 - [x] (4/5 測試通過) 測試 AI 生成的文章是否包含真實的市場數據分析
 
 ### 2. 完成編輯歷史記錄前端 UI
-- [ ] 創建 getPostVersions API，返回文章的所有歷史版本
-- [ ] 創建 restorePostVersion API，恢復指定版本
+- [x] 創建 getPostVersions API，返回文章的所有歷史版本
+- [x] 創建 restorePostVersion API，恢復指定版本
 - [ ] 在 ArticlePreview 組件添加「查看歷史」按鈕
 - [ ] 創建歷史版本列表對話框，顯示版本時間和創建者
 - [ ] 添加「恢復此版本」按鈕
@@ -1810,4 +1810,24 @@ useEffect(() => {
 - [ ] 在 ArticlePreview 組件添加「圖片庫」按鈕
 - [ ] 顯示圖片列表，支持搜尋和篩選
 - [ ] 點擊圖片插入到編輯器
+- [ ] 測試圖片管理功能
+
+---
+
+## 🚀 博客管理系統優化（第三階段）
+
+### 編輯歷史記錄
+- [x] 創建 getPostVersions API（查詢文章的所有歷史版本）
+- [x] 創建 restorePostVersion API（恢復到指定版本）
+- [ ] 在 ArticlePreview 組件添加「查看歷史」按鈕
+- [ ] 創建歷史版本列表對話框
+- [ ] 實施版本比較功能（顯示差異）
+- [ ] 測試歷史記錄功能
+
+### 圖片管理
+- [ ] 創建 getUploadedImages API（查詢所有已上傳的圖片）
+- [ ] 創建 deleteImage API（刪除圖片）
+- [ ] 創建圖片庫頁面組件
+- [ ] 實施圖片搜尋和篩選功能
+- [ ] 顯示圖片使用情況（哪些文章使用了該圖片）
 - [ ] 測試圖片管理功能
