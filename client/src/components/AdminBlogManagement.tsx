@@ -220,6 +220,16 @@ export function AdminBlogManagement() {
     },
   });
 
+  const updatePostMutation = trpc.blog.updatePost.useMutation({
+    onSuccess: () => {
+      toast.success('文章更新成功！');
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`更新失敗：${error.message}`);
+    },
+  });
+
   const handleDelete = (id: number) => {
     if (confirm('確定要刪除這篇文章嗎？')) {
       deletePostMutation.mutate({ id });
@@ -236,8 +246,19 @@ export function AdminBlogManagement() {
   };
 
   const handleEdit = (post: any) => {
+    // 將文章數據轉換為 ArticlePreview 所需的格式
+    setPreviewArticle({
+      id: post.id,
+      title: post.title,
+      excerpt: post.excerpt || '',
+      content: post.content,
+      featuredImage: post.featuredImage || '',
+      category: post.category || '',
+      tags: post.tags ? post.tags.join(', ') : '',
+      dataSource: post.dataSource || 'manual',
+    });
     setSelectedPost(post);
-    setActiveView('edit');
+    setActiveView('preview'); // 使用 preview 視圖，但會預設為編輯模式
   };
 
   return (
@@ -424,6 +445,7 @@ export function AdminBlogManagement() {
       {activeView === 'preview' && previewArticle && (
         <ArticlePreview
           article={previewArticle}
+          initialEditMode={!!previewArticle.id} // 如果有 id 表示是編輯現有文章，預設為編輯模式
           onPublish={async () => {
             try {
               // 解析 tags 字串為陣列
@@ -431,26 +453,38 @@ export function AdminBlogManagement() {
                 ? previewArticle.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
                 : [];
 
-              // 調用 createPost API 將文章保存到數據庫
-              await createPostMutation.mutateAsync({
-                title: previewArticle.title,
-                excerpt: previewArticle.excerpt || '',
-                content: previewArticle.content,
-                featuredImage: previewArticle.featuredImage,
-                status: 'published',
-                dataSource: previewArticle.dataSource as 'manual' | 'ai-generated' | 'mixed' || 'ai-generated',
-                tags: tagsArray,
-              });
+              if (previewArticle.id) {
+                // 編輯現有文章 - 調用 updatePost API
+                await updatePostMutation.mutateAsync({
+                  id: previewArticle.id,
+                  title: previewArticle.title,
+                  excerpt: previewArticle.excerpt || '',
+                  content: previewArticle.content,
+                  featuredImage: previewArticle.featuredImage,
+                  status: 'published',
+                  tags: tagsArray,
+                });
+              } else {
+                // 新增文章 - 調用 createPost API
+                await createPostMutation.mutateAsync({
+                  title: previewArticle.title,
+                  excerpt: previewArticle.excerpt || '',
+                  content: previewArticle.content,
+                  featuredImage: previewArticle.featuredImage,
+                  status: 'published',
+                  dataSource: previewArticle.dataSource as 'manual' | 'ai-generated' | 'mixed' || 'ai-generated',
+                  tags: tagsArray,
+                });
+              }
 
-              // 成功提示已在 createPostMutation.onSuccess 中處理
+              // 成功提示已在 mutation.onSuccess 中處理
               setActiveView('list');
             } catch (error: any) {
-              // 錯誤提示已在 createPostMutation.onError 中處理
+              // 錯誤提示已在 mutation.onError 中處理
             }
           }}
           onEdit={() => {
-            // TODO: 實現編輯功能
-            toast.info('編輯功能尚未實現');
+            // onEdit 回調不再需要，因為編輯模式已經在 ArticlePreview 內部處理
           }}
           onCancel={() => setActiveView('list')}
         />

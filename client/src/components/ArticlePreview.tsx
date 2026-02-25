@@ -15,6 +15,7 @@ import { CardImagePicker } from "@/components/CardImagePicker";
 
 interface ArticlePreviewProps {
   article: {
+    id?: number;
     title: string;
     excerpt?: string;
     content: string;
@@ -26,14 +27,15 @@ interface ArticlePreviewProps {
   onPublish: () => void;
   onEdit: () => void;
   onCancel: () => void;
+  initialEditMode?: boolean;
 }
 
-export function ArticlePreview({ article, onPublish, onEdit, onCancel }: ArticlePreviewProps) {
+export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEditMode = false }: ArticlePreviewProps) {
   const [currentArticle, setCurrentArticle] = useState(article);
   const [showAIEditDialog, setShowAIEditDialog] = useState(false);
   const [editInstruction, setEditInstruction] = useState('');
   const [isAIEditing, setIsAIEditing] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(initialEditMode);
 
   const editWithAIMutation = trpc.blog.editArticleWithAI.useMutation({
     onSuccess: (data: { title: string; excerpt: string; content: string }) => {
