@@ -37,13 +37,13 @@ export async function searchCards(query: string, limit: number = 20) {
 
   if (matchingCards.length === 0) return [];
 
-  // Get latest SNKRDUNK PSA 10 price for each card
+  // Get latest SNKRDUNK PSA 10 price for each card (by soldAt, not createdAt)
   const cardIds = matchingCards.map(c => c.id);
   const latestPrices = await db
     .select({
       cardId: priceHistory.cardId,
       price: priceHistory.price,
-      createdAt: priceHistory.createdAt,
+      soldAt: priceHistory.soldAt,
     })
     .from(priceHistory)
     .where(
@@ -53,7 +53,7 @@ export async function searchCards(query: string, limit: number = 20) {
         eq(priceHistory.grade, 'PSA10')
       )
     )
-    .orderBy(desc(priceHistory.createdAt));
+    .orderBy(desc(priceHistory.soldAt));
 
   // Create price map (cardId -> latest price)
   const priceMap = new Map<number, number>();

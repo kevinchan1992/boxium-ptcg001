@@ -1,0 +1,50 @@
+{
+  "query": "SELECT c.id, c.name, c.cardNumber, ph.price, ph.soldAt, ph.createdAt \nFROM cards c \nLEFT JOIN priceHistory ph ON c.id = ph.cardId \nWHERE c.cardNumber LIKE '%SM-P 288%' \nAND ph.source = 'snkrdunk' \nAND ph.grade = 'PSA10' \nORDER BY ph.soldAt DESC \nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, c.cardNumber, ph.price, ph.soldAt, ph.createdAt \nFROM cards c \nLEFT JOIN priceHistory ph ON c.id = ph.cardId \nWHERE c.cardNumber LIKE '%SM-P 288%' \nAND ph.source = 'snkrdunk' \nAND ph.grade = 'PSA10' \nORDER BY ph.soldAt DESC \nLIMIT 5;",
+  "rows": [
+    {
+      "id": "812832",
+      "name": "Pikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)",
+      "cardNumber": "SM-P 288",
+      "price": "109450.00",
+      "soldAt": "2026-02-21 09:30:27",
+      "createdAt": "2026-02-21 09:30:29"
+    },
+    {
+      "id": "812832",
+      "name": "Pikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)",
+      "cardNumber": "SM-P 288",
+      "price": "107250.00",
+      "soldAt": "2026-02-21 09:30:27",
+      "createdAt": "2026-02-21 09:30:29"
+    },
+    {
+      "id": "812832",
+      "name": "Pikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)",
+      "cardNumber": "SM-P 288",
+      "price": "107800.00",
+      "soldAt": "2026-02-21 09:30:27",
+      "createdAt": "2026-02-21 09:30:29"
+    },
+    {
+      "id": "812832",
+      "name": "Pikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)",
+      "cardNumber": "SM-P 288",
+      "price": "109175.00",
+      "soldAt": "2026-02-21 09:30:27",
+      "createdAt": "2026-02-21 09:30:29"
+    },
+    {
+      "id": "812832",
+      "name": "Pikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)",
+      "cardNumber": "SM-P 288",
+      "price": "109450.00",
+      "soldAt": "2026-02-21 09:30:27",
+      "createdAt": "2026-02-21 09:30:29"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\tprice\tsoldAt\tcreatedAt\n812832\tPikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)\tSM-P 288\t109450.00\t2026-02-21 09:30:27\t2026-02-21 09:30:29\n812832\tPikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)\tSM-P 288\t107250.00\t2026-02-21 09:30:27\t2026-02-21 09:30:29\n812832\tPikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)\tSM-P 288\t107800.00\t2026-02-21 09:30:27\t2026-02-21 09:30:29\n812832\tPikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)\tSM-P 288\t109175.00\t2026-02-21 09:30:27\t2026-02-21 09:30:29\n812832\tPikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)\tSM-P 288\t109450.00\t2026-02-21 09:30:27\t2026-02-21 09:30:29\n",
+  "stderr": "",
+  "execution_time_ms": 1825
+}
