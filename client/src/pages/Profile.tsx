@@ -91,38 +91,38 @@ export default function Profile() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full bg-zinc-900 border border-zinc-800 p-1">
+          <TabsList className="grid grid-cols-4 w-full bg-zinc-900 border border-zinc-800 p-1 h-auto">
             <TabsTrigger 
               value="info" 
-              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center gap-2"
+              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center justify-center gap-1.5 px-2 py-2.5 whitespace-nowrap text-sm"
             >
-              <User className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('profile.tabs.info')}</span>
-              <span className="sm:hidden">{t('profile.tabs.infoShort')}</span>
+              <User className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden md:inline">{t('profile.tabs.info')}</span>
+              <span className="md:hidden text-xs">{t('profile.tabs.infoShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="watchlist" 
-              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center gap-2"
+              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center justify-center gap-1.5 px-2 py-2.5 whitespace-nowrap text-sm"
             >
-              <Heart className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('profile.tabs.watchlist')}</span>
-              <span className="sm:hidden">{t('profile.tabs.watchlistShort')}</span>
+              <Heart className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden md:inline">{t('profile.tabs.watchlist')}</span>
+              <span className="md:hidden text-xs">{t('profile.tabs.watchlistShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
-              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center gap-2"
+              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center justify-center gap-1.5 px-2 py-2.5 whitespace-nowrap text-sm"
             >
-              <History className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('profile.tabs.history')}</span>
-              <span className="sm:hidden">{t('profile.tabs.historyShort')}</span>
+              <History className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden md:inline">{t('profile.tabs.history')}</span>
+              <span className="md:hidden text-xs">{t('profile.tabs.historyShort')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="stats" 
-              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center gap-2"
+              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center justify-center gap-1.5 px-2 py-2.5 whitespace-nowrap text-sm"
             >
-              <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('profile.tabs.stats')}</span>
-              <span className="sm:hidden">{t('profile.tabs.statsShort')}</span>
+              <TrendingUp className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden md:inline">{t('profile.tabs.stats')}</span>
+              <span className="md:hidden text-xs">{t('profile.tabs.statsShort')}</span>
             </TabsTrigger>
           </TabsList>
 

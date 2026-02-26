@@ -2587,3 +2587,5 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 測試前端錯誤捕獲（手動觸發錯誤）
 - [x] 測試後端錯誤捕獲（API 錯誤）
 - [x] 保存 checkpoint
+
+- [x] 修復 Profile 頁面標籤頁（個人資訊、關注清單、瀏覽歷史、收藏統計）顯示不完整的排版問題
