@@ -98,12 +98,12 @@ export function TopNav() {
             </button>
 
             {/* Desktop Navigation - Center */}
-            <div className="hidden md:flex items-center gap-6 lg:gap-12 flex-1 justify-center">
+            <div className="hidden md:flex items-center gap-4 lg:gap-6 flex-1 justify-center">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative text-sm lg:text-base font-medium transition-colors hover:text-[#ffed00] group ${
+                  className={`relative text-xs lg:text-sm font-medium transition-colors hover:text-[#ffed00] group whitespace-nowrap ${
                     isActive(item.href)
                       ? "text-[#ffed00]"
                       : "text-white/80"
@@ -123,8 +123,9 @@ export function TopNav() {
               {user?.role === "admin" && (
                 <Link
                   href="/admin"
-                  className="text-sm lg:text-base font-medium bg-red-600 px-2 lg:px-3 py-1 rounded hover:bg-red-700 transition-colors"
+                  className="text-xs lg:text-sm font-medium bg-red-600 px-2 py-1 rounded hover:bg-red-700 transition-colors whitespace-nowrap"
                 >
+
                   {t("nav.admin")}
                 </Link>
               )}

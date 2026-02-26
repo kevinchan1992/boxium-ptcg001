@@ -2620,3 +2620,12 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [ ] 測試註冊跳轉
 - [ ] 測試 Google 登入跳轉
 - [ ] 保存 checkpoint
+
+
+### ✅ 修復頂部導航列文字換行問題（已完成）
+- [x] 診斷導航列文字換行原因（gap-12 間距過大導致換行）
+- [x] 調整導航列文字尺寸（text-sm lg:text-base → text-xs lg:text-sm）
+- [x] 調整導航列間距（gap-6 lg:gap-12 → gap-4 lg:gap-6）
+- [x] 添加 whitespace-nowrap 防止文字換行
+- [x] 測試桌面版顯示效果（✅ 所有項目在同一行）
+- [ ] 保存 checkpoint
