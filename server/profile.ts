@@ -185,7 +185,20 @@ export async function getUserViewHistory(userId: number, limit: number = 50) {
     .orderBy(desc(viewHistory.viewedAt))
     .limit(limit);
 
-  return result;
+  // Restructure to match frontend expectations
+  const historyWithCardDetails = result.map((item) => ({
+    id: item.id,
+    viewedAt: item.viewedAt,
+    card: {
+      id: item.cardId,
+      name: item.cardName,
+      cardNumber: item.cardNumber,
+      series: item.series,
+      imageUrl: item.imageUrl,
+    },
+  }));
+
+  return historyWithCardDetails;
 }
 
 // Clear user's view history
