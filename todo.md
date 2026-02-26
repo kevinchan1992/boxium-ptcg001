@@ -2241,4 +2241,18 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 移除 Admin 頁面的 eBay 批量更新按鈕（AdminDataSources.tsx）
 - [x] 測試驗證 Research 頁面 SNKRDUNK 功能正常（無錯誤日誌）
 - [x] 測試驗證 Pricing 頁面 eBay 功能不受影響（未修改 Pricing 相關 API）
+- [x] 保存 checkpoint（version: a71ad99e）
+
+
+---
+
+## 🗑️ 從 Admin 排程管理頁面移除 eBay 排程設定
+
+### 目標
+從 AdminScheduleManagement.tsx 中移除 eBay 排程設定區塊（包括開關、時間設定和手動更新按鈕）
+
+### 任務清單
+- [x] 移除 eBay 排程設定 UI 區塊（第 536-595 行）
+- [x] 移除 eBay 相關 state 變數（ebayEnabled、ebayTime）
+- [x] 移除 eBay 相關 mutations（triggerEbayUpdate）
 - [ ] 保存 checkpoint

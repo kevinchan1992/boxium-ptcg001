@@ -254,8 +254,6 @@ export function AdminScheduleManagement() {
   // 本地狀態
   const [snkrdunkEnabled, setSnkrdunkEnabled] = useState(schedule?.snkrdunkEnabled ?? false);
   const [snkrdunkTime, setSnkrdunkTime] = useState(schedule?.snkrdunkUpdateTime ?? "01:00");
-  const [ebayEnabled, setEbayEnabled] = useState(schedule?.ebayEnabled ?? false);
-  const [ebayTime, setEbayTime] = useState(schedule?.ebayUpdateTime ?? "01:00");
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   
   // 當 schedule 數據載入時同步更新本地狀態
@@ -263,8 +261,6 @@ export function AdminScheduleManagement() {
     if (schedule) {
       setSnkrdunkEnabled(schedule.snkrdunkEnabled);
       setSnkrdunkTime(schedule.snkrdunkUpdateTime);
-      setEbayEnabled(schedule.ebayEnabled);
-      setEbayTime(schedule.ebayUpdateTime);
     }
   }, [schedule]);
   
@@ -287,8 +283,6 @@ export function AdminScheduleManagement() {
     updateSchedule.mutate({
       snkrdunkEnabled,
       snkrdunkUpdateTime: snkrdunkTime,
-      ebayEnabled,
-      ebayUpdateTime: ebayTime,
     });
   };
   
@@ -296,21 +290,6 @@ export function AdminScheduleManagement() {
   const triggerSnkrdunkUpdate = trpc.admin.batchUpdateSnkrdunkPrices.useMutation({
     onSuccess: (data) => {
       toast.success("SNKRDUNK 批量更新已啟動", {
-        description: data.message,
-      });
-      refetch();
-    },
-    onError: (error) => {
-      toast.error("啟動失敗", {
-        description: error.message,
-      });
-    },
-  });
-  
-  // 手動觸發 eBay 批量更新
-  const triggerEbayUpdate = trpc.admin.batchUpdateEbayPrices.useMutation({
-    onSuccess: (data) => {
-      toast.success("eBay 批量更新已啟動", {
         description: data.message,
       });
       refetch();
@@ -531,68 +510,7 @@ export function AdminScheduleManagement() {
               </div>
             )}
           </div>
-          
-          {/* eBay 排程設定 */}
-          <div className="space-y-4 p-4 bg-gray-800 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-white font-medium text-sm sm:text-base">eBay 批量更新</Label>
-                <p className="text-sm text-gray-400">
-                  每日自動更新所有卡牌的 eBay 價格
-                </p>
-              </div>
-              <Switch
-                checked={ebayEnabled}
-                onCheckedChange={setEbayEnabled}
-              />
-            </div>
-            
-            {ebayEnabled && (
-              <div className="space-y-2">
-                <Label className="text-white">更新時間（香港時間）</Label>
-                <Input
-                  type="time"
-                  value={ebayTime}
-                  onChange={(e) => setEbayTime(e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white max-w-xs"
-                />
-                <p className="text-xs text-gray-400">
-                  最後執行時間：{schedule?.ebayLastExecutedAt 
-                    ? new Date(schedule.ebayLastExecutedAt).toLocaleString('zh-TW', { 
-                        timeZone: 'Asia/Hong_Kong',
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })
-                    : "尚未執行"}
-                </p>
-              </div>
-            )}
-            
-            {/* 手動更新按鈕 */}
-            <div className="pt-2">
-              <Button
-                onClick={() => triggerEbayUpdate.mutate()}
-                disabled={triggerEbayUpdate.isPending}
-                variant="outline"
-                className="w-full bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
-              >
-                {triggerEbayUpdate.isPending ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    更新中...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    立即更新所有 eBay 卡牌
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
+
           
           {/* 保存按鈕 */}
           <div className="flex gap-2">
