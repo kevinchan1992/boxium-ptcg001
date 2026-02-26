@@ -2629,3 +2629,13 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 添加 whitespace-nowrap 防止文字換行
 - [x] 測試桌面版顯示效果（✅ 所有項目在同一行）
 - [ ] 保存 checkpoint
+
+
+### ✅ 設定網站 favicon 和 SEO 優化（已完成）
+- [x] 準備 favicon 圖片（16x16, 32x32, 192x192, 512x512）
+- [x] 準備 Open Graph 圖片（1200x630）
+- [x] 設定 HTML meta tags（title, description, Open Graph, Twitter Card）
+- [x] 添加 favicon 連結到 index.html
+- [x] 添加 JSON-LD 結構化數據（Organization, WebSite）
+- [x] 更新 Open Graph 圖片為 og-image.png（1200x630）
+- [ ] 保存 checkpoint
