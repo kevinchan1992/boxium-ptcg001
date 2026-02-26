@@ -2563,3 +2563,4 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [ ] 測試搜尋 pikachu，確認可以查看所有 659 張卡牌
 - [ ] 測試「載入更多」按鈕的功能
 - [ ] 保存 checkpoint
+- [x] 將搜尋結果的「載入更多」模式改為傳統分頁模式（每頁 50 張卡牌，顯示頁碼導航）

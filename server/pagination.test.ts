@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import * as db from "./db";
 
-describe("Search Pagination Tests", () => {
+describe("Search Pagination Tests (Traditional Page Mode)", () => {
   describe("searchCards with offset and limit", () => {
     it("should return correct structure with cards and total", async () => {
       const result = await db.searchCards("pikachu", 10, 0);
@@ -19,19 +19,46 @@ describe("Search Pagination Tests", () => {
       expect(result.total).toBeGreaterThan(0);
     });
 
-    it("should return next 50 cards when offset is 50", async () => {
-      const firstBatch = await db.searchCards("pikachu", 50, 0);
-      const secondBatch = await db.searchCards("pikachu", 50, 50);
+    it("should return next 50 cards when offset is 50 (page 2)", async () => {
+      const page1 = await db.searchCards("pikachu", 50, 0);
+      const page2 = await db.searchCards("pikachu", 50, 50);
       
       // If there are more than 50 cards total
-      if (firstBatch.total > 50) {
-        expect(secondBatch.cards.length).toBeGreaterThan(0);
-        expect(secondBatch.total).toBe(firstBatch.total); // Total should be the same
+      if (page1.total > 50) {
+        expect(page2.cards.length).toBeGreaterThan(0);
+        expect(page2.total).toBe(page1.total); // Total should be the same
         
-        // First card of second batch should be different from first card of first batch
-        if (secondBatch.cards.length > 0 && firstBatch.cards.length > 0) {
-          expect(secondBatch.cards[0].id).not.toBe(firstBatch.cards[0].id);
+        // First card of page 2 should be different from first card of page 1
+        if (page2.cards.length > 0 && page1.cards.length > 0) {
+          expect(page2.cards[0].id).not.toBe(page1.cards[0].id);
         }
+      }
+    });
+
+    it("should support traditional pagination (page 1, 2, 3)", async () => {
+      const limit = 50;
+      
+      // Page 1: offset = 0
+      const page1 = await db.searchCards("pikachu", limit, 0);
+      // Page 2: offset = 50
+      const page2 = await db.searchCards("pikachu", limit, 50);
+      // Page 3: offset = 100
+      const page3 = await db.searchCards("pikachu", limit, 100);
+      
+      // All pages should have the same total
+      expect(page1.total).toBe(page2.total);
+      expect(page2.total).toBe(page3.total);
+      
+      // Calculate total pages
+      const totalPages = Math.ceil(page1.total / limit);
+      expect(totalPages).toBeGreaterThan(0);
+      
+      // Each page should have different cards (no duplicates)
+      if (page1.cards.length > 0 && page2.cards.length > 0) {
+        const page1Ids = page1.cards.map(c => c.id);
+        const page2Ids = page2.cards.map(c => c.id);
+        const overlap = page1Ids.filter(id => page2Ids.includes(id));
+        expect(overlap.length).toBe(0); // No overlap between pages
       }
     });
 

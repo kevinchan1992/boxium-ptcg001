@@ -12,12 +12,14 @@ export default function SearchResults() {
   const query = new URLSearchParams(searchParams).get("q") || "";
   const [searchQuery, setSearchQuery] = useState(query);
   const [, setLocation] = useLocation();
-  const [offset, setOffset] = useState(0);
-  const [allCards, setAllCards] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const limit = 50;
 
+  // Calculate offset based on current page
+  const offset = (currentPage - 1) * limit;
+
   // Fetch search results with offset support
-  const { data: searchData, isLoading, error, refetch } = trpc.cards.search.useQuery(
+  const { data: searchData, isLoading, error } = trpc.cards.search.useQuery(
     { query: query || "", limit, offset },
     { enabled: !!query, retry: 1 }
   );
@@ -26,32 +28,67 @@ export default function SearchResults() {
   const searchResults = searchData?.cards || [];
   const totalResults = searchData?.total || 0;
   
-  // Update allCards when new data arrives
-  useEffect(() => {
-    if (searchResults.length > 0) {
-      if (offset === 0) {
-        // First load: replace all cards
-        setAllCards(searchResults);
-      } else {
-        // Load more: append new cards
-        setAllCards(prev => [...prev, ...searchResults]);
-      }
-    }
-  }, [searchResults, offset]);
+  // Calculate total pages
+  const totalPages = Math.ceil(totalResults / limit);
   
-  // Reset offset when query changes
+  // Reset page when query changes
   useEffect(() => {
-    setOffset(0);
-    setAllCards([]);
+    setCurrentPage(1);
   }, [query]);
   
-  // Load more handler
-  const handleLoadMore = () => {
-    setOffset(prev => prev + limit);
+  // Page navigation handlers
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
-  // Check if there are more cards to load
-  const hasMore = allCards.length < totalResults;
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  };
+  
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      goToPage(currentPage + 1);
+    }
+  };
+  
+  // Generate page numbers to display (show max 7 pages)
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    
+    if (totalPages <= 7) {
+      // Show all pages if total is 7 or less
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      if (currentPage > 3) {
+        pages.push('...');
+      }
+      
+      // Show pages around current page
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      
+      if (currentPage < totalPages - 2) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      pages.push(totalPages);
+    }
+    
+    return pages;
+  };
 
   // SEO: Update document title and meta tags
   useEffect(() => {
@@ -145,15 +182,16 @@ export default function SearchResults() {
               <p className="text-muted-foreground">搜尋出錯,請重試</p>
             </div>
           </div>
-        ) : allCards.length > 0 ? (
+        ) : searchResults.length > 0 ? (
           <>
-            {/* Results count */}
-            <div className="mb-4 text-sm text-muted-foreground">
-              顯示 {allCards.length} / {totalResults} 張卡牌
+            {/* Results count and page info */}
+            <div className="mb-4 text-sm text-muted-foreground flex justify-between items-center">
+              <span>第 {currentPage} 頁 / 共 {totalPages} 頁（總共 {totalResults} 張卡牌）</span>
+              <span>顯示 {(currentPage - 1) * limit + 1}-{Math.min(currentPage * limit, totalResults)} 張</span>
             </div>
             
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 sm:gap-3">
-            {allCards.map((card: any) => (
+            {searchResults.map((card: any) => (
               <div
                 key={card.id}
                 onClick={() => handleCardClick(card.id)}
@@ -196,23 +234,49 @@ export default function SearchResults() {
             ))}
           </div>
           
-          {/* Load More Button */}
-          {hasMore && (
-            <div className="flex justify-center mt-6">
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-6">
+              {/* Previous button */}
               <Button
-                onClick={handleLoadMore}
-                disabled={isLoading}
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1 || isLoading}
                 variant="outline"
-                className="min-w-[200px]"
+                size="sm"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    載入中...
-                  </>
-                ) : (
-                  `載入更多 (還有 ${totalResults - allCards.length} 張)`
-                )}
+                上一頁
+              </Button>
+              
+              {/* Page numbers */}
+              <div className="flex gap-1">
+                {getPageNumbers().map((page, index) => (
+                  page === '...' ? (
+                    <span key={`ellipsis-${index}`} className="px-3 py-1 text-muted-foreground">
+                      ...
+                    </span>
+                  ) : (
+                    <Button
+                      key={page}
+                      onClick={() => goToPage(page as number)}
+                      disabled={isLoading}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      className="min-w-[40px]"
+                    >
+                      {page}
+                    </Button>
+                  )
+                ))}
+              </div>
+              
+              {/* Next button */}
+              <Button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages || isLoading}
+                variant="outline"
+                size="sm"
+              >
+                下一頁
               </Button>
             </div>
           )}
