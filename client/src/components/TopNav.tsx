@@ -114,34 +114,58 @@ export function TopNav() {
             {/* Desktop Navigation - Center */}
             <div className="hidden md:flex items-center gap-4 lg:gap-6">
               {navItems.map((item) => (
-                <Link
+                <motion.div
                   key={item.href}
-                  href={item.href}
-                  className={`relative text-xs lg:text-sm font-medium transition-colors hover:text-[#ffed00] group whitespace-nowrap ${
-                    isActive(item.href)
-                      ? "text-[#ffed00]"
-                      : "text-white/80"
-                  }`}
+                  whileHover={{ y: -2 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-                  {item.label}
-                  {/* Active 或 Hover 下劃線動畫 */}
-                  <span className={`absolute -bottom-1 h-0.5 bg-[#ffed00] transition-all duration-300 ${
-                    isActive(item.href)
-                      ? "w-full left-0"
-                      : "left-1/2 w-0 group-hover:w-full group-hover:left-0"
-                  }`} />
-                </Link>
+                  <Link
+                    href={item.href}
+                    className={`relative text-xs lg:text-sm font-medium group whitespace-nowrap block ${
+                      isActive(item.href)
+                        ? "text-[#ffed00]"
+                        : "text-white/80"
+                    }`}
+                  >
+                    <motion.span
+                      className="block"
+                      whileHover={{ color: "#ffed00" }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {item.label}
+                    </motion.span>
+                    {/* Active 或 Hover 下劃線動畫 */}
+                    <motion.span
+                      className="absolute -bottom-1 h-0.5 bg-[#ffed00]"
+                      initial={false}
+                      animate={{
+                        width: isActive(item.href) ? "100%" : "0%",
+                        left: isActive(item.href) ? "0%" : "50%"
+                      }}
+                      whileHover={{
+                        width: "100%",
+                        left: "0%"
+                      }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    />
+                  </Link>
+                </motion.div>
               ))}
               
               {/* 管理後台連結 - 僅管理員可見 */}
               {user?.role === "admin" && (
-                <Link
-                  href="/admin"
-                  className="text-xs lg:text-sm font-medium bg-red-600 px-2 py-1 rounded hover:bg-red-700 transition-colors whitespace-nowrap"
+                <motion.div
+                  whileHover={{ y: -2, scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-
-                  {t("nav.admin")}
-                </Link>
+                  <Link
+                    href="/admin"
+                    className="text-xs lg:text-sm font-medium bg-red-600 px-2 py-1 rounded hover:bg-red-700 transition-colors whitespace-nowrap block"
+                  >
+                    {t("nav.admin")}
+                  </Link>
+                </motion.div>
               )}
             </div>
 

@@ -2689,3 +2689,13 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 添加 hover 背景效果（bg-white/5 + rounded-lg）
 - [x] 測試手機版選單動畫效果（✅ TypeScript 編譯無錯誤）
 - [ ] 保存 checkpoint
+
+
+### ✅ 優化桌面版導航動畫（已完成）
+- [x] 為導航項目添加 Framer Motion hover 動畫（whileHover: y: -2）
+- [x] 添加文字輕微上移效果（y: -2px，Spring 動畫）
+- [x] 優化下劃線滑入動畫（從中心滑入到兩側，Spring 動畫）
+- [x] 添加顏色過渡動畫（white/80 → #ffed00，0.2 秒）
+- [x] 添加管理後台按鈕動畫（hover: y: -2 + scale: 1.05）
+- [x] 測試桌面版導航動畫效果（✅ TypeScript 編譯無錯誤）
+- [ ] 保存 checkpoint
