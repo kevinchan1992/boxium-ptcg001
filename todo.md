@@ -2589,3 +2589,11 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 保存 checkpoint
 
 - [x] 修復 Profile 頁面標籤頁（個人資訊、關注清單、瀏覽歷史、收藏統計）顯示不完整的排版問題
+
+### 反爬取機制實施
+- [x] 實施全局 API Rate Limiting（防止高頻請求）
+- [x] 添加 User-Agent 黑名單（封鎖常見爬蟲工具）
+- [x] 添加 IP 臨時封鎖機制（自動封鎖惡意 IP）
+- [x] 添加請求日誌和監控（記錄異常行為）
+- [x] 測試反爬取機制
+- [x] 保存 checkpoint

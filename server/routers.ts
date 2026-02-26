@@ -2371,6 +2371,41 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
           return { analysis: "市場分析生成失敗，請稍後再試。" };
         }
       }),
+    
+    // 反爬取監控 API
+    getAntiCrawlerStats: adminProcedure
+      .query(async () => {
+        const { getBlockedIPs, getRequestLogs, analyzeRequestPatterns } = await import("./middleware/antiCrawler");
+        
+        const blockedIPs = getBlockedIPs();
+        const recentLogs = getRequestLogs(100);
+        const patterns = analyzeRequestPatterns();
+        
+        return {
+          blockedIPs,
+          recentLogs,
+          suspiciousIPs: patterns.suspiciousIPs,
+          topUserAgents: patterns.topUserAgents,
+          topPaths: patterns.topPaths,
+        };
+      }),
+    
+    unblockIP: adminProcedure
+      .input(z.object({ ip: z.string() }))
+      .mutation(async ({ input }) => {
+        const { unblockIP } = await import("./middleware/antiCrawler");
+        
+        const success = unblockIP(input.ip);
+        
+        if (!success) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'IP not found in blocked list',
+          });
+        }
+        
+        return { success: true, message: `IP ${input.ip} has been unblocked` };
+      }),
   }),
 
   // Blog router - article management and AI generation

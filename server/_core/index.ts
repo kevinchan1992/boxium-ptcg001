@@ -38,6 +38,9 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
+  // Trust proxy for accurate IP detection (required for rate limiting)
+  app.set('trust proxy', 1);
+  
   // Configure CORS to allow credentials
   app.use(cors({
     origin: true, // Allow all origins in development
@@ -50,6 +53,12 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  
+  // Anti-Crawler Middleware
+  const { checkIPBlock, checkUserAgent, logRequest } = await import("../middleware/antiCrawler");
+  app.use(logRequest); // 記錄所有請求
+  app.use(checkIPBlock); // 檢查 IP 是否被封鎖
+  app.use(checkUserAgent); // 檢查 User-Agent 黑名單
   // Manus OAuth removed
   
   // Google OAuth routes under /api/auth/google
@@ -152,7 +161,10 @@ async function startServer() {
       res.status(500).json({ error: "Failed to upload image" });
     }
   });
-  // tRPC API
+  // tRPC API with Rate Limiting
+  const { globalAPIRateLimiter } = await import("../middleware/antiCrawler");
+  app.use("/api/trpc", globalAPIRateLimiter); // 全局 API 速率限制
+  
   app.use(
     "/api/trpc",
     createExpressMiddleware({
