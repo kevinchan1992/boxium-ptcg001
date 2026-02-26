@@ -2255,4 +2255,19 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 移除 eBay 排程設定 UI 區塊（第 536-595 行）
 - [x] 移除 eBay 相關 state 變數（ebayEnabled、ebayTime）
 - [x] 移除 eBay 相關 mutations（triggerEbayUpdate）
+- [x] 保存 checkpoint（version: 6f20db6d）
+
+
+---
+
+## 🗑️ 移除 Admin 頁面的 eBay 更新歷史
+
+### 目標
+從 Admin 頁面移除「eBay 更新歷史」區塊，並從數據庫中刪除所有 eBay 更新歷史記錄
+
+### 任務清單
+- [x] 查找顯示 eBay 更新歷史的組件（AdminScheduleManagement.tsx）
+- [x] 移除 eBay 更新歷史 UI 區塊（第 151-193 行）
+- [x] 修改 getScheduleExecutionHistory API，返回空的 eBay 歷史陣列
+- [x] 從數據庫中刪除所有 eBay 更新歷史記錄（scheduleType = 'ebay_update'）
 - [ ] 保存 checkpoint

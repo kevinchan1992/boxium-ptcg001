@@ -148,50 +148,6 @@ function ExecutionHistory() {
           )}
         </div>
         
-        {/* eBay 執行歷史 */}
-        <div className="space-y-3">
-          <h3 className="text-white font-medium text-sm sm:text-base lg:text-lg">🛒 eBay 更新歷史</h3>
-          {history.ebay && history.ebay.length > 0 ? (
-            <div className="space-y-2">
-              {history.ebay.map((record: any) => (
-                <div key={record.id} className="p-3 lg:p-4 bg-gray-800 rounded-lg space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className={`font-medium text-xs sm:text-sm lg:text-base ${getStatusColor(record.status)}`}>
-                      {getStatusText(record.status)}
-                    </span>
-                    <span className="text-xs sm:text-sm text-gray-400">
-                      {record.executionType === 'manual' ? '手動觸發' : '自動排程'}
-                    </span>
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-300 space-y-1">
-                    <div>開始時間：{formatDate(record.startedAt)}</div>
-                    {record.completedAt && (
-                      <div>完成時間：{formatDate(record.completedAt)}</div>
-                    )}
-                    {record.durationMs && (
-                      <div>耗時：{formatDuration(record.durationMs)}</div>
-                    )}
-                    {record.ebaySuccessCount !== null && (
-                      <div className="flex gap-4">
-                        <span className="text-green-400">成功：{record.ebaySuccessCount}</span>
-                        <span className="text-red-400">失敗：{record.ebayFailureCount || 0}</span>
-                        <span className="text-blue-400">新增記錄：{record.ebayRecordsAdded || 0}</span>
-                      </div>
-                    )}
-                    {record.errorMessage && (
-                      <div className="text-red-400 mt-2">錯誤：{record.errorMessage}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-gray-400 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
-              尚無執行記錄
-            </div>
-          )}
-        </div>
-        
         {/* Trending 執行歷史 */}
         <div className="space-y-3">
           <h3 className="text-white font-medium text-sm sm:text-base lg:text-lg">🔥 熱門卡牌計算歷史</h3>

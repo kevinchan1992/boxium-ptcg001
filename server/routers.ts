@@ -1839,12 +1839,11 @@ try {
         } else {
           // 查詢所有類型的排程歷史
           const snkrdunk = await db.getScheduleExecutionHistory("snkrdunk_update", limit);
-          const ebay = await db.getScheduleExecutionHistory("ebay_update", limit);
           const trending = await db.getScheduleExecutionHistory("trending_update", limit);
           
           return {
             snkrdunk,
-            ebay,
+            ebay: [], // eBay 功能已移除，返回空陣列
             trending,
           };
         }
