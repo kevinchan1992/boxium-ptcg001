@@ -13,4 +13,4 @@ Disallow: /admin
 Disallow: /api/
 
 # Sitemap location
-Sitemap: https://boxium-ptcg.manus.space/sitemap.xml
+Sitemap: https://boxium.asia/sitemap.xml

@@ -2647,3 +2647,14 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 移除 flex-1 讓導航項目不佔滿整行
 - [x] 測試桌面版顯示效果（✅ 導航項目完美置中）
 - [ ] 保存 checkpoint
+
+
+### ✅ 修復 Google 搜尋結果 favicon 顯示問題（部分完成）
+- [x] 診斷 favicon 未顯示原因（Google 索引延遲，需要 1-7 天更新）
+- [x] 檢查生產環境 favicon 文件是否存在（✅ 所有 favicon 文件已生成）
+- [x] 驗證 favicon 路徑和格式（✅ 配置正確）
+- [x] 創建 sitemap.xml 和 robots.txt
+- [x] 創建 Google Search Console 設定指南
+- [ ] 用戶需要提交網站到 Google Search Console 重新索引（見 GOOGLE_SEARCH_CONSOLE_SETUP.md）
+- [ ] 等待 Google 更新（1-7 天）
+- [ ] 保存 checkpoint
