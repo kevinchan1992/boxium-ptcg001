@@ -2217,3 +2217,28 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 查找手動添加 SNKRDUNK 數據源的代碼
 - [x] 添加自動提取 cardNumber 的邏輯（routers.ts, scheduler.ts, fixOrphanDataSources.ts）（從卡片名稱中提取方括號中的內容）
 - [ ] 測試並保存 checkpoint
+
+## Research 頁面删除 eBay 相關功能
+- [ ] 删除 CardDetail.tsx 中的 eBay UI 元素和數據查詢（標籤按鈕、價格區塊、歷史表格）
+- [ ] 删除 PriceTrendChart 組件中的 eBay 價格趋勢線條
+- [ ] 停止並删除後台排程中的 eBay 更新任務（每天凌晨 3:00 執行）
+- [ ] 删除 Admin 頁面中的 eBay 批量更新按鈕
+- [ ] 測試並保存 checkpoint
+
+
+---
+
+## 🗑️ 從 Research 頁面移除所有 eBay 功能
+
+### 目標
+完全移除 Research 頁面（CardDetail.tsx）的所有 eBay 功能，包括 UI 元素、後端 API 調用、scheduled tasks 和 admin 按鈕，同時確保 SNKRDUNK 功能運作正常且 Pricing 頁面的 eBay 功能不受影響。
+
+### 任務清單
+- [x] 重寫 CardDetail.tsx，移除所有 eBay UI 元素和 state
+- [x] 修改 PriceTrendChart 組件，從 Research 頁面移除 eBay 圖表線條
+- [x] 移除 getPriceTrendData API 中的 eBay 數據查詢
+- [x] 停止並移除 eBay scheduled tasks（從 priceUpdateScheduler.ts 中移除）
+- [x] 移除 Admin 頁面的 eBay 批量更新按鈕（AdminDataSources.tsx）
+- [x] 測試驗證 Research 頁面 SNKRDUNK 功能正常（無錯誤日誌）
+- [x] 測試驗證 Pricing 頁面 eBay 功能不受影響（未修改 Pricing 相關 API）
+- [ ] 保存 checkpoint

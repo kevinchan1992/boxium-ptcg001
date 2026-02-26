@@ -267,54 +267,42 @@ export const appRouter = router({
                 (record.grade === "PSA 10" || record.grade === "PSA10")
               );
 
-          // Group by date and source
-          const groupedByDate = new Map<string, { snkrdunk: any[]; ebay: any[] }>();
+          // Group by date (SNKRDUNK only)
+          const groupedByDate = new Map<string, any[]>();
           
           for (const record of recentHistory) {
-            // Only include PSA 10 records
+            // Only include PSA 10 records from SNKRDUNK
             if (record.grade !== "PSA 10" && record.grade !== "PSA10") continue;
+            if (record.source !== "snkrdunk") continue;
             
             const date = new Date(record.soldAt || record.createdAt);
             const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
             
             if (!groupedByDate.has(dateStr)) {
-              groupedByDate.set(dateStr, { snkrdunk: [], ebay: [] });
+              groupedByDate.set(dateStr, []);
             }
             
-            const group = groupedByDate.get(dateStr)!;
-            if (record.source === "snkrdunk") {
-              group.snkrdunk.push(record);
-            } else if (record.source === "ebay") {
-              group.ebay.push(record);
-            }
+            groupedByDate.get(dateStr)!.push(record);
           }
 
-          // Calculate daily averages
+          // Calculate daily averages (SNKRDUNK only)
           const trendData = Array.from(groupedByDate.entries())
             .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-            .map(([date, data]) => {
-              const snkrdunkPrices = data.snkrdunk.map(r => parseFloat(r.price));
-              const ebayPrices = data.ebay.map(r => parseFloat(r.price));
+            .map(([date, records]) => {
+              const prices = records.map(r => parseFloat(r.price));
               
               return {
                 date,
-                snkrdunkPrice: snkrdunkPrices.length > 0 
-                  ? snkrdunkPrices.reduce((a, b) => a + b, 0) / snkrdunkPrices.length 
+                snkrdunkPrice: prices.length > 0 
+                  ? prices.reduce((a, b) => a + b, 0) / prices.length 
                   : undefined,
-                snkrdunkCount: snkrdunkPrices.length,
-                ebayPrice: ebayPrices.length > 0 
-                  ? ebayPrices.reduce((a, b) => a + b, 0) / ebayPrices.length 
-                  : undefined,
-                ebayCount: ebayPrices.length,
+                snkrdunkCount: prices.length,
               };
             });
 
-          // Calculate statistics
+          // Calculate statistics (SNKRDUNK only)
           const allSnkrdunkPrices = recentHistory
             .filter(r => r.source === "snkrdunk")
-            .map(r => parseFloat(r.price));
-          const allEbayPrices = recentHistory
-            .filter(r => r.source === "ebay")
             .map(r => parseFloat(r.price));
 
           const stats = {
@@ -324,14 +312,6 @@ export const appRouter = router({
               avgPrice: allSnkrdunkPrices.reduce((a, b) => a + b, 0) / allSnkrdunkPrices.length,
               latestPrice: parseFloat(recentHistory
                 .filter(r => r.source === "snkrdunk")
-                .sort((a: any, b: any) => new Date(b.soldAt || b.createdAt).getTime() - new Date(a.soldAt || a.createdAt).getTime())[0]?.price || "0"),
-            } : { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 },
-            ebay: allEbayPrices.length > 0 ? {
-              minPrice: Math.min(...allEbayPrices),
-              maxPrice: Math.max(...allEbayPrices),
-              avgPrice: allEbayPrices.reduce((a, b) => a + b, 0) / allEbayPrices.length,
-              latestPrice: parseFloat(recentHistory
-                .filter(r => r.source === "ebay")
                 .sort((a: any, b: any) => new Date(b.soldAt || b.createdAt).getTime() - new Date(a.soldAt || a.createdAt).getTime())[0]?.price || "0"),
             } : { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 },
           };

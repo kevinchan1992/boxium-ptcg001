@@ -14,40 +14,7 @@ import { useLocation } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
-// 單卡 eBay 價格更新按鈕組件
-function UpdateEbayButton({ cardId }: { cardId: number }) {
-  const utils = trpc.useUtils();
-  const updateEbayMutation = trpc.admin.updateEbayPrices.useMutation({
-    onSuccess: (result) => {
-      if (result.success) {
-        toast.success(result.message);
-        utils.admin.getDataSources.invalidate();
-      } else {
-        toast.warning(result.message);
-      }
-    },
-    onError: (error: any) => {
-      toast.error(`更新 eBay 價格失敗: ${error.message}`);
-    },
-  });
 
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => updateEbayMutation.mutate({ cardId })}
-      disabled={updateEbayMutation.isPending}
-      title="更新 eBay 市場參考價"
-      className="text-xs"
-    >
-      {updateEbayMutation.isPending ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
-      ) : (
-        "eBay"
-      )}
-    </Button>
-  );
-}
 
 export function AdminDataSources() {
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
@@ -300,19 +267,7 @@ export function AdminDataSources() {
   });
 
   // === 持久化批量更新 ===
-  const [ebayTaskId, setEbayTaskId] = useState<number | null>(null);
   const [snkrdunkTaskId, setSnkrdunkTaskId] = useState<number | null>(null);
-
-  // 啟動 eBay 批量更新
-  const startEbayBatchUpdateMutation = trpc.admin.startPersistentEbayBatchUpdate.useMutation({
-    onSuccess: (result) => {
-      setEbayTaskId(result.taskId);
-      toast.success(result.message);
-    },
-    onError: (error: any) => {
-      toast.error(`啟動 eBay 批量更新失敗: ${error.message}`);
-    },
-  });
 
   // 啟動 SNKRDUNK 批量更新
   const startSnkrdunkBatchUpdateMutation = trpc.admin.startPersistentSnkrdunkBatchUpdate.useMutation({
@@ -325,15 +280,6 @@ export function AdminDataSources() {
     },
   });
 
-  // 輪詢 eBay 任務進度
-  const { data: ebayTaskProgress } = trpc.admin.getPersistentTaskProgress.useQuery(
-    { taskType: 'batch_ebay_update' },
-    {
-      enabled: true, // 總是啟用，以支持跨會話恢復
-      refetchInterval: 3000, // 每 3 秒輪詢
-    }
-  );
-
   // 輪詢 SNKRDUNK 任務進度
   const { data: snkrdunkTaskProgress } = trpc.admin.getPersistentTaskProgress.useQuery(
     { taskType: 'batch_snkrdunk_update' },
@@ -342,30 +288,6 @@ export function AdminDataSources() {
       refetchInterval: 3000, // 每 3 秒輪詢
     }
   );
-
-  // 暫停/繼續/取消 eBay 任務
-  const pauseEbayTaskMutation = trpc.admin.pausePersistentTask.useMutation({
-    onSuccess: () => {
-      toast.info("eBay 批量更新已暫停");
-    },
-  });
-
-  const resumeEbayTaskMutation = trpc.admin.resumePersistentTask.useMutation({
-    onSuccess: () => {
-      toast.info("eBay 批量更新已繼續");
-    },
-  });
-
-  const cancelEbayTaskMutation = trpc.admin.cancelPersistentTask.useMutation({
-    onSuccess: () => {
-      toast.success("已取消 eBay 批量更新任務");
-      utils.admin.getDataSources.invalidate();
-      setEbayTaskId(null);
-    },
-    onError: (error: any) => {
-      toast.error(`取消任務失敗: ${error.message}`);
-    },
-  });
 
   // 暫停/繼續/取消 SNKRDUNK 任務
   const pauseSnkrdunkTaskMutation = trpc.admin.pausePersistentTask.useMutation({
@@ -392,14 +314,6 @@ export function AdminDataSources() {
   });
 
   // 當任務完成時，顯示通知並刷新數據
-  useEffect(() => {
-    if (ebayTaskProgress && ebayTaskProgress.status === 'completed') {
-      toast.success(`eBay 批量更新完成！成功: ${ebayTaskProgress.successCount}，失敗: ${ebayTaskProgress.failureCount}`);
-      utils.admin.getDataSources.invalidate();
-      setEbayTaskId(null);
-    }
-  }, [ebayTaskProgress?.status]);
-
   useEffect(() => {
     if (snkrdunkTaskProgress && snkrdunkTaskProgress.status === 'completed') {
       toast.success(`SNKRDUNK 批量更新完成！成功: ${snkrdunkTaskProgress.successCount}，失敗: ${snkrdunkTaskProgress.failureCount}`);
@@ -662,24 +576,6 @@ export function AdminDataSources() {
                   </>
                 )}
               </Button>
-              <Button
-                onClick={() => startEbayBatchUpdateMutation.mutate()}
-                disabled={startEbayBatchUpdateMutation.isPending || (ebayTaskProgress?.status === 'running' || ebayTaskProgress?.status === 'paused')}
-                variant="outline"
-                className="bg-orange-500 text-white hover:bg-orange-600"
-              >
-                {startEbayBatchUpdateMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    啟動中...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    批量更新所有卡牌 eBay 價格
-                  </>
-                )}
-              </Button>
             </div>
 
             {/* 批量更新進度條 */}
@@ -695,17 +591,7 @@ export function AdminDataSources() {
                   isResumeLoading={resumeSnkrdunkTaskMutation.isPending}
                 />
               )}
-              {ebayTaskProgress && (ebayTaskProgress.status === 'running' || ebayTaskProgress.status === 'paused') && (
-                <BatchTaskProgressBar
-                  taskType="eBay"
-                  progress={ebayTaskProgress}
-                  onPause={() => pauseEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
-                  onResume={() => resumeEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
-                  onCancel={() => cancelEbayTaskMutation.mutate({ taskId: ebayTaskProgress.taskId })}
-                  isPauseLoading={pauseEbayTaskMutation.isPending}
-                  isResumeLoading={resumeEbayTaskMutation.isPending}
-                />
-              )}
+
             </div>
           </Card>
 
@@ -945,9 +831,6 @@ export function AdminDataSources() {
                         >
                           <RefreshCw className="w-4 h-4" />
                         </Button>
-                        {source.cardId && (
-                          <UpdateEbayButton cardId={source.cardId} />
-                        )}
                       </div>
                     </div>
                   </div>

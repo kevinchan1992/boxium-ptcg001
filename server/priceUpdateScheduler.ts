@@ -3,7 +3,6 @@ import { getPriceUpdateSchedule, updateSnkrdunkLastExecutedAt, updateEbayLastExe
 import { executeSnkrdunkBatchUpdate, executeEbayBatchUpdate } from './batchUpdateExecutor';
 
 let snkrdunkCronJob: ReturnType<typeof cron.schedule> | null = null;
-let ebayCronJob: ReturnType<typeof cron.schedule> | null = null;
 
 /**
  * Initialize price update scheduler
@@ -24,11 +23,6 @@ export async function initPriceUpdateScheduler() {
     // Start SNKRDUNK scheduler if enabled
     if (config.snkrdunkEnabled) {
       startSnkrdunkScheduler(config.snkrdunkUpdateTime);
-    }
-
-    // Start eBay scheduler if enabled
-    if (config.ebayEnabled) {
-      startEbayScheduler(config.ebayUpdateTime);
     }
 
     console.log('[PriceUpdateScheduler] Price update scheduler initialized successfully');
@@ -106,74 +100,7 @@ function startSnkrdunkScheduler(updateTime: string) {
   console.log('[PriceUpdateScheduler] SNKRDUNK scheduler started');
 }
 
-/**
- * Start eBay price update scheduler
- * @param updateTime - Time in HH:mm format (e.g., "21:00")
- */
-function startEbayScheduler(updateTime: string) {
-  // Stop existing job if any
-  if (ebayCronJob) {
-    ebayCronJob.stop();
-  }
 
-  const [hour, minute] = updateTime.split(':');
-  const cronExpression = `${minute} ${hour} * * *`; // Every day at specified time
-
-  console.log(`[PriceUpdateScheduler] Starting eBay scheduler with cron: ${cronExpression} (${updateTime})`);
-
-  ebayCronJob = cron.schedule(cronExpression, async () => {
-    console.log('[PriceUpdateScheduler] Executing scheduled eBay price update...');
-    const startTime = new Date();
-    let historyId: number | null = null;
-    
-    try {
-      // Create execution history record
-      historyId = await addScheduleExecutionHistory({
-        scheduleType: 'ebay_update',
-        executionType: 'scheduled',
-        status: 'running',
-        startedAt: startTime,
-      });
-      
-      // Execute eBay batch update
-      const result = await executeEbayBatchUpdate();
-      await updateEbayLastExecutedAt();
-      
-      // Update execution history with success
-      const endTime = new Date();
-      if (historyId !== null) {
-        await updateScheduleExecutionHistory(historyId, {
-          status: 'completed',
-          completedAt: endTime,
-          durationMs: endTime.getTime() - startTime.getTime(),
-          ebaySuccessCount: result.successCount || 0,
-          ebayFailureCount: result.failureCount || 0,
-          ebayRecordsAdded: result.totalRecordsAdded || 0,
-        });
-      }
-      
-      console.log('[PriceUpdateScheduler] eBay price update completed successfully');
-    } catch (error) {
-      console.error('[PriceUpdateScheduler] eBay price update failed:', error);
-      
-      // Update execution history with failure
-      if (historyId !== null) {
-        const endTime = new Date();
-        await updateScheduleExecutionHistory(historyId, {
-          status: 'failed',
-          completedAt: endTime,
-          durationMs: endTime.getTime() - startTime.getTime(),
-          errorMessage: error instanceof Error ? error.message : String(error),
-        });
-      }
-    }
-  }, {
-    timezone: 'Asia/Hong_Kong'
-  });
-
-  ebayCronJob.start();
-  console.log('[PriceUpdateScheduler] eBay scheduler started');
-}
 
 /**
  * Stop SNKRDUNK scheduler
@@ -186,16 +113,7 @@ export function stopSnkrdunkScheduler() {
   }
 }
 
-/**
- * Stop eBay scheduler
- */
-export function stopEbayScheduler() {
-  if (ebayCronJob) {
-    ebayCronJob.stop();
-    ebayCronJob = null;
-    console.log('[PriceUpdateScheduler] eBay scheduler stopped');
-  }
-}
+
 
 /**
  * Restart scheduler with updated configuration
@@ -205,7 +123,6 @@ export async function restartPriceUpdateScheduler() {
   
   // Stop all existing jobs
   stopSnkrdunkScheduler();
-  stopEbayScheduler();
   
   // Reinitialize with new configuration
   await initPriceUpdateScheduler();
@@ -219,7 +136,6 @@ export async function restartPriceUpdateScheduler() {
 export function getPriceUpdateSchedulerStatus() {
   return {
     snkrdunkSchedulerRunning: snkrdunkCronJob !== null,
-    ebaySchedulerRunning: ebayCronJob !== null,
   };
 }
 

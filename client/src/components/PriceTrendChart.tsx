@@ -18,18 +18,10 @@ interface PriceTrendData {
   date: string;
   snkrdunkPrice?: number;
   snkrdunkCount?: number;
-  ebayPrice?: number;
-  ebayCount?: number;
 }
 
 interface PriceTrendStats {
   snkrdunk: {
-    minPrice: number;
-    maxPrice: number;
-    avgPrice: number;
-    latestPrice: number;
-  };
-  ebay: {
     minPrice: number;
     maxPrice: number;
     avgPrice: number;
@@ -83,11 +75,6 @@ export function PriceTrendChart({
           {data.snkrdunkPrice && (
             <p className="text-sm text-blue-500">
               SNKRDUNK: {formatPrice(data.snkrdunkPrice)} ({data.snkrdunkCount} records)
-            </p>
-          )}
-          {data.ebayPrice && (
-            <p className="text-sm text-orange-500">
-              eBay: {formatPrice(data.ebayPrice)} ({data.ebayCount} records)
             </p>
           )}
         </div>
@@ -171,24 +158,14 @@ export function PriceTrendChart({
               className="sm:text-xs"
             />
             <YAxis
-              yAxisId="left"
               stroke="#3B82F6"
               style={{ fontSize: "10px" }}
               tick={{ fill: "#3B82F6" }}
               className="sm:text-xs"
             />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              stroke="#F97316"
-              style={{ fontSize: "10px" }}
-              tick={{ fill: "#F97316" }}
-              className="sm:text-xs"
-            />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Line
-              yAxisId="left"
               type="monotone"
               dataKey="snkrdunkPrice"
               stroke="#3B82F6"
@@ -196,20 +173,9 @@ export function PriceTrendChart({
               name="SNKRDUNK PSA 10 價格"
               isAnimationActive={false}
             />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="ebayPrice"
-              stroke="#F97316"
-              dot={false}
-              name="eBay PSA 10 價格"
-              isAnimationActive={false}
-            />
           </LineChart>
         </ResponsiveContainer>
       </div>
-
-
     </Card>
   );
 }
