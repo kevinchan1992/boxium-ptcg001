@@ -151,9 +151,10 @@ export const appRouter = router({
       .input(z.object({
         query: z.string(),
         limit: z.number().optional().default(20),
+        offset: z.number().optional().default(0),
       }))
       .query(async ({ input }) => {
-        const results = await db.searchCards(input.query, input.limit);
+        const results = await db.searchCards(input.query, input.limit, input.offset);
         return results;
       }),
 
@@ -2822,10 +2823,10 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         limit: z.number().min(1).max(50).optional().default(20),
       }))
       .query(async ({ input }) => {
-        const cards = await db.searchCards(input.query, input.limit);
+        const result = await db.searchCards(input.query, input.limit);
         
         // Return card data with latest price
-        return cards.map(card => ({
+        return result.cards.map((card: any) => ({
           id: card.id,
           name: card.name,
           nameJa: card.nameJa,

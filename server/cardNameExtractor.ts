@@ -29,9 +29,9 @@ export async function extractCardsFromText(text: string, limit: number = 20): Pr
     const normalizedNumber = cardNumber.replace(/\s+/g, ' ').trim();
     
     // Search for cards with this card number
-    const cards = await db.searchCards(normalizedNumber, 5);
+    const result = await db.searchCards(normalizedNumber, 5);
     
-    for (const card of cards) {
+    for (const card of result.cards) {
       if (cardIds.size < limit) {
         cardIds.add(card.id);
         console.log(`[CardNameExtractor] Matched card by number: ${card.name} [${card.cardNumber}]`);
@@ -55,9 +55,9 @@ export async function extractCardsFromText(text: string, limit: number = 20): Pr
       console.log(`[CardNameExtractor] Found card name in text: ${cardName}`);
       
       // Search for cards with this name
-      const cards = await db.searchCards(cardName, 5);
+      const result = await db.searchCards(cardName, 5);
       
-      for (const card of cards) {
+      for (const card of result.cards) {
         if (cardIds.size < limit) {
           cardIds.add(card.id);
           console.log(`[CardNameExtractor] Matched card by name: ${card.name} [${card.cardNumber}]`);
@@ -82,9 +82,9 @@ export async function extractCardsFromText(text: string, limit: number = 20): Pr
         console.log(`[CardNameExtractor] Found analysis keyword: ${keyword}`);
         
         // Search for cards with this keyword
-        const cards = await db.searchCards(keyword, 5);
+        const result = await db.searchCards(keyword, 5);
         
-        for (const card of cards) {
+        for (const card of result.cards) {
           if (cardIds.size < limit) {
             cardIds.add(card.id);
             console.log(`[CardNameExtractor] Matched card by keyword: ${card.name} [${card.cardNumber}]`);

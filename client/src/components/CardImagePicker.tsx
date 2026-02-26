@@ -28,7 +28,7 @@ export function CardImagePicker({ onInsert, variant = 'dark' }: CardImagePickerP
   };
 
   // Search cards
-  const { data: cards, isLoading } = trpc.cards.search.useQuery(
+  const { data: searchData, isLoading } = trpc.cards.search.useQuery(
     {
       query: debouncedQuery,
       limit: 20,
@@ -37,6 +37,9 @@ export function CardImagePicker({ onInsert, variant = 'dark' }: CardImagePickerP
       enabled: debouncedQuery.length > 0,
     }
   );
+  
+  // Extract cards array from response
+  const cards = searchData?.cards || [];
 
   const handleInsertCard = (card: any) => {
     if (card.imageUrl) {
@@ -96,7 +99,7 @@ export function CardImagePicker({ onInsert, variant = 'dark' }: CardImagePickerP
               </div>
             )}
 
-            {!isLoading && debouncedQuery && cards && cards.length === 0 && (
+            {!isLoading && debouncedQuery && cards.length === 0 && (
               <div className="text-center py-8 text-gray-400">
                 沒有找到相關卡牌
               </div>
@@ -108,7 +111,7 @@ export function CardImagePicker({ onInsert, variant = 'dark' }: CardImagePickerP
               </div>
             )}
 
-            {cards && cards.length > 0 && (
+            {cards.length > 0 && (
               <div className="grid grid-cols-2 gap-4">
                 {cards.map((card: any) => (
                   <div

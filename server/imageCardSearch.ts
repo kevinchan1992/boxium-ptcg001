@@ -58,7 +58,7 @@ export async function searchCardByImage(base64Image: string): Promise<{
     // Search for the card in the database
     const searchResults = await db.searchCards(identifiedName, 5);
 
-    if (searchResults.length === 0) {
+    if (searchResults.cards.length === 0) {
       console.log("[Image Card Search] No matching cards found in database");
       return {
         success: true,
@@ -68,7 +68,7 @@ export async function searchCardByImage(base64Image: string): Promise<{
     }
 
     // Return the first (best) match
-    const bestMatch = searchResults[0];
+    const bestMatch = searchResults.cards[0];
     console.log(`[Image Card Search] Found matching card: ${bestMatch.name} (ID: ${bestMatch.id})`);
 
     return {

@@ -14,10 +14,13 @@ export default function PricingSearch() {
   const [, setLocation] = useLocation();
 
   // Fetch search results from database
-  const { data: searchResults = [], isLoading, error } = trpc.cards.search.useQuery(
+  const { data: searchData, isLoading, error } = trpc.cards.search.useQuery(
     { query: query || "", limit: 50 },
     { enabled: !!query, retry: 1 }
   );
+  
+  // Extract cards array from response
+  const searchResults = searchData?.cards || [];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

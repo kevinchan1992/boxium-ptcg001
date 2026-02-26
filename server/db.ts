@@ -19,9 +19,9 @@ export async function getDb() {
 }
 
 // Card queries
-export async function searchCards(query: string, limit: number = 20) {
+export async function searchCards(query: string, limit: number = 20, offset: number = 0) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return { cards: [], total: 0 };
 
   // First, get matching cards
   const matchingCards = await db
@@ -35,7 +35,7 @@ export async function searchCards(query: string, limit: number = 20) {
       )
     );
 
-  if (matchingCards.length === 0) return [];
+  if (matchingCards.length === 0) return { cards: [], total: 0 };
 
   // Get latest SNKRDUNK PSA 10 price for each card (by soldAt, not createdAt)
   const cardIds = matchingCards.map(c => c.id);
@@ -76,7 +76,10 @@ export async function searchCards(query: string, limit: number = 20) {
     latestPrice: priceMap.get(card.id) || null,
   }));
 
-  return cardsWithPrice.slice(0, limit);
+  return {
+    cards: cardsWithPrice.slice(offset, offset + limit),
+    total: cardsWithPrice.length,
+  };
 }
 
 export async function getCardById(id: number) {

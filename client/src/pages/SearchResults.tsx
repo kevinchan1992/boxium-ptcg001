@@ -5,18 +5,53 @@ import { Input } from "@/components/ui/input";
 import { Search, Loader2, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { Button } from "@/components/ui/button";
 
 export default function SearchResults() {
   const searchParams = useSearch();
   const query = new URLSearchParams(searchParams).get("q") || "";
   const [searchQuery, setSearchQuery] = useState(query);
   const [, setLocation] = useLocation();
+  const [offset, setOffset] = useState(0);
+  const [allCards, setAllCards] = useState<any[]>([]);
+  const limit = 50;
 
-  // Fetch search results - single query, no conditional hooks
-  const { data: searchResults = [], isLoading, error } = trpc.cards.search.useQuery(
-    { query: query || "", limit: 50 },
+  // Fetch search results with offset support
+  const { data: searchData, isLoading, error, refetch } = trpc.cards.search.useQuery(
+    { query: query || "", limit, offset },
     { enabled: !!query, retry: 1 }
   );
+  
+  // Extract cards array from response
+  const searchResults = searchData?.cards || [];
+  const totalResults = searchData?.total || 0;
+  
+  // Update allCards when new data arrives
+  useEffect(() => {
+    if (searchResults.length > 0) {
+      if (offset === 0) {
+        // First load: replace all cards
+        setAllCards(searchResults);
+      } else {
+        // Load more: append new cards
+        setAllCards(prev => [...prev, ...searchResults]);
+      }
+    }
+  }, [searchResults, offset]);
+  
+  // Reset offset when query changes
+  useEffect(() => {
+    setOffset(0);
+    setAllCards([]);
+  }, [query]);
+  
+  // Load more handler
+  const handleLoadMore = () => {
+    setOffset(prev => prev + limit);
+  };
+  
+  // Check if there are more cards to load
+  const hasMore = allCards.length < totalResults;
 
   // SEO: Update document title and meta tags
   useEffect(() => {
@@ -110,9 +145,15 @@ export default function SearchResults() {
               <p className="text-muted-foreground">搜尋出錯,請重試</p>
             </div>
           </div>
-        ) : searchResults.length > 0 ? (
+        ) : allCards.length > 0 ? (
+          <>
+            {/* Results count */}
+            <div className="mb-4 text-sm text-muted-foreground">
+              顯示 {allCards.length} / {totalResults} 張卡牌
+            </div>
+            
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 sm:gap-3">
-            {searchResults.map((card: any) => (
+            {allCards.map((card: any) => (
               <div
                 key={card.id}
                 onClick={() => handleCardClick(card.id)}
@@ -154,6 +195,28 @@ export default function SearchResults() {
               </div>
             ))}
           </div>
+          
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center mt-6">
+              <Button
+                onClick={handleLoadMore}
+                disabled={isLoading}
+                variant="outline"
+                className="min-w-[200px]"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    載入中...
+                  </>
+                ) : (
+                  `載入更多 (還有 ${totalResults - allCards.length} 張)`
+                )}
+              </Button>
+            </div>
+          )}
+          </>
         ) : (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
