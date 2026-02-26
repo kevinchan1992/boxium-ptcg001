@@ -626,6 +626,23 @@ export async function generateArticle(
     if (options.textInput.topic) {
       userInput = `【主題】${options.textInput.topic}\n\n${userInput}`;
     }
+    
+    // NEW: Auto-extract cards from text input if no cards are provided
+    if (cardIds.length === 0) {
+      const { extractCardsFromText } = await import('./cardNameExtractor');
+      const extractedCardIds = await extractCardsFromText(userInput, 20);
+      
+      if (extractedCardIds.length > 0) {
+        console.log(`[ArticleGenerator] Auto-extracted ${extractedCardIds.length} cards from text input`);
+        cardIds = extractedCardIds;
+        
+        // Get data context for extracted cards
+        dataContext = await getArticleDataContext(
+          cardIds,
+          options.dataInput?.timeRange || '30d'
+        );
+      }
+    }
   }
 
   // 3. Build AI prompt

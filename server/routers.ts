@@ -2847,7 +2847,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
             if (!card) return null;
             
             // Get latest SNKRDUNK PSA10 price
-            const latestPrices = await db.getPriceHistory(cardId, 'snkrdunk', undefined, 1, 1);
+            const latestPrices = await db.getPriceHistory(cardId, 'snkrdunk', 'PSA10', 1, undefined);
             const latestPrice = latestPrices.length > 0 ? latestPrices[0].price : null;
             
             return {

@@ -1,0 +1,90 @@
+{
+  "query": "SELECT c.id, c.name, c.cardNumber, COUNT(ph.id) as price_count, MIN(ph.soldAt) as earliest_date, MAX(ph.soldAt) as latest_date\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId AND ph.source = 'snkrdunk' AND ph.grade = 'PSA10' AND ph.soldAt >= '2026-01-01'\nWHERE c.name LIKE '%Pikachu%' AND c.cardNumber LIKE '%XY-P%'\nGROUP BY c.id, c.name, c.cardNumber\nORDER BY price_count DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, c.cardNumber, COUNT(ph.id) as price_count, MIN(ph.soldAt) as earliest_date, MAX(ph.soldAt) as latest_date\nFROM cards c\nLEFT JOIN priceHistory ph ON c.id = ph.cardId AND ph.source = 'snkrdunk' AND ph.grade = 'PSA10' AND ph.soldAt >= '2026-01-01'\nWHERE c.name LIKE '%Pikachu%' AND c.cardNumber LIKE '%XY-P%'\nGROUP BY c.id, c.name, c.cardNumber\nORDER BY price_count DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "180003",
+      "name": "Pikachu wearing a poncho Pikachu: PROMO[XY-P 203/XY-P](XY-P Promotional cards)",
+      "cardNumber": "XY-P 203/XY-P",
+      "price_count": "503",
+      "earliest_date": "2026-01-01 00:00:00",
+      "latest_date": "2026-02-25 14:58:36"
+    },
+    {
+      "id": "180004",
+      "name": "Mega Tokyo Pikachu: PROMO[XY-P 098/XY-P](XY-P Promotional cards)",
+      "cardNumber": "XY-P 098/XY-P",
+      "price_count": "502",
+      "earliest_date": "2026-01-04 00:00:00",
+      "latest_date": "2026-02-25 14:58:39"
+    },
+    {
+      "id": "180012",
+      "name": "Magikarp Pretend Pikachu: PROMO[XY-P 150/XY-P](XY-P Promotional cards)",
+      "cardNumber": "XY-P 150/XY-P",
+      "price_count": "299",
+      "earliest_date": "2026-01-02 00:00:00",
+      "latest_date": "2026-02-25 14:59:01"
+    },
+    {
+      "id": "180005",
+      "name": "Pikachu wearing a poncho Pikachu: PROMO[XY-P 208/XY-P](BREAK Special Box \"Pikachu Wearing Mega Charizard Y's Poncho\")",
+      "cardNumber": "XY-P 208/XY-P",
+      "price_count": "238",
+      "earliest_date": "2026-01-04 00:00:00",
+      "latest_date": "2026-02-25 14:58:41"
+    },
+    {
+      "id": "180009",
+      "name": "Gyarados Pretend Pikachu: PROMO[XY-P 151/XY-P](XY-P Promotional cards)",
+      "cardNumber": "XY-P 151/XY-P",
+      "price_count": "236",
+      "earliest_date": "2026-01-02 00:00:00",
+      "latest_date": "2026-02-25 14:58:53"
+    },
+    {
+      "id": "180010",
+      "name": "Pikachu wearing a poncho Pikachu: PROMO[XY-P 231/XY-P](XY-P Promotional cards)",
+      "cardNumber": "XY-P 231/XY-P",
+      "price_count": "231",
+      "earliest_date": "2026-01-02 00:00:00",
+      "latest_date": "2026-02-25 14:58:56"
+    },
+    {
+      "id": "180007",
+      "name": "Pikachu wearing a poncho Pikachu: PROMO[XY-P 230/XY-P](XY-P Promotional cards)",
+      "cardNumber": "XY-P 230/XY-P",
+      "price_count": "188",
+      "earliest_date": "2026-01-03 00:00:00",
+      "latest_date": "2026-02-25 14:58:47"
+    },
+    {
+      "id": "180011",
+      "name": "Pikachu: PROMO[XY-P 090/XY-P](XY-P Promotional cards)",
+      "cardNumber": "XY-P 090/XY-P",
+      "price_count": "152",
+      "earliest_date": "2026-01-03 00:00:00",
+      "latest_date": "2026-02-25 14:58:58"
+    },
+    {
+      "id": "816963",
+      "name": "Pikachu P [XY-P 206](Special BOX \"Pikachu Wearing Mega Charizard X's Poncho & Pikachu Wearing Mega Charizard Y's Poncho\")",
+      "cardNumber": "XY-P 206",
+      "price_count": "109",
+      "earliest_date": "2026-01-06 00:00:00",
+      "latest_date": "2026-02-25 19:15:06"
+    },
+    {
+      "id": "180002",
+      "name": "Pikachu wearing a poncho Pikachu: PROMO[XY-P 207/XY-P](BREAK Special Box \"Pikachu Wearing Mega Charizard X's Poncho\")",
+      "cardNumber": "XY-P 207/XY-P",
+      "price_count": "108",
+      "earliest_date": "2026-01-02 00:00:00",
+      "latest_date": "2026-02-23 06:50:28"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\tprice_count\tearliest_date\tlatest_date\n180003\tPikachu wearing a poncho Pikachu: PROMO[XY-P 203/XY-P](XY-P Promotional cards)\tXY-P 203/XY-P\t503\t2026-01-01 00:00:00\t2026-02-25 14:58:36\n180004\tMega Tokyo Pikachu: PROMO[XY-P 098/XY-P](XY-P Promotional cards)\tXY-P 098/XY-P\t502\t2026-01-04 00:00:00\t2026-02-25 14:58:39\n180012\tMagikarp Pretend Pikachu: PROMO[XY-P 150/XY-P](XY-P Promotional cards)\tXY-P 150/XY-P\t299\t2026-01-02 00:00:00\t2026-02-25 14:59:01\n180005\tPikachu wearing a poncho Pikachu: PROMO[XY-P 208/XY-P](BREAK Special Box \"Pikachu Wearing Mega Charizard Y's Poncho\")\tXY-P 208/XY-P\t238\t2026-01-04 00:00:00\t2026-02-25 14:58:41\n180009\tGyarados Pretend Pikachu: PROMO[XY-P 151/XY-P](XY-P Promotional cards)\tXY-P 151/XY-P\t236\t2026-01-02 00:00:00\t2026-02-25 14:58:53\n180010\tPikachu wearing a poncho Pikachu: PROMO[XY-P 231/XY-P](XY-P Promotional cards)\tXY-P 231/XY-P\t231\t2026-01-02 00:00:00\t2026-02-25 14:58:56\n180007\tPikachu wearing a poncho Pikachu: PROMO[XY-P 230/XY-P](XY-P Promotional cards)\tXY-P 230/XY-P\t188\t2026-01-03 00:00:00\t2026-02-25 14:58:47\n180011\tPikachu: PROMO[XY-P 090/XY-P](XY-P Promotional cards)\tXY-P 090/XY-P\t152\t2026-01-03 00:00:00\t2026-02-25 14:58:58\n816963\tPikachu P [XY-P 206](Special BOX \"Pikachu Wearing Mega Charizard X's Poncho & Pikachu Wearing Mega Charizard Y's Poncho\")\tXY-P 206\t109\t2026-01-06 00:00:00\t2026-02-25 19:15:06\n180002\tPikachu wearing a poncho Pikachu: PROMO[XY-P 207/XY-P](BREAK Special Box \"Pikachu Wearing Mega Charizard X's Poncho\")\tXY-P 207/XY-P\t108\t2026-01-02 00:00:00\t2026-02-23 06:50:28\n",
+  "stderr": "",
+  "execution_time_ms": 3132
+}

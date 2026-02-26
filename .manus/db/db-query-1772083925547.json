@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, cardId, snkrdunkId, name FROM cards WHERE name LIKE '%Munch%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, cardId, snkrdunkId, name FROM cards WHERE name LIKE '%Munch%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "544890",
+      "cardId": "snkrdunk-435210",
+      "snkrdunkId": "435210",
+      "name": "Larousse's Munchlax [2004 VS 006/019](Movie Release Commemorative VS Pack \"Deoxys of the Sky\")"
+    },
+    {
+      "id": "546111",
+      "cardId": "snkrdunk-93056",
+      "snkrdunkId": "93056",
+      "name": "Mimikyu Munch Exhibition: PROMO[SM-P 289](SM-P Promotional cards)"
+    },
+    {
+      "id": "630152",
+      "cardId": "snkrdunk-448612",
+      "snkrdunkId": "448612",
+      "name": "Munchlax :1ED [Pt2 069/090](Expansion Pack \"Bonds at the End of Time\")"
+    },
+    {
+      "id": "630153",
+      "cardId": "snkrdunk-448613",
+      "snkrdunkId": "448613",
+      "name": "Munchlax [Pt2 069/090](Expansion Pack \"Bonds at the End of Time\")"
+    },
+    {
+      "id": "630396",
+      "cardId": "snkrdunk-452668",
+      "snkrdunkId": "452668",
+      "name": "Larousse's Munchlax P [PCG-P 020](Promotional Cards \"Shogakukan 1st Grade 2nd Grade 3Rd Grade 4Th Grade 5Th Grade September Issue Supplement\")"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tsnkrdunkId\tname\n544890\tsnkrdunk-435210\t435210\tLarousse's Munchlax [2004 VS 006/019](Movie Release Commemorative VS Pack \"Deoxys of the Sky\")\n546111\tsnkrdunk-93056\t93056\tMimikyu Munch Exhibition: PROMO[SM-P 289](SM-P Promotional cards)\n630152\tsnkrdunk-448612\t448612\tMunchlax :1ED [Pt2 069/090](Expansion Pack \"Bonds at the End of Time\")\n630153\tsnkrdunk-448613\t448613\tMunchlax [Pt2 069/090](Expansion Pack \"Bonds at the End of Time\")\n630396\tsnkrdunk-452668\t452668\tLarousse's Munchlax P [PCG-P 020](Promotional Cards \"Shogakukan 1st Grade 2nd Grade 3Rd Grade 4Th Grade 5Th Grade September Issue Supplement\")\n",
+  "stderr": "",
+  "execution_time_ms": 1660
+}
