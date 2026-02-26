@@ -66,6 +66,7 @@ export interface ArticleDataContext {
 
 /**
  * Calculate price statistics for a single card
+ * Uses the same logic as card detail page (latest 10 records + dynamic time range)
  */
 async function calculateCardPriceStats(
   db: any,
@@ -73,47 +74,139 @@ async function calculateCardPriceStats(
   grade: 'PSA10' | 'A',
   timeRange: '7d' | '30d' | '60d' | 'all'
 ): Promise<CardPriceStats> {
-  const daysMap = { '7d': 7, '30d': 30, '60d': 60, 'all': 365 * 10 };
-  const days = daysMap[timeRange];
-  const now = new Date();
-  const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-
-  // Query price history for this card
-  const priceData = await db.select({
-    price: priceHistory.price,
-    soldAt: priceHistory.soldAt,
-  }).from(priceHistory)
-    .where(
-      and(
-        eq(priceHistory.cardId, cardId),
-        eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, grade),
-        gte(priceHistory.soldAt, startDate)
+  // For PSA10, use the same logic as card detail page:
+  // - Latest 10 records
+  // - Dynamic time range: 2 months -> 3 months -> 6 months
+  if (grade === 'PSA10') {
+    let days = 60; // Start with 2 months
+    let priceData: any[] = [];
+    
+    // Try 2 months first
+    const now = new Date();
+    let startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    
+    priceData = await db.select({
+      price: priceHistory.price,
+      soldAt: priceHistory.soldAt,
+    }).from(priceHistory)
+      .where(
+        and(
+          eq(priceHistory.cardId, cardId),
+          eq(priceHistory.source, 'snkrdunk'),
+          eq(priceHistory.grade, grade),
+          gte(priceHistory.soldAt, startDate)
+        )
       )
-    )
-    .orderBy(desc(priceHistory.soldAt));
+      .orderBy(desc(priceHistory.soldAt))
+      .limit(10); // Latest 10 records
+    
+    // If less than 3 records, extend to 3 months
+    if (priceData.length < 3) {
+      days = 90;
+      startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      
+      priceData = await db.select({
+        price: priceHistory.price,
+        soldAt: priceHistory.soldAt,
+      }).from(priceHistory)
+        .where(
+          and(
+            eq(priceHistory.cardId, cardId),
+            eq(priceHistory.source, 'snkrdunk'),
+            eq(priceHistory.grade, grade),
+            gte(priceHistory.soldAt, startDate)
+          )
+        )
+        .orderBy(desc(priceHistory.soldAt))
+        .limit(10);
+    }
+    
+    // If still less than 3 records, extend to 6 months
+    if (priceData.length < 3) {
+      days = 180;
+      startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      
+      priceData = await db.select({
+        price: priceHistory.price,
+        soldAt: priceHistory.soldAt,
+      }).from(priceHistory)
+        .where(
+          and(
+            eq(priceHistory.cardId, cardId),
+            eq(priceHistory.source, 'snkrdunk'),
+            eq(priceHistory.grade, grade),
+            gte(priceHistory.soldAt, startDate)
+          )
+        )
+        .orderBy(desc(priceHistory.soldAt))
+        .limit(10);
+    }
+    
+    // Calculate statistics (same as card detail page)
+    const prices = priceData.map((p: { price: string }) => parseFloat(p.price));
+    const avgPrice = prices.length > 0 ? prices.reduce((a: number, b: number) => a + b, 0) / prices.length : 0;
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+    const priceChange7d = calculatePriceChange(priceData, 7);
+    const priceChange30d = calculatePriceChange(priceData, 30);
+    const priceChange60d = calculatePriceChange(priceData, 60);
+    const totalVolume = priceData.length;
+    const avgDailyVolume = totalVolume / days;
+    
+    return {
+      avgPrice,
+      minPrice,
+      maxPrice,
+      priceChange7d,
+      priceChange30d,
+      priceChange60d,
+      totalVolume,
+      avgDailyVolume,
+    };
+  } else {
+    // For Grade A, use the original logic
+    const daysMap = { '7d': 7, '30d': 30, '60d': 60, 'all': 365 * 10 };
+    const days = daysMap[timeRange];
+    const now = new Date();
+    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
-  // Calculate statistics
-  const prices = priceData.map((p: { price: string }) => parseFloat(p.price));
-  const avgPrice = prices.length > 0 ? prices.reduce((a: number, b: number) => a + b, 0) / prices.length : 0;
-  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-  const priceChange7d = calculatePriceChange(priceData, 7);
-  const priceChange30d = calculatePriceChange(priceData, 30);
-  const priceChange60d = calculatePriceChange(priceData, 60);
-  const totalVolume = priceData.length;
-  const avgDailyVolume = totalVolume / days;
+    // Query price history for this card
+    const priceData = await db.select({
+      price: priceHistory.price,
+      soldAt: priceHistory.soldAt,
+    }).from(priceHistory)
+      .where(
+        and(
+          eq(priceHistory.cardId, cardId),
+          eq(priceHistory.source, 'snkrdunk'),
+          eq(priceHistory.grade, grade),
+          gte(priceHistory.soldAt, startDate)
+        )
+      )
+      .orderBy(desc(priceHistory.soldAt));
 
-  return {
-    avgPrice,
-    minPrice,
-    maxPrice,
-    priceChange7d,
-    priceChange30d,
-    priceChange60d,
-    totalVolume,
-    avgDailyVolume,
-  };
+    // Calculate statistics
+    const prices = priceData.map((p: { price: string }) => parseFloat(p.price));
+    const avgPrice = prices.length > 0 ? prices.reduce((a: number, b: number) => a + b, 0) / prices.length : 0;
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+    const priceChange7d = calculatePriceChange(priceData, 7);
+    const priceChange30d = calculatePriceChange(priceData, 30);
+    const priceChange60d = calculatePriceChange(priceData, 60);
+    const totalVolume = priceData.length;
+    const avgDailyVolume = totalVolume / days;
+
+    return {
+      avgPrice,
+      minPrice,
+      maxPrice,
+      priceChange7d,
+      priceChange30d,
+      priceChange60d,
+      totalVolume,
+      avgDailyVolume,
+    };
+  }
 }
 
 /**
