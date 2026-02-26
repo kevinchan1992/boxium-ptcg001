@@ -2602,3 +2602,21 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - ~~動態 Rate Limit 參數調整~~（已取消）
 
 **備註：** 反爬取機制導致所有 tRPC API 請求被封鎖，已緊急回滾。未來如需實施，需要更保守的配置和充分的測試。
+
+
+### ✅ 修復 Google OAuth redirect_uri_mismatch 錯誤（已完成）
+- [x] 診斷 redirect_uri_mismatch 錯誤原因（Google Cloud Console 配置問題）
+- [x] 檢查當前的 OAuth 配置和環境變數（環境變數已正確設定）
+- [x] 修復 Google OAuth redirect URI 配置（在 Google Cloud Console 添加正確的 redirect URI）
+- [x] 測試 Google 登入功能（✅ 成功）
+- [ ] 保存 checkpoint
+
+
+### 🔧 修復登入和註冊後的跳轉邏輯
+- [x] 修改 Login.tsx 登入成功後跳轉到主頁頂部（添加 window.scrollTo(0, 0)）
+- [x] 修改 Register.tsx 註冊成功後跳轉到主頁頂部（改為跳轉到 / 而不是 /login）
+- [x] 修改 Google OAuth 回調跳轉邏輯（returnTo 設定為 /）
+- [ ] 測試登入跳轉
+- [ ] 測試註冊跳轉
+- [ ] 測試 Google 登入跳轉
+- [ ] 保存 checkpoint

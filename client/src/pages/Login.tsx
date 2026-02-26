@@ -19,6 +19,8 @@ export default function Login() {
       // Wait a bit to ensure cookie is set before redirecting
       setTimeout(() => {
         window.location.href = "/";
+        // Scroll to top after redirect
+        window.scrollTo(0, 0);
       }, 100);
     },
     onError: (error) => {
@@ -41,8 +43,8 @@ export default function Login() {
   const handleGoogleLogin = () => {
     // Redirect to Google OAuth flow with origin parameter
     const origin = window.location.origin;
-    const returnTo = window.location.pathname;
-    window.location.href = `/api/auth/google?origin=${encodeURIComponent(origin)}&returnTo=${encodeURIComponent(returnTo)}`;
+    // Always return to home page after Google login
+    window.location.href = `/api/auth/google?origin=${encodeURIComponent(origin)}&returnTo=/`;
   };
 
   return (
