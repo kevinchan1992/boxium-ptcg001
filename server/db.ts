@@ -70,7 +70,13 @@ export async function searchCards(query: string, limit: number = 20) {
     return priceB - priceA;
   });
 
-  return sortedCards.slice(0, limit);
+  // Add latestPrice to each card
+  const cardsWithPrice = sortedCards.map(card => ({
+    ...card,
+    latestPrice: priceMap.get(card.id) || null,
+  }));
+
+  return cardsWithPrice.slice(0, limit);
 }
 
 export async function getCardById(id: number) {

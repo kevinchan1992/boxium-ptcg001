@@ -13,6 +13,7 @@ import { Plus, Edit, Trash2, Eye, EyeOff, FileText, Image as ImageIcon, Sparkles
 
 import { CardImagePicker } from "@/components/CardImagePicker";
 import { ArticlePreview } from "@/components/ArticlePreview";
+import { CardSelectionDialog } from "@/components/CardSelectionDialog";
 
 // Share Statistics Card Component
 function ShareStatisticsCard() {
@@ -660,6 +661,17 @@ function AIArticleGenerator({
   const [targetLanguage, setTargetLanguage] = useState('zh-TW');
   const [isUploading, setIsUploading] = useState(false);
   const [generationId, setGenerationId] = useState<number | null>(null);
+  const [cardSelectionDialogOpen, setCardSelectionDialogOpen] = useState(false);
+
+  // Handle card data insertion
+  const handleCardDataInsert = (cardData: string) => {
+    setTextContent(prev => {
+      if (prev) {
+        return prev + '\n\n' + cardData;
+      }
+      return cardData;
+    });
+  };
 
   // Original blog generate mutation (for image/text input)
   const generateMutation = trpc.blog.generateArticle.useMutation({
@@ -906,13 +918,24 @@ function AIArticleGenerator({
               />
             </div>
             <div>
-              <Label htmlFor="textContent" className="text-white">文字內容</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="textContent" className="text-white">文字內容</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCardSelectionDialogOpen(true)}
+                  className="border-[#ffed00] text-[#ffed00] hover:bg-[#ffed00]/10"
+                >
+                  🎴 插入卡牌資料
+                </Button>
+              </div>
               <Textarea
                 id="textContent"
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
                 className="bg-zinc-800 border-zinc-700 text-white"
-                placeholder="輸入您想要生成文章的資訊...&#10;&#10;例如：&#10;- Pikachu PROMO 今日價格從 HKD 10,000 升至 HKD 13,500&#10;- 交易量增加 200%&#10;- 市場熱度創新高"
+                placeholder="輸入您想要生成文章的資訊...&#10;&#10;例如：&#10;- Pikachu PROMO 今日價格從 HKD 10,000 升至 HKD 13,500&#10;- 交易量增加 200%&#10;- 市場熱度創新高&#10;&#10;提示：點擊「插入卡牌資料」按鈕，可從資料庫選擇卡牌並插入真實價格資料"
                 rows={10}
               />
             </div>
@@ -939,6 +962,13 @@ function AIArticleGenerator({
           </div>
         </div>
       </CardContent>
+
+      {/* Card Selection Dialog */}
+      <CardSelectionDialog
+        open={cardSelectionDialogOpen}
+        onOpenChange={setCardSelectionDialogOpen}
+        onInsert={handleCardDataInsert}
+      />
     </Card>
   );
 }

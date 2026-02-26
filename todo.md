@@ -2342,3 +2342,80 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [ ] 測試批量更新速度優化
 - [ ] 測試排程執行監控儀表板
 - [ ] 保存 checkpoint
+
+
+---
+
+## 📝 AI 自動生成文章 - 新增插入卡牌圖片功能
+
+### 目標
+在 AI 自動生成文章頁面中新增「插入卡牌圖片」功能，讓用戶可以搜尋並選擇資料庫中的卡牌，將卡牌資料（圖片、名稱、價格等）提供給 AI，以提高生成文章的準確性和可信度。
+
+### 功能需求
+1. **卡牌搜尋對話框**
+   - 搜尋框（支持卡牌名稱、卡號搜尋）
+   - 卡牌列表顯示（圖片、名稱、卡號）
+   - 多選功能（可選擇多張卡牌）
+   - 確認插入按鈕
+
+2. **卡牌資料插入**
+   - 將選中的卡牌資料插入到「文字內容」輸入框
+   - 格式化卡牌資料（名稱、卡號、價格、圖片 URL）
+   - 支持多張卡牌插入
+
+3. **AI 生成整合**
+   - 將卡牌資料作為 context 傳遞給 AI
+   - AI 根據卡牌資料生成更準確的文章內容
+
+### 任務清單
+
+#### Phase 1: 分析現有代碼並設計功能方案
+- [x] 分析 AdminBlogManagement.tsx 的現有結構
+- [x] 設計卡牌選擇對話框 UI
+- [x] 設計卡牌資料格式（傳遞給 AI 的格式）
+- [x] 設計 API 接口（卡牌搜尋和資料獲取）
+
+#### Phase 2: 實現後端 API
+- [x] 創建 admin.searchCardsForBlog API（搜尋卡牌）
+- [x] 創建 admin.getCardDetailsForBlog API（獲取卡牌詳細資料）
+- [x] 添加卡牌價格資料（最新 SNKRDUNK PSA10 價格）
+- [x] 修改 searchCards 函數返回類型，添加 latestPrice 欄位
+
+#### Phase 3: 實現前端 UI
+- [x] 創建 CardSelectionDialog 組件（卡牌選擇對話框）
+- [x] 在 AI 生成文章頁面添加「插入卡牌資料」按鈕
+- [x] 實現卡牌搜尋功能（實時搜尋）
+- [x] 實現卡牌多選功能（checkbox）
+- [x] 實現卡牌資料插入到文字內容輸入框
+
+#### Phase 4: 整合 AI 生成邏輯
+- [x] 確認 generateArticle API 已支持接收卡牌資料（通過 textInput.content）
+- [x] 卡牌資料自動作為 AI prompt 的一部分
+
+#### Phase 5: 測試驗證並保存 checkpoint
+- [x] 測試卡牌資料格式化功能（14/14 測試通過）
+- [x] 測試卡牌資料插入邏輯
+- [x] 測試價格格式化
+- [x] 測試搜尋查詢驗證
+- [ ] 用戶測試：搜尋卡牌、插入資料、AI 生成文章
+- [ ] 保存 checkpoint
+
+### 設計草案
+
+#### 卡牌資料格式（插入到文字內容）
+```
+【卡牌資料】
+- 卡牌名稱：Pikachu PROMO
+- 卡號：SM-P 288
+- 最新價格：HKD 140,815（SNKRDUNK PSA10）
+- 圖片：[圖片 URL]
+```
+
+#### API 設計
+```typescript
+// 搜尋卡牌
+admin.searchCardsForBlog.useQuery({ query: "pikachu", limit: 20 })
+
+// 獲取卡牌詳細資料
+admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
+```

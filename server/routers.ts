@@ -2815,6 +2815,56 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         return await blogDb.getAllPostsShareStats();
       }),
 
+    // Search cards for blog article generation (Admin only)
+    searchCardsForBlog: adminProcedure
+      .input(z.object({
+        query: z.string(),
+        limit: z.number().min(1).max(50).optional().default(20),
+      }))
+      .query(async ({ input }) => {
+        const cards = await db.searchCards(input.query, input.limit);
+        
+        // Return card data with latest price
+        return cards.map(card => ({
+          id: card.id,
+          name: card.name,
+          nameJa: card.nameJa,
+          cardNumber: card.cardNumber,
+          imageUrl: card.imageUrl,
+          latestPrice: card.latestPrice || null,
+        }));
+      }),
+
+    // Get card details for blog article generation (Admin only)
+    getCardDetailsForBlog: adminProcedure
+      .input(z.object({
+        cardIds: z.array(z.number()),
+      }))
+      .query(async ({ input }) => {
+        const cardDetails = await Promise.all(
+          input.cardIds.map(async (cardId) => {
+            const card = await db.getCardById(cardId);
+            if (!card) return null;
+            
+            // Get latest SNKRDUNK PSA10 price
+            const latestPrices = await db.getPriceHistory(cardId, 'snkrdunk', undefined, 1, 1);
+            const latestPrice = latestPrices.length > 0 ? latestPrices[0].price : null;
+            
+            return {
+              id: card.id,
+              name: card.name,
+              nameJa: card.nameJa,
+              cardNumber: card.cardNumber,
+              imageUrl: card.imageUrl,
+              latestPrice,
+              priceDate: latestPrices.length > 0 ? latestPrices[0].createdAt : null,
+            };
+          })
+        );
+        
+        return cardDetails.filter(card => card !== null);
+      }),
+
     // AI generate article (Admin only)
     generateArticle: adminProcedure
       .input(z.object({
