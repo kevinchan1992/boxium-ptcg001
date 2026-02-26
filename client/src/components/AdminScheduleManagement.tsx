@@ -11,6 +11,154 @@ import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "react-i18next";
 
 /**
+ * ScheduleHealthStats component - displays schedule health statistics (last 7 days)
+ */
+function ScheduleHealthStats() {
+  const { data: stats } = trpc.admin.getScheduleHealthStats.useQuery();
+  
+  if (!stats) {
+    return (
+      <Card className="bg-gray-900 border-gray-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg lg:text-xl">
+            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+            排程健康統計（最近 7 天）
+          </CardTitle>
+          <CardDescription className="text-gray-400 text-xs sm:text-sm lg:text-base">
+            查看排程任務的執行健康度和性能指標
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8 text-gray-400">
+            <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+            載入中...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  const formatDuration = (ms: number) => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours}小時 ${minutes % 60}分鐘`;
+    } else if (minutes > 0) {
+      return `${minutes}分鐘 ${seconds % 60}秒`;
+    } else {
+      return `${seconds}秒`;
+    }
+  };
+  
+  const getSuccessRateColor = (rate: number) => {
+    if (rate >= 90) return 'text-green-400';
+    if (rate >= 70) return 'text-yellow-400';
+    return 'text-red-400';
+  };
+  
+  return (
+    <Card className="bg-gray-900 border-gray-800">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg lg:text-xl">
+          <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+          排程健康統計（最近 7 天）
+        </CardTitle>
+        <CardDescription className="text-gray-400 text-xs sm:text-sm lg:text-base">
+          查看排程任務的執行健康度和性能指標
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* SNKRDUNK 健康統計 */}
+        <div className="space-y-3">
+          <h3 className="text-white font-medium text-sm sm:text-base">SNKRDUNK 批量更新</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-gray-400 text-xs mb-1">總執行次數</p>
+              <p className="text-white text-lg font-semibold">{stats.snkrdunk.totalExecutions}</p>
+            </div>
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-gray-400 text-xs mb-1">成功率</p>
+              <p className={`text-lg font-semibold ${getSuccessRateColor(stats.snkrdunk.successRate)}`}>
+                {stats.snkrdunk.successRate.toFixed(1)}%
+              </p>
+            </div>
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-gray-400 text-xs mb-1">平均執行時間</p>
+              <p className="text-white text-lg font-semibold">
+                {formatDuration(stats.snkrdunk.averageExecutionTime)}
+              </p>
+            </div>
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-gray-400 text-xs mb-1">失敗次數</p>
+              <p className="text-red-400 text-lg font-semibold">{stats.snkrdunk.failureCount}</p>
+            </div>
+          </div>
+          
+          {/* 失敗原因統計 */}
+          {stats.snkrdunk.failureReasons.length > 0 && (
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-gray-400 text-xs mb-2">失敗原因統計（Top 5）</p>
+              <ul className="space-y-1">
+                {stats.snkrdunk.failureReasons.map((reason, index) => (
+                  <li key={index} className="text-xs text-gray-300 flex justify-between">
+                    <span className="truncate mr-2">{reason.reason}</span>
+                    <span className="text-red-400 font-medium">{reason.count}次</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        
+        {/* Trending 健康統計 */}
+        <div className="space-y-3">
+          <h3 className="text-white font-medium text-sm sm:text-base">Trending 計算</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-gray-400 text-xs mb-1">總執行次數</p>
+              <p className="text-white text-lg font-semibold">{stats.trending.totalExecutions}</p>
+            </div>
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-gray-400 text-xs mb-1">成功率</p>
+              <p className={`text-lg font-semibold ${getSuccessRateColor(stats.trending.successRate)}`}>
+                {stats.trending.successRate.toFixed(1)}%
+              </p>
+            </div>
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-gray-400 text-xs mb-1">平均執行時間</p>
+              <p className="text-white text-lg font-semibold">
+                {formatDuration(stats.trending.averageExecutionTime)}
+              </p>
+            </div>
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-gray-400 text-xs mb-1">失敗次數</p>
+              <p className="text-red-400 text-lg font-semibold">{stats.trending.failureCount}</p>
+            </div>
+          </div>
+          
+          {/* 失敗原因統計 */}
+          {stats.trending.failureReasons.length > 0 && (
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-gray-400 text-xs mb-2">失敗原因統計（Top 5）</p>
+              <ul className="space-y-1">
+                {stats.trending.failureReasons.map((reason, index) => (
+                  <li key={index} className="text-xs text-gray-300 flex justify-between">
+                    <span className="truncate mr-2">{reason.reason}</span>
+                    <span className="text-red-400 font-medium">{reason.count}次</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
  * ExecutionHistory component - displays schedule execution history
  */
 function ExecutionHistory() {
@@ -504,6 +652,9 @@ export function AdminScheduleManagement() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 排程健康統計 */}
+      <ScheduleHealthStats />
 
       {/* 排程執行歷史 */}
       <ExecutionHistory />

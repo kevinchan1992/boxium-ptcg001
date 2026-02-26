@@ -1604,112 +1604,18 @@ try {
         return { success: true, message: "批量更新已繼續" };
       }),
 
-    // 批量更新所有卡牌 SNKRDUNK 價格
+    // 批量更新所有卡牠 SNKRDUNK 價格（使用持久化版本）
     batchUpdateSnkrdunkPrices: adminProcedure
       .mutation(async ({ ctx }) => {
         try {
-          // 檢查是否已經在運行
-          const currentProgress = snkrdunkBatchUpdateProgress.getSnkrdunkBatchUpdateProgress();
-          if (currentProgress.isRunning) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: "批量更新正在進行中，請稍候。已處理 " + currentProgress.processedCards + "/" + currentProgress.totalCards + " 張卡牌。",
-            });
-          }
-
-          // 獲取所有 SNKRDUNK 數據源的唯一卡牌
-          const { data: dataSources } = await db.getDataSources({ pageSize: 100000 });
-          const snkrdunkSources = dataSources.filter((ds: any) => ds.source === "snkrdunk");
-          const uniqueCards = new Map<number, { id: number; name: string }>();
+          // 使用持久化版本的批量更新（支持後端持續運行）
+          const { taskId, totalCards } = await executePersistentSnkrdunkBatchUpdate();
           
-          for (const source of snkrdunkSources) {
-            if (source.card) {
-              uniqueCards.set(source.card.id, {
-                id: source.card.id,
-                name: source.card.name,
-              });
-            }
-          }
-
-          const cardsToUpdate = Array.from(uniqueCards.values());
-          console.log(`[SnkrdunkBatchUpdate] Starting batch update for ${cardsToUpdate.length} cards`);
-
-          // 初始化進度
-          snkrdunkBatchUpdateProgress.initSnkrdunkBatchUpdateProgress(cardsToUpdate.length);
-
-          // 在後台執行批量更新（異步）
-          (async () => {
-            for (const card of cardsToUpdate) {
-              try {
-                // 檢查是否暫停
-                while (snkrdunkBatchUpdateProgress.isSnkrdunkPaused()) {
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-
-                // 獲取該卡牌的 SNKRDUNK 數據源
-                const cardDataSources = snkrdunkSources.filter(ds => ds.cardId === card.id);
-                if (cardDataSources.length === 0) {
-                  snkrdunkBatchUpdateProgress.updateSnkrdunkProgressFailure(card.id, card.name, "無 SNKRDUNK 數據源");
-                  continue;
-                }
-
-                // 使用第一個數據源的 URL
-                const dataSource = cardDataSources[0];
-                const url = dataSource.sourceUrl;
-
-                // 爬取 SNKRDUNK 頁面
-                const cardData = await scrapeSnkrdunkPage(url);
-
-                // 更新卡牌資訊
-                await db.updateCard(card.id, {
-                  name: cardData.name,
-                  nameJa: cardData.nameJa,
-                  imageUrl: cardData.imageUrl || undefined,
-                });
-
-                // 儲存價格歷史
-                let recordsAdded = 0;
-                for (const priceEntry of cardData.priceHistory) {
-                  const priceHkd = convertJpyToHkd(priceEntry.price);
-                  await db.addPriceHistory({
-                    cardId: card.id,
-                    source: "snkrdunk",
-                    price: priceHkd.toString(),
-                    currency: "HKD",
-                    grade: priceEntry.grade,
-                    soldAt: priceEntry.soldAt,
-                    listingUrl: url,
-                  });
-                  recordsAdded++;
-                }
-
-                // 更新所有該卡牌的 SNKRDUNK 數據源狀態
-                for (const ds of cardDataSources) {
-                  await db.updateDataSourceFetchStatus(ds.id, "success");
-                }
-
-                snkrdunkBatchUpdateProgress.updateSnkrdunkProgressSuccess(recordsAdded);
-                console.log(`[SnkrdunkBatchUpdate] Updated card ${card.id}, added ${recordsAdded} records`);
-
-                // 每處理 3 張卡片後暫停 2 秒，避免 API 限制
-                if (snkrdunkBatchUpdateProgress.getSnkrdunkBatchUpdateProgress().processedCards % 3 === 0) {
-                  await new Promise(resolve => setTimeout(resolve, 2000));
-                }
-              } catch (error: any) {
-                console.error(`[SnkrdunkBatchUpdate] Error updating card ${card.id}: ${error.message}`);
-                snkrdunkBatchUpdateProgress.updateSnkrdunkProgressFailure(card.id, card.name, error.message);
-              }
-            }
-
-            // 完成批量更新
-            snkrdunkBatchUpdateProgress.completeSnkrdunkBatchUpdate();
-            console.log(`[SnkrdunkBatchUpdate] Batch update completed`);
-          })();
-
           return {
             success: true,
-            message: `SNKRDUNK 批量更新已啟動，共 ${cardsToUpdate.length} 張卡牌`,
-            totalCards: cardsToUpdate.length,
+            message: `SNKRDUNK 批量更新已啟動，任務 ID: ${taskId}，總共 ${totalCards} 張卡牠。即使關閉頁面，任務也會在後端持續運行。`,
+            taskId,
+            totalCards,
           };
         } catch (error: any) {
           console.error(`[SnkrdunkBatchUpdate] Error starting batch update: ${error.message}`);
@@ -1847,6 +1753,14 @@ try {
             trending,
           };
         }
+      }),
+
+    // Get schedule health statistics (last 7 days)
+    getScheduleHealthStats: publicProcedure
+      .query(async () => {
+        const { getAllScheduleHealthStats } = await import('./getScheduleHealthStats');
+        const stats = await getAllScheduleHealthStats();
+        return stats;
       }),
 
     // Manually trigger trending cards calculation
