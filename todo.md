@@ -2639,3 +2639,11 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 添加 JSON-LD 結構化數據（Organization, WebSite）
 - [x] 更新 Open Graph 圖片為 og-image.png（1200x630）
 - [ ] 保存 checkpoint
+
+
+### ✅ 調整導航列布局為置中顯示（已完成）
+- [x] 修改 TopNav.tsx 導航列布局（justify-center 置中導航項目）
+- [x] 調整左右兩側元素的位置（右側元素 absolute right-0）
+- [x] 移除 flex-1 讓導航項目不佔滿整行
+- [x] 測試桌面版顯示效果（✅ 導航項目完美置中）
+- [ ] 保存 checkpoint

@@ -84,11 +84,11 @@ export function TopNav() {
         }`}
       >
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-center h-16 relative">
             {/* Mobile Menu Button - Left */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden text-white p-2"
+              className="md:hidden text-white p-2 absolute left-0"
             >
               {isMobileMenuOpen ? (
                 <X className="w-6 h-6" />
@@ -98,7 +98,7 @@ export function TopNav() {
             </button>
 
             {/* Desktop Navigation - Center */}
-            <div className="hidden md:flex items-center gap-4 lg:gap-6 flex-1 justify-center">
+            <div className="hidden md:flex items-center gap-4 lg:gap-6">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -132,7 +132,7 @@ export function TopNav() {
             </div>
 
             {/* Right Side: Language Switcher + Auth */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 absolute right-0">
               {/* Language Switcher */}
               <div className="hidden md:block">
                 <LanguageSwitcher />
