@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, name, cardNumber FROM cards WHERE id = 812832;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, cardNumber FROM cards WHERE id = 812832;",
+  "rows": [
+    {
+      "id": "812832",
+      "name": "Pikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)",
+      "cardNumber": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\n812832\tPikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1628
+}

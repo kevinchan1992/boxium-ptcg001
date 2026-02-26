@@ -2201,3 +2201,14 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 修改 pricing.ts，改用文字搜尋（卡牌編號 + PSA10）替代圖片搜尋
 - [x] 簡化過濾邏輯，保留 PSA 等級和商品類型過濾
 - [ ] 測試並保存 checkpoint
+
+## Pricing 頁面沒有 eBay 搜尋結果
+- [x] 檢查服務器日誌，診斷 eBay 搜尋失敗原因：cardNumber 欄位為空，但卡牌編號包含在名稱中（例如 "[SM-P 288]"）
+- [ ] 修復問題並測試
+- [ ] 保存 checkpoint
+
+## 批量更新 cardNumber 欄位
+- [x] 創建腳本從卡片名稱中提取卡牌編號（正則表達式匹配方括號中的內容）
+- [x] 執行腳本批量更新 cardNumber 欄位（成功更新 31,939 張卡片）
+- [x] 驗證更新結果並測試 eBay 搜尋（cardNumber 更新成功，eBay 搜尋邏輯正確，但遇到 Rate Limit）
+- [ ] 保存 checkpoint
