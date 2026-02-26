@@ -142,7 +142,6 @@ function DataSourceHealthPanel() {
   }
 
   const snkrdunkHealth: any = healthMetrics?.find((m: any) => m.source === 'snkrdunk');
-  const ebayHealth: any = healthMetrics?.find((m: any) => m.source === 'ebay');
 
   const getStatusIcon = (status: string | undefined) => {
     switch (status) {
@@ -187,12 +186,6 @@ function DataSourceHealthPanel() {
       health: snkrdunkHealth,
       color: '#3b82f6',
       borderColor: 'border-l-blue-500',
-    },
-    {
-      title: 'eBay 數據源',
-      health: ebayHealth,
-      color: '#f59e0b',
-      borderColor: 'border-l-yellow-500',
     },
   ];
 
@@ -328,8 +321,8 @@ function SearchStatsPanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">eBay 搜尋統計</h2>
-        <p className="text-gray-400">圖片搜尋效果與效能分析</p>
+        <h2 className="text-2xl font-bold text-white mb-2">搜尋統計</h2>
+        <p className="text-gray-400">數據源搜尋效果與效能分析</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

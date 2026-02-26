@@ -5,7 +5,7 @@
 
 import * as cron from "node-cron";
 import * as db from "./db";
-import { executeEbayBatchUpdate, executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
+import { executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
 
 let scheduledTask: ReturnType<typeof cron.schedule> | null = null;
 
@@ -98,11 +98,7 @@ async function executeBatchUpdate(executionType: "scheduled" | "manual") {
 
     console.log(`[BatchUpdateScheduler] Starting ${executionType} batch update (history ID: ${historyId})`);
 
-    // 執行 eBay 批量更新
-    const ebayResult = await executeEbayBatchUpdate();
-    console.log(`[BatchUpdateScheduler] eBay update completed: ${ebayResult.successCount} success, ${ebayResult.failureCount} failures`);
-
-    // 執行 SNKRDUNK 批量更新
+    // 僅執行 SNKRDUNK 批量更新（eBay 已停用）
     const snkrdunkResult = await executeSnkrdunkBatchUpdate();
     console.log(`[BatchUpdateScheduler] SNKRDUNK update completed: ${snkrdunkResult.successCount} success, ${snkrdunkResult.failureCount} failures`);
 
@@ -110,9 +106,9 @@ async function executeBatchUpdate(executionType: "scheduled" | "manual") {
     const durationMs = Date.now() - startTime;
     await db.updateScheduleExecutionHistory(historyId, {
       status: "completed",
-      ebaySuccessCount: ebayResult.successCount,
-      ebayFailureCount: ebayResult.failureCount,
-      ebayRecordsAdded: ebayResult.totalRecordsAdded,
+      ebaySuccessCount: 0,
+      ebayFailureCount: 0,
+      ebayRecordsAdded: 0,
       snkrdunkSuccessCount: snkrdunkResult.successCount,
       snkrdunkFailureCount: snkrdunkResult.failureCount,
       snkrdunkRecordsAdded: snkrdunkResult.totalRecordsAdded,

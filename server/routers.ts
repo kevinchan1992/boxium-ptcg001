@@ -6,17 +6,17 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
-import { searchAndSaveEbaySoldItems, extractCardNumber, cleanCardNameForSearch } from "./ebayService";
+// [eBay cleanup] ebayService removed
 import { downloadAndEncodeImage, getBestImageUrl } from "./imageUtils";
 import { searchEbayByImageWithHkd } from "./ebayImageSearch";
 import { searchEbayItems, convertUsdToHkd, getUsdToHkdRate } from "./ebay";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
-import * as batchUpdateProgress from "./batchUpdateProgress";
+// [eBay cleanup] batchUpdateProgress removed
 import * as snkrdunkBatchUpdateProgress from "./batchUpdateSnkrdunkProgress";
-import { executePersistentEbayBatchUpdate } from "./persistentEbayBatchUpdate";
+// [eBay cleanup] persistentEbayBatchUpdate removed
 import { executePersistentSnkrdunkBatchUpdate } from "./persistentSnkrdunkBatchUpdate";
 import * as batchTaskManager from "./batchTaskManager";
-import { executeEbayBatchUpdate, executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
+import { executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
 import { restartScheduler } from "./batchUpdateScheduler";
 import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
 import { pricingRouter } from "./routers/pricing";
@@ -331,6 +331,8 @@ export const appRouter = router({
         }
       }),
 
+    // 已停用：getEbaySoldItems - 搜尋 eBay 已售出商品
+    // 注意：此功能已停用，僅保留 searchEbayMarketPrice 用於 pricing 頁面顯示在售商品
     getEbaySoldItems: publicProcedure
       .input(z.object({
         cardId: z.number(),
@@ -338,65 +340,9 @@ export const appRouter = router({
         forceRefresh: z.boolean().optional().default(false),
       }))
       .query(async ({ input }) => {
-        try {
-          // First, try to get from database
-          if (!input.forceRefresh) {
-            const dbRecords = await db.getPriceHistory(input.cardId, "ebay", "PSA10", input.limit);
-            
-            // If we have recent records (within 7 days), return them
-            if (dbRecords.length > 0) {
-              const latestRecord = dbRecords[0];
-              const daysSinceUpdate = latestRecord.createdAt 
-                ? (Date.now() - new Date(latestRecord.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-                : 999;
-              
-              if (daysSinceUpdate < 7) {
-                console.log(`[eBay] Returning ${dbRecords.length} cached records for card ${input.cardId}`);
-                // Convert database records to EbaySoldItem format
-                return dbRecords.map(record => ({
-                  title: `PSA 10 - ${record.grade || "Unknown"}`,
-                  price: parseFloat(record.price),
-                  currency: record.currency,
-                  soldDate: record.soldAt || new Date(),
-                  imageUrl: null,
-                  itemUrl: record.listingUrl || "",
-                  condition: record.condition || "PSA 10",
-                }));
-              }
-            }
-          }
-
-          // If no recent records or force refresh, fetch from eBay API
-          const card = await db.getCardById(input.cardId);
-          if (!card) {
-            throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
-          }
-
-          // Extract card number from card name
-          const cardNumber = extractCardNumber(card.name);
-          if (!cardNumber) {
-            console.warn(`[eBay] Cannot extract card number from: ${card.name}`);
-            return [];
-          }
-
-          // Clean card name for search
-          const cleanedName = cleanCardNameForSearch(card.name);
-
-          // Search eBay for sold PSA10 items and save to database
-          console.log(`[eBay] Fetching fresh data from eBay API for card ${input.cardId}`);
-          const soldItems = await searchAndSaveEbaySoldItems(
-            input.cardId,
-            cleanedName,
-            cardNumber,
-            input.limit,
-            true // Save to database
-          );
-          return soldItems;
-        } catch (error: any) {
-          console.error("[eBay] Error fetching sold items:", error.message);
-          // Return empty array instead of throwing error to avoid breaking the UI
-          return [];
-        }
+        // 功能已停用，返回空陣列
+        console.log(`[eBay] getEbaySoldItems 已停用，返回空陣列`);
+        return [];
       }),
 
     // eBay Browse API - 搜尋活躍商品作為市場參考價
@@ -1078,7 +1024,13 @@ try {
       return result;
     }),
 
+  // 已停用：updateAllEbayRecords - 更新所有 eBay 記錄
   updateAllEbayRecords: adminProcedure.mutation(async ({ ctx }) => {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "eBay 更新功能已停用",
+    });
+    /* 原始代碼已註釋
 // Get all data sources with cards
     const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });
     const uniqueCards = new Map<number, { id: number; name: string }>();
@@ -1121,6 +1073,7 @@ try {
       total: uniqueCards.size,
       errors: errors.slice(0, 10),
     };
+    */ // updateAllEbayRecords 註釋結束
   }),
 
   fixOrphanDataSources: adminProcedure.mutation(async ({ ctx }) => {
@@ -1273,12 +1226,19 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         };
       }),
 
-    // 更新指定卡牌的 eBay 交易記錄（存入 prices 表）
+    // 已停用：updateEbayPrices - Admin 更新單一卡牌 eBay 價格
+    // 此功能已停用，不再主動更新 eBay 數據
     updateEbayPrices: adminProcedure
       .input(z.object({
         cardId: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // 功能已停用
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "eBay 價格更新功能已停用",
+        });
+        /* 原始代碼已註釋
 try {
           // 獲取卡牌資訊
           const card = await db.getCardById(input.cardId);
@@ -1396,11 +1356,17 @@ try {
             message: `更新 eBay 價格失敗: ${error.message}`,
           });
         }
+        */ // 註釋結束
       }),
 
-    // 批量更新所有卡牌 eBay 價格
+    // 已停用：batchUpdateEbayPrices - 批量更新所有卡牌 eBay 價格
     batchUpdateEbayPrices: adminProcedure
       .mutation(async ({ ctx }) => {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "eBay 批量更新功能已停用",
+        });
+        /* 原始代碼已註釋
         try {
           // 檢查是否已經在運行
           const currentProgress = batchUpdateProgress.getBatchUpdateProgress();
@@ -1564,43 +1530,29 @@ try {
             message: `啟動批量更新失敗: ${error.message}`,
           });
         }
+        */ // batchUpdateEbayPrices 註釋結束
       }),
 
-    // 獲取批量更新進度（同時檢查 eBay 和 SNKRDUNK）
+    // 獲取批量更新進度（僅檢查 SNKRDUNK）
     getBatchUpdateProgress: publicProcedure
       .query(async ({ ctx }) => {
-        // 檢查 eBay 進度
-        const ebayProgress = batchUpdateProgress.getBatchUpdateProgress();
-        if (ebayProgress.isRunning) {
-          return ebayProgress;
-        }
-        
-        // 檢查 SNKRDUNK 進度
+        // 僅檢查 SNKRDUNK 進度（eBay 已停用）
         const snkrdunkProgress = snkrdunkBatchUpdateProgress.getSnkrdunkBatchUpdateProgress();
-        if (snkrdunkProgress.isRunning) {
-          return snkrdunkProgress;
-        }
-        
-        // 如果都沒有運行，返回 eBay 進度（預設）
-        return ebayProgress;
+        return snkrdunkProgress;
       }),
 
-    // 暫停批量更新（同時操作 eBay 和 SNKRDUNK）
+    // 暫停批量更新（僅 SNKRDUNK）
     pauseBatchUpdate: adminProcedure
       .mutation(async ({ ctx }) => {
-        // 暫停 eBay 批量更新
-        batchUpdateProgress.pauseBatchUpdate();
-        // 暫停 SNKRDUNK 批量更新
+        // 僅暫停 SNKRDUNK 批量更新（eBay 已停用）
         snkrdunkBatchUpdateProgress.pauseSnkrdunkBatchUpdate();
         return { success: true, message: "批量更新已暫停" };
       }),
 
-    // 繼續批量更新（同時操作 eBay 和 SNKRDUNK）
+    // 繼續批量更新（僅 SNKRDUNK）
     resumeBatchUpdate: adminProcedure
       .mutation(async ({ ctx }) => {
-        // 繼續 eBay 批量更新
-        batchUpdateProgress.resumeBatchUpdate();
-        // 繼續 SNKRDUNK 批量更新
+        // 僅繼續 SNKRDUNK 批量更新（eBay 已停用）
         snkrdunkBatchUpdateProgress.resumeSnkrdunkBatchUpdate();
         return { success: true, message: "批量更新已繼續" };
       }),
@@ -1686,19 +1638,16 @@ try {
           (async () => {
             const startTime = Date.now();
             try {
-              // 啟動 eBay 批量更新
-              const ebayResult = await executeEbayBatchUpdate();
-
-              // 啟動 SNKRDUNK 批量更新
+              // 僅啟動 SNKRDUNK 批量更新（eBay 已停用）
               const snkrdunkResult = await executeSnkrdunkBatchUpdate();
 
               // 更新執行歷史
               const durationMs = Date.now() - startTime;
               await db.updateScheduleExecutionHistory(historyId, {
                 status: "completed",
-                ebaySuccessCount: ebayResult.successCount,
-                ebayFailureCount: ebayResult.failureCount,
-                ebayRecordsAdded: ebayResult.totalRecordsAdded,
+                ebaySuccessCount: 0,
+                ebayFailureCount: 0,
+                ebayRecordsAdded: 0,
                 snkrdunkSuccessCount: snkrdunkResult.successCount,
                 snkrdunkFailureCount: snkrdunkResult.failureCount,
                 snkrdunkRecordsAdded: snkrdunkResult.totalRecordsAdded,
@@ -1823,23 +1772,13 @@ try {
 
     // === 持久化批量更新 API ===
 
-    // 啟動持久化 eBay 批量更新
+    // 已停用：startPersistentEbayBatchUpdate - 持久化 eBay 批量更新
     startPersistentEbayBatchUpdate: adminProcedure
       .mutation(async () => {
-        try {
-          const result = await executePersistentEbayBatchUpdate();
-          return {
-            success: true,
-            message: `批量更新已啟動，共 ${result.totalCards} 張卡牌`,
-            taskId: result.taskId,
-            totalCards: result.totalCards,
-          };
-        } catch (error: any) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: error.message || "批量更新啟動失敗",
-          });
-        }
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "eBay 持久化批量更新功能已停用",
+        });
       }),
 
     // 啟動持久化 SNKRDUNK 批量更新
@@ -1912,6 +1851,7 @@ try {
       .input(z.object({
         snkrdunkEnabled: z.boolean().optional(),
         snkrdunkUpdateTime: z.string().optional(),
+        // eBay 已停用，保留參數但忽略
         ebayEnabled: z.boolean().optional(),
         ebayUpdateTime: z.string().optional(),
       }))

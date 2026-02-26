@@ -162,7 +162,7 @@ function ScheduleHealthStats() {
  * ExecutionHistory component - displays schedule execution history
  */
 function ExecutionHistory() {
-  const { data: history } = trpc.admin.getScheduleExecutionHistory.useQuery() as { data: { snkrdunk: any[], ebay: any[], trending: any[] } | undefined };
+  const { data: history } = trpc.admin.getScheduleExecutionHistory.useQuery() as { data: { snkrdunk: any[], ebay?: any[], trending: any[] } | undefined };
   
   if (!history) {
     return (
@@ -438,7 +438,7 @@ export function AdminScheduleManagement() {
             價格更新排程設定
           </CardTitle>
           <CardDescription className="text-gray-400 text-xs sm:text-sm">
-            設定 SNKRDUNK 和 eBay 價格的自動更新時間
+            設定 SNKRDUNK 價格的自動更新時間
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

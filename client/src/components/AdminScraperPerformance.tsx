@@ -7,7 +7,7 @@ import { RefreshCw, TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, Aler
 import { Badge } from "@/components/ui/badge";
 
 export function AdminScraperPerformance() {
-  const [source, setSource] = useState<"all" | "snkrdunk" | "ebay">("all");
+  const [source, setSource] = useState<"all" | "snkrdunk">("all");
   const [hours, setHours] = useState(24);
 
   const { data: performance, isLoading, refetch } = trpc.admin.getScraperPerformance.useQuery(
@@ -69,7 +69,6 @@ export function AdminScraperPerformance() {
                 <SelectContent>
                   <SelectItem value="all">所有來源</SelectItem>
                   <SelectItem value="snkrdunk">SNKRDUNK</SelectItem>
-                  <SelectItem value="ebay">eBay</SelectItem>
                 </SelectContent>
               </Select>
 

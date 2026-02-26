@@ -2567,3 +2567,8 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 修復 Profile 頁面的瀏覽歷史錯誤和排版文字顯示問題
 - [x] 添加 API 響應驗證測試到 profile.test.ts
 - [x] 添加 JSDoc 註釋到 server/profile.ts 定義返回類型
+- [x] 階段 1: 停用 eBay API 調用（不包括 pricing 頁面）
+- [x] 階段 1: 清理前端 UI 的 eBay 選項
+- [x] 階段 2: 刪除 eBay 相關文件（6 個文件已刪除，保留 pricing 頁面所需的 4 個文件）
+- [x] 階段 2: 清理共享文件中的 eBay 代碼（batchUpdateExecutor, batchUpdateScheduler, routers.ts imports）
+- [x] 階段 2: 數據庫清理（保留 ebayListingsCache 表供 pricing 頁面使用）
