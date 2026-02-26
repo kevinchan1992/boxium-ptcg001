@@ -2676,3 +2676,16 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 修復批量更新邏輯錯誤（添加進度追蹤更新調用）
 - [ ] 測試批量更新功能
 - [ ] 保存 checkpoint
+
+
+### ✅ 優化手機版選單動畫（已完成）
+- [x] 安裝 Framer Motion 依賴（framer-motion@latest）
+- [x] 修改 TopNav.tsx 添加滑入/滑出動畫（從左側滑入，Spring 動畫）
+- [x] 優化選單項目間距（px-6 py-8 + space-y-2 + py-3 px-4 每項）
+- [x] 優化選單項目字體大小（text-base → text-lg）
+- [x] 添加背景遮罩動畫（淡入/淡出效果）
+- [x] 添加漢堡圖標動畫（旋轉 90° + 按壓縮放效果）
+- [x] 添加選單項目依序滑入動畫（錯開 0.05 秒）
+- [x] 添加 hover 背景效果（bg-white/5 + rounded-lg）
+- [x] 測試手機版選單動畫效果（✅ TypeScript 編譯無錯誤）
+- [ ] 保存 checkpoint

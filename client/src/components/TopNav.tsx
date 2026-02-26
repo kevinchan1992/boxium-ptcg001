@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, LogOut, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -66,13 +67,19 @@ export function TopNav() {
 
   return (
     <>
-      {/* 遮罩層 */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity duration-300"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+      {/* 遮罩層 with Animation */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black/60 z-40 md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <nav
         className={`fixed top-0 left-0 right-0 z-50 border-b border-white/10 transition-all duration-500 ${
@@ -86,16 +93,23 @@ export function TopNav() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center h-16 relative">
             {/* Mobile Menu Button - Left */}
-            <button
+            <motion.button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden text-white p-2 absolute left-0"
+              whileTap={{ scale: 0.9 }}
             >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </button>
+              <motion.div
+                initial={false}
+                animate={{ rotate: isMobileMenuOpen ? 90 : 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
+              </motion.div>
+            </motion.button>
 
             {/* Desktop Navigation - Center */}
             <div className="hidden md:flex items-center gap-4 lg:gap-6">
@@ -184,47 +198,68 @@ export function TopNav() {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
-      <div
-        className={`fixed top-16 left-0 right-0 bg-black/95 backdrop-blur-md border-b border-white/10 z-40 md:hidden transition-all duration-300 ${
-          isMobileMenuOpen
-            ? "translate-y-0 opacity-100"
-            : "-translate-y-full opacity-0 pointer-events-none"
-        }`}
-      >
-        <div className="container mx-auto px-4 py-6 space-y-4">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={`block text-base font-medium transition-colors ${
-                isActive(item.href)
-                  ? "text-[#ffed00]"
-                  : "text-white/80 hover:text-[#ffed00]"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-          
-          {/* 管理後台連結 - 僅管理員可見 */}
-          {user?.role === "admin" && (
-            <Link
-              href="/admin"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="block text-base font-medium text-red-400 hover:text-red-300"
-            >
-              {t("nav.admin")}
-            </Link>
-          )}
+      {/* Mobile Menu with Framer Motion */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ x: "-100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "-100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed top-16 left-0 right-0 bg-black/95 backdrop-blur-md border-b border-white/10 z-40 md:hidden"
+          >
+            <div className="container mx-auto px-6 py-8 space-y-2">
+              {navItems.map((item, index) => (
+                <motion.div
+                  key={item.href}
+                  initial={{ x: -50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Link
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block text-lg font-medium transition-colors py-3 px-4 rounded-lg ${
+                      isActive(item.href)
+                        ? "text-[#ffed00] bg-white/5"
+                        : "text-white/80 hover:text-[#ffed00] hover:bg-white/5"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                </motion.div>
+              ))}
+              
+              {/* 管理後台連結 - 僅管理員可見 */}
+              {user?.role === "admin" && (
+                <motion.div
+                  initial={{ x: -50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: navItems.length * 0.05 }}
+                >
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block text-lg font-medium text-red-400 hover:text-red-300 hover:bg-white/5 py-3 px-4 rounded-lg"
+                  >
+                    {t("nav.admin")}
+                  </Link>
+                </motion.div>
+              )}
 
-          {/* Language Switcher for Mobile */}
-          <div className="pt-4 border-t border-white/10">
-            <LanguageSwitcher />
-          </div>
-        </div>
-      </div>
+              {/* Language Switcher for Mobile */}
+              <motion.div
+                initial={{ x: -50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: (navItems.length + 1) * 0.05 }}
+                className="pt-6 border-t border-white/10"
+              >
+                <LanguageSwitcher />
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
