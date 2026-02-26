@@ -13,6 +13,7 @@ import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
 import { initPriceUpdateScheduler, startTrendingCardsScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
+import { Sentry } from "./sentry";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -157,6 +158,26 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
+      onError: ({ error, type, path, input, ctx, req }) => {
+        console.error(`[tRPC Error] ${type} at ${path}:`, error);
+        
+        // Send to Sentry
+        if (process.env.SENTRY_DSN_BACKEND) {
+          Sentry.captureException(error, {
+            tags: {
+              type: 'trpc_error',
+              procedure_type: type,
+            },
+            contexts: {
+              trpc: {
+                path,
+                input: JSON.stringify(input),
+                user: ctx?.user?.email || 'anonymous',
+              },
+            },
+          });
+        }
+      },
     })
   );
   // development mode uses Vite, production mode uses static files

@@ -5,10 +5,32 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import * as Sentry from "@sentry/react";
 
 import "./index.css";
 import "./mobile-touch-optimization.css";
 import "./i18n";
+
+// Initialize Sentry for frontend error monitoring
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN_FRONTEND;
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    environment: import.meta.env.MODE,
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration({
+        maskAllText: false,
+        blockAllMedia: false,
+      }),
+    ],
+    // Performance Monitoring
+    tracesSampleRate: import.meta.env.MODE === "production" ? 0.1 : 1.0,
+    // Session Replay
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+  });
+}
 
 const queryClient = new QueryClient();
 
@@ -21,6 +43,18 @@ queryClient.getQueryCache().subscribe(event => {
       return;
     }
     console.error("[API Query Error]", error);
+    // Send to Sentry
+    if (sentryDsn) {
+      Sentry.captureException(error, {
+        tags: { type: "api_query_error" },
+        contexts: {
+          query: {
+            queryKey: event.query.queryKey,
+            queryHash: event.query.queryHash,
+          },
+        },
+      });
+    }
   }
 });
 
@@ -32,6 +66,17 @@ queryClient.getMutationCache().subscribe(event => {
       return;
     }
     console.error("[API Mutation Error]", error);
+    // Send to Sentry
+    if (sentryDsn) {
+      Sentry.captureException(error, {
+        tags: { type: "api_mutation_error" },
+        contexts: {
+          mutation: {
+            mutationId: event.mutation.mutationId,
+          },
+        },
+      });
+    }
   }
 });
 

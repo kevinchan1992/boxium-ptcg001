@@ -2140,7 +2140,7 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 檢查是否有現成的卡牌圖片插入 API（沒有，直接修改 prompt）
 - [x] 修改 AI prompt 提供正確的圖片格式範例
 - [x] 測試修復後的文章生成功能（需在 Admin 後台實際測試）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -2158,7 +2158,7 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [ ] 分析 AI prompt 中的價格數據傳遞邏輯（檢查是否正確傳遞）
 - [ ] 修改 AI prompt 添加更嚴格的價格使用指示（或改變數據傳遞方式）
 - [ ] 測試修復後的文章生成功能
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 - [x] 查詢資料庫中的最新成交價格
 - [x] 對比 AI 輸出價格與資料庫價格的差異
 - [x] 分析 AI prompt 中的價格數據傳遞邏輯
@@ -2184,7 +2184,7 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 ## eBay 商品篩選邏輯優化
 - [x] 添加 PSA 10 標題關鍵字過濾邏輯
 - [x] 測試過濾效果（邏輯已實現，等待用戶測試）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ## 修復 eBay 商品篩選邏輯（用戶反饋：仍顯示非 PSA 10 商品）
 - [x] 診斷過濾失敗原因（需要更嚴格的過濾規則）
@@ -2205,13 +2205,13 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 ## Pricing 頁面沒有 eBay 搜尋結果
 - [x] 檢查服務器日誌，診斷 eBay 搜尋失敗原因：cardNumber 欄位為空，但卡牌編號包含在名稱中（例如 "[SM-P 288]"）
 - [ ] 修復問題並測試
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ## 批量更新 cardNumber 欄位
 - [x] 創建腳本從卡片名稱中提取卡牌編號（正則表達式匹配方括號中的內容）
 - [x] 執行腳本批量更新 cardNumber 欄位（成功更新 31,939 張卡片）
 - [x] 驗證更新結果並測試 eBay 搜尋（cardNumber 更新成功，eBay 搜尋邏輯正確，但遇到 Rate Limit）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ## 手動添加 SNKRDUNK 數據源時自動提取 cardNumber
 - [x] 查找手動添加 SNKRDUNK 數據源的代碼
@@ -2270,7 +2270,7 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 移除 eBay 更新歷史 UI 區塊（第 151-193 行）
 - [x] 修改 getScheduleExecutionHistory API，返回空的 eBay 歷史陣列
 - [x] 從數據庫中刪除所有 eBay 更新歷史記錄（scheduleType = 'ebay_update'）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -2307,7 +2307,7 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 測試手動觸發更新功能（用戶將在生產環境測試）
 - [x] 測試自動排程功能（下次觸發時間：明天 02:00）
 - [x] 清理卡住的「運行中」排程執行歷史記錄
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 ### 待處理：批量更新任務持久化
 用戶報告：在生產環境點擊「立即更新所有 SNKRDUNK 卡牠」後，如果關閉頁面，更新任務會中斷。需要實現後端持久化運行，不依賴前端頁面。
@@ -2341,7 +2341,7 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [ ] 測試批量更新任務持久化
 - [ ] 測試批量更新速度優化
 - [ ] 測試排程執行監控儀表板
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -2445,7 +2445,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 #### Phase 3: 測試驗證並保存 checkpoint
 - [ ] 重新生成博客文章，確認價格資料正確顯示
 - [ ] 檢查其他博客文章的卡牌價格資料
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -2537,7 +2537,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 #### Phase 3: 測試驗證並保存 checkpoint
 - [ ] 測試搜尋結果頁面的價格顯示
 - [ ] 確認價格為最新成交價格
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -2562,7 +2562,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 #### Phase 3: 測試驗證並保存 checkpoint
 - [ ] 測試搜尋 pikachu，確認可以查看所有 659 張卡牌
 - [ ] 測試「載入更多」按鈕的功能
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 - [x] 將搜尋結果的「載入更多」模式改為傳統分頁模式（每頁 50 張卡牌，顯示頁碼導航）
 - [x] 修復 Profile 頁面的瀏覽歷史錯誤和排版文字顯示問題
 - [x] 添加 API 響應驗證測試到 profile.test.ts
@@ -2572,3 +2572,18 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 階段 2: 刪除 eBay 相關文件（6 個文件已刪除，保留 pricing 頁面所需的 4 個文件）
 - [x] 階段 2: 清理共享文件中的 eBay 代碼（batchUpdateExecutor, batchUpdateScheduler, routers.ts imports）
 - [x] 階段 2: 數據庫清理（保留 ebayListingsCache 表供 pricing 頁面使用）
+
+## 🔍 實施 Sentry 錯誤監控和日誌系統
+
+### 目標
+添加集中式錯誤追蹤系統，快速定位和修復生產環境問題
+
+### 任務清單
+- [x] 安裝 Sentry SDK（@sentry/react, @sentry/node）
+- [x] 配置 Sentry 環境變量（SENTRY_DSN_FRONTEND, SENTRY_DSN_BACKEND）
+- [x] 配置前端 Sentry 錯誤監控（client/src/main.tsx）
+- [x] 配置後端 Sentry 錯誤監控（server/_core/sentry.ts）
+- [x] 在 server/index.ts 中集成 Sentry
+- [x] 測試前端錯誤捕獲（手動觸發錯誤）
+- [x] 測試後端錯誤捕獲（API 錯誤）
+- [x] 保存 checkpoint
