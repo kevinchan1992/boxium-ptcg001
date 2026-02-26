@@ -2212,3 +2212,8 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 執行腳本批量更新 cardNumber 欄位（成功更新 31,939 張卡片）
 - [x] 驗證更新結果並測試 eBay 搜尋（cardNumber 更新成功，eBay 搜尋邏輯正確，但遇到 Rate Limit）
 - [ ] 保存 checkpoint
+
+## 手動添加 SNKRDUNK 數據源時自動提取 cardNumber
+- [x] 查找手動添加 SNKRDUNK 數據源的代碼
+- [x] 添加自動提取 cardNumber 的邏輯（routers.ts, scheduler.ts, fixOrphanDataSources.ts）（從卡片名稱中提取方括號中的內容）
+- [ ] 測試並保存 checkpoint

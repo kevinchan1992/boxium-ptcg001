@@ -57,11 +57,16 @@ export async function fixOrphanDataSources() {
         });
       } else {
         console.log(`✨ Creating new card...`);
+        // Extract card number from name (e.g., "Pikachu[SM-P 288]" → "SM-P 288")
+        const cardNumberMatch = cardData.name.match(/\[([^\]]+)\]/);
+        const cardNumber = cardNumberMatch ? cardNumberMatch[1].trim() : undefined;
+        
         cardId = await db.createCard({
           cardId: `snkrdunk-${snkrdunkId}`,
           name: cardData.name,
           nameJa: cardData.nameJa,
           imageUrl: cardData.imageUrl || undefined,
+          cardNumber,
         });
       }
       
