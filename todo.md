@@ -2565,3 +2565,5 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [ ] 保存 checkpoint
 - [x] 將搜尋結果的「載入更多」模式改為傳統分頁模式（每頁 50 張卡牌，顯示頁碼導航）
 - [x] 修復 Profile 頁面的瀏覽歷史錯誤和排版文字顯示問題
+- [x] 添加 API 響應驗證測試到 profile.test.ts
+- [x] 添加 JSDoc 註釋到 server/profile.ts 定義返回類型

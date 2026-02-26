@@ -3,10 +3,61 @@ import { watchlist, viewHistory, cards, priceHistory } from "../drizzle/schema_n
 import { eq, desc, and, sql } from "drizzle-orm";
 
 /**
+ * Type Definitions
+ * 
+ * These types define the expected structure of data returned by profile API functions.
+ * Frontend components (Profile.tsx) rely on these structures.
+ */
+
+/**
+ * Card object structure used in watchlist and view history
+ * @typedef {Object} CardInfo
+ * @property {number} id - Card ID
+ * @property {string} name - Card name
+ * @property {string | null} cardNumber - Card number
+ * @property {string | null} series - Series name
+ * @property {string | null} setName - Set name (watchlist only)
+ * @property {string | null} rarity - Rarity (watchlist only)
+ * @property {string | null} imageUrl - Card image URL
+ */
+
+/**
+ * Watchlist item structure
+ * @typedef {Object} WatchlistItem
+ * @property {number} id - Watchlist entry ID
+ * @property {string | null} notes - User notes
+ * @property {Date} createdAt - When added to watchlist
+ * @property {CardInfo} card - Nested card object
+ * @property {number | null} latestPrice - Latest price value
+ * @property {string} currency - Price currency (default: 'HKD')
+ */
+
+/**
+ * View history item structure
+ * @typedef {Object} ViewHistoryItem
+ * @property {number} id - View history entry ID
+ * @property {Date} viewedAt - When card was viewed
+ * @property {CardInfo} card - Nested card object (without setName and rarity)
+ */
+
+/**
+ * Watchlist statistics structure
+ * @typedef {Object} WatchlistStats
+ * @property {number} totalCount - Total number of cards in watchlist
+ * @property {number} totalValue - Total value of all cards
+ * @property {string} currency - Currency code
+ * @property {WatchlistItem[]} top5Cards - Top 5 most valuable cards
+ */
+
+/**
  * Watchlist operations
  */
 
-// Get user's watchlist with card details and latest prices
+/**
+ * Get user's watchlist with card details and latest prices
+ * @param {number} userId - User ID
+ * @returns {Promise<WatchlistItem[]>} Array of watchlist items with nested card objects
+ */
 export async function getUserWatchlist(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -69,7 +120,12 @@ export async function getUserWatchlist(userId: number) {
   return watchlistWithPrices;
 }
 
-// Check if card is in user's watchlist
+/**
+ * Check if card is in user's watchlist
+ * @param {number} userId - User ID
+ * @param {number} cardId - Card ID
+ * @returns {Promise<boolean>} True if card is in watchlist
+ */
 export async function isCardInWatchlist(userId: number, cardId: number) {
   const db = await getDb();
   if (!db) return false;
@@ -83,7 +139,14 @@ export async function isCardInWatchlist(userId: number, cardId: number) {
   return result.length > 0;
 }
 
-// Add card to watchlist
+/**
+ * Add card to watchlist
+ * @param {number} userId - User ID
+ * @param {number} cardId - Card ID
+ * @param {string} [notes] - Optional user notes
+ * @returns {Promise<any>} Database insert result
+ * @throws {Error} If card is already in watchlist or database is unavailable
+ */
 export async function addToWatchlist(userId: number, cardId: number, notes?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -109,7 +172,14 @@ export async function addToWatchlist(userId: number, cardId: number, notes?: str
   return result;
 }
 
-// Update watchlist item notes
+/**
+ * Update watchlist item notes
+ * @param {number} userId - User ID
+ * @param {number} watchlistId - Watchlist entry ID
+ * @param {string} notes - New notes content
+ * @returns {Promise<any>} Database update result
+ * @throws {Error} If database is unavailable
+ */
 export async function updateWatchlistNotes(userId: number, watchlistId: number, notes: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -122,7 +192,13 @@ export async function updateWatchlistNotes(userId: number, watchlistId: number, 
   return result;
 }
 
-// Remove from watchlist by watchlist ID
+/**
+ * Remove from watchlist by watchlist ID
+ * @param {number} userId - User ID
+ * @param {number} watchlistId - Watchlist entry ID
+ * @returns {Promise<any>} Database delete result
+ * @throws {Error} If database is unavailable
+ */
 export async function removeFromWatchlist(userId: number, watchlistId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -134,7 +210,13 @@ export async function removeFromWatchlist(userId: number, watchlistId: number) {
   return result;
 }
 
-// Remove from watchlist by card ID
+/**
+ * Remove from watchlist by card ID
+ * @param {number} userId - User ID
+ * @param {number} cardId - Card ID
+ * @returns {Promise<any>} Database delete result
+ * @throws {Error} If database is unavailable
+ */
 export async function removeFromWatchlistByCardId(userId: number, cardId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -150,7 +232,13 @@ export async function removeFromWatchlistByCardId(userId: number, cardId: number
  * View history operations
  */
 
-// Add view history record
+/**
+ * Add view history record
+ * @param {number} userId - User ID
+ * @param {number} cardId - Card ID
+ * @returns {Promise<any>} Database insert result
+ * @throws {Error} If database is unavailable
+ */
 export async function addViewHistory(userId: number, cardId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -163,7 +251,28 @@ export async function addViewHistory(userId: number, cardId: number) {
   return result;
 }
 
-// Get user's view history (last 50 records)
+/**
+ * Get user's view history with card details
+ * @param {number} userId - User ID
+ * @param {number} [limit=50] - Maximum number of records to return
+ * @returns {Promise<ViewHistoryItem[]>} Array of view history items with nested card objects
+ * 
+ * **Important:** Returns array of objects with structure:
+ * ```
+ * {
+ *   id: number,
+ *   viewedAt: Date,
+ *   card: {
+ *     id: number,
+ *     name: string,
+ *     cardNumber: string | null,
+ *     series: string | null,
+ *     imageUrl: string | null
+ *   }
+ * }
+ * ```
+ * Frontend expects `item.card.id` and `item.card.name`, NOT `item.cardId` or `item.cardName`.
+ */
 export async function getUserViewHistory(userId: number, limit: number = 50) {
   const db = await getDb();
   if (!db) return [];
@@ -201,7 +310,12 @@ export async function getUserViewHistory(userId: number, limit: number = 50) {
   return historyWithCardDetails;
 }
 
-// Clear user's view history
+/**
+ * Clear user's view history
+ * @param {number} userId - User ID
+ * @returns {Promise<any>} Database delete result
+ * @throws {Error} If database is unavailable
+ */
 export async function clearViewHistory(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -217,7 +331,11 @@ export async function clearViewHistory(userId: number) {
  * User statistics
  */
 
-// Get user's watchlist statistics
+/**
+ * Get user's watchlist statistics
+ * @param {number} userId - User ID
+ * @returns {Promise<WatchlistStats>} Statistics object with total count, value, and top 5 cards
+ */
 export async function getUserWatchlistStats(userId: number) {
   const db = await getDb();
   if (!db) return { totalCount: 0, totalValue: 0, currency: "HKD", top5Cards: [] };
