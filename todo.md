@@ -2658,3 +2658,12 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [ ] 用戶需要提交網站到 Google Search Console 重新索引（見 GOOGLE_SEARCH_CONSOLE_SETUP.md）
 - [ ] 等待 Google 更新（1-7 天）
 - [ ] 保存 checkpoint
+
+
+### ✅ 修復手機版導航列登入按鈕顯示（已完成）
+- [x] 檢查 TopNav.tsx 手機版布局代碼（發現 hidden md:flex 導致手機版隱藏）
+- [x] 在手機版右上角添加登入/註冊按鈕（移除 hidden md:flex）
+- [x] 調整按鈕 padding（px-2 md:px-4 手機版更緊湊）
+- [x] 用戶頭像手機版只顯示圖標（hidden md:inline 隱藏用戶名）
+- [x] 測試桌面版顯示效果（✅ 正常顯示）
+- [ ] 保存 checkpoint

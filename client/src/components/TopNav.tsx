@@ -144,7 +144,7 @@ export function TopNav() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00] text-xs lg:text-sm">
                       <User className="w-3 h-3 lg:w-4 lg:h-4 mr-1 lg:mr-2" />
-                      <span className="max-w-[80px] lg:max-w-none truncate">{user.name || user.email}</span>
+                      <span className="hidden md:inline max-w-[80px] lg:max-w-none truncate">{user.name || user.email}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -161,18 +161,18 @@ export function TopNav() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <div className="hidden md:flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-white hover:text-[#ffed00] text-xs lg:text-sm"
+                    className="text-white hover:text-[#ffed00] text-xs lg:text-sm px-2 md:px-4"
                     onClick={() => setLocation("/login")}
                   >
                     登入
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-[#ffed00] text-black hover:bg-[#ffed00]/90 text-xs lg:text-sm"
+                    className="bg-[#ffed00] text-black hover:bg-[#ffed00]/90 text-xs lg:text-sm px-2 md:px-4"
                     onClick={() => setLocation("/register")}
                   >
                     註冊
