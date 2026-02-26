@@ -1,6 +1,6 @@
 import * as cron from 'node-cron';
 import { getPriceUpdateSchedule, updateSnkrdunkLastExecutedAt, addScheduleExecutionHistory, updateScheduleExecutionHistory } from './db';
-import { executeSnkrdunkBatchUpdate } from './batchUpdateExecutor';
+import { executePersistentSnkrdunkBatchUpdate } from './persistentSnkrdunkBatchUpdate';
 
 let snkrdunkCronJob: ReturnType<typeof cron.schedule> | null = null;
 
@@ -60,8 +60,13 @@ function startSnkrdunkScheduler(updateTime: string) {
         startedAt: startTime,
       });
       
-      // Execute SNKRDUNK batch update
-      const result = await executeSnkrdunkBatchUpdate();
+      // Execute SNKRDUNK batch update (persistent version for better progress tracking)
+      const { taskId, totalCards } = await executePersistentSnkrdunkBatchUpdate();
+      console.log(`[PriceUpdateScheduler] Started persistent SNKRDUNK batch update, task ID: ${taskId}, total cards: ${totalCards}`);
+      
+      // Note: The persistent batch update runs in the background
+      // We'll mark this execution as completed immediately, and the task manager will track the actual progress
+      const result = { successCount: 0, failureCount: 0, totalRecordsAdded: 0 };
       await updateSnkrdunkLastExecutedAt();
       
       // Update execution history with success

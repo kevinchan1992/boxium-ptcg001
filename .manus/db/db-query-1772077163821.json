@@ -1,0 +1,52 @@
+{
+  "query": "SELECT * FROM scheduleExecutionHistory WHERE scheduleType = 'snkrdunk_update' ORDER BY startedAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT * FROM scheduleExecutionHistory WHERE scheduleType = 'snkrdunk_update' ORDER BY startedAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "270002",
+      "scheduleType": "snkrdunk_update",
+      "executionType": "scheduled",
+      "status": "running",
+      "snkrdunkSuccessCount": "0",
+      "snkrdunkFailureCount": "0",
+      "snkrdunkRecordsAdded": "0",
+      "errorMessage": "NULL",
+      "startedAt": "2026-02-25 18:00:00",
+      "completedAt": "NULL",
+      "durationMs": "NULL",
+      "createdAt": "2026-02-25 18:00:00"
+    },
+    {
+      "id": "180001",
+      "scheduleType": "snkrdunk_update",
+      "executionType": "scheduled",
+      "status": "running",
+      "snkrdunkSuccessCount": "0",
+      "snkrdunkFailureCount": "0",
+      "snkrdunkRecordsAdded": "0",
+      "errorMessage": "NULL",
+      "startedAt": "2026-02-24 18:00:02",
+      "completedAt": "NULL",
+      "durationMs": "NULL",
+      "createdAt": "2026-02-24 18:00:03"
+    },
+    {
+      "id": "60001",
+      "scheduleType": "snkrdunk_update",
+      "executionType": "scheduled",
+      "status": "running",
+      "snkrdunkSuccessCount": "0",
+      "snkrdunkFailureCount": "0",
+      "snkrdunkRecordsAdded": "0",
+      "errorMessage": "NULL",
+      "startedAt": "2026-02-23 18:00:04",
+      "completedAt": "NULL",
+      "durationMs": "NULL",
+      "createdAt": "2026-02-23 18:00:09"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tscheduleType\texecutionType\tstatus\tsnkrdunkSuccessCount\tsnkrdunkFailureCount\tsnkrdunkRecordsAdded\terrorMessage\tstartedAt\tcompletedAt\tdurationMs\tcreatedAt\n270002\tsnkrdunk_update\tscheduled\trunning\t0\t0\t0\tNULL\t2026-02-25 18:00:00\tNULL\tNULL\t2026-02-25 18:00:00\n180001\tsnkrdunk_update\tscheduled\trunning\t0\t0\t0\tNULL\t2026-02-24 18:00:02\tNULL\tNULL\t2026-02-24 18:00:03\n60001\tsnkrdunk_update\tscheduled\trunning\t0\t0\t0\tNULL\t2026-02-23 18:00:04\tNULL\tNULL\t2026-02-23 18:00:09\n",
+  "stderr": "",
+  "execution_time_ms": 1633
+}

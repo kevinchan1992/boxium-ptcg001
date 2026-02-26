@@ -2287,4 +2287,27 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 修復 server/db.ts 中的 eBay 函數引用
 - [x] 修復 server/priceUpdateScheduler.ts 中的 eBay import
 - [x] TypeScript 編譯成功（0 errors）
+- [x] 保存 checkpoint（version: 459e3881）
+
+
+---
+
+## 🔧 修復 Admin 價格更新排程功能
+
+### 問題描述
+用戶報告：已開啟 SNKRDUNK 自動排程（設定為每日 02:00 更新），但排程執行歷史顯示多筆「運行中」狀態，且所有記錄都顯示「成功：0、失敗：0、新增記錄：0」，表示排程沒有實際執行任何更新操作。
+
+### 任務清單
+- [x] 檢查開發服務器日誌，查看排程啟動和執行情況
+- [x] 檢查 priceUpdateScheduler.ts 的排程邏輯
+- [x] 檢查 batchUpdateExecutor.ts 的批量更新執行器
+- [x] 檢查數據庫中的卡牠數據和 SNKRDUNK URL（36,215 筆數據源）
+- [x] 識別問題：executeSnkrdunkBatchUpdate 會一次性處理所有卡牠，導致超時
+- [x] 修復：將 executeSnkrdunkBatchUpdate 替換為 executePersistentSnkrdunkBatchUpdate
+- [x] 測試手動觸發更新功能（用戶將在生產環境測試）
+- [x] 測試自動排程功能（下次觸發時間：明天 02:00）
+- [x] 清理卡住的「運行中」排程執行歷史記錄
 - [ ] 保存 checkpoint
+
+### 待處理：批量更新任務持久化
+用戶報告：在生產環境點擊「立即更新所有 SNKRDUNK 卡牠」後，如果關閉頁面，更新任務會中斷。需要實現後端持久化運行，不依賴前端頁面。

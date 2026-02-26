@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE scheduleExecutionHistory \nSET status = 'failed', \n    completedAt = NOW(), \n    durationMs = TIMESTAMPDIFF(MICROSECOND, startedAt, NOW()) / 1000,\n    errorMessage = '排程執行超時（已修復：改用 executePersistentSnkrdunkBatchUpdate）'\nWHERE scheduleType = 'snkrdunk_update' \n  AND status = 'running' \n  AND completedAt IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute UPDATE scheduleExecutionHistory \nSET status = 'failed', \n    completedAt = NOW(), \n    durationMs = TIMESTAMPDIFF(MICROSECOND, startedAt, NOW()) / 1000,\n    errorMessage = '排程執行超時（已修復：改用 executePersistentSnkrdunkBatchUpdate）'\nWHERE scheduleType = 'snkrdunk_update' \n  AND status = 'running' \n  AND completedAt IS NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1632
+}
