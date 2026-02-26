@@ -1023,8 +1023,6 @@ export async function getPriceUpdateSchedule() {
 export async function updatePriceUpdateSchedule(data: {
   snkrdunkEnabled?: boolean;
   snkrdunkUpdateTime?: string;
-  ebayEnabled?: boolean;
-  ebayUpdateTime?: string;
 }) {
   const db = await getDb();
   if (!db) {
@@ -1061,24 +1059,7 @@ export async function updateSnkrdunkLastExecutedAt() {
     .where(eq(priceUpdateSchedule.id, existing.id));
 }
 
-/**
- * Update last execution time for eBay
- */
-export async function updateEbayLastExecutedAt() {
-  const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
 
-  const existing = await getPriceUpdateSchedule();
-  if (!existing) {
-    throw new Error("Price update schedule not found");
-  }
-
-  await db.update(priceUpdateSchedule)
-    .set({ ebayLastExecutedAt: new Date() })
-    .where(eq(priceUpdateSchedule.id, existing.id));
-}
 
 
 // DEPRECATED: Functions using deleted table 'dataSourceHealth'

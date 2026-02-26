@@ -1,6 +1,6 @@
 import * as cron from 'node-cron';
-import { getPriceUpdateSchedule, updateSnkrdunkLastExecutedAt, updateEbayLastExecutedAt, addScheduleExecutionHistory, updateScheduleExecutionHistory } from './db';
-import { executeSnkrdunkBatchUpdate, executeEbayBatchUpdate } from './batchUpdateExecutor';
+import { getPriceUpdateSchedule, updateSnkrdunkLastExecutedAt, addScheduleExecutionHistory, updateScheduleExecutionHistory } from './db';
+import { executeSnkrdunkBatchUpdate } from './batchUpdateExecutor';
 
 let snkrdunkCronJob: ReturnType<typeof cron.schedule> | null = null;
 

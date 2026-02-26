@@ -2271,3 +2271,20 @@ Blog 頁面在手機上查看時，字體太大，排版不夠清晰，需要縮
 - [x] 修改 getScheduleExecutionHistory API，返回空的 eBay 歷史陣列
 - [x] 從數據庫中刪除所有 eBay 更新歷史記錄（scheduleType = 'ebay_update'）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🧹 執行方案 A：清理 eBay 相關欄位
+
+### 目標
+只刪除 priceUpdateSchedule 和 scheduleExecutionHistory 表中的 eBay 相關欄位，保留其他表結構
+
+### 任務清單
+- [x] 從 schema 文件中刪除 priceUpdateSchedule 表的 eBay 欄位（ebayEnabled, ebayUpdateTime, ebayLastExecutedAt）
+- [x] 從 schema 文件中刪除 scheduleExecutionHistory 表的 eBay 欄位（ebaySuccessCount, ebayFailureCount, ebayRecordsAdded）
+- [x] 使用 SQL ALTER TABLE 直接從數據庫中刪除 eBay 欄位
+- [x] 修復 server/db.ts 中的 eBay 函數引用
+- [x] 修復 server/priceUpdateScheduler.ts 中的 eBay import
+- [x] TypeScript 編譯成功（0 errors）
+- [ ] 保存 checkpoint
