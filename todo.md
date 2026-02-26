@@ -2667,3 +2667,12 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 用戶頭像手機版只顯示圖標（hidden md:inline 隱藏用戶名）
 - [x] 測試桌面版顯示效果（✅ 正常顯示）
 - [ ] 保存 checkpoint
+
+
+### ✅ 修復批量更新功能無法運作問題（已完成）
+- [x] 檢查後端批量更新 tRPC procedure 代碼（batchUpdateSnkrdunkPrices 調用 executePersistentSnkrdunkBatchUpdate）
+- [x] 檢查前端批量更新調用代碼（AdminScheduleManagement.tsx 輪詢 getBatchUpdateProgress）
+- [x] 診断「更新中...」停在 0 的原因（persistentSnkrdunkBatchUpdate 未更新 batchUpdateSnkrdunkProgress）
+- [x] 修復批量更新邏輯錯誤（添加進度追蹤更新調用）
+- [ ] 測試批量更新功能
+- [ ] 保存 checkpoint

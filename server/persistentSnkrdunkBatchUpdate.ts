@@ -1,6 +1,7 @@
 import * as db from './db';
 import * as batchTaskManager from './batchTaskManager';
 import { scrapeSnkrdunkPage, convertJpyToHkd } from './snkrdunkScraper';
+import * as batchUpdateSnkrdunkProgress from './batchUpdateSnkrdunkProgress';
 
 /**
  * Execute SNKRDUNK batch update with persistent task tracking
@@ -57,7 +58,10 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
 
   console.log(`[PersistentSnkrdunkBatchUpdate] Starting batch update for ${cardsToUpdate.length} cards (skipped ${skippedCards.length} recently updated)`);
 
-  // Create persistent task
+  // Initialize progress tracking (for frontend display)
+  batchUpdateSnkrdunkProgress.initSnkrdunkBatchUpdateProgress(cardsToUpdate.length);
+
+  // Create persistent task (for database persistence)
   const taskId = await batchTaskManager.createBatchTask('batch_snkrdunk_update', cardsToUpdate.length);
 
   // Execute batch update in background (async IIFE) with parallel processing
@@ -94,6 +98,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
             if (cardDataSources.length === 0) {
               // 無數據源不計入錯誤，跳過
               await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
+              batchUpdateSnkrdunkProgress.updateSnkrdunkProgressSuccess(0);
               return;
             }
 
@@ -102,6 +107,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
             if (!dataSource.sourceUrl) {
               // URL 為空不計入錯誤，跳過
               await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
+              batchUpdateSnkrdunkProgress.updateSnkrdunkProgressSuccess(0);
               return;
             }
 
@@ -110,6 +116,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
             if (!scrapedData || !scrapedData.priceHistory || scrapedData.priceHistory.length === 0) {
               // 沒有價格數據是正常情況，不計入錯誤
               await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
+              batchUpdateSnkrdunkProgress.updateSnkrdunkProgressSuccess(0);
               return;
             }
 
@@ -134,10 +141,12 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
             }
 
             await batchTaskManager.updateTaskProgressSuccess(taskId, recordsAdded);
+            batchUpdateSnkrdunkProgress.updateSnkrdunkProgressSuccess(recordsAdded);
             console.log(`[PersistentSnkrdunkBatchUpdate] Updated card ${card.id}, added ${recordsAdded} records`);
           } catch (error: any) {
             console.error(`[PersistentSnkrdunkBatchUpdate] Error updating card ${card.id}: ${error.message}`);
             await batchTaskManager.updateTaskProgressFailure(taskId, card.id, card.name, error.message);
+            batchUpdateSnkrdunkProgress.updateSnkrdunkProgressFailure(card.id, card.name, error.message);
           }
         }));
         
@@ -153,6 +162,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
 
     // Complete task
     await batchTaskManager.completeTask(taskId, 'completed');
+    batchUpdateSnkrdunkProgress.completeSnkrdunkBatchUpdate();
     console.log(`[PersistentSnkrdunkBatchUpdate] Batch update completed (processed: ${cardsToUpdate.length}, skipped: ${skippedCards.length})`);
   })();
 
