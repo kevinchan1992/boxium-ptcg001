@@ -2937,3 +2937,35 @@ for (const card of allCards) {
 - [x] 測試並驗證所有修改（11/11 單元測試通過）
 - [x] 修復批量更新執行器支持卡盒產品（batchUpdateExecutor.ts + persistentSnkrdunkBatchUpdate.ts）
 - [x] 保存 checkpoint
+
+
+---
+
+## 🔧 修復再次卡死的批量更新任務
+
+### 問題描述
+用戶點擊「立即更新所有 SNKRDUNK 卡牌」後，顯示「啟動失敗：SNKRDUNK 批量更新失敗: SNKRDUNK 批量更新已在運行中」。
+
+### 任務清單
+- [x] 檢查 scheduledTasks 表中是否有 running 狀態的任務（Task 330001 卡在 312/36123）
+- [x] 清理所有卡死的 running 任務（Task 330001 已標記為 failed）
+- [x] 診斷任務卡死的根本原因：SNKRDUNK 限流導致連續失敗，但任務繼續嘗試處理剩餘 36,000 張卡片
+- [x] 添加連續失敗檢測機制：連續 10 次失敗後自動暫停任務，記錄錯誤原因
+- [ ] 測試批量更新功能
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🔧 深入修復批量更新限流/超時問題
+
+### 問題描述
+批量更新 36,000+ 張卡牌時頻繁卡死，可能是 SNKRDUNK 限流或爬蟲實現問題。
+
+### 任務清單
+- [x] 分析爬蟲實現方式（snkrdunkScraper.ts）
+- [x] 分析 SNKRDUNK API 的限流策略
+- [x] 設計穩健的批量更新策略（指數退避、智能跳過、隨機延遲、超時保護、連續失敗檢測）
+- [x] 實現修復（重寫 persistentSnkrdunkBatchUpdate.ts + 更新 batchUpdateScheduler.ts）
+- [x] 測試批量更新功能（29/29 單元測試通過）
+- [x] 保存 checkpoint

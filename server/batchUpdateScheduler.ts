@@ -5,7 +5,7 @@
 
 import * as cron from "node-cron";
 import * as db from "./db";
-import { executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
+import { executePersistentSnkrdunkBatchUpdate } from "./persistentSnkrdunkBatchUpdate";
 
 let scheduledTask: ReturnType<typeof cron.schedule> | null = null;
 
@@ -98,20 +98,20 @@ async function executeBatchUpdate(executionType: "scheduled" | "manual") {
 
     console.log(`[BatchUpdateScheduler] Starting ${executionType} batch update (history ID: ${historyId})`);
 
-    // 僅執行 SNKRDUNK 批量更新（eBay 已停用）
-    const snkrdunkResult = await executeSnkrdunkBatchUpdate();
-    console.log(`[BatchUpdateScheduler] SNKRDUNK update completed: ${snkrdunkResult.successCount} success, ${snkrdunkResult.failureCount} failures`);
+    // 使用持久化版本的批量更新（支持防限流、指數退避、智能跳過）
+    const { taskId, totalCards, skippedCards } = await executePersistentSnkrdunkBatchUpdate();
+    console.log(`[BatchUpdateScheduler] SNKRDUNK persistent batch update started: taskId=${taskId}, totalCards=${totalCards}, skippedCards=${skippedCards}`);
 
-    // 更新執行歷史
+    // 更新執行歷史（任務已在後台運行，這裡只記錄啟動狀態）
     const durationMs = Date.now() - startTime;
     await db.updateScheduleExecutionHistory(historyId, {
       status: "completed",
       ebaySuccessCount: 0,
       ebayFailureCount: 0,
       ebayRecordsAdded: 0,
-      snkrdunkSuccessCount: snkrdunkResult.successCount,
-      snkrdunkFailureCount: snkrdunkResult.failureCount,
-      snkrdunkRecordsAdded: snkrdunkResult.totalRecordsAdded,
+      snkrdunkSuccessCount: totalCards,
+      snkrdunkFailureCount: 0,
+      snkrdunkRecordsAdded: 0,
       completedAt: new Date(),
       durationMs,
     });
