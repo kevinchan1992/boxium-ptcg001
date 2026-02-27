@@ -2699,3 +2699,54 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 添加管理後台按鈕動畫（hover: y: -2 + scale: 1.05）
 - [x] 測試桌面版導航動畫效果（✅ TypeScript 編譯無錯誤）
 - [ ] 保存 checkpoint
+
+
+### 🔧 診斷並修復 SNKRDUNK 價格更新排程失敗問題
+- [ ] 檢查排程執行歷史日誌（查看錯誤信息）
+- [ ] 檢查後端批量更新代碼（persistentSnkrdunkBatchUpdate.ts）
+- [ ] 檢查 SNKRDUNK API 調用是否正常
+- [ ] 檢查數據庫中是否有 SNKRDUNK 卡牌數據
+- [ ] 診斷「成功：0、失敗：0、新增記錄：0」的原因
+- [ ] 修復爬取邏輯或 API 調用問題
+- [ ] 測試手動觸發批量更新
+- [ ] 保存 checkpoint
+
+
+---
+
+## 🐛 修復 SNKRDUNK 批量更新智能跳過邏輯
+
+### 問題描述
+用戶每天在固定時間批量更新所有卡牌價格，但批量更新執行後只處理了 1-2 張卡牌，其他卡牌都被「智能跳過」邏輯跳過了。
+
+### 診斷結果
+- 數據庫有 36,215 個 SNKRDUNK 數據源（全部 isActive = 1）
+- 批量更新執行時，幾乎所有卡牌都被跳過（因為過去 24 小時內已更新過）
+- 最近的批量更新（ID: 270004）：26,275 張卡牌中只處理了 1 張，2 秒內完成
+
+### 根本原因
+`persistentSnkrdunkBatchUpdate.ts` 中的智能跳過邏輯（第 40-57 行）：
+```typescript
+// Smart skip: Filter out cards updated in the last 24 hours
+const SKIP_THRESHOLD_HOURS = 24;
+const skipThreshold = new Date(Date.now() - SKIP_THRESHOLD_HOURS * 60 * 60 * 1000);
+
+for (const card of allCards) {
+  // Check if card has recent price history (last 24 hours)
+  const recentPrices = await db.getPriceHistory(card.id, 'snkrdunk', undefined, 1, 1);
+  
+  if (recentPrices.length > 0) {
+    skippedCards.push(card.id);
+    console.log(`[PersistentSnkrdunkBatchUpdate] Skipping card ${card.id} (updated recently)`);
+  } else {
+    cardsToUpdate.push(card);
+  }
+}
+```
+
+### 任務清單
+- [x] 移除智能跳過邏輯（第 40-57 行）
+- [x] 直接將所有卡牌加入 cardsToUpdate 列表
+- [x] 測試批量更新功能（確認所有卡牌都被處理）
+- [x] 創建單元測試（3 項測試全部通過）
+- [ ] 保存 checkpoint

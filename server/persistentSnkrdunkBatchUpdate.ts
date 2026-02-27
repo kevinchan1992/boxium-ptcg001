@@ -9,8 +9,8 @@ import * as batchUpdateSnkrdunkProgress from './batchUpdateSnkrdunkProgress';
  * 
  * Optimizations:
  * - Parallel processing: Process 5 cards concurrently
- * - Smart skip: Skip cards updated in the last 24 hours
  * - Reduced delay: 100ms between cards (down from 150ms)
+ * - Process all cards without skipping (for daily scheduled updates)
  */
 export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: number; totalCards: number; skippedCards: number }> {
   // Check if there's already a running task
@@ -37,26 +37,10 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
   const allCards = Array.from(uniqueCards.values());
   console.log(`[PersistentSnkrdunkBatchUpdate] Found ${allCards.length} unique cards`);
 
-  // Smart skip: Filter out cards updated in the last 24 hours
-  const SKIP_THRESHOLD_HOURS = 24;
-  const skipThreshold = new Date(Date.now() - SKIP_THRESHOLD_HOURS * 60 * 60 * 1000);
+  // Process all cards without skipping
+  const cardsToUpdate = allCards;
   
-  const cardsToUpdate: Array<{ id: number; name: string }> = [];
-  const skippedCards: number[] = [];
-  
-  for (const card of allCards) {
-    // Check if card has recent price history (last 24 hours)
-    const recentPrices = await db.getPriceHistory(card.id, 'snkrdunk', undefined, 1, 1); // days = 1 (last 24 hours)
-    
-    if (recentPrices.length > 0) {
-      skippedCards.push(card.id);
-      console.log(`[PersistentSnkrdunkBatchUpdate] Skipping card ${card.id} (updated recently)`);
-    } else {
-      cardsToUpdate.push(card);
-    }
-  }
-
-  console.log(`[PersistentSnkrdunkBatchUpdate] Starting batch update for ${cardsToUpdate.length} cards (skipped ${skippedCards.length} recently updated)`);
+  console.log(`[PersistentSnkrdunkBatchUpdate] Starting batch update for ${cardsToUpdate.length} cards`);
 
   // Initialize progress tracking (for frontend display)
   batchUpdateSnkrdunkProgress.initSnkrdunkBatchUpdateProgress(cardsToUpdate.length);
@@ -163,8 +147,8 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
     // Complete task
     await batchTaskManager.completeTask(taskId, 'completed');
     batchUpdateSnkrdunkProgress.completeSnkrdunkBatchUpdate();
-    console.log(`[PersistentSnkrdunkBatchUpdate] Batch update completed (processed: ${cardsToUpdate.length}, skipped: ${skippedCards.length})`);
+    console.log(`[PersistentSnkrdunkBatchUpdate] Batch update completed (processed: ${cardsToUpdate.length})`);
   })();
 
-  return { taskId, totalCards: cardsToUpdate.length, skippedCards: skippedCards.length };
+  return { taskId, totalCards: cardsToUpdate.length, skippedCards: 0 };
 }
