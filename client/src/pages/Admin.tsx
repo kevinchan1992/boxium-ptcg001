@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock, Activity } from "lucide-react";
+import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock, Activity, History } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
 import { AdminDataSources } from "@/components/AdminDataSources";
@@ -9,6 +9,7 @@ import { AdminBlogManagement } from "@/components/AdminBlogManagement";
 import { AdminCacheManagement } from "@/components/AdminCacheManagement";
 import { AdminScheduleManagement } from "@/components/AdminScheduleManagement";
 import { AdminScraperPerformance } from "@/components/AdminScraperPerformance";
+import { AdminTaskHistory } from "@/components/AdminTaskHistory";
 
 import { useTranslation } from "react-i18next";
 
@@ -56,6 +57,10 @@ export default function Admin() {
               <Activity className="w-4 h-4 lg:w-5 lg:h-5" />
               <span className="hidden sm:inline">性能監控</span>
             </TabsTrigger>
+            <TabsTrigger value="taskhistory" className="flex items-center gap-1 lg:gap-2 text-xs lg:text-base lg:px-4 lg:py-2.5">
+              <History className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="hidden sm:inline">任務歷史</span>
+            </TabsTrigger>
           </TabsList>
 
             <TabsContent value="dashboard" className="mt-6">
@@ -88,6 +93,10 @@ export default function Admin() {
 
             <TabsContent value="performance" className="mt-6">
               <AdminScraperPerformance />
+            </TabsContent>
+
+            <TabsContent value="taskhistory" className="mt-6">
+              <AdminTaskHistory />
             </TabsContent>
           </Tabs>
         </div>

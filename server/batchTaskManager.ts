@@ -1,6 +1,6 @@
 import { getDb } from './db';
 import { scheduledTasks, BatchTaskProgress } from '../drizzle/schema_new';
-import { eq, and, or } from 'drizzle-orm';
+import { eq, and, or, desc, lt, sql } from 'drizzle-orm';
 
 /**
  * Batch Task Manager - Persistent task tracking using database
@@ -291,4 +291,223 @@ export async function isTaskCancelled(taskId: number): Promise<boolean> {
 export async function hasRunningTask(taskType: 'batch_ebay_update' | 'batch_snkrdunk_update'): Promise<boolean> {
   const task = await getLatestRunningTask(taskType);
   return task !== null;
+}
+
+/**
+ * Get task history with pagination
+ */
+export async function getTaskHistory(options: {
+  page?: number;
+  pageSize?: number;
+  taskType?: string;
+  status?: string;
+} = {}): Promise<{
+  tasks: Array<{
+    id: number;
+    taskType: string;
+    status: string;
+    totalItems: number;
+    processedItems: number;
+    successCount: number;
+    failureCount: number;
+    progress: number;
+    errorMessage: string | null;
+    startedAt: Date | null;
+    completedAt: Date | null;
+    createdAt: Date | null;
+    durationMs: number | null;
+  }>;
+  total: number;
+  page: number;
+  pageSize: number;
+}> {
+  const db = await getDb();
+  if (!db) {
+    return { tasks: [], total: 0, page: 1, pageSize: 20 };
+  }
+
+  const page = options.page || 1;
+  const pageSize = options.pageSize || 20;
+  const offset = (page - 1) * pageSize;
+
+  // Build where conditions
+  const conditions: any[] = [];
+  if (options.taskType) {
+    conditions.push(eq(scheduledTasks.taskType, options.taskType));
+  }
+  if (options.status) {
+    conditions.push(eq(scheduledTasks.status, options.status as any));
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  // Get total count
+  const countResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(scheduledTasks)
+    .where(whereClause);
+  const total = Number(countResult[0]?.count || 0);
+
+  // Get paginated tasks
+  const tasks = await db
+    .select()
+    .from(scheduledTasks)
+    .where(whereClause)
+    .orderBy(desc(scheduledTasks.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  return {
+    tasks: tasks.map(task => {
+      // Calculate duration
+      let durationMs: number | null = null;
+      if (task.startedAt && task.completedAt) {
+        durationMs = new Date(task.completedAt).getTime() - new Date(task.startedAt).getTime();
+      } else if (task.startedAt && task.status === 'running') {
+        durationMs = Date.now() - new Date(task.startedAt).getTime();
+      }
+
+      return {
+        id: task.id,
+        taskType: task.taskType,
+        status: task.status,
+        totalItems: task.totalItems || 0,
+        processedItems: task.processedItems || 0,
+        successCount: task.successCount || 0,
+        failureCount: task.failureCount || 0,
+        progress: task.progress || 0,
+        errorMessage: task.errorMessage || null,
+        startedAt: task.startedAt,
+        completedAt: task.completedAt,
+        createdAt: task.createdAt,
+        durationMs,
+      };
+    }),
+    total,
+    page,
+    pageSize,
+  };
+}
+
+/**
+ * Clean old task records, keeping only the most recent N records
+ */
+export async function cleanOldTasks(keepCount: number = 50): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    return 0;
+  }
+
+  // Get the ID threshold: keep the most recent keepCount records
+  const recentTasks = await db
+    .select({ id: scheduledTasks.id })
+    .from(scheduledTasks)
+    .orderBy(desc(scheduledTasks.createdAt))
+    .limit(keepCount);
+
+  if (recentTasks.length < keepCount) {
+    // Not enough records to clean
+    return 0;
+  }
+
+  const oldestKeptId = recentTasks[recentTasks.length - 1].id;
+
+  // Delete records older than the threshold (but not running/paused tasks)
+  const result = await db
+    .delete(scheduledTasks)
+    .where(
+      and(
+        lt(scheduledTasks.id, oldestKeptId),
+        // Don't delete running or paused tasks
+        sql`${scheduledTasks.status} NOT IN ('running', 'paused')`
+      )
+    );
+
+  const deletedCount = Number((result as any)[0]?.affectedRows || 0);
+  console.log(`[BatchTaskManager] Cleaned ${deletedCount} old task records (kept ${keepCount} most recent)`);
+  return deletedCount;
+}
+
+/**
+ * Get task summary statistics
+ */
+export async function getTaskStats(): Promise<{
+  totalTasks: number;
+  runningTasks: number;
+  completedTasks: number;
+  failedTasks: number;
+  last7DaysStats: {
+    totalRuns: number;
+    successfulRuns: number;
+    failedRuns: number;
+    avgDurationMs: number;
+    totalItemsProcessed: number;
+  };
+}> {
+  const db = await getDb();
+  if (!db) {
+    return {
+      totalTasks: 0,
+      runningTasks: 0,
+      completedTasks: 0,
+      failedTasks: 0,
+      last7DaysStats: { totalRuns: 0, successfulRuns: 0, failedRuns: 0, avgDurationMs: 0, totalItemsProcessed: 0 },
+    };
+  }
+
+  // Overall counts - query all tasks and count in JS to avoid drizzle groupBy type issues
+  const allTasks = await db
+    .select({ status: scheduledTasks.status })
+    .from(scheduledTasks);
+
+  const counts: Record<string, number> = {};
+  for (const row of allTasks) {
+    counts[row.status] = (counts[row.status] || 0) + 1;
+  }
+
+  // Last 7 days stats
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const recentTasks = await db
+    .select()
+    .from(scheduledTasks)
+    .where(
+      and(
+        sql`${scheduledTasks.createdAt} >= ${sevenDaysAgo}`,
+        eq(scheduledTasks.taskType, 'batch_snkrdunk_update')
+      )
+    );
+
+  let totalRuns = recentTasks.length;
+  let successfulRuns = 0;
+  let failedRuns = 0;
+  let totalDurationMs = 0;
+  let durationCount = 0;
+  let totalItemsProcessed = 0;
+
+  for (const task of recentTasks) {
+    if (task.status === 'completed') successfulRuns++;
+    if (task.status === 'failed') failedRuns++;
+    totalItemsProcessed += task.processedItems || 0;
+
+    if (task.startedAt && task.completedAt) {
+      totalDurationMs += new Date(task.completedAt).getTime() - new Date(task.startedAt).getTime();
+      durationCount++;
+    }
+  }
+
+  return {
+    totalTasks: Object.values(counts).reduce((a, b) => a + b, 0),
+    runningTasks: counts['running'] || 0,
+    completedTasks: counts['completed'] || 0,
+    failedTasks: counts['failed'] || 0,
+    last7DaysStats: {
+      totalRuns,
+      successfulRuns,
+      failedRuns,
+      avgDurationMs: durationCount > 0 ? Math.round(totalDurationMs / durationCount) : 0,
+      totalItemsProcessed,
+    },
+  };
 }

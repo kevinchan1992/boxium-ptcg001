@@ -2969,3 +2969,17 @@ for (const card of allCards) {
 - [x] 實現修復（重寫 persistentSnkrdunkBatchUpdate.ts + 更新 batchUpdateScheduler.ts）
 - [x] 測試批量更新功能（29/29 單元測試通過）
 - [x] 保存 checkpoint
+
+
+---
+
+## 🔧 啟動批量更新 + 任務歷史查看功能
+
+### 任務清單
+- [x] 清理舊的卡死任務記錄（5553→只保留 17 條有意義的記錄）
+- [x] 啟動新的批量更新（Task 330002，34147 張卡片）
+- [x] 後端：創建任務歷史查詢 API（getTaskHistory, getTaskStats, cleanOldTasks, deleteTask）
+- [x] 後端：創建清洗舊記錄 API
+- [x] 前端：在管理後台添加任務歷史查看 UI（AdminTaskHistory 組件）
+- [x] 測試並驗證（7/7 單元測試通過）
+- [x] 保存 checkpoint

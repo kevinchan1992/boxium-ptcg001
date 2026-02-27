@@ -2402,6 +2402,54 @@ try {
 
         return { success: true };
       }),
+    // Task History APIs
+    getTaskHistory: adminProcedure
+      .input(z.object({
+        page: z.number().min(1).optional(),
+        pageSize: z.number().min(1).max(100).optional(),
+        taskType: z.string().optional(),
+        status: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await batchTaskManager.getTaskHistory(input);
+      }),
+
+    getTaskStats: adminProcedure
+      .query(async () => {
+        return await batchTaskManager.getTaskStats();
+      }),
+
+    cleanOldTasks: adminProcedure
+      .input(z.object({
+        keepCount: z.number().min(5).max(500).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const deletedCount = await batchTaskManager.cleanOldTasks(input.keepCount || 50);
+        return { success: true, deletedCount };
+      }),
+
+    deleteTask: adminProcedure
+      .input(z.object({
+        taskId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        // Only allow deleting completed or failed tasks
+        const task = await batchTaskManager.getBatchTaskProgress(input.taskId);
+        if (!task) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: '找不到該任務' });
+        }
+        if (task.status === 'running' || task.status === 'paused') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: '無法刪除正在運行或暫停的任務，請先取消任務' });
+        }
+        const dbInstance = await db.getDb();
+        if (dbInstance) {
+          const { scheduledTasks } = require('../drizzle/schema_new');
+          const { eq } = require('drizzle-orm');
+          await dbInstance.delete(scheduledTasks).where(eq(scheduledTasks.id, input.taskId));
+        }
+        return { success: true };
+      }),
+
     // User Management APIs
     getUserList: adminProcedure
       .input(z.object({
