@@ -95,8 +95,9 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
               return;
             }
 
-            // Scrape SNKRDUNK page
-            const scrapedData = await scrapeSnkrdunkPage(dataSource.sourceUrl);
+            // Scrape SNKRDUNK page (pass productType to handle sealed products correctly)
+            const productType = dataSource.productType || "single_card";
+            const scrapedData = await scrapeSnkrdunkPage(dataSource.sourceUrl, productType);
             if (!scrapedData || !scrapedData.priceHistory || scrapedData.priceHistory.length === 0) {
               // 沒有價格數據是正常情況，不計入錯誤
               await batchTaskManager.updateTaskProgressSuccess(taskId, 0);

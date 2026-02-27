@@ -1,0 +1,1 @@
+ALTER TABLE `priceHistory` ADD `quantity` varchar(50);

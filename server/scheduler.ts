@@ -3,7 +3,7 @@ import { getDb } from "./db";
 import * as db from "./db";
 import { dataSources, scheduledTasks, priceHistory } from "../drizzle/schema_new";
 import { eq, and, lt, or, isNull } from "drizzle-orm";
-import { scrapeSnkrdunkPage, updatePriceHistoryOnly, convertJpyToHkd, extractSnkrdunkId } from "./snkrdunkScraper";
+import { scrapeSnkrdunkPage, fetchPriceHistory, convertJpyToHkd, extractSnkrdunkId } from "./snkrdunkScraper";
 import { scrapeSnkrdunkPages } from "./snkrdunkAutoCrawler";
 import { calculateAndCacheTrendingRankings } from "./trendingCacheManager";
 
@@ -172,7 +172,7 @@ async function updateDataSource(db: any, source: any) {
     );
 
     // Only update price history (not card data)
-    const priceData = await updatePriceHistoryOnly(source.sourceUrl);
+    const priceData = await fetchPriceHistory(source.sourceUrl);
 
     // Insert price history records
     if (priceData && priceData.length > 0) {

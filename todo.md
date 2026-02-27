@@ -2792,3 +2792,37 @@ for (const card of allCards) {
 - [ ] 手動測試添加 One Piece 單卡
 - [ ] 手動測試添加 One Piece 卡盒
 - [ ] 保存 checkpoint
+
+
+---
+
+## 📦 優化 SNKRDUNK 爬蟲邏輯 - 支持卡盒數量欄位
+
+### 需求
+- 卡盒的「サイズ」欄位顯示的是「數量」（10盒、1盒、2盒等），而不是「評級」
+- 需要爬取並顯示卡盒交易記錄的數量信息
+
+### 數據庫修改
+- [x] 在 `priceHistory` 表添加 `quantity` 欄位（用於存儲卡盒數量）
+- [x] `grade` 欄位已經是可選（卡盒不需要評級）
+
+### 後端代碼更新
+- [x] 修改 `snkrdunkScraper.ts` 爬蟲邏輯，根據 `productType` 解析「サイズ」欄位
+  - 單卡：解析為「評級」（PSA 10、中古等）
+  - 卡盒：解析為「數量」（10盒、1盒、2盒等）
+- [x] 修改 `persistentSnkrdunkBatchUpdate.ts` 批量更新邏輯
+- [x] 修改 `db.ts` 添加 `productType` 欄位到 `getDataSources` 返回結果
+- [x] 修改 `scheduler.ts` 修復導入錯誤
+- [x] 創建單元測試（5 項測試全部通過）
+
+### 前端界面更新
+- [x] 修改 `CardDetail.tsx` 卡牌詳情頁
+  - 單卡：顯示「評級」欄位
+  - 卡盒：顯示「數量」欄位
+- [ ] 測試卡盒和單卡的顯示效果
+
+### 測試場景
+- [x] 單元測試驗證卡盒數量欄位爬取
+- [x] 單元測試驗證單卡評級欄位爬取
+- [ ] 手動測試添加卡盒數據源並查看顯示效果
+- [ ] 保存 checkpoint

@@ -379,7 +379,8 @@ export default function CardDetail() {
                         {t("cardDetail.date")}
                       </th>
                       <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm w-16 sm:w-24">
-                        {t("cardDetail.grade")}
+                        {/* Show "數量" for sealed products, "評級" for single cards */}
+                        {priceHistory.some(p => p.quantity) ? "數量" : t("cardDetail.grade")}
                       </th>
                       <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm">
                         {t("cardDetail.price")}
@@ -388,8 +389,10 @@ export default function CardDetail() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {priceHistory.map((item, index) => {
-                      const displayGrade = item.grade;
-                      const isUngraded = !item.grade;
+                      // For sealed products: show quantity (e.g., "10盒", "1盒")
+                      // For single cards: show grade (e.g., "PSA 10", "中古")
+                      const displayValue = item.quantity || item.grade;
+                      const isEmpty = !displayValue;
                       
                       return (
                         <tr key={index} className="hover:bg-muted/50 transition-colors">
@@ -397,12 +400,12 @@ export default function CardDetail() {
                             {item.soldAt ? formatShortDateTime(item.soldAt) : "N/A"}
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-foreground text-xs sm:text-sm w-16 sm:w-24">
-                            {isUngraded ? (
+                            {isEmpty ? (
                               <span className="inline-flex items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-md bg-muted text-[10px] sm:text-xs font-medium whitespace-nowrap">
                                 {t("cardDetail.usedGrade")}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center justify-center font-medium whitespace-nowrap text-xs sm:text-sm">{displayGrade}</span>
+                              <span className="inline-flex items-center justify-center font-medium whitespace-nowrap text-xs sm:text-sm">{displayValue}</span>
                             )}
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-right font-semibold text-primary text-xs sm:text-sm">

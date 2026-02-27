@@ -109,8 +109,9 @@ export const priceHistory = mysqlTable("priceHistory", {
   source: mysqlEnum("source", ["snkrdunk", "ebay", "tcgplayer", "other"]).notNull(), // Price source
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Price value
   currency: varchar("currency", { length: 8 }).default("HKD").notNull(), // Currency code
-  grade: varchar("grade", { length: 32 }), // Card grade (e.g., "PSA 10", "BGS 9.5")
+  grade: varchar("grade", { length: 32 }), // Card grade (e.g., "PSA 10", "BGS 9.5") - for single cards
   condition: varchar("condition", { length: 64 }), // Card condition
+  quantity: varchar("quantity", { length: 50 }), // Quantity (e.g., "10盒", "1盒") - for sealed products
   listingUrl: text("listingUrl"), // URL to the listing
   soldAt: timestamp("soldAt"), // Transaction timestamp
   createdAt: timestamp("createdAt").defaultNow().notNull(),

@@ -14,7 +14,8 @@ export interface SnkrdunkCardData {
     price: number;
     currency: string;
     soldAt: Date;
-    grade?: string;
+    grade?: string; // For single cards (e.g., "PSA 10", "中古")
+    quantity?: string; // For sealed products (e.g., "10盒", "1盒")
   }>;
 }
 
@@ -72,7 +73,7 @@ export async function fetchCardDetailsFromApi(productId: string): Promise<{
 /**
  * Scrape SNKRDUNK page using API
  */
-export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData> {
+export async function scrapeSnkrdunkPage(url: string, productType: "single_card" | "sealed_product" = "single_card"): Promise<SnkrdunkCardData> {
   try {
     // Extract product ID from URL
     const productId = extractSnkrdunkId(url);
@@ -84,7 +85,7 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
     const cardDetails = await fetchCardDetailsFromApi(productId);
     
     // Fetch price history from API
-    const priceHistory = await fetchPriceHistoryFromApi(productId);
+    const priceHistory = await fetchPriceHistoryFromApi(productId, productType);
 
     return {
       name: cardDetails.name,
@@ -112,11 +113,12 @@ export async function scrapeSnkrdunkPage(url: string): Promise<SnkrdunkCardData>
  * Fetch price history from SNKRDUNK API
  * API endpoint: /v1/apparels/{id}/sales-history
  */
-export async function fetchPriceHistoryFromApi(productId: string): Promise<Array<{
+export async function fetchPriceHistoryFromApi(productId: string, productType: "single_card" | "sealed_product" = "single_card"): Promise<Array<{
   price: number;
   currency: string;
   soldAt: Date;
   grade?: string;
+  quantity?: string;
 }>> {
   try {
     const apiUrl = `https://snkrdunk.com/v1/apparels/${productId}/sales-history?size_id=0&page=1&per_page=100`;
@@ -136,17 +138,33 @@ export async function fetchPriceHistoryFromApi(productId: string): Promise<Array
       currency: string;
       soldAt: Date;
       grade?: string;
+      quantity?: string;
     }> = [];
 
     // Parse API response
     if (data.history && Array.isArray(data.history)) {
       for (const item of data.history) {
-        priceHistory.push({
+        const record: {
+          price: number;
+          currency: string;
+          soldAt: Date;
+          grade?: string;
+          quantity?: string;
+        } = {
           price: item.price,
           currency: "JPY",
           soldAt: parseJapaneseDate(item.date),
-          grade: item.condition || undefined,
-        });
+        };
+        
+        // For single cards: store grade (e.g., "PSA 10", "中古")
+        // For sealed products: store quantity (e.g., "10盒", "1盒")
+        if (productType === "single_card") {
+          record.grade = item.condition || undefined;
+        } else {
+          record.quantity = item.condition || undefined; // "condition" field contains quantity for sealed products
+        }
+        
+        priceHistory.push(record);
       }
     }
 
@@ -195,16 +213,17 @@ export function convertJpyToTwd(jpy: number): number {
  * Update price history only (without re-scraping card data)
  * This function is optimized for scheduled updates where card info doesn't change
  */
-export async function updatePriceHistoryOnly(url: string): Promise<Array<{
+export async function fetchPriceHistory(url: string, productType: "single_card" | "sealed_product" = "single_card"): Promise<Array<{
   price: number;
   currency: string;
   soldAt: Date;
   grade?: string;
+  quantity?: string;
 }>> {
   const productId = extractSnkrdunkId(url);
   if (!productId) {
     throw new Error("Invalid SNKRDUNK URL: Cannot extract product ID");
   }
   
-  return await fetchPriceHistoryFromApi(productId);
+  return await fetchPriceHistoryFromApi(productId, productType);
 }

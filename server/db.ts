@@ -350,6 +350,7 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
       cardId: dataSources.cardId,
       source: dataSources.source,
       sourceUrl: dataSources.sourceUrl,
+      productType: dataSources.productType,
       isActive: dataSources.isActive,
       lastFetchedAt: dataSources.lastFetchedAt,
       lastFetchStatus: dataSources.lastFetchStatus,
