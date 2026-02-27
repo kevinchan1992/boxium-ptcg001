@@ -359,7 +359,7 @@ export default function Home() {
 
       {/* Image Upload Dialog */}
       <Dialog open={showImageDialog} onOpenChange={(open) => { if (!open) handleCloseDialog(); }}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-lg max-h-[85dvh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
               {showResults ? '識別結果' : '卡牌圖片分析功能'}
@@ -412,12 +412,12 @@ export default function Home() {
                   <button
                     key={card.id}
                     onClick={() => handleSelectMatch(card)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all hover:scale-[1.01] hover:shadow-md ${
+                    className={`w-full flex items-center gap-2 p-3 rounded-lg border transition-all active:scale-[0.99] hover:shadow-md ${
                       index === 0 ? getScoreBg(card.matchScore) : 'bg-card border-border hover:border-primary/50'
                     }`}
                   >
                     {/* Card Image */}
-                    <div className="w-14 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+                    <div className="w-12 h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted">
                       {card.imageUrl ? (
                         <LazyImage
                           src={card.imageUrl}
@@ -426,40 +426,40 @@ export default function Home() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                          <Search className="w-5 h-5" />
+                          <Search className="w-4 h-4" />
                         </div>
                       )}
                     </div>
 
-                    {/* Card Info */}
-                    <div className="flex-1 text-left min-w-0">
-                      <div className="flex items-center gap-2">
+                    {/* Card Info - takes all remaining space */}
+                    <div className="flex-1 text-left min-w-0 overflow-hidden">
+                      <div className="flex items-center gap-1.5 mb-0.5">
                         {index === 0 && (
-                          <Star className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0 fill-yellow-500" />
+                          <Star className="w-3 h-3 text-yellow-500 flex-shrink-0 fill-yellow-500" />
                         )}
-                        <p className="text-sm font-medium text-foreground truncate">
+                        <p className="text-sm font-medium text-foreground leading-tight line-clamp-2">
                           {card.name}
                         </p>
                       </div>
                       {card.nameJa && card.nameJa !== card.name && (
                         <p className="text-xs text-muted-foreground truncate">{card.nameJa}</p>
                       )}
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         {card.cardNumber && (
                           <span className="text-xs text-muted-foreground">#{card.cardNumber}</span>
                         )}
                         {card.rarity && (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{card.rarity}</span>
+                          <span className="text-xs px-1 py-0.5 rounded bg-muted text-muted-foreground">{card.rarity}</span>
                         )}
                         {card.latestPrice && (
-                          <span className="text-xs font-medium text-green-500">
+                          <span className="text-xs font-semibold text-green-500">
                             HK${card.latestPrice.toLocaleString()}
                           </span>
                         )}
                       </div>
-                      {/* Match reasons */}
+                      {/* Match reasons - show fewer on mobile */}
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {card.matchReasons.slice(0, 3).map((reason, i) => (
+                        {card.matchReasons.slice(0, 2).map((reason, i) => (
                           <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                             {reason}
                           </span>
@@ -467,12 +467,12 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Match Score */}
-                    <div className="flex-shrink-0 text-right">
-                      <div className={`text-lg font-bold ${getScoreColor(card.matchScore)}`}>
+                    {/* Match Score - compact */}
+                    <div className="flex-shrink-0 text-right pl-1">
+                      <div className={`text-base font-bold ${getScoreColor(card.matchScore)}`}>
                         {card.matchScore}
                       </div>
-                      <p className="text-[10px] text-muted-foreground">匹配分</p>
+                      <p className="text-[9px] text-muted-foreground">分</p>
                     </div>
                   </button>
                 ))}

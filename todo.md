@@ -3262,7 +3262,7 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 嘗試用輕量 HTTP 請求替代 Playwright（發現 SNKRDUNK 內部 REST API）
 - [x] 優化超時設定和等待策略（HTTP API 僅需 0.2-4 秒）
 - [x] 測試驗證優化效果（Card 430110: 3.56s 返回 5 個 PSA 10 listings）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint（version: 2aa60d81）
 
 ### 任務清單
 - [x] 探索 SNKRDUNK 內部 API 端點（GET /en/v1/trading-cards/{id}/used-listings）
@@ -3271,4 +3271,16 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 整合到現有服務架構（snkrdunkScraperService.ts 優先 HTTP API，Playwright 降級）
 - [x] 更新所有引用（routers.ts, diagnostics.ts, batchUpdateTaskManager.ts, cachePreloader.ts, cacheWarmer.ts）
 - [x] 編寫測試並驗證性能提升（16 個測試全部通過）
+- [x] 保存 checkpoint（version: 2aa60d81）
+
+## 📱 優化圖片搜尋結果 modal 手機顯示
+
+### 問題描述
+圖片搜尋結果視窗在手機螢幕上顯示可觀性低：視窗左側被截斷、卡牌標題文字超出視窗寬度、modal 未正確填滿手機螢幕。
+
+### 任務清單
+- [x] 找到圖片搜尋結果 modal 組件（Research.tsx + Pricing.tsx）
+- [x] 修復 modal 在手機上的尺寸和佈局（w-[calc(100vw-1.5rem)]，max-h-[85dvh]）
+- [x] 確保文字不溢出（overflow-x-hidden，line-clamp-2）
+- [x] 修復 dialog.tsx 基礎樣式（-translate-x-1/2 -translate-y-1/2）
 - [ ] 保存 checkpoint

@@ -300,7 +300,7 @@ export default function Pricing() {
 
       {/* Image Upload Dialog */}
       <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-lg max-h-[85dvh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">{t('pricing.imageSearchTitle') || '卡牌圖片分析功能'}</DialogTitle>
           </DialogHeader>
