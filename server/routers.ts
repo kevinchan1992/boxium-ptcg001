@@ -11,12 +11,8 @@ import { downloadAndEncodeImage, getBestImageUrl } from "./imageUtils";
 import { searchEbayByImageWithHkd } from "./ebayImageSearch";
 import { searchEbayItems, convertUsdToHkd, getUsdToHkdRate } from "./ebay";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
-// [eBay cleanup] batchUpdateProgress removed
-import * as snkrdunkBatchUpdateProgress from "./batchUpdateSnkrdunkProgress";
-// [eBay cleanup] persistentEbayBatchUpdate removed
 import { executePersistentSnkrdunkBatchUpdate } from "./persistentSnkrdunkBatchUpdate";
 import * as batchTaskManager from "./batchTaskManager";
-import { executeSnkrdunkBatchUpdate } from "./batchUpdateExecutor";
 import { restartScheduler } from "./batchUpdateScheduler";
 import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
 import { pricingRouter } from "./routers/pricing";
@@ -1789,12 +1785,12 @@ try {
         */ // batchUpdateEbayPrices 註釋結束
       }),
 
-    // 獲取批量更新進度（從數據庫讀取持久化進度）
+    // ─── 批量更新 API（統一使用持久化版本，進度從數據庫讀取）───
+
+    // 獲取批量更新進度（從數據庫讀取，前端輪詢用）
     getBatchUpdateProgress: publicProcedure
-      .query(async ({ ctx }) => {
-        // 從數據庫讀取最新的 running/paused task
+      .query(async () => {
         const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
-        
         if (runningTask) {
           return {
             isRunning: true,
@@ -1810,8 +1806,6 @@ try {
             taskId: runningTask.taskId,
           };
         }
-        
-        // 沒有運行中的任務，返回默認狀態
         return {
           isRunning: false,
           isPaused: false,
@@ -1827,106 +1821,43 @@ try {
         };
       }),
 
-    // 暫停批量更新（操作數據庫）
+    // 暫停批量更新（操作數據庫，batchTaskManager 是唯一的狀態來源）
     pauseBatchUpdate: adminProcedure
-      .mutation(async ({ ctx }) => {
+      .mutation(async () => {
         const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
         if (runningTask) {
           await batchTaskManager.pauseTask(runningTask.taskId);
-          // 同時更新內存狀態（用於當前進程內的暫停檢查）
-          snkrdunkBatchUpdateProgress.pauseSnkrdunkBatchUpdate();
         }
         return { success: true, message: "批量更新已暫停" };
       }),
 
     // 繼續批量更新（操作數據庫）
     resumeBatchUpdate: adminProcedure
-      .mutation(async ({ ctx }) => {
+      .mutation(async () => {
         const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
         if (runningTask) {
           await batchTaskManager.resumeTask(runningTask.taskId);
-          // 同時更新內存狀態
-          snkrdunkBatchUpdateProgress.resumeSnkrdunkBatchUpdate();
         }
         return { success: true, message: "批量更新已繼續" };
       }),
 
-    // 批量更新所有卡牠 SNKRDUNK 價格（使用持久化版本）
+    // 啟動 SNKRDUNK 批量更新（持久化版本）
     batchUpdateSnkrdunkPrices: adminProcedure
-      .mutation(async ({ ctx }) => {
+      .mutation(async () => {
         try {
-          // 使用持久化版本的批量更新（支持後端持續運行）
           const { taskId, totalCards } = await executePersistentSnkrdunkBatchUpdate();
-          
           return {
             success: true,
-            message: `SNKRDUNK 批量更新已啟動，任務 ID: ${taskId}，總共 ${totalCards} 張卡牠。即使關閉頁面，任務也會在後端持續運行。`,
+            message: `SNKRDUNK 批量更新已啟動，共 ${totalCards} 張卡牌`,
             taskId,
             totalCards,
           };
         } catch (error: any) {
-          console.error(`[SnkrdunkBatchUpdate] Error starting batch update: ${error.message}`);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: `啟動 SNKRDUNK 批量更新失敗: ${error.message}`,
           });
         }
-      }),
-
-    // 獲取 SNKRDUNK 批量更新進度（從數據庫讀取）
-    getSnkrdunkBatchUpdateProgress: publicProcedure
-      .query(async ({ ctx }) => {
-        const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
-        if (runningTask) {
-          return {
-            isRunning: true,
-            isPaused: runningTask.status === 'paused',
-            totalCards: runningTask.totalItems,
-            processedCards: runningTask.processedItems,
-            successCount: runningTask.successCount,
-            failureCount: runningTask.failureCount,
-            totalRecordsAdded: 0,
-            errors: runningTask.errors || [],
-            startTime: runningTask.startedAt ? new Date(runningTask.startedAt).getTime() : null,
-            endTime: null,
-            taskId: runningTask.taskId,
-          };
-        }
-        return {
-          isRunning: false,
-          isPaused: false,
-          totalCards: 0,
-          processedCards: 0,
-          successCount: 0,
-          failureCount: 0,
-          totalRecordsAdded: 0,
-          errors: [],
-          startTime: null,
-          endTime: null,
-          taskId: null,
-        };
-      }),
-
-    // 暫停 SNKRDUNK 批量更新（操作數據庫）
-    pauseSnkrdunkBatchUpdate: adminProcedure
-      .mutation(async ({ ctx }) => {
-        const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
-        if (runningTask) {
-          await batchTaskManager.pauseTask(runningTask.taskId);
-          snkrdunkBatchUpdateProgress.pauseSnkrdunkBatchUpdate();
-        }
-        return { success: true, message: "SNKRDUNK 批量更新已暫停" };
-      }),
-
-    // 繼續 SNKRDUNK 批量更新（操作數據庫）
-    resumeSnkrdunkBatchUpdate: adminProcedure
-      .mutation(async ({ ctx }) => {
-        const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
-        if (runningTask) {
-          await batchTaskManager.resumeTask(runningTask.taskId);
-          snkrdunkBatchUpdateProgress.resumeSnkrdunkBatchUpdate();
-        }
-        return { success: true, message: "SNKRDUNK 批量更新已繼續" };
       }),
 
     // 獲取排程設定
@@ -1951,9 +1882,9 @@ try {
         };
       }),
 
-    // 立即手動觸發排程
+    // 立即手動觸發排程（使用持久化版本）
     triggerScheduleNow: adminProcedure
-      .mutation(async ({ ctx }) => {
+      .mutation(async () => {
         try {
           // 創建執行歷史記錄
           const historyId = await db.addScheduleExecutionHistory({
@@ -1963,42 +1894,25 @@ try {
             startedAt: new Date(),
           });
 
-          // 在後台執行批量更新（異步）
-          (async () => {
-            const startTime = Date.now();
-            try {
-              // 僅啟動 SNKRDUNK 批量更新（eBay 已停用）
-              const snkrdunkResult = await executeSnkrdunkBatchUpdate();
+          // 使用持久化版本的批量更新
+          const { taskId, totalCards } = await executePersistentSnkrdunkBatchUpdate();
 
-              // 更新執行歷史
-              const durationMs = Date.now() - startTime;
-              await db.updateScheduleExecutionHistory(historyId, {
-                status: "completed",
-                ebaySuccessCount: 0,
-                ebayFailureCount: 0,
-                ebayRecordsAdded: 0,
-                snkrdunkSuccessCount: snkrdunkResult.successCount,
-                snkrdunkFailureCount: snkrdunkResult.failureCount,
-                snkrdunkRecordsAdded: snkrdunkResult.totalRecordsAdded,
-                completedAt: new Date(),
-                durationMs,
-              });
-
-              console.log(`[Schedule] Manual execution completed in ${durationMs}ms`);
-            } catch (error: any) {
-              console.error(`[Schedule] Manual execution failed: ${error.message}`);
-              await db.updateScheduleExecutionHistory(historyId, {
-                status: "failed",
-                errorMessage: error.message,
-                completedAt: new Date(),
-                durationMs: Date.now() - startTime,
-              });
-            }
-          })();
+          // 更新執行歷史（任務已在後台運行）
+          await db.updateScheduleExecutionHistory(historyId, {
+            status: "completed",
+            ebaySuccessCount: 0,
+            ebayFailureCount: 0,
+            ebayRecordsAdded: 0,
+            snkrdunkSuccessCount: totalCards,
+            snkrdunkFailureCount: 0,
+            snkrdunkRecordsAdded: 0,
+            completedAt: new Date(),
+            durationMs: 0,
+          });
 
           return {
             success: true,
-            message: "排程任務已啟動，正在後台執行",
+            message: `排程任務已啟動，任務 ID: ${taskId}，共 ${totalCards} 張卡牌`,
           };
         } catch (error: any) {
           throw new TRPCError({

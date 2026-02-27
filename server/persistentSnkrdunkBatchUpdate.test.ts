@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { executePersistentSnkrdunkBatchUpdate } from './persistentSnkrdunkBatchUpdate';
 import * as db from './db';
 import * as batchTaskManager from './batchTaskManager';
+import * as fs from 'fs';
+import * as path from 'path';
 
 describe('SNKRDUNK Persistent Batch Update', () => {
   beforeAll(async () => {
-    // Mock console to reduce noise
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -14,79 +14,85 @@ describe('SNKRDUNK Persistent Batch Update', () => {
     vi.restoreAllMocks();
   });
 
-  it('should process all cards without skipping', async () => {
-    // This test verifies that the smart skip logic has been removed
-    // and all cards are processed regardless of their last update time
-    
-    // Get all SNKRDUNK data sources
+  it('should have SNKRDUNK data sources to process', async () => {
     const { data: allDataSources } = await db.getDataSources({ pageSize: 100000 });
     const snkrdunkSources = allDataSources.filter((ds: any) => ds.source === 'snkrdunk');
     
-    // Get unique cards
-    const uniqueCards = new Map<number, { id: number; name: string }>();
+    const uniqueProducts = new Map<string, { id: number; name: string }>();
     for (const source of snkrdunkSources) {
+      const productType = source.productType || 'single_card';
+      const key = `${productType}:${source.cardId}`;
       if (source.card) {
-        uniqueCards.set(source.card.id, {
-          id: source.card.id,
-          name: source.card.name,
-        });
+        uniqueProducts.set(key, { id: source.card.id, name: source.card.name });
       }
     }
 
-    const totalCards = uniqueCards.size;
-    
-    // Verify we have cards to test
-    expect(totalCards).toBeGreaterThan(0);
-    
-    console.log(`[Test] Found ${totalCards} unique SNKRDUNK cards`);
-    console.log(`[Test] All cards should be processed without skipping`);
+    expect(uniqueProducts.size).toBeGreaterThan(0);
   });
 
-  it('should not skip cards updated in the last 24 hours', async () => {
-    // This test verifies that the smart skip logic has been removed
-    // All cards are now processed regardless of update time
+  it('should use fetchPriceHistory (single API call) instead of scrapeSnkrdunkPage', () => {
+    const code = fs.readFileSync(
+      path.join(__dirname, 'persistentSnkrdunkBatchUpdate.ts'),
+      'utf-8'
+    );
     
-    console.log('[Test] Smart skip logic has been removed');
-    console.log('[Test] All cards will be processed regardless of last update time');
+    // Should use fetchPriceHistory (optimized single API call)
+    expect(code).toContain('fetchPriceHistory');
     
-    // Verify the logic by checking that no skipping occurs
-    const expectedSkippedCards = 0;
-    expect(expectedSkippedCards).toBe(0);
-  }, 10000);
+    // Should NOT use scrapeSnkrdunkPage (old 2-API-call approach)
+    expect(code).not.toContain('scrapeSnkrdunkPage');
+  });
 
-  it('should return correct task information', async () => {
-    // Check if there's already a running task
+  it('should use database-only progress tracking (no in-memory)', () => {
+    const code = fs.readFileSync(
+      path.join(__dirname, 'persistentSnkrdunkBatchUpdate.ts'),
+      'utf-8'
+    );
+    
+    // Should use batchTaskManager for all progress tracking
+    expect(code).toContain('batchTaskManager');
+    
+    // Should NOT use old in-memory progress module
+    expect(code).not.toContain('batchUpdateSnkrdunkProgress');
+  });
+
+  it('should have optimized configuration (PARALLEL_LIMIT: 5)', () => {
+    const code = fs.readFileSync(
+      path.join(__dirname, 'persistentSnkrdunkBatchUpdate.ts'),
+      'utf-8'
+    );
+    
+    expect(code).toContain('PARALLEL_LIMIT: 5');
+    expect(code).toContain('MIN_DELAY: 300');
+    expect(code).toContain('MAX_DELAY: 800');
+    expect(code).toContain('BATCH_PAUSE: 2000');
+  });
+
+  it('should support smart skip (23 hours threshold)', () => {
+    const code = fs.readFileSync(
+      path.join(__dirname, 'persistentSnkrdunkBatchUpdate.ts'),
+      'utf-8'
+    );
+    
+    expect(code).toContain('SKIP_RECENTLY_UPDATED_HOURS: 23');
+    expect(code).toContain('lastFetchedAt');
+    expect(code).toContain('skipThreshold');
+  });
+
+  it('should be able to check running task status', async () => {
     const hasRunning = await batchTaskManager.hasRunningTask('batch_snkrdunk_update');
-    
-    if (hasRunning) {
-      console.log('[Test] Batch update already running, skipping execution test');
-      return;
-    }
+    expect(typeof hasRunning).toBe('boolean');
+  });
 
-    // Note: We don't actually execute the batch update in tests
-    // because it would take too long and consume resources
-    // Instead, we verify the logic is correct by checking the code structure
-    
-    const { data: allDataSources } = await db.getDataSources({ pageSize: 100000 });
-    const snkrdunkSources = allDataSources.filter((ds: any) => ds.source === 'snkrdunk');
-    
-    const uniqueCards = new Map<number, { id: number; name: string }>();
-    for (const source of snkrdunkSources) {
-      if (source.card) {
-        uniqueCards.set(source.card.id, {
-          id: source.card.id,
-          name: source.card.name,
-        });
-      }
+  it('should be able to get latest running task', async () => {
+    const task = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
+    // Task can be null (no running task) or an object
+    if (task) {
+      expect(task).toHaveProperty('taskId');
+      expect(task).toHaveProperty('totalItems');
+      expect(task).toHaveProperty('processedItems');
+      expect(task).toHaveProperty('successCount');
+      expect(task).toHaveProperty('failureCount');
     }
-
-    const expectedTotalCards = uniqueCards.size;
-    const expectedSkippedCards = 0; // No cards should be skipped
-    
-    console.log(`[Test] Expected total cards: ${expectedTotalCards}`);
-    console.log(`[Test] Expected skipped cards: ${expectedSkippedCards}`);
-    
-    expect(expectedSkippedCards).toBe(0);
-    expect(expectedTotalCards).toBeGreaterThan(0);
   });
 });

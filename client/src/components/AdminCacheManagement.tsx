@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Trash2, RefreshCw, Database, AlertCircle, Flame, List, ExternalLink } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { formatHKLocale } from "@/lib/formatDate";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -428,7 +429,7 @@ export function AdminCacheManagement() {
                 <p className="text-sm text-gray-400 mb-1">最舊緩存</p>
                 <p className="text-sm font-medium text-white">
                   {cacheStats.oldestCache 
-                    ? new Date(cacheStats.oldestCache).toLocaleString("zh-TW")
+                    ? formatHKLocale(cacheStats.oldestCache)
                     : "N/A"}
                 </p>
               </div>
@@ -436,7 +437,7 @@ export function AdminCacheManagement() {
                 <p className="text-sm text-gray-400 mb-1">最新緩存</p>
                 <p className="text-sm font-medium text-white">
                   {cacheStats.newestCache 
-                    ? new Date(cacheStats.newestCache).toLocaleString("zh-TW")
+                    ? formatHKLocale(cacheStats.newestCache)
                     : "N/A"}
                 </p>
               </div>
@@ -681,7 +682,7 @@ export function AdminCacheManagement() {
                               {hotExpired ? "已過期" : "有效"}
                             </span>
                             <div className="text-xs text-gray-500 mt-1">
-                              {new Date(cache.hotExpiresAt).toLocaleString("zh-TW", {
+                              {formatHKLocale(cache.hotExpiresAt, {
                                 month: "2-digit",
                                 day: "2-digit",
                                 hour: "2-digit",
@@ -694,7 +695,7 @@ export function AdminCacheManagement() {
                               {coldExpired ? "已過期" : "有效"}
                             </span>
                             <div className="text-xs text-gray-500 mt-1">
-                              {new Date(cache.expiresAt).toLocaleString("zh-TW", {
+                              {formatHKLocale(cache.expiresAt, {
                                 month: "2-digit",
                                 day: "2-digit",
                                 hour: "2-digit",

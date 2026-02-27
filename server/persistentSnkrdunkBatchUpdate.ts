@@ -1,18 +1,32 @@
+/**
+ * SNKRDUNK Persistent Batch Update
+ * 
+ * The single, authoritative batch update executor for SNKRDUNK price data.
+ * All progress is tracked via the database (batchTaskManager), not in-memory.
+ * 
+ * Optimizations:
+ * - Only fetches price history (1 API call per product, skips card details)
+ * - 5 concurrent requests with randomized delays
+ * - Exponential backoff on consecutive failures
+ * - Smart skip: skip products updated within 23 hours
+ * - Per-request and per-batch timeout protection
+ * - Auto-stop after 15 consecutive failures
+ */
+
 import * as db from './db';
 import * as batchTaskManager from './batchTaskManager';
-import { scrapeSnkrdunkPage, convertJpyToHkd } from './snkrdunkScraper';
-import * as batchUpdateSnkrdunkProgress from './batchUpdateSnkrdunkProgress';
+import { fetchPriceHistory, convertJpyToHkd } from './snkrdunkScraper';
 
 // ─── Configuration ───────────────────────────────────────────────
 const CONFIG = {
-  // Concurrency: keep low to avoid rate limiting
-  PARALLEL_LIMIT: 2,         // Only 2 concurrent requests (down from 5)
+  // Concurrency: 5 concurrent requests (only 1 API call per product)
+  PARALLEL_LIMIT: 5,
   
   // Delays (ms)
-  MIN_DELAY: 800,            // Minimum delay between requests
-  MAX_DELAY: 2000,           // Maximum delay between requests (randomized)
-  BATCH_PAUSE: 5000,         // Pause between batches of 40
-  BATCH_SIZE: 40,            // Products per batch (down from 80)
+  MIN_DELAY: 300,            // Minimum delay between parallel batches
+  MAX_DELAY: 800,            // Maximum delay between parallel batches (randomized)
+  BATCH_PAUSE: 2000,         // Pause between batches of 50
+  BATCH_SIZE: 50,            // Products per batch
   
   // Exponential backoff
   INITIAL_BACKOFF: 5000,     // 5 seconds initial backoff
@@ -56,15 +70,8 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 }
 
 /**
- * Execute SNKRDUNK batch update with persistent task tracking
- * 
- * Resilience features:
- * - Low concurrency (2 parallel) with randomized delays
- * - Exponential backoff on consecutive failures (rate limiting detection)
- * - Smart skip: skip recently updated products
- * - Per-request and per-batch timeout protection
- * - Consecutive failure auto-stop with detailed error logging
- * - Supports both single_card and sealed_product types
+ * Execute SNKRDUNK batch update with persistent task tracking.
+ * All progress is stored in the database via batchTaskManager.
  */
 export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: number; totalCards: number; skippedCards: number }> {
   // Check if there's already a running task
@@ -90,7 +97,6 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
     const productType = source.productType || 'single_card';
     const key = `${productType}:${source.cardId}`;
     
-    // Skip if we already have this product with a more recent fetch
     if (uniqueProducts.has(key)) continue;
     
     if (source.card) {
@@ -143,17 +149,13 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
     return aTime - bTime; // Oldest first
   });
   
-  console.log(`[PersistentSnkrdunkBatchUpdate] Found ${allProducts.length} unique products, skipping ${skippedCount} recently updated, updating ${productsToUpdate.length}`);
+  console.log(`[BatchUpdate] Found ${allProducts.length} unique products, skipping ${skippedCount} recently updated, updating ${productsToUpdate.length}`);
 
-  // Initialize progress tracking
-  batchUpdateSnkrdunkProgress.initSnkrdunkBatchUpdateProgress(productsToUpdate.length);
-
-  // Create persistent task
+  // Create persistent task in database (this is the ONLY progress source)
   const taskId = await batchTaskManager.createBatchTask('batch_snkrdunk_update', productsToUpdate.length);
 
   // Execute batch update in background
   (async () => {
-    // Shared state for backoff and failure tracking
     let consecutiveFailures = 0;
     let currentBackoff = CONFIG.INITIAL_BACKOFF;
     let shouldStop = false;
@@ -165,7 +167,6 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
       if (shouldStop) return;
       
       try {
-        // Get product's SNKRDUNK data sources
         const productDataSources = snkrdunkSources.filter((ds: any) => {
           const dsProductType = ds.productType || 'single_card';
           return ds.cardId === product.id && dsProductType === product.productType;
@@ -173,7 +174,6 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         
         if (productDataSources.length === 0 || !productDataSources[0].sourceUrl) {
           await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
-          batchUpdateSnkrdunkProgress.updateSnkrdunkProgressSuccess(0);
           return;
         }
 
@@ -181,45 +181,29 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         const productType: "single_card" | "sealed_product" = 
           (product.productType === 'sealed_product') ? 'sealed_product' : 'single_card';
 
-        // Fetch with timeout protection
-        const scrapedData = await withTimeout(
-          scrapeSnkrdunkPage(dataSource.sourceUrl, productType),
+        // Only fetch price history (skip card details for speed)
+        const priceHistory = await withTimeout(
+          fetchPriceHistory(dataSource.sourceUrl, productType),
           CONFIG.REQUEST_TIMEOUT,
-          `scrape ${product.id}`
+          `fetchPriceHistory ${product.id}`
         );
         
-        if (!scrapedData || !scrapedData.priceHistory || scrapedData.priceHistory.length === 0) {
+        if (!priceHistory || priceHistory.length === 0) {
           await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
-          batchUpdateSnkrdunkProgress.updateSnkrdunkProgressSuccess(0);
           return;
-        }
-
-        // Update product info based on type
-        if (productType === 'sealed_product') {
-          await db.updateSealedProduct(product.id, {
-            name: scrapedData.name,
-            nameJa: scrapedData.nameJa,
-            imageUrl: scrapedData.imageUrl || undefined,
-          });
-        } else {
-          await db.updateCard(product.id, {
-            name: scrapedData.name,
-            nameJa: scrapedData.nameJa,
-            imageUrl: scrapedData.imageUrl || undefined,
-          });
         }
 
         // Save price data
         let recordsAdded = 0;
-        for (const priceItem of scrapedData.priceHistory) {
-          const priceHKD = await convertJpyToHkd(priceItem.price);
+        for (const priceItem of priceHistory) {
+          const priceHKD = convertJpyToHkd(priceItem.price);
           await db.addPriceHistory({
             cardId: product.id,
             source: 'snkrdunk',
             price: priceHKD.toString(),
             currency: 'HKD',
             grade: productType === 'sealed_product' ? undefined : priceItem.grade,
-            quantity: productType === 'sealed_product' ? (priceItem.grade || undefined) : undefined,
+            quantity: productType === 'sealed_product' ? (priceItem.quantity || undefined) : undefined,
             productType,
             soldAt: priceItem.soldAt,
           });
@@ -232,21 +216,18 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         }
 
         await batchTaskManager.updateTaskProgressSuccess(taskId, recordsAdded);
-        batchUpdateSnkrdunkProgress.updateSnkrdunkProgressSuccess(recordsAdded);
-        console.log(`[PersistentSnkrdunkBatchUpdate] Updated ${productType} ${product.id}, added ${recordsAdded} records`);
+        console.log(`[BatchUpdate] Updated ${productType} ${product.id}, added ${recordsAdded} records`);
         
         // Reset backoff on success
         consecutiveFailures = 0;
         currentBackoff = CONFIG.INITIAL_BACKOFF;
         
       } catch (error: any) {
-        console.error(`[PersistentSnkrdunkBatchUpdate] Error updating ${product.productType} ${product.id}: ${error.message}`);
+        console.error(`[BatchUpdate] Error updating ${product.productType} ${product.id}: ${error.message}`);
         await batchTaskManager.updateTaskProgressFailure(taskId, product.id, product.name, error.message);
-        batchUpdateSnkrdunkProgress.updateSnkrdunkProgressFailure(product.id, product.name, error.message);
         
         consecutiveFailures++;
         
-        // Increase backoff on failure
         if (consecutiveFailures >= CONFIG.BACKOFF_TRIGGER) {
           currentBackoff = Math.min(currentBackoff * CONFIG.BACKOFF_MULTIPLIER, CONFIG.MAX_BACKOFF);
         }
@@ -254,9 +235,8 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         // Auto-stop after too many consecutive failures
         if (consecutiveFailures >= CONFIG.MAX_CONSECUTIVE_FAILURES) {
           const errorMsg = `Auto-stopped: ${consecutiveFailures} consecutive failures. Last error: ${error.message}. Possible rate limiting or network issues.`;
-          console.error(`[PersistentSnkrdunkBatchUpdate] ${errorMsg}`);
+          console.error(`[BatchUpdate] ${errorMsg}`);
           
-          // Store error message in task metadata
           const database = await db.getDb();
           if (database) {
             const { scheduledTasks } = await import('../drizzle/schema_new');
@@ -267,7 +247,6 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
           }
           
           await batchTaskManager.completeTask(taskId, 'failed');
-          batchUpdateSnkrdunkProgress.completeSnkrdunkBatchUpdate();
           shouldStop = true;
           return;
         }
@@ -285,13 +264,13 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
       if (await batchTaskManager.isTaskCancelled(taskId)) {
-        console.log(`[PersistentSnkrdunkBatchUpdate] Task ${taskId} cancelled, stopping...`);
+        console.log(`[BatchUpdate] Task ${taskId} cancelled, stopping...`);
         return;
       }
       
       const batchNum = Math.floor(i / CONFIG.BATCH_SIZE) + 1;
       const totalBatches = Math.ceil(productsToUpdate.length / CONFIG.BATCH_SIZE);
-      console.log(`[PersistentSnkrdunkBatchUpdate] Processing batch ${batchNum}/${totalBatches} (${batch.length} products)`);
+      console.log(`[BatchUpdate] Processing batch ${batchNum}/${totalBatches} (${batch.length} products)`);
       
       // Process batch with limited parallelism
       for (let j = 0; j < batch.length; j += CONFIG.PARALLEL_LIMIT) {
@@ -301,7 +280,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         
         // If we're in backoff mode, wait before processing
         if (consecutiveFailures >= CONFIG.BACKOFF_TRIGGER) {
-          console.log(`[PersistentSnkrdunkBatchUpdate] Backoff: waiting ${currentBackoff / 1000}s due to ${consecutiveFailures} consecutive failures`);
+          console.log(`[BatchUpdate] Backoff: waiting ${currentBackoff / 1000}s due to ${consecutiveFailures} consecutive failures`);
           await new Promise(resolve => setTimeout(resolve, currentBackoff));
         }
         
@@ -313,22 +292,18 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
             `Parallel batch at index ${j}`
           );
         } catch (batchError: any) {
-          // Entire parallel batch timed out
-          console.error(`[PersistentSnkrdunkBatchUpdate] Parallel batch timeout: ${batchError.message}`);
+          console.error(`[BatchUpdate] Parallel batch timeout: ${batchError.message}`);
           
-          // Mark all products in this batch as failed
           for (const product of parallelBatch) {
             await batchTaskManager.updateTaskProgressFailure(taskId, product.id, product.name, 'Batch timeout');
-            batchUpdateSnkrdunkProgress.updateSnkrdunkProgressFailure(product.id, product.name, 'Batch timeout');
           }
           
           consecutiveFailures += parallelBatch.length;
           currentBackoff = Math.min(currentBackoff * CONFIG.BACKOFF_MULTIPLIER, CONFIG.MAX_BACKOFF);
           
-          // Check if we should stop
           if (consecutiveFailures >= CONFIG.MAX_CONSECUTIVE_FAILURES) {
             const errorMsg = `Auto-stopped: ${consecutiveFailures} consecutive failures (batch timeout). Possible rate limiting.`;
-            console.error(`[PersistentSnkrdunkBatchUpdate] ${errorMsg}`);
+            console.error(`[BatchUpdate] ${errorMsg}`);
             
             const database = await db.getDb();
             if (database) {
@@ -340,7 +315,6 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
             }
             
             await batchTaskManager.completeTask(taskId, 'failed');
-            batchUpdateSnkrdunkProgress.completeSnkrdunkBatchUpdate();
             shouldStop = true;
             break;
           }
@@ -354,15 +328,14 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
       
       // Pause between batches
       if (!shouldStop && i + CONFIG.BATCH_SIZE < productsToUpdate.length) {
-        await randomDelay(CONFIG.BATCH_PAUSE - 1000, CONFIG.BATCH_PAUSE + 2000);
+        await randomDelay(CONFIG.BATCH_PAUSE - 500, CONFIG.BATCH_PAUSE + 1000);
       }
     }
 
     // Complete task (only if not already stopped)
     if (!shouldStop) {
       await batchTaskManager.completeTask(taskId, 'completed');
-      batchUpdateSnkrdunkProgress.completeSnkrdunkBatchUpdate();
-      console.log(`[PersistentSnkrdunkBatchUpdate] Batch update completed (processed: ${productsToUpdate.length})`);
+      console.log(`[BatchUpdate] Batch update completed (processed: ${productsToUpdate.length})`);
     }
   })();
 

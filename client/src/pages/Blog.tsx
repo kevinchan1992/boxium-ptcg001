@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { formatHKDate, formatHKLocale } from "@/lib/formatDate";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -171,7 +172,7 @@ export default function Blog() {
                         <div className="flex items-center gap-6 text-sm text-gray-500 mb-6">
                           <span className="flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
-                            {new Date(featuredPost.publishedAt || featuredPost.createdAt).toLocaleDateString('zh-TW')}
+                            {formatHKDate(featuredPost.publishedAt || featuredPost.createdAt)}
                           </span>
                           <span className="flex items-center gap-2">
                             <Eye className="w-4 h-4" />
@@ -231,7 +232,7 @@ export default function Blog() {
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <span className="flex items-center gap-1.5">
                               <Calendar className="w-4 h-4" />
-                              {new Date(post.publishedAt || post.createdAt).toLocaleDateString('zh-TW', {
+                              {formatHKLocale(post.publishedAt || post.createdAt, {
                                 month: 'short',
                                 day: 'numeric',
                               })}

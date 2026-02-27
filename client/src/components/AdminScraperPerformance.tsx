@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { formatHKLocale } from "@/lib/formatDate";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -217,7 +218,7 @@ export function AdminScraperPerformance() {
                       </span>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {new Date(log.createdAt).toLocaleString("zh-TW")}
+                      {formatHKLocale(log.createdAt)}
                     </span>
                   </div>
                 </div>
@@ -258,7 +259,7 @@ export function AdminScraperPerformance() {
                       )}
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(log.createdAt).toLocaleString("zh-TW")}
+                      {formatHKLocale(log.createdAt)}
                     </span>
                   </div>
                   {log.errorMessage && (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
+import { formatHKDate } from '../lib/formatDate';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -105,7 +106,7 @@ export function ImageLibrary({ open, onClose, onSelectImage }: ImageLibraryProps
                     </p>
                     <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
                       <span>{formatFileSize(image.fileSize)}</span>
-                      <span>{new Date(image.createdAt).toLocaleDateString('zh-HK')}</span>
+                      <span>{formatHKDate(image.createdAt)}</span>
                     </div>
                   </div>
 

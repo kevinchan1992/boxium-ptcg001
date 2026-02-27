@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { formatHKLocale } from "@/lib/formatDate";
 import { Loader2, Plus, RefreshCw, ExternalLink, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
 import { BatchTaskProgressBar } from "@/components/BatchTaskProgressBar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -837,7 +838,7 @@ export function AdminDataSources() {
                         {source.lastFetchedAt && (
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            最後更新: {new Date(source.lastFetchedAt).toLocaleString("zh-HK")}
+                            最後更新: {formatHKLocale(source.lastFetchedAt)}
                           </span>
                         )}
                         {source.lastFetchStatus && (

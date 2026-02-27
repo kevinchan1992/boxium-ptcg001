@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, progress, startedAt, updatedAt FROM scheduledTasks WHERE status IN ('running', 'pending') ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, progress, startedAt, updatedAt FROM scheduledTasks WHERE status IN ('running', 'pending') ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "330010",
+      "taskType": "batch_snkrdunk_update",
+      "status": "running",
+      "totalItems": "34219",
+      "processedItems": "169",
+      "successCount": "169",
+      "failureCount": "0",
+      "progress": "0",
+      "startedAt": "2026-02-27 07:21:32",
+      "updatedAt": "2026-02-27 07:31:11"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttaskType\tstatus\ttotalItems\tprocessedItems\tsuccessCount\tfailureCount\tprogress\tstartedAt\tupdatedAt\n330010\tbatch_snkrdunk_update\trunning\t34219\t169\t169\t0\t0\t2026-02-27 07:21:32\t2026-02-27 07:31:11\n",
+  "stderr": "",
+  "execution_time_ms": 1632
+}

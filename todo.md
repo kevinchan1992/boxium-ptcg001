@@ -3001,3 +3001,82 @@ for (const card of allCards) {
 - [x] 修復進度條顯示問題（後端改為從數據庫讀取進度，前端添加 justStarted 輪詢機制 + 強制取消按鈕）
 - [x] 測試並驗證（7/7 單元測試通過）
 - [x] 保存 checkpoint
+
+
+---
+
+## 🔧 在開發環境運行批量更新並監控
+
+### 任務清單
+- [ ] 啟動批量更新
+- [ ] 持續監控進度（每隔一段時間檢查）
+- [ ] 觀察是否有超時、限流、連續失敗等問題
+- [ ] 如有問題，診斷並修復
+- [ ] 確保所有卡片能夠更新完成
+- [ ] 報告最終結果
+
+
+---
+
+## 🧹 清理批量更新舊配置，統一使用新優化版本
+
+### 背景
+批量更新系統經歷多次迭代，留下了大量舊代碼和重複模塊。需要全面清理，確保前後端統一使用新的優化配置（單 API 請求 + 高並行度），避免混亂。
+
+### 後端清理
+- [x] 移除 `batchUpdateSnkrdunkProgress.ts`（舊的內存進度追蹤模塊，已被數據庫進度追蹤取代）
+- [x] 移除 `batchUpdateExecutor.ts`（舊的批量更新執行器，已被 `persistentSnkrdunkBatchUpdate.ts` 取代）
+- [x] 移除 `batchUpdateSnkrdunkPrices` 相關函數（舊版 API 已改為指向持久化版本）
+- [x] 清理 `routers.ts` 中引用舊模塊的 API（統一使用持久化版本）
+- [x] 清理 `persistentSnkrdunkBatchUpdate.ts` 中對舊模塊的引用
+- [x] 確認 `batchTaskManager.ts` 是唯一的進度追蹤來源
+- [x] 清理 `batchUpdateScheduler.ts` 確保只使用持久化版本
+
+### 前端清理
+- [x] 清理 `AdminScheduleManagement.tsx` 中引用舊進度 API 的代碼（前端 API 名稱保留，後端已統一指向持久化版本）
+- [x] 統一進度顯示邏輯（只從數據庫讀取）
+- [x] 移除不再需要的 `getBatchUpdateProgress` 內存版本引用（後端已統一使用 batchTaskManager）
+
+### 數據庫清理
+- [x] 清理舊的失敗/卡死任務記錄（Task 330010 已取消，Task 330011 已標記失敗）
+- [x] 確認 Task 330012（新配置 + 清理後代碼）正常運行（43.3 items/min, 0 失敗）
+
+### 測試
+- [x] 更新單元測試以反映新架構（63 tests all passed）
+- [x] 執行所有測試確認無回歸（ebay-cleanup, batchUpdateResilience, persistentSnkrdunkBatchUpdate 全部通過）
+- [x] 保存 checkpoint
+
+
+---
+
+## 🕐 修復時區問題：統一使用香港時區 (Asia/Hong_Kong, UTC+8)
+
+### 問題描述
+MySQL 服務器時區為 UTC+5，JavaScript `new Date()` 返回 UTC，導致：
+1. 智能跳過邏輯判斷錯誤（時間差計算偏移 5 小時）
+2. 前端顯示時間與實際時間不一致
+3. 排程執行時間可能不準確
+
+### 修復任務
+
+#### MySQL 連線時區
+- [x] 在 db.ts 初始化時執行 `SET time_zone = '+08:00'`，強制 MySQL session 使用香港時區
+- [x] 確認 Drizzle ORM 讀寫時間一致
+
+#### 後端時間處理
+- [x] 設定 Node.js 進程時區為 `Asia/Hong_Kong`（server/_core/index.ts 最頂部）
+- [x] 更新 dateUtils.ts 為統一的香港時區工具模塊
+- [x] 創建 shared/timezone.ts 前後端共用時區常量
+- [x] 智能跳過邏輯使用 getTime() 比較（不受時區影響）
+- [x] 排程時間處理已統一使用 HK 時區
+
+#### 前端時間顯示
+- [x] 重寫 formatDate.ts，統一使用 Intl.DateTimeFormat 強制 Asia/Hong_Kong
+- [x] 更新 14 個前端組件使用統一的 formatHKLocale/formatHKDate
+- [x] 修復排程管理頁面的時間顯示
+
+#### 測試
+- [x] 創建 timezone.test.ts（12 tests all passed）
+- [x] 測試時區修復後的智能跳過邏輯
+- [x] 測試排程時間準確性
+- [x] 保存 checkpoint

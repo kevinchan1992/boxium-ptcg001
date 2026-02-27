@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { formatHKLocale } from "@/lib/formatDate";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,8 +48,7 @@ function formatDuration(ms: number | null): string {
 
 function formatDateTime(date: Date | string | null): string {
   if (!date) return "-";
-  const d = new Date(date);
-  return d.toLocaleString("zh-TW", {
+  return formatHKLocale(date, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

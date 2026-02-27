@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
+import { formatHKLocale } from "@/lib/formatDate";
 import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2, BookOpen, FileEdit, AlertCircle, XCircle, Server, RefreshCw } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -171,7 +172,7 @@ function DataSourceHealthPanel() {
 
   const formatTime = (timestamp: Date | null | undefined) => {
     if (!timestamp) return '從未';
-    return new Date(timestamp).toLocaleString('zh-TW', {
+    return formatHKLocale(timestamp, {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',

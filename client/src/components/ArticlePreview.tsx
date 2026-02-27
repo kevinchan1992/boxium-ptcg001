@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, Edit, X, Calendar, Tag, Sparkles, Wand2, Loader2, FileText, MessageSquare, Layout, Search, ImageIcon, Save, History, RotateCcw, FileImage } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { trpc } from "@/lib/trpc";
+import { formatHKDate, formatHKLocale } from "@/lib/formatDate";
 import { toast } from "sonner";
 import { CardImagePicker } from "@/components/CardImagePicker";
 import { ImageLibrary } from "@/components/ImageLibrary";
@@ -237,7 +238,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              <span>{new Date().toLocaleDateString('zh-TW')}</span>
+              <span>{formatHKDate(new Date())}</span>
             </div>
             {currentArticle.category && (
               <Badge className="bg-[#0033CC] text-white hover:bg-[#0033CC]/90">
@@ -913,7 +914,7 @@ function HistoryDialog({ postId, open, onOpenChange, onRestore }: HistoryDialogP
                       <div className="flex items-center gap-4 text-xs text-zinc-500">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {new Date(version.createdAt).toLocaleString('zh-TW')}
+                          {formatHKLocale(version.createdAt)}
                         </span>
                         {version.createdByName && (
                           <span>編輯者：{version.createdByName}</span>

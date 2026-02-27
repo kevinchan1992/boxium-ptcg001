@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { formatHKLocale } from "@/lib/formatDate";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -203,8 +204,7 @@ function ExecutionHistory() {
   
   const formatDate = (date: Date | string | null) => {
     if (!date) return 'N/A';
-    return new Date(date).toLocaleString('zh-TW', {
-      timeZone: 'Asia/Hong_Kong',
+    return formatHKLocale(date, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -492,8 +492,7 @@ export function AdminScheduleManagement() {
                 />
                 <p className="text-xs text-gray-400">
                   最後執行時間：{schedule?.snkrdunkLastExecutedAt 
-                    ? new Date(schedule.snkrdunkLastExecutedAt).toLocaleString('zh-TW', { 
-                        timeZone: 'Asia/Hong_Kong',
+                    ? formatHKLocale(schedule.snkrdunkLastExecutedAt, {
                         year: 'numeric',
                         month: '2-digit',
                         day: '2-digit',

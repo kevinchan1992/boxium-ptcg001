@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRoute, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { formatHKLocale } from "@/lib/formatDate";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Badge } from "@/components/ui/badge";
@@ -149,7 +150,7 @@ export default function BlogPost() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 text-sm md:text-base text-gray-600 mb-8 md:mb-10">
               <span className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 md:w-6 md:h-6 text-[#0033CC]" />
-                {new Date(post.publishedAt || post.createdAt).toLocaleDateString('zh-TW', {
+                {formatHKLocale(post.publishedAt || post.createdAt, {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',

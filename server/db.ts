@@ -1,15 +1,28 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";;
+import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
+/**
+ * Hong Kong timezone offset for MySQL session.
+ * Forces all TIMESTAMP/DATETIME operations to use UTC+8.
+ */
+const HK_TIMEZONE = '+08:00';
+
 // Lazily create the drizzle instance so local tooling can run without a DB.
+// Appends timezone parameter to DATABASE_URL to force Hong Kong timezone.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      // Append timezone parameter to the connection URL
+      const dbUrl = process.env.DATABASE_URL;
+      const separator = dbUrl.includes('?') ? '&' : '?';
+      const dbUrlWithTz = `${dbUrl}${separator}timezone=${encodeURIComponent(HK_TIMEZONE)}`;
+      
+      _db = drizzle(dbUrlWithTz);
+      console.log(`[Database] Connected with timezone: ${HK_TIMEZONE} (Hong Kong)`);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;

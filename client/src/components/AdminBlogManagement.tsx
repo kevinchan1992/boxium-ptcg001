@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { formatHKDate } from "@/lib/formatDate";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -480,8 +481,8 @@ export function AdminBlogManagement() {
                         <span>瀏覽：{post.viewCount}</span>
                         <span>
                           {post.publishedAt
-                            ? new Date(post.publishedAt).toLocaleDateString('zh-TW')
-                            : new Date(post.createdAt).toLocaleDateString('zh-TW')}
+                            ? formatHKDate(post.publishedAt)
+                            : formatHKDate(post.createdAt)}
                         </span>
                       </div>
                     </div>

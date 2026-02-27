@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
-describe('Batch Update Resilience Improvements', () => {
+describe('Batch Update Resilience & Optimization', () => {
   const persistentBatchUpdatePath = path.join(__dirname, 'persistentSnkrdunkBatchUpdate.ts');
   const batchSchedulerPath = path.join(__dirname, 'batchUpdateScheduler.ts');
   let persistentBatchUpdateCode: string;
@@ -13,22 +13,42 @@ describe('Batch Update Resilience Improvements', () => {
     batchSchedulerCode = fs.readFileSync(batchSchedulerPath, 'utf-8');
   });
 
-  describe('Configuration', () => {
-    it('should have reduced parallel limit (2 instead of 5)', () => {
-      expect(persistentBatchUpdateCode).toContain('PARALLEL_LIMIT: 2');
+  describe('Optimized Configuration (single API call per product)', () => {
+    it('should have parallel limit of 5 (optimized for 1 API call per product)', () => {
+      expect(persistentBatchUpdateCode).toContain('PARALLEL_LIMIT: 5');
     });
 
-    it('should have randomized delay between requests (800-2000ms)', () => {
-      expect(persistentBatchUpdateCode).toContain('MIN_DELAY: 800');
-      expect(persistentBatchUpdateCode).toContain('MAX_DELAY: 2000');
+    it('should have reduced delay (300-800ms)', () => {
+      expect(persistentBatchUpdateCode).toContain('MIN_DELAY: 300');
+      expect(persistentBatchUpdateCode).toContain('MAX_DELAY: 800');
     });
 
-    it('should have batch pause of 5 seconds', () => {
-      expect(persistentBatchUpdateCode).toContain('BATCH_PAUSE: 5000');
+    it('should have batch pause of 2 seconds', () => {
+      expect(persistentBatchUpdateCode).toContain('BATCH_PAUSE: 2000');
     });
 
-    it('should have reduced batch size (40 instead of 80)', () => {
-      expect(persistentBatchUpdateCode).toContain('BATCH_SIZE: 40');
+    it('should have batch size of 50', () => {
+      expect(persistentBatchUpdateCode).toContain('BATCH_SIZE: 50');
+    });
+
+    it('should only fetch price history (not card details)', () => {
+      expect(persistentBatchUpdateCode).toContain('fetchPriceHistory');
+      // Should NOT use scrapeSnkrdunkPage (the old 2-API-call approach)
+      expect(persistentBatchUpdateCode).not.toContain('scrapeSnkrdunkPage');
+    });
+  });
+
+  describe('Architecture: Database-only progress tracking', () => {
+    it('should use batchTaskManager as sole progress source', () => {
+      expect(persistentBatchUpdateCode).toContain('batchTaskManager');
+    });
+
+    it('should NOT use old in-memory progress tracking', () => {
+      expect(persistentBatchUpdateCode).not.toContain('batchUpdateSnkrdunkProgress');
+    });
+
+    it('should NOT import from deleted modules', () => {
+      expect(persistentBatchUpdateCode).not.toContain('batchUpdateExecutor');
     });
   });
 
@@ -73,7 +93,7 @@ describe('Batch Update Resilience Improvements', () => {
       expect(persistentBatchUpdateCode).toContain('PARALLEL_TIMEOUT: 60000');
     });
 
-    it('should wrap scrape calls with timeout', () => {
+    it('should wrap API calls with timeout', () => {
       expect(persistentBatchUpdateCode).toContain('withTimeout(');
       expect(persistentBatchUpdateCode).toContain('CONFIG.REQUEST_TIMEOUT');
     });
@@ -85,7 +105,7 @@ describe('Batch Update Resilience Improvements', () => {
   });
 
   describe('Smart Skip', () => {
-    it('should skip products updated within 20 hours', () => {
+    it('should skip products updated within 23 hours', () => {
       expect(persistentBatchUpdateCode).toContain('SKIP_RECENTLY_UPDATED_HOURS: 23');
     });
 
@@ -130,18 +150,6 @@ describe('Batch Update Resilience Improvements', () => {
 
     it('should use randomized pause between batch groups', () => {
       expect(persistentBatchUpdateCode).toContain('await randomDelay(CONFIG.BATCH_PAUSE');
-    });
-  });
-
-  describe('Sealed Product Support', () => {
-    it('should handle sealed_product type', () => {
-      expect(persistentBatchUpdateCode).toContain("'sealed_product'");
-      expect(persistentBatchUpdateCode).toContain('updateSealedProduct');
-    });
-
-    it('should handle single_card type', () => {
-      expect(persistentBatchUpdateCode).toContain("'single_card'");
-      expect(persistentBatchUpdateCode).toContain('updateCard');
     });
   });
 

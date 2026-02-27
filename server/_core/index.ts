@@ -1,4 +1,9 @@
+// ===== Force Hong Kong timezone for the entire Node.js process =====
+// Must be set before any imports that use Date objects
+process.env.TZ = 'Asia/Hong_Kong';
+
 import "dotenv/config";
+
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";

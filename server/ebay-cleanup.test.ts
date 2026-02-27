@@ -3,6 +3,9 @@
  * 
  * Verifies that eBay batch update features have been properly disabled
  * while pricing page eBay functionality remains intact.
+ * 
+ * Also verifies that old batch update modules have been cleaned up
+ * and the system uses the unified persistent batch update architecture.
  */
 import { describe, it, expect } from "vitest";
 import * as fs from "fs";
@@ -29,6 +32,48 @@ describe("eBay Cleanup - Deleted Files", () => {
   }
 });
 
+describe("Old Batch Update Modules - Cleaned Up", () => {
+  const deletedModules = [
+    "server/batchUpdateSnkrdunkProgress.ts",  // Old in-memory progress tracking
+    "server/batchUpdateExecutor.ts",           // Old non-persistent batch executor
+  ];
+
+  for (const file of deletedModules) {
+    it(`should have deleted old module ${file}`, () => {
+      const filePath = path.join(projectRoot, file);
+      expect(fs.existsSync(filePath)).toBe(false);
+    });
+  }
+
+  it("routers.ts should not import from deleted modules", () => {
+    const content = fs.readFileSync(
+      path.join(serverDir, "routers.ts"),
+      "utf-8"
+    );
+    expect(content).not.toMatch(/from\s+["']\.\/batchUpdateSnkrdunkProgress["']/);
+    expect(content).not.toMatch(/from\s+["']\.\/batchUpdateExecutor["']/);
+    expect(content).not.toMatch(/from\s+["']\.\/batchUpdateProgress["']/);
+  });
+
+  it("persistentSnkrdunkBatchUpdate.ts should not import from old modules", () => {
+    const content = fs.readFileSync(
+      path.join(serverDir, "persistentSnkrdunkBatchUpdate.ts"),
+      "utf-8"
+    );
+    expect(content).not.toContain("batchUpdateSnkrdunkProgress");
+    expect(content).not.toContain("batchUpdateExecutor");
+  });
+
+  it("persistentSnkrdunkBatchUpdate.ts should use batchTaskManager as sole progress source", () => {
+    const content = fs.readFileSync(
+      path.join(serverDir, "persistentSnkrdunkBatchUpdate.ts"),
+      "utf-8"
+    );
+    expect(content).toContain("batchTaskManager");
+    expect(content).toContain("fetchPriceHistory");
+  });
+});
+
 describe("eBay Cleanup - Preserved Files (Pricing Page)", () => {
   const preservedFiles = [
     "server/ebay.ts",
@@ -45,27 +90,6 @@ describe("eBay Cleanup - Preserved Files (Pricing Page)", () => {
   }
 });
 
-describe("eBay Cleanup - batchUpdateExecutor.ts", () => {
-  it("should not export executeEbayBatchUpdate function", () => {
-    const content = fs.readFileSync(
-      path.join(serverDir, "batchUpdateExecutor.ts"),
-      "utf-8"
-    );
-    // Should not have an active export function (comments are OK)
-    expect(content).not.toMatch(/^export\s+(async\s+)?function\s+executeEbayBatchUpdate/m);
-    expect(content).not.toContain("from \"./ebayService\"");
-    expect(content).not.toContain("from \"./ebayImageSearch\"");
-  });
-
-  it("should still contain executeSnkrdunkBatchUpdate function", () => {
-    const content = fs.readFileSync(
-      path.join(serverDir, "batchUpdateExecutor.ts"),
-      "utf-8"
-    );
-    expect(content).toContain("executeSnkrdunkBatchUpdate");
-  });
-});
-
 describe("eBay Cleanup - batchUpdateScheduler.ts", () => {
   it("should not import executeEbayBatchUpdate", () => {
     const content = fs.readFileSync(
@@ -75,12 +99,12 @@ describe("eBay Cleanup - batchUpdateScheduler.ts", () => {
     expect(content).not.toContain("executeEbayBatchUpdate");
   });
 
-  it("should still import executeSnkrdunkBatchUpdate", () => {
+  it("should use persistent batch update", () => {
     const content = fs.readFileSync(
       path.join(serverDir, "batchUpdateScheduler.ts"),
       "utf-8"
     );
-    expect(content).toContain("executeSnkrdunkBatchUpdate");
+    expect(content).toContain("executePersistentSnkrdunkBatchUpdate");
   });
 });
 
@@ -90,7 +114,6 @@ describe("eBay Cleanup - routers.ts imports", () => {
       path.join(serverDir, "routers.ts"),
       "utf-8"
     );
-    // Should not have active imports from deleted files
     expect(content).not.toMatch(/^import.*from\s+["']\.\/ebayService["']/m);
     expect(content).not.toMatch(/^import.*from\s+["']\.\/persistentEbayBatchUpdate["']/m);
     expect(content).not.toMatch(/^import.*from\s+["']\.\/batchUpdateProgress["']/m);
@@ -101,7 +124,6 @@ describe("eBay Cleanup - routers.ts imports", () => {
       path.join(serverDir, "routers.ts"),
       "utf-8"
     );
-    // searchEbayItems and convertUsdToHkd are needed for searchEbayMarketPrice
     expect(content).toContain('from "./ebay"');
   });
 });

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { RefreshCw, TrendingUp } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { formatHKLocale } from "@/lib/formatDate";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -45,8 +46,7 @@ export function AdminTrendingCards() {
       nextUpdate.setDate(nextUpdate.getDate() + 1);
     }
     
-    return nextUpdate.toLocaleString('zh-TW', { 
-      timeZone: 'Asia/Hong_Kong',
+    return formatHKLocale(nextUpdate, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
