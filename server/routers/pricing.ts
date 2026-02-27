@@ -227,7 +227,11 @@ export const pricingRouter = router({
                 // Hot cache is valid, use cached data directly
                 console.log(`[Pricing Router] Using hot cache (expires at ${cache.hotExpiresAt})`);
                 const cachedListings = JSON.parse(cache.listings);
-                snkrdunkListings = cachedListings.map((item: any) => ({
+                // Filter out sold items from cache (in case old cache contains sold items)
+                const onSaleCachedListings = cachedListings.filter(
+                  (item: any) => !item.status || item.status === 'on-sale'
+                );
+                snkrdunkListings = onSaleCachedListings.map((item: any) => ({
                   id: `snkrdunk-${item.url}`,
                   title: `${card.name} ${item.grade}`,
                   price: item.price,
@@ -238,7 +242,7 @@ export const pricingRouter = router({
                   seller: 'SNKRDUNK',
                   condition: item.grade,
                 }));
-                console.log(`[Pricing Router] Hot cache returned ${snkrdunkListings.length} listings`);
+                console.log(`[Pricing Router] Hot cache returned ${snkrdunkListings.length} on-sale listings (filtered from ${cachedListings.length} total)`);
               } else {
                 // Hot cache expired or doesn't exist, scrape new data
                 console.log('[Pricing Router] Hot cache expired, scraping SNKRDUNK...');

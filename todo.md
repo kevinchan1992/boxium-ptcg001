@@ -3312,3 +3312,14 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 應用到所有搜尋功能（db.searchCards + imageCardSearch.ts）
 - [x] 編寫測試驗證各種格式（26 個測試全部通過）
 - [x] 保存 checkpoint
+
+## 🐛 修復 SNKRDUNK 顯示已售商品問題
+
+### 問題描述
+市場格價頁面的 SNKRDUNK 商品包含已售出商品，應只顯示在售商品。
+
+### 任務清單
+- [ ] 找到 snkrdunkApi.ts 中的 isOnlyOnSale 參數
+- [ ] 確認 API 調用時 isOnlyOnSale=true
+- [ ] 清除相關快取讓修復生效
+- [ ] 保存 checkpoint

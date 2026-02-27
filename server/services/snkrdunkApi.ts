@@ -139,43 +139,17 @@ export async function scrapeSnkrdunkListingsViaApi(
   console.log(`[SNKRDUNK API] Starting API fetch for SNKRDUNK ID: ${snkrdunkId}`);
 
   try {
-    // Fetch both on-sale and sold items in parallel
-    const [onSaleItems, allItems] = await Promise.all([
-      fetchSnkrdunkApiPage(snkrdunkId, { isOnlyOnSale: true, perPage: 50 }),
-      fetchSnkrdunkApiPage(snkrdunkId, { isOnlyOnSale: false, perPage: 50 }),
-    ]);
+    // Only fetch on-sale items - we only want to show items currently available for purchase
+    const onSaleItems = await fetchSnkrdunkApiPage(snkrdunkId, { isOnlyOnSale: true, perPage: 50 });
 
-    console.log(`[SNKRDUNK API] Fetched ${onSaleItems.length} on-sale + ${allItems.length} all items`);
-
-    // Merge and deduplicate by listingUID
-    const seen = new Set<string>();
-    const mergedItems: (SnkrdunkApiItem & { status: 'on-sale' | 'sold' })[] = [];
-
-    // On-sale items first (they take priority)
-    for (const item of onSaleItems) {
-      if (!seen.has(item.listingUID)) {
-        seen.add(item.listingUID);
-        mergedItems.push({ ...item, status: 'on-sale' as const });
-      }
-    }
-
-    // Then add sold items from the "all" list
-    for (const item of allItems) {
-      if (!seen.has(item.listingUID)) {
-        seen.add(item.listingUID);
-        mergedItems.push({
-          ...item,
-          status: item.isSold ? 'sold' as const : 'on-sale' as const,
-        });
-      }
-    }
+    console.log(`[SNKRDUNK API] Fetched ${onSaleItems.length} on-sale items`);
 
     // Filter PSA 10 only
-    const psa10Items = mergedItems.filter(
+    const psa10Items = onSaleItems.filter(
       (item) => item.condition === "PSA 10" || item.condition === "PSA10"
     );
 
-    console.log(`[SNKRDUNK API] After dedup: ${mergedItems.length} total, ${psa10Items.length} PSA 10`);
+    console.log(`[SNKRDUNK API] PSA 10 on-sale: ${psa10Items.length}`);
 
     // Convert to unified listing format
     const listings: SnkrdunkListing[] = psa10Items.map((item) => {
@@ -188,7 +162,7 @@ export async function scrapeSnkrdunkListingsViaApi(
         currency: "HKD",
         grade: item.condition,
         image: item.thumbnailUrl || undefined,
-        status: item.status,
+        status: 'on-sale' as const,
       };
     });
 
