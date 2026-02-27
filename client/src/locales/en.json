@@ -168,7 +168,11 @@
     "sealedPriceTrend": "Price Trend",
     "sealedReferencePrice": "Reference Price",
     "basedOnLatestSealedRecords": "Based on the latest {{count}} transactions within the past {{months}} months",
-    "noSealedData": "No sealed product price data available"
+    "noSealedData": "No sealed product price data available",
+    "priceUpdating": "Updating latest transaction prices...",
+    "priceUpdated": "Prices updated",
+    "priceUpToDate": "Prices are up to date",
+    "priceUpdateFailed": "Price update failed"
   },
   "admin": {
     "title": "Admin Panel",

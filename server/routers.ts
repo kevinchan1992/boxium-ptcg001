@@ -714,6 +714,108 @@ export const appRouter = router({
         });
         return { success: true };
       }),
+
+    /**
+     * Trigger on-demand price refresh for a single card.
+     * Called when a user views a card detail page.
+     * Uses 6-hour cooldown to avoid redundant scraping.
+     * Writes results to priceHistory + updates dataSource status,
+     * exactly like the batch update process.
+     */
+    triggerPriceRefresh: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const { cardId } = input;
+        const COOLDOWN_HOURS = 3;
+        const COOLDOWN_MS = COOLDOWN_HOURS * 60 * 60 * 1000;
+
+        console.log(`[PriceRefresh] Triggered for cardId: ${cardId}`);
+
+        // Step 1: Get card info
+        const card = await db.getCardById(cardId);
+        if (!card) {
+          return { status: 'error' as const, message: 'Card not found', recordsAdded: 0 };
+        }
+
+        // Step 2: Get SNKRDUNK data source
+        const dataSource = await db.getDataSourceByCardIdAndSource(cardId, 'snkrdunk');
+        if (!dataSource || !dataSource.sourceUrl) {
+          return { status: 'no_source' as const, message: 'No SNKRDUNK data source for this card', recordsAdded: 0 };
+        }
+
+        // Step 3: Check 6-hour cooldown via dataSource.lastFetchedAt
+        const now = new Date();
+        if (dataSource.lastFetchedAt) {
+          const lastFetched = new Date(dataSource.lastFetchedAt);
+          const elapsed = now.getTime() - lastFetched.getTime();
+          if (elapsed < COOLDOWN_MS) {
+            const remainingMin = Math.ceil((COOLDOWN_MS - elapsed) / 60000);
+            console.log(`[PriceRefresh] Card ${cardId} in cooldown, ${remainingMin} min remaining`);
+            return {
+              status: 'cooldown' as const,
+              message: `Recently updated, next refresh available in ${remainingMin} minutes`,
+              lastFetchedAt: lastFetched.toISOString(),
+              remainingMinutes: remainingMin,
+              recordsAdded: 0,
+            };
+          }
+        }
+
+        // Step 4: Fetch price history from SNKRDUNK (same as batch update)
+        console.log(`[PriceRefresh] Fetching price history for card ${cardId} from ${dataSource.sourceUrl}`);
+        try {
+          const { fetchPriceHistory, convertJpyToHkd } = await import('./snkrdunkScraper');
+          const productType: "single_card" | "sealed_product" = 
+            (dataSource.productType === 'sealed_product') ? 'sealed_product' : 'single_card';
+
+          const priceHistoryData = await fetchPriceHistory(dataSource.sourceUrl, productType);
+
+          if (!priceHistoryData || priceHistoryData.length === 0) {
+            // Update status even if no data found
+            await db.updateDataSourceFetchStatus(dataSource.id, 'success');
+            console.log(`[PriceRefresh] No price history found for card ${cardId}`);
+            return { status: 'success' as const, message: 'No new price data found', recordsAdded: 0 };
+          }
+
+          // Step 5: Write to priceHistory table (exactly like batch update)
+          let recordsAdded = 0;
+          for (const priceItem of priceHistoryData) {
+            const priceHKD = convertJpyToHkd(priceItem.price);
+            await db.addPriceHistory({
+              cardId: cardId,
+              source: 'snkrdunk',
+              price: priceHKD.toString(),
+              currency: 'HKD',
+              grade: productType === 'sealed_product' ? undefined : priceItem.grade,
+              quantity: productType === 'sealed_product' ? (priceItem.quantity || undefined) : undefined,
+              productType,
+              soldAt: priceItem.soldAt,
+            });
+            recordsAdded++;
+          }
+
+          // Step 6: Update data source fetch status (exactly like batch update)
+          await db.updateDataSourceFetchStatus(dataSource.id, 'success');
+
+          console.log(`[PriceRefresh] Card ${cardId} refreshed: ${recordsAdded} records added`);
+          return {
+            status: 'success' as const,
+            message: `Price data refreshed, ${recordsAdded} records added`,
+            recordsAdded,
+            lastFetchedAt: now.toISOString(),
+          };
+        } catch (error: any) {
+          console.error(`[PriceRefresh] Error refreshing card ${cardId}:`, error.message);
+          await db.updateDataSourceFetchStatus(dataSource.id, 'error', error.message);
+          return {
+            status: 'error' as const,
+            message: `Refresh failed: ${error.message}`,
+            recordsAdded: 0,
+          };
+        }
+      }),
   }),
 
   prices: router({

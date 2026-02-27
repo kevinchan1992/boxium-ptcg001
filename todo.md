@@ -3151,4 +3151,31 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 編寫自動恢復機制單元測試（8 tests passed）
 - [x] 測試卡死任務偵測邏輯
 - [x] TypeScript 編譯 0 errors
+- [x] 保存 checkpoint（version: 55b435c8）
+
+
+---
+
+## 🔄 用戶點擊卡牌觸發智能爬取最新成交價格
+
+### 目標
+當用戶在 Research 頁面搜尋並點擊卡牌進入 CardDetail 頁面時，後端自動觸發 SNKRDUNK 爬取該卡牌的最新成交價格數據，並寫入價格歷史表。6 小時內重複點擊同一卡牌不會再次觸發爬取。
+
+### 後端
+- [x] 創建 `triggerPriceRefresh` API（接收 cardId，返回爬取狀態）
+- [x] 實現 3 小時冷卻機制（檢查 dataSource.lastFetchedAt）
+- [x] 爬取成功後將最新成交價格寫入 priceHistory 表
+- [x] 爬取完成後更新 dataSource 狀態（與批量更新一致）
+
+### 前端
+- [x] CardDetail 頁面載入時自動調用 triggerPriceRefresh
+- [x] 顯示爬取狀態指示器（更新中/已是最新/冷卻中/失敗）
+- [x] 爬取完成後自動 invalidate 價格相關 queries 刷新 UI
+
+### 測試
+- [x] 編寫智能爬取 API 單元測試（14 tests passed）
+- [x] 測試 3 小時冷卻機制
+- [x] TypeScript 編譯 0 errors
 - [ ] 保存 checkpoint
+
+- [x] 將 triggerPriceRefresh 冷卻機制由 6 小時改為 3 小時

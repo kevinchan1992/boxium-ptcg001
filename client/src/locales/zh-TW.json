@@ -220,7 +220,11 @@
     "sealedPriceTrend": "價格趨勢",
     "sealedReferencePrice": "參考價格",
     "basedOnLatestSealedRecords": "基於最近 {{months}} 個月內最新 {{count}} 筆成交記錄",
-    "noSealedData": "暫無卡盒交易價格數據"
+    "noSealedData": "暫無卡盒交易價格數據",
+    "priceUpdating": "正在更新最新成交價格...",
+    "priceUpdated": "價格已更新",
+    "priceUpToDate": "價格已是最新",
+    "priceUpdateFailed": "價格更新失敗"
   },
   "admin": {
     "title": "管理後台",

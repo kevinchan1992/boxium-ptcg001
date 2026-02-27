@@ -158,7 +158,11 @@
     "usdPrice": "USD価格",
     "priceTrend": "30日間のトレンド",
     "priceIncrease": "↑ 上昇",
-    "priceDecrease": "↓ 下落"
+    "priceDecrease": "↓ 下落",
+    "priceUpdating": "最新の取引価格を更新中...",
+    "priceUpdated": "価格が更新されました",
+    "priceUpToDate": "価格は最新です",
+    "priceUpdateFailed": "価格の更新に失敗しました"
   },
   "admin": {
     "title": "管理パネル",

@@ -4,7 +4,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
-import { Loader2, AlertCircle, Heart, Package } from "lucide-react";
+import { Loader2, AlertCircle, Heart, Package, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { PriceTrendChart } from "@/components/PriceTrendChart";
@@ -114,6 +114,34 @@ export default function CardDetail() {
       addViewHistory.mutate({ cardId });
     }
   }, [user, cardId]);
+
+  // ─── On-demand price refresh (triggered when user views card) ───
+  const utils = trpc.useUtils();
+  const triggerRefresh = trpc.cards.triggerPriceRefresh.useMutation({
+    onSuccess: (result) => {
+      if (result.status === 'success' && result.recordsAdded > 0) {
+        // Invalidate price-related queries so UI refreshes with new data
+        utils.prices.getHistory.invalidate({ cardId: cardId! });
+        utils.prices.getStatistics.invalidate({ cardId: cardId! });
+        utils.cards.getPriceTrendData.invalidate({ cardId: cardId! });
+        utils.products.getPriceHistory.invalidate();
+      }
+    },
+  });
+
+  // Auto-trigger price refresh when card detail page loads
+  const [refreshTriggered, setRefreshTriggered] = useState(false);
+  useEffect(() => {
+    if (cardId && product && !refreshTriggered) {
+      setRefreshTriggered(true);
+      triggerRefresh.mutate({ cardId });
+    }
+  }, [cardId, product, refreshTriggered]);
+
+  // Reset trigger when cardId changes
+  useEffect(() => {
+    setRefreshTriggered(false);
+  }, [cardId]);
 
   // Fetch price history from SNKRDUNK
   const normalizeGrade = (grade: string | null) => {
@@ -422,6 +450,37 @@ export default function CardDetail() {
                 <span className="ml-2">· {t("cardDetail.priceTrend")}</span>
               )}
             </p>
+            {/* Price Refresh Status Indicator */}
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+              {triggerRefresh.isPending ? (
+                <>
+                  <RefreshCw className="w-3 h-3 animate-spin text-primary" />
+                  <span>{t("cardDetail.priceUpdating", "正在更新最新成交價格...")}</span>
+                </>
+              ) : triggerRefresh.data?.status === 'success' && triggerRefresh.data.recordsAdded > 0 ? (
+                <>
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span>{t("cardDetail.priceUpdated", "價格已更新")}</span>
+                </>
+              ) : triggerRefresh.data?.status === 'cooldown' ? (
+                <>
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  <span>{t("cardDetail.priceUpToDate", "價格已是最新")}</span>
+                </>
+              ) : triggerRefresh.data?.status === 'success' && triggerRefresh.data.recordsAdded === 0 ? (
+                <>
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  <span>{t("cardDetail.priceUpToDate", "價格已是最新")}</span>
+                </>
+              ) : triggerRefresh.data?.status === 'no_source' ? (
+                null
+              ) : triggerRefresh.data?.status === 'error' ? (
+                <>
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <span>{t("cardDetail.priceUpdateFailed", "價格更新失敗")}</span>
+                </>
+              ) : null}
+            </div>
           </div>
 
           {/* Price History Table */}
