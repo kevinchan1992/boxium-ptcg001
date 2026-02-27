@@ -210,7 +210,17 @@
     "usdPrice": "USD 價格",
     "priceTrend": "近 7 天趋勢",
     "priceIncrease": "↑ 上漲",
-    "priceDecrease": "↓ 下跌"
+    "priceDecrease": "↓ 下跌",
+    "quantity": "數量",
+    "boxType": "產品類型",
+    "boosterBox": "卡盒",
+    "sealedProduct": "密封產品",
+    "singleCard": "單卡",
+    "productName": "產品名稱",
+    "sealedPriceTrend": "價格趨勢",
+    "sealedReferencePrice": "參考價格",
+    "basedOnLatestSealedRecords": "基於最近 {{months}} 個月內最新 {{count}} 筆成交記錄",
+    "noSealedData": "暫無卡盒交易價格數據"
   },
   "admin": {
     "title": "管理後台",

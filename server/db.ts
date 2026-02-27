@@ -496,6 +496,153 @@ export async function getSealedProductById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+/**
+ * Unified product query - searches both cards and sealedProducts tables
+ * First checks dataSources to determine productType, then queries the correct table
+ * If no dataSource found, falls back to cards table first, then sealedProducts
+ */
+export async function getProductById(productId: number, productType?: 'single_card' | 'sealed_product') {
+  // If productType is known, query directly
+  if (productType === 'sealed_product') {
+    const product = await getSealedProductById(productId);
+    if (product) {
+      return {
+        ...product,
+        productType: 'sealed_product' as const,
+        // Normalize fields for unified display
+        cardNumber: null,
+        rarity: null,
+        language: null,
+        artist: null,
+        description: null,
+        types: null,
+        hp: null,
+        cardId: null,
+        snkrdunkId: null,
+      };
+    }
+    return undefined;
+  }
+
+  if (productType === 'single_card') {
+    const card = await getCardById(productId);
+    if (card) {
+      return {
+        ...card,
+        productType: 'single_card' as const,
+        boxType: null,
+        itemCount: null,
+      };
+    }
+    return undefined;
+  }
+
+  // productType unknown - try cards first, then sealedProducts
+  const card = await getCardById(productId);
+  if (card) {
+    return {
+      ...card,
+      productType: 'single_card' as const,
+      boxType: null,
+      itemCount: null,
+    };
+  }
+
+  const product = await getSealedProductById(productId);
+  if (product) {
+    return {
+      ...product,
+      productType: 'sealed_product' as const,
+      cardNumber: null,
+      rarity: null,
+      language: null,
+      artist: null,
+      description: null,
+      types: null,
+      hp: null,
+      cardId: null,
+      snkrdunkId: null,
+    };
+  }
+
+  return undefined;
+}
+
+/**
+ * Get all sealed products
+ */
+export async function getAllSealedProducts() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.select().from(sealedProducts);
+  return result;
+}
+
+/**
+ * Search sealed products by name
+ */
+export async function searchSealedProducts(query: string, limit: number = 20, offset: number = 0) {
+  const db = await getDb();
+  if (!db) return { products: [], total: 0 };
+
+  const matchingProducts = await db
+    .select()
+    .from(sealedProducts)
+    .where(
+      or(
+        like(sealedProducts.name, `%${query}%`),
+        like(sealedProducts.nameJa, `%${query}%`)
+      )
+    );
+
+  if (matchingProducts.length === 0) return { products: [], total: 0 };
+
+  // Get latest price for each sealed product
+  const productIds = matchingProducts.map(p => p.id);
+  const latestPrices = await db
+    .select({
+      cardId: priceHistory.cardId,
+      price: priceHistory.price,
+      soldAt: priceHistory.soldAt,
+    })
+    .from(priceHistory)
+    .where(
+      and(
+        inArray(priceHistory.cardId, productIds),
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.productType, 'sealed_product')
+      )
+    )
+    .orderBy(desc(priceHistory.soldAt));
+
+  // Create price map (productId -> latest price)
+  const priceMap = new Map<number, number>();
+  for (const price of latestPrices) {
+    if (!priceMap.has(price.cardId)) {
+      priceMap.set(price.cardId, Number(price.price));
+    }
+  }
+
+  // Sort products by price (highest first)
+  const sortedProducts = matchingProducts.sort((a, b) => {
+    const priceA = priceMap.get(a.id) || 0;
+    const priceB = priceMap.get(b.id) || 0;
+    return priceB - priceA;
+  });
+
+  const productsWithPrice = sortedProducts.map(product => ({
+    ...product,
+    latestPrice: priceMap.get(product.id) || null,
+    productType: 'sealed_product' as const,
+  }));
+
+  return {
+    products: productsWithPrice.slice(offset, offset + limit),
+    total: matchingProducts.length,
+  };
+}
+
 export async function updateCard(
   cardId: number,
   data: Partial<Omit<typeof cards.$inferInsert, "id" | "cardId" | "createdAt">>

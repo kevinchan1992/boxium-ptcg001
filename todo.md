@@ -2857,12 +2857,12 @@ for (const card of allCards) {
 - [ ] 更新 `viewHistory` 表
 
 #### 5. 創建統一的產品查詢 API
-- [ ] 創建 `products.getById` API，支持同時查詢單卡和卡盒
+- [x] 創建 `products.getById` API，支持同時查詢單卡和卡盒
 - [ ] 修改後端路由，支持 `/product/:id` 路徑
 
 #### 6. 修改前端頁面
-- [ ] 修改 CardDetail.tsx，支持顯示卡盒信息
-- [ ] 根據 `productType` 動態顯示表頭（評級 vs 數量）
+- [x] 修改 CardDetail.tsx，支持顯示卡盒信息
+- [x] 根據 `productType` 動態顯示表頭（評級 vs 數量）
 - [ ] 修改其他相關頁面（例如搜尋結果、市場價格等）
 
 #### 7. 刪除舊數據
@@ -2924,3 +2924,16 @@ for (const card of allCards) {
 - ✅ 未來添加卡盒產品時，數據會正確存儲到 `sealedProducts` 表
 - ✅ 現有卡盒記錄已正確遷移
 - ✅ 價格歷史記錄包含數量信息（例如「10盒」、「1盒」）
+
+
+---
+
+## 🔧 檢查批量更新狀態 + CardDetail 頁面更新 + 統一產品查詢 API
+
+### 任務清單
+- [x] 檢查後端批量更新是否正在運行（Task 300001 卡死在 3994/36123，已強制標記為 failed，清理 5522 個舊 running 任務）
+- [x] 創建統一產品查詢 API（同時查詢 cards 和 sealedProducts 表）
+- [x] 更新 CardDetail 頁面，根據 productType 顯示不同欄位（單卡顯示「評級」，卡盒顯示「數量」）
+- [x] 測試並驗證所有修改（11/11 單元測試通過）
+- [x] 修復批量更新執行器支持卡盒產品（batchUpdateExecutor.ts + persistentSnkrdunkBatchUpdate.ts）
+- [x] 保存 checkpoint

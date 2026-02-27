@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRoute, useLocation } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
-import { Loader2, AlertCircle, Heart } from "lucide-react";
+import { Loader2, AlertCircle, Heart, Package } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { PriceTrendChart } from "@/components/PriceTrendChart";
@@ -24,11 +24,36 @@ export default function CardDetail() {
 
   const cardId = params?.id ? parseInt(params.id, 10) : null;
 
-  // Fetch card details
+  // Determine productType from URL search params or auto-detect
+  const [productType, setProductType] = useState<'single_card' | 'sealed_product' | undefined>(undefined);
+
+  // Try to detect productType from URL query params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type');
+    if (type === 'sealed_product' || type === 'single_card') {
+      setProductType(type);
+    } else {
+      setProductType(undefined); // Will auto-detect
+    }
+  }, [cardId]);
+
+  // Fetch card details - try cards table first (existing behavior for backward compatibility)
   const { data: card, isLoading: cardLoading, error: cardError } = trpc.cards.getById.useQuery(
     { id: cardId! },
-    { enabled: !!cardId, retry: 1 }
+    { enabled: !!cardId && productType !== 'sealed_product', retry: 1 }
   );
+
+  // Fetch sealed product details if productType is sealed_product or card not found
+  const { data: sealedProduct, isLoading: sealedLoading } = trpc.products.getById.useQuery(
+    { id: cardId!, productType: 'sealed_product' },
+    { enabled: !!cardId && (productType === 'sealed_product' || (!cardLoading && !card && productType === undefined)), retry: 1 }
+  );
+
+  // Determine the actual product to display
+  const isSealedProduct = productType === 'sealed_product' || (!card && !!sealedProduct);
+  const product = isSealedProduct ? sealedProduct : card;
+  const isLoading = cardLoading || (productType === 'sealed_product' && sealedLoading);
 
   // Get current user
   const { data: user } = trpc.auth.me.useQuery();
@@ -93,11 +118,11 @@ export default function CardDetail() {
   // Fetch price history from SNKRDUNK
   const normalizeGrade = (grade: string | null) => {
     if (!grade) return undefined;
-    // Handle special case for "中古" which should match A, B, C, D grades
     if (grade === "中古") return "中古";
     return grade.replace(/\s+/g, '');
   };
 
+  // For single cards: use existing price history API
   const { data: priceHistory = [], isLoading: priceLoading } = trpc.prices.getHistory.useQuery(
     {
       cardId: cardId!,
@@ -105,20 +130,34 @@ export default function CardDetail() {
       grade: normalizeGrade(activeGrade),
       limit: 50,
     },
-    { enabled: !!cardId, retry: 1 }
+    { enabled: !!cardId && !isSealedProduct, retry: 1 }
   );
 
-  // 動態時間範圍調整：2個月 → 3個月 → 6個月
-  const [timeRangeDays, setTimeRangeDays] = useState(60); // 預設 2 個月
-  const [actualMonths, setActualMonths] = useState(2); // 實際使用的月份數
+  // For sealed products: use products price history API
+  const { data: sealedPriceHistory = [], isLoading: sealedPriceLoading } = trpc.products.getPriceHistory.useQuery(
+    {
+      productId: cardId!,
+      productType: 'sealed_product',
+      source: "snkrdunk",
+      limit: 50,
+    },
+    { enabled: !!cardId && isSealedProduct, retry: 1 }
+  );
 
-  // 當 cardId 變化時，重置時間範圍為初始值
+  // Use the appropriate price history
+  const activePriceHistory = isSealedProduct ? sealedPriceHistory : priceHistory;
+  const activePriceLoading = isSealedProduct ? sealedPriceLoading : priceLoading;
+
+  // 動態時間範圍調整：2個月 → 3個月 → 6個月
+  const [timeRangeDays, setTimeRangeDays] = useState(60);
+  const [actualMonths, setActualMonths] = useState(2);
+
   useEffect(() => {
     setTimeRangeDays(60);
     setActualMonths(2);
   }, [cardId]);
 
-  // 獨立查詢 PSA 10 價格歷史用於計算參考價格
+  // 獨立查詢 PSA 10 價格歷史用於計算參考價格 (single cards only)
   const { data: psa10PriceHistory = [], isLoading: psa10Loading } = trpc.prices.getHistory.useQuery(
     {
       cardId: cardId!,
@@ -127,48 +166,62 @@ export default function CardDetail() {
       limit: 10,
       days: timeRangeDays,
     },
-    { enabled: !!cardId, retry: 1 }
+    { enabled: !!cardId && !isSealedProduct, retry: 1 }
   );
 
-  // 動態調整時間範圍：根據記錄數量動態調整
+  // For sealed products: get recent price history for reference price
+  const { data: sealedRecentPrices = [], isLoading: sealedRecentLoading } = trpc.products.getPriceHistory.useQuery(
+    {
+      productId: cardId!,
+      productType: 'sealed_product',
+      source: "snkrdunk",
+      limit: 10,
+      days: timeRangeDays,
+    },
+    { enabled: !!cardId && isSealedProduct, retry: 1 }
+  );
+
+  const activeRecentPrices = isSealedProduct ? sealedRecentPrices : psa10PriceHistory;
+  const activeRecentLoading = isSealedProduct ? sealedRecentLoading : psa10Loading;
+
+  // 動態調整時間範圍
   useEffect(() => {
-    // 等待數據載入完成後才進行調整
-    if (psa10Loading) return;
+    if (activeRecentLoading) return;
     
-    const recordCount = psa10PriceHistory.length;
+    const recordCount = activeRecentPrices.length;
     
-    // 如果當前時間範圍內有足夠數據，不需要擴展
     if (recordCount >= 3) {
-      // 根據當前 timeRangeDays 設置 actualMonths
-      if (timeRangeDays === 60) {
-        setActualMonths(2);
-      } else if (timeRangeDays === 90) {
-        setActualMonths(3);
-      } else if (timeRangeDays === 180) {
-        setActualMonths(6);
-      }
+      if (timeRangeDays === 60) setActualMonths(2);
+      else if (timeRangeDays === 90) setActualMonths(3);
+      else if (timeRangeDays === 180) setActualMonths(6);
     } else {
-      // 記錄不足 3 筆，需要擴展時間範圍
       if (timeRangeDays === 60) {
-        // 2個月不足，擴展到3個月
         setTimeRangeDays(90);
         setActualMonths(3);
       } else if (timeRangeDays === 90) {
-        // 3個月不足，擴展到6個月
         setTimeRangeDays(180);
         setActualMonths(6);
       } else if (timeRangeDays === 180) {
-        // 6個月仍不足 3 筆，維持 6 個月
         setActualMonths(6);
       }
     }
-  }, [psa10PriceHistory.length, timeRangeDays, psa10Loading]);
+  }, [activeRecentPrices.length, timeRangeDays, activeRecentLoading]);
 
-  // Fetch price trend data (days: 0 means all data)
+  // Fetch price trend data
+  // For single cards: use existing API
   const { data: priceTrendData, isLoading: trendLoading } = trpc.cards.getPriceTrendData.useQuery(
     { cardId: cardId!, days: 0 },
-    { enabled: !!cardId, retry: 1 }
+    { enabled: !!cardId && !isSealedProduct, retry: 1 }
   );
+
+  // For sealed products: use products API
+  const { data: sealedTrendData, isLoading: sealedTrendLoading } = trpc.products.getPriceTrendData.useQuery(
+    { productId: cardId!, productType: 'sealed_product', days: 0 },
+    { enabled: !!cardId && isSealedProduct, retry: 1 }
+  );
+
+  const activeTrendData = isSealedProduct ? sealedTrendData : priceTrendData;
+  const activeTrendLoading = isSealedProduct ? sealedTrendLoading : trendLoading;
 
   if (!cardId) {
     return (
@@ -181,7 +234,7 @@ export default function CardDetail() {
     );
   }
 
-  if (cardLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -189,7 +242,7 @@ export default function CardDetail() {
     );
   }
 
-  if (cardError || !card) {
+  if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -200,44 +253,37 @@ export default function CardDetail() {
     );
   }
 
-  // Calculate PSA 10 reference price (average of latest 10 records)
-  const calculatePSA10ReferencePrice = () => {
-    if (psa10PriceHistory.length === 0) return "N/A";
-    
-    const avg = psa10PriceHistory.reduce((sum, p) => sum + parseFloat(p.price), 0) / psa10PriceHistory.length;
+  // Calculate reference price
+  const calculateReferencePrice = () => {
+    if (activeRecentPrices.length === 0) return "N/A";
+    const avg = activeRecentPrices.reduce((sum, p) => sum + parseFloat(p.price), 0) / activeRecentPrices.length;
     return avg.toFixed(2);
   };
   
-  const avgPrice = calculatePSA10ReferencePrice();
-  const recordCount = psa10PriceHistory.length;
+  const avgPrice = calculateReferencePrice();
+  const recordCount = activeRecentPrices.length;
 
   // Calculate price trend (7-day comparison)
   const calculatePriceTrend = () => {
-    if (psa10PriceHistory.length < 2) {
-      return null;
-    }
+    if (activeRecentPrices.length < 2) return null;
 
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-    // Get recent 7 days data
-    const recent7Days = psa10PriceHistory.filter(p => {
+    const recent7Days = activeRecentPrices.filter(p => {
       if (!p.soldAt) return false;
       const soldDate = new Date(p.soldAt);
       return soldDate >= sevenDaysAgo && soldDate <= now;
     });
 
-    // Get previous 7 days data (7-14 days ago)
-    const previous7Days = psa10PriceHistory.filter(p => {
+    const previous7Days = activeRecentPrices.filter(p => {
       if (!p.soldAt) return false;
       const soldDate = new Date(p.soldAt);
       return soldDate >= fourteenDaysAgo && soldDate < sevenDaysAgo;
     });
 
-    if (recent7Days.length === 0 || previous7Days.length === 0) {
-      return null;
-    }
+    if (recent7Days.length === 0 || previous7Days.length === 0) return null;
 
     const recentAvg = recent7Days.reduce((sum: number, p: any) => sum + parseFloat(p.price), 0) / recent7Days.length;
     const previousAvg = previous7Days.reduce((sum: number, p: any) => sum + parseFloat(p.price), 0) / previous7Days.length;
@@ -259,22 +305,31 @@ export default function CardDetail() {
         items={[
           { label: t("common.home"), href: "/" },
           { label: t("common.research"), href: "/research" },
-          { label: card.name }
+          { label: product.name }
         ]}
       />
       
       {/* Header */}
       <div className="mb-4">
+        {/* Product Type Badge */}
+        {isSealedProduct && (
+          <div className="flex items-center gap-1.5 mb-2">
+            <Package className="w-4 h-4 text-amber-500" />
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              {t("cardDetail.boosterBox")}
+            </span>
+          </div>
+        )}
         <h1 className="text-base sm:text-xl font-bold text-foreground mb-1">
-          {card.name}
+          {product.name}
         </h1>
-        {card.nameJa && (
-          <p className="text-sm sm:text-base text-muted-foreground mb-2">{card.nameJa}</p>
+        {product.nameJa && (
+          <p className="text-sm sm:text-base text-muted-foreground mb-2">{product.nameJa}</p>
         )}
         <div className="flex flex-wrap gap-2">
           <BrandButton 
             size="sm" 
-            onClick={() => setLocation(`/pricing/${card.id}`)}
+            onClick={() => setLocation(`/pricing/${product.id}${isSealedProduct ? '?type=sealed_product' : ''}`)}
           >
             {t("cardDetail.comparePrice")}
           </BrandButton>
@@ -288,18 +343,18 @@ export default function CardDetail() {
             <Heart className={`w-4 h-4 mr-1 ${watchlistStatus?.isInWatchlist ? "fill-current" : ""}`} />
             {watchlistStatus?.isInWatchlist ? "從收藏中移除" : "加入收藏"}
           </Button>
-          <ShareButton cardName={card.name} cardId={cardId!} />
+          <ShareButton cardName={product.name} cardId={cardId!} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Card Image */}
+        {/* Left Column - Product Image */}
         <div className="lg:col-span-1">
           <div className="sticky top-8">
-            {card.imageUrl ? (
+            {product.imageUrl ? (
               <img
-                src={card.imageUrl}
-                alt={card.name}
+                src={product.imageUrl}
+                alt={product.name}
                 className="w-full rounded-lg shadow-2xl hover:scale-105 transition-transform duration-300"
                 style={{ maxWidth: "100%", height: "auto" }}
               />
@@ -311,28 +366,34 @@ export default function CardDetail() {
           </div>
         </div>
 
-        {/* Right Column - Card Information */}
+        {/* Right Column - Product Information */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Grade Filters */}
-          <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
-            {grades.map((grade) => (
-              <Button
-                key={grade}
-                variant={activeGrade === grade ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveGrade(activeGrade === grade ? null : grade)}
-                className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 h-auto min-h-[36px] whitespace-nowrap"
-              >
-                {grade}
-              </Button>
-            ))}
-          </div>
+          {/* Grade Filters - only for single cards */}
+          {!isSealedProduct && (
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
+              {grades.map((grade) => (
+                <Button
+                  key={grade}
+                  variant={activeGrade === grade ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveGrade(activeGrade === grade ? null : grade)}
+                  className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 h-auto min-h-[36px] whitespace-nowrap"
+                >
+                  {grade}
+                </Button>
+              ))}
+            </div>
+          )}
 
           {/* Reference Price */}
           <div className="bg-card rounded-lg p-3 sm:p-4 md:p-6 border border-border">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground break-words">
-                PSA 10 {t("cardDetail.referencePrice")}: {formatCurrency(avgPrice)}
+                {isSealedProduct ? (
+                  <>{t("cardDetail.sealedReferencePrice")}: {formatCurrency(avgPrice)}</>
+                ) : (
+                  <>PSA 10 {t("cardDetail.referencePrice")}: {formatCurrency(avgPrice)}</>
+                )}
               </h2>
               {priceTrend && (
                 <div className={`flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs md:text-sm font-semibold whitespace-nowrap ${
@@ -352,7 +413,11 @@ export default function CardDetail() {
               )}
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-              {t("cardDetail.basedOnLatestRecords", { count: recordCount, months: actualMonths })}
+              {isSealedProduct ? (
+                t("cardDetail.basedOnLatestSealedRecords", { count: recordCount, months: actualMonths })
+              ) : (
+                t("cardDetail.basedOnLatestRecords", { count: recordCount, months: actualMonths })
+              )}
               {priceTrend && (
                 <span className="ml-2">· {t("cardDetail.priceTrend")}</span>
               )}
@@ -366,11 +431,11 @@ export default function CardDetail() {
                 SNKRDUNK {t("cardDetail.actualPriceHistory")}
               </h3>
             </div>
-            {priceLoading ? (
+            {activePriceLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
-            ) : priceHistory.length > 0 ? (
+            ) : activePriceHistory.length > 0 ? (
               <div className="overflow-y-auto max-h-96 scrollbar-hide overflow-x-auto -mx-4 sm:mx-0">
                 <table className="w-full min-w-full sm:min-w-[300px]">
                   <thead className="sticky top-0 bg-card border-b border-border">
@@ -380,7 +445,7 @@ export default function CardDetail() {
                       </th>
                       <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm w-16 sm:w-24">
                         {/* Show "數量" for sealed products, "評級" for single cards */}
-                        {priceHistory.some(p => p.quantity) ? "數量" : t("cardDetail.grade")}
+                        {isSealedProduct ? t("cardDetail.quantity") : t("cardDetail.grade")}
                       </th>
                       <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm">
                         {t("cardDetail.price")}
@@ -388,10 +453,10 @@ export default function CardDetail() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {priceHistory.map((item, index) => {
+                    {activePriceHistory.map((item, index) => {
                       // For sealed products: show quantity (e.g., "10盒", "1盒")
                       // For single cards: show grade (e.g., "PSA 10", "中古")
-                      const displayValue = item.quantity || item.grade;
+                      const displayValue = isSealedProduct ? (item.quantity || '-') : (item.quantity || item.grade);
                       const isEmpty = !displayValue;
                       
                       return (
@@ -402,7 +467,7 @@ export default function CardDetail() {
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-foreground text-xs sm:text-sm w-16 sm:w-24">
                             {isEmpty ? (
                               <span className="inline-flex items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-md bg-muted text-[10px] sm:text-xs font-medium whitespace-nowrap">
-                                {t("cardDetail.usedGrade")}
+                                {isSealedProduct ? '-' : t("cardDetail.usedGrade")}
                               </span>
                             ) : (
                               <span className="inline-flex items-center justify-center font-medium whitespace-nowrap text-xs sm:text-sm">{displayValue}</span>
@@ -419,19 +484,19 @@ export default function CardDetail() {
               </div>
             ) : (
               <p className="text-muted-foreground py-8 text-center">
-                {t("cardDetail.noGradeData")}
+                {isSealedProduct ? t("cardDetail.noSealedData") : t("cardDetail.noGradeData")}
               </p>
             )}
           </div>
 
           {/* Price Trend Chart */}
           <PriceTrendChart
-            cardName={card.name}
-            trendData={priceTrendData?.trendData || []}
-            stats={priceTrendData?.stats || {
+            cardName={product.name}
+            trendData={activeTrendData?.trendData || []}
+            stats={activeTrendData?.stats || {
               snkrdunk: { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 }
             }}
-            isLoading={trendLoading}
+            isLoading={activeTrendLoading}
           />
 
           {/* Basic Information */}
@@ -441,25 +506,38 @@ export default function CardDetail() {
             </h3>
             <dl className="space-y-3">
               <div className="flex">
-                <dt className="text-muted-foreground w-32">{t("cardDetail.cardName")}:</dt>
-                <dd className="text-foreground">{card.name}</dd>
+                <dt className="text-muted-foreground w-32">
+                  {isSealedProduct ? t("cardDetail.productName") : t("cardDetail.cardName")}:
+                </dt>
+                <dd className="text-foreground">{product.name}</dd>
               </div>
-              {card.nameJa && (
+              {product.nameJa && (
                 <div className="flex">
                   <dt className="text-muted-foreground w-32">{t("cardDetail.japaneseName")}:</dt>
-                  <dd className="text-foreground">{card.nameJa}</dd>
+                  <dd className="text-foreground">{product.nameJa}</dd>
                 </div>
               )}
-              {card.cardNumber && (
+              {isSealedProduct && (
+                <div className="flex">
+                  <dt className="text-muted-foreground w-32">{t("cardDetail.boxType")}:</dt>
+                  <dd className="text-foreground">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm font-medium">
+                      <Package className="w-3.5 h-3.5" />
+                      {t("cardDetail.boosterBox")}
+                    </span>
+                  </dd>
+                </div>
+              )}
+              {!isSealedProduct && 'cardNumber' in product && product.cardNumber && (
                 <div className="flex">
                   <dt className="text-muted-foreground w-32">{t("cardDetail.cardNumber")}:</dt>
-                  <dd className="text-foreground">{card.cardNumber}</dd>
+                  <dd className="text-foreground">{product.cardNumber}</dd>
                 </div>
               )}
-              {card.series && (
+              {product.series && (
                 <div className="flex">
                   <dt className="text-muted-foreground w-32">{t("cardDetail.series")}:</dt>
-                  <dd className="text-foreground">{card.series}</dd>
+                  <dd className="text-foreground">{product.series}</dd>
                 </div>
               )}
             </dl>

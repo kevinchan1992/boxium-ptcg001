@@ -158,7 +158,17 @@
     "usdPrice": "USD Price",
     "priceTrend": "30-Day Trend",
     "priceIncrease": "↑ Up",
-    "priceDecrease": "↓ Down"
+    "priceDecrease": "↓ Down",
+    "quantity": "Quantity",
+    "boxType": "Product Type",
+    "boosterBox": "Booster Box",
+    "sealedProduct": "Sealed Product",
+    "singleCard": "Single Card",
+    "productName": "Product Name",
+    "sealedPriceTrend": "Price Trend",
+    "sealedReferencePrice": "Reference Price",
+    "basedOnLatestSealedRecords": "Based on the latest {{count}} transactions within the past {{months}} months",
+    "noSealedData": "No sealed product price data available"
   },
   "admin": {
     "title": "Admin Panel",

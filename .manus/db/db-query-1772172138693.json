@@ -1,0 +1,13 @@
+{
+  "query": "\n-- Step 1: Mark the stuck batch task 300001 as failed\nUPDATE scheduledTasks \nSET status = 'failed', \n    completedAt = NOW(),\n    errorMessage = 'Task stuck at 3994/36123 - force stopped by admin'\nWHERE id = 300001 AND status = 'running';\n\n-- Step 2: Clean up all old stuck running tasks (snkrdunk_update type from days ago)\nUPDATE scheduledTasks \nSET status = 'failed', \n    completedAt = NOW(),\n    errorMessage = 'Stale running task - force cleaned up'\nWHERE status = 'running' \n  AND taskType = 'snkrdunk_update'\n  AND updatedAt < DATE_SUB(NOW(), INTERVAL 1 HOUR);\n\n-- Step 3: Verify no more running tasks\nSELECT COUNT(*) as remaining_running FROM scheduledTasks WHERE status = 'running';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- Step 1: Mark the stuck batch task 300001 as failed\nUPDATE scheduledTasks \nSET status = 'failed', \n    completedAt = NOW(),\n    errorMessage = 'Task stuck at 3994/36123 - force stopped by admin'\nWHERE id = 300001 AND status = 'running';\n\n-- Step 2: Clean up all old stuck running tasks (snkrdunk_update type from days ago)\nUPDATE scheduledTasks \nSET status = 'failed', \n    completedAt = NOW(),\n    errorMessage = 'Stale running task - force cleaned up'\nWHERE status = 'running' \n  AND taskType = 'snkrdunk_update'\n  AND updatedAt < DATE_SUB(NOW(), INTERVAL 1 HOUR);\n\n-- Step 3: Verify no more running tasks\nSELECT COUNT(*) as remaining_running FROM scheduledTasks WHERE status = 'running';\n",
+  "rows": [
+    {
+      "remaining_running": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "remaining_running\n0\n",
+  "stderr": "",
+  "execution_time_ms": 2287
+}
