@@ -3237,4 +3237,29 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 移除 conditions:{USED} filter（PSA 卡片 condition 是 Graded 不是 Used）
 - [x] Browse API 測試正常（Charizard PSA 10: 18,886 結果）
 - [x] 48 個測試全部通過，TypeScript 0 errors
+- [x] 保存 checkpoint（version: 18c4c785）
+
+---
+
+## 🐛 修復 eBay 商品不顯示問題
+
+### 問題描述
+卡牌詳情頁只顯示 SNKRDUNK 商品，eBay 商品完全不顯示。
+
+### 任務清單
+- [x] 診斷 eBay API 回應是否正常（API 正常，PSA 10 過濾邏輯有 bug）
+- [x] 修復 PSA 10 過濾邏輯（'psa 1' 會錯誤匹配 'psa 10'，改用正則表達式 word boundary）
+- [x] 清除 eBay 快取讓修復生效
+- [x] 統一所有商品價格為 HKD 港幣顯示（eBay USD 轉 HKD，後端 convertToHKD）
+- [x] 測試修復結果（16 個測試全部通過）
+- [ ] 保存 checkpoint
+
+---
+
+## ⚡ 優化 SNKRDUNK 爬取速度
+
+- [ ] 分析現有 Playwright 爬取流程和性能瓶頸
+- [ ] 嘗試用輕量 HTTP 請求替代 Playwright（如 SNKRDUNK 有 API 或 SSR 數據）
+- [ ] 優化超時設定和等待策略
+- [ ] 測試驗證優化效果（對比優化前後速度）
 - [ ] 保存 checkpoint

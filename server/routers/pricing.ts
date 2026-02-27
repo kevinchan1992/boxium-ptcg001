@@ -2,6 +2,7 @@ import { router, publicProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { fetchEbayListings } from '../services/ebay';
 import { scrapeSnkrdunkListings } from '../services/snkrdunkScraperService';
+import { convertToHKD } from '../utils/currency';
 import * as db from '../db';
 
 interface PriceListing {
@@ -145,19 +146,29 @@ export const pricingRouter = router({
               // Filter for PSA 10 items only
               const psa10Items = (textSearchResponse || []).filter((item: any) => {
                 const title = item.title.toLowerCase();
-                if (!title.includes('psa') || !title.includes('10')) return false;
+                // Must contain "psa 10" or "psa10" (exact grade match)
+                const hasPsa10 = /\bpsa\s*10\b/.test(title);
+                if (!hasPsa10) return false;
                 
-                const excludePatterns = [
-                  'psa 9', 'psa9', 'psa 8', 'psa8', 'psa 7', 'psa7',
-                  'psa 6', 'psa6', 'psa 5', 'psa5', 'psa 4', 'psa4',
-                  'psa 3', 'psa3', 'psa 2', 'psa2', 'psa 1', 'psa1',
+                // Exclude non-PSA 10 grades using word boundary regex to avoid false positives
+                // (e.g., 'psa 1' was incorrectly matching 'psa 10' before)
+                const excludeGradePatterns = [
+                  /\bpsa\s*9\b/, /\bpsa\s*8\b/, /\bpsa\s*7\b/,
+                  /\bpsa\s*6\b/, /\bpsa\s*5\b/, /\bpsa\s*4\b/,
+                  /\bpsa\s*3\b/, /\bpsa\s*2\b/, /\bpsa\s*1\b/,
+                ];
+                const hasOtherGrade = excludeGradePatterns.some(p => p.test(title));
+                if (hasOtherGrade) return false;
+                
+                // Exclude non-card items
+                const excludeItemPatterns = [
                   'bgs', 'cgc', 'sgc', 'beckett',
                   'raw', 'ungraded', 'not graded',
                   'sleeve', 'sleeves', 'deck box', 'deckbox', 'playmat',
                   'binder', 'case', 'holder', 'toploader', 'protector',
                   'lot', 'bundle', 'collection',
                 ];
-                return !excludePatterns.some(p => title.includes(p));
+                return !excludeItemPatterns.some(p => title.includes(p));
               });
               
               console.log(`[Pricing Router] Filtered ${psa10Items.length}/${textSearchResponse?.length || 0} PSA 10 items`);
@@ -300,18 +311,21 @@ export const pricingRouter = router({
           // Continue even if SNKRDUNK fails
         }
 
-        // Step 4: Transform eBay listings to unified format
-        const ebayFormattedListings = ebayListings.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          price: item.price,
-          currency: item.currency,
-          imageUrl: item.image,
-          source: 'ebay' as const,
-          buyUrl: item.productUrl,
-          seller: item.seller?.name,
-          condition: item.condition,
-        }));
+        // Step 4: Transform eBay listings to unified format (convert all prices to HKD)
+        const ebayFormattedListings = ebayListings.map((item: any) => {
+          const priceInHKD = item.currency === 'HKD' ? item.price : convertToHKD(item.price, item.currency);
+          return {
+            id: item.id,
+            title: item.title,
+            price: priceInHKD,
+            currency: 'HKD',
+            imageUrl: item.image,
+            source: 'ebay' as const,
+            buyUrl: item.productUrl,
+            seller: item.seller?.name,
+            condition: item.condition,
+          };
+        });
 
         // Step 5: Merge eBay and SNKRDUNK listings
         const listings = [...ebayFormattedListings, ...snkrdunkListings];

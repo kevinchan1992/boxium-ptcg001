@@ -239,7 +239,7 @@ export default function PricingDetail() {
                 
                 {/* Price */}
                 <p className="text-sm sm:text-lg md:text-xl font-bold text-primary mb-1 sm:mb-2">
-                  {item.currency === "USD" ? `$${item.price.toFixed(2)}` : formatCurrency(item.price)}
+                  {formatCurrency(item.price)}
                 </p>
 
                 {/* Seller Info */}

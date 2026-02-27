@@ -1,0 +1,46 @@
+{
+  "query": "SELECT id, name, cardNumber, series FROM cards WHERE name LIKE '%Gyarados%Pretend%' OR name LIKE '%Pretend%Pikachu%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, cardNumber, series FROM cards WHERE name LIKE '%Gyarados%Pretend%' OR name LIKE '%Pretend%Pikachu%' LIMIT 10;",
+  "rows": [
+    {
+      "id": "180009",
+      "name": "Gyarados Pretend Pikachu: PROMO[XY-P 151/XY-P](XY-P Promotional cards)",
+      "cardNumber": "XY-P 151/XY-P",
+      "series": "NULL"
+    },
+    {
+      "id": "180012",
+      "name": "Magikarp Pretend Pikachu: PROMO[XY-P 150/XY-P](XY-P Promotional cards)",
+      "cardNumber": "XY-P 150/XY-P",
+      "series": "NULL"
+    },
+    {
+      "id": "781660",
+      "name": "Team Skull Pikachu: PROMO[SM-P 013](Special BOX \"Member Pretend Pikachu\")",
+      "cardNumber": "SM-P 013",
+      "series": "NULL"
+    },
+    {
+      "id": "781692",
+      "name": "Member Pretend Pikachu: PROMO[SM-P 014](Special BOX \"Member Pretend Pikachu\")",
+      "cardNumber": "SM-P 014",
+      "series": "NULL"
+    },
+    {
+      "id": "816939",
+      "name": "Team Skull Pikachu & Member Pretend Pikachu P [SM-P 013 014](Special BOX \"Member Pretend Pikachu\") Unopened Pack",
+      "cardNumber": "SM-P 013 014",
+      "series": "NULL"
+    },
+    {
+      "id": "1020068",
+      "name": "Gyarados Pretend Pikachu & Magikarp Pretend Pikachu P [XY-P 150 151/XY-P](XY-P Promotional cards) Unopened Pack",
+      "cardNumber": "XY-P 150 151/XY-P",
+      "series": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcardNumber\tseries\n180009\tGyarados Pretend Pikachu: PROMO[XY-P 151/XY-P](XY-P Promotional cards)\tXY-P 151/XY-P\tNULL\n180012\tMagikarp Pretend Pikachu: PROMO[XY-P 150/XY-P](XY-P Promotional cards)\tXY-P 150/XY-P\tNULL\n781660\tTeam Skull Pikachu: PROMO[SM-P 013](Special BOX \"Member Pretend Pikachu\")\tSM-P 013\tNULL\n781692\tMember Pretend Pikachu: PROMO[SM-P 014](Special BOX \"Member Pretend Pikachu\")\tSM-P 014\tNULL\n816939\tTeam Skull Pikachu & Member Pretend Pikachu P [SM-P 013 014](Special BOX \"Member Pretend Pikachu\") Unopened Pack\tSM-P 013 014\tNULL\n1020068\tGyarados Pretend Pikachu & Magikarp Pretend Pikachu P [XY-P 150 151/XY-P](XY-P Promotional cards) Unopened Pack\tXY-P 150 151/XY-P\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1683
+}
