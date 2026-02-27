@@ -607,38 +607,58 @@ const snkrdunkId = extractSnkrdunkId(input.url);
           // Scrape SNKRDUNK page
           const cardData = await scrapeSnkrdunkPage(input.url);
 
-          // Create or update card
-          const existingCard = await db.getCardByCardId(`snkrdunk-${snkrdunkId}`);
-          let cardId: number;
+          // Determine product type (default to single_card if not specified)
+          const productType = input.productType || "single_card";
+          const gameId = input.gameId || 1; // Default to Pokémon
+          let productId: number;
 
-          if (existingCard) {
-            cardId = existingCard.id;
-            // Update card with scraped data
-            await db.updateCard(cardId, {
+          if (productType === "sealed_product") {
+            // Create or update sealed product
+            // For sealed products, we use the SNKRDUNK ID as the unique identifier
+            // Since we don't have a getSealedProductByCardId function, we'll create a new product each time
+            // TODO: Add getSealedProductByCardId function to avoid duplicates
+            
+            productId = await db.createSealedProduct({
+              gameId,
               name: cardData.name,
               nameJa: cardData.nameJa,
               imageUrl: cardData.imageUrl || undefined,
+              boxType: "booster_box", // Default to booster_box
             });
           } else {
-            // Create new card
-            // Extract card number from name (e.g., "Pikachu[SM-P 288]" → "SM-P 288")
-            const cardNumberMatch = cardData.name.match(/\[([^\]]+)\]/);
-            const cardNumber = cardNumberMatch ? cardNumberMatch[1].trim() : undefined;
-            
-            cardId = await db.createCard({
-              cardId: `snkrdunk-${snkrdunkId}`,
-              name: cardData.name,
-              nameJa: cardData.nameJa,
-              imageUrl: cardData.imageUrl || undefined,
-              cardNumber,
-            });
+            // Create or update single card
+            const existingCard = await db.getCardByCardId(`snkrdunk-${snkrdunkId}`);
+
+            if (existingCard) {
+              productId = existingCard.id;
+              // Update card with scraped data
+              await db.updateCard(productId, {
+                name: cardData.name,
+                nameJa: cardData.nameJa,
+                imageUrl: cardData.imageUrl || undefined,
+              });
+            } else {
+              // Create new card
+              // Extract card number from name (e.g., "Pikachu[SM-P 288]" → "SM-P 288")
+              const cardNumberMatch = cardData.name.match(/\[([^\]]+)\]/);
+              const cardNumber = cardNumberMatch ? cardNumberMatch[1].trim() : undefined;
+              
+              productId = await db.createCard({
+                cardId: `snkrdunk-${snkrdunkId}`,
+                gameId,
+                name: cardData.name,
+                nameJa: cardData.nameJa,
+                imageUrl: cardData.imageUrl || undefined,
+                cardNumber,
+              });
+            }
           }
 
           // Add data source (now guaranteed to be new)
           await db.addDataSource({
-            cardId,
-            gameId: input.gameId || 1, // Default to Pokémon (gameId=1) if not specified
-            productType: input.productType || "single_card", // Default to single_card if not specified
+            cardId: productId, // This is the ID of either a card or sealed product
+            gameId, // Use the gameId determined above
+            productType, // Use the productType determined above
             source: "snkrdunk",
             sourceUrl: input.url,
             sourceIdentifier: snkrdunkId,
@@ -648,11 +668,13 @@ const snkrdunkId = extractSnkrdunkId(input.url);
           for (const priceEntry of cardData.priceHistory) {
             const priceHkd = convertJpyToHkd(priceEntry.price);
             await db.addPriceHistory({
-              cardId,
+              cardId: productId, // This is the ID of either a card or sealed product
               source: "snkrdunk",
               price: priceHkd.toString(),
               currency: "HKD",
               grade: priceEntry.grade,
+              quantity: priceEntry.quantity, // Add quantity field for sealed products
+              productType, // Add productType field
               soldAt: priceEntry.soldAt,
               listingUrl: input.url,
             });
@@ -661,13 +683,13 @@ const snkrdunkId = extractSnkrdunkId(input.url);
           // Get and update data source status
           const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });
           const newDataSource = dataSources.find(
-            (ds) => ds.cardId === cardId && ds.source === "snkrdunk"
+            (ds) => ds.cardId === productId && ds.source === "snkrdunk"
           );
           if (newDataSource) {
             await db.updateDataSourceFetchStatus(newDataSource.id, "success");
           }
 
-          return { success: true, cardId, priceCount: cardData.priceHistory.length };
+          return { success: true, cardId: productId, priceCount: cardData.priceHistory.length };
         } catch (error: any) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",

@@ -2826,3 +2826,101 @@ for (const card of allCards) {
 - [x] 單元測試驗證單卡評級欄位爬取
 - [ ] 手動測試添加卡盒數據源並查看顯示效果
 - [ ] 保存 checkpoint
+
+
+---
+
+## 📦 將卡盒數據從 cards 表遷移到 sealedProducts 表
+
+### 問題
+- 卡盒數據被錯誤地存儲在 `cards` 表中，而不是 `sealedProducts` 表
+- 導致前端無法正確區分單卡和卡盒，表頭始終顯示「評級」
+
+### 任務清單
+
+#### 1. 識別並遷移卡盒數據
+- [ ] 識別 `cards` 表中的卡盒記錄（名稱包含 "Box"、"Pack" 等關鍵詞）
+- [ ] 將卡盒記錄複製到 `sealedProducts` 表
+- [ ] 記錄舊 ID 和新 ID 的對應關係
+
+#### 2. 更新數據源關聯
+- [ ] 更新 `dataSources` 表，將卡盒的數據源指向 `sealedProducts` 表
+- [ ] 修改 `dataSources` 表的 `cardId` 欄位為卡盒的新 ID
+
+#### 3. 更新價格歷史關聯
+- [ ] 更新 `priceHistory` 表，將卡盒的價格歷史指向 `sealedProducts` 表
+- [ ] 修改 `priceHistory` 表的 `cardId` 欄位為卡盒的新 ID
+- [ ] 設置 `productType='sealed_product'`
+
+#### 4. 更新其他關聯表
+- [ ] 更新 `watchlist` 表
+- [ ] 更新 `viewHistory` 表
+
+#### 5. 創建統一的產品查詢 API
+- [ ] 創建 `products.getById` API，支持同時查詢單卡和卡盒
+- [ ] 修改後端路由，支持 `/product/:id` 路徑
+
+#### 6. 修改前端頁面
+- [ ] 修改 CardDetail.tsx，支持顯示卡盒信息
+- [ ] 根據 `productType` 動態顯示表頭（評級 vs 數量）
+- [ ] 修改其他相關頁面（例如搜尋結果、市場價格等）
+
+#### 7. 刪除舊數據
+- [ ] 從 `cards` 表中刪除已遷移的卡盒記錄
+
+#### 8. 測試
+- [ ] 測試單卡詳情頁面
+- [ ] 測試卡盒詳情頁面
+- [ ] 測試批量更新功能
+- [ ] 保存 checkpoint
+
+
+---
+
+## ✅ 修復卡盒數據源存儲邏輯
+
+### 問題描述
+用戶手動添加卡盒產品（productType='sealed_product'）時，數據被錯誤地存儲到 `cards` 表而不是 `sealedProducts` 表。
+
+### 根本原因
+`addSnkrdunkSource` mutation 的邏輯沒有根據 `productType` 決定存儲到哪個表，所有產品都被存儲到 `cards` 表。
+
+### 任務清單
+- [x] 檢查後端數據源添加邏輯（發現問題）
+- [x] 在 db.ts 中添加 `createSealedProduct` 和 `updateSealedProduct` 函數
+- [x] 修改 `addSnkrdunkSource` mutation，根據 `productType` 決定存儲到 `cards` 或 `sealedProducts` 表
+- [x] 更新 `addPriceHistory` 函數，支持 `quantity` 和 `productType` 欄位
+- [x] 遷移現有卡盒記錄（ID 1080001）到 `sealedProducts` 表
+- [x] 創建單元測試驗證修復效果（5/5 測試通過）
+- [x] 保存 checkpoint
+
+### 修復內容
+
+**1. 數據庫函數（db.ts）**
+- 添加 `createSealedProduct` 函數：創建卡盒產品
+- 添加 `getSealedProductById` 函數：查詢卡盒產品
+- 添加 `updateSealedProduct` 函數：更新卡盒產品
+- 更新 `addPriceHistory` 函數：支持 `quantity` 和 `productType` 欄位
+
+**2. 後端邏輯（routers.ts）**
+- 修改 `addSnkrdunkSource` mutation：
+  - 如果 `productType === "sealed_product"` → 存儲到 `sealedProducts` 表
+  - 如果 `productType === "single_card"` → 存儲到 `cards` 表
+- 價格歷史記錄包含 `quantity` 和 `productType` 欄位
+
+**3. 數據遷移**
+- 將 card ID 1080001 從 `cards` 表遷移到 `sealedProducts` 表（新 ID: 1）
+- 更新所有關聯數據（dataSources, priceHistory, watchlist, viewHistory）
+- 刪除舊的 card 記錄
+
+**4. 測試結果（5/5 通過）**
+- ✅ 成功創建測試卡盒產品
+- ✅ 價格歷史記錄包含 `quantity` 欄位（"10盒"）
+- ✅ 遷移後的卡盒產品存在於 `sealedProducts` 表
+- ✅ 所有價格歷史記錄的 `productType` 都已更新為 "sealed_product"
+- ✅ 原 card ID 1080001 已從 `cards` 表刪除
+
+### 預期效果
+- ✅ 未來添加卡盒產品時，數據會正確存儲到 `sealedProducts` 表
+- ✅ 現有卡盒記錄已正確遷移
+- ✅ 價格歷史記錄包含數量信息（例如「10盒」、「1盒」）

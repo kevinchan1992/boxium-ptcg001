@@ -1,6 +1,6 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { users, cards, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";;
+import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";;
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -478,6 +478,24 @@ export async function createCard(data: Omit<typeof cards.$inferInsert, "id" | "c
   return newCard[0].id;
 }
 
+export async function createSealedProduct(data: Omit<typeof sealedProducts.$inferInsert, "id" | "createdAt" | "updatedAt">) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(sealedProducts).values(data);
+
+  // Return the auto-incremented ID
+  return Number(result[0].insertId);
+}
+
+export async function getSealedProductById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(sealedProducts).where(eq(sealedProducts.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
 export async function updateCard(
   cardId: number,
   data: Partial<Omit<typeof cards.$inferInsert, "id" | "cardId" | "createdAt">>
@@ -496,12 +514,32 @@ export async function updateCard(
   return result;
 }
 
+export async function updateSealedProduct(
+  productId: number,
+  data: Partial<Omit<typeof sealedProducts.$inferInsert, "id" | "createdAt">>
+) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .update(sealedProducts)
+    .set({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .where(eq(sealedProducts.id, productId));
+
+  return result;
+}
+
 export async function addPriceHistory(data: {
   cardId: number;
   source: "snkrdunk" | "ebay" | "tcgplayer" | "other";
   price: string;
   currency: string;
   grade?: string;
+  quantity?: string; // For sealed products (e.g., "10盒", "1盒")
+  productType?: "single_card" | "sealed_product"; // Product type
   soldAt?: Date;
   listingUrl?: string;
 }) {
@@ -514,6 +552,8 @@ export async function addPriceHistory(data: {
     price: data.price,
     currency: data.currency,
     grade: data.grade,
+    quantity: data.quantity,
+    productType: data.productType || "single_card", // Default to single_card
     soldAt: data.soldAt,
     listingUrl: data.listingUrl,
   });
