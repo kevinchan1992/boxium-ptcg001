@@ -2,11 +2,7 @@ import { router, publicProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { fetchEbayListings } from '../services/ebay';
 import { scrapeSnkrdunkListings } from '../services/snkrdunkScraperService';
-import { ebayRateLimiter } from '../services/rateLimiter';
 import * as db from '../db';
-import { searchEbayByImage } from '../ebayImageSearch';
-import { convertUsdToHkd } from '../ebay';
-import { downloadAndEncodeImage, getBestImageUrl } from '../imageUtils';
 
 interface PriceListing {
   id: string;
@@ -103,8 +99,8 @@ export const pricingRouter = router({
         
         const actualCardId = card.id;
 
-        // Step 2: Fetch from eBay API using text search (card number + PSA10) for better accuracy
-        console.log('[Pricing Router] Fetching from eBay using text search...');
+        // Step 2: Fetch from eBay Browse API (text search)
+        console.log('[Pricing Router] Fetching from eBay Browse API...');
         let ebayListings: any[] = [];
         try {
           // Build search query: card number + PSA10
@@ -112,7 +108,7 @@ export const pricingRouter = router({
           const searchQuery = cardNumber ? `${cardNumber} PSA10` : `${card.name} PSA10`;
           console.log(`[Pricing Router] eBay search query: "${searchQuery}"`);
           
-          const cacheKey = `text-search-${actualCardId}`; // Use cardId as cache key for text search
+          const cacheKey = `text-search-${actualCardId}`;
           
           // Check cache first (dual-layer caching: hot cache 1h + cold cache 6h)
           const cache = await db.getEbayListingsCache(actualCardId, cacheKey);
@@ -120,11 +116,8 @@ export const pricingRouter = router({
           
           // Check hot cache first
           if (cache && cache.hotExpiresAt && new Date(cache.hotExpiresAt) > now) {
-            // Hot cache is valid, use cached data directly
             console.log(`[Pricing Router] Using eBay hot cache (expires at ${cache.hotExpiresAt})`);
-            
             try {
-              // Handle both string and object types (Drizzle may auto-parse JSON)
               let cachedListings;
               if (typeof cache.listings === 'string') {
                 cachedListings = JSON.parse(cache.listings);
@@ -133,119 +126,66 @@ export const pricingRouter = router({
               } else {
                 throw new Error(`Unexpected cache.listings type: ${typeof cache.listings}`);
               }
-              
               ebayListings = cachedListings;
               console.log(`[Pricing Router] eBay hot cache returned ${ebayListings.length} listings`);
             } catch (parseError) {
-              console.error(`[Pricing Router] Failed to parse eBay cache listings:`, parseError);
-              console.error(`[Pricing Router] cache.listings type: ${typeof cache.listings}`);
-              console.error(`[Pricing Router] cache.listings value:`, cache.listings);
-              // Clear invalid cache and continue without eBay listings
+              console.error(`[Pricing Router] Failed to parse eBay cache:`, parseError);
               ebayListings = [];
             }
           } else {
-            // Hot cache expired or doesn't exist, check rate limiter
-            if (ebayRateLimiter.tryConsume()) {
-              console.log('[Pricing Router] eBay hot cache expired, using text search...');
-              
-              // Check if card has card number
-              if (!cardNumber) {
-                console.log('[Pricing Router] No card number available for eBay text search, skipping...');
-                ebayListings = [];
-              } else {
-                // Search eBay by text (card number + PSA10)
-                console.log(`[Pricing Router] Searching eBay with query: "${searchQuery}"`);
-                const textSearchResponse = await fetchEbayListings({ cardName: searchQuery });
-                
-                // Filter for PSA 10 items only (simplified filtering)
-                const psa10Items = (textSearchResponse || []).filter((item: any) => {
-                  const title = item.title.toLowerCase();
-                  
-                  // Step 1: Must contain "psa" and "10"
-                  const hasPSA = title.includes('psa');
-                  const has10 = title.includes('10');
-                  
-                  if (!hasPSA || !has10) {
-                    return false; // Exclude if doesn't contain both "psa" and "10"
-                  }
-                  
-                  
-                  // Step 3: Exclude other PSA grades (PSA 9, PSA 8, PSA 7, etc.)
-                  const excludeGrades = [
-                    'psa 9', 'psa9', 'psa 8', 'psa8', 'psa 7', 'psa7',
-                    'psa 6', 'psa6', 'psa 5', 'psa5', 'psa 4', 'psa4',
-                    'psa 3', 'psa3', 'psa 2', 'psa2', 'psa 1', 'psa1',
-                    'bgs', 'cgc', 'sgc', 'beckett', // Other grading companies
-                    'raw', 'ungraded', 'not graded', // Ungraded cards
-                  ];
-                  
-                  for (const pattern of excludeGrades) {
-                    if (title.includes(pattern)) {
-                      return false; // Exclude if matches any exclude pattern
-                    }
-                  }
-                  
-                  // Step 4: Exclude non-card items (sleeves, boxes, accessories)
-                  const excludeTypes = [
-                    'sleeve', 'sleeves', 'deck box', 'deckbox', 'playmat',
-                    'binder', 'case', 'holder', 'toploader', 'protector',
-                    'lot', 'bundle', 'collection', // Multi-card listings
-                  ];
-                  
-                  for (const pattern of excludeTypes) {
-                    if (title.includes(pattern)) {
-                      return false; // Exclude if matches any exclude pattern
-                    }
-                  }
-                  
-                  return true; // Only PSA 10 items of the correct card pass
-                });
-                
-                console.log(`[Pricing Router] Filtered ${psa10Items.length}/${textSearchResponse?.length || 0} PSA 10 items from eBay text search`);
-                
-                // fetchEbayListings already returns formatted EbayListing[], no need to transform
-                // Prices are already in the original currency (USD), will be converted later if needed
-                const newListings = psa10Items;
-                
-                // URL deduplication: merge new listings with cached listings
-                let mergedListings = newListings;
-                if (cache && new Date(cache.expiresAt) > now) {
-                  // Cold cache is still valid, merge with new listings
-                  const cachedListings = JSON.parse(cache.listings);
-                  const newIds = new Set(newListings.map(item => item.id));
-                  const uniqueCachedListings = cachedListings.filter(
-                    (item: any) => !newIds.has(item.id)
-                  );
-                  mergedListings = [...newListings, ...uniqueCachedListings];
-                  console.log(`[Pricing Router] Merged ${newListings.length} new + ${uniqueCachedListings.length} cached = ${mergedListings.length} total eBay listings`);
-                }
-                
-                // Save to cache with dual expiration times
-                const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
-                const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
-                await db.saveEbayListingsCache({
-                  cardId: actualCardId,
-                  searchQuery,
-                  listings: JSON.stringify(mergedListings),
-                  hotExpiresAt,
-                  expiresAt: coldExpiresAt,
-                });
-                console.log(`[Pricing Router] Saved eBay data to cache (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
-                
-                ebayListings = mergedListings;
-                console.log(`[Pricing Router] eBay image search returned ${ebayListings.length} listings`);
-              }
+            // Hot cache expired, fetch fresh data from Browse API
+            console.log('[Pricing Router] eBay hot cache expired, fetching from Browse API...');
+            
+            if (!cardNumber) {
+              console.log('[Pricing Router] No card number available for eBay search, skipping...');
+              ebayListings = [];
             } else {
-              // Rate limit exceeded, use cold cache if available
-              console.log('[Pricing Router] eBay rate limit exceeded, checking cold cache...');
+              const textSearchResponse = await fetchEbayListings({ cardName: searchQuery });
+              
+              // Filter for PSA 10 items only
+              const psa10Items = (textSearchResponse || []).filter((item: any) => {
+                const title = item.title.toLowerCase();
+                if (!title.includes('psa') || !title.includes('10')) return false;
+                
+                const excludePatterns = [
+                  'psa 9', 'psa9', 'psa 8', 'psa8', 'psa 7', 'psa7',
+                  'psa 6', 'psa6', 'psa 5', 'psa5', 'psa 4', 'psa4',
+                  'psa 3', 'psa3', 'psa 2', 'psa2', 'psa 1', 'psa1',
+                  'bgs', 'cgc', 'sgc', 'beckett',
+                  'raw', 'ungraded', 'not graded',
+                  'sleeve', 'sleeves', 'deck box', 'deckbox', 'playmat',
+                  'binder', 'case', 'holder', 'toploader', 'protector',
+                  'lot', 'bundle', 'collection',
+                ];
+                return !excludePatterns.some(p => title.includes(p));
+              });
+              
+              console.log(`[Pricing Router] Filtered ${psa10Items.length}/${textSearchResponse?.length || 0} PSA 10 items`);
+              
+              // Merge with cold cache if available
+              let mergedListings = psa10Items;
               if (cache && new Date(cache.expiresAt) > now) {
-                console.log(`[Pricing Router] Using eBay cold cache (expires at ${cache.expiresAt})`);
-                const cachedListings = JSON.parse(cache.listings);
-                ebayListings = cachedListings;
-                console.log(`[Pricing Router] eBay cold cache returned ${ebayListings.length} listings`);
-              } else {
-                console.log('[Pricing Router] No valid eBay cache available, skipping eBay listings');
+                const cachedListings = typeof cache.listings === 'string' ? JSON.parse(cache.listings) : cache.listings;
+                const newIds = new Set(psa10Items.map((item: any) => item.id));
+                const uniqueCached = cachedListings.filter((item: any) => !newIds.has(item.id));
+                mergedListings = [...psa10Items, ...uniqueCached];
+                console.log(`[Pricing Router] Merged ${psa10Items.length} new + ${uniqueCached.length} cached = ${mergedListings.length} total`);
               }
+              
+              // Save to cache
+              const hotExpiresAt = new Date(now.getTime() + 1 * 60 * 60 * 1000); // 1 hour
+              const coldExpiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
+              await db.saveEbayListingsCache({
+                cardId: actualCardId,
+                searchQuery,
+                listings: JSON.stringify(mergedListings),
+                hotExpiresAt,
+                expiresAt: coldExpiresAt,
+              });
+              console.log(`[Pricing Router] Saved eBay cache (hot: ${hotExpiresAt}, cold: ${coldExpiresAt})`);
+              
+              ebayListings = mergedListings;
+              console.log(`[Pricing Router] eBay returned ${ebayListings.length} listings`);
             }
           }
         } catch (error) {

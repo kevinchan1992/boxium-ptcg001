@@ -1,13 +1,65 @@
 /**
- * eBay Browse API Service
+ * eBay Browse API Service (Unified)
  * 
- * This service integrates with eBay Finding API to search for active "Buy It Now" listings
- * for Pokemon TCG cards with PSA 10 grading.
+ * Uses eBay Browse API (OAuth 2.0) to search for active "Buy It Now" listings.
+ * Replaces the old Finding API which had strict rate limits (5,000/day).
  * 
- * API Documentation: https://developer.ebay.com/devzone/finding/callref/findItemsAdvanced.html
+ * Browse API Documentation: https://developer.ebay.com/api-docs/buy/browse/resources/item_summary/methods/search
  */
 
 import { logPerformance } from "./performanceTracker";
+
+// ─── OAuth Token Cache ───────────────────────────────────────────────
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
+/**
+ * Get eBay OAuth 2.0 Access Token (with caching)
+ * Uses Client Credentials Grant Flow
+ */
+async function getEbayAccessToken(): Promise<string> {
+  // Check if cached token is still valid (refresh 5 minutes early)
+  if (cachedToken && cachedToken.expiresAt > Date.now() + 5 * 60 * 1000) {
+    return cachedToken.token;
+  }
+
+  console.log('[eBay Browse API] Fetching new OAuth Access Token...');
+
+  const appId = process.env.EBAY_APP_ID;
+  const certId = process.env.EBAY_CERT_ID;
+
+  if (!appId || !certId) {
+    throw new Error('EBAY_APP_ID or EBAY_CERT_ID not configured');
+  }
+
+  const credentials = Buffer.from(`${appId}:${certId}`).toString('base64');
+
+  const response = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${credentials}`,
+    },
+    body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`eBay OAuth failed: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json() as { access_token: string; expires_in: number };
+
+  // Cache the token
+  cachedToken = {
+    token: data.access_token,
+    expiresAt: Date.now() + data.expires_in * 1000,
+  };
+
+  console.log('[eBay Browse API] Access Token obtained successfully');
+  return data.access_token;
+}
+
+// ─── Types ───────────────────────────────────────────────────────────
 
 interface EbayListing {
   id: string;
@@ -32,8 +84,38 @@ interface EbaySearchParams {
   series?: string;
 }
 
+interface BrowseApiResponse {
+  total: number;
+  itemSummaries?: Array<{
+    itemId: string;
+    title: string;
+    price: {
+      value: string;
+      currency: string;
+    };
+    itemWebUrl: string;
+    image?: {
+      imageUrl: string;
+    };
+    thumbnailImages?: Array<{
+      imageUrl: string;
+    }>;
+    condition?: string;
+    conditionId?: string;
+    seller?: {
+      username: string;
+      feedbackPercentage?: string;
+      feedbackScore?: number;
+    };
+    buyingOptions?: string[];
+  }>;
+  warnings?: Array<{ message: string }>;
+}
+
+// ─── Main Search Function ────────────────────────────────────────────
+
 /**
- * Fetch eBay listings for a Pokemon TCG card with PSA 10 grading
+ * Fetch eBay listings using Browse API
  * 
  * @param params - Search parameters including card name, number, and series
  * @returns Array of formatted eBay listings
@@ -44,7 +126,6 @@ export async function fetchEbayListings(params: EbaySearchParams): Promise<EbayL
   const { cardName, cardNumber, series } = params;
 
   // Construct search query
-  // Example: "Charizard ex 110 PSA 10"
   let searchQuery = `${cardName}`;
   if (cardNumber) {
     searchQuery += ` ${cardNumber}`;
@@ -52,91 +133,61 @@ export async function fetchEbayListings(params: EbaySearchParams): Promise<EbayL
   if (series) {
     searchQuery += ` ${series}`;
   }
-  searchQuery += ' PSA 10';
 
-  console.log('[eBay Service] Searching for:', searchQuery);
+  console.log('[eBay Browse API] Searching for:', searchQuery);
 
   try {
-    // Get eBay App ID from environment
-    const ebayAppId = process.env.EBAY_APP_ID;
-    if (!ebayAppId) {
-      throw new Error('EBAY_APP_ID environment variable is not set');
-    }
+    const accessToken = await getEbayAccessToken();
 
-    // eBay Finding API endpoint (correct format)
-    const apiUrl = 'https://svcs.ebay.com/services/search/FindingService/v1';
-    
-    // Construct URL with query parameters
-    const url = new URL(apiUrl);
-    url.searchParams.append('OPERATION-NAME', 'findItemsAdvanced');
-    url.searchParams.append('SERVICE-VERSION', '1.0.0');
-    url.searchParams.append('SECURITY-APPNAME', ebayAppId);
-    url.searchParams.append('RESPONSE-DATA-FORMAT', 'JSON');
-    url.searchParams.append('keywords', searchQuery);
-    url.searchParams.append('paginationInput.entriesPerPage', '50');
-    
-    // Filter for "Buy It Now" listings only
-    url.searchParams.append('itemFilter(0).name', 'ListingType');
-    url.searchParams.append('itemFilter(0).value', 'FixedPrice');
-    
-    // Filter for Pokemon TCG category
-    url.searchParams.append('categoryId', '183454');
-    
+    // Build Browse API search URL
+    const searchUrl = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search');
+    searchUrl.searchParams.set('q', searchQuery);
+    searchUrl.searchParams.set('limit', '50');
+    // Filter: Buy It Now only (no condition filter - PSA graded cards use conditionId 2750 "Graded")
+    searchUrl.searchParams.set('filter', 'buyingOptions:{FIXED_PRICE}');
+    // Pokemon TCG category
+    searchUrl.searchParams.set('category_ids', '183454');
     // Sort by price (lowest first)
-    url.searchParams.append('sortOrder', 'PricePlusShippingLowest');
+    searchUrl.searchParams.set('sort', 'price');
 
-    console.log('[eBay Service] API URL:', url.toString());
+    console.log('[eBay Browse API] Request URL:', searchUrl.toString());
 
-    const response = await fetch(url.toString());
-    
+    const response = await fetch(searchUrl.toString(), {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+      },
+      signal: AbortSignal.timeout(15000), // 15 second timeout
+    });
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[eBay Service] API error response:', errorText);
-      throw new Error(`eBay API request failed: ${response.status} ${response.statusText}`);
+      console.error('[eBay Browse API] API error response:', errorText);
+      throw new Error(`eBay Browse API request failed: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
-    console.log('[eBay Service] API response:', JSON.stringify(data).substring(0, 500));
+    const data: BrowseApiResponse = await response.json();
     
-    // Parse eBay API response
-    const searchResult = data.findItemsAdvancedResponse?.[0];
-    if (!searchResult) {
-      console.error('[eBay Service] Invalid API response structure');
-      return [];
-    }
+    const items = data.itemSummaries || [];
+    console.log(`[eBay Browse API] Found ${data.total} total, returned ${items.length} listings`);
 
-    const ack = searchResult.ack?.[0];
-    if (ack !== 'Success') {
-      console.error('[eBay Service] API returned non-success ack:', ack);
-      if (searchResult.errorMessage) {
-        console.error('[eBay Service] Error message:', searchResult.errorMessage);
-      }
-      return [];
-    }
-
-    const items = searchResult.searchResult?.[0]?.item || [];
-    console.log(`[eBay Service] Found ${items.length} listings`);
-
-    // Format eBay listings to unified format
-    const listings: EbayListing[] = items.map((item: any) => {
-      const itemId = item.itemId?.[0] || '';
-      const title = item.title?.[0] || '';
-      const price = parseFloat(item.sellingStatus?.[0]?.currentPrice?.[0]?.__value__ || '0');
-      const currency = item.sellingStatus?.[0]?.currentPrice?.[0]?.['@currencyId'] || 'USD';
-      const image = item.galleryURL?.[0] || item.pictureURLLarge?.[0] || '';
-      const productUrl = item.viewItemURL?.[0] || '';
-      const sellerName = item.sellerInfo?.[0]?.sellerUserName?.[0] || 'Unknown';
-      const sellerRating = parseInt(item.sellerInfo?.[0]?.feedbackScore?.[0] || '0');
-      const condition = item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown';
+    // Format Browse API response to unified EbayListing format
+    const listings: EbayListing[] = items.map((item) => {
+      const price = parseFloat(item.price.value) || 0;
+      const currency = item.price.currency || 'USD';
+      const image = item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl || '';
+      const sellerName = item.seller?.username || 'Unknown';
+      const sellerRating = item.seller?.feedbackScore || 0;
+      const condition = item.condition || 'Used';
 
       return {
-        id: `ebay-${itemId}`,
-        market: 'ebay',
-        title,
+        id: `ebay-${item.itemId}`,
+        market: 'ebay' as const,
+        title: item.title,
         price,
         currency,
         image,
-        productUrl,
+        productUrl: item.itemWebUrl,
         seller: {
           name: sellerName,
           rating: sellerRating,
@@ -152,8 +203,8 @@ export async function fetchEbayListings(params: EbaySearchParams): Promise<EbayL
       (listing) => listing.price > 0 && listing.productUrl
     );
 
-    console.log(`[eBay Service] Returning ${validListings.length} valid listings`);
-    
+    console.log(`[eBay Browse API] Returning ${validListings.length} valid listings`);
+
     // Log performance
     const responseTime = Date.now() - startTime;
     await logPerformance({
@@ -161,14 +212,14 @@ export async function fetchEbayListings(params: EbaySearchParams): Promise<EbayL
       operationType: 'single',
       status: 'success',
       responseTime,
-      itemsProcessed: validListings.length
-    }).catch(e => console.error('[eBay Service] Failed to log performance:', e));
+      itemsProcessed: validListings.length,
+    }).catch((e) => console.error('[eBay Browse API] Failed to log performance:', e));
     performanceLogged = true;
-    
+
     return validListings;
   } catch (error: any) {
-    console.error('[eBay Service] Error fetching listings:', error);
-    
+    console.error('[eBay Browse API] Error fetching listings:', error);
+
     // Log performance failure
     if (!performanceLogged) {
       const responseTime = Date.now() - startTime;
@@ -178,29 +229,29 @@ export async function fetchEbayListings(params: EbaySearchParams): Promise<EbayL
         status: 'error',
         responseTime,
         itemsProcessed: 0,
-        errorMessage: error.message || String(error)
-      }).catch(e => console.error('[eBay Service] Failed to log performance:', e));
+        errorMessage: error.message || String(error),
+      }).catch((e) => console.error('[eBay Browse API] Failed to log performance:', e));
     }
-    
+
     // Return empty array instead of throwing to allow graceful degradation
     return [];
   }
 }
 
 /**
- * Test function to verify eBay API integration
+ * Test function to verify eBay Browse API integration
  */
 export async function testEbayAPI() {
   try {
-    console.log('[eBay Service] Testing API integration...');
+    console.log('[eBay Browse API] Testing API integration...');
     const results = await fetchEbayListings({
       cardName: 'Charizard ex',
       cardNumber: '110',
     });
-    console.log(`[eBay Service] Test successful: ${results.length} listings found`);
+    console.log(`[eBay Browse API] Test successful: ${results.length} listings found`);
     return results;
   } catch (error) {
-    console.error('[eBay Service] Test failed:', error);
+    console.error('[eBay Browse API] Test failed:', error);
     throw error;
   }
 }

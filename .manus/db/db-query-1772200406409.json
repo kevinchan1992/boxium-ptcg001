@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, cardId, name, snkrdunkId FROM cards LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, cardId, name, snkrdunkId FROM cards LIMIT 5;",
+  "rows": [
+    {
+      "id": "150822",
+      "cardId": "snkrdunk-100562",
+      "name": "Skuntank V SR[s12 105/098](Expansion Pack \"Paradigm Trigger\")",
+      "snkrdunkId": "100562"
+    },
+    {
+      "id": "150823",
+      "cardId": "snkrdunk-102286",
+      "name": "Rotom Phone[SC 011/020](Starter Set VMAX \"Orongue\")",
+      "snkrdunkId": "102286"
+    },
+    {
+      "id": "150824",
+      "cardId": "snkrdunk-102289",
+      "name": "Rotom Phone[SC-C 011/021](Starter Set VMAX \"Charizard\")",
+      "snkrdunkId": "102289"
+    },
+    {
+      "id": "150825",
+      "cardId": "snkrdunk-102306",
+      "name": "Piers HR[S3 115/100](Expansion Pack \"Infinity Zone\")",
+      "snkrdunkId": "102306"
+    },
+    {
+      "id": "150826",
+      "cardId": "snkrdunk-102302",
+      "name": "Frosmoth UR[S1a 084/070](Enhanced Expansion Pack \"VMAX Rising\")",
+      "snkrdunkId": "102302"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tname\tsnkrdunkId\n150822\tsnkrdunk-100562\tSkuntank V SR[s12 105/098](Expansion Pack \"Paradigm Trigger\")\t100562\n150823\tsnkrdunk-102286\tRotom Phone[SC 011/020](Starter Set VMAX \"Orongue\")\t102286\n150824\tsnkrdunk-102289\tRotom Phone[SC-C 011/021](Starter Set VMAX \"Charizard\")\t102289\n150825\tsnkrdunk-102306\tPiers HR[S3 115/100](Expansion Pack \"Infinity Zone\")\t102306\n150826\tsnkrdunk-102302\tFrosmoth UR[S1a 084/070](Enhanced Expansion Pack \"VMAX Rising\")\t102302\n",
+  "stderr": "",
+  "execution_time_ms": 1633
+}

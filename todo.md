@@ -3210,3 +3210,31 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 清理後端 routers.ts（刪除約 300 行 eBay 代碼）、batchTaskManager、batchUpdateScheduler
 - [x] 驗證排版顯示和功能完整性（TypeScript 0 errors，服務器正常運行）
 - [x] 編寫測試並保存 checkpoint（19 個清理驗證測試 + 29 個現有測試全部通過）
+
+---
+
+## 🐛 修復 Pricing Detail 頁面在售商品無法搜尋
+
+### 問題描述
+- SNKRDUNK 和 eBay 的在售商品都無法搜尋到
+- 頁面顯示「暫無在售商品」
+- 早前一直正常運作
+
+### 任務清單
+- [x] 檢查後端 pricing router 的在售商品搜尋邏輯
+- [x] 檢查前端 PricingDetail 頁面的數據調用和顯示邏輯
+- [x] 診斷問題根因：Finding API 被限速 + 空結果被 cache
+- [x] 修復：統一改用 Browse API，清除舊 cache
+
+---
+
+## 🔄 統一 eBay API 為 Browse API，刪除 Finding API
+
+- [x] 重寫 server/services/ebay.ts 改用 Browse API + OAuth 2.0 token 緩存
+- [x] 刪除 server/services/rateLimiter.ts（Finding API 專用）
+- [x] 刪除 server/ebay.ts 和 server/ebayImageSearch.ts（已合併到 services/ebay.ts）
+- [x] pricing router 已指向新的 Browse API 服務
+- [x] 移除 conditions:{USED} filter（PSA 卡片 condition 是 Graded 不是 Used）
+- [x] Browse API 測試正常（Charizard PSA 10: 18,886 結果）
+- [x] 48 個測試全部通過，TypeScript 0 errors
+- [ ] 保存 checkpoint
