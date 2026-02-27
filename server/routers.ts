@@ -1972,20 +1972,6 @@ try {
         }
       }),
 
-    // Get health metrics for data sources
-    getHealthMetrics: publicProcedure
-      .query(async () => {
-        try {
-          const metrics = await db.getDataSourceHealthMetrics();
-          return metrics;
-        } catch (error: any) {
-          console.error("[Admin] Failed to get health metrics:", error);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `Failed to get health metrics: ${error.message}`,
-          });
-        }
-      }),
 
     // 獲取儀表板統計數據
     getDashboardStats: publicProcedure

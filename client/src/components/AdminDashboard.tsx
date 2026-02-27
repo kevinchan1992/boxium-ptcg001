@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { formatHKLocale } from "@/lib/formatDate";
-import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2, BookOpen, FileEdit, AlertCircle, XCircle, Server, RefreshCw } from "lucide-react";
+import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2, RefreshCw } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -116,152 +116,10 @@ export function AdminDashboard() {
       {/* 搜尋統計面板 */}
       <SearchStatsPanel />
 
-      {/* 數據源健康監控面板 */}
-      <DataSourceHealthPanel />
     </div>
   );
 }
 
-// 數據源健康監控面板組件
-function DataSourceHealthPanel() {
-  const { data: healthMetrics, isLoading } = trpc.admin.getHealthMetrics.useQuery();
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="h-6 bg-muted rounded w-1/4 animate-pulse"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[...Array(2)].map((_, i) => (
-            <Card key={i} className="p-6 animate-pulse">
-              <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
-              <div className="h-8 bg-muted rounded w-1/3"></div>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const snkrdunkHealth: any = healthMetrics?.find((m: any) => m.source === 'snkrdunk');
-
-  const getStatusIcon = (status: string | undefined) => {
-    switch (status) {
-      case 'healthy':
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-      case 'degraded':
-        return <AlertCircle className="w-5 h-5 text-yellow-600" />;
-      case 'down':
-        return <XCircle className="w-5 h-5 text-red-600" />;
-      default:
-        return <Server className="w-5 h-5 text-gray-400" />;
-    }
-  };
-
-  const getStatusText = (status: string | undefined) => {
-    switch (status) {
-      case 'healthy':
-        return { text: '正常', color: 'text-green-600', bgColor: 'bg-green-50' };
-      case 'degraded':
-        return { text: '降級', color: 'text-yellow-600', bgColor: 'bg-yellow-50' };
-      case 'down':
-        return { text: '停機', color: 'text-red-600', bgColor: 'bg-red-50' };
-      default:
-        return { text: '未知', color: 'text-gray-600', bgColor: 'bg-gray-50' };
-    }
-  };
-
-  const formatTime = (timestamp: Date | null | undefined) => {
-    if (!timestamp) return '從未';
-    return formatHKLocale(timestamp, {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  };
-
-  const healthCards = [
-    {
-      title: 'SNKRDUNK 數據源',
-      health: snkrdunkHealth,
-      color: '#3b82f6',
-      borderColor: 'border-l-blue-500',
-    },
-  ];
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-2">數據源健康監控</h2>
-        <p className="text-gray-400">實時監控數據源連接狀態和性能指標</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {healthCards.map((card, index) => {
-          const health = card.health;
-          const statusInfo = getStatusText(health?.status);
-          
-          return (
-            <Card 
-              key={index} 
-              className={`p-6 border-l-4 ${card.borderColor} bg-gray-900`}
-            >
-              <div className="space-y-4">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-white">{card.title}</h3>
-                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${statusInfo.bgColor}`}>
-                    {getStatusIcon(health?.status)}
-                    <span className={`text-sm font-medium ${statusInfo.color}`}>
-                      {statusInfo.text}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Metrics */}
-                {health ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">活躍數據源</p>
-                      <p className="text-2xl font-bold text-white">
-                        {health.activeSourcesCount}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">24小時記錄</p>
-                      <p className="text-2xl font-bold text-white">
-                        {health.recentRecordsCount.toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-xs text-gray-400 mb-1">總記錄數</p>
-                      <p className="text-lg font-semibold text-white">
-                        {health.totalRecordsCount.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-400">暫無健康數據</p>
-                )}
-
-                {/* Last Update Time */}
-                <div className="pt-4 border-t border-gray-700">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400">最後更新：</span>
-                    <span className="font-medium text-white">
-                      {formatTime(health?.lastUpdatedAt)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 
 // 搜尋統計面板組件

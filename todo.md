@@ -3104,3 +3104,23 @@ MySQL 服務器時區為 UTC+5，JavaScript `new Date()` 返回 UTC，導致：
 - [x] 測試匹配分數計算、卡號正規化、結果結構
 - [x] TypeScript 編譯 0 errors
 - [x] 保存 checkpoint
+
+
+---
+
+## 🗑️ 功能刪除與性能監控優化
+
+### 功能刪除
+- [x] 刪除「數據源健康監控」區塊（AdminDashboard.tsx — DataSourceHealthPanel 組件及引用）
+- [x] 刪除「Playwright 狀態測試」功能（AdminPlaywrightTest.tsx 文件及 AdminCacheManagement.tsx 引用）
+- [x] 刪除「SNKRDUNK 更新歷史」部分（AdminScheduleManagement.tsx 中的歷史區塊）
+- [x] 清理相關後端 API 和無用引用（getHealthMetrics API、getDataSourceHealthMetrics 函數、Playwright 測試文件）
+
+### 性能監控優化
+- [x] 優化性能監控頁面的顯示和邏輯（AdminScraperPerformance.tsx — 深色主題、圖標、成功率條形圖、響應式佈局）
+- [x] 改進數據展示和用戶體驗（載入骨架屏、空狀態、顏色編碼指標）
+
+### 測試
+- [x] TypeScript 編譯 0 errors
+- [x] 所有相關測試通過（85 tests passed）
+- [x] 保存 checkpoint
