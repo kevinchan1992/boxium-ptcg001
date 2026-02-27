@@ -1,0 +1,80 @@
+{
+  "query": "SELECT sp.id, sp.name, ds.id as ds_id, ds.sourceUrl, ds.lastFetchStatus FROM sealedProducts sp LEFT JOIN dataSources ds ON ds.cardId = sp.id AND ds.productType = 'sealed_product' WHERE sp.name IN (SELECT name FROM sealedProducts GROUP BY name HAVING COUNT(*) > 1) ORDER BY sp.name, sp.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT sp.id, sp.name, ds.id as ds_id, ds.sourceUrl, ds.lastFetchStatus FROM sealedProducts sp LEFT JOIN dataSources ds ON ds.cardId = sp.id AND ds.productType = 'sealed_product' WHERE sp.name IN (SELECT name FROM sealedProducts GROUP BY name HAVING COUNT(*) > 1) ORDER BY sp.name, sp.id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Box",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL",
+      "lastFetchStatus": "NULL"
+    },
+    {
+      "id": "4",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Box",
+      "ds_id": "1200002",
+      "sourceUrl": "https://snkrdunk.com/apparels/687430",
+      "lastFetchStatus": "success"
+    },
+    {
+      "id": "2",
+      "name": "Test Booster Box",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL",
+      "lastFetchStatus": "NULL"
+    },
+    {
+      "id": "30001",
+      "name": "Test Booster Box",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL",
+      "lastFetchStatus": "NULL"
+    },
+    {
+      "id": "30002",
+      "name": "Test Booster Box",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL",
+      "lastFetchStatus": "NULL"
+    },
+    {
+      "id": "30003",
+      "name": "Test Booster Box",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL",
+      "lastFetchStatus": "NULL"
+    },
+    {
+      "id": "60001",
+      "name": "Test Booster Box",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL",
+      "lastFetchStatus": "NULL"
+    },
+    {
+      "id": "60002",
+      "name": "Test Booster Box",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL",
+      "lastFetchStatus": "NULL"
+    },
+    {
+      "id": "60003",
+      "name": "Test Booster Box",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL",
+      "lastFetchStatus": "NULL"
+    },
+    {
+      "id": "60004",
+      "name": "Test Booster Box",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL",
+      "lastFetchStatus": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tds_id\tsourceUrl\tlastFetchStatus\n1\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Box\tNULL\tNULL\tNULL\n4\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Box\t1200002\thttps://snkrdunk.com/apparels/687430\tsuccess\n2\tTest Booster Box\tNULL\tNULL\tNULL\n30001\tTest Booster Box\tNULL\tNULL\tNULL\n30002\tTest Booster Box\tNULL\tNULL\tNULL\n30003\tTest Booster Box\tNULL\tNULL\tNULL\n60001\tTest Booster Box\tNULL\tNULL\tNULL\n60002\tTest Booster Box\tNULL\tNULL\tNULL\n60003\tTest Booster Box\tNULL\tNULL\tNULL\n60004\tTest Booster Box\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1611
+}

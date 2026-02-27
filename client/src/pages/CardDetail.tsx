@@ -299,10 +299,25 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   }
 
   // Calculate reference price
+  // For sealed products: latest transaction price ÷ quantity (reflects per-unit value)
+  // For single cards: average of recent PSA 10 transactions (unchanged)
   const calculateReferencePrice = () => {
     if (activeRecentPrices.length === 0) return "N/A";
-    const avg = activeRecentPrices.reduce((sum, p) => sum + parseFloat(p.price), 0) / activeRecentPrices.length;
-    return avg.toFixed(2);
+    
+    if (isSealedProduct) {
+      // Sealed product: use latest transaction price ÷ quantity
+      const latest = activeRecentPrices[0]; // Already sorted by date desc
+      const price = parseFloat(latest.price);
+      // Extract numeric quantity from strings like "3個", "10個", "1個"
+      const qtyStr = latest.quantity || '1';
+      const qtyMatch = qtyStr.match(/(\d+)/);
+      const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
+      return (price / Math.max(qty, 1)).toFixed(2);
+    } else {
+      // Single card: average of recent PSA 10 transactions (unchanged)
+      const avg = activeRecentPrices.reduce((sum: number, p: any) => sum + parseFloat(p.price), 0) / activeRecentPrices.length;
+      return avg.toFixed(2);
+    }
   };
   
   const avgPrice = calculateReferencePrice();
@@ -600,6 +615,16 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm font-medium">
                       <Package className="w-3.5 h-3.5" />
                       {t("cardDetail.boosterBox")}
+                    </span>
+                  </dd>
+                </div>
+              )}
+              {isSealedProduct && 'styleCode' in product && product.styleCode && (
+                <div className="flex">
+                  <dt className="text-muted-foreground w-32">{t("cardDetail.styleCode", "系列編號")}:</dt>
+                  <dd className="text-foreground">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-mono">
+                      {product.styleCode}
                     </span>
                   </dd>
                 </div>

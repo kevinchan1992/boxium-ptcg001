@@ -10,6 +10,7 @@ export interface SnkrdunkCardData {
   name: string;
   nameJa: string;
   imageUrl: string | null;
+  styleCode?: string | null; // スタイルコード (e.g., "pkmn-tcg-M2")
   priceHistory: Array<{
     price: number;
     currency: string;
@@ -44,6 +45,7 @@ export async function fetchCardDetailsFromApi(productId: string): Promise<{
   name: string;
   nameJa: string;
   imageUrl: string | null;
+  styleCode: string | null;
 }> {
   try {
     const apiUrl = `https://snkrdunk.com/v1/apparels/${productId}`;
@@ -63,6 +65,7 @@ export async function fetchCardDetailsFromApi(productId: string): Promise<{
       name: data.name || "Unknown Card",
       nameJa: data.localizedName || data.name || "Unknown Card",
       imageUrl: data.primaryMedia?.imageUrl || null,
+      styleCode: data.productNumber || null, // スタイルコード (e.g., "pkmn-tcg-M2")
     };
   } catch (error: any) {
     console.error("Error fetching card details from API:", error.message);
@@ -91,6 +94,7 @@ export async function scrapeSnkrdunkPage(url: string, productType: "single_card"
       name: cardDetails.name,
       nameJa: cardDetails.nameJa,
       imageUrl: cardDetails.imageUrl,
+      styleCode: cardDetails.styleCode,
       priceHistory,
     };
   } catch (error: any) {
@@ -156,12 +160,12 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
           soldAt: parseJapaneseDate(item.date),
         };
         
-        // For single cards: store grade (e.g., "PSA 10", "中古")
-        // For sealed products: store quantity (e.g., "10盒", "1盒")
+        // For single cards: store grade from "condition" field (e.g., "PSA 10", "中古")
+        // For sealed products: store quantity from "size" field (e.g., "3個", "10個")
         if (productType === "single_card") {
           record.grade = item.condition || undefined;
         } else {
-          record.quantity = item.condition || undefined; // "condition" field contains quantity for sealed products
+          record.quantity = item.size || undefined; // "size" field contains quantity for sealed products (e.g., "3個")
         }
         
         priceHistory.push(record);

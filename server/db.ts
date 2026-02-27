@@ -481,9 +481,55 @@ export async function deleteDataSource(dataSourceId: number) {
   const db = await getDb();
   if (!db) return null;
 
+  // First get the data source to know the cardId and productType
+  const dataSource = await db
+    .select()
+    .from(dataSources)
+    .where(eq(dataSources.id, dataSourceId))
+    .limit(1);
+
+  if (dataSource.length === 0) return null;
+
+  const ds = dataSource[0];
+
+  // Delete the data source
   const result = await db
     .delete(dataSources)
     .where(eq(dataSources.id, dataSourceId));
+
+  // Check if there are other data sources pointing to the same product
+  const otherSources = await db
+    .select()
+    .from(dataSources)
+    .where(and(
+      eq(dataSources.cardId, ds.cardId),
+      eq(dataSources.productType, ds.productType)
+    ))
+    .limit(1);
+
+  // If no other data sources reference this product, clean up related data
+  if (otherSources.length === 0) {
+    // Delete price history for this product
+    await db
+      .delete(priceHistory)
+      .where(and(
+        eq(priceHistory.cardId, ds.cardId),
+        eq(priceHistory.productType, ds.productType)
+      ));
+
+    // If it's a sealed product, delete from sealedProducts table
+    if (ds.productType === 'sealed_product') {
+      await db
+        .delete(sealedProducts)
+        .where(eq(sealedProducts.id, ds.cardId));
+    }
+    // If it's a single card, delete from cards table
+    else if (ds.productType === 'single_card') {
+      await db
+        .delete(cards)
+        .where(eq(cards.id, ds.cardId));
+    }
+  }
 
   return result;
 }
@@ -618,7 +664,8 @@ export async function searchSealedProducts(query: string, limit: number = 20, of
     .where(
       or(
         like(sealedProducts.name, `%${query}%`),
-        like(sealedProducts.nameJa, `%${query}%`)
+        like(sealedProducts.nameJa, `%${query}%`),
+        like(sealedProducts.styleCode, `%${query}%`)
       )
     );
 

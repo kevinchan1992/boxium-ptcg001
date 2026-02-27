@@ -1,0 +1,1 @@
+ALTER TABLE `sealedProducts` ADD `styleCode` text;

@@ -1,0 +1,210 @@
+{
+  "query": "SELECT id, cardId, productType, price, currency, quantity, grade, soldAt FROM priceHistory WHERE productType = 'sealed_product' ORDER BY soldAt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, cardId, productType, price, currency, quantity, grade, soldAt FROM priceHistory WHERE productType = 'sealed_product' ORDER BY soldAt DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "1650104",
+      "cardId": "60004",
+      "productType": "sealed_product",
+      "price": "1000.00",
+      "currency": "HKD",
+      "quantity": "10盒",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 15:34:08"
+    },
+    {
+      "id": "1650103",
+      "cardId": "60003",
+      "productType": "sealed_product",
+      "price": "1000.00",
+      "currency": "HKD",
+      "quantity": "10盒",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 15:32:05"
+    },
+    {
+      "id": "1650102",
+      "cardId": "60002",
+      "productType": "sealed_product",
+      "price": "1000.00",
+      "currency": "HKD",
+      "quantity": "10盒",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 15:30:19"
+    },
+    {
+      "id": "1650001",
+      "cardId": "60001",
+      "productType": "sealed_product",
+      "price": "1000.00",
+      "currency": "HKD",
+      "quantity": "10盒",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 14:52:38"
+    },
+    {
+      "id": "1620003",
+      "cardId": "30003",
+      "productType": "sealed_product",
+      "price": "1000.00",
+      "currency": "HKD",
+      "quantity": "10盒",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 10:13:08"
+    },
+    {
+      "id": "1620002",
+      "cardId": "30002",
+      "productType": "sealed_product",
+      "price": "1000.00",
+      "currency": "HKD",
+      "quantity": "10盒",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 09:49:05"
+    },
+    {
+      "id": "1620001",
+      "cardId": "30001",
+      "productType": "sealed_product",
+      "price": "1000.00",
+      "currency": "HKD",
+      "quantity": "10盒",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 09:46:59"
+    },
+    {
+      "id": "1597950",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "825.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597949",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "1727.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597948",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "8717.50",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597947",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "824.95",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597946",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "825.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597945",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "825.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597944",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "825.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597943",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "825.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597942",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "825.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597941",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "825.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597940",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "825.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597939",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "825.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    },
+    {
+      "id": "1597938",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "price": "825.00",
+      "currency": "HKD",
+      "quantity": "NULL",
+      "grade": "NULL",
+      "soldAt": "2026-02-27 06:24:14"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tproductType\tprice\tcurrency\tquantity\tgrade\tsoldAt\n1650104\t60004\tsealed_product\t1000.00\tHKD\t10盒\tNULL\t2026-02-27 15:34:08\n1650103\t60003\tsealed_product\t1000.00\tHKD\t10盒\tNULL\t2026-02-27 15:32:05\n1650102\t60002\tsealed_product\t1000.00\tHKD\t10盒\tNULL\t2026-02-27 15:30:19\n1650001\t60001\tsealed_product\t1000.00\tHKD\t10盒\tNULL\t2026-02-27 14:52:38\n1620003\t30003\tsealed_product\t1000.00\tHKD\t10盒\tNULL\t2026-02-27 10:13:08\n1620002\t30002\tsealed_product\t1000.00\tHKD\t10盒\tNULL\t2026-02-27 09:49:05\n1620001\t30001\tsealed_product\t1000.00\tHKD\t10盒\tNULL\t2026-02-27 09:46:59\n1597950\t4\tsealed_product\t825.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597949\t4\tsealed_product\t1727.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597948\t4\tsealed_product\t8717.50\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597947\t4\tsealed_product\t824.95\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597946\t4\tsealed_product\t825.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597945\t4\tsealed_product\t825.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597944\t4\tsealed_product\t825.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597943\t4\tsealed_product\t825.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597942\t4\tsealed_product\t825.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597941\t4\tsealed_product\t825.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597940\t4\tsealed_product\t825.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597939\t4\tsealed_product\t825.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n1597938\t4\tsealed_product\t825.00\tHKD\tNULL\tNULL\t2026-02-27 06:24:14\n",
+  "stderr": "",
+  "execution_time_ms": 1522
+}

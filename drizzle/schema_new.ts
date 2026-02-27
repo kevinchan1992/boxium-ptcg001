@@ -38,6 +38,7 @@ export const sealedProducts = mysqlTable("sealedProducts", {
   series: text("series"),
   imageUrl: text("imageUrl"),
   releaseDate: timestamp("releaseDate"),
+  styleCode: text("styleCode"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({

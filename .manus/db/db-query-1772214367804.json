@@ -1,0 +1,87 @@
+{
+  "query": "SELECT sp.id, sp.name, sp.nameJa, ds.id as ds_id, ds.sourceUrl FROM sealedProducts sp LEFT JOIN dataSources ds ON ds.cardId = sp.id AND ds.productType = 'sealed_product' ORDER BY sp.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT sp.id, sp.name, sp.nameJa, ds.id as ds_id, ds.sourceUrl FROM sealedProducts sp LEFT JOIN dataSources ds ON ds.cardId = sp.id AND ds.productType = 'sealed_product' ORDER BY sp.id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Box",
+      "nameJa": "ポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL"
+    },
+    {
+      "id": "2",
+      "name": "Test Booster Box",
+      "nameJa": "テストブースターボックス",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL"
+    },
+    {
+      "id": "3",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Pack",
+      "nameJa": "ポケモンカードゲームMEGA 拡張パック「インフェルノX」パック",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL"
+    },
+    {
+      "id": "4",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Box",
+      "nameJa": "ポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス",
+      "ds_id": "1200002",
+      "sourceUrl": "https://snkrdunk.com/apparels/687430"
+    },
+    {
+      "id": "30001",
+      "name": "Test Booster Box",
+      "nameJa": "テストブースターボックス",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL"
+    },
+    {
+      "id": "30002",
+      "name": "Test Booster Box",
+      "nameJa": "テストブースターボックス",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL"
+    },
+    {
+      "id": "30003",
+      "name": "Test Booster Box",
+      "nameJa": "テストブースターボックス",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL"
+    },
+    {
+      "id": "60001",
+      "name": "Test Booster Box",
+      "nameJa": "テストブースターボックス",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL"
+    },
+    {
+      "id": "60002",
+      "name": "Test Booster Box",
+      "nameJa": "テストブースターボックス",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL"
+    },
+    {
+      "id": "60003",
+      "name": "Test Booster Box",
+      "nameJa": "テストブースターボックス",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL"
+    },
+    {
+      "id": "60004",
+      "name": "Test Booster Box",
+      "nameJa": "テストブースターボックス",
+      "ds_id": "NULL",
+      "sourceUrl": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tnameJa\tds_id\tsourceUrl\n1\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Box\tポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス\tNULL\tNULL\n2\tTest Booster Box\tテストブースターボックス\tNULL\tNULL\n3\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Pack\tポケモンカードゲームMEGA 拡張パック「インフェルノX」パック\tNULL\tNULL\n4\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Box\tポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス\t1200002\thttps://snkrdunk.com/apparels/687430\n30001\tTest Booster Box\tテストブースターボックス\tNULL\tNULL\n30002\tTest Booster Box\tテストブースターボックス\tNULL\tNULL\n30003\tTest Booster Box\tテストブースターボックス\tNULL\tNULL\n60001\tTest Booster Box\tテストブースターボックス\tNULL\tNULL\n60002\tTest Booster Box\tテストブースターボックス\tNULL\tNULL\n60003\tTest Booster Box\tテストブースターボックス\tNULL\tNULL\n60004\tTest Booster Box\tテストブースターボックス\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1576
+}

@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, cardId, productType, source, sourceUrl, lastFetchStatus FROM dataSources WHERE productType = 'sealed_product' ORDER BY id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, cardId, productType, source, sourceUrl, lastFetchStatus FROM dataSources WHERE productType = 'sealed_product' ORDER BY id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "1200002",
+      "cardId": "4",
+      "productType": "sealed_product",
+      "source": "snkrdunk",
+      "sourceUrl": "https://snkrdunk.com/apparels/687430",
+      "lastFetchStatus": "success"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tproductType\tsource\tsourceUrl\tlastFetchStatus\n1200002\t4\tsealed_product\tsnkrdunk\thttps://snkrdunk.com/apparels/687430\tsuccess\n",
+  "stderr": "",
+  "execution_time_ms": 1616
+}

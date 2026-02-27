@@ -1,0 +1,19 @@
+{
+  "query": "SELECT ds.id as ds_id, ds.cardId, ds.sourceUrl, ds.lastFetchStatus, sp.id as sp_id, sp.name, sp.boxType FROM dataSources ds LEFT JOIN sealedProducts sp ON ds.cardId = sp.id WHERE ds.productType = 'sealed_product';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT ds.id as ds_id, ds.cardId, ds.sourceUrl, ds.lastFetchStatus, sp.id as sp_id, sp.name, sp.boxType FROM dataSources ds LEFT JOIN sealedProducts sp ON ds.cardId = sp.id WHERE ds.productType = 'sealed_product';",
+  "rows": [
+    {
+      "ds_id": "1200002",
+      "cardId": "4",
+      "sourceUrl": "https://snkrdunk.com/apparels/687430",
+      "lastFetchStatus": "success",
+      "sp_id": "4",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Box",
+      "boxType": "booster_box"
+    }
+  ],
+  "messages": [],
+  "stdout": "ds_id\tcardId\tsourceUrl\tlastFetchStatus\tsp_id\tname\tboxType\n1200002\t4\thttps://snkrdunk.com/apparels/687430\tsuccess\t4\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Box\tbooster_box\n",
+  "stderr": "",
+  "execution_time_ms": 1541
+}

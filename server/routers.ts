@@ -930,11 +930,11 @@ const snkrdunkId = extractSnkrdunkId(input.url);
         }
 
         try {
-          // Scrape SNKRDUNK page
-          const cardData = await scrapeSnkrdunkPage(input.url);
-
           // Determine product type (default to single_card if not specified)
           const productType = input.productType || "single_card";
+
+          // Scrape SNKRDUNK page with correct productType
+          const cardData = await scrapeSnkrdunkPage(input.url, productType);
           const gameId = input.gameId || 1; // Default to Pokémon
           let productId: number;
 
@@ -950,6 +950,7 @@ const snkrdunkId = extractSnkrdunkId(input.url);
               nameJa: cardData.nameJa,
               imageUrl: cardData.imageUrl || undefined,
               boxType: "booster_box", // Default to booster_box
+              styleCode: cardData.styleCode || undefined,
             });
           } else {
             // Create or update single card
@@ -1036,15 +1037,25 @@ try {
             throw new TRPCError({ code: "NOT_FOUND", message: "Data source not found" });
           }
 
-          // Scrape SNKRDUNK page
-          const cardData = await scrapeSnkrdunkPage(dataSource.sourceUrl);
+          // Scrape SNKRDUNK page with correct productType
+          const productType = (dataSource.productType as "single_card" | "sealed_product") || "single_card";
+          const cardData = await scrapeSnkrdunkPage(dataSource.sourceUrl, productType);
 
-          // Update card
-          await db.updateCard(dataSource.cardId, {
-            name: cardData.name,
-            nameJa: cardData.nameJa,
-            imageUrl: cardData.imageUrl || undefined,
-          });
+          // Update card or sealed product
+          if (productType === 'sealed_product') {
+            await db.updateSealedProduct(dataSource.cardId, {
+              name: cardData.name,
+              nameJa: cardData.nameJa,
+              imageUrl: cardData.imageUrl || undefined,
+              styleCode: cardData.styleCode || undefined,
+            });
+          } else {
+            await db.updateCard(dataSource.cardId, {
+              name: cardData.name,
+              nameJa: cardData.nameJa,
+              imageUrl: cardData.imageUrl || undefined,
+            });
+          }
 
           // Save new price history
           for (const priceEntry of cardData.priceHistory) {
@@ -1055,6 +1066,8 @@ try {
               price: priceHkd.toString(),
               currency: "HKD",
               grade: priceEntry.grade,
+              quantity: priceEntry.quantity,
+              productType,
               soldAt: priceEntry.soldAt,
               listingUrl: dataSource.sourceUrl,
             });
