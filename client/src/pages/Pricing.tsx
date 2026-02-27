@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { TypeAnimation } from 'react-type-animation';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ReactCrop, { type Crop as CropType } from 'react-image-crop';
@@ -298,12 +298,12 @@ export default function Pricing() {
         </p>
       </div>
 
-      {/* Image Upload Dialog */}
-      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-lg max-h-[85dvh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">{t('pricing.imageSearchTitle') || '卡牌圖片分析功能'}</DialogTitle>
-          </DialogHeader>
+      {/* Image Upload Bottom Sheet */}
+      <BottomSheet
+        open={showImageDialog}
+        onOpenChange={setShowImageDialog}
+        title={t('pricing.imageSearchTitle') || '卡牌圖片分析功能'}
+      >
           <div className="space-y-6">
             {/* Image Preview or Upload Area */}
             {imagePreview ? (
@@ -458,8 +458,7 @@ export default function Pricing() {
               className="hidden"
             />
           </div>
-        </DialogContent>
-      </Dialog>
+      </BottomSheet>
     </div>
   );
 }

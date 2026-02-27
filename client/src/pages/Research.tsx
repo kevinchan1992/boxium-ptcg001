@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { TypeAnimation } from 'react-type-animation';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ReactCrop, { type Crop as CropType } from 'react-image-crop';
@@ -357,14 +357,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Image Upload Dialog */}
-      <Dialog open={showImageDialog} onOpenChange={(open) => { if (!open) handleCloseDialog(); }}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-lg max-h-[85dvh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">
-              {showResults ? '識別結果' : '卡牌圖片分析功能'}
-            </DialogTitle>
-          </DialogHeader>
+      {/* Image Upload Bottom Sheet */}
+      <BottomSheet
+        open={showImageDialog}
+        onOpenChange={(open) => { if (!open) handleCloseDialog(); }}
+        title={showResults ? '識別結果' : '卡牌圖片分析功能'}
+      >
 
           {/* Results View */}
           {showResults && matchResults.length > 0 ? (
@@ -694,8 +692,7 @@ export default function Home() {
               )}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+      </BottomSheet>
     </div>
     </>
   );

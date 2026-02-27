@@ -3283,4 +3283,12 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 修復 modal 在手機上的尺寸和佈局（w-[calc(100vw-1.5rem)]，max-h-[85dvh]）
 - [x] 確保文字不溢出（overflow-x-hidden，line-clamp-2）
 - [x] 修復 dialog.tsx 基礎樣式（-translate-x-1/2 -translate-y-1/2）
+- [x] 保存 checkpoint（version: 75be8e87）
+
+## 📱 改用 Bottom Sheet 優化圖片搜尋 UX
+
+### 任務清單
+- [x] 建立可重用的 BottomSheet 組件（手機從底部滑出，桌面保持 Dialog）
+- [x] 更新 Research.tsx 使用 Bottom Sheet
+- [x] 更新 Pricing.tsx 使用 Bottom Sheet
 - [ ] 保存 checkpoint
