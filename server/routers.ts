@@ -1789,27 +1789,65 @@ try {
         */ // batchUpdateEbayPrices 註釋結束
       }),
 
-    // 獲取批量更新進度（僅檢查 SNKRDUNK）
+    // 獲取批量更新進度（從數據庫讀取持久化進度）
     getBatchUpdateProgress: publicProcedure
       .query(async ({ ctx }) => {
-        // 僅檢查 SNKRDUNK 進度（eBay 已停用）
-        const snkrdunkProgress = snkrdunkBatchUpdateProgress.getSnkrdunkBatchUpdateProgress();
-        return snkrdunkProgress;
+        // 從數據庫讀取最新的 running/paused task
+        const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
+        
+        if (runningTask) {
+          return {
+            isRunning: true,
+            isPaused: runningTask.status === 'paused',
+            totalCards: runningTask.totalItems,
+            processedCards: runningTask.processedItems,
+            successCount: runningTask.successCount,
+            failureCount: runningTask.failureCount,
+            totalRecordsAdded: 0,
+            errors: runningTask.errors || [],
+            startTime: runningTask.startedAt ? new Date(runningTask.startedAt).getTime() : null,
+            endTime: null,
+            taskId: runningTask.taskId,
+          };
+        }
+        
+        // 沒有運行中的任務，返回默認狀態
+        return {
+          isRunning: false,
+          isPaused: false,
+          totalCards: 0,
+          processedCards: 0,
+          successCount: 0,
+          failureCount: 0,
+          totalRecordsAdded: 0,
+          errors: [],
+          startTime: null,
+          endTime: null,
+          taskId: null,
+        };
       }),
 
-    // 暫停批量更新（僅 SNKRDUNK）
+    // 暫停批量更新（操作數據庫）
     pauseBatchUpdate: adminProcedure
       .mutation(async ({ ctx }) => {
-        // 僅暫停 SNKRDUNK 批量更新（eBay 已停用）
-        snkrdunkBatchUpdateProgress.pauseSnkrdunkBatchUpdate();
+        const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
+        if (runningTask) {
+          await batchTaskManager.pauseTask(runningTask.taskId);
+          // 同時更新內存狀態（用於當前進程內的暫停檢查）
+          snkrdunkBatchUpdateProgress.pauseSnkrdunkBatchUpdate();
+        }
         return { success: true, message: "批量更新已暫停" };
       }),
 
-    // 繼續批量更新（僅 SNKRDUNK）
+    // 繼續批量更新（操作數據庫）
     resumeBatchUpdate: adminProcedure
       .mutation(async ({ ctx }) => {
-        // 僅繼續 SNKRDUNK 批量更新（eBay 已停用）
-        snkrdunkBatchUpdateProgress.resumeSnkrdunkBatchUpdate();
+        const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
+        if (runningTask) {
+          await batchTaskManager.resumeTask(runningTask.taskId);
+          // 同時更新內存狀態
+          snkrdunkBatchUpdateProgress.resumeSnkrdunkBatchUpdate();
+        }
         return { success: true, message: "批量更新已繼續" };
       }),
 
@@ -1835,24 +1873,59 @@ try {
         }
       }),
 
-    // 獲取 SNKRDUNK 批量更新進度
+    // 獲取 SNKRDUNK 批量更新進度（從數據庫讀取）
     getSnkrdunkBatchUpdateProgress: publicProcedure
       .query(async ({ ctx }) => {
-        const progress = snkrdunkBatchUpdateProgress.getSnkrdunkBatchUpdateProgress();
-        return progress;
+        const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
+        if (runningTask) {
+          return {
+            isRunning: true,
+            isPaused: runningTask.status === 'paused',
+            totalCards: runningTask.totalItems,
+            processedCards: runningTask.processedItems,
+            successCount: runningTask.successCount,
+            failureCount: runningTask.failureCount,
+            totalRecordsAdded: 0,
+            errors: runningTask.errors || [],
+            startTime: runningTask.startedAt ? new Date(runningTask.startedAt).getTime() : null,
+            endTime: null,
+            taskId: runningTask.taskId,
+          };
+        }
+        return {
+          isRunning: false,
+          isPaused: false,
+          totalCards: 0,
+          processedCards: 0,
+          successCount: 0,
+          failureCount: 0,
+          totalRecordsAdded: 0,
+          errors: [],
+          startTime: null,
+          endTime: null,
+          taskId: null,
+        };
       }),
 
-    // 暫停 SNKRDUNK 批量更新
+    // 暫停 SNKRDUNK 批量更新（操作數據庫）
     pauseSnkrdunkBatchUpdate: adminProcedure
       .mutation(async ({ ctx }) => {
-        snkrdunkBatchUpdateProgress.pauseSnkrdunkBatchUpdate();
+        const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
+        if (runningTask) {
+          await batchTaskManager.pauseTask(runningTask.taskId);
+          snkrdunkBatchUpdateProgress.pauseSnkrdunkBatchUpdate();
+        }
         return { success: true, message: "SNKRDUNK 批量更新已暫停" };
       }),
 
-    // 繼續 SNKRDUNK 批量更新
+    // 繼續 SNKRDUNK 批量更新（操作數據庫）
     resumeSnkrdunkBatchUpdate: adminProcedure
       .mutation(async ({ ctx }) => {
-        snkrdunkBatchUpdateProgress.resumeSnkrdunkBatchUpdate();
+        const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
+        if (runningTask) {
+          await batchTaskManager.resumeTask(runningTask.taskId);
+          snkrdunkBatchUpdateProgress.resumeSnkrdunkBatchUpdate();
+        }
         return { success: true, message: "SNKRDUNK 批量更新已繼續" };
       }),
 

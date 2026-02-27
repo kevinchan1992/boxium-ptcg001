@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Clock, Save, RefreshCw, Play, AlertCircle, CheckCircle2, Pause, PlayCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Clock, Save, RefreshCw, Play, AlertCircle, CheckCircle2, Pause, PlayCircle, ChevronDown, ChevronUp, XCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "react-i18next";
 
@@ -339,19 +339,27 @@ function ExecutionHistory() {
 
 export function AdminScheduleManagement() {
   const { t } = useTranslation();
+  const utils = trpc.useUtils();
   
   // 獲取當前排程設定
   const { data: schedule, refetch } = trpc.admin.getPriceUpdateSchedule.useQuery();
   
+  // 追蹤是否剛啟動了批量更新（用於保持輪詢）
+  const [justStarted, setJustStarted] = useState(false);
+  
   // 獲取批量更新進度（輪詢）
   const { data: progress } = trpc.admin.getBatchUpdateProgress.useQuery(undefined, {
     refetchInterval: (query) => {
-      // 如果正在運行，每 3 秒輪詢一次
-      if (query.state.data?.isRunning) {
+      // 如果正在運行或剛啟動，每 3 秒輪詢一次
+      if (query.state.data?.isRunning || justStarted) {
+        // 如果數據已返回且 isRunning 為 true，清除 justStarted
+        if (query.state.data?.isRunning && justStarted) {
+          setJustStarted(false);
+        }
         return 3000;
       }
-      // 否則停止輪詢
-      return false;
+      // 否則每 30 秒檢查一次（以防其他地方啟動了任務）
+      return 30000;
     },
   });
   
@@ -396,10 +404,26 @@ export function AdminScheduleManagement() {
       toast.success("SNKRDUNK 批量更新已啟動", {
         description: data.message,
       });
+      setJustStarted(true);
+      // 立即刷新進度查詢
+      utils.admin.getBatchUpdateProgress.invalidate();
       refetch();
     },
     onError: (error) => {
       toast.error("啟動失敗", {
+        description: error.message,
+      });
+    },
+  });
+  
+  // 強制取消批量更新
+  const cancelUpdate = trpc.admin.cancelPersistentTask.useMutation({
+    onSuccess: () => {
+      toast.success("批量更新已強制取消");
+      utils.admin.getBatchUpdateProgress.invalidate();
+    },
+    onError: (error) => {
+      toast.error("取消失敗", {
         description: error.message,
       });
     },
@@ -535,6 +559,20 @@ export function AdminScheduleManagement() {
                         暫停
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if ((progress as any)?.taskId) {
+                          cancelUpdate.mutate({ taskId: (progress as any).taskId });
+                        }
+                      }}
+                      disabled={cancelUpdate.isPending || !(progress as any)?.taskId}
+                      className="h-7 px-2 bg-red-600 hover:bg-red-700 text-white border-red-500"
+                    >
+                      <XCircle className="w-3 h-3 mr-1" />
+                      取消
+                    </Button>
                   </div>
                 </div>
                 <Progress 
