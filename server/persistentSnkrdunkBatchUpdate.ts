@@ -28,7 +28,7 @@ const CONFIG = {
   PARALLEL_TIMEOUT: 60000,   // 60s for a parallel batch
   
   // Smart skip
-  SKIP_RECENTLY_UPDATED_HOURS: 20, // Skip products updated within 20 hours
+  SKIP_RECENTLY_UPDATED_HOURS: 23, // Skip products updated within 23 hours
 };
 
 /**

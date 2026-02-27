@@ -86,7 +86,7 @@ describe('Batch Update Resilience Improvements', () => {
 
   describe('Smart Skip', () => {
     it('should skip products updated within 20 hours', () => {
-      expect(persistentBatchUpdateCode).toContain('SKIP_RECENTLY_UPDATED_HOURS: 20');
+      expect(persistentBatchUpdateCode).toContain('SKIP_RECENTLY_UPDATED_HOURS: 23');
     });
 
     it('should check lastFetchedAt for skip logic', () => {
