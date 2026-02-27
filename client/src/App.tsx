@@ -48,7 +48,16 @@ function Router() {
       <Route path={"/"} component={Home} />
 
       <Route path="/search" component={SearchResults} />
-      <Route path="/card/:id" component={CardDetail} />
+      <Route path="/card/:id">
+        {() => <CardDetail />}
+      </Route>
+      <Route path="/sealed-product/:id">
+        {(params: { id?: string }) => {
+          const id = params?.id;
+          if (!id) return <NotFound />;
+          return <CardDetail sealedProductId={parseInt(id, 10)} />;
+        }}
+      </Route>
       <Route path="/research" component={Research} />
       <Route path="/trending" component={Trending} />
 

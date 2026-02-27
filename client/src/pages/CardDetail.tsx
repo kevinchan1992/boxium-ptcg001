@@ -16,19 +16,33 @@ import { formatShortDateTime } from "@/lib/formatDate";
 
 const grades = ["PSA 10", "中古"];
 
-export default function CardDetail() {
+interface CardDetailProps {
+  sealedProductId?: number;
+}
+
+export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [, params] = useRoute("/card/:id");
+  const [, sealedParams] = useRoute("/sealed-product/:id");
   const [activeGrade, setActiveGrade] = useState<string | null>(null);
 
-  const cardId = params?.id ? parseInt(params.id, 10) : null;
+  // Resolve cardId from: direct prop > /sealed-product/:id > /card/:id
+  const cardId = sealedProductId ??
+    (sealedParams?.id ? parseInt(sealedParams.id, 10) : null) ??
+    (params?.id ? parseInt(params.id, 10) : null);
 
-  // Determine productType from URL search params or auto-detect
-  const [productType, setProductType] = useState<'single_card' | 'sealed_product' | undefined>(undefined);
+  // Determine productType from URL path, prop, or auto-detect
+  const [productType, setProductType] = useState<'single_card' | 'sealed_product' | undefined>(
+    sealedProductId || sealedParams?.id ? 'sealed_product' : undefined
+  );
 
-  // Try to detect productType from URL query params
+  // Try to detect productType from URL query params or path
   useEffect(() => {
+    if (sealedProductId || sealedParams?.id) {
+      setProductType('sealed_product');
+      return;
+    }
     const urlParams = new URLSearchParams(window.location.search);
     const type = urlParams.get('type');
     if (type === 'sealed_product' || type === 'single_card') {
@@ -36,7 +50,7 @@ export default function CardDetail() {
     } else {
       setProductType(undefined); // Will auto-detect
     }
-  }, [cardId]);
+  }, [cardId, sealedProductId, sealedParams?.id]);
 
   // Fetch card details - try cards table first (existing behavior for backward compatibility)
   const { data: card, isLoading: cardLoading, error: cardError } = trpc.cards.getById.useQuery(
