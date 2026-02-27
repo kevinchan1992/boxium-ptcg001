@@ -165,9 +165,10 @@ async function findMatchingCards(identification: CardIdentification): Promise<Ma
   const seenIds = new Set<number>();
 
   // Strategy 1: Exact card number match (highest priority)
+  // Uses smart normalization to handle format variants (SM-P 288 / 288/SM-P / 288 sm-p)
   if (identification.cardNumber) {
     const normalizedNumber = normalizeCardNumber(identification.cardNumber);
-    console.log(`[Image Card Search] Searching by card number: ${normalizedNumber}`);
+    console.log(`[Image Card Search] Searching by card number: ${normalizedNumber} (original: ${identification.cardNumber})`);
     
     const numberResults = await db.searchCards(normalizedNumber, 20);
     for (const card of numberResults.cards) {
@@ -300,10 +301,14 @@ async function findMatchingCards(identification: CardIdentification): Promise<Ma
 
 /**
  * Normalize card number for comparison
- * Handles formats like "110/080", "110/80", "085/070", etc.
+ * Handles formats like "110/080", "110/80", "085/070", "SM-P 288", "288/SM-P", etc.
  */
 function normalizeCardNumber(cardNumber: string): string {
-  // Remove leading zeros and normalize
+  const { normalizeCardQuery } = require('./utils/cardNumberNormalize');
+  // First try smart normalization (handles set code variants)
+  const smart = normalizeCardQuery(cardNumber);
+  if (smart !== cardNumber.trim()) return smart;
+  // Fallback: remove leading zeros
   return cardNumber
     .replace(/^0+/, '')
     .replace(/\/0+/, '/')

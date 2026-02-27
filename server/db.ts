@@ -1,4 +1,5 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
+import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
 import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";
 import { ENV } from './_core/env';
@@ -36,6 +37,18 @@ export async function searchCards(query: string, limit: number = 20, offset: num
   const db = await getDb();
   if (!db) return { cards: [], total: 0 };
 
+  // Build smart search conditions with card number normalization
+  // This handles format variants like "SM-P 288", "288/SM-P", "288 sm-p"
+  const cardNumberPatterns = generateCardNumberPatterns(query);
+  const normalizedQuery = normalizeCardQuery(query);
+
+  // Build card number conditions: original query + all format variants
+  const cardNumberConditions = [
+    like(cards.cardNumber, `%${query}%`),
+    ...(normalizedQuery !== query ? [like(cards.cardNumber, `%${normalizedQuery}%`)] : []),
+    ...cardNumberPatterns.map(pattern => like(cards.cardNumber, pattern)),
+  ];
+
   // First, get matching cards
   const matchingCards = await db
     .select()
@@ -44,7 +57,7 @@ export async function searchCards(query: string, limit: number = 20, offset: num
       or(
         like(cards.name, `%${query}%`),
         like(cards.nameJa, `%${query}%`),
-        like(cards.cardNumber, `%${query}%`)
+        ...cardNumberConditions
       )
     );
 

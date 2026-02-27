@@ -2609,7 +2609,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 檢查當前的 OAuth 配置和環境變數（環境變數已正確設定）
 - [x] 修復 Google OAuth redirect URI 配置（在 Google Cloud Console 添加正確的 redirect URI）
 - [x] 測試 Google 登入功能（✅ 成功）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ### 🔧 修復登入和註冊後的跳轉邏輯
@@ -2619,7 +2619,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [ ] 測試登入跳轉
 - [ ] 測試註冊跳轉
 - [ ] 測試 Google 登入跳轉
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ### ✅ 修復頂部導航列文字換行問題（已完成）
@@ -2628,7 +2628,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 調整導航列間距（gap-6 lg:gap-12 → gap-4 lg:gap-6）
 - [x] 添加 whitespace-nowrap 防止文字換行
 - [x] 測試桌面版顯示效果（✅ 所有項目在同一行）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ### ✅ 設定網站 favicon 和 SEO 優化（已完成）
@@ -2638,7 +2638,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 添加 favicon 連結到 index.html
 - [x] 添加 JSON-LD 結構化數據（Organization, WebSite）
 - [x] 更新 Open Graph 圖片為 og-image.png（1200x630）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ### ✅ 調整導航列布局為置中顯示（已完成）
@@ -2646,7 +2646,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 調整左右兩側元素的位置（右側元素 absolute right-0）
 - [x] 移除 flex-1 讓導航項目不佔滿整行
 - [x] 測試桌面版顯示效果（✅ 導航項目完美置中）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ### ✅ 修復 Google 搜尋結果 favicon 顯示問題（部分完成）
@@ -2657,7 +2657,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 創建 Google Search Console 設定指南
 - [ ] 用戶需要提交網站到 Google Search Console 重新索引（見 GOOGLE_SEARCH_CONSOLE_SETUP.md）
 - [ ] 等待 Google 更新（1-7 天）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ### ✅ 修復手機版導航列登入按鈕顯示（已完成）
@@ -2666,7 +2666,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 調整按鈕 padding（px-2 md:px-4 手機版更緊湊）
 - [x] 用戶頭像手機版只顯示圖標（hidden md:inline 隱藏用戶名）
 - [x] 測試桌面版顯示效果（✅ 正常顯示）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ### ✅ 修復批量更新功能無法運作問題（已完成）
@@ -2675,7 +2675,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 診断「更新中...」停在 0 的原因（persistentSnkrdunkBatchUpdate 未更新 batchUpdateSnkrdunkProgress）
 - [x] 修復批量更新邏輯錯誤（添加進度追蹤更新調用）
 - [ ] 測試批量更新功能
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ### ✅ 優化手機版選單動畫（已完成）
@@ -2688,7 +2688,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 添加選單項目依序滑入動畫（錯開 0.05 秒）
 - [x] 添加 hover 背景效果（bg-white/5 + rounded-lg）
 - [x] 測試手機版選單動畫效果（✅ TypeScript 編譯無錯誤）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ### ✅ 優化桌面版導航動畫（已完成）
@@ -2698,7 +2698,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [x] 添加顏色過渡動畫（white/80 → #ffed00，0.2 秒）
 - [x] 添加管理後台按鈕動畫（hover: y: -2 + scale: 1.05）
 - [x] 測試桌面版導航動畫效果（✅ TypeScript 編譯無錯誤）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ### 🔧 診斷並修復 SNKRDUNK 價格更新排程失敗問題
@@ -2709,7 +2709,7 @@ admin.getCardDetailsForBlog.useQuery({ cardIds: [1, 2, 3] })
 - [ ] 診斷「成功：0、失敗：0、新增記錄：0」的原因
 - [ ] 修復爬取邏輯或 API 調用問題
 - [ ] 測試手動觸發批量更新
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -2749,7 +2749,7 @@ for (const card of allCards) {
 - [x] 直接將所有卡牌加入 cardsToUpdate 列表
 - [x] 測試批量更新功能（確認所有卡牌都被處理）
 - [x] 創建單元測試（3 項測試全部通過）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -2791,7 +2791,7 @@ for (const card of allCards) {
 - [ ] 手動測試添加 Pokémon 卡盒
 - [ ] 手動測試添加 One Piece 單卡
 - [ ] 手動測試添加 One Piece 卡盒
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -2825,7 +2825,7 @@ for (const card of allCards) {
 - [x] 單元測試驗證卡盒數量欄位爬取
 - [x] 單元測試驗證單卡評級欄位爬取
 - [ ] 手動測試添加卡盒數據源並查看顯示效果
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -2872,7 +2872,7 @@ for (const card of allCards) {
 - [ ] 測試單卡詳情頁面
 - [ ] 測試卡盒詳情頁面
 - [ ] 測試批量更新功能
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -2952,7 +2952,7 @@ for (const card of allCards) {
 - [x] 診斷任務卡死的根本原因：SNKRDUNK 限流導致連續失敗，但任務繼續嘗試處理剩餘 36,000 張卡片
 - [x] 添加連續失敗檢測機制：連續 10 次失敗後自動暫停任務，記錄錯誤原因
 - [ ] 測試批量更新功能
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
 
 
 ---
@@ -3298,4 +3298,17 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 修復 bottom-sheet.tsx 寬度截斷（w-screen max-w-full + overflow-hidden + style transform:none）
 - [x] 確保 overflow-x-hidden 和 w-full 正確套用
 - [x] 修復識別結果 badge 溢出（max-w + truncate）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint（version: daab5cf7）
+
+## 🔍 優化卡牌搜尋邏輯 - 卡號格式標準化
+
+### 問題描述
+相同卡號不同格式搜尋結果不一致：`Sm-p 288` 找到 1 張，`288 sm-p` 找到 0 張。需要讓所有格式變體（SM-P 288 / 288/SM-P / 288 sm-p）都能正確匹配。
+
+### 任務清單
+- [x] 分析現有搜尋邏輯（cards.search router）
+- [x] 實現卡號標準化函數（cardNumberNormalize.ts）
+- [x] 在搜尋時生成多種格式變體進行匹配（generateCardNumberPatterns）
+- [x] 應用到所有搜尋功能（db.searchCards + imageCardSearch.ts）
+- [x] 編寫測試驗證各種格式（26 個測試全部通過）
+- [x] 保存 checkpoint

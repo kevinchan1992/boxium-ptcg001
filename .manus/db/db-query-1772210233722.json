@@ -1,0 +1,70 @@
+{
+  "query": "SELECT cardNumber FROM cards WHERE cardNumber LIKE '%SM-P%' OR cardNumber LIKE '%XY-P%' OR cardNumber LIKE '%SV-P%' LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT cardNumber FROM cards WHERE cardNumber LIKE '%SM-P%' OR cardNumber LIKE '%XY-P%' OR cardNumber LIKE '%SV-P%' LIMIT 20;",
+  "rows": [
+    {
+      "cardNumber": "XY-P 207/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 203/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 098/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 208/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 279/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 230/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 294/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 151/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 231/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 090/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 150/XY-P"
+    },
+    {
+      "cardNumber": "XY-P 050/XY-P"
+    },
+    {
+      "cardNumber": "SM-P 397"
+    },
+    {
+      "cardNumber": "SM-P 381"
+    },
+    {
+      "cardNumber": "SM-P 395"
+    },
+    {
+      "cardNumber": "SV-P 288"
+    },
+    {
+      "cardNumber": "SV-P 261"
+    },
+    {
+      "cardNumber": "XY-P 296/XY-P"
+    },
+    {
+      "cardNumber": "SM-P 059"
+    },
+    {
+      "cardNumber": "SM-P 039"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardNumber\nXY-P 207/XY-P\nXY-P 203/XY-P\nXY-P 098/XY-P\nXY-P 208/XY-P\nXY-P 279/XY-P\nXY-P 230/XY-P\nXY-P 294/XY-P\nXY-P 151/XY-P\nXY-P 231/XY-P\nXY-P 090/XY-P\nXY-P 150/XY-P\nXY-P 050/XY-P\nSM-P 397\nSM-P 381\nSM-P 395\nSV-P 288\nSV-P 261\nXY-P 296/XY-P\nSM-P 059\nSM-P 039\n",
+  "stderr": "",
+  "execution_time_ms": 1542
+}
