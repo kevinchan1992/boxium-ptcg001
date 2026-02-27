@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, cardId, source, sourceUrl, sourceIdentifier FROM dataSources WHERE source = 'snkrdunk' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, cardId, source, sourceUrl, sourceIdentifier FROM dataSources WHERE source = 'snkrdunk' LIMIT 5;",
+  "rows": [
+    {
+      "id": "150827",
+      "cardId": "150822",
+      "source": "snkrdunk",
+      "sourceUrl": "https://snkrdunk.com/apparels/100562",
+      "sourceIdentifier": "100562"
+    },
+    {
+      "id": "150828",
+      "cardId": "150823",
+      "source": "snkrdunk",
+      "sourceUrl": "https://snkrdunk.com/apparels/102286",
+      "sourceIdentifier": "102286"
+    },
+    {
+      "id": "150829",
+      "cardId": "150824",
+      "source": "snkrdunk",
+      "sourceUrl": "https://snkrdunk.com/apparels/102289",
+      "sourceIdentifier": "102289"
+    },
+    {
+      "id": "150830",
+      "cardId": "150825",
+      "source": "snkrdunk",
+      "sourceUrl": "https://snkrdunk.com/apparels/102306",
+      "sourceIdentifier": "102306"
+    },
+    {
+      "id": "150831",
+      "cardId": "150826",
+      "source": "snkrdunk",
+      "sourceUrl": "https://snkrdunk.com/apparels/102302",
+      "sourceIdentifier": "102302"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tsource\tsourceUrl\tsourceIdentifier\n150827\t150822\tsnkrdunk\thttps://snkrdunk.com/apparels/100562\t100562\n150828\t150823\tsnkrdunk\thttps://snkrdunk.com/apparels/102286\t102286\n150829\t150824\tsnkrdunk\thttps://snkrdunk.com/apparels/102289\t102289\n150830\t150825\tsnkrdunk\thttps://snkrdunk.com/apparels/102306\t102306\n150831\t150826\tsnkrdunk\thttps://snkrdunk.com/apparels/102302\t102302\n",
+  "stderr": "",
+  "execution_time_ms": 1514
+}

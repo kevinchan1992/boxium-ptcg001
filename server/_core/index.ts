@@ -76,7 +76,7 @@ async function startServer() {
   if (process.env.NODE_ENV === "development") {
     const { verifyDevScraperAuth } = await import("../middleware/devScraperAuth");
     const { devScraperLimiter } = await import("../middleware/rateLimiter");
-    const { scrapeSnkrdunkListings } = await import("../services/snkrdunkPlaywright");
+    const { scrapeSnkrdunkListings } = await import("../services/snkrdunkScraperService");
 
     // Health check endpoint
     app.get("/api/dev/health", (req, res) => {

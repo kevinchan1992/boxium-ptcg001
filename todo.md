@@ -3252,14 +3252,23 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 清除 eBay 快取讓修復生效
 - [x] 統一所有商品價格為 HKD 港幣顯示（eBay USD 轉 HKD，後端 convertToHKD）
 - [x] 測試修復結果（16 個測試全部通過）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint（version: 9adc3711）
 
 ---
 
 ## ⚡ 優化 SNKRDUNK 爬取速度
 
-- [ ] 分析現有 Playwright 爬取流程和性能瓶頸
-- [ ] 嘗試用輕量 HTTP 請求替代 Playwright（如 SNKRDUNK 有 API 或 SSR 數據）
-- [ ] 優化超時設定和等待策略
-- [ ] 測試驗證優化效果（對比優化前後速度）
+- [x] 分析現有 Playwright 爬取流程和性能瓶頸（Playwright 需 20-33 秒）
+- [x] 嘗試用輕量 HTTP 請求替代 Playwright（發現 SNKRDUNK 內部 REST API）
+- [x] 優化超時設定和等待策略（HTTP API 僅需 0.2-4 秒）
+- [x] 測試驗證優化效果（Card 430110: 3.56s 返回 5 個 PSA 10 listings）
+- [ ] 保存 checkpoint
+
+### 任務清單
+- [x] 探索 SNKRDUNK 內部 API 端點（GET /en/v1/trading-cards/{id}/used-listings）
+- [x] 驗證 API 端點可用性（多張卡測試成功）
+- [x] 實現基於 HTTP API 的 SNKRDUNK 爬蟲（snkrdunkApi.ts）
+- [x] 整合到現有服務架構（snkrdunkScraperService.ts 優先 HTTP API，Playwright 降級）
+- [x] 更新所有引用（routers.ts, diagnostics.ts, batchUpdateTaskManager.ts, cachePreloader.ts, cacheWarmer.ts）
+- [x] 編寫測試並驗證性能提升（16 個測試全部通過）
 - [ ] 保存 checkpoint

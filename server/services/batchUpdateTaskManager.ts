@@ -136,7 +136,7 @@ class TaskController {
             }
             
             // 爬取並更新快取
-            const { scrapeSnkrdunkListings } = await import('./snkrdunkPlaywright');
+            const { scrapeSnkrdunkListings } = await import('./snkrdunkScraperService');
             const listings = await scrapeSnkrdunkListings(card.snkrdunkId!);
             
             // 保存快取

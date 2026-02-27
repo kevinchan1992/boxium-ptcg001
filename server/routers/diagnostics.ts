@@ -99,7 +99,7 @@ export const diagnosticsRouter = router({
         result.logs.push(`[${new Date().toISOString()}] Testing SNKRDUNK scraping for ID: ${input.snkrdunkId}`);
 
         // Import scraping function
-        const { scrapeSnkrdunkListings } = await import("../services/snkrdunkPlaywright");
+        const { scrapeSnkrdunkListings } = await import("../services/snkrdunkScraperService");
 
         // Attempt to scrape
         const listings = await scrapeSnkrdunkListings(input.snkrdunkId);

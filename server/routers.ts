@@ -1835,7 +1835,7 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
             }
             
             // 爬取並更新快取
-            const { scrapeSnkrdunkListings } = await import('./services/snkrdunkPlaywright');
+            const { scrapeSnkrdunkListings } = await import('./services/snkrdunkScraperService');
             const listings = await scrapeSnkrdunkListings(card.snkrdunkId!);
             
             // 保存快取

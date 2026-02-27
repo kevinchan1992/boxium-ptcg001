@@ -1,12 +1,13 @@
 /**
  * 統一的 SNKRDUNK 爬取服務
  * 
- * 功能：
- * - 開發環境：直接使用 Playwright 爬取
- * - 生產環境：調用開發環境 API
- * - 自動判斷環境並選擇最佳方式
+ * 策略優先級：
+ * 1. HTTP API（最快，~0.2-0.5s）- 直接調用 SNKRDUNK 內部 REST API
+ * 2. Playwright（降級方案，~20-33s）- 當 API 不可用時使用瀏覽器自動化
+ * 3. Dev Environment API（生產環境降級）- 調用開發環境的 Playwright
  */
 
+import { scrapeSnkrdunkListingsViaApi } from './snkrdunkApi';
 import { scrapeSnkrdunkListings as playwrightScrape } from './snkrdunkPlaywright';
 import { fetchFromDevEnv } from './devEnvScraper';
 
@@ -16,38 +17,49 @@ interface SnkrdunkListing {
   grade: string;
   url: string;
   image?: string;
+  status?: 'on-sale' | 'sold';
 }
 
 /**
  * 爬取 SNKRDUNK 商品列表
  * 
- * 根據環境自動選擇爬取方式：
- * - 開發環境：直接使用 Playwright
- * - 生產環境：調用開發環境 API
+ * 優先使用 HTTP API（速度最快），失敗時降級到 Playwright 或 Dev Environment API
  * 
  * @param snkrdunkId SNKRDUNK 卡牌 ID
  * @returns 商品列表
  */
 export async function scrapeSnkrdunkListings(snkrdunkId: string): Promise<SnkrdunkListing[]> {
+  // Strategy 1: Try HTTP API first (fastest, ~0.2-0.5s)
+  try {
+    console.log(`[SNKRDUNK Service] Trying HTTP API for ID: ${snkrdunkId}`);
+    const listings = await scrapeSnkrdunkListingsViaApi(snkrdunkId);
+    console.log(`[SNKRDUNK Service] HTTP API success: ${listings.length} listings`);
+    return listings;
+  } catch (apiError) {
+    console.warn(`[SNKRDUNK Service] HTTP API failed:`, apiError instanceof Error ? apiError.message : apiError);
+  }
+
+  // Strategy 2: Fall back based on environment
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   if (isDevelopment) {
-    // 開發環境：直接使用 Playwright
-    console.log(`[SNKRDUNK Service] Development mode: using Playwright directly`);
-    return await playwrightScrape(snkrdunkId);
+    // Development: fall back to Playwright
+    console.log(`[SNKRDUNK Service] Falling back to Playwright for ID: ${snkrdunkId}`);
+    try {
+      return await playwrightScrape(snkrdunkId);
+    } catch (playwrightError) {
+      console.error(`[SNKRDUNK Service] Playwright also failed:`, playwrightError instanceof Error ? playwrightError.message : playwrightError);
+      throw new Error(`All SNKRDUNK scraping methods failed for ID ${snkrdunkId}`);
+    }
   } else {
-    // 生產環境：調用開發環境 API
-    console.log(`[SNKRDUNK Service] Production mode: calling dev environment API`);
-    
+    // Production: fall back to dev environment API
+    console.log(`[SNKRDUNK Service] Falling back to dev environment API for ID: ${snkrdunkId}`);
     try {
       const result = await fetchFromDevEnv(snkrdunkId);
       return result.listings;
-    } catch (error) {
-      console.error(`[SNKRDUNK Service] Failed to fetch from dev environment:`, error);
-      
-      // 如果開發環境不可用，拋出錯誤
-      // 調用方會使用快取降級
-      throw new Error(`Dev environment unavailable: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (devEnvError) {
+      console.error(`[SNKRDUNK Service] Dev environment API also failed:`, devEnvError instanceof Error ? devEnvError.message : devEnvError);
+      throw new Error(`All SNKRDUNK scraping methods failed for ID ${snkrdunkId}`);
     }
   }
 }
@@ -58,14 +70,6 @@ export async function scrapeSnkrdunkListings(snkrdunkId: string): Promise<Snkrdu
  * @returns 是否可用
  */
 export async function isSnkrdunkScraperAvailable(): Promise<boolean> {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-
-  if (isDevelopment) {
-    // 開發環境：Playwright 總是可用
-    return true;
-  } else {
-    // 生產環境：檢查開發環境健康狀態
-    const { checkDevEnvHealth } = await import('./devEnvScraper');
-    return await checkDevEnvHealth();
-  }
+  // HTTP API is always available (no browser dependency)
+  return true;
 }
