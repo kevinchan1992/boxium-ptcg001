@@ -2069,6 +2069,41 @@ try {
         return { success: true, message: "任務已取消" };
       }),
 
+    // 批量更新健康檢查 - 偵測卡死任務
+    checkBatchHealth: adminProcedure
+      .query(async () => {
+        const stalledTasks = await batchTaskManager.checkStalledTasks(30);
+        return {
+          healthy: stalledTasks.length === 0,
+          stalledTasks,
+          checkedAt: new Date(),
+        };
+      }),
+
+    // 強制取消卡死任務（標記為 failed）
+    forceCancelStalledTask: adminProcedure
+      .input(z.object({
+        taskId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        await batchTaskManager.completeTask(input.taskId, 'failed');
+        return { success: true, message: `任務 ${input.taskId} 已強制取消` };
+      }),
+
+    // 恢復所有卡死任務（服務器啟動時自動調用，也可手動觸發）
+    recoverStalledTasks: adminProcedure
+      .mutation(async () => {
+        const result = await batchTaskManager.recoverStalledTasks(30);
+        return {
+          success: true,
+          recoveredCount: result.recoveredCount,
+          recoveredTaskIds: result.recoveredTaskIds,
+          message: result.recoveredCount > 0
+            ? `已恢復 ${result.recoveredCount} 個卡死任務`
+            : '沒有找到卡死任務',
+        };
+      }),
+
     // 價格更新排程 API
     getPriceUpdateSchedule: publicProcedure
       .query(async () => {

@@ -429,8 +429,126 @@ export async function cleanOldTasks(keepCount: number = 50): Promise<number> {
 }
 
 /**
- * Get task summary statistics
+ * Recover stalled tasks on server startup.
+ * Detects tasks with status='running' but no progress update for >30 minutes,
+ * and marks them as 'failed' with an appropriate error message.
+ * 
+ * This should be called once during server startup to clean up orphaned tasks
+ * from previous server instances that died unexpectedly.
  */
+export async function recoverStalledTasks(stalledThresholdMinutes: number = 30): Promise<{
+  recoveredCount: number;
+  recoveredTaskIds: number[];
+}> {
+  const db = await getDb();
+  if (!db) {
+    return { recoveredCount: 0, recoveredTaskIds: [] };
+  }
+
+  const thresholdDate = new Date(Date.now() - stalledThresholdMinutes * 60 * 1000);
+
+  // Find all running/paused tasks that haven't been updated recently
+  const stalledTasks = await db
+    .select({
+      id: scheduledTasks.id,
+      taskType: scheduledTasks.taskType,
+      status: scheduledTasks.status,
+      processedItems: scheduledTasks.processedItems,
+      totalItems: scheduledTasks.totalItems,
+      updatedAt: scheduledTasks.updatedAt,
+    })
+    .from(scheduledTasks)
+    .where(
+      and(
+        or(
+          eq(scheduledTasks.status, 'running'),
+          eq(scheduledTasks.status, 'paused')
+        ),
+        lt(scheduledTasks.updatedAt, thresholdDate)
+      )
+    );
+
+  if (stalledTasks.length === 0) {
+    console.log('[BatchTaskManager] No stalled tasks found on startup');
+    return { recoveredCount: 0, recoveredTaskIds: [] };
+  }
+
+  const recoveredTaskIds: number[] = [];
+
+  for (const task of stalledTasks) {
+    const errorMsg = `Auto-recovered on server startup: task was ${task.status} but had no progress update since ${task.updatedAt?.toISOString() || 'unknown'}. Processed ${task.processedItems || 0}/${task.totalItems || 0} items before stalling.`;
+    
+    await db
+      .update(scheduledTasks)
+      .set({
+        status: 'failed',
+        completedAt: new Date(),
+        errorMessage: errorMsg,
+      })
+      .where(eq(scheduledTasks.id, task.id));
+
+    recoveredTaskIds.push(task.id);
+    console.log(`[BatchTaskManager] Recovered stalled task ${task.id} (${task.taskType}): ${task.processedItems || 0}/${task.totalItems || 0} items processed`);
+  }
+
+  console.log(`[BatchTaskManager] Recovered ${recoveredTaskIds.length} stalled task(s) on startup: [${recoveredTaskIds.join(', ')}]`);
+  return { recoveredCount: recoveredTaskIds.length, recoveredTaskIds };
+}
+
+/**
+ * Check for stalled tasks (health check).
+ * Returns tasks that are marked as 'running' but haven't been updated recently.
+ * Unlike recoverStalledTasks, this does NOT modify the tasks - it only reports them.
+ */
+export async function checkStalledTasks(stalledThresholdMinutes: number = 30): Promise<Array<{
+  id: number;
+  taskType: string;
+  status: string;
+  processedItems: number;
+  totalItems: number;
+  lastUpdated: Date | null;
+  stalledMinutes: number;
+}>> {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const thresholdDate = new Date(Date.now() - stalledThresholdMinutes * 60 * 1000);
+
+  const stalledTasks = await db
+    .select({
+      id: scheduledTasks.id,
+      taskType: scheduledTasks.taskType,
+      status: scheduledTasks.status,
+      processedItems: scheduledTasks.processedItems,
+      totalItems: scheduledTasks.totalItems,
+      updatedAt: scheduledTasks.updatedAt,
+    })
+    .from(scheduledTasks)
+    .where(
+      and(
+        or(
+          eq(scheduledTasks.status, 'running'),
+          eq(scheduledTasks.status, 'paused')
+        ),
+        lt(scheduledTasks.updatedAt, thresholdDate)
+      )
+    );
+
+  return stalledTasks.map(task => ({
+    id: task.id,
+    taskType: task.taskType,
+    status: task.status,
+    processedItems: task.processedItems || 0,
+    totalItems: task.totalItems || 0,
+    lastUpdated: task.updatedAt,
+    stalledMinutes: task.updatedAt 
+      ? Math.round((Date.now() - new Date(task.updatedAt).getTime()) / 60000)
+      : -1,
+  }));
+}
+
 export async function getTaskStats(): Promise<{
   totalTasks: number;
   runningTasks: number;

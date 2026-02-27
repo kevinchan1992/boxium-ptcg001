@@ -3124,3 +3124,31 @@ MySQL 服務器時區為 UTC+5，JavaScript `new Date()` 返回 UTC，導致：
 - [x] TypeScript 編譯 0 errors
 - [x] 所有相關測試通過（85 tests passed）
 - [x] 保存 checkpoint
+
+
+---
+
+## 🔄 批量更新自動恢復機制
+
+### 問題描述
+Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數據庫狀態仍為 "running" 但進程已死。需要自動恢復機制防止此類問題。
+
+### 任務清單
+
+#### 自動恢復機制
+- [x] 在 batchTaskManager.ts 添加 `recoverStalledTasks()` 函數
+- [x] 偵測 status='running' 但 updatedAt > 30 分鐘前的任務
+- [x] 自動標記為 'failed' 並記錄原因
+- [x] 在服務器啟動時（index.ts）調用恢復函數
+
+#### 健康檢查端點
+- [x] 添加 `checkBatchHealth` API 端點偵測卡死任務
+- [x] 添加 `forceCancelStalledTask` API 強制取消卡死任務
+- [x] 添加 `recoverStalledTasks` API 手動觸發恢復
+- [ ] 在前端管理頁面顯示卡死任務警告（可選）
+
+#### 測試
+- [x] 編寫自動恢復機制單元測試（8 tests passed）
+- [x] 測試卡死任務偵測邏輯
+- [x] TypeScript 編譯 0 errors
+- [ ] 保存 checkpoint

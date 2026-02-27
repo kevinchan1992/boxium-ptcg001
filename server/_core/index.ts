@@ -201,6 +201,20 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    
+    // Recover stalled batch tasks from previous server instance
+    import('../batchTaskManager').then(({ recoverStalledTasks }) => {
+      recoverStalledTasks(30).then(result => {
+        if (result.recoveredCount > 0) {
+          console.log(`[Server] Recovered ${result.recoveredCount} stalled task(s) from previous instance`);
+        }
+      }).catch(err => {
+        console.error('[Server] Failed to recover stalled tasks:', err);
+      });
+    }).catch(err => {
+      console.error('[Server] Failed to import batchTaskManager:', err);
+    });
+    
     // Start the auto-update scheduler
     // startScheduler(); // Disabled: use priceUpdateScheduler instead
     // Start the price update scheduler
