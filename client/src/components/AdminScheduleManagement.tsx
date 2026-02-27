@@ -163,7 +163,7 @@ function ScheduleHealthStats() {
  * ExecutionHistory component - displays schedule execution history
  */
 function ExecutionHistory() {
-  const { data: history } = trpc.admin.getScheduleExecutionHistory.useQuery() as { data: { snkrdunk: any[], ebay?: any[], trending: any[] } | undefined };
+  const { data: history } = trpc.admin.getScheduleExecutionHistory.useQuery() as { data: { snkrdunk: any[], trending: any[] } | undefined };
   
   if (!history) {
     return (

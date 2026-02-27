@@ -6,10 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
-// [eBay cleanup] ebayService removed
 import { downloadAndEncodeImage, getBestImageUrl } from "./imageUtils";
-import { searchEbayByImageWithHkd } from "./ebayImageSearch";
-import { searchEbayItems, convertUsdToHkd, getUsdToHkdRate } from "./ebay";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
 import { executePersistentSnkrdunkBatchUpdate } from "./persistentSnkrdunkBatchUpdate";
 import * as batchTaskManager from "./batchTaskManager";
@@ -554,85 +551,6 @@ export const appRouter = router({
             code: "INTERNAL_SERVER_ERROR",
             message: `Failed to get price trend data: ${error.message}`,
           });
-        }
-      }),
-
-    // 已停用：getEbaySoldItems - 搜尋 eBay 已售出商品
-    // 注意：此功能已停用，僅保留 searchEbayMarketPrice 用於 pricing 頁面顯示在售商品
-    getEbaySoldItems: publicProcedure
-      .input(z.object({
-        cardId: z.number(),
-        limit: z.number().optional().default(20),
-        forceRefresh: z.boolean().optional().default(false),
-      }))
-      .query(async ({ input }) => {
-        // 功能已停用，返回空陣列
-        console.log(`[eBay] getEbaySoldItems 已停用，返回空陣列`);
-        return [];
-      }),
-
-    // eBay Browse API - 搜尋活躍商品作為市場參考價
-    searchEbayMarketPrice: publicProcedure
-      .input(z.object({
-        cardName: z.string(),
-        cardNumber: z.string().optional(),
-        limit: z.number().optional().default(10),
-      }))
-      .query(async ({ input }) => {
-        try {
-          // 簡化卡牌名稱以提高 eBay 搜尋成功率
-          // 移除括號內容、特殊字符，只保留核心名稱
-          let simplifiedName = input.cardName
-            .replace(/\[.*?\]/g, '') // 移除方括號內容
-            .replace(/\(.*?\)/g, '') // 移除圓括號內容
-            .replace(/[：:]/g, '') // 移除冒號
-            .replace(/\s+/g, ' ') // 合併多個空格
-            .trim();
-
-          // 構建搜尋關鍵字：簡化名稱 + 卡號 + PSA 10
-          let searchQuery = simplifiedName;
-          if (input.cardNumber) {
-            // 只取卡號的核心部分（例如 "085" 而不是 "SVP EN 085"）
-            const coreCardNumber = input.cardNumber.match(/\d+/)?.[0] || input.cardNumber;
-            searchQuery += ` ${coreCardNumber}`;
-          }
-          searchQuery += " PSA 10 Pokemon";
-
-          console.log(`[eBay Browse API] Original name: "${input.cardName}"`);
-          console.log(`[eBay Browse API] Simplified search: "${searchQuery}"`);
-
-          // 搜尋 eBay 活躍商品
-          const items = await searchEbayItems(searchQuery, input.limit);
-          console.log(`[eBay Browse API] Found ${items.length} items`);
-
-          // 轉換價格為 HKD
-          const itemsWithHkd = await Promise.all(
-            items.map(async (item) => {
-              const usdPrice = parseFloat(item.price.value);
-              const hkdPrice = await convertUsdToHkd(usdPrice);
-              return {
-                ...item,
-                priceHkd: hkdPrice,
-              };
-            })
-          );
-
-          return itemsWithHkd;
-        } catch (error: any) {
-          console.error("[eBay Browse API] Error:", error.message);
-          return [];
-        }
-      }),
-
-    // 獲取當前 USD → HKD 匯率
-    getExchangeRate: publicProcedure
-      .query(async () => {
-        try {
-          const rate = await getUsdToHkdRate();
-          return { rate, lastUpdated: new Date() };
-        } catch (error: any) {
-          console.error("[Exchange Rate] Error:", error.message);
-          return { rate: 7.8, lastUpdated: new Date() }; // 後備匯率
         }
       }),
 
@@ -1386,58 +1304,6 @@ try {
       return result;
     }),
 
-  // 已停用：updateAllEbayRecords - 更新所有 eBay 記錄
-  updateAllEbayRecords: adminProcedure.mutation(async ({ ctx }) => {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "eBay 更新功能已停用",
-    });
-    /* 原始代碼已註釋
-// Get all data sources with cards
-    const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });
-    const uniqueCards = new Map<number, { id: number; name: string }>();
-    
-    for (const source of dataSources) {
-      if (source.cardId && source.card) {
-        uniqueCards.set(source.cardId, { id: source.cardId, name: source.card.name });
-      }
-    }
-
-    let updated = 0;
-    let failed = 0;
-    const errors: string[] = [];
-
-    for (const card of Array.from(uniqueCards.values())) {
-      try {
-        const cardNumber = extractCardNumber(card.name);
-        if (!cardNumber) {
-          console.log(`[UpdateEbay] Cannot extract card number from: ${card.name}`);
-          continue;
-        }
-
-        const cleanedName = cleanCardNameForSearch(card.name);
-        await searchAndSaveEbaySoldItems(card.id, cleanedName, cardNumber, 20, true);
-        console.log(`[UpdateEbay] Updated eBay records for card ${card.id}`);
-        updated++;
-
-        // Add delay to avoid rate limit (200ms between requests)
-        await new Promise(resolve => setTimeout(resolve, 200));
-      } catch (error: any) {
-        failed++;
-        errors.push(`Card ${card.id}: ${error.message}`);
-      }
-    }
-
-    return {
-      success: true,
-      updated,
-      failed,
-      total: uniqueCards.size,
-      errors: errors.slice(0, 10),
-    };
-    */ // updateAllEbayRecords 註釋結束
-  }),
-
   fixOrphanDataSources: adminProcedure.mutation(async ({ ctx }) => {
 try {
           const { fixOrphanDataSources } = await import("./fixOrphanDataSources");
@@ -1587,314 +1453,6 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
           fallbackToTextCount,
         };
       }),
-
-    // 已停用：updateEbayPrices - Admin 更新單一卡牌 eBay 價格
-    // 此功能已停用，不再主動更新 eBay 數據
-    updateEbayPrices: adminProcedure
-      .input(z.object({
-        cardId: z.number(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        // 功能已停用
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "eBay 價格更新功能已停用",
-        });
-        /* 原始代碼已註釋
-try {
-          // 獲取卡牌資訊
-          const card = await db.getCardById(input.cardId);
-          if (!card) {
-            throw new TRPCError({ code: "NOT_FOUND", message: "Card not found" });
-          }
-
-          // 簡化卡牌名稱
-          let simplifiedName = card.name
-            .replace(/\[.*?\]/g, '')
-            .replace(/\(.*?\)/g, '')
-            .replace(/[：:]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-
-          // 構建搜尋關鍵字
-          let searchQuery = simplifiedName;
-          if (card.cardNumber) {
-            const coreCardNumber = card.cardNumber.match(/\d+/)?.[0] || card.cardNumber;
-            searchQuery += ` ${coreCardNumber}`;
-          }
-          searchQuery += " PSA 10 Pokemon";
-
-          console.log(`[Admin] Updating eBay prices for card ${input.cardId}`);
-
-          let items: any[] = [];
-          let searchMethod: 'image' | 'text' = 'text';
-          const searchStartTime = Date.now();
-
-          // 優先使用圖片搜尋
-          const imageUrl = getBestImageUrl(card);
-          if (imageUrl) {
-            try {
-              console.log(`[Admin] 嘗試使用圖片搜尋: ${imageUrl}`);
-              const base64Image = await downloadAndEncodeImage(imageUrl);
-              const imageSearchResults = await searchEbayByImageWithHkd(base64Image, convertUsdToHkd, undefined, 20);
-              
-              if (imageSearchResults.length > 0) {
-                // 圖片搜尋成功，使用圖片搜尋結果
-                items = imageSearchResults.map(item => ({
-                  price: { value: item.price.toString(), currency: item.currency },
-                  itemWebUrl: item.url,
-                }));
-                searchMethod = 'image';
-                console.log(`[Admin] 圖片搜尋成功，找到 ${items.length} 個商品`);
-              } else {
-                console.log(`[Admin] 圖片搜尋未找到商品，回退到文字搜尋`);
-              }
-            } catch (error: any) {
-              console.error(`[Admin] 圖片搜尋失敗: ${error.message}，回退到文字搜尋`);
-            }
-          } else {
-            console.log(`[Admin] 無有效圖片 URL，使用文字搜尋`);
-          }
-
-          // 如果圖片搜尋失敗或無圖片，使用文字搜尋
-          if (items.length === 0) {
-            console.log(`[Admin] 使用文字搜尋: "${searchQuery}"`);
-            items = await searchEbayItems(searchQuery, 20);
-            console.log(`[Admin] 文字搜尋找到 ${items.length} 個商品`);
-          }
-
-          // 記錄搜尋統計
-          const searchDuration = Date.now() - searchStartTime;
-          await db.addSearchStat({
-            cardId: input.cardId,
-            searchMethod,
-            searchDuration,
-            resultsCount: items.length,
-            success: items.length > 0,
-            errorMessage: items.length === 0 ? "未找到 eBay 商品" : undefined,
-          });
-
-          if (items.length === 0) {
-            return { success: false, message: "未找到 eBay 商品", itemsAdded: 0 };
-          }
-
-          // 將 eBay 數據存入 prices 表
-          let itemsAdded = 0;
-          for (const item of items) {
-            try {
-              let hkdPrice: number;
-              
-              // 如果是圖片搜尋結果，價格已經轉換為 HKD
-              if (searchMethod === 'image') {
-                hkdPrice = parseFloat(item.price.value);
-              } else {
-                // 文字搜尋結果，需要轉換價格
-                const usdPrice = parseFloat(item.price.value);
-                hkdPrice = await convertUsdToHkd(usdPrice);
-              }
-
-              // 存入資料庫（標記數據來源為 "ebay"）
-              await db.addPriceHistory({
-                cardId: input.cardId,
-                price: hkdPrice.toFixed(2),
-                currency: "HKD",
-                grade: "PSA10", // eBay 搜尋結果都是 PSA 10
-                source: "ebay",
-                soldAt: new Date(), // 使用當前時間作為抓取時間
-                listingUrl: item.itemWebUrl,
-              });
-              itemsAdded++;
-            } catch (error: any) {
-              console.error(`[Admin] Error adding eBay price: ${error.message}`);
-            }
-          }
-
-          console.log(`[Admin] Added ${itemsAdded} eBay prices for card ${input.cardId}`);
-          return { success: true, message: `成功添加 ${itemsAdded} 筆 eBay 交易記錄`, itemsAdded };
-        } catch (error: any) {
-          console.error(`[Admin] Error updating eBay prices: ${error.message}`);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `更新 eBay 價格失敗: ${error.message}`,
-          });
-        }
-        */ // 註釋結束
-      }),
-
-    // 已停用：batchUpdateEbayPrices - 批量更新所有卡牌 eBay 價格
-    batchUpdateEbayPrices: adminProcedure
-      .mutation(async ({ ctx }) => {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "eBay 批量更新功能已停用",
-        });
-        /* 原始代碼已註釋
-        try {
-          // 檢查是否已經在運行
-          const currentProgress = batchUpdateProgress.getBatchUpdateProgress();
-          if (currentProgress.isRunning) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: "批量更新正在進行中，請稍候。已處理 " + currentProgress.processedCards + "/" + currentProgress.totalCards + " 張卡牌。",
-            });
-          }
-
-          // 獲取所有數據源的唯一卡牌
-          const { data: dataSources } = await db.getDataSources({ pageSize: 100000 });
-          const uniqueCards = new Map<number, { id: number; name: string }>();
-          
-          for (const source of dataSources) {
-            if (source.card) {
-              uniqueCards.set(source.card.id, {
-                id: source.card.id,
-                name: source.card.name,
-              });
-            }
-          }
-
-          const cardsToUpdate = Array.from(uniqueCards.values());
-          console.log(`[BatchUpdate] Starting batch update for ${cardsToUpdate.length} cards`);
-
-          // 初始化進度
-          batchUpdateProgress.initBatchUpdateProgress(cardsToUpdate.length);
-
-          // 在後台執行批量更新（異步）
-          (async () => {
-            for (const card of cardsToUpdate) {
-              try {
-                // 檢查是否暫停
-                while (batchUpdateProgress.isPaused()) {
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-
-                // 獲取卡牌資訊
-                const fullCard = await db.getCardById(card.id);
-                if (!fullCard) {
-                  batchUpdateProgress.updateProgressFailure(card.id, card.name, "卡牌不存在");
-                  continue;
-                }
-
-                // 簡化卡牌名稱
-                let simplifiedName = fullCard.name
-                  .replace(/\[.*?\]/g, '')
-                  .replace(/\(.*?\)/g, '')
-                  .replace(/[：:]/g, '')
-                  .replace(/\s+/g, ' ')
-                  .trim();
-
-                // 構建搜尋關鍵字
-                let searchQuery = simplifiedName;
-                if (fullCard.cardNumber) {
-                  const coreCardNumber = fullCard.cardNumber.match(/\d+/)?.[0] || fullCard.cardNumber;
-                  searchQuery += ` ${coreCardNumber}`;
-                }
-                searchQuery += " PSA 10 Pokemon";
-
-                let items: any[] = [];
-                let searchMethod: 'image' | 'text' = 'text';
-                const searchStartTime = Date.now();
-
-                // 優先使用圖片搜尋
-                const imageUrl = getBestImageUrl(fullCard);
-                if (imageUrl) {
-                  try {
-                    const base64Image = await downloadAndEncodeImage(imageUrl);
-                    const imageSearchResults = await searchEbayByImageWithHkd(base64Image, convertUsdToHkd, undefined, 20);
-                    
-                    if (imageSearchResults.length > 0) {
-                      items = imageSearchResults.map(item => ({
-                        price: { value: item.price.toString(), currency: item.currency },
-                        itemWebUrl: item.url,
-                      }));
-                      searchMethod = 'image';
-                    }
-                  } catch (error: any) {
-                    console.error(`[BatchUpdate] 圖片搜尋失敗: ${error.message}`);
-                  }
-                }
-
-                // 如果圖片搜尋失敗或無圖片，使用文字搜尋
-                if (items.length === 0) {
-                  items = await searchEbayItems(searchQuery, 20);
-                }
-
-                // 記錄搜尋統計
-                const searchDuration = Date.now() - searchStartTime;
-                await db.addSearchStat({
-                  cardId: card.id,
-                  searchMethod,
-                  searchDuration,
-                  resultsCount: items.length,
-                  success: items.length > 0,
-                  errorMessage: items.length === 0 ? "未找到 eBay 商品" : undefined,
-                });
-
-                if (items.length === 0) {
-                  batchUpdateProgress.updateProgressFailure(card.id, card.name, "未找到 eBay 商品");
-                  continue;
-                }
-
-                // 將 eBay 數據存入 prices 表
-                let itemsAdded = 0;
-                for (const item of items) {
-                  try {
-                    let hkdPrice: number;
-                    
-                    if (searchMethod === 'image') {
-                      hkdPrice = parseFloat(item.price.value);
-                    } else {
-                      const usdPrice = parseFloat(item.price.value);
-                      hkdPrice = await convertUsdToHkd(usdPrice);
-                    }
-
-                    await db.addPriceHistory({
-                      cardId: card.id,
-                      price: hkdPrice.toFixed(2),
-                      currency: "HKD",
-                      grade: "PSA10",
-                      source: "ebay",
-                      soldAt: new Date(),
-                      listingUrl: item.itemWebUrl,
-                    });
-                    itemsAdded++;
-                  } catch (error: any) {
-                    console.error(`[BatchUpdate] Error adding eBay price: ${error.message}`);
-                  }
-                }
-
-                batchUpdateProgress.updateProgressSuccess(itemsAdded);
-                console.log(`[BatchUpdate] Updated card ${card.id}, added ${itemsAdded} records`);
-
-                // 每處理 5 張卡片後暫停 1 秒，避免 API 限制
-                if (batchUpdateProgress.getBatchUpdateProgress().processedCards % 5 === 0) {
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-              } catch (error: any) {
-                console.error(`[BatchUpdate] Error updating card ${card.id}: ${error.message}`);
-                batchUpdateProgress.updateProgressFailure(card.id, card.name, error.message);
-              }
-            }
-
-            // 完成批量更新
-            batchUpdateProgress.completeBatchUpdate();
-            console.log(`[BatchUpdate] Batch update completed`);
-          })();
-
-          return {
-            success: true,
-            message: `批量更新已啟動，共 ${cardsToUpdate.length} 張卡牌`,
-            totalCards: cardsToUpdate.length,
-          };
-        } catch (error: any) {
-          console.error(`[BatchUpdate] Error starting batch update: ${error.message}`);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `啟動批量更新失敗: ${error.message}`,
-          });
-        }
-        */ // batchUpdateEbayPrices 註釋結束
-      }),
-
     // ─── 批量更新 API（統一使用持久化版本，進度從數據庫讀取）───
 
     // 獲取批量更新進度（從數據庫讀取，前端輪詢用）
@@ -2010,9 +1568,6 @@ try {
           // 更新執行歷史（任務已在後台運行）
           await db.updateScheduleExecutionHistory(historyId, {
             status: "completed",
-            ebaySuccessCount: 0,
-            ebayFailureCount: 0,
-            ebayRecordsAdded: 0,
             snkrdunkSuccessCount: totalCards,
             snkrdunkFailureCount: 0,
             snkrdunkRecordsAdded: 0,
@@ -2035,7 +1590,7 @@ try {
     // 獲取排程執行歷史
     getScheduleExecutionHistory: publicProcedure
       .input(z.object({
-        scheduleType: z.enum(["snkrdunk_update", "ebay_update", "trending_update"]).optional(),
+        scheduleType: z.enum(["snkrdunk_update", "trending_update"]).optional(),
         limit: z.number().min(1).max(50).optional().default(10),
       }).optional())
       .query(async ({ input }) => {
@@ -2111,15 +1666,6 @@ try {
 
     // === 持久化批量更新 API ===
 
-    // 已停用：startPersistentEbayBatchUpdate - 持久化 eBay 批量更新
-    startPersistentEbayBatchUpdate: adminProcedure
-      .mutation(async () => {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "eBay 持久化批量更新功能已停用",
-        });
-      }),
-
     // 啟動持久化 SNKRDUNK 批量更新
     startPersistentSnkrdunkBatchUpdate: adminProcedure
       .mutation(async () => {
@@ -2142,7 +1688,7 @@ try {
     // 獲取持久化任務進度
     getPersistentTaskProgress: publicProcedure
       .input(z.object({
-        taskType: z.enum(['batch_ebay_update', 'batch_snkrdunk_update']),
+        taskType: z.enum(['batch_snkrdunk_update']),
       }))
       .query(async ({ input }) => {
         const task = await batchTaskManager.getLatestRunningTask(input.taskType);

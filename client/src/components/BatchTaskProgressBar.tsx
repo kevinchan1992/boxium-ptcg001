@@ -5,7 +5,7 @@ import { Loader2, Pause, Play, CheckCircle, XCircle, X, AlertCircle } from "luci
 import { useState, useEffect } from "react";
 
 interface BatchTaskProgressBarProps {
-  taskType: 'eBay' | 'SNKRDUNK';
+  taskType: 'SNKRDUNK';
   progress: {
     taskId: number;
     status: 'pending' | 'running' | 'paused' | 'completed' | 'failed';
@@ -79,22 +79,14 @@ export function BatchTaskProgressBar({
     }
   }, [isCompleted]);
 
-  // 根據任務類型選擇配色
-  const colorScheme = taskType === 'eBay' 
-    ? {
-        bg: 'bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950',
-        border: 'border-orange-200 dark:border-orange-800',
-        progress: 'bg-gradient-to-r from-orange-500 to-red-500',
-        icon: 'text-orange-600',
-        pulse: 'animate-pulse'
-      }
-    : {
-        bg: 'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950',
-        border: 'border-blue-200 dark:border-blue-800',
-        progress: 'bg-gradient-to-r from-blue-500 to-cyan-500',
-        icon: 'text-blue-600',
-        pulse: 'animate-pulse'
-      };
+  // SNKRDUNK 配色方案
+  const colorScheme = {
+    bg: 'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950',
+    border: 'border-blue-200 dark:border-blue-800',
+    progress: 'bg-gradient-to-r from-blue-500 to-cyan-500',
+    icon: 'text-blue-600',
+    pulse: 'animate-pulse'
+  };
 
   return (
     <Card className={`p-4 ${colorScheme.bg} ${colorScheme.border} border-2 transition-all duration-300 ${showCelebration ? 'scale-105 shadow-2xl' : 'shadow-md'}`}>

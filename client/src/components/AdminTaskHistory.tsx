@@ -79,7 +79,7 @@ function getTaskTypeName(taskType: string): string {
     case "batch_snkrdunk_update":
       return "SNKRDUNK 批量更新";
     case "batch_ebay_update":
-      return "eBay 批量更新";
+      return "eBay 批量更新（已停用）";
     case "batch_add_data_sources":
       return "批量添加數據源";
     default:

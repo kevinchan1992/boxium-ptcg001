@@ -3198,4 +3198,15 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ### 測試
 - [x] 編寫密封產品智能爬取測試Ｈ21 tests passed）
 - [x] TypeScript 編譯 0 errors
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint（version: 670593f4）
+
+---
+
+## 🧹 Admin 頁面功能檢查與代碼清理
+
+- [x] 全面審查 Admin 頁面所有組件和功能
+- [x] 識別已廢棄功能和冗餘代碼（7 個 eBay API、備份文件、冗餘 import）
+- [x] 清理前端 Admin 組件（BatchTaskProgressBar、AdminScheduleManagement、AdminTaskHistory）
+- [x] 清理後端 routers.ts（刪除約 300 行 eBay 代碼）、batchTaskManager、batchUpdateScheduler
+- [x] 驗證排版顯示和功能完整性（TypeScript 0 errors，服務器正常運行）
+- [x] 編寫測試並保存 checkpoint（19 個清理驗證測試 + 29 個現有測試全部通過）

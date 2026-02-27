@@ -106,9 +106,6 @@ async function executeBatchUpdate(executionType: "scheduled" | "manual") {
     const durationMs = Date.now() - startTime;
     await db.updateScheduleExecutionHistory(historyId, {
       status: "completed",
-      ebaySuccessCount: 0,
-      ebayFailureCount: 0,
-      ebayRecordsAdded: 0,
       snkrdunkSuccessCount: totalCards,
       snkrdunkFailureCount: 0,
       snkrdunkRecordsAdded: 0,
