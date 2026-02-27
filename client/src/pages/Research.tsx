@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Camera, Upload, X, Crop } from "lucide-react";
+import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
@@ -10,8 +10,22 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ReactCrop, { type Crop as CropType } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-// import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
+import { LazyImage } from "@/components/LazyImage";
+
+interface MatchedCard {
+  id: number;
+  name: string;
+  nameJa: string | null;
+  cardNumber: string | null;
+  series: string | null;
+  setName: string | null;
+  rarity: string | null;
+  imageUrl: string | null;
+  matchScore: number;
+  matchReasons: string[];
+  latestPrice: number | null;
+}
 
 export default function Home() {
   const { t } = useTranslation();
@@ -25,6 +39,9 @@ export default function Home() {
   const [crop, setCrop] = useState<CropType>();
   const [completedCrop, setCompletedCrop] = useState<CropType>();
   const [isDragging, setIsDragging] = useState(false);
+  const [matchResults, setMatchResults] = useState<MatchedCard[]>([]);
+  const [identificationInfo, setIdentificationInfo] = useState<any>(null);
+  const [showResults, setShowResults] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -61,14 +78,20 @@ export default function Home() {
 
   const handleCameraClick = () => {
     setShowImageDialog(true);
+    setShowResults(false);
+    setMatchResults([]);
+    setIdentificationInfo(null);
   };
 
   const processImageFile = (file: File) => {
     setSelectedImage(file);
+    setShowResults(false);
+    setMatchResults([]);
+    setIdentificationInfo(null);
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
-      setShowCropView(false); // 重置裁剪視圖
+      setShowCropView(false);
       setCrop(undefined);
       setCompletedCrop(undefined);
     };
@@ -119,14 +142,13 @@ export default function Home() {
     }
 
     setIsSearching(true);
+    setShowResults(false);
     try {
       let base64Image: string;
 
-      // 如果用戶選擇裁剪且有完成的裁剪區域
       if (useCrop && completedCrop && imgRef.current) {
         base64Image = await getCroppedImg(imgRef.current, completedCrop);
       } else {
-        // 使用原圖
         const reader = new FileReader();
         base64Image = await new Promise((resolve) => {
           reader.onloadend = () => resolve(reader.result as string);
@@ -134,16 +156,29 @@ export default function Home() {
         });
       }
       
-      // Call image search API
       const result = await imageSearchMutation.mutateAsync({ image: base64Image });
       
-      if (result.success && result.cardName) {
-        toast.success(t('research.imageSearchSuccess', { cardName: result.cardName }));
-        setShowImageDialog(false);
-        setSearchQuery(result.cardName);
-        setLocation(`/search?q=${encodeURIComponent(result.cardName)}`);
+      if (result.success && result.matches && result.matches.length > 0) {
+        setMatchResults(result.matches as MatchedCard[]);
+        setIdentificationInfo(result.identification);
+        setShowResults(true);
+        
+        if (result.bestMatch) {
+          toast.success(`識別成功！找到 ${result.matches.length} 個匹配結果`);
+        }
+      } else if (result.success && result.identification) {
+        // Identified but no DB match - try text search with the identified name
+        const cardName = result.identification.cardName || result.identification.cardNameJa;
+        if (cardName) {
+          toast.info(`識別到「${cardName}」，正在進行文字搜尋...`);
+          setShowImageDialog(false);
+          setSearchQuery(cardName);
+          setLocation(`/search?q=${encodeURIComponent(cardName)}`);
+        } else {
+          toast.error(result.error || t('research.imageSearchFailed'));
+        }
       } else {
-        toast.error(t('research.imageSearchFailed'));
+        toast.error(result.error || t('research.imageSearchFailed'));
       }
     } catch (error) {
       console.error('Image search error:', error);
@@ -153,6 +188,12 @@ export default function Home() {
     }
   };
 
+  const handleSelectMatch = (card: MatchedCard) => {
+    setShowImageDialog(false);
+    handleCloseDialog();
+    setLocation(`/card/${card.id}`);
+  };
+
   const handleCloseDialog = () => {
     setShowImageDialog(false);
     setSelectedImage(null);
@@ -160,11 +201,13 @@ export default function Home() {
     setShowCropView(false);
     setCrop(undefined);
     setCompletedCrop(undefined);
+    setShowResults(false);
+    setMatchResults([]);
+    setIdentificationInfo(null);
   };
 
   const handleStartCrop = () => {
     setShowCropView(true);
-    // 設定預設裁剪區域（居中 80% 大小）
     setCrop({
       unit: '%',
       x: 10,
@@ -178,6 +221,15 @@ export default function Home() {
     setShowCropView(false);
     setCrop(undefined);
     setCompletedCrop(undefined);
+  };
+
+  const handleRetrySearch = () => {
+    setShowResults(false);
+    setMatchResults([]);
+    setIdentificationInfo(null);
+    setSelectedImage(null);
+    setImagePreview(null);
+    setShowCropView(false);
   };
 
   // Generate WebSite with SearchAction structured data for SEO
@@ -196,6 +248,21 @@ export default function Home() {
         "query-input": "required name=search_term_string"
       }
     };
+  };
+
+  // Get match score color
+  const getScoreColor = (score: number) => {
+    if (score >= 60) return 'text-green-500';
+    if (score >= 40) return 'text-yellow-500';
+    if (score >= 20) return 'text-orange-500';
+    return 'text-red-500';
+  };
+
+  const getScoreBg = (score: number) => {
+    if (score >= 60) return 'bg-green-500/10 border-green-500/30';
+    if (score >= 40) return 'bg-yellow-500/10 border-yellow-500/30';
+    if (score >= 20) return 'bg-orange-500/10 border-orange-500/30';
+    return 'bg-red-500/10 border-red-500/30';
   };
 
   return (
@@ -291,146 +358,299 @@ export default function Home() {
       </div>
 
       {/* Image Upload Dialog */}
-      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent className="sm:max-w-lg">
+      <Dialog open={showImageDialog} onOpenChange={(open) => { if (!open) handleCloseDialog(); }}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">卡牌圖片分析功能</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              {showResults ? '識別結果' : '卡牌圖片分析功能'}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-6">
-            {/* Image Preview or Upload Area */}
-            {imagePreview ? (
-              <div className="relative">
-                <div className="relative rounded-lg overflow-hidden bg-muted border-2 border-border">
-                  {showCropView ? (
-                    <ReactCrop
-                      crop={crop}
-                      onChange={(c) => setCrop(c)}
-                      onComplete={(c) => setCompletedCrop(c)}
-                      aspect={undefined}
-                    >
-                      <img
-                        ref={imgRef}
-                        src={imagePreview}
-                        alt="Crop preview"
-                        className="max-h-96 w-full object-contain"
-                      />
-                    </ReactCrop>
-                  ) : (
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-80 object-contain"
-                    />
-                  )}
-                  {/* Loading Overlay */}
-                  {isSearching && (
-                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
-                      <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-                      <p className="text-sm font-medium text-foreground">{t('research.searching')}</p>
-                      <p className="text-xs text-muted-foreground mt-2">正在識別卡牌中...</p>
-                    </div>
-                  )}
+
+          {/* Results View */}
+          {showResults && matchResults.length > 0 ? (
+            <div className="space-y-4">
+              {/* Identification Summary */}
+              {identificationInfo && (
+                <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">AI 識別結果：</p>
+                  <div className="flex flex-wrap gap-2">
+                    {identificationInfo.cardNameJa && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                        {identificationInfo.cardNameJa}
+                      </span>
+                    )}
+                    {identificationInfo.cardName && identificationInfo.cardName !== identificationInfo.cardNameJa && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                        {identificationInfo.cardName}
+                      </span>
+                    )}
+                    {identificationInfo.cardNumber && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                        #{identificationInfo.cardNumber}
+                      </span>
+                    )}
+                    {identificationInfo.rarity && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                        {identificationInfo.rarity}
+                      </span>
+                    )}
+                    {identificationInfo.setName && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                        {identificationInfo.setName}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                {!isSearching && (
+              )}
+
+              {/* Match Results List */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">
+                  找到 {matchResults.length} 個匹配結果，請選擇正確的卡牌：
+                </p>
+                {matchResults.map((card, index) => (
                   <button
-                    onClick={handleCloseDialog}
-                    className="absolute -top-2 -right-2 p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-lg transition-colors z-20"
+                    key={card.id}
+                    onClick={() => handleSelectMatch(card)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all hover:scale-[1.01] hover:shadow-md ${
+                      index === 0 ? getScoreBg(card.matchScore) : 'bg-card border-border hover:border-primary/50'
+                    }`}
                   >
-                    <X className="w-4 h-4" />
+                    {/* Card Image */}
+                    <div className="w-14 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+                      {card.imageUrl ? (
+                        <LazyImage
+                          src={card.imageUrl}
+                          alt={card.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <Search className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Card Info */}
+                    <div className="flex-1 text-left min-w-0">
+                      <div className="flex items-center gap-2">
+                        {index === 0 && (
+                          <Star className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0 fill-yellow-500" />
+                        )}
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {card.name}
+                        </p>
+                      </div>
+                      {card.nameJa && card.nameJa !== card.name && (
+                        <p className="text-xs text-muted-foreground truncate">{card.nameJa}</p>
+                      )}
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {card.cardNumber && (
+                          <span className="text-xs text-muted-foreground">#{card.cardNumber}</span>
+                        )}
+                        {card.rarity && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{card.rarity}</span>
+                        )}
+                        {card.latestPrice && (
+                          <span className="text-xs font-medium text-green-500">
+                            HK${card.latestPrice.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                      {/* Match reasons */}
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {card.matchReasons.slice(0, 3).map((reason, i) => (
+                          <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            {reason}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Match Score */}
+                    <div className="flex-shrink-0 text-right">
+                      <div className={`text-lg font-bold ${getScoreColor(card.matchScore)}`}>
+                        {card.matchScore}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">匹配分</p>
+                    </div>
                   </button>
+                ))}
+              </div>
+
+              {/* Retry Button */}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleRetrySearch}
+                  className="flex-1 h-11"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  重新拍攝
+                </Button>
+                {matchResults.length > 0 && (
+                  <Button
+                    onClick={() => {
+                      const name = identificationInfo?.cardName || identificationInfo?.cardNameJa;
+                      if (name) {
+                        setShowImageDialog(false);
+                        handleCloseDialog();
+                        setSearchQuery(name);
+                        setLocation(`/search?q=${encodeURIComponent(name)}`);
+                      }
+                    }}
+                    variant="outline"
+                    className="flex-1 h-11"
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    文字搜尋
+                  </Button>
                 )}
               </div>
-            ) : (
-              <div 
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  isDragging 
-                    ? 'border-primary bg-primary/10' 
-                    : 'border-border bg-muted/30'
-                }`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDragLeave={(e) => {
-                  e.preventDefault();
-                  setIsDragging(false);
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setIsDragging(false);
-                  const files = e.dataTransfer.files;
-                  if (files && files[0]) {
-                    const file = files[0];
-                    if (file.type.startsWith('image/')) {
-                      processImageFile(file);
-                    } else {
-                      toast.error('請上傳圖片檔案（JPG、PNG）');
-                    }
-                  }
-                }}
-              >
-                <Upload className={`w-12 h-12 mx-auto mb-4 transition-colors ${
-                  isDragging ? 'text-primary' : 'text-muted-foreground'
-                }`} />
-                <p className="text-sm text-muted-foreground mb-2">
-                  {isDragging ? '釋放以上傳圖片' : '選擇或拖放一張寶可夢卡牌圖片'}
-                </p>
-                <p className="text-xs text-muted-foreground mb-3">支持 JPG、PNG 格式</p>
-                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">💡 拍攝技巧：</p>
-                  <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 text-left">
-                    <li>• 確保卡牌名稱清晰可見</li>
-                    <li>• 避免反光和陰影</li>
-                    <li>• 建議使用裁剪功能框選卡牌主體</li>
-                  </ul>
+            </div>
+          ) : (
+            /* Upload View */
+            <div className="space-y-6">
+              {/* Image Preview or Upload Area */}
+              {imagePreview ? (
+                <div className="relative">
+                  <div className="relative rounded-lg overflow-hidden bg-muted border-2 border-border">
+                    {showCropView ? (
+                      <ReactCrop
+                        crop={crop}
+                        onChange={(c) => setCrop(c)}
+                        onComplete={(c) => setCompletedCrop(c)}
+                        aspect={undefined}
+                      >
+                        <img
+                          ref={imgRef}
+                          src={imagePreview}
+                          alt="Crop preview"
+                          className="max-h-96 w-full object-contain"
+                        />
+                      </ReactCrop>
+                    ) : (
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-80 object-contain"
+                      />
+                    )}
+                    {/* Loading Overlay */}
+                    {isSearching && (
+                      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
+                        <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+                        <p className="text-sm font-medium text-foreground">{t('research.searching')}</p>
+                        <p className="text-xs text-muted-foreground mt-2">正在使用 AI 識別卡牌名稱、卡號、系列...</p>
+                      </div>
+                    )}
+                  </div>
+                  {!isSearching && (
+                    <button
+                      onClick={() => {
+                        setSelectedImage(null);
+                        setImagePreview(null);
+                        setShowCropView(false);
+                        setCrop(undefined);
+                        setCompletedCrop(undefined);
+                      }}
+                      className="absolute -top-2 -right-2 p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-lg transition-colors z-20"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-              </div>
-            )}
-
-            {/* Upload Buttons */}
-            {!isSearching && !imagePreview && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Button
-                  variant="outline"
-                  onClick={() => cameraInputRef.current?.click()}
-                  className="w-full h-12 sm:h-14 group"
+              ) : (
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                    isDragging 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border bg-muted/30'
+                  }`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    const files = e.dataTransfer.files;
+                    if (files && files[0]) {
+                      const file = files[0];
+                      if (file.type.startsWith('image/')) {
+                        processImageFile(file);
+                      } else {
+                        toast.error('請上傳圖片檔案（JPG、PNG）');
+                      }
+                    }
+                  }}
                 >
-                  <Camera className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
-                  拍攝照片
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-12 sm:h-14 group"
-                >
-                  <Upload className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
-                  上傳照片
-                </Button>
-              </div>
-            )}
+                  <Upload className={`w-12 h-12 mx-auto mb-4 transition-colors ${
+                    isDragging ? 'text-primary' : 'text-muted-foreground'
+                  }`} />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {isDragging ? '釋放以上傳圖片' : '選擇或拖放一張寶可夢卡牌圖片'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">支持 JPG、PNG 格式</p>
+                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">💡 拍攝技巧：</p>
+                    <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 text-left">
+                      <li>• 確保卡牌名稱和卡號清晰可見</li>
+                      <li>• 避免反光和陰影</li>
+                      <li>• 建議使用裁剪功能框選卡牌主體</li>
+                      <li>• AI 會自動識別卡名、卡號、系列和稀有度</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
 
-            {/* Hidden File Inputs */}
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
+              {/* Upload Buttons */}
+              {!isSearching && !imagePreview && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="w-full h-12 sm:h-14 group"
+                  >
+                    <Camera className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
+                    拍攝照片
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full h-12 sm:h-14 group"
+                  >
+                    <Upload className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
+                    上傳照片
+                  </Button>
+                </div>
+              )}
 
-            {/* Crop and Search Buttons */}
-            {imagePreview && !isSearching && (
-              <div className="space-y-3">
-                {showCropView ? (
-                  <>
+              {/* Hidden File Inputs */}
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
+              {/* Crop and Search Buttons */}
+              {imagePreview && !isSearching && (
+                <div className="space-y-3">
+                  {showCropView ? (
                     <div className="grid grid-cols-2 gap-3">
                       <Button
                         variant="outline"
@@ -450,9 +670,7 @@ export default function Home() {
                         裁剪後搜尋
                       </Button>
                     </div>
-                  </>
-                ) : (
-                  <>
+                  ) : (
                     <div className="grid grid-cols-2 gap-3">
                       <Button
                         variant="outline"
@@ -471,11 +689,11 @@ export default function Home() {
                         直接搜尋
                       </Button>
                     </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

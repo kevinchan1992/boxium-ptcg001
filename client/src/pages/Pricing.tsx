@@ -135,13 +135,24 @@ export default function Pricing() {
       // Call image search API
       const result = await imageSearchMutation.mutateAsync({ image: base64Image });
       
-      if (result.success && result.cardName) {
-        toast.success(t('pricing.imageSearchSuccess', { cardName: result.cardName }) || `找到卡牌：${result.cardName}`);
+      if (result.success && result.bestMatch) {
+        const cardName = result.bestMatch.name;
+        toast.success(`找到卡牌：${cardName}`);
         setShowImageDialog(false);
-        setSearchQuery(result.cardName);
-        setLocation(`/pricing/search?q=${encodeURIComponent(result.cardName)}`);
+        setSearchQuery(cardName);
+        setLocation(`/card/${result.bestMatch.id}`);
+      } else if (result.success && result.identification) {
+        const cardName = result.identification.cardName || result.identification.cardNameJa;
+        if (cardName) {
+          toast.info(`識別到「${cardName}」，正在進行文字搜尋...`);
+          setShowImageDialog(false);
+          setSearchQuery(cardName);
+          setLocation(`/search?q=${encodeURIComponent(cardName)}`);
+        } else {
+          toast.error(result.error || '無法識別卡牌，請嘗試其他圖片');
+        }
       } else {
-        toast.error(t('pricing.imageSearchFailed') || '無法識別卡牌，請嘗試其他圖片');
+        toast.error(result.error || t('pricing.imageSearchFailed') || '無法識別卡牌，請嘗試其他圖片');
       }
     } catch (error) {
       console.error('Image search error:', error);
