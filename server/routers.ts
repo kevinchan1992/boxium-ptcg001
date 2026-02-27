@@ -725,18 +725,26 @@ export const appRouter = router({
     triggerPriceRefresh: publicProcedure
       .input(z.object({
         cardId: z.number(),
+        productType: z.enum(['single_card', 'sealed_product']).optional().default('single_card'),
       }))
       .mutation(async ({ input }) => {
-        const { cardId } = input;
+        const { cardId, productType: inputProductType } = input;
         const COOLDOWN_HOURS = 3;
         const COOLDOWN_MS = COOLDOWN_HOURS * 60 * 60 * 1000;
 
-        console.log(`[PriceRefresh] Triggered for cardId: ${cardId}`);
+        console.log(`[PriceRefresh] Triggered for cardId: ${cardId}, productType: ${inputProductType}`);
 
-        // Step 1: Get card info
-        const card = await db.getCardById(cardId);
-        if (!card) {
-          return { status: 'error' as const, message: 'Card not found', recordsAdded: 0 };
+        // Step 1: Get product info (card or sealed product)
+        if (inputProductType === 'sealed_product') {
+          const product = await db.getProductById(cardId, 'sealed_product');
+          if (!product) {
+            return { status: 'error' as const, message: 'Sealed product not found', recordsAdded: 0 };
+          }
+        } else {
+          const card = await db.getCardById(cardId);
+          if (!card) {
+            return { status: 'error' as const, message: 'Card not found', recordsAdded: 0 };
+          }
         }
 
         // Step 2: Get SNKRDUNK data source

@@ -129,14 +129,17 @@ export default function CardDetail() {
     },
   });
 
-  // Auto-trigger price refresh when card detail page loads
+  // Auto-trigger price refresh when card detail page loads (both single cards and sealed products)
   const [refreshTriggered, setRefreshTriggered] = useState(false);
   useEffect(() => {
     if (cardId && product && !refreshTriggered) {
       setRefreshTriggered(true);
-      triggerRefresh.mutate({ cardId });
+      triggerRefresh.mutate({
+        cardId,
+        productType: isSealedProduct ? 'sealed_product' : 'single_card',
+      });
     }
-  }, [cardId, product, refreshTriggered]);
+  }, [cardId, product, refreshTriggered, isSealedProduct]);
 
   // Reset trigger when cardId changes
   useEffect(() => {

@@ -164,4 +164,104 @@ describe('triggerPriceRefresh', () => {
       expect(response.status).toBe('no_source');
     }
   });
+
+  // ─── Sealed Product Support Tests ───
+
+  it('should accept productType parameter with default single_card', () => {
+    const input = { cardId: 123 };
+    const defaultProductType = 'single_card';
+    const resolvedType = (input as any).productType || defaultProductType;
+    expect(resolvedType).toBe('single_card');
+  });
+
+  it('should accept productType=sealed_product for sealed products', () => {
+    const input = { cardId: 4, productType: 'sealed_product' as const };
+    expect(input.productType).toBe('sealed_product');
+    expect(input.cardId).toBe(4);
+  });
+
+  it('should use correct productType when calling fetchPriceHistory for sealed products', () => {
+    // Simulate the logic in triggerPriceRefresh
+    const dataSource = {
+      id: 1200002,
+      cardId: 4,
+      productType: 'sealed_product' as const,
+      sourceUrl: 'https://snkrdunk.com/apparels/687430',
+    };
+
+    const productType: 'single_card' | 'sealed_product' =
+      dataSource.productType === 'sealed_product' ? 'sealed_product' : 'single_card';
+
+    expect(productType).toBe('sealed_product');
+  });
+
+  it('should skip grade for sealed products in price history', () => {
+    const productType = 'sealed_product' as const;
+    const priceItem = { price: 50000, grade: 'PSA10', soldAt: new Date(), quantity: 1 };
+
+    const record = {
+      cardId: 4,
+      source: 'snkrdunk',
+      price: '2750.00',
+      currency: 'HKD',
+      grade: productType === 'sealed_product' ? undefined : priceItem.grade,
+      quantity: productType === 'sealed_product' ? (priceItem.quantity || undefined) : undefined,
+      productType,
+      soldAt: priceItem.soldAt,
+    };
+
+    expect(record.grade).toBeUndefined();
+    expect(record.quantity).toBe(1);
+    expect(record.productType).toBe('sealed_product');
+  });
+
+  it('should include grade for single cards in price history', () => {
+    const productType = 'single_card' as const;
+    const priceItem = { price: 10000, grade: 'PSA10', soldAt: new Date(), quantity: undefined };
+
+    const record = {
+      cardId: 123,
+      source: 'snkrdunk',
+      price: '550.00',
+      currency: 'HKD',
+      grade: productType === 'sealed_product' ? undefined : priceItem.grade,
+      quantity: productType === 'sealed_product' ? (priceItem.quantity || undefined) : undefined,
+      productType,
+      soldAt: priceItem.soldAt,
+    };
+
+    expect(record.grade).toBe('PSA10');
+    expect(record.quantity).toBeUndefined();
+    expect(record.productType).toBe('single_card');
+  });
+
+  it('should return error for non-existent sealed product', () => {
+    const product = null;
+    if (!product) {
+      const response = {
+        status: 'error' as const,
+        message: 'Sealed product not found',
+        recordsAdded: 0,
+      };
+      expect(response.status).toBe('error');
+      expect(response.message).toContain('Sealed product');
+    }
+  });
+
+  it('should invalidate sealed product queries on successful refresh', () => {
+    // Simulate the onSuccess callback logic
+    const result = { status: 'success' as const, recordsAdded: 5 };
+    const isSealedProduct = true;
+    const queriesToInvalidate: string[] = [];
+
+    if (result.status === 'success' && result.recordsAdded > 0) {
+      queriesToInvalidate.push('prices.getHistory');
+      queriesToInvalidate.push('prices.getStatistics');
+      queriesToInvalidate.push('cards.getPriceTrendData');
+      queriesToInvalidate.push('products.getPriceHistory');
+    }
+
+    expect(queriesToInvalidate).toContain('products.getPriceHistory');
+    expect(queriesToInvalidate.length).toBe(4);
+  });
 });

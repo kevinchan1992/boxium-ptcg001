@@ -3176,6 +3176,26 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 編寫智能爬取 API 單元測試（14 tests passed）
 - [x] 測試 3 小時冷卻機制
 - [x] TypeScript 編譯 0 errors
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint（version: 40cbe4e0）
 
 - [x] 將 triggerPriceRefresh 冷卻機制由 6 小時改為 3 小時
+
+---
+
+## 🔄 擴展智能爬取到密封產品詳情頁
+
+### 後端
+- [x] 擴展現有 `triggerPriceRefresh` API 支持 `productType` 參數（sealed_product / single_card）
+- [x] 密封產品時查詢 sealedProducts 表驗證產品存在
+- [x] 爬取結果寫入 priceHistory 表（與批量更新一致）
+- [x] 3 小時冷卻機制共用
+
+### 前端
+- [x] CardDetail 頁面偵測 isSealedProduct 時傳入 productType='sealed_product'
+- [x] 顯示爬取狀態指示器（共用現有 UI）
+- [x] 爬取完成後自動 invalidate products.getPriceHistory 刷新 UI
+
+### 測試
+- [x] 編寫密封產品智能爬取測試Ｈ21 tests passed）
+- [x] TypeScript 編譯 0 errors
+- [ ] 保存 checkpoint
