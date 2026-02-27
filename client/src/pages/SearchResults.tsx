@@ -18,14 +18,14 @@ export default function SearchResults() {
   // Calculate offset based on current page
   const offset = (currentPage - 1) * limit;
 
-  // Fetch search results with offset support
-  const { data: searchData, isLoading, error } = trpc.cards.search.useQuery(
+  // Fetch search results with offset support — use products.search to include sealed products
+  const { data: searchData, isLoading, error } = trpc.products.search.useQuery(
     { query: query || "", limit, offset },
     { enabled: !!query, retry: 1 }
   );
   
-  // Extract cards array from response
-  const searchResults = searchData?.cards || [];
+  // Extract items array from response
+  const searchResults = searchData?.items || [];
   const totalResults = searchData?.total || 0;
   
   // Fuzzy suggestion: only trigger when search is done and returned 0 results
@@ -122,13 +122,17 @@ export default function SearchResults() {
 
   const logSearchMutation = trpc.cards.logSearch.useMutation();
 
-  const handleCardClick = (cardId: number) => {
-    logSearchMutation.mutate({
-      cardId,
-      searchQuery: query,
-      source: "search_page",
-    });
-    setLocation(`/card/${cardId}`);
+  const handleItemClick = (item: { id: number; productType: string }) => {
+    if (item.productType === 'sealed_product') {
+      setLocation(`/sealed-product/${item.id}`);
+    } else {
+      logSearchMutation.mutate({
+        cardId: item.id,
+        searchQuery: query,
+        source: "search_page",
+      });
+      setLocation(`/card/${item.id}`);
+    }
   };
 
   // Navigate to a suggested query
@@ -201,7 +205,7 @@ export default function SearchResults() {
             {searchResults.map((card: any) => (
               <div
                 key={card.id}
-                onClick={() => handleCardClick(card.id)}
+                onClick={() => handleItemClick(card)}
                 className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-110 hover:shadow-lg"
               >
                 <div className="aspect-[2/3] relative bg-muted">
@@ -218,6 +222,11 @@ export default function SearchResults() {
                   )}
                 </div>
                 <div className="p-1.5 sm:p-2">
+                  {card.productType === 'sealed_product' && (
+                    <span className="inline-block text-[8px] sm:text-[9px] bg-primary/20 text-primary px-1 py-0.5 rounded mb-0.5 font-medium">
+                      卡盒
+                    </span>
+                  )}
                   <h3 className="font-semibold text-foreground text-[10px] sm:text-xs mb-0.5 truncate">
                     {card.name}
                   </h3>
