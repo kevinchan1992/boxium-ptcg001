@@ -3291,4 +3291,11 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 建立可重用的 BottomSheet 組件（手機從底部滑出，桌面保持 Dialog）
 - [x] 更新 Research.tsx 使用 Bottom Sheet
 - [x] 更新 Pricing.tsx 使用 Bottom Sheet
+- [x] 保存 checkpoint（version: 2987e563）
+
+## 🐛 修復 Bottom Sheet 手機水平截斷問題
+
+- [x] 修復 bottom-sheet.tsx 寬度截斷（w-screen max-w-full + overflow-hidden + style transform:none）
+- [x] 確保 overflow-x-hidden 和 w-full 正確套用
+- [x] 修復識別結果 badge 溢出（max-w + truncate）
 - [ ] 保存 checkpoint

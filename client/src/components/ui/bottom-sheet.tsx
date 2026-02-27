@@ -49,21 +49,24 @@ export function BottomSheet({
 
         {/* Content panel */}
         <DialogPrimitive.Content
+          style={{ transform: "none" }} // override any Radix transform that may shift the panel
           className={cn(
-            // ── Mobile: bottom sheet ──
-            "fixed bottom-0 left-0 right-0 z-50",
+            // ── Mobile: bottom sheet (full width, anchored to bottom) ──
+            "fixed bottom-0 left-0 z-50",
+            "w-screen max-w-full", // force full viewport width, never exceed it
+            "overflow-hidden",     // clip any child overflow at the panel boundary
             "bg-background border-t border-border",
             "rounded-t-2xl shadow-2xl",
             "max-h-[90dvh] flex flex-col",
-            // Slide-up animation on mobile
+            // Slide-up animation
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
             "duration-300 ease-out",
             // ── Desktop (sm+): centered dialog ──
-            "sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2",
-            "sm:-translate-x-1/2 sm:-translate-y-1/2",
-            "sm:rounded-xl sm:border sm:w-full sm:max-w-lg",
-            "sm:data-[state=closed]:slide-out-to-bottom-0 sm:data-[state=open]:slide-in-from-bottom-0",
+            "sm:bottom-auto sm:left-1/2 sm:top-1/2",
+            "sm:w-full sm:max-w-lg",
+            "sm:rounded-xl sm:border",
+            "sm:[transform:translate(-50%,-50%)]", // explicit translate for desktop only
             "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
             "sm:data-[state=closed]:fade-out-0 sm:data-[state=open]:fade-in-0",
             className
@@ -76,21 +79,21 @@ export function BottomSheet({
 
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between px-5 py-3 flex-shrink-0 border-b border-border/50">
-              <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-border/50 min-w-0">
+              <div className="flex-1 min-w-0 overflow-hidden">
                 {title && (
-                  <DialogPrimitive.Title className="text-lg font-semibold text-foreground leading-tight">
+                  <DialogPrimitive.Title className="text-base font-semibold text-foreground leading-tight truncate">
                     {title}
                   </DialogPrimitive.Title>
                 )}
                 {description && (
-                  <DialogPrimitive.Description className="text-sm text-muted-foreground mt-0.5">
+                  <DialogPrimitive.Description className="text-sm text-muted-foreground mt-0.5 truncate">
                     {description}
                   </DialogPrimitive.Description>
                 )}
               </div>
               {showCloseButton && (
-                <DialogPrimitive.Close className="ml-3 flex-shrink-0 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                <DialogPrimitive.Close className="ml-2 flex-shrink-0 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                   <XIcon className="w-5 h-5" />
                   <span className="sr-only">Close</span>
                 </DialogPrimitive.Close>
@@ -98,8 +101,8 @@ export function BottomSheet({
             </div>
           )}
 
-          {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4">
+          {/* Scrollable body — overflow-x-hidden prevents horizontal bleed */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 min-w-0">
             {children}
           </div>
         </DialogPrimitive.Content>

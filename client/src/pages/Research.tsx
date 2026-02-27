@@ -371,29 +371,29 @@ export default function Home() {
               {identificationInfo && (
                 <div className="p-3 rounded-lg bg-muted/50 border border-border">
                   <p className="text-xs font-medium text-muted-foreground mb-1">AI 識別結果：</p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {identificationInfo.cardNameJa && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 max-w-[140px] truncate">
                         {identificationInfo.cardNameJa}
                       </span>
                     )}
                     {identificationInfo.cardName && identificationInfo.cardName !== identificationInfo.cardNameJa && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 max-w-[140px] truncate">
                         {identificationInfo.cardName}
                       </span>
                     )}
                     {identificationInfo.cardNumber && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                      <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 max-w-[120px] truncate">
                         #{identificationInfo.cardNumber}
                       </span>
                     )}
                     {identificationInfo.rarity && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                      <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 max-w-[100px] truncate">
                         {identificationInfo.rarity}
                       </span>
                     )}
                     {identificationInfo.setName && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                      <span className="text-xs px-2 py-1 rounded-full bg-purple-500/10 text-purple-500 border border-purple-500/20 max-w-[120px] truncate">
                         {identificationInfo.setName}
                       </span>
                     )}
