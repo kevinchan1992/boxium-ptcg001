@@ -381,6 +381,78 @@ export const appRouter = router({
         return results;
       }),
 
+    /**
+     * Fuzzy query suggestion: when a search returns 0 results, suggest
+     * alternative queries by decomposing the input (e.g. extract the numeric
+     * part, try canonical card-number forms, strip extra words).
+     *
+     * Returns an array of { query, label } objects that the frontend can
+     * display as "Did you mean: SM-P 288?" chips.
+     */
+    suggestQuery: publicProcedure
+      .input(z.object({ query: z.string() }))
+      .query(async ({ input }) => {
+        const { parseCardNumber, normalizeCardQuery } = await import('./utils/cardNumberNormalize');
+        const raw = input.query.trim();
+        if (!raw) return { suggestions: [] };
+
+        const suggestions: { query: string; label: string }[] = [];
+        const seen = new Set<string>();
+
+        const addSuggestion = (q: string, label: string) => {
+          if (q && q !== raw && !seen.has(q)) {
+            seen.add(q);
+            suggestions.push({ query: q, label });
+          }
+        };
+
+        // 1. Canonical card-number form (e.g. "288 sm-p" → "SM-P 288")
+        const canonical = normalizeCardQuery(raw);
+        if (canonical !== raw) {
+          addSuggestion(canonical, canonical);
+        }
+
+        // 2. Parsed parts: number-only and set-code-only
+        const parts = parseCardNumber(raw);
+        if (parts) {
+          if (parts.number) {
+            addSuggestion(parts.number, parts.number);
+          }
+          if (parts.setCode && parts.number) {
+            // Alternative separator forms
+            addSuggestion(`${parts.number}/${parts.setCode}`, `${parts.number}/${parts.setCode}`);
+            addSuggestion(`${parts.setCode} ${parts.number}`, `${parts.setCode} ${parts.number}`);
+          }
+          if (parts.setCode) {
+            addSuggestion(parts.setCode, parts.setCode);
+          }
+        }
+
+        // 3. Extract any number sequence from free-text (e.g. "pikachu 288" → "288")
+        const numberMatch = raw.match(/(\d{2,4})/);
+        if (numberMatch) {
+          addSuggestion(numberMatch[1], numberMatch[1]);
+        }
+
+        // 4. Try first word only (handles "pikachu promo" → "pikachu")
+        const words = raw.split(/\s+/);
+        if (words.length > 1) {
+          addSuggestion(words[0], words[0]);
+        }
+
+        // Verify each suggestion actually returns results (up to 3 checks)
+        const verified: { query: string; label: string }[] = [];
+        for (const s of suggestions.slice(0, 6)) {
+          if (verified.length >= 3) break;
+          const result = await db.searchCards(s.query, 1, 0);
+          if (result.total > 0) {
+            verified.push(s);
+          }
+        }
+
+        return { suggestions: verified };
+      }),
+
     getById: publicProcedure
       .input(z.object({
         id: z.number(),

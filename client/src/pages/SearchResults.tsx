@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, AlertCircle } from "lucide-react";
+import { Search, Loader2, AlertCircle, Lightbulb } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,14 @@ export default function SearchResults() {
   const searchResults = searchData?.cards || [];
   const totalResults = searchData?.total || 0;
   
+  // Fuzzy suggestion: only trigger when search is done and returned 0 results
+  const hasNoResults = !isLoading && !error && !!query && totalResults === 0;
+  const { data: suggestData, isLoading: isSuggesting } = trpc.cards.suggestQuery.useQuery(
+    { query },
+    { enabled: hasNoResults, retry: 0 }
+  );
+  const suggestions = suggestData?.suggestions ?? [];
+
   // Calculate total pages
   const totalPages = Math.ceil(totalResults / limit);
   
@@ -59,19 +67,16 @@ export default function SearchResults() {
     const pages: (number | string)[] = [];
     
     if (totalPages <= 7) {
-      // Show all pages if total is 7 or less
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      // Always show first page
       pages.push(1);
       
       if (currentPage > 3) {
         pages.push('...');
       }
       
-      // Show pages around current page
       const start = Math.max(2, currentPage - 1);
       const end = Math.min(totalPages - 1, currentPage + 1);
       
@@ -83,7 +88,6 @@ export default function SearchResults() {
         pages.push('...');
       }
       
-      // Always show last page
       pages.push(totalPages);
     }
     
@@ -95,13 +99,11 @@ export default function SearchResults() {
     if (query) {
       document.title = `搜尋「${query}」的寶可夢卡牌價格 - BOXIUM PTCG 市場格價平台`;
       
-      // Update meta description
       let metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
         metaDesc.setAttribute('content', `在 BOXIUM 搜尋「${query}」相關的寶可夢卡牌，查看 PSA 10 價格、SNKRDUNK 交易記錄和市場趨勢分析。`);
       }
       
-      // Update meta keywords (3-8 core keywords)
       let metaKeywords = document.querySelector('meta[name="keywords"]');
       if (metaKeywords) {
         metaKeywords.setAttribute('content', `${query},寶可夢卡牌,PSA 10,卡牌價格,SNKRDUNK,市場格價`);
@@ -121,13 +123,18 @@ export default function SearchResults() {
   const logSearchMutation = trpc.cards.logSearch.useMutation();
 
   const handleCardClick = (cardId: number) => {
-    // Log user search behavior for trending cards
     logSearchMutation.mutate({
       cardId,
       searchQuery: query,
       source: "search_page",
     });
     setLocation(`/card/${cardId}`);
+  };
+
+  // Navigate to a suggested query
+  const handleSuggestionClick = (suggestedQuery: string) => {
+    setSearchQuery(suggestedQuery);
+    setLocation(`/search?q=${encodeURIComponent(suggestedQuery)}`);
   };
 
   return (
@@ -282,13 +289,45 @@ export default function SearchResults() {
           )}
           </>
         ) : (
-          <div className="flex items-center justify-center py-12">
+          /* ── Zero results state ── */
+          <div className="flex flex-col items-center justify-center py-12 gap-6">
             <div className="text-center">
               <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                {query ? "找不到相符的卡牌" : "請輸入搜尋關鍵字"}
+              <p className="text-muted-foreground text-base">
+                {query ? `找不到「${query}」相符的卡牌` : "請輸入搜尋關鍵字"}
               </p>
             </div>
+
+            {/* Fuzzy suggestions */}
+            {query && (
+              <div className="w-full max-w-md">
+                {isSuggesting ? (
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>正在尋找相似搜尋...</span>
+                  </div>
+                ) : suggestions.length > 0 ? (
+                  <div className="bg-card border border-border rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Lightbulb className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span className="text-sm font-medium text-foreground">您是否想搜尋：</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestions.map((s) => (
+                        <button
+                          key={s.query}
+                          onClick={() => handleSuggestionClick(s.query)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors border border-primary/20 hover:border-primary/40"
+                        >
+                          <Search className="w-3 h-3" />
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
         )}
     </div>

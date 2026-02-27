@@ -3323,3 +3323,10 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [ ] 確認 API 調用時 isOnlyOnSale=true
 - [ ] 清除相關快取讓修復生效
 - [ ] 保存 checkpoint
+
+---
+
+## 📱 Bottom Sheet swipe-to-dismiss + 搜尋模糊匹配提示
+
+- [x] Bottom Sheet swipe-to-dismiss：加入向下滑動手勢關閉 Bottom Sheet
+- [x] 搜尋頁模糊匹配提示：零結果時自動解析查詢並顯示「您是否想搜尋：SM-P 288？」建議
