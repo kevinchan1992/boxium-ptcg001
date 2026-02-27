@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE dataSources \nADD COLUMN IF NOT EXISTS gameId INT COMMENT '遊戲類型 ID（外鍵關聯 games 表）',\nADD COLUMN IF NOT EXISTS productType ENUM('single_card', 'sealed_product') DEFAULT 'single_card' NOT NULL COMMENT '產品類型';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute ALTER TABLE dataSources \nADD COLUMN IF NOT EXISTS gameId INT COMMENT '遊戲類型 ID（外鍵關聯 games 表）',\nADD COLUMN IF NOT EXISTS productType ENUM('single_card', 'sealed_product') DEFAULT 'single_card' NOT NULL COMMENT '產品類型';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2279
+}

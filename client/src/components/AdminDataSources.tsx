@@ -18,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function AdminDataSources() {
   const [snkrdunkUrl, setSnkrdunkUrl] = useState("");
+  const [gameId, setGameId] = useState<number>(1); // Default to Pokémon
+  const [productType, setProductType] = useState<"single_card" | "sealed_product">("single_card"); // Default to single_card
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [batchResults, setBatchResults] = useState<{success: number; failed: number; errors: string[]; duplicates: number; progress?: string; failedUrls?: string[]}>({ success: 0, failed: 0, errors: [], duplicates: 0 });
@@ -176,7 +178,7 @@ export function AdminDataSources() {
         
         // Process batch in parallel
         const results = await Promise.allSettled(
-          batch.map(url => addDataSourceMutation.mutateAsync({ url }))
+          batch.map(url => addDataSourceMutation.mutateAsync({ url, gameId, productType }))
         );
         
         // Add delay between batches to avoid rate limits (except for last batch)
@@ -455,6 +457,44 @@ export function AdminDataSources() {
               手動添加 SNKRDUNK 數據源
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Game Type Selector */}
+              <div>
+                <Label htmlFor="game-type" className="text-foreground">
+                  遊戲類型 *
+                </Label>
+                <Select value={gameId.toString()} onValueChange={(value) => setGameId(parseInt(value))} disabled={isSubmitting}>
+                  <SelectTrigger id="game-type" className="mt-2">
+                    <SelectValue placeholder="選擇遊戲類型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Pokémon TCG</SelectItem>
+                    <SelectItem value="2">One Piece Card Game</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground mt-2">
+                  選擇卡牌所屬的遊戲類型
+                </p>
+              </div>
+
+              {/* Product Type Selector */}
+              <div>
+                <Label htmlFor="product-type" className="text-foreground">
+                  產品類型 *
+                </Label>
+                <Select value={productType} onValueChange={(value: "single_card" | "sealed_product") => setProductType(value)} disabled={isSubmitting}>
+                  <SelectTrigger id="product-type" className="mt-2">
+                    <SelectValue placeholder="選擇產品類型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single_card">單卡</SelectItem>
+                    <SelectItem value="sealed_product">卡盒</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground mt-2">
+                  選擇是單張卡牌還是卡盒產品
+                </p>
+              </div>
+
               <div>
                 <Label htmlFor="snkrdunk-url" className="text-foreground">
                   SNKRDUNK 卡牌連結
@@ -744,7 +784,7 @@ export function AdminDataSources() {
                         className="mt-1"
                       />
                       <div className="flex-1 space-y-2 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium text-foreground">
                           {source.source.toUpperCase()}
                         </span>
@@ -753,6 +793,14 @@ export function AdminDataSources() {
                         ) : (
                           <XCircle className="w-4 h-4 text-red-500" />
                         )}
+                        {/* Game Type Badge */}
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                          {source.gameId === 1 ? 'Pokémon' : source.gameId === 2 ? 'One Piece' : '未知'}
+                        </span>
+                        {/* Product Type Badge */}
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
+                          {source.productType === 'single_card' ? '單卡' : '卡盒'}
+                        </span>
                         {/* 更新狀態顯示 */}
                         {batchUpdateStatus[source.id] && (
                           <span className={

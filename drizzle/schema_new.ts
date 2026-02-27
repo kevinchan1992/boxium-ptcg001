@@ -1,6 +1,54 @@
 import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index } from "drizzle-orm/mysql-core";
 
 /**
+ * Games table - manages TCG game types
+ */
+export const games = mysqlTable("games", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  name: varchar("name", { length: 128 }).notNull(),
+  nameJa: varchar("nameJa", { length: 128 }),
+  nameZh: varchar("nameZh", { length: 128 }),
+  publisher: varchar("publisher", { length: 128 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  icon: text("icon"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  codeIdx: index("idx_games_code").on(table.code),
+  isActiveIdx: index("idx_games_isActive").on(table.isActive),
+}));
+
+export type Game = typeof games.$inferSelect;
+export type InsertGame = typeof games.$inferInsert;
+
+/**
+ * Sealed products table - stores booster boxes and other sealed products
+ */
+export const sealedProducts = mysqlTable("sealedProducts", {
+  id: int("id").autoincrement().primaryKey(),
+  gameId: int("gameId").notNull(),
+  name: text("name").notNull(),
+  nameJa: text("nameJa"),
+  nameZh: text("nameZh"),
+  boxType: mysqlEnum("boxType", ["booster_box", "other"]).notNull().default("booster_box"),
+  itemCount: int("itemCount"),
+  setName: text("setName"),
+  series: text("series"),
+  imageUrl: text("imageUrl"),
+  releaseDate: timestamp("releaseDate"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  gameIdIdx: index("idx_sealed_gameId").on(table.gameId),
+  boxTypeIdx: index("idx_sealed_boxType").on(table.boxType),
+}));
+
+export type SealedProduct = typeof sealedProducts.$inferSelect;
+export type InsertSealedProduct = typeof sealedProducts.$inferInsert;
+
+/**
  * Users table - supports password and Google OAuth authentication
  */
 export const users = mysqlTable("users", {
@@ -27,6 +75,7 @@ export const cards = mysqlTable("cards", {
   id: int("id").autoincrement().primaryKey(),
   cardId: varchar("cardId", { length: 128 }).notNull().unique(), // External API card ID
   snkrdunkId: varchar("snkrdunkId", { length: 32 }).unique(), // SNKRDUNK ID (extracted from SNKRDUNK URL)
+  gameId: int("gameId").notNull().default(1), // Game type ID (foreign key to games table)
   name: text("name").notNull(),
   nameJa: text("nameJa"), // Japanese name
   series: text("series"), // Expansion Pack series
@@ -43,7 +92,9 @@ export const cards = mysqlTable("cards", {
   hp: int("hp"), // HP value
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  gameIdIdx: index("idx_cards_gameId").on(table.gameId),
+}));
 
 export type Card = typeof cards.$inferSelect;
 export type InsertCard = typeof cards.$inferInsert;
@@ -54,6 +105,7 @@ export type InsertCard = typeof cards.$inferInsert;
 export const priceHistory = mysqlTable("priceHistory", {
   id: int("id").autoincrement().primaryKey(),
   cardId: int("cardId").notNull(), // Foreign key to cards table
+  productType: mysqlEnum("productType", ["single_card", "sealed_product"]).notNull().default("single_card"), // Product type
   source: mysqlEnum("source", ["snkrdunk", "ebay", "tcgplayer", "other"]).notNull(), // Price source
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Price value
   currency: varchar("currency", { length: 8 }).default("HKD").notNull(), // Currency code
@@ -75,6 +127,8 @@ export const priceHistory = mysqlTable("priceHistory", {
   soldAtIdx: index("soldAt_idx").on(table.soldAt),
   // Index for source to optimize source-specific queries
   sourceIdx: index("source_idx").on(table.source),
+  // Index for productType to optimize product type queries
+  productTypeIdx: index("idx_price_productType").on(table.productType),
 }));
 
 export type PriceHistory = typeof priceHistory.$inferSelect;
@@ -87,11 +141,14 @@ export const watchlist = mysqlTable("watchlist", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(), // Foreign key to users table
   cardId: int("cardId").notNull(), // Foreign key to cards table
+  productType: mysqlEnum("productType", ["single_card", "sealed_product"]).notNull().default("single_card"), // Product type
   targetPrice: decimal("targetPrice", { precision: 10, scale: 2 }), // Optional target price alert
   currency: varchar("currency", { length: 8 }).default("HKD"),
   notes: text("notes"), // User notes about this card
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  productTypeIdx: index("idx_watchlist_productType").on(table.productType),
+}));
 
 export type Watchlist = typeof watchlist.$inferSelect;
 export type InsertWatchlist = typeof watchlist.$inferInsert;
@@ -103,8 +160,11 @@ export const viewHistory = mysqlTable("viewHistory", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(), // Foreign key to users table
   cardId: int("cardId").notNull(), // Foreign key to cards table
+  productType: mysqlEnum("productType", ["single_card", "sealed_product"]).notNull().default("single_card"), // Product type
   viewedAt: timestamp("viewedAt").defaultNow().notNull(), // Viewing timestamp
-});
+}, (table) => ({
+  productTypeIdx: index("idx_viewhistory_productType").on(table.productType),
+}));
 
 export type ViewHistory = typeof viewHistory.$inferSelect;
 export type InsertViewHistory = typeof viewHistory.$inferInsert;
@@ -152,6 +212,8 @@ export type InsertMarketTrend = typeof marketTrends.$inferInsert;
 export const dataSources = mysqlTable("dataSources", {
   id: int("id").autoincrement().primaryKey(),
   cardId: int("cardId").notNull(), // Foreign key to cards table
+  gameId: int("gameId").notNull(), // Game type ID (foreign key to games table)
+  productType: mysqlEnum("productType", ["single_card", "sealed_product"]).notNull().default("single_card"), // Product type
   source: mysqlEnum("source", ["snkrdunk", "ebay", "tcgplayer", "other"]).notNull(),
   sourceUrl: text("sourceUrl").notNull(), // URL to the source page
   sourceIdentifier: varchar("sourceIdentifier", { length: 128 }), // External ID from source
@@ -164,7 +226,10 @@ export const dataSources = mysqlTable("dataSources", {
   updateCount: int("updateCount").default(0).notNull(), // Number of times updated
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  gameIdIdx: index("idx_datasources_gameId").on(table.gameId),
+  productTypeIdx: index("idx_datasources_productType").on(table.productType),
+}));
 
 export type DataSource = typeof dataSources.$inferSelect;
 export type InsertDataSource = typeof dataSources.$inferInsert;

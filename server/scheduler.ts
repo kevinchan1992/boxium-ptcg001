@@ -593,6 +593,8 @@ export async function autoCrawlSnkrdunk(startPage: number = 1, endPage: number =
         // Add data source
         await db.addDataSource({
           cardId,
+          gameId: 1, // Default to Pokémon (gameId=1)
+          productType: "single_card", // Default to single_card
           source: "snkrdunk",
           sourceUrl: url,
         });

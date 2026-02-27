@@ -584,6 +584,8 @@ export const appRouter = router({
     addSnkrdunkSource: adminProcedure
       .input(z.object({
         url: z.string().url(),
+        gameId: z.number().int().positive().optional(), // Game type ID (defaults to 1 for Pokémon)
+        productType: z.enum(["single_card", "sealed_product"]).optional(), // Product type (defaults to single_card)
       }))
       .mutation(async ({ ctx, input }) => {
 const snkrdunkId = extractSnkrdunkId(input.url);
@@ -635,6 +637,8 @@ const snkrdunkId = extractSnkrdunkId(input.url);
           // Add data source (now guaranteed to be new)
           await db.addDataSource({
             cardId,
+            gameId: input.gameId || 1, // Default to Pokémon (gameId=1) if not specified
+            productType: input.productType || "single_card", // Default to single_card if not specified
             source: "snkrdunk",
             sourceUrl: input.url,
             sourceIdentifier: snkrdunkId,

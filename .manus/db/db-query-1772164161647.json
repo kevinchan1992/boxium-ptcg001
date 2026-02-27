@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS sealedProducts (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  gameId INT NOT NULL COMMENT '遊戲類型 ID（外鍵關聯 games 表）',\n  name TEXT NOT NULL COMMENT '產品名稱',\n  nameJa TEXT COMMENT '日文名稱',\n  nameZh TEXT COMMENT '中文名稱',\n  boxType ENUM('booster_box', 'other') NOT NULL DEFAULT 'booster_box' COMMENT '產品類型（booster_box=卡盒, other=其他）',\n  itemCount INT COMMENT '包含數量（例如：一盒包含 30 包）',\n  setName TEXT COMMENT '系列名稱',\n  series TEXT COMMENT '擴展包系列',\n  imageUrl TEXT COMMENT '產品圖片 URL',\n  releaseDate TIMESTAMP COMMENT '發售日期',\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX idx_sealed_gameId (gameId),\n  INDEX idx_sealed_boxType (boxType)\n) COMMENT='密封產品表（卡盒等）';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS sealedProducts (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  gameId INT NOT NULL COMMENT '遊戲類型 ID（外鍵關聯 games 表）',\n  name TEXT NOT NULL COMMENT '產品名稱',\n  nameJa TEXT COMMENT '日文名稱',\n  nameZh TEXT COMMENT '中文名稱',\n  boxType ENUM('booster_box', 'other') NOT NULL DEFAULT 'booster_box' COMMENT '產品類型（booster_box=卡盒, other=其他）',\n  itemCount INT COMMENT '包含數量（例如：一盒包含 30 包）',\n  setName TEXT COMMENT '系列名稱',\n  series TEXT COMMENT '擴展包系列',\n  imageUrl TEXT COMMENT '產品圖片 URL',\n  releaseDate TIMESTAMP COMMENT '發售日期',\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX idx_sealed_gameId (gameId),\n  INDEX idx_sealed_boxType (boxType)\n) COMMENT='密封產品表（卡盒等）';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1696
+}

@@ -2750,3 +2750,45 @@ for (const card of allCards) {
 - [x] 測試批量更新功能（確認所有卡牌都被處理）
 - [x] 創建單元測試（3 項測試全部通過）
 - [ ] 保存 checkpoint
+
+
+---
+
+## 🗄️ 數據庫擴展 - 支持多種 TCG 和產品類型
+
+### 需求
+- 支持兩種產品類型：單卡、卡盒
+- 支持多種 TCG 遊戲：Pokémon、One Piece（可隨時擴展）
+- 添加數據源時手動選擇遊戲類型和產品類型
+- 保持現有數據完整性
+
+### 數據庫遷移
+- [x] 創建 `games` 表（遊戲類型管理）
+- [x] 創建 `sealedProducts` 表（卡盒產品）
+- [x] 修改 `cards` 表添加 `gameId` 欄位
+- [x] 修改 `dataSources` 表添加 `gameId` 和 `productType` 欄位
+- [x] 修改 `priceHistory` 表添加 `productType` 欄位
+- [x] 修改 `watchlist` 表添加 `productType` 欄位
+- [x] 修改 `viewHistory` 表添加 `productType` 欄位
+- [x] 遷移現有數據（設置為 Pokémon + 單卡）
+
+### 後端代碼更新
+- [x] 更新 schema_new.ts 定義（添加 games 和 sealedProducts 表）
+- [x] 更新 routers.ts 修復 TypeScript 錯誤
+- [x] 更新 scheduler.ts 修復 TypeScript 錯誤
+- [x] 創建單元測試（5 項測試全部通過）
+
+### 前端界面更新
+- [x] 更新「添加數據源」表單（添加遊戲類型和產品類型選擇器）
+- [x] 更新數據源列表顯示（顯示遊戲類型和產品類型）
+- [ ] 更新卡牌詳情頁（顯示遊戲類型）
+- [ ] 測試所有功能
+
+### 測試場景
+- [x] 數據庫結構測試（games 表、sealedProducts 表、gameId 欄位、productType 欄位）
+- [x] 數據遷移測試（現有數據源設置為 Pokémon + 單卡）
+- [ ] 手動測試添加 Pokémon 單卡
+- [ ] 手動測試添加 Pokémon 卡盒
+- [ ] 手動測試添加 One Piece 單卡
+- [ ] 手動測試添加 One Piece 卡盒
+- [ ] 保存 checkpoint
