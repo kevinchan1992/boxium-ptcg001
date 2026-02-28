@@ -87,9 +87,9 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
       if (card.imageUrl) formatted += `圖片：${card.imageUrl}\n`;
       formatted += '\n📊 PSA10 鑑定卡價格統計：\n';
       if (card.psa10Stats && card.psa10Stats.totalVolume > 0) {
-        formatted += `  - 平均價格：¥${Math.round(card.psa10Stats.avgPrice).toLocaleString()}\n`;
-        formatted += `  - 最低價格：¥${Math.round(card.psa10Stats.minPrice).toLocaleString()}\n`;
-        formatted += `  - 最高價格：¥${Math.round(card.psa10Stats.maxPrice).toLocaleString()}\n`;
+        formatted += `  - 平均價格：HKD$${Math.round(card.psa10Stats.avgPrice).toLocaleString()}\n`;
+        formatted += `  - 最低價格：HKD$${Math.round(card.psa10Stats.minPrice).toLocaleString()}\n`;
+        formatted += `  - 最高價格：HKD$${Math.round(card.psa10Stats.maxPrice).toLocaleString()}\n`;
         formatted += `  - 7天價格變化：${formatPriceChange(card.psa10Stats.priceChange7d)}\n`;
         formatted += `  - 30天價格變化：${formatPriceChange(card.psa10Stats.priceChange30d)}\n`;
         formatted += `  - 成交量：${card.psa10Stats.totalVolume} 筆\n`;
@@ -98,9 +98,9 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
       }
       formatted += '\n📊 中古 A 級價格統計：\n';
       if (card.usedStats && card.usedStats.totalVolume > 0) {
-        formatted += `  - 平均價格：¥${Math.round(card.usedStats.avgPrice).toLocaleString()}\n`;
-        formatted += `  - 最低價格：¥${Math.round(card.usedStats.minPrice).toLocaleString()}\n`;
-        formatted += `  - 最高價格：¥${Math.round(card.usedStats.maxPrice).toLocaleString()}\n`;
+        formatted += `  - 平均價格：HKD$${Math.round(card.usedStats.avgPrice).toLocaleString()}\n`;
+        formatted += `  - 最低價格：HKD$${Math.round(card.usedStats.minPrice).toLocaleString()}\n`;
+        formatted += `  - 最高價格：HKD$${Math.round(card.usedStats.maxPrice).toLocaleString()}\n`;
         formatted += `  - 7天價格變化：${formatPriceChange(card.usedStats.priceChange7d)}\n`;
         formatted += `  - 30天價格變化：${formatPriceChange(card.usedStats.priceChange30d)}\n`;
         formatted += `  - 成交量：${card.usedStats.totalVolume} 筆\n`;
@@ -108,7 +108,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
         formatted += '  - 暫無中古 A 級成交記錄\n';
       }
       if (card.peakPrice > 0) {
-        formatted += `\n🏆 歷史最高價：¥${Math.round(card.peakPrice).toLocaleString()}`;
+        formatted += `\n🏆 歷史最高價：HKD$${Math.round(card.peakPrice).toLocaleString()}`;
         if (card.peakDate) formatted += `（${new Date(card.peakDate).toLocaleDateString('zh-TW')}）`;
         formatted += '\n';
       }
@@ -261,11 +261,11 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                           <div className="space-y-1.5">
                             <div className="flex justify-between text-xs">
                               <span className="text-gray-400">平均價格</span>
-                              <span className="text-white font-medium">¥{Math.round(card.psa10Stats.avgPrice).toLocaleString()}</span>
+                              <span className="text-white font-medium">HKD${Math.round(card.psa10Stats.avgPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs gap-2">
                               <span className="text-gray-400 flex-shrink-0">價格區間</span>
-                              <span className="text-white text-right break-all">¥{Math.round(card.psa10Stats.minPrice).toLocaleString()} ~ ¥{Math.round(card.psa10Stats.maxPrice).toLocaleString()}</span>
+                              <span className="text-white text-right break-all">HKD${Math.round(card.psa10Stats.minPrice).toLocaleString()} ~ HKD${Math.round(card.psa10Stats.maxPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs">
                               <span className="text-gray-400">7天變化</span>
@@ -294,11 +294,11 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                           <div className="space-y-1.5">
                             <div className="flex justify-between text-xs">
                               <span className="text-gray-400">平均價格</span>
-                              <span className="text-white font-medium">¥{Math.round(card.usedStats.avgPrice).toLocaleString()}</span>
+                              <span className="text-white font-medium">HKD${Math.round(card.usedStats.avgPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs gap-2">
                               <span className="text-gray-400 flex-shrink-0">價格區間</span>
-                              <span className="text-white text-right break-all">¥{Math.round(card.usedStats.minPrice).toLocaleString()} ~ ¥{Math.round(card.usedStats.maxPrice).toLocaleString()}</span>
+                              <span className="text-white text-right break-all">HKD${Math.round(card.usedStats.minPrice).toLocaleString()} ~ HKD${Math.round(card.usedStats.maxPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs">
                               <span className="text-gray-400">7天變化</span>
@@ -323,7 +323,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                     {card.peakPrice > 0 && (
                       <div className="px-3 py-2 bg-zinc-800/50 border-t border-zinc-700 flex items-center gap-2 flex-wrap">
                         <span className="text-xs text-gray-400">🏆 歷史最高價</span>
-                        <span className="text-sm font-semibold text-[#ffed00]">¥{Math.round(card.peakPrice).toLocaleString()}</span>
+                        <span className="text-sm font-semibold text-[#ffed00]">HKD${Math.round(card.peakPrice).toLocaleString()}</span>
                         {card.peakDate && (
                           <span className="text-xs text-gray-500">({new Date(card.peakDate).toLocaleDateString('zh-TW')})</span>
                         )}
@@ -368,7 +368,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                         <div className="text-xs font-medium text-white line-clamp-2 leading-tight">{card.name}</div>
                         {card.cardNumber && <div className="text-[10px] text-gray-400">{card.cardNumber}</div>}
                         {card.latestPrice && (
-                          <div className="text-[10px] text-[#ffed00] font-semibold">¥{Number(card.latestPrice).toLocaleString()}</div>
+                          <div className="text-[10px] text-[#ffed00] font-semibold">HKD${Number(card.latestPrice).toLocaleString()}</div>
                         )}
                       </div>
                     </div>

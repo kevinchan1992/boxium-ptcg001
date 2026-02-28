@@ -202,19 +202,19 @@ export function BottomSheet({
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
             isDragging ? "duration-0" : "duration-300 ease-out",
-            // ── Desktop (sm+): centered dialog ──
-            "sm:bottom-auto sm:left-1/2 sm:top-1/2",
-            "sm:w-full sm:max-w-lg",
-            "sm:rounded-xl sm:border",
-            "sm:[transform:translate(-50%,-50%)]",
-            "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
-            "sm:data-[state=closed]:fade-out-0 sm:data-[state=open]:fade-in-0",
+            // ── Desktop (md+): centered dialog ──
+            "md:bottom-auto md:left-1/2 md:top-1/2",
+            "md:w-full md:max-w-lg",
+            "md:rounded-xl md:border",
+            "md:[transform:translate(-50%,-50%)]",
+            "md:data-[state=closed]:zoom-out-95 md:data-[state=open]:zoom-in-95",
+            "md:data-[state=closed]:fade-out-0 md:data-[state=open]:fade-in-0",
             className
           )}
         >
           {/* ── Drag handle (mobile only) — touch/mouse target for swipe ── */}
           <div
-            className="flex justify-center pt-3 pb-1 sm:hidden flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
+            className="flex justify-center pt-3 pb-1 md:hidden flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -234,7 +234,7 @@ export function BottomSheet({
             <div
               className={cn(
                 "flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-border/50 min-w-0",
-                "sm:cursor-default cursor-grab active:cursor-grabbing touch-none select-none sm:select-auto sm:touch-auto"
+                "md:cursor-default cursor-grab active:cursor-grabbing touch-none select-none md:select-auto md:touch-auto"
               )}
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}

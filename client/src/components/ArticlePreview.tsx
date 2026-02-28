@@ -36,6 +36,10 @@ interface ArticlePreviewProps {
 
 export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEditMode = false }: ArticlePreviewProps) {
   const [currentArticle, setCurrentArticle] = useState(article);
+  // Sync article prop changes (e.g., when AI generates a new article and parent updates the prop)
+  useEffect(() => {
+    setCurrentArticle(article);
+  }, [article.title, article.content]);
   const [showAIEditDialog, setShowAIEditDialog] = useState(false);
   const [editInstruction, setEditInstruction] = useState('');
   const [isAIEditing, setIsAIEditing] = useState(false);

@@ -3420,3 +3420,8 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ## 📱 全站 Dialog → BottomSheet 統一改造
 - [x] 掃描所有 Dialog 使用位置：ImageLibrary、CardImagePicker、ArticlePreview（AI編輯+草稿+歷史版本）、AdminUserManagement
 - [x] 將高風險 Dialog 改為 BottomSheet：4 個組件共 7 個 Dialog 全部改用系統 BottomSheet，TypeScript 0 錯誤
+
+## 🐛 三個緊急修復 (2026-03-01)
+- [x] 修復 BottomSheet iPad 顯示：斷點改為 md: (768px)，手機和 iPad 都使用全寬底部 Sheet
+- [x] 修復卡牌市場數據價格單位：全部 ¥ 改為 HKD$（9 處），資料庫儲存的本來就是 HKD
+- [x] 修復 AI 生成文章功能：實現完整 LLM 呼叫邏輯（支援卡牌數據/文字/URL/圖片四種輸入），修復 ArticlePreview 同步 prop 變化
