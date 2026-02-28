@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
-describe('Batch Update Resilience & Optimization', () => {
+describe('Batch Update Resilience & Optimization (v4)', () => {
   const persistentBatchUpdatePath = path.join(__dirname, 'persistentSnkrdunkBatchUpdate.ts');
   const batchSchedulerPath = path.join(__dirname, 'batchUpdateScheduler.ts');
   let persistentBatchUpdateCode: string;
@@ -13,26 +13,27 @@ describe('Batch Update Resilience & Optimization', () => {
     batchSchedulerCode = fs.readFileSync(batchSchedulerPath, 'utf-8');
   });
 
-  describe('Optimized Configuration (single API call per product)', () => {
-    it('should have parallel limit of 5 (optimized for 1 API call per product)', () => {
+  describe('v4 Optimized Configuration', () => {
+    it('should have parallel limit of 5 (reduced from 15 for stability)', () => {
       expect(persistentBatchUpdateCode).toContain('PARALLEL_LIMIT: 5');
     });
 
-    it('should have reduced delay (300-800ms)', () => {
-      expect(persistentBatchUpdateCode).toContain('MIN_DELAY: 300');
-      expect(persistentBatchUpdateCode).toContain('MAX_DELAY: 800');
+    it('should have reduced delay (200-500ms)', () => {
+      expect(persistentBatchUpdateCode).toContain('MIN_DELAY: 200');
+      expect(persistentBatchUpdateCode).toContain('MAX_DELAY: 500');
     });
 
-    it('should have batch pause of 2 seconds', () => {
-      expect(persistentBatchUpdateCode).toContain('BATCH_PAUSE: 2000');
+    it('should have batch pause of 1 second', () => {
+      expect(persistentBatchUpdateCode).toContain('BATCH_PAUSE: 1000');
     });
 
     it('should have batch size of 50', () => {
       expect(persistentBatchUpdateCode).toContain('BATCH_SIZE: 50');
     });
 
-    it('should only fetch price history (not card details)', () => {
-      expect(persistentBatchUpdateCode).toContain('fetchPriceHistory');
+    it('should only fetch price history using fetchPriceHistoryFromApi with throwOnError', () => {
+      expect(persistentBatchUpdateCode).toContain('fetchPriceHistoryFromApi');
+      expect(persistentBatchUpdateCode).toContain('throwOnError: true');
       // Should NOT use scrapeSnkrdunkPage (the old 2-API-call approach)
       expect(persistentBatchUpdateCode).not.toContain('scrapeSnkrdunkPage');
     });
@@ -52,25 +53,25 @@ describe('Batch Update Resilience & Optimization', () => {
     });
   });
 
-  describe('Exponential Backoff', () => {
+  describe('Exponential Backoff (only for HTTP errors)', () => {
     it('should have initial backoff of 5 seconds', () => {
       expect(persistentBatchUpdateCode).toContain('INITIAL_BACKOFF: 5000');
     });
 
-    it('should have max backoff of 5 minutes', () => {
-      expect(persistentBatchUpdateCode).toContain('MAX_BACKOFF: 300000');
+    it('should have max backoff of 120 seconds', () => {
+      expect(persistentBatchUpdateCode).toContain('MAX_BACKOFF: 120000');
     });
 
     it('should have backoff multiplier of 2', () => {
       expect(persistentBatchUpdateCode).toContain('BACKOFF_MULTIPLIER: 2');
     });
 
-    it('should trigger backoff after 3 consecutive failures', () => {
-      expect(persistentBatchUpdateCode).toContain('BACKOFF_TRIGGER: 3');
+    it('should trigger backoff after 10 consecutive HTTP errors', () => {
+      expect(persistentBatchUpdateCode).toContain('BACKOFF_TRIGGER: 10');
     });
 
     it('should implement backoff wait before processing', () => {
-      expect(persistentBatchUpdateCode).toContain('consecutiveFailures >= CONFIG.BACKOFF_TRIGGER');
+      expect(persistentBatchUpdateCode).toContain('consecutiveHttpErrors >= CONFIG.BACKOFF_TRIGGER');
       expect(persistentBatchUpdateCode).toContain('await new Promise(resolve => setTimeout(resolve, currentBackoff))');
     });
 
@@ -79,28 +80,34 @@ describe('Batch Update Resilience & Optimization', () => {
     });
 
     it('should reset backoff on success', () => {
-      expect(persistentBatchUpdateCode).toContain('consecutiveFailures = 0');
+      expect(persistentBatchUpdateCode).toContain('consecutiveHttpErrors = 0');
       expect(persistentBatchUpdateCode).toContain('currentBackoff = CONFIG.INITIAL_BACKOFF');
     });
   });
 
-  describe('Timeout Protection', () => {
-    it('should have per-request timeout of 20 seconds', () => {
-      expect(persistentBatchUpdateCode).toContain('REQUEST_TIMEOUT: 20000');
+  describe('v4 Timeout & Retry Strategy', () => {
+    it('should have request timeout of 30 seconds (increased from 15s)', () => {
+      expect(persistentBatchUpdateCode).toContain('REQUEST_TIMEOUT: 30000');
     });
 
-    it('should have parallel batch timeout of 60 seconds', () => {
-      expect(persistentBatchUpdateCode).toContain('PARALLEL_TIMEOUT: 60000');
+    it('should have retry logic with MAX_RETRIES: 1', () => {
+      expect(persistentBatchUpdateCode).toContain('MAX_RETRIES: 1');
     });
 
-    it('should wrap API calls with timeout', () => {
-      expect(persistentBatchUpdateCode).toContain('withTimeout(');
-      expect(persistentBatchUpdateCode).toContain('CONFIG.REQUEST_TIMEOUT');
+    it('should NOT use withTimeout wrapper (removed double timeout)', () => {
+      // Should NOT call withTimeout as a function
+      expect(persistentBatchUpdateCode).not.toMatch(/await\s+withTimeout\s*\(/);
+      expect(persistentBatchUpdateCode).not.toMatch(/function\s+withTimeout/);
+      expect(persistentBatchUpdateCode).not.toMatch(/import.*withTimeout/);
     });
 
-    it('should wrap Promise.all with timeout', () => {
-      expect(persistentBatchUpdateCode).toContain('withTimeout(');
-      expect(persistentBatchUpdateCode).toContain('CONFIG.PARALLEL_TIMEOUT');
+    it('should use fetchWithRetry for retry logic', () => {
+      expect(persistentBatchUpdateCode).toContain('fetchWithRetry');
+    });
+
+    it('should distinguish timeout from HTTP errors', () => {
+      expect(persistentBatchUpdateCode).toContain('isTimeout');
+      expect(persistentBatchUpdateCode).toContain('consecutiveHttpErrors');
     });
   });
 
@@ -110,23 +117,26 @@ describe('Batch Update Resilience & Optimization', () => {
     });
 
     it('should check lastFetchedAt for skip logic', () => {
-      expect(persistentBatchUpdateCode).toContain('product.lastFetchedAt');
+      expect(persistentBatchUpdateCode).toContain('lastFetchedAt');
       expect(persistentBatchUpdateCode).toContain('skipThreshold');
     });
 
     it('should sort products by oldest first', () => {
       expect(persistentBatchUpdateCode).toContain('aTime - bTime');
-      expect(persistentBatchUpdateCode).toContain('Oldest first');
     });
   });
 
-  describe('Consecutive Failure Detection', () => {
-    it('should auto-stop after 15 consecutive failures', () => {
-      expect(persistentBatchUpdateCode).toContain('MAX_CONSECUTIVE_FAILURES: 15');
+  describe('v4 Consecutive Failure Detection (HTTP errors only)', () => {
+    it('should auto-stop after 200 consecutive HTTP errors (not timeouts)', () => {
+      expect(persistentBatchUpdateCode).toContain('MAX_CONSECUTIVE_HTTP_ERRORS: 200');
     });
 
-    it('should track consecutive failures', () => {
-      expect(persistentBatchUpdateCode).toContain('consecutiveFailures++');
+    it('should track consecutive HTTP errors separately from timeouts', () => {
+      expect(persistentBatchUpdateCode).toContain('consecutiveHttpErrors++');
+    });
+
+    it('should NOT count timeouts as consecutive failures', () => {
+      expect(persistentBatchUpdateCode).toContain('DO NOT increment consecutiveHttpErrors for timeouts');
     });
 
     it('should mark task as failed when threshold is reached', () => {
@@ -135,6 +145,17 @@ describe('Batch Update Resilience & Optimization', () => {
 
     it('should store error message in database', () => {
       expect(persistentBatchUpdateCode).toContain('errorMessage: errorMsg');
+    });
+  });
+
+  describe('Duplicate Price Record Prevention', () => {
+    it('should check for existing records before inserting', () => {
+      expect(persistentBatchUpdateCode).toContain('priceRecordExists');
+    });
+
+    it('should skip duplicate records', () => {
+      expect(persistentBatchUpdateCode).toContain('isDuplicate');
+      expect(persistentBatchUpdateCode).toContain('totalSkippedDuplicates');
     });
   });
 

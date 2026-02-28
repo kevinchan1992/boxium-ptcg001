@@ -117,13 +117,15 @@ export async function scrapeSnkrdunkPage(url: string, productType: "single_card"
  * Fetch price history from SNKRDUNK API
  * API endpoint: /v1/apparels/{id}/sales-history
  */
-export async function fetchPriceHistoryFromApi(productId: string, productType: "single_card" | "sealed_product" = "single_card"): Promise<Array<{
+export async function fetchPriceHistoryFromApi(productId: string, productType: "single_card" | "sealed_product" = "single_card", options?: { timeout?: number; throwOnError?: boolean }): Promise<Array<{
   price: number;
   currency: string;
   soldAt: Date;
   grade?: string;
   quantity?: string;
 }>> {
+  const timeout = options?.timeout || 15000;
+  const throwOnError = options?.throwOnError || false;
   try {
     const apiUrl = `https://snkrdunk.com/v1/apparels/${productId}/sales-history?size_id=0&page=1&per_page=100`;
     
@@ -133,7 +135,7 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
         "Accept": "application/json",
         "Referer": `https://snkrdunk.com/apparels/${productId}`,
       },
-      timeout: 15000,
+      timeout,
     });
 
     const data = response.data;
@@ -175,7 +177,15 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
     return priceHistory;
   } catch (error: any) {
     console.error("Error fetching price history from API:", error.message);
-    // Return empty array if API fails, don't throw error
+    if (throwOnError) {
+      // Re-throw with categorized error info for batch processing
+      const isTimeout = error.code === 'ECONNABORTED' || error.message?.includes('timeout');
+      const enhancedError = new Error(isTimeout ? `Timeout after ${timeout}ms` : `HTTP error: ${error.message}`);
+      (enhancedError as any).isTimeout = isTimeout;
+      (enhancedError as any).statusCode = error.response?.status;
+      throw enhancedError;
+    }
+    // Return empty array if API fails, don't throw error (backward compatible)
     return [];
   }
 }
