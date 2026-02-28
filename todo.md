@@ -3412,3 +3412,6 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 
 ## 🐛 Bug Fix
 - [x] 修復 /admin 頁面 React 渲染錯誤：post.tags 陣列包含 {id, name, slug} 物件，修復為提取 tag.name 字串
+
+## 📱 手機版響應式修復
+- [x] 修復 CardSelectionDialog 手機版尺寸：w-[95vw]、max-h-[90vh]、價格統計改為小螢幕單欄、按鈕改為全寬、ScrollArea 高度改為 45vh
