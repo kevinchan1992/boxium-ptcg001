@@ -585,25 +585,46 @@ export async function autoResumeOnStartup(): Promise<{ resumed: boolean; taskId?
   const { scheduledTasks } = await import('../drizzle/schema_new');
   const { eq, and, desc } = await import('drizzle-orm');
   
-  // Find the most recent failed task that was auto-recovered (stalled)
+  const { gt } = await import('drizzle-orm');
+
+  // Find the most recent failed task that was auto-recovered (stalled) within the last 2 hours
+  // Use 2-hour window to avoid resuming old tasks after a long downtime
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
   const recentFailedTasks = await database
     .select()
     .from(scheduledTasks)
     .where(
       and(
         eq(scheduledTasks.taskType, 'batch_snkrdunk_update'),
-        eq(scheduledTasks.status, 'failed')
+        eq(scheduledTasks.status, 'failed'),
+        gt(scheduledTasks.updatedAt, twoHoursAgo)
       )
     )
-    .orderBy(desc(scheduledTasks.createdAt))
-    .limit(1);
+    .orderBy(desc(scheduledTasks.updatedAt))
+    .limit(5); // Check up to 5 recent failed tasks
   
   if (recentFailedTasks.length === 0) {
-    console.log('[BatchUpdate] No failed tasks to auto-resume');
+    console.log('[BatchUpdate] No recently failed tasks to auto-resume (within 2 hours)');
     return { resumed: false };
   }
   
-  const failedTask = recentFailedTasks[0];
+  // Find the best candidate: auto-recovered task with most progress
+  // Prefer tasks that were stalled (auto-recovered on startup) over tasks that failed due to rate limits
+  const eligibleTasks = recentFailedTasks.filter(t => {
+    const isAutoRecoveredTask = t.errorMessage?.includes('Auto-recovered on server startup');
+    const hasProgressItems = (t.processedItems || 0) > 0;
+    return isAutoRecoveredTask && hasProgressItems;
+  });
+  
+  // Sort by processedItems descending (resume the most advanced task)
+  eligibleTasks.sort((a, b) => (b.processedItems || 0) - (a.processedItems || 0));
+  
+  const failedTask = eligibleTasks[0];
+  
+  if (!failedTask) {
+    console.log('[BatchUpdate] No eligible tasks for auto-resume (no auto-recovered tasks with progress found)');
+    return { resumed: false };
+  }
   
   // Only auto-resume if:
   // 1. Task was auto-recovered (error message contains "Auto-recovered on server startup")
