@@ -3415,3 +3415,4 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 
 ## 📱 手機版響應式修復
 - [x] 修復 CardSelectionDialog 手機版尺寸：w-[95vw]、max-h-[90vh]、價格統計改為小螢幕單欄、按鈕改為全寬、ScrollArea 高度改為 45vh
+- [x] 徹底重寫 CardSelectionDialog：改用系統 BottomSheet 組件（手機底部滑出全寬、桌面 Dialog），PSA10/中古 A 級改為垂直單欄，價格區間加 break-all 防截斷
