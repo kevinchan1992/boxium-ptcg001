@@ -211,10 +211,7 @@ async function startServer() {
         // Auto-resume: if a stalled task was just marked as failed, try to continue from where it left off
         try {
           const { autoResumeOnStartup } = await import('../persistentSnkrdunkBatchUpdate');
-          const resumeResult = await autoResumeOnStartup();
-          if (resumeResult.resumed) {
-            console.log(`[Server] Auto-resumed batch update: new task ${resumeResult.taskId}, continuing from ${resumeResult.resumedFrom} products`);
-          }
+          await autoResumeOnStartup();
         } catch (resumeErr: any) {
           console.error('[Server] Auto-resume check failed:', resumeErr.message);
         }
