@@ -6,6 +6,7 @@ describe('Blog System Tests', () => {
   let testCategoryId: number;
   let testPostId: number;
   let testTagId: number;
+  const uniqueSuffix = Date.now();
 
   beforeAll(async () => {
     const db = await getDb();
@@ -17,8 +18,8 @@ describe('Blog System Tests', () => {
   describe('Category Management', () => {
     it('should create a new category', async () => {
       const categoryId = await blogDb.createCategory({
-        name: 'Test Category',
-        slug: 'test-category',
+        name: `Test Category ${uniqueSuffix}`,
+        slug: `test-category-${uniqueSuffix}`,
         description: 'This is a test category',
       });
       expect(categoryId).toBeGreaterThan(0);
@@ -32,17 +33,17 @@ describe('Blog System Tests', () => {
     });
 
     it('should get category by slug', async () => {
-      const category = await blogDb.getCategoryBySlug('test-category');
+      const category = await blogDb.getCategoryBySlug(`test-category-${uniqueSuffix}`);
       expect(category).not.toBeNull();
-      expect(category?.name).toBe('Test Category');
+      expect(category?.name).toBe(`Test Category ${uniqueSuffix}`);
     });
   });
 
   describe('Tag Management', () => {
     it('should create a new tag', async () => {
       const tagId = await blogDb.createTag({
-        name: 'Test Tag',
-        slug: 'test-tag',
+        name: `Test Tag ${uniqueSuffix}`,
+        slug: `test-tag-${uniqueSuffix}`,
       });
       expect(tagId).toBeGreaterThan(0);
       testTagId = tagId;
@@ -55,17 +56,17 @@ describe('Blog System Tests', () => {
     });
 
     it('should get tag by slug', async () => {
-      const tag = await blogDb.getTagBySlug('test-tag');
+      const tag = await blogDb.getTagBySlug(`test-tag-${uniqueSuffix}`);
       expect(tag).not.toBeNull();
-      expect(tag?.name).toBe('Test Tag');
+      expect(tag?.name).toBe(`Test Tag ${uniqueSuffix}`);
     });
   });
 
   describe('Post Management', () => {
     it('should create a new post', async () => {
       const postId = await blogDb.createPost({
-        title: 'Test Post',
-        slug: 'test-post',
+        title: `Test Post ${uniqueSuffix}`,
+        slug: `test-post-${uniqueSuffix}`,
         excerpt: 'This is a test post excerpt',
         content: '# Test Post\n\nThis is the content of the test post.',
         featuredImage: 'https://example.com/image.jpg',
@@ -86,9 +87,9 @@ describe('Blog System Tests', () => {
     });
 
     it('should get post by slug', async () => {
-      const post = await blogDb.getPostBySlug('test-post');
+      const post = await blogDb.getPostBySlug(`test-post-${uniqueSuffix}`);
       expect(post).not.toBeNull();
-      expect(post?.title).toBe('Test Post');
+      expect(post?.title).toBe(`Test Post ${uniqueSuffix}`);
       expect(post?.status).toBe('draft');
     });
 
@@ -98,34 +99,36 @@ describe('Blog System Tests', () => {
       expect(post?.id).toBe(testPostId);
     });
 
-    it('should get all posts', async () => {
-      const posts = await blogDb.getPosts();
-      expect(posts.length).toBeGreaterThan(0);
-      expect(posts.some(p => p.id === testPostId)).toBe(true);
+    it('should get all posts (paginated)', async () => {
+      const result = await blogDb.getPosts();
+      // getPosts now returns { posts, total, limit, offset }
+      expect(result.posts.length).toBeGreaterThan(0);
+      expect(result.total).toBeGreaterThan(0);
+      expect(result.posts.some(p => p.id === testPostId)).toBe(true);
     });
 
     it('should filter posts by status', async () => {
-      const draftPosts = await blogDb.getPosts({ status: 'draft' });
-      expect(draftPosts.every(p => p.status === 'draft')).toBe(true);
+      const result = await blogDb.getPosts({ status: 'draft' });
+      expect(result.posts.every(p => p.status === 'draft')).toBe(true);
     });
 
     it('should filter posts by category', async () => {
-      const categoryPosts = await blogDb.getPosts({ categoryId: testCategoryId });
-      expect(categoryPosts.every(p => p.categoryId === testCategoryId)).toBe(true);
+      const result = await blogDb.getPosts({ categoryId: testCategoryId });
+      expect(result.posts.every(p => p.categoryId === testCategoryId)).toBe(true);
     });
 
     it('should search posts by title', async () => {
-      const searchResults = await blogDb.getPosts({ search: 'Test' });
-      expect(searchResults.length).toBeGreaterThan(0);
+      const result = await blogDb.getPosts({ search: `Test Post ${uniqueSuffix}` });
+      expect(result.posts.length).toBeGreaterThan(0);
     });
 
     it('should update a post', async () => {
       await blogDb.updatePost(testPostId, {
-        title: 'Updated Test Post',
+        title: `Updated Test Post ${uniqueSuffix}`,
         excerpt: 'Updated excerpt',
       });
       const post = await blogDb.getPostById(testPostId);
-      expect(post?.title).toBe('Updated Test Post');
+      expect(post?.title).toBe(`Updated Test Post ${uniqueSuffix}`);
       expect(post?.excerpt).toBe('Updated excerpt');
     });
 
@@ -144,7 +147,8 @@ describe('Blog System Tests', () => {
       const initialPost = await blogDb.getPostById(testPostId);
       const initialViewCount = initialPost?.viewCount || 0;
 
-      await blogDb.incrementPostViewCount(testPostId);
+      // incrementPostViewCount now takes slug
+      await blogDb.incrementPostViewCount(`test-post-${uniqueSuffix}`);
       const updatedPost = await blogDb.getPostById(testPostId);
       expect(updatedPost?.viewCount).toBe(initialViewCount + 1);
     });
@@ -159,7 +163,6 @@ describe('Blog System Tests', () => {
     });
 
     it('should get tags for a post after adding', async () => {
-      // Tags should still be there from previous test
       const tags = await blogDb.getPostTags(testPostId);
       expect(tags.length).toBeGreaterThanOrEqual(0);
     });

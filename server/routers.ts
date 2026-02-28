@@ -2606,7 +2606,12 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         if (input.categoryId !== undefined) updates.categoryId = input.categoryId;
         if (input.status) {
           updates.status = input.status;
-          updates.publishedAt = input.status === 'published' ? new Date() : null;
+          // Only set publishedAt on first publish, don't reset on subsequent updates
+          if (input.status === 'published' && currentPost && !currentPost.publishedAt) {
+            updates.publishedAt = new Date();
+          } else if (input.status === 'draft') {
+            // Keep publishedAt when reverting to draft (can re-publish later)
+          }
         }
         if (input.metaTitle !== undefined) updates.metaTitle = input.metaTitle;
         if (input.metaDescription !== undefined) updates.metaDescription = input.metaDescription;
@@ -2641,7 +2646,20 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const blogDb = await import('./blogDb');
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        
+        // Clean up related data
         await blogDb.removeTagsFromPost(input.id);
+        
+        // Clean up postVersions and postShares
+        if (db) {
+          const { eq } = await import('drizzle-orm');
+          const { postVersions, postShares } = await import('../drizzle/schema_new');
+          await db.delete(postVersions).where(eq(postVersions.postId, input.id));
+          await db.delete(postShares).where(eq(postShares.postId, input.id));
+        }
+        
         await blogDb.deletePost(input.id);
         return { success: true };
       }),
@@ -2851,28 +2869,41 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         cardIds: z.array(z.number()),
       }))
       .query(async ({ input }) => {
-        const cardDetails = await Promise.all(
-          input.cardIds.map(async (cardId) => {
-            const card = await db.getCardById(cardId);
-            if (!card) return null;
-            
-            // Get latest SNKRDUNK PSA10 price
-            const latestPrices = await db.getPriceHistory(cardId, 'snkrdunk', 'PSA10', 1, undefined);
-            const latestPrice = latestPrices.length > 0 ? latestPrices[0].price : null;
-            
-            return {
-              id: card.id,
-              name: card.name,
-              nameJa: card.nameJa,
-              cardNumber: card.cardNumber,
-              imageUrl: card.imageUrl,
-              latestPrice,
-              priceDate: latestPrices.length > 0 ? latestPrices[0].createdAt : null,
-            };
-          })
-        );
+        // Use articleGenerator's getArticleDataContext for comprehensive card data
+        const articleGenerator = await import('./articleGenerator');
+        const context = await articleGenerator.getArticleDataContext(input.cardIds, '30d');
         
-        return cardDetails.filter(card => card !== null);
+        // Return full card details with all price statistics
+        return context.cards.map(card => ({
+          id: card.id,
+          name: card.name,
+          nameJa: card.nameJa,
+          cardNumber: card.cardNumber,
+          series: card.series,
+          setName: card.setName,
+          rarity: card.rarity,
+          imageUrl: card.imageUrl,
+          // PSA10 price statistics
+          psa10Stats: {
+            avgPrice: card.psa10Stats.avgPrice,
+            minPrice: card.psa10Stats.minPrice,
+            maxPrice: card.psa10Stats.maxPrice,
+            priceChange7d: card.psa10Stats.priceChange7d,
+            priceChange30d: card.psa10Stats.priceChange30d,
+            totalVolume: card.psa10Stats.totalVolume,
+          },
+          // Used Grade A price statistics
+          usedStats: {
+            avgPrice: card.usedGradeAStats.avgPrice,
+            minPrice: card.usedGradeAStats.minPrice,
+            maxPrice: card.usedGradeAStats.maxPrice,
+            priceChange7d: card.usedGradeAStats.priceChange7d,
+            priceChange30d: card.usedGradeAStats.priceChange30d,
+            totalVolume: card.usedGradeAStats.totalVolume,
+          },
+          peakPrice: card.peakPrice,
+          peakDate: card.peakDate,
+        }));
       }),
 
     // AI generate article (Admin only)

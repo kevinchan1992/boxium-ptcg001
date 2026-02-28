@@ -25,7 +25,8 @@ export async function generateSitemap(): Promise<string> {
   const cards = await getAllCardIds();
 
   // Fetch all published blog posts
-  const posts = await getPosts({ status: 'published' });
+  const postsResult = await getPosts({ status: 'published' });
+  const posts = postsResult.posts;
 
   // Build XML content
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';

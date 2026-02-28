@@ -3380,3 +3380,12 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 安全地引入受控 2 並行（2×2 DB ops = 4，安全在 10 連線池內）
 - [x] 減少延遲（300ms→0ms batch延遲）+ 批量INSERT（50條/次）
 - [x] 測試並保存 checkpoint（67 個測試全部通過）
+
+## 📝 全面優化博客管理功能
+- [x] 全面檢查博客管理的前後端代碼，記錄 12 個問題
+- [x] 修復後端邏輯（viewCount原子更新、publishedAt首次發布設定、deletePost清理postVersions、getPosts分頁）
+- [x] 重新設計前端博客管理介面（表格式佈局、分類/tags/翻譯狀態、分頁、可折疊分享統計）
+- [x] 優化公開博客頁面的展示（已確認無需大幅修改）
+- [x] 測試並保存 checkpoint（54 個博客測試全部通過）
+- [x] 修復 CardSelectionDialog：使用 getArticleDataContext 取得完整卡牌資料（編號、名字、PSA10/中古統計、成交量、價格趨勢）
+- [x] 確保 AI 生成文章時使用真實準確的卡牌數據（getCardDetailsForBlog 已重寫）

@@ -34,7 +34,7 @@ export default function Blog() {
   // Update allPosts when posts change
   useEffect(() => {
     if (posts) {
-      setAllPosts(posts);
+      setAllPosts(posts.posts);
     }
   }, [posts]);
 
@@ -49,7 +49,7 @@ export default function Blog() {
   // Get featured post (most recent)
   const featuredPost = allPosts && allPosts.length > 0 ? allPosts[0] : null;
   const regularPosts = allPosts && allPosts.length > 1 ? allPosts.slice(1) : [];
-  const hasMore = posts && posts.length === POSTS_PER_PAGE * page;
+  const hasMore = posts && posts.posts.length === POSTS_PER_PAGE * page;
 
   const handleLoadMore = () => {
     setPage(prev => prev + 1);
@@ -127,7 +127,7 @@ export default function Blog() {
             <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#0033CC]"></div>
             <p className="text-gray-600 mt-6 text-lg">{t('blogPage.loading')}</p>
           </div>
-        ) : posts && posts.length > 0 ? (
+        ) : posts && posts.posts.length > 0 ? (
           <>
             {/* Featured Post - 大型卡片設計 */}
             {featuredPost && (
