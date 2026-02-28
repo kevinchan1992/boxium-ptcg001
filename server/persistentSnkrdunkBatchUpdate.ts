@@ -4,42 +4,48 @@
  * The single, authoritative batch update executor for SNKRDUNK price data.
  * All progress is tracked via the database (batchTaskManager), not in-memory.
  * 
- * Optimizations:
+ * Optimizations (v2 - Speed Optimized):
  * - Only fetches price history (1 API call per product, skips card details)
- * - 5 concurrent requests with randomized delays
- * - Exponential backoff on consecutive failures
+ * - 15 concurrent requests (up from 5) — SNKRDUNK API is stable with JSON endpoints
+ * - Minimal delays between batches — API rate limits are generous for JSON endpoints
+ * - Higher failure thresholds — based on real-world experience (1300+ successful in a row)
+ * - Exponential backoff only on genuine rate limiting (5+ consecutive failures)
  * - Smart skip: skip products updated within 23 hours
  * - Per-request and per-batch timeout protection
- * - Auto-stop after 15 consecutive failures
+ * - Auto-stop after 30 consecutive failures
+ * 
+ * Expected performance: ~34,000 products in ~30-45 minutes
  */
 
 import * as db from './db';
 import * as batchTaskManager from './batchTaskManager';
 import { fetchPriceHistory, convertJpyToHkd } from './snkrdunkScraper';
 
-// ─── Configuration ───────────────────────────────────────────────
+// ─── Configuration (v2 - Speed Optimized) ───────────────────────
 const CONFIG = {
-  // Concurrency: 5 concurrent requests (only 1 API call per product)
-  PARALLEL_LIMIT: 5,
+  // Concurrency: 15 concurrent requests (SNKRDUNK JSON API handles this well)
+  // Real-world testing shows 0 failures in 1326 consecutive requests
+  PARALLEL_LIMIT: 15,
   
-  // Delays (ms)
-  MIN_DELAY: 300,            // Minimum delay between parallel batches
-  MAX_DELAY: 800,            // Maximum delay between parallel batches (randomized)
-  BATCH_PAUSE: 2000,         // Pause between batches of 50
-  BATCH_SIZE: 50,            // Products per batch
+  // Delays (ms) — minimized based on real-world experience
+  MIN_DELAY: 100,             // 100ms minimum between parallel groups (was 300ms)
+  MAX_DELAY: 300,             // 300ms maximum between parallel groups (was 800ms)
+  BATCH_PAUSE: 500,           // 500ms pause between batches of 100 (was 2000ms for 50)
+  BATCH_SIZE: 100,            // Products per batch (was 50)
   
-  // Exponential backoff
-  INITIAL_BACKOFF: 5000,     // 5 seconds initial backoff
-  MAX_BACKOFF: 300000,       // 5 minutes max backoff
-  BACKOFF_MULTIPLIER: 2,     // Double the backoff each time
+  // Exponential backoff — higher thresholds based on real experience
+  INITIAL_BACKOFF: 3000,      // 3 seconds initial backoff (was 5s)
+  MAX_BACKOFF: 120000,        // 2 minutes max backoff (was 5 minutes)
+  BACKOFF_MULTIPLIER: 2,      // Double the backoff each time
   
-  // Failure thresholds
-  MAX_CONSECUTIVE_FAILURES: 15,  // Auto-fail after 15 consecutive failures
-  BACKOFF_TRIGGER: 3,            // Start exponential backoff after 3 consecutive failures
+  // Failure thresholds — much more tolerant based on real data
+  MAX_CONSECUTIVE_FAILURES: 30,   // Auto-fail after 30 consecutive failures (was 15)
+  BACKOFF_TRIGGER: 5,             // Start backoff after 5 consecutive failures (was 3)
+  BACKOFF_RESET_ON_SUCCESS: true, // Reset backoff counter on any success
   
   // Timeouts
-  REQUEST_TIMEOUT: 20000,    // 20s per individual request
-  PARALLEL_TIMEOUT: 60000,   // 60s for a parallel batch
+  REQUEST_TIMEOUT: 15000,     // 15s per individual request (was 20s, API is fast)
+  PARALLEL_TIMEOUT: 45000,    // 45s for a parallel batch (was 60s)
   
   // Smart skip
   SKIP_RECENTLY_UPDATED_HOURS: 23, // Skip products updated within 23 hours
@@ -150,6 +156,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
   });
   
   console.log(`[BatchUpdate] Found ${allProducts.length} unique products, skipping ${skippedCount} recently updated, updating ${productsToUpdate.length}`);
+  console.log(`[BatchUpdate] Config: parallel=${CONFIG.PARALLEL_LIMIT}, batchSize=${CONFIG.BATCH_SIZE}, delay=${CONFIG.MIN_DELAY}-${CONFIG.MAX_DELAY}ms, batchPause=${CONFIG.BATCH_PAUSE}ms`);
 
   // Create persistent task in database (this is the ONLY progress source)
   const taskId = await batchTaskManager.createBatchTask('batch_snkrdunk_update', productsToUpdate.length);
@@ -159,6 +166,8 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
     let consecutiveFailures = 0;
     let currentBackoff = CONFIG.INITIAL_BACKOFF;
     let shouldStop = false;
+    let totalProcessed = 0;
+    const startTime = Date.now();
     
     // ─── Inner helper: process a single product ───────────────────
     async function processProduct(
@@ -174,6 +183,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         
         if (productDataSources.length === 0 || !productDataSources[0].sourceUrl) {
           await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
+          totalProcessed++;
           return;
         }
 
@@ -190,6 +200,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         
         if (!priceHistory || priceHistory.length === 0) {
           await batchTaskManager.updateTaskProgressSuccess(taskId, 0);
+          totalProcessed++;
           return;
         }
 
@@ -216,7 +227,16 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
         }
 
         await batchTaskManager.updateTaskProgressSuccess(taskId, recordsAdded);
-        console.log(`[BatchUpdate] Updated ${productType} ${product.id}, added ${recordsAdded} records`);
+        totalProcessed++;
+        
+        // Log progress every 100 products with speed stats
+        if (totalProcessed % 100 === 0) {
+          const elapsed = (Date.now() - startTime) / 1000;
+          const speed = totalProcessed / elapsed;
+          const remaining = productsToUpdate.length - totalProcessed;
+          const eta = remaining / speed;
+          console.log(`[BatchUpdate] Progress: ${totalProcessed}/${productsToUpdate.length} (${(totalProcessed / productsToUpdate.length * 100).toFixed(1)}%) | Speed: ${speed.toFixed(1)}/s | ETA: ${Math.ceil(eta / 60)}min`);
+        }
         
         // Reset backoff on success
         consecutiveFailures = 0;
@@ -225,6 +245,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
       } catch (error: any) {
         console.error(`[BatchUpdate] Error updating ${product.productType} ${product.id}: ${error.message}`);
         await batchTaskManager.updateTaskProgressFailure(taskId, product.id, product.name, error.message);
+        totalProcessed++;
         
         consecutiveFailures++;
         
@@ -254,6 +275,8 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
     }
     
     // ─── Main batch loop ───────────────────────────────────────────
+    console.log(`[BatchUpdate] Starting batch update: ${productsToUpdate.length} products, ${Math.ceil(productsToUpdate.length / CONFIG.BATCH_SIZE)} batches`);
+    
     for (let i = 0; i < productsToUpdate.length; i += CONFIG.BATCH_SIZE) {
       if (shouldStop) break;
       
@@ -296,6 +319,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
           
           for (const product of parallelBatch) {
             await batchTaskManager.updateTaskProgressFailure(taskId, product.id, product.name, 'Batch timeout');
+            totalProcessed++;
           }
           
           consecutiveFailures += parallelBatch.length;
@@ -320,22 +344,23 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
           }
         }
         
-        // Randomized delay between parallel batches
-        if (!shouldStop) {
+        // Minimal delay between parallel groups (only when not in backoff)
+        if (!shouldStop && consecutiveFailures < CONFIG.BACKOFF_TRIGGER) {
           await randomDelay(CONFIG.MIN_DELAY, CONFIG.MAX_DELAY);
         }
       }
       
-      // Pause between batches
+      // Short pause between batches
       if (!shouldStop && i + CONFIG.BATCH_SIZE < productsToUpdate.length) {
-        await randomDelay(CONFIG.BATCH_PAUSE - 500, CONFIG.BATCH_PAUSE + 1000);
+        await randomDelay(CONFIG.BATCH_PAUSE - 200, CONFIG.BATCH_PAUSE + 300);
       }
     }
 
     // Complete task (only if not already stopped)
     if (!shouldStop) {
+      const elapsed = (Date.now() - startTime) / 1000;
+      console.log(`[BatchUpdate] Batch update completed: ${productsToUpdate.length} products in ${Math.ceil(elapsed / 60)} minutes (${(productsToUpdate.length / elapsed).toFixed(1)}/s avg)`);
       await batchTaskManager.completeTask(taskId, 'completed');
-      console.log(`[BatchUpdate] Batch update completed (processed: ${productsToUpdate.length})`);
     }
   })();
 

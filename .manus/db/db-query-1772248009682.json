@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, errorMessage, createdAt, updatedAt FROM scheduledTasks WHERE id = 390058",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, errorMessage, createdAt, updatedAt FROM scheduledTasks WHERE id = 390058",
+  "rows": [
+    {
+      "id": "390058",
+      "taskType": "batch_snkrdunk_update",
+      "status": "failed",
+      "totalItems": "34142",
+      "processedItems": "1326",
+      "successCount": "1326",
+      "failureCount": "0",
+      "errorMessage": "Auto-recovered on server startup: task was running but had no progress update since 2026-02-27T17:48:07.000Z. Processed 1326/34142 items before stalling.",
+      "createdAt": "2026-02-27 17:00:03",
+      "updatedAt": "2026-02-27 19:11:51"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttaskType\tstatus\ttotalItems\tprocessedItems\tsuccessCount\tfailureCount\terrorMessage\tcreatedAt\tupdatedAt\n390058\tbatch_snkrdunk_update\tfailed\t34142\t1326\t1326\t0\tAuto-recovered on server startup: task was running but had no progress update since 2026-02-27T17:48:07.000Z. Processed 1326/34142 items before stalling.\t2026-02-27 17:00:03\t2026-02-27 19:11:51\n",
+  "stderr": "",
+  "execution_time_ms": 1592
+}
