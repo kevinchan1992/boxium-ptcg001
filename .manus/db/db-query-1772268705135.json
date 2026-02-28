@@ -1,0 +1,23 @@
+{
+  "query": "SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, errorMessage, createdAt, updatedAt, CAST(metadata AS CHAR) as meta FROM scheduledTasks WHERE id = 450030;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, errorMessage, createdAt, updatedAt, CAST(metadata AS CHAR) as meta FROM scheduledTasks WHERE id = 450030;",
+  "rows": [
+    {
+      "id": "450030",
+      "taskType": "batch_snkrdunk_update",
+      "status": "running",
+      "totalItems": "35354",
+      "processedItems": "670",
+      "successCount": "670",
+      "failureCount": "0",
+      "errorMessage": "NULL",
+      "createdAt": "2026-02-28 07:51:36",
+      "updatedAt": "2026-02-28 08:34:03",
+      "meta": "{\"errors\":[]}"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttaskType\tstatus\ttotalItems\tprocessedItems\tsuccessCount\tfailureCount\terrorMessage\tcreatedAt\tupdatedAt\tmeta\n450030\tbatch_snkrdunk_update\trunning\t35354\t670\t670\t0\tNULL\t2026-02-28 07:51:36\t2026-02-28 08:34:03\t{\"errors\":[]}\n",
+  "stderr": "",
+  "execution_time_ms": 1665
+}

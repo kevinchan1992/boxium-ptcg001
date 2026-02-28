@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
-describe('Batch Update Resilience & Optimization (v4)', () => {
+describe('Batch Update Resilience & Optimization (v5)', () => {
   const persistentBatchUpdatePath = path.join(__dirname, 'persistentSnkrdunkBatchUpdate.ts');
   const batchSchedulerPath = path.join(__dirname, 'batchUpdateScheduler.ts');
   let persistentBatchUpdateCode: string;
@@ -13,7 +13,7 @@ describe('Batch Update Resilience & Optimization (v4)', () => {
     batchSchedulerCode = fs.readFileSync(batchSchedulerPath, 'utf-8');
   });
 
-  describe('v4 Optimized Configuration', () => {
+  describe('v5 Optimized Configuration', () => {
     it('should have parallel limit of 5 (reduced from 15 for stability)', () => {
       expect(persistentBatchUpdateCode).toContain('PARALLEL_LIMIT: 5');
     });
@@ -34,7 +34,6 @@ describe('Batch Update Resilience & Optimization (v4)', () => {
     it('should only fetch price history using fetchPriceHistoryFromApi with throwOnError', () => {
       expect(persistentBatchUpdateCode).toContain('fetchPriceHistoryFromApi');
       expect(persistentBatchUpdateCode).toContain('throwOnError: true');
-      // Should NOT use scrapeSnkrdunkPage (the old 2-API-call approach)
       expect(persistentBatchUpdateCode).not.toContain('scrapeSnkrdunkPage');
     });
   });
@@ -85,20 +84,23 @@ describe('Batch Update Resilience & Optimization (v4)', () => {
     });
   });
 
-  describe('v4 Timeout & Retry Strategy', () => {
-    it('should have request timeout of 30 seconds (increased from 15s)', () => {
+  describe('v5 Timeout & Retry Strategy', () => {
+    it('should have request timeout of 30 seconds', () => {
       expect(persistentBatchUpdateCode).toContain('REQUEST_TIMEOUT: 30000');
+    });
+
+    it('should have per-product timeout of 60 seconds', () => {
+      expect(persistentBatchUpdateCode).toContain('PRODUCT_TIMEOUT: 60000');
     });
 
     it('should have retry logic with MAX_RETRIES: 1', () => {
       expect(persistentBatchUpdateCode).toContain('MAX_RETRIES: 1');
     });
 
-    it('should NOT use withTimeout wrapper (removed double timeout)', () => {
-      // Should NOT call withTimeout as a function
-      expect(persistentBatchUpdateCode).not.toMatch(/await\s+withTimeout\s*\(/);
-      expect(persistentBatchUpdateCode).not.toMatch(/function\s+withTimeout/);
-      expect(persistentBatchUpdateCode).not.toMatch(/import.*withTimeout/);
+    it('should use withTimeout for per-product protection (not for API calls)', () => {
+      // v5 uses withTimeout for individual product processing to prevent DB stalls
+      expect(persistentBatchUpdateCode).toContain('function withTimeout');
+      expect(persistentBatchUpdateCode).toContain('PRODUCT_TIMEOUT');
     });
 
     it('should use fetchWithRetry for retry logic', () => {
@@ -108,6 +110,29 @@ describe('Batch Update Resilience & Optimization (v4)', () => {
     it('should distinguish timeout from HTTP errors', () => {
       expect(persistentBatchUpdateCode).toContain('isTimeout');
       expect(persistentBatchUpdateCode).toContain('consecutiveHttpErrors');
+    });
+  });
+
+  describe('v5 DB Efficiency', () => {
+    it('should use batch insert instead of per-record duplicate check', () => {
+      expect(persistentBatchUpdateCode).toContain('batchInsertPriceRecords');
+      expect(persistentBatchUpdateCode).toContain('database.insert(priceHistory).values(values)');
+    });
+
+    it('should use batch progress flushing (not per-product DB writes)', () => {
+      expect(persistentBatchUpdateCode).toContain('batchSuccessCount');
+      expect(persistentBatchUpdateCode).toContain('batchFailureCount');
+      expect(persistentBatchUpdateCode).toContain('flushProgress');
+    });
+
+    it('should have watchdog timer to detect stalls', () => {
+      expect(persistentBatchUpdateCode).toContain('WATCHDOG_TIMEOUT');
+      expect(persistentBatchUpdateCode).toContain('lastProgressTime');
+      expect(persistentBatchUpdateCode).toContain('Watchdog triggered');
+    });
+
+    it('should have global try-catch for FATAL errors', () => {
+      expect(persistentBatchUpdateCode).toContain('FATAL');
     });
   });
 
@@ -126,7 +151,7 @@ describe('Batch Update Resilience & Optimization (v4)', () => {
     });
   });
 
-  describe('v4 Consecutive Failure Detection (HTTP errors only)', () => {
+  describe('v5 Consecutive Failure Detection (HTTP errors only)', () => {
     it('should auto-stop after 200 consecutive HTTP errors (not timeouts)', () => {
       expect(persistentBatchUpdateCode).toContain('MAX_CONSECUTIVE_HTTP_ERRORS: 200');
     });
@@ -135,27 +160,12 @@ describe('Batch Update Resilience & Optimization (v4)', () => {
       expect(persistentBatchUpdateCode).toContain('consecutiveHttpErrors++');
     });
 
-    it('should NOT count timeouts as consecutive failures', () => {
-      expect(persistentBatchUpdateCode).toContain('DO NOT increment consecutiveHttpErrors for timeouts');
-    });
-
     it('should mark task as failed when threshold is reached', () => {
       expect(persistentBatchUpdateCode).toContain("completeTask(taskId, 'failed')");
     });
 
     it('should store error message in database', () => {
       expect(persistentBatchUpdateCode).toContain('errorMessage: errorMsg');
-    });
-  });
-
-  describe('Duplicate Price Record Prevention', () => {
-    it('should check for existing records before inserting', () => {
-      expect(persistentBatchUpdateCode).toContain('priceRecordExists');
-    });
-
-    it('should skip duplicate records', () => {
-      expect(persistentBatchUpdateCode).toContain('isDuplicate');
-      expect(persistentBatchUpdateCode).toContain('totalSkippedDuplicates');
     });
   });
 

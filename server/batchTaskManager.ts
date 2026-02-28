@@ -5,6 +5,8 @@ import { eq, and, or, desc, lt, sql } from 'drizzle-orm';
 /**
  * Batch Task Manager - Persistent task tracking using database
  * Replaces in-memory progress tracking to support server restarts and cross-page navigation
+ * 
+ * v5: Atomic SQL updates for progress tracking (no more read-then-write)
  */
 
 /**
@@ -122,7 +124,7 @@ export async function getLatestRunningTask(
 }
 
 /**
- * Update task progress (success)
+ * Update task progress (success) - ATOMIC SQL update, no read-then-write
  */
 export async function updateTaskProgressSuccess(taskId: number, recordsAdded: number): Promise<void> {
   const db = await getDb();
@@ -130,29 +132,38 @@ export async function updateTaskProgressSuccess(taskId: number, recordsAdded: nu
     return;
   }
 
-  const task = await getBatchTaskProgress(taskId);
-  if (!task) {
-    return;
-  }
-
-  const processedItems = task.processedItems + 1;
-  const successCount = task.successCount + 1;
-  const progress = Math.round((processedItems / task.totalItems) * 100);
-
-  await db
-    .update(scheduledTasks)
-    .set({
-      processedItems,
-      successCount,
-      progress,
-    })
-    .where(eq(scheduledTasks.id, taskId));
-
-  console.log(`[BatchTaskManager] Task ${taskId} progress: ${processedItems}/${task.totalItems} (${progress}%)`);
+  // Atomic increment: no need to read first
+  await db.execute(sql`
+    UPDATE ${scheduledTasks}
+    SET 
+      processedItems = processedItems + 1,
+      successCount = successCount + 1,
+      progress = LEAST(ROUND((processedItems + 1) * 100 / GREATEST(totalItems, 1)), 100)
+    WHERE id = ${taskId}
+  `);
 }
 
 /**
- * Update task progress (failure)
+ * Update task progress for multiple successes at once - ATOMIC SQL update
+ */
+export async function updateTaskProgressBulkSuccess(taskId: number, count: number): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    return;
+  }
+
+  await db.execute(sql`
+    UPDATE ${scheduledTasks}
+    SET 
+      processedItems = processedItems + ${count},
+      successCount = successCount + ${count},
+      progress = LEAST(ROUND((processedItems + ${count}) * 100 / GREATEST(totalItems, 1)), 100)
+    WHERE id = ${taskId}
+  `);
+}
+
+/**
+ * Update task progress (failure) - ATOMIC SQL update
  */
 export async function updateTaskProgressFailure(
   taskId: number,
@@ -165,33 +176,39 @@ export async function updateTaskProgressFailure(
     return;
   }
 
-  const task = await getBatchTaskProgress(taskId);
-  if (!task) {
+  // Atomic increment
+  await db.execute(sql`
+    UPDATE ${scheduledTasks}
+    SET 
+      processedItems = processedItems + 1,
+      failureCount = failureCount + 1,
+      progress = LEAST(ROUND((processedItems + 1) * 100 / GREATEST(totalItems, 1)), 100)
+    WHERE id = ${taskId}
+  `);
+
+  // Errors are appended separately (less critical, can be async)
+  // We only log to console now instead of updating metadata for every failure
+  // Metadata errors are saved periodically by the batch update itself
+  console.log(`[BatchTaskManager] Task ${taskId} failure: ${cardName} - ${error}`);
+}
+
+/**
+ * Update task progress for multiple failures at once - ATOMIC SQL update
+ */
+export async function updateTaskProgressBulkFailure(taskId: number, count: number): Promise<void> {
+  const db = await getDb();
+  if (!db) {
     return;
   }
 
-  const processedItems = task.processedItems + 1;
-  const failureCount = task.failureCount + 1;
-  const progress = Math.round((processedItems / task.totalItems) * 100);
-
-  // Add error to metadata
-  const errors = task.errors || [];
-  errors.push({ cardId, cardName, error });
-  
-  // Keep only last 100 errors to avoid metadata bloat
-  const recentErrors = errors.slice(-100);
-
-  await db
-    .update(scheduledTasks)
-    .set({
-      processedItems,
-      failureCount,
-      progress,
-      metadata: JSON.stringify({ errors: recentErrors }),
-    })
-    .where(eq(scheduledTasks.id, taskId));
-
-  console.log(`[BatchTaskManager] Task ${taskId} failure: ${cardName} - ${error}`);
+  await db.execute(sql`
+    UPDATE ${scheduledTasks}
+    SET 
+      processedItems = processedItems + ${count},
+      failureCount = failureCount + ${count},
+      progress = LEAST(ROUND((processedItems + ${count}) * 100 / GREATEST(totalItems, 1)), 100)
+    WHERE id = ${taskId}
+  `);
 }
 
 /**
@@ -232,8 +249,16 @@ export async function resumeTask(taskId: number): Promise<void> {
  * Check if task is paused
  */
 export async function isTaskPaused(taskId: number): Promise<boolean> {
-  const task = await getBatchTaskProgress(taskId);
-  return task?.status === 'paused';
+  const db = await getDb();
+  if (!db) return false;
+  
+  const result = await db
+    .select({ status: scheduledTasks.status })
+    .from(scheduledTasks)
+    .where(eq(scheduledTasks.id, taskId))
+    .limit(1);
+  
+  return result[0]?.status === 'paused';
 }
 
 /**
@@ -281,8 +306,16 @@ export async function cancelTask(taskId: number): Promise<void> {
  * Check if task is cancelled/completed
  */
 export async function isTaskCancelled(taskId: number): Promise<boolean> {
-  const task = await getBatchTaskProgress(taskId);
-  return task?.status === 'completed';
+  const db = await getDb();
+  if (!db) return false;
+  
+  const result = await db
+    .select({ status: scheduledTasks.status })
+    .from(scheduledTasks)
+    .where(eq(scheduledTasks.id, taskId))
+    .limit(1);
+  
+  return result[0]?.status === 'completed';
 }
 
 /**
@@ -432,9 +465,6 @@ export async function cleanOldTasks(keepCount: number = 50): Promise<number> {
  * Recover stalled tasks on server startup.
  * Detects tasks with status='running' but no progress update for >30 minutes,
  * and marks them as 'failed' with an appropriate error message.
- * 
- * This should be called once during server startup to clean up orphaned tasks
- * from previous server instances that died unexpectedly.
  */
 export async function recoverStalledTasks(stalledThresholdMinutes: number = 30): Promise<{
   recoveredCount: number;
@@ -497,8 +527,6 @@ export async function recoverStalledTasks(stalledThresholdMinutes: number = 30):
 
 /**
  * Check for stalled tasks (health check).
- * Returns tasks that are marked as 'running' but haven't been updated recently.
- * Unlike recoverStalledTasks, this does NOT modify the tasks - it only reports them.
  */
 export async function checkStalledTasks(stalledThresholdMinutes: number = 30): Promise<Array<{
   id: number;
@@ -573,7 +601,7 @@ export async function getTaskStats(): Promise<{
     };
   }
 
-  // Overall counts - query all tasks and count in JS to avoid drizzle groupBy type issues
+  // Overall counts
   const allTasks = await db
     .select({ status: scheduledTasks.status })
     .from(scheduledTasks);
