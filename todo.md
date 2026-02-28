@@ -3389,3 +3389,11 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 測試並保存 checkpoint（54 個博客測試全部通過）
 - [x] 修復 CardSelectionDialog：使用 getArticleDataContext 取得完整卡牌資料（編號、名字、PSA10/中古統計、成交量、價格趨勢）
 - [x] 確保 AI 生成文章時使用真實準確的卡牌數據（getCardDetailsForBlog 已重寫）
+
+## 🔧 修復批量更新 metadata 保存失敗 (v7.1)
+- [x] 診斷 metadata 保存失敗原因（processedProductKeys 陣列超過 MySQL TEXT 65KB 限制，約 2,978 個 key 後溢出）
+- [x] 重寫 saveTaskMetadata：改用 processedCount（整數）替代完整 key 列表，metadata 大小固定不隨進度增長
+- [x] 重寫 resume 邏輯：使用 SKIP_RECENTLY_UPDATED_HOURS 過濾已更新產品，不再依賴 key 列表
+- [x] 所有 64 個相關測試通過（31 batch + 21 blog + 12 optimization）
+- [x] TypeScript 0 錯誤
+- [x] 確認 v7.1 運行穩定：4.5/s 速度，0 失敗，metadata 保存正常

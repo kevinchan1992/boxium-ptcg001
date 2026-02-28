@@ -1,30 +1,29 @@
 /**
- * SNKRDUNK Persistent Batch Update (v7 - Controlled Parallel)
+ * SNKRDUNK Persistent Batch Update (v7.1 - Fixed Metadata)
  * 
- * v6 proved that serial processing is STABLE (task 480003: 6,870+ with 0 failures).
- * But it's SLOW: ~45 products/min → 13 hours for 35,000 products.
+ * v7 proved controlled 2-parallel is STABLE and FAST (~3.6/s, 0 failures).
  * 
- * v7 OPTIMIZATION STRATEGY:
- * - Controlled parallelism: 2 concurrent products (2 × 3 DB ops = 6, safe within 10 pool)
- * - Reduced delay: 50ms between batches (was 300ms per product)
- * - Batch INSERT for price records (one INSERT per product instead of N)
- * - Less frequent progress flush (every 50 instead of every 10)
+ * v7.1 FIX: Metadata save was failing because processedProductKeys array
+ * grew beyond MySQL TEXT column limit (65KB) at ~3000 keys.
+ * 
+ * SOLUTION: Stop storing processedProductKeys in metadata.
+ * Instead, use processedCount (integer) for resume tracking.
+ * On resume, rely on SKIP_RECENTLY_UPDATED_HOURS to skip already-updated
+ * products (their lastFetchedAt is recent), which is more reliable anyway.
+ * The in-memory processedKeys Set is still used during a single run to
+ * prevent re-processing within the same execution.
  * 
  * WHY 2 PARALLEL IS SAFE:
  * mysql2 default pool = 10 connections.
  * Each product needs: 1 batch INSERT + 1 updateDataSourceFetchStatus = 2 DB ops
  * 2 parallel × 2 DB ops = 4 simultaneous connections. Well within 10.
- * (v4/v5 used 5 parallel × 4 ops = 20 → deadlock)
- * 
- * The API call (fetchPriceHistoryFromApi) uses HTTP, NOT a DB connection.
- * So while product A waits for API response, product B can use the DB.
  */
 
 import * as db from './db';
 import * as batchTaskManager from './batchTaskManager';
 import { extractSnkrdunkId, fetchPriceHistoryFromApi, convertJpyToHkd } from './snkrdunkScraper';
 
-// ─── Configuration (v7 - Controlled Parallel) ──────────────────
+// ─── Configuration (v7.1 - Fixed Metadata) ──────────────────
 const CONFIG = {
   // Number of products to process in parallel
   // MUST stay at 2 to avoid DB connection pool exhaustion (pool = 10)
@@ -115,11 +114,14 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * Save task metadata (errors + processed keys)
+ * Save task metadata (compact format - no full key list)
+ * 
+ * v7.1: Only stores processedCount, errors (last 50), and resumeCount.
+ * This keeps metadata well under MySQL TEXT 65KB limit.
  */
 async function saveTaskMetadata(
   taskId: number, 
-  processedKeys: string[], 
+  processedCount: number, 
   errors: Array<{ cardId: number; cardName: string; error: string }>,
   resumeCount: number,
 ): Promise<void> {
@@ -131,8 +133,8 @@ async function saveTaskMetadata(
     const { eq } = await import('drizzle-orm');
     
     const metadata = {
-      errors: errors.slice(-100),
-      processedProductKeys: processedKeys,
+      errors: errors.slice(-50), // Keep last 50 errors (was 100)
+      processedCount,
       resumeCount,
     };
     
@@ -227,7 +229,7 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
 }
 
 /**
- * Core batch processing — v7 CONTROLLED PARALLEL
+ * Core batch processing — v7.1 CONTROLLED PARALLEL
  * 
  * Processes products in pairs of 2 using Promise.allSettled.
  * Each pair is fully resolved before starting the next pair.
@@ -260,7 +262,7 @@ async function runControlledParallelProcessing(
     return;
   }
   
-  console.log(`[BatchUpdate] v7 Controlled Parallel (${CONFIG.PARALLEL}): Processing ${remaining.length} products (${processedKeys.size} already done)`);
+  console.log(`[BatchUpdate] v7.1 Controlled Parallel (${CONFIG.PARALLEL}): Processing ${remaining.length} products (${processedKeys.size} already done)`);
   
   // ─── Process in pairs ─────────────────────────────────────────
   for (let i = 0; i < remaining.length; i += CONFIG.PARALLEL) {
@@ -344,9 +346,9 @@ async function runControlledParallelProcessing(
       console.log(`[BatchUpdate] Progress: ${i + CONFIG.PARALLEL}/${remaining.length} | Success: ${successCount} | Fail: ${failCount} | Speed: ${speed.toFixed(1)}/s | ETA: ${Math.ceil(eta / 60)}min`);
     }
     
-    // Save metadata periodically
+    // Save metadata periodically (v7.1: compact format, no key list)
     if (processedKeys.size % CONFIG.PROGRESS_SAVE_INTERVAL === 0) {
-      await saveTaskMetadata(taskId, Array.from(processedKeys), errors, resumeCount);
+      await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount);
     }
     
     // Stop if too many consecutive HTTP errors
@@ -357,7 +359,7 @@ async function runControlledParallelProcessing(
       // Flush remaining
       if (pendingSuccessFlush > 0) await batchTaskManager.updateTaskProgressBulkSuccess(taskId, pendingSuccessFlush);
       if (pendingFailFlush > 0) await batchTaskManager.updateTaskProgressBulkFailure(taskId, pendingFailFlush);
-      await saveTaskMetadata(taskId, Array.from(processedKeys), errors, resumeCount);
+      await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount);
       
       try {
         const database = await db.getDb();
@@ -389,7 +391,7 @@ async function runControlledParallelProcessing(
   if (pendingFailFlush > 0) {
     await batchTaskManager.updateTaskProgressBulkFailure(taskId, pendingFailFlush);
   }
-  await saveTaskMetadata(taskId, Array.from(processedKeys), errors, resumeCount);
+  await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount);
   
   // ─── Complete ─────────────────────────────────────────────────
   const elapsed = (Date.now() - startTime) / 1000;
@@ -468,6 +470,10 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
 
 /**
  * Resume a failed/stalled task from its last progress.
+ * 
+ * v7.1: No longer relies on processedProductKeys from metadata.
+ * Instead, uses SKIP_RECENTLY_UPDATED_HOURS to filter out already-updated products.
+ * The task's processedItems count is used for progress reporting.
  */
 export async function resumeFailedTask(taskId: number): Promise<{ taskId: number; totalCards: number; skippedCards: number; resumedFrom: number }> {
   const database = await db.getDb();
@@ -479,38 +485,45 @@ export async function resumeFailedTask(taskId: number): Promise<{ taskId: number
   const [task] = await database.select().from(scheduledTasks).where(eq(scheduledTasks.id, taskId)).limit(1);
   if (!task) throw new Error(`Task ${taskId} not found`);
   
-  let processedKeys = new Set<string>();
   let resumeCount = 0;
   
   if (task.metadata) {
     try {
       const meta = typeof task.metadata === 'string' ? JSON.parse(task.metadata) : task.metadata;
-      if (meta.processedProductKeys) {
-        processedKeys = new Set(meta.processedProductKeys);
-      }
       resumeCount = (meta.resumeCount || 0) + 1;
     } catch (e) {}
   }
   
-  const resumedFrom = processedKeys.size;
+  // Use processedItems from the task record as the resume point
+  const resumedFrom = task.processedItems || 0;
   
+  // Get all products and filter by SKIP_RECENTLY_UPDATED_HOURS
+  // Products that were already updated in this batch run will have recent lastFetchedAt
   const allProducts = await getAllSnkrdunkProducts();
+  
+  const now = new Date();
+  const skipThreshold = CONFIG.SKIP_RECENTLY_UPDATED_HOURS * 60 * 60 * 1000;
+  
   const productsToUpdate = allProducts.filter(p => {
-    const key = `${p.productType}:${p.id}`;
-    return !processedKeys.has(key);
+    if (p.lastFetchedAt && (now.getTime() - p.lastFetchedAt.getTime()) < skipThreshold) {
+      return false; // Skip recently updated
+    }
+    return true;
   });
   
-  console.log(`[BatchUpdate] Manual resume of task ${taskId}: ${resumedFrom} already done, ${productsToUpdate.length} remaining`);
+  console.log(`[BatchUpdate] Manual resume of task ${taskId}: ${resumedFrom} already done (by processedItems), ${productsToUpdate.length} remaining (by lastFetchedAt filter)`);
   
   const newTaskId = await batchTaskManager.createBatchTask('batch_snkrdunk_update', allProducts.length);
   
-  if (resumedFrom > 0) {
-    await batchTaskManager.updateTaskProgressBulkSuccess(newTaskId, resumedFrom);
+  // Pre-fill progress for already-processed items
+  const alreadyDone = allProducts.length - productsToUpdate.length;
+  if (alreadyDone > 0) {
+    await batchTaskManager.updateTaskProgressBulkSuccess(newTaskId, alreadyDone);
   }
   
   (async () => {
     try {
-      await runControlledParallelProcessing(newTaskId, allProducts, processedKeys, resumeCount);
+      await runControlledParallelProcessing(newTaskId, productsToUpdate, new Set(), resumeCount);
     } catch (error: any) {
       console.error(`[BatchUpdate] FATAL during manual resume: ${error.message}`);
       try {
@@ -519,11 +532,14 @@ export async function resumeFailedTask(taskId: number): Promise<{ taskId: number
     }
   })();
   
-  return { taskId: newTaskId, totalCards: productsToUpdate.length, skippedCards: resumedFrom, resumedFrom };
+  return { taskId: newTaskId, totalCards: productsToUpdate.length, skippedCards: alreadyDone, resumedFrom: alreadyDone };
 }
 
 /**
  * Auto-resume a stalled task on server startup.
+ * 
+ * v7.1: Uses SKIP_RECENTLY_UPDATED_HOURS to determine which products
+ * still need processing, instead of relying on processedProductKeys metadata.
  */
 export async function autoResumeOnStartup(): Promise<void> {
   try {
@@ -555,15 +571,11 @@ export async function autoResumeOnStartup(): Promise<void> {
     
     const task = candidates[0];
     
-    let processedKeys = new Set<string>();
     let resumeCount = 0;
     
     if (task.metadata) {
       try {
         const meta = typeof task.metadata === 'string' ? JSON.parse(task.metadata) : task.metadata;
-        if (meta.processedProductKeys) {
-          processedKeys = new Set(meta.processedProductKeys);
-        }
         resumeCount = (meta.resumeCount || 0) + 1;
       } catch (e) {}
     }
@@ -574,13 +586,25 @@ export async function autoResumeOnStartup(): Promise<void> {
       return;
     }
     
-    console.log(`[BatchUpdate] Auto-resuming task ${task.id} (processed ${processedKeys.size}, resume #${resumeCount})`);
-    
+    // Use SKIP_RECENTLY_UPDATED_HOURS to determine remaining products
     const allProducts = await getAllSnkrdunkProducts();
+    const now = new Date();
+    const skipThreshold = CONFIG.SKIP_RECENTLY_UPDATED_HOURS * 60 * 60 * 1000;
+    
+    const remainingProducts = allProducts.filter(p => {
+      if (p.lastFetchedAt && (now.getTime() - p.lastFetchedAt.getTime()) < skipThreshold) {
+        return false;
+      }
+      return true;
+    });
+    
+    const alreadyDone = allProducts.length - remainingProducts.length;
+    
+    console.log(`[BatchUpdate] Auto-resuming task ${task.id} (${alreadyDone} already done by lastFetchedAt, ${remainingProducts.length} remaining, resume #${resumeCount})`);
     
     (async () => {
       try {
-        await runControlledParallelProcessing(task.id, allProducts, processedKeys, resumeCount);
+        await runControlledParallelProcessing(task.id, remainingProducts, new Set(), resumeCount);
       } catch (error: any) {
         console.error(`[BatchUpdate] FATAL during resume: ${error.message}`);
         try {
