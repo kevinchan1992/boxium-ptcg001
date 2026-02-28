@@ -1,8 +1,8 @@
 /**
- * Tests for SNKRDUNK Persistent Batch Update v6 (Serial Mode)
+ * Tests for SNKRDUNK Persistent Batch Update v7 (Controlled Parallel)
  * 
- * v6 uses pure serial processing (no parallelism) to match the
- * manual "add SNKRDUNK data source" pattern that works reliably.
+ * v7 uses controlled parallelism (2 concurrent) for speed,
+ * while staying safely within DB connection pool limits (10).
  */
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import * as db from './db';
@@ -16,7 +16,20 @@ const sourceCode = fs.readFileSync(
   'utf-8'
 );
 
-describe('SNKRDUNK Batch Update v6 - Serial Mode', () => {
+// Helper to get non-comment code lines
+function getNonCommentLines(content: string): string {
+  return content
+    .split('\n')
+    .filter(line => {
+      const trimmed = line.trim();
+      return !trimmed.startsWith('//') && !trimmed.startsWith('*') && !trimmed.startsWith('/*');
+    })
+    .join('\n');
+}
+
+const codeOnly = getNonCommentLines(sourceCode);
+
+describe('SNKRDUNK Batch Update v7 - Controlled Parallel', () => {
   beforeAll(async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -27,143 +40,108 @@ describe('SNKRDUNK Batch Update v6 - Serial Mode', () => {
     vi.restoreAllMocks();
   });
 
-  describe('Architecture: No parallelism (root cause fix)', () => {
-    it('should NOT use Promise.allSettled (caused DB connection pool deadlock)', () => {
-      // Should not appear as actual code (await Promise.allSettled)
-      // May appear in comments explaining why it was removed
-      expect(sourceCode).not.toMatch(/await\s+Promise\.allSettled/);
+  describe('Architecture: Controlled Parallel (2 concurrent)', () => {
+    it('should use Promise.allSettled for controlled parallelism', () => {
+      expect(codeOnly).toContain('Promise.allSettled');
     });
     
-    it('should NOT use Promise.all for product processing', () => {
-      expect(sourceCode).not.toContain('Promise.all(parallelBatch');
+    it('should have PARALLEL config set to 2', () => {
+      expect(sourceCode).toMatch(/PARALLEL:\s*2/);
     });
     
-    it('should NOT have PARALLEL_LIMIT config', () => {
-      expect(sourceCode).not.toContain('PARALLEL_LIMIT');
+    it('should process products in batches using slice', () => {
+      expect(codeOnly).toContain('remaining.slice(i, i + CONFIG.PARALLEL)');
     });
     
-    it('should use simple serial for loop', () => {
-      expect(sourceCode).toContain('for (let i = 0; i < remaining.length; i++)');
-    });
-  });
-  
-  describe('Architecture: No complex timeout wrappers', () => {
     it('should NOT use withTimeout wrapper', () => {
-      expect(sourceCode).not.toContain('function withTimeout');
-      expect(sourceCode).not.toContain('PRODUCT_TIMEOUT');
+      expect(codeOnly).not.toContain('function withTimeout');
+      expect(codeOnly).not.toContain('PRODUCT_TIMEOUT');
     });
     
     it('should NOT have watchdog timer', () => {
-      expect(sourceCode).not.toContain('WATCHDOG_TIMEOUT');
+      expect(codeOnly).not.toContain('WATCHDOG_TIMEOUT');
     });
   });
   
-  describe('Architecture: Same pattern as manual add data source', () => {
-    it('should call fetchPriceHistoryFromApi with throwOnError', () => {
-      expect(sourceCode).toContain('fetchPriceHistoryFromApi');
-      expect(sourceCode).toContain('throwOnError: true');
+  describe('Speed Optimizations', () => {
+    it('should have short delay between batches (50ms)', () => {
+      expect(sourceCode).toMatch(/DELAY_BETWEEN_BATCHES:\s*50/);
     });
     
-    it('should call db.addPriceHistory for each record (same as manual add)', () => {
-      // Manual add uses: for (const priceEntry of cardData.priceHistory) { await db.addPriceHistory(...) }
-      expect(sourceCode).toContain('db.addPriceHistory');
-      expect(sourceCode).toContain('for (const priceEntry of priceHistory)');
+    it('should use batch INSERT for price records', () => {
+      expect(codeOnly).toContain('.insert(priceHistoryTable).values(chunk)');
     });
     
-    it('should call db.updateDataSourceFetchStatus (same as manual add)', () => {
-      expect(sourceCode).toContain('db.updateDataSourceFetchStatus');
+    it('should flush progress every 50 products', () => {
+      expect(sourceCode).toMatch(/PROGRESS_DB_INTERVAL:\s*50/);
     });
     
-    it('should convert JPY to HKD (same as manual add)', () => {
+    it('should use bulk progress update functions', () => {
+      expect(codeOnly).toContain('updateTaskProgressBulkSuccess');
+      expect(codeOnly).toContain('updateTaskProgressBulkFailure');
+    });
+    
+    it('should log processing speed and ETA', () => {
+      expect(codeOnly).toContain('Speed:');
+      expect(codeOnly).toContain('ETA:');
+    });
+  });
+  
+  describe('Stability Features', () => {
+    it('should have processSingleProduct that never throws', () => {
+      expect(codeOnly).toContain('async function processSingleProduct');
+      expect(codeOnly).toContain('success: true');
+      expect(codeOnly).toContain('success: false');
+    });
+    
+    it('should track consecutive errors only for non-timeout failures', () => {
+      expect(codeOnly).toContain('if (!r.isTimeout)');
+      expect(codeOnly).toContain('consecutiveErrors++');
+    });
+    
+    it('should have pause/cancel support', () => {
+      expect(codeOnly).toContain('isTaskCancelled');
+      expect(codeOnly).toContain('isTaskPaused');
+    });
+    
+    it('should save metadata periodically', () => {
+      expect(codeOnly).toContain('saveTaskMetadata');
+      expect(sourceCode).toMatch(/PROGRESS_SAVE_INTERVAL:\s*200/);
+    });
+    
+    it('should handle batch INSERT failures with fallback to individual inserts', () => {
+      expect(codeOnly).toContain("insertErr.message?.includes('Duplicate')");
+    });
+    
+    it('should convert JPY to HKD', () => {
       expect(sourceCode).toContain('convertJpyToHkd');
     });
     
-    it('should NOT use scrapeSnkrdunkPage (only needs price history, not card details)', () => {
-      // Should not import or call scrapeSnkrdunkPage
+    it('should NOT use scrapeSnkrdunkPage (only needs price history)', () => {
       expect(sourceCode).not.toMatch(/import.*scrapeSnkrdunkPage/);
       expect(sourceCode).not.toMatch(/await\s+scrapeSnkrdunkPage/);
     });
   });
   
-  describe('Configuration', () => {
-    it('should have reasonable delay between products', () => {
-      const match = sourceCode.match(/DELAY_BETWEEN_PRODUCTS:\s*(\d+)/);
-      expect(match).toBeTruthy();
-      const delayMs = parseInt(match![1]);
-      expect(delayMs).toBeGreaterThanOrEqual(100);
-      expect(delayMs).toBeLessThanOrEqual(2000);
+  describe('Configuration Safety', () => {
+    it('should have REQUEST_TIMEOUT of 30 seconds', () => {
+      expect(sourceCode).toMatch(/REQUEST_TIMEOUT:\s*30000/);
     });
     
-    it('should have error delay', () => {
-      const match = sourceCode.match(/DELAY_AFTER_ERROR:\s*(\d+)/);
-      expect(match).toBeTruthy();
-      const delayMs = parseInt(match![1]);
-      expect(delayMs).toBeGreaterThanOrEqual(1000);
+    it('should have MAX_CONSECUTIVE_ERRORS of 50', () => {
+      expect(sourceCode).toMatch(/MAX_CONSECUTIVE_ERRORS:\s*50/);
     });
     
-    it('should have max consecutive errors threshold', () => {
-      const match = sourceCode.match(/MAX_CONSECUTIVE_ERRORS:\s*(\d+)/);
-      expect(match).toBeTruthy();
-      const maxErrors = parseInt(match![1]);
-      expect(maxErrors).toBeGreaterThanOrEqual(20);
+    it('should skip recently updated products (23 hours)', () => {
+      expect(sourceCode).toMatch(/SKIP_RECENTLY_UPDATED_HOURS:\s*23/);
     });
     
-    it('should have request timeout', () => {
-      const match = sourceCode.match(/REQUEST_TIMEOUT:\s*(\d+)/);
-      expect(match).toBeTruthy();
-      const timeout = parseInt(match![1]);
-      expect(timeout).toBeGreaterThanOrEqual(15000);
-      expect(timeout).toBeLessThanOrEqual(60000);
+    it('should have MAX_AUTO_RESUME_ATTEMPTS of 3', () => {
+      expect(sourceCode).toMatch(/MAX_AUTO_RESUME_ATTEMPTS:\s*3/);
     });
     
-    it('should have skip recently updated threshold', () => {
-      expect(sourceCode).toContain('SKIP_RECENTLY_UPDATED_HOURS');
-      expect(sourceCode).toContain('lastFetchedAt');
-      expect(sourceCode).toContain('skipThreshold');
-    });
-  });
-  
-  describe('Error handling', () => {
-    it('should distinguish timeout errors from HTTP errors', () => {
-      expect(sourceCode).toContain('isTimeout');
-      expect(sourceCode).toContain('if (!isTimeout)');
-      expect(sourceCode).toContain('consecutiveErrors++');
-    });
-    
-    it('should stop on too many consecutive HTTP errors', () => {
-      expect(sourceCode).toContain('MAX_CONSECUTIVE_ERRORS');
-      expect(sourceCode).toContain("completeTask(taskId, 'failed')");
-    });
-    
-    it('should have global error handler for FATAL errors', () => {
-      expect(sourceCode).toContain('FATAL');
-    });
-    
-    it('should skip individual price record insert failures without failing the product', () => {
-      // Each addPriceHistory should be in its own try-catch
-      expect(sourceCode).toContain('} catch (insertErr)');
-    });
-  });
-  
-  describe('Progress tracking', () => {
-    it('should batch progress updates (not per-product DB writes)', () => {
-      expect(sourceCode).toContain('PROGRESS_DB_INTERVAL');
-      expect(sourceCode).toContain('pendingSuccessFlush');
-      expect(sourceCode).toContain('pendingFailFlush');
-    });
-    
-    it('should use bulk progress update functions', () => {
-      expect(sourceCode).toContain('updateTaskProgressBulkSuccess');
-      expect(sourceCode).toContain('updateTaskProgressBulkFailure');
-    });
-    
-    it('should save metadata periodically', () => {
-      expect(sourceCode).toContain('PROGRESS_SAVE_INTERVAL');
-      expect(sourceCode).toContain('saveTaskMetadata');
-    });
-    
-    it('should check pause/cancel every 10 products (not every product)', () => {
-      expect(sourceCode).toContain('i % 10 === 0');
+    it('should have error delay of 1000ms', () => {
+      expect(sourceCode).toMatch(/DELAY_AFTER_ERROR:\s*1000/);
     });
   });
   

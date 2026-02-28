@@ -1,32 +1,48 @@
 /**
- * Batch Update Resilience Tests - v6 Serial Mode
+ * Batch Update Resilience Tests - v7 Controlled Parallel Mode
  * 
- * v6 switched from parallel processing to pure serial mode
- * to match the manual "add data source" pattern that works reliably.
+ * v7 uses controlled parallelism (2 concurrent) for speed,
+ * while staying safely within DB connection pool limits.
  */
 import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
-describe('Batch Update Resilience & Optimization (v6 - Serial)', () => {
+// Helper to get non-comment code lines
+function getNonCommentLines(content: string): string {
+  return content
+    .split('\n')
+    .filter(line => {
+      const trimmed = line.trim();
+      return !trimmed.startsWith('//') && !trimmed.startsWith('*') && !trimmed.startsWith('/*');
+    })
+    .join('\n');
+}
+
+describe('Batch Update Resilience & Optimization (v7 - Controlled Parallel)', () => {
   const persistentBatchUpdatePath = path.join(__dirname, 'persistentSnkrdunkBatchUpdate.ts');
   const batchSchedulerPath = path.join(__dirname, 'batchUpdateScheduler.ts');
   let persistentBatchUpdateCode: string;
+  let codeOnly: string;
   let batchSchedulerCode: string;
 
   beforeAll(() => {
     persistentBatchUpdateCode = fs.readFileSync(persistentBatchUpdatePath, 'utf-8');
+    codeOnly = getNonCommentLines(persistentBatchUpdateCode);
     batchSchedulerCode = fs.readFileSync(batchSchedulerPath, 'utf-8');
   });
 
-  describe('v6 Serial Configuration', () => {
-    it('should NOT have parallel processing (root cause of stalls)', () => {
-      expect(persistentBatchUpdateCode).not.toContain('PARALLEL_LIMIT');
-      expect(persistentBatchUpdateCode).not.toMatch(/await\s+Promise\.allSettled/);
+  describe('v7 Controlled Parallel Configuration', () => {
+    it('should use controlled parallelism (PARALLEL: 2)', () => {
+      expect(persistentBatchUpdateCode).toMatch(/PARALLEL:\s*2/);
     });
 
-    it('should have delay between products', () => {
-      expect(persistentBatchUpdateCode).toContain('DELAY_BETWEEN_PRODUCTS');
+    it('should use Promise.allSettled for controlled parallel processing', () => {
+      expect(codeOnly).toContain('Promise.allSettled');
+    });
+
+    it('should have short delay between batches (50ms)', () => {
+      expect(persistentBatchUpdateCode).toContain('DELAY_BETWEEN_BATCHES');
     });
 
     it('should have delay after error', () => {
@@ -38,8 +54,8 @@ describe('Batch Update Resilience & Optimization (v6 - Serial)', () => {
       expect(persistentBatchUpdateCode).toContain('throwOnError: true');
     });
 
-    it('should use db.addPriceHistory (same as manual add)', () => {
-      expect(persistentBatchUpdateCode).toContain('db.addPriceHistory');
+    it('should use batch INSERT for price records', () => {
+      expect(codeOnly).toContain('.insert(priceHistoryTable).values(chunk)');
     });
   });
 

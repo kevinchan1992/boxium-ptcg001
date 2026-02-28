@@ -1,34 +1,40 @@
 /**
- * SNKRDUNK Persistent Batch Update (v6 - Serial Mode)
+ * SNKRDUNK Persistent Batch Update (v7 - Controlled Parallel)
  * 
- * ROOT CAUSE OF ALL PREVIOUS STALLS:
- * mysql2 default connection pool = 10 connections.
- * v4/v5 used Promise.allSettled with 5 parallel products, each needing 3-4 DB ops.
- * 5 × 4 = 20 simultaneous DB operations > 10 connections = DEADLOCK.
+ * v6 proved that serial processing is STABLE (task 480003: 6,870+ with 0 failures).
+ * But it's SLOW: ~45 products/min → 13 hours for 35,000 products.
  * 
- * WHY MANUAL ADD WORKS:
- * Manual "add SNKRDUNK data source" processes ONE product at a time, serially.
- * It calls: scrapeSnkrdunkPage → addPriceHistory (loop) → updateDataSourceFetchStatus.
- * All sequential. Never exceeds 1 DB connection at a time. Never stalls.
+ * v7 OPTIMIZATION STRATEGY:
+ * - Controlled parallelism: 2 concurrent products (2 × 3 DB ops = 6, safe within 10 pool)
+ * - Reduced delay: 50ms between batches (was 300ms per product)
+ * - Batch INSERT for price records (one INSERT per product instead of N)
+ * - Less frequent progress flush (every 50 instead of every 10)
  * 
- * v6 SOLUTION: Copy the exact same pattern as manual add.
- * - Pure serial processing: ONE product at a time, NO parallelism
- * - Same function calls as manual add (fetchPriceHistoryFromApi → addPriceHistory → updateStatus)
- * - No withTimeout, no Promise.allSettled, no complex state machines
- * - Simple for loop, simple try/catch, simple progress tracking
+ * WHY 2 PARALLEL IS SAFE:
+ * mysql2 default pool = 10 connections.
+ * Each product needs: 1 batch INSERT + 1 updateDataSourceFetchStatus = 2 DB ops
+ * 2 parallel × 2 DB ops = 4 simultaneous connections. Well within 10.
+ * (v4/v5 used 5 parallel × 4 ops = 20 → deadlock)
+ * 
+ * The API call (fetchPriceHistoryFromApi) uses HTTP, NOT a DB connection.
+ * So while product A waits for API response, product B can use the DB.
  */
 
 import * as db from './db';
 import * as batchTaskManager from './batchTaskManager';
 import { extractSnkrdunkId, fetchPriceHistoryFromApi, convertJpyToHkd } from './snkrdunkScraper';
 
-// ─── Configuration (v6 - Keep It Simple) ────────────────────────
+// ─── Configuration (v7 - Controlled Parallel) ──────────────────
 const CONFIG = {
-  // Delay between products (ms) - be polite to SNKRDUNK API
-  DELAY_BETWEEN_PRODUCTS: 300,
+  // Number of products to process in parallel
+  // MUST stay at 2 to avoid DB connection pool exhaustion (pool = 10)
+  PARALLEL: 2,
+  
+  // Delay between parallel batches (ms)
+  DELAY_BETWEEN_BATCHES: 50,
   
   // Delay after error (ms)
-  DELAY_AFTER_ERROR: 2000,
+  DELAY_AFTER_ERROR: 1000,
   
   // API request timeout (ms)
   REQUEST_TIMEOUT: 30000,
@@ -37,10 +43,10 @@ const CONFIG = {
   MAX_CONSECUTIVE_ERRORS: 50,
   
   // Progress save interval (save metadata every N products)
-  PROGRESS_SAVE_INTERVAL: 100,
+  PROGRESS_SAVE_INTERVAL: 200,
   
   // Progress DB update interval (update task progress every N products)
-  PROGRESS_DB_INTERVAL: 10,
+  PROGRESS_DB_INTERVAL: 50,
   
   // Skip products updated within this many hours
   SKIP_RECENTLY_UPDATED_HOURS: 23,
@@ -58,6 +64,13 @@ interface ProductInfo {
   lastFetchedAt: Date | null;
   sourceUrl: string;
   dataSourceId: number;
+}
+
+interface ProcessResult {
+  success: boolean;
+  productKey: string;
+  error?: { cardId: number; cardName: string; error: string };
+  isTimeout?: boolean;
 }
 
 /**
@@ -132,13 +145,95 @@ async function saveTaskMetadata(
 }
 
 /**
- * Core batch processing — v6 PURE SERIAL
- * 
- * This is intentionally simple. It processes ONE product at a time,
- * exactly like the manual "add SNKRDUNK data source" function.
- * No parallelism, no withTimeout, no Promise.allSettled.
+ * Process a single product - fetch prices and save to DB.
+ * Returns a result object (never throws).
  */
-async function runSerialBatchProcessing(
+async function processSingleProduct(product: ProductInfo): Promise<ProcessResult> {
+  const productKey = `${product.productType}:${product.id}`;
+  
+  try {
+    // Step 1: Fetch price history from SNKRDUNK API (HTTP, not DB)
+    const productType: "single_card" | "sealed_product" = 
+      product.productType === 'sealed_product' ? 'sealed_product' : 'single_card';
+    
+    const priceHistory = await fetchPriceHistoryFromApi(
+      product.snkrdunkId, 
+      productType,
+      { timeout: CONFIG.REQUEST_TIMEOUT, throwOnError: true }
+    );
+    
+    // Step 2: Batch insert all price records at once
+    if (priceHistory && priceHistory.length > 0) {
+      const database = await db.getDb();
+      if (database) {
+        const { priceHistory: priceHistoryTable } = await import('../drizzle/schema_new');
+        
+        const records = priceHistory.map(entry => ({
+          cardId: product.id,
+          source: "snkrdunk" as const,
+          price: convertJpyToHkd(entry.price).toString(),
+          currency: "HKD",
+          grade: productType === 'single_card' ? (entry.grade || null) : null,
+          quantity: productType === 'sealed_product' ? (entry.quantity || null) : null,
+          productType,
+          soldAt: entry.soldAt,
+          listingUrl: product.sourceUrl,
+        }));
+        
+        // Batch insert in chunks of 50 to avoid query size limits
+        for (let i = 0; i < records.length; i += 50) {
+          const chunk = records.slice(i, i + 50);
+          try {
+            await database.insert(priceHistoryTable).values(chunk);
+          } catch (insertErr: any) {
+            // If batch fails (e.g., duplicate), fall back to individual inserts
+            if (insertErr.message?.includes('Duplicate') || insertErr.code === 'ER_DUP_ENTRY') {
+              for (const record of chunk) {
+                try {
+                  await database.insert(priceHistoryTable).values(record);
+                } catch (e) {
+                  // Skip individual duplicates silently
+                }
+              }
+            }
+            // Other errors: just skip this chunk, don't fail the product
+          }
+        }
+      }
+    }
+    
+    // Step 3: Update data source status (1 DB op)
+    await db.updateDataSourceFetchStatus(product.dataSourceId, "success");
+    
+    return { success: true, productKey };
+    
+  } catch (error: any) {
+    const isTimeout = error.isTimeout || 
+                      error.code === 'ECONNABORTED' || 
+                      error.message?.includes('timeout') || 
+                      error.message?.includes('Timeout');
+    
+    return {
+      success: false,
+      productKey,
+      isTimeout,
+      error: {
+        cardId: product.id,
+        cardName: product.name,
+        error: error.message || String(error),
+      },
+    };
+  }
+}
+
+/**
+ * Core batch processing — v7 CONTROLLED PARALLEL
+ * 
+ * Processes products in pairs of 2 using Promise.allSettled.
+ * Each pair is fully resolved before starting the next pair.
+ * This keeps DB connections at max 4-6 (well within pool of 10).
+ */
+async function runControlledParallelProcessing(
   taskId: number,
   productsToUpdate: ProductInfo[],
   alreadyProcessedKeys: Set<string>,
@@ -149,7 +244,6 @@ async function runSerialBatchProcessing(
   let consecutiveErrors = 0;
   let successCount = 0;
   let failCount = 0;
-  let skipCount = 0;
   let pendingSuccessFlush = 0;
   let pendingFailFlush = 0;
   const startTime = Date.now();
@@ -166,15 +260,12 @@ async function runSerialBatchProcessing(
     return;
   }
   
-  console.log(`[BatchUpdate] v6 Serial Mode: Processing ${remaining.length} products one-by-one (${processedKeys.size} already done)`);
+  console.log(`[BatchUpdate] v7 Controlled Parallel (${CONFIG.PARALLEL}): Processing ${remaining.length} products (${processedKeys.size} already done)`);
   
-  // ─── Simple serial loop ───────────────────────────────────────
-  for (let i = 0; i < remaining.length; i++) {
-    const product = remaining[i];
-    const productKey = `${product.productType}:${product.id}`;
-    
-    // Check pause/cancel every 10 products (not every product to reduce DB load)
-    if (i % 10 === 0) {
+  // ─── Process in pairs ─────────────────────────────────────────
+  for (let i = 0; i < remaining.length; i += CONFIG.PARALLEL) {
+    // Check pause/cancel every 20 products
+    if (i % 20 === 0 && i > 0) {
       try {
         if (await batchTaskManager.isTaskCancelled(taskId)) {
           console.log(`[BatchUpdate] Task ${taskId} cancelled at ${i}/${remaining.length}`);
@@ -182,151 +273,112 @@ async function runSerialBatchProcessing(
         }
         if (await batchTaskManager.isTaskPaused(taskId)) {
           console.log(`[BatchUpdate] Task ${taskId} paused at ${i}/${remaining.length}`);
-          // Wait until unpaused
           while (await batchTaskManager.isTaskPaused(taskId)) {
             await delay(3000);
           }
           console.log(`[BatchUpdate] Task ${taskId} resumed`);
         }
       } catch (e) {
-        // If we can't check status, just continue processing
         console.warn(`[BatchUpdate] Status check failed: ${(e as Error).message}`);
       }
     }
     
-    try {
-      // ─── Step 1: Fetch price history from SNKRDUNK API ───────
-      // (Same as manual add: scrapeSnkrdunkPage → fetchPriceHistoryFromApi)
-      const productType: "single_card" | "sealed_product" = 
-        product.productType === 'sealed_product' ? 'sealed_product' : 'single_card';
-      
-      const priceHistory = await fetchPriceHistoryFromApi(
-        product.snkrdunkId, 
-        productType,
-        { timeout: CONFIG.REQUEST_TIMEOUT, throwOnError: true }
-      );
-      
-      // ─── Step 2: Save price history ──────────────────────────
-      // (Same as manual add: for loop with db.addPriceHistory)
-      if (priceHistory && priceHistory.length > 0) {
-        for (const priceEntry of priceHistory) {
-          const priceHkd = convertJpyToHkd(priceEntry.price);
-          try {
-            await db.addPriceHistory({
-              cardId: product.id,
-              source: "snkrdunk",
-              price: priceHkd.toString(),
-              currency: "HKD",
-              grade: productType === 'single_card' ? priceEntry.grade : undefined,
-              quantity: productType === 'sealed_product' ? priceEntry.quantity : undefined,
-              productType,
-              soldAt: priceEntry.soldAt,
-              listingUrl: product.sourceUrl,
-            });
-          } catch (insertErr) {
-            // Skip duplicate or invalid records, don't fail the whole product
+    // Get the current batch (1 or 2 products)
+    const batch = remaining.slice(i, i + CONFIG.PARALLEL);
+    
+    // Process batch in parallel
+    const results = await Promise.allSettled(
+      batch.map(product => processSingleProduct(product))
+    );
+    
+    // Process results
+    let batchHadError = false;
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        const r = result.value;
+        processedKeys.add(r.productKey);
+        
+        if (r.success) {
+          successCount++;
+          pendingSuccessFlush++;
+          consecutiveErrors = 0;
+        } else {
+          failCount++;
+          pendingFailFlush++;
+          batchHadError = true;
+          
+          if (r.error) {
+            errors.push(r.error);
+          }
+          
+          // Only count non-timeout errors as consecutive
+          if (!r.isTimeout) {
+            consecutiveErrors++;
           }
         }
-      }
-      
-      // ─── Step 3: Update data source status ───────────────────
-      // (Same as manual add: updateDataSourceFetchStatus)
-      await db.updateDataSourceFetchStatus(product.dataSourceId, "success");
-      
-      // ─── Step 4: Track progress ──────────────────────────────
-      processedKeys.add(productKey);
-      successCount++;
-      pendingSuccessFlush++;
-      consecutiveErrors = 0; // Reset on success
-      
-      // Flush progress to DB periodically (not every product)
-      if (pendingSuccessFlush >= CONFIG.PROGRESS_DB_INTERVAL) {
-        await batchTaskManager.updateTaskProgressBulkSuccess(taskId, pendingSuccessFlush);
-        pendingSuccessFlush = 0;
-      }
-      if (pendingFailFlush > 0) {
-        await batchTaskManager.updateTaskProgressBulkFailure(taskId, pendingFailFlush);
-        pendingFailFlush = 0;
-      }
-      
-      // Log progress periodically
-      if ((successCount + failCount) % 100 === 0) {
-        const elapsed = (Date.now() - startTime) / 1000;
-        const speed = (successCount + failCount) / elapsed;
-        const eta = speed > 0 ? (remaining.length - i) / speed : 0;
-        console.log(`[BatchUpdate] Progress: ${i + 1}/${remaining.length} | Success: ${successCount} | Fail: ${failCount} | Speed: ${speed.toFixed(1)}/s | ETA: ${Math.ceil(eta / 60)}min`);
-      }
-      
-      // Save metadata periodically
-      if (processedKeys.size % CONFIG.PROGRESS_SAVE_INTERVAL === 0) {
-        await saveTaskMetadata(taskId, Array.from(processedKeys), errors, resumeCount);
-      }
-      
-      // Delay between products (be polite to API)
-      await delay(CONFIG.DELAY_BETWEEN_PRODUCTS);
-      
-    } catch (error: any) {
-      // Product failed
-      processedKeys.add(productKey);
-      failCount++;
-      pendingFailFlush++;
-      
-      const isTimeout = error.isTimeout || 
-                        error.code === 'ECONNABORTED' || 
-                        error.message?.includes('timeout') || 
-                        error.message?.includes('Timeout');
-      
-      errors.push({ 
-        cardId: product.id, 
-        cardName: product.name, 
-        error: error.message || String(error) 
-      });
-      
-      // Only count non-timeout errors as consecutive errors
-      if (!isTimeout) {
-        consecutiveErrors++;
       } else {
-        // Timeout: don't count as consecutive error, just skip and continue
-        consecutiveErrors = 0;
+        // Promise itself rejected (shouldn't happen since processSingleProduct catches all)
+        failCount++;
+        pendingFailFlush++;
+        batchHadError = true;
+        consecutiveErrors++;
       }
+    }
+    
+    // Flush progress to DB periodically
+    if (pendingSuccessFlush >= CONFIG.PROGRESS_DB_INTERVAL) {
+      await batchTaskManager.updateTaskProgressBulkSuccess(taskId, pendingSuccessFlush);
+      pendingSuccessFlush = 0;
+    }
+    if (pendingFailFlush >= CONFIG.PROGRESS_DB_INTERVAL) {
+      await batchTaskManager.updateTaskProgressBulkFailure(taskId, pendingFailFlush);
+      pendingFailFlush = 0;
+    }
+    
+    // Log progress periodically
+    const totalProcessed = successCount + failCount;
+    if (totalProcessed % 100 === 0 && totalProcessed > 0) {
+      const elapsed = (Date.now() - startTime) / 1000;
+      const speed = totalProcessed / elapsed;
+      const eta = speed > 0 ? (remaining.length - i) / speed : 0;
+      console.log(`[BatchUpdate] Progress: ${i + CONFIG.PARALLEL}/${remaining.length} | Success: ${successCount} | Fail: ${failCount} | Speed: ${speed.toFixed(1)}/s | ETA: ${Math.ceil(eta / 60)}min`);
+    }
+    
+    // Save metadata periodically
+    if (processedKeys.size % CONFIG.PROGRESS_SAVE_INTERVAL === 0) {
+      await saveTaskMetadata(taskId, Array.from(processedKeys), errors, resumeCount);
+    }
+    
+    // Stop if too many consecutive HTTP errors
+    if (consecutiveErrors >= CONFIG.MAX_CONSECUTIVE_ERRORS) {
+      const errorMsg = `Auto-stopped: ${consecutiveErrors} consecutive HTTP errors. Last: ${errors[errors.length - 1]?.error || 'unknown'}`;
+      console.error(`[BatchUpdate] ${errorMsg}`);
       
-      // Log errors periodically (not every one)
-      if (failCount % 10 === 0) {
-        console.warn(`[BatchUpdate] ${failCount} failures so far. Last: ${error.message} (consecutive: ${consecutiveErrors})`);
-      }
+      // Flush remaining
+      if (pendingSuccessFlush > 0) await batchTaskManager.updateTaskProgressBulkSuccess(taskId, pendingSuccessFlush);
+      if (pendingFailFlush > 0) await batchTaskManager.updateTaskProgressBulkFailure(taskId, pendingFailFlush);
+      await saveTaskMetadata(taskId, Array.from(processedKeys), errors, resumeCount);
       
-      // Stop if too many consecutive HTTP errors (not timeouts)
-      if (consecutiveErrors >= CONFIG.MAX_CONSECUTIVE_ERRORS) {
-        const errorMsg = `Auto-stopped: ${consecutiveErrors} consecutive HTTP errors. Last: ${error.message}`;
-        console.error(`[BatchUpdate] ${errorMsg}`);
-        
-        // Flush remaining progress
-        if (pendingSuccessFlush > 0) {
-          await batchTaskManager.updateTaskProgressBulkSuccess(taskId, pendingSuccessFlush);
+      try {
+        const database = await db.getDb();
+        if (database) {
+          const { scheduledTasks } = await import('../drizzle/schema_new');
+          const { eq } = await import('drizzle-orm');
+          await database.update(scheduledTasks)
+            .set({ errorMessage: errorMsg })
+            .where(eq(scheduledTasks.id, taskId));
         }
-        if (pendingFailFlush > 0) {
-          await batchTaskManager.updateTaskProgressBulkFailure(taskId, pendingFailFlush);
-        }
-        await saveTaskMetadata(taskId, Array.from(processedKeys), errors, resumeCount);
-        
-        // Save error message
-        try {
-          const database = await db.getDb();
-          if (database) {
-            const { scheduledTasks } = await import('../drizzle/schema_new');
-            const { eq } = await import('drizzle-orm');
-            await database.update(scheduledTasks)
-              .set({ errorMessage: errorMsg })
-              .where(eq(scheduledTasks.id, taskId));
-          }
-        } catch (e) {}
-        
-        await batchTaskManager.completeTask(taskId, 'failed');
-        return;
-      }
+      } catch (e) {}
       
-      // Longer delay after error
+      await batchTaskManager.completeTask(taskId, 'failed');
+      return;
+    }
+    
+    // Delay between batches
+    if (batchHadError) {
       await delay(CONFIG.DELAY_AFTER_ERROR);
+    } else {
+      await delay(CONFIG.DELAY_BETWEEN_BATCHES);
     }
   }
   
@@ -341,8 +393,9 @@ async function runSerialBatchProcessing(
   
   // ─── Complete ─────────────────────────────────────────────────
   const elapsed = (Date.now() - startTime) / 1000;
-  console.log(`[BatchUpdate] ✅ Completed: ${remaining.length} products in ${Math.ceil(elapsed / 60)} minutes`);
-  console.log(`[BatchUpdate] Results: ${successCount} success, ${failCount} failed, ${skipCount} skipped`);
+  const speed = (successCount + failCount) / elapsed;
+  console.log(`[BatchUpdate] ✅ Completed: ${remaining.length} products in ${Math.ceil(elapsed / 60)} minutes (${speed.toFixed(1)}/s)`);
+  console.log(`[BatchUpdate] Results: ${successCount} success, ${failCount} failed`);
   
   await batchTaskManager.completeTask(taskId, 'completed');
 }
@@ -386,7 +439,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
   // Execute in background with global error handler
   (async () => {
     try {
-      await runSerialBatchProcessing(taskId, productsToUpdate, new Set(), 0);
+      await runControlledParallelProcessing(taskId, productsToUpdate, new Set(), 0);
     } catch (error: any) {
       console.error(`[BatchUpdate] FATAL: ${error.message}`);
       console.error(error.stack);
@@ -415,7 +468,6 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
 
 /**
  * Resume a failed/stalled task from its last progress.
- * Called from admin UI to manually resume a task.
  */
 export async function resumeFailedTask(taskId: number): Promise<{ taskId: number; totalCards: number; skippedCards: number; resumedFrom: number }> {
   const database = await db.getDb();
@@ -427,7 +479,6 @@ export async function resumeFailedTask(taskId: number): Promise<{ taskId: number
   const [task] = await database.select().from(scheduledTasks).where(eq(scheduledTasks.id, taskId)).limit(1);
   if (!task) throw new Error(`Task ${taskId} not found`);
   
-  // Parse metadata to get processed keys
   let processedKeys = new Set<string>();
   let resumeCount = 0;
   
@@ -443,7 +494,6 @@ export async function resumeFailedTask(taskId: number): Promise<{ taskId: number
   
   const resumedFrom = processedKeys.size;
   
-  // Get all products
   const allProducts = await getAllSnkrdunkProducts();
   const productsToUpdate = allProducts.filter(p => {
     const key = `${p.productType}:${p.id}`;
@@ -452,18 +502,15 @@ export async function resumeFailedTask(taskId: number): Promise<{ taskId: number
   
   console.log(`[BatchUpdate] Manual resume of task ${taskId}: ${resumedFrom} already done, ${productsToUpdate.length} remaining`);
   
-  // Create a new task for tracking
   const newTaskId = await batchTaskManager.createBatchTask('batch_snkrdunk_update', allProducts.length);
   
-  // Pre-set the progress to account for already processed items
   if (resumedFrom > 0) {
     await batchTaskManager.updateTaskProgressBulkSuccess(newTaskId, resumedFrom);
   }
   
-  // Run in background
   (async () => {
     try {
-      await runSerialBatchProcessing(newTaskId, allProducts, processedKeys, resumeCount);
+      await runControlledParallelProcessing(newTaskId, allProducts, processedKeys, resumeCount);
     } catch (error: any) {
       console.error(`[BatchUpdate] FATAL during manual resume: ${error.message}`);
       try {
@@ -477,7 +524,6 @@ export async function resumeFailedTask(taskId: number): Promise<{ taskId: number
 
 /**
  * Auto-resume a stalled task on server startup.
- * Finds the most recent running task within 2 hours and resumes it.
  */
 export async function autoResumeOnStartup(): Promise<void> {
   try {
@@ -509,7 +555,6 @@ export async function autoResumeOnStartup(): Promise<void> {
     
     const task = candidates[0];
     
-    // Parse metadata to get processed keys
     let processedKeys = new Set<string>();
     let resumeCount = 0;
     
@@ -531,13 +576,11 @@ export async function autoResumeOnStartup(): Promise<void> {
     
     console.log(`[BatchUpdate] Auto-resuming task ${task.id} (processed ${processedKeys.size}, resume #${resumeCount})`);
     
-    // Get all products and resume
     const allProducts = await getAllSnkrdunkProducts();
     
-    // Resume in background
     (async () => {
       try {
-        await runSerialBatchProcessing(task.id, allProducts, processedKeys, resumeCount);
+        await runControlledParallelProcessing(task.id, allProducts, processedKeys, resumeCount);
       } catch (error: any) {
         console.error(`[BatchUpdate] FATAL during resume: ${error.message}`);
         try {
