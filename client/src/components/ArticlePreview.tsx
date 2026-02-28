@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -136,28 +136,26 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
   return (
     <>
       {/* Draft Restore Dialog */}
-      <Dialog open={showDraftDialog} onOpenChange={setShowDraftDialog}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
-          <DialogHeader>
-            <DialogTitle>發現未完成的草稿</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              檢測到您有一篇未完成的文章草稿，是否要恢復？
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => setShowDraftDialog(false)}
-              className="border-zinc-700 text-white hover:bg-zinc-800"
-            >
-              不恢復
-            </Button>
-            <BrandButton onClick={restoreDraft}>
-              恢復草稿
-            </BrandButton>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <BottomSheet
+        open={showDraftDialog}
+        onOpenChange={setShowDraftDialog}
+        title="發現未完成的草稿"
+        description="檢測到您有一篇未完成的文章草稿，是否要恢復？"
+        className="bg-zinc-900 border-zinc-800 text-white"
+      >
+        <div className="flex gap-2 justify-end pt-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowDraftDialog(false)}
+            className="border-zinc-700 text-white hover:bg-zinc-800 flex-1"
+          >
+            不恢復
+          </Button>
+          <BrandButton onClick={restoreDraft} className="flex-1">
+            恢復草稿
+          </BrandButton>
+        </div>
+      </BottomSheet>
 
       <div className="space-y-6">
       {/* Header */}
@@ -678,18 +676,19 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
         </BrandButton>
       </div>
 
-      {/* AI Edit Dialog */}
-      <Dialog open={showAIEditDialog} onOpenChange={setShowAIEditDialog}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-white">
-              <Wand2 className="w-5 h-5 text-[#ffed00]" />
-              AI 編輯文章
-            </DialogTitle>
-            <DialogDescription className="text-gray-400">
-              向 AI 描述你想要的修改，AI 會根據你的要求修正文章內容
-            </DialogDescription>
-          </DialogHeader>
+      {/* AI Edit BottomSheet */}
+      <BottomSheet
+        open={showAIEditDialog}
+        onOpenChange={setShowAIEditDialog}
+        title={
+          <span className="flex items-center gap-2 text-white">
+            <Wand2 className="w-5 h-5 text-[#ffed00]" />
+            AI 編輯文章
+          </span>
+        }
+        description="向 AI 描述你想要的修改，AI 會根據你的要求修正文章內容"
+        className="bg-zinc-900 border-zinc-800 text-white sm:max-w-2xl"
+      >
 
           <div className="space-y-4 mt-4">
             {/* Quick Options */}
@@ -812,8 +811,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
               </BrandButton>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+      </BottomSheet>
 
       {/* History Dialog */}
       <HistoryDialog 
@@ -887,14 +885,13 @@ function HistoryDialog({ postId, open, onOpenChange, onRestore }: HistoryDialogP
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-white">歷史版本</DialogTitle>
-          <DialogDescription className="text-zinc-400">
-            查看文章的所有歷史版本，點擊「恢復」可以回到之前的版本
-          </DialogDescription>
-        </DialogHeader>
+    <BottomSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title="歷史版本"
+      description="查看文章的所有歷史版本，點擊「恢復」可以回到之前的版本"
+      className="max-w-4xl bg-zinc-900 border-zinc-800 text-white sm:max-w-4xl"
+    >
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -946,7 +943,6 @@ function HistoryDialog({ postId, open, onOpenChange, onRestore }: HistoryDialogP
             沒有歷史版本
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+    </BottomSheet>
   );
 }

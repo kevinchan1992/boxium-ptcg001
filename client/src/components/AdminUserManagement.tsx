@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Search, RefreshCw, UserCog, Edit, Trash2, Key, Shield, User, Mail, Calendar, Clock } from "lucide-react";
@@ -366,75 +366,75 @@ export function AdminUserManagement() {
         </CardContent>
       </Card>
 
-      {/* Edit User Dialog */}
-      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">編輯用戶</DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm">修改用戶的基本信息</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit-name" className="text-xs sm:text-sm">名稱</Label>
-              <Input
-                id="edit-name"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="輸入用戶名稱"
-                className="text-sm"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-email" className="text-xs sm:text-sm">Email</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-                placeholder="輸入 Email"
-                className="text-sm"
-              />
-            </div>
+      {/* Edit User BottomSheet */}
+      <BottomSheet
+        open={!!editingUser}
+        onOpenChange={(open) => !open && setEditingUser(null)}
+        title="編輯用戶"
+        description="修改用戶的基本信息"
+      >
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="edit-name">名稱</Label>
+            <Input
+              id="edit-name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="輸入用戶名稱"
+              className="mt-1"
+            />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingUser(null)} className="text-xs sm:text-sm">
+          <div>
+            <Label htmlFor="edit-email">Email</Label>
+            <Input
+              id="edit-email"
+              type="email"
+              value={editEmail}
+              onChange={(e) => setEditEmail(e.target.value)}
+              placeholder="輸入 Email"
+              className="mt-1"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" onClick={() => setEditingUser(null)} className="flex-1">
               取消
             </Button>
-            <Button onClick={handleSaveUser} disabled={updateUserMutation.isPending} className="text-xs sm:text-sm">
+            <Button onClick={handleSaveUser} disabled={updateUserMutation.isPending} className="flex-1">
               {updateUserMutation.isPending ? "保存中..." : "保存"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </BottomSheet>
 
-      {/* Reset Password Dialog */}
-      <Dialog open={!!resetPasswordUserId} onOpenChange={(open) => !open && setResetPasswordUserId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">重置密碼</DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm">為用戶設置新密碼（至少 8 個字符）</DialogDescription>
-          </DialogHeader>
+      {/* Reset Password BottomSheet */}
+      <BottomSheet
+        open={!!resetPasswordUserId}
+        onOpenChange={(open) => !open && setResetPasswordUserId(null)}
+        title="重置密碼"
+        description="為用戶設置新密碼（至少 8 個字符）"
+      >
+        <div className="space-y-4">
           <div>
-            <Label htmlFor="new-password" className="text-xs sm:text-sm">新密碼</Label>
+            <Label htmlFor="new-password">新密碼</Label>
             <Input
               id="new-password"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="輸入新密碼"
-              className="text-sm"
+              className="mt-1"
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResetPasswordUserId(null)} className="text-xs sm:text-sm">
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" onClick={() => setResetPasswordUserId(null)} className="flex-1">
               取消
             </Button>
-            <Button onClick={handleResetPassword} disabled={resetPasswordMutation.isPending} className="text-xs sm:text-sm">
+            <Button onClick={handleResetPassword} disabled={resetPasswordMutation.isPending} className="flex-1">
               {resetPasswordMutation.isPending ? "重置中..." : "重置密碼"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </BottomSheet>
 
       {/* Delete User Confirmation */}
       <AlertDialog open={!!deletingUserId} onOpenChange={(open) => !open && setDeletingUserId(null)}>

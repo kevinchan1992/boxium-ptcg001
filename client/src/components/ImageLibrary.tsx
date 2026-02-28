@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { formatHKDate } from '../lib/formatDate';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { BottomSheet } from './ui/bottom-sheet';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Search, Trash2, Image as ImageIcon } from 'lucide-react';
@@ -53,12 +53,13 @@ export function ImageLibrary({ open, onClose, onSelectImage }: ImageLibraryProps
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>圖片庫</DialogTitle>
-        </DialogHeader>
-
+    <BottomSheet
+      open={open}
+      onOpenChange={(v) => { if (!v) onClose(); }}
+      title="圖片庫"
+      className="sm:max-w-4xl"
+    >
+      <div className="flex flex-col gap-3">
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -71,7 +72,7 @@ export function ImageLibrary({ open, onClose, onSelectImage }: ImageLibraryProps
         </div>
 
         {/* Image Grid */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="min-h-[200px]">
           {isLoading ? (
             <div className="flex items-center justify-center h-48">
               <div className="text-muted-foreground">載入中...</div>
@@ -82,7 +83,7 @@ export function ImageLibrary({ open, onClose, onSelectImage }: ImageLibraryProps
               <p>沒有找到圖片</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {images.map((image) => (
                 <div
                   key={image.id}
@@ -101,10 +102,10 @@ export function ImageLibrary({ open, onClose, onSelectImage }: ImageLibraryProps
 
                   {/* Info */}
                   <div className="p-2 bg-background">
-                    <p className="text-sm font-medium truncate" title={image.fileName}>
+                    <p className="text-xs font-medium truncate" title={image.fileName}>
                       {image.fileName}
                     </p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-1">
                       <span>{formatFileSize(image.fileSize)}</span>
                       <span>{formatHKDate(image.createdAt)}</span>
                     </div>
@@ -114,13 +115,13 @@ export function ImageLibrary({ open, onClose, onSelectImage }: ImageLibraryProps
                   <Button
                     variant="destructive"
                     size="icon"
-                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(image.id, image.fileName);
                     }}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               ))}
@@ -129,7 +130,7 @@ export function ImageLibrary({ open, onClose, onSelectImage }: ImageLibraryProps
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between items-center pt-4 border-t">
+        <div className="flex justify-between items-center pt-2 border-t">
           <p className="text-sm text-muted-foreground">
             {images && images.length > 0 ? `共 ${images.length} 張圖片` : ''}
           </p>
@@ -137,7 +138,7 @@ export function ImageLibrary({ open, onClose, onSelectImage }: ImageLibraryProps
             關閉
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </BottomSheet>
   );
 }
