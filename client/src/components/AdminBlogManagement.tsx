@@ -210,7 +210,7 @@ export function AdminBlogManagement() {
       content: post.content,
       featuredImage: post.featuredImage || '',
       category: post.category || '',
-      tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
+      tags: Array.isArray(post.tags) ? post.tags.map((t: any) => typeof t === 'string' ? t : t.name).join(', ') : (post.tags || ''),
       dataSource: post.dataSource || 'manual',
     });
     setSelectedPost(post);
@@ -462,9 +462,9 @@ export function AdminBlogManagement() {
                                     {post.tags && post.tags.length > 0 && (
                                       <div className="flex items-center gap-1 mt-1 flex-wrap">
                                         <Tag className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                                        {(Array.isArray(post.tags) ? post.tags : []).slice(0, 3).map((tag: string, i: number) => (
+                                        {(Array.isArray(post.tags) ? post.tags : []).slice(0, 3).map((tag: any, i: number) => (
                                           <span key={i} className="text-[10px] px-1.5 py-0.5 bg-zinc-800 text-gray-400 rounded">
-                                            {tag}
+                                            {typeof tag === 'string' ? tag : tag.name}
                                           </span>
                                         ))}
                                         {Array.isArray(post.tags) && post.tags.length > 3 && (
