@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { RefreshCw, Trash2, ChevronLeft, ChevronRight, BarChart3, Clock, CheckCircle2, XCircle, Loader2, Pause } from "lucide-react";
+import { RefreshCw, Trash2, ChevronLeft, ChevronRight, BarChart3, Clock, CheckCircle2, XCircle, Loader2, Pause, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 function formatDuration(ms: number | null): string {
@@ -118,6 +118,16 @@ export function AdminTaskHistory() {
     },
     onError: (error) => {
       toast.error(`刪除失敗：${error.message}`);
+    },
+  });
+
+  const resumeTaskMutation = trpc.admin.resumeFailedBatchTask.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message, { duration: 5000 });
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`恢復失敗：${error.message}`);
     },
   });
 
@@ -312,6 +322,33 @@ export function AdminTaskHistory() {
                           {task.errorMessage || "-"}
                         </TableCell>
                         <TableCell>
+                          <div className="flex items-center gap-1">
+                          {task.status === "failed" && task.processedItems > 0 && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 h-8 w-8 p-0" title="從上次進度恢復">
+                                  <RotateCcw className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-gray-900 border-gray-800">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-white">從上次進度恢復任務 #{task.id}？</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-gray-400">
+                                    將跳過已處理的 {task.processedItems.toLocaleString()} 個產品，從上次停止的位置繼續執行批量更新。
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="bg-gray-800 border-gray-700 text-gray-300">取消</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                    onClick={() => resumeTaskMutation.mutate({ taskId: task.id })}
+                                  >
+                                    確認恢復
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                           {(task.status === "completed" || task.status === "failed") && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -338,6 +375,7 @@ export function AdminTaskHistory() {
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

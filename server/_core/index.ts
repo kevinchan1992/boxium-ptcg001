@@ -202,11 +202,21 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
     
-    // Recover stalled batch tasks from previous server instance
+    // Recover stalled batch tasks from previous server instance, then auto-resume if eligible
     import('../batchTaskManager').then(({ recoverStalledTasks }) => {
-      recoverStalledTasks(30).then(result => {
+      recoverStalledTasks(30).then(async result => {
         if (result.recoveredCount > 0) {
           console.log(`[Server] Recovered ${result.recoveredCount} stalled task(s) from previous instance`);
+        }
+        // Auto-resume: if a stalled task was just marked as failed, try to continue from where it left off
+        try {
+          const { autoResumeOnStartup } = await import('../persistentSnkrdunkBatchUpdate');
+          const resumeResult = await autoResumeOnStartup();
+          if (resumeResult.resumed) {
+            console.log(`[Server] Auto-resumed batch update: new task ${resumeResult.taskId}, continuing from ${resumeResult.resumedFrom} products`);
+          }
+        } catch (resumeErr: any) {
+          console.error('[Server] Auto-resume check failed:', resumeErr.message);
         }
       }).catch(err => {
         console.error('[Server] Failed to recover stalled tasks:', err);

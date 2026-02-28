@@ -1845,6 +1845,22 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         };
       }),
 
+    // 從上次進度恢復失敗的批量更新任務
+    resumeFailedBatchTask: adminProcedure
+      .input(z.object({ taskId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { resumeFailedTask } = await import('./persistentSnkrdunkBatchUpdate');
+        const result = await resumeFailedTask(input.taskId);
+        return {
+          success: true,
+          newTaskId: result.taskId,
+          totalCards: result.totalCards,
+          skippedCards: result.skippedCards,
+          resumedFrom: result.resumedFrom,
+          message: `已從任務 ${input.taskId} 的進度恢復，跳過 ${result.resumedFrom} 個已處理產品，繼續處理 ${result.totalCards} 個產品`,
+        };
+      }),
+
     // 價格更新排程 API
     getPriceUpdateSchedule: publicProcedure
       .query(async () => {
