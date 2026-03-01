@@ -3425,3 +3425,6 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 修復 BottomSheet iPad 顯示：斷點改為 md: (768px)，手機和 iPad 都使用全寬底部 Sheet
 - [x] 修復卡牌市場數據價格單位：全部 ¥ 改為 HKD$（9 處），資料庫儲存的本來就是 HKD
 - [x] 修復 AI 生成文章功能：實現完整 LLM 呼叫邏輯（支援卡牌數據/文字/URL/圖片四種輸入），修復 ArticlePreview 同步 prop 變化
+
+## 🐛 BottomSheet iPad 右下角問題 (2026-03-01)
+- [x] 役從修復 BottomSheet 在 iPad 上只顯示在右下角的問題，確保手機和平板都全寬底部顯示

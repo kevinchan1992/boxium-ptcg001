@@ -1,7 +1,13 @@
 /**
  * BottomSheet component
- * - Mobile: slides up from the bottom (native sheet UX) with swipe-to-dismiss gesture
- * - Desktop (sm+): renders as a centered Dialog
+ * - Mobile & Tablet (< 1024px / lg): slides up from the bottom (native sheet UX) with swipe-to-dismiss gesture
+ * - Desktop (lg+, ≥ 1024px): renders as a centered Dialog
+ *
+ * Breakpoint rationale:
+ *   - iPhone: ~375-430px viewport → bottom sheet
+ *   - iPad (portrait): ~768px viewport → bottom sheet
+ *   - iPad (landscape): ~1024px viewport → bottom sheet
+ *   - Desktop: ≥ 1024px → centered dialog
  *
  * Swipe-to-dismiss:
  *   - Drag the sheet downward ≥ 80px OR with velocity ≥ 0.5px/ms → closes the sheet
@@ -35,6 +41,23 @@ const DISMISS_THRESHOLD = 80;
 /** Minimum drag velocity (px/ms) to trigger dismiss regardless of distance */
 const DISMISS_VELOCITY = 0.5;
 
+/** Hook to detect if we're in desktop mode (≥ 1024px) */
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = React.useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1024
+  );
+
+  React.useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    setIsDesktop(mq.matches);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  return isDesktop;
+}
+
 export function BottomSheet({
   open,
   onOpenChange,
@@ -45,6 +68,7 @@ export function BottomSheet({
   showCloseButton = true,
 }: BottomSheetProps) {
   const panelRef = React.useRef<HTMLDivElement>(null);
+  const isDesktop = useIsDesktop();
 
   // ── Swipe-to-dismiss state ──────────────────────────────────────────────
   const dragState = React.useRef<{
@@ -69,6 +93,7 @@ export function BottomSheet({
   // ── Pointer / Touch handlers ────────────────────────────────────────────
   const handleDragStart = React.useCallback(
     (clientY: number) => {
+      if (isDesktop) return; // no drag on desktop
       dragState.current = {
         startY: clientY,
         startTime: performance.now(),
@@ -77,7 +102,7 @@ export function BottomSheet({
       };
       setIsDragging(true);
     },
-    []
+    [isDesktop]
   );
 
   const handleDragMove = React.useCallback(
@@ -117,7 +142,6 @@ export function BottomSheet({
   // ── Touch events ────────────────────────────────────────────────────────
   const onTouchStart = React.useCallback(
     (e: React.TouchEvent) => {
-      // Only start drag from the handle or header area
       handleDragStart(e.touches[0].clientY);
     },
     [handleDragStart]
@@ -162,15 +186,20 @@ export function BottomSheet({
   }, [isDragging, handleDragMove, handleDragEnd]);
 
   // ── Derived styles ──────────────────────────────────────────────────────
-  const panelStyle: React.CSSProperties =
-    dragOffset > 0
-      ? {
-          transform: `translateY(${dragOffset}px)`,
-          transition: "none", // no transition while dragging
-        }
-      : {
-          transform: "none",
-        };
+  // Only apply drag transform on mobile/tablet (not desktop)
+  const panelStyle: React.CSSProperties = React.useMemo(() => {
+    if (isDesktop) {
+      // Desktop: use CSS for centering (no JS transform override)
+      return {};
+    }
+    if (dragOffset > 0) {
+      return {
+        transform: `translateY(${dragOffset}px)`,
+        transition: "none",
+      };
+    }
+    return {};
+  }, [isDesktop, dragOffset]);
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -183,7 +212,11 @@ export function BottomSheet({
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
             "duration-300"
           )}
-          style={dragOffset > 0 ? { opacity: Math.max(0, 1 - dragOffset / 300) } : undefined}
+          style={
+            !isDesktop && dragOffset > 0
+              ? { opacity: Math.max(0, 1 - dragOffset / 300) }
+              : undefined
+          }
         />
 
         {/* Content panel */}
@@ -191,30 +224,31 @@ export function BottomSheet({
           ref={panelRef}
           style={panelStyle}
           className={cn(
-            // ── Mobile: bottom sheet (full width, anchored to bottom) ──
-            "fixed bottom-0 left-0 z-50",
-            "w-screen max-w-full",
+            // ── Mobile & Tablet (< lg): bottom sheet — full width, anchored to bottom ──
+            "fixed bottom-0 left-0 right-0 z-50",
+            "w-full",
             "overflow-hidden",
             "bg-background border-t border-border",
             "rounded-t-2xl shadow-2xl",
             "max-h-[90dvh] flex flex-col",
-            // Slide-up animation (only when not dragging)
+            // Slide-up animation
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
             isDragging ? "duration-0" : "duration-300 ease-out",
-            // ── Desktop (md+): centered dialog ──
-            "md:bottom-auto md:left-1/2 md:top-1/2",
-            "md:w-full md:max-w-lg",
-            "md:rounded-xl md:border",
-            "md:[transform:translate(-50%,-50%)]",
-            "md:data-[state=closed]:zoom-out-95 md:data-[state=open]:zoom-in-95",
-            "md:data-[state=closed]:fade-out-0 md:data-[state=open]:fade-in-0",
+            // ── Desktop (lg+, ≥ 1024px): centered dialog ──
+            "lg:bottom-auto lg:left-1/2 lg:right-auto lg:top-1/2",
+            "lg:w-full lg:max-w-lg",
+            "lg:rounded-xl lg:border lg:border-border",
+            "lg:-translate-x-1/2 lg:-translate-y-1/2",
+            "lg:data-[state=closed]:zoom-out-95 lg:data-[state=open]:zoom-in-95",
+            "lg:data-[state=closed]:fade-out-0 lg:data-[state=open]:fade-in-0",
+            "lg:data-[state=closed]:slide-out-to-bottom-0 lg:data-[state=open]:slide-in-from-bottom-0",
             className
           )}
         >
-          {/* ── Drag handle (mobile only) — touch/mouse target for swipe ── */}
+          {/* ── Drag handle (mobile/tablet only) — touch/mouse target for swipe ── */}
           <div
-            className="flex justify-center pt-3 pb-1 md:hidden flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
+            className="flex justify-center pt-3 pb-1 lg:hidden flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -229,12 +263,12 @@ export function BottomSheet({
             />
           </div>
 
-          {/* Header — also draggable on mobile */}
+          {/* Header — also draggable on mobile/tablet */}
           {(title || showCloseButton) && (
             <div
               className={cn(
                 "flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-border/50 min-w-0",
-                "md:cursor-default cursor-grab active:cursor-grabbing touch-none select-none md:select-auto md:touch-auto"
+                "lg:cursor-default cursor-grab active:cursor-grabbing touch-none select-none lg:select-auto lg:touch-auto"
               )}
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
@@ -256,7 +290,7 @@ export function BottomSheet({
               {showCloseButton && (
                 <DialogPrimitive.Close
                   className="ml-2 flex-shrink-0 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  onMouseDown={(e) => e.stopPropagation()} // prevent drag from close button
+                  onMouseDown={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
                 >
                   <XIcon className="w-5 h-5" />
