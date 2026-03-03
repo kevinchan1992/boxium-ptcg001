@@ -85,8 +85,13 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
 
 type VerifyResult = {
   verified: boolean;
+  payeeVerified: boolean;
+  detectedPayee: string | null;
+  amountVerified: boolean;
   detectedAmount: number | null;
   currency: string | null;
+  statusVerified: boolean;
+  detectedStatus: string | null;
   confidence: "high" | "medium" | "low";
   reason: string;
 };
@@ -364,25 +369,55 @@ export default function MarketplaceListing() {
                           <span>AI 正在驗證付款金額...</span>
                         </div>
                       ) : verifyResult ? (
-                        <div className={`rounded-lg p-3 text-sm ${verifyResult.verified ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
-                          <div className="flex items-center gap-2 font-medium">
+                        <div className={`rounded-lg p-3 text-sm space-y-2 ${verifyResult.verified ? "bg-green-50 border border-green-200" : "bg-orange-50 border border-orange-200"}`}>
+                          <div className="flex items-center gap-2 font-medium mb-2">
                             {verifyResult.verified
-                              ? <><CheckCircle className="w-4 h-4 text-green-600" /><span className="text-green-800">金額驗證成功</span></>
-                              : <><XCircle className="w-4 h-4 text-red-600" /><span className="text-red-800">金額不符</span></>
+                              ? <><CheckCircle className="w-4 h-4 text-green-600" /><span className="text-green-800">三項驗證全部通過</span></>
+                              : <><XCircle className="w-4 h-4 text-orange-600" /><span className="text-orange-800">驗證未完全通過</span></>
                             }
                           </div>
-                          <p className={`mt-1 ${verifyResult.verified ? "text-green-700" : "text-red-700"}`}>
+                          {/* Three check items */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2 text-xs">
+                              {verifyResult.payeeVerified
+                                ? <CheckCircle className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                                : <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                              }
+                              <span className={verifyResult.payeeVerified ? "text-green-700" : "text-red-700"}>
+                                收款方：{verifyResult.detectedPayee ?? "未識別"}
+                                {!verifyResult.payeeVerified && " （需為「零度有限公司」）"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs">
+                              {verifyResult.amountVerified
+                                ? <CheckCircle className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                                : <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                              }
+                              <span className={verifyResult.amountVerified ? "text-green-700" : "text-red-700"}>
+                                金額：{verifyResult.currency ?? "HKD"} {verifyResult.detectedAmount ?? "未識別"}
+                                {!verifyResult.amountVerified && ` （需為 HKD ${price.toFixed(2)}）`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs">
+                              {verifyResult.statusVerified
+                                ? <CheckCircle className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                                : <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                              }
+                              <span className={verifyResult.statusVerified ? "text-green-700" : "text-red-700"}>
+                                狀態：{verifyResult.detectedStatus ?? "未識別"}
+                                {!verifyResult.statusVerified && " （需為「成功」）"}
+                              </span>
+                            </div>
+                          </div>
+                          <p className={`text-xs mt-1 ${verifyResult.verified ? "text-green-700" : "text-orange-700"}`}>
                             {verifyResult.reason}
                           </p>
-                          {verifyResult.detectedAmount !== null && (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              識別金額：{verifyResult.currency ?? ""} {verifyResult.detectedAmount} 
-                              （信心度：{verifyResult.confidence === "high" ? "高" : verifyResult.confidence === "medium" ? "中" : "低"}）
-                            </p>
-                          )}
+                          <p className="text-xs text-muted-foreground">
+                            AI 信心度：{verifyResult.confidence === "high" ? "高" : verifyResult.confidence === "medium" ? "中" : "低"}
+                          </p>
                           {!verifyResult.verified && (
                             <button
-                              className="mt-2 text-xs text-blue-600 underline"
+                              className="mt-1 text-xs text-blue-600 underline"
                               onClick={() => { setProofUrl(""); setVerifyResult(null); }}
                             >
                               重新上傳截圖

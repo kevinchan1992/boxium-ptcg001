@@ -481,13 +481,12 @@ export const marketplaceRouter = router({
           messages: [
             {
               role: "system",
-              content: `You are a payment verification assistant. Analyze the payment screenshot and extract the payment amount. 
-Respond with JSON only: { "verified": boolean, "detectedAmount": number | null, "currency": string | null, "confidence": "high" | "medium" | "low", "reason": string }
-- verified: true if the detected amount matches the expected amount (within 1% tolerance)
-- detectedAmount: the amount you found in the screenshot (number, no currency symbol)
-- currency: the currency detected (e.g. "HKD", "USD")
-- confidence: how confident you are in the reading
-- reason: brief explanation in Traditional Chinese`,
+              content: `You are a payment verification assistant for a Hong Kong e-commerce platform. Analyze the Alipay HK payment screenshot and verify three things:
+1. Payee name must be exactly "零度有限公司"
+2. Payment amount must match the expected amount (within 1% tolerance)
+3. Payment status must show "成功" (success)
+
+All three checks must pass for verified to be true. Respond with JSON only matching the exact schema provided.`,
             },
             {
               role: "user",
@@ -498,7 +497,12 @@ Respond with JSON only: { "verified": boolean, "detectedAmount": number | null, 
                 },
                 {
                   type: "text" as const,
-                  text: `請分析這張付款截圖，確認付款金額是否為 HKD ${input.expectedAmountHkd.toFixed(2)}。`,
+                  text: `請分析這張支付寶 HK 付款截圖，驗證以下三項：
+1. 收款方必須是「零度有限公司」
+2. 付款金額必須是 HKD ${input.expectedAmountHkd.toFixed(2)}
+3. 付款狀態必須顯示「成功」
+
+三項全部符合才算驗證通過。`,
                 },
               ],
             },
@@ -512,12 +516,17 @@ Respond with JSON only: { "verified": boolean, "detectedAmount": number | null, 
                 type: "object",
                 properties: {
                   verified: { type: "boolean" },
+                  payeeVerified: { type: "boolean" },
+                  detectedPayee: { type: ["string", "null"] },
+                  amountVerified: { type: "boolean" },
                   detectedAmount: { type: ["number", "null"] },
                   currency: { type: ["string", "null"] },
+                  statusVerified: { type: "boolean" },
+                  detectedStatus: { type: ["string", "null"] },
                   confidence: { type: "string", enum: ["high", "medium", "low"] },
                   reason: { type: "string" },
                 },
-                required: ["verified", "detectedAmount", "currency", "confidence", "reason"],
+                required: ["verified", "payeeVerified", "detectedPayee", "amountVerified", "detectedAmount", "currency", "statusVerified", "detectedStatus", "confidence", "reason"],
                 additionalProperties: false,
               },
             },
@@ -527,14 +536,30 @@ Respond with JSON only: { "verified": boolean, "detectedAmount": number | null, 
         const result = typeof content === "string" ? JSON.parse(content) : content;
         return {
           verified: result.verified === true,
-          detectedAmount: result.detectedAmount,
-          currency: result.currency,
-          confidence: result.confidence,
-          reason: result.reason,
+          payeeVerified: result.payeeVerified === true,
+          detectedPayee: result.detectedPayee ?? null,
+          amountVerified: result.amountVerified === true,
+          detectedAmount: result.detectedAmount ?? null,
+          currency: result.currency ?? null,
+          statusVerified: result.statusVerified === true,
+          detectedStatus: result.detectedStatus ?? null,
+          confidence: result.confidence as "high" | "medium" | "low",
+          reason: result.reason ?? "",
         };
       } catch (err) {
         console.error("[PaymentVerify] LLM error:", err);
-        return { verified: false, detectedAmount: null, currency: null, confidence: "low", reason: "無法分析截圖，請確保截圖清晰可見付款金額" };
+        return {
+          verified: false,
+          payeeVerified: false,
+          detectedPayee: null,
+          amountVerified: false,
+          detectedAmount: null,
+          currency: null,
+          statusVerified: false,
+          detectedStatus: null,
+          confidence: "low" as const,
+          reason: "無法分析截圖，請確保截圖清晰可見付款資訊",
+        };
       }
     }),
 
