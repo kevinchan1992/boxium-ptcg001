@@ -83,7 +83,7 @@ export default function MarketplaceListing() {
     </div>
   );
 
-  const price = parseFloat(listing.price as string);
+  const price = parseFloat(listing.priceHkd as string);
   const isAvailable = listing.status === "active" && listing.quantity > 0;
 
   return (

@@ -2664,8 +2664,8 @@ export async function getPublicListings(options: {
   if (search) conditions.push(like(marketplaceListings.title, `%${search}%`));
   if (condition) conditions.push(eq(marketplaceListings.condition, condition as any));
   if (sellerType) conditions.push(eq(marketplaceListings.sellerType, sellerType as any));
-  if (minPrice != null) conditions.push(sql`${marketplaceListings.price} >= ${minPrice}`);
-  if (maxPrice != null) conditions.push(sql`${marketplaceListings.price} <= ${maxPrice}`);
+  if (minPrice != null) conditions.push(sql`${marketplaceListings.priceHkd} >= ${minPrice}`);
+  if (maxPrice != null) conditions.push(sql`${marketplaceListings.priceHkd} <= ${maxPrice}`);
   const rows = await db.select().from(marketplaceListings)
     .where(and(...conditions))
     .orderBy(desc(marketplaceListings.createdAt))

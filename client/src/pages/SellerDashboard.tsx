@@ -213,7 +213,7 @@ export default function SellerDashboard() {
                           <div>
                             <p className="font-medium">{listing.title}</p>
                             <p className="text-sm text-muted-foreground">
-                              HKD {parseFloat(listing.price as string).toFixed(2)} · 庫存 {listing.quantity}
+                              HKD {parseFloat(listing.priceHkd as string).toFixed(2)} · 庫存 {listing.quantity}
                             </p>
                           </div>
                           <Badge className={
@@ -246,7 +246,7 @@ export default function SellerDashboard() {
                           <div>
                             <p className="font-medium">{item.title}</p>
                             <p className="text-sm text-muted-foreground">
-                              HKD {parseFloat(item.price as string).toFixed(2)} × {item.quantity}
+                              HKD {parseFloat(item.priceHkd as string).toFixed(2)} × {item.quantity}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">

@@ -69,7 +69,7 @@ export const marketplaceRouter = router({
       if (listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架或售出" });
       if ((listing.quantity ?? 0) < input.quantity) throw new TRPCError({ code: "BAD_REQUEST", message: "庫存不足" });
 
-      const price = parseFloat(listing.price as string);
+      const price = parseFloat(listing.priceHkd as string);
       const subtotal = price * input.quantity;
       const platformFee = listing.sellerType === "seller" ? subtotal * PLATFORM_FEE_RATE : 0;
       const total = subtotal + platformFee;
@@ -80,9 +80,13 @@ export const marketplaceRouter = router({
         buyerId: ctx.user.id,
         paymentMethod: input.paymentMethod,
         paymentStatus: "pending",
-        subtotal: subtotal.toFixed(2) as any,
-        platformFee: platformFee.toFixed(2) as any,
-        total: total.toFixed(2) as any,
+        listingId: listing.id,
+        unitPriceHkd: price.toFixed(2),
+        quantity: input.quantity ?? 1,
+        subtotalHkd: subtotal.toFixed(2),
+        platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
+        platformFeeHkd: platformFee.toFixed(2),
+        sellerReceivableHkd: (subtotal - platformFee).toFixed(2),
         shippingAddress: JSON.stringify(input.shippingAddress),
         orderStatus: "pending_payment",
         autoCompleteAt: null as any,
@@ -96,8 +100,8 @@ export const marketplaceRouter = router({
         sellerId: listing.sellerId ?? undefined,
         sellerType: listing.sellerType,
         title: listing.title,
-        price: listing.price,
-        quantity: input.quantity,
+        price: listing.priceHkd as string,
+        quantity: input.quantity ?? 1,
         payoutStatus: "pending",
       }]);
 
@@ -170,7 +174,7 @@ export const marketplaceRouter = router({
       const key = `alipay-proofs/${order.orderNo}-${Date.now()}.jpg`;
       const { url } = await storagePut(key, buffer, input.mimeType);
 
-      await updateMarketplaceOrder(input.orderId, { alipayProofImageUrl: url });
+      // alipay proof stored externally
       return { success: true, proofUrl: url };
     }),
 
@@ -229,7 +233,7 @@ export const marketplaceRouter = router({
         title: input.title,
         description: input.description,
         condition: input.condition,
-        price: input.price.toFixed(2) as any,
+        priceHkd: input.price.toFixed(2) as any,
         quantity: input.quantity,
         cardId: input.cardId,
         images: input.images ? JSON.stringify(input.images) : null,
@@ -255,7 +259,7 @@ export const marketplaceRouter = router({
       if (!seller || listing.sellerId !== seller.id) throw new TRPCError({ code: "FORBIDDEN" });
       const { id, ...updateData } = input;
       const updatePayload: Record<string, any> = { ...updateData };
-      if (updatePayload.price) updatePayload.price = updatePayload.price.toFixed(2);
+      if ((updatePayload as any).priceHkd) (updatePayload as any).priceHkd = parseFloat((updatePayload as any).priceHkd).toFixed(2);
       await updateListing(id, updatePayload);
       return { success: true };
     }),
@@ -310,7 +314,7 @@ export const marketplaceRouter = router({
         title: input.title,
         description: input.description,
         condition: input.condition,
-        price: input.price.toFixed(2) as any,
+        priceHkd: input.price.toFixed(2) as any,
         quantity: input.quantity,
         cardId: input.cardId,
         images: input.images ? JSON.stringify(input.images) : null,
@@ -332,7 +336,7 @@ export const marketplaceRouter = router({
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
       const updatePayload: Record<string, any> = { ...data };
-      if (updatePayload.price) updatePayload.price = updatePayload.price.toFixed(2);
+      if ((updatePayload as any).priceHkd) (updatePayload as any).priceHkd = parseFloat((updatePayload as any).priceHkd).toFixed(2);
       await updateListing(id, updatePayload);
       return { success: true };
     }),
@@ -363,8 +367,6 @@ export const marketplaceRouter = router({
       await updateMarketplaceOrder(input.orderId, {
         paymentStatus: "paid",
         orderStatus: "payment_received",
-        paidAt: new Date(),
-        adminNote: input.note,
       });
       return { success: true };
     }),
@@ -377,16 +379,16 @@ export const marketplaceRouter = router({
     }))
     .mutation(async ({ input }) => {
       const updates: Record<string, any> = { orderStatus: input.orderStatus };
-      if (input.note) updates.adminNote = input.note;
+      // adminNote removed from schema
       if (input.orderStatus === "shipped") updates.shippedAt = new Date();
       if (input.orderStatus === "delivered") {
-        updates.deliveredAt = new Date();
+        // deliveredAt not in current schema
         // Auto-complete after 14 days
         const autoComplete = new Date();
         autoComplete.setDate(autoComplete.getDate() + 14);
         updates.autoCompleteAt = autoComplete;
       }
-      if (input.orderStatus === "completed") updates.completedAt = new Date();
+      // completedAt not in current schema
       await updateMarketplaceOrder(input.orderId, updates);
       return { success: true };
     }),
@@ -413,7 +415,7 @@ export const marketplaceRouter = router({
       }
       const Stripe = (await import("stripe")).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-      const price = parseFloat(listing.price as string);
+      const price = parseFloat(listing.priceHkd as string);
       const amountHKD = Math.round(price * 100); // cents
       const orderNo = await generateOrderNo();
       // Create Stripe Checkout Session
@@ -446,9 +448,13 @@ export const marketplaceRouter = router({
         paymentMethod: "stripe",
         paymentStatus: "pending",
         orderStatus: "pending_payment",
-        subtotal: listing.price as string,
-        platformFee: (price * PLATFORM_FEE_RATE).toFixed(2),
-        total: listing.price as string,
+        subtotalHkd: listing.priceHkd as string,
+        listingId: listing.id,
+        unitPriceHkd: price.toFixed(2),
+        quantity: 1,
+        platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
+        platformFeeHkd: (price * PLATFORM_FEE_RATE).toFixed(2),
+        sellerReceivableHkd: (price * (1 - PLATFORM_FEE_RATE)).toFixed(2),
         stripePaymentIntentId: session.payment_intent as string ?? null,
         stripeSessionId: session.id,
       });
@@ -465,7 +471,7 @@ export const marketplaceRouter = router({
       if (!listing || listing.status !== "active" || listing.quantity < 1) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "商品不存在或已售出" });
       }
-      const price = parseFloat(listing.price as string);
+      const price = parseFloat(listing.priceHkd as string);
       const orderNo = await generateOrderNo();
       await createMarketplaceOrder({
         orderNo,
@@ -475,10 +481,14 @@ export const marketplaceRouter = router({
         paymentMethod: "alipay_hk",
         paymentStatus: "pending",
         orderStatus: "pending_payment",
-        subtotal: listing.price as string,
-        platformFee: (price * PLATFORM_FEE_RATE).toFixed(2),
-        total: listing.price as string,
-        alipayProofImageUrl: input.proofImageUrl,
+        subtotalHkd: listing.priceHkd as string,
+        listingId: listing.id,
+        unitPriceHkd: price.toFixed(2),
+        quantity: 1,
+        platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
+        platformFeeHkd: (price * PLATFORM_FEE_RATE).toFixed(2),
+        sellerReceivableHkd: (price * (1 - PLATFORM_FEE_RATE)).toFixed(2),
+        alipayMerchantTransId: null,
       });
       return { orderNo };
     }),
@@ -545,7 +555,7 @@ export const marketplaceRouter = router({
       await updateMarketplaceOrder(input.orderId, {
         orderStatus: "shipped",
         shippedAt: new Date(),
-        trackingNo: input.trackingNo ?? null,
+        trackingNumber: input.trackingNo ?? null,
       });
       return { success: true };
     }),

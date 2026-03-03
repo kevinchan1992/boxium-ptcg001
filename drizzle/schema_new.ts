@@ -718,11 +718,14 @@ export const sellerProfiles = mysqlTable("sellerProfiles", {
   userId: int("userId").notNull(), // FK to users table
   displayName: varchar("displayName", { length: 100 }).notNull(),
   bio: text("bio"),
+  avatarUrl: text("avatarUrl"),
   stripeConnectId: varchar("stripeConnectId", { length: 100 }), // Stripe Connect account ID
   stripeConnectStatus: mysqlEnum("stripeConnectStatus", ["pending", "active", "restricted", "disabled"]).default("pending").notNull(),
-  isActive: boolean("isActive").default(false).notNull(), // Admin approved
+  stripeOnboardingUrl: text("stripeOnboardingUrl"),
   totalSales: int("totalSales").default(0).notNull(),
-  rating: decimal("rating", { precision: 3, scale: 2 }).default("0.00"),
+  avgRating: decimal("avgRating", { precision: 3, scale: 2 }).default("0.00"),
+  ratingCount: int("ratingCount").default(0).notNull(),
+  isActive: boolean("isActive").default(false).notNull(), // Admin approved
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 }, (table) => ({
@@ -740,21 +743,30 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   sellerType: mysqlEnum("sellerType", ["platform", "seller"]).notNull(), // platform = BOXIUM direct, seller = C2C
   sellerId: int("sellerId"), // NULL for platform listings, sellerProfiles.id for C2C
   // Product info
+  cardId: int("cardId"), // FK to cards table
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
   condition: mysqlEnum("condition", ["mint", "near_mint", "excellent", "good", "played", "poor", "sealed"]).notNull(),
-  // Card reference (optional - links to cards/sealedProducts table)
-  cardId: int("cardId"), // FK to cards table
-  sealedProductId: int("sealedProductId"), // FK to sealedProducts table
+  language: varchar("language", { length: 20 }),
   // Pricing
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // HKD
+  priceHkd: decimal("priceHkd", { precision: 10, scale: 2 }).notNull(), // HKD
   quantity: int("quantity").default(1).notNull(),
+  remainingQuantity: int("remainingQuantity").default(1).notNull(),
   // Images (JSON array of URLs)
   images: text("images"), // JSON array of image URLs
+  // Market reference price
+  refMarketPriceHkd: decimal("refMarketPriceHkd", { precision: 10, scale: 2 }),
+  refMarketPriceDate: timestamp("refMarketPriceDate"),
   // Status
   status: mysqlEnum("status", ["draft", "pending_review", "active", "sold", "removed"]).default("draft").notNull(),
+  rejectedReason: text("rejectedReason"),
+  // Offer settings
+  allowOffers: boolean("allowOffers").default(false).notNull(),
+  minOfferHkd: decimal("minOfferHkd", { precision: 10, scale: 2 }),
   // Metadata
   viewCount: int("viewCount").default(0).notNull(),
+  favoriteCount: int("favoriteCount").default(0).notNull(),
+  listedAt: timestamp("listedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 }, (table) => ({
@@ -773,22 +785,24 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   id: int("id").autoincrement().primaryKey(),
   orderNo: varchar("orderNo", { length: 50 }).notNull(), // e.g. BOXIUM-20240101-001
   buyerId: int("buyerId").notNull(), // FK to users table
-  // Payment
-  paymentMethod: mysqlEnum("paymentMethod", ["stripe", "alipay_hk"]).notNull(),
-  paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "failed", "refunded"]).default("pending").notNull(),
-  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 200 }),
-  alipayTradeNo: varchar("alipayTradeNo", { length: 100 }), // Alipay HK trade number (for future API)
-  alipayProofImageUrl: text("alipayProofImageUrl"), // Buyer uploads payment screenshot
-  stripeSessionId: varchar("stripeSessionId", { length: 200 }), // Stripe Checkout Session ID
-  trackingNo: varchar("trackingNo", { length: 100 }), // Shipping tracking number
+  listingId: int("listingId").notNull(), // FK to marketplaceListings
   sellerId: int("sellerId"), // FK to users table (null for platform listings)
   sellerType: mysqlEnum("sellerType", ["platform", "seller"]).default("platform").notNull(),
+  unitPriceHkd: decimal("unitPriceHkd", { precision: 10, scale: 2 }).notNull(),
+  quantity: int("quantity").default(1).notNull(),
   // Amounts (HKD)
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
-  platformFee: decimal("platformFee", { precision: 10, scale: 2 }).default("0.00").notNull(),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  // Shipping
-  shippingAddress: text("shippingAddress"), // JSON
+  subtotalHkd: decimal("subtotalHkd", { precision: 10, scale: 2 }).notNull(),
+  platformFeeRate: decimal("platformFeeRate", { precision: 5, scale: 4 }).default("0.0500").notNull(),
+  platformFeeHkd: decimal("platformFeeHkd", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  sellerReceivableHkd: decimal("sellerReceivableHkd", { precision: 10, scale: 2 }).notNull(),
+  // Payment
+  paymentMethod: mysqlEnum("paymentMethod", ["stripe", "alipay_hk"]).notNull(),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 200 }),
+  stripeChargeId: varchar("stripeChargeId", { length: 200 }),
+  stripeTransferId: varchar("stripeTransferId", { length: 200 }),
+  alipayAcquirementId: varchar("alipayAcquirementId", { length: 100 }),
+  alipayMerchantTransId: varchar("alipayMerchantTransId", { length: 100 }),
+  paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "failed", "refunded"]).default("pending").notNull(),
   // Order status
   orderStatus: mysqlEnum("orderStatus", [
     "pending_payment",
@@ -800,16 +814,26 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
     "cancelled",
     "disputed"
   ]).default("pending_payment").notNull(),
-  // Timestamps
-  paidAt: timestamp("paidAt"),
+  // Shipping
+  shippingName: varchar("shippingName", { length: 100 }),
+  shippingPhone: varchar("shippingPhone", { length: 30 }),
+  shippingAddress: text("shippingAddress"), // JSON
+  shippingMethod: varchar("shippingMethod", { length: 50 }),
+  trackingNumber: varchar("trackingNumber", { length: 100 }),
   shippedAt: timestamp("shippedAt"),
-  deliveredAt: timestamp("deliveredAt"),
-  completedAt: timestamp("completedAt"),
   autoCompleteAt: timestamp("autoCompleteAt"), // 14 days after delivered
+  buyerConfirmedAt: timestamp("buyerConfirmedAt"),
+  disputeOpenedAt: timestamp("disputeOpenedAt"),
+  disputeReason: text("disputeReason"),
+  disputeResolvedAt: timestamp("disputeResolvedAt"),
+  disputeResolution: text("disputeResolution"),
+  payoutStatus: mysqlEnum("payoutStatus", ["pending", "processing", "paid", "failed"]).default("pending").notNull(),
+  stripeTransferError: text("stripeTransferError"),
+  paymentExpiresAt: timestamp("paymentExpiresAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-  // Admin notes
-  adminNote: text("adminNote"),
+  stripeSessionId: varchar("stripeSessionId", { length: 200 }),
+  trackingNo: varchar("trackingNo", { length: 100 }),
 }, (table) => ({
   orderNoIdx: index("mo_orderNo_idx").on(table.orderNo),
   buyerIdIdx: index("mo_buyerId_idx").on(table.buyerId),
