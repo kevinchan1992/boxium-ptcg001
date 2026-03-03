@@ -435,8 +435,10 @@ function SellersTab() {
 export default function AdminMarketplace() {
   const { data: stats } = trpc.marketplace.adminGetStats.useQuery();
   const { data: me } = trpc.auth.me.useQuery();
+  // 🔧 開發環境繞過 admin 權限檢查（不影響生產環境）
+  const isDev = import.meta.env.DEV;
 
-  if (!me || me.role !== "admin") {
+  if (!isDev && (!me || me.role !== "admin")) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

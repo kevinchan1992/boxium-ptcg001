@@ -1,0 +1,82 @@
+{
+  "query": "SELECT id, name, email, role FROM users LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, email, role FROM users LIMIT 20;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Admin",
+      "email": "xyz.asia.co@gmail.com",
+      "role": "admin"
+    },
+    {
+      "id": "8",
+      "name": "kevin",
+      "email": "tearshim1004@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "30001",
+      "name": "Suki Ma",
+      "email": "sin_man1124@hotmail.com",
+      "role": "admin"
+    },
+    {
+      "id": "60001",
+      "name": "View History Test User",
+      "email": "viewhistory-test@example.com",
+      "role": "user"
+    },
+    {
+      "id": "60002",
+      "name": "Remove Watchlist Test User",
+      "email": "remove-watchlist-test@example.com",
+      "role": "user"
+    },
+    {
+      "id": "60003",
+      "name": "Profile Test User",
+      "email": "profile-test@example.com",
+      "role": "user"
+    },
+    {
+      "id": "90002",
+      "name": "Chan Andy",
+      "email": "zero.c.co.ltd@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "90003",
+      "name": "Chan Kevin",
+      "email": "chantzehim@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "90004",
+      "name": "Chan Kevin",
+      "email": "boxium.gamecard@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "120007",
+      "name": "",
+      "email": "",
+      "role": "user"
+    },
+    {
+      "id": "120008",
+      "name": "Test User",
+      "email": "test-session@example.com",
+      "role": "user"
+    },
+    {
+      "id": "240009",
+      "name": "Watchlist Test User",
+      "email": "watchlist-test@example.com",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n1\tAdmin\txyz.asia.co@gmail.com\tadmin\n8\tkevin\ttearshim1004@gmail.com\tuser\n30001\tSuki Ma\tsin_man1124@hotmail.com\tadmin\n60001\tView History Test User\tviewhistory-test@example.com\tuser\n60002\tRemove Watchlist Test User\tremove-watchlist-test@example.com\tuser\n60003\tProfile Test User\tprofile-test@example.com\tuser\n90002\tChan Andy\tzero.c.co.ltd@gmail.com\tuser\n90003\tChan Kevin\tchantzehim@gmail.com\tuser\n90004\tChan Kevin\tboxium.gamecard@gmail.com\tuser\n120007\t\t\tuser\n120008\tTest User\ttest-session@example.com\tuser\n240009\tWatchlist Test User\twatchlist-test@example.com\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 1524
+}
