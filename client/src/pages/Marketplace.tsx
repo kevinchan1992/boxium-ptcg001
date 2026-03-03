@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Package, ChevronLeft, ChevronRight, X, ShoppingBag, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
-import { CONDITION_GROUPS, CONDITION_SHORT, CONDITION_BADGE, type ConditionValue } from "@/lib/conditions";
+import { Search, Package, ChevronLeft, ChevronRight, X, ShoppingBag, SlidersHorizontal, ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CONDITION_GROUPS, CONDITION_SHORT, CONDITION_BADGE, CONDITION_TOOLTIP, type ConditionValue } from "@/lib/conditions";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -131,7 +132,7 @@ export default function Marketplace() {
     page,
     pageSize: PAGE_SIZE,
     search: search || undefined,
-    condition: selectedConditions.length === 1 ? selectedConditions[0] : undefined,
+    conditions: selectedConditions.length > 0 ? selectedConditions : undefined,
     sellerType: sellerType !== "all" ? (sellerType as "platform" | "seller") : undefined,
     sortBy,
   });
@@ -197,36 +198,61 @@ export default function Marketplace() {
 
       {/* Condition - grouped by grading company */}
       <FilterSection title="品相">
-        <div className="space-y-3">
-          {CONDITION_GROUPS.map(group => (
-            <div key={group.group}>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{group.group}</p>
-              <div className="space-y-1">
-                {group.items.map(item => {
-                  const checked = selectedConditions.includes(item.value);
-                  return (
-                    <label
-                      key={item.value}
-                      className="flex items-center gap-2 cursor-pointer group"
-                      onClick={() => toggleCondition(item.value)}
-                    >
-                      <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                        checked ? "bg-[#0A0A2E] border-[#0A0A2E]" : "border-gray-300 bg-white group-hover:border-[#0A0A2E]"
-                      }`}>
-                        {checked && (
-                          <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
-                            <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${CONDITION_BADGE[item.value as ConditionValue]}`}>{item.label}</span>
-                    </label>
-                  );
-                })}
+        <TooltipProvider delayDuration={200}>
+          <div className="space-y-3">
+            {CONDITION_GROUPS.map(group => (
+              <div key={group.group}>
+                {/* Group header with description tooltip */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1 cursor-help w-fit">
+                      {group.group}
+                      <HelpCircle className="w-3 h-3 text-gray-300" />
+                    </p>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-[200px] text-xs">
+                    {group.groupDesc}
+                  </TooltipContent>
+                </Tooltip>
+                <div className="space-y-1">
+                  {group.items.map(item => {
+                    const checked = selectedConditions.includes(item.value);
+                    return (
+                      <div key={item.value} className="flex items-center gap-1.5">
+                        <label
+                          className="flex items-center gap-2 cursor-pointer group flex-1"
+                          onClick={() => toggleCondition(item.value)}
+                        >
+                          <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                            checked ? "bg-[#0A0A2E] border-[#0A0A2E]" : "border-gray-300 bg-white group-hover:border-[#0A0A2E]"
+                          }`}>
+                            {checked && (
+                              <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                                <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${CONDITION_BADGE[item.value as ConditionValue]}`}>{item.label}</span>
+                        </label>
+                        {/* Per-item tooltip */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button className="shrink-0 text-gray-300 hover:text-gray-500 transition-colors">
+                              <HelpCircle className="w-3 h-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[200px] text-xs">
+                            {CONDITION_TOOLTIP[item.value as ConditionValue]}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </TooltipProvider>
       </FilterSection>
 
       {/* Seller Type */}

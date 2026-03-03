@@ -2654,16 +2654,21 @@ export async function getAllSellerProfiles(page = 1, pageSize = 20) {
 // --- Marketplace Listings ---
 export async function getPublicListings(options: {
   page?: number; pageSize?: number; search?: string;
-  condition?: string; sellerType?: string; minPrice?: number; maxPrice?: number;
+  condition?: string; conditions?: string[]; sellerType?: string; minPrice?: number; maxPrice?: number;
   sortBy?: 'newest' | 'price_asc' | 'price_desc';
 }) {
   const db = await getDb();
-  const { page = 1, pageSize = 20, search, condition, sellerType, minPrice, maxPrice, sortBy = 'newest' } = options;
+  const { page = 1, pageSize = 20, search, condition, conditions: conditionList, sellerType, minPrice, maxPrice, sortBy = 'newest' } = options;
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
   const conditions = [eq(marketplaceListings.status, 'active')];
   if (search) conditions.push(like(marketplaceListings.title, `%${search}%`));
-  if (condition) conditions.push(eq(marketplaceListings.condition, condition as any));
+  // Support multi-condition array (OR) or single condition
+  if (conditionList && conditionList.length > 0) {
+    conditions.push(inArray(marketplaceListings.condition, conditionList as any[]));
+  } else if (condition) {
+    conditions.push(eq(marketplaceListings.condition, condition as any));
+  }
   if (sellerType) conditions.push(eq(marketplaceListings.sellerType, sellerType as any));
   if (minPrice != null) conditions.push(sql`${marketplaceListings.priceHkd} >= ${minPrice}`);
   if (maxPrice != null) conditions.push(sql`${marketplaceListings.priceHkd} <= ${maxPrice}`);

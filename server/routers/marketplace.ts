@@ -31,6 +31,7 @@ export const marketplaceRouter = router({
       pageSize: z.number().int().min(1).max(50).default(20),
       search: z.string().optional(),
       condition: z.string().optional(),
+      conditions: z.array(z.string()).optional(),
       sellerType: z.enum(["platform", "seller"]).optional(),
       minPrice: z.number().optional(),
       maxPrice: z.number().optional(),

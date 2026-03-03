@@ -7,15 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, CreditCard, Smartphone, Package, Star, Shield, Truck, AlertCircle, ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, CreditCard, Smartphone, Package, Star, Shield, Truck, AlertCircle, ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader2, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CONDITION_BADGE, CONDITION_FULL, CONDITION_TOOLTIP, CONDITION_GROUP_COLOR, CONDITION_GROUPS, type ConditionValue } from "@/lib/conditions";
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
-const conditionLabel: Record<string, string> = {
-  psa10: "PSA 10", psa9: "PSA 9", psa8_below: "PSA 8 以下",
-  bgs10: "BGS 10", bgs9: "BGS 9", bgs8_below: "BGS 8 以下",
-  tag10: "TAG 10", tag9_below: "TAG 9 以下",
-  raw_a: "A品 (Raw)", raw_b: "B品 (Raw)", raw_c: "C品 (Raw)", raw_d: "D品 (Raw)",
-};
+
+// Helper: get the group name for a condition value
+function getConditionGroup(condition: string): string {
+  for (const g of CONDITION_GROUPS) {
+    if (g.items.some(i => i.value === condition)) return g.group;
+  }
+  return "";
+}
 
 function ListingImageGallery({ images, title }: { images: string[] | null; title: string }) {
   const [activeIdx, setActiveIdx] = useState(0);
@@ -229,9 +233,27 @@ export default function MarketplaceListing() {
           <div className="space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <Badge className="bg-green-100 text-green-800">
-                  {conditionLabel[listing.condition] ?? listing.condition}
-                </Badge>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1.5 cursor-help">
+                        {/* Group badge */}
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${CONDITION_GROUP_COLOR[getConditionGroup(listing.condition)] ?? "bg-gray-100 text-gray-700"}`}>
+                          {getConditionGroup(listing.condition)}
+                        </span>
+                        {/* Specific grade badge */}
+                        <span className={`text-sm font-semibold px-3 py-1 rounded-full ${CONDITION_BADGE[listing.condition as ConditionValue] ?? "bg-gray-100 text-gray-700 border border-gray-300"}`}>
+                          {CONDITION_FULL[listing.condition as ConditionValue] ?? listing.condition}
+                        </span>
+                        <HelpCircle className="w-3.5 h-3.5 text-gray-400" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs text-sm">
+                      <p className="font-semibold mb-1">{CONDITION_FULL[listing.condition as ConditionValue] ?? listing.condition}</p>
+                      <p className="text-muted-foreground">{CONDITION_TOOLTIP[listing.condition as ConditionValue] ?? ""}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Badge variant="outline" className={listing.sellerType === "platform" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}>
                   {listing.sellerType === "platform" ? "🏻 BOXIUM 官方" : "👤 個人賣家"}
                 </Badge>
