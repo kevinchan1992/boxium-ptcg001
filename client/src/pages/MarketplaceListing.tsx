@@ -174,12 +174,23 @@ export default function MarketplaceListing() {
                   {conditionLabel[listing.condition] ?? listing.condition}
                 </Badge>
                 <Badge variant="outline" className={listing.sellerType === "platform" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}>
-                  {listing.sellerType === "platform" ? "🏪 BOXIUM 官方" : "👤 個人賣家"}
+                  {listing.sellerType === "platform" ? "🏻 BOXIUM 官方" : "👤 個人賣家"}
                 </Badge>
                 {!isAvailable && <Badge variant="outline" className="bg-red-100 text-red-800">已售出</Badge>}
               </div>
               <h1 className="text-2xl font-bold">{listing.title}</h1>
               {listing.description && <p className="text-muted-foreground mt-2">{listing.description}</p>}
+              {/* Seller info for C2C listings */}
+              {listing.sellerType === "seller" && (listing as any).sellerProfile && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">{(listing as any).sellerProfile.displayName}</span>
+                  <span>·</span>
+                  <span>已售出 {(listing as any).sellerProfile.totalSales} 件</span>
+                  {(listing as any).sellerProfile.ratingCount > 0 && (
+                    <><span>·</span><span>{(listing as any).sellerProfile.ratingCount} 個評價</span></>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="bg-card border rounded-xl p-4">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,95 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X } from "lucide-react";
 import { Link } from "wouter";
+
+// ─── ImageUploader ────────────────────────────────────────────────────────────
+function ImageUploader({
+  images,
+  onChange,
+  maxImages = 5,
+}: {
+  images: string[];
+  onChange: (imgs: string[]) => void;
+  maxImages?: number;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0) return;
+      const remaining = maxImages - images.length;
+      if (remaining <= 0) { toast.error(`最多上傳 ${maxImages} 張圖片`); return; }
+      const toUpload = Array.from(files).slice(0, remaining);
+      setUploading(true);
+      try {
+        const uploaded: string[] = [];
+        for (const file of toUpload) {
+          if (!file.type.startsWith("image/")) { toast.error(`${file.name} 不是圖片`); continue; }
+          if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} 超過 10MB`); continue; }
+          const fd = new FormData();
+          fd.append("file", file);
+          const res = await fetch("/api/upload-marketplace-image", { method: "POST", body: fd });
+          if (!res.ok) throw new Error("上傳失敗");
+          const { url } = await res.json();
+          uploaded.push(url);
+        }
+        if (uploaded.length > 0) { onChange([...images, ...uploaded]); toast.success(`已上傳 ${uploaded.length} 張圖片`); }
+      } catch (e: any) {
+        toast.error(e.message || "圖片上傳失敗");
+      } finally {
+        setUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    },
+    [images, onChange, maxImages]
+  );
+
+  const handleDrop = useCallback((e: React.DragEvent) => { e.preventDefault(); handleFiles(e.dataTransfer.files); }, [handleFiles]);
+
+  return (
+    <div className="space-y-2">
+      <Label>商品圖片（最多 {maxImages} 張）</Label>
+      {images.length > 0 && (
+        <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+          {images.map((url, idx) => (
+            <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
+              <img src={url} alt={`商品圖 ${idx + 1}`} className="w-full h-full object-cover" />
+              <button type="button" onClick={() => onChange(images.filter((_, i) => i !== idx))}
+                className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <X className="w-3 h-3" />
+              </button>
+              {idx === 0 && <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1 rounded">封面</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {images.length < maxImages && (
+        <div
+          className="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors"
+          onClick={() => fileInputRef.current?.click()}
+          onDrop={handleDrop}
+          onDragOver={e => e.preventDefault()}
+        >
+          {uploading ? (
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm">上傳中...</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1 text-muted-foreground">
+              <ImagePlus className="w-6 h-6" />
+              <span className="text-sm">點擊或拖放圖片上傳</span>
+              <span className="text-xs">支援 JPG、PNG、WebP，每張最大 10MB</span>
+            </div>
+          )}
+        </div>
+      )}
+      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
+    </div>
+  );
+}
 
 const conditionOptions = [
   { value: "mint", label: "Mint (M)" },
@@ -39,6 +126,7 @@ export default function SellerDashboard() {
   const [listingForm, setListingForm] = useState({
     title: "", description: "", condition: "near_mint", price: "", quantity: "1",
   });
+  const [listingImages, setListingImages] = useState<string[]>([]);
 
   const { data: me } = trpc.auth.me.useQuery();
   const { data: sellerProfile, refetch: refetchProfile } = trpc.marketplace.getMySellerProfile.useQuery(
@@ -60,7 +148,13 @@ export default function SellerDashboard() {
   });
 
   const createListingMutation = trpc.marketplace.createListing.useMutation({
-    onSuccess: () => { toast.success("商品已提交審核"); setShowNewListing(false); refetchListings(); },
+    onSuccess: () => {
+      toast.success("商品已提交審核");
+      setShowNewListing(false);
+      setListingForm({ title: "", description: "", condition: "near_mint", price: "", quantity: "1" });
+      setListingImages([]);
+      refetchListings();
+    },
     onError: (e) => toast.error(e.message),
   });
 
@@ -207,27 +301,43 @@ export default function SellerDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {myListings.map((listing) => (
-                      <Card key={listing.id}>
-                        <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
-                          <div>
-                            <p className="font-medium">{listing.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              HKD {parseFloat(listing.priceHkd as string).toFixed(2)} · 庫存 {listing.quantity}
-                            </p>
-                          </div>
-                          <Badge className={
-                            listing.status === "active" ? "bg-green-100 text-green-800" :
-                            listing.status === "pending_review" ? "bg-yellow-100 text-yellow-800" :
-                            "bg-gray-100 text-gray-800"
-                          }>
-                            {listing.status === "active" ? "上架中" :
-                             listing.status === "pending_review" ? "審核中" :
-                             listing.status === "sold" ? "已售出" : listing.status}
-                          </Badge>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    {myListings.map((listing) => {
+                      let coverImg: string | null = null;
+                      try {
+                        const imgs = listing.images ? JSON.parse(listing.images as string) : null;
+                        coverImg = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null;
+                      } catch {}
+                      return (
+                        <Card key={listing.id}>
+                          <CardContent className="flex items-center gap-4 py-3 flex-wrap">
+                            <div className="w-14 h-14 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0">
+                              {coverImg ? (
+                                <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Package className="w-6 h-6 text-muted-foreground/40" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{listing.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                HKD {parseFloat(listing.priceHkd as string).toFixed(2)} · 庫存 {listing.quantity}
+                              </p>
+                            </div>
+                            <Badge className={
+                              listing.status === "active" ? "bg-green-100 text-green-800" :
+                              listing.status === "pending_review" ? "bg-yellow-100 text-yellow-800" :
+                              "bg-gray-100 text-gray-800"
+                            }>
+                              {listing.status === "active" ? "上架中" :
+                               listing.status === "pending_review" ? "審核中" :
+                               listing.status === "sold" ? "已售出" : listing.status}
+                            </Badge>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </TabsContent>
@@ -331,9 +441,10 @@ export default function SellerDashboard() {
       </Dialog>
 
       <Dialog open={showNewListing} onOpenChange={setShowNewListing}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>上架新商品</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            <ImageUploader images={listingImages} onChange={setListingImages} />
             <div>
               <Label>商品名稱 *</Label>
               <Input className="mt-1" placeholder="例如：Charizard ex 噴火龍 SAR"
@@ -379,6 +490,7 @@ export default function SellerDashboard() {
                 condition: listingForm.condition as any,
                 price: parseFloat(listingForm.price),
                 quantity: parseInt(listingForm.quantity),
+                images: listingImages.length > 0 ? listingImages : undefined,
               })}>
               {createListingMutation.isPending ? "提交中..." : "提交審核"}
             </Button>

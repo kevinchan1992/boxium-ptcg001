@@ -2655,9 +2655,10 @@ export async function getAllSellerProfiles(page = 1, pageSize = 20) {
 export async function getPublicListings(options: {
   page?: number; pageSize?: number; search?: string;
   condition?: string; sellerType?: string; minPrice?: number; maxPrice?: number;
+  sortBy?: 'newest' | 'price_asc' | 'price_desc';
 }) {
   const db = await getDb();
-  const { page = 1, pageSize = 20, search, condition, sellerType, minPrice, maxPrice } = options;
+  const { page = 1, pageSize = 20, search, condition, sellerType, minPrice, maxPrice, sortBy = 'newest' } = options;
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
   const conditions = [eq(marketplaceListings.status, 'active')];
@@ -2666,9 +2667,13 @@ export async function getPublicListings(options: {
   if (sellerType) conditions.push(eq(marketplaceListings.sellerType, sellerType as any));
   if (minPrice != null) conditions.push(sql`${marketplaceListings.priceHkd} >= ${minPrice}`);
   if (maxPrice != null) conditions.push(sql`${marketplaceListings.priceHkd} <= ${maxPrice}`);
+  const orderClause =
+    sortBy === 'price_asc' ? asc(marketplaceListings.priceHkd) :
+    sortBy === 'price_desc' ? desc(marketplaceListings.priceHkd) :
+    desc(marketplaceListings.createdAt);
   const rows = await db.select().from(marketplaceListings)
     .where(and(...conditions))
-    .orderBy(desc(marketplaceListings.createdAt))
+    .orderBy(orderClause)
     .limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(...conditions));
   return { listings: rows, total: Number(countRows[0]?.count ?? 0) };

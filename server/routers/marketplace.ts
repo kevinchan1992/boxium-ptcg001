@@ -33,6 +33,7 @@ export const marketplaceRouter = router({
       sellerType: z.enum(["platform", "seller"]).optional(),
       minPrice: z.number().optional(),
       maxPrice: z.number().optional(),
+      sortBy: z.enum(["newest", "price_asc", "price_desc"]).optional(),
     }))
     .query(async ({ input }) => {
       return getPublicListings(input);
@@ -45,7 +46,13 @@ export const marketplaceRouter = router({
       if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
       // Increment view count
       await updateListing(input.id, { viewCount: (listing.viewCount ?? 0) + 1 });
-      return listing;
+      // Fetch seller profile if C2C listing
+      let sellerProfile: { displayName: string; totalSales: number; ratingCount: number } | null = null;
+      if (listing.sellerType === "seller" && listing.sellerId) {
+        const sp = await getSellerProfileById(listing.sellerId);
+        if (sp) sellerProfile = { displayName: sp.displayName, totalSales: sp.totalSales ?? 0, ratingCount: sp.ratingCount ?? 0 };
+      }
+      return { ...listing, sellerProfile };
     }),
 
   // ============================================================

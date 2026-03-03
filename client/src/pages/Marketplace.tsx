@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Package, ChevronLeft, ChevronRight, SlidersHorizontal, X, ShoppingBag } from "lucide-react";
+import { Search, Package, ChevronLeft, ChevronRight, SlidersHorizontal, X, ShoppingBag, ArrowUpDown, Sparkles, Tag } from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -129,6 +129,7 @@ export default function Marketplace() {
   const [sellerType, setSellerType] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">("newest");
 
   const { data, isLoading } = trpc.marketplace.getListings.useQuery({
     page,
@@ -136,6 +137,7 @@ export default function Marketplace() {
     search: search || undefined,
     condition: condition !== "all" ? condition : undefined,
     sellerType: sellerType !== "all" ? (sellerType as "platform" | "seller") : undefined,
+    sortBy,
   });
 
   const listings = data?.listings ?? [];
@@ -166,8 +168,59 @@ export default function Marketplace() {
 
   const hasActiveFilters = condition !== "all" || sellerType !== "all" || search;
 
+  const handleSortChange = (val: string) => {
+    setSortBy(val as "newest" | "price_asc" | "price_desc");
+    setPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      {/* ── Featured Banner ── */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#1a0533] via-[#0d1a4a] to-[#1a0533] border-b border-border">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+        <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 relative">
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+            <div className="flex-1 text-center md:text-left">
+              <div className="inline-flex items-center gap-1.5 bg-primary/20 border border-primary/30 rounded-full px-3 py-1 text-xs text-primary font-medium mb-3">
+                <Sparkles className="w-3 h-3" />
+                BOXIUM 官方商城
+              </div>
+              <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">
+                精選寶可夢卡牌
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground max-w-md">
+                官方認證商品 · 品質保證 · 安全交易
+              </p>
+              <div className="flex items-center gap-4 mt-4 justify-center md:justify-start">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Tag className="w-3.5 h-3.5 text-primary" />
+                  <span>即時市場定價</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <ShoppingBag className="w-3.5 h-3.5 text-primary" />
+                  <span>支援 Stripe / 支付寶 HK</span>
+                </div>
+              </div>
+            </div>
+            <div className="hidden md:flex gap-3">
+              {["Mint", "NM", "EX", "Sealed"].map((grade, i) => (
+                <div key={grade} className={`w-16 h-22 rounded-xl border-2 flex flex-col items-center justify-center gap-1 text-xs font-bold cursor-pointer hover:scale-105 transition-transform ${
+                  i === 0 ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-400" :
+                  i === 1 ? "border-green-500/60 bg-green-500/10 text-green-400" :
+                  i === 2 ? "border-blue-500/60 bg-blue-500/10 text-blue-400" :
+                  "border-purple-500/60 bg-purple-500/10 text-purple-400"
+                }`}
+                  onClick={() => { handleConditionChange(i === 0 ? "mint" : i === 1 ? "near_mint" : i === 2 ? "excellent" : "sealed"); setShowFilters(true); }}
+                >
+                  <Package className="w-5 h-5" />
+                  {grade}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── Header ── */}
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -259,9 +312,9 @@ export default function Marketplace() {
 
       {/* ── Content ── */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Result count */}
+        {/* Result count + Sort */}
         {!isLoading && (
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <p className="text-sm text-muted-foreground">
               {total > 0 ? (
                 <>共 <span className="text-foreground font-medium">{total}</span> 件商品</>
@@ -269,12 +322,25 @@ export default function Marketplace() {
                 "暫無商品"
               )}
             </p>
-            {search && (
-              <Badge variant="secondary" className="gap-1 text-xs">
-                搜尋：{search}
-                <button onClick={clearSearch}><X className="w-3 h-3" /></button>
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {search && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  搜尋：{search}
+                  <button onClick={clearSearch}><X className="w-3 h-3" /></button>
+                </Badge>
+              )}
+              <Select value={sortBy} onValueChange={handleSortChange}>
+                <SelectTrigger className="w-36 h-8 text-xs gap-1">
+                  <ArrowUpDown className="w-3 h-3 shrink-0" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">最新上架</SelectItem>
+                  <SelectItem value="price_asc">價格由低至高</SelectItem>
+                  <SelectItem value="price_desc">價格由高至低</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         )}
 

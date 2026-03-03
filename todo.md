@@ -3457,3 +3457,12 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 前端 Login 頁面加入「開發模式快速登入」按鈕
 - [x] 確保生產環境完全不暴露此端點（NODE_ENV guard）
 - [x] 修復 cookie SameSite=None 讓跨域 HTTPS 環境（Manus preview）能正常設置 session cookie
+
+## 🛒 商城功能增強（Marketplace Enhancements）
+- [x] 賣家上架表單加入圖片上傳（複用 ImageUploader 組件）
+- [x] 賣家中心商品列表加入封面圖片縮圖
+- [x] 後端 getListings 加入 sortBy 參數（newest/price_asc/price_desc）
+- [x] 商城列表頁加入排序下拉選單
+- [x] 商城列表頁加入精選商品 Banner（含品相快捷按鈕）
+- [x] 商城詳情頁加入賣家資訊顯示（賣家名稱、已售出件數、評價數）
+- [ ] 商城詳情頁加入「相關商品」推薦區塊
