@@ -310,7 +310,7 @@ export const marketplaceRouter = router({
     .mutation(async ({ input }) => {
       const listing = await createListing({
         sellerType: "platform",
-        sellerId: null as any,
+        // sellerId intentionally omitted for platform listings (DB defaults to NULL)
         title: input.title,
         description: input.description,
         condition: input.condition,
