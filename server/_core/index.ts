@@ -157,6 +157,27 @@ async function startServer() {
       res.status(500).json({ error: "Failed to upload image" });
     }
   });
+  // Marketplace listing image upload API (up to 5 images per listing, 10MB each)
+  app.post("/api/upload-marketplace-image", upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      const { processAndUploadMultiSizeImages } = await import("../imageProcessor");
+      const fileBuffer = req.file.buffer;
+      const originalFilename = req.file.originalname || "listing-image";
+      const urls = await processAndUploadMultiSizeImages(
+        fileBuffer,
+        "marketplace-images",
+        originalFilename
+      );
+      res.json({ url: urls.original ?? urls.medium, urls });
+    } catch (error) {
+      console.error("[Marketplace] Error uploading image:", error);
+      res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",

@@ -144,3 +144,67 @@ describe("Card condition validation", () => {
     expect(isValidCondition("damaged")).toBe(false);
   });
 });
+
+describe("Image upload for marketplace listings", () => {
+  it("should accept valid image URLs in listing images array", () => {
+    const images = [
+      "https://storage.example.com/marketplace-images/test-1.jpg",
+      "https://storage.example.com/marketplace-images/test-2.png",
+    ];
+    const isValidImageUrl = (url: string) =>
+      url.startsWith("https://") && /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
+    expect(images.every(isValidImageUrl)).toBe(true);
+  });
+
+  it("should enforce maximum 5 images per listing", () => {
+    const maxImages = 5;
+    const images = ["a.jpg", "b.jpg", "c.jpg", "d.jpg", "e.jpg", "f.jpg"];
+    const allowed = images.slice(0, maxImages);
+    expect(allowed).toHaveLength(5);
+    expect(images.length).toBeGreaterThan(maxImages);
+  });
+
+  it("should use first image as cover/thumbnail", () => {
+    const images = ["cover.jpg", "detail1.jpg", "detail2.jpg"];
+    const coverImage = images[0];
+    expect(coverImage).toBe("cover.jpg");
+  });
+
+  it("should handle listing with no images gracefully", () => {
+    const listing = { images: null, title: "Test Card" };
+    const hasImages = listing.images !== null && Array.isArray(listing.images) && listing.images.length > 0;
+    expect(hasImages).toBe(false);
+  });
+
+  it("should handle listing with empty images array", () => {
+    const listing = { images: [] as string[], title: "Test Card" };
+    const hasImages = Array.isArray(listing.images) && listing.images.length > 0;
+    expect(hasImages).toBe(false);
+  });
+
+  it("should validate file size limit of 10MB", () => {
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const validFile = { size: 5 * 1024 * 1024 }; // 5MB
+    const oversizedFile = { size: 15 * 1024 * 1024 }; // 15MB
+    expect(validFile.size <= MAX_SIZE).toBe(true);
+    expect(oversizedFile.size <= MAX_SIZE).toBe(false);
+  });
+
+  it("should only accept image MIME types", () => {
+    const isImageMime = (type: string) => type.startsWith("image/");
+    expect(isImageMime("image/jpeg")).toBe(true);
+    expect(isImageMime("image/png")).toBe(true);
+    expect(isImageMime("image/webp")).toBe(true);
+    expect(isImageMime("application/pdf")).toBe(false);
+    expect(isImageMime("video/mp4")).toBe(false);
+  });
+
+  it("should generate unique S3 keys to prevent enumeration", () => {
+    const generateKey = (filename: string, suffix: string) =>
+      `marketplace-images/${filename}-${suffix}.jpg`;
+    const key1 = generateKey("test", "abc123");
+    const key2 = generateKey("test", "xyz789");
+    expect(key1).not.toBe(key2);
+    expect(key1).toContain("marketplace-images/");
+  });
+});

@@ -7,13 +7,81 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, CreditCard, Smartphone, Package, Star, Shield, Truck, AlertCircle } from "lucide-react";
+import { ArrowLeft, CreditCard, Smartphone, Package, Star, Shield, Truck, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 const conditionLabel: Record<string, string> = {
   mint: "Mint (M)", near_mint: "Near Mint (NM)", excellent: "Excellent (EX)",
   good: "Good (G)", played: "Played (PL)", poor: "Poor (PR)", sealed: "Sealed",
 };
+
+function ListingImageGallery({ images, title }: { images: string[] | null; title: string }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const imgs = images && images.length > 0 ? images : null;
+
+  if (!imgs) {
+    return (
+      <div className="aspect-[3/4] bg-gradient-to-br from-muted to-muted/50 rounded-2xl flex items-center justify-center border">
+        <div className="text-center text-muted-foreground">
+          <Package className="w-16 h-16 mx-auto mb-2 opacity-30" />
+          <p className="text-sm">商品圖片</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Main image */}
+      <div className="relative aspect-[3/4] bg-muted rounded-2xl overflow-hidden border group">
+        <img
+          src={imgs[activeIdx]}
+          alt={`${title} - 圖片 ${activeIdx + 1}`}
+          className="w-full h-full object-contain"
+        />
+        {imgs.length > 1 && (
+          <>
+            <button
+              onClick={() => setActiveIdx(i => (i - 1 + imgs.length) % imgs.length)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setActiveIdx(i => (i + 1) % imgs.length)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              {imgs.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveIdx(i)}
+                  className={`w-2 h-2 rounded-full transition-colors ${i === activeIdx ? "bg-white" : "bg-white/50"}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      {/* Thumbnails */}
+      {imgs.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {imgs.map((url, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveIdx(i)}
+              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${i === activeIdx ? "border-[#06038d]" : "border-border hover:border-muted-foreground"}`}
+            >
+              <img src={url} alt={`縮圖 ${i + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function MarketplaceListing() {
   const params = useParams<{ id: string }>();
@@ -85,6 +153,7 @@ export default function MarketplaceListing() {
 
   const price = parseFloat(listing.priceHkd as string);
   const isAvailable = listing.status === "active" && listing.quantity > 0;
+  const images = listing.images as string[] | null;
 
   return (
     <div className="min-h-screen bg-background pt-20">
@@ -96,12 +165,7 @@ export default function MarketplaceListing() {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="aspect-[3/4] bg-gradient-to-br from-muted to-muted/50 rounded-2xl flex items-center justify-center border">
-            <div className="text-center text-muted-foreground">
-              <Package className="w-16 h-16 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">商品圖片</p>
-            </div>
-          </div>
+          <ListingImageGallery images={images} title={listing.title} />
 
           <div className="space-y-6">
             <div>

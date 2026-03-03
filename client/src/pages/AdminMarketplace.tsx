@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2 } from "lucide-react";
 
 const conditionLabel: Record<string, string> = {
   mint: "Mint", near_mint: "NM", excellent: "EX", good: "Good",
@@ -53,31 +53,115 @@ function StatCard({ title, value, icon: Icon, color }: { title: string; value: n
   );
 }
 
+function ImageUploader({ images, onChange, maxImages = 5 }: { images: string[]; onChange: (imgs: string[]) => void; maxImages?: number }) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const remaining = maxImages - images.length;
+    if (remaining <= 0) { toast.error(`最多上傳 ${maxImages} 張圖片`); return; }
+    const toUpload = Array.from(files).slice(0, remaining);
+    setUploading(true);
+    try {
+      const uploaded: string[] = [];
+      for (const file of toUpload) {
+        if (!file.type.startsWith("image/")) { toast.error(`${file.name} 不是圖片`); continue; }
+        if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} 超過 10MB`); continue; }
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/upload-marketplace-image", { method: "POST", body: fd });
+        if (!res.ok) throw new Error("上傳失敗");
+        const { url } = await res.json();
+        uploaded.push(url);
+      }
+      if (uploaded.length > 0) {
+        onChange([...images, ...uploaded]);
+        toast.success(`已上傳 ${uploaded.length} 張圖片`);
+      }
+    } catch (e: any) {
+      toast.error(e.message || "圖片上傳失敗");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }, [images, onChange, maxImages]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    handleFiles(e.dataTransfer.files);
+  }, [handleFiles]);
+
+  return (
+    <div className="space-y-2">
+      <Label>商品圖片（最多 {maxImages} 張）</Label>
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+          {images.map((url, idx) => (
+            <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
+              <img src={url} alt={`商品圖 ${idx + 1}`} className="w-full h-full object-cover" />
+              <button type="button" onClick={() => onChange(images.filter((_, i) => i !== idx))}
+                className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <X className="w-3 h-3" />
+              </button>
+              {idx === 0 && <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1 rounded">封面</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {images.length < maxImages && (
+        <div
+          className="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors"
+          onClick={() => fileInputRef.current?.click()}
+          onDrop={handleDrop}
+          onDragOver={e => e.preventDefault()}
+        >
+          {uploading ? (
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm">上傳中...</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1 text-muted-foreground">
+              <ImagePlus className="w-6 h-6" />
+              <span className="text-sm">點擊或拖放圖片上傳</span>
+              <span className="text-xs">支援 JPG、PNG、WebP，每張最大 10MB</span>
+            </div>
+          )}
+        </div>
+      )}
+      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
+    </div>
+  );
+}
+
 function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess: () => void }) {
   const [form, setForm] = useState({ title: "", description: "", condition: "near_mint", price: "", quantity: "1", status: "active" });
+  const [images, setImages] = useState<string[]>([]);
+  const reset = () => { setForm({ title: "", description: "", condition: "near_mint", price: "", quantity: "1", status: "active" }); setImages([]); };
   const createMutation = trpc.marketplace.adminCreatePlatformListing.useMutation({
-    onSuccess: () => { toast.success("商品已上架"); onSuccess(); onClose(); },
+    onSuccess: () => { toast.success("商品已上架"); onSuccess(); onClose(); reset(); },
     onError: (e) => toast.error(e.message),
   });
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+    <Dialog open={open} onOpenChange={() => { onClose(); reset(); }}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>新增平台商品</DialogTitle></DialogHeader>
         <div className="space-y-4">
-          <div><Label>商品名稱 *</Label><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="例：PSA 10 皮卡丘 SM-P 288" /></div>
-          <div><Label>描述</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} /></div>
+          <div><Label>商品名稱 *</Label><Input className="mt-1" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="例：PSA 10 皮卡丘 SM-P 288" /></div>
+          <div><Label>描述</Label><Textarea className="mt-1" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} /></div>
+          <ImageUploader images={images} onChange={setImages} />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>品相 *</Label>
               <Select value={form.condition} onValueChange={v => setForm(f => ({ ...f, condition: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(conditionLabel).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>狀態</Label>
               <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">立即上架</SelectItem>
                   <SelectItem value="draft">草稿</SelectItem>
@@ -86,17 +170,18 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div><Label>售價 (HKD) *</Label><Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0.00" min="0" step="0.01" /></div>
-            <div><Label>數量 *</Label><Input type="number" value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} min="1" /></div>
+            <div><Label>售價 (HKD) *</Label><Input className="mt-1" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0.00" min="0" step="0.01" /></div>
+            <div><Label>數量 *</Label><Input className="mt-1" type="number" value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} min="1" /></div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button variant="outline" onClick={() => { onClose(); reset(); }}>取消</Button>
           <Button
             onClick={() => createMutation.mutate({
               title: form.title, description: form.description,
               condition: form.condition as any, price: parseFloat(form.price),
-              quantity: parseInt(form.quantity), status: form.status as any
+              quantity: parseInt(form.quantity), status: form.status as any,
+              images: images.length > 0 ? images : undefined
             })}
             disabled={!form.title || !form.price || createMutation.isPending}
             className="bg-[#06038d] hover:bg-[#0804b8] text-white">
