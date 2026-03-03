@@ -14,6 +14,7 @@ import {
   getSellerPayouts, getMarketplaceStats,
 } from "../db";
 import { storagePut } from "../storage";
+import { invokeLLM } from "../_core/llm";
 
 // Platform fee rate (5% for C2C listings)
 const PLATFORM_FEE_RATE = 0.05;
@@ -468,6 +469,75 @@ export const marketplaceRouter = router({
       return { checkoutUrl: session.url, orderNo };
     }),
 
+  // AI verification of payment proof screenshot
+  verifyPaymentProof: protectedProcedure
+    .input(z.object({
+      proofImageUrl: z.string().url(),
+      expectedAmountHkd: z.number().positive(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are a payment verification assistant. Analyze the payment screenshot and extract the payment amount. 
+Respond with JSON only: { "verified": boolean, "detectedAmount": number | null, "currency": string | null, "confidence": "high" | "medium" | "low", "reason": string }
+- verified: true if the detected amount matches the expected amount (within 1% tolerance)
+- detectedAmount: the amount you found in the screenshot (number, no currency symbol)
+- currency: the currency detected (e.g. "HKD", "USD")
+- confidence: how confident you are in the reading
+- reason: brief explanation in Traditional Chinese`,
+            },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image_url" as const,
+                  image_url: { url: input.proofImageUrl, detail: "high" as const },
+                },
+                {
+                  type: "text" as const,
+                  text: `請分析這張付款截圖，確認付款金額是否為 HKD ${input.expectedAmountHkd.toFixed(2)}。`,
+                },
+              ],
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "payment_verification",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  verified: { type: "boolean" },
+                  detectedAmount: { type: ["number", "null"] },
+                  currency: { type: ["string", "null"] },
+                  confidence: { type: "string", enum: ["high", "medium", "low"] },
+                  reason: { type: "string" },
+                },
+                required: ["verified", "detectedAmount", "currency", "confidence", "reason"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const content = response.choices?.[0]?.message?.content;
+        const result = typeof content === "string" ? JSON.parse(content) : content;
+        return {
+          verified: result.verified === true,
+          detectedAmount: result.detectedAmount,
+          currency: result.currency,
+          confidence: result.confidence,
+          reason: result.reason,
+        };
+      } catch (err) {
+        console.error("[PaymentVerify] LLM error:", err);
+        return { verified: false, detectedAmount: null, currency: null, confidence: "low", reason: "無法分析截圖，請確保截圖清晰可見付款金額" };
+      }
+    }),
+
   createAlipayOrder: protectedProcedure
     .input(z.object({
       listingId: z.number().int(),
@@ -496,6 +566,7 @@ export const marketplaceRouter = router({
         platformFeeHkd: (price * PLATFORM_FEE_RATE).toFixed(2),
         sellerReceivableHkd: (price * (1 - PLATFORM_FEE_RATE)).toFixed(2),
         alipayMerchantTransId: null,
+        alipayProofImageUrl: input.proofImageUrl,
       });
       return { orderNo };
     }),

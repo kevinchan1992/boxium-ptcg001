@@ -217,6 +217,25 @@ async function startServer() {
     }
   });
 
+  // Payment proof image upload API (for Alipay HK payment verification)
+  app.post("/api/upload-payment-proof", upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      const fileBuffer = req.file.buffer;
+      const mimeType = req.file.mimetype || "image/jpeg";
+      const ext = mimeType.split("/")[1] || "jpg";
+      const key = `payment-proofs/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { storagePut } = await import("../storage");
+      const { url } = await storagePut(key, fileBuffer, mimeType);
+      res.json({ url });
+    } catch (error) {
+      console.error("[PaymentProof] Error uploading proof:", error);
+      res.status(500).json({ error: "Failed to upload payment proof" });
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",
