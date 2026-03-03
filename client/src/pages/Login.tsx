@@ -7,11 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
+const IS_DEV = import.meta.env.DEV;
+
 export default function Login() {
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [devLoading, setDevLoading] = useState(false);
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: () => {
@@ -45,6 +48,30 @@ export default function Login() {
     const origin = window.location.origin;
     // Always return to home page after Google login
     window.location.href = `/api/auth/google?origin=${encodeURIComponent(origin)}&returnTo=/`;
+  };
+
+  // Dev-only: bypass auth by calling the mock-login endpoint
+  const handleDevLogin = async () => {
+    setDevLoading(true);
+    try {
+      const res = await fetch("/api/dev/mock-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userId: 1 }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`[DEV] 已以 ${data.user.name || data.user.email} 身份登入`);
+        setTimeout(() => { window.location.href = "/"; }, 200);
+      } else {
+        toast.error("Dev 登入失敗: " + (data.error || "未知錯誤"));
+      }
+    } catch (e: any) {
+      toast.error("Dev 登入失敗: " + e.message);
+    } finally {
+      setDevLoading(false);
+    }
   };
 
   return (
@@ -131,6 +158,31 @@ export default function Login() {
             </svg>
             使用 Google 登入
           </Button>
+
+          {/* ── DEV ONLY: mock login bypass ── */}
+          {IS_DEV && (
+            <div className="mt-4">
+              <div className="relative mb-3">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-dashed border-amber-400/60" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-background px-2 text-amber-500 font-mono font-semibold tracking-wider">
+                    ⚠ DEV ONLY
+                  </span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-amber-400 text-amber-600 hover:bg-amber-50 font-mono text-xs gap-2"
+                onClick={handleDevLogin}
+                disabled={devLoading}
+              >
+                {devLoading ? "登入中..." : "⚡ 開發模式快速登入 (Admin id=1)"}
+              </Button>
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-center text-muted-foreground">

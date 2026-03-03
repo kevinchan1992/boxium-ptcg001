@@ -3451,3 +3451,8 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 撰寫商城 vitest 測試（28 tests passing）
 - [x] 商品圖片上傳功能（S3 上傳 + 圖片庫 + 詳情頁圖片輪播）
 - [x] 儲存 Checkpoint
+
+## 🔧 開發環境繞過認證（Dev Login Bypass）
+- [x] 後端加入 /api/dev/mock-login 端點（僅限 NODE_ENV=development）
+- [x] 前端 Login 頁面加入「開發模式快速登入」按鈕
+- [x] 確保生產環境完全不暴露此端點（NODE_ENV guard）

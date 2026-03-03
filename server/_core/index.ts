@@ -125,6 +125,45 @@ async function startServer() {
     );
 
     console.log("[DevScraper] Development scraper API enabled");
+
+    // ── Dev mock login (DEVELOPMENT ONLY) ──────────────────────────────
+    // Signs a JWT for a given user and sets the session cookie.
+    // NEVER exposed in production (guarded by NODE_ENV === 'development').
+    app.post("/api/dev/mock-login", async (req, res) => {
+      try {
+        const { getDb } = await import("../db");
+        const { users } = await import("../../drizzle/schema_new");
+        const { eq } = await import("drizzle-orm");
+        const jwt = (await import("jsonwebtoken")).default;
+        const { getSessionCookieOptions } = await import("./cookies");
+
+        const db = await getDb();
+        if (!db) return res.status(500).json({ error: "DB unavailable" });
+
+        // Default to admin user (id=1); caller can pass { userId } to switch
+        const targetId = Number(req.body?.userId) || 1;
+        const userRows = await db.select().from(users).where(eq(users.id, targetId)).limit(1);
+        const user = userRows[0];
+        if (!user) return res.status(404).json({ error: `User id=${targetId} not found` });
+
+        const token = jwt.sign(
+          { id: user.id, email: user.email, role: user.role },
+          process.env.JWT_SECRET || "your-secret-key",
+          { expiresIn: "7d" } as any
+        );
+
+        res.cookie("session", token, getSessionCookieOptions(req));
+        console.log(`[DevMockLogin] Logged in as ${user.email} (id=${user.id}, role=${user.role})`);
+        return res.json({
+          success: true,
+          user: { id: user.id, email: user.email, name: user.name, role: user.role },
+        });
+      } catch (err: any) {
+        console.error("[DevMockLogin] Error:", err);
+        return res.status(500).json({ error: err.message });
+      }
+    });
+    console.log("[DevMockLogin] Dev mock login enabled at POST /api/dev/mock-login");
   }
 
   // Blog image upload API
