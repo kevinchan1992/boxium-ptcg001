@@ -24,25 +24,32 @@ function isSecureRequest(req: Request) {
 export function getSessionCookieOptions(
   req: Request
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
-  const hostname = req.hostname;
   const isSecure = isSecureRequest(req);
-  
+
   console.log("[Cookie] Request protocol:", req.protocol);
   console.log("[Cookie] x-forwarded-proto:", req.headers["x-forwarded-proto"]);
   console.log("[Cookie] isSecure:", isSecure);
   console.log("[Cookie] hostname:", req.hostname);
   console.log("[Cookie] host:", req.headers.host);
-  
-  // Don't set domain at all - let the browser handle it automatically
-  // This is the most reliable approach for complex subdomain scenarios
-  const options = {
-    httpOnly: true,
-    path: "/",
-    sameSite: "lax" as const,
-    // Use secure in production (HTTPS), but allow HTTP for local development
-    secure: isSecure,
-  };
-  
+
+  // When served over HTTPS (including Manus preview / production), use SameSite=None
+  // so the cookie works in cross-origin iframe contexts (e.g. Manus preview panel).
+  // SameSite=None REQUIRES Secure=true per the spec.
+  // On plain HTTP (local dev without proxy) fall back to SameSite=Lax.
+  const options: Pick<CookieOptions, "httpOnly" | "path" | "sameSite" | "secure"> = isSecure
+    ? {
+        httpOnly: true,
+        path: "/",
+        sameSite: "none" as const,
+        secure: true,
+      }
+    : {
+        httpOnly: true,
+        path: "/",
+        sameSite: "lax" as const,
+        secure: false,
+      };
+
   console.log("[Cookie] Final options:", JSON.stringify(options));
   return options;
 }
