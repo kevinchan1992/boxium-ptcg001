@@ -1,0 +1,390 @@
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Link } from "wouter";
+
+const conditionOptions = [
+  { value: "mint", label: "Mint (M)" },
+  { value: "near_mint", label: "Near Mint (NM)" },
+  { value: "excellent", label: "Excellent (EX)" },
+  { value: "good", label: "Good (G)" },
+  { value: "played", label: "Played (PL)" },
+  { value: "poor", label: "Poor (PR)" },
+  { value: "sealed", label: "Sealed" },
+];
+
+const orderStatusLabel: Record<string, { label: string; color: string }> = {
+  pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800" },
+  paid_held: { label: "已付款", color: "bg-blue-100 text-blue-800" },
+  processing: { label: "處理中", color: "bg-purple-100 text-purple-800" },
+  shipped: { label: "已寄出", color: "bg-indigo-100 text-indigo-800" },
+  completed: { label: "已完成", color: "bg-green-100 text-green-800" },
+  cancelled: { label: "已取消", color: "bg-red-100 text-red-800" },
+};
+
+export default function SellerDashboard() {
+  const [showApply, setShowApply] = useState(false);
+  const [showNewListing, setShowNewListing] = useState(false);
+  const [applyForm, setApplyForm] = useState({ displayName: "", bio: "" });
+  const [listingForm, setListingForm] = useState({
+    title: "", description: "", condition: "near_mint", price: "", quantity: "1",
+  });
+
+  const { data: me } = trpc.auth.me.useQuery();
+  const { data: sellerProfile, refetch: refetchProfile } = trpc.marketplace.getMySellerProfile.useQuery(
+    undefined, { enabled: !!me }
+  );
+  const { data: myListings, refetch: refetchListings } = trpc.marketplace.getMyListings.useQuery(
+    undefined, { enabled: !!sellerProfile }
+  );
+  const { data: myOrders } = trpc.marketplace.getMySellerOrders.useQuery(
+    undefined, { enabled: !!sellerProfile }
+  );
+  const { data: myPayouts } = trpc.marketplace.getMyPayouts.useQuery(
+    undefined, { enabled: !!sellerProfile }
+  );
+
+  const applyMutation = trpc.marketplace.applyAsSeller.useMutation({
+    onSuccess: () => { toast.success("申請已提交，等待審批"); setShowApply(false); refetchProfile(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const createListingMutation = trpc.marketplace.createListing.useMutation({
+    onSuccess: () => { toast.success("商品已提交審核"); setShowNewListing(false); refetchListings(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const stripeMutation = trpc.marketplace.startStripeConnectOnboarding.useMutation({
+    onSuccess: (data) => { window.open(data.onboardingUrl, "_blank"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const markShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
+    onSuccess: () => toast.success("已標記為已寄出"),
+    onError: (e) => toast.error(e.message),
+  });
+
+  if (!me) return (
+    <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+      <div className="text-center">
+        <AlertCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+        <p className="text-lg font-medium">請先登入</p>
+        <Link href="/login"><Button className="mt-4">登入</Button></Link>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-background pt-20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">賣家中心</h1>
+            <p className="text-muted-foreground text-sm mt-1">管理你的商品、訂單和收款</p>
+          </div>
+          {sellerProfile?.isActive && (
+            <Button onClick={() => setShowNewListing(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white">
+              <Plus className="w-4 h-4 mr-2" />上架新商品
+            </Button>
+          )}
+        </div>
+
+        {!sellerProfile && (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <ShoppingBag className="w-16 h-16 mb-4 text-muted-foreground opacity-40" />
+              <h2 className="text-xl font-semibold mb-2">成為 BOXIUM 賣家</h2>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                在 BOXIUM 平台上架你的寶可夢卡牌，觸及更多買家。平台收取 5% 服務費，款項透過 Stripe 自動轉帳到你的帳戶。
+              </p>
+              <Button onClick={() => setShowApply(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white">
+                申請成為賣家
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {sellerProfile && !sellerProfile.isActive && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="flex items-center gap-4 py-6">
+              <Clock className="w-8 h-8 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-amber-900">申請審批中</p>
+                <p className="text-sm text-amber-700">你的賣家申請正在審批，通常需要 1-3 個工作天。</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {sellerProfile?.isActive && (
+          <>
+            {sellerProfile.stripeConnectStatus !== "active" && (
+              <Card className="border-blue-200 bg-blue-50 mb-6">
+                <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-blue-900">設定 Stripe 收款帳戶</p>
+                      <p className="text-sm text-blue-700">完成 Stripe Connect 設定後才能收取款項</p>
+                    </div>
+                  </div>
+                  <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    {stripeMutation.isPending ? "處理中..." : "設定 Stripe 帳戶"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+            {sellerProfile.stripeConnectStatus === "active" && (
+              <Card className="border-green-200 bg-green-50 mb-6">
+                <CardContent className="flex items-center gap-3 py-4">
+                  <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+                  <p className="text-green-800 font-medium">Stripe 收款帳戶已連接</p>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <Package className="w-8 h-8 text-blue-500" />
+                    <div>
+                      <p className="text-2xl font-bold">{myListings?.length ?? 0}</p>
+                      <p className="text-xs text-muted-foreground">上架商品</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <ShoppingBag className="w-8 h-8 text-green-500" />
+                    <div>
+                      <p className="text-2xl font-bold">{sellerProfile.totalSales}</p>
+                      <p className="text-xs text-muted-foreground">總銷售量</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="col-span-2 sm:col-span-1">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="w-8 h-8 text-yellow-500" />
+                    <div>
+                      <p className="text-2xl font-bold">{myPayouts?.length ?? 0}</p>
+                      <p className="text-xs text-muted-foreground">放款記錄</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Tabs defaultValue="listings">
+              <TabsList className="w-full sm:w-auto">
+                <TabsTrigger value="listings">我的商品</TabsTrigger>
+                <TabsTrigger value="orders">訂單管理</TabsTrigger>
+                <TabsTrigger value="payouts">放款記錄</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="listings" className="mt-4">
+                {!myListings?.length ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>尚未上架任何商品</p>
+                    <Button className="mt-4" onClick={() => setShowNewListing(true)}>上架第一件商品</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {myListings.map((listing) => (
+                      <Card key={listing.id}>
+                        <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
+                          <div>
+                            <p className="font-medium">{listing.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              HKD {parseFloat(listing.price as string).toFixed(2)} · 庫存 {listing.quantity}
+                            </p>
+                          </div>
+                          <Badge className={
+                            listing.status === "active" ? "bg-green-100 text-green-800" :
+                            listing.status === "pending_review" ? "bg-yellow-100 text-yellow-800" :
+                            "bg-gray-100 text-gray-800"
+                          }>
+                            {listing.status === "active" ? "上架中" :
+                             listing.status === "pending_review" ? "審核中" :
+                             listing.status === "sold" ? "已售出" : listing.status}
+                          </Badge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="orders" className="mt-4">
+                {!myOrders?.length ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>尚無訂單</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(myOrders as any[]).map((item) => (
+                      <Card key={item.id}>
+                        <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
+                          <div>
+                            <p className="font-medium">{item.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              HKD {parseFloat(item.price as string).toFixed(2)} × {item.quantity}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className={orderStatusLabel[item.orderStatus]?.color ?? "bg-gray-100 text-gray-800"}>
+                              {orderStatusLabel[item.orderStatus]?.label ?? item.orderStatus}
+                            </Badge>
+                            {item.orderStatus === "processing" && (
+                              <Button size="sm" variant="outline"
+                                onClick={() => markShippedMutation.mutate({ orderId: item.orderId })}>
+                                標記已寄出
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="payouts" className="mt-4">
+                {!myPayouts?.length ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>尚無放款記錄</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(myPayouts as any[]).map((payout) => (
+                      <Card key={payout.id}>
+                        <CardContent className="flex items-center justify-between py-4">
+                          <div>
+                            <p className="font-medium">HKD {parseFloat(payout.amount).toFixed(2)}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(payout.createdAt).toLocaleDateString("zh-HK")}
+                            </p>
+                          </div>
+                          <Badge className={payout.status === "completed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                            {payout.status === "completed" ? "已放款" : "處理中"}
+                          </Badge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
+      </div>
+
+      <Dialog open={showApply} onOpenChange={setShowApply}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>申請成為賣家</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>顯示名稱 *</Label>
+              <Input className="mt-1" placeholder="例如：CardMaster HK"
+                value={applyForm.displayName}
+                onChange={(e) => setApplyForm(p => ({ ...p, displayName: e.target.value }))} />
+            </div>
+            <div>
+              <Label>自我介紹</Label>
+              <Textarea className="mt-1" placeholder="介紹你的賣家背景..."
+                value={applyForm.bio}
+                onChange={(e) => setApplyForm(p => ({ ...p, bio: e.target.value }))} />
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              <p className="font-medium">平台服務費：5%</p>
+              <p className="mt-1">款項透過 Stripe Connect 自動轉帳到你的銀行帳戶，通常 2-3 個工作天到帳。</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowApply(false)}>取消</Button>
+            <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white"
+              disabled={!applyForm.displayName || applyMutation.isPending}
+              onClick={() => applyMutation.mutate({ displayName: applyForm.displayName, bio: applyForm.bio || undefined })}>
+              {applyMutation.isPending ? "提交中..." : "提交申請"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showNewListing} onOpenChange={setShowNewListing}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>上架新商品</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>商品名稱 *</Label>
+              <Input className="mt-1" placeholder="例如：Charizard ex 噴火龍 SAR"
+                value={listingForm.title}
+                onChange={(e) => setListingForm(p => ({ ...p, title: e.target.value }))} />
+            </div>
+            <div>
+              <Label>商品描述</Label>
+              <Textarea className="mt-1" placeholder="描述卡牌狀況、版本等..."
+                value={listingForm.description}
+                onChange={(e) => setListingForm(p => ({ ...p, description: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>品相 *</Label>
+                <Select value={listingForm.condition} onValueChange={(v) => setListingForm(p => ({ ...p, condition: v }))}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>數量 *</Label>
+                <Input className="mt-1" type="number" min="1" value={listingForm.quantity}
+                  onChange={(e) => setListingForm(p => ({ ...p, quantity: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <Label>售價（HKD）*</Label>
+              <Input className="mt-1" type="number" min="1" step="0.01" placeholder="0.00"
+                value={listingForm.price}
+                onChange={(e) => setListingForm(p => ({ ...p, price: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewListing(false)}>取消</Button>
+            <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white"
+              disabled={!listingForm.title || !listingForm.price || createListingMutation.isPending}
+              onClick={() => createListingMutation.mutate({
+                title: listingForm.title,
+                description: listingForm.description || undefined,
+                condition: listingForm.condition as any,
+                price: parseFloat(listingForm.price),
+                quantity: parseInt(listingForm.quantity),
+              })}>
+              {createListingMutation.isPending ? "提交中..." : "提交審核"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

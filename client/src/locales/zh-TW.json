@@ -82,7 +82,11 @@
     "blog": "最新消息",
     "back": "返回",
     "close": "關閉",
-    "loading": "載入中..."
+    "loading": "載入中...",
+    "marketplace": "商場",
+    "adminMarketplace": "商場管理",
+    "seller": "賣家",
+    "buyer": "買家"
   },
   "nav": {
     "login": "登入/註冊",

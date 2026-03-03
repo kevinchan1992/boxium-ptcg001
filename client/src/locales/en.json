@@ -52,7 +52,11 @@
     "blog": "Latest News",
     "back": "Back",
     "close": "Close",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "marketplace": "Marketplace",
+    "adminMarketplace": "Shop Management",
+    "seller": "Seller",
+    "buyer": "Buyer"
   },
   "home": {
     "welcome": "Welcome to Boxium ~ Gaming Enthusiasts' World",

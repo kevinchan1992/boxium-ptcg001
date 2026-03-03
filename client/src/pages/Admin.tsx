@@ -11,6 +11,7 @@ import { AdminScheduleManagement } from "@/components/AdminScheduleManagement";
 import { AdminScraperPerformance } from "@/components/AdminScraperPerformance";
 import { AdminTaskHistory } from "@/components/AdminTaskHistory";
 
+import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 
 export default function Admin() {
@@ -99,6 +100,14 @@ export default function Admin() {
               <AdminTaskHistory />
             </TabsContent>
           </Tabs>
+          <div className="mt-8 border-t pt-6">
+            <h3 className="text-lg font-semibold mb-3">商場管理</h3>
+            <Link href="/admin/marketplace">
+              <button className="inline-flex items-center gap-2 px-4 py-2 bg-[#06038d] text-white rounded-lg hover:bg-[#0804b8] transition-colors text-sm font-medium">
+                🛒 進入商場管理後台
+              </button>
+            </Link>
+          </div>
         </div>
     </div>
   );

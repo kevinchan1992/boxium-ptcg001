@@ -379,6 +379,20 @@
       "when": 1772214811319,
       "tag": "0053_old_cyclops",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "5",
+      "when": 1772519461507,
+      "tag": "0054_calm_madame_web",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "5",
+      "when": 1772521714738,
+      "tag": "0055_dear_ender_wiggin",
+      "breakpoints": true
     }
   ]
 }

@@ -705,3 +705,162 @@ export const trendingRankingsCache = mysqlTable("trendingRankingsCache", {
 
 export type TrendingRankingsCache = typeof trendingRankingsCache.$inferSelect;
 export type InsertTrendingRankingsCache = typeof trendingRankingsCache.$inferInsert;
+
+// ============================================================
+// MARKETPLACE TABLES
+// ============================================================
+
+/**
+ * Seller Profiles - stores C2C seller information and Stripe Connect details
+ */
+export const sellerProfiles = mysqlTable("sellerProfiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // FK to users table
+  displayName: varchar("displayName", { length: 100 }).notNull(),
+  bio: text("bio"),
+  stripeConnectId: varchar("stripeConnectId", { length: 100 }), // Stripe Connect account ID
+  stripeConnectStatus: mysqlEnum("stripeConnectStatus", ["pending", "active", "restricted", "disabled"]).default("pending").notNull(),
+  isActive: boolean("isActive").default(false).notNull(), // Admin approved
+  totalSales: int("totalSales").default(0).notNull(),
+  rating: decimal("rating", { precision: 3, scale: 2 }).default("0.00"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("sp_userId_idx").on(table.userId),
+}));
+export type SellerProfile = typeof sellerProfiles.$inferSelect;
+export type InsertSellerProfile = typeof sellerProfiles.$inferInsert;
+
+/**
+ * Marketplace Listings - products for sale (both platform and C2C)
+ */
+export const marketplaceListings = mysqlTable("marketplaceListings", {
+  id: int("id").autoincrement().primaryKey(),
+  // Seller info
+  sellerType: mysqlEnum("sellerType", ["platform", "seller"]).notNull(), // platform = BOXIUM direct, seller = C2C
+  sellerId: int("sellerId"), // NULL for platform listings, sellerProfiles.id for C2C
+  // Product info
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  condition: mysqlEnum("condition", ["mint", "near_mint", "excellent", "good", "played", "poor", "sealed"]).notNull(),
+  // Card reference (optional - links to cards/sealedProducts table)
+  cardId: int("cardId"), // FK to cards table
+  sealedProductId: int("sealedProductId"), // FK to sealedProducts table
+  // Pricing
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // HKD
+  quantity: int("quantity").default(1).notNull(),
+  // Images (JSON array of URLs)
+  images: text("images"), // JSON array of image URLs
+  // Status
+  status: mysqlEnum("status", ["draft", "pending_review", "active", "sold", "removed"]).default("draft").notNull(),
+  // Metadata
+  viewCount: int("viewCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+}, (table) => ({
+  sellerTypeIdx: index("ml_sellerType_idx").on(table.sellerType),
+  sellerIdIdx: index("ml_sellerId_idx").on(table.sellerId),
+  statusIdx: index("ml_status_idx").on(table.status),
+  cardIdIdx: index("ml_cardId_idx").on(table.cardId),
+}));
+export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
+export type InsertMarketplaceListing = typeof marketplaceListings.$inferInsert;
+
+/**
+ * Marketplace Orders - buyer orders
+ */
+export const marketplaceOrders = mysqlTable("marketplaceOrders", {
+  id: int("id").autoincrement().primaryKey(),
+  orderNo: varchar("orderNo", { length: 50 }).notNull(), // e.g. BOXIUM-20240101-001
+  buyerId: int("buyerId").notNull(), // FK to users table
+  // Payment
+  paymentMethod: mysqlEnum("paymentMethod", ["stripe", "alipay_hk"]).notNull(),
+  paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "failed", "refunded"]).default("pending").notNull(),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 200 }),
+  alipayTradeNo: varchar("alipayTradeNo", { length: 100 }), // Alipay HK trade number (for future API)
+  alipayProofImageUrl: text("alipayProofImageUrl"), // Buyer uploads payment screenshot
+  stripeSessionId: varchar("stripeSessionId", { length: 200 }), // Stripe Checkout Session ID
+  trackingNo: varchar("trackingNo", { length: 100 }), // Shipping tracking number
+  sellerId: int("sellerId"), // FK to users table (null for platform listings)
+  sellerType: mysqlEnum("sellerType", ["platform", "seller"]).default("platform").notNull(),
+  // Amounts (HKD)
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  platformFee: decimal("platformFee", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  // Shipping
+  shippingAddress: text("shippingAddress"), // JSON
+  // Order status
+  orderStatus: mysqlEnum("orderStatus", [
+    "pending_payment",
+    "payment_received",
+    "processing",
+    "shipped",
+    "delivered",
+    "completed",
+    "cancelled",
+    "disputed"
+  ]).default("pending_payment").notNull(),
+  // Timestamps
+  paidAt: timestamp("paidAt"),
+  shippedAt: timestamp("shippedAt"),
+  deliveredAt: timestamp("deliveredAt"),
+  completedAt: timestamp("completedAt"),
+  autoCompleteAt: timestamp("autoCompleteAt"), // 14 days after delivered
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  // Admin notes
+  adminNote: text("adminNote"),
+}, (table) => ({
+  orderNoIdx: index("mo_orderNo_idx").on(table.orderNo),
+  buyerIdIdx: index("mo_buyerId_idx").on(table.buyerId),
+  orderStatusIdx: index("mo_orderStatus_idx").on(table.orderStatus),
+  paymentStatusIdx: index("mo_paymentStatus_idx").on(table.paymentStatus),
+}));
+export type MarketplaceOrder = typeof marketplaceOrders.$inferSelect;
+export type InsertMarketplaceOrder = typeof marketplaceOrders.$inferInsert;
+
+/**
+ * Marketplace Order Items - line items for each order
+ */
+export const marketplaceOrderItems = mysqlTable("marketplaceOrderItems", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(), // FK to marketplaceOrders
+  listingId: int("listingId").notNull(), // FK to marketplaceListings
+  sellerId: int("sellerId"), // NULL for platform items, sellerProfiles.id for C2C
+  sellerType: mysqlEnum("sellerType", ["platform", "seller"]).notNull(),
+  title: varchar("title", { length: 200 }).notNull(), // snapshot at time of purchase
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // HKD, snapshot
+  quantity: int("quantity").default(1).notNull(),
+  // Payout tracking for C2C sellers
+  payoutStatus: mysqlEnum("payoutStatus", ["pending", "processing", "paid", "failed"]).default("pending").notNull(),
+  stripeTransferId: varchar("stripeTransferId", { length: 200 }),
+  paidOutAt: timestamp("paidOutAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  orderIdIdx: index("moi_orderId_idx").on(table.orderId),
+  listingIdIdx: index("moi_listingId_idx").on(table.listingId),
+  sellerIdIdx: index("moi_sellerId_idx").on(table.sellerId),
+}));
+export type MarketplaceOrderItem = typeof marketplaceOrderItems.$inferSelect;
+export type InsertMarketplaceOrderItem = typeof marketplaceOrderItems.$inferInsert;
+
+/**
+ * Marketplace Payouts - payout records for C2C sellers
+ */
+export const marketplacePayouts = mysqlTable("marketplacePayouts", {
+  id: int("id").autoincrement().primaryKey(),
+  sellerId: int("sellerId").notNull(), // FK to sellerProfiles
+  orderItemId: int("orderItemId").notNull(), // FK to marketplaceOrderItems
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // HKD
+  currency: varchar("currency", { length: 10 }).default("HKD").notNull(),
+  stripeTransferId: varchar("stripeTransferId", { length: 200 }),
+  status: mysqlEnum("status", ["pending", "processing", "paid", "failed"]).default("pending").notNull(),
+  failureReason: text("failureReason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  paidAt: timestamp("paidAt"),
+}, (table) => ({
+  sellerIdIdx: index("mp_sellerId_idx").on(table.sellerId),
+  statusIdx: index("mp_status_idx").on(table.status),
+}));
+export type MarketplacePayout = typeof marketplacePayouts.$inferSelect;
+export type InsertMarketplacePayout = typeof marketplacePayouts.$inferInsert;

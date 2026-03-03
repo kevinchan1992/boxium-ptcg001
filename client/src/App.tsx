@@ -15,6 +15,10 @@ import Pricing from "./pages/Pricing";
 import PricingSearch from "./pages/PricingSearch";
 import PricingDetail from "./pages/PricingDetail";
 import Admin from "./pages/Admin";
+import AdminMarketplace from "./pages/AdminMarketplace";
+import Marketplace from "./pages/Marketplace";
+import MarketplaceListing from "./pages/MarketplaceListing";
+import SellerDashboard from "./pages/SellerDashboard";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Disclaimer from "./pages/Disclaimer";
@@ -77,6 +81,14 @@ function Router() {
           <Admin />
         </ProtectedAdminRoute>
       </Route>
+      <Route path="/admin/marketplace">
+        <ProtectedAdminRoute>
+          <AdminMarketplace />
+        </ProtectedAdminRoute>
+      </Route>
+      <Route path="/marketplace" component={Marketplace} />
+      <Route path="/marketplace/listing/:id" component={MarketplaceListing} />
+      <Route path="/seller" component={SellerDashboard} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/disclaimer" component={Disclaimer} />

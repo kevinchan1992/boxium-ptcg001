@@ -1,3 +1,4 @@
+import { marketplaceRouter } from "./routers/marketplace";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -3437,6 +3438,8 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
       }),
   }),
 
+  marketplace: marketplaceRouter,
 });
 
 export type AppRouter = typeof appRouter;
+

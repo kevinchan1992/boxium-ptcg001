@@ -3428,3 +3428,25 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 
 ## 🐛 BottomSheet iPad 右下角問題 (2026-03-01)
 - [x] 役從修復 BottomSheet 在 iPad 上只顯示在右下角的問題，確保手機和平板都全寬底部顯示
+
+## 🛒 商城（Marketplace）功能開發
+- [ ] 建立 5 張商城資料庫表（sellerProfiles, marketplaceListings, marketplaceOrders, marketplaceOrderItems, marketplacePayouts）
+- [x] 建立後端 tRPC marketplace router 與 DB helpers
+- [ ] 建立 Admin 商場管理專頁（AdminMarketplace）
+  - [ ] 商品管理（平台商品上架/下架/審核 C2C 商品）
+  - [ ] 訂單監控（全部訂單狀態一覽）
+  - [ ] 支付寶 HK 手動核對介面（標記已付款）
+  - [ ] 賣家管理（審批/停用賣家帳號）
+- [ ] 建立買家端商城頁面（/marketplace）
+  - [ ] 商品列表（篩選、搜尋、分頁）
+  - [ ] 商品詳情頁（/marketplace/:id）
+  - [ ] Stripe 付款流程
+  - [ ] 支付寶 HK 靜態 QR Code 付款流程（手動核對）
+- [ ] 建立賣家端頁面（/seller）
+  - [ ] 申請成為賣家 + Stripe Connect Onboarding
+  - [ ] 上架管理（新增/編輯/下架商品）
+  - [ ] 訂單管理（待出貨/已出貨）
+- [ ] 加入 TopNav 商城導航連結
+- [ ] 在 Admin.tsx 加入商場管理入口
+- [ ] 撰寫商城 vitest 測試
+- [ ] 儲存 Checkpoint

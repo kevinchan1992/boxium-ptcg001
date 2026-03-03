@@ -52,7 +52,11 @@
     "blog": "最新ニュース",
     "back": "戻る",
     "close": "閉じる",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "marketplace": "マーケット",
+    "adminMarketplace": "ショップ管理",
+    "seller": "セラー",
+    "buyer": "バイヤー"
   },
   "home": {
     "welcome": "Boxiumへようこそ〜ゲーム愛好家の世界",

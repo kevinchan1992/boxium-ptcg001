@@ -2606,3 +2606,225 @@ export async function getRunningBatchUpdateTask(taskType: string) {
     return null;
   }
 }
+
+// ============================================================
+// MARKETPLACE DB HELPERS
+// ============================================================
+import {
+  sellerProfiles, marketplaceListings, marketplaceOrders,
+  marketplaceOrderItems, marketplacePayouts,
+  InsertSellerProfile, InsertMarketplaceListing, InsertMarketplaceOrder,
+  InsertMarketplaceOrderItem, InsertMarketplacePayout
+} from "../drizzle/schema_new";
+
+// --- Seller Profiles ---
+export async function getSellerProfileByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(sellerProfiles).where(eq(sellerProfiles.userId, userId)).limit(1);
+  return rows[0] ?? null;
+}
+export async function getSellerProfileById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(sellerProfiles).where(eq(sellerProfiles.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+export async function createSellerProfile(data: InsertSellerProfile) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(sellerProfiles).values(data);
+  const rows = await db.select().from(sellerProfiles).where(eq(sellerProfiles.userId, data.userId)).limit(1);
+  return rows[0];
+}
+export async function updateSellerProfile(id: number, data: Partial<InsertSellerProfile>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(sellerProfiles).set({ ...data, updatedAt: new Date() }).where(eq(sellerProfiles.id, id));
+}
+export async function getAllSellerProfiles(page = 1, pageSize = 20) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const offset = (page - 1) * pageSize;
+  const rows = await db.select().from(sellerProfiles).orderBy(desc(sellerProfiles.createdAt)).limit(pageSize).offset(offset);
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(sellerProfiles);
+  return { sellers: rows, total: Number(countRows[0]?.count ?? 0) };
+}
+
+// --- Marketplace Listings ---
+export async function getPublicListings(options: {
+  page?: number; pageSize?: number; search?: string;
+  condition?: string; sellerType?: string; minPrice?: number; maxPrice?: number;
+}) {
+  const db = await getDb();
+  const { page = 1, pageSize = 20, search, condition, sellerType, minPrice, maxPrice } = options;
+  if (!db) throw new Error("Database not available");
+  const offset = (page - 1) * pageSize;
+  const conditions = [eq(marketplaceListings.status, 'active')];
+  if (search) conditions.push(like(marketplaceListings.title, `%${search}%`));
+  if (condition) conditions.push(eq(marketplaceListings.condition, condition as any));
+  if (sellerType) conditions.push(eq(marketplaceListings.sellerType, sellerType as any));
+  if (minPrice != null) conditions.push(sql`${marketplaceListings.price} >= ${minPrice}`);
+  if (maxPrice != null) conditions.push(sql`${marketplaceListings.price} <= ${maxPrice}`);
+  const rows = await db.select().from(marketplaceListings)
+    .where(and(...conditions))
+    .orderBy(desc(marketplaceListings.createdAt))
+    .limit(pageSize).offset(offset);
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(...conditions));
+  return { listings: rows, total: Number(countRows[0]?.count ?? 0) };
+}
+export async function getListingById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(marketplaceListings).where(eq(marketplaceListings.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+export async function createListing(data: InsertMarketplaceListing) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(marketplaceListings).values(data);
+  const rows = await db.select().from(marketplaceListings)
+    .where(and(eq(marketplaceListings.title, data.title), eq(marketplaceListings.sellerType, data.sellerType)))
+    .orderBy(desc(marketplaceListings.createdAt)).limit(1);
+  return rows[0];
+}
+export async function updateListing(id: number, data: Partial<InsertMarketplaceListing>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(marketplaceListings).set({ ...data, updatedAt: new Date() }).where(eq(marketplaceListings.id, id));
+}
+export async function getAdminListings(page = 1, pageSize = 20, status?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const offset = (page - 1) * pageSize;
+  const conditions = status ? [eq(marketplaceListings.status, status as any)] : [];
+  const rows = await db.select().from(marketplaceListings)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(marketplaceListings.createdAt)).limit(pageSize).offset(offset);
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings)
+    .where(conditions.length ? and(...conditions) : undefined);
+  return { listings: rows, total: Number(countRows[0]?.count ?? 0) };
+}
+export async function getSellerListings(sellerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.select().from(marketplaceListings)
+    .where(eq(marketplaceListings.sellerId, sellerId))
+    .orderBy(desc(marketplaceListings.createdAt));
+}
+
+// --- Marketplace Orders ---
+export async function generateOrderNo(): Promise<string> {
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const rand = Math.floor(Math.random() * 9000) + 1000;
+  return `BOXIUM-${date}-${rand}`;
+}
+export async function createMarketplaceOrder(data: InsertMarketplaceOrder) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(marketplaceOrders).values(data);
+  const rows = await db.select().from(marketplaceOrders).where(eq(marketplaceOrders.orderNo, data.orderNo)).limit(1);
+  return rows[0];
+}
+export async function getMarketplaceOrderById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(marketplaceOrders).where(eq(marketplaceOrders.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+export async function getMarketplaceOrderByNo(orderNo: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(marketplaceOrders).where(eq(marketplaceOrders.orderNo, orderNo)).limit(1);
+  return rows[0] ?? null;
+}
+export async function updateMarketplaceOrder(id: number, data: Partial<InsertMarketplaceOrder>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(marketplaceOrders).set({ ...data, updatedAt: new Date() }).where(eq(marketplaceOrders.id, id));
+}
+export async function getBuyerOrders(buyerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.select().from(marketplaceOrders).where(eq(marketplaceOrders.buyerId, buyerId)).orderBy(desc(marketplaceOrders.createdAt));
+}
+export async function getAdminOrders(page = 1, pageSize = 20, status?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const offset = (page - 1) * pageSize;
+  const conditions = status ? [eq(marketplaceOrders.orderStatus, status as any)] : [];
+  const rows = await db.select().from(marketplaceOrders)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(marketplaceOrders.createdAt)).limit(pageSize).offset(offset);
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
+    .where(conditions.length ? and(...conditions) : undefined);
+  return { orders: rows, total: Number(countRows[0]?.count ?? 0) };
+}
+export async function getAlipayPendingOrders() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.select().from(marketplaceOrders)
+    .where(and(eq(marketplaceOrders.paymentMethod, 'alipay_hk'), eq(marketplaceOrders.paymentStatus, 'pending')))
+    .orderBy(desc(marketplaceOrders.createdAt));
+}
+
+// --- Marketplace Order Items ---
+export async function createOrderItems(items: InsertMarketplaceOrderItem[]) {
+  const db = await getDb();
+  if (items.length === 0) return;
+  if (!db) throw new Error("Database not available");
+  await db.insert(marketplaceOrderItems).values(items);
+}
+export async function getOrderItems(orderId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.select().from(marketplaceOrderItems).where(eq(marketplaceOrderItems.orderId, orderId));
+}
+export async function getSellerOrderItems(sellerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.select().from(marketplaceOrderItems)
+    .where(and(eq(marketplaceOrderItems.sellerId, sellerId), eq(marketplaceOrderItems.sellerType, 'seller')))
+    .orderBy(desc(marketplaceOrderItems.createdAt));
+}
+export async function getPendingPayoutItems() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.select().from(marketplaceOrderItems)
+    .where(and(eq(marketplaceOrderItems.sellerType, 'seller'), eq(marketplaceOrderItems.payoutStatus, 'pending')));
+}
+
+// --- Marketplace Payouts ---
+export async function createPayout(data: InsertMarketplacePayout) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(marketplacePayouts).values(data);
+}
+export async function updatePayout(id: number, data: Partial<InsertMarketplacePayout>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(marketplacePayouts).set(data).where(eq(marketplacePayouts.id, id));
+}
+export async function getSellerPayouts(sellerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.select().from(marketplacePayouts).where(eq(marketplacePayouts.sellerId, sellerId)).orderBy(desc(marketplacePayouts.createdAt));
+}
+export async function getMarketplaceStats() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [listingCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.status, 'active'));
+  const [orderCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders);
+  const [pendingAlipay] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
+    .where(and(eq(marketplaceOrders.paymentMethod, 'alipay_hk'), eq(marketplaceOrders.paymentStatus, 'pending')));
+  const [sellerCount] = await db.select({ count: sql<number>`count(*)` }).from(sellerProfiles).where(eq(sellerProfiles.isActive, true));
+  const [pendingReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.status, 'pending_review'));
+  return {
+    activeListings: Number(listingCount?.count ?? 0),
+    totalOrders: Number(orderCount?.count ?? 0),
+    pendingAlipayConfirmation: Number(pendingAlipay?.count ?? 0),
+    activeSellerCount: Number(sellerCount?.count ?? 0),
+    pendingReviewListings: Number(pendingReview?.count ?? 0),
+  };
+}

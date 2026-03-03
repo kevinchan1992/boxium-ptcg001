@@ -43,6 +43,7 @@ export function TopNav() {
     { href: "/trending", label: t("common.trending") },
     { href: "/blog", label: t("common.blog") },
     { href: "/about", label: t("common.about") },
+    { href: "/marketplace", label: "商城" },
   ];
 
   // 頁面載入動畫
