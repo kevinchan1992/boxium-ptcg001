@@ -87,7 +87,7 @@ function Router() {
         </ProtectedAdminRoute>
       </Route>
       <Route path="/marketplace" component={Marketplace} />
-      <Route path="/marketplace/listing/:id" component={MarketplaceListing} />
+      <Route path="/marketplace/:id" component={MarketplaceListing} />
       <Route path="/seller" component={SellerDashboard} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
