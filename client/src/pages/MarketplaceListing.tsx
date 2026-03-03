@@ -153,7 +153,17 @@ export default function MarketplaceListing() {
 
   const price = parseFloat(listing.priceHkd as string);
   const isAvailable = listing.status === "active" && listing.quantity > 0;
-  const images = listing.images as string[] | null;
+  // images may come back as a JSON string from the DB (e.g. '["url1"]') or already as an array
+  const rawImages = listing.images;
+  const images: string[] | null = (() => {
+    if (!rawImages) return null;
+    if (Array.isArray(rawImages)) return rawImages as string[];
+    if (typeof rawImages === "string") {
+      try { const parsed = JSON.parse(rawImages); return Array.isArray(parsed) ? parsed : null; }
+      catch { return null; }
+    }
+    return null;
+  })();
 
   return (
     <div className="min-h-screen bg-background pt-20">

@@ -3470,3 +3470,6 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ## 🐛 修復商品詳情頁 404 錯誤
 - [x] 修復 App.tsx 路由：將 /marketplace/listing/:id 改為 /marketplace/:id
 - [x] 確認 MarketplaceListing.tsx 包含完整商品資訊和付款方式（Stripe + 支付寶 HK）
+
+## 🐛 修復商品詳情頁圖片 JSON 解析錯誤
+- [x] 修復 MarketplaceListing.tsx 中 images 欄位 JSON.parse 問題（DB 返回字串而非陣列）
