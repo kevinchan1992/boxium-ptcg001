@@ -11,8 +11,10 @@ import { ArrowLeft, CreditCard, Smartphone, Package, Star, Shield, Truck, AlertC
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 const conditionLabel: Record<string, string> = {
-  mint: "Mint (M)", near_mint: "Near Mint (NM)", excellent: "Excellent (EX)",
-  good: "Good (G)", played: "Played (PL)", poor: "Poor (PR)", sealed: "Sealed",
+  psa10: "PSA 10", psa9: "PSA 9", psa8_below: "PSA 8 以下",
+  bgs10: "BGS 10", bgs9: "BGS 9", bgs8_below: "BGS 8 以下",
+  tag10: "TAG 10", tag9_below: "TAG 9 以下",
+  raw_a: "A品 (Raw)", raw_b: "B品 (Raw)", raw_c: "C品 (Raw)", raw_d: "D品 (Raw)",
 };
 
 function ListingImageGallery({ images, title }: { images: string[] | null; title: string }) {

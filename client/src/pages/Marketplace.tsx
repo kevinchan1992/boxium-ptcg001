@@ -1,34 +1,21 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Package, ChevronLeft, ChevronRight, SlidersHorizontal, X, ShoppingBag, ArrowUpDown, Sparkles, Tag } from "lucide-react";
+import { Search, Package, ChevronLeft, ChevronRight, X, ShoppingBag, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
+import { CONDITION_GROUPS, CONDITION_SHORT, CONDITION_BADGE, type ConditionValue } from "@/lib/conditions";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CONDITION_LABELS: Record<string, string> = {
-  mint: "Mint",
-  near_mint: "NM",
-  excellent: "EX",
-  good: "Good",
-  played: "Played",
-  poor: "Poor",
-  sealed: "Sealed",
-};
-
-const CONDITION_COLORS: Record<string, string> = {
-  mint: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  near_mint: "bg-green-500/20 text-green-400 border-green-500/30",
-  excellent: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  good: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  played: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  poor: "bg-red-500/20 text-red-400 border-red-500/30",
-  sealed: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-};
+const LANGUAGES = [
+  { value: "jp", label: "日版" },
+  { value: "en", label: "英版" },
+  { value: "tw", label: "台版" },
+  { value: "kr", label: "韓版" },
+];
 
 const PAGE_SIZE = 20;
 
@@ -44,15 +31,15 @@ function ProductCard({ listing }: { listing: any }) {
     }
   })();
   const coverImage = images && images.length > 0 ? images[0] : null;
-  const conditionKey = listing.condition as string;
+  const conditionKey = listing.condition as ConditionValue;
 
   return (
     <div
-      className="group cursor-pointer bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200"
+      className="group cursor-pointer bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-[#FFD700] hover:shadow-lg transition-all duration-200"
       onClick={() => setLocation(`/marketplace/${listing.id}`)}
     >
       {/* Image */}
-      <div className="relative aspect-[3/4] bg-gradient-to-br from-muted to-muted/50 overflow-hidden">
+      <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden">
         {coverImage ? (
           <img
             src={coverImage}
@@ -62,44 +49,33 @@ function ProductCard({ listing }: { listing: any }) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-12 h-12 text-muted-foreground/30" />
+            <Package className="w-12 h-12 text-gray-300" />
           </div>
         )}
-        {/* Condition badge overlay */}
+        {/* Condition badge */}
         <div className="absolute top-2 left-2">
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border backdrop-blur-sm ${CONDITION_COLORS[conditionKey] ?? "bg-muted/80 text-muted-foreground border-border"}`}>
-            {CONDITION_LABELS[conditionKey] ?? conditionKey}
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${CONDITION_BADGE[conditionKey] ?? "bg-gray-100 text-gray-600 border border-gray-300"}`}>
+            {CONDITION_SHORT[conditionKey] ?? conditionKey}
           </span>
         </div>
-        {/* Platform badge */}
+        {/* Official badge */}
         {listing.sellerType === "platform" && (
           <div className="absolute top-2 right-2">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/90 text-primary-foreground backdrop-blur-sm">
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#0A0A2E] text-[#FFD700]">
               官方
             </span>
-          </div>
-        )}
-        {/* Image count indicator */}
-        {images && images.length > 1 && (
-          <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-full">
-            +{images.length - 1}
           </div>
         )}
       </div>
 
       {/* Info */}
-      <div className="p-3 space-y-1.5">
-        <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+      <div className="p-3 space-y-1">
+        <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">
           {listing.title}
         </p>
-        <div className="flex items-center justify-between">
-          <span className="text-base font-bold text-primary">
-            HK${Number(listing.priceHkd).toLocaleString()}
-          </span>
-          {listing.quantity > 1 && (
-            <span className="text-xs text-muted-foreground">×{listing.quantity}</span>
-          )}
-        </div>
+        <p className="text-base font-bold text-[#0A0A2E]">
+          HK${Number(listing.priceHkd).toLocaleString()}
+        </p>
       </div>
     </div>
   );
@@ -109,7 +85,7 @@ function ProductCard({ listing }: { listing: any }) {
 
 function ProductCardSkeleton() {
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
       <Skeleton className="aspect-[3/4] w-full" />
       <div className="p-3 space-y-2">
         <Skeleton className="h-4 w-full" />
@@ -120,22 +96,42 @@ function ProductCardSkeleton() {
   );
 }
 
+// ─── Filter Section ───────────────────────────────────────────────────────────
+
+function FilterSection({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-gray-100 py-3">
+      <button
+        className="w-full flex items-center justify-between text-sm font-semibold text-gray-800 mb-2"
+        onClick={() => setOpen(o => !o)}
+      >
+        {title}
+        {open ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+      </button>
+      {open && children}
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Marketplace() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [condition, setCondition] = useState<string>("all");
+  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [sellerType, setSellerType] = useState<string>("all");
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000]);
   const [page, setPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">("newest");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const { data, isLoading } = trpc.marketplace.getListings.useQuery({
     page,
     pageSize: PAGE_SIZE,
     search: search || undefined,
-    condition: condition !== "all" ? condition : undefined,
+    condition: selectedConditions.length === 1 ? selectedConditions[0] : undefined,
     sellerType: sellerType !== "all" ? (sellerType as "platform" | "seller") : undefined,
     sortBy,
   });
@@ -156,182 +152,269 @@ export default function Marketplace() {
     setPage(1);
   }, []);
 
-  const handleConditionChange = (val: string) => {
-    setCondition(val);
+  const toggleCondition = (val: string) => {
+    setSelectedConditions(prev =>
+      prev.includes(val) ? prev.filter(c => c !== val) : [...prev, val]
+    );
     setPage(1);
   };
 
-  const handleSellerTypeChange = (val: string) => {
-    setSellerType(val);
+  const toggleLanguage = (val: string) => {
+    setSelectedLanguages(prev =>
+      prev.includes(val) ? prev.filter(l => l !== val) : [...prev, val]
+    );
     setPage(1);
   };
 
-  const hasActiveFilters = condition !== "all" || sellerType !== "all" || search;
-
-  const handleSortChange = (val: string) => {
-    setSortBy(val as "newest" | "price_asc" | "price_desc");
-    setPage(1);
+  const clearAllFilters = () => {
+    setSelectedConditions([]);
+    setSellerType("all");
+    setSelectedLanguages([]);
+    setPriceRange([0, 50000]);
+    clearSearch();
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* ── Featured Banner ── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#1a0533] via-[#0d1a4a] to-[#1a0533] border-b border-border">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
-        <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 relative">
-          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
-            <div className="flex-1 text-center md:text-left">
-              <div className="inline-flex items-center gap-1.5 bg-primary/20 border border-primary/30 rounded-full px-3 py-1 text-xs text-primary font-medium mb-3">
-                <Sparkles className="w-3 h-3" />
-                BOXIUM 官方商城
-              </div>
-              <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">
-                精選寶可夢卡牌
-              </h1>
-              <p className="text-sm md:text-base text-muted-foreground max-w-md">
-                官方認證商品 · 品質保證 · 安全交易
-              </p>
-              <div className="flex items-center gap-4 mt-4 justify-center md:justify-start">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Tag className="w-3.5 h-3.5 text-primary" />
-                  <span>即時市場定價</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <ShoppingBag className="w-3.5 h-3.5 text-primary" />
-                  <span>支援 Stripe / 支付寶 HK</span>
-                </div>
-              </div>
-            </div>
-            <div className="hidden md:flex gap-3">
-              {["Mint", "NM", "EX", "Sealed"].map((grade, i) => (
-                <div key={grade} className={`w-16 h-22 rounded-xl border-2 flex flex-col items-center justify-center gap-1 text-xs font-bold cursor-pointer hover:scale-105 transition-transform ${
-                  i === 0 ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-400" :
-                  i === 1 ? "border-green-500/60 bg-green-500/10 text-green-400" :
-                  i === 2 ? "border-blue-500/60 bg-blue-500/10 text-blue-400" :
-                  "border-purple-500/60 bg-purple-500/10 text-purple-400"
-                }`}
-                  onClick={() => { handleConditionChange(i === 0 ? "mint" : i === 1 ? "near_mint" : i === 2 ? "excellent" : "sealed"); setShowFilters(true); }}
-                >
-                  <Package className="w-5 h-5" />
-                  {grade}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+  const hasActiveFilters = selectedConditions.length > 0 || sellerType !== "all" || selectedLanguages.length > 0 || search;
+
+  // ─── Filter Sidebar ───────────────────────────────────────────────────────
+  const FilterSidebar = () => (
+    <aside className="w-full space-y-0">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-bold text-[#0A0A2E] flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4" />
+          篩選條件
+        </h2>
+        {hasActiveFilters && (
+          <button
+            className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+            onClick={clearAllFilters}
+          >
+            清除全部
+          </button>
+        )}
       </div>
 
-      {/* ── Header ── */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+      {/* Condition - grouped by grading company */}
+      <FilterSection title="品相">
+        <div className="space-y-3">
+          {CONDITION_GROUPS.map(group => (
+            <div key={group.group}>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{group.group}</p>
+              <div className="space-y-1">
+                {group.items.map(item => {
+                  const checked = selectedConditions.includes(item.value);
+                  return (
+                    <label
+                      key={item.value}
+                      className="flex items-center gap-2 cursor-pointer group"
+                      onClick={() => toggleCondition(item.value)}
+                    >
+                      <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                        checked ? "bg-[#0A0A2E] border-[#0A0A2E]" : "border-gray-300 bg-white group-hover:border-[#0A0A2E]"
+                      }`}>
+                        {checked && (
+                          <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                            <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${CONDITION_BADGE[item.value as ConditionValue]}`}>{item.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </FilterSection>
+
+      {/* Seller Type */}
+      <FilterSection title="賣家類型" defaultOpen={false}>
+        <div className="space-y-1">
+          {[
+            { value: "all", label: "全部" },
+            { value: "platform", label: "BOXIUM 官方" },
+            { value: "seller", label: "C2C 賣家" },
+          ].map(s => (
+            <label key={s.value} className="flex items-center gap-2 cursor-pointer group" onClick={() => { setSellerType(s.value); setPage(1); }}>
+              <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                sellerType === s.value ? "bg-[#0A0A2E] border-[#0A0A2E]" : "border-gray-300 bg-white group-hover:border-[#0A0A2E]"
+              }`}>
+                {sellerType === s.value && (
+                  <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                    <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </span>
+              <span className="text-xs text-gray-700">{s.label}</span>
+            </label>
+          ))}
+        </div>
+      </FilterSection>
+
+      {/* Language */}
+      <FilterSection title="語言版本" defaultOpen={false}>
+        <div className="space-y-1">
+          {LANGUAGES.map(l => (
+            <label key={l.value} className="flex items-center gap-2 cursor-pointer group" onClick={() => toggleLanguage(l.value)}>
+              <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                selectedLanguages.includes(l.value) ? "bg-[#0A0A2E] border-[#0A0A2E]" : "border-gray-300 bg-white group-hover:border-[#0A0A2E]"
+              }`}>
+                {selectedLanguages.includes(l.value) && (
+                  <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                    <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </span>
+              <span className="text-xs text-gray-700">{l.label}</span>
+            </label>
+          ))}
+        </div>
+      </FilterSection>
+
+      {/* Price Range */}
+      <FilterSection title="價格範圍 (HKD)" defaultOpen={false}>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              placeholder="最低"
+              value={priceRange[0] || ""}
+              onChange={e => setPriceRange([Number(e.target.value) || 0, priceRange[1]])}
+              className="h-7 text-xs"
+            />
+            <span className="text-gray-400 self-center text-xs">—</span>
+            <Input
+              type="number"
+              placeholder="最高"
+              value={priceRange[1] === 50000 ? "" : priceRange[1]}
+              onChange={e => setPriceRange([priceRange[0], Number(e.target.value) || 50000])}
+              className="h-7 text-xs"
+            />
+          </div>
+        </div>
+      </FilterSection>
+    </aside>
+  );
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* ── Top Search Bar ── */}
+      <div className="bg-[#0A0A2E] border-b border-[#1a1a4e]">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Search bar */}
-            <form onSubmit={handleSearch} className="flex-1 min-w-[200px] flex gap-2">
+          <div className="flex flex-col md:flex-row items-center gap-3">
+            {/* Title */}
+            <div className="shrink-0 text-center md:text-left">
+              <h1 className="text-lg font-bold text-white">BOXIUM 商城</h1>
+              <p className="text-xs text-gray-400">精選寶可夢卡牌 · 安全交易</p>
+            </div>
+            {/* Search */}
+            <form onSubmit={handleSearch} className="flex-1 flex gap-2 max-w-2xl mx-auto w-full">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="搜尋商品名稱..."
-                  className="pl-9 pr-8 text-sm"
+                  placeholder="搜尋卡牌名稱、編號..."
+                  className="pl-9 pr-8 bg-white border-0 text-gray-900 placeholder:text-gray-400 h-9 rounded-lg focus-visible:ring-2 focus-visible:ring-[#FFD700]"
                 />
                 {searchInput && (
                   <button
                     type="button"
                     onClick={clearSearch}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
-              <Button type="submit" size="sm" className="shrink-0">搜尋</Button>
+              <Button
+                type="submit"
+                className="bg-[#FFD700] hover:bg-[#e6c200] text-[#0A0A2E] font-bold h-9 px-5 rounded-lg shrink-0"
+              >
+                搜尋
+              </Button>
             </form>
-
-            {/* Filter toggle (mobile) */}
+            {/* Mobile filter toggle */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className={`shrink-0 gap-1.5 ${hasActiveFilters ? "border-primary text-primary" : ""}`}
+              className="md:hidden border-white/30 text-white hover:bg-white/10 gap-1.5"
+              onClick={() => setMobileSidebarOpen(o => !o)}
             >
               <SlidersHorizontal className="w-4 h-4" />
               篩選
-              {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
             </Button>
           </div>
-
-          {/* Filters row */}
-          {showFilters && (
-            <div className="flex gap-3 mt-3 flex-wrap">
-              <Select value={condition} onValueChange={handleConditionChange}>
-                <SelectTrigger className="w-36 text-sm h-8">
-                  <SelectValue placeholder="卡況" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部卡況</SelectItem>
-                  <SelectItem value="mint">Mint</SelectItem>
-                  <SelectItem value="near_mint">Near Mint</SelectItem>
-                  <SelectItem value="excellent">Excellent</SelectItem>
-                  <SelectItem value="good">Good</SelectItem>
-                  <SelectItem value="played">Played</SelectItem>
-                  <SelectItem value="poor">Poor</SelectItem>
-                  <SelectItem value="sealed">Sealed</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sellerType} onValueChange={handleSellerTypeChange}>
-                <SelectTrigger className="w-36 text-sm h-8">
-                  <SelectValue placeholder="賣家類型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部賣家</SelectItem>
-                  <SelectItem value="platform">官方商品</SelectItem>
-                  <SelectItem value="seller">C2C 賣家</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs text-muted-foreground"
-                  onClick={() => {
-                    setCondition("all");
-                    setSellerType("all");
-                    clearSearch();
-                  }}
-                >
-                  清除篩選
-                </Button>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* ── Content ── */}
+      {/* ── Active Filter Tags ── */}
+      {hasActiveFilters && (
+        <div className="bg-gray-50 border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 py-2 flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-gray-500 shrink-0">已篩選：</span>
+            {search && (
+              <span className="inline-flex items-center gap-1 bg-[#0A0A2E] text-white text-xs px-2 py-0.5 rounded-full">
+                搜尋：{search}
+                <button onClick={clearSearch}><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            {selectedConditions.map(c => (
+              <span key={c} className="inline-flex items-center gap-1 bg-[#0A0A2E] text-white text-xs px-2 py-0.5 rounded-full">
+                {CONDITION_SHORT[c as ConditionValue] ?? c}
+                <button onClick={() => toggleCondition(c)}><X className="w-3 h-3" /></button>
+              </span>
+            ))}
+            {sellerType !== "all" && (
+              <span className="inline-flex items-center gap-1 bg-[#0A0A2E] text-white text-xs px-2 py-0.5 rounded-full">
+                {sellerType === "platform" ? "官方" : "C2C"}
+                <button onClick={() => setSellerType("all")}><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            <button className="text-xs text-red-500 hover:text-red-700 font-medium ml-1" onClick={clearAllFilters}>
+              清除全部
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Main Layout ── */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Result count + Sort */}
-        {!isLoading && (
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <p className="text-sm text-muted-foreground">
-              {total > 0 ? (
-                <>共 <span className="text-foreground font-medium">{total}</span> 件商品</>
-              ) : (
-                "暫無商品"
-              )}
-            </p>
-            <div className="flex items-center gap-2">
-              {search && (
-                <Badge variant="secondary" className="gap-1 text-xs">
-                  搜尋：{search}
-                  <button onClick={clearSearch}><X className="w-3 h-3" /></button>
-                </Badge>
-              )}
-              <Select value={sortBy} onValueChange={handleSortChange}>
-                <SelectTrigger className="w-36 h-8 text-xs gap-1">
-                  <ArrowUpDown className="w-3 h-3 shrink-0" />
+        <div className="flex gap-6">
+          {/* Left Sidebar - Desktop */}
+          <div className="hidden md:block w-52 shrink-0">
+            <div className="sticky top-4 bg-white border border-gray-200 rounded-xl p-4">
+              <FilterSidebar />
+            </div>
+          </div>
+
+          {/* Mobile Sidebar Overlay */}
+          {mobileSidebarOpen && (
+            <div className="fixed inset-0 z-50 md:hidden">
+              <div className="absolute inset-0 bg-black/40" onClick={() => setMobileSidebarOpen(false)} />
+              <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-4 overflow-y-auto shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold text-[#0A0A2E]">篩選條件</h2>
+                  <button onClick={() => setMobileSidebarOpen(false)}><X className="w-5 h-5" /></button>
+                </div>
+                <FilterSidebar />
+              </div>
+            </div>
+          )}
+
+          {/* Right Content */}
+          <div className="flex-1 min-w-0">
+            {/* Result count + Sort */}
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <p className="text-sm text-gray-500">
+                {isLoading ? "載入中..." : total > 0 ? (
+                  <>共 <span className="text-gray-900 font-semibold">{total}</span> 件商品</>
+                ) : "暫無商品"}
+              </p>
+              <Select value={sortBy} onValueChange={v => { setSortBy(v as typeof sortBy); setPage(1); }}>
+                <SelectTrigger className="w-36 h-8 text-xs border-gray-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -341,96 +424,66 @@ export default function Marketplace() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-        )}
 
-        {/* Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <ProductCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : listings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <ShoppingBag className="w-16 h-16 text-muted-foreground/30 mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-1">暫無在售商品</h3>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              {hasActiveFilters ? "嘗試調整篩選條件以查看更多商品" : "商城即將上架更多精選卡牌，敬請期待！"}
-            </p>
-            {hasActiveFilters && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4"
-                onClick={() => {
-                  setCondition("all");
-                  setSellerType("all");
-                  clearSearch();
-                }}
-              >
-                清除篩選
-              </Button>
+            {/* Grid */}
+            {isLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                {Array.from({ length: 10 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+              </div>
+            ) : listings.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <ShoppingBag className="w-16 h-16 text-gray-200 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">暫無在售商品</h3>
+                <p className="text-sm text-gray-500 max-w-xs">
+                  {hasActiveFilters ? "嘗試調整篩選條件以查看更多商品" : "商城即將上架更多精選卡牌，敬請期待！"}
+                </p>
+                {hasActiveFilters && (
+                  <Button variant="outline" size="sm" className="mt-4" onClick={clearAllFilters}>
+                    清除篩選
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                {listings.map((listing: any) => (
+                  <ProductCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="gap-1">
+                  <ChevronLeft className="w-4 h-4" />上一頁
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 7) pageNum = i + 1;
+                    else if (page <= 4) pageNum = i + 1;
+                    else if (page >= totalPages - 3) pageNum = totalPages - 6 + i;
+                    else pageNum = page - 3 + i;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={page === pageNum ? "default" : "ghost"}
+                        size="sm"
+                        className={`w-8 h-8 p-0 text-xs ${page === pageNum ? "bg-[#0A0A2E] text-white hover:bg-[#1a1a4e]" : ""}`}
+                        onClick={() => setPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="gap-1">
+                  下一頁<ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             )}
           </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-            {listings.map((listing: any) => (
-              <ProductCard key={listing.id} listing={listing} />
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-8">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage(p => p - 1)}
-              className="gap-1"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              上一頁
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                let pageNum: number;
-                if (totalPages <= 7) {
-                  pageNum = i + 1;
-                } else if (page <= 4) {
-                  pageNum = i + 1;
-                } else if (page >= totalPages - 3) {
-                  pageNum = totalPages - 6 + i;
-                } else {
-                  pageNum = page - 3 + i;
-                }
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={page === pageNum ? "default" : "ghost"}
-                    size="sm"
-                    className="w-8 h-8 p-0 text-xs"
-                    onClick={() => setPage(pageNum)}
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage(p => p + 1)}
-              className="gap-1"
-            >
-              下一頁
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

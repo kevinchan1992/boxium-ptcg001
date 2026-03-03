@@ -101,13 +101,26 @@ function ImageUploader({
 }
 
 const conditionOptions = [
-  { value: "mint", label: "Mint (M)" },
-  { value: "near_mint", label: "Near Mint (NM)" },
-  { value: "excellent", label: "Excellent (EX)" },
-  { value: "good", label: "Good (G)" },
-  { value: "played", label: "Played (PL)" },
-  { value: "poor", label: "Poor (PR)" },
-  { value: "sealed", label: "Sealed" },
+  { group: "PSA", items: [
+    { value: "psa10", label: "PSA 10" },
+    { value: "psa9", label: "PSA 9" },
+    { value: "psa8_below", label: "PSA 8 以下" },
+  ]},
+  { group: "BGS", items: [
+    { value: "bgs10", label: "BGS 10" },
+    { value: "bgs9", label: "BGS 9" },
+    { value: "bgs8_below", label: "BGS 8 以下" },
+  ]},
+  { group: "TAG", items: [
+    { value: "tag10", label: "TAG 10" },
+    { value: "tag9_below", label: "TAG 9 以下" },
+  ]},
+  { group: "Raw 卡", items: [
+    { value: "raw_a", label: "A品" },
+    { value: "raw_b", label: "B品" },
+    { value: "raw_c", label: "C品" },
+    { value: "raw_d", label: "D品" },
+  ]},
 ];
 
 const orderStatusLabel: Record<string, { label: string; color: string }> = {
@@ -124,7 +137,7 @@ export default function SellerDashboard() {
   const [showNewListing, setShowNewListing] = useState(false);
   const [applyForm, setApplyForm] = useState({ displayName: "", bio: "" });
   const [listingForm, setListingForm] = useState({
-    title: "", description: "", condition: "near_mint", price: "", quantity: "1",
+    title: "", description: "", condition: "raw_a", price: "", quantity: "1",
   });
   const [listingImages, setListingImages] = useState<string[]>([]);
 
@@ -151,7 +164,7 @@ export default function SellerDashboard() {
     onSuccess: () => {
       toast.success("商品已提交審核");
       setShowNewListing(false);
-      setListingForm({ title: "", description: "", condition: "near_mint", price: "", quantity: "1" });
+      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1" });
       setListingImages([]);
       refetchListings();
     },
@@ -463,7 +476,12 @@ export default function SellerDashboard() {
                 <Select value={listingForm.condition} onValueChange={(v) => setListingForm(p => ({ ...p, condition: v }))}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                    {conditionOptions.map(group => (
+                      <div key={group.group}>
+                        <div className="px-2 py-1 text-xs font-bold text-gray-400 uppercase tracking-wide">{group.group}</div>
+                        {group.items.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                      </div>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

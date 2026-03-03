@@ -224,7 +224,7 @@ export const marketplaceRouter = router({
     .input(z.object({
       title: z.string().min(3).max(200),
       description: z.string().max(2000).optional(),
-      condition: z.enum(["mint", "near_mint", "excellent", "good", "played", "poor", "sealed"]),
+      condition: z.enum(["psa10", "psa9", "psa8_below", "bgs10", "bgs9", "bgs8_below", "tag10", "tag9_below", "raw_a", "raw_b", "raw_c", "raw_d"]),
       price: z.number().positive(),
       quantity: z.number().int().min(1).default(1),
       cardId: z.number().int().optional(),
@@ -308,7 +308,7 @@ export const marketplaceRouter = router({
     .input(z.object({
       title: z.string().min(3).max(200),
       description: z.string().max(2000).optional(),
-      condition: z.enum(["mint", "near_mint", "excellent", "good", "played", "poor", "sealed"]),
+      condition: z.enum(["psa10", "psa9", "psa8_below", "bgs10", "bgs9", "bgs8_below", "tag10", "tag9_below", "raw_a", "raw_b", "raw_c", "raw_d"]),
       price: z.number().positive(),
       quantity: z.number().int().min(1).default(1),
       cardId: z.number().int().optional(),
@@ -603,7 +603,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .input(z.object({
       title: z.string().min(1).max(200),
       description: z.string().optional(),
-      condition: z.enum(["mint", "near_mint", "excellent", "good", "played", "poor", "sealed"]),
+      condition: z.enum(["psa10", "psa9", "psa8_below", "bgs10", "bgs9", "bgs8_below", "tag10", "tag9_below", "raw_a", "raw_b", "raw_c", "raw_d"]),
       price: z.number().positive(),
       quantity: z.number().int().positive(),
     }))

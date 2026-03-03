@@ -12,16 +12,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2 } from "lucide-react";
+import { CONDITION_GROUPS } from "@/lib/conditions";
 
 const conditionLabel: Record<string, string> = {
-  mint: "Mint", near_mint: "NM", excellent: "EX", good: "Good",
-  played: "Played", poor: "Poor", sealed: "Sealed"
+  psa10: "PSA 10", psa9: "PSA 9", psa8_below: "PSA 8↓",
+  bgs10: "BGS 10", bgs9: "BGS 9", bgs8_below: "BGS 8↓",
+  tag10: "TAG 10", tag9_below: "TAG 9↓",
+  raw_a: "A品", raw_b: "B品", raw_c: "C品", raw_d: "D品",
 };
 const conditionColor: Record<string, string> = {
-  mint: "bg-emerald-100 text-emerald-800", near_mint: "bg-green-100 text-green-800",
-  excellent: "bg-blue-100 text-blue-800", good: "bg-yellow-100 text-yellow-800",
-  played: "bg-orange-100 text-orange-800", poor: "bg-red-100 text-red-800",
-  sealed: "bg-purple-100 text-purple-800"
+  psa10: "bg-yellow-100 text-yellow-800", psa9: "bg-yellow-50 text-yellow-700", psa8_below: "bg-amber-50 text-amber-700",
+  bgs10: "bg-blue-100 text-blue-800", bgs9: "bg-blue-50 text-blue-700", bgs8_below: "bg-sky-50 text-sky-700",
+  tag10: "bg-purple-100 text-purple-800", tag9_below: "bg-purple-50 text-purple-700",
+  raw_a: "bg-emerald-100 text-emerald-800", raw_b: "bg-green-50 text-green-700", raw_c: "bg-orange-50 text-orange-700", raw_d: "bg-red-50 text-red-700",
 };
 const orderStatusColor: Record<string, string> = {
   pending_payment: "bg-yellow-100 text-yellow-800",
@@ -135,9 +138,9 @@ function ImageUploader({ images, onChange, maxImages = 5 }: { images: string[]; 
 }
 
 function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess: () => void }) {
-  const [form, setForm] = useState({ title: "", description: "", condition: "near_mint", price: "", quantity: "1", status: "active" });
+  const [form, setForm] = useState({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active" });
   const [images, setImages] = useState<string[]>([]);
-  const reset = () => { setForm({ title: "", description: "", condition: "near_mint", price: "", quantity: "1", status: "active" }); setImages([]); };
+  const reset = () => { setForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active" }); setImages([]); };
   const createMutation = trpc.marketplace.adminCreatePlatformListing.useMutation({
     onSuccess: () => { toast.success("商品已上架"); onSuccess(); onClose(); reset(); },
     onError: (e) => toast.error(e.message),
@@ -155,7 +158,14 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
               <Label>品相 *</Label>
               <Select value={form.condition} onValueChange={v => setForm(f => ({ ...f, condition: v }))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>{Object.entries(conditionLabel).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {CONDITION_GROUPS.map(group => (
+                    <div key={group.group}>
+                      <div className="px-2 py-1 text-xs font-bold text-gray-400 uppercase tracking-wide">{group.group}</div>
+                      {group.items.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                    </div>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div>
