@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -23,37 +22,58 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { User, Heart, History, TrendingUp, Edit, Trash2, X, Package } from "lucide-react";
+import { User, Heart, History, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
+// ─── Brand tokens ──────────────────────────────────────────────
+const BRAND_BLUE = "#06038d";
+const BRAND_YELLOW = "#FFD700";
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
   const { data: user, isLoading: userLoading } = trpc.auth.me.useQuery();
-  const [activeTab, setActiveTab] = useState("watchlist");
+  const [activeTab, setActiveTab] = useState("info");
+
+  const locale = i18n.language === "ja" ? "ja-JP" : i18n.language === "en" ? "en-US" : "zh-TW";
 
   if (userLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#06038d] to-[#030156] flex items-center justify-center">
-        <div className="text-white text-xl">{t('profile.loading')}</div>
+      <div className="min-h-screen bg-white">
+        {/* Blue hero skeleton */}
+        <div className="h-48" style={{ background: BRAND_BLUE }} />
+        <div className="max-w-5xl mx-auto px-4 -mt-16 pb-12 space-y-4">
+          <Skeleton className="h-32 w-32 rounded-full" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#06038d] to-[#030156] flex items-center justify-center p-4">
-        <Card className="max-w-md w-full bg-zinc-900 border-zinc-800">
-          <CardHeader className="text-center">
-            <div className="w-20 h-20 bg-[#ffed00] rounded-full mx-auto mb-4 flex items-center justify-center">
-              <Package className="w-10 h-10 text-[#06038d]" />
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border border-gray-200 shadow-lg">
+          <CardHeader className="text-center pb-4">
+            <div
+              className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
+              style={{ background: BRAND_BLUE }}
+            >
+              <Package className="w-10 h-10" style={{ color: BRAND_YELLOW }} />
             </div>
-            <CardTitle className="text-white text-2xl">{t('profile.pleaseLogin')}</CardTitle>
-            <CardDescription className="text-gray-400">{t('profile.loginRequired')}</CardDescription>
+            <CardTitle className="text-2xl font-bold text-gray-900">{t("profile.pleaseLogin")}</CardTitle>
+            <CardDescription className="text-gray-500">{t("profile.loginRequired")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full bg-[#ffed00] hover:bg-[#ffed00]/90 text-[#06038d] font-bold">
-              <a href="/login">{t('profile.goToLogin')}</a>
+            <Button
+              asChild
+              className="w-full font-bold text-base"
+              style={{ background: BRAND_BLUE, color: "white" }}
+            >
+              <a href="/login">{t("profile.goToLogin")}</a>
             </Button>
           </CardContent>
         </Card>
@@ -61,501 +81,385 @@ export default function Profile() {
     );
   }
 
+  const isAdmin = user.role === "admin";
+  const joinDate = new Date(user.createdAt).toLocaleDateString(locale);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#06038d] to-[#030156] py-8 px-4">
-      <div className="container max-w-6xl mx-auto">
-        {/* Header Section */}
-        <div className="bg-zinc-900/50 border border-[#ffed00]/20 rounded-lg p-6 md:p-8 mb-6 flex flex-col md:flex-row items-center gap-6">
-          <div className="w-24 h-24 md:w-32 md:h-32 bg-[#ffed00] rounded-full flex items-center justify-center flex-shrink-0">
-            <User className="w-12 h-12 md:w-16 md:h-16 text-[#06038d]" />
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              {user.name || t('profile.user')}
-            </h1>
-            <p className="text-[#ffed00] text-lg md:text-xl font-medium mb-2">
-              {user.role === "admin" ? t('profile.admin') : t('profile.collector')}
-            </p>
-            <p className="text-gray-300 text-sm md:text-base">
-              {t('profile.joinedAt')}{new Date(user.createdAt).toLocaleDateString(i18n.language === 'ja' ? 'ja-JP' : i18n.language === 'en' ? 'en-US' : 'zh-TW')}
-            </p>
+    <div className="min-h-screen bg-white">
+      {/* ── Hero Banner ── */}
+      <div
+        className="relative"
+        style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #0a06b5 100%)` }}
+      >
+        {/* Decorative yellow accent line */}
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: BRAND_YELLOW }} />
+        <div className="max-w-5xl mx-auto px-4 pt-10 pb-20">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+            {/* Avatar */}
+            <div
+              className="w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
+              style={{ background: BRAND_YELLOW, borderColor: "white" }}
+            >
+              <User className="w-12 h-12 md:w-14 md:h-14" style={{ color: BRAND_BLUE }} />
+            </div>
+            {/* Name & meta */}
+            <div className="text-center md:text-left pb-1">
+              <div className="flex items-center gap-2 justify-center md:justify-start mb-1">
+                <h1 className="text-2xl md:text-3xl font-bold text-white">
+                  {user.name || t("profile.user")}
+                </h1>
+                {isAdmin && (
+                  <span
+                    className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}
+                  >
+                    <Crown className="w-3 h-3" />
+                    Admin
+                  </span>
+                )}
+              </div>
+              <p className="text-white/70 text-sm flex items-center gap-1.5 justify-center md:justify-start">
+                <Calendar className="w-3.5 h-3.5" />
+                {t("profile.joinedAt")}{joinDate}
+              </p>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Welcome Message */}
-        <div className="bg-zinc-900/50 border border-[#ffed00]/20 rounded-lg p-4 md:p-6 mb-6">
-          <p className="text-white text-base md:text-lg">
-            {t('profile.welcome')}
-          </p>
+      {/* ── Main Content ── */}
+      <div className="max-w-5xl mx-auto px-4 -mt-10 pb-16">
+        {/* Tabs card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            {/* Tab bar */}
+            <TabsList
+              className="grid grid-cols-3 w-full rounded-none border-b border-gray-100 bg-white h-auto p-0"
+            >
+              {[
+                { value: "info", icon: User, label: t("profile.tabs.info"), short: t("profile.tabs.infoShort") },
+                { value: "watchlist", icon: Heart, label: t("profile.tabs.watchlist"), short: t("profile.tabs.watchlistShort") },
+                { value: "history", icon: History, label: t("profile.tabs.history"), short: t("profile.tabs.historyShort") },
+              ].map(({ value, icon: Icon, label, short }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className="relative flex items-center justify-center gap-2 py-4 text-sm font-medium text-gray-500 rounded-none border-0 data-[state=active]:text-white data-[state=active]:shadow-none transition-colors"
+                  style={
+                    activeTab === value
+                      ? { background: BRAND_BLUE, color: "white" }
+                      : {}
+                  }
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden md:inline">{label}</span>
+                  <span className="md:hidden text-xs">{short}</span>
+                  {/* Yellow underline accent for active */}
+                  {activeTab === value && (
+                    <span
+                      className="absolute bottom-0 left-0 right-0 h-0.5"
+                      style={{ background: BRAND_YELLOW }}
+                    />
+                  )}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            <div className="p-6">
+              <TabsContent value="info" className="mt-0">
+                <InfoSection user={user} locale={locale} />
+              </TabsContent>
+              <TabsContent value="watchlist" className="mt-0">
+                <WatchlistSection />
+              </TabsContent>
+              <TabsContent value="history" className="mt-0">
+                <HistorySection />
+              </TabsContent>
+            </div>
+          </Tabs>
         </div>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full bg-zinc-900 border border-zinc-800 p-1 h-auto">
-            <TabsTrigger 
-              value="info" 
-              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center justify-center gap-1.5 px-2 py-2.5 whitespace-nowrap text-sm"
-            >
-              <User className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline">{t('profile.tabs.info')}</span>
-              <span className="md:hidden text-xs">{t('profile.tabs.infoShort')}</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="watchlist" 
-              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center justify-center gap-1.5 px-2 py-2.5 whitespace-nowrap text-sm"
-            >
-              <Heart className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline">{t('profile.tabs.watchlist')}</span>
-              <span className="md:hidden text-xs">{t('profile.tabs.watchlistShort')}</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history" 
-              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center justify-center gap-1.5 px-2 py-2.5 whitespace-nowrap text-sm"
-            >
-              <History className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline">{t('profile.tabs.history')}</span>
-              <span className="md:hidden text-xs">{t('profile.tabs.historyShort')}</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="stats" 
-              className="data-[state=active]:bg-[#ffed00] data-[state=active]:text-[#06038d] text-white flex items-center justify-center gap-1.5 px-2 py-2.5 whitespace-nowrap text-sm"
-            >
-              <TrendingUp className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline">{t('profile.tabs.stats')}</span>
-              <span className="md:hidden text-xs">{t('profile.tabs.statsShort')}</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="info">
-            <InfoSection user={user} />
-          </TabsContent>
-
-          <TabsContent value="watchlist">
-            <WatchlistSection />
-          </TabsContent>
-
-          <TabsContent value="history">
-            <HistorySection />
-          </TabsContent>
-
-          <TabsContent value="stats">
-            <StatisticsSection />
-          </TabsContent>
-        </Tabs>
       </div>
     </div>
   );
 }
 
-function InfoSection({ user }: { user: any }) {
-  const { t, i18n } = useTranslation();
-  
+// ─── Info Section ──────────────────────────────────────────────
+function InfoSection({ user, locale }: { user: any; locale: string }) {
+  const { t } = useTranslation();
+
+  const fields = [
+    { icon: User, label: t("profile.infoSection.username"), value: user.name || t("profile.infoSection.notSet") },
+    { icon: Mail, label: t("profile.infoSection.email"), value: user.email || t("profile.infoSection.notSet") },
+    { icon: Shield, label: t("profile.infoSection.role"), value: user.role === "admin" ? t("profile.infoSection.adminRole") : t("profile.infoSection.normalUser") },
+    { icon: Calendar, label: t("profile.infoSection.registeredAt"), value: new Date(user.createdAt).toLocaleString(locale) },
+    {
+      icon: Calendar,
+      label: t("profile.infoSection.lastLogin"),
+      value: user.lastSignedIn
+        ? new Date(user.lastSignedIn).toLocaleString(locale)
+        : t("profile.infoSection.noRecord"),
+    },
+  ];
+
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
-      <CardHeader>
-        <CardTitle className="text-[#ffed00] flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#ffed00] rounded-full flex items-center justify-center">
-            <User className="w-4 h-4 text-[#06038d]" />
-          </div>
-          {t('profile.infoSection.title')}
-        </CardTitle>
-        <CardDescription className="text-gray-400">{t('profile.infoSection.description')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.username')}</Label>
-            <Input 
-              value={user.name || t('profile.infoSection.notSet')} 
-              disabled 
-              className="mt-2 bg-zinc-800 border-zinc-700 text-white" 
-            />
-          </div>
-          <div>
-            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.email')}</Label>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-bold text-gray-900 mb-1">{t("profile.infoSection.title")}</h2>
+        <p className="text-sm text-gray-500">{t("profile.infoSection.description")}</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {fields.map(({ icon: Icon, label, value }) => (
+          <div key={label} className="space-y-1.5">
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+              <Icon className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+              {label}
+            </Label>
             <Input
-              value={user.email || t('profile.infoSection.notSet')}
+              value={value}
               disabled
-              className="mt-2 bg-zinc-800 border-zinc-700 text-white"
+              className="bg-gray-50 border-gray-200 text-gray-800 disabled:opacity-100 disabled:cursor-default"
             />
           </div>
-          <div>
-            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.role')}</Label>
-            <Input
-              value={user.role === "admin" ? t('profile.infoSection.adminRole') : t('profile.infoSection.normalUser')}
-              disabled
-              className="mt-2 bg-zinc-800 border-zinc-700 text-white"
-            />
-          </div>
-          <div>
-            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.loginMethod')}</Label>
-            <Input
-              value={user.loginMethod === "password" ? t('profile.infoSection.passwordLogin') : t('profile.infoSection.googleOAuth')}
-              disabled
-              className="mt-2 bg-zinc-800 border-zinc-700 text-white"
-            />
-          </div>
-          <div>
-            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.registeredAt')}</Label>
-            <Input
-              value={new Date(user.createdAt).toLocaleString(i18n.language === 'ja' ? 'ja-JP' : i18n.language === 'en' ? 'en-US' : 'zh-TW')}
-              disabled
-              className="mt-2 bg-zinc-800 border-zinc-700 text-white"
-            />
-          </div>
-          <div>
-            <Label className="text-[#ffed00] font-medium">{t('profile.infoSection.lastLogin')}</Label>
-            <Input
-              value={
-                user.lastSignedIn
-                  ? new Date(user.lastSignedIn).toLocaleString(i18n.language === 'ja' ? 'ja-JP' : i18n.language === 'en' ? 'en-US' : 'zh-TW')
-                  : t('profile.infoSection.noRecord')
-              }
-              disabled
-              className="mt-2 bg-zinc-800 border-zinc-700 text-white"
-            />
-          </div>
-        </div>
-        <div className="pt-4">
-          <Button 
-            variant="outline" 
-            className="border-[#ffed00] text-[#ffed00] hover:bg-[#ffed00] hover:text-[#06038d]"
-          >
-            {t('profile.infoSection.changePassword')}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        ))}
+      </div>
+
+      <div className="pt-2 border-t border-gray-100">
+        <Button
+          variant="outline"
+          className="font-semibold border-2"
+          style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
+        >
+          {t("profile.infoSection.changePassword")}
+        </Button>
+      </div>
+    </div>
   );
 }
 
+// ─── Watchlist Section ─────────────────────────────────────────
 function WatchlistSection() {
   const { t } = useTranslation();
   const { data: watchlist, isLoading, refetch } = trpc.profile.getWatchlist.useQuery();
 
   const removeFromWatchlist = trpc.profile.removeFromWatchlist.useMutation({
     onSuccess: () => {
-      toast.success(t('profile.watchlistSection.removeSuccess'));
+      toast.success(t("profile.watchlistSection.removeSuccess"));
       refetch();
     },
     onError: (error) => {
-      toast.error(t('profile.watchlistSection.removeFailed', { error: error.message }));
+      toast.error(t("profile.watchlistSection.removeFailed", { error: error.message }));
     },
   });
 
   if (isLoading) {
     return (
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardContent className="py-12 text-center text-gray-400">
-          {t('profile.loading')}
-        </CardContent>
-      </Card>
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-lg" />
+        ))}
+      </div>
     );
   }
 
   if (!watchlist || watchlist.length === 0) {
     return (
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardContent className="py-12 text-center">
-          <Heart className="w-16 h-16 text-[#ffed00]/30 mx-auto mb-4" />
-          <p className="text-gray-400 mb-4 text-lg">{t('profile.watchlistSection.empty')}</p>
-          <Button 
-            asChild 
-            className="bg-[#ffed00] hover:bg-[#ffed00]/90 text-[#06038d] font-bold"
-          >
-            <a href="/research">{t('profile.watchlistSection.goToResearch')}</a>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="py-16 text-center">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+          style={{ background: `${BRAND_BLUE}10` }}
+        >
+          <Heart className="w-8 h-8" style={{ color: BRAND_BLUE }} />
+        </div>
+        <p className="text-gray-500 mb-5 text-base">{t("profile.watchlistSection.empty")}</p>
+        <Button
+          asChild
+          className="font-bold"
+          style={{ background: BRAND_BLUE, color: "white" }}
+        >
+          <a href="/research">{t("profile.watchlistSection.goToResearch")}</a>
+        </Button>
+      </div>
     );
   }
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
-      <CardHeader>
-        <CardTitle className="text-[#ffed00] flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#ffed00] rounded-full flex items-center justify-center">
-            <Heart className="w-4 h-4 text-[#06038d]" />
-          </div>
-          {t('profile.watchlistSection.title')}
-        </CardTitle>
-        <CardDescription className="text-gray-400">{t('profile.watchlistSection.count', { count: watchlist.length })}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-zinc-800 hover:bg-zinc-800/50">
-                <TableHead className="text-[#ffed00]">{t('profile.watchlistSection.table.card')}</TableHead>
-                <TableHead className="text-[#ffed00]">{t('profile.watchlistSection.table.series')}</TableHead>
-                <TableHead className="text-[#ffed00]">{t('profile.watchlistSection.table.latestPrice')}</TableHead>
-                <TableHead className="text-[#ffed00]">{t('profile.watchlistSection.table.notes')}</TableHead>
-                <TableHead className="text-[#ffed00]">{t('profile.watchlistSection.table.addedAt')}</TableHead>
-                <TableHead className="text-right text-[#ffed00]">{t('profile.watchlistSection.table.actions')}</TableHead>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-900">{t("profile.watchlistSection.title")}</h2>
+        <Badge
+          className="text-xs font-semibold"
+          style={{ background: `${BRAND_BLUE}15`, color: BRAND_BLUE, border: "none" }}
+        >
+          {watchlist.length} {t("profile.statsSection.cardsCount")}
+        </Badge>
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-gray-100">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-gray-100" style={{ background: `${BRAND_BLUE}08` }}>
+              <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.card")}</TableHead>
+              <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.series")}</TableHead>
+              <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.latestPrice")}</TableHead>
+              <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.addedAt")}</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700">{t("profile.watchlistSection.table.actions")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {watchlist.map((item: any) => (
+              <TableRow key={item.id} className="border-gray-100 hover:bg-gray-50 transition-colors">
+                <TableCell className="font-medium">
+                  <a
+                    href={`/card/${item.card.id}`}
+                    className="font-semibold transition-colors hover:underline"
+                    style={{ color: BRAND_BLUE }}
+                  >
+                    {item.card.name}
+                  </a>
+                </TableCell>
+                <TableCell className="text-gray-500 text-sm">{item.card.series || "—"}</TableCell>
+                <TableCell>
+                  {item.latestPrice ? (
+                    <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>
+                      {item.currency} {item.latestPrice.toLocaleString()}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400 text-sm">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-gray-500 text-sm">
+                  {new Date(item.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFromWatchlist.mutate({ watchlistId: item.id })}
+                    className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {watchlist.map((item: any) => (
-                <TableRow key={item.id} className="border-zinc-800 hover:bg-zinc-800/50">
-                  <TableCell className="font-medium text-white">
-                    <a href={`/card/${item.card.id}`} className="hover:text-[#ffed00] transition-colors">
-                      {item.card.name}
-                    </a>
-                  </TableCell>
-                  <TableCell className="text-gray-300">{item.card.series || "-"}</TableCell>
-                  <TableCell>
-                    {item.latestPrice ? (
-                      <div className="flex flex-col">
-                        <span className="text-[#ffed00] font-semibold">
-                          {item.currency} {item.latestPrice.toLocaleString()}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500">{t('profile.watchlistSection.table.noPrice')}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-gray-300">{item.notes || "-"}</TableCell>
-                  <TableCell className="text-gray-300">
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFromWatchlist.mutate({ watchlistId: item.id })}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   );
 }
 
+// ─── History Section ───────────────────────────────────────────
 function HistorySection() {
   const { t } = useTranslation();
   const { data: history, isLoading, refetch } = trpc.profile.getViewHistory.useQuery({});
 
   const clearHistory = trpc.profile.clearViewHistory.useMutation({
     onSuccess: () => {
-      toast.success(t('profile.historySection.clearSuccess'));
+      toast.success(t("profile.historySection.clearSuccess"));
       refetch();
     },
     onError: (error) => {
-      toast.error(t('profile.historySection.clearFailed', { error: error.message }));
+      toast.error(t("profile.historySection.clearFailed", { error: error.message }));
     },
   });
 
   if (isLoading) {
     return (
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardContent className="py-12 text-center text-gray-400">
-          {t('profile.loading')}
-        </CardContent>
-      </Card>
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-lg" />
+        ))}
+      </div>
     );
   }
 
   if (!history || history.length === 0) {
     return (
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardContent className="py-12 text-center">
-          <History className="w-16 h-16 text-[#ffed00]/30 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">{t('profile.historySection.empty')}</p>
-        </CardContent>
-      </Card>
+      <div className="py-16 text-center">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+          style={{ background: `${BRAND_BLUE}10` }}
+        >
+          <History className="w-8 h-8" style={{ color: BRAND_BLUE }} />
+        </div>
+        <p className="text-gray-500 text-base">{t("profile.historySection.empty")}</p>
+      </div>
     );
   }
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
         <div>
-          <CardTitle className="text-[#ffed00] flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#ffed00] rounded-full flex items-center justify-center">
-              <History className="w-4 h-4 text-[#06038d]" />
-            </div>
-            {t('profile.historySection.title')}
-          </CardTitle>
-          <CardDescription className="text-gray-400">{t('profile.historySection.count', { count: history.length })}</CardDescription>
+          <h2 className="text-lg font-bold text-gray-900">{t("profile.historySection.title")}</h2>
+          <p className="text-sm text-gray-500">{t("profile.historySection.count", { count: history.length })}</p>
         </div>
         <Dialog>
           <DialogTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-red-300 text-red-500 hover:bg-red-50 hover:border-red-400 font-semibold"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
-              {t('profile.historySection.clearHistory')}
+              <Trash2 className="w-4 h-4 mr-1.5" />
+              {t("profile.historySection.clearHistory")}
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-zinc-900 border-zinc-800">
+          <DialogContent className="bg-white border border-gray-200">
             <DialogHeader>
-              <DialogTitle className="text-white">{t('profile.historySection.confirmClear')}</DialogTitle>
-              <DialogDescription className="text-gray-400">
-                {t('profile.historySection.confirmDescription')}
+              <DialogTitle className="text-gray-900">{t("profile.historySection.confirmClear")}</DialogTitle>
+              <DialogDescription className="text-gray-500">
+                {t("profile.historySection.confirmDescription")}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button 
-                variant="outline" 
-                className="border-zinc-700 text-white hover:bg-zinc-800"
-              >
-                {t('profile.historySection.cancel')}
+              <Button variant="outline" className="border-gray-200 text-gray-700">
+                {t("profile.historySection.cancel")}
               </Button>
-            <Button
-              onClick={() => clearHistory.mutate(undefined)}
-              disabled={clearHistory.isPending}
-              className="bg-red-500 hover:bg-red-600"
-            >
-                {t('profile.historySection.confirm')}
+              <Button
+                onClick={() => clearHistory.mutate(undefined)}
+                disabled={clearHistory.isPending}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                {t("profile.historySection.confirm")}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-zinc-800 hover:bg-zinc-800/50">
-                <TableHead className="text-[#ffed00]">{t('profile.historySection.table.card')}</TableHead>
-                <TableHead className="text-[#ffed00]">{t('profile.historySection.table.series')}</TableHead>
-                <TableHead className="text-[#ffed00]">{t('profile.historySection.table.viewedAt')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {history.map((item: any) => (
-                <TableRow key={item.id} className="border-zinc-800 hover:bg-zinc-800/50">
-                  <TableCell className="font-medium text-white">
-                    <a href={`/card/${item.card.id}`} className="hover:text-[#ffed00] transition-colors">
-                      {item.card.name}
-                    </a>
-                  </TableCell>
-                  <TableCell className="text-gray-300">{item.card.series || "-"}</TableCell>
-                  <TableCell className="text-gray-300">
-                    {new Date(item.viewedAt).toLocaleString()}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function StatisticsSection() {
-  const { t } = useTranslation();
-  const { data: stats, isLoading } = trpc.profile.getWatchlistStats.useQuery();
-
-  if (isLoading) {
-    return (
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardContent className="py-12 text-center text-gray-400">
-          {t('profile.loading')}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!stats) {
-    return (
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardContent className="py-12 text-center">
-          <TrendingUp className="w-16 h-16 text-[#ffed00]/30 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">{t('profile.statsSection.empty')}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-[#ffed00]/10 to-[#ffed00]/5 border-[#ffed00]/20">
-          <CardHeader>
-            <CardTitle className="text-[#06038d] flex items-center gap-2">
-              <Heart className="w-5 h-5" />
-              {t('profile.statsSection.watchlistCards')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold text-[#06038d]">{stats.totalCount || 0}</div>
-            <p className="text-[#06038d]/70 text-sm mt-1">{t('profile.statsSection.cardsCount')}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-zinc-900 border-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-[#ffed00] flex items-center gap-2">
-              <History className="w-5 h-5" />
-              {t('profile.statsSection.viewHistory')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold text-white">-</div>
-            <p className="text-gray-300 text-sm mt-1">{t('profile.statsSection.recordsCount')}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-zinc-900 border-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-[#ffed00] flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              {t('profile.statsSection.activity')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold text-white">
-              {stats.totalCount > 0 ? Math.min(100, stats.totalCount * 5) : 0}%
-            </div>
-            <p className="text-gray-300 text-sm mt-1">{t('profile.statsSection.activityLevel')}</p>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Detailed Stats */}
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardHeader>
-          <CardTitle className="text-[#ffed00] flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#ffed00] rounded-full flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-[#06038d]" />
-            </div>
-            {t('profile.statsSection.title')}
-          </CardTitle>
-          <CardDescription className="text-gray-400">{t('profile.statsSection.description')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
-              <span className="text-gray-300">{t('profile.statsSection.totalCount')}</span>
-              <span className="text-[#ffed00] font-bold text-lg">{stats.totalCount || 0} {t('profile.statsSection.cardsCount')}</span>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
-              <span className="text-gray-300">{t('profile.statsSection.totalValue')}</span>
-              <span className="text-[#ffed00] font-bold text-lg">{stats.currency} {stats.totalValue.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
-              <span className="text-gray-300">{t('profile.statsSection.highestCard')}</span>
-              <span className="text-[#ffed00] font-bold text-lg">
-                {stats.top5Cards && stats.top5Cards.length > 0
-                  ? stats.top5Cards[0].card.name
-                  : t('profile.statsSection.noRecord')}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="overflow-x-auto rounded-xl border border-gray-100">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-gray-100" style={{ background: `${BRAND_BLUE}08` }}>
+              <TableHead className="font-semibold text-gray-700">{t("profile.historySection.table.card")}</TableHead>
+              <TableHead className="font-semibold text-gray-700">{t("profile.historySection.table.series")}</TableHead>
+              <TableHead className="font-semibold text-gray-700">{t("profile.historySection.table.viewedAt")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {history.map((item: any) => (
+              <TableRow key={item.id} className="border-gray-100 hover:bg-gray-50 transition-colors">
+                <TableCell className="font-medium">
+                  <a
+                    href={`/card/${item.card.id}`}
+                    className="font-semibold transition-colors hover:underline"
+                    style={{ color: BRAND_BLUE }}
+                  >
+                    {item.card.name}
+                  </a>
+                </TableCell>
+                <TableCell className="text-gray-500 text-sm">{item.card.series || "—"}</TableCell>
+                <TableCell className="text-gray-500 text-sm">
+                  {new Date(item.viewedAt).toLocaleString()}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
