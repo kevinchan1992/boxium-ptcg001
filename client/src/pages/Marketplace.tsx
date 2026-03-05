@@ -659,7 +659,7 @@ export default function Marketplace() {
 
             {/* Grid */}
             {isLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
                 {Array.from({ length: 10 }).map((_, i) => <ProductCardSkeleton key={i} />)}
               </div>
             ) : listings.length === 0 ? (
@@ -676,7 +676,7 @@ export default function Marketplace() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
                 {listings.map((listing: any) => (
                   <ProductCard key={listing.id} listing={listing} wishlistIds={wishlistIds} onWishlistToggle={handleWishlistToggle} />
                 ))}

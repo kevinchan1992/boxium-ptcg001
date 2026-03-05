@@ -201,7 +201,7 @@ export default function SearchResults() {
               <span>顯示 {(currentPage - 1) * limit + 1}-{Math.min(currentPage * limit, totalResults)} 張</span>
             </div>
             
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 sm:gap-3">
+          <div className="grid grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-1.5 sm:gap-2">
             {searchResults.map((card: any) => (
               <div
                 key={card.id}
@@ -214,6 +214,7 @@ export default function SearchResults() {
                       src={card.imageUrl}
                       alt={card.name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
