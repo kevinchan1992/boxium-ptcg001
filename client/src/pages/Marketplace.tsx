@@ -329,12 +329,29 @@ export default function Marketplace() {
       {/* ── Top Search Bar ── */}
       <div className="bg-[#0A0A2E] border-b border-[#1a1a4e]">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row items-center gap-3">
-            {/* Title */}
-            <div className="shrink-0 text-center md:text-left">
-              <h1 className="text-lg font-bold text-white">BOXIUM 商城</h1>
-              <p className="text-xs text-gray-400">精選寶可夢卡牌 · 安全交易</p>
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            {/* Logo + Title block */}
+            <div className="shrink-0 flex items-center gap-3">
+              {/* Logo in yellow pill */}
+              <div className="bg-[#FFD700] rounded-xl p-1.5 flex items-center justify-center shadow-lg shadow-yellow-900/30">
+                <img
+                  src="/boxium-logo.png"
+                  alt="BOXIUM"
+                  className="h-9 w-auto object-contain"
+                  style={{ filter: "brightness(0) saturate(100%) invert(8%) sepia(80%) saturate(3000%) hue-rotate(220deg) brightness(70%)" }}
+                />
+              </div>
+              {/* Text */}
+              <div className="text-left">
+                <div className="flex items-baseline gap-2">
+                  <h1 className="text-xl font-extrabold text-white tracking-tight leading-none">BOXIUM</h1>
+                  <span className="text-[#FFD700] font-bold text-lg leading-none">商城</span>
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5">精選寶可夢卡牌 · 安全交易</p>
+              </div>
             </div>
+            {/* Divider */}
+            <div className="hidden md:block w-px h-10 bg-white/10 shrink-0" />
             {/* Search */}
             <form onSubmit={handleSearch} className="flex-1 flex gap-2 max-w-2xl mx-auto w-full">
               <div className="relative flex-1">
