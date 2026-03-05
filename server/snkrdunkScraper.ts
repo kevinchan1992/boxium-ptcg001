@@ -193,6 +193,10 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
 /**
  * Parse Japanese date string to Date object
  * Examples: "2025/12/10" → Date object
+ * 
+ * IMPORTANT: Uses UTC midnight (Date.UTC) to ensure the same date string
+ * always produces the EXACT same timestamp, regardless of server timezone
+ * or when the scraping runs. This is critical for deduplication via UNIQUE INDEX.
  */
 function parseJapaneseDate(dateStr: string): Date {
   // Format: YYYY/MM/DD
@@ -201,10 +205,13 @@ function parseJapaneseDate(dateStr: string): Date {
     const year = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10) - 1; // JavaScript months are 0-indexed
     const day = parseInt(parts[2], 10);
-    return new Date(year, month, day);
+    // Use Date.UTC to get a stable, timezone-independent timestamp at midnight UTC
+    return new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
   }
   
-  return new Date();
+  // Fallback: return UTC midnight of today
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 }
 
 /**
