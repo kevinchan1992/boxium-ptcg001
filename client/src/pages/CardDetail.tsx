@@ -12,7 +12,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { useTranslation } from "react-i18next";
 
 import { formatCurrency } from "@/lib/formatCurrency";
-import { formatShortDateTime } from "@/lib/formatDate";
+import { formatDate } from "@/lib/formatDate";
 
 const grades = ["PSA 10", "中古"];
 
@@ -553,7 +553,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                       return (
                         <tr key={index} className="hover:bg-muted/50 transition-colors">
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground text-xs sm:text-sm">
-                            {item.soldAt ? formatShortDateTime(item.soldAt) : "N/A"}
+                            {item.soldAt ? formatDate(item.soldAt) : "N/A"}
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-foreground text-xs sm:text-sm w-16 sm:w-24">
                             {isEmpty ? (
