@@ -3539,3 +3539,22 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 在 persistentSnkrdunkBatchUpdate 批次插入改用 onDuplicateKeyUpdate 無操作去重
 - [x] 在 schema 加入 UNIQUE INDEX (cardId, source, grade, soldAt)
 - [x] 清理現有重複記錄（從 1,222,804 筆清理至 273,113 筆，刪除 949,691 筆重複）
+
+## Phase 0：賣家申請流程補齊
+- [ ] applyAsSeller 後通知管理員（notifyOwner）
+- [ ] adminApproveSeller 加入 rejectReason 欄位
+- [ ] sellerProfile schema 加入 rejectReason 欄位
+- [ ] 批准/拒絕後建立用戶 in-app 通知
+- [ ] 停用賣家時連鎖下架所有 active 商品
+- [ ] Admin 停用確認對話框顯示進行中訂單數量警告
+- [ ] 用戶端顯示拒絕原因
+
+## Phase 1：交易閉環
+- [ ] 買家訂單頁面 /orders（列表 + 詳情 Timeline）
+- [ ] 結帳時收貨地址表單
+- [ ] confirmReceipt procedure
+- [ ] Stripe Transfer 放款邏輯（訂單完成後自動轉帳）
+- [ ] 自動完成 Cron Job（14天後自動完成 shipped 訂單）
+- [ ] 賣家出貨表單（物流公司 + Tracking Number）
+- [ ] 付款成功通知賣家
+- [ ] 賣家出貨通知買家

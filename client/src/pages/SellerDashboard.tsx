@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X } from "lucide-react";
 import { Link } from "wouter";
 
@@ -176,8 +176,14 @@ export default function SellerDashboard() {
     onError: (e) => toast.error(e.message),
   });
 
+  const [shipDialog, setShipDialog] = useState<{ open: boolean; orderId: number; orderNo: string }>({ open: false, orderId: 0, orderNo: "" });
+  const [shipForm, setShipForm] = useState({ shippingMethod: "", trackingNumber: "" });
   const markShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
-    onSuccess: () => toast.success("已標記為已寄出"),
+    onSuccess: () => {
+      toast.success("已標記為已寄出，已通知買家");
+      setShipDialog({ open: false, orderId: 0, orderNo: "" });
+      setShipForm({ shippingMethod: "", trackingNumber: "" });
+    },
     onError: (e) => toast.error(e.message),
   });
 
@@ -222,12 +228,26 @@ export default function SellerDashboard() {
         )}
 
         {sellerProfile && !sellerProfile.isActive && (
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="flex items-center gap-4 py-6">
-              <Clock className="w-8 h-8 text-amber-600 flex-shrink-0" />
+          <Card className={(sellerProfile as any).rejectReason ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}>
+            <CardContent className="flex items-start gap-4 py-6">
+              {(sellerProfile as any).rejectReason ? (
+                <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0 mt-0.5" />
+              ) : (
+                <Clock className="w-8 h-8 text-amber-600 flex-shrink-0" />
+              )}
               <div>
-                <p className="font-medium text-amber-900">申請審批中</p>
-                <p className="text-sm text-amber-700">你的賣家申請正在審批，通常需要 1-3 個工作天。</p>
+                {(sellerProfile as any).rejectReason ? (
+                  <>
+                    <p className="font-medium text-red-900">申請未獲批准</p>
+                    <p className="text-sm text-red-700 mt-1">原因：{(sellerProfile as any).rejectReason}</p>
+                    <p className="text-xs text-red-600 mt-2">如有疑問，請聯絡平台客服。</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium text-amber-900">申請審批中</p>
+                    <p className="text-sm text-amber-700">你的賣家申請正在審批，通常需要 1-3 個工作天。</p>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -298,14 +318,14 @@ export default function SellerDashboard() {
               </Card>
             </div>
 
-            <Tabs defaultValue="listings">
-              <TabsList className="w-full sm:w-auto">
-                <TabsTrigger value="listings">我的商品</TabsTrigger>
-                <TabsTrigger value="orders">訂單管理</TabsTrigger>
-                <TabsTrigger value="payouts">放款記錄</TabsTrigger>
-              </TabsList>
+            <BrandTabs defaultValue="listings">
+              <BrandTabsList>
+                <BrandTabsTrigger value="listings">我的商品</BrandTabsTrigger>
+                <BrandTabsTrigger value="orders">訂單管理</BrandTabsTrigger>
+                <BrandTabsTrigger value="payouts">放款記錄</BrandTabsTrigger>
+              </BrandTabsList>
 
-              <TabsContent value="listings" className="mt-4">
+              <BrandTabsContent value="listings" className="mt-4">
                 {!myListings?.length ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -353,9 +373,9 @@ export default function SellerDashboard() {
                     })}
                   </div>
                 )}
-              </TabsContent>
+              </BrandTabsContent>
 
-              <TabsContent value="orders" className="mt-4">
+              <BrandTabsContent value="orders" className="mt-4">
                 {!myOrders?.length ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -365,32 +385,45 @@ export default function SellerDashboard() {
                   <div className="space-y-3">
                     {(myOrders as any[]).map((item) => (
                       <Card key={item.id}>
-                        <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
-                          <div>
-                            <p className="font-medium">{item.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              HKD {parseFloat(item.priceHkd as string).toFixed(2)} × {item.quantity}
-                            </p>
+                        <CardContent className="py-4 space-y-2">
+                          <div className="flex items-start justify-between gap-3 flex-wrap">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{item.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                HKD {parseFloat(item.priceHkd as string).toFixed(2)} × {item.quantity}
+                              </p>
+                              {item.orderNo && <p className="text-xs text-muted-foreground">訂單號：{item.orderNo}</p>}
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge className={orderStatusLabel[item.orderStatus]?.color ?? "bg-gray-100 text-gray-800"}>
+                                {orderStatusLabel[item.orderStatus]?.label ?? item.orderStatus}
+                              </Badge>
+                              {item.orderStatus === "processing" && (
+                                <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white"
+                                  onClick={() => {
+                                    setShipDialog({ open: true, orderId: item.orderId, orderNo: item.orderNo ?? "" });
+                                    setShipForm({ shippingMethod: "", trackingNumber: "" });
+                                  }}>
+                                  填寫出貨資料
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={orderStatusLabel[item.orderStatus]?.color ?? "bg-gray-100 text-gray-800"}>
-                              {orderStatusLabel[item.orderStatus]?.label ?? item.orderStatus}
-                            </Badge>
-                            {item.orderStatus === "processing" && (
-                              <Button size="sm" variant="outline"
-                                onClick={() => markShippedMutation.mutate({ orderId: item.orderId })}>
-                                標記已寄出
-                              </Button>
-                            )}
-                          </div>
+                          {item.shippingName && (
+                            <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1.5 space-y-0.5">
+                              <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>
+                              <p>📍 地址：{item.shippingAddress}</p>
+                              {item.trackingNumber && <p>🚚 追蹤號：{item.trackingNumber}</p>}
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     ))}
                   </div>
                 )}
-              </TabsContent>
+              </BrandTabsContent>
 
-              <TabsContent value="payouts" className="mt-4">
+              <BrandTabsContent value="payouts" className="mt-4">
                 {!myPayouts?.length ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -415,8 +448,8 @@ export default function SellerDashboard() {
                     ))}
                   </div>
                 )}
-              </TabsContent>
-            </Tabs>
+              </BrandTabsContent>
+            </BrandTabs>
           </>
         )}
       </div>
@@ -511,6 +544,48 @@ export default function SellerDashboard() {
                 images: listingImages.length > 0 ? listingImages : undefined,
               })}>
               {createListingMutation.isPending ? "提交中..." : "提交審核"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ship Dialog */}
+      <Dialog open={shipDialog.open} onOpenChange={(o) => setShipDialog(d => ({ ...d, open: o }))}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>填寫出貨資料</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3">
+            {shipDialog.orderNo && <p className="text-xs text-muted-foreground">訂單號：{shipDialog.orderNo}</p>}
+            <div className="space-y-1.5">
+              <Label>物流公司</Label>
+              <Input
+                placeholder="例：順豐速運、SF Express、香港郵政..."
+                value={shipForm.shippingMethod}
+                onChange={(e) => setShipForm(f => ({ ...f, shippingMethod: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>追蹤號碼（選填）</Label>
+              <Input
+                placeholder="例：SF1234567890"
+                value={shipForm.trackingNumber}
+                onChange={(e) => setShipForm(f => ({ ...f, trackingNumber: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShipDialog(d => ({ ...d, open: false }))}>取消</Button>
+            <Button
+              className="bg-[#06038d] hover:bg-[#0804b8] text-white"
+              disabled={!shipForm.shippingMethod || markShippedMutation.isPending}
+              onClick={() => markShippedMutation.mutate({
+                orderId: shipDialog.orderId,
+                shippingMethod: shipForm.shippingMethod,
+                trackingNo: shipForm.trackingNumber || undefined,
+              })}
+            >
+              {markShippedMutation.isPending ? "處理中..." : "確認出貨"}
             </Button>
           </DialogFooter>
         </DialogContent>

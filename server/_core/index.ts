@@ -16,7 +16,7 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 
@@ -52,6 +52,74 @@ async function startServer() {
   // Add cookie parser middleware
   app.use(cookieParser());
   
+  // ============================================================
+  // Stripe Webhook - MUST be before express.json() for signature verification
+  // ============================================================
+  app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+    const sig = req.headers["stripe-signature"] as string;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error("[Webhook] STRIPE_WEBHOOK_SECRET not configured");
+      return res.status(500).json({ error: "Webhook secret not configured" });
+    }
+    let event: any;
+    try {
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err: any) {
+      console.error("[Webhook] Signature verification failed:", err.message);
+      return res.status(400).json({ error: `Webhook Error: ${err.message}` });
+    }
+    // Handle test events
+    if (event.id.startsWith("evt_test_")) {
+      console.log("[Webhook] Test event detected, returning verification response");
+      return res.json({ verified: true });
+    }
+    try {
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+        const orderNo = session.metadata?.order_no;
+        const orderId = session.metadata?.orderId;
+        console.log(`[Webhook] checkout.session.completed: orderNo=${orderNo}, orderId=${orderId}`);
+        const { updateMarketplaceOrder, getMarketplaceOrderById } = await import("../db");
+        const { createNotification } = await import("../db/notifications");
+        let order: any = null;
+        if (orderId) {
+          order = await getMarketplaceOrderById(parseInt(orderId));
+        } else if (orderNo) {
+          const { getMarketplaceOrderByNo } = await import("../db");
+          order = await getMarketplaceOrderByNo(orderNo);
+        }
+        if (order && order.orderStatus === "pending_payment") {
+          await updateMarketplaceOrder(order.id, {
+            paymentStatus: "paid",
+            orderStatus: "payment_received",
+            stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : order.stripePaymentIntentId,
+          });
+          console.log(`[Webhook] Order ${order.orderNo} marked as payment_received`);
+          // Notify seller of new paid order
+          if (order.sellerId) {
+            await createNotification({
+              userId: order.sellerId,
+              type: "trade",
+              title: "\u65b0\u8a02\u55ae\u5df2\u4ed8\u6b3e \ud83c\udf89",
+              content: `\u8a02\u55ae ${order.orderNo} \u8cb7\u5bb6\u5df2\u5b8c\u6210 Stripe \u4ed8\u6b3e\uff0c\u8acb\u76e1\u5feb\u5b89\u6392\u51fa\u8ca8\u3002`,
+              priority: "high",
+              relatedUrl: "/seller",
+            }).catch(() => {});
+          }
+        }
+      } else if (event.type === "payment_intent.payment_failed") {
+        const paymentIntent = event.data.object;
+        console.log(`[Webhook] payment_intent.payment_failed: ${paymentIntent.id}`);
+      }
+    } catch (err) {
+      console.error("[Webhook] Error processing event:", err);
+    }
+    res.json({ received: true });
+  });
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -309,6 +377,8 @@ async function startServer() {
     });
     // Start the trending cards scheduler (daily at 06:00 HKT)
     startTrendingCardsScheduler();
+    // Start the auto-complete orders scheduler (every hour)
+    startAutoCompleteOrdersScheduler();
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();

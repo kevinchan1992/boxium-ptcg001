@@ -112,6 +112,8 @@ export default function MarketplaceListing() {
   const [isUploading, setIsUploading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
+  const [showShippingDialog, setShowShippingDialog] = useState(false);
+  const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港" });
 
   const { data: listing, isLoading } = trpc.marketplace.getListing.useQuery(
     { id },
@@ -297,7 +299,7 @@ export default function MarketplaceListing() {
                 <Button
                   className="w-full bg-[#06038d] hover:bg-[#0804b8] text-white h-12 text-base"
                   disabled={!me || createStripeOrderMutation.isPending}
-                  onClick={() => createStripeOrderMutation.mutate({ listingId: listing.id })}
+                  onClick={() => { if (!me) return; setShowShippingDialog(true); }}
                 >
                   <CreditCard className="w-5 h-5 mr-2" />
                   {createStripeOrderMutation.isPending ? "處理中..." : "信用卡 / Apple Pay 付款"}
@@ -496,6 +498,101 @@ export default function MarketplaceListing() {
               <Button className="w-full" onClick={() => setShowAlipay(false)}>關閉</Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Shipping Address Dialog */}
+      <Dialog open={showShippingDialog} onOpenChange={setShowShippingDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="w-5 h-5 text-[#06038d]" />
+              填寫收貨地址
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="ship-name">收件人姓名 *</Label>
+                <input
+                  id="ship-name"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d]"
+                  placeholder="例：陳大文"
+                  value={shippingForm.name}
+                  onChange={e => setShippingForm(f => ({ ...f, name: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ship-phone">聯絡電話 *</Label>
+                <input
+                  id="ship-phone"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d]"
+                  placeholder="例：9123 4567"
+                  value={shippingForm.phone}
+                  onChange={e => setShippingForm(f => ({ ...f, phone: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ship-address">詳細地址 *</Label>
+              <input
+                id="ship-address"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d]"
+                placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室"
+                value={shippingForm.address}
+                onChange={e => setShippingForm(f => ({ ...f, address: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="ship-district">地區</Label>
+                <input
+                  id="ship-district"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d]"
+                  placeholder="例：旺角"
+                  value={shippingForm.district}
+                  onChange={e => setShippingForm(f => ({ ...f, district: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ship-region">區域</Label>
+                <select
+                  id="ship-region"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background"
+                  value={shippingForm.region}
+                  onChange={e => setShippingForm(f => ({ ...f, region: e.target.value }))}
+                >
+                  <option value="香港島">香港島</option>
+                  <option value="九龍">九龍</option>
+                  <option value="新界">新界</option>
+                  <option value="香港">香港（不指定）</option>
+                </select>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">* 必填欄位。收貨地址將提供給賣家安排寄送。</p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowShippingDialog(false)}>取消</Button>
+            <Button
+              className="bg-[#06038d] hover:bg-[#0804b8] text-white"
+              disabled={!shippingForm.name.trim() || !shippingForm.phone.trim() || !shippingForm.address.trim() || createStripeOrderMutation.isPending}
+              onClick={() => {
+                setShowShippingDialog(false);
+                createStripeOrderMutation.mutate({
+                  listingId: listing.id,
+                  shippingAddress: {
+                    name: shippingForm.name.trim(),
+                    phone: shippingForm.phone.trim(),
+                    address: shippingForm.address.trim(),
+                    district: shippingForm.district.trim() || undefined,
+                    region: shippingForm.region,
+                  },
+                });
+              }}
+            >
+              {createStripeOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</> : <><CreditCard className="w-4 h-4 mr-2" />前往付款</>}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

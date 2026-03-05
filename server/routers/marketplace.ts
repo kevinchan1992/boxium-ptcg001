@@ -14,9 +14,14 @@ import {
   getSellerPayouts, getMarketplaceStats,
   getActiveBanners, getAllBanners, createBanner, updateBanner, deleteBanner,
   getUserWishlist, isInWishlist, addToWishlistListing, removeFromWishlistListing, getWishlistListingIds,
+  getDb,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
+import { notifyOwner } from "../_core/notification";
+import { createNotification } from "../db/notifications";
+import { marketplaceListings } from "../../drizzle/schema_new";
+import { eq, and } from "drizzle-orm";
 
 // Platform fee rate (5% for C2C listings)
 const PLATFORM_FEE_RATE = 0.05;
@@ -92,12 +97,16 @@ export const marketplaceRouter = router({
         paymentMethod: input.paymentMethod,
         paymentStatus: "pending",
         listingId: listing.id,
+        sellerId: listing.sellerId ?? null,
+        sellerType: listing.sellerType as any,
         unitPriceHkd: price.toFixed(2),
         quantity: input.quantity ?? 1,
         subtotalHkd: subtotal.toFixed(2),
         platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
         platformFeeHkd: platformFee.toFixed(2),
         sellerReceivableHkd: (subtotal - platformFee).toFixed(2),
+        shippingName: input.shippingAddress.name,
+        shippingPhone: input.shippingAddress.phone,
         shippingAddress: JSON.stringify(input.shippingAddress),
         orderStatus: "pending_payment",
         autoCompleteAt: null as any,
@@ -127,34 +136,50 @@ export const marketplaceRouter = router({
         };
       }
 
-      // For Stripe, create PaymentIntent
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const Stripe = require("stripe");
+      // For Stripe, create Checkout Session
+      const Stripe = (await import("stripe")).default;
       const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-      const paymentIntent = await stripeClient.paymentIntents.create({
-        amount: Math.round(total * 100), // cents
-        currency: "hkd",
+      const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
+      const session = await stripeClient.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [{
+          price_data: {
+            currency: "hkd",
+            product_data: { name: listing.title },
+            unit_amount: Math.round(total * 100),
+          },
+          quantity: 1,
+        }],
+        mode: "payment",
+        customer_email: ctx.user.email ?? undefined,
+        client_reference_id: ctx.user.id.toString(),
         metadata: {
           orderId: order.id.toString(),
           orderNo,
           buyerId: ctx.user.id.toString(),
+          listingId: listing.id.toString(),
         },
+        success_url: `${origin}/orders?payment=success&orderNo=${orderNo}`,
+        cancel_url: `${origin}/shop/${listing.id}?payment=cancelled`,
+        allow_promotion_codes: true,
       });
 
-      await updateMarketplaceOrder(order.id, { stripePaymentIntentId: paymentIntent.id });
+      await updateMarketplaceOrder(order.id, {
+        stripeSessionId: session.id,
+        stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
+      });
 
       return {
         order,
         paymentMethod: "stripe",
-        clientSecret: paymentIntent.client_secret,
+        checkoutUrl: session.url,
         orderNo,
       };
     }),
 
   getMyOrders: protectedProcedure
     .query(async ({ ctx }) => {
-      const orders = await getBuyerOrders(ctx.user.id);
-      return orders;
+      return getBuyerOrders(ctx.user.id);
     }),
 
   getOrderDetails: protectedProcedure
@@ -180,13 +205,66 @@ export const marketplaceRouter = router({
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
       if (order.paymentMethod !== "alipay_hk") throw new TRPCError({ code: "BAD_REQUEST" });
 
-      // Upload proof image to S3
       const buffer = Buffer.from(input.proofImageBase64, "base64");
       const key = `alipay-proofs/${order.orderNo}-${Date.now()}.jpg`;
       const { url } = await storagePut(key, buffer, input.mimeType);
-
-      // alipay proof stored externally
       return { success: true, proofUrl: url };
+    }),
+
+  // ============================================================
+  // BUYER - Confirm Receipt + Trigger Payout
+  // ============================================================
+  confirmReceipt: protectedProcedure
+    .input(z.object({ orderId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (order.orderStatus !== "shipped" && order.orderStatus !== "delivered") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "訂單尚未出貨，無法確認收貨" });
+      }
+      await updateMarketplaceOrder(input.orderId, {
+        orderStatus: "completed",
+        buyerConfirmedAt: new Date(),
+        payoutStatus: "processing",
+      });
+      // Trigger Stripe Transfer payout if C2C order
+      if (order.sellerType === "seller" && order.sellerId) {
+        const sellerProfile = await getSellerProfileByUserId(order.sellerId);
+        if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
+          try {
+            const Stripe = (await import("stripe")).default;
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+            const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
+            const transfer = await stripe.transfers.create({
+              amount: receivable,
+              currency: "hkd",
+              destination: sellerProfile.stripeConnectId,
+              metadata: { order_no: order.orderNo, order_id: order.id.toString() },
+            });
+            await updateMarketplaceOrder(input.orderId, {
+              payoutStatus: "paid",
+              stripeTransferId: transfer.id,
+            });
+            // Notify seller of payout
+            await createNotification({
+              userId: order.sellerId,
+              type: "trade",
+              title: "款項已轉帳 💰",
+              content: `訂單 ${order.orderNo} 買家已確認收貨，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
+              priority: "high",
+              relatedUrl: "/seller",
+            }).catch(() => {});
+          } catch (err: any) {
+            console.error("[Payout] Stripe transfer failed:", err);
+            await updateMarketplaceOrder(input.orderId, {
+              payoutStatus: "failed",
+              stripeTransferError: err.message,
+            });
+          }
+        }
+      }
+      return { success: true };
     }),
 
   // ============================================================
@@ -213,6 +291,11 @@ export const marketplaceRouter = router({
         stripeConnectStatus: "pending",
         totalSales: 0,
       });
+      // Notify owner of new seller application
+      notifyOwner({
+        title: "新賣家申請",
+        content: `用戶 ${ctx.user.name ?? ctx.user.email} 申請成為賣家（顯示名稱：${input.displayName}）。請前往管理後台審核。`,
+      }).catch(err => console.warn("[Seller] Failed to notify owner:", err));
       return profile;
     }),
 
@@ -270,8 +353,22 @@ export const marketplaceRouter = router({
       if (!seller || listing.sellerId !== seller.id) throw new TRPCError({ code: "FORBIDDEN" });
       const { id, ...updateData } = input;
       const updatePayload: Record<string, any> = { ...updateData };
-      if ((updatePayload as any).priceHkd) (updatePayload as any).priceHkd = parseFloat((updatePayload as any).priceHkd).toFixed(2);
+      if (updatePayload.price) {
+        updatePayload.priceHkd = parseFloat(updatePayload.price).toFixed(2);
+        delete updatePayload.price;
+      }
       await updateListing(id, updatePayload);
+      return { success: true };
+    }),
+
+  deleteMyListing: protectedProcedure
+    .input(z.object({ id: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const seller = await getSellerProfileByUserId(ctx.user.id);
+      if (!seller) throw new TRPCError({ code: "FORBIDDEN" });
+      const listing = await getListingById(input.id);
+      if (!listing || listing.sellerId !== seller.id) throw new TRPCError({ code: "FORBIDDEN" });
+      await updateListing(input.id, { status: "removed" });
       return { success: true };
     }),
 
@@ -287,6 +384,71 @@ export const marketplaceRouter = router({
       const seller = await getSellerProfileByUserId(ctx.user.id);
       if (!seller) return [];
       return getSellerPayouts(seller.id);
+    }),
+
+  // ============================================================
+  // SELLER - Mark Order Shipped
+  // ============================================================
+  markOrderShipped: protectedProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      trackingNo: z.string().optional(),
+      shippingMethod: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      if (order.sellerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (order.orderStatus !== "processing") throw new TRPCError({ code: "BAD_REQUEST", message: "訂單狀態不允許此操作" });
+      // Set autoCompleteAt = 14 days from now
+      const autoCompleteAt = new Date();
+      autoCompleteAt.setDate(autoCompleteAt.getDate() + 14);
+      await updateMarketplaceOrder(input.orderId, {
+        orderStatus: "shipped",
+        shippedAt: new Date(),
+        trackingNumber: input.trackingNo ?? null,
+        shippingMethod: input.shippingMethod ?? null,
+        autoCompleteAt,
+      });
+      // Notify buyer of shipment
+      await createNotification({
+        userId: order.buyerId,
+        type: "trade",
+        title: "你的訂單已出貨 📦",
+        content: `訂單 ${order.orderNo} 已出貨${input.trackingNo ? `，物流追蹤號：${input.trackingNo}` : ""}。如 14 天內未確認收貨，系統將自動完成訂單。`,
+        priority: "high",
+        relatedUrl: "/orders",
+      }).catch(err => console.warn("[Order] Failed to notify buyer of shipment:", err));
+      return { success: true };
+    }),
+
+  // ============================================================
+  // SELLER - Stripe Connect Onboarding
+  // ============================================================
+  startStripeConnectOnboarding: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const profile = await getSellerProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "賣家資料不存在" });
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      let connectId = profile.stripeConnectId;
+      if (!connectId) {
+        const account = await stripe.accounts.create({
+          type: "express",
+          country: "HK",
+          email: ctx.user.email ?? undefined,
+          capabilities: { transfers: { requested: true } },
+        });
+        connectId = account.id;
+        await updateSellerProfile(profile.id, { stripeConnectId: connectId, stripeConnectStatus: "pending" });
+      }
+      const accountLink = await stripe.accountLinks.create({
+        account: connectId,
+        refresh_url: `${ctx.req.headers.origin}/seller?stripe=refresh`,
+        return_url: `${ctx.req.headers.origin}/seller?stripe=success`,
+        type: "account_onboarding",
+      });
+      return { onboardingUrl: accountLink.url };
     }),
 
   // ============================================================
@@ -321,7 +483,6 @@ export const marketplaceRouter = router({
     .mutation(async ({ input }) => {
       const listing = await createListing({
         sellerType: "platform",
-        // sellerId intentionally omitted for platform listings (DB defaults to NULL)
         title: input.title,
         description: input.description,
         condition: input.condition,
@@ -347,7 +508,10 @@ export const marketplaceRouter = router({
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
       const updatePayload: Record<string, any> = { ...data };
-      if ((updatePayload as any).priceHkd) (updatePayload as any).priceHkd = parseFloat((updatePayload as any).priceHkd).toFixed(2);
+      if (updatePayload.price) {
+        updatePayload.priceHkd = parseFloat(updatePayload.price).toFixed(2);
+        delete updatePayload.price;
+      }
       await updateListing(id, updatePayload);
       return { success: true };
     }),
@@ -379,6 +543,17 @@ export const marketplaceRouter = router({
         paymentStatus: "paid",
         orderStatus: "payment_received",
       });
+      // Notify seller of new order
+      if (order.sellerId) {
+        await createNotification({
+          userId: order.sellerId,
+          type: "trade",
+          title: "新訂單已付款 🎉",
+          content: `訂單 ${order.orderNo} 買家已完成付款，請盡快安排出貨。`,
+          priority: "high",
+          relatedUrl: "/seller",
+        }).catch(() => {});
+      }
       return { success: true };
     }),
 
@@ -390,16 +565,12 @@ export const marketplaceRouter = router({
     }))
     .mutation(async ({ input }) => {
       const updates: Record<string, any> = { orderStatus: input.orderStatus };
-      // adminNote removed from schema
       if (input.orderStatus === "shipped") updates.shippedAt = new Date();
       if (input.orderStatus === "delivered") {
-        // deliveredAt not in current schema
-        // Auto-complete after 14 days
         const autoComplete = new Date();
         autoComplete.setDate(autoComplete.getDate() + 14);
         updates.autoCompleteAt = autoComplete;
       }
-      // completedAt not in current schema
       await updateMarketplaceOrder(input.orderId, updates);
       return { success: true };
     }),
@@ -413,12 +584,67 @@ export const marketplaceRouter = router({
       return getAllSellerProfiles(input.page, input.pageSize);
     }),
 
+  // ============================================================
+  // ADMIN - Approve/Reject Seller with Notification
+  // ============================================================
+  adminApproveSeller: adminProcedure
+    .input(z.object({
+      sellerId: z.number().int(),
+      approve: z.boolean(),
+      rejectReason: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const seller = await getSellerProfileById(input.sellerId);
+      if (!seller) throw new TRPCError({ code: "NOT_FOUND", message: "賣家不存在" });
+      if (input.approve) {
+        await updateSellerProfile(input.sellerId, { isActive: true, rejectReason: null });
+        // Notify seller user of approval
+        await createNotification({
+          userId: seller.userId,
+          type: "system",
+          title: "賣家申請已批准 ✅",
+          content: "恭喜！你的賣家申請已獲批准，現在可以開始上架商品了。請前往賣家後台設定 Stripe 收款帳戶。",
+          priority: "high",
+          relatedUrl: "/seller",
+        }).catch(err => console.warn("[Seller] Failed to create approval notification:", err));
+      } else {
+        await updateSellerProfile(input.sellerId, { isActive: false, rejectReason: input.rejectReason ?? null });
+        // Deactivate all seller's active listings
+        const db = await getDb();
+        if (db) {
+          await db.update(marketplaceListings)
+            .set({ status: "removed" })
+            .where(and(eq(marketplaceListings.sellerId, input.sellerId), eq(marketplaceListings.status, "active")));
+        }
+        // Notify seller user of rejection
+        await createNotification({
+          userId: seller.userId,
+          type: "system",
+          title: "賣家申請未獲批准",
+          content: input.rejectReason
+            ? `你的賣家申請未獲批准。原因：${input.rejectReason}。如有疑問，請聯絡客服。`
+            : "你的賣家申請未獲批准。如有疑問，請聯絡客服。",
+          priority: "high",
+          relatedUrl: "/seller",
+        }).catch(err => console.warn("[Seller] Failed to create rejection notification:", err));
+      }
+      return { success: true };
+    }),
 
   // ============================================================
-  // BUYER - Create Orders (Stripe + Alipay HK)
+  // BUYER - Create Orders (legacy Stripe + Alipay HK)
   // ============================================================
   createStripeOrder: protectedProcedure
-    .input(z.object({ listingId: z.number().int() }))
+    .input(z.object({
+      listingId: z.number().int(),
+      shippingAddress: z.object({
+        name: z.string().min(1),
+        phone: z.string().min(1),
+        address: z.string().min(1),
+        district: z.string().optional(),
+        region: z.string().optional(),
+      }).optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       const listing = await getListingById(input.listingId);
       if (!listing || listing.status !== "active" || listing.quantity < 1) {
@@ -468,6 +694,9 @@ export const marketplaceRouter = router({
         sellerReceivableHkd: (price * (1 - PLATFORM_FEE_RATE)).toFixed(2),
         stripePaymentIntentId: session.payment_intent as string ?? null,
         stripeSessionId: session.id,
+        shippingName: input.shippingAddress?.name ?? null,
+        shippingPhone: input.shippingAddress?.phone ?? null,
+        shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
       });
       return { checkoutUrl: session.url, orderNo };
     }),
@@ -488,7 +717,6 @@ export const marketplaceRouter = router({
 1. Payee name must be exactly "零度有限公司"
 2. Payment amount must match the expected amount (within 1% tolerance)
 3. Payment status must show "成功" (success)
-
 All three checks must pass for verified to be true. Respond with JSON only matching the exact schema provided.`,
             },
             {
@@ -504,7 +732,6 @@ All three checks must pass for verified to be true. Respond with JSON only match
 1. 收款方必須是「零度有限公司」
 2. 付款金額必須是 HKD ${input.expectedAmountHkd.toFixed(2)}
 3. 付款狀態必須顯示「成功」
-
 三項全部符合才算驗證通過。`,
                 },
               ],
@@ -600,7 +827,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
     }),
 
   // ============================================================
-  // SELLER - Create Listing
+  // SELLER - Create Listing (legacy)
   // ============================================================
   createSellerListing: protectedProcedure
     .input(z.object({
@@ -615,64 +842,6 @@ All three checks must pass for verified to be true. Respond with JSON only match
       if (!profile || !profile.isActive) {
         throw new TRPCError({ code: "FORBIDDEN", message: "你尚未成為賣家或帳號未激活" });
       }
-      // Duplicate block removed - use createListing procedure instead
-      return { success: true };
-    }),
-
-  // ============================================================
-  // SELLER - Stripe Connect Onboarding
-  // ============================================================
-  startStripeConnectOnboarding: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      const profile = await getSellerProfileByUserId(ctx.user.id);
-      if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "賣家資料不存在" });
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-      let connectId = profile.stripeConnectId;
-      if (!connectId) {
-        const account = await stripe.accounts.create({
-          type: "express",
-          country: "HK",
-          email: ctx.user.email ?? undefined,
-          capabilities: { transfers: { requested: true } },
-        });
-        connectId = account.id;
-        await updateSellerProfile(profile.id, { stripeConnectId: connectId, stripeConnectStatus: "pending" });
-      }
-      const accountLink = await stripe.accountLinks.create({
-        account: connectId,
-        refresh_url: `${ctx.req.headers.origin}/seller?stripe=refresh`,
-        return_url: `${ctx.req.headers.origin}/seller?stripe=success`,
-        type: "account_onboarding",
-      });
-      return { onboardingUrl: accountLink.url };
-    }),
-
-  // ============================================================
-  // SELLER - Mark Order Shipped
-  // ============================================================
-  markOrderShipped: protectedProcedure
-    .input(z.object({ orderId: z.number().int(), trackingNo: z.string().optional() }))
-    .mutation(async ({ ctx, input }) => {
-      const order = await getMarketplaceOrderById(input.orderId);
-      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
-      if (order.sellerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
-      if (order.orderStatus !== "processing") throw new TRPCError({ code: "BAD_REQUEST", message: "訂單狀態不允許此操作" });
-      await updateMarketplaceOrder(input.orderId, {
-        orderStatus: "shipped",
-        shippedAt: new Date(),
-        trackingNumber: input.trackingNo ?? null,
-      });
-      return { success: true };
-    }),
-
-  adminApproveSeller: adminProcedure
-    .input(z.object({
-      sellerId: z.number().int(),
-      approve: z.boolean(),
-    }))
-    .mutation(async ({ input }) => {
-      await updateSellerProfile(input.sellerId, { isActive: input.approve });
       return { success: true };
     }),
 

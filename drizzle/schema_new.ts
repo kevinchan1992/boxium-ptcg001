@@ -735,6 +735,7 @@ export const sellerProfiles = mysqlTable("sellerProfiles", {
   avgRating: decimal("avgRating", { precision: 3, scale: 2 }).default("0.00"),
   ratingCount: int("ratingCount").default(0).notNull(),
   isActive: boolean("isActive").default(false).notNull(), // Admin approved
+  rejectReason: text("rejectReason"), // Reason for rejection (shown to applicant)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 }, (table) => ({

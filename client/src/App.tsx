@@ -30,6 +30,7 @@ import DebugBlog from "./pages/DebugBlog";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import Orders from "./pages/Orders";
 import { TopNav } from "./components/TopNav";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 
@@ -91,6 +92,7 @@ function Router() {
       <Route path="/marketplace/:id" component={MarketplaceListing} />
       <Route path="/wishlist" component={Wishlist} />
       <Route path="/seller" component={SellerDashboard} />
+      <Route path="/orders" component={Orders} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/disclaimer" component={Disclaimer} />

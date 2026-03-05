@@ -234,3 +234,106 @@ export function stopTrendingCardsScheduler() {
     console.log('[TrendingCardsScheduler] Trending cards scheduler stopped');
   }
 }
+
+// ============================================================
+// Auto-Complete Orders Cron Job
+// Runs every hour: auto-complete shipped orders where autoCompleteAt has passed
+// ============================================================
+let autoCompleteOrdersCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startAutoCompleteOrdersScheduler() {
+  if (autoCompleteOrdersCronJob) return;
+  autoCompleteOrdersCronJob = cron.schedule(
+    '0 * * * *', // Every hour at :00
+    async () => {
+      try {
+        const { getDb, getSellerProfileByUserId } = await import('./db');
+        const { marketplaceOrders } = await import('../drizzle/schema_new');
+        const { and, eq, lte, isNotNull } = await import('drizzle-orm');
+        const { createNotification } = await import('./db/notifications');
+        const db = await getDb();
+        if (!db) return;
+
+        const now = new Date();
+        const overdueOrders = await db.select()
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.orderStatus, 'shipped'),
+              isNotNull(marketplaceOrders.autoCompleteAt),
+              lte(marketplaceOrders.autoCompleteAt, now)
+            )
+          )
+          .limit(100);
+
+        if (overdueOrders.length === 0) return;
+        console.log(`[AutoComplete] Found ${overdueOrders.length} orders to auto-complete`);
+
+        for (const order of overdueOrders) {
+          try {
+            await db.update(marketplaceOrders)
+              .set({ orderStatus: 'completed', buyerConfirmedAt: now, payoutStatus: 'processing' })
+              .where(eq(marketplaceOrders.id, order.id));
+
+            await createNotification({
+              userId: order.buyerId,
+              type: 'trade',
+              title: '訂單已自動完成 ✅',
+              content: `訂單 ${order.orderNo} 已超過 14 天未確認收貨，系統已自動完成訂單。`,
+              priority: 'medium',
+              relatedUrl: '/orders',
+            }).catch(() => {});
+
+            // Trigger Stripe Transfer payout if C2C order
+            if (order.sellerType === 'seller' && order.sellerId) {
+              const sellerProfile = await getSellerProfileByUserId(order.sellerId);
+              if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === 'active') {
+                try {
+                  const Stripe = (await import('stripe')).default;
+                  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
+                  const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
+                  const transfer = await stripe.transfers.create({
+                    amount: receivable,
+                    currency: 'hkd',
+                    destination: sellerProfile.stripeConnectId,
+                    metadata: { order_no: order.orderNo, order_id: order.id.toString(), auto_completed: 'true' },
+                  });
+                  await db.update(marketplaceOrders)
+                    .set({ payoutStatus: 'paid', stripeTransferId: transfer.id })
+                    .where(eq(marketplaceOrders.id, order.id));
+                  await createNotification({
+                    userId: order.sellerId,
+                    type: 'trade',
+                    title: '款項已自動轉帳 💰',
+                    content: `訂單 ${order.orderNo} 已自動完成，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
+                    priority: 'high',
+                    relatedUrl: '/seller',
+                  }).catch(() => {});
+                } catch (err: any) {
+                  console.error(`[AutoComplete] Stripe transfer failed for order ${order.orderNo}:`, err.message);
+                  await db.update(marketplaceOrders)
+                    .set({ payoutStatus: 'failed', stripeTransferError: err.message })
+                    .where(eq(marketplaceOrders.id, order.id));
+                }
+              }
+            }
+            console.log(`[AutoComplete] Order ${order.orderNo} auto-completed`);
+          } catch (err) {
+            console.error(`[AutoComplete] Failed to auto-complete order ${order.orderNo}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[AutoComplete] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[AutoComplete] Auto-complete orders scheduler started');
+}
+
+export function stopAutoCompleteOrdersScheduler() {
+  if (autoCompleteOrdersCronJob) {
+    autoCompleteOrdersCronJob.stop();
+    autoCompleteOrdersCronJob = null;
+  }
+}

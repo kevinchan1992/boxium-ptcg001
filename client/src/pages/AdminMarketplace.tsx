@@ -466,9 +466,16 @@ function AlipayPendingTab() {
 
 function SellersTab() {
   const [page, setPage] = useState(1);
+  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; sellerId: number; sellerName: string }>({ open: false, sellerId: 0, sellerName: "" });
+  const [rejectReason, setRejectReason] = useState("");
   const { data, isLoading, refetch } = trpc.marketplace.adminGetSellers.useQuery({ page, pageSize: 20 });
   const approveMutation = trpc.marketplace.adminApproveSeller.useMutation({
-    onSuccess: (_, vars) => { toast.success(vars.approve ? "賣家已批准" : "賣家已停用"); refetch(); },
+    onSuccess: (_, vars) => {
+      toast.success(vars.approve ? "賣家已批准，已通知申請人" : "賣家已拒絕/停用，已通知申請人");
+      setRejectDialog({ open: false, sellerId: 0, sellerName: "" });
+      setRejectReason("");
+      refetch();
+    },
     onError: (e) => toast.error(e.message),
   });
   const sellers = data?.sellers ?? [];
@@ -498,16 +505,22 @@ function SellersTab() {
                   <span>評分: {seller.rating ?? "N/A"}</span>
                   <span>申請: {new Date(seller.createdAt).toLocaleDateString("zh-HK")}</span>
                 </div>
+                {seller.rejectReason && (
+                  <div className="mt-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+                    拒絕原因：{seller.rejectReason}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {!seller.isActive ? (
                   <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
+                    disabled={approveMutation.isPending}
                     onClick={() => approveMutation.mutate({ sellerId: seller.id, approve: true })}>
                     <CheckCircle className="w-3 h-3 mr-1" />批准
                   </Button>
                 ) : (
                   <Button size="sm" variant="outline" className="text-red-600 border-red-300 hover:bg-red-50"
-                    onClick={() => approveMutation.mutate({ sellerId: seller.id, approve: false })}>
+                    onClick={() => { setRejectDialog({ open: true, sellerId: seller.id, sellerName: seller.displayName }); setRejectReason(""); }}>
                     停用
                   </Button>
                 )}
@@ -523,6 +536,38 @@ function SellersTab() {
           <Button variant="outline" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一頁</Button>
         </div>
       )}
+
+      {/* Reject/Deactivate Dialog */}
+      <Dialog open={rejectDialog.open} onOpenChange={(o) => setRejectDialog(d => ({ ...d, open: o }))}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>停用賣家帳號</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3">
+            <p className="text-sm text-muted-foreground">停用 <strong>{rejectDialog.sellerName}</strong> 的賣家資格，其所有商品將自動下架，並通知申請人。</p>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">拒絕/停用原因（選填，將發送給用戶）</label>
+              <textarea
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] resize-none bg-background text-foreground"
+                rows={3}
+                placeholder="例：資料不完整、違反平台規則..."
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setRejectDialog(d => ({ ...d, open: false }))}>取消</Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={approveMutation.isPending}
+              onClick={() => approveMutation.mutate({ sellerId: rejectDialog.sellerId, approve: false, rejectReason: rejectReason.trim() || undefined })}
+            >
+              {approveMutation.isPending ? "處理中..." : "確認停用"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
