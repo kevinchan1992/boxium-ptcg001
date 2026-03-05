@@ -1,4 +1,4 @@
-import { useState } from "react";
+
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { User, Heart, History, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 
 // ─── Brand tokens ──────────────────────────────────────────────
 const BRAND_BLUE = "#06038d";
@@ -34,7 +35,7 @@ const BRAND_YELLOW = "#FFD700";
 export default function Profile() {
   const { t, i18n } = useTranslation();
   const { data: user, isLoading: userLoading } = trpc.auth.me.useQuery();
-  const [activeTab, setActiveTab] = useState("info");
+
 
   const locale = i18n.language === "ja" ? "ja-JP" : i18n.language === "en" ? "en-US" : "zh-TW";
 
@@ -130,50 +131,35 @@ export default function Profile() {
       <div className="max-w-5xl mx-auto px-4 -mt-10 pb-16">
         {/* Tabs card */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div>
-            {/* Tab bar */}
-            <div className="grid grid-cols-3 w-full border-b border-gray-100">
-              {[
-                { value: "info", icon: User, label: t("profile.tabs.info"), short: t("profile.tabs.infoShort") },
-                { value: "watchlist", icon: Heart, label: t("profile.tabs.watchlist"), short: t("profile.tabs.watchlistShort") },
-                { value: "history", icon: History, label: t("profile.tabs.history"), short: t("profile.tabs.historyShort") },
-              ].map(({ value, icon: Icon, label, short }) => (
-                <button
-                  key={value}
-                  onClick={() => setActiveTab(value)}
-                  className="relative flex items-center justify-center gap-2 py-4 text-sm font-medium transition-all duration-200 focus:outline-none"
-                  style={
-                    activeTab === value
-                      ? { background: BRAND_BLUE, color: "white" }
-                      : { background: "white", color: "#6b7280" }
-                  }
-                >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">{label}</span>
-                  <span className="sm:hidden text-xs">{short}</span>
-                  {/* Yellow underline accent for active */}
-                  {activeTab === value && (
-                    <span
-                      className="absolute bottom-0 left-0 right-0 h-1 rounded-t-sm"
-                      style={{ background: BRAND_YELLOW }}
-                    />
-                  )}
-                </button>
-              ))}
+          <BrandTabs defaultValue="info" variant="light">
+            <div className="px-4 pt-4 border-b border-gray-100">
+              <BrandTabsList className="border-0 bg-transparent gap-1">
+                <BrandTabsTrigger value="info" icon={<User className="w-4 h-4" />}>
+                  <span className="hidden sm:inline">{t("profile.tabs.info")}</span>
+                  <span className="sm:hidden">{t("profile.tabs.infoShort")}</span>
+                </BrandTabsTrigger>
+                <BrandTabsTrigger value="watchlist" icon={<Heart className="w-4 h-4" />}>
+                  <span className="hidden sm:inline">{t("profile.tabs.watchlist")}</span>
+                  <span className="sm:hidden">{t("profile.tabs.watchlistShort")}</span>
+                </BrandTabsTrigger>
+                <BrandTabsTrigger value="history" icon={<History className="w-4 h-4" />}>
+                  <span className="hidden sm:inline">{t("profile.tabs.history")}</span>
+                  <span className="sm:hidden">{t("profile.tabs.historyShort")}</span>
+                </BrandTabsTrigger>
+              </BrandTabsList>
             </div>
-
             <div className="p-6">
-              {activeTab === "info" && (
+              <BrandTabsContent value="info">
                 <InfoSection user={user} locale={locale} />
-              )}
-              {activeTab === "watchlist" && (
+              </BrandTabsContent>
+              <BrandTabsContent value="watchlist">
                 <WatchlistSection />
-              )}
-              {activeTab === "history" && (
+              </BrandTabsContent>
+              <BrandTabsContent value="history">
                 <HistorySection />
-              )}
+              </BrandTabsContent>
             </div>
-          </div>
+          </BrandTabs>
         </div>
       </div>
     </div>

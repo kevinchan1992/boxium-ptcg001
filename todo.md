@@ -3519,3 +3519,9 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ## 🐛 Profile 頁面分頁按鈕修復
 
 - [x] 修復個人資訊/關注清單/瀏覽歷史分頁按鈕顯示問題（改用原生 button 元素，深藍 active + 黃色底線）
+
+## 🎨 統一分頁按鈕設計
+
+- [x] 建立共用 BrandTabs 元件（深藍 active pill + 黃色底線，light/dark 兩種變體）
+- [x] 套用至 Profile.tsx 分頁按鈕
+- [x] 套用至 Admin.tsx 和 AdminMarketplace.tsx 分頁按鈕

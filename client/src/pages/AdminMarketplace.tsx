@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -740,36 +740,36 @@ export default function AdminMarketplace() {
           <StatCard title="待審核商品" value={stats?.pendingReviewListings ?? 0} icon={Clock} color="bg-orange-100 text-orange-700" />
         </div>
 
-        <Tabs defaultValue="listings">
-          <TabsList className="mb-4 flex flex-wrap h-auto gap-1">
-            <TabsTrigger value="listings" className="flex items-center gap-1">
-              <Package className="w-4 h-4" />商品管理
+        <BrandTabs defaultValue="listings" variant="light">
+          <BrandTabsList wrap className="mb-2">
+            <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />}>
+              商品管理
               {(stats?.pendingReviewListings ?? 0) > 0 && (
                 <span className="ml-1 bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5">{stats?.pendingReviewListings}</span>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="flex items-center gap-1">
-              <ShoppingBag className="w-4 h-4" />訂單管理
-            </TabsTrigger>
-            <TabsTrigger value="alipay" className="flex items-center gap-1">
-              <DollarSign className="w-4 h-4" />支付寶核對
+            </BrandTabsTrigger>
+            <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />}>
+              訂單管理
+            </BrandTabsTrigger>
+            <BrandTabsTrigger value="alipay" icon={<DollarSign className="w-4 h-4" />}>
+              支付寶核對
               {(stats?.pendingAlipayConfirmation ?? 0) > 0 && (
                 <span className="ml-1 bg-amber-500 text-white text-xs rounded-full px-1.5 py-0.5">{stats?.pendingAlipayConfirmation}</span>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="sellers" className="flex items-center gap-1">
-              <Users className="w-4 h-4" />賣家管理
-            </TabsTrigger>
-            <TabsTrigger value="banners" className="flex items-center gap-1">
-              <Image className="w-4 h-4" />廣告 Banner
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="listings"><ListingsTab /></TabsContent>
-          <TabsContent value="orders"><OrdersTab /></TabsContent>
-          <TabsContent value="alipay"><AlipayPendingTab /></TabsContent>
-          <TabsContent value="sellers"><SellersTab /></TabsContent>
-          <TabsContent value="banners"><BannersTab /></TabsContent>
-        </Tabs>
+            </BrandTabsTrigger>
+            <BrandTabsTrigger value="sellers" icon={<Users className="w-4 h-4" />}>
+              賣家管理
+            </BrandTabsTrigger>
+            <BrandTabsTrigger value="banners" icon={<Image className="w-4 h-4" />}>
+              廣告 Banner
+            </BrandTabsTrigger>
+          </BrandTabsList>
+          <BrandTabsContent value="listings"><ListingsTab /></BrandTabsContent>
+          <BrandTabsContent value="orders"><OrdersTab /></BrandTabsContent>
+          <BrandTabsContent value="alipay"><AlipayPendingTab /></BrandTabsContent>
+          <BrandTabsContent value="sellers"><SellersTab /></BrandTabsContent>
+          <BrandTabsContent value="banners"><BannersTab /></BrandTabsContent>
+        </BrandTabs>
       </div>
     </div>
   );
