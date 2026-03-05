@@ -327,27 +327,23 @@ export default function Marketplace() {
   return (
     <div className="min-h-screen bg-white">
       {/* ── Top Search Bar ── */}
-      <div className="bg-[#0A0A2E] border-b border-[#1a1a4e]">
+      <div className="bg-[#06038d] border-b border-[#0a07b5]">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row items-center gap-4">
             {/* Logo + Title block */}
             <div className="shrink-0 flex items-center gap-3">
-              {/* Logo in yellow pill */}
-              <div className="bg-[#FFD700] rounded-xl p-1.5 flex items-center justify-center shadow-lg shadow-yellow-900/30">
-                <img
-                  src="/boxium-logo.png"
-                  alt="BOXIUM"
-                  className="h-9 w-auto object-contain"
-                  style={{ filter: "brightness(0) saturate(100%) invert(8%) sepia(80%) saturate(3000%) hue-rotate(220deg) brightness(70%)" }}
-                />
-              </div>
+              {/* BOXIUM Logo image */}
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/boxium-logo-full_e9207f64.png"
+                alt="BOXIUM"
+                className="h-12 w-auto object-contain"
+              />
               {/* Text */}
               <div className="text-left">
-                <div className="flex items-baseline gap-2">
-                  <h1 className="text-xl font-extrabold text-white tracking-tight leading-none">BOXIUM</h1>
-                  <span className="text-[#FFD700] font-bold text-lg leading-none">商城</span>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-[#FFD700] font-bold text-xl leading-none">商城</span>
                 </div>
-                <p className="text-xs text-gray-400 mt-0.5">精選寶可夢卡牌 · 安全交易</p>
+                <p className="text-xs text-gray-300 mt-0.5">精選寶可夢卡牌 · 安全交易</p>
               </div>
             </div>
             {/* Divider */}
