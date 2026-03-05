@@ -2633,10 +2633,10 @@ export async function getRunningBatchUpdateTask(taskType: string) {
 import {
   sellerProfiles, marketplaceListings, marketplaceOrders,
   marketplaceOrderItems, marketplacePayouts,
-  marketplaceBanners, wishlists,
+  marketplaceBanners, wishlists, marketplaceReviews,
   InsertSellerProfile, InsertMarketplaceListing, InsertMarketplaceOrder,
   InsertMarketplaceOrderItem, InsertMarketplacePayout,
-  InsertMarketplaceBanner, InsertWishlist
+  InsertMarketplaceBanner, InsertWishlist, InsertMarketplaceReview
 } from "../drizzle/schema_new";
 
 // --- Seller Profiles ---
@@ -2941,4 +2941,71 @@ export async function getWishlistListingIds(userId: number): Promise<number[]> {
   const rows = await db.select({ listingId: wishlists.listingId }).from(wishlists)
     .where(eq(wishlists.userId, userId));
   return rows.map(r => r.listingId);
+}
+
+// ============================================================
+// DISPUTE & REVIEW DB HELPERS
+// ============================================================
+
+export async function getDisputedOrders(page = 1, pageSize = 20) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const offset = (page - 1) * pageSize;
+  const rows = await db.select().from(marketplaceOrders)
+    .where(eq(marketplaceOrders.orderStatus, "disputed"))
+    .orderBy(desc(marketplaceOrders.disputeOpenedAt))
+    .limit(pageSize).offset(offset);
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
+    .where(eq(marketplaceOrders.orderStatus, "disputed"));
+  return { orders: rows, total: Number(countRows[0]?.count ?? 0) };
+}
+
+export async function getSellerProfileByStripeConnectId(stripeConnectId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(sellerProfiles)
+    .where(eq(sellerProfiles.stripeConnectId, stripeConnectId)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function createReview(data: InsertMarketplaceReview) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(marketplaceReviews).values(data);
+  const stats = await db.select({
+    avg: sql<string>`AVG(rating)`,
+    cnt: sql<number>`COUNT(*)`,
+  }).from(marketplaceReviews).where(eq(marketplaceReviews.sellerId, data.sellerId));
+  const avg = parseFloat(stats[0]?.avg ?? "0");
+  const cnt = Number(stats[0]?.cnt ?? 0);
+  await db.update(sellerProfiles).set({
+    avgRating: avg.toFixed(2),
+    ratingCount: cnt,
+    updatedAt: new Date(),
+  }).where(eq(sellerProfiles.id, data.sellerId));
+}
+
+export async function getSellerReviews(sellerId: number, page = 1, pageSize = 10) {
+  const db = await getDb();
+  if (!db) return { reviews: [], total: 0 };
+  const offset = (page - 1) * pageSize;
+  const rows = await db.select({
+    review: marketplaceReviews,
+    buyerName: users.name,
+  }).from(marketplaceReviews)
+    .leftJoin(users, eq(marketplaceReviews.buyerId, users.id))
+    .where(eq(marketplaceReviews.sellerId, sellerId))
+    .orderBy(desc(marketplaceReviews.createdAt))
+    .limit(pageSize).offset(offset);
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceReviews)
+    .where(eq(marketplaceReviews.sellerId, sellerId));
+  return { reviews: rows, total: Number(countRows[0]?.count ?? 0) };
+}
+
+export async function getReviewByOrderId(orderId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(marketplaceReviews)
+    .where(eq(marketplaceReviews.orderId, orderId)).limit(1);
+  return rows[0] ?? null;
 }

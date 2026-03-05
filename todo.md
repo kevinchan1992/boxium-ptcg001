@@ -3558,3 +3558,19 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [ ] 賣家出貨表單（物流公司 + Tracking Number）
 - [ ] 付款成功通知賣家
 - [ ] 賣家出貨通知買家
+
+## Phase 2：爭議處理 + KYC Webhook
+- [x] marketplaceReviews 資料表建立（SQL 直接建立）
+- [x] DB helpers：getDisputedOrders, resolveDispute, createReview, getSellerReviews, getOrderReview, getSellerProfileByStripeConnectId
+- [x] tRPC procedures：openDispute, adminGetDisputes, adminResolveDispute
+- [x] Stripe Webhook account.updated 處理（KYC 狀態同步 + 通知賣家）
+- [x] 訂單頁面加入「申請爭議」按鈕與對話框
+- [x] 管理員後台新增「爭議處理」分頁（列出爭議訂單、處理對話框）
+- [x] 爭議處理結果：退款買家（取消訂單）/ 放款賣家（完成訂單）/ 部分處理
+
+## Phase 3：評價系統
+- [x] tRPC procedures：submitReview, getSellerReviews, getOrderReview
+- [x] 訂單頁面加入「評價賣家」按鈕（訂單完成後才顯示）
+- [x] 星級評分元件（1-5 星，hover 效果）
+- [x] 商品詳情頁顯示賣家評價（最新 2 則，可展開全部）
+- [x] 賣家資訊顯示平均評分與評價數量

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Image, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Image, Trash2, ToggleLeft, ToggleRight, Flag } from "lucide-react";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 
 const conditionLabel: Record<string, string> = {
@@ -575,6 +575,149 @@ function SellersTab() {
 // ============================================================
 // BANNERS TAB
 // ============================================================
+function DisputesTab() {
+  const [page, setPage] = useState(1);
+  const [selectedDispute, setSelectedDispute] = useState<any>(null);
+  const [resolution, setResolution] = useState("");
+  const [outcome, setOutcome] = useState<"refund_buyer" | "release_seller" | "partial">("refund_buyer");
+  const utils = trpc.useUtils();
+
+  const { data, isLoading } = trpc.marketplace.adminGetDisputes.useQuery({ page, pageSize: 20 });
+  const resolveMutation = trpc.marketplace.adminResolveDispute.useMutation({
+    onSuccess: () => {
+      toast.success("✅ 爭議已處理");
+      setSelectedDispute(null);
+      setResolution("");
+      utils.marketplace.adminGetDisputes.invalidate();
+      utils.marketplace.adminGetOrders.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  if (isLoading) return <div className="py-8 text-center text-muted-foreground">載入中...</div>;
+
+  const disputes = data?.orders ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-lg flex items-center gap-2">
+          <Flag className="w-5 h-5 text-red-500" />
+          爭議訂單管理
+        </h3>
+        <span className="text-sm text-muted-foreground">共 {data?.total ?? 0} 筆爭議</span>
+      </div>
+
+      {disputes.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-400" />
+          <p>目前沒有待處理的爭議</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {disputes.map((order: any) => (
+            <div key={order.id} className="border rounded-xl p-4 bg-red-50 border-red-200">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-mono text-xs text-muted-foreground">#{order.orderNo}</span>
+                    <span className="text-xs bg-red-100 text-red-700 border border-red-200 rounded-full px-2 py-0.5">爭議中</span>
+                  </div>
+                  <p className="font-medium text-sm">{order.listingTitle ?? "商品"}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)} · {order.paymentMethod}
+                  </p>
+                  {order.disputeOpenedAt && (
+                    <p className="text-xs text-red-600 mt-1">
+                      申請時間：{new Date(order.disputeOpenedAt).toLocaleString("zh-HK")}
+                    </p>
+                  )}
+                  {order.disputeReason && (
+                    <div className="mt-2 bg-white border border-red-200 rounded-lg p-2.5 text-xs text-gray-700">
+                      <span className="font-medium text-red-600">爭議原因：</span>{order.disputeReason}
+                    </div>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-[#06038d] hover:bg-[#06038d]/90 text-white flex-shrink-0"
+                  onClick={() => { setSelectedDispute(order); setResolution(""); setOutcome("refund_buyer"); }}
+                >
+                  <Edit className="w-4 h-4 mr-1" />處理
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Resolve Dispute Dialog */}
+      <Dialog open={!!selectedDispute} onOpenChange={(o) => !o && setSelectedDispute(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Flag className="w-5 h-5 text-red-500" />
+              處理爭議 #{selectedDispute?.orderNo}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedDispute && (
+            <div className="space-y-4 py-2">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+                <p className="font-medium text-red-700 mb-1">爭議原因：</p>
+                <p className="text-gray-700">{selectedDispute.disputeReason}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>處理結果</Label>
+                <Select value={outcome} onValueChange={(v) => setOutcome(v as any)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="refund_buyer">退款給買家（取消訂單）</SelectItem>
+                    <SelectItem value="release_seller">放款給賣家（完成訂單）</SelectItem>
+                    <SelectItem value="partial">部分處理（需手動操作）</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>處理說明</Label>
+                <Textarea
+                  placeholder="請說明處理決定的原因（至少 5 字）"
+                  value={resolution}
+                  onChange={e => setResolution(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+                <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
+                {outcome === "refund_buyer" && "選擇退款後，訂單將標記為已取消，賣家不會收到款項。"}
+                {outcome === "release_seller" && "選擇放款後，系統將自動轉帳給賣家，訂單標記為已完成。"}
+                {outcome === "partial" && "部分處理需要管理員手動操作，訂單將標記為已完成。"}
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setSelectedDispute(null)}>取消</Button>
+            <Button
+              className="bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+              disabled={resolveMutation.isPending || resolution.trim().length < 5}
+              onClick={() => resolveMutation.mutate({
+                orderId: selectedDispute.id,
+                resolution: resolution.trim(),
+                outcome,
+              })}
+            >
+              {resolveMutation.isPending
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</>
+                : <><CheckCircle className="w-4 h-4 mr-2" />確認處理</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 function BannersTab() {
   const utils = trpc.useUtils();
   const { data: banners = [], isLoading } = trpc.marketplace.adminGetBanners.useQuery();
@@ -802,12 +945,16 @@ export default function AdminMarketplace() {
             </BrandTabsTrigger>
             <BrandTabsTrigger value="sellers" icon={<Users className="w-4 h-4" />} label="賣家管理">賣家管理</BrandTabsTrigger>
             <BrandTabsTrigger value="banners" icon={<Image className="w-4 h-4" />} label="廣告 Banner">廣告 Banner</BrandTabsTrigger>
+            <BrandTabsTrigger value="disputes" icon={<Flag className="w-4 h-4" />} label="爭議處理">
+              爭議處理
+            </BrandTabsTrigger>
           </BrandTabsList>
           <BrandTabsContent value="listings"><ListingsTab /></BrandTabsContent>
           <BrandTabsContent value="orders"><OrdersTab /></BrandTabsContent>
           <BrandTabsContent value="alipay"><AlipayPendingTab /></BrandTabsContent>
           <BrandTabsContent value="sellers"><SellersTab /></BrandTabsContent>
           <BrandTabsContent value="banners"><BannersTab /></BrandTabsContent>
+          <BrandTabsContent value="disputes"><DisputesTab /></BrandTabsContent>
         </BrandTabs>
       </div>
     </div>

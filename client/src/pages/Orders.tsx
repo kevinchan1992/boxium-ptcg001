@@ -5,14 +5,17 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import {
   Package, ArrowLeft, CheckCircle, Truck, Clock, XCircle, AlertCircle,
-  ChevronDown, ChevronUp, MapPin, Phone, User, CreditCard, Loader2
+  ChevronDown, ChevronUp, MapPin, Phone, User, CreditCard, Loader2,
+  Star, MessageSquare, Flag
 } from "lucide-react";
 
 const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: <Clock className="w-3.5 h-3.5" /> },
+  payment_received: { label: "已收款", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <CreditCard className="w-3.5 h-3.5" /> },
   processing: { label: "已付款，等待出貨", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-3.5 h-3.5" /> },
   shipped: { label: "已出貨", color: "bg-indigo-100 text-indigo-800 border-indigo-200", icon: <Truck className="w-3.5 h-3.5" /> },
   delivered: { label: "已送達", color: "bg-teal-100 text-teal-800 border-teal-200", icon: <Truck className="w-3.5 h-3.5" /> },
@@ -20,6 +23,32 @@ const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; icon: R
   cancelled: { label: "已取消", color: "bg-gray-100 text-gray-600 border-gray-200", icon: <XCircle className="w-3.5 h-3.5" /> },
   disputed: { label: "爭議中", color: "bg-red-100 text-red-800 border-red-200", icon: <AlertCircle className="w-3.5 h-3.5" /> },
 };
+
+function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          onMouseEnter={() => setHovered(star)}
+          onMouseLeave={() => setHovered(0)}
+          onClick={() => onChange(star)}
+          className="focus:outline-none"
+        >
+          <Star
+            className={`w-7 h-7 transition-colors ${
+              star <= (hovered || value)
+                ? "fill-yellow-400 text-yellow-400"
+                : "text-gray-300"
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function OrderStatusBadge({ status }: { status: string }) {
   const s = ORDER_STATUS_LABEL[status] ?? { label: status, color: "bg-gray-100 text-gray-600 border-gray-200", icon: null };
@@ -33,6 +62,11 @@ function OrderStatusBadge({ status }: { status: string }) {
 function OrderCard({ order }: { order: any }) {
   const [expanded, setExpanded] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showDisputeDialog, setShowDisputeDialog] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
   const utils = trpc.useUtils();
 
   const confirmReceiptMutation = trpc.marketplace.confirmReceipt.useMutation({
@@ -44,14 +78,43 @@ function OrderCard({ order }: { order: any }) {
     onError: (e) => toast.error(e.message),
   });
 
+  const openDisputeMutation = trpc.marketplace.openDispute.useMutation({
+    onSuccess: () => {
+      toast.success("⚠️ 爭議申請已提交，管理員將盡快處理");
+      setShowDisputeDialog(false);
+      setDisputeReason("");
+      utils.marketplace.getMyOrders.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const submitReviewMutation = trpc.marketplace.submitReview.useMutation({
+    onSuccess: () => {
+      toast.success("⭐ 評價已提交，感謝你的反饋！");
+      setShowReviewDialog(false);
+      setReviewComment("");
+      setReviewRating(5);
+      utils.marketplace.getMyOrders.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const { data: existingReview } = trpc.marketplace.getOrderReview.useQuery(
+    { orderId: order.id },
+    { enabled: order.orderStatus === "completed" && order.sellerType === "seller" }
+  );
+
   const shippingAddr = (() => {
     if (!order.shippingAddress) return null;
     try { return JSON.parse(order.shippingAddress); } catch { return null; }
   })();
 
   const canConfirm = order.orderStatus === "shipped" || order.orderStatus === "delivered";
+  const canDispute = ["shipped", "delivered", "payment_received", "processing"].includes(order.orderStatus);
   const isCompleted = order.orderStatus === "completed";
   const isPending = order.orderStatus === "pending_payment";
+  const isDisputed = order.orderStatus === "disputed";
+  const canReview = isCompleted && order.sellerType === "seller" && !existingReview;
 
   return (
     <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
@@ -74,8 +137,8 @@ function OrderCard({ order }: { order: any }) {
       </div>
 
       {/* Action buttons */}
-      {(canConfirm || isPending) && (
-        <div className="px-4 pb-3 flex gap-2">
+      {(canConfirm || canDispute || isPending || canReview || isDisputed) && (
+        <div className="px-4 pb-3 flex flex-wrap gap-2">
           {canConfirm && (
             <Button
               size="sm"
@@ -85,10 +148,55 @@ function OrderCard({ order }: { order: any }) {
               <CheckCircle className="w-4 h-4 mr-1.5" />確認收貨
             </Button>
           )}
+          {canDispute && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-red-300 text-red-600 hover:bg-red-50"
+              onClick={() => setShowDisputeDialog(true)}
+            >
+              <Flag className="w-4 h-4 mr-1.5" />申請爭議
+            </Button>
+          )}
+          {canReview && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+              onClick={() => setShowReviewDialog(true)}
+            >
+              <Star className="w-4 h-4 mr-1.5" />評價賣家
+            </Button>
+          )}
+          {isCompleted && existingReview && (
+            <span className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+              已評價 {existingReview.rating} 星
+            </span>
+          )}
           {isPending && order.paymentMethod === "stripe" && (
             <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />等待付款確認
             </span>
+          )}
+          {isDisputed && (
+            <span className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+              <AlertCircle className="w-3.5 h-3.5" />爭議處理中，請等待管理員回覆
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Dispute info banner */}
+      {isDisputed && order.disputeReason && (
+        <div className="mx-4 mb-3 bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-800">
+          <div className="font-medium mb-1">爭議原因：</div>
+          <div>{order.disputeReason}</div>
+          {order.disputeResolution && (
+            <div className="mt-2 pt-2 border-t border-red-200">
+              <div className="font-medium mb-1 text-green-700">處理結果：</div>
+              <div className="text-green-700">{order.disputeResolution}</div>
+            </div>
           )}
         </div>
       )}
@@ -163,7 +271,7 @@ function OrderCard({ order }: { order: any }) {
             <p className="text-sm text-muted-foreground">確認已收到商品後，款項將立即轉帳給賣家。此操作不可撤銷。</p>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
               <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
-              請確認商品狀態與描述相符後再確認收貨。如有問題，請先聯絡賣家。
+              請確認商品狀態與描述相符後再確認收貨。如有問題，請先申請爭議。
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -176,6 +284,92 @@ function OrderCard({ order }: { order: any }) {
               {confirmReceiptMutation.isPending
                 ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</>
                 : <><CheckCircle className="w-4 h-4 mr-2" />確認收貨</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Open Dispute Dialog */}
+      <Dialog open={showDisputeDialog} onOpenChange={setShowDisputeDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Flag className="w-5 h-5 text-red-500" />申請爭議
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3">
+            <p className="text-sm text-muted-foreground">請詳細描述問題，管理員將在 1-3 個工作天內處理。</p>
+            <Textarea
+              placeholder="請描述問題，例如：商品與描述不符、未收到商品、商品損壞等（至少 10 字）"
+              value={disputeReason}
+              onChange={e => setDisputeReason(e.target.value)}
+              rows={4}
+              className="text-sm"
+            />
+            <div className="text-xs text-muted-foreground text-right">{disputeReason.length}/1000</div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowDisputeDialog(false)}>取消</Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={openDisputeMutation.isPending || disputeReason.trim().length < 10}
+              onClick={() => openDisputeMutation.mutate({ orderId: order.id, reason: disputeReason.trim() })}
+            >
+              {openDisputeMutation.isPending
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</>
+                : <><Flag className="w-4 h-4 mr-2" />提交爭議</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Dialog */}
+      <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-400" />評價賣家
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">評分</p>
+              <StarRating value={reviewRating} onChange={setReviewRating} />
+              <p className="text-xs text-muted-foreground">
+                {reviewRating === 1 && "非常不滿意"}
+                {reviewRating === 2 && "不滿意"}
+                {reviewRating === 3 && "一般"}
+                {reviewRating === 4 && "滿意"}
+                {reviewRating === 5 && "非常滿意"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">評語（選填）</p>
+              <Textarea
+                placeholder="分享你的購物體驗..."
+                value={reviewComment}
+                onChange={e => setReviewComment(e.target.value)}
+                rows={3}
+                className="text-sm"
+                maxLength={500}
+              />
+              <div className="text-xs text-muted-foreground text-right">{reviewComment.length}/500</div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowReviewDialog(false)}>取消</Button>
+            <Button
+              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+              disabled={submitReviewMutation.isPending || reviewRating === 0}
+              onClick={() => submitReviewMutation.mutate({
+                orderId: order.id,
+                rating: reviewRating,
+                comment: reviewComment.trim() || undefined,
+              })}
+            >
+              {submitReviewMutation.isPending
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</>
+                : <><MessageSquare className="w-4 h-4 mr-2" />提交評價</>}
             </Button>
           </DialogFooter>
         </DialogContent>

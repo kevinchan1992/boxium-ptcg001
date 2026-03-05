@@ -14,6 +14,8 @@ import {
   getSellerPayouts, getMarketplaceStats,
   getActiveBanners, getAllBanners, createBanner, updateBanner, deleteBanner,
   getUserWishlist, isInWishlist, addToWishlistListing, removeFromWishlistListing, getWishlistListingIds,
+  getDisputedOrders, getSellerProfileByStripeConnectId,
+  createReview, getSellerReviews, getReviewByOrderId,
   getDb,
 } from "../db";
 import { storagePut } from "../storage";
@@ -934,5 +936,173 @@ All three checks must pass for verified to be true. Respond with JSON only match
         await addToWishlistListing(ctx.user.id, input.listingId);
         return { wishlisted: true };
       }
+    }),
+
+  // ============================================================
+  // BUYER - Dispute Handling
+  // ============================================================
+  openDispute: protectedProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      reason: z.string().min(10).max(1000),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      const allowedStatuses = ["shipped", "delivered", "payment_received", "processing"];
+      if (!allowedStatuses.includes(order.orderStatus)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單狀態不允許申請爭議" });
+      }
+      if (order.orderStatus === "disputed") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已在爭議處理中" });
+      }
+      await updateMarketplaceOrder(input.orderId, {
+        orderStatus: "disputed",
+        disputeOpenedAt: new Date(),
+        disputeReason: input.reason,
+      });
+      // Notify admin
+      await notifyOwner({
+        title: "新爭議申請 ⚠️",
+        content: `訂單 ${order.orderNo} 買家申請爭議。原因：${input.reason}`,
+      }).catch(() => {});
+      // Notify seller
+      if (order.sellerId) {
+        await createNotification({
+          userId: order.sellerId,
+          type: "trade",
+          title: "訂單爭議申請 ⚠️",
+          content: `訂單 ${order.orderNo} 買家已申請爭議，請等待管理員處理。`,
+          priority: "high",
+          relatedUrl: "/seller",
+        }).catch(() => {});
+      }
+      return { success: true };
+    }),
+
+  // ============================================================
+  // ADMIN - Resolve Dispute
+  // ============================================================
+  adminResolveDispute: adminProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      resolution: z.string().min(5).max(1000),
+      outcome: z.enum(["refund_buyer", "release_seller", "partial"]),
+    }))
+    .mutation(async ({ input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      if (order.orderStatus !== "disputed") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不在爭議狀態" });
+      }
+      // Determine final order status based on outcome
+      const finalStatus = input.outcome === "refund_buyer" ? "cancelled" : "completed";
+      await updateMarketplaceOrder(input.orderId, {
+        orderStatus: finalStatus,
+        disputeResolvedAt: new Date(),
+        disputeResolution: `[${input.outcome}] ${input.resolution}`,
+        payoutStatus: input.outcome === "release_seller" ? "processing" : "failed",
+      });
+      // If releasing to seller, trigger payout
+      if (input.outcome === "release_seller" && order.sellerType === "seller" && order.sellerId) {
+        const sellerProfile = await getSellerProfileByUserId(order.sellerId);
+        if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
+          try {
+            const Stripe = (await import("stripe")).default;
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+            const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
+            await stripe.transfers.create({
+              amount: receivable,
+              currency: "hkd",
+              destination: sellerProfile.stripeConnectId,
+              metadata: { order_no: order.orderNo, dispute_resolved: "true" },
+            });
+            await updateMarketplaceOrder(input.orderId, { payoutStatus: "paid" });
+          } catch (err) {
+            console.error("[Dispute] Transfer failed:", err);
+          }
+        }
+      }
+      // Notify buyer
+      await createNotification({
+        userId: order.buyerId,
+        type: "trade",
+        title: "爭議已處理 ✅",
+        content: `訂單 ${order.orderNo} 的爭議已由管理員處理。結果：${input.resolution}`,
+        priority: "high",
+        relatedUrl: "/orders",
+      }).catch(() => {});
+      // Notify seller
+      if (order.sellerId) {
+        await createNotification({
+          userId: order.sellerId,
+          type: "trade",
+          title: "爭議已處理 ✅",
+          content: `訂單 ${order.orderNo} 的爭議已由管理員處理。`,
+          priority: "high",
+          relatedUrl: "/seller",
+        }).catch(() => {});
+      }
+      return { success: true };
+    }),
+
+  adminGetDisputes: adminProcedure
+    .input(z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(50).default(20),
+    }))
+    .query(async ({ input }) => {
+      return getDisputedOrders(input.page, input.pageSize);
+    }),
+
+  // ============================================================
+  // REVIEW SYSTEM
+  // ============================================================
+  submitReview: protectedProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      rating: z.number().int().min(1).max(5),
+      comment: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (order.orderStatus !== "completed") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "只有已完成的訂單才能評價" });
+      }
+      if (!order.sellerId) throw new TRPCError({ code: "BAD_REQUEST", message: "平台商品不支援評價" });
+      // Check if already reviewed
+      const existing = await getReviewByOrderId(input.orderId);
+      if (existing) throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已評價過" });
+      await createReview({
+        orderId: input.orderId,
+        listingId: order.listingId!,
+        buyerId: ctx.user.id,
+        sellerId: order.sellerId,
+        rating: input.rating,
+        comment: input.comment ?? null,
+      });
+      return { success: true };
+    }),
+
+  getSellerReviews: publicProcedure
+    .input(z.object({
+      sellerId: z.number().int(),
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(20).default(10),
+    }))
+    .query(async ({ input }) => {
+      return getSellerReviews(input.sellerId, input.page, input.pageSize);
+    }),
+
+  getOrderReview: protectedProcedure
+    .input(z.object({ orderId: z.number().int() }))
+    .query(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      return getReviewByOrderId(input.orderId);
     }),
 });

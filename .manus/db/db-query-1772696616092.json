@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `marketplaceReviews` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `orderId` int NOT NULL,\n  `listingId` int NOT NULL,\n  `buyerId` int NOT NULL,\n  `sellerId` int NOT NULL,\n  `rating` int NOT NULL,\n  `comment` text,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  PRIMARY KEY(`id`),\n  UNIQUE INDEX `mr_unique_order`(`orderId`),\n  INDEX `mr_sellerId_idx`(`sellerId`),\n  INDEX `mr_buyerId_idx`(`buyerId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS `marketplaceReviews` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `orderId` int NOT NULL,\n  `listingId` int NOT NULL,\n  `buyerId` int NOT NULL,\n  `sellerId` int NOT NULL,\n  `rating` int NOT NULL,\n  `comment` text,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  PRIMARY KEY(`id`),\n  UNIQUE INDEX `mr_unique_order`(`orderId`),\n  INDEX `mr_sellerId_idx`(`sellerId`),\n  INDEX `mr_buyerId_idx`(`buyerId`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1690
+}

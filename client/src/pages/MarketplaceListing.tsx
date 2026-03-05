@@ -89,6 +89,44 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
   );
 }
 
+function SellerReviewsSection({ sellerId }: { sellerId: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const { data } = trpc.marketplace.getSellerReviews.useQuery(
+    { sellerId: sellerId, page: 1, pageSize: 5 },
+    { enabled: !!sellerId }
+  );
+  const reviews = data?.reviews ?? [];
+  const total = data?.total ?? 0;
+  if (total === 0) return null;
+  const shown = expanded ? reviews : reviews.slice(0, 2);
+  return (
+    <div className="mt-2 space-y-2">
+      <div className="text-xs font-medium text-muted-foreground">賣家評價（{total} 則）</div>
+      {shown.map((r: any) => (
+        <div key={r.id} className="bg-muted/40 rounded-lg p-2.5 text-xs space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {[1,2,3,4,5].map(s => (
+                <Star key={s} className={`w-3 h-3 ${s <= r.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+              ))}
+            </div>
+            <span className="text-muted-foreground">{new Date(r.createdAt).toLocaleDateString("zh-HK")}</span>
+          </div>
+          {r.comment && <p className="text-foreground">{r.comment}</p>}
+        </div>
+      ))}
+      {total > 2 && (
+        <button
+          className="text-xs text-[#06038d] hover:underline"
+          onClick={() => setExpanded(e => !e)}
+        >
+          {expanded ? "收起" : `查看全部 ${total} 則評價`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 type VerifyResult = {
   verified: boolean;
   payeeVerified: boolean;
@@ -265,13 +303,23 @@ export default function MarketplaceListing() {
               {listing.description && <p className="text-muted-foreground mt-2">{listing.description}</p>}
               {/* Seller info for C2C listings */}
               {listing.sellerType === "seller" && (listing as any).sellerProfile && (
-                <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">{(listing as any).sellerProfile.displayName}</span>
-                  <span>·</span>
-                  <span>已售出 {(listing as any).sellerProfile.totalSales} 件</span>
-                  {(listing as any).sellerProfile.ratingCount > 0 && (
-                    <><span>·</span><span>{(listing as any).sellerProfile.ratingCount} 個評價</span></>
-                  )}
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                    <span className="font-medium text-foreground">{(listing as any).sellerProfile.displayName}</span>
+                    <span>·</span>
+                    <span>已售出 {(listing as any).sellerProfile.totalSales} 件</span>
+                    {(listing as any).sellerProfile.ratingCount > 0 && (
+                      <>
+                        <span>·</span>
+                        <span className="flex items-center gap-1">
+                          <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium text-foreground">{parseFloat((listing as any).sellerProfile.avgRating ?? "0").toFixed(1)}</span>
+                          <span>({(listing as any).sellerProfile.ratingCount} 個評價)</span>
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <SellerReviewsSection sellerId={(listing as any).sellerProfile.id} />
                 </div>
               )}
             </div>

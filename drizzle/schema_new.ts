@@ -942,3 +942,25 @@ export const wishlists = mysqlTable("wishlists", {
 }));
 export type Wishlist = typeof wishlists.$inferSelect;
 export type InsertWishlist = typeof wishlists.$inferInsert;
+
+/**
+ * Marketplace Reviews - buyers can leave reviews for sellers after order completion
+ */
+export const marketplaceReviews = mysqlTable("marketplaceReviews", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(),
+  listingId: int("listingId").notNull(),
+  buyerId: int("buyerId").notNull(),
+  sellerId: int("sellerId").notNull(),
+  rating: int("rating").notNull(),
+  comment: text("comment"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  orderIdIdx: index("mr_orderId_idx").on(table.orderId),
+  sellerIdIdx: index("mr_sellerId_idx").on(table.sellerId),
+  buyerIdIdx: index("mr_buyerId_idx").on(table.buyerId),
+  uniqueOrderReview: uniqueIndex("mr_unique_order").on(table.orderId),
+}));
+export type MarketplaceReview = typeof marketplaceReviews.$inferSelect;
+export type InsertMarketplaceReview = typeof marketplaceReviews.$inferInsert;
+

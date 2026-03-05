@@ -113,6 +113,39 @@ async function startServer() {
       } else if (event.type === "payment_intent.payment_failed") {
         const paymentIntent = event.data.object;
         console.log(`[Webhook] payment_intent.payment_failed: ${paymentIntent.id}`);
+      } else if (event.type === "account.updated") {
+        // KYC / Stripe Connect onboarding status sync
+        const account = event.data.object;
+        const stripeConnectId = account.id;
+        console.log(`[Webhook] account.updated: ${stripeConnectId}, charges_enabled=${account.charges_enabled}, payouts_enabled=${account.payouts_enabled}`);
+        const { getSellerProfileByStripeConnectId, updateSellerProfile } = await import("../db");
+        const sellerProfile = await getSellerProfileByStripeConnectId(stripeConnectId);
+        if (sellerProfile) {
+          let newStatus: "pending" | "active" | "restricted" | "disabled";
+          if (account.charges_enabled && account.payouts_enabled) {
+            newStatus = "active";
+          } else if (account.requirements?.disabled_reason) {
+            newStatus = "disabled";
+          } else if ((account.requirements?.currently_due?.length ?? 0) > 0) {
+            newStatus = "restricted";
+          } else {
+            newStatus = "pending";
+          }
+          const prevStatus = sellerProfile.stripeConnectStatus;
+          await updateSellerProfile(sellerProfile.id, { stripeConnectStatus: newStatus });
+          console.log(`[Webhook] Seller ${sellerProfile.id} stripeConnectStatus: ${prevStatus} -> ${newStatus}`);
+          if (newStatus === "active" && prevStatus !== "active") {
+            const { createNotification } = await import("../db/notifications");
+            await createNotification({
+              userId: sellerProfile.userId,
+              type: "system",
+              title: "Stripe 收款帳戶已啟用 ✅",
+              content: "你的 Stripe Connect 帳戶已通過驗證並啟用，現在可以接收付款轉帳了。",
+              priority: "high",
+              relatedUrl: "/seller",
+            }).catch(() => {});
+          }
+        }
       }
     } catch (err) {
       console.error("[Webhook] Error processing event:", err);
