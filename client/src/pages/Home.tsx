@@ -34,7 +34,7 @@ function TrendingCardsGrid() {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+    <div className="grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 lg:gap-6">
       {trendingCards.map((card: any) => (
         <div
           key={card.id}
@@ -46,7 +46,7 @@ function TrendingCardsGrid() {
             });
             setLocation(`/card/${card.id}`);
           }}
-          className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer hover:scale-105 border-2 border-transparent hover:border-[#ffed00]"
+          className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer hover:scale-105 border-2 border-transparent hover:border-[#ffed00]"
         >
           {/* Card Image */}
           <div className="aspect-[2.5/3.5] bg-gray-100 relative overflow-hidden">
@@ -62,21 +62,21 @@ function TrendingCardsGrid() {
               </div>
             )}
             {/* Price Change Badge */}
-            <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-2 md:right-2 bg-red-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-2.5 md:py-1 rounded text-[10px] sm:text-xs md:text-sm font-bold shadow-lg">
+            <div className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 md:top-1.5 md:right-1.5 bg-red-500 text-white px-0.5 py-0 sm:px-1 sm:py-0.5 md:px-1.5 md:py-0.5 rounded text-[7px] sm:text-[9px] md:text-xs font-bold shadow-lg">
               {card.priceChangeFormatted}
             </div>
           </div>
 
           {/* Card Info */}
-          <div className="p-2 sm:p-2.5 md:p-3 lg:p-4">
-            <h3 className="font-bold text-xs sm:text-sm md:text-base lg:text-lg mb-1 line-clamp-2" style={{ color: "#06038d" }}>
+          <div className="p-1 sm:p-1.5 md:p-2 lg:p-3">
+            <h3 className="font-bold text-[8px] sm:text-[10px] md:text-xs lg:text-sm mb-0.5 line-clamp-2" style={{ color: "#06038d" }}>
               {card.name}
             </h3>
             {card.nameJa && (
-              <p className="text-[10px] sm:text-xs md:text-sm text-gray-500 mb-1 line-clamp-1">{card.nameJa}</p>
+              <p className="text-[7px] sm:text-[9px] md:text-[10px] text-gray-500 mb-0.5 line-clamp-1">{card.nameJa}</p>
             )}
             <div className="flex items-baseline gap-0.5">
-              <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold" style={{ color: "#06038d" }}>
+              <span className="text-[9px] sm:text-xs md:text-sm lg:text-base font-bold" style={{ color: "#06038d" }}>
                 {formatCurrency(card.currentPrice)}
               </span>
             </div>

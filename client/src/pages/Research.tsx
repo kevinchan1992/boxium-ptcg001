@@ -323,7 +323,7 @@ export default function Home() {
         </form>
 
         {/* Top Gainers - Daily Price Increase Top 5 */}
-        <div className="flex justify-center gap-4 mt-12 flex-wrap">
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 mt-12 w-full">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -334,7 +334,7 @@ export default function Home() {
               <button
                 key={card.id}
                 onClick={() => handleCardClick(card.id)}
-                className="group relative w-28 sm:w-32 transition-transform hover:scale-105"
+                className="group relative w-full transition-transform hover:scale-105"
               >
                 <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-card border border-border shadow-sm">
                   <img
@@ -344,7 +344,7 @@ export default function Home() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <p className="mt-2 text-xs sm:text-sm font-medium text-foreground line-clamp-2">
+                <p className="mt-1 text-[8px] sm:text-[10px] md:text-xs font-medium text-foreground line-clamp-2">
                   {card.name}
                 </p>
               </button>
