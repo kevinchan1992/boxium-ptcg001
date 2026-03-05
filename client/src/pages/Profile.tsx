@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -131,52 +130,50 @@ export default function Profile() {
       <div className="max-w-5xl mx-auto px-4 -mt-10 pb-16">
         {/* Tabs card */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div>
             {/* Tab bar */}
-            <TabsList
-              className="grid grid-cols-3 w-full rounded-none border-b border-gray-100 bg-white h-auto p-0"
-            >
+            <div className="grid grid-cols-3 w-full border-b border-gray-100">
               {[
                 { value: "info", icon: User, label: t("profile.tabs.info"), short: t("profile.tabs.infoShort") },
                 { value: "watchlist", icon: Heart, label: t("profile.tabs.watchlist"), short: t("profile.tabs.watchlistShort") },
                 { value: "history", icon: History, label: t("profile.tabs.history"), short: t("profile.tabs.historyShort") },
               ].map(({ value, icon: Icon, label, short }) => (
-                <TabsTrigger
+                <button
                   key={value}
-                  value={value}
-                  className="relative flex items-center justify-center gap-2 py-4 text-sm font-medium text-gray-500 rounded-none border-0 data-[state=active]:text-white data-[state=active]:shadow-none transition-colors"
+                  onClick={() => setActiveTab(value)}
+                  className="relative flex items-center justify-center gap-2 py-4 text-sm font-medium transition-all duration-200 focus:outline-none"
                   style={
                     activeTab === value
                       ? { background: BRAND_BLUE, color: "white" }
-                      : {}
+                      : { background: "white", color: "#6b7280" }
                   }
                 >
                   <Icon className="w-4 h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">{label}</span>
-                  <span className="md:hidden text-xs">{short}</span>
+                  <span className="hidden sm:inline">{label}</span>
+                  <span className="sm:hidden text-xs">{short}</span>
                   {/* Yellow underline accent for active */}
                   {activeTab === value && (
                     <span
-                      className="absolute bottom-0 left-0 right-0 h-0.5"
+                      className="absolute bottom-0 left-0 right-0 h-1 rounded-t-sm"
                       style={{ background: BRAND_YELLOW }}
                     />
                   )}
-                </TabsTrigger>
+                </button>
               ))}
-            </TabsList>
+            </div>
 
             <div className="p-6">
-              <TabsContent value="info" className="mt-0">
+              {activeTab === "info" && (
                 <InfoSection user={user} locale={locale} />
-              </TabsContent>
-              <TabsContent value="watchlist" className="mt-0">
+              )}
+              {activeTab === "watchlist" && (
                 <WatchlistSection />
-              </TabsContent>
-              <TabsContent value="history" className="mt-0">
+              )}
+              {activeTab === "history" && (
                 <HistorySection />
-              </TabsContent>
+              )}
             </div>
-          </Tabs>
+          </div>
         </div>
       </div>
     </div>
