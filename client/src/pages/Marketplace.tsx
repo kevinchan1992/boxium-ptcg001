@@ -11,6 +11,58 @@ import { CONDITION_GROUPS, CONDITION_SHORT, CONDITION_BADGE, CONDITION_TOOLTIP, 
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+// Banner slides for the carousel
+const BANNERS = [
+  {
+    id: 1,
+    title: "PSA 評級卡專區",
+    subtitle: "精選 PSA 10 完美品相 · 限量珍藏",
+    cta: "立即選購",
+    ctaConditions: ["psa10"],
+    gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]",
+    accent: "#FFD700",
+    badge: "PSA 10",
+    badgeClass: "bg-yellow-400 text-[#06038d]",
+    emoji: "🏆",
+  },
+  {
+    id: 2,
+    title: "Raw 卡精選",
+    subtitle: "A品 · B品 嚴選卡牌 · 性價比之選",
+    cta: "探索 Raw 卡",
+    ctaConditions: ["raw_a", "raw_b"],
+    gradient: "from-[#0f4c2a] via-[#1a6b3a] to-[#0f4c2a]",
+    accent: "#4ade80",
+    badge: "Raw 卡",
+    badgeClass: "bg-emerald-400 text-white",
+    emoji: "🌿",
+  },
+  {
+    id: 3,
+    title: "BOXIUM 官方上架",
+    subtitle: "官方認證 · 品質保證 · 安心購買",
+    cta: "查看官方商品",
+    ctaConditions: [],
+    ctaSellerType: "platform" as const,
+    gradient: "from-[#7c1a1a] via-[#9e2525] to-[#7c1a1a]",
+    accent: "#fca5a5",
+    badge: "官方",
+    badgeClass: "bg-blue-500 text-white",
+    emoji: "✨",
+  },
+];
+
+// Quick category filter tags
+const QUICK_TAGS = [
+  { label: "全部", conditions: [], sellerType: "all" as const },
+  { label: "PSA 評級卡", conditions: ["psa10", "psa9", "psa8_below"], sellerType: "all" as const },
+  { label: "BGS 評級卡", conditions: ["bgs10", "bgs9", "bgs8_below"], sellerType: "all" as const },
+  { label: "TAG 評級卡", conditions: ["tag10", "tag9_below"], sellerType: "all" as const },
+  { label: "Raw 卡", conditions: ["raw_a", "raw_b", "raw_c", "raw_d"], sellerType: "all" as const },
+  { label: "BOXIUM 官方", conditions: [], sellerType: "platform" as const },
+  { label: "個人賣家", conditions: [], sellerType: "seller" as const },
+];
+
 const LANGUAGES = [
   { value: "jp", label: "日版" },
   { value: "en", label: "英版" },
@@ -36,7 +88,7 @@ function ProductCard({ listing }: { listing: any }) {
 
   return (
     <div
-      className="group cursor-pointer bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-[#FFD700] hover:shadow-lg transition-all duration-200"
+      className="group cursor-pointer bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-[#FFD700] hover:shadow-xl hover:shadow-yellow-100 hover:-translate-y-1 hover:scale-[1.02] transition-all duration-200"
       onClick={() => setLocation(`/marketplace/${listing.id}`)}
     >
       {/* Image */}
@@ -127,6 +179,29 @@ export default function Marketplace() {
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">("newest");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [bannerIdx, setBannerIdx] = useState(0);
+  const [bannerPaused, setBannerPaused] = useState(false);
+
+  // Auto-advance banner every 4 seconds
+  useEffect(() => {
+    if (bannerPaused) return;
+    const t = setInterval(() => setBannerIdx(i => (i + 1) % BANNERS.length), 4000);
+    return () => clearInterval(t);
+  }, [bannerPaused]);
+
+  // Apply quick tag filter
+  const applyQuickTag = (tag: typeof QUICK_TAGS[0]) => {
+    setSelectedConditions(tag.conditions);
+    setSellerType(tag.sellerType);
+    setPage(1);
+  };
+
+  // Derive active quick tag
+  const activeQuickTag = QUICK_TAGS.findIndex(t => {
+    const condMatch = JSON.stringify([...t.conditions].sort()) === JSON.stringify([...selectedConditions].sort());
+    const sellerMatch = t.sellerType === sellerType;
+    return condMatch && sellerMatch;
+  });
 
   const { data, isLoading } = trpc.marketplace.getListings.useQuery({
     page,
@@ -385,6 +460,92 @@ export default function Marketplace() {
               <SlidersHorizontal className="w-4 h-4" />
               篩選
             </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Banner Carousel ── */}
+      <div
+        className="relative overflow-hidden"
+        onMouseEnter={() => setBannerPaused(true)}
+        onMouseLeave={() => setBannerPaused(false)}
+      >
+        {BANNERS.map((banner, i) => (
+          <div
+            key={banner.id}
+            className={`bg-gradient-to-r ${banner.gradient} transition-all duration-700 ${
+              i === bannerIdx ? "block" : "hidden"
+            }`}
+          >
+            <div className="max-w-7xl mx-auto px-4 py-5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <span className="text-3xl">{banner.emoji}</span>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${banner.badgeClass}`}>{banner.badge}</span>
+                  </div>
+                  <h2 className="text-white font-bold text-lg leading-tight">{banner.title}</h2>
+                  <p className="text-white/70 text-sm">{banner.subtitle}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedConditions(banner.ctaConditions);
+                  setSellerType((banner as any).ctaSellerType ?? "all");
+                  setPage(1);
+                }}
+                className="shrink-0 px-5 py-2 rounded-lg font-bold text-sm transition-all duration-200 hover:scale-105 active:scale-95"
+                style={{ backgroundColor: banner.accent, color: banner.gradient.includes("06038d") ? "#06038d" : "white" }}
+              >
+                {banner.cta}
+              </button>
+            </div>
+          </div>
+        ))}
+        {/* Dot indicators */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {BANNERS.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setBannerIdx(i)}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                i === bannerIdx ? "bg-white w-4" : "bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+        {/* Prev / Next arrows */}
+        <button
+          onClick={() => setBannerIdx(i => (i - 1 + BANNERS.length) % BANNERS.length)}
+          className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => setBannerIdx(i => (i + 1) % BANNERS.length)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-colors"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* ── Quick Category Tags ── */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-20 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center gap-2 overflow-x-auto py-2.5 scrollbar-none">
+            {QUICK_TAGS.map((tag, i) => (
+              <button
+                key={tag.label}
+                onClick={() => applyQuickTag(tag)}
+                className={`shrink-0 text-xs font-semibold px-3.5 py-1.5 rounded-full border transition-all duration-150 ${
+                  activeQuickTag === i
+                    ? "bg-[#06038d] text-white border-[#06038d] shadow-sm"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-[#06038d] hover:text-[#06038d]"
+                }`}
+              >
+                {tag.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
