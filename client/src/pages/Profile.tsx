@@ -133,18 +133,15 @@ export default function Profile() {
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           <BrandTabs defaultValue="info" variant="light">
             <div className="px-4 pt-4 border-b border-gray-100">
-              <BrandTabsList className="border-0 bg-transparent gap-1">
-                <BrandTabsTrigger value="info" icon={<User className="w-4 h-4" />}>
-                  <span className="hidden sm:inline">{t("profile.tabs.info")}</span>
-                  <span className="sm:hidden">{t("profile.tabs.infoShort")}</span>
+              <BrandTabsList>
+                <BrandTabsTrigger value="info" icon={<User className="w-4 h-4" />} label={t("profile.tabs.info")}>
+                  {t("profile.tabs.info")}
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="watchlist" icon={<Heart className="w-4 h-4" />}>
-                  <span className="hidden sm:inline">{t("profile.tabs.watchlist")}</span>
-                  <span className="sm:hidden">{t("profile.tabs.watchlistShort")}</span>
+                <BrandTabsTrigger value="watchlist" icon={<Heart className="w-4 h-4" />} label={t("profile.tabs.watchlist")}>
+                  {t("profile.tabs.watchlist")}
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="history" icon={<History className="w-4 h-4" />}>
-                  <span className="hidden sm:inline">{t("profile.tabs.history")}</span>
-                  <span className="sm:hidden">{t("profile.tabs.historyShort")}</span>
+                <BrandTabsTrigger value="history" icon={<History className="w-4 h-4" />} label={t("profile.tabs.history")}>
+                  {t("profile.tabs.history")}
                 </BrandTabsTrigger>
               </BrandTabsList>
             </div>

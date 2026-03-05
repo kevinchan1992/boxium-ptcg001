@@ -3525,3 +3525,9 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 建立共用 BrandTabs 元件（深藍 active pill + 黃色底線，light/dark 兩種變體）
 - [x] 套用至 Profile.tsx 分頁按鈕
 - [x] 套用至 Admin.tsx 和 AdminMarketplace.tsx 分頁按鈕
+
+## 🐛 修復分頁按鈕響應式顯示問題
+
+- [x] 修復 Profile 分頁按鈕在桌面版文字被截斷問題
+- [x] 修復 BrandTabs 元件在各設備尺寸下的文字顯示邏輯
+- [x] 確保 Admin 後台分頁按鈕在手機/平板/桌面都能正確顯示

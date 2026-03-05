@@ -742,27 +742,21 @@ export default function AdminMarketplace() {
 
         <BrandTabs defaultValue="listings" variant="light">
           <BrandTabsList wrap className="mb-2">
-            <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />}>
+            <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="商品管理">
               商品管理
               {(stats?.pendingReviewListings ?? 0) > 0 && (
                 <span className="ml-1 bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5">{stats?.pendingReviewListings}</span>
               )}
             </BrandTabsTrigger>
-            <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />}>
-              訂單管理
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="alipay" icon={<DollarSign className="w-4 h-4" />}>
+            <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="訂單管理">訂單管理</BrandTabsTrigger>
+            <BrandTabsTrigger value="alipay" icon={<DollarSign className="w-4 h-4" />} label="支付寶核對">
               支付寶核對
               {(stats?.pendingAlipayConfirmation ?? 0) > 0 && (
                 <span className="ml-1 bg-amber-500 text-white text-xs rounded-full px-1.5 py-0.5">{stats?.pendingAlipayConfirmation}</span>
               )}
             </BrandTabsTrigger>
-            <BrandTabsTrigger value="sellers" icon={<Users className="w-4 h-4" />}>
-              賣家管理
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="banners" icon={<Image className="w-4 h-4" />}>
-              廣告 Banner
-            </BrandTabsTrigger>
+            <BrandTabsTrigger value="sellers" icon={<Users className="w-4 h-4" />} label="賣家管理">賣家管理</BrandTabsTrigger>
+            <BrandTabsTrigger value="banners" icon={<Image className="w-4 h-4" />} label="廣告 Banner">廣告 Banner</BrandTabsTrigger>
           </BrandTabsList>
           <BrandTabsContent value="listings"><ListingsTab /></BrandTabsContent>
           <BrandTabsContent value="orders"><OrdersTab /></BrandTabsContent>

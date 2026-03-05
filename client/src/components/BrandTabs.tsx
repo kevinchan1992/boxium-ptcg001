@@ -1,12 +1,15 @@
 /**
  * BrandTabs – Unified tab bar component for BOXIUM PTCG
  *
- * Design:
- *  - Light variant (default): white/light-gray background, deep-blue active pill
- *  - Dark variant: dark background, for Admin pages on dark bg
- *  - Active tab: #06038d background, white text, #FFD700 bottom accent bar
- *  - Inactive tab: transparent bg, muted text, hover lightens bg
- *  - Smooth transition on all states
+ * Responsive behaviour:
+ *  - xs (<480px): icon only, tooltip via aria-label
+ *  - sm+ (≥480px): icon + full label
+ *
+ * Variants:
+ *  - light: gray-50 bg, for white-background pages (Profile, AdminMarketplace)
+ *  - dark:  white/5 bg, for dark-background pages (Admin)
+ *
+ * Active state: #06038d pill + #FFD700 bottom accent bar
  */
 
 import { ReactNode, createContext, useContext, useState } from "react";
@@ -57,7 +60,7 @@ export function BrandTabs({
 interface BrandTabsListProps {
   children: ReactNode;
   className?: string;
-  /** Wrap tabs into multiple rows when there are many tabs */
+  /** Allow tabs to wrap onto multiple lines (for many tabs like Admin) */
   wrap?: boolean;
 }
 export function BrandTabsList({ children, className, wrap = false }: BrandTabsListProps) {
@@ -65,11 +68,14 @@ export function BrandTabsList({ children, className, wrap = false }: BrandTabsLi
   return (
     <div
       className={cn(
-        "flex items-stretch overflow-x-auto rounded-xl border",
-        wrap ? "flex-wrap gap-1 p-1" : "flex-nowrap",
+        // Horizontal scroll on very small screens, wrap on larger when requested
+        "flex items-center gap-1 p-1 rounded-xl border",
+        wrap
+          ? "flex-wrap"
+          : "flex-nowrap overflow-x-auto",
         variant === "dark"
           ? "bg-white/5 border-white/10"
-          : "bg-gray-50 border-gray-200",
+          : "bg-gray-100 border-gray-200",
         className
       )}
       role="tablist"
@@ -82,11 +88,15 @@ export function BrandTabsList({ children, className, wrap = false }: BrandTabsLi
 // ─── Tab Trigger ──────────────────────────────────────────────────────────────
 interface BrandTabsTriggerProps {
   value: string;
+  /** Label text shown beside the icon */
   children: ReactNode;
   className?: string;
+  /** Icon element rendered before the label */
   icon?: ReactNode;
+  /** Accessible label for icon-only display on very small screens */
+  label?: string;
 }
-export function BrandTabsTrigger({ value, children, className, icon }: BrandTabsTriggerProps) {
+export function BrandTabsTrigger({ value, children, className, icon, label }: BrandTabsTriggerProps) {
   const { active, setActive, variant } = useContext(TabsContext);
   const isActive = active === value;
 
@@ -94,13 +104,16 @@ export function BrandTabsTrigger({ value, children, className, icon }: BrandTabs
     <button
       role="tab"
       aria-selected={isActive}
+      aria-label={label}
       onClick={() => setActive(value)}
       className={cn(
-        "relative flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-medium",
+        // Layout: icon + text always visible; on very small screens text hidden
+        "relative flex items-center justify-center gap-1.5",
+        // Padding: tighter on mobile, comfortable on desktop
+        "px-2.5 py-2 xs:px-3.5 xs:py-2.5 sm:px-4",
+        "text-sm font-medium rounded-lg",
         "transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
         "whitespace-nowrap flex-shrink-0",
-        // Rounded only when wrapping (pill style)
-        "rounded-lg",
         isActive
           ? "text-white shadow-sm"
           : variant === "dark"
@@ -108,18 +121,18 @@ export function BrandTabsTrigger({ value, children, className, icon }: BrandTabs
           : "text-gray-500 hover:text-gray-800 hover:bg-white",
         className
       )}
-      style={
-        isActive
-          ? { background: BRAND_BLUE }
-          : undefined
-      }
+      style={isActive ? { background: BRAND_BLUE } : undefined}
     >
-      {icon && <span className="flex-shrink-0">{icon}</span>}
-      {children}
-      {/* Yellow accent bar at bottom */}
+      {/* Icon: always visible */}
+      {icon && <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">{icon}</span>}
+
+      {/* Label: hidden on very small screens (<480px), visible on sm+ */}
+      <span className="hidden min-[480px]:inline leading-none">{children}</span>
+
+      {/* Yellow accent bar at bottom of active tab */}
       {isActive && (
         <span
-          className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full"
+          className="absolute bottom-0.5 left-3 right-3 h-0.5 rounded-full"
           style={{ background: BRAND_YELLOW }}
         />
       )}

@@ -30,33 +30,15 @@ export default function Admin() {
         {/* Brand Tabs */}
         <BrandTabs defaultValue="dashboard" variant="dark">
           <BrandTabsList wrap className="mb-2">
-            <BrandTabsTrigger value="dashboard" icon={<LayoutDashboard className="w-4 h-4" />}>
-              <span className="hidden sm:inline">{t("admin.statistics")}</span>
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="users" icon={<Users className="w-4 h-4" />}>
-              <span className="hidden sm:inline">帳號管理</span>
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="datasources" icon={<Database className="w-4 h-4" />}>
-              <span className="hidden sm:inline">{t("admin.dataSources")}</span>
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="trending" icon={<TrendingUp className="w-4 h-4" />}>
-              <span className="hidden sm:inline">熱門卡牌</span>
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="blog" icon={<FileText className="w-4 h-4" />}>
-              <span className="hidden sm:inline">博客管理</span>
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="cache" icon={<HardDrive className="w-4 h-4" />}>
-              <span className="hidden sm:inline">緩存管理</span>
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="schedule" icon={<Clock className="w-4 h-4" />}>
-              <span className="hidden sm:inline">排程管理</span>
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="performance" icon={<Activity className="w-4 h-4" />}>
-              <span className="hidden sm:inline">性能監控</span>
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="taskhistory" icon={<History className="w-4 h-4" />}>
-              <span className="hidden sm:inline">任務歷史</span>
-            </BrandTabsTrigger>
+            <BrandTabsTrigger value="dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label={t("admin.statistics")}>{t("admin.statistics")}</BrandTabsTrigger>
+            <BrandTabsTrigger value="users" icon={<Users className="w-4 h-4" />} label="帳號管理">帳號管理</BrandTabsTrigger>
+            <BrandTabsTrigger value="datasources" icon={<Database className="w-4 h-4" />} label={t("admin.dataSources")}>{t("admin.dataSources")}</BrandTabsTrigger>
+            <BrandTabsTrigger value="trending" icon={<TrendingUp className="w-4 h-4" />} label="熱門卡牌">熱門卡牌</BrandTabsTrigger>
+            <BrandTabsTrigger value="blog" icon={<FileText className="w-4 h-4" />} label="博客管理">博客管理</BrandTabsTrigger>
+            <BrandTabsTrigger value="cache" icon={<HardDrive className="w-4 h-4" />} label="緩存管理">緩存管理</BrandTabsTrigger>
+            <BrandTabsTrigger value="schedule" icon={<Clock className="w-4 h-4" />} label="排程管理">排程管理</BrandTabsTrigger>
+            <BrandTabsTrigger value="performance" icon={<Activity className="w-4 h-4" />} label="性能監控">性能監控</BrandTabsTrigger>
+            <BrandTabsTrigger value="taskhistory" icon={<History className="w-4 h-4" />} label="任務歷史">任務歷史</BrandTabsTrigger>
           </BrandTabsList>
 
           <BrandTabsContent value="dashboard"><AdminDashboard /></BrandTabsContent>
