@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -153,12 +153,30 @@ export default function MarketplaceListing() {
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [showShippingDialog, setShowShippingDialog] = useState(false);
   const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港" });
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<number | null>(null);
 
+  const { data: me } = trpc.auth.me.useQuery();
+
+  // Fetch saved addresses for auto-fill
+  const { data: savedAddresses } = trpc.marketplace.getMyShippingAddresses.useQuery(
+    undefined,
+    { enabled: !!me }
+  );
+
+  // Auto-fill shipping form with default address when dialog opens
+  useEffect(() => {
+    if (showShippingDialog && savedAddresses && savedAddresses.length > 0) {
+      const defaultAddr = savedAddresses.find((a: any) => a.isDefault) || savedAddresses[0];
+      if (defaultAddr && !shippingForm.name) {
+        setShippingForm({ name: defaultAddr.recipientName, phone: defaultAddr.phone, address: defaultAddr.address, district: defaultAddr.district || "", region: defaultAddr.region });
+        setSelectedSavedAddressId(defaultAddr.id);
+      }
+    }
+  }, [showShippingDialog, savedAddresses]);
   const { data: listing, isLoading } = trpc.marketplace.getListing.useQuery(
     { id },
     { enabled: !!id }
   );
-  const { data: me } = trpc.auth.me.useQuery();
 
   const createStripeOrderMutation = trpc.marketplace.createStripeOrder.useMutation({
     onSuccess: (data) => {
@@ -610,7 +628,7 @@ export default function MarketplaceListing() {
       </Dialog>
 
       {/* Shipping Address Dialog */}
-      <Dialog open={showShippingDialog} onOpenChange={setShowShippingDialog}>
+      <Dialog open={showShippingDialog} onOpenChange={(open) => { setShowShippingDialog(open); if (!open) { setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港" }); setSelectedSavedAddressId(null); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -619,6 +637,26 @@ export default function MarketplaceListing() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {savedAddresses && savedAddresses.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">已儲存地址</p>
+                <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                  {savedAddresses.map((addr: any) => (
+                    <button key={addr.id} type="button"
+                      onClick={() => { setSelectedSavedAddressId(addr.id); setShippingForm({ name: addr.recipientName, phone: addr.phone, address: addr.address, district: addr.district || "", region: addr.region }); }}
+                      className={`w-full text-left rounded-lg border-2 px-3 py-2 text-sm transition-all ${
+                        selectedSavedAddressId === addr.id ? "border-[#06038d] bg-blue-50" : "border-gray-200 hover:border-gray-300"
+                      }`}>
+                      <span className="font-semibold">{addr.label}</span>
+                      <span className="text-gray-500 ml-2">{addr.recipientName} · {addr.phone}</span>
+                      <br />
+                      <span className="text-gray-400 text-xs">{addr.district ? `${addr.district}，` : ""}{addr.address}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400">或手動填寫以下欄位</p>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="ship-name">收件人姓名 *</Label>

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `userShippingAddresses` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `label` varchar(50) NOT NULL DEFAULT '預設地址',\n  `recipientName` varchar(100) NOT NULL,\n  `phone` varchar(30) NOT NULL,\n  `address` varchar(255) NOT NULL,\n  `district` varchar(50) DEFAULT NULL,\n  `region` varchar(50) NOT NULL DEFAULT '香港',\n  `isDefault` tinyint(1) NOT NULL DEFAULT 0,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `usa_userId_idx` (`userId`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS `userShippingAddresses` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `label` varchar(50) NOT NULL DEFAULT '預設地址',\n  `recipientName` varchar(100) NOT NULL,\n  `phone` varchar(30) NOT NULL,\n  `address` varchar(255) NOT NULL,\n  `district` varchar(50) DEFAULT NULL,\n  `region` varchar(50) NOT NULL DEFAULT '香港',\n  `isDefault` tinyint(1) NOT NULL DEFAULT 0,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `usa_userId_idx` (`userId`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1817
+}

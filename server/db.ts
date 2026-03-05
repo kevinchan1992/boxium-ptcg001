@@ -2633,10 +2633,11 @@ export async function getRunningBatchUpdateTask(taskType: string) {
 import {
   sellerProfiles, marketplaceListings, marketplaceOrders,
   marketplaceOrderItems, marketplacePayouts,
-  marketplaceBanners, wishlists, marketplaceReviews,
+  marketplaceBanners, wishlists, marketplaceReviews, userShippingAddresses,
   InsertSellerProfile, InsertMarketplaceListing, InsertMarketplaceOrder,
   InsertMarketplaceOrderItem, InsertMarketplacePayout,
-  InsertMarketplaceBanner, InsertWishlist, InsertMarketplaceReview
+  InsertMarketplaceBanner, InsertWishlist, InsertMarketplaceReview,
+  type InsertUserShippingAddress
 } from "../drizzle/schema_new";
 
 // --- Seller Profiles ---
@@ -3008,4 +3009,75 @@ export async function getReviewByOrderId(orderId: number) {
   const rows = await db.select().from(marketplaceReviews)
     .where(eq(marketplaceReviews.orderId, orderId)).limit(1);
   return rows[0] ?? null;
+}
+
+// --- User Shipping Addresses ---
+export async function getUserShippingAddresses(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(userShippingAddresses)
+    .where(eq(userShippingAddresses.userId, userId))
+    .orderBy(desc(userShippingAddresses.isDefault), asc(userShippingAddresses.createdAt));
+}
+
+export async function getUserDefaultShippingAddress(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(userShippingAddresses)
+    .where(and(eq(userShippingAddresses.userId, userId), eq(userShippingAddresses.isDefault, true)))
+    .limit(1);
+  if (rows.length > 0) return rows[0];
+  // Fall back to first address
+  const all = await db.select().from(userShippingAddresses)
+    .where(eq(userShippingAddresses.userId, userId))
+    .orderBy(asc(userShippingAddresses.createdAt)).limit(1);
+  return all[0] ?? null;
+}
+
+export async function createUserShippingAddress(data: InsertUserShippingAddress) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  // If this is the first address, make it default
+  const existing = await db.select({ id: userShippingAddresses.id })
+    .from(userShippingAddresses).where(eq(userShippingAddresses.userId, data.userId)).limit(1);
+  const shouldBeDefault = existing.length === 0 || data.isDefault;
+  if (shouldBeDefault) {
+    // Clear existing defaults
+    await db.update(userShippingAddresses)
+      .set({ isDefault: false })
+      .where(eq(userShippingAddresses.userId, data.userId));
+  }
+  const [result] = await db.insert(userShippingAddresses).values({ ...data, isDefault: shouldBeDefault });
+  return result;
+}
+
+export async function updateUserShippingAddress(id: number, userId: number, data: Partial<InsertUserShippingAddress>) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  if (data.isDefault) {
+    await db.update(userShippingAddresses)
+      .set({ isDefault: false })
+      .where(eq(userShippingAddresses.userId, userId));
+  }
+  await db.update(userShippingAddresses)
+    .set({ ...data, updatedAt: new Date() })
+    .where(and(eq(userShippingAddresses.id, id), eq(userShippingAddresses.userId, userId)));
+}
+
+export async function deleteUserShippingAddress(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.delete(userShippingAddresses)
+    .where(and(eq(userShippingAddresses.id, id), eq(userShippingAddresses.userId, userId)));
+}
+
+export async function setDefaultShippingAddress(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(userShippingAddresses)
+    .set({ isDefault: false })
+    .where(eq(userShippingAddresses.userId, userId));
+  await db.update(userShippingAddresses)
+    .set({ isDefault: true, updatedAt: new Date() })
+    .where(and(eq(userShippingAddresses.id, id), eq(userShippingAddresses.userId, userId)));
 }

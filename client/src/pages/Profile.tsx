@@ -24,7 +24,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { User, Heart, History, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield } from "lucide-react";
+import { useState } from "react";
+import { User, Heart, History, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield, MapPin, Plus, Edit2, Star, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 
@@ -143,6 +144,9 @@ export default function Profile() {
                 <BrandTabsTrigger value="history" icon={<History className="w-4 h-4" />} label={t("profile.tabs.history")}>
                   {t("profile.tabs.history")}
                 </BrandTabsTrigger>
+                <BrandTabsTrigger value="addresses" icon={<MapPin className="w-4 h-4" />} label="收貨地址">
+                  收貨地址
+                </BrandTabsTrigger>
               </BrandTabsList>
             </div>
             <div className="p-6">
@@ -154,6 +158,9 @@ export default function Profile() {
               </BrandTabsContent>
               <BrandTabsContent value="history">
                 <HistorySection />
+              </BrandTabsContent>
+              <BrandTabsContent value="addresses">
+                <ShippingAddressSection />
               </BrandTabsContent>
             </div>
           </BrandTabs>
@@ -326,6 +333,169 @@ function WatchlistSection() {
           </TableBody>
         </Table>
       </div>
+    </div>
+  );
+}
+
+// ─── Shipping Address Section ────────────────────────────────
+function ShippingAddressSection() {
+  const utils = trpc.useUtils();
+  const { data: addresses, isLoading } = trpc.marketplace.getMyShippingAddresses.useQuery();
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState({ label: "預設地址", recipientName: "", phone: "", address: "", district: "", region: "香港", isDefault: false });
+
+  const addMutation = trpc.marketplace.addShippingAddress.useMutation({
+    onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); setShowForm(false); resetForm(); toast.success("地址已新增"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const updateMutation = trpc.marketplace.updateShippingAddress.useMutation({
+    onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); setShowForm(false); setEditingId(null); resetForm(); toast.success("地址已更新"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteMutation = trpc.marketplace.deleteShippingAddress.useMutation({
+    onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); toast.success("地址已刪除"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const setDefaultMutation = trpc.marketplace.setDefaultShippingAddress.useMutation({
+    onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); toast.success("預設地址已更新"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const resetForm = () => setForm({ label: "預設地址", recipientName: "", phone: "", address: "", district: "", region: "香港", isDefault: false });
+
+  const handleEdit = (addr: any) => {
+    setEditingId(addr.id);
+    setForm({ label: addr.label, recipientName: addr.recipientName, phone: addr.phone, address: addr.address, district: addr.district || "", region: addr.region, isDefault: addr.isDefault });
+    setShowForm(true);
+  };
+
+  const handleSubmit = () => {
+    if (!form.recipientName.trim() || !form.phone.trim() || !form.address.trim()) {
+      toast.error("請填寫收件人、電話及地址"); return;
+    }
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, ...form });
+    } else {
+      addMutation.mutate(form);
+    }
+  };
+
+  const HK_DISTRICTS = ["中西區", "灣仔區", "東區", "南區", "油尖旺區", "深水埗區", "九龍城區", "黃大仙區", "觀塘區", "荃灣區", "屯門區", "元朗區", "北區", "大埔區", "沙田區", "西貢區", "葵青區", "離島區"];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">收貨地址</h2>
+          <p className="text-sm text-gray-500">管理您的收貨地址，付款時可快速帶入</p>
+        </div>
+        {!showForm && (
+          <Button size="sm" onClick={() => { resetForm(); setEditingId(null); setShowForm(true); }}
+            className="font-semibold" style={{ background: BRAND_BLUE, color: "white" }}>
+            <Plus className="w-4 h-4 mr-1.5" /> 新增地址
+          </Button>
+        )}
+      </div>
+
+      {showForm && (
+        <Card className="border-2" style={{ borderColor: BRAND_BLUE + "40" }}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base" style={{ color: BRAND_BLUE }}>
+              {editingId ? "編輯地址" : "新增收貨地址"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-gray-500 uppercase">地址標籤</Label>
+                <Input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} placeholder="例：家、公司" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-gray-500 uppercase">收件人姓名 *</Label>
+                <Input value={form.recipientName} onChange={e => setForm(f => ({ ...f, recipientName: e.target.value }))} placeholder="收件人全名" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-gray-500 uppercase">聯絡電話 *</Label>
+                <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+852 XXXX XXXX" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-gray-500 uppercase">地區</Label>
+                <select value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm">
+                  <option value="">選擇地區（可選）</option>
+                  {HK_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5 md:col-span-2">
+                <Label className="text-xs font-semibold text-gray-500 uppercase">詳細地址 *</Label>
+                <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="街道、樓層、單位" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="isDefault" checked={form.isDefault} onChange={e => setForm(f => ({ ...f, isDefault: e.target.checked }))} className="rounded" />
+              <Label htmlFor="isDefault" className="text-sm cursor-pointer">設為預設地址</Label>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button onClick={handleSubmit} disabled={addMutation.isPending || updateMutation.isPending}
+                className="font-semibold" style={{ background: BRAND_BLUE, color: "white" }}>
+                {editingId ? "儲存更改" : "新增地址"}
+              </Button>
+              <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); resetForm(); }}>取消</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <div className="space-y-3">{[1,2].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}</div>
+      ) : !addresses || addresses.length === 0 ? (
+        <div className="py-16 text-center">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: `${BRAND_BLUE}10` }}>
+            <MapPin className="w-8 h-8" style={{ color: BRAND_BLUE }} />
+          </div>
+          <p className="text-gray-500 mb-2">尚未新增收貨地址</p>
+          <p className="text-sm text-gray-400">新增地址後，付款時可快速帶入，無需重複填寫</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {addresses.map((addr: any) => (
+            <div key={addr.id} className={`rounded-xl border-2 p-4 transition-all ${
+              addr.isDefault ? "border-blue-600 bg-blue-50/50" : "border-gray-200 bg-white hover:border-gray-300"
+            }`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-gray-900">{addr.label}</span>
+                    {addr.isDefault && (
+                      <Badge className="text-xs" style={{ background: BRAND_BLUE, color: "white" }}>
+                        <Star className="w-2.5 h-2.5 mr-1" /> 預設
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-700">{addr.recipientName} · {addr.phone}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">{addr.district ? `${addr.district}，` : ""}{addr.address}，{addr.region}</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {!addr.isDefault && (
+                    <Button size="sm" variant="ghost" onClick={() => setDefaultMutation.mutate({ id: addr.id })}
+                      className="h-7 text-xs text-blue-600 hover:bg-blue-50" disabled={setDefaultMutation.isPending}>
+                      <Check className="w-3 h-3 mr-1" /> 設為預設
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" onClick={() => handleEdit(addr)} className="h-7 w-7 p-0">
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate({ id: addr.id })}
+                    className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50" disabled={deleteMutation.isPending}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

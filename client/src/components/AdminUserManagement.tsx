@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, RefreshCw, UserCog, Edit, Trash2, Key, Shield, User, Mail, Calendar, Clock } from "lucide-react";
+import { Search, RefreshCw, UserCog, Edit, Trash2, Key, Shield, User, Mail, Calendar, Clock, MapPin, ShoppingBag, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -29,6 +29,7 @@ export function AdminUserManagement() {
   const [newPassword, setNewPassword] = useState("");
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [viewingUserId, setViewingUserId] = useState<number | null>(null);
 
   // Queries
   const { data: userList, isLoading: isLoadingUsers, refetch: refetchUsers } = trpc.admin.getUserList.useQuery({
@@ -305,6 +306,15 @@ export function AdminUserManagement() {
                           <Button
                             size="sm"
                             variant="ghost"
+                            onClick={() => setViewingUserId(user.id)}
+                            className="h-7 w-7 p-0 text-blue-500 hover:text-blue-700"
+                            title="查看詳情"
+                          >
+                            <Eye className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             onClick={() => handleEditUser(user)}
                             className="h-7 w-7 p-0"
                           >
@@ -436,6 +446,9 @@ export function AdminUserManagement() {
         </div>
       </BottomSheet>
 
+      {/* User Detail BottomSheet */}
+      <UserDetailSheet userId={viewingUserId} onClose={() => setViewingUserId(null)} />
+
       {/* Delete User Confirmation */}
       <AlertDialog open={!!deletingUserId} onOpenChange={(open) => !open && setDeletingUserId(null)}>
         <AlertDialogContent>
@@ -456,6 +469,105 @@ export function AdminUserManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+// ─── User Detail Sheet ──────────────────────────────────────────
+function UserDetailSheet({ userId, onClose }: { userId: number | null; onClose: () => void }) {
+  const { data: detail, isLoading } = trpc.admin.getUserDetailWithStats.useQuery(
+    { userId: userId! },
+    { enabled: !!userId }
+  );
+
+  return (
+    <BottomSheet
+      open={!!userId}
+      onOpenChange={(open) => !open && onClose()}
+      title="帳號詳細資料"
+      description="查看用戶的完整帳號資訊、訂單統計及收貨地址"
+    >
+      {isLoading ? (
+        <div className="space-y-3 py-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
+          ))}
+        </div>
+      ) : detail ? (
+        <div className="space-y-6">
+          {/* Basic Info */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5" /> 基本資料
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <InfoRow icon={User} label="用戶名稱" value={detail.name || "—"} />
+              <InfoRow icon={Mail} label="電子郵件" value={detail.email || "—"} />
+              <InfoRow icon={Shield} label="角色" value={detail.role === "admin" ? "管理員" : "普通用戶"} />
+              <InfoRow icon={Key} label="登入方式" value={detail.loginMethod === "google" ? "Google" : "密碼"} />
+              <InfoRow icon={Calendar} label="註冊時間" value={new Date(detail.createdAt).toLocaleString("zh-HK")} />
+              <InfoRow icon={Clock} label="最後登入" value={detail.lastSignedIn ? new Date(detail.lastSignedIn).toLocaleString("zh-HK") : "—"} />
+            </div>
+          </div>
+
+          {/* Order Stats */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              <ShoppingBag className="w-3.5 h-3.5" /> 訂單統計
+            </h3>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-xl border border-gray-200 p-3 text-center">
+                <p className="text-2xl font-bold text-gray-900">{detail.orderStats.totalOrders}</p>
+                <p className="text-xs text-gray-500 mt-0.5">總訂單</p>
+              </div>
+              <div className="rounded-xl border border-gray-200 p-3 text-center">
+                <p className="text-2xl font-bold text-green-600">{detail.orderStats.completedOrders}</p>
+                <p className="text-xs text-gray-500 mt-0.5">已完成</p>
+              </div>
+              <div className="rounded-xl border border-gray-200 p-3 text-center">
+                <p className="text-2xl font-bold text-blue-600">HK${detail.orderStats.totalSpent.toLocaleString()}</p>
+                <p className="text-xs text-gray-500 mt-0.5">總消費</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Shipping Addresses */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" /> 收貨地址 ({detail.shippingAddresses.length})
+            </h3>
+            {detail.shippingAddresses.length === 0 ? (
+              <p className="text-sm text-gray-400 py-2">尚未新增收貨地址</p>
+            ) : (
+              <div className="space-y-2">
+                {detail.shippingAddresses.map((addr: any) => (
+                  <div key={addr.id} className={`rounded-lg border p-3 text-sm ${addr.isDefault ? "border-blue-400 bg-blue-50" : "border-gray-200"}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold">{addr.label}</span>
+                      {addr.isDefault && <Badge className="text-xs h-4 bg-blue-600 text-white">預設</Badge>}
+                    </div>
+                    <p className="text-gray-700">{addr.recipientName} · {addr.phone}</p>
+                    <p className="text-gray-500 text-xs mt-0.5">{addr.district ? `${addr.district}，` : ""}{addr.address}，{addr.region}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-gray-400 py-4">找不到用戶資料</p>
+      )}
+    </BottomSheet>
+  );
+}
+
+function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs text-gray-500 flex items-center gap-1">
+        <Icon className="w-3 h-3" /> {label}
+      </p>
+      <p className="text-sm font-medium text-gray-900 truncate">{value}</p>
     </div>
   );
 }

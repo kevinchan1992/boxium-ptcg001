@@ -2285,6 +2285,15 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         const { getUserById } = await import('./userManagement');
         return await getUserById(input.userId);
       }),
+
+    getUserDetailWithStats: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const { getUserDetailWithStats } = await import('./userManagement');
+        return await getUserDetailWithStats(input.userId);
+      }),
     
     // Get trending rankings cache status
     getTrendingCacheStatus: adminProcedure

@@ -964,3 +964,24 @@ export const marketplaceReviews = mysqlTable("marketplaceReviews", {
 export type MarketplaceReview = typeof marketplaceReviews.$inferSelect;
 export type InsertMarketplaceReview = typeof marketplaceReviews.$inferInsert;
 
+
+/**
+ * User Shipping Addresses - saved addresses for checkout
+ */
+export const userShippingAddresses = mysqlTable("userShippingAddresses", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  label: varchar("label", { length: 50 }).default("預設地址").notNull(),
+  recipientName: varchar("recipientName", { length: 100 }).notNull(),
+  phone: varchar("phone", { length: 30 }).notNull(),
+  address: varchar("address", { length: 255 }).notNull(),
+  district: varchar("district", { length: 50 }),
+  region: varchar("region", { length: 50 }).default("香港").notNull(),
+  isDefault: boolean("isDefault").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("usa_userId_idx").on(table.userId),
+}));
+export type UserShippingAddress = typeof userShippingAddresses.$inferSelect;
+export type InsertUserShippingAddress = typeof userShippingAddresses.$inferInsert;

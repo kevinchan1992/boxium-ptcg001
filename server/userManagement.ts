@@ -225,3 +225,59 @@ export async function getUserById(userId: number) {
 
   return user || null;
 }
+
+/**
+ * Get user detail with order stats and shipping addresses
+ */
+export async function getUserDetailWithStats(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [user] = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      role: users.role,
+      loginMethod: users.loginMethod,
+      emailVerified: users.emailVerified,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+      lastSignedIn: users.lastSignedIn,
+    })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  if (!user) return null;
+
+  // Get order stats
+  const { marketplaceOrders } = await import("../drizzle/schema_new");
+  const { count, and: andOp, eq: eqOp } = await import("drizzle-orm");
+
+  const [orderStats] = await db
+    .select({
+      totalOrders: sql<number>`count(*)`,
+      completedOrders: sql<number>`sum(case when ${marketplaceOrders.orderStatus} = 'completed' then 1 else 0 end)`,
+      totalSpent: sql<number>`sum(case when ${marketplaceOrders.paymentStatus} = 'paid' then cast(${marketplaceOrders.subtotalHkd} as decimal(10,2)) else 0 end)`,
+    })
+    .from(marketplaceOrders)
+    .where(eq(marketplaceOrders.buyerId, userId));
+
+  // Get shipping addresses
+  const { userShippingAddresses } = await import("../drizzle/schema_new");
+  const addresses = await db
+    .select()
+    .from(userShippingAddresses)
+    .where(eq(userShippingAddresses.userId, userId))
+    .orderBy(desc(userShippingAddresses.isDefault));
+
+  return {
+    ...user,
+    orderStats: {
+      totalOrders: Number(orderStats?.totalOrders ?? 0),
+      completedOrders: Number(orderStats?.completedOrders ?? 0),
+      totalSpent: Number(orderStats?.totalSpent ?? 0),
+    },
+    shippingAddresses: addresses,
+  };
+}

@@ -3586,3 +3586,14 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 訂單詳情頁顯示物流追蹤號、收貨地址、付款摘要
 - [x] 訂單詳情頁支援確認收貨、申請爭議、評價賣家操作
 - [x] 訂單列表頁每筆訂單加入「查看詳情」連結
+
+## 收貨地址管理 + 付款流程整合 + Admin 帳號詳情
+
+- [x] 新增 userShippingAddresses 資料庫表（label, recipientName, phone, address, district, region, isDefault）
+- [x] 後端 tRPC procedures：getMyShippingAddresses, addShippingAddress, updateShippingAddress, deleteShippingAddress, setDefaultShippingAddress
+- [x] Profile 頁面新增「收貨地址」分頁（新增/編輯/刪除/設預設）
+- [x] Stripe 付款對話框自動帶入已儲存預設地址，支援快速選擇
+- [x] Alipay 付款流程加入收貨地址步驟（未儲存時才需填寫）
+- [x] Admin 帳號管理新增「查看詳情」按鈕（眼睛圖示）
+- [x] Admin 用戶詳情頁顯示：基本資料、訂單統計（總訂單/已完成/總消費）、收貨地址列表
+- [x] 後端 getUserDetailWithStats procedure（含訂單統計 + 收貨地址）

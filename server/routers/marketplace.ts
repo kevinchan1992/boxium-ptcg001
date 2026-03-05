@@ -16,6 +16,9 @@ import {
   getUserWishlist, isInWishlist, addToWishlistListing, removeFromWishlistListing, getWishlistListingIds,
   getDisputedOrders, getSellerProfileByStripeConnectId,
   createReview, getSellerReviews, getReviewByOrderId,
+  getUserShippingAddresses, getUserDefaultShippingAddress,
+  createUserShippingAddress, updateUserShippingAddress,
+  deleteUserShippingAddress, setDefaultShippingAddress,
   getDb,
 } from "../db";
 import { storagePut } from "../storage";
@@ -1136,5 +1139,64 @@ All three checks must pass for verified to be true. Respond with JSON only match
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
       return getReviewByOrderId(input.orderId);
+    }),
+
+  // ============================================================
+  // PROTECTED - Shipping Addresses
+  // ============================================================
+  getMyShippingAddresses: protectedProcedure
+    .query(async ({ ctx }) => {
+      return getUserShippingAddresses(ctx.user.id);
+    }),
+
+  getMyDefaultShippingAddress: protectedProcedure
+    .query(async ({ ctx }) => {
+      return getUserDefaultShippingAddress(ctx.user.id);
+    }),
+
+  addShippingAddress: protectedProcedure
+    .input(z.object({
+      label: z.string().max(50).default("預設地址"),
+      recipientName: z.string().min(1).max(100),
+      phone: z.string().min(1).max(30),
+      address: z.string().min(1).max(255),
+      district: z.string().max(50).optional(),
+      region: z.string().max(50).default("香港"),
+      isDefault: z.boolean().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await createUserShippingAddress({ ...input, userId: ctx.user.id });
+      return { success: true };
+    }),
+
+  updateShippingAddress: protectedProcedure
+    .input(z.object({
+      id: z.number().int(),
+      label: z.string().max(50).optional(),
+      recipientName: z.string().min(1).max(100).optional(),
+      phone: z.string().min(1).max(30).optional(),
+      address: z.string().min(1).max(255).optional(),
+      district: z.string().max(50).optional(),
+      region: z.string().max(50).optional(),
+      isDefault: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await updateUserShippingAddress(id, ctx.user.id, data);
+      return { success: true };
+    }),
+
+  deleteShippingAddress: protectedProcedure
+    .input(z.object({ id: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteUserShippingAddress(input.id, ctx.user.id);
+      return { success: true };
+    }),
+
+  setDefaultShippingAddress: protectedProcedure
+    .input(z.object({ id: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      await setDefaultShippingAddress(input.id, ctx.user.id);
+      return { success: true };
     }),
 });
