@@ -181,7 +181,61 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+// ─── Coming Soon (Production Guard) ─────────────────────────────────────────
+
+function MarketplaceComingSoon() {
+  return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+      {/* Top brand bar */}
+      <div className="w-full bg-[#06038d] py-4 flex justify-center absolute top-0 left-0">
+        <img
+          src={import.meta.env.VITE_APP_LOGO || "/boxium-logo.png"}
+          alt="BOXIUM"
+          className="h-10 object-contain"
+        />
+      </div>
+
+      {/* Main content */}
+      <div className="text-center max-w-md mt-16">
+        {/* Icon */}
+        <div className="w-24 h-24 rounded-full bg-[#06038d] flex items-center justify-center mx-auto mb-6 shadow-lg">
+          <ShoppingBag className="w-12 h-12 text-[#FFD700]" />
+        </div>
+
+        {/* Brand */}
+        <div className="inline-flex items-center gap-2 bg-[#06038d] text-[#FFD700] font-bold text-sm px-4 py-1.5 rounded-full mb-4">
+          BOXIUM 商城
+        </div>
+
+        {/* Heading */}
+        <h1 className="text-3xl font-bold text-[#06038d] mb-3">功能開發中</h1>
+        <p className="text-lg text-gray-500 mb-2">敬請期待！</p>
+        <p className="text-sm text-gray-400 mb-8">
+          我們正在為您打造最優質的可夢卡牌交易平台，<br />
+          即將推出，請繼續關注。
+        </p>
+
+        {/* Decorative dots */}
+        <div className="flex justify-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "0ms" }} />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#06038d] animate-bounce" style={{ animationDelay: "150ms" }} />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "300ms" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Marketplace() {
+  // Show coming soon page in production environment
+  if (import.meta.env.PROD) {
+    return <MarketplaceComingSoon />;
+  }
+
+  return <MarketplaceInner />;
+}
+
+function MarketplaceInner() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
