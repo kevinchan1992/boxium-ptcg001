@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Games table - manages TCG game types
@@ -117,6 +117,15 @@ export const priceHistory = mysqlTable("priceHistory", {
   soldAt: timestamp("soldAt"), // Transaction timestamp
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
+  // UNIQUE index to prevent duplicate price history records
+  // A record is considered duplicate if it has the same cardId, source, grade, and soldAt
+  // This enables INSERT ... ON DUPLICATE KEY UPDATE (no-op) for idempotent batch inserts
+  uniquePriceRecord: uniqueIndex("uniq_price_card_source_grade_soldAt").on(
+    table.cardId,
+    table.source,
+    table.grade,
+    table.soldAt
+  ),
   // Composite index for trending calculations (cardId + soldAt + source + grade)
   // Optimizes queries that filter by cardId, time range, source, and grade
   cardIdSoldAtSourceGradeIdx: index("cardId_soldAt_source_grade_idx").on(

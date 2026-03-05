@@ -1,0 +1,136 @@
+{
+  "query": "\nSELECT cardId, source, grade, soldAt, COUNT(*) as cnt\nFROM priceHistory\nWHERE cardId = 1020335 AND source = 'snkrdunk'\nGROUP BY cardId, source, grade, soldAt\nHAVING cnt > 1\nORDER BY cnt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT cardId, source, grade, soldAt, COUNT(*) as cnt\nFROM priceHistory\nWHERE cardId = 1020335 AND source = 'snkrdunk'\nGROUP BY cardId, source, grade, soldAt\nHAVING cnt > 1\nORDER BY cnt DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA9",
+      "soldAt": "2026-01-25 16:00:00",
+      "cnt": "12"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2026-02-14 16:00:00",
+      "cnt": "12"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2024-12-30 16:00:00",
+      "cnt": "12"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2025-07-08 16:00:00",
+      "cnt": "12"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2025-02-24 16:00:00",
+      "cnt": "12"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2026-02-21 16:00:00",
+      "cnt": "12"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2025-05-15 16:00:00",
+      "cnt": "12"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2025-10-18 16:00:00",
+      "cnt": "12"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "A",
+      "soldAt": "2026-01-07 16:00:00",
+      "cnt": "12"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2026-02-25 16:00:00",
+      "cnt": "4"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2025-10-19 00:00:00",
+      "cnt": "3"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2025-02-25 00:00:00",
+      "cnt": "3"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2026-02-15 00:00:00",
+      "cnt": "3"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA9",
+      "soldAt": "2026-01-26 00:00:00",
+      "cnt": "3"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2024-12-31 00:00:00",
+      "cnt": "3"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "A",
+      "soldAt": "2026-01-08 00:00:00",
+      "cnt": "3"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2025-07-09 00:00:00",
+      "cnt": "3"
+    },
+    {
+      "cardId": "1020335",
+      "source": "snkrdunk",
+      "grade": "PSA10",
+      "soldAt": "2025-05-16 00:00:00",
+      "cnt": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\tsource\tgrade\tsoldAt\tcnt\n1020335\tsnkrdunk\tPSA9\t2026-01-25 16:00:00\t12\n1020335\tsnkrdunk\tPSA10\t2026-02-14 16:00:00\t12\n1020335\tsnkrdunk\tPSA10\t2024-12-30 16:00:00\t12\n1020335\tsnkrdunk\tPSA10\t2025-07-08 16:00:00\t12\n1020335\tsnkrdunk\tPSA10\t2025-02-24 16:00:00\t12\n1020335\tsnkrdunk\tPSA10\t2026-02-21 16:00:00\t12\n1020335\tsnkrdunk\tPSA10\t2025-05-15 16:00:00\t12\n1020335\tsnkrdunk\tPSA10\t2025-10-18 16:00:00\t12\n1020335\tsnkrdunk\tA\t2026-01-07 16:00:00\t12\n1020335\tsnkrdunk\tPSA10\t2026-02-25 16:00:00\t4\n1020335\tsnkrdunk\tPSA10\t2025-10-19 00:00:00\t3\n1020335\tsnkrdunk\tPSA10\t2025-02-25 00:00:00\t3\n1020335\tsnkrdunk\tPSA10\t2026-02-15 00:00:00\t3\n1020335\tsnkrdunk\tPSA9\t2026-01-26 00:00:00\t3\n1020335\tsnkrdunk\tPSA10\t2024-12-31 00:00:00\t3\n1020335\tsnkrdunk\tA\t2026-01-08 00:00:00\t3\n1020335\tsnkrdunk\tPSA10\t2025-07-09 00:00:00\t3\n1020335\tsnkrdunk\tPSA10\t2025-05-16 00:00:00\t3\n",
+  "stderr": "",
+  "execution_time_ms": 1598
+}

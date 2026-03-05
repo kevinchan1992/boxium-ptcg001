@@ -183,22 +183,28 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
         }));
         
         // Batch insert in chunks of 50 to avoid query size limits
+        // Use onDuplicateKeyUpdate with a no-op to silently skip duplicates (INSERT IGNORE equivalent)
         for (let i = 0; i < records.length; i += 50) {
           const chunk = records.slice(i, i + 50);
           try {
-            await database.insert(priceHistoryTable).values(chunk);
+            const { sql } = await import('drizzle-orm');
+            await database
+              .insert(priceHistoryTable)
+              .values(chunk)
+              .onDuplicateKeyUpdate({ set: { id: sql`id` } });
           } catch (insertErr: any) {
-            // If batch fails (e.g., duplicate), fall back to individual inserts
-            if (insertErr.message?.includes('Duplicate') || insertErr.code === 'ER_DUP_ENTRY') {
-              for (const record of chunk) {
-                try {
-                  await database.insert(priceHistoryTable).values(record);
-                } catch (e) {
-                  // Skip individual duplicates silently
-                }
+            // If batch fails, fall back to individual inserts with no-op dedup
+            for (const record of chunk) {
+              try {
+                const { sql } = await import('drizzle-orm');
+                await database
+                  .insert(priceHistoryTable)
+                  .values(record)
+                  .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+              } catch (e) {
+                // Skip silently
               }
             }
-            // Other errors: just skip this chunk, don't fail the product
           }
         }
       }

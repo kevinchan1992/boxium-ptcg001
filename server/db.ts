@@ -766,6 +766,26 @@ export async function addPriceHistory(data: {
   const db = await getDb();
   if (!db) return null;
 
+  // Deduplication: skip insert if a record with the same (cardId, source, grade, soldAt) already exists
+  if (data.soldAt) {
+    const existing = await db
+      .select({ id: priceHistory.id })
+      .from(priceHistory)
+      .where(
+        and(
+          eq(priceHistory.cardId, data.cardId),
+          eq(priceHistory.source, data.source),
+          data.grade ? eq(priceHistory.grade, data.grade) : sql`${priceHistory.grade} IS NULL`,
+          eq(priceHistory.soldAt, data.soldAt)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      return null; // Already exists, skip insert
+    }
+  }
+
   const result = await db.insert(priceHistory).values({
     cardId: data.cardId,
     source: data.source,

@@ -1,0 +1,16 @@
+{
+  "query": "\nSELECT \n  MAX(cnt) as max_duplicates,\n  AVG(cnt) as avg_duplicates,\n  SUM(cnt) as total_records,\n  COUNT(*) as unique_combinations\nFROM (\n  SELECT cardId, source, grade, soldAt, COUNT(*) as cnt\n  FROM priceHistory\n  WHERE cardId = 1020335 AND source = 'snkrdunk'\n  GROUP BY cardId, source, grade, soldAt\n) sub;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT \n  MAX(cnt) as max_duplicates,\n  AVG(cnt) as avg_duplicates,\n  SUM(cnt) as total_records,\n  COUNT(*) as unique_combinations\nFROM (\n  SELECT cardId, source, grade, soldAt, COUNT(*) as cnt\n  FROM priceHistory\n  WHERE cardId = 1020335 AND source = 'snkrdunk'\n  GROUP BY cardId, source, grade, soldAt\n) sub;\n",
+  "rows": [
+    {
+      "max_duplicates": "12",
+      "avg_duplicates": "4.0256",
+      "total_records": "157",
+      "unique_combinations": "39"
+    }
+  ],
+  "messages": [],
+  "stdout": "max_duplicates\tavg_duplicates\ttotal_records\tunique_combinations\n12\t4.0256\t157\t39\n",
+  "stderr": "",
+  "execution_time_ms": 1568
+}

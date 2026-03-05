@@ -3531,3 +3531,11 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 修復 Profile 分頁按鈕在桌面版文字被截斷問題
 - [x] 修復 BrandTabs 元件在各設備尺寸下的文字顯示邏輯
 - [x] 確保 Admin 後台分頁按鈕在手機/平板/桌面都能正確顯示
+
+## 🔧 爬取系統重複數據修復
+
+- [x] 診斷重複爬取根本原因（SNKRDUNK API 每次回傳全部歷史記錄，INSERT 無去重）
+- [x] 在 addPriceHistory 加入去重邏輯（先查後插）
+- [x] 在 persistentSnkrdunkBatchUpdate 批次插入改用 onDuplicateKeyUpdate 無操作去重
+- [x] 在 schema 加入 UNIQUE INDEX (cardId, source, grade, soldAt)
+- [x] 清理現有重複記錄（從 1,222,804 筆清理至 273,113 筆，刪除 949,691 筆重複）
