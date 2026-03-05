@@ -3483,3 +3483,17 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ## 🔍 優化 AI 付款截圖驗證：加入收款方核對
 - [x] 更新 verifyPaymentProof LLM prompt，加入收款方（零度有限公司）和狀態（成功）驗證
 - [x] 更新前端顯示三項驗證結果（收款方/金額/狀態）
+
+---
+
+## 🆕 新功能：Banner 後台管理 + 願望清單
+
+- [x] 新增 marketplaceBanners 資料表（DB schema + migrate）
+- [x] 新增 wishlists 資料表（DB schema + migrate）
+- [x] 後端：Banner CRUD tRPC procedures（admin）
+- [x] 後端：Wishlist add/remove/list tRPC procedures（protected）
+- [x] 前端：AdminMarketplace 新增 Banner 管理面板（新增/編輯/刪除/排序）
+- [x] 前端：Marketplace 商城 Banner 輪播改為讀取 DB 資料
+- [x] 前端：ProductCard 右上角加入愛心收藏按鈕
+- [x] 前端：新增 /wishlist 願望清單頁面（個人頁面可查看）
+- [x] 前端：TopNav 加入願望清單入口（登入後顯示）

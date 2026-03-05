@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2 } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Image, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 
 const conditionLabel: Record<string, string> = {
@@ -527,6 +527,180 @@ function SellersTab() {
   );
 }
 
+// ============================================================
+// BANNERS TAB
+// ============================================================
+function BannersTab() {
+  const utils = trpc.useUtils();
+  const { data: banners = [], isLoading } = trpc.marketplace.adminGetBanners.useQuery();
+  const [showForm, setShowForm] = useState(false);
+  const [editBanner, setEditBanner] = useState<any | null>(null);
+  const [form, setForm] = useState({
+    title: "", subtitle: "", cta: "立即選購",
+    gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]",
+    accentColor: "#FFD700", badge: "", emoji: "🏆", sortOrder: 0, isActive: true,
+  });
+
+  const createMutation = trpc.marketplace.adminCreateBanner.useMutation({
+    onSuccess: () => { toast.success("廣告已新增"); utils.marketplace.adminGetBanners.invalidate(); setShowForm(false); resetForm(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const updateMutation = trpc.marketplace.adminUpdateBanner.useMutation({
+    onSuccess: () => { toast.success("廣告已更新"); utils.marketplace.adminGetBanners.invalidate(); setEditBanner(null); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteMutation = trpc.marketplace.adminDeleteBanner.useMutation({
+    onSuccess: () => { toast.success("廣告已刪除"); utils.marketplace.adminGetBanners.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const resetForm = () => setForm({ title: "", subtitle: "", cta: "立即選購", gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]", accentColor: "#FFD700", badge: "", emoji: "🏆", sortOrder: 0, isActive: true });
+
+  const openEdit = (b: any) => {
+    setEditBanner(b);
+    setForm({ title: b.title, subtitle: b.subtitle, cta: b.cta, gradient: b.gradient, accentColor: b.accentColor, badge: b.badge, emoji: b.emoji, sortOrder: b.sortOrder, isActive: b.isActive });
+  };
+
+  const handleSubmitCreate = () => {
+    if (!form.title.trim()) { toast.error("請輸入標題"); return; }
+    createMutation.mutate({ ...form });
+  };
+
+  const handleSubmitUpdate = () => {
+    if (!editBanner) return;
+    updateMutation.mutate({ id: editBanner.id, ...form });
+  };
+
+  const BannerForm = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="sm:col-span-2">
+        <Label>標題 *</Label>
+        <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="例：PSA 10 精品展示" />
+      </div>
+      <div className="sm:col-span-2">
+        <Label>副標題</Label>
+        <Input value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} placeholder="例：精選頂級評級卡牌，每張都是投資价値" />
+      </div>
+      <div>
+        <Label>CTA 按鈕文字</Label>
+        <Input value={form.cta} onChange={e => setForm(f => ({ ...f, cta: e.target.value }))} placeholder="立即選購" />
+      </div>
+      <div>
+        <Label>Emoji 圖標</Label>
+        <Input value={form.emoji} onChange={e => setForm(f => ({ ...f, emoji: e.target.value }))} placeholder="🏆" />
+      </div>
+      <div>
+        <Label>徽章文字</Label>
+        <Input value={form.badge} onChange={e => setForm(f => ({ ...f, badge: e.target.value }))} placeholder="例：PSA 認證" />
+      </div>
+      <div>
+        <Label>強調色</Label>
+        <div className="flex items-center gap-2">
+          <input type="color" value={form.accentColor} onChange={e => setForm(f => ({ ...f, accentColor: e.target.value }))} className="w-10 h-10 rounded cursor-pointer border" />
+          <Input value={form.accentColor} onChange={e => setForm(f => ({ ...f, accentColor: e.target.value }))} className="flex-1" />
+        </div>
+      </div>
+      <div>
+        <Label>排列順序</Label>
+        <Input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))} />
+      </div>
+      <div className="flex items-center gap-2">
+        <Label>狀態</Label>
+        <button type="button" onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))} className="flex items-center gap-1 text-sm">
+          {form.isActive ? <ToggleRight className="w-6 h-6 text-green-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
+          {form.isActive ? "啟用" : "停用"}
+        </button>
+      </div>
+      <div className="sm:col-span-2">
+        <Label>Gradient CSS 類名</Label>
+        <Input value={form.gradient} onChange={e => setForm(f => ({ ...f, gradient: e.target.value }))} placeholder="from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]" />
+        <p className="text-xs text-muted-foreground mt-1">Tailwind gradient class，例：from-blue-900 via-blue-800 to-blue-700</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-lg">廣告 Banner 管理</h3>
+          <p className="text-sm text-muted-foreground">管理商城首頁輪播廣告，支援新增、編輯、刪除及排序</p>
+        </div>
+        <Button onClick={() => { setShowForm(true); resetForm(); }} className="bg-[#06038d] hover:bg-[#0a06b5] text-white">
+          <Plus className="w-4 h-4 mr-1" />新增 Banner
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground">載入中...</div>
+      ) : banners.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Image className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p>暫無 Banner，點擊「新增 Banner」開始創建</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {banners.map((b: any) => (
+            <div key={b.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="text-2xl">{b.emoji}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium truncate">{b.title}</span>
+                    <Badge className={b.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}>
+                      {b.isActive ? "啟用" : "停用"}
+                    </Badge>
+                    {b.badge && <Badge variant="outline">{b.badge}</Badge>}
+                  </div>
+                  <p className="text-sm text-muted-foreground truncate">{b.subtitle}</p>
+                  <p className="text-xs text-muted-foreground">排序: {b.sortOrder} · CTA: {b.cta}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => openEdit(b)}>
+                  <Edit className="w-3 h-3 mr-1" />編輯
+                </Button>
+                <Button size="sm" variant="outline" className="text-red-600 border-red-300 hover:bg-red-50"
+                  onClick={() => { if (confirm("確定刪除此 Banner？")) deleteMutation.mutate({ id: b.id }); }}>
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Create Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>新增廣告 Banner</DialogTitle></DialogHeader>
+          <BannerForm />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowForm(false)}>取消</Button>
+            <Button onClick={handleSubmitCreate} disabled={createMutation.isPending} className="bg-[#06038d] text-white">
+              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "建立 Banner"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editBanner} onOpenChange={(o) => { if (!o) setEditBanner(null); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>編輯 Banner</DialogTitle></DialogHeader>
+          <BannerForm />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditBanner(null)}>取消</Button>
+            <Button onClick={handleSubmitUpdate} disabled={updateMutation.isPending} className="bg-[#06038d] text-white">
+              {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "儲存變更"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function AdminMarketplace() {
   const { data: stats } = trpc.marketplace.adminGetStats.useQuery();
   const { data: me } = trpc.auth.me.useQuery();
@@ -586,11 +760,15 @@ export default function AdminMarketplace() {
             <TabsTrigger value="sellers" className="flex items-center gap-1">
               <Users className="w-4 h-4" />賣家管理
             </TabsTrigger>
+            <TabsTrigger value="banners" className="flex items-center gap-1">
+              <Image className="w-4 h-4" />廣告 Banner
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="listings"><ListingsTab /></TabsContent>
           <TabsContent value="orders"><OrdersTab /></TabsContent>
           <TabsContent value="alipay"><AlipayPendingTab /></TabsContent>
           <TabsContent value="sellers"><SellersTab /></TabsContent>
+          <TabsContent value="banners"><BannersTab /></TabsContent>
         </Tabs>
       </div>
     </div>

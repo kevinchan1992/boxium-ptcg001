@@ -12,6 +12,8 @@ import {
   createMarketplaceOrder, getMarketplaceOrderById, updateMarketplaceOrder, getBuyerOrders, getAdminOrders, getAlipayPendingOrders, generateOrderNo,
   createOrderItems, getOrderItems, getSellerOrderItems,
   getSellerPayouts, getMarketplaceStats,
+  getActiveBanners, getAllBanners, createBanner, updateBanner, deleteBanner,
+  getUserWishlist, isInWishlist, addToWishlistListing, removeFromWishlistListing, getWishlistListingIds,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
@@ -672,5 +674,96 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .mutation(async ({ input }) => {
       await updateSellerProfile(input.sellerId, { isActive: input.approve });
       return { success: true };
+    }),
+
+  // ============================================================
+  // PUBLIC - Banners
+  // ============================================================
+  getBanners: publicProcedure
+    .query(async () => {
+      return getActiveBanners();
+    }),
+
+  // ============================================================
+  // ADMIN - Banner Management
+  // ============================================================
+  adminGetBanners: adminProcedure
+    .query(async () => {
+      return getAllBanners();
+    }),
+
+  adminCreateBanner: adminProcedure
+    .input(z.object({
+      title: z.string().min(1).max(200),
+      subtitle: z.string().max(300).default(""),
+      cta: z.string().max(100).default("立即選購"),
+      ctaConditions: z.string().default("[]"),
+      ctaSellerType: z.string().default("all"),
+      gradient: z.string().max(200).default("from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]"),
+      accentColor: z.string().max(20).default("#FFD700"),
+      badge: z.string().max(50).default(""),
+      badgeClass: z.string().max(100).default("bg-yellow-400 text-[#06038d]"),
+      emoji: z.string().max(10).default("🏆"),
+      sortOrder: z.number().int().default(0),
+      isActive: z.boolean().default(true),
+    }))
+    .mutation(async ({ input }) => {
+      await createBanner(input);
+      return { success: true };
+    }),
+
+  adminUpdateBanner: adminProcedure
+    .input(z.object({
+      id: z.number().int(),
+      title: z.string().min(1).max(200).optional(),
+      subtitle: z.string().max(300).optional(),
+      cta: z.string().max(100).optional(),
+      ctaConditions: z.string().optional(),
+      ctaSellerType: z.string().optional(),
+      gradient: z.string().max(200).optional(),
+      accentColor: z.string().max(20).optional(),
+      badge: z.string().max(50).optional(),
+      badgeClass: z.string().max(100).optional(),
+      emoji: z.string().max(10).optional(),
+      sortOrder: z.number().int().optional(),
+      isActive: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      await updateBanner(id, data);
+      return { success: true };
+    }),
+
+  adminDeleteBanner: adminProcedure
+    .input(z.object({ id: z.number().int() }))
+    .mutation(async ({ input }) => {
+      await deleteBanner(input.id);
+      return { success: true };
+    }),
+
+  // ============================================================
+  // PROTECTED - Wishlist
+  // ============================================================
+  getMyWishlist: protectedProcedure
+    .query(async ({ ctx }) => {
+      return getUserWishlist(ctx.user.id);
+    }),
+
+  getWishlistIds: protectedProcedure
+    .query(async ({ ctx }) => {
+      return getWishlistListingIds(ctx.user.id);
+    }),
+
+  toggleWishlist: protectedProcedure
+    .input(z.object({ listingId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const already = await isInWishlist(ctx.user.id, input.listingId);
+      if (already) {
+        await removeFromWishlistListing(ctx.user.id, input.listingId);
+        return { wishlisted: false };
+      } else {
+        await addToWishlistListing(ctx.user.id, input.listingId);
+        return { wishlisted: true };
+      }
     }),
 });

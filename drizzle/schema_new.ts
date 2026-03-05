@@ -890,3 +890,45 @@ export const marketplacePayouts = mysqlTable("marketplacePayouts", {
 }));
 export type MarketplacePayout = typeof marketplacePayouts.$inferSelect;
 export type InsertMarketplacePayout = typeof marketplacePayouts.$inferInsert;
+
+/**
+ * Marketplace Banners - admin-managed banner slides for the marketplace carousel
+ */
+export const marketplaceBanners = mysqlTable("marketplaceBanners", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 200 }).notNull(),
+  subtitle: varchar("subtitle", { length: 300 }).default("").notNull(),
+  cta: varchar("cta", { length: 100 }).default("立即選購").notNull(),
+  ctaConditions: varchar("ctaConditions", { length: 500 }).default("[]").notNull(), // JSON array of condition values
+  ctaSellerType: varchar("ctaSellerType", { length: 20 }).default("all").notNull(), // "all" | "platform" | "seller"
+  gradient: varchar("gradient", { length: 200 }).default("from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]").notNull(),
+  accentColor: varchar("accentColor", { length: 20 }).default("#FFD700").notNull(),
+  badge: varchar("badge", { length: 50 }).default("").notNull(),
+  badgeClass: varchar("badgeClass", { length: 100 }).default("bg-yellow-400 text-[#06038d]").notNull(),
+  emoji: varchar("emoji", { length: 10 }).default("🏆").notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  isActiveIdx: index("mb_isActive_idx").on(table.isActive),
+  sortOrderIdx: index("mb_sortOrder_idx").on(table.sortOrder),
+}));
+export type MarketplaceBanner = typeof marketplaceBanners.$inferSelect;
+export type InsertMarketplaceBanner = typeof marketplaceBanners.$inferInsert;
+
+/**
+ * Wishlists - users can save marketplace listings to their wishlist
+ */
+export const wishlists = mysqlTable("wishlists", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // FK to users
+  listingId: int("listingId").notNull(), // FK to marketplaceListings
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("wl_userId_idx").on(table.userId),
+  listingIdIdx: index("wl_listingId_idx").on(table.listingId),
+  uniqueUserListing: index("wl_unique_user_listing").on(table.userId, table.listingId),
+}));
+export type Wishlist = typeof wishlists.$inferSelect;
+export type InsertWishlist = typeof wishlists.$inferInsert;

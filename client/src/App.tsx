@@ -19,6 +19,7 @@ import AdminMarketplace from "./pages/AdminMarketplace";
 import Marketplace from "./pages/Marketplace";
 import MarketplaceListing from "./pages/MarketplaceListing";
 import SellerDashboard from "./pages/SellerDashboard";
+import Wishlist from "./pages/Wishlist";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Disclaimer from "./pages/Disclaimer";
@@ -88,6 +89,7 @@ function Router() {
       </Route>
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/marketplace/:id" component={MarketplaceListing} />
+      <Route path="/wishlist" component={Wishlist} />
       <Route path="/seller" component={SellerDashboard} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />

@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Package, ChevronLeft, ChevronRight, X, ShoppingBag, SlidersHorizontal, ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
+import { Search, Package, ChevronLeft, ChevronRight, X, ShoppingBag, SlidersHorizontal, ChevronDown, ChevronUp, HelpCircle, Heart } from "lucide-react";
+import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CONDITION_GROUPS, CONDITION_SHORT, CONDITION_BADGE, CONDITION_TOOLTIP, type ConditionValue } from "@/lib/conditions";
 
@@ -74,7 +75,7 @@ const PAGE_SIZE = 20;
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
-function ProductCard({ listing }: { listing: any }) {
+function ProductCard({ listing, wishlistIds, onWishlistToggle }: { listing: any; wishlistIds?: number[]; onWishlistToggle?: (id: number) => void }) {
   const [, setLocation] = useLocation();
   const images: string[] | null = (() => {
     try {
@@ -85,6 +86,7 @@ function ProductCard({ listing }: { listing: any }) {
   })();
   const coverImage = images && images.length > 0 ? images[0] : null;
   const conditionKey = listing.condition as ConditionValue;
+  const isWishlisted = wishlistIds?.includes(listing.id) ?? false;
 
   return (
     <div
@@ -118,6 +120,16 @@ function ProductCard({ listing }: { listing: any }) {
               官方
             </span>
           </div>
+        )}
+        {/* Wishlist heart button */}
+        {onWishlistToggle && (
+          <button
+            className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-white/90 shadow flex items-center justify-center hover:scale-110 transition-transform z-10"
+            onClick={e => { e.stopPropagation(); onWishlistToggle(listing.id); }}
+            aria-label={isWishlisted ? "移除收藏" : "加入收藏"}
+          >
+            <Heart className={`w-4 h-4 transition-colors ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-400"}`} />
+          </button>
         )}
       </div>
 
@@ -182,12 +194,16 @@ export default function Marketplace() {
   const [bannerIdx, setBannerIdx] = useState(0);
   const [bannerPaused, setBannerPaused] = useState(false);
 
+  // Load banners from DB (fallback to static BANNERS)
+  const { data: dbBanners } = trpc.marketplace.getBanners.useQuery();
+  const activeBanners = (dbBanners && dbBanners.length > 0) ? dbBanners : BANNERS;
+
   // Auto-advance banner every 4 seconds
   useEffect(() => {
     if (bannerPaused) return;
-    const t = setInterval(() => setBannerIdx(i => (i + 1) % BANNERS.length), 4000);
+    const t = setInterval(() => setBannerIdx(i => (i + 1) % activeBanners.length), 4000);
     return () => clearInterval(t);
-  }, [bannerPaused]);
+  }, [bannerPaused, activeBanners.length]);
 
   // Apply quick tag filter
   const applyQuickTag = (tag: typeof QUICK_TAGS[0]) => {
@@ -202,6 +218,22 @@ export default function Marketplace() {
     const sellerMatch = t.sellerType === sellerType;
     return condMatch && sellerMatch;
   });
+
+  // Auth + wishlist
+  const { data: me } = trpc.auth.me.useQuery();
+  const utils = trpc.useUtils();
+  const { data: wishlistIds = [] } = trpc.marketplace.getWishlistIds.useQuery(undefined, { enabled: !!me });
+  const toggleWishlistMutation = trpc.marketplace.toggleWishlist.useMutation({
+    onSuccess: (res) => {
+      toast.success(res.wishlisted ? "已加入收藏" : "已移除收藏");
+      utils.marketplace.getWishlistIds.invalidate();
+    },
+    onError: () => toast.error("請先登入才能收藏"),
+  });
+  const handleWishlistToggle = (listingId: number) => {
+    if (!me) { toast.error("請先登入才能收藏"); return; }
+    toggleWishlistMutation.mutate({ listingId });
+  };
 
   const { data, isLoading } = trpc.marketplace.getListings.useQuery({
     page,
@@ -470,7 +502,7 @@ export default function Marketplace() {
         onMouseEnter={() => setBannerPaused(true)}
         onMouseLeave={() => setBannerPaused(false)}
       >
-        {BANNERS.map((banner, i) => (
+        {activeBanners.map((banner: any, i: number) => (
           <div
             key={banner.id}
             className={`bg-gradient-to-r ${banner.gradient} transition-all duration-700 ${
@@ -504,7 +536,7 @@ export default function Marketplace() {
         ))}
         {/* Dot indicators */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-          {BANNERS.map((_, i) => (
+          {activeBanners.map((_: any, i: number) => (
             <button
               key={i}
               onClick={() => setBannerIdx(i)}
@@ -516,13 +548,13 @@ export default function Marketplace() {
         </div>
         {/* Prev / Next arrows */}
         <button
-          onClick={() => setBannerIdx(i => (i - 1 + BANNERS.length) % BANNERS.length)}
+          onClick={() => setBannerIdx(i => (i - 1 + activeBanners.length) % activeBanners.length)}
           className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
         <button
-          onClick={() => setBannerIdx(i => (i + 1) % BANNERS.length)}
+          onClick={() => setBannerIdx(i => (i + 1) % activeBanners.length)}
           className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-colors"
         >
           <ChevronRight className="w-4 h-4" />
@@ -646,7 +678,7 @@ export default function Marketplace() {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {listings.map((listing: any) => (
-                  <ProductCard key={listing.id} listing={listing} />
+                  <ProductCard key={listing.id} listing={listing} wishlistIds={wishlistIds} onWishlistToggle={handleWishlistToggle} />
                 ))}
               </div>
             )}

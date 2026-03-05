@@ -2613,8 +2613,10 @@ export async function getRunningBatchUpdateTask(taskType: string) {
 import {
   sellerProfiles, marketplaceListings, marketplaceOrders,
   marketplaceOrderItems, marketplacePayouts,
+  marketplaceBanners, wishlists,
   InsertSellerProfile, InsertMarketplaceListing, InsertMarketplaceOrder,
-  InsertMarketplaceOrderItem, InsertMarketplacePayout
+  InsertMarketplaceOrderItem, InsertMarketplacePayout,
+  InsertMarketplaceBanner, InsertWishlist
 } from "../drizzle/schema_new";
 
 // --- Seller Profiles ---
@@ -2837,4 +2839,86 @@ export async function getMarketplaceStats() {
     activeSellerCount: Number(sellerCount?.count ?? 0),
     pendingReviewListings: Number(pendingReview?.count ?? 0),
   };
+}
+
+// --- Marketplace Banners ---
+export async function getActiveBanners() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(marketplaceBanners)
+    .where(eq(marketplaceBanners.isActive, true))
+    .orderBy(asc(marketplaceBanners.sortOrder), asc(marketplaceBanners.id));
+}
+
+export async function getAllBanners() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(marketplaceBanners)
+    .orderBy(asc(marketplaceBanners.sortOrder), asc(marketplaceBanners.id));
+}
+
+export async function createBanner(data: InsertMarketplaceBanner) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(marketplaceBanners).values(data);
+}
+
+export async function updateBanner(id: number, data: Partial<InsertMarketplaceBanner>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(marketplaceBanners).set({ ...data, updatedAt: new Date() }).where(eq(marketplaceBanners.id, id));
+}
+
+export async function deleteBanner(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(marketplaceBanners).where(eq(marketplaceBanners.id, id));
+}
+
+// --- Wishlists ---
+export async function getUserWishlist(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select({
+    wishlistId: wishlists.id,
+    createdAt: wishlists.createdAt,
+    listing: marketplaceListings,
+  }).from(wishlists)
+    .innerJoin(marketplaceListings, eq(wishlists.listingId, marketplaceListings.id))
+    .where(eq(wishlists.userId, userId))
+    .orderBy(desc(wishlists.createdAt));
+  return rows;
+}
+
+export async function isInWishlist(userId: number, listingId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const rows = await db.select({ id: wishlists.id }).from(wishlists)
+    .where(and(eq(wishlists.userId, userId), eq(wishlists.listingId, listingId)))
+    .limit(1);
+  return rows.length > 0;
+}
+
+export async function addToWishlistListing(userId: number, listingId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Upsert: ignore if already exists
+  const existing = await isInWishlist(userId, listingId);
+  if (!existing) {
+    await db.insert(wishlists).values({ userId, listingId });
+  }
+}
+
+export async function removeFromWishlistListing(userId: number, listingId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(wishlists).where(and(eq(wishlists.userId, userId), eq(wishlists.listingId, listingId)));
+}
+
+export async function getWishlistListingIds(userId: number): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select({ listingId: wishlists.listingId }).from(wishlists)
+    .where(eq(wishlists.userId, userId));
+  return rows.map(r => r.listingId);
 }
