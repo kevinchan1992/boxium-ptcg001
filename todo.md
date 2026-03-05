@@ -3574,3 +3574,15 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 星級評分元件（1-5 星，hover 效果）
 - [x] 商品詳情頁顯示賣家評價（最新 2 則，可展開全部）
 - [x] 賣家資訊顯示平均評分與評價數量
+
+## Alipay 流程補齊 + 訂單詳情頁
+
+- [x] Alipay 付款流程新增收貨地址填寫步驟（qr → shipping → upload → done）
+- [x] createAlipayOrder 後端接受 shippingAddress 並儲存到訂單
+- [x] Alipay 訂單提交後自動通知管理員審核（notifyOwner）
+- [x] 新增 getOrderByNo tRPC procedure（買家/賣家均可查看）
+- [x] 新增訂單詳情頁 /orders/:orderNo（OrderDetail.tsx）
+- [x] 訂單詳情頁包含完整 Timeline（付款 → 處理中 → 已寄出 → 確認收貨）
+- [x] 訂單詳情頁顯示物流追蹤號、收貨地址、付款摘要
+- [x] 訂單詳情頁支援確認收貨、申請爭議、評價賣家操作
+- [x] 訂單列表頁每筆訂單加入「查看詳情」連結

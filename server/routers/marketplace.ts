@@ -9,7 +9,7 @@ import {
   getPublicListings, getListingById, createListing, updateListing,
   getAdminListings, getSellerListings,
   getSellerProfileByUserId, getSellerProfileById, createSellerProfile, updateSellerProfile, getAllSellerProfiles,
-  createMarketplaceOrder, getMarketplaceOrderById, updateMarketplaceOrder, getBuyerOrders, getAdminOrders, getAlipayPendingOrders, generateOrderNo,
+  createMarketplaceOrder, getMarketplaceOrderById, getMarketplaceOrderByNo, updateMarketplaceOrder, getBuyerOrders, getAdminOrders, getAlipayPendingOrders, generateOrderNo,
   createOrderItems, getOrderItems, getSellerOrderItems,
   getSellerPayouts, getMarketplaceStats,
   getActiveBanners, getAllBanners, createBanner, updateBanner, deleteBanner,
@@ -799,6 +799,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .input(z.object({
       listingId: z.number().int(),
       proofImageUrl: z.string().url(),
+      shippingAddress: z.object({
+        name: z.string().min(1),
+        phone: z.string().min(1),
+        address: z.string().min(1),
+        district: z.string().optional(),
+        region: z.string().default("香港"),
+      }).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const listing = await getListingById(input.listingId);
@@ -807,7 +814,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
       const price = parseFloat(listing.priceHkd as string);
       const orderNo = await generateOrderNo();
-      await createMarketplaceOrder({
+      const newOrder = await createMarketplaceOrder({
         orderNo,
         buyerId: ctx.user.id,
         sellerId: listing.sellerId ?? null,
@@ -824,8 +831,33 @@ All three checks must pass for verified to be true. Respond with JSON only match
         sellerReceivableHkd: (price * (1 - PLATFORM_FEE_RATE)).toFixed(2),
         alipayMerchantTransId: null,
         alipayProofImageUrl: input.proofImageUrl,
+        shippingName: input.shippingAddress?.name ?? null,
+        shippingPhone: input.shippingAddress?.phone ?? null,
+        shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
       });
+      // Notify admin of new Alipay order pending review
+      await notifyOwner({
+        title: "支付寶 HK 訂單待審核 💰",
+        content: `訂單 ${orderNo} 買家已提交支付寶 HK 付款截圖，請前往管理後台審核。商品：${listing.title}，金額：HKD ${price.toFixed(2)}`,
+      }).catch(() => {});
       return { orderNo };
+    }),
+
+  // Get single order by orderNo (for detail page)
+  getOrderByNo: protectedProcedure
+    .input(z.object({ orderNo: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderByNo(input.orderNo);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
+      // Only buyer or seller can view
+      const isBuyer = order.buyerId === ctx.user.id;
+      const sellerProfile = order.sellerId ? await getSellerProfileById(order.sellerId) : null;
+      const isSeller = !!(sellerProfile?.userId === ctx.user.id);
+      if (!isBuyer && !isSeller) throw new TRPCError({ code: "FORBIDDEN" });
+      const items = await getOrderItems(order.id);
+      const listing = order.listingId ? await getListingById(order.listingId) : null;
+      const review = await getReviewByOrderId(order.id);
+      return { order, items, listing, review, isBuyer, isSeller };
     }),
 
   // ============================================================

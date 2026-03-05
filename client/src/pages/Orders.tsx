@@ -130,9 +130,12 @@ function OrderCard({ order }: { order: any }) {
             {new Date(order.createdAt).toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
-        <div className="text-right flex-shrink-0">
+        <div className="text-right flex-shrink-0 space-y-1">
           <p className="font-bold text-[#06038d]">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</p>
           <p className="text-xs text-muted-foreground capitalize">{order.paymentMethod?.replace("_", " ")}</p>
+          <Link href={`/orders/${order.orderNo}`}>
+            <Button variant="outline" size="sm" className="text-xs h-7 px-2">查看詳情</Button>
+          </Link>
         </div>
       </div>
 

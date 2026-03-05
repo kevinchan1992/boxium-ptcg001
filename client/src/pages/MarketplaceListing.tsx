@@ -146,7 +146,8 @@ export default function MarketplaceListing() {
   const [showAlipay, setShowAlipay] = useState(false);
   const [completedOrderNo, setCompletedOrderNo] = useState("");
   const [proofUrl, setProofUrl] = useState("");
-  const [alipayStep, setAlipayStep] = useState<"qr" | "upload" | "done">("qr");
+  const [alipayStep, setAlipayStep] = useState<"qr" | "shipping" | "upload" | "done">("qr");
+  const [alipayShippingForm, setAlipayShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港" });
   const [isUploading, setIsUploading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
@@ -414,9 +415,58 @@ export default function MarketplaceListing() {
                 <p className="font-mono mt-1">{listing.title.substring(0, 30)}</p>
               </div>
               <Button className="w-full bg-[#06038d] hover:bg-[#0804b8] text-white"
-                onClick={() => setAlipayStep("upload")}>
-                我已完成付款，上傳截圖
+                onClick={() => setAlipayStep("shipping")}>
+                我已完成付款，填寫收貨地址
               </Button>
+            </div>
+          )}
+
+          {alipayStep === "shipping" && (
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                <p className="font-medium">請填寫收貨地址</p>
+                <p className="text-xs mt-1">收貨地址將提供給賣家安排寄送</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>收件人姓名 *</Label>
+                  <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：陳大文" value={alipayShippingForm.name} onChange={e => setAlipayShippingForm(f => ({ ...f, name: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>聯絡電話 *</Label>
+                  <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：9123 4567" value={alipayShippingForm.phone} onChange={e => setAlipayShippingForm(f => ({ ...f, phone: e.target.value }))} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>詳細地址 *</Label>
+                <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={alipayShippingForm.address} onChange={e => setAlipayShippingForm(f => ({ ...f, address: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>地區</Label>
+                  <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：旺角" value={alipayShippingForm.district} onChange={e => setAlipayShippingForm(f => ({ ...f, district: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>區域</Label>
+                  <select className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" value={alipayShippingForm.region} onChange={e => setAlipayShippingForm(f => ({ ...f, region: e.target.value }))}>
+                    <option value="香港島">香港島</option>
+                    <option value="九龍">九龍</option>
+                    <option value="新界">新界</option>
+                    <option value="香港">香港（不指定）</option>
+                  </select>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">* 必填欄位。如不需要寄送可跳過。</p>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setAlipayStep("qr")}>返回</Button>
+                <Button
+                  className="flex-1 bg-[#06038d] hover:bg-[#0804b8] text-white"
+                  disabled={!alipayShippingForm.name.trim() || !alipayShippingForm.phone.trim() || !alipayShippingForm.address.trim()}
+                  onClick={() => setAlipayStep("upload")}
+                >
+                  下一步：上傳截圖
+                </Button>
+              </div>
             </div>
           )}
 
@@ -526,7 +576,17 @@ export default function MarketplaceListing() {
                 <Button
                   className="bg-[#06038d] hover:bg-[#0804b8] text-white"
                   disabled={!proofUrl || isVerifying || isUploading || createAlipayOrderMutation.isPending}
-                  onClick={() => createAlipayOrderMutation.mutate({ listingId: listing.id, proofImageUrl: proofUrl })}
+                  onClick={() => createAlipayOrderMutation.mutate({
+                    listingId: listing.id,
+                    proofImageUrl: proofUrl,
+                    shippingAddress: alipayShippingForm.name.trim() ? {
+                      name: alipayShippingForm.name.trim(),
+                      phone: alipayShippingForm.phone.trim(),
+                      address: alipayShippingForm.address.trim(),
+                      district: alipayShippingForm.district.trim() || undefined,
+                      region: alipayShippingForm.region,
+                    } : undefined,
+                  })}
                 >
                   {createAlipayOrderMutation.isPending ? (
                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</>
