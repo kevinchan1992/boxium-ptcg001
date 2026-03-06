@@ -60,10 +60,10 @@ export default function Notifications() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a1a] flex items-center justify-center">
         <div className="text-center">
           <Bell className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-700 text-lg mb-4">請先登入以查看通知</p>
+          <p className="text-white text-lg mb-4">請先登入以查看通知</p>
           <a href="/login"><Button className="bg-[#ffed00] text-black">登入</Button></a>
         </div>
       </div>
@@ -74,18 +74,18 @@ export default function Notifications() {
   const unreadCount = notifications.filter((n: any) => !n.isRead).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-12">
+    <div className="min-h-screen bg-[#0a0a1a] pt-20 pb-12">
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Link href="/">
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-[#06038d] p-2">
+              <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00] p-2">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                 <Bell className="w-6 h-6 text-[#ffed00]" />
                 通知中心
               </h1>
@@ -98,7 +98,7 @@ export default function Notifications() {
             <Button
               variant="outline"
               size="sm"
-              className="border-gray-300 text-gray-700 hover:bg-gray-100"
+              className="border-white/20 text-white hover:bg-white/10"
               onClick={() => markAllAsReadMutation.mutate()}
               disabled={markAllAsReadMutation.isPending}
             >
@@ -110,11 +110,11 @@ export default function Notifications() {
 
         {/* Filter Tabs */}
         <Tabs value={unreadOnly ? "unread" : "all"} onValueChange={(v) => setUnreadOnly(v === "unread")} className="mb-4">
-          <TabsList className="bg-white border border-gray-200">
-            <TabsTrigger value="all" className="text-gray-600 data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
+          <TabsList className="bg-white/5 border border-white/10">
+            <TabsTrigger value="all" className="text-white data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
               全部
             </TabsTrigger>
-            <TabsTrigger value="unread" className="text-gray-600 data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
+            <TabsTrigger value="unread" className="text-white data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
               未讀
               {unreadCount > 0 && (
                 <Badge className="ml-2 bg-red-500 text-white text-xs px-1.5 py-0">{unreadCount}</Badge>
@@ -127,7 +127,7 @@ export default function Notifications() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-20 bg-gray-200 rounded-lg animate-pulse" />
+              <div key={i} className="h-20 bg-white/5 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : notifications.length === 0 ? (
@@ -142,7 +142,7 @@ export default function Notifications() {
             {notifications.map((notif: any) => (
               <Card
                 key={notif.id}
-                className={`bg-white border border-gray-200 border-l-4 ${priorityColor(notif.priority)} transition-all  ${!notif.isRead ? "bg-blue-50/50" : ""}`}
+                className={`bg-white/5 border border-white/10 border-l-4 ${priorityColor(notif.priority)} transition-all hover:bg-white/8 ${!notif.isRead ? "bg-white/8" : ""}`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
@@ -152,7 +152,7 @@ export default function Notifications() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
-                          <p className={`text-sm font-medium ${notif.isRead ? "text-gray-600" : "text-gray-900"}`}>
+                          <p className={`text-sm font-medium ${notif.isRead ? "text-gray-300" : "text-white"}`}>
                             {notif.title}
                             {!notif.isRead && (
                               <span className="ml-2 inline-block w-2 h-2 bg-blue-400 rounded-full" />
@@ -168,7 +168,7 @@ export default function Notifications() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 w-7 p-0 text-gray-400 hover:text-green-600"
+                              className="h-7 w-7 p-0 text-gray-400 hover:text-green-400"
                               onClick={() => markAsReadMutation.mutate({ notificationId: notif.id })}
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -177,7 +177,7 @@ export default function Notifications() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 w-7 p-0 text-gray-400 hover:text-red-500"
+                            className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
                             onClick={() => deleteMutation.mutate({ notificationId: notif.id })}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -189,7 +189,7 @@ export default function Notifications() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="mt-2 h-7 text-xs text-[#ffed00] hover:text-[#06038d]/80 p-0"
+                            className="mt-2 h-7 text-xs text-[#ffed00] hover:text-[#ffed00]/80 p-0"
                             onClick={() => !notif.isRead && markAsReadMutation.mutate({ notificationId: notif.id })}
                           >
                             查看詳情 →

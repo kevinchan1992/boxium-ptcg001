@@ -273,7 +273,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-          <p className="text-gray-500">{t("cardDetail.noData")}</p>
+          <p className="text-muted-foreground">{t("cardDetail.noData")}</p>
         </div>
       </div>
     );
@@ -292,7 +292,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-          <p className="text-gray-500">{t("cardDetail.noData")}</p>
+          <p className="text-muted-foreground">{t("cardDetail.noData")}</p>
         </div>
       </div>
     );
@@ -380,11 +380,11 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             </span>
           </div>
         )}
-        <h1 className="text-base sm:text-xl font-bold text-gray-900 mb-1">
+        <h1 className="text-base sm:text-xl font-bold text-foreground mb-1">
           {product.name}
         </h1>
         {product.nameJa && (
-          <p className="text-sm sm:text-base text-gray-500 mb-2">{product.nameJa}</p>
+          <p className="text-sm sm:text-base text-muted-foreground mb-2">{product.nameJa}</p>
         )}
         <div className="flex flex-wrap gap-2">
           <BrandButton 
@@ -419,8 +419,8 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 style={{ maxWidth: "100%", height: "auto" }}
               />
             ) : (
-              <div className="w-full aspect-[2/3] bg-gray-100 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">{t("home.noImage")}</p>
+              <div className="w-full aspect-[2/3] bg-muted rounded-lg flex items-center justify-center">
+                <p className="text-muted-foreground">{t("home.noImage")}</p>
               </div>
             )}
           </div>
@@ -446,9 +446,9 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           )}
 
           {/* Reference Price */}
-          <div className="bg-card rounded-lg p-3 sm:p-4 md:p-6 border border-gray-200">
+          <div className="bg-card rounded-lg p-3 sm:p-4 md:p-6 border border-border">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 break-words">
+              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground break-words">
                 {isSealedProduct ? (
                   <>{t("cardDetail.sealedReferencePrice")}: {formatCurrency(avgPrice)}</>
                 ) : (
@@ -461,7 +461,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                     ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
                     : priceTrend.isDecrease 
                     ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-                    : 'bg-gray-100 text-gray-500'
+                    : 'bg-muted text-muted-foreground'
                 }`}>
                   <span>
                     {priceTrend.isIncrease 
@@ -472,7 +472,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 </div>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-gray-500 mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
               {isSealedProduct ? (
                 t("cardDetail.basedOnLatestSealedRecords", { count: recordCount, months: actualMonths })
               ) : (
@@ -483,7 +483,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               )}
             </p>
             {/* Price Refresh Status Indicator */}
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
               {triggerRefresh.isPending ? (
                 <>
                   <RefreshCw className="w-3 h-3 animate-spin text-primary" />
@@ -516,9 +516,9 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           </div>
 
           {/* Price History Table */}
-          <div className="bg-card rounded-lg p-3 sm:p-4 md:p-6 border border-gray-200">
+          <div className="bg-card rounded-lg p-3 sm:p-4 md:p-6 border border-border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900">
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-foreground">
                 SNKRDUNK {t("cardDetail.actualPriceHistory")}
               </h3>
             </div>
@@ -529,16 +529,16 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             ) : activePriceHistory.length > 0 ? (
               <div className="overflow-y-auto max-h-96 scrollbar-hide overflow-x-auto -mx-4 sm:mx-0">
                 <table className="w-full min-w-full sm:min-w-[300px]">
-                  <thead className="sticky top-0 bg-card border-b border-gray-200">
+                  <thead className="sticky top-0 bg-card border-b border-border">
                     <tr>
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-gray-500 font-medium text-xs sm:text-sm">
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm">
                         {t("cardDetail.date")}
                       </th>
-                      <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-gray-500 font-medium text-xs sm:text-sm w-16 sm:w-24">
+                      <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm w-16 sm:w-24">
                         {/* Show "數量" for sealed products, "評級" for single cards */}
                         {isSealedProduct ? t("cardDetail.quantity") : t("cardDetail.grade")}
                       </th>
-                      <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-gray-500 font-medium text-xs sm:text-sm">
+                      <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground font-medium text-xs sm:text-sm">
                         {t("cardDetail.price")}
                       </th>
                     </tr>
@@ -551,13 +551,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                       const isEmpty = !displayValue;
                       
                       return (
-                        <tr key={index} className="hover:bg-gray-100 transition-colors">
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-gray-500 text-xs sm:text-sm">
+                        <tr key={index} className="hover:bg-muted/50 transition-colors">
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-muted-foreground text-xs sm:text-sm">
                             {item.soldAt ? formatDate(item.soldAt) : "N/A"}
                           </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-gray-900 text-xs sm:text-sm w-16 sm:w-24">
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-foreground text-xs sm:text-sm w-16 sm:w-24">
                             {isEmpty ? (
-                              <span className="inline-flex items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-md bg-gray-100 text-[10px] sm:text-xs font-medium whitespace-nowrap">
+                              <span className="inline-flex items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-md bg-muted text-[10px] sm:text-xs font-medium whitespace-nowrap">
                                 {isSealedProduct ? '-' : t("cardDetail.usedGrade")}
                               </span>
                             ) : (
@@ -574,7 +574,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 </table>
               </div>
             ) : (
-              <p className="text-gray-500 py-8 text-center">
+              <p className="text-muted-foreground py-8 text-center">
                 {isSealedProduct ? t("cardDetail.noSealedData") : t("cardDetail.noGradeData")}
               </p>
             )}
@@ -591,27 +591,27 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           />
 
           {/* Basic Information */}
-          <div className="bg-card rounded-lg p-6 border border-gray-200">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+          <div className="bg-card rounded-lg p-6 border border-border">
+            <h3 className="text-xl font-semibold text-foreground mb-4">
               {t("cardDetail.basicInfo")}
             </h3>
             <dl className="space-y-3">
               <div className="flex">
-                <dt className="text-gray-500 w-32">
+                <dt className="text-muted-foreground w-32">
                   {isSealedProduct ? t("cardDetail.productName") : t("cardDetail.cardName")}:
                 </dt>
-                <dd className="text-gray-900">{product.name}</dd>
+                <dd className="text-foreground">{product.name}</dd>
               </div>
               {product.nameJa && (
                 <div className="flex">
-                  <dt className="text-gray-500 w-32">{t("cardDetail.japaneseName")}:</dt>
-                  <dd className="text-gray-900">{product.nameJa}</dd>
+                  <dt className="text-muted-foreground w-32">{t("cardDetail.japaneseName")}:</dt>
+                  <dd className="text-foreground">{product.nameJa}</dd>
                 </div>
               )}
               {isSealedProduct && (
                 <div className="flex">
-                  <dt className="text-gray-500 w-32">{t("cardDetail.boxType")}:</dt>
-                  <dd className="text-gray-900">
+                  <dt className="text-muted-foreground w-32">{t("cardDetail.boxType")}:</dt>
+                  <dd className="text-foreground">
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm font-medium">
                       <Package className="w-3.5 h-3.5" />
                       {t("cardDetail.boosterBox")}
@@ -621,8 +621,8 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               )}
               {isSealedProduct && 'styleCode' in product && product.styleCode && (
                 <div className="flex">
-                  <dt className="text-gray-500 w-32">{t("cardDetail.styleCode", "系列編號")}:</dt>
-                  <dd className="text-gray-900">
+                  <dt className="text-muted-foreground w-32">{t("cardDetail.styleCode", "系列編號")}:</dt>
+                  <dd className="text-foreground">
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-mono">
                       {product.styleCode}
                     </span>
@@ -631,14 +631,14 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               )}
               {!isSealedProduct && 'cardNumber' in product && product.cardNumber && (
                 <div className="flex">
-                  <dt className="text-gray-500 w-32">{t("cardDetail.cardNumber")}:</dt>
-                  <dd className="text-gray-900">{product.cardNumber}</dd>
+                  <dt className="text-muted-foreground w-32">{t("cardDetail.cardNumber")}:</dt>
+                  <dd className="text-foreground">{product.cardNumber}</dd>
                 </div>
               )}
               {product.series && (
                 <div className="flex">
-                  <dt className="text-gray-500 w-32">{t("cardDetail.series")}:</dt>
-                  <dd className="text-gray-900">{product.series}</dd>
+                  <dt className="text-muted-foreground w-32">{t("cardDetail.series")}:</dt>
+                  <dd className="text-foreground">{product.series}</dd>
                 </div>
               )}
             </dl>

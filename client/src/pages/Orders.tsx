@@ -122,17 +122,17 @@ function OrderCard({ order }: { order: any }) {
       <div className="p-4 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="text-xs text-gray-500 font-mono">#{order.orderNo}</span>
+            <span className="text-xs text-muted-foreground font-mono">#{order.orderNo}</span>
             <OrderStatusBadge status={order.orderStatus} />
           </div>
           <p className="font-medium text-sm truncate">{order.listingTitle ?? "商品"}</p>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {new Date(order.createdAt).toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
         <div className="text-right flex-shrink-0 space-y-1">
           <p className="font-bold text-[#06038d]">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</p>
-          <p className="text-xs text-gray-500 capitalize">{order.paymentMethod?.replace("_", " ")}</p>
+          <p className="text-xs text-muted-foreground capitalize">{order.paymentMethod?.replace("_", " ")}</p>
           <Link href={`/orders/${order.orderNo}`}>
             <Button variant="outline" size="sm" className="text-xs h-7 px-2">查看詳情</Button>
           </Link>
@@ -220,14 +220,14 @@ function OrderCard({ order }: { order: any }) {
 
       {/* Auto-complete notice */}
       {order.orderStatus === "shipped" && order.autoCompleteAt && (
-        <div className="mx-4 mb-3 text-xs text-gray-500 bg-gray-50 border rounded-lg px-3 py-2">
+        <div className="mx-4 mb-3 text-xs text-muted-foreground bg-gray-50 border rounded-lg px-3 py-2">
           如未確認收貨，系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成訂單
         </div>
       )}
 
       {/* Expand toggle */}
       <button
-        className="w-full px-4 py-2.5 border-t text-xs text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+        className="w-full px-4 py-2.5 border-t text-xs text-muted-foreground hover:bg-muted/30 transition-colors flex items-center justify-center gap-1"
         onClick={() => setExpanded(e => !e)}
       >
         {expanded ? <><ChevronUp className="w-3.5 h-3.5" />收起詳情</> : <><ChevronDown className="w-3.5 h-3.5" />查看詳情</>}
@@ -235,14 +235,14 @@ function OrderCard({ order }: { order: any }) {
 
       {/* Expanded details */}
       {expanded && (
-        <div className="border-t p-4 space-y-3 bg-gray-50">
+        <div className="border-t p-4 space-y-3 bg-muted/20">
           {shippingAddr && (
             <div className="space-y-1.5">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">收貨資料</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">收貨資料</p>
               <div className="text-sm space-y-1">
-                <div className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-gray-500" />{shippingAddr.name}</div>
-                <div className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-gray-500" />{shippingAddr.phone}</div>
-                <div className="flex items-start gap-2"><MapPin className="w-3.5 h-3.5 text-gray-500 mt-0.5" />
+                <div className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-muted-foreground" />{shippingAddr.name}</div>
+                <div className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-muted-foreground" />{shippingAddr.phone}</div>
+                <div className="flex items-start gap-2"><MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5" />
                   <span>{shippingAddr.address}{shippingAddr.district ? `，${shippingAddr.district}` : ""}{shippingAddr.region ? `，${shippingAddr.region}` : ""}</span>
                 </div>
               </div>
@@ -250,9 +250,9 @@ function OrderCard({ order }: { order: any }) {
           )}
           <Separator />
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">付款資料</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">付款資料</p>
             <div className="text-sm space-y-1">
-              <div className="flex justify-between"><span className="text-gray-500">商品金額</span><span>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">商品金額</span><span>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
               <div className="flex justify-between font-medium"><span>總計</span><span className="text-[#06038d]">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
             </div>
           </div>
@@ -271,7 +271,7 @@ function OrderCard({ order }: { order: any }) {
             <DialogTitle>確認收貨</DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-gray-500">確認已收到商品後，款項將立即轉帳給賣家。此操作不可撤銷。</p>
+            <p className="text-sm text-muted-foreground">確認已收到商品後，款項將立即轉帳給賣家。此操作不可撤銷。</p>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
               <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
               請確認商品狀態與描述相符後再確認收貨。如有問題，請先申請爭議。
@@ -301,7 +301,7 @@ function OrderCard({ order }: { order: any }) {
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-gray-500">請詳細描述問題，管理員將在 1-3 個工作天內處理。</p>
+            <p className="text-sm text-muted-foreground">請詳細描述問題，管理員將在 1-3 個工作天內處理。</p>
             <Textarea
               placeholder="請描述問題，例如：商品與描述不符、未收到商品、商品損壞等（至少 10 字）"
               value={disputeReason}
@@ -309,7 +309,7 @@ function OrderCard({ order }: { order: any }) {
               rows={4}
               className="text-sm"
             />
-            <div className="text-xs text-gray-500 text-right">{disputeReason.length}/1000</div>
+            <div className="text-xs text-muted-foreground text-right">{disputeReason.length}/1000</div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowDisputeDialog(false)}>取消</Button>
@@ -338,7 +338,7 @@ function OrderCard({ order }: { order: any }) {
             <div className="space-y-2">
               <p className="text-sm font-medium">評分</p>
               <StarRating value={reviewRating} onChange={setReviewRating} />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {reviewRating === 1 && "非常不滿意"}
                 {reviewRating === 2 && "不滿意"}
                 {reviewRating === 3 && "一般"}
@@ -356,7 +356,7 @@ function OrderCard({ order }: { order: any }) {
                 className="text-sm"
                 maxLength={500}
               />
-              <div className="text-xs text-gray-500 text-right">{reviewComment.length}/500</div>
+              <div className="text-xs text-muted-foreground text-right">{reviewComment.length}/500</div>
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -390,10 +390,10 @@ export default function Orders() {
   const user = me;
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20">
+      <div className="min-h-screen bg-background pt-20">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-32 bg-gray-100 rounded-xl animate-pulse" />
+            <div key={i} className="h-32 bg-muted rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -402,9 +402,9 @@ export default function Orders() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
+      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
         <div className="text-center space-y-3">
-          <Package className="w-12 h-12 mx-auto text-gray-500" />
+          <Package className="w-12 h-12 mx-auto text-muted-foreground" />
           <p className="font-medium">請先登入查看訂單</p>
           <Link href="/login"><Button className="bg-[#06038d] text-white">登入</Button></Link>
         </div>
@@ -416,7 +416,7 @@ export default function Orders() {
   const pastOrders = (orders ?? []).filter(o => ["completed", "cancelled"].includes(o.orderStatus));
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-background pt-20">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
           <Link href="/marketplace">
@@ -426,14 +426,14 @@ export default function Orders() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold">我的訂單</h1>
-            <p className="text-sm text-gray-500">共 {orders?.length ?? 0} 筆訂單</p>
+            <p className="text-sm text-muted-foreground">共 {orders?.length ?? 0} 筆訂單</p>
           </div>
         </div>
 
         {(!orders || orders.length === 0) ? (
           <div className="text-center py-16 space-y-3">
-            <Package className="w-14 h-14 mx-auto text-gray-500 opacity-40" />
-            <p className="font-medium text-gray-500">暫無訂單記錄</p>
+            <Package className="w-14 h-14 mx-auto text-muted-foreground opacity-40" />
+            <p className="font-medium text-muted-foreground">暫無訂單記錄</p>
             <Link href="/marketplace">
               <Button className="bg-[#06038d] text-white">前往商城購物</Button>
             </Link>
@@ -442,7 +442,7 @@ export default function Orders() {
           <div className="space-y-6">
             {activeOrders.length > 0 && (
               <section className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                   <CreditCard className="w-4 h-4" />進行中的訂單（{activeOrders.length}）
                 </h2>
                 {activeOrders.map(order => <OrderCard key={order.id} order={order} />)}
@@ -450,7 +450,7 @@ export default function Orders() {
             )}
             {pastOrders.length > 0 && (
               <section className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                   <CheckCircle className="w-4 h-4" />歷史訂單（{pastOrders.length}）
                 </h2>
                 {pastOrders.map(order => <OrderCard key={order.id} order={order} />)}

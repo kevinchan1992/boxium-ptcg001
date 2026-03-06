@@ -144,11 +144,11 @@ function OrderTimeline({ order }: { order: any }) {
             {/* Content */}
             <div className="flex-1 pt-1.5 pb-2">
               <div className="flex items-center justify-between gap-2">
-                <p className={`font-medium text-sm ${isPending ? "text-gray-500" : "text-gray-900"}`}>
+                <p className={`font-medium text-sm ${isPending ? "text-muted-foreground" : "text-foreground"}`}>
                   {step.label}
                 </p>
                 {timestamp && (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     {timestamp.toLocaleDateString("zh-HK", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </span>
                 )}
@@ -163,7 +163,7 @@ function OrderTimeline({ order }: { order: any }) {
               )}
               {/* Auto-complete notice */}
               {step.key === "completed" && isPending && order.orderStatus === "shipped" && order.autoCompleteAt && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成
                 </p>
               )}
@@ -228,11 +228,11 @@ export default function OrderDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20">
+      <div className="min-h-screen bg-background pt-20">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-4 animate-pulse">
-          <div className="h-8 bg-gray-100 rounded w-1/3" />
-          <div className="h-48 bg-gray-100 rounded-xl" />
-          <div className="h-32 bg-gray-100 rounded-xl" />
+          <div className="h-8 bg-muted rounded w-1/3" />
+          <div className="h-48 bg-muted rounded-xl" />
+          <div className="h-32 bg-muted rounded-xl" />
         </div>
       </div>
     );
@@ -240,9 +240,9 @@ export default function OrderDetail() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
+      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
         <div className="text-center space-y-3">
-          <Package className="w-12 h-12 mx-auto text-gray-500" />
+          <Package className="w-12 h-12 mx-auto text-muted-foreground" />
           <p className="font-medium">訂單不存在或無權查看</p>
           <Link href="/orders"><Button variant="outline">返回訂單列表</Button></Link>
         </div>
@@ -264,7 +264,7 @@ export default function OrderDetail() {
   const canReview = isBuyer && isCompleted && order.sellerType === "seller" && !review;
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-background pt-20">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -276,7 +276,7 @@ export default function OrderDetail() {
           <div>
             <h1 className="text-xl font-bold">訂單詳情</h1>
             <button
-              className="text-xs text-gray-500 font-mono flex items-center gap-1 hover:text-gray-900 transition-colors"
+              className="text-xs text-muted-foreground font-mono flex items-center gap-1 hover:text-foreground transition-colors"
               onClick={() => { navigator.clipboard.writeText(order.orderNo); toast.success("訂單號已複製"); }}
             >
               #{order.orderNo}
@@ -296,12 +296,12 @@ export default function OrderDetail() {
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}>
                   {statusInfo.label}
                 </span>
-                <p className="text-xs text-gray-500 mt-0.5">{statusInfo.desc}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{statusInfo.desc}</p>
               </div>
             </div>
             <div className="text-right">
               <p className="font-bold text-[#06038d] text-lg">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</p>
-              <p className="text-xs text-gray-500 capitalize">{order.paymentMethod?.replace("_", " ")}</p>
+              <p className="text-xs text-muted-foreground capitalize">{order.paymentMethod?.replace("_", " ")}</p>
             </div>
           </div>
 
@@ -330,7 +330,7 @@ export default function OrderDetail() {
               <span className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1">
                 <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
                 已評價 {review.rating} 星
-                {review.comment && <span className="ml-1 text-gray-500">· {review.comment}</span>}
+                {review.comment && <span className="ml-1 text-muted-foreground">· {review.comment}</span>}
               </span>
             </div>
           )}
@@ -380,17 +380,17 @@ export default function OrderDetail() {
         {/* Product Info */}
         {listing && (
           <div className="bg-white rounded-xl border shadow-sm p-4">
-            <h2 className="font-semibold mb-3 text-sm text-gray-500 uppercase tracking-wide">商品資訊</h2>
+            <h2 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">商品資訊</h2>
             <div className="flex items-start gap-3">
               {listing.images && (() => {
                 const imgs = typeof listing.images === "string" ? (() => { try { return JSON.parse(listing.images as string); } catch { return null; } })() : listing.images;
                 return imgs?.[0] ? (
-                  <img src={imgs[0]} alt={listing.title} className="w-16 h-20 object-contain rounded-lg border bg-gray-100 flex-shrink-0" />
+                  <img src={imgs[0]} alt={listing.title} className="w-16 h-20 object-contain rounded-lg border bg-muted flex-shrink-0" />
                 ) : null;
               })()}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">{listing.title}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{listing.condition}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{listing.condition}</p>
                 <p className="text-sm font-bold text-[#06038d] mt-1">HKD {parseFloat(listing.priceHkd as string).toFixed(2)}</p>
               </div>
               <Link href={`/marketplace/${listing.id}`}>
@@ -405,18 +405,18 @@ export default function OrderDetail() {
         {/* Shipping Address */}
         {shippingAddr && (
           <div className="bg-white rounded-xl border shadow-sm p-4">
-            <h2 className="font-semibold mb-3 text-sm text-gray-500 uppercase tracking-wide">收貨資料</h2>
+            <h2 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">收貨資料</h2>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2.5">
-                <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <span>{shippingAddr.name}</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <span>{shippingAddr.phone}</span>
               </div>
               <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <span>
                   {shippingAddr.address}
                   {shippingAddr.district ? `，${shippingAddr.district}` : ""}
@@ -429,18 +429,18 @@ export default function OrderDetail() {
 
         {/* Payment Summary */}
         <div className="bg-white rounded-xl border shadow-sm p-4">
-          <h2 className="font-semibold mb-3 text-sm text-gray-500 uppercase tracking-wide">付款摘要</h2>
+          <h2 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">付款摘要</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">商品金額</span>
+              <span className="text-muted-foreground">商品金額</span>
               <span>HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">付款方式</span>
+              <span className="text-muted-foreground">付款方式</span>
               <span className="capitalize">{order.paymentMethod === "alipay_hk" ? "支付寶 HK" : "Stripe 信用卡"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">付款狀態</span>
+              <span className="text-muted-foreground">付款狀態</span>
               <span className={order.paymentStatus === "paid" ? "text-green-600 font-medium" : "text-amber-600"}>
                 {order.paymentStatus === "paid" ? "已付款" : order.paymentStatus === "pending" ? "待付款" : order.paymentStatus === "refunded" ? "已退款" : order.paymentStatus}
               </span>
@@ -454,7 +454,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Order Meta */}
-        <div className="text-xs text-gray-500 space-y-1 px-1">
+        <div className="text-xs text-muted-foreground space-y-1 px-1">
           <p>訂單建立：{new Date(order.createdAt).toLocaleString("zh-HK")}</p>
           <p>最後更新：{new Date(order.updatedAt).toLocaleString("zh-HK")}</p>
         </div>
@@ -465,7 +465,7 @@ export default function OrderDetail() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>確認收貨</DialogTitle></DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-gray-500">確認已收到商品後，款項將立即轉帳給賣家。此操作不可撤銷。</p>
+            <p className="text-sm text-muted-foreground">確認已收到商品後，款項將立即轉帳給賣家。此操作不可撤銷。</p>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
               <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
               請確認商品狀態與描述相符後再確認收貨。如有問題，請先申請爭議。
@@ -495,7 +495,7 @@ export default function OrderDetail() {
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-gray-500">請詳細描述問題，管理員將在 1-3 個工作天內處理。</p>
+            <p className="text-sm text-muted-foreground">請詳細描述問題，管理員將在 1-3 個工作天內處理。</p>
             <Textarea
               placeholder="請描述問題，例如：商品與描述不符、未收到商品、商品損壞等（至少 10 字）"
               value={disputeReason}
@@ -503,7 +503,7 @@ export default function OrderDetail() {
               rows={4}
               className="text-sm"
             />
-            <div className="text-xs text-gray-500 text-right">{disputeReason.length}/1000</div>
+            <div className="text-xs text-muted-foreground text-right">{disputeReason.length}/1000</div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowDisputeDialog(false)}>取消</Button>
@@ -532,7 +532,7 @@ export default function OrderDetail() {
             <div className="space-y-2">
               <p className="text-sm font-medium">評分</p>
               <StarRating value={reviewRating} onChange={setReviewRating} />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {reviewRating === 1 && "非常不滿意"}
                 {reviewRating === 2 && "不滿意"}
                 {reviewRating === 3 && "一般"}
@@ -550,7 +550,7 @@ export default function OrderDetail() {
                 className="text-sm"
                 maxLength={500}
               />
-              <div className="text-xs text-gray-500 text-right">{reviewComment.length}/500</div>
+              <div className="text-xs text-muted-foreground text-right">{reviewComment.length}/500</div>
             </div>
           </div>
           <DialogFooter className="gap-2">
