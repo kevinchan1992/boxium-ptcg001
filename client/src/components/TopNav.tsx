@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, LogOut, User, Bell, Tag } from "lucide-react";
+import { Menu, X, LogOut, User, Bell, Tag, ShoppingBag, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export function TopNav() {
@@ -22,6 +23,7 @@ export function TopNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showSellDialog, setShowSellDialog] = useState(false);
 
   const { data: user } = trpc.auth.me.useQuery();
   const logoutMutation = trpc.auth.logout.useMutation({
@@ -64,9 +66,11 @@ export function TopNav() {
   const handleSellClick = () => {
     setIsMenuOpen(false);
     if (!user) {
-      setLocation("/login");
+      // Show guide dialog for unauthenticated users
+      setShowSellDialog(true);
     } else {
-      setLocation("/seller/dashboard");
+      // Logged-in users go directly to seller dashboard
+      setLocation("/seller");
     }
   };
 
@@ -74,6 +78,54 @@ export function TopNav() {
 
   return (
     <>
+      {/* Sell Guide Dialog for unauthenticated users */}
+      <Dialog open={showSellDialog} onOpenChange={setShowSellDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-[#ffed00]" />
+              成為賣家，輕鬆出售卡牌
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              在 BOXIUM 平台上架你的寶可夢卡牌，觸及更多買家。
+            </p>
+            <div className="space-y-2">
+              {[
+                "免費上架，平台僅收取 5% 服務費",
+                "支援 Stripe 信用卡及支付寶 HK 收款",
+                "自動通知買家，輕鬆管理訂單",
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-[#ffed00] font-bold mt-0.5">✓</span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+              登入後即可立即上架商品，無需額外審核。
+            </p>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => { setShowSellDialog(false); setLocation("/register"); }}
+            >
+              免費註冊
+            </Button>
+            <Button
+              className="flex-1 bg-[#ffed00] text-black hover:bg-[#ffed00]/90 font-bold"
+              onClick={() => { setShowSellDialog(false); setLocation("/login"); }}
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              登入並上架
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Overlay */}
       <AnimatePresence>
         {isMenuOpen && (
@@ -143,7 +195,7 @@ export function TopNav() {
                     <User className="w-4 h-4 mr-2" />
                     個人中心
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setLocation("/seller/dashboard"); }}>
+                  <DropdownMenuItem onClick={() => { setLocation("/seller"); }}>
                     <Tag className="w-4 h-4 mr-2" />
                     賣家中心
                   </DropdownMenuItem>
@@ -224,12 +276,27 @@ export function TopNav() {
                 </motion.div>
               ))}
 
+              {/* Sell link in hamburger menu */}
+              <motion.div
+                initial={{ x: -16, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: navItems.length * 0.04 }}
+              >
+                <button
+                  onClick={() => { handleNavClick(); handleSellClick(); }}
+                  className="w-full flex items-center text-sm font-medium text-[#ffed00] hover:text-[#ffed00]/80 hover:bg-white/5 py-2 px-3 rounded-lg transition-colors"
+                >
+                  <Tag className="w-4 h-4 mr-2" />
+                  出售商品
+                </button>
+              </motion.div>
+
               {/* Admin link */}
               {user?.role === "admin" && (
                 <motion.div
                   initial={{ x: -16, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: navItems.length * 0.04 }}
+                  transition={{ delay: (navItems.length + 1) * 0.04 }}
                 >
                   <Link
                     href="/admin"
@@ -245,7 +312,7 @@ export function TopNav() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: (navItems.length + 1) * 0.04 }}
+                transition={{ delay: (navItems.length + 2) * 0.04 }}
                 className="pt-2 mt-1 border-t border-white/10 space-y-1.5"
               >
                 <div className="px-1">

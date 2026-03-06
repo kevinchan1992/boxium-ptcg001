@@ -3244,3 +3244,28 @@ export async function getSalesReport(months: number = 12) {
     },
   };
 }
+
+// --- Admin Listing Detail with Seller Info ---
+export async function getAdminListingDetail(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Get listing
+  const listingRows = await db.select().from(marketplaceListings).where(eq(marketplaceListings.id, id)).limit(1);
+  const listing = listingRows[0] ?? null;
+  if (!listing) return null;
+  // Get seller profile if C2C
+  let sellerProfile = null;
+  let sellerUser = null;
+  if (listing.sellerType === "seller" && listing.sellerId) {
+    const spRows = await db.select().from(sellerProfiles).where(eq(sellerProfiles.id, listing.sellerId)).limit(1);
+    sellerProfile = spRows[0] ?? null;
+    if (sellerProfile) {
+      const userRows = await db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.id, sellerProfile.userId)).limit(1);
+      sellerUser = userRows[0] ?? null;
+    }
+  }
+  // Get order count for this listing
+  const orderCountRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders).where(eq(marketplaceOrders.listingId, id));
+  const orderCount = Number(orderCountRows[0]?.count ?? 0);
+  return { listing, sellerProfile, sellerUser, orderCount };
+}

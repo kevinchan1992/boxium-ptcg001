@@ -7,7 +7,7 @@ import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure, adminProcedure } from "../_core/trpc";
 import {
   getPublicListings, getListingById, createListing, updateListing,
-  getAdminListings, getSellerListings,
+  getAdminListings, getSellerListings, getAdminListingDetail,
   getSellerProfileByUserId, getSellerProfileById, createSellerProfile, updateSellerProfile, getAllSellerProfiles,
   createMarketplaceOrder, getMarketplaceOrderById, getMarketplaceOrderByNo, updateMarketplaceOrder, getBuyerOrders, getAdminOrders, getAlipayPendingOrders, generateOrderNo,
   createOrderItems, getOrderItems, getSellerOrderItems,
@@ -484,6 +484,14 @@ export const marketplaceRouter = router({
     }))
     .query(async ({ input }) => {
       return getAdminListings(input.page, input.pageSize, input.status);
+    }),
+
+  adminGetListingDetail: adminProcedure
+    .input(z.object({ id: z.number().int() }))
+    .query(async ({ input }) => {
+      const detail = await getAdminListingDetail(input.id);
+      if (!detail) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
+      return detail;
     }),
 
   adminCreatePlatformListing: adminProcedure

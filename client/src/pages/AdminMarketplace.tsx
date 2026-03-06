@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Image, Trash2, ToggleLeft, ToggleRight, Flag, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Image, Trash2, ToggleLeft, ToggleRight, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag } from "lucide-react";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 
 const conditionLabel: Record<string, string> = {
@@ -203,10 +203,231 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
   );
 }
 
+function ListingDetailDialog({ listingId, onClose, onUpdated }: { listingId: number | null; onClose: () => void; onUpdated: () => void }) {
+  const [editMode, setEditMode] = useState(false);
+  const [imgIdx, setImgIdx] = useState(0);
+  const [editForm, setEditForm] = useState({ title: "", description: "", price: "", quantity: "", status: "" });
+
+  const { data, isLoading, refetch } = trpc.marketplace.adminGetListingDetail.useQuery(
+    { id: listingId! },
+    { enabled: !!listingId }
+  );
+
+  const updateMutation = trpc.marketplace.adminUpdateListing.useMutation({
+    onSuccess: () => { toast.success("已更新商品資料"); setEditMode(false); refetch(); onUpdated(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const listing = data?.listing;
+  const sellerProfile = data?.sellerProfile;
+  const sellerUser = data?.sellerUser;
+  const orderCount = data?.orderCount ?? 0;
+
+  const images: string[] = (() => {
+    try { return listing?.images ? JSON.parse(listing.images) : []; } catch { return []; }
+  })();
+
+  const handleEditOpen = () => {
+    if (!listing) return;
+    setEditForm({
+      title: listing.title,
+      description: listing.description ?? "",
+      price: parseFloat(listing.priceHkd as string || "0").toFixed(2),
+      quantity: String(listing.quantity),
+      status: listing.status,
+    });
+    setEditMode(true);
+  };
+
+  return (
+    <Dialog open={!!listingId} onOpenChange={() => { onClose(); setEditMode(false); setImgIdx(0); }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Package className="w-5 h-5" />
+            {editMode ? "編輯商品" : "商品詳情"}
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+        ) : listing ? (
+          <div className="space-y-5">
+            {/* Image Gallery */}
+            {images.length > 0 && (
+              <div className="relative">
+                <div className="aspect-square max-h-64 w-full rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+                  <img src={images[imgIdx]} alt={listing.title} className="w-full h-full object-contain" />
+                </div>
+                {images.length > 1 && (
+                  <>
+                    <button onClick={() => setImgIdx(i => (i - 1 + images.length) % images.length)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1">
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setImgIdx(i => (i + 1) % images.length)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1">
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <div className="flex justify-center gap-1 mt-2">
+                      {images.map((_, i) => (
+                        <button key={i} onClick={() => setImgIdx(i)}
+                          className={`w-2 h-2 rounded-full transition-colors ${i === imgIdx ? "bg-primary" : "bg-muted-foreground/30"}`} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {editMode ? (
+              /* Edit Form */
+              <div className="space-y-4">
+                <div><Label>商品名稱</Label><Input className="mt-1" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} /></div>
+                <div><Label>描述</Label><Textarea className="mt-1" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} rows={3} /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label>售價 (HKD)</Label><Input className="mt-1" type="number" value={editForm.price} onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))} min="4" step="0.01" /></div>
+                  <div><Label>庫存數量</Label><Input className="mt-1" type="number" value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: e.target.value }))} min="0" /></div>
+                </div>
+                <div>
+                  <Label>狀態</Label>
+                  <Select value={editForm.status} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">上架中</SelectItem>
+                      <SelectItem value="pending_review">待審核</SelectItem>
+                      <SelectItem value="draft">草稿</SelectItem>
+                      <SelectItem value="removed">已下架</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ) : (
+              /* View Mode */
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg">{listing.title}</h3>
+                  {listing.description && <p className="text-sm text-muted-foreground mt-1">{listing.description}</p>}
+                </div>
+
+                {/* Key Info Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted/40 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">售價</p>
+                    <p className="font-bold text-lg">HKD {parseFloat(listing.priceHkd as string || "0").toFixed(2)}</p>
+                  </div>
+                  <div className="bg-muted/40 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">庫存</p>
+                    <p className="font-bold text-lg">{listing.quantity}</p>
+                  </div>
+                  <div className="bg-muted/40 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">品相</p>
+                    <Badge className={conditionColor[listing.condition] ?? ""}>{conditionLabel[listing.condition] ?? listing.condition}</Badge>
+                  </div>
+                  <div className="bg-muted/40 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">訂單數</p>
+                    <p className="font-bold text-lg">{orderCount}</p>
+                  </div>
+                </div>
+
+                {/* Status & Type */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge className={listing.status === "active" ? "bg-green-100 text-green-800" : listing.status === "pending_review" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}>
+                    {listing.status === "active" ? "上架中" : listing.status === "pending_review" ? "待審核" : listing.status === "draft" ? "草稿" : listing.status === "sold" ? "已售出" : "已下架"}
+                  </Badge>
+                  <Badge variant="outline" className={listing.sellerType === "platform" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}>
+                    {listing.sellerType === "platform" ? "官方商品" : "C2C 賣家"}
+                  </Badge>
+                </div>
+
+                {/* Dates */}
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>上架時間：{new Date(listing.createdAt).toLocaleString("zh-HK")}</span>
+                  </div>
+                  {listing.listedAt && (
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-3.5 h-3.5" />
+                      <span>正式上架：{new Date(listing.listedAt).toLocaleString("zh-HK")}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Seller Info (C2C only) */}
+                {listing.sellerType === "seller" && (
+                  <div className="border rounded-lg p-3 space-y-2">
+                    <p className="text-sm font-medium flex items-center gap-2"><User2 className="w-4 h-4" />賣家資訊</p>
+                    {sellerProfile ? (
+                      <div className="text-sm space-y-1">
+                        <div className="flex items-center gap-2">
+                          {sellerProfile.avatarUrl && <img src={sellerProfile.avatarUrl} className="w-8 h-8 rounded-full object-cover" alt="" />}
+                          <div>
+                            <p className="font-medium">{sellerProfile.displayName}</p>
+                            {sellerUser && <p className="text-xs text-muted-foreground">{sellerUser.email}</p>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>總銷售：{sellerProfile.totalSales}</span>
+                          <span>評分：{sellerProfile.avgRating ?? "N/A"} ({sellerProfile.ratingCount} 評)</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">賣家資料不可用</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Rejection Reason */}
+                {listing.rejectedReason && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-red-800">拒絕原因</p>
+                    <p className="text-sm text-red-700 mt-1">{listing.rejectedReason}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          {editMode ? (
+            <>
+              <Button variant="outline" onClick={() => setEditMode(false)}>取消</Button>
+              <Button
+                className="bg-[#06038d] hover:bg-[#0804b8] text-white"
+                disabled={updateMutation.isPending}
+                onClick={() => updateMutation.mutate({
+                  id: listingId!,
+                  title: editForm.title || undefined,
+                  description: editForm.description || undefined,
+                  price: parseFloat(editForm.price) || undefined,
+                  quantity: parseInt(editForm.quantity) ?? undefined,
+                  status: editForm.status as any || undefined,
+                })}>
+                {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                儲存變更
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose}>關閉</Button>
+              <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white" onClick={handleEditOpen}>
+                <Edit className="w-4 h-4 mr-2" />編輯商品
+              </Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ListingsTab() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
+  const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
   const { data, isLoading, refetch } = trpc.marketplace.adminGetListings.useQuery({
     page, pageSize: 20, status: statusFilter === "all" ? undefined : statusFilter
   });
@@ -258,6 +479,9 @@ function ListingsTab() {
                 <Badge className={listing.status === "active" ? "bg-green-100 text-green-800" : listing.status === "pending_review" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}>
                   {listing.status === "active" ? "上架中" : listing.status === "pending_review" ? "待審核" : listing.status === "draft" ? "草稿" : listing.status === "sold" ? "已售出" : "已下架"}
                 </Badge>
+                <Button size="sm" variant="outline" onClick={() => setSelectedListingId(listing.id)}>
+                  <Eye className="w-3 h-3 mr-1" />查看/編輯
+                </Button>
                 {listing.status === "pending_review" && (
                   <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
                     onClick={() => updateMutation.mutate({ id: listing.id, status: "active" })}>
@@ -283,6 +507,11 @@ function ListingsTab() {
         </div>
       )}
       <CreateListingDialog open={showCreate} onClose={() => setShowCreate(false)} onSuccess={refetch} />
+      <ListingDetailDialog
+        listingId={selectedListingId}
+        onClose={() => setSelectedListingId(null)}
+        onUpdated={refetch}
+      />
     </div>
   );
 }
