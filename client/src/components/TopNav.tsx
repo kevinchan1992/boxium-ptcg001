@@ -189,17 +189,17 @@ export function TopNav() {
         </div>
       </nav>
 
-      {/* Slide-down Menu — all devices */}
+      {/* Compact dropdown panel — right-aligned, all devices */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ y: -10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -10, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 250 }}
-            className="fixed top-14 left-0 right-0 bg-black/97 backdrop-blur-md border-b border-white/10 z-40"
+            initial={{ y: -8, opacity: 0, scale: 0.97 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -8, opacity: 0, scale: 0.97 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed top-14 right-4 w-56 bg-black/97 backdrop-blur-md border border-white/15 rounded-xl shadow-2xl z-40"
           >
-            <div className="px-4 py-4 space-y-1 max-w-lg mx-auto">
+            <div className="px-2 py-3 space-y-0.5">
               {navItems.map((item, index) => (
                 <motion.div
                   key={item.href}
@@ -210,10 +210,10 @@ export function TopNav() {
                   <Link
                     href={item.href}
                     onClick={handleNavClick}
-                    className={`flex items-center text-base font-medium py-2.5 px-3 rounded-lg transition-colors ${
+                    className={`flex items-center text-sm font-medium py-2 px-3 rounded-lg transition-colors ${
                       isActive(item.href)
                         ? "text-[#ffed00] bg-white/5"
-                        : "text-white/80 hover:text-[#ffed00] hover:bg-white/5"
+                        : "text-white/70 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     {item.label}
@@ -234,7 +234,7 @@ export function TopNav() {
                   <Link
                     href="/admin"
                     onClick={handleNavClick}
-                    className="flex items-center text-base font-medium text-red-400 hover:text-red-300 hover:bg-white/5 py-2.5 px-3 rounded-lg"
+                    className="flex items-center text-sm font-medium text-red-400 hover:text-red-300 hover:bg-white/5 py-2 px-3 rounded-lg"
                   >
                     {t("nav.admin")}
                   </Link>
@@ -246,22 +246,24 @@ export function TopNav() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: (navItems.length + 1) * 0.04 }}
-                className="pt-3 border-t border-white/10 flex items-center justify-between"
+                className="pt-2 mt-1 border-t border-white/10 space-y-1.5"
               >
-                <LanguageSwitcher />
+                <div className="px-1">
+                  <LanguageSwitcher />
+                </div>
                 {!user && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5 px-1">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-white border-white/30 hover:bg-white/10 bg-transparent"
+                      className="flex-1 text-white border-white/30 hover:bg-white/10 bg-transparent text-xs"
                       onClick={() => { setLocation("/login"); handleNavClick(); }}
                     >
                       登入
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-[#ffed00] text-black hover:bg-[#ffed00]/90"
+                      className="flex-1 bg-[#ffed00] text-black hover:bg-[#ffed00]/90 text-xs"
                       onClick={() => { setLocation("/register"); handleNavClick(); }}
                     >
                       註冊
