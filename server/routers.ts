@@ -2266,6 +2266,7 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         search: z.string().optional(),
         role: z.enum(["admin", "user"]).optional(),
         loginMethod: z.enum(["password", "google"]).optional(),
+        isBlocked: z.boolean().optional(),
       }).optional())
       .query(async ({ input }) => {
         const { getUserList } = await import('./userManagement');
@@ -2335,6 +2336,23 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       .query(async ({ input }) => {
         const { getUserDetailWithStats } = await import('./userManagement');
         return await getUserDetailWithStats(input.userId);
+      }),
+    blockUser: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        reason: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { blockUser } = await import('./userManagement');
+        return await blockUser(input.userId, input.reason);
+      }),
+    unblockUser: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const { unblockUser } = await import('./userManagement');
+        return await unblockUser(input.userId);
       }),
     
     // Get trending rankings cache status

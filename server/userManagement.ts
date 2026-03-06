@@ -13,6 +13,7 @@ export async function getUserList(params: {
   search?: string;
   role?: "admin" | "user";
   loginMethod?: "password" | "google";
+  isBlocked?: boolean;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -41,6 +42,10 @@ export async function getUserList(params: {
     conditions.push(eq(users.loginMethod, params.loginMethod));
   }
 
+  if (params.isBlocked !== undefined) {
+    conditions.push(eq(users.isBlocked, params.isBlocked));
+  }
+
   // Get total count
   const countQuery = conditions.length > 0
     ? db.select({ count: sql<number>`count(*)` }).from(users).where(and(...conditions))
@@ -57,9 +62,12 @@ export async function getUserList(params: {
       role: users.role,
       loginMethod: users.loginMethod,
       emailVerified: users.emailVerified,
+      isBlocked: users.isBlocked,
+      blockReason: users.blockReason,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
       lastSignedIn: users.lastSignedIn,
+      phone: users.phone,
     })
     .from(users)
     .orderBy(desc(users.createdAt))
@@ -118,6 +126,12 @@ export async function getUserStats() {
     .from(users)
     .where(gte(users.createdAt, sevenDaysAgo));
 
+  // Blocked users count
+  const [{ blockedCount }] = await db
+    .select({ blockedCount: sql<number>`count(*)` })
+    .from(users)
+    .where(eq(users.isBlocked, true));
+
   return {
     total,
     adminCount,
@@ -125,7 +139,38 @@ export async function getUserStats() {
     passwordCount,
     googleCount,
     newUsersLast7Days: newUsers,
+    blockedCount,
   };
+}
+
+/**
+ * Block a user
+ */
+export async function blockUser(userId: number, reason?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(users)
+    .set({ isBlocked: true, blockReason: reason ?? null, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+
+  return { success: true };
+}
+
+/**
+ * Unblock a user
+ */
+export async function unblockUser(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(users)
+    .set({ isBlocked: false, blockReason: null, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+
+  return { success: true };
 }
 
 /**
@@ -216,6 +261,9 @@ export async function getUserById(userId: number) {
       role: users.role,
       loginMethod: users.loginMethod,
       emailVerified: users.emailVerified,
+      isBlocked: users.isBlocked,
+      blockReason: users.blockReason,
+      phone: users.phone,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
       lastSignedIn: users.lastSignedIn,
@@ -241,6 +289,9 @@ export async function getUserDetailWithStats(userId: number) {
       role: users.role,
       loginMethod: users.loginMethod,
       emailVerified: users.emailVerified,
+      isBlocked: users.isBlocked,
+      blockReason: users.blockReason,
+      phone: users.phone,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
       lastSignedIn: users.lastSignedIn,
@@ -252,7 +303,6 @@ export async function getUserDetailWithStats(userId: number) {
 
   // Get order stats
   const { marketplaceOrders } = await import("../drizzle/schema_new");
-  const { count, and: andOp, eq: eqOp } = await import("drizzle-orm");
 
   const [orderStats] = await db
     .select({

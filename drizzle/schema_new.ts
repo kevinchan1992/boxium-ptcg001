@@ -65,6 +65,8 @@ export const users = mysqlTable("users", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   phone: varchar("phone", { length: 30 }),
+  isBlocked: boolean("isBlocked").default(false).notNull(),
+  blockReason: text("blockReason"),
 });
 
 export type User = typeof users.$inferSelect;

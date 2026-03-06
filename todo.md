@@ -3705,3 +3705,18 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 移除 DebugBlog 頁面及其路由
 - [x] 修復 Notifications 頁面使用新欄位名（body、linkUrl）
 - [x] 修復 SellerDashboard 放款記錄使用 amountHkd 欄位
+
+## 👤 Admin 帳號管理 Tab 重新設計
+- [x] 後端：新增 isBlocked/blockReason 欄位到 users 資料庫
+- [x] 後端：新增 blockUser / unblockUser API
+- [x] 後端：新增 isBlocked 篩選器到 getUserList API
+- [x] 後端： getUserStats 已包含 blockedCount
+- [x] 前端：全面重設計 AdminUserManagement 元件
+- [x] 前端：用戶列表（頭像、名稱、Email、角色、封鎖狀態、登入方式、註冊時間）
+- [x] 前端：搜尋欄（按名稱/Email 搜尋）+ 角色/登入方式/帳號狀態篩選器
+- [x] 前端：每行操作按鈕（查看詳情、封鎖/解封、修改角色、編輯、重置密碼、刪除）
+- [x] 前端：用戶詳情 Dialog（完整帳號資料 + 訂單統計 + 收貨地址）
+- [x] 前端：封鎖確認 Dialog（輸入封鎖原因）
+- [x] 前端：修改角色確認 Dialog（升為管理員警告）
+- [x] 前端：統計卡片（總用戶數、管理員、已封鎖等）
+- [x] 前端：分頁功能優化
