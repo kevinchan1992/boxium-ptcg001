@@ -1,0 +1,133 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'marketplaceOrders' ORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'marketplaceOrders' ORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "orderNo"
+    },
+    {
+      "COLUMN_NAME": "listingId"
+    },
+    {
+      "COLUMN_NAME": "buyerId"
+    },
+    {
+      "COLUMN_NAME": "sellerId"
+    },
+    {
+      "COLUMN_NAME": "sellerType"
+    },
+    {
+      "COLUMN_NAME": "unitPriceHkd"
+    },
+    {
+      "COLUMN_NAME": "quantity"
+    },
+    {
+      "COLUMN_NAME": "subtotalHkd"
+    },
+    {
+      "COLUMN_NAME": "platformFeeRate"
+    },
+    {
+      "COLUMN_NAME": "platformFeeHkd"
+    },
+    {
+      "COLUMN_NAME": "sellerReceivableHkd"
+    },
+    {
+      "COLUMN_NAME": "paymentMethod"
+    },
+    {
+      "COLUMN_NAME": "stripePaymentIntentId"
+    },
+    {
+      "COLUMN_NAME": "stripeChargeId"
+    },
+    {
+      "COLUMN_NAME": "stripeTransferId"
+    },
+    {
+      "COLUMN_NAME": "alipayAcquirementId"
+    },
+    {
+      "COLUMN_NAME": "alipayMerchantTransId"
+    },
+    {
+      "COLUMN_NAME": "alipayProofImageUrl"
+    },
+    {
+      "COLUMN_NAME": "aiVerificationResult"
+    },
+    {
+      "COLUMN_NAME": "paymentStatus"
+    },
+    {
+      "COLUMN_NAME": "orderStatus"
+    },
+    {
+      "COLUMN_NAME": "shippingName"
+    },
+    {
+      "COLUMN_NAME": "shippingPhone"
+    },
+    {
+      "COLUMN_NAME": "shippingAddress"
+    },
+    {
+      "COLUMN_NAME": "shippingMethod"
+    },
+    {
+      "COLUMN_NAME": "trackingNumber"
+    },
+    {
+      "COLUMN_NAME": "shippedAt"
+    },
+    {
+      "COLUMN_NAME": "autoCompleteAt"
+    },
+    {
+      "COLUMN_NAME": "buyerConfirmedAt"
+    },
+    {
+      "COLUMN_NAME": "disputeOpenedAt"
+    },
+    {
+      "COLUMN_NAME": "disputeReason"
+    },
+    {
+      "COLUMN_NAME": "disputeResolvedAt"
+    },
+    {
+      "COLUMN_NAME": "disputeResolution"
+    },
+    {
+      "COLUMN_NAME": "payoutStatus"
+    },
+    {
+      "COLUMN_NAME": "stripeTransferError"
+    },
+    {
+      "COLUMN_NAME": "paymentExpiresAt"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "COLUMN_NAME": "stripeSessionId"
+    },
+    {
+      "COLUMN_NAME": "trackingNo"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\norderNo\nlistingId\nbuyerId\nsellerId\nsellerType\nunitPriceHkd\nquantity\nsubtotalHkd\nplatformFeeRate\nplatformFeeHkd\nsellerReceivableHkd\npaymentMethod\nstripePaymentIntentId\nstripeChargeId\nstripeTransferId\nalipayAcquirementId\nalipayMerchantTransId\nalipayProofImageUrl\naiVerificationResult\npaymentStatus\norderStatus\nshippingName\nshippingPhone\nshippingAddress\nshippingMethod\ntrackingNumber\nshippedAt\nautoCompleteAt\nbuyerConfirmedAt\ndisputeOpenedAt\ndisputeReason\ndisputeResolvedAt\ndisputeResolution\npayoutStatus\nstripeTransferError\npaymentExpiresAt\ncreatedAt\nupdatedAt\nstripeSessionId\ntrackingNo\n",
+  "stderr": "",
+  "execution_time_ms": 1540
+}
