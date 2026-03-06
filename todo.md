@@ -3646,3 +3646,7 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 支援商品圖片、名稱、價格、描述的 OG 標籤（og:title, og:description, og:image, og:price）
 - [x] 支援 Twitter Card meta tags
 - [x] 修正 index.html 中 Twitter meta 屬性為正確的 name 屬性
+
+## 🐛 修復支付寶確認收款資料庫錯誤
+- [x] 診斷原因：資料庫 orderStatus enum 缺少 payment_received / processing / delivered 等值
+- [x] 直接 ALTER TABLE 修正資料庫 enum 值，並同步更新 schema_new.ts

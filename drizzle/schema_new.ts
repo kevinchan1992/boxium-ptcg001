@@ -819,13 +819,15 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   // Order status
   orderStatus: mysqlEnum("orderStatus", [
     "pending_payment",
+    "paid_held",
     "payment_received",
     "processing",
     "shipped",
     "delivered",
     "completed",
     "cancelled",
-    "disputed"
+    "disputed",
+    "refunded"
   ]).default("pending_payment").notNull(),
   // Shipping
   shippingName: varchar("shippingName", { length: 100 }),
@@ -840,7 +842,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   disputeReason: text("disputeReason"),
   disputeResolvedAt: timestamp("disputeResolvedAt"),
   disputeResolution: text("disputeResolution"),
-  payoutStatus: mysqlEnum("payoutStatus", ["pending", "processing", "paid", "failed"]).default("pending").notNull(),
+  payoutStatus: mysqlEnum("payoutStatus", ["not_applicable", "pending", "processing", "completed", "paid", "failed"]).default("pending").notNull(),
   stripeTransferError: text("stripeTransferError"),
   paymentExpiresAt: timestamp("paymentExpiresAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

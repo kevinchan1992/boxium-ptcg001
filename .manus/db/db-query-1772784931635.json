@@ -1,0 +1,338 @@
+{
+  "query": "DESCRIBE `marketplaceOrders`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute DESCRIBE `marketplaceOrders`;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "orderNo",
+      "Type": "varchar(20)",
+      "Null": "NO",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "listingId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "buyerId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "sellerId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "sellerType",
+      "Type": "enum('platform','seller')",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "unitPriceHkd",
+      "Type": "decimal(10,2)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "quantity",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "subtotalHkd",
+      "Type": "decimal(10,2)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "platformFeeRate",
+      "Type": "decimal(5,4)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "platformFeeHkd",
+      "Type": "decimal(10,2)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "sellerReceivableHkd",
+      "Type": "decimal(10,2)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "paymentMethod",
+      "Type": "enum('stripe','alipay_hk')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "stripePaymentIntentId",
+      "Type": "varchar(200)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "stripeChargeId",
+      "Type": "varchar(200)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "stripeTransferId",
+      "Type": "varchar(200)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "alipayAcquirementId",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "alipayMerchantTransId",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "alipayProofImageUrl",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "aiVerificationResult",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "paymentStatus",
+      "Type": "enum('pending','paid','failed','refunded')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "pending",
+      "Extra": ""
+    },
+    {
+      "Field": "orderStatus",
+      "Type": "enum('pending_payment','paid_held','shipped','completed','cancelled','disputed','refunded')",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "pending_payment",
+      "Extra": ""
+    },
+    {
+      "Field": "shippingName",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "shippingPhone",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "shippingAddress",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "shippingMethod",
+      "Type": "enum('sf_express','hongkong_post','other')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "trackingNumber",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "shippedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "autoCompleteAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "buyerConfirmedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "disputeOpenedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "disputeReason",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "disputeResolvedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "disputeResolution",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "payoutStatus",
+      "Type": "enum('not_applicable','pending','completed','failed')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "not_applicable",
+      "Extra": ""
+    },
+    {
+      "Field": "stripeTransferError",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "paymentExpiresAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "stripeSessionId",
+      "Type": "varchar(200)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "trackingNo",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\norderNo\tvarchar(20)\tNO\tUNI\tNULL\t\nlistingId\tint\tNO\t\tNULL\t\nbuyerId\tint\tNO\tMUL\tNULL\t\nsellerId\tint\tYES\tMUL\tNULL\t\nsellerType\tenum('platform','seller')\tNO\tMUL\tNULL\t\nunitPriceHkd\tdecimal(10,2)\tNO\t\tNULL\t\nquantity\tint\tNO\t\tNULL\t\nsubtotalHkd\tdecimal(10,2)\tNO\t\tNULL\t\nplatformFeeRate\tdecimal(5,4)\tNO\t\tNULL\t\nplatformFeeHkd\tdecimal(10,2)\tNO\t\tNULL\t\nsellerReceivableHkd\tdecimal(10,2)\tNO\t\tNULL\t\npaymentMethod\tenum('stripe','alipay_hk')\tNO\t\tNULL\t\nstripePaymentIntentId\tvarchar(200)\tYES\t\tNULL\t\nstripeChargeId\tvarchar(200)\tYES\t\tNULL\t\nstripeTransferId\tvarchar(200)\tYES\t\tNULL\t\nalipayAcquirementId\tvarchar(100)\tYES\t\tNULL\t\nalipayMerchantTransId\tvarchar(100)\tYES\t\tNULL\t\nalipayProofImageUrl\ttext\tYES\t\tNULL\t\naiVerificationResult\ttext\tYES\t\tNULL\t\npaymentStatus\tenum('pending','paid','failed','refunded')\tNO\t\tpending\t\norderStatus\tenum('pending_payment','paid_held','shipped','completed','cancelled','disputed','refunded')\tNO\tMUL\tpending_payment\t\nshippingName\tvarchar(100)\tYES\t\tNULL\t\nshippingPhone\tvarchar(20)\tYES\t\tNULL\t\nshippingAddress\ttext\tYES\t\tNULL\t\nshippingMethod\tenum('sf_express','hongkong_post','other')\tYES\t\tNULL\t\ntrackingNumber\tvarchar(100)\tYES\t\tNULL\t\nshippedAt\ttimestamp\tYES\t\tNULL\t\nautoCompleteAt\ttimestamp\tYES\t\tNULL\t\nbuyerConfirmedAt\ttimestamp\tYES\t\tNULL\t\ndisputeOpenedAt\ttimestamp\tYES\t\tNULL\t\ndisputeReason\ttext\tYES\t\tNULL\t\ndisputeResolvedAt\ttimestamp\tYES\t\tNULL\t\ndisputeResolution\ttext\tYES\t\tNULL\t\npayoutStatus\tenum('not_applicable','pending','completed','failed')\tNO\t\tnot_applicable\t\nstripeTransferError\ttext\tYES\t\tNULL\t\npaymentExpiresAt\ttimestamp\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\nstripeSessionId\tvarchar(200)\tYES\t\tNULL\t\ntrackingNo\tvarchar(100)\tYES\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 1707
+}

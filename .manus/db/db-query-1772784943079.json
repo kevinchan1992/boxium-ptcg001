@@ -1,0 +1,18 @@
+{
+  "query": "SELECT COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_NAME = 'marketplaceOrders' AND COLUMN_NAME IN ('paymentStatus', 'orderStatus');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_NAME = 'marketplaceOrders' AND COLUMN_NAME IN ('paymentStatus', 'orderStatus');",
+  "rows": [
+    {
+      "COLUMN_NAME": "paymentStatus",
+      "COLUMN_TYPE": "enum('pending','paid','failed','refunded')"
+    },
+    {
+      "COLUMN_NAME": "orderStatus",
+      "COLUMN_TYPE": "enum('pending_payment','paid_held','shipped','completed','cancelled','disputed','refunded')"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\tCOLUMN_TYPE\npaymentStatus\tenum('pending','paid','failed','refunded')\norderStatus\tenum('pending_payment','paid_held','shipped','completed','cancelled','disputed','refunded')\n",
+  "stderr": "",
+  "execution_time_ms": 1510
+}
