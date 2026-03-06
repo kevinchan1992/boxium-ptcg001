@@ -3687,3 +3687,21 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] Dialog 內支援直接修改商品標題、描述、售價、庫存、狀態
 - [x] 出售商品按鈕：未登入彈出引導 Dialog（說明平台功能+登入/註冊按鈕），已登入跳轉 /seller
 - [x] 修復 marketplaceReviews 資料庫欄位不一致問題（新增 listingId/buyerId/sellerId 欄位）
+
+#### 🐛 修復 Stripe Connect 設定按鈕錯誤
+- [x] 調查 Stripe Connect 設定按鈕錯誤原因（帳戶尚未開通 Connect 功能）
+- [x] 修復 Stripe Connect onboarding 流程（当 Connect 未開通時顯示引導訊息带前往 Stripe Dashboard 按鈕）
+- [x] 確保 Stripe Connect 設定按鈕正確引導賣家完成 KYC 驗證
+## 🔧 Admin 賣家管理 - 顯示完整賣家身份資料
+- [x] 賣家管理列表加入「查看詳情」按鈕
+- [x] 建立賣家詳情 Dialog：顯示賣家帳號資料（姓名、Email、電話、登入方式、帳號建立時間）
+- [x] 顯示賣家 Profile 資料（店名、頭像、簡介、Stripe Connect 狀態）
+- [x] 顯示賣家統計（總商品數、總訂單數、總銷售額、評分）
+## 🧹 清理舊版冗餘資料
+- [x] 修復所有 TypeScript 錯誤（notifications schema 欄位重命名導致）
+- [x] 修復 LLM 訊息中被錯誤替換的 body 欄位（已恢復為 content）
+- [x] 清理舊版 schema 檔案（移除 schema_new_games.ts、relations.ts）
+- [x] 清理舊版 drizzle migrations-pg 目錄（PostgreSQL 遷移檔案）
+- [x] 移除 DebugBlog 頁面及其路由
+- [x] 修復 Notifications 頁面使用新欄位名（body、linkUrl）
+- [x] 修復 SellerDashboard 放款記錄使用 amountHkd 欄位

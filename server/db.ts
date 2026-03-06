@@ -3245,6 +3245,33 @@ export async function getSalesReport(months: number = 12) {
   };
 }
 
+// --- Admin Seller Detail with User Account Info ---
+export async function getAdminSellerDetail(sellerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Get seller profile
+  const spRows = await db.select().from(sellerProfiles).where(eq(sellerProfiles.id, sellerId)).limit(1);
+  const sellerProfile = spRows[0] ?? null;
+  if (!sellerProfile) return null;
+  // Get user account
+  const userRows = await db.select({ id: users.id, email: users.email, name: users.name, phone: users.phone, loginMethod: users.loginMethod, role: users.role, emailVerified: users.emailVerified, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn }).from(users).where(eq(users.id, sellerProfile.userId)).limit(1);
+  const user = userRows[0] ?? null;
+  // Get listing count
+  const listingCountRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.sellerId, sellerId));
+  const listingCount = Number(listingCountRows[0]?.count ?? 0);
+  // Get active listing count
+  const activeListingCountRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(eq(marketplaceListings.sellerId, sellerId), eq(marketplaceListings.status, 'active')));
+  const activeListingCount = Number(activeListingCountRows[0]?.count ?? 0);
+  // Get order count
+  const orderCountRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders).where(eq(marketplaceOrders.sellerId, sellerId));
+  const orderCount = Number(orderCountRows[0]?.count ?? 0);
+  // Get completed order count and total revenue
+  const completedOrderRows = await db.select({ count: sql<number>`count(*)`, revenue: sql<number>`sum(sellerReceivableHkd)` }).from(marketplaceOrders).where(and(eq(marketplaceOrders.sellerId, sellerId), eq(marketplaceOrders.orderStatus, 'completed')));
+  const completedOrderCount = Number(completedOrderRows[0]?.count ?? 0);
+  const totalRevenue = Number(completedOrderRows[0]?.revenue ?? 0);
+  return { sellerProfile, user, listingCount, activeListingCount, orderCount, completedOrderCount, totalRevenue };
+}
+
 // --- Admin Listing Detail with Seller Info ---
 export async function getAdminListingDetail(id: number) {
   const db = await getDb();

@@ -625,16 +625,13 @@ export type InsertTrendingCardsCache = typeof trendingCardsCache.$inferInsert;
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(), // Foreign key to users table
-  type: mysqlEnum("type", ["price_alert", "system", "trade", "announcement"]).notNull(), // Notification type
+  type: varchar("type", { length: 50 }).notNull(), // Notification type
   title: text("title").notNull(), // Notification title
-  content: text("content").notNull(), // Notification content
-  priority: mysqlEnum("priority", ["low", "medium", "high"]).default("medium").notNull(), // Notification priority
+  body: text("body"), // Notification body content
+  linkUrl: text("linkUrl"), // Optional: URL to navigate when clicked
+  relatedId: int("relatedId"), // Optional: related entity ID
   isRead: boolean("isRead").default(false).notNull(), // Whether notification has been read
-  relatedCardId: int("relatedCardId"), // Optional: related card ID for price alerts
-  relatedUrl: text("relatedUrl"), // Optional: URL to navigate when clicked
-  metadata: text("metadata"), // Optional: JSON metadata (e.g., old price, new price)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  readAt: timestamp("readAt"), // When notification was read
 }, (table) => {
   return {
     userIdIdx: index("userId_idx").on(table.userId),
@@ -888,15 +885,15 @@ export type InsertMarketplaceOrderItem = typeof marketplaceOrderItems.$inferInse
  */
 export const marketplacePayouts = mysqlTable("marketplacePayouts", {
   id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(), // FK to marketplaceOrders
   sellerId: int("sellerId").notNull(), // FK to sellerProfiles
-  orderItemId: int("orderItemId").notNull(), // FK to marketplaceOrderItems
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // HKD
-  currency: varchar("currency", { length: 10 }).default("HKD").notNull(),
+  amountHkd: decimal("amountHkd", { precision: 10, scale: 2 }).notNull(), // HKD amount
   stripeTransferId: varchar("stripeTransferId", { length: 200 }),
   status: mysqlEnum("status", ["pending", "processing", "paid", "failed"]).default("pending").notNull(),
   failureReason: text("failureReason"),
+  retryCount: int("retryCount").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  paidAt: timestamp("paidAt"),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 }, (table) => ({
   sellerIdIdx: index("mp_sellerId_idx").on(table.sellerId),
   statusIdx: index("mp_status_idx").on(table.status),

@@ -109,9 +109,9 @@ async function startServer() {
             userId: order.buyerId,
             type: "trade",
             title: "付款成功 ✅",
-            content: `訂單 ${order.orderNo} 的 Stripe 付款已確認，訂單現在進入處理中。`,
-            priority: "high",
-            relatedUrl: `/orders/${order.orderNo}`,
+            body: `訂單 ${order.orderNo} 的 Stripe 付款已確認，訂單現在進入處理中。`,
+
+            linkUrl: `/orders/${order.orderNo}`,
           }).catch(() => {});
           // Notify seller of new paid order
           if (order.sellerId) {
@@ -119,9 +119,9 @@ async function startServer() {
               userId: order.sellerId,
               type: "trade",
               title: "新訂單已付款 🎉",
-              content: `訂單 ${order.orderNo} 買家已完成 Stripe 付款，請盡快安排出貨。`,
-              priority: "high",
-              relatedUrl: "/seller",
+              body: `訂單 ${order.orderNo} 買家已完成 Stripe 付款，請盡快安排出貨。`,
+
+              linkUrl: "/seller",
             }).catch(() => {});
           }
         }
@@ -155,9 +155,9 @@ async function startServer() {
               userId: sellerProfile.userId,
               type: "system",
               title: "Stripe 收款帳戶已啟用 ✅",
-              content: "你的 Stripe Connect 帳戶已通過驗證並啟用，現在可以接收付款轉帳了。",
-              priority: "high",
-              relatedUrl: "/seller",
+              body: "你的 Stripe Connect 帳戶已通過驗證並啟用，現在可以接收付款轉帳了。",
+
+              linkUrl: "/seller",
             }).catch(() => {});
           }
         }

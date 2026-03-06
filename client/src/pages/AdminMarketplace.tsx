@@ -793,8 +793,163 @@ function AlipayPendingTab() {
   );
 }
 
+function SellerDetailDialog({ sellerId, onClose }: { sellerId: number | null; onClose: () => void }) {
+  const { data, isLoading } = trpc.marketplace.adminGetSellerDetail.useQuery(
+    { sellerId: sellerId! },
+    { enabled: !!sellerId }
+  );
+  const sp = data?.sellerProfile;
+  const user = data?.user;
+
+  const loginMethodLabel: Record<string, string> = { password: "密碼登入", google: "Google OAuth" };
+  const stripeStatusColor: Record<string, string> = { active: "bg-green-100 text-green-800", pending: "bg-yellow-100 text-yellow-800", restricted: "bg-orange-100 text-orange-800", disabled: "bg-red-100 text-red-800" };
+
+  return (
+    <Dialog open={!!sellerId} onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <User2 className="w-5 h-5" />賣家詳情
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+        ) : sp && user ? (
+          <div className="space-y-5">
+            {/* Seller Profile Header */}
+            <div className="flex items-center gap-4">
+              {sp.avatarUrl ? (
+                <img src={sp.avatarUrl} alt={sp.displayName} className="w-16 h-16 rounded-full object-cover border" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                  <User2 className="w-8 h-8 text-muted-foreground" />
+                </div>
+              )}
+              <div>
+                <h3 className="font-bold text-lg">{sp.displayName}</h3>
+                {sp.bio && <p className="text-sm text-muted-foreground">{sp.bio}</p>}
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <Badge className={sp.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                    {sp.isActive ? "已批准" : "已停用"}
+                  </Badge>
+                  <Badge className={stripeStatusColor[sp.stripeConnectStatus] ?? ""}>
+                    Stripe: {sp.stripeConnectStatus}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Account Info Section */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-4 py-2 border-b">
+                <p className="text-sm font-semibold">👤 帳號資訊</p>
+              </div>
+              <div className="divide-y">
+                <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
+                  <span className="text-muted-foreground">姓名</span>
+                  <span className="font-medium">{user.name ?? "未設定"}</span>
+                </div>
+                <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
+                  <span className="text-muted-foreground">Email</span>
+                  <span className="font-medium break-all">{user.email}</span>
+                </div>
+                <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
+                  <span className="text-muted-foreground">電話</span>
+                  <span className="font-medium">{user.phone ?? "未設定"}</span>
+                </div>
+                <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
+                  <span className="text-muted-foreground">登入方式</span>
+                  <span className="font-medium">{loginMethodLabel[user.loginMethod] ?? user.loginMethod}</span>
+                </div>
+                <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
+                  <span className="text-muted-foreground">Email 驗證</span>
+                  <span className={`font-medium ${user.emailVerified ? "text-green-600" : "text-orange-500"}`}>{user.emailVerified ? "已驗證" : "未驗證"}</span>
+                </div>
+                <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
+                  <span className="text-muted-foreground">註冊時間</span>
+                  <span className="font-medium">{new Date(user.createdAt).toLocaleString("zh-HK")}</span>
+                </div>
+                <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
+                  <span className="text-muted-foreground">最後登入</span>
+                  <span className="font-medium">{new Date(user.lastSignedIn).toLocaleString("zh-HK")}</span>
+                </div>
+                <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
+                  <span className="text-muted-foreground">用戶 ID</span>
+                  <span className="font-medium text-muted-foreground">#{user.id}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Seller Stats Section */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-4 py-2 border-b">
+                <p className="text-sm font-semibold">📊 銷售統計</p>
+              </div>
+              <div className="grid grid-cols-2 divide-x divide-y">
+                <div className="px-4 py-3 text-center">
+                  <p className="text-2xl font-bold">{data?.activeListingCount ?? 0}</p>
+                  <p className="text-xs text-muted-foreground">上架中商品</p>
+                </div>
+                <div className="px-4 py-3 text-center">
+                  <p className="text-2xl font-bold">{data?.listingCount ?? 0}</p>
+                  <p className="text-xs text-muted-foreground">總商品數</p>
+                </div>
+                <div className="px-4 py-3 text-center">
+                  <p className="text-2xl font-bold">{data?.completedOrderCount ?? 0}</p>
+                  <p className="text-xs text-muted-foreground">已完成訂單</p>
+                </div>
+                <div className="px-4 py-3 text-center">
+                  <p className="text-2xl font-bold">HK${(data?.totalRevenue ?? 0).toFixed(0)}</p>
+                  <p className="text-xs text-muted-foreground">總收益</p>
+                </div>
+                <div className="px-4 py-3 text-center col-span-2">
+                  <p className="text-2xl font-bold">{sp.avgRating ?? "0.00"} <span className="text-sm text-yellow-500">★</span></p>
+                  <p className="text-xs text-muted-foreground">評分 ({sp.ratingCount} 則評價)</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Stripe Connect Info */}
+            {sp.stripeConnectId && (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-muted/50 px-4 py-2 border-b">
+                  <p className="text-sm font-semibold">💳 Stripe Connect</p>
+                </div>
+                <div className="divide-y">
+                  <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
+                    <span className="text-muted-foreground">Account ID</span>
+                    <span className="font-mono text-xs break-all">{sp.stripeConnectId}</span>
+                  </div>
+                  <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
+                    <span className="text-muted-foreground">狀態</span>
+                    <Badge className={stripeStatusColor[sp.stripeConnectStatus] ?? ""}>{sp.stripeConnectStatus}</Badge>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Rejection Reason */}
+            {sp.rejectReason && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm font-medium text-red-800">停用/拒絕原因</p>
+                <p className="text-sm text-red-700 mt-1">{sp.rejectReason}</p>
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>關閉</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function SellersTab() {
   const [page, setPage] = useState(1);
+  const [selectedSellerId, setSelectedSellerId] = useState<number | null>(null);
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; sellerId: number; sellerName: string }>({ open: false, sellerId: 0, sellerName: "" });
   const [rejectReason, setRejectReason] = useState("");
   const { data, isLoading, refetch } = trpc.marketplace.adminGetSellers.useQuery({ page, pageSize: 20 });
@@ -841,6 +996,9 @@ function SellersTab() {
                 )}
               </div>
               <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => setSelectedSellerId(seller.id)}>
+                  <Eye className="w-3 h-3 mr-1" />查看詳情
+                </Button>
                 {!seller.isActive ? (
                   <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
                     disabled={approveMutation.isPending}
@@ -865,6 +1023,9 @@ function SellersTab() {
           <Button variant="outline" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一頁</Button>
         </div>
       )}
+
+      {/* Seller Detail Dialog */}
+      <SellerDetailDialog sellerId={selectedSellerId} onClose={() => setSelectedSellerId(null)} />
 
       {/* Reject/Deactivate Dialog */}
       <Dialog open={rejectDialog.open} onOpenChange={(o) => setRejectDialog(d => ({ ...d, open: o }))}>

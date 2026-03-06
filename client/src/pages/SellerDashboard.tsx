@@ -187,7 +187,17 @@ export default function SellerDashboard() {
   });
 
   const stripeMutation = trpc.marketplace.startStripeConnectOnboarding.useMutation({
-    onSuccess: (data) => { window.open(data.onboardingUrl, "_blank"); },
+    onSuccess: (data) => {
+      if (!data.connectEnabled) {
+        toast.info("請先開通 Stripe Connect 功能", {
+          description: data.message ?? "請先在 Stripe Dashboard 開通 Connect 功能，然後再返回設定收款帳戶。",
+          action: { label: "前往 Stripe Dashboard", onClick: () => window.open(data.onboardingUrl, "_blank") },
+          duration: 10000,
+        });
+      } else {
+        window.open(data.onboardingUrl, "_blank");
+      }
+    },
     onError: (e) => toast.error(e.message),
   });
 
@@ -475,7 +485,7 @@ export default function SellerDashboard() {
                       <Card key={payout.id}>
                         <CardContent className="flex items-center justify-between py-4">
                           <div>
-                            <p className="font-medium">HKD {parseFloat(payout.amount).toFixed(2)}</p>
+                            <p className="font-medium">HKD {parseFloat(payout.amountHkd ?? payout.amount ?? 0).toFixed(2)}</p>
                             <p className="text-sm text-muted-foreground">
                               {new Date(payout.createdAt).toLocaleDateString("zh-HK")}
                             </p>

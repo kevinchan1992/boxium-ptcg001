@@ -279,9 +279,9 @@ export function startAutoCompleteOrdersScheduler() {
               userId: order.buyerId,
               type: 'trade',
               title: '訂單已自動完成 ✅',
-              content: `訂單 ${order.orderNo} 已超過 14 天未確認收貨，系統已自動完成訂單。`,
-              priority: 'medium',
-              relatedUrl: '/orders',
+              body: `訂單 ${order.orderNo} 已超過 14 天未確認收貨，系統已自動完成訂單。`,
+
+              linkUrl: '/orders',
             }).catch(() => {});
 
             // Trigger Stripe Transfer payout if C2C order
@@ -305,9 +305,9 @@ export function startAutoCompleteOrdersScheduler() {
                     userId: order.sellerId,
                     type: 'trade',
                     title: '款項已自動轉帳 💰',
-                    content: `訂單 ${order.orderNo} 已自動完成，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
-                    priority: 'high',
-                    relatedUrl: '/seller',
+                    body: `訂單 ${order.orderNo} 已自動完成，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
+
+                    linkUrl: '/seller',
                   }).catch(() => {});
                 } catch (err: any) {
                   console.error(`[AutoComplete] Stripe transfer failed for order ${order.orderNo}:`, err.message);

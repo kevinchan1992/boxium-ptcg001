@@ -18,13 +18,6 @@ const typeIcon = (type: string) => {
   }
 };
 
-const priorityColor = (priority: string) => {
-  switch (priority) {
-    case "high": return "border-l-red-500";
-    case "medium": return "border-l-yellow-500";
-    default: return "border-l-gray-600";
-  }
-};
 
 export default function Notifications() {
   const { data: user } = trpc.auth.me.useQuery();
@@ -142,7 +135,7 @@ export default function Notifications() {
             {notifications.map((notif: any) => (
               <Card
                 key={notif.id}
-                className={`bg-white/5 border border-white/10 border-l-4 ${priorityColor(notif.priority)} transition-all hover:bg-white/8 ${!notif.isRead ? "bg-white/8" : ""}`}
+                className={`bg-white/5 border border-white/10 border-l-4 border-l-blue-500/40 transition-all hover:bg-white/8 ${!notif.isRead ? "bg-white/8" : ""}`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
@@ -158,7 +151,7 @@ export default function Notifications() {
                               <span className="ml-2 inline-block w-2 h-2 bg-blue-400 rounded-full" />
                             )}
                           </p>
-                          <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{notif.content}</p>
+                          <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{notif.body}</p>
                           <p className="text-xs text-gray-600 mt-1">
                             {new Date(notif.createdAt).toLocaleString("zh-HK")}
                           </p>
@@ -184,8 +177,8 @@ export default function Notifications() {
                           </Button>
                         </div>
                       </div>
-                      {notif.relatedUrl && (
-                        <Link href={notif.relatedUrl}>
+                      {notif.linkUrl && (
+                        <Link href={notif.linkUrl}>
                           <Button
                             variant="ghost"
                             size="sm"

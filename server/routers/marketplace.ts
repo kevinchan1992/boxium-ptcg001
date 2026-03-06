@@ -8,7 +8,7 @@ import { router, publicProcedure, protectedProcedure, adminProcedure } from "../
 import {
   getPublicListings, getListingById, createListing, updateListing,
   getAdminListings, getSellerListings, getAdminListingDetail,
-  getSellerProfileByUserId, getSellerProfileById, createSellerProfile, updateSellerProfile, getAllSellerProfiles,
+  getSellerProfileByUserId, getSellerProfileById, createSellerProfile, updateSellerProfile, getAllSellerProfiles, getAdminSellerDetail,
   createMarketplaceOrder, getMarketplaceOrderById, getMarketplaceOrderByNo, updateMarketplaceOrder, getBuyerOrders, getAdminOrders, getAlipayPendingOrders, generateOrderNo,
   createOrderItems, getOrderItems, getSellerOrderItems,
   getSellerPayouts, getMarketplaceStats, getSalesReport,
@@ -267,9 +267,8 @@ export const marketplaceRouter = router({
               userId: order.sellerId,
               type: "trade",
               title: "款項已轉帳 💰",
-              content: `訂單 ${order.orderNo} 買家已確認收貨，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
-              priority: "high",
-              relatedUrl: "/seller",
+              body: `訂單 ${order.orderNo} 買家已確認收貨，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
+              linkUrl: "/seller",
             }).catch(() => {});
           } catch (err: any) {
             console.error("[Payout] Stripe transfer failed:", err);
@@ -426,9 +425,8 @@ export const marketplaceRouter = router({
         userId: order.buyerId,
         type: "trade",
         title: "你的訂單已出貨 📦",
-        content: `訂單 ${order.orderNo} 已出貨${input.trackingNo ? `，物流追蹤號：${input.trackingNo}` : ""}。如 14 天內未確認收貨，系統將自動完成訂單。`,
-        priority: "high",
-        relatedUrl: "/orders",
+        body: `訂單 ${order.orderNo} 已出貨${input.trackingNo ? `，物流追蹤號：${input.trackingNo}` : ""}。如 14 天內未確認收貨，系統將自動完成訂單。`,
+        linkUrl: "/orders",
       }).catch(err => console.warn("[Order] Failed to notify buyer of shipment:", err));
       return { success: true };
     }),
@@ -443,23 +441,35 @@ export const marketplaceRouter = router({
       const Stripe = (await import("stripe")).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
       let connectId = profile.stripeConnectId;
-      if (!connectId) {
-        const account = await stripe.accounts.create({
-          type: "express",
-          country: "HK",
-          email: ctx.user.email ?? undefined,
-          capabilities: { transfers: { requested: true } },
+      try {
+        if (!connectId) {
+          const account = await stripe.accounts.create({
+            type: "express",
+            country: "HK",
+            email: ctx.user.email ?? undefined,
+            capabilities: { transfers: { requested: true } },
+          });
+          connectId = account.id;
+          await updateSellerProfile(profile.id, { stripeConnectId: connectId, stripeConnectStatus: "pending" });
+        }
+        const accountLink = await stripe.accountLinks.create({
+          account: connectId,
+          refresh_url: `${ctx.req.headers.origin}/seller?stripe=refresh`,
+          return_url: `${ctx.req.headers.origin}/seller?stripe=success`,
+          type: "account_onboarding",
         });
-        connectId = account.id;
-        await updateSellerProfile(profile.id, { stripeConnectId: connectId, stripeConnectStatus: "pending" });
+        return { onboardingUrl: accountLink.url, connectEnabled: true };
+      } catch (err: any) {
+        // Stripe Connect not enabled on this account - redirect to Stripe Connect signup
+        if (err?.raw?.code === 'account_invalid' || err?.message?.includes('Connect') || err?.message?.includes('signed up for Connect')) {
+          return {
+            onboardingUrl: "https://dashboard.stripe.com/connect",
+            connectEnabled: false,
+            message: "請先在 Stripe Dashboard 開通 Connect 功能，然後再返回設定收款帳戶。",
+          };
+        }
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err?.message ?? "Stripe 連接失敗" });
       }
-      const accountLink = await stripe.accountLinks.create({
-        account: connectId,
-        refresh_url: `${ctx.req.headers.origin}/seller?stripe=refresh`,
-        return_url: `${ctx.req.headers.origin}/seller?stripe=success`,
-        type: "account_onboarding",
-      });
-      return { onboardingUrl: accountLink.url };
     }),
 
   // ============================================================
@@ -577,9 +587,8 @@ export const marketplaceRouter = router({
         userId: order.buyerId,
         type: "trade",
         title: "支付寶 HK 收款已確認 ✅",
-        content: `訂單 ${order.orderNo} 的支付寶 HK 付款已由管理員確認，訂單現在進入處理中。${input.note ? `備註：${input.note}` : ""}`,
-        priority: "high",
-        relatedUrl: `/orders/${order.orderNo}`,
+        body: `訂單 ${order.orderNo} 的支付寶 HK 付款已由管理員確認，訂單現在進入處理中。${input.note ? `備註：${input.note}` : ""}`,
+        linkUrl: `/orders/${order.orderNo}`,
       }).catch(() => {});
       // Notify seller of new order
       if (order.sellerId) {
@@ -587,9 +596,8 @@ export const marketplaceRouter = router({
           userId: order.sellerId,
           type: "trade",
           title: "新訂單已付款 🎉",
-          content: `訂單 ${order.orderNo} 買家已完成付款，請盡快安排出貨。`,
-          priority: "high",
-          relatedUrl: "/seller",
+          body: `訂單 ${order.orderNo} 買家已完成付款，請盡快安排出貨。`,
+          linkUrl: "/seller",
         }).catch(() => {});
       }
       return { success: true };
@@ -619,9 +627,8 @@ export const marketplaceRouter = router({
             userId: order.buyerId,
             type: "trade",
             title: "支付寶 HK 收款已確認 ✅",
-            content: `訂單 ${order.orderNo} 的支付寶 HK 付款已由管理員確認，訂單現在進入處理中。${input.note ? `備註：${input.note}` : ""}`,
-            priority: "high",
-            relatedUrl: `/orders/${order.orderNo}`,
+            body: `訂單 ${order.orderNo} 的支付寶 HK 付款已由管理員確認，訂單現在進入處理中。${input.note ? `備註：${input.note}` : ""}`,
+            linkUrl: `/orders/${order.orderNo}`,
           }).catch(() => {});
           // Notify seller of new order
           if (order.sellerId) {
@@ -629,9 +636,8 @@ export const marketplaceRouter = router({
               userId: order.sellerId,
               type: "trade",
               title: "新訂單已付款 🎉",
-              content: `訂單 ${order.orderNo} 買家已完成支付寶 HK 付款，請盡快安排出貨。`,
-              priority: "high",
-              relatedUrl: "/seller",
+              body: `訂單 ${order.orderNo} 買家已完成支付寶 HK 付款，請盡快安排出貨。`,
+              linkUrl: "/seller",
             }).catch(() => {});
           }
           results.push({ orderId, success: true });
@@ -675,9 +681,8 @@ export const marketplaceRouter = router({
           userId: order.buyerId,
           type: "trade",
           title: msg.title,
-          content: msg.content,
-          priority: input.orderStatus === "cancelled" || input.orderStatus === "disputed" ? "high" : "medium",
-          relatedUrl: `/orders/${order.orderNo}`,
+          body: msg.content,
+          linkUrl: `/orders/${order.orderNo}`,
         }).catch(err => console.warn("[Admin] Failed to notify buyer of status change:", err));
       }
       return { success: true };
@@ -692,9 +697,17 @@ export const marketplaceRouter = router({
       return getAllSellerProfiles(input.page, input.pageSize);
     }),
 
+  adminGetSellerDetail: adminProcedure
+    .input(z.object({ sellerId: z.number().int() }))
+    .query(async ({ input }) => {
+      const detail = await getAdminSellerDetail(input.sellerId);
+      if (!detail) throw new TRPCError({ code: "NOT_FOUND", message: "賣家不存在" });
+      return detail;
+    }),
+
   // ============================================================
   // ADMIN - Approve/Reject Seller with Notification
-  // ============================================================
+  // =============================================================
   adminApproveSeller: adminProcedure
     .input(z.object({
       sellerId: z.number().int(),
@@ -711,9 +724,8 @@ export const marketplaceRouter = router({
           userId: seller.userId,
           type: "system",
           title: "賣家申請已批准 ✅",
-          content: "恭喜！你的賣家申請已獲批准，現在可以開始上架商品了。請前往賣家後台設定 Stripe 收款帳戶。",
-          priority: "high",
-          relatedUrl: "/seller",
+          body: "恭喜！你的賣家申請已獲批准，現在可以開始上架商品了。請前往賣家後台設定 Stripe 收款帳戶。",
+          linkUrl: "/seller",
         }).catch(err => console.warn("[Seller] Failed to create approval notification:", err));
       } else {
         await updateSellerProfile(input.sellerId, { isActive: false, rejectReason: input.rejectReason ?? null });
@@ -729,11 +741,10 @@ export const marketplaceRouter = router({
           userId: seller.userId,
           type: "system",
           title: "賣家申請未獲批准",
-          content: input.rejectReason
+          body: input.rejectReason
             ? `你的賣家申請未獲批准。原因：${input.rejectReason}。如有疑問，請聯絡客服。`
             : "你的賣家申請未獲批准。如有疑問，請聯絡客服。",
-          priority: "high",
-          relatedUrl: "/seller",
+          linkUrl: "/seller",
         }).catch(err => console.warn("[Seller] Failed to create rejection notification:", err));
       }
       return { success: true };
@@ -1120,9 +1131,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
           userId: order.sellerId,
           type: "trade",
           title: "訂單爭議申請 ⚠️",
-          content: `訂單 ${order.orderNo} 買家已申請爭議，請等待管理員處理。`,
-          priority: "high",
-          relatedUrl: "/seller",
+          body: `訂單 ${order.orderNo} 買家已申請爭議，請等待管理員處理。`,
+          linkUrl: "/seller",
         }).catch(() => {});
       }
       return { success: true };
@@ -1190,9 +1200,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
         userId: order.buyerId,
         type: "trade",
         title: "爭議已處理 ✅",
-        content: `訂單 ${order.orderNo} 的爭議已由管理員處理。結果：${input.resolution}`,
-        priority: "high",
-        relatedUrl: "/orders",
+        body: `訂單 ${order.orderNo} 的爭議已由管理員處理。結果：${input.resolution}`,
+        linkUrl: "/orders",
       }).catch(() => {});
       // Notify seller
       if (order.sellerId) {
@@ -1200,9 +1209,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
           userId: order.sellerId,
           type: "trade",
           title: "爭議已處理 ✅",
-          content: `訂單 ${order.orderNo} 的爭議已由管理員處理。`,
-          priority: "high",
-          relatedUrl: "/seller",
+          body: `訂單 ${order.orderNo} 的爭議已由管理員處理。`,
+          linkUrl: "/seller",
         }).catch(() => {});
       }
       return { success: true };
@@ -1364,9 +1372,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
         userId: sellerProfile.userId,
         type: "trade",
         title: "收到新出價 💰",
-        content: `有買家對「${listing.title}」出價 HKD ${input.offerPriceHkd}，請在 48 小時內回應。`,
-        priority: "high",
-        relatedUrl: "/seller",
+        body: `有買家對「${listing.title}」出價 HKD ${input.offerPriceHkd}，請在 48 小時內回應。`,
+        linkUrl: "/seller",
       }).catch(() => {});
       return offer;
     }),
@@ -1405,9 +1412,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
           userId: offer.buyerId,
           type: "trade",
           title: "出價被拒絕 ❌",
-          content: `你對商品的出價 HKD ${offer.offerPriceHkd} 已被賣家拒絕。${input.rejectionReason ? `原因：${input.rejectionReason}` : ""}`,
-          priority: "medium",
-          relatedUrl: "/orders",
+          body: `你對商品的出價 HKD ${offer.offerPriceHkd} 已被賣家拒絕。${input.rejectionReason ? `原因：${input.rejectionReason}` : ""}`,
+          linkUrl: "/orders",
         }).catch(() => {});
         return { success: true, action: "rejected" };
       }
@@ -1457,9 +1463,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
         userId: offer.buyerId,
         type: "trade",
         title: "出價被接受 ✅",
-        content: `賣家接受了你的出價 HKD ${offer.offerPriceHkd}！請尽快完成付款。`,
-        priority: "high",
-        relatedUrl: `/orders`,
+        body: `賣家接受了你的出價 HKD ${offer.offerPriceHkd}！請尽快完成付款。`,
+        linkUrl: `/orders`,
       }).catch(() => {});
       return { success: true, action: "accepted", checkoutUrl: session.url, orderNo };
     }),

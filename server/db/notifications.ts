@@ -73,7 +73,7 @@ export async function markAsRead(notificationId: number, userId: number): Promis
   
   const result = await db
     .update(notifications)
-    .set({ isRead: true, readAt: new Date() })
+    .set({ isRead: true })
     .where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId)));
 
   return (result[0]?.affectedRows || 0) > 0;
@@ -88,7 +88,7 @@ export async function markAllAsRead(userId: number): Promise<number> {
   
   const result = await db
     .update(notifications)
-    .set({ isRead: true, readAt: new Date() })
+    .set({ isRead: true })
     .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
 
   return result[0]?.affectedRows || 0;
