@@ -7,7 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, CreditCard, Smartphone, Package, Star, Shield, Truck, AlertCircle, ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader2, HelpCircle } from "lucide-react";
+import { ArrowLeft, CreditCard, Smartphone, Package, Star, Shield, Truck, AlertCircle, ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader2, HelpCircle, Tag, Flag } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CONDITION_BADGE, CONDITION_FULL, CONDITION_TOOLTIP, CONDITION_GROUP_COLOR, CONDITION_GROUPS, type ConditionValue } from "@/lib/conditions";
 
@@ -154,6 +157,12 @@ export default function MarketplaceListing() {
   const [showShippingDialog, setShowShippingDialog] = useState(false);
   const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港" });
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<number | null>(null);
+  const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [offerAmount, setOfferAmount] = useState("");
+  const [offerMessage, setOfferMessage] = useState("");
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
 
   const { data: me } = trpc.auth.me.useQuery();
 
@@ -184,6 +193,26 @@ export default function MarketplaceListing() {
         window.open(data.checkoutUrl, "_blank");
         toast.success("正在跳轉到 Stripe 付款頁面...");
       }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const makeOfferMutation = trpc.marketplace.makeOffer.useMutation({
+    onSuccess: () => {
+      toast.success("出價已送出！賣家將盡快回覆。");
+      setShowOfferDialog(false);
+      setOfferAmount("");
+      setOfferMessage("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const reportListingMutation = trpc.marketplace.reportListing.useMutation({
+    onSuccess: () => {
+      toast.success("舉報已提交，我們將盡快審核。");
+      setShowReportDialog(false);
+      setReportReason("");
+      setReportDetails("");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -379,12 +408,30 @@ export default function MarketplaceListing() {
                 >
                   <Smartphone className="w-5 h-5 mr-2" />支付寶 HK 付款
                 </Button>
+                {(listing as any).allowOffers && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-12 text-base border-yellow-400 text-yellow-600 hover:bg-yellow-50"
+                    disabled={!me}
+                    onClick={() => setShowOfferDialog(true)}
+                  >
+                    <Tag className="w-5 h-5 mr-2" />出價洽議
+                  </Button>
+                )}
               </div>
             ) : (
               <Button disabled className="w-full h-12">商品已售出</Button>
             )}
 
             <Separator />
+            {me && (
+              <button
+                onClick={() => setShowReportDialog(true)}
+                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-400 transition-colors"
+              >
+                <Flag className="w-3.5 h-3.5" />舉報此商品
+              </button>
+            )}
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-3 text-muted-foreground">
                 <Shield className="w-4 h-4 text-green-600 flex-shrink-0" />
@@ -737,6 +784,118 @@ export default function MarketplaceListing() {
               }}
             >
               {createStripeOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</> : <><CreditCard className="w-4 h-4 mr-2" />前往付款</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Offer Dialog */}
+      <Dialog open={showOfferDialog} onOpenChange={setShowOfferDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Tag className="w-5 h-5 text-yellow-500" />出價洿議
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-sm font-medium mb-1.5 block">
+                出價金額（HKD）
+                {listing?.minOfferHkd && (
+                  <span className="text-gray-400 font-normal ml-1">（最低 HKD {parseFloat(listing.minOfferHkd as string).toFixed(0)}）</span>
+                )}
+              </Label>
+              <Input
+                type="number"
+                placeholder="請輸入出價金額"
+                value={offerAmount}
+                onChange={(e) => setOfferAmount(e.target.value)}
+                className="bg-white/5 border-white/20 text-white"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium mb-1.5 block">留言（可選）</Label>
+              <Textarea
+                placeholder="可以說明出價原因或其他要求..."
+                value={offerMessage}
+                onChange={(e) => setOfferMessage(e.target.value)}
+                rows={3}
+                className="bg-white/5 border-white/20 text-white resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowOfferDialog(false)}>取消</Button>
+            <Button
+              className="bg-yellow-500 hover:bg-yellow-600 text-black"
+              disabled={!offerAmount || parseFloat(offerAmount) <= 0 || makeOfferMutation.isPending}
+              onClick={() => {
+                if (!listing || !me) return;
+                const sellerId = (listing as any).sellerId;
+                if (!sellerId) return;
+                makeOfferMutation.mutate({
+                  listingId: listing.id,
+                  offerPriceHkd: parseFloat(offerAmount),
+                  message: offerMessage || undefined,
+                });
+              }}
+            >
+              {makeOfferMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "送出出價"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Dialog */}
+      <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Flag className="w-5 h-5 text-red-500" />舉報商品
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-sm font-medium mb-1.5 block">舉報原因</Label>
+              <Select value={reportReason} onValueChange={setReportReason}>
+                <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                  <SelectValue placeholder="請選擇舉報原因" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fake_item">假貨 / 詐騙</SelectItem>
+                  <SelectItem value="wrong_description">商品與描述不符</SelectItem>
+                  <SelectItem value="prohibited_item">禁售商品</SelectItem>
+                  <SelectItem value="scam">詐騙行為</SelectItem>
+                  <SelectItem value="other">其他</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm font-medium mb-1.5 block">詳細說明（可選）</Label>
+              <Textarea
+                placeholder="請詳述舉報原因..."
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                rows={3}
+                className="bg-white/5 border-white/20 text-white resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowReportDialog(false)}>取消</Button>
+            <Button
+              variant="destructive"
+              disabled={!reportReason || reportListingMutation.isPending}
+              onClick={() => {
+                if (!listing) return;
+                reportListingMutation.mutate({
+                  listingId: listing.id,
+                  reason: reportReason as "fake_item" | "wrong_description" | "prohibited_item" | "scam" | "other",
+                  details: reportDetails || undefined,
+                });
+              }}
+            >
+              {reportListingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "提交舉報"}
             </Button>
           </DialogFooter>
         </DialogContent>

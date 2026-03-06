@@ -734,7 +734,7 @@ export const sellerProfiles = mysqlTable("sellerProfiles", {
   totalSales: int("totalSales").default(0).notNull(),
   avgRating: decimal("avgRating", { precision: 3, scale: 2 }).default("0.00"),
   ratingCount: int("ratingCount").default(0).notNull(),
-  isActive: boolean("isActive").default(false).notNull(), // Admin approved
+  isActive: boolean("isActive").default(true).notNull(), // Auto-approved (all users can sell)
   rejectReason: text("rejectReason"), // Reason for rejection (shown to applicant)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
@@ -985,3 +985,52 @@ export const userShippingAddresses = mysqlTable("userShippingAddresses", {
 }));
 export type UserShippingAddress = typeof userShippingAddresses.$inferSelect;
 export type InsertUserShippingAddress = typeof userShippingAddresses.$inferInsert;
+
+/**
+ * Offers - buyers can make offers on listings that allow it
+ */
+export const offers = mysqlTable("offers", {
+  id: int("id").autoincrement().primaryKey(),
+  listingId: int("listingId").notNull(), // FK to marketplaceListings
+  buyerId: int("buyerId").notNull(), // FK to users
+  sellerId: int("sellerId").notNull(), // FK to users (via sellerProfiles.userId)
+  sellerProfileId: int("sellerProfileId").notNull(), // FK to sellerProfiles
+  offerPriceHkd: decimal("offerPriceHkd", { precision: 10, scale: 2 }).notNull(),
+  message: text("message"), // optional message from buyer
+  status: mysqlEnum("status", ["pending", "accepted", "rejected", "expired", "cancelled"]).default("pending").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(), // 48 hours from creation
+  respondedAt: timestamp("respondedAt"),
+  rejectionReason: text("rejectionReason"),
+  // If accepted, this links to the resulting order
+  orderId: int("orderId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  listingIdIdx: index("offer_listingId_idx").on(table.listingId),
+  buyerIdIdx: index("offer_buyerId_idx").on(table.buyerId),
+  sellerIdIdx: index("offer_sellerId_idx").on(table.sellerId),
+  statusIdx: index("offer_status_idx").on(table.status),
+}));
+export type Offer = typeof offers.$inferSelect;
+export type InsertOffer = typeof offers.$inferInsert;
+
+/**
+ * ListingReports - buyers can report suspicious or rule-violating listings
+ */
+export const listingReports = mysqlTable("listingReports", {
+  id: int("id").autoincrement().primaryKey(),
+  listingId: int("listingId").notNull(), // FK to marketplaceListings
+  reporterId: int("reporterId").notNull(), // FK to users
+  reason: mysqlEnum("reason", ["fake_item", "wrong_description", "prohibited_item", "scam", "other"]).notNull(),
+  details: text("details"),
+  status: mysqlEnum("status", ["pending", "reviewed", "dismissed", "actioned"]).default("pending").notNull(),
+  adminNote: text("adminNote"),
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  listingIdIdx: index("lr_listingId_idx").on(table.listingId),
+  reporterIdIdx: index("lr_reporterId_idx").on(table.reporterId),
+  statusIdx: index("lr_status_idx").on(table.status),
+}));
+export type ListingReport = typeof listingReports.$inferSelect;
+export type InsertListingReport = typeof listingReports.$inferInsert;

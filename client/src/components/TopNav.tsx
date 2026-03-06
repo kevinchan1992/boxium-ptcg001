@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, LogOut, User } from "lucide-react";
+import { Menu, X, LogOut, User, Bell } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -35,6 +35,12 @@ export function TopNav() {
   const handleLogout = () => {
     logoutMutation.mutate();
   };
+
+  // Notification unread count
+  const { data: unreadData } = trpc.notifications.getUnreadCount.useQuery(
+    undefined,
+    { enabled: !!user, refetchInterval: 30000 }
+  );
 
   const navItems = [
     { href: "/", label: t("common.home") },
@@ -177,6 +183,22 @@ export function TopNav() {
                 <LanguageSwitcher />
               </div>
               
+              {/* Notification Bell - only for logged in users */}
+              {user && (
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <Link href="/notifications">
+                    <Button variant="ghost" size="sm" className="relative text-white hover:text-[#ffed00] p-2">
+                      <Bell className="w-4 h-4" />
+                      {(unreadData?.count ?? 0) > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                          {(unreadData?.count ?? 0) > 9 ? "9+" : unreadData?.count}
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
+                </motion.div>
+              )}
+
               {/* Auth Buttons */}
               {user ? (
                 <DropdownMenu>

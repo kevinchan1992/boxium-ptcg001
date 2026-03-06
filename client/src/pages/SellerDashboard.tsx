@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
-import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X } from "lucide-react";
+import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag } from "lucide-react";
 import { Link } from "wouter";
 
 // ─── ImageUploader ────────────────────────────────────────────────────────────
@@ -154,6 +154,21 @@ export default function SellerDashboard() {
   const { data: myPayouts } = trpc.marketplace.getMyPayouts.useQuery(
     undefined, { enabled: !!sellerProfile }
   );
+  const { data: salesStats } = trpc.marketplace.getSellerSalesStats.useQuery(
+    undefined, { enabled: !!sellerProfile }
+  );
+  const { data: myOffers } = trpc.marketplace.getMyOffers.useQuery(
+    undefined, { enabled: !!sellerProfile }
+  );
+
+  const utils = trpc.useUtils();
+  const respondToOfferMutation = trpc.marketplace.respondToOffer.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(vars.action === 'accept' ? '已接受出價' : '已拒絕出價');
+      utils.marketplace.getMyOffers.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const applyMutation = trpc.marketplace.applyAsSeller.useMutation({
     onSuccess: () => { toast.success("申請已提交，等待審批"); setShowApply(false); refetchProfile(); },
@@ -282,7 +297,7 @@ export default function SellerDashboard() {
               </Card>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
@@ -299,19 +314,36 @@ export default function SellerDashboard() {
                   <div className="flex items-center gap-3">
                     <ShoppingBag className="w-8 h-8 text-green-500" />
                     <div>
-                      <p className="text-2xl font-bold">{sellerProfile.totalSales}</p>
-                      <p className="text-xs text-muted-foreground">總銷售量</p>
+                      <p className="text-2xl font-bold">{salesStats?.completedOrders ?? sellerProfile.totalSales}</p>
+                      <p className="text-xs text-muted-foreground">已完成訂單</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              <Card className="col-span-2 sm:col-span-1">
+              <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
                     <DollarSign className="w-8 h-8 text-yellow-500" />
                     <div>
-                      <p className="text-2xl font-bold">{myPayouts?.length ?? 0}</p>
-                      <p className="text-xs text-muted-foreground">放款記錄</p>
+                      <p className="text-2xl font-bold">HK${(salesStats?.thisMonthRevenue ?? 0).toFixed(0)}</p>
+                      <p className="text-xs text-muted-foreground">本月收益</p>
+                      {salesStats && salesStats.lastMonthRevenue > 0 && (
+                        <p className="text-xs mt-0.5 " style={{ color: salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '#22c55e' : '#ef4444' }}>
+                          {salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '▲' : '▼'}
+                          {Math.abs(((salesStats.thisMonthRevenue - salesStats.lastMonthRevenue) / salesStats.lastMonthRevenue) * 100).toFixed(0)}% 與上月比
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <Star className="w-8 h-8 text-amber-500" />
+                    <div>
+                      <p className="text-2xl font-bold">{parseFloat(sellerProfile.avgRating as string ?? '0').toFixed(1)}</p>
+                      <p className="text-xs text-muted-foreground">評分 ({sellerProfile.ratingCount} 則)</p>
                     </div>
                   </div>
                 </CardContent>
@@ -322,6 +354,14 @@ export default function SellerDashboard() {
               <BrandTabsList>
                 <BrandTabsTrigger value="listings">我的商品</BrandTabsTrigger>
                 <BrandTabsTrigger value="orders">訂單管理</BrandTabsTrigger>
+                <BrandTabsTrigger value="offers">
+                  出價洿議
+                  {myOffers && myOffers.filter((o: any) => o.status === 'pending').length > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-yellow-500 text-black rounded-full">
+                      {myOffers.filter((o: any) => o.status === 'pending').length}
+                    </span>
+                  )}
+                </BrandTabsTrigger>
                 <BrandTabsTrigger value="payouts">放款記錄</BrandTabsTrigger>
               </BrandTabsList>
 
@@ -443,6 +483,53 @@ export default function SellerDashboard() {
                           <Badge className={payout.status === "completed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
                             {payout.status === "completed" ? "已放款" : "處理中"}
                           </Badge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </BrandTabsContent>
+
+              <BrandTabsContent value="offers" className="mt-4">
+                {!myOffers?.length ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>尚無出價洿議</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(myOffers as any[]).map((offer) => (
+                      <Card key={offer.id}>
+                        <CardContent className="py-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{offer.listingTitle || '商品'}</p>
+                              <p className="text-lg font-bold text-yellow-600 mt-0.5">HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</p>
+                              {offer.message && <p className="text-xs text-muted-foreground mt-1">{offer.message}</p>}
+                              <p className="text-xs text-muted-foreground mt-1">{new Date(offer.createdAt).toLocaleDateString('zh-HK')}</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              <Badge className={
+                                offer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                offer.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                                'bg-red-100 text-red-800'
+                              }>
+                                {offer.status === 'pending' ? '待回覆' : offer.status === 'accepted' ? '已接受' : '已拒絕'}
+                              </Badge>
+                              {offer.status === 'pending' && (
+                                <div className="flex gap-2">
+                                  <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                    disabled={respondToOfferMutation.isPending}
+                                    onClick={() => respondToOfferMutation.mutate({ offerId: offer.id, action: 'accept' })}
+                                  >接受</Button>
+                                  <Button size="sm" variant="outline" className="h-7 text-xs border-red-300 text-red-600 hover:bg-red-50"
+                                    disabled={respondToOfferMutation.isPending}
+                                    onClick={() => respondToOfferMutation.mutate({ offerId: offer.id, action: 'reject' })}
+                                  >拒絕</Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}

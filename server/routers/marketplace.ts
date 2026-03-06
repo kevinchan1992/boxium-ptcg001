@@ -20,12 +20,14 @@ import {
   createUserShippingAddress, updateUserShippingAddress,
   deleteUserShippingAddress, setDefaultShippingAddress,
   getDb,
+  createOffer, getOfferById, getBuyerOffers, getSellerOffers, getListingOffers, updateOffer,
+  createListingReport, getAdminListingReports, updateListingReport,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
-import { marketplaceListings } from "../../drizzle/schema_new";
+import { marketplaceListings, offers, listingReports } from "../../drizzle/schema_new";
 import { eq, and } from "drizzle-orm";
 
 // Platform fee rate (5% for C2C listings)
@@ -292,15 +294,10 @@ export const marketplaceRouter = router({
         userId: ctx.user.id,
         displayName: input.displayName,
         bio: input.bio,
-        isActive: false,
+        isActive: true, // Auto-approved: any user can sell
         stripeConnectStatus: "pending",
         totalSales: 0,
       });
-      // Notify owner of new seller application
-      notifyOwner({
-        title: "新賣家申請",
-        content: `用戶 ${ctx.user.name ?? ctx.user.email} 申請成為賣家（顯示名稱：${input.displayName}）。請前往管理後台審核。`,
-      }).catch(err => console.warn("[Seller] Failed to notify owner:", err));
       return profile;
     }),
 
@@ -1039,6 +1036,20 @@ All three checks must pass for verified to be true. Respond with JSON only match
         disputeResolution: `[${input.outcome}] ${input.resolution}`,
         payoutStatus: input.outcome === "release_seller" ? "processing" : "failed",
       });
+      // If refunding buyer, trigger Stripe Refund
+      if (input.outcome === "refund_buyer" && order.stripePaymentIntentId) {
+        try {
+          const Stripe = (await import("stripe")).default;
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+          await stripe.refunds.create({
+            payment_intent: order.stripePaymentIntentId,
+            metadata: { order_no: order.orderNo, dispute_resolved: "refund_buyer" },
+          });
+          console.log(`[Dispute] Stripe refund created for order ${order.orderNo}`);
+        } catch (err: any) {
+          console.error(`[Dispute] Stripe refund failed for order ${order.orderNo}:`, err.message);
+        }
+      }
       // If releasing to seller, trigger payout
       if (input.outcome === "release_seller" && order.sellerType === "seller" && order.sellerId) {
         const sellerProfile = await getSellerProfileByUserId(order.sellerId);
@@ -1198,5 +1209,268 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .mutation(async ({ ctx, input }) => {
       await setDefaultShippingAddress(input.id, ctx.user.id);
       return { success: true };
+    }),
+
+  // ============================================================
+  // OFFERS - Buyer makes price offers on listings
+  // ============================================================
+  makeOffer: protectedProcedure
+    .input(z.object({
+      listingId: z.number().int(),
+      offerPriceHkd: z.number().positive(),
+      message: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await getListingById(input.listingId);
+      if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
+      if (listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架" });
+      if (!listing.allowOffers) throw new TRPCError({ code: "BAD_REQUEST", message: "此商品不接受出價" });
+      const minOffer = listing.minOfferHkd ? parseFloat(listing.minOfferHkd as string) : 0;
+      if (minOffer > 0 && input.offerPriceHkd < minOffer) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `出價不得低於 HKD ${minOffer}` });
+      }
+      if (!listing.sellerId) throw new TRPCError({ code: "BAD_REQUEST", message: "平台商品不支持出價" });
+      const sellerProfile = await getSellerProfileById(listing.sellerId);
+      if (!sellerProfile) throw new TRPCError({ code: "NOT_FOUND", message: "賣家不存在" });
+      // Expire in 48 hours
+      const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+      const offer = await createOffer({
+        listingId: input.listingId,
+        buyerId: ctx.user.id,
+        sellerId: sellerProfile.userId,
+        sellerProfileId: sellerProfile.id,
+        offerPriceHkd: input.offerPriceHkd.toFixed(2),
+        message: input.message,
+        status: "pending",
+        expiresAt,
+      });
+      // Notify seller
+      await createNotification({
+        userId: sellerProfile.userId,
+        type: "trade",
+        title: "收到新出價 💰",
+        content: `有買家對「${listing.title}」出價 HKD ${input.offerPriceHkd}，請在 48 小時內回應。`,
+        priority: "high",
+        relatedUrl: "/seller",
+      }).catch(() => {});
+      return offer;
+    }),
+
+  getMyOffers: protectedProcedure
+    .query(async ({ ctx }) => {
+      return getBuyerOffers(ctx.user.id);
+    }),
+
+  getSellerOffers: protectedProcedure
+    .query(async ({ ctx }) => {
+      const seller = await getSellerProfileByUserId(ctx.user.id);
+      if (!seller) return [];
+      return getSellerOffers(seller.id);
+    }),
+
+  respondToOffer: protectedProcedure
+    .input(z.object({
+      offerId: z.number().int(),
+      action: z.enum(["accept", "reject"]),
+      rejectionReason: z.string().max(300).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const offer = await getOfferById(input.offerId);
+      if (!offer) throw new TRPCError({ code: "NOT_FOUND" });
+      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      if (!sellerProfile || offer.sellerProfileId !== sellerProfile.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      if (offer.status !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "此出價已處理" });
+      if (new Date() > offer.expiresAt) throw new TRPCError({ code: "BAD_REQUEST", message: "出價已過期" });
+
+      if (input.action === "reject") {
+        await updateOffer(offer.id, { status: "rejected", respondedAt: new Date(), rejectionReason: input.rejectionReason });
+        await createNotification({
+          userId: offer.buyerId,
+          type: "trade",
+          title: "出價被拒絕 ❌",
+          content: `你對商品的出價 HKD ${offer.offerPriceHkd} 已被賣家拒絕。${input.rejectionReason ? `原因：${input.rejectionReason}` : ""}`,
+          priority: "medium",
+          relatedUrl: "/orders",
+        }).catch(() => {});
+        return { success: true, action: "rejected" };
+      }
+
+      // Accept: create order at offer price
+      const listing = await getListingById(offer.listingId);
+      if (!listing || listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架" });
+      const offerPrice = parseFloat(offer.offerPriceHkd as string);
+      const platformFee = offerPrice * PLATFORM_FEE_RATE;
+      const orderNo = await generateOrderNo();
+      const order = await createMarketplaceOrder({
+        orderNo,
+        buyerId: offer.buyerId,
+        paymentMethod: "stripe",
+        paymentStatus: "pending",
+        listingId: listing.id,
+        sellerId: listing.sellerId ?? null,
+        sellerType: listing.sellerType as any,
+        unitPriceHkd: offerPrice.toFixed(2),
+        quantity: 1,
+        subtotalHkd: offerPrice.toFixed(2),
+        platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
+        platformFeeHkd: platformFee.toFixed(2),
+        sellerReceivableHkd: (offerPrice - platformFee).toFixed(2),
+        orderStatus: "pending_payment",
+        autoCompleteAt: null as any,
+      });
+      await updateOffer(offer.id, { status: "accepted", respondedAt: new Date(), orderId: order.id });
+      // Create Stripe checkout for buyer
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const origin = "https://boxiumptcg-mua4eq38.manus.space";
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [{ price_data: { currency: "hkd", product_data: { name: listing.title }, unit_amount: Math.round((offerPrice + platformFee) * 100) }, quantity: 1 }],
+        mode: "payment",
+        customer_email: undefined,
+        client_reference_id: offer.buyerId.toString(),
+        metadata: { orderId: order.id.toString(), orderNo, buyerId: offer.buyerId.toString(), offerId: offer.id.toString() },
+        success_url: `${origin}/orders?payment=success&orderNo=${orderNo}`,
+        cancel_url: `${origin}/shop/${listing.id}`,
+        allow_promotion_codes: true,
+      });
+      await updateMarketplaceOrder(order.id, { stripeSessionId: session.id });
+      // Notify buyer
+      await createNotification({
+        userId: offer.buyerId,
+        type: "trade",
+        title: "出價被接受 ✅",
+        content: `賣家接受了你的出價 HKD ${offer.offerPriceHkd}！請尽快完成付款。`,
+        priority: "high",
+        relatedUrl: `/orders`,
+      }).catch(() => {});
+      return { success: true, action: "accepted", checkoutUrl: session.url, orderNo };
+    }),
+
+  // ============================================================
+  // LISTING REPORTS - Buyers can report suspicious listings
+  // ============================================================
+  reportListing: protectedProcedure
+    .input(z.object({
+      listingId: z.number().int(),
+      reason: z.enum(["fake_item", "wrong_description", "prohibited_item", "scam", "other"]),
+      details: z.string().max(1000).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await getListingById(input.listingId);
+      if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
+      const report = await createListingReport({
+        listingId: input.listingId,
+        reporterId: ctx.user.id,
+        reason: input.reason,
+        details: input.details,
+        status: "pending",
+      });
+      notifyOwner({
+        title: "新商品舉報",
+        content: `商品「${listing.title}」被舉報，原因：${input.reason}。請前往管理後台處理。`,
+      }).catch(() => {});
+      return { success: true, reportId: report.id };
+    }),
+
+  adminGetReports: adminProcedure
+    .input(z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(50).default(20),
+      status: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      return getAdminListingReports(input);
+    }),
+
+  adminReviewReport: adminProcedure
+    .input(z.object({
+      reportId: z.number().int(),
+      status: z.enum(["reviewed", "dismissed", "actioned"]),
+      adminNote: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      await updateListingReport(input.reportId, {
+        status: input.status,
+        adminNote: input.adminNote,
+        reviewedAt: new Date(),
+      });
+      return { success: true };
+    }),
+
+  // ============================================================
+  // SELLER PUBLIC PROFILE
+  // ============================================================
+  getSellerPublicProfile: publicProcedure
+    .input(z.object({ sellerId: z.number().int() }))
+    .query(async ({ input }) => {
+      const seller = await getSellerProfileById(input.sellerId);
+      if (!seller || !seller.isActive) throw new TRPCError({ code: "NOT_FOUND", message: "賣家不存在" });
+      const listings = await getSellerListings(seller.id);
+      const activeListings = listings.filter((l: any) => l.status === "active");
+      const reviews = await getSellerReviews(seller.id, 1, 10);
+      return {
+        seller: {
+          id: seller.id,
+          displayName: seller.displayName,
+          bio: seller.bio,
+          avatarUrl: seller.avatarUrl,
+          totalSales: seller.totalSales,
+          avgRating: seller.avgRating,
+          ratingCount: seller.ratingCount,
+          memberSince: seller.createdAt,
+        },
+        listings: activeListings,
+        reviews: reviews.reviews,
+        reviewTotal: reviews.total,
+      };
+    }),
+
+  // ============================================================
+  // SELLER SALES STATS
+  // ============================================================
+  getSellerSalesStats: protectedProcedure
+    .query(async ({ ctx }) => {
+      const seller = await getSellerProfileByUserId(ctx.user.id);
+      if (!seller) return null;
+      const db = await getDb();
+      if (!db) return null;
+      const { gte, sql: sqlFn } = await import("drizzle-orm");
+      const { marketplaceOrders: ordersTable } = await import("../../drizzle/schema_new");
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+      const allOrders = await db.select({
+        status: ordersTable.orderStatus,
+        amount: ordersTable.sellerReceivableHkd,
+        createdAt: ordersTable.createdAt,
+      }).from(ordersTable).where(eq(ordersTable.sellerId, seller.id));
+      const completedOrders = allOrders.filter((o: any) => o.status === "completed");
+      const pendingOrders = allOrders.filter((o: any) => ["pending_payment", "paid", "processing", "shipped"].includes(o.status));
+      const totalRevenue = completedOrders.reduce((sum: number, o: any) => sum + parseFloat(o.amount ?? "0"), 0);
+      const thisMonthOrders = allOrders.filter((o: any) => new Date(o.createdAt) >= startOfMonth);
+      const thisMonthRevenue = thisMonthOrders
+        .filter((o: any) => o.status === "completed")
+        .reduce((sum: number, o: any) => sum + parseFloat(o.amount ?? "0"), 0);
+      const lastMonthOrders = allOrders.filter((o: any) => {
+        const d = new Date(o.createdAt);
+        return d >= startOfLastMonth && d <= endOfLastMonth;
+      });
+      const lastMonthRevenue = lastMonthOrders
+        .filter((o: any) => o.status === "completed")
+        .reduce((sum: number, o: any) => sum + parseFloat(o.amount ?? "0"), 0);
+      return {
+        totalOrders: allOrders.length,
+        completedOrders: completedOrders.length,
+        pendingOrders: pendingOrders.length,
+        totalRevenue,
+        thisMonthRevenue,
+        lastMonthRevenue,
+        avgRating: seller.avgRating,
+        ratingCount: seller.ratingCount,
+      };
     }),
 });

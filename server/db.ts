@@ -2633,11 +2633,11 @@ export async function getRunningBatchUpdateTask(taskType: string) {
 import {
   sellerProfiles, marketplaceListings, marketplaceOrders,
   marketplaceOrderItems, marketplacePayouts,
-  marketplaceBanners, wishlists, marketplaceReviews, userShippingAddresses,
+  marketplaceBanners, wishlists, marketplaceReviews, userShippingAddresses, offers, listingReports,
   InsertSellerProfile, InsertMarketplaceListing, InsertMarketplaceOrder,
   InsertMarketplaceOrderItem, InsertMarketplacePayout,
   InsertMarketplaceBanner, InsertWishlist, InsertMarketplaceReview,
-  type InsertUserShippingAddress
+  type InsertUserShippingAddress, type InsertOffer, type InsertListingReport
 } from "../drizzle/schema_new";
 
 // --- Seller Profiles ---
@@ -3080,4 +3080,70 @@ export async function setDefaultShippingAddress(id: number, userId: number) {
   await db.update(userShippingAddresses)
     .set({ isDefault: true, updatedAt: new Date() })
     .where(and(eq(userShippingAddresses.id, id), eq(userShippingAddresses.userId, userId)));
+}
+
+// --- Offers ---
+export async function createOffer(data: InsertOffer) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(offers).values(data).$returningId();
+  const [row] = await db.select().from(offers).where(eq(offers.id, result.id));
+  return row;
+}
+
+export async function getOfferById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(offers).where(eq(offers.id, id));
+  return row ?? null;
+}
+
+export async function getBuyerOffers(buyerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(offers).where(eq(offers.buyerId, buyerId)).orderBy(desc(offers.createdAt));
+}
+
+export async function getSellerOffers(sellerProfileId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(offers).where(eq(offers.sellerProfileId, sellerProfileId)).orderBy(desc(offers.createdAt));
+}
+
+export async function getListingOffers(listingId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(offers).where(eq(offers.listingId, listingId)).orderBy(desc(offers.createdAt));
+}
+
+export async function updateOffer(id: number, data: Partial<typeof offers.$inferInsert>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(offers).set(data).where(eq(offers.id, id));
+}
+
+// --- Listing Reports ---
+export async function createListingReport(data: InsertListingReport) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(listingReports).values(data).$returningId();
+  const [row] = await db.select().from(listingReports).where(eq(listingReports.id, result.id));
+  return row;
+}
+
+export async function getAdminListingReports(options: { page?: number; pageSize?: number; status?: string } = {}) {
+  const db = await getDb();
+  if (!db) return { reports: [], total: 0 };
+  const { page = 1, pageSize = 20, status } = options;
+  const offset = (page - 1) * pageSize;
+  const conditions = status && status !== 'all' ? [eq(listingReports.status, status as any)] : [];
+  const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(listingReports).where(conditions.length ? and(...conditions) : undefined);
+  const reports = await db.select().from(listingReports).where(conditions.length ? and(...conditions) : undefined).orderBy(desc(listingReports.createdAt)).limit(pageSize).offset(offset);
+  return { reports, total: countResult?.count ?? 0 };
+}
+
+export async function updateListingReport(id: number, data: Partial<typeof listingReports.$inferInsert>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(listingReports).set(data).where(eq(listingReports.id, id));
 }

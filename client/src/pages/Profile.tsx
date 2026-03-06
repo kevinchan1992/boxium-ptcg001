@@ -147,6 +147,9 @@ export default function Profile() {
                 <BrandTabsTrigger value="addresses" icon={<MapPin className="w-4 h-4" />} label="收貨地址">
                   收貨地址
                 </BrandTabsTrigger>
+                <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="我的訂單">
+                  我的訂單
+                </BrandTabsTrigger>
               </BrandTabsList>
             </div>
             <div className="p-6">
@@ -161,6 +164,9 @@ export default function Profile() {
               </BrandTabsContent>
               <BrandTabsContent value="addresses">
                 <ShippingAddressSection />
+              </BrandTabsContent>
+              <BrandTabsContent value="orders">
+                <OrdersSection />
               </BrandTabsContent>
             </div>
           </BrandTabs>
@@ -610,6 +616,85 @@ function HistorySection() {
           </TableBody>
         </Table>
       </div>
+    </div>
+  );
+}
+
+// ─── OrdersSection ─────────────────────────────────────────────────────────────
+function OrdersSection() {
+  const { data: orders, isLoading } = trpc.marketplace.getMyOrders.useQuery();
+  const { t } = useTranslation();
+
+  const statusLabel: Record<string, string> = {
+    pending_payment: "待付款",
+    payment_review: "審核中",
+    processing: "處理中",
+    shipped: "已出貨",
+    completed: "已完成",
+    cancelled: "已取消",
+    disputed: "爭議中",
+  };
+
+  const statusColor: Record<string, string> = {
+    pending_payment: "bg-gray-100 text-gray-700",
+    payment_review: "bg-yellow-100 text-yellow-800",
+    processing: "bg-blue-100 text-blue-800",
+    shipped: "bg-purple-100 text-purple-800",
+    completed: "bg-green-100 text-green-800",
+    cancelled: "bg-red-100 text-red-800",
+    disputed: "bg-orange-100 text-orange-800",
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}
+      </div>
+    );
+  }
+
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+        <p className="font-medium">尚無訂單記錄</p>
+        <p className="text-sm mt-1">前往商城購買卡牌後，訂單將顯示在這裡</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {(orders as any[]).map((order) => (
+        <a
+          key={order.id}
+          href={`/orders/${order.orderNo}`}
+          className="block"
+        >
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-muted-foreground font-mono">#{order.orderNo}</span>
+                    <Badge className={`text-xs ${statusColor[order.status] || "bg-gray-100 text-gray-700"}`}>
+                      {statusLabel[order.status] || order.status}
+                    </Badge>
+                  </div>
+                  <p className="font-medium text-sm truncate">{order.listingTitle || "商品"}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {new Date(order.createdAt).toLocaleDateString("zh-HK")}
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="font-bold text-base">HKD {parseFloat(order.totalAmountHkd || "0").toFixed(2)}</p>
+                  <p className="text-xs text-blue-600 mt-1">查看詳情 →</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </a>
+      ))}
     </div>
   );
 }
