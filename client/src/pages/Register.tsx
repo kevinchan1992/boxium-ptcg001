@@ -73,7 +73,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md bg-white text-gray-900 shadow-lg">
         <CardHeader className="space-y-4">
           {/* Company Logo */}
           <div className="flex justify-center">
@@ -124,7 +124,7 @@ export default function Register() {
                 required
                 disabled={isLoading}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-500">
                 至少 8 個字符，包含大小寫字母和數字
               </p>
             </div>
@@ -146,7 +146,7 @@ export default function Register() {
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
-          <div className="text-sm text-center text-muted-foreground">
+          <div className="text-sm text-center text-gray-500">
             已經有帳號？{" "}
             <Link href="/login" className="text-primary hover:underline">
               立即登入

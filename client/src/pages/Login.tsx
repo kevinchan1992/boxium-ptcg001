@@ -76,7 +76,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md bg-white text-gray-900 shadow-lg">
         <CardHeader className="space-y-4">
           {/* Company Logo */}
           <div className="flex justify-center">
@@ -127,7 +127,7 @@ export default function Login() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">或</span>
+              <span className="bg-white px-2 text-gray-500">或</span>
             </div>
           </div>
 
@@ -167,7 +167,7 @@ export default function Login() {
                   <span className="w-full border-t border-dashed border-amber-400/60" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-background px-2 text-amber-500 font-mono font-semibold tracking-wider">
+                  <span className="bg-white px-2 text-amber-500 font-mono font-semibold tracking-wider">
                     ⚠ DEV ONLY
                   </span>
                 </div>
@@ -185,7 +185,7 @@ export default function Login() {
           )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
-          <div className="text-sm text-center text-muted-foreground">
+          <div className="text-sm text-center text-gray-500">
             還沒有帳號？{" "}
             <Link href="/register" className="text-primary hover:underline">
               立即註冊

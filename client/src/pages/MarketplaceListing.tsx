@@ -31,7 +31,7 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
   if (!imgs) {
     return (
       <div className="aspect-[3/4] bg-gradient-to-br from-muted to-muted/50 rounded-2xl flex items-center justify-center border">
-        <div className="text-center text-muted-foreground">
+        <div className="text-center text-gray-500">
           <Package className="w-16 h-16 mx-auto mb-2 opacity-30" />
           <p className="text-sm">商品圖片</p>
         </div>
@@ -42,7 +42,7 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
   return (
     <div className="space-y-3">
       {/* Main image */}
-      <div className="relative aspect-[3/4] bg-muted rounded-2xl overflow-hidden border group">
+      <div className="relative aspect-[3/4] bg-gray-100 rounded-2xl overflow-hidden border group">
         <img
           src={imgs[activeIdx]}
           alt={`${title} - 圖片 ${activeIdx + 1}`}
@@ -81,7 +81,7 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
             <button
               key={i}
               onClick={() => setActiveIdx(i)}
-              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${i === activeIdx ? "border-[#06038d]" : "border-border hover:border-muted-foreground"}`}
+              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${i === activeIdx ? "border-[#06038d]" : "border-gray-200 hover:border-muted-foreground"}`}
             >
               <img src={url} alt={`縮圖 ${i + 1}`} className="w-full h-full object-cover" />
             </button>
@@ -104,18 +104,18 @@ function SellerReviewsSection({ sellerId }: { sellerId: number }) {
   const shown = expanded ? reviews : reviews.slice(0, 2);
   return (
     <div className="mt-2 space-y-2">
-      <div className="text-xs font-medium text-muted-foreground">賣家評價（{total} 則）</div>
+      <div className="text-xs font-medium text-gray-500">賣家評價（{total} 則）</div>
       {shown.map((r: any) => (
-        <div key={r.id} className="bg-muted/40 rounded-lg p-2.5 text-xs space-y-1">
+        <div key={r.id} className="bg-gray-100 rounded-lg p-2.5 text-xs space-y-1">
           <div className="flex items-center gap-2">
             <div className="flex">
               {[1,2,3,4,5].map(s => (
                 <Star key={s} className={`w-3 h-3 ${s <= r.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
               ))}
             </div>
-            <span className="text-muted-foreground">{new Date(r.createdAt).toLocaleDateString("zh-HK")}</span>
+            <span className="text-gray-500">{new Date(r.createdAt).toLocaleDateString("zh-HK")}</span>
           </div>
-          {r.comment && <p className="text-foreground">{r.comment}</p>}
+          {r.comment && <p className="text-gray-900">{r.comment}</p>}
         </div>
       ))}
       {total > 2 && (
@@ -272,18 +272,18 @@ export default function MarketplaceListing() {
   };
 
   if (isLoading) return (
-    <div className="min-h-screen bg-background pt-20">
+    <div className="min-h-screen bg-gray-50 pt-20">
       <div className="max-w-4xl mx-auto px-4 py-8 animate-pulse space-y-4">
-        <div className="h-8 bg-muted rounded w-1/3" />
-        <div className="h-64 bg-muted rounded" />
+        <div className="h-8 bg-gray-100 rounded w-1/3" />
+        <div className="h-64 bg-gray-100 rounded" />
       </div>
     </div>
   );
 
   if (!listing) return (
-    <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
       <div className="text-center">
-        <AlertCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+        <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-500" />
         <p className="text-lg font-medium">商品不存在或已下架</p>
         <Link href="/marketplace"><Button className="mt-4">返回商城</Button></Link>
       </div>
@@ -307,7 +307,7 @@ export default function MarketplaceListing() {
   const canSubmitAlipay = proofUrl && verifyResult?.verified === true;
 
   return (
-    <div className="min-h-screen bg-background pt-20">
+    <div className="min-h-screen bg-gray-50 pt-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <Link href="/marketplace">
           <Button variant="outline" size="sm" className="mb-6">
@@ -338,7 +338,7 @@ export default function MarketplaceListing() {
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="max-w-xs text-sm">
                       <p className="font-semibold mb-1">{CONDITION_FULL[listing.condition as ConditionValue] ?? listing.condition}</p>
-                      <p className="text-muted-foreground">{CONDITION_TOOLTIP[listing.condition as ConditionValue] ?? ""}</p>
+                      <p className="text-gray-500">{CONDITION_TOOLTIP[listing.condition as ConditionValue] ?? ""}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -348,12 +348,12 @@ export default function MarketplaceListing() {
                 {!isAvailable && <Badge variant="outline" className="bg-red-100 text-red-800">已售出</Badge>}
               </div>
               <h1 className="text-2xl font-bold">{listing.title}</h1>
-              {listing.description && <p className="text-muted-foreground mt-2">{listing.description}</p>}
+              {listing.description && <p className="text-gray-500 mt-2">{listing.description}</p>}
               {/* Seller info for C2C listings */}
               {listing.sellerType === "seller" && (listing as any).sellerProfile && (
                 <div className="mt-3 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                    <span className="font-medium text-foreground">{(listing as any).sellerProfile.displayName}</span>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
+                    <span className="font-medium text-gray-900">{(listing as any).sellerProfile.displayName}</span>
                     <span>·</span>
                     <span>已售出 {(listing as any).sellerProfile.totalSales} 件</span>
                     {(listing as any).sellerProfile.ratingCount > 0 && (
@@ -361,7 +361,7 @@ export default function MarketplaceListing() {
                         <span>·</span>
                         <span className="flex items-center gap-1">
                           <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                          <span className="font-medium text-foreground">{parseFloat((listing as any).sellerProfile.avgRating ?? "0").toFixed(1)}</span>
+                          <span className="font-medium text-gray-900">{parseFloat((listing as any).sellerProfile.avgRating ?? "0").toFixed(1)}</span>
                           <span>({(listing as any).sellerProfile.ratingCount} 個評價)</span>
                         </span>
                       </>
@@ -376,7 +376,7 @@ export default function MarketplaceListing() {
               <span className="text-3xl font-bold text-[#06038d] dark:text-blue-400">
                 HKD {price.toFixed(2)}
               </span>
-              <p className="text-sm text-muted-foreground mt-1">庫存：{listing.quantity} 件</p>
+              <p className="text-sm text-gray-500 mt-1">庫存：{listing.quantity} 件</p>
             </div>
 
             {completedOrderNo ? (
@@ -433,15 +433,15 @@ export default function MarketplaceListing() {
               </button>
             )}
             <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-3 text-muted-foreground">
+              <div className="flex items-center gap-3 text-gray-500">
                 <Shield className="w-4 h-4 text-green-600 flex-shrink-0" />
                 <span>買家保障：商品與描述不符可申請退款</span>
               </div>
-              <div className="flex items-center gap-3 text-muted-foreground">
+              <div className="flex items-center gap-3 text-gray-500">
                 <Truck className="w-4 h-4 text-blue-600 flex-shrink-0" />
                 <span>本地順豐到付 / 自取（詳情請聯絡賣家）</span>
               </div>
-              <div className="flex items-center gap-3 text-muted-foreground">
+              <div className="flex items-center gap-3 text-gray-500">
                 <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                 <span>付款後 14 天自動確認完成交易</span>
               </div>
@@ -464,7 +464,7 @@ export default function MarketplaceListing() {
                 <p className="text-blue-700 mt-1">{listing.title}</p>
               </div>
               <div className="text-center space-y-3">
-                <p className="text-sm text-muted-foreground">請掃描 QR Code 或點擊連結付款</p>
+                <p className="text-sm text-gray-500">請掃描 QR Code 或點擊連結付款</p>
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ALIPAY_QR_URL)}`}
                   alt="支付寶 HK QR Code"
@@ -495,25 +495,25 @@ export default function MarketplaceListing() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>收件人姓名 *</Label>
-                  <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：陳大文" value={alipayShippingForm.name} onChange={e => setAlipayShippingForm(f => ({ ...f, name: e.target.value }))} />
+                  <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-white" placeholder="例：陳大文" value={alipayShippingForm.name} onChange={e => setAlipayShippingForm(f => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>聯絡電話 *</Label>
-                  <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：9123 4567" value={alipayShippingForm.phone} onChange={e => setAlipayShippingForm(f => ({ ...f, phone: e.target.value }))} />
+                  <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-white" placeholder="例：9123 4567" value={alipayShippingForm.phone} onChange={e => setAlipayShippingForm(f => ({ ...f, phone: e.target.value }))} />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <Label>詳細地址 *</Label>
-                <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={alipayShippingForm.address} onChange={e => setAlipayShippingForm(f => ({ ...f, address: e.target.value }))} />
+                <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-white" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={alipayShippingForm.address} onChange={e => setAlipayShippingForm(f => ({ ...f, address: e.target.value }))} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>地區</Label>
-                  <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：旺角" value={alipayShippingForm.district} onChange={e => setAlipayShippingForm(f => ({ ...f, district: e.target.value }))} />
+                  <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-white" placeholder="例：旺角" value={alipayShippingForm.district} onChange={e => setAlipayShippingForm(f => ({ ...f, district: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>區域</Label>
-                  <select className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" value={alipayShippingForm.region} onChange={e => setAlipayShippingForm(f => ({ ...f, region: e.target.value }))}>
+                  <select className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-white" value={alipayShippingForm.region} onChange={e => setAlipayShippingForm(f => ({ ...f, region: e.target.value }))}>
                     <option value="香港島">香港島</option>
                     <option value="九龍">九龍</option>
                     <option value="新界">新界</option>
@@ -521,7 +521,7 @@ export default function MarketplaceListing() {
                   </select>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">* 必填欄位。如不需要寄送可跳過。</p>
+              <p className="text-xs text-gray-500">* 必填欄位。如不需要寄送可跳過。</p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setAlipayStep("qr")}>返回</Button>
                 <Button
@@ -545,7 +545,7 @@ export default function MarketplaceListing() {
                 <Label>付款截圖 *</Label>
                 <div className="mt-2 border-2 border-dashed rounded-lg p-6 text-center">
                   {isUploading ? (
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2 text-gray-500">
                       <Loader2 className="w-8 h-8 animate-spin" />
                       <p className="text-sm">上傳中...</p>
                     </div>
@@ -601,7 +601,7 @@ export default function MarketplaceListing() {
                           <p className={`text-xs mt-1 ${verifyResult.verified ? "text-green-700" : "text-orange-700"}`}>
                             {verifyResult.reason}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-gray-500">
                             AI 信心度：{verifyResult.confidence === "high" ? "高" : verifyResult.confidence === "medium" ? "中" : "低"}
                           </p>
                           {!verifyResult.verified && (
@@ -620,8 +620,8 @@ export default function MarketplaceListing() {
                       <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" id="proof-upload" />
                       <label htmlFor="proof-upload" className="cursor-pointer">
                         <div className="text-3xl mb-2">📷</div>
-                        <p className="text-sm text-muted-foreground">點擊上傳截圖</p>
-                        <p className="text-xs text-muted-foreground mt-1">支援 JPG、PNG，最大 5MB</p>
+                        <p className="text-sm text-gray-500">點擊上傳截圖</p>
+                        <p className="text-xs text-gray-500 mt-1">支援 JPG、PNG，最大 5MB</p>
                       </label>
                     </div>
                   )}
@@ -665,7 +665,7 @@ export default function MarketplaceListing() {
             <div className="text-center space-y-4 py-4">
               <div className="text-5xl">✅</div>
               <p className="font-medium text-lg">訂單已提交！</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 我們將在核對收款後確認你的訂單，通常需要 1-2 個工作天。
               </p>
               <Button className="w-full" onClick={() => setShowAlipay(false)}>關閉</Button>
@@ -751,7 +751,7 @@ export default function MarketplaceListing() {
                 <Label htmlFor="ship-region">區域</Label>
                 <select
                   id="ship-region"
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-white"
                   value={shippingForm.region}
                   onChange={e => setShippingForm(f => ({ ...f, region: e.target.value }))}
                 >
@@ -762,7 +762,7 @@ export default function MarketplaceListing() {
                 </select>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">* 必填欄位。收貨地址將提供給賣家安排寄送。</p>
+            <p className="text-xs text-gray-500">* 必填欄位。收貨地址將提供給賣家安排寄送。</p>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowShippingDialog(false)}>取消</Button>
@@ -810,7 +810,7 @@ export default function MarketplaceListing() {
                 placeholder="請輸入出價金額"
                 value={offerAmount}
                 onChange={(e) => setOfferAmount(e.target.value)}
-                className="bg-white/5 border-white/20 text-white"
+                className="bg-white border-gray-200 text-gray-900"
               />
             </div>
             <div>
@@ -820,7 +820,7 @@ export default function MarketplaceListing() {
                 value={offerMessage}
                 onChange={(e) => setOfferMessage(e.target.value)}
                 rows={3}
-                className="bg-white/5 border-white/20 text-white resize-none"
+                className="bg-white border-gray-200 text-gray-900 resize-none"
               />
             </div>
           </div>
@@ -858,7 +858,7 @@ export default function MarketplaceListing() {
             <div>
               <Label className="text-sm font-medium mb-1.5 block">舉報原因</Label>
               <Select value={reportReason} onValueChange={setReportReason}>
-                <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                <SelectTrigger className="bg-white border-gray-200 text-gray-900">
                   <SelectValue placeholder="請選擇舉報原因" />
                 </SelectTrigger>
                 <SelectContent>
@@ -877,7 +877,7 @@ export default function MarketplaceListing() {
                 value={reportDetails}
                 onChange={(e) => setReportDetails(e.target.value)}
                 rows={3}
-                className="bg-white/5 border-white/20 text-white resize-none"
+                className="bg-white border-gray-200 text-gray-900 resize-none"
               />
             </div>
           </div>

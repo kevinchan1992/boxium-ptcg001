@@ -32,10 +32,10 @@ export default function SellerPublicProfile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] pt-20 pb-12">
+      <div className="min-h-screen bg-gray-50 pt-20 pb-12">
         <div className="max-w-4xl mx-auto px-4 space-y-4">
-          <div className="h-40 bg-white/5 rounded-xl animate-pulse" />
-          <div className="h-64 bg-white/5 rounded-xl animate-pulse" />
+          <div className="h-40 bg-gray-200 rounded-xl animate-pulse" />
+          <div className="h-64 bg-gray-200 rounded-xl animate-pulse" />
         </div>
       </div>
     );
@@ -43,10 +43,10 @@ export default function SellerPublicProfile() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] pt-20 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
         <div className="text-center">
           <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <p className="text-white text-lg mb-2">找不到此賣家</p>
+          <p className="text-gray-700 text-lg mb-2">找不到此賣家</p>
           <Link href="/marketplace">
             <Button className="bg-[#ffed00] text-black hover:bg-[#ffed00]/90">返回商城</Button>
           </Link>
@@ -59,22 +59,22 @@ export default function SellerPublicProfile() {
   const avgRating = parseFloat(seller.avgRating as string ?? "0");
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] pt-20 pb-12">
+    <div className="min-h-screen bg-gray-50 pt-20 pb-12">
       <div className="max-w-4xl mx-auto px-4">
         {/* Back button */}
         <Link href="/marketplace">
-          <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00] mb-4 p-2">
+          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-[#06038d] mb-4 p-2">
             <ArrowLeft className="w-4 h-4 mr-2" />
             返回商城
           </Button>
         </Link>
 
         {/* Seller Profile Header */}
-        <Card className="bg-gradient-to-br from-[#06038d]/40 to-[#0a0a1a] border border-white/10 mb-6">
+        <Card className="bg-white border border-gray-200 shadow-sm mb-6">
           <CardContent className="p-6">
             <div className="flex items-start gap-5">
               {/* Avatar */}
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#ffed00] to-[#06038d] flex items-center justify-center flex-shrink-0 text-2xl font-bold text-white">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#06038d] to-[#0804b8] flex items-center justify-center flex-shrink-0 text-2xl font-bold text-white">
                 {seller.avatarUrl ? (
                   <img src={seller.avatarUrl} alt={seller.displayName} className="w-full h-full rounded-full object-cover" />
                 ) : (
@@ -84,7 +84,7 @@ export default function SellerPublicProfile() {
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-bold text-white mb-1">{seller.displayName}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">{seller.displayName}</h1>
                 {seller.bio && <p className="text-gray-400 text-sm mb-3 line-clamp-2">{seller.bio}</p>}
 
                 <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -130,11 +130,11 @@ export default function SellerPublicProfile() {
 
         {/* Tabs: Listings & Reviews */}
         <Tabs defaultValue="listings">
-          <TabsList className="bg-white/5 border border-white/10 mb-4">
-            <TabsTrigger value="listings" className="text-white data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
+          <TabsList className="bg-white border border-gray-200 mb-4">
+            <TabsTrigger value="listings" className="text-gray-600 data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
               在售商品 ({listings.length})
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="text-white data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
+            <TabsTrigger value="reviews" className="text-gray-600 data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
               買家評價 ({reviewTotal})
             </TabsTrigger>
           </TabsList>
@@ -150,7 +150,7 @@ export default function SellerPublicProfile() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {listings.map((listing: any) => (
                   <Link key={listing.id} href={`/marketplace/${listing.id}`}>
-                    <Card className="bg-white/5 border border-white/10 hover:border-[#ffed00]/40 transition-all cursor-pointer group">
+                    <Card className="bg-white border border-gray-200 hover:border-[#06038d]/40 hover:shadow-md transition-all cursor-pointer group">
                       <CardContent className="p-0">
                         {listing.images?.[0] ? (
                           <img
@@ -159,19 +159,19 @@ export default function SellerPublicProfile() {
                             className="w-full h-40 object-cover rounded-t-lg"
                           />
                         ) : (
-                          <div className="w-full h-40 bg-white/5 rounded-t-lg flex items-center justify-center">
+                          <div className="w-full h-40 bg-gray-100 rounded-t-lg flex items-center justify-center">
                             <Package className="w-8 h-8 text-gray-600" />
                           </div>
                         )}
                         <div className="p-3">
-                          <p className="text-white text-sm font-medium line-clamp-2 group-hover:text-[#ffed00] transition-colors">
+                          <p className="text-gray-900 text-sm font-medium line-clamp-2 group-hover:text-[#06038d] transition-colors">
                             {listing.title}
                           </p>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-[#ffed00] font-bold text-sm">
+                            <span className="text-[#06038d] font-bold text-sm">
                               HKD {parseFloat(listing.priceHkd).toLocaleString()}
                             </span>
-                            <Badge variant="outline" className="text-xs border-white/20 text-gray-400">
+                            <Badge variant="outline" className="text-xs border-gray-200 text-gray-500">
                               {listing.condition === "new" ? "全新" :
                                listing.condition === "like_new" ? "近全新" :
                                listing.condition === "good" ? "良好" : "一般"}
@@ -196,7 +196,7 @@ export default function SellerPublicProfile() {
             ) : (
               <div className="space-y-3">
                 {reviews.map((r: any) => (
-                  <Card key={r.review.id} className="bg-white/5 border border-white/10">
+                  <Card key={r.review.id} className="bg-white border border-gray-200">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export default function SellerPublicProfile() {
                             {(r.buyerName ?? "?").charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-white text-sm font-medium">{r.buyerName ?? "匿名買家"}</p>
+                            <p className="text-gray-900 text-sm font-medium">{r.buyerName ?? "匿名買家"}</p>
                             <StarRating rating={r.review.rating} size="sm" />
                           </div>
                         </div>
@@ -213,7 +213,7 @@ export default function SellerPublicProfile() {
                         </span>
                       </div>
                       {r.review.comment && (
-                        <p className="text-gray-300 text-sm mt-2">{r.review.comment}</p>
+                        <p className="text-gray-600 text-sm mt-2">{r.review.comment}</p>
                       )}
                     </CardContent>
                   </Card>

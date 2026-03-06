@@ -64,7 +64,7 @@ function ImageUploader({
       {images.length > 0 && (
         <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
           {images.map((url, idx) => (
-            <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
+            <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
               <img src={url} alt={`商品圖 ${idx + 1}`} className="w-full h-full object-cover" />
               <button type="button" onClick={() => onChange(images.filter((_, i) => i !== idx))}
                 className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -77,17 +77,17 @@ function ImageUploader({
       )}
       {images.length < maxImages && (
         <div
-          className="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors"
+          className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 hover:bg-gray-50 transition-colors"
           onClick={() => fileInputRef.current?.click()}
           onDrop={handleDrop}
           onDragOver={e => e.preventDefault()}
         >
           {uploading ? (
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 text-gray-500">
               <Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm">上傳中...</span>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-1 text-muted-foreground">
+            <div className="flex flex-col items-center gap-1 text-gray-500">
               <ImagePlus className="w-6 h-6" />
               <span className="text-sm">點擊或拖放圖片上傳</span>
               <span className="text-xs">支援 JPG、PNG、WebP，每張最大 10MB</span>
@@ -203,9 +203,9 @@ export default function SellerDashboard() {
   });
 
   if (!me) return (
-    <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
       <div className="text-center">
-        <AlertCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+        <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-500" />
         <p className="text-lg font-medium">請先登入</p>
         <Link href="/login"><Button className="mt-4">登入</Button></Link>
       </div>
@@ -213,12 +213,12 @@ export default function SellerDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-background pt-20">
+    <div className="min-h-screen bg-gray-50 pt-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold">賣家中心</h1>
-            <p className="text-muted-foreground text-sm mt-1">管理你的商品、訂單和收款</p>
+            <p className="text-gray-500 text-sm mt-1">管理你的商品、訂單和收款</p>
           </div>
           {sellerProfile?.isActive && (
             <Button onClick={() => setShowNewListing(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white">
@@ -230,9 +230,9 @@ export default function SellerDashboard() {
         {!sellerProfile && (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <ShoppingBag className="w-16 h-16 mb-4 text-muted-foreground opacity-40" />
+              <ShoppingBag className="w-16 h-16 mb-4 text-gray-500 opacity-40" />
               <h2 className="text-xl font-semibold mb-2">成為 BOXIUM 賣家</h2>
-              <p className="text-muted-foreground mb-6 max-w-md">
+              <p className="text-gray-500 mb-6 max-w-md">
                 在 BOXIUM 平台上架你的寶可夢卡牌，觸及更多買家。平台收取 5% 服務費，款項透過 Stripe 自動轉帳到你的帳戶。
               </p>
               <Button onClick={() => setShowApply(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white">
@@ -304,7 +304,7 @@ export default function SellerDashboard() {
                     <Package className="w-8 h-8 text-blue-500" />
                     <div>
                       <p className="text-2xl font-bold">{myListings?.length ?? 0}</p>
-                      <p className="text-xs text-muted-foreground">上架商品</p>
+                      <p className="text-xs text-gray-500">上架商品</p>
                     </div>
                   </div>
                 </CardContent>
@@ -315,7 +315,7 @@ export default function SellerDashboard() {
                     <ShoppingBag className="w-8 h-8 text-green-500" />
                     <div>
                       <p className="text-2xl font-bold">{salesStats?.completedOrders ?? sellerProfile.totalSales}</p>
-                      <p className="text-xs text-muted-foreground">已完成訂單</p>
+                      <p className="text-xs text-gray-500">已完成訂單</p>
                     </div>
                   </div>
                 </CardContent>
@@ -326,7 +326,7 @@ export default function SellerDashboard() {
                     <DollarSign className="w-8 h-8 text-yellow-500" />
                     <div>
                       <p className="text-2xl font-bold">HK${(salesStats?.thisMonthRevenue ?? 0).toFixed(0)}</p>
-                      <p className="text-xs text-muted-foreground">本月收益</p>
+                      <p className="text-xs text-gray-500">本月收益</p>
                       {salesStats && salesStats.lastMonthRevenue > 0 && (
                         <p className="text-xs mt-0.5 " style={{ color: salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '#22c55e' : '#ef4444' }}>
                           {salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '▲' : '▼'}
@@ -343,7 +343,7 @@ export default function SellerDashboard() {
                     <Star className="w-8 h-8 text-amber-500" />
                     <div>
                       <p className="text-2xl font-bold">{parseFloat(sellerProfile.avgRating as string ?? '0').toFixed(1)}</p>
-                      <p className="text-xs text-muted-foreground">評分 ({sellerProfile.ratingCount} 則)</p>
+                      <p className="text-xs text-gray-500">評分 ({sellerProfile.ratingCount} 則)</p>
                     </div>
                   </div>
                 </CardContent>
@@ -367,7 +367,7 @@ export default function SellerDashboard() {
 
               <BrandTabsContent value="listings" className="mt-4">
                 {!myListings?.length ? (
-                  <div className="text-center py-12 text-muted-foreground">
+                  <div className="text-center py-12 text-gray-500">
                     <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>尚未上架任何商品</p>
                     <Button className="mt-4" onClick={() => setShowNewListing(true)}>上架第一件商品</Button>
@@ -383,18 +383,18 @@ export default function SellerDashboard() {
                       return (
                         <Card key={listing.id}>
                           <CardContent className="flex items-center gap-4 py-3 flex-wrap">
-                            <div className="w-14 h-14 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0">
+                            <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
                               {coverImg ? (
                                 <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
-                                  <Package className="w-6 h-6 text-muted-foreground/40" />
+                                  <Package className="w-6 h-6 text-gray-500/40" />
                                 </div>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium truncate">{listing.title}</p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm text-gray-500">
                                 HKD {parseFloat(listing.priceHkd as string).toFixed(2)} · 庫存 {listing.quantity}
                               </p>
                             </div>
@@ -417,7 +417,7 @@ export default function SellerDashboard() {
 
               <BrandTabsContent value="orders" className="mt-4">
                 {!myOrders?.length ? (
-                  <div className="text-center py-12 text-muted-foreground">
+                  <div className="text-center py-12 text-gray-500">
                     <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>尚無訂單</p>
                   </div>
@@ -429,10 +429,10 @@ export default function SellerDashboard() {
                           <div className="flex items-start justify-between gap-3 flex-wrap">
                             <div className="flex-1 min-w-0">
                               <p className="font-medium truncate">{item.title}</p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm text-gray-500">
                                 HKD {parseFloat(item.priceHkd as string).toFixed(2)} × {item.quantity}
                               </p>
-                              {item.orderNo && <p className="text-xs text-muted-foreground">訂單號：{item.orderNo}</p>}
+                              {item.orderNo && <p className="text-xs text-gray-500">訂單號：{item.orderNo}</p>}
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <Badge className={orderStatusLabel[item.orderStatus]?.color ?? "bg-gray-100 text-gray-800"}>
@@ -450,7 +450,7 @@ export default function SellerDashboard() {
                             </div>
                           </div>
                           {item.shippingName && (
-                            <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1.5 space-y-0.5">
+                            <div className="text-xs text-gray-500 bg-gray-100 rounded px-2 py-1.5 space-y-0.5">
                               <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>
                               <p>📍 地址：{item.shippingAddress}</p>
                               {item.trackingNumber && <p>🚚 追蹤號：{item.trackingNumber}</p>}
@@ -465,7 +465,7 @@ export default function SellerDashboard() {
 
               <BrandTabsContent value="payouts" className="mt-4">
                 {!myPayouts?.length ? (
-                  <div className="text-center py-12 text-muted-foreground">
+                  <div className="text-center py-12 text-gray-500">
                     <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>尚無放款記錄</p>
                   </div>
@@ -476,7 +476,7 @@ export default function SellerDashboard() {
                         <CardContent className="flex items-center justify-between py-4">
                           <div>
                             <p className="font-medium">HKD {parseFloat(payout.amount).toFixed(2)}</p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-gray-500">
                               {new Date(payout.createdAt).toLocaleDateString("zh-HK")}
                             </p>
                           </div>
@@ -492,7 +492,7 @@ export default function SellerDashboard() {
 
               <BrandTabsContent value="offers" className="mt-4">
                 {!myOffers?.length ? (
-                  <div className="text-center py-12 text-muted-foreground">
+                  <div className="text-center py-12 text-gray-500">
                     <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>尚無出價洿議</p>
                   </div>
@@ -505,8 +505,8 @@ export default function SellerDashboard() {
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm truncate">{offer.listingTitle || '商品'}</p>
                               <p className="text-lg font-bold text-yellow-600 mt-0.5">HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</p>
-                              {offer.message && <p className="text-xs text-muted-foreground mt-1">{offer.message}</p>}
-                              <p className="text-xs text-muted-foreground mt-1">{new Date(offer.createdAt).toLocaleDateString('zh-HK')}</p>
+                              {offer.message && <p className="text-xs text-gray-500 mt-1">{offer.message}</p>}
+                              <p className="text-xs text-gray-500 mt-1">{new Date(offer.createdAt).toLocaleDateString('zh-HK')}</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
                               <Badge className={
@@ -643,7 +643,7 @@ export default function SellerDashboard() {
             <DialogTitle>填寫出貨資料</DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            {shipDialog.orderNo && <p className="text-xs text-muted-foreground">訂單號：{shipDialog.orderNo}</p>}
+            {shipDialog.orderNo && <p className="text-xs text-gray-500">訂單號：{shipDialog.orderNo}</p>}
             <div className="space-y-1.5">
               <Label>物流公司</Label>
               <Input
