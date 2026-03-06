@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, LogOut, User, Bell } from "lucide-react";
+import { Menu, X, LogOut, User, Bell, Tag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -22,8 +22,7 @@ export function TopNav() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  
-  // Get current user
+
   const { data: user } = trpc.auth.me.useQuery();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
@@ -31,12 +30,9 @@ export function TopNav() {
       window.location.href = "/";
     },
   });
-  
-  const handleLogout = () => {
-    logoutMutation.mutate();
-  };
 
-  // Notification unread count
+  const handleLogout = () => logoutMutation.mutate();
+
   const { data: unreadData } = trpc.notifications.getUnreadCount.useQuery(
     undefined,
     { enabled: !!user, refetchInterval: 30000 }
@@ -52,17 +48,12 @@ export function TopNav() {
     { href: "/marketplace", label: "商城" },
   ];
 
-  // 頁面載入動畫
   useEffect(() => {
     setTimeout(() => setIsVisible(true), 100);
   }, []);
 
-  // 滾動行為優化
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -72,16 +63,25 @@ export function TopNav() {
     return location.startsWith(href);
   };
 
+  const handleSellClick = () => {
+    if (!user) {
+      setLocation("/login");
+    } else {
+      setLocation("/seller/dashboard");
+    }
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <>
-      {/* 遮罩層 with Animation */}
+      {/* Overlay */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
             className="fixed inset-0 bg-black/60 z-40 md:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
@@ -97,93 +97,69 @@ export function TopNav() {
             : "bg-black/80 backdrop-blur-md"
         }`}
       >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center h-16 relative">
-            {/* Mobile Menu Button - Left */}
-            <motion.button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden text-white p-2 absolute left-0"
-              whileTap={{ scale: 0.9 }}
-            >
-              <motion.div
-                initial={false}
-                animate={{ rotate: isMobileMenuOpen ? 90 : 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {isMobileMenuOpen ? (
-                  <X className="w-6 h-6" />
-                ) : (
-                  <Menu className="w-6 h-6" />
-                )}
-              </motion.div>
-            </motion.button>
+        <div className="px-4 md:px-6">
+          <div className="flex items-center justify-between h-14 md:h-16">
 
-            {/* Desktop Navigation - Center */}
-            <div className="hidden md:flex items-center gap-4 lg:gap-6">
+            {/* ── Desktop: Logo + Nav Links (left) ── */}
+            <div className="hidden md:flex items-center gap-6">
+              {/* Logo */}
+              <Link href="/" className="flex-shrink-0">
+                <img src="/logo.png" alt="BOXIUM" className="h-8 w-auto" onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }} />
+                <span className="text-[#ffed00] font-bold text-lg tracking-wide hidden" style={{display: 'none'}}>BOXIUM</span>
+              </Link>
+
+              {/* Nav Links */}
               {navItems.map((item) => (
                 <motion.div
                   key={item.href}
-                  whileHover={{ y: -2 }}
+                  whileHover={{ y: -1 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
                   <Link
                     href={item.href}
-                    className={`relative text-xs lg:text-sm font-medium group whitespace-nowrap block ${
-                      isActive(item.href)
-                        ? "text-[#ffed00]"
-                        : "text-white/80"
+                    className={`relative text-sm font-medium whitespace-nowrap block ${
+                      isActive(item.href) ? "text-[#ffed00]" : "text-white/80 hover:text-white"
                     }`}
                   >
-                    <motion.span
-                      className="block"
-                      whileHover={{ color: "#ffed00" }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {item.label}
-                    </motion.span>
-                    {/* Active 或 Hover 下劃線動畫 */}
+                    {item.label}
                     <motion.span
                       className="absolute -bottom-1 h-0.5 bg-[#ffed00]"
                       initial={false}
-                      animate={{
-                        width: isActive(item.href) ? "100%" : "0%",
-                        left: isActive(item.href) ? "0%" : "50%"
-                      }}
-                      whileHover={{
-                        width: "100%",
-                        left: "0%"
-                      }}
+                      animate={{ width: isActive(item.href) ? "100%" : "0%", left: isActive(item.href) ? "0%" : "50%" }}
+                      whileHover={{ width: "100%", left: "0%" }}
                       transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     />
                   </Link>
                 </motion.div>
               ))}
-              
-              {/* 管理後台連結 - 僅管理員可見 */}
+
               {user?.role === "admin" && (
-                <motion.div
-                  whileHover={{ y: -2, scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <Link
-                    href="/admin"
-                    className="text-xs lg:text-sm font-medium bg-red-600 px-2 py-1 rounded hover:bg-red-700 transition-colors whitespace-nowrap block"
-                  >
-                    {t("nav.admin")}
-                  </Link>
-                </motion.div>
+                <Link href="/admin" className="text-sm font-medium bg-red-600 px-2 py-1 rounded hover:bg-red-700 transition-colors whitespace-nowrap">
+                  {t("nav.admin")}
+                </Link>
               )}
             </div>
 
-            {/* Right Side: Language Switcher + Auth */}
-            <div className="flex items-center gap-3 absolute right-0">
-              {/* Language Switcher */}
-              <div className="hidden md:block">
-                <LanguageSwitcher />
-              </div>
-              
-              {/* Notification Bell - only for logged in users */}
+            {/* ── Mobile: empty left spacer ── */}
+            <div className="md:hidden flex-1" />
+
+            {/* ── Right Side (both mobile & desktop) ── */}
+            {/* Order: 出售商品 | 通知鈴鐺 | 用戶圖示 | 語言(desktop only) | 漢堡(mobile only) */}
+            <div className="flex items-center gap-1">
+
+              {/* 出售商品 button */}
+              <motion.button
+                onClick={handleSellClick}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-1 bg-[#ffed00] text-black text-xs font-bold px-2.5 py-1.5 rounded-md hover:bg-[#ffed00]/90 transition-colors whitespace-nowrap"
+              >
+                <Tag className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">出售商品</span>
+              </motion.button>
+
+              {/* Notification Bell */}
               {user && (
                 <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <Link href="/notifications">
@@ -199,13 +175,13 @@ export function TopNav() {
                 </motion.div>
               )}
 
-              {/* Auth Buttons */}
+              {/* User Icon / Auth */}
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00] text-xs lg:text-sm">
-                      <User className="w-3 h-3 lg:w-4 lg:h-4 mr-1 lg:mr-2" />
-                      <span className="hidden md:inline max-w-[80px] lg:max-w-none truncate">{user.name || user.email}</span>
+                    <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00] p-2">
+                      <User className="w-4 h-4" />
+                      <span className="hidden md:inline ml-1 max-w-[80px] truncate text-sm">{user.name || user.email}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -215,6 +191,11 @@ export function TopNav() {
                       <User className="w-4 h-4 mr-2" />
                       個人中心
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocation("/seller/dashboard")}>
+                      <Tag className="w-4 h-4 mr-2" />
+                      賣家中心
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="w-4 h-4 mr-2" />
                       登出
@@ -222,51 +203,83 @@ export function TopNav() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="hidden md:flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-white hover:text-[#ffed00] text-xs lg:text-sm px-2 md:px-4"
+                    className="text-white hover:text-[#ffed00] text-sm px-3"
                     onClick={() => setLocation("/login")}
                   >
                     登入
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-[#ffed00] text-black hover:bg-[#ffed00]/90 text-xs lg:text-sm px-2 md:px-4"
+                    className="bg-white/10 text-white hover:bg-white/20 text-sm px-3"
                     onClick={() => setLocation("/register")}
                   >
                     註冊
                   </Button>
                 </div>
               )}
+
+              {/* Login icon for mobile (not logged in) */}
+              {!user && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="md:hidden text-white hover:text-[#ffed00] p-2"
+                  onClick={() => setLocation("/login")}
+                >
+                  <User className="w-4 h-4" />
+                </Button>
+              )}
+
+              {/* Language Switcher - desktop only */}
+              <div className="hidden md:block">
+                <LanguageSwitcher />
+              </div>
+
+              {/* Hamburger - mobile only, rightmost */}
+              <motion.button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden text-white p-2"
+                whileTap={{ scale: 0.9 }}
+              >
+                <motion.div
+                  initial={false}
+                  animate={{ rotate: isMobileMenuOpen ? 90 : 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </motion.div>
+              </motion.button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Menu with Framer Motion */}
+      {/* Mobile Slide-down Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            initial={{ x: "-100%", opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "-100%", opacity: 0 }}
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -20, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-16 left-0 right-0 bg-black/95 backdrop-blur-md border-b border-white/10 z-40 md:hidden"
+            className="fixed top-14 left-0 right-0 bg-black/95 backdrop-blur-md border-b border-white/10 z-40 md:hidden"
           >
-            <div className="container mx-auto px-6 py-8 space-y-2">
+            <div className="px-4 py-4 space-y-1">
               {navItems.map((item, index) => (
                 <motion.div
                   key={item.href}
-                  initial={{ x: -50, opacity: 0 }}
+                  initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{ delay: index * 0.04 }}
                 >
                   <Link
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block text-lg font-medium transition-colors py-3 px-4 rounded-lg ${
+                    className={`block text-base font-medium py-2.5 px-3 rounded-lg transition-colors ${
                       isActive(item.href)
                         ? "text-[#ffed00] bg-white/5"
                         : "text-white/80 hover:text-[#ffed00] hover:bg-white/5"
@@ -276,33 +289,72 @@ export function TopNav() {
                   </Link>
                 </motion.div>
               ))}
-              
-              {/* 管理後台連結 - 僅管理員可見 */}
+
               {user?.role === "admin" && (
                 <motion.div
-                  initial={{ x: -50, opacity: 0 }}
+                  initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: navItems.length * 0.05 }}
+                  transition={{ delay: navItems.length * 0.04 }}
                 >
                   <Link
                     href="/admin"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="block text-lg font-medium text-red-400 hover:text-red-300 hover:bg-white/5 py-3 px-4 rounded-lg"
+                    className="block text-base font-medium text-red-400 hover:text-red-300 hover:bg-white/5 py-2.5 px-3 rounded-lg"
                   >
                     {t("nav.admin")}
                   </Link>
                 </motion.div>
               )}
 
-              {/* Language Switcher for Mobile */}
+              {/* Sell button in menu */}
               <motion.div
-                initial={{ x: -50, opacity: 0 }}
+                initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: (navItems.length + 1) * 0.05 }}
-                className="pt-6 border-t border-white/10"
+                transition={{ delay: (navItems.length + 1) * 0.04 }}
+                className="pt-2 border-t border-white/10"
+              >
+                <button
+                  onClick={handleSellClick}
+                  className="w-full flex items-center gap-2 bg-[#ffed00] text-black font-bold py-2.5 px-3 rounded-lg hover:bg-[#ffed00]/90 transition-colors"
+                >
+                  <Tag className="w-4 h-4" />
+                  出售商品
+                </button>
+              </motion.div>
+
+              {/* Language Switcher */}
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: (navItems.length + 2) * 0.04 }}
+                className="pt-2"
               >
                 <LanguageSwitcher />
               </motion.div>
+
+              {/* Login/Register for non-logged-in mobile users */}
+              {!user && (
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: (navItems.length + 3) * 0.04 }}
+                  className="flex gap-2 pt-2"
+                >
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-white border-white/30 hover:bg-white/10"
+                    onClick={() => { setLocation("/login"); setIsMobileMenuOpen(false); }}
+                  >
+                    登入
+                  </Button>
+                  <Button
+                    className="flex-1 bg-[#ffed00] text-black hover:bg-[#ffed00]/90"
+                    onClick={() => { setLocation("/register"); setIsMobileMenuOpen(false); }}
+                  >
+                    註冊
+                  </Button>
+                </motion.div>
+              )}
             </div>
           </motion.div>
         )}
