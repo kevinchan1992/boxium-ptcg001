@@ -11,7 +11,7 @@ import {
   getSellerProfileByUserId, getSellerProfileById, createSellerProfile, updateSellerProfile, getAllSellerProfiles,
   createMarketplaceOrder, getMarketplaceOrderById, getMarketplaceOrderByNo, updateMarketplaceOrder, getBuyerOrders, getAdminOrders, getAlipayPendingOrders, generateOrderNo,
   createOrderItems, getOrderItems, getSellerOrderItems,
-  getSellerPayouts, getMarketplaceStats,
+  getSellerPayouts, getMarketplaceStats, getSalesReport,
   getActiveBanners, getAllBanners, createBanner, updateBanner, deleteBanner,
   getUserWishlist, isInWishlist, addToWishlistListing, removeFromWishlistListing, getWishlistListingIds,
   getDisputedOrders, getSellerProfileByStripeConnectId,
@@ -468,6 +468,12 @@ export const marketplaceRouter = router({
   adminGetStats: adminProcedure
     .query(async () => {
       return getMarketplaceStats();
+    }),
+
+  adminGetSalesReport: adminProcedure
+    .input(z.object({ months: z.number().int().min(1).max(36).default(12) }))
+    .query(async ({ input }) => {
+      return getSalesReport(input.months);
     }),
 
   adminGetListings: adminProcedure

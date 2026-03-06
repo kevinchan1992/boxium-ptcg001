@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Image, Trash2, ToggleLeft, ToggleRight, Flag } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Image, Trash2, ToggleLeft, ToggleRight, Flag, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 
 const conditionLabel: Record<string, string> = {
@@ -989,6 +989,135 @@ function BannersTab() {
   );
 }
 
+function SalesReportTab() {
+  const [months, setMonths] = useState(12);
+  const { data, isLoading } = trpc.marketplace.adminGetSalesReport.useQuery({ months });
+
+  const fmtHkd = (v: number) => v.toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtYearMonth = (ym: string) => {
+    const [y, m] = ym.split('-');
+    return `${y}年${parseInt(m)}月`;
+  };
+
+  const overall = data?.overall;
+  const monthly = data?.monthly ?? [];
+
+  return (
+    <div className="space-y-6">
+      {/* Overall Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-br from-[#06038d] to-[#1a0a9e] rounded-xl p-4 text-white">
+          <p className="text-xs opacity-80 mb-1">平台銷售總額</p>
+          <p className="text-2xl font-bold">HKD {fmtHkd(overall?.totalSalesHkd ?? 0)}</p>
+          <p className="text-xs opacity-70 mt-1">{overall?.totalOrders ?? 0} 筆已付款訂單</p>
+        </div>
+        <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl p-4 text-white">
+          <p className="text-xs opacity-80 mb-1">C2C 手續費收入</p>
+          <p className="text-2xl font-bold">HKD {fmtHkd(overall?.totalFeesHkd ?? 0)}</p>
+          <p className="text-xs opacity-70 mt-1">僅計算賣家訂單</p>
+        </div>
+        <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-4 text-white">
+          <p className="text-xs opacity-80 mb-1">平台直售額</p>
+          <p className="text-2xl font-bold">HKD {fmtHkd(overall?.platformSalesHkd ?? 0)}</p>
+          <p className="text-xs opacity-70 mt-1">官方上架商品</p>
+        </div>
+        <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-4 text-white">
+          <p className="text-xs opacity-80 mb-1">C2C 賣家銷售額</p>
+          <p className="text-2xl font-bold">HKD {fmtHkd(overall?.sellerSalesHkd ?? 0)}</p>
+          <p className="text-xs opacity-70 mt-1">Stripe {overall?.stripeCount ?? 0} · 支付寶 {overall?.alipayCount ?? 0}</p>
+        </div>
+      </div>
+
+      {/* Month Range Selector */}
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-base">每月銷售明細</h3>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">顯示最近</span>
+          <Select value={String(months)} onValueChange={v => setMonths(Number(v))}>
+            <SelectTrigger className="w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="6">6 個月</SelectItem>
+              <SelectItem value="12">12 個月</SelectItem>
+              <SelectItem value="24">24 個月</SelectItem>
+              <SelectItem value="36">36 個月</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Monthly Table */}
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />載入中...</div>
+      ) : monthly.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground"><BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無銷售數據</p></div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-muted/50 border-b">
+                <th className="text-left px-4 py-3 font-medium">月份</th>
+                <th className="text-right px-4 py-3 font-medium">銷售總額</th>
+                <th className="text-right px-4 py-3 font-medium">平台直售</th>
+                <th className="text-right px-4 py-3 font-medium">C2C 銷售</th>
+                <th className="text-right px-4 py-3 font-medium">手續費收入</th>
+                <th className="text-right px-4 py-3 font-medium">訂單數</th>
+                <th className="text-right px-4 py-3 font-medium">Stripe</th>
+                <th className="text-right px-4 py-3 font-medium">支付寶 HK</th>
+                <th className="text-right px-4 py-3 font-medium">環比</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthly.map((row, idx) => {
+                const prev = monthly[idx + 1];
+                const growth = prev && prev.totalSalesHkd > 0
+                  ? ((row.totalSalesHkd - prev.totalSalesHkd) / prev.totalSalesHkd * 100)
+                  : null;
+                return (
+                  <tr key={row.yearMonth} className="border-b hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3 font-medium">{fmtYearMonth(row.yearMonth)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-[#06038d]">HKD {fmtHkd(row.totalSalesHkd)}</td>
+                    <td className="px-4 py-3 text-right text-blue-700">HKD {fmtHkd(row.platformSalesHkd)}</td>
+                    <td className="px-4 py-3 text-right text-purple-700">HKD {fmtHkd(row.sellerSalesHkd)}</td>
+                    <td className="px-4 py-3 text-right text-emerald-700">HKD {fmtHkd(row.sellerFeesHkd)}</td>
+                    <td className="px-4 py-3 text-right">{row.orderCount}</td>
+                    <td className="px-4 py-3 text-right text-purple-600">{row.stripeCount}</td>
+                    <td className="px-4 py-3 text-right text-blue-600">{row.alipayCount}</td>
+                    <td className="px-4 py-3 text-right">
+                      {growth !== null ? (
+                        <span className={`flex items-center justify-end gap-0.5 font-medium ${
+                          growth >= 0 ? 'text-emerald-600' : 'text-red-500'
+                        }`}>
+                          {growth >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                          {Math.abs(growth).toFixed(1)}%
+                        </span>
+                      ) : <span className="text-muted-foreground text-xs">—</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="bg-muted/50 font-semibold">
+                <td className="px-4 py-3">合計</td>
+                <td className="px-4 py-3 text-right text-[#06038d]">HKD {fmtHkd(monthly.reduce((s, r) => s + r.totalSalesHkd, 0))}</td>
+                <td className="px-4 py-3 text-right text-blue-700">HKD {fmtHkd(monthly.reduce((s, r) => s + r.platformSalesHkd, 0))}</td>
+                <td className="px-4 py-3 text-right text-purple-700">HKD {fmtHkd(monthly.reduce((s, r) => s + r.sellerSalesHkd, 0))}</td>
+                <td className="px-4 py-3 text-right text-emerald-700">HKD {fmtHkd(monthly.reduce((s, r) => s + r.sellerFeesHkd, 0))}</td>
+                <td className="px-4 py-3 text-right">{monthly.reduce((s, r) => s + r.orderCount, 0)}</td>
+                <td className="px-4 py-3 text-right text-purple-600">{monthly.reduce((s, r) => s + r.stripeCount, 0)}</td>
+                <td className="px-4 py-3 text-right text-blue-600">{monthly.reduce((s, r) => s + r.alipayCount, 0)}</td>
+                <td className="px-4 py-3 text-right">—</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminMarketplace() {
   const { data: stats } = trpc.marketplace.adminGetStats.useQuery();
   const { data: me } = trpc.auth.me.useQuery();
@@ -1028,61 +1157,6 @@ export default function AdminMarketplace() {
           <StatCard title="待審核商品" value={stats?.pendingReviewListings ?? 0} icon={Clock} color="bg-orange-100 text-orange-700" />
         </div>
 
-        {/* Sales Revenue Dashboard */}
-        <div className="bg-gradient-to-r from-[#06038d]/5 to-[#06038d]/10 border border-[#06038d]/20 rounded-xl p-4 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <DollarSign className="w-5 h-5 text-[#06038d]" />
-            <h2 className="font-semibold text-[#06038d]">銷售總覽</h2>
-            <span className="text-xs text-muted-foreground ml-1">（已付款訂單）</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg p-3 shadow-sm">
-              <p className="text-xs text-muted-foreground mb-1">平台銷售總額</p>
-              <p className="text-xl font-bold text-[#06038d]">HKD {(stats?.totalSalesHkd ?? 0).toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              <p className="text-xs text-muted-foreground mt-1">{stats?.completedOrderCount ?? 0} 筆已付款訂單</p>
-            </div>
-            <div className="bg-white rounded-lg p-3 shadow-sm">
-              <p className="text-xs text-muted-foreground mb-1">平台手續費收入</p>
-              <p className="text-xl font-bold text-emerald-600">HKD {(stats?.totalFeesHkd ?? 0).toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              <p className="text-xs text-muted-foreground mt-1">佔銷售額 {stats?.totalSalesHkd ? ((stats.totalFeesHkd / stats.totalSalesHkd) * 100).toFixed(1) : '0'}%</p>
-            </div>
-            <div className="bg-white rounded-lg p-3 shadow-sm">
-              <p className="text-xs text-muted-foreground mb-1">本月銷售額</p>
-              <p className="text-xl font-bold text-blue-600">HKD {(stats?.thisMonthSalesHkd ?? 0).toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                上月 HKD {(stats?.lastMonthSalesHkd ?? 0).toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                {stats?.lastMonthSalesHkd ? (
-                  <span className={`ml-1 font-medium ${(stats.thisMonthSalesHkd ?? 0) >= stats.lastMonthSalesHkd ? 'text-emerald-600' : 'text-red-500'}`}>
-                    {(stats.thisMonthSalesHkd ?? 0) >= stats.lastMonthSalesHkd ? '▲' : '▼'}
-                    {Math.abs(((stats.thisMonthSalesHkd ?? 0) - stats.lastMonthSalesHkd) / stats.lastMonthSalesHkd * 100).toFixed(1)}%
-                  </span>
-                ) : null}
-              </p>
-            </div>
-            <div className="bg-white rounded-lg p-3 shadow-sm">
-              <p className="text-xs text-muted-foreground mb-1">付款方式分佈</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-purple-700">Stripe</span>
-                    <span className="font-medium">{stats?.stripePaidCount ?? 0}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${stats?.completedOrderCount ? ((stats.stripePaidCount ?? 0) / stats.completedOrderCount * 100) : 0}%` }} />
-                  </div>
-                  <div className="flex justify-between text-xs mt-1">
-                    <span className="text-blue-700">支付寶 HK</span>
-                    <span className="font-medium">{stats?.alipayPaidCount ?? 0}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2 mt-1">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${stats?.completedOrderCount ? ((stats.alipayPaidCount ?? 0) / stats.completedOrderCount * 100) : 0}%` }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <BrandTabs defaultValue="listings" variant="light">
           <BrandTabsList wrap className="mb-2">
             <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="商品管理">
@@ -1103,6 +1177,7 @@ export default function AdminMarketplace() {
             <BrandTabsTrigger value="disputes" icon={<Flag className="w-4 h-4" />} label="爭議處理">
               爭議處理
             </BrandTabsTrigger>
+            <BrandTabsTrigger value="sales" icon={<BarChart3 className="w-4 h-4" />} label="銷售總覽">銷售總覽</BrandTabsTrigger>
           </BrandTabsList>
           <BrandTabsContent value="listings"><ListingsTab /></BrandTabsContent>
           <BrandTabsContent value="orders"><OrdersTab /></BrandTabsContent>
@@ -1110,6 +1185,7 @@ export default function AdminMarketplace() {
           <BrandTabsContent value="sellers"><SellersTab /></BrandTabsContent>
           <BrandTabsContent value="banners"><BannersTab /></BrandTabsContent>
           <BrandTabsContent value="disputes"><DisputesTab /></BrandTabsContent>
+          <BrandTabsContent value="sales"><SalesReportTab /></BrandTabsContent>
         </BrandTabs>
       </div>
     </div>

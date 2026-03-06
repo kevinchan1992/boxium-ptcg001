@@ -2853,13 +2853,21 @@ export async function getMarketplaceStats() {
     .where(and(eq(marketplaceOrders.paymentMethod, 'alipay_hk'), eq(marketplaceOrders.paymentStatus, 'pending')));
   const [sellerCount] = await db.select({ count: sql<number>`count(*)` }).from(sellerProfiles).where(eq(sellerProfiles.isActive, true));
   const [pendingReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.status, 'pending_review'));
-  // Sales revenue stats - all paid orders
+  // Sales revenue stats - all paid orders (total sales includes platform orders; fees only for C2C seller orders)
   const paidStatuses = ['payment_received', 'processing', 'shipped', 'delivered', 'completed'];
   const [totalRevenue] = await db.select({
     totalSales: sql<string>`COALESCE(SUM(subtotalHkd), 0)`,
-    totalFees: sql<string>`COALESCE(SUM(platformFeeHkd), 0)`,
     completedCount: sql<number>`count(*)`,
   }).from(marketplaceOrders).where(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]));
+  // Platform fee income: only from C2C seller orders (sellerType = 'seller')
+  const [totalFeeRevenue] = await db.select({
+    totalFees: sql<string>`COALESCE(SUM(platformFeeHkd), 0)`,
+  }).from(marketplaceOrders).where(
+    and(
+      inArray(marketplaceOrders.orderStatus, paidStatuses as any[]),
+      eq(marketplaceOrders.sellerType, 'seller')
+    )
+  );
   // This month revenue
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -2885,7 +2893,7 @@ export async function getMarketplaceStats() {
     pendingReviewListings: Number(pendingReview?.count ?? 0),
     // Sales revenue
     totalSalesHkd: parseFloat(totalRevenue?.totalSales ?? '0'),
-    totalFeesHkd: parseFloat(totalRevenue?.totalFees ?? '0'),
+    totalFeesHkd: parseFloat(totalFeeRevenue?.totalFees ?? '0'), // C2C only
     completedOrderCount: Number(totalRevenue?.completedCount ?? 0),
     thisMonthSalesHkd: parseFloat(thisMonthRevenue?.total ?? '0'),
     lastMonthSalesHkd: parseFloat(lastMonthRevenue?.total ?? '0'),
@@ -3178,4 +3186,61 @@ export async function updateListingReport(id: number, data: Partial<typeof listi
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(listingReports).set(data).where(eq(listingReports.id, id));
+}
+
+// --- Sales Report (Monthly Breakdown) ---
+export async function getSalesReport(months: number = 12) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const paidStatuses = ['payment_received', 'processing', 'shipped', 'delivered', 'completed'];
+
+  // Monthly breakdown: group by year-month
+  const monthlyRows = await db.select({
+    yearMonth: sql<string>`DATE_FORMAT(createdAt, '%Y-%m')`,
+    totalSales: sql<string>`COALESCE(SUM(subtotalHkd), 0)`,
+    orderCount: sql<number>`count(*)`,
+    stripeCount: sql<number>`SUM(CASE WHEN paymentMethod = 'stripe' THEN 1 ELSE 0 END)`,
+    alipayCount: sql<number>`SUM(CASE WHEN paymentMethod = 'alipay_hk' THEN 1 ELSE 0 END)`,
+    platformSales: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'platform' THEN subtotalHkd ELSE 0 END), 0)`,
+    sellerSales: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'seller' THEN subtotalHkd ELSE 0 END), 0)`,
+    sellerFees: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
+  })
+    .from(marketplaceOrders)
+    .where(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]))
+    .groupBy(sql`DATE_FORMAT(createdAt, '%Y-%m')`)
+    .orderBy(sql`DATE_FORMAT(createdAt, '%Y-%m') DESC`)
+    .limit(months);
+
+  // Overall totals
+  const [overall] = await db.select({
+    totalSales: sql<string>`COALESCE(SUM(subtotalHkd), 0)`,
+    totalFees: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
+    totalOrders: sql<number>`count(*)`,
+    platformSales: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'platform' THEN subtotalHkd ELSE 0 END), 0)`,
+    sellerSales: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'seller' THEN subtotalHkd ELSE 0 END), 0)`,
+    stripeCount: sql<number>`SUM(CASE WHEN paymentMethod = 'stripe' THEN 1 ELSE 0 END)`,
+    alipayCount: sql<number>`SUM(CASE WHEN paymentMethod = 'alipay_hk' THEN 1 ELSE 0 END)`,
+  }).from(marketplaceOrders).where(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]));
+
+  return {
+    monthly: monthlyRows.map(r => ({
+      yearMonth: r.yearMonth,
+      totalSalesHkd: parseFloat(r.totalSales ?? '0'),
+      orderCount: Number(r.orderCount ?? 0),
+      stripeCount: Number(r.stripeCount ?? 0),
+      alipayCount: Number(r.alipayCount ?? 0),
+      platformSalesHkd: parseFloat(r.platformSales ?? '0'),
+      sellerSalesHkd: parseFloat(r.sellerSales ?? '0'),
+      sellerFeesHkd: parseFloat(r.sellerFees ?? '0'),
+    })),
+    overall: {
+      totalSalesHkd: parseFloat(overall?.totalSales ?? '0'),
+      totalFeesHkd: parseFloat(overall?.totalFees ?? '0'),
+      totalOrders: Number(overall?.totalOrders ?? 0),
+      platformSalesHkd: parseFloat(overall?.platformSales ?? '0'),
+      sellerSalesHkd: parseFloat(overall?.sellerSales ?? '0'),
+      stripeCount: Number(overall?.stripeCount ?? 0),
+      alipayCount: Number(overall?.alipayCount ?? 0),
+    },
+  };
 }

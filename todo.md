@@ -3654,3 +3654,13 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ## 🐛 三個問題修復- [x] 修復已售出商品仍顯示在商城（支付寶和 Stripe 確認收款後同步更新商品狀態為 sold）
 - [x] 修復 HKD NaN 金額顯示（後端返回 subtotalHkd/priceHkd，前端修正字段名稱並加 parseFloat 保護）
 - [x] 新增 Admin 销售總覽面板（销售總額、手續費收入、本月/上月對比、付款方式分佈）
+
+## 🐛 修正平台手續費計算邏輯
+- [x] 後端 getMarketplaceStats 的手續費統計排除 sellerType=platform 的訂單（平台自己上架不收手續費）
+- [x] 同時確認訂單建立時 platformFeeHkd 對 platform 賣家也設為 0
+
+## 🔧 銷售總覽優化
+- [x] 修正手續費統計邏輯：排除 sellerType=platform 的訂單（平台自己上架不收手續費）
+- [x] 新增後端 adminGetSalesReport API：按月份分拆销售數據（每月销售額、手續費、訂單數、付款方式）
+- [x] 在 Admin 後台新增「销售總覽」獨立分頁，顯示每月分拆數據表格和摘要統計
+- [x] 移除現有統計卡片下方的销售總覽小面板（改為分頁顯示）
