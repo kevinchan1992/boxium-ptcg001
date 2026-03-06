@@ -322,7 +322,7 @@ export const marketplaceRouter = router({
       title: z.string().min(3).max(200),
       description: z.string().max(2000).optional(),
       condition: z.enum(["psa10", "psa9", "psa8_below", "bgs10", "bgs9", "bgs8_below", "tag10", "tag9_below", "raw_a", "raw_b", "raw_c", "raw_d"]),
-      price: z.number().positive(),
+      price: z.number().min(4.00, "商品定價不能低於 HKD 4.00"),
       quantity: z.number().int().min(1).default(1),
       cardId: z.number().int().optional(),
       images: z.array(z.string()).max(5).optional(),
@@ -353,7 +353,7 @@ export const marketplaceRouter = router({
       id: z.number().int(),
       title: z.string().min(3).max(200).optional(),
       description: z.string().max(2000).optional(),
-      price: z.number().positive().optional(),
+      price: z.number().min(4.00, "商品定價不能低於 HKD 4.00").optional(),
       quantity: z.number().int().min(1).optional(),
       status: z.enum(["draft", "active", "removed"]).optional(),
     }))
@@ -566,6 +566,50 @@ export const marketplaceRouter = router({
         }).catch(() => {});
       }
       return { success: true };
+    }),
+
+  adminBatchConfirmAlipayPayment: adminProcedure
+    .input(z.object({
+      orderIds: z.array(z.number().int()).min(1).max(50),
+      note: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const results: { orderId: number; success: boolean; error?: string }[] = [];
+      for (const orderId of input.orderIds) {
+        try {
+          const order = await getMarketplaceOrderById(orderId);
+          if (!order) { results.push({ orderId, success: false, error: "訂單不存在" }); continue; }
+          await updateMarketplaceOrder(orderId, {
+            paymentStatus: "paid",
+            orderStatus: "payment_received",
+          });
+          // Notify buyer of payment confirmation
+          await createNotification({
+            userId: order.buyerId,
+            type: "trade",
+            title: "支付寶 HK 收款已確認 ✅",
+            content: `訂單 ${order.orderNo} 的支付寶 HK 付款已由管理員確認，訂單現在進入處理中。${input.note ? `備註：${input.note}` : ""}`,
+            priority: "high",
+            relatedUrl: `/orders/${order.orderNo}`,
+          }).catch(() => {});
+          // Notify seller of new order
+          if (order.sellerId) {
+            await createNotification({
+              userId: order.sellerId,
+              type: "trade",
+              title: "新訂單已付款 🎉",
+              content: `訂單 ${order.orderNo} 買家已完成支付寶 HK 付款，請盡快安排出貨。`,
+              priority: "high",
+              relatedUrl: "/seller",
+            }).catch(() => {});
+          }
+          results.push({ orderId, success: true });
+        } catch (err: any) {
+          results.push({ orderId, success: false, error: err.message });
+        }
+      }
+      const successCount = results.filter(r => r.success).length;
+      return { results, successCount, failCount: results.length - successCount };
     }),
 
   adminUpdateOrderStatus: adminProcedure

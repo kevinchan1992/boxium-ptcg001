@@ -613,15 +613,18 @@ export default function SellerDashboard() {
             </div>
             <div>
               <Label>售價（HKD）*</Label>
-              <Input className="mt-1" type="number" min="1" step="0.01" placeholder="0.00"
+              <Input className="mt-1" type="number" min="4" step="0.01" placeholder="最低 HKD 4.00"
                 value={listingForm.price}
                 onChange={(e) => setListingForm(p => ({ ...p, price: e.target.value }))} />
+              {listingForm.price && parseFloat(listingForm.price) < 4.00 && (
+                <p className="text-xs text-red-500 mt-1">定價不能低於 HKD 4.00（Stripe 信用卡付款最低限額）</p>
+              )}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewListing(false)}>取消</Button>
             <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white"
-              disabled={!listingForm.title || !listingForm.price || createListingMutation.isPending}
+              disabled={!listingForm.title || !listingForm.price || parseFloat(listingForm.price) < 4.00 || createListingMutation.isPending}
               onClick={() => createListingMutation.mutate({
                 title: listingForm.title,
                 description: listingForm.description || undefined,

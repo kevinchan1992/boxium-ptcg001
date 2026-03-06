@@ -187,6 +187,61 @@ export default function MarketplaceListing() {
     { enabled: !!id }
   );
 
+  // SEO: Set Open Graph meta tags for social sharing (WhatsApp, Facebook, etc.)
+  useEffect(() => {
+    if (!listing) return;
+    const price = parseFloat(listing.priceHkd as string);
+    const rawImages = listing.images;
+    const images: string[] | null = (() => {
+      if (!rawImages) return null;
+      if (Array.isArray(rawImages)) return rawImages as string[];
+      if (typeof rawImages === "string") {
+        try { const parsed = JSON.parse(rawImages); return Array.isArray(parsed) ? parsed : null; } catch { return null; }
+      }
+      return null;
+    })();
+    const imageUrl = images && images.length > 0 ? images[0] : "";
+    const title = `${listing.title} - HKD ${price.toFixed(2)} | BOXIUM PTCG`;
+    const description = listing.description
+      ? `${listing.description.slice(0, 120)}${listing.description.length > 120 ? "..." : ""} | HKD ${price.toFixed(2)}`
+      : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(2)} | BOXIUM PTCG 卡牌商城`;
+
+    // Update document title
+    document.title = title;
+
+    // Helper to set or create a meta tag
+    const setMeta = (property: string, content: string, useProperty = true) => {
+      const attr = useProperty ? "property" : "name";
+      let el = document.querySelector(`meta[${attr}="${property}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute(attr, property);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", content);
+    };
+
+    const pageUrl = window.location.href;
+    setMeta("og:title", title);
+    setMeta("og:description", description);
+    setMeta("og:url", pageUrl);
+    setMeta("og:type", "product");
+    setMeta("og:site_name", "BOXIUM PTCG");
+    if (imageUrl) setMeta("og:image", imageUrl);
+    setMeta("og:price:amount", price.toFixed(2));
+    setMeta("og:price:currency", "HKD");
+    // Twitter Card
+    setMeta("twitter:card", imageUrl ? "summary_large_image" : "summary", false);
+    setMeta("twitter:title", title, false);
+    setMeta("twitter:description", description, false);
+    if (imageUrl) setMeta("twitter:image", imageUrl, false);
+
+    // Cleanup: restore default title on unmount
+    return () => {
+      document.title = "BOXIUM PTCG";
+    };
+  }, [listing]);
+
   const createStripeOrderMutation = trpc.marketplace.createStripeOrder.useMutation({
     onSuccess: (data) => {
       if (data.checkoutUrl) {

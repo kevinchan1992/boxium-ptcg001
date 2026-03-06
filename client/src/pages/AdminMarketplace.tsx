@@ -385,10 +385,39 @@ function AlipayPendingTab() {
   const { data: orders, isLoading, refetch } = trpc.marketplace.adminGetAlipayPending.useQuery();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [note, setNote] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [batchNote, setBatchNote] = useState("");
+  const [showBatchDialog, setShowBatchDialog] = useState(false);
+
   const confirmMutation = trpc.marketplace.adminConfirmAlipayPayment.useMutation({
-    onSuccess: () => { toast.success("已確認收款"); refetch(); setSelectedOrder(null); },
+    onSuccess: () => { toast.success("已確認收款，已通知買家"); refetch(); setSelectedOrder(null); },
     onError: (e) => toast.error(e.message),
   });
+
+  const batchConfirmMutation = trpc.marketplace.adminBatchConfirmAlipayPayment.useMutation({
+    onSuccess: (data) => {
+      toast.success(`批量審核完成：${data.successCount} 筆成功${data.failCount > 0 ? `，${data.failCount} 筆失敗` : ""}`);
+      refetch();
+      setSelectedIds(new Set());
+      setShowBatchDialog(false);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const allIds = orders?.map((o: any) => o.id) ?? [];
+  const allSelected = allIds.length > 0 && allIds.every((id: number) => selectedIds.has(id));
+
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(allIds));
+  };
+
+  const toggleSelect = (id: number) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedIds(next);
+  };
+
   return (
     <div className="space-y-4">
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
@@ -396,11 +425,37 @@ function AlipayPendingTab() {
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <div>
             <p className="font-medium">支付寶 HK 手動核對</p>
-            <p className="mt-1">請登入支付寶 HK 商戶後台核對收款後，點擊「確認收款」。</p>
+            <p className="mt-1">請登入支付寶 HK 商戶後台核對收款後，點擊「確認收款」。確認後系統會自動通知買家。</p>
             <p className="mt-1">收款帳號：<strong>Account ID: 2160120158548164</strong></p>
           </div>
         </div>
       </div>
+
+      {/* Batch actions toolbar */}
+      {orders && orders.length > 0 && (
+        <div className="flex items-center justify-between bg-gray-50 border rounded-lg px-4 py-2">
+          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleSelectAll}
+              className="w-4 h-4 rounded border-gray-300"
+            />
+            <span className="text-muted-foreground">全選 ({selectedIds.size}/{allIds.length})</span>
+          </label>
+          {selectedIds.size > 0 && (
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => { setBatchNote(""); setShowBatchDialog(true); }}
+            >
+              <CheckCircle className="w-3 h-3 mr-1" />
+              批量確認 ({selectedIds.size} 筆)
+            </Button>
+          )}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">載入中...</div>
       ) : !orders || orders.length === 0 ? (
@@ -411,23 +466,32 @@ function AlipayPendingTab() {
       ) : (
         <div className="space-y-2">
           {orders.map((order: any) => (
-            <div key={order.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono text-sm font-medium">{order.orderNo}</span>
-                  <Badge className="bg-yellow-100 text-yellow-800">待核對</Badge>
-                </div>
-                <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
-                  <span className="font-medium text-foreground">HKD {parseFloat(order.total as string).toFixed(2)}</span>
-                  <span>{new Date(order.createdAt).toLocaleString("zh-HK")}</span>
-                  {order.alipayProofImageUrl && (
-                    <a href={order.alipayProofImageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
-                      <Eye className="w-3 h-3" />查看截圖
-                    </a>
-                  )}
+            <div key={order.id} className={`border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card transition-colors ${selectedIds.has(order.id) ? "border-green-400 bg-green-50" : ""}`}>
+              <div className="flex items-start gap-3 flex-1">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(order.id)}
+                  onChange={() => toggleSelect(order.id)}
+                  className="w-4 h-4 mt-1 rounded border-gray-300 flex-shrink-0"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-sm font-medium">{order.orderNo}</span>
+                    <Badge className="bg-yellow-100 text-yellow-800">待核對</Badge>
+                    {order.shippingName && <span className="text-xs text-muted-foreground">買家：{order.shippingName}</span>}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
+                    <span className="font-medium text-foreground">HKD {parseFloat(order.total as string).toFixed(2)}</span>
+                    <span>{new Date(order.createdAt).toLocaleString("zh-HK")}</span>
+                    {order.alipayProofImageUrl && (
+                      <a href={order.alipayProofImageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
+                        <Eye className="w-3 h-3" />查看截圖
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
-              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
+              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0"
                 onClick={() => { setSelectedOrder(order); setNote(""); }}>
                 <CheckCircle className="w-3 h-3 mr-1" />確認收款
               </Button>
@@ -435,6 +499,8 @@ function AlipayPendingTab() {
           ))}
         </div>
       )}
+
+      {/* Single confirm dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>確認支付寶 HK 收款</DialogTitle></DialogHeader>
@@ -443,11 +509,13 @@ function AlipayPendingTab() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
                 <p>訂單：<strong>{selectedOrder.orderNo}</strong></p>
                 <p>金額：<strong>HKD {parseFloat(selectedOrder.total).toFixed(2)}</strong></p>
+                {selectedOrder.shippingName && <p>買家：<strong>{selectedOrder.shippingName}</strong></p>}
               </div>
               {selectedOrder.alipayProofImageUrl && (
                 <img src={selectedOrder.alipayProofImageUrl} alt="付款截圖" className="rounded-lg border max-h-48 object-contain w-full" />
               )}
               <div><Label>備注（可選）</Label><Input value={note} onChange={e => setNote(e.target.value)} placeholder="例：已在支付寶後台核對，交易號 xxxx" /></div>
+              <p className="text-sm text-green-700 bg-green-50 rounded p-2">ℹ️ 確認後系統會自動發送通知給買家和賣家。</p>
               <p className="text-sm text-amber-700 bg-amber-50 rounded p-2">請確認已在支付寶 HK 商戶後台核對到此筆收款後，再點擊確認。</p>
             </div>
           )}
@@ -456,6 +524,38 @@ function AlipayPendingTab() {
             <Button className="bg-green-600 hover:bg-green-700 text-white" disabled={confirmMutation.isPending}
               onClick={() => confirmMutation.mutate({ orderId: selectedOrder.id, note })}>
               {confirmMutation.isPending ? "確認中..." : "確認已收款"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Batch confirm dialog */}
+      <Dialog open={showBatchDialog} onOpenChange={setShowBatchDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>批量確認支付寶 HK 收款</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+              <p>將確認以下 <strong>{selectedIds.size}</strong> 筆訂單的支付寶 HK 收款：</p>
+              <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+                {orders?.filter((o: any) => selectedIds.has(o.id)).map((o: any) => (
+                  <li key={o.id} className="flex justify-between">
+                    <span className="font-mono">{o.orderNo}</span>
+                    <span className="font-medium">HKD {parseFloat(o.total).toFixed(2)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div><Label>備注（可選，會發送給所有買家）</Label><Input value={batchNote} onChange={e => setBatchNote(e.target.value)} placeholder="例：已批量核對支付寶 HK 後台收款記錄" /></div>
+            <p className="text-sm text-green-700 bg-green-50 rounded p-2">ℹ️ 確認後系統會自動通知所有買家和賣家。</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBatchDialog(false)}>取消</Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={batchConfirmMutation.isPending}
+              onClick={() => batchConfirmMutation.mutate({ orderIds: Array.from(selectedIds), note: batchNote || undefined })}
+            >
+              {batchConfirmMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />審核中...</> : `確認 ${selectedIds.size} 筆收款`}
             </Button>
           </DialogFooter>
         </DialogContent>

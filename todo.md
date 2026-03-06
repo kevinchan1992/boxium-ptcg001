@@ -3630,3 +3630,19 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 在後端 buyNow (createStripeOrder) 加入最低金額驗證（HKD 4.00）
 - [x] 在前端商品詳情頁顯示友好的最低金額提示並禁用 Stripe 按鈕
 - [ ] 保存 checkpoint
+
+## 🔧 三項新功能實施
+
+### 1. 商品最低定價 HKD 4.00 驗證
+- [x] 後端 createListing / updateListing 加入最低定價驗證
+- [x] 前端賣家上架表單加入最低定價提示和驗證
+
+### 2. 支付寶 HK 批量審核（Admin 後台）
+- [x] 後端加入批量審核 API（批量更新支付寶訂單狀態 + 批量通知買家和賣家）
+- [x] Admin 後台支付寶核對頁加入全選 checkbox + 批量確認按鈕 + 批量審核 Dialog
+
+### 3. 商品詳情頁 SEO Open Graph meta tags
+- [x] 前端商品詳情頁使用 useEffect 動態設定 OG meta tags
+- [x] 支援商品圖片、名稱、價格、描述的 OG 標籤（og:title, og:description, og:image, og:price）
+- [x] 支援 Twitter Card meta tags
+- [x] 修正 index.html 中 Twitter meta 屬性為正確的 name 屬性
