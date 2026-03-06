@@ -370,7 +370,28 @@ export const appRouter = router({
         const rows = await drizzleDb.select().from(usersTable).where(eqOp(usersTable.id, ctx.user.id)).limit(1);
         return rows[0] || null;
       }),
-
+    changePassword: protectedProcedure
+      .input(z.object({
+        currentPassword: z.string().min(1),
+        newPassword: z.string().min(8, '密碼至少需要 8 個字元'),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const bcrypt = await import('bcrypt');
+        const { getDb } = await import('./db');
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '資料庫連線失敗' });
+        const { users: usersTable } = await import('../drizzle/schema_new');
+        const { eq: eqOp } = await import('drizzle-orm');
+        const userRows = await drizzleDb.select().from(usersTable).where(eqOp(usersTable.id, ctx.user.id)).limit(1);
+        const user = userRows[0];
+        if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: '用戶不存在' });
+        if (!user.passwordHash) throw new TRPCError({ code: 'BAD_REQUEST', message: '您的帳號使用第三方登入，無法修改密碼' });
+        const isValid = await bcrypt.compare(input.currentPassword, user.passwordHash);
+        if (!isValid) throw new TRPCError({ code: 'UNAUTHORIZED', message: '現有密碼不正確' });
+        const newHash = await bcrypt.hash(input.newPassword, 12);
+        await drizzleDb.update(usersTable).set({ passwordHash: newHash }).where(eqOp(usersTable.id, ctx.user.id));
+        return { success: true };
+      }),
     logout: publicProcedure
       .mutation(async ({ ctx }) => {
         console.log('[Logout API] Clearing session cookie...');

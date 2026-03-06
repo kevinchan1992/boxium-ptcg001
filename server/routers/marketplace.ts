@@ -566,6 +566,8 @@ export const marketplaceRouter = router({
       note: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       const updates: Record<string, any> = { orderStatus: input.orderStatus };
       if (input.orderStatus === "shipped") updates.shippedAt = new Date();
       if (input.orderStatus === "delivered") {
@@ -574,6 +576,26 @@ export const marketplaceRouter = router({
         updates.autoCompleteAt = autoComplete;
       }
       await updateMarketplaceOrder(input.orderId, updates);
+      // Notify buyer of status change
+      const statusMessages: Record<string, { title: string; content: string }> = {
+        processing: { title: "訂單處理中 ⏳", content: `訂單 ${order.orderNo} 已進入處理中，賣家正在準備發貨。` },
+        shipped: { title: "訂單已出貨 📦", content: `訂單 ${order.orderNo} 已出貨，請注意查收。` },
+        delivered: { title: "訂單已送達 ✅", content: `訂單 ${order.orderNo} 已送達，如有問題請在 14 天內提出申請。` },
+        completed: { title: "訂單已完成 🎉", content: `訂單 ${order.orderNo} 已完成，感謝您的支持！` },
+        cancelled: { title: "訂單已取消 ❌", content: `訂單 ${order.orderNo} 已取消。${input.note ? `原因：${input.note}` : ""}` },
+        disputed: { title: "訂單爭議中 ⚠️", content: `訂單 ${order.orderNo} 已進入爭議處理。我們將盡快處理，請耐心等候。` },
+      };
+      const msg = statusMessages[input.orderStatus];
+      if (msg) {
+        await createNotification({
+          userId: order.buyerId,
+          type: "trade",
+          title: msg.title,
+          content: msg.content,
+          priority: input.orderStatus === "cancelled" || input.orderStatus === "disputed" ? "high" : "medium",
+          relatedUrl: `/orders/${order.orderNo}`,
+        }).catch(err => console.warn("[Admin] Failed to notify buyer of status change:", err));
+      }
       return { success: true };
     }),
 

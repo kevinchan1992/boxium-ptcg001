@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useState } from "react";
-import { User, Heart, History, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X } from "lucide-react";
+import { User, Heart, History, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 
@@ -176,6 +176,92 @@ export default function Profile() {
   );
 }
 
+// ─── Change Password Dialog ────────────────────────────────────
+function ChangePasswordDialog() {
+  const [open, setOpen] = useState(false);
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+
+  const changePassword = trpc.auth.changePassword.useMutation({
+    onSuccess: () => {
+      toast.success("密碼已成功修改");
+      setOpen(false);
+      setCurrentPw(""); setNewPw(""); setConfirmPw("");
+    },
+    onError: (err) => toast.error(`修改失敗：${err.message}`),
+  });
+
+  const handleSubmit = () => {
+    if (!currentPw || !newPw || !confirmPw) { toast.error("請填寫所有欄位"); return; }
+    if (newPw.length < 8) { toast.error("新密碼至少需要 8 個字元"); return; }
+    if (newPw !== confirmPw) { toast.error("新密碼與確認密碼不一致"); return; }
+    changePassword.mutate({ currentPassword: currentPw, newPassword: newPw });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          className="font-semibold border-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+          style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
+        >
+          <Lock className="w-4 h-4 mr-1.5" /> 修改密碼
+        </Button>
+      </DialogTrigger>
+      <DialogContent style={{ background: "#ffffff", color: "#111827" }}>
+        <DialogHeader>
+          <DialogTitle style={{ color: "#111827" }}>修改密碼</DialogTitle>
+          <DialogDescription style={{ color: "#6b7280" }}>請輸入現有密碼及新密碼以完成修改</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label style={{ color: "#374151" }}>現有密碼</Label>
+            <Input
+              type="password"
+              value={currentPw}
+              onChange={e => setCurrentPw(e.target.value)}
+              placeholder="請輸入現有密碼"
+              style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label style={{ color: "#374151" }}>新密碼</Label>
+            <Input
+              type="password"
+              value={newPw}
+              onChange={e => setNewPw(e.target.value)}
+              placeholder="至少 8 個字元"
+              style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label style={{ color: "#374151" }}>確認新密碼</Label>
+            <Input
+              type="password"
+              value={confirmPw}
+              onChange={e => setConfirmPw(e.target.value)}
+              placeholder="再次輸入新密碼"
+              style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} style={{ borderColor: "#d1d5db", color: "#374151", background: "#ffffff" }}>取消</Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={changePassword.isPending}
+            style={{ background: BRAND_BLUE, color: "white" }}
+          >
+            {changePassword.isPending ? "修改中..." : "確認修改"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Info Section ──────────────────────────────────────────────
 function InfoSection({ user, locale }: { user: any; locale: string }) {
   const { t } = useTranslation();
@@ -306,13 +392,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
       </div>
 
       <div className="pt-2 border-t border-gray-100">
-        <Button
-          variant="outline"
-          className="font-semibold border-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
-          style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
-        >
-          {t("profile.infoSection.changePassword")}
-        </Button>
+        <ChangePasswordDialog />
       </div>
     </div>
   );
@@ -493,13 +573,13 @@ function ShippingAddressSection() {
       </div>
 
       {showForm && (
-        <Card className="border-2 bg-white" style={{ borderColor: BRAND_BLUE + "40" }}>
+        <Card className="border-2" style={{ borderColor: BRAND_BLUE + "40", background: "#ffffff", color: "#111827" }}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base" style={{ color: BRAND_BLUE }}>
+            <CardTitle className="text-base" style={{ color: BRAND_BLUE, background: "#ffffff" }}>
               {editingId ? "編輯地址" : "新增收貨地址"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 bg-white">
+          <CardContent className="space-y-4" style={{ background: "#ffffff" }}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-gray-500 uppercase">地址標籤</Label>
@@ -535,7 +615,7 @@ function ShippingAddressSection() {
                 className="font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] disabled:scale-100 disabled:shadow-none" style={{ background: BRAND_BLUE, color: "white" }}>
                 {editingId ? "儲存更改" : "新增地址"}
               </Button>
-              <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); resetForm(); }} className="transition-all duration-200 hover:scale-[1.02] hover:shadow-sm active:scale-[0.98]">取消</Button>
+              <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); resetForm(); }} className="transition-all duration-200 hover:scale-[1.02] hover:shadow-sm active:scale-[0.98] border-gray-400 text-gray-700 bg-white hover:bg-gray-50">取消</Button>
             </div>
           </CardContent>
         </Card>
@@ -759,23 +839,23 @@ function OrdersSection() {
           href={`/orders/${order.orderNo}`}
           className="block"
         >
-          <Card className="hover:shadow-md transition-shadow cursor-pointer bg-white border border-gray-200">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200" style={{ background: "#ffffff", color: "#111827" }}>
             <CardContent className="py-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-gray-500 font-mono">#{order.orderNo}</span>
+                    <span className="text-xs font-mono" style={{ color: "#6b7280" }}>#{order.orderNo}</span>
                     <Badge className={`text-xs ${statusColor[order.status] || "bg-gray-100 text-gray-700"}`}>
                       {statusLabel[order.status] || order.status}
                     </Badge>
                   </div>
-                  <p className="font-medium text-sm truncate text-gray-900">{order.listingTitle || "商品"}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="font-medium text-sm truncate" style={{ color: "#111827" }}>{order.listingTitle || "商品"}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#6b7280" }}>
                     {new Date(order.createdAt).toLocaleDateString("zh-HK")}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-base text-gray-900">HKD {parseFloat(order.totalAmountHkd || "0").toFixed(2)}</p>
+                  <p className="font-bold text-base" style={{ color: "#111827" }}>HKD {parseFloat(order.totalAmountHkd || "0").toFixed(2)}</p>
                   <p className="text-xs text-blue-600 mt-1">查看詳情 →</p>
                 </div>
               </div>
