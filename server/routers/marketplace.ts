@@ -94,8 +94,9 @@ export const marketplaceRouter = router({
 
       const price = parseFloat(listing.priceHkd as string);
       const subtotal = price * input.quantity;
+      // Platform fee is deducted from seller's payout (buyer pays listing price only)
       const platformFee = listing.sellerType === "seller" ? subtotal * PLATFORM_FEE_RATE : 0;
-      const total = subtotal + platformFee;
+      const total = subtotal; // Buyer pays listing price only, no extra fees
 
       // Stripe requires minimum HKD 4.00 for card payments
       if (input.paymentMethod === "stripe" && total < 4.00) {
@@ -156,6 +157,26 @@ export const marketplaceRouter = router({
       const Stripe = (await import("stripe")).default;
       const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
       const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
+      // Build payment_intent_data - use Destination Charge for C2C listings with active Stripe Connect
+      const paymentIntentData: any = {
+        metadata: {
+          orderId: order.id.toString(),
+          orderNo,
+          buyerId: ctx.user.id.toString(),
+          listingId: listing.id.toString(),
+        },
+      };
+      if (listing.sellerType === "seller" && listing.sellerId) {
+        const sellerProfile = await getSellerProfileById(listing.sellerId);
+        if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
+          // Destination Charge: buyer pays listing price (total)
+          // Platform takes application_fee (5%) from seller's payout
+          // Seller automatically receives (total - application_fee) = 95% of listing price
+          paymentIntentData.application_fee_amount = Math.round(platformFee * 100);
+          paymentIntentData.transfer_data = { destination: sellerProfile.stripeConnectId };
+          console.log(`[Checkout] Destination charge to ${sellerProfile.stripeConnectId}, buyer pays HKD ${total.toFixed(2)}, platform fee HKD ${platformFee.toFixed(2)}, seller receives HKD ${(subtotal - platformFee).toFixed(2)}`);
+        }
+      }
       const session = await stripeClient.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [{
@@ -175,6 +196,7 @@ export const marketplaceRouter = router({
           buyerId: ctx.user.id.toString(),
           listingId: listing.id.toString(),
         },
+        payment_intent_data: paymentIntentData,
         success_url: `${origin}/orders?payment=success&orderNo=${orderNo}`,
         cancel_url: `${origin}/shop/${listing.id}?payment=cancelled`,
         allow_promotion_codes: true,
@@ -244,38 +266,56 @@ export const marketplaceRouter = router({
         buyerConfirmedAt: new Date(),
         payoutStatus: "processing",
       });
-      // Trigger Stripe Transfer payout if C2C order
+      // Handle payout for C2C orders
       if (order.sellerType === "seller" && order.sellerId) {
         const sellerProfile = await getSellerProfileByUserId(order.sellerId);
         if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
-          try {
-            const Stripe = (await import("stripe")).default;
-            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-            const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
-            const transfer = await stripe.transfers.create({
-              amount: receivable,
-              currency: "hkd",
-              destination: sellerProfile.stripeConnectId,
-              metadata: { order_no: order.orderNo, order_id: order.id.toString() },
-            });
-            await updateMarketplaceOrder(input.orderId, {
-              payoutStatus: "paid",
-              stripeTransferId: transfer.id,
-            });
-            // Notify seller of payout
-            await createNotification({
-              userId: order.sellerId,
-              type: "trade",
-              title: "款項已轉帳 💰",
-              body: `訂單 ${order.orderNo} 買家已確認收貨，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
-              linkUrl: "/seller",
-            }).catch(() => {});
-          } catch (err: any) {
-            console.error("[Payout] Stripe transfer failed:", err);
-            await updateMarketplaceOrder(input.orderId, {
-              payoutStatus: "failed",
-              stripeTransferError: err.message,
-            });
+          // Check if this was a Destination Charge (funds already transferred automatically)
+          // Destination charges auto-transfer funds when payment completes, so we just mark as paid
+          if (order.stripePaymentIntentId) {
+            try {
+              const Stripe = (await import("stripe")).default;
+              const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+              const paymentIntent = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
+              const isDestinationCharge = !!(paymentIntent as any).transfer_data?.destination;
+              if (isDestinationCharge) {
+                // Destination charge: funds already auto-transferred at payment time
+                const transferId = (paymentIntent as any).transfer;
+                await updateMarketplaceOrder(input.orderId, {
+                  payoutStatus: "paid",
+                  stripeTransferId: typeof transferId === "string" ? transferId : null,
+                });
+                console.log(`[Payout] Destination charge - funds auto-transferred for order ${order.orderNo}`);
+              } else {
+                // Legacy: manual transfer (Separate Charges & Transfers)
+                const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
+                const transfer = await stripe.transfers.create({
+                  amount: receivable,
+                  currency: "hkd",
+                  destination: sellerProfile.stripeConnectId,
+                  metadata: { order_no: order.orderNo, order_id: order.id.toString() },
+                });
+                await updateMarketplaceOrder(input.orderId, {
+                  payoutStatus: "paid",
+                  stripeTransferId: transfer.id,
+                });
+                console.log(`[Payout] Manual transfer ${transfer.id} for order ${order.orderNo}`);
+              }
+              // Notify seller of payout
+              await createNotification({
+                userId: order.sellerId,
+                type: "trade",
+                title: "款項已確認 💰",
+                body: `訂單 ${order.orderNo} 買家已確認收貨，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
+                linkUrl: "/seller",
+              }).catch(() => {});
+            } catch (err: any) {
+              console.error("[Payout] Stripe payout check failed:", err);
+              await updateMarketplaceOrder(input.orderId, {
+                payoutStatus: "failed",
+                stripeTransferError: err.message,
+              });
+            }
           }
         }
       }
@@ -783,6 +823,25 @@ export const marketplaceRouter = router({
       }
 
       const orderNo = await generateOrderNo();
+      // Build payment_intent_data - use Destination Charge for C2C listings with active Stripe Connect
+      const platformFee2 = listing.sellerType === "seller" ? price * PLATFORM_FEE_RATE : 0;
+      const total2 = price; // Buyer pays listing price only, platform fee deducted from seller payout
+      const paymentIntentData2: any = {
+        metadata: {
+          orderId: "pending", // will be updated after order creation
+          orderNo,
+          buyerId: ctx.user.id.toString(),
+          listingId: listing.id.toString(),
+        },
+      };
+      if (listing.sellerType === "seller" && listing.sellerId) {
+        const sellerProfile2 = await getSellerProfileById(listing.sellerId);
+        if (sellerProfile2?.stripeConnectId && sellerProfile2.stripeConnectStatus === "active") {
+          paymentIntentData2.application_fee_amount = Math.round(platformFee2 * 100);
+          paymentIntentData2.transfer_data = { destination: sellerProfile2.stripeConnectId };
+          console.log(`[Checkout2] Destination charge to ${sellerProfile2.stripeConnectId}`);
+        }
+      }
       // Create Stripe Checkout Session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
@@ -790,7 +849,7 @@ export const marketplaceRouter = router({
           price_data: {
             currency: "hkd",
             product_data: { name: listing.title, description: listing.description ?? undefined },
-            unit_amount: amountHKD,
+            unit_amount: Math.round(total2 * 100), // Listing price only
           },
           quantity: 1,
         }],
@@ -803,6 +862,7 @@ export const marketplaceRouter = router({
           listing_id: listing.id.toString(),
           order_no: orderNo,
         },
+        payment_intent_data: paymentIntentData2,
       });
       // Create pending order
       await createMarketplaceOrder({
@@ -1422,6 +1482,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const listing = await getListingById(offer.listingId);
       if (!listing || listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架" });
       const offerPrice = parseFloat(offer.offerPriceHkd as string);
+      // Platform fee is deducted from seller's payout (buyer pays offer price only)
       const platformFee = offerPrice * PLATFORM_FEE_RATE;
       const orderNo = await generateOrderNo();
       const order = await createMarketplaceOrder({
@@ -1445,14 +1506,27 @@ All three checks must pass for verified to be true. Respond with JSON only match
       // Create Stripe checkout for buyer
       const Stripe = (await import("stripe")).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-      const origin = "https://boxiumptcg-mua4eq38.manus.space";
+      const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
+      // Build payment_intent_data - use Destination Charge for C2C listings with active Stripe Connect
+      const offerPaymentIntentData: any = {
+        metadata: { orderId: order.id.toString(), orderNo, buyerId: offer.buyerId.toString(), offerId: offer.id.toString() },
+      };
+      if (listing.sellerType === "seller" && listing.sellerId) {
+        const offerSellerProfile = await getSellerProfileById(listing.sellerId);
+        if (offerSellerProfile?.stripeConnectId && offerSellerProfile.stripeConnectStatus === "active") {
+          offerPaymentIntentData.application_fee_amount = Math.round(platformFee * 100);
+          offerPaymentIntentData.transfer_data = { destination: offerSellerProfile.stripeConnectId };
+          console.log(`[OfferCheckout] Destination charge to ${offerSellerProfile.stripeConnectId}`);
+        }
+      }
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
-        line_items: [{ price_data: { currency: "hkd", product_data: { name: listing.title }, unit_amount: Math.round((offerPrice + platformFee) * 100) }, quantity: 1 }],
+        line_items: [{ price_data: { currency: "hkd", product_data: { name: listing.title }, unit_amount: Math.round(offerPrice * 100) }, quantity: 1 }], // Buyer pays offer price only
         mode: "payment",
         customer_email: undefined,
         client_reference_id: offer.buyerId.toString(),
         metadata: { orderId: order.id.toString(), orderNo, buyerId: offer.buyerId.toString(), offerId: offer.id.toString() },
+        payment_intent_data: offerPaymentIntentData,
         success_url: `${origin}/orders?payment=success&orderNo=${orderNo}`,
         cancel_url: `${origin}/shop/${listing.id}`,
         allow_promotion_codes: true,

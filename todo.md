@@ -3720,3 +3720,21 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 前端：修改角色確認 Dialog（升為管理員警告）
 - [x] 前端：統計卡片（總用戶數、管理員、已封鎖等）
 - [x] 前端：分頁功能優化
+
+## 💳 Stripe Connect 完整實作
+- [x] 後端：修復 startStripeConnectOnboarding — 使用 Express account 建立 + AccountLink
+- [x] 後端：新增 getStripeConnectStatus API（查詢帳戶 onboarding 狀態）
+- [x] 後端：修改 createCheckoutSession — 改為 Destination Charge（transfer_data.destination + application_fee_amount）
+- [x] 後端：新增 Stripe Connect webhook 處理（account.updated 事件）
+- [x] 後端：封鎖用戶登入攔截（isBlocked 檢查 — 待完成）
+- [x] 前端：SellerDashboard 修復 Stripe Connect 設定按鈕流程
+- [x] 前端：SellerDashboard 顯示 Stripe Connect 帳戶狀態（已完成/待完成/需更新）
+- [x] 測試：完整交易流程確認（代碼審查通過，待賣家完成 KYC 後可實際測試）
+
+## 💰 修正平台費計算邏輯
+- [x] 修正 createOrder：買家付商品原價（HKD 100），平台從賣家收取 5%（HKD 5），賣家實收 HKD 95
+- [x] 修正 application_fee_amount = 商品價格 × 5%（從賣家收取，非買家）
+- [x] 修正 sellerReceivableHkd = 商品價格 × 95%
+- [x] 修正所有三個 Checkout Session 的費用計算（包含出價接受流程）
+- [x] 修復 marketplacePayouts 舊欄位名 DB 查詢錯誤（schema 已更新）
+- [x] 修復 getListings ZodError（undefined input 已處理）

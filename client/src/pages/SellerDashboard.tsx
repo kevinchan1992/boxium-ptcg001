@@ -280,14 +280,14 @@ export default function SellerDashboard() {
 
         {sellerProfile?.isActive && (
           <>
-            {sellerProfile.stripeConnectStatus !== "active" && (
+            {sellerProfile.stripeConnectStatus === "pending" && (
               <Card className="border-blue-200 bg-blue-50 mb-6">
                 <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
                     <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0" />
                     <div>
                       <p className="font-medium text-blue-900">設定 Stripe 收款帳戶</p>
-                      <p className="text-sm text-blue-700">完成 Stripe Connect 設定後才能收取款項</p>
+                      <p className="text-sm text-blue-700">完成 Stripe Connect 設定後才能收取款項。平台將透過 Stripe 自動轉帳給你。</p>
                     </div>
                   </div>
                   <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
@@ -298,11 +298,50 @@ export default function SellerDashboard() {
                 </CardContent>
               </Card>
             )}
+            {sellerProfile.stripeConnectStatus === "restricted" && (
+              <Card className="border-yellow-200 bg-yellow-50 mb-6">
+                <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-yellow-900">Stripe 帳戶需要補充資料</p>
+                      <p className="text-sm text-yellow-700">你的 Stripe Connect 帳戶尚未完成驗證，請繼續完成設定流程。</p>
+                    </div>
+                  </div>
+                  <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
+                    variant="outline" className="border-yellow-600 text-yellow-700 hover:bg-yellow-100">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    {stripeMutation.isPending ? "處理中..." : "繼續完成設定"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+            {sellerProfile.stripeConnectStatus === "disabled" && (
+              <Card className="border-red-200 bg-red-50 mb-6">
+                <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-red-900">Stripe 帳戶已停用</p>
+                      <p className="text-sm text-red-700">你的 Stripe Connect 帳戶已被停用，請聯絡 Stripe 支援或重新申請。</p>
+                    </div>
+                  </div>
+                  <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
+                    variant="outline" className="border-red-600 text-red-700 hover:bg-red-100">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    {stripeMutation.isPending ? "處理中..." : "重新設定"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
             {sellerProfile.stripeConnectStatus === "active" && (
               <Card className="border-green-200 bg-green-50 mb-6">
                 <CardContent className="flex items-center gap-3 py-4">
                   <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
-                  <p className="text-green-800 font-medium">Stripe 收款帳戶已連接</p>
+                  <div>
+                    <p className="text-green-800 font-medium">Stripe 收款帳戶已啟用 ✅</p>
+                    <p className="text-sm text-green-700">買家付款後，平台將自動透過 Stripe 轉帳至你的帳戶（扣除 5% 平台服務費）。</p>
+                  </div>
                 </CardContent>
               </Card>
             )}
