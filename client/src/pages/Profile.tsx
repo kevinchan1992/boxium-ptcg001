@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useState } from "react";
-import { User, Heart, History, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield, MapPin, Plus, Edit2, Star, Check } from "lucide-react";
+import { User, Heart, History, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 
@@ -179,48 +179,136 @@ export default function Profile() {
 // ─── Info Section ──────────────────────────────────────────────
 function InfoSection({ user, locale }: { user: any; locale: string }) {
   const { t } = useTranslation();
+  const utils = trpc.useUtils();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(user.name || "");
+  const [editPhone, setEditPhone] = useState(user.phone || "");
 
-  const fields = [
-    { icon: User, label: t("profile.infoSection.username"), value: user.name || t("profile.infoSection.notSet") },
+  const updateProfile = trpc.auth.updateProfile.useMutation({
+    onSuccess: () => {
+      toast.success("個人資料已更新");
+      setIsEditing(false);
+      utils.auth.me.invalidate();
+    },
+    onError: (err) => toast.error(`更新失敗：${err.message}`),
+  });
+
+  const readonlyFields = [
     { icon: Mail, label: t("profile.infoSection.email"), value: user.email || t("profile.infoSection.notSet") },
     { icon: Shield, label: t("profile.infoSection.role"), value: user.role === "admin" ? t("profile.infoSection.adminRole") : t("profile.infoSection.normalUser") },
     { icon: Calendar, label: t("profile.infoSection.registeredAt"), value: new Date(user.createdAt).toLocaleString(locale) },
     {
       icon: Calendar,
       label: t("profile.infoSection.lastLogin"),
-      value: user.lastSignedIn
-        ? new Date(user.lastSignedIn).toLocaleString(locale)
-        : t("profile.infoSection.noRecord"),
+      value: user.lastSignedIn ? new Date(user.lastSignedIn).toLocaleString(locale) : t("profile.infoSection.noRecord"),
     },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-bold text-gray-900 mb-1">{t("profile.infoSection.title")}</h2>
-        <p className="text-sm text-gray-500">{t("profile.infoSection.description")}</p>
+      {/* ── Editable Profile Block ── */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">編輯個人資料</h2>
+            <p className="text-xs text-gray-500 mt-0.5">更新您的姓名和聯繫電話</p>
+          </div>
+          {!isEditing ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => { setEditName(user.name || ""); setEditPhone(user.phone || ""); setIsEditing(true); }}
+              className="font-semibold border-2 transition-all duration-200 hover:scale-[1.03] hover:shadow-md active:scale-[0.97] gap-1.5"
+              style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
+            >
+              <Edit2 className="w-3.5 h-3.5" /> 編輯
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => updateProfile.mutate({ name: editName || undefined, phone: editPhone || null })}
+                disabled={updateProfile.isPending}
+                className="font-semibold gap-1.5 transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] disabled:scale-100"
+                style={{ background: BRAND_BLUE, color: "white" }}
+              >
+                <Save className="w-3.5 h-3.5" /> {updateProfile.isPending ? "儲存中..." : "儲存"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsEditing(false)}
+                className="gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <X className="w-3.5 h-3.5" /> 取消
+              </Button>
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+              {t("profile.infoSection.username")}
+            </Label>
+            {isEditing ? (
+              <Input
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                placeholder="輸入您的姓名"
+                className="border-gray-300 focus:border-blue-500 bg-white text-gray-900"
+              />
+            ) : (
+              <div className="h-9 flex items-center px-3 rounded-md border border-gray-200 bg-gray-50 text-gray-800 text-sm">
+                {user.name || <span className="text-gray-400">{t("profile.infoSection.notSet")}</span>}
+              </div>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+              聯繫電話
+            </Label>
+            {isEditing ? (
+              <Input
+                value={editPhone}
+                onChange={e => setEditPhone(e.target.value)}
+                placeholder="+852 XXXX XXXX"
+                className="border-gray-300 focus:border-blue-500 bg-white text-gray-900"
+              />
+            ) : (
+              <div className="h-9 flex items-center px-3 rounded-md border border-gray-200 bg-gray-50 text-gray-800 text-sm">
+                {user.phone || <span className="text-gray-400">未設定</span>}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {fields.map(({ icon: Icon, label, value }) => (
-          <div key={label} className="space-y-1.5">
-            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
-              <Icon className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
-              {label}
-            </Label>
-            <Input
-              value={value}
-              disabled
-              className="bg-gray-50 border-gray-200 text-gray-800 disabled:opacity-100 disabled:cursor-default"
-            />
-          </div>
-        ))}
+      {/* ── Read-only Account Info ── */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">帳戶資訊</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {readonlyFields.map(({ icon: Icon, label, value }) => (
+            <div key={label} className="space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+                <Icon className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+                {label}
+              </Label>
+              <Input
+                value={value}
+                disabled
+                className="bg-gray-50 border-gray-200 text-gray-800 disabled:opacity-100 disabled:cursor-default"
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="pt-2 border-t border-gray-100">
         <Button
           variant="outline"
-          className="font-semibold border-2"
+          className="font-semibold border-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
           style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
         >
           {t("profile.infoSection.changePassword")}
@@ -398,44 +486,44 @@ function ShippingAddressSection() {
         </div>
         {!showForm && (
           <Button size="sm" onClick={() => { resetForm(); setEditingId(null); setShowForm(true); }}
-            className="font-semibold" style={{ background: BRAND_BLUE, color: "white" }}>
+            className="font-semibold transition-all duration-200 hover:scale-[1.03] hover:shadow-md active:scale-[0.97]" style={{ background: BRAND_BLUE, color: "white" }}>
             <Plus className="w-4 h-4 mr-1.5" /> 新增地址
           </Button>
         )}
       </div>
 
       {showForm && (
-        <Card className="border-2" style={{ borderColor: BRAND_BLUE + "40" }}>
+        <Card className="border-2 bg-white" style={{ borderColor: BRAND_BLUE + "40" }}>
           <CardHeader className="pb-3">
             <CardTitle className="text-base" style={{ color: BRAND_BLUE }}>
               {editingId ? "編輯地址" : "新增收貨地址"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 bg-white">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-gray-500 uppercase">地址標籤</Label>
-                <Input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} placeholder="例：家、公司" />
+                <Input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} placeholder="例：家、公司" className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-gray-500 uppercase">收件人姓名 *</Label>
-                <Input value={form.recipientName} onChange={e => setForm(f => ({ ...f, recipientName: e.target.value }))} placeholder="收件人全名" />
+                <Input value={form.recipientName} onChange={e => setForm(f => ({ ...f, recipientName: e.target.value }))} placeholder="收件人全名" className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-gray-500 uppercase">聯絡電話 *</Label>
-                <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+852 XXXX XXXX" />
+                <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+852 XXXX XXXX" className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-gray-500 uppercase">地區</Label>
                 <select value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
-                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm">
+                  className="w-full h-9 rounded-md border border-gray-200 bg-white text-gray-900 px-3 py-1 text-sm shadow-sm">
                   <option value="">選擇地區（可選）</option>
                   {HK_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
               <div className="space-y-1.5 md:col-span-2">
                 <Label className="text-xs font-semibold text-gray-500 uppercase">詳細地址 *</Label>
-                <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="街道、樓層、單位" />
+                <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="街道、樓層、單位" className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400" />
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -444,10 +532,10 @@ function ShippingAddressSection() {
             </div>
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSubmit} disabled={addMutation.isPending || updateMutation.isPending}
-                className="font-semibold" style={{ background: BRAND_BLUE, color: "white" }}>
+                className="font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] disabled:scale-100 disabled:shadow-none" style={{ background: BRAND_BLUE, color: "white" }}>
                 {editingId ? "儲存更改" : "新增地址"}
               </Button>
-              <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); resetForm(); }}>取消</Button>
+              <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); resetForm(); }} className="transition-all duration-200 hover:scale-[1.02] hover:shadow-sm active:scale-[0.98]">取消</Button>
             </div>
           </CardContent>
         </Card>
@@ -485,15 +573,15 @@ function ShippingAddressSection() {
                 <div className="flex items-center gap-1 shrink-0">
                   {!addr.isDefault && (
                     <Button size="sm" variant="ghost" onClick={() => setDefaultMutation.mutate({ id: addr.id })}
-                      className="h-7 text-xs text-blue-600 hover:bg-blue-50" disabled={setDefaultMutation.isPending}>
+                      className="h-7 text-xs text-blue-600 hover:bg-blue-50 transition-all duration-150 hover:scale-[1.05] active:scale-95" disabled={setDefaultMutation.isPending}>
                       <Check className="w-3 h-3 mr-1" /> 設為預設
                     </Button>
                   )}
-                  <Button size="sm" variant="ghost" onClick={() => handleEdit(addr)} className="h-7 w-7 p-0">
+                  <Button size="sm" variant="ghost" onClick={() => handleEdit(addr)} className="h-7 w-7 p-0 transition-all duration-150 hover:scale-110 hover:bg-blue-50 hover:text-blue-600 active:scale-90">
                     <Edit2 className="w-3.5 h-3.5" />
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate({ id: addr.id })}
-                    className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50" disabled={deleteMutation.isPending}>
+                    className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 transition-all duration-150 hover:scale-110 active:scale-90" disabled={deleteMutation.isPending}>
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
@@ -671,23 +759,23 @@ function OrdersSection() {
           href={`/orders/${order.orderNo}`}
           className="block"
         >
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer bg-white border border-gray-200">
             <CardContent className="py-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-muted-foreground font-mono">#{order.orderNo}</span>
+                    <span className="text-xs text-gray-500 font-mono">#{order.orderNo}</span>
                     <Badge className={`text-xs ${statusColor[order.status] || "bg-gray-100 text-gray-700"}`}>
                       {statusLabel[order.status] || order.status}
                     </Badge>
                   </div>
-                  <p className="font-medium text-sm truncate">{order.listingTitle || "商品"}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="font-medium text-sm truncate text-gray-900">{order.listingTitle || "商品"}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
                     {new Date(order.createdAt).toLocaleDateString("zh-HK")}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-base">HKD {parseFloat(order.totalAmountHkd || "0").toFixed(2)}</p>
+                  <p className="font-bold text-base text-gray-900">HKD {parseFloat(order.totalAmountHkd || "0").toFixed(2)}</p>
                   <p className="text-xs text-blue-600 mt-1">查看詳情 →</p>
                 </div>
               </div>

@@ -351,6 +351,26 @@ export const appRouter = router({
         };
       }),
     
+    updateProfile: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1).max(100).optional(),
+        phone: z.string().max(30).optional().nullable(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { getDb } = await import('./db');
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '資料庫連線失敗' });
+        const updateData: Record<string, any> = {};
+        if (input.name !== undefined) updateData.name = input.name;
+        if (input.phone !== undefined) updateData.phone = input.phone;
+        if (Object.keys(updateData).length === 0) throw new TRPCError({ code: 'BAD_REQUEST', message: '沒有需要更新的資料' });
+        const { users: usersTable } = await import('../drizzle/schema_new');
+        const { eq: eqOp } = await import('drizzle-orm');
+        await drizzleDb.update(usersTable).set(updateData).where(eqOp(usersTable.id, ctx.user.id));
+        const rows = await drizzleDb.select().from(usersTable).where(eqOp(usersTable.id, ctx.user.id)).limit(1);
+        return rows[0] || null;
+      }),
+
     logout: publicProcedure
       .mutation(async ({ ctx }) => {
         console.log('[Logout API] Clearing session cookie...');
