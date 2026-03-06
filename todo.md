@@ -3618,3 +3618,15 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 自動 Stripe Refund（爭議解決選擇退款時自動呼叫 Stripe API）
 - [x] 商品舉報功能（買家舉報 + 舉報原因選擇）
 - [x] Admin 商品舉報管理（listingReports 表）
+
+## 🐛 修復 Stripe Checkout 最低金額錯誤
+
+### 問題描述
+當商品價格低於 HKD 4.00 時，Stripe Checkout Session 建立失敗，錯誤訊息：
+"The Checkout Session's total amount due must add up to at least $4.00 hkd"
+
+### 任務清單
+- [x] 在後端 createOrder 加入最低金額驗證（HKD 4.00）
+- [x] 在後端 buyNow (createStripeOrder) 加入最低金額驗證（HKD 4.00）
+- [x] 在前端商品詳情頁顯示友好的最低金額提示並禁用 Stripe 按鈕
+- [ ] 保存 checkpoint

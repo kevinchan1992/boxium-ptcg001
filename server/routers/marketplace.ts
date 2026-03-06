@@ -96,6 +96,15 @@ export const marketplaceRouter = router({
       const subtotal = price * input.quantity;
       const platformFee = listing.sellerType === "seller" ? subtotal * PLATFORM_FEE_RATE : 0;
       const total = subtotal + platformFee;
+
+      // Stripe requires minimum HKD 4.00 for card payments
+      if (input.paymentMethod === "stripe" && total < 4.00) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `此商品金額 HKD ${total.toFixed(2)} 低於 Stripe 最低付款金額 HKD 4.00，請改用支付寶 HK 付款。`,
+        });
+      }
+
       const orderNo = await generateOrderNo();
 
       const order = await createMarketplaceOrder({
@@ -678,6 +687,15 @@ export const marketplaceRouter = router({
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
       const price = parseFloat(listing.priceHkd as string);
       const amountHKD = Math.round(price * 100); // cents
+
+      // Stripe requires minimum HKD 4.00 for card payments
+      if (price < 4.00) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `此商品金額 HKD ${price.toFixed(2)} 低於 Stripe 最低付款金額 HKD 4.00，請改用支付寶 HK 付款。`,
+        });
+      }
+
       const orderNo = await generateOrderNo();
       // Create Stripe Checkout Session
       const session = await stripe.checkout.sessions.create({

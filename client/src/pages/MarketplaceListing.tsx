@@ -392,9 +392,15 @@ export default function MarketplaceListing() {
                     請先<Link href="/login" className="font-medium underline mx-1">登入</Link>才能購買
                   </div>
                 )}
+                {price < 4.00 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                    <AlertCircle className="w-4 h-4 inline mr-1" />
+                    此商品金額低於 Stripe 最低付款限額（HKD 4.00），請使用支付寶 HK 付款。
+                  </div>
+                )}
                 <Button
-                  className="w-full bg-[#06038d] hover:bg-[#0804b8] text-white h-12 text-base"
-                  disabled={!me || createStripeOrderMutation.isPending}
+                  className="w-full bg-[#06038d] hover:bg-[#0804b8] text-white h-12 text-base disabled:opacity-40 disabled:cursor-not-allowed"
+                  disabled={!me || createStripeOrderMutation.isPending || price < 4.00}
                   onClick={() => { if (!me) return; setShowShippingDialog(true); }}
                 >
                   <CreditCard className="w-5 h-5 mr-2" />
