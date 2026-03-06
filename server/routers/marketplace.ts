@@ -554,6 +554,19 @@ export const marketplaceRouter = router({
         paymentStatus: "paid",
         orderStatus: "payment_received",
       });
+      // Mark listing as sold
+      if (order.listingId) {
+        await updateListing(order.listingId, { status: "sold" });
+      }
+      // Notify buyer of payment confirmation
+      await createNotification({
+        userId: order.buyerId,
+        type: "trade",
+        title: "支付寶 HK 收款已確認 ✅",
+        content: `訂單 ${order.orderNo} 的支付寶 HK 付款已由管理員確認，訂單現在進入處理中。${input.note ? `備註：${input.note}` : ""}`,
+        priority: "high",
+        relatedUrl: `/orders/${order.orderNo}`,
+      }).catch(() => {});
       // Notify seller of new order
       if (order.sellerId) {
         await createNotification({
@@ -583,6 +596,10 @@ export const marketplaceRouter = router({
             paymentStatus: "paid",
             orderStatus: "payment_received",
           });
+          // Mark listing as sold
+          if (order.listingId) {
+            await updateListing(order.listingId, { status: "sold" });
+          }
           // Notify buyer of payment confirmation
           await createNotification({
             userId: order.buyerId,

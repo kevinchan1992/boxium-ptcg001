@@ -98,13 +98,28 @@ async function startServer() {
             stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : order.stripePaymentIntentId,
           });
           console.log(`[Webhook] Order ${order.orderNo} marked as payment_received`);
+          // Mark listing as sold
+          if (order.listingId) {
+            const { updateListing } = await import("../db");
+            await updateListing(order.listingId, { status: "sold" });
+            console.log(`[Webhook] Listing ${order.listingId} marked as sold`);
+          }
+          // Notify buyer of payment confirmation
+          await createNotification({
+            userId: order.buyerId,
+            type: "trade",
+            title: "付款成功 ✅",
+            content: `訂單 ${order.orderNo} 的 Stripe 付款已確認，訂單現在進入處理中。`,
+            priority: "high",
+            relatedUrl: `/orders/${order.orderNo}`,
+          }).catch(() => {});
           // Notify seller of new paid order
           if (order.sellerId) {
             await createNotification({
               userId: order.sellerId,
               type: "trade",
-              title: "\u65b0\u8a02\u55ae\u5df2\u4ed8\u6b3e \ud83c\udf89",
-              content: `\u8a02\u55ae ${order.orderNo} \u8cb7\u5bb6\u5df2\u5b8c\u6210 Stripe \u4ed8\u6b3e\uff0c\u8acb\u76e1\u5feb\u5b89\u6392\u51fa\u8ca8\u3002`,
+              title: "新訂單已付款 🎉",
+              content: `訂單 ${order.orderNo} 買家已完成 Stripe 付款，請盡快安排出貨。`,
               priority: "high",
               relatedUrl: "/seller",
             }).catch(() => {});

@@ -3650,3 +3650,7 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ## 🐛 修復支付寶確認收款資料庫錯誤
 - [x] 診斷原因：資料庫 orderStatus enum 缺少 payment_received / processing / delivered 等值
 - [x] 直接 ALTER TABLE 修正資料庫 enum 值，並同步更新 schema_new.ts
+
+## 🐛 三個問題修復- [x] 修復已售出商品仍顯示在商城（支付寶和 Stripe 確認收款後同步更新商品狀態為 sold）
+- [x] 修復 HKD NaN 金額顯示（後端返回 subtotalHkd/priceHkd，前端修正字段名稱並加 parseFloat 保護）
+- [x] 新增 Admin 销售總覽面板（销售總額、手續費收入、本月/上月對比、付款方式分佈）

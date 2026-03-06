@@ -2853,12 +2853,44 @@ export async function getMarketplaceStats() {
     .where(and(eq(marketplaceOrders.paymentMethod, 'alipay_hk'), eq(marketplaceOrders.paymentStatus, 'pending')));
   const [sellerCount] = await db.select({ count: sql<number>`count(*)` }).from(sellerProfiles).where(eq(sellerProfiles.isActive, true));
   const [pendingReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.status, 'pending_review'));
+  // Sales revenue stats - all paid orders
+  const paidStatuses = ['payment_received', 'processing', 'shipped', 'delivered', 'completed'];
+  const [totalRevenue] = await db.select({
+    totalSales: sql<string>`COALESCE(SUM(subtotalHkd), 0)`,
+    totalFees: sql<string>`COALESCE(SUM(platformFeeHkd), 0)`,
+    completedCount: sql<number>`count(*)`,
+  }).from(marketplaceOrders).where(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]));
+  // This month revenue
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const [thisMonthRevenue] = await db.select({
+    total: sql<string>`COALESCE(SUM(subtotalHkd), 0)`,
+  }).from(marketplaceOrders)
+    .where(and(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]), sql`createdAt >= ${firstDayOfMonth}`));
+  const [lastMonthRevenue] = await db.select({
+    total: sql<string>`COALESCE(SUM(subtotalHkd), 0)`,
+  }).from(marketplaceOrders)
+    .where(and(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]), sql`createdAt >= ${firstDayOfLastMonth}`, sql`createdAt < ${firstDayOfMonth}`));
+  // Payment method breakdown
+  const [stripeCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
+    .where(and(eq(marketplaceOrders.paymentMethod, 'stripe'), inArray(marketplaceOrders.orderStatus, paidStatuses as any[])));
+  const [alipayCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
+    .where(and(eq(marketplaceOrders.paymentMethod, 'alipay_hk'), inArray(marketplaceOrders.orderStatus, paidStatuses as any[])));
   return {
     activeListings: Number(listingCount?.count ?? 0),
     totalOrders: Number(orderCount?.count ?? 0),
     pendingAlipayConfirmation: Number(pendingAlipay?.count ?? 0),
     activeSellerCount: Number(sellerCount?.count ?? 0),
     pendingReviewListings: Number(pendingReview?.count ?? 0),
+    // Sales revenue
+    totalSalesHkd: parseFloat(totalRevenue?.totalSales ?? '0'),
+    totalFeesHkd: parseFloat(totalRevenue?.totalFees ?? '0'),
+    completedOrderCount: Number(totalRevenue?.completedCount ?? 0),
+    thisMonthSalesHkd: parseFloat(thisMonthRevenue?.total ?? '0'),
+    lastMonthSalesHkd: parseFloat(lastMonthRevenue?.total ?? '0'),
+    stripePaidCount: Number(stripeCount?.count ?? 0),
+    alipayPaidCount: Number(alipayCount?.count ?? 0),
   };
 }
 

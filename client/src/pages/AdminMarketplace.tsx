@@ -249,7 +249,7 @@ function ListingsTab() {
                   </Badge>
                 </div>
                 <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
-                  <span>HKD {parseFloat(listing.price as string).toFixed(2)}</span>
+                  <span>HKD {parseFloat(listing.priceHkd as string || "0").toFixed(2)}</span>
                   <span>庫存: {listing.quantity}</span>
                   <span>{new Date(listing.createdAt).toLocaleDateString("zh-HK")}</span>
                 </div>
@@ -329,7 +329,7 @@ function OrdersTab() {
                   </Badge>
                 </div>
                 <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
-                  <span>HKD {parseFloat(order.total as string).toFixed(2)}</span>
+                  <span>HKD {parseFloat(order.subtotalHkd as string || "0").toFixed(2)}</span>
                   <span>{new Date(order.createdAt).toLocaleDateString("zh-HK")}</span>
                 </div>
               </div>
@@ -356,7 +356,7 @@ function OrdersTab() {
                 <span className="text-muted-foreground">付款方式</span>
                 <span>{selectedOrder.paymentMethod === "stripe" ? "Stripe" : "支付寶 HK"}</span>
                 <span className="text-muted-foreground">訂單金額</span>
-                <span className="font-medium">HKD {parseFloat(selectedOrder.total).toFixed(2)}</span>
+                <span className="font-medium">HKD {parseFloat(selectedOrder.subtotalHkd || "0").toFixed(2)}</span>
                 <span className="text-muted-foreground">當前狀態</span>
                 <Badge className={orderStatusColor[selectedOrder.orderStatus] ?? ""}>{orderStatusLabel[selectedOrder.orderStatus]}</Badge>
               </div>
@@ -481,7 +481,7 @@ function AlipayPendingTab() {
                     {order.shippingName && <span className="text-xs text-muted-foreground">買家：{order.shippingName}</span>}
                   </div>
                   <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
-                    <span className="font-medium text-foreground">HKD {parseFloat(order.total as string).toFixed(2)}</span>
+                    <span className="font-medium text-foreground">HKD {parseFloat(order.subtotalHkd as string || "0").toFixed(2)}</span>
                     <span>{new Date(order.createdAt).toLocaleString("zh-HK")}</span>
                     {order.alipayProofImageUrl && (
                       <a href={order.alipayProofImageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
@@ -508,7 +508,7 @@ function AlipayPendingTab() {
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
                 <p>訂單：<strong>{selectedOrder.orderNo}</strong></p>
-                <p>金額：<strong>HKD {parseFloat(selectedOrder.total).toFixed(2)}</strong></p>
+                <p>金額：<strong>HKD {parseFloat(selectedOrder.subtotalHkd || "0").toFixed(2)}</strong></p>
                 {selectedOrder.shippingName && <p>買家：<strong>{selectedOrder.shippingName}</strong></p>}
               </div>
               {selectedOrder.alipayProofImageUrl && (
@@ -540,7 +540,7 @@ function AlipayPendingTab() {
                 {orders?.filter((o: any) => selectedIds.has(o.id)).map((o: any) => (
                   <li key={o.id} className="flex justify-between">
                     <span className="font-mono">{o.orderNo}</span>
-                    <span className="font-medium">HKD {parseFloat(o.total).toFixed(2)}</span>
+                    <span className="font-medium">HKD {parseFloat(o.subtotalHkd || "0").toFixed(2)}</span>
                   </li>
                 ))}
               </ul>
@@ -1020,12 +1020,67 @@ export default function AdminMarketplace() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
           <StatCard title="上架商品" value={stats?.activeListings ?? 0} icon={Package} color="bg-blue-100 text-blue-700" />
           <StatCard title="總訂單" value={stats?.totalOrders ?? 0} icon={ShoppingBag} color="bg-purple-100 text-purple-700" />
           <StatCard title="待核對支付寶" value={stats?.pendingAlipayConfirmation ?? 0} icon={AlertCircle} color="bg-amber-100 text-amber-700" />
           <StatCard title="活躍賣家" value={stats?.activeSellerCount ?? 0} icon={Users} color="bg-green-100 text-green-700" />
           <StatCard title="待審核商品" value={stats?.pendingReviewListings ?? 0} icon={Clock} color="bg-orange-100 text-orange-700" />
+        </div>
+
+        {/* Sales Revenue Dashboard */}
+        <div className="bg-gradient-to-r from-[#06038d]/5 to-[#06038d]/10 border border-[#06038d]/20 rounded-xl p-4 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <DollarSign className="w-5 h-5 text-[#06038d]" />
+            <h2 className="font-semibold text-[#06038d]">銷售總覽</h2>
+            <span className="text-xs text-muted-foreground ml-1">（已付款訂單）</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <p className="text-xs text-muted-foreground mb-1">平台銷售總額</p>
+              <p className="text-xl font-bold text-[#06038d]">HKD {(stats?.totalSalesHkd ?? 0).toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-xs text-muted-foreground mt-1">{stats?.completedOrderCount ?? 0} 筆已付款訂單</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <p className="text-xs text-muted-foreground mb-1">平台手續費收入</p>
+              <p className="text-xl font-bold text-emerald-600">HKD {(stats?.totalFeesHkd ?? 0).toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-xs text-muted-foreground mt-1">佔銷售額 {stats?.totalSalesHkd ? ((stats.totalFeesHkd / stats.totalSalesHkd) * 100).toFixed(1) : '0'}%</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <p className="text-xs text-muted-foreground mb-1">本月銷售額</p>
+              <p className="text-xl font-bold text-blue-600">HKD {(stats?.thisMonthSalesHkd ?? 0).toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                上月 HKD {(stats?.lastMonthSalesHkd ?? 0).toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {stats?.lastMonthSalesHkd ? (
+                  <span className={`ml-1 font-medium ${(stats.thisMonthSalesHkd ?? 0) >= stats.lastMonthSalesHkd ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {(stats.thisMonthSalesHkd ?? 0) >= stats.lastMonthSalesHkd ? '▲' : '▼'}
+                    {Math.abs(((stats.thisMonthSalesHkd ?? 0) - stats.lastMonthSalesHkd) / stats.lastMonthSalesHkd * 100).toFixed(1)}%
+                  </span>
+                ) : null}
+              </p>
+            </div>
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <p className="text-xs text-muted-foreground mb-1">付款方式分佈</p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex-1">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-purple-700">Stripe</span>
+                    <span className="font-medium">{stats?.stripePaidCount ?? 0}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${stats?.completedOrderCount ? ((stats.stripePaidCount ?? 0) / stats.completedOrderCount * 100) : 0}%` }} />
+                  </div>
+                  <div className="flex justify-between text-xs mt-1">
+                    <span className="text-blue-700">支付寶 HK</span>
+                    <span className="font-medium">{stats?.alipayPaidCount ?? 0}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 mt-1">
+                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${stats?.completedOrderCount ? ((stats.alipayPaidCount ?? 0) / stats.completedOrderCount * 100) : 0}%` }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <BrandTabs defaultValue="listings" variant="light">
