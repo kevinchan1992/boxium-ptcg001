@@ -319,6 +319,29 @@ export const marketplaceRouter = router({
           }
         }
       }
+      // Send completed email to buyer
+      try {
+        const { sendOrderEmail, buildOrderCompletedBuyerEmail, buildOrderCompletedSellerEmail, getOrderEmailData } = await import("../emailService");
+        const emailData = await getOrderEmailData(order);
+        const { subject: buyerSubject, html: buyerHtml } = buildOrderCompletedBuyerEmail({
+          orderNo: order.orderNo,
+          itemName: emailData.itemName,
+          priceHkd: emailData.priceHkd,
+        });
+        await sendOrderEmail({ userId: order.buyerId, subject: buyerSubject, html: buyerHtml });
+        // Send completed email to seller (C2C only)
+        if (order.sellerType === "seller" && order.sellerId) {
+          const { subject: sellerSubject, html: sellerHtml } = buildOrderCompletedSellerEmail({
+            orderNo: order.orderNo,
+            itemName: emailData.itemName,
+            priceHkd: emailData.priceHkd,
+            receivableHkd: emailData.receivableHkd,
+          });
+          await sendOrderEmail({ userId: order.sellerId, subject: sellerSubject, html: sellerHtml });
+        }
+      } catch (emailErr: any) {
+        console.warn("[Order] Completed email failed:", emailErr.message);
+      }
       return { success: true };
     }),
 
@@ -468,6 +491,20 @@ export const marketplaceRouter = router({
         body: `訂單 ${order.orderNo} 已出貨${input.trackingNo ? `，物流追蹤號：${input.trackingNo}` : ""}。如 14 天內未確認收貨，系統將自動完成訂單。`,
         linkUrl: "/orders",
       }).catch(err => console.warn("[Order] Failed to notify buyer of shipment:", err));
+      // Send shipped email to buyer
+      try {
+        const { sendOrderEmail, buildOrderShippedEmail, getOrderEmailData } = await import("../emailService");
+        const emailData = await getOrderEmailData(order);
+        const { subject, html } = buildOrderShippedEmail({
+          orderNo: order.orderNo,
+          itemName: emailData.itemName,
+          priceHkd: emailData.priceHkd,
+          trackingNo: input.trackingNo,
+        });
+        await sendOrderEmail({ userId: order.buyerId, subject, html });
+      } catch (emailErr: any) {
+        console.warn("[Order] Shipped email failed:", emailErr.message);
+      }
       return { success: true };
     }),
 
@@ -724,6 +761,29 @@ export const marketplaceRouter = router({
           body: msg.content,
           linkUrl: `/orders/${order.orderNo}`,
         }).catch(err => console.warn("[Admin] Failed to notify buyer of status change:", err));
+      }
+      // Send email for key status changes
+      if (["shipped", "completed", "cancelled"].includes(input.orderStatus)) {
+        try {
+          const { sendOrderEmail, buildOrderShippedEmail, buildOrderCompletedBuyerEmail, buildOrderCompletedSellerEmail, buildOrderCancelledEmail, getOrderEmailData } = await import("../emailService");
+          const emailData = await getOrderEmailData(order);
+          if (input.orderStatus === "shipped") {
+            const { subject, html } = buildOrderShippedEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
+            await sendOrderEmail({ userId: order.buyerId, subject, html });
+          } else if (input.orderStatus === "completed") {
+            const { subject: bs, html: bh } = buildOrderCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
+            await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh });
+            if (order.sellerType === "seller" && order.sellerId) {
+              const { subject: ss, html: sh } = buildOrderCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
+              await sendOrderEmail({ userId: order.sellerId, subject: ss, html: sh });
+            }
+          } else if (input.orderStatus === "cancelled") {
+            const { subject, html } = buildOrderCancelledEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, note: input.note });
+            await sendOrderEmail({ userId: order.buyerId, subject, html });
+          }
+        } catch (emailErr: any) {
+          console.warn("[Admin] Order status email failed:", emailErr.message);
+        }
       }
       return { success: true };
     }),
@@ -1272,6 +1332,31 @@ All three checks must pass for verified to be true. Respond with JSON only match
           body: `訂單 ${order.orderNo} 的爭議已由管理員處理。`,
           linkUrl: "/seller",
         }).catch(() => {});
+      }
+      // Send email based on dispute outcome
+      try {
+        const { sendOrderEmail, buildOrderRefundedEmail, buildOrderCompletedBuyerEmail, buildOrderCompletedSellerEmail, getOrderEmailData } = await import("../emailService");
+        const emailData = await getOrderEmailData(order);
+        if (input.outcome === "refund_buyer") {
+          // Refund email to buyer
+          const { subject, html } = buildOrderRefundedEmail({
+            orderNo: order.orderNo,
+            itemName: emailData.itemName,
+            priceHkd: emailData.priceHkd,
+            note: input.resolution,
+          });
+          await sendOrderEmail({ userId: order.buyerId, subject, html });
+        } else if (input.outcome === "release_seller") {
+          // Completed email to buyer and seller
+          const { subject: bs, html: bh } = buildOrderCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
+          await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh });
+          if (order.sellerId) {
+            const { subject: ss, html: sh } = buildOrderCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
+            await sendOrderEmail({ userId: order.sellerId, subject: ss, html: sh });
+          }
+        }
+      } catch (emailErr: any) {
+        console.warn("[Dispute] Resolve email failed:", emailErr.message);
       }
       return { success: true };
     }),

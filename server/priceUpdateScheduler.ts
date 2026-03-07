@@ -283,6 +283,15 @@ export function startAutoCompleteOrdersScheduler() {
               body: `訂單 ${order.orderNo} 已超過 14 天未確認收貨，系統已自動完成訂單。如有問題請聯絡客服。`,
               linkUrl: '/orders',
             }).catch(() => {});
+            // Send auto-completed email to buyer
+            try {
+              const { sendOrderEmail, buildOrderAutoCompletedBuyerEmail, getOrderEmailData } = await import('./emailService');
+              const emailData = await getOrderEmailData(order);
+              const { subject, html } = buildOrderAutoCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
+              await sendOrderEmail({ userId: order.buyerId, subject, html });
+            } catch (emailErr: any) {
+              console.warn(`[AutoComplete] Buyer email failed for order ${order.orderNo}:`, emailErr.message);
+            }
 
             // Trigger Stripe Transfer payout if C2C order
             if (order.sellerType === 'seller' && order.sellerId) {
@@ -309,6 +318,15 @@ export function startAutoCompleteOrdersScheduler() {
                     body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨），HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
                     linkUrl: '/seller',
                   }).catch(() => {});
+                  // Send auto-completed email to seller
+                  try {
+                    const { sendOrderEmail, buildOrderAutoCompletedSellerEmail, getOrderEmailData } = await import('./emailService');
+                    const emailData = await getOrderEmailData(order);
+                    const { subject, html } = buildOrderAutoCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
+                    await sendOrderEmail({ userId: order.sellerId, subject, html });
+                  } catch (emailErr: any) {
+                    console.warn(`[AutoComplete] Seller email failed for order ${order.orderNo}:`, emailErr.message);
+                  }
                 } catch (err: any) {
                   console.error(`[AutoComplete] Stripe transfer failed for order ${order.orderNo}:`, err.message);
                   await db.update(marketplaceOrders)

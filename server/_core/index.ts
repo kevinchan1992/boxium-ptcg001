@@ -107,18 +107,27 @@ async function startServer() {
           // Notify buyer of payment confirmation
           await createNotification({
             userId: order.buyerId,
-            type: "trade",
-            title: "付款成功 ✅",
+            type: 'trade',
+            title: '付款成功 ✅',
             body: `訂單 ${order.orderNo} 的 Stripe 付款已確認，訂單現在進入處理中。`,
 
             linkUrl: `/orders/${order.orderNo}`,
           }).catch(() => {});
+          // Send order confirmed email to buyer
+          try {
+            const { sendOrderEmail, buildOrderConfirmedEmail, getOrderEmailData } = await import('../emailService');
+            const emailData = await getOrderEmailData(order);
+            const { subject, html } = buildOrderConfirmedEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
+            await sendOrderEmail({ userId: order.buyerId, subject, html });
+          } catch (emailErr: any) {
+            console.warn('[Webhook] Order confirmed email failed:', emailErr.message);
+          }
           // Notify seller of new paid order
           if (order.sellerId) {
             await createNotification({
               userId: order.sellerId,
-              type: "trade",
-              title: "新訂單已付款 🎉",
+              type: 'trade',
+              title: '新訂單已付款 🎉',
               body: `訂單 ${order.orderNo} 買家已完成 Stripe 付款，請盡快安排出貨。`,
 
               linkUrl: "/seller",

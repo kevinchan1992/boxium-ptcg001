@@ -3761,3 +3761,14 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ## 📱 修復 Profile 頁面 Tab 按鈕重疊問題
 - [x] 修復 Profile 頁面（個人資訊、關注清單、瀏覽歷史、收貨地址、我的訂單）tab 列與上方 header 重疊
 - [x] 將 hero banner 的 pb-20 改為 pb-8，並將 tab 卡片的 -mt-10 改為 mt-6，確保 tab 列不與上方重疊
+
+## 📧 訂單狀態 Email 通知
+- [x] 分析現有通知架構和 SMTP 設定
+- [x] 建立 Email 發送服務（emailService.ts）
+- [x] 建立 HTML Email 模板（出貨、完成、退款、自動完成、取消、訂單確認）
+- [x] 訂單出貨時發送 Email 給買家（含物流追蹤號）
+- [x] 訂單完成時發送 Email 給買家和賣家
+- [x] 訂單退款時發送 Email 給買家（爭議解決退款）
+- [x] 訂單自動完成時發送 Email 給買家和賣家
+- [x] 付款成功時發送 Email 給買家（Stripe Webhook）
+- [x] Admin 更改訂單狀態時發送對應 Email（出貨、完成、取消）
