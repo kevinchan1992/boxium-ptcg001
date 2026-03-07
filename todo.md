@@ -3759,5 +3759,5 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 確保通知包含訂單編號及相關說明
 
 ## 📱 修復 Profile 頁面 Tab 按鈕重疊問題
-- [ ] 修復 Profile 頁面（個人資訊、關注清單、瀏覽歷史、收貨地址、我的訂單）tab 列與上方 header 重疊
-- [ ] 增加 tab 列的 top padding/margin，確保不與上方 sticky header 重疊
+- [x] 修復 Profile 頁面（個人資訊、關注清單、瀏覽歷史、收貨地址、我的訂單）tab 列與上方 header 重疊
+- [x] 將 hero banner 的 pb-20 改為 pb-8，並將 tab 卡片的 -mt-10 改為 mt-6，確保 tab 列不與上方重疊

@@ -94,7 +94,7 @@ export default function Profile() {
       >
         {/* Decorative yellow accent line */}
         <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: BRAND_YELLOW }} />
-        <div className="max-w-5xl mx-auto px-4 pt-10 pb-20">
+        <div className="max-w-5xl mx-auto px-4 pt-10 pb-8">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
             {/* Avatar */}
             <div
@@ -129,7 +129,7 @@ export default function Profile() {
       </div>
 
       {/* ── Main Content ── */}
-      <div className="max-w-5xl mx-auto px-4 -mt-10 pb-16">
+      <div className="max-w-5xl mx-auto px-4 mt-6 pb-16">
         {/* Tabs card */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           <BrandTabs defaultValue="info" variant="light">
