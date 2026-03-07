@@ -117,6 +117,11 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     const result = await findOrCreateGoogleUser(googleId, email, name);
 
     if (!result.success || !result.user) {
+      // Check if blocked error
+      if (result.error && result.error.includes('封鎖')) {
+        const encodedMsg = encodeURIComponent(result.error);
+        return res.redirect(`${origin}/login?error=blocked&message=${encodedMsg}`);
+      }
       return res.redirect(`${origin}/login?error=user_creation_failed`);
     }
 

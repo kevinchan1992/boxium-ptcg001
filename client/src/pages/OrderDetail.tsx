@@ -229,7 +229,7 @@ export default function OrderDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background pt-20">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-4 animate-pulse">
+        <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-4 animate-pulse">
           <div className="h-8 bg-muted rounded w-1/3" />
           <div className="h-48 bg-muted rounded-xl" />
           <div className="h-32 bg-muted rounded-xl" />
@@ -265,7 +265,7 @@ export default function OrderDetail() {
 
   return (
     <div className="min-h-screen bg-background pt-20">
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link href="/orders">
@@ -287,20 +287,20 @@ export default function OrderDetail() {
 
         {/* Status Card */}
         <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-          <div className="p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${statusInfo.color}`}>
+          <div className="p-4 flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${statusInfo.color}`}>
                 {statusInfo.icon}
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}>
                   {statusInfo.label}
                 </span>
-                <p className="text-xs text-muted-foreground mt-0.5">{statusInfo.desc}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{statusInfo.desc}</p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="font-bold text-[#06038d] text-lg">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</p>
+            <div className="text-right flex-shrink-0">
+              <p className="font-bold text-[#06038d] text-base sm:text-lg">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</p>
               <p className="text-xs text-muted-foreground capitalize">{order.paymentMethod?.replace("_", " ")}</p>
             </div>
           </div>

@@ -275,12 +275,12 @@ export function startAutoCompleteOrdersScheduler() {
               .set({ orderStatus: 'completed', buyerConfirmedAt: now, payoutStatus: 'processing' })
               .where(eq(marketplaceOrders.id, order.id));
 
+            // Notify buyer: order auto-completed
             await createNotification({
               userId: order.buyerId,
               type: 'trade',
               title: '訂單已自動完成 ✅',
-              body: `訂單 ${order.orderNo} 已超過 14 天未確認收貨，系統已自動完成訂單。`,
-
+              body: `訂單 ${order.orderNo} 已超過 14 天未確認收貨，系統已自動完成訂單。如有問題請聯絡客服。`,
               linkUrl: '/orders',
             }).catch(() => {});
 
@@ -301,12 +301,12 @@ export function startAutoCompleteOrdersScheduler() {
                   await db.update(marketplaceOrders)
                     .set({ payoutStatus: 'paid', stripeTransferId: transfer.id })
                     .where(eq(marketplaceOrders.id, order.id));
+                  // Notify seller: Stripe payout transferred
                   await createNotification({
                     userId: order.sellerId,
                     type: 'trade',
                     title: '款項已自動轉帳 💰',
-                    body: `訂單 ${order.orderNo} 已自動完成，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
-
+                    body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨），HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
                     linkUrl: '/seller',
                   }).catch(() => {});
                 } catch (err: any) {
@@ -314,7 +314,24 @@ export function startAutoCompleteOrdersScheduler() {
                   await db.update(marketplaceOrders)
                     .set({ payoutStatus: 'failed', stripeTransferError: err.message })
                     .where(eq(marketplaceOrders.id, order.id));
+                  // Notify seller: payout failed
+                  await createNotification({
+                    userId: order.sellerId,
+                    type: 'trade',
+                    title: '訂單自動完成，款項轉帳失敗 ⚠️',
+                    body: `訂單 ${order.orderNo} 已自動完成，但款項轉帳失敗，請聯絡客服處理。`,
+                    linkUrl: '/seller',
+                  }).catch(() => {});
                 }
+              } else {
+                // Seller has no Stripe Connect or not active - notify them to contact admin
+                await createNotification({
+                  userId: order.sellerId,
+                  type: 'trade',
+                  title: '訂單已自動完成 ✅',
+                  body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨）。款項將由平台管理員安排轉帳，請留意後續通知。`,
+                  linkUrl: '/seller',
+                }).catch(() => {});
               }
             }
             console.log(`[AutoComplete] Order ${order.orderNo} auto-completed`);

@@ -13,10 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   Search, RefreshCw, Edit, Trash2, Key, Shield, User, Mail, Calendar, Clock,
   MapPin, ShoppingBag, Eye, Ban, CheckCircle, Users, UserCheck, UserX, ChevronLeft, ChevronRight,
-  Phone, Lock, Globe, AlertTriangle, UserCog
+  Phone, Lock, Globe, AlertTriangle, UserCog, MoreVertical
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -538,7 +539,8 @@ export function AdminUserManagement() {
                         {new Date(user.lastSignedIn).toLocaleDateString("zh-HK")}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center justify-end gap-1">
+                        {/* Desktop: icon buttons */}
+                        <div className="hidden sm:flex items-center justify-end gap-1">
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="查看詳情" onClick={() => setViewingUserId(user.id)}>
                             <Eye className="w-3.5 h-3.5" />
                           </Button>
@@ -562,6 +564,43 @@ export function AdminUserManagement() {
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive" title="刪除用戶" onClick={() => setDeletingUserId(user.id)}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
+                        </div>
+                        {/* Mobile: dropdown menu */}
+                        <div className="flex sm:hidden items-center justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem onClick={() => setViewingUserId(user.id)}>
+                                <Eye className="w-3.5 h-3.5 mr-2" />查看詳情
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setEditingUser(user)}>
+                                <Edit className="w-3.5 h-3.5 mr-2" />編輯
+                              </DropdownMenuItem>
+                              {user.loginMethod === "password" && (
+                                <DropdownMenuItem onClick={() => setResetPasswordUserId(user.id)}>
+                                  <Key className="w-3.5 h-3.5 mr-2" />重置密碼
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              {user.isBlocked ? (
+                                <DropdownMenuItem className="text-green-600" onClick={() => setUnblockingUserId(user.id)}>
+                                  <CheckCircle className="w-3.5 h-3.5 mr-2" />解除封鎖
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem className="text-orange-600" onClick={() => setBlockingUserId(user.id)}>
+                                  <Ban className="w-3.5 h-3.5 mr-2" />封鎖帳號
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={() => setDeletingUserId(user.id)}>
+                                <Trash2 className="w-3.5 h-3.5 mr-2" />刪除用戶
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>

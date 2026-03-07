@@ -169,6 +169,12 @@ export async function loginUser(
     return { success: false, error: "email 或密碼錯誤" };
   }
 
+  // Check if user is blocked
+  if ((user as any).isBlocked) {
+    const reason = (user as any).blockReason;
+    return { success: false, error: reason ? `帳號已被封鎖：${reason}` : "帳號已被封鎖，請聯絡客服" };
+  }
+
   // Update last signed in
   await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
 
@@ -195,6 +201,11 @@ export async function findOrCreateGoogleUser(
   let user = await db.select().from(users).where(eq(users.googleId, googleId)).limit(1);
 
   if (user.length > 0) {
+    // Check if user is blocked
+    if ((user[0] as any).isBlocked) {
+      const reason = (user[0] as any).blockReason;
+      return { success: false, error: reason ? `帳號已被封鎖：${reason}` : "帳號已被封鎖，請聯絡客服" };
+    }
     // Update last signed in
     await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user[0].id));
     const token = generateToken(user[0]);
@@ -205,6 +216,11 @@ export async function findOrCreateGoogleUser(
   user = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
   if (user.length > 0) {
+    // Check if user is blocked
+    if ((user[0] as any).isBlocked) {
+      const reason = (user[0] as any).blockReason;
+      return { success: false, error: reason ? `帳號已被封鎖：${reason}` : "帳號已被封鎖，請聯絡客服" };
+    }
     // Link Google account to existing user
     await db.update(users).set({ googleId, lastSignedIn: new Date() }).where(eq(users.id, user[0].id));
     const updatedUser = await db.select().from(users).where(eq(users.id, user[0].id)).limit(1);

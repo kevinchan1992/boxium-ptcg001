@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
 
 const IS_DEV = import.meta.env.DEV;
 
@@ -15,9 +17,28 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [devLoading, setDevLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Handle error params from Google OAuth redirect (e.g. blocked user)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    const message = params.get("message");
+
+    if (error === "blocked" && message) {
+      setErrorMessage(decodeURIComponent(message));
+    } else if (error === "user_creation_failed") {
+      setErrorMessage("帳號建立失敗，請稍後再試或聯絡客服");
+    } else if (error === "auth_failed") {
+      setErrorMessage("Google 登入失敗，請稍後再試");
+    } else if (error === "no_email") {
+      setErrorMessage("無法取得 Google 帳號 Email，請確認授權設定");
+    }
+  }, []);
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: () => {
+      setErrorMessage(null);
       toast.success("登入成功");
       // Wait a bit to ensure cookie is set before redirecting
       setTimeout(() => {
@@ -27,7 +48,13 @@ export default function Login() {
       }, 100);
     },
     onError: (error) => {
-      toast.error(error.message || "登入失敗");
+      const msg = error.message || "登入失敗";
+      // Show blocked errors in the alert banner, other errors as toast
+      if (msg.includes("封鎖") || msg.includes("blocked")) {
+        setErrorMessage(msg);
+      } else {
+        toast.error(msg);
+      }
       setIsLoading(false);
     },
   });
@@ -35,6 +62,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage(null);
     
     try {
       await loginMutation.mutateAsync({ email, password });
@@ -92,6 +120,14 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Blocked / Error Alert Banner */}
+          {errorMessage && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

@@ -417,7 +417,7 @@ export default function Orders() {
 
   return (
     <div className="min-h-screen bg-background pt-20">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
         <div className="flex items-center gap-3 mb-6">
           <Link href="/marketplace">
             <Button variant="outline" size="sm">
@@ -425,7 +425,7 @@ export default function Orders() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">我的訂單</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">我的訂單</h1>
             <p className="text-sm text-muted-foreground">共 {orders?.length ?? 0} 筆訂單</p>
           </div>
         </div>

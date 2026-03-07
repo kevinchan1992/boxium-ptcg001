@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
-import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag } from "lucide-react";
+import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare } from "lucide-react";
 import { Link } from "wouter";
 
 // ─── ImageUploader ────────────────────────────────────────────────────────────
@@ -232,7 +232,9 @@ export default function SellerDashboard() {
           </div>
           {sellerProfile?.isActive && (
             <Button onClick={() => setShowNewListing(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white">
-              <Plus className="w-4 h-4 mr-2" />上架新商品
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">上架新商品</span>
+              <span className="sm:hidden">上架</span>
             </Button>
           )}
         </div>
@@ -401,9 +403,9 @@ export default function SellerDashboard() {
 
             <BrandTabs defaultValue="listings">
               <BrandTabsList>
-                <BrandTabsTrigger value="listings">我的商品</BrandTabsTrigger>
-                <BrandTabsTrigger value="orders">訂單管理</BrandTabsTrigger>
-                <BrandTabsTrigger value="offers">
+                <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="我的商品">我的商品</BrandTabsTrigger>
+                <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="訂單管理">訂單管理</BrandTabsTrigger>
+                <BrandTabsTrigger value="offers" icon={<MessageSquare className="w-4 h-4" />} label="出價洿議">
                   出價洿議
                   {myOffers && myOffers.filter((o: any) => o.status === 'pending').length > 0 && (
                     <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-yellow-500 text-black rounded-full">
@@ -411,7 +413,7 @@ export default function SellerDashboard() {
                     </span>
                   )}
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="payouts">放款記錄</BrandTabsTrigger>
+                <BrandTabsTrigger value="payouts" icon={<Wallet className="w-4 h-4" />} label="放款記錄">放款記錄</BrandTabsTrigger>
               </BrandTabsList>
 
               <BrandTabsContent value="listings" className="mt-4">

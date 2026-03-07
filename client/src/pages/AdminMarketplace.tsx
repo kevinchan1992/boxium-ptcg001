@@ -153,7 +153,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
           <div><Label>商品名稱 *</Label><Input className="mt-1" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="例：PSA 10 皮卡丘 SM-P 288" /></div>
           <div><Label>描述</Label><Textarea className="mt-1" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} /></div>
           <ImageUploader images={images} onChange={setImages} />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>品相 *</Label>
               <Select value={form.condition} onValueChange={v => setForm(f => ({ ...f, condition: v }))}>
@@ -179,7 +179,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div><Label>售價 (HKD) *</Label><Input className="mt-1" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0.00" min="0" step="0.01" /></div>
             <div><Label>數量 *</Label><Input className="mt-1" type="number" value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} min="1" /></div>
           </div>
@@ -285,7 +285,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated }: { listingId: num
               <div className="space-y-4">
                 <div><Label>商品名稱</Label><Input className="mt-1" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} /></div>
                 <div><Label>描述</Label><Textarea className="mt-1" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} rows={3} /></div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><Label>售價 (HKD)</Label><Input className="mt-1" type="number" value={editForm.price} onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))} min="4" step="0.01" /></div>
                   <div><Label>庫存數量</Label><Input className="mt-1" type="number" value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: e.target.value }))} min="0" /></div>
                 </div>
@@ -311,7 +311,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated }: { listingId: num
                 </div>
 
                 {/* Key Info Grid */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
                   <div className="bg-muted/40 rounded-lg p-3">
                     <p className="text-xs text-muted-foreground mb-1">售價</p>
                     <p className="font-bold text-lg">HKD {parseFloat(listing.priceHkd as string || "0").toFixed(2)}</p>

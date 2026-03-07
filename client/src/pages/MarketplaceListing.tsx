@@ -553,7 +553,7 @@ export default function MarketplaceListing() {
                 <p className="font-medium">請填寫收貨地址</p>
                 <p className="text-xs mt-1">收貨地址將提供給賣家安排寄送</p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>收件人姓名 *</Label>
                   <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：陳大文" value={alipayShippingForm.name} onChange={e => setAlipayShippingForm(f => ({ ...f, name: e.target.value }))} />
@@ -567,7 +567,7 @@ export default function MarketplaceListing() {
                 <Label>詳細地址 *</Label>
                 <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={alipayShippingForm.address} onChange={e => setAlipayShippingForm(f => ({ ...f, address: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>地區</Label>
                   <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] bg-background" placeholder="例：旺角" value={alipayShippingForm.district} onChange={e => setAlipayShippingForm(f => ({ ...f, district: e.target.value }))} />
@@ -765,7 +765,7 @@ export default function MarketplaceListing() {
                 <p className="text-xs text-gray-400">或手動填寫以下欄位</p>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="ship-name">收件人姓名 *</Label>
                 <input
@@ -797,7 +797,7 @@ export default function MarketplaceListing() {
                 onChange={e => setShippingForm(f => ({ ...f, address: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="ship-district">地區</Label>
                 <input

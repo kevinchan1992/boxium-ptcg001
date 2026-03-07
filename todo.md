@@ -3738,3 +3738,22 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 修正所有三個 Checkout Session 的費用計算（包含出價接受流程）
 - [x] 修復 marketplacePayouts 舊欄位名 DB 查詢錯誤（schema 已更新）
 - [x] 修復 getListings ZodError（undefined input 已處理）
+
+## 📱 響應式設計全面修復（方案 A）
+- [ ] SellerDashboard Tabs — 加入 icon，修復 < 480px 空白 Tab
+- [ ] SellerDashboard 標題列 — 手機上「上架新商品」按鈕改為圖示按鈕或縮短
+- [ ] MarketplaceListing 表單 — 名稱/電話欄在手機改為 grid-cols-1
+- [ ] Orders/OrderDetail — 加入統一容器 padding 及響應式斷點
+- [ ] AdminMarketplace Dialogs — 詳情 Dialog grid 在手機改為 grid-cols-1 sm:grid-cols-2
+- [ ] Admin 帳號管理操作按鈕 — 手機上改為 Dropdown 代替多按鈕並排
+- [ ] 全局規範 — index.css 加入響應式容器 utility，確保日後開發統一套用
+
+## 🔒 封鎖用戶登入攔截
+- [x] 後端：在 OAuth callback 流程加入 isBlocked 檢查（Google OAuth 回調已加入封鎖檢查）
+- [x] 後端：被封鎖用戶登入時返回錯誤訊息（含封鎖原因）（loginUser + findOrCreateGoogleUser 均已實作）
+- [x] 前端：登入失敗時顯示「帳號已被封鎖」 Alert Banner（Login.tsx 更新）
+
+## 📬 訂單自動完成通知
+- [x] 後端：自動完成訂單時發送站內通知給買家（說明自動確認收貨原因）
+- [x] 後端：自動完成訂單時發送站內通知給賣家（Stripe 轉帳成功、失敗、非 Stripe 訂單均有通知）
+- [x] 確保通知包含訂單編號及相關說明
