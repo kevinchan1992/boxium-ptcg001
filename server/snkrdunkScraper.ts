@@ -199,7 +199,7 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
  * or when the scraping runs. This is critical for deduplication via UNIQUE INDEX.
  */
 function parseJapaneseDate(dateStr: string): Date {
-  // Format: YYYY/MM/DD
+  // Format 1: YYYY/MM/DD (absolute date)
   const parts = dateStr.split("/");
   if (parts.length === 3) {
     const year = parseInt(parts[0], 10);
@@ -209,9 +209,37 @@ function parseJapaneseDate(dateStr: string): Date {
     return new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
   }
   
-  // Fallback: return UTC midnight of today
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+  // Format 2: "N日前" (N days ago) - e.g., "2日前", "3日前"
+  // SNKRDUNK uses this for very recent sales (within ~7 days)
+  // We calculate the actual date by subtracting N days from today (JST midnight = UTC-9 = UTC+9)
+  // Use JST (Japan Standard Time, UTC+9) since SNKRDUNK is a Japanese platform
+  const daysAgoMatch = dateStr.match(/(\d+)日前/);
+  if (daysAgoMatch) {
+    const daysAgo = parseInt(daysAgoMatch[1], 10);
+    // Get today in JST: UTC+9
+    const nowUtc = new Date();
+    const jstOffsetMs = 9 * 60 * 60 * 1000;
+    const nowJst = new Date(nowUtc.getTime() + jstOffsetMs);
+    // Calculate the target date in JST
+    const targetJst = new Date(nowJst.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    // Store as UTC midnight of that JST date (consistent with absolute date format)
+    return new Date(Date.UTC(targetJst.getUTCFullYear(), targetJst.getUTCMonth(), targetJst.getUTCDate(), 0, 0, 0, 0));
+  }
+  
+  // Format 3: "N時間前" (N hours ago) - treat as today
+  const hoursAgoMatch = dateStr.match(/(\d+)時間前/);
+  if (hoursAgoMatch) {
+    const nowUtc = new Date();
+    const jstOffsetMs = 9 * 60 * 60 * 1000;
+    const nowJst = new Date(nowUtc.getTime() + jstOffsetMs);
+    return new Date(Date.UTC(nowJst.getUTCFullYear(), nowJst.getUTCMonth(), nowJst.getUTCDate(), 0, 0, 0, 0));
+  }
+  
+  // Fallback: return UTC midnight of today (JST)
+  const nowUtc = new Date();
+  const jstOffsetMs = 9 * 60 * 60 * 1000;
+  const nowJst = new Date(nowUtc.getTime() + jstOffsetMs);
+  return new Date(Date.UTC(nowJst.getUTCFullYear(), nowJst.getUTCMonth(), nowJst.getUTCDate(), 0, 0, 0, 0));
 }
 
 /**

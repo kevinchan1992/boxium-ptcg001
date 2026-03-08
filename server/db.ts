@@ -766,33 +766,12 @@ export async function addPriceHistory(data: {
   const db = await getDb();
   if (!db) return null;
 
-  // Deduplication: skip insert if a record with the same (cardId, source, grade, DATE(soldAt), price) already exists
-  // Using DATE() comparison (not exact timestamp) to handle timezone-shifted duplicates
-  // Including price allows same-day multiple sales at different prices (e.g., two PSA10 sales on same day)
-  if (data.soldAt) {
-    const existing = await db
-      .select({ id: priceHistory.id })
-      .from(priceHistory)
-      .where(
-        and(
-          eq(priceHistory.cardId, data.cardId),
-          eq(priceHistory.source, data.source),
-          data.grade ? eq(priceHistory.grade, data.grade) : sql`${priceHistory.grade} IS NULL`,
-          sql`DATE(${priceHistory.soldAt}) = DATE(${data.soldAt})`,
-          eq(priceHistory.price, data.price)
-        )
-      )
-      .limit(1);
-
-    if (existing.length > 0) {
-      return null; // Already exists, skip insert
-    }
-  }
-
-  // Use onDuplicateKeyUpdate as a final safety net against UNIQUE INDEX violations
-  // (e.g., race conditions where two concurrent requests both pass the dedup check above)
-  // The UNIQUE INDEX is on (cardId, source, grade, soldAt) - exact timestamp match
-  // This ensures INSERT is idempotent: duplicate records are silently ignored
+  // Deduplication: rely entirely on the database UNIQUE INDEX (cardId, source, grade, soldAt, price)
+  // No application-layer check needed - the DB constraint handles all dedup cases:
+  //   - Same day, same grade, same price → duplicate (ignored)
+  //   - Same day, same grade, different price → allowed (e.g., two PSA10 sales at different prices)
+  // onDuplicateKeyUpdate is a no-op that silently ignores constraint violations
+  // This is the most reliable approach as it avoids race conditions and timezone issues
   const result = await db.insert(priceHistory).values({
     cardId: data.cardId,
     source: data.source,

@@ -121,13 +121,15 @@ export const priceHistory = mysqlTable("priceHistory", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   // UNIQUE index to prevent duplicate price history records
-  // A record is considered duplicate if it has the same cardId, source, grade, and soldAt
+  // A record is considered duplicate if it has the same cardId, source, grade, soldAt AND price
+  // Including price allows same-day same-grade multiple sales at different prices (common on SNKRDUNK)
   // This enables INSERT ... ON DUPLICATE KEY UPDATE (no-op) for idempotent batch inserts
-  uniquePriceRecord: uniqueIndex("uniq_price_card_source_grade_soldAt").on(
+  uniquePriceRecord: uniqueIndex("uniq_price_card_source_grade_soldAt_price").on(
     table.cardId,
     table.source,
     table.grade,
-    table.soldAt
+    table.soldAt,
+    table.price
   ),
   // Composite index for trending calculations (cardId + soldAt + source + grade)
   // Optimizes queries that filter by cardId, time range, source, and grade

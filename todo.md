@@ -3841,3 +3841,28 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 檢查資料庫 UNIQUE INDEX 定義：(cardId, source, grade, soldAt) 精確時間戳
 - [x] 修復 addPriceHistory：加入 onDuplicateKeyUpdate 作為最後防線，重複記錄靜默忽略
 - [x] 儲存 Checkpoint
+
+---
+
+## 🔍 SNKRDUNK 成交價格歷史不一致問題（深度修復）
+
+- [ ] 直接對比 API 數據與資料庫記錄（card 812832 / SNKRDUNK 100090）
+- [ ] 追蹤完整爬取流程，找出日期轉換根本問題
+- [ ] 徹底修復爬取邏輯，清理錯誤記錄
+- [ ] 驗證修復結果並儲存 Checkpoint
+
+---
+
+## 🔧 SNKRDUNK 成交價格歷史深度修復（2026-03-08）
+
+### 根本問題
+1. `parseJapaneseDate` 未處理相對日期格式（`N日前`），導致最新成交被存成「今天」
+2. UNIQUE INDEX 只有 `(cardId, source, grade, soldAt)`，無法支援同日同評級不同價格的多筆成交
+3. `addPriceHistory` 的應用層去重用 `DATE()` 比對，誤判同日同價為重複而丟失記錄
+
+### 修復清單
+- [x] 修復 `parseJapaneseDate`：正確解析 `N日前`、`N時間前` 格式，使用 JST 時區計算實際日期
+- [x] 修改資料庫 UNIQUE INDEX：加入 `price` 欄位 → `(cardId, source, grade, soldAt, price)`
+- [x] 移除 `addPriceHistory` 應用層去重查詢，完全依賴資料庫 UNIQUE INDEX
+- [x] 新增 3 個相對日期解析單元測試（共 15 個，全部通過）
+- [x] 儲存 Checkpoint

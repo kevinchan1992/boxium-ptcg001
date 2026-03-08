@@ -1,0 +1,185 @@
+{
+  "query": "SELECT id, grade, price, currency, soldAt \nFROM priceHistory \nWHERE cardId = 812832 AND source = 'snkrdunk' AND grade = 'PSA10'\nORDER BY soldAt DESC LIMIT 25;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, grade, price, currency, soldAt \nFROM priceHistory \nWHERE cardId = 812832 AND source = 'snkrdunk' AND grade = 'PSA10'\nORDER BY soldAt DESC LIMIT 25;",
+  "rows": [
+    {
+      "id": "2880719",
+      "grade": "PSA10",
+      "price": "137500.00",
+      "currency": "HKD",
+      "soldAt": "2026-03-05 00:00:00"
+    },
+    {
+      "id": "2836802",
+      "grade": "PSA10",
+      "price": "137500.00",
+      "currency": "HKD",
+      "soldAt": "2026-03-04 00:00:00"
+    },
+    {
+      "id": "2631412",
+      "grade": "PSA10",
+      "price": "137500.00",
+      "currency": "HKD",
+      "soldAt": "2026-03-03 00:00:00"
+    },
+    {
+      "id": "2190266",
+      "grade": "PSA10",
+      "price": "137500.00",
+      "currency": "HKD",
+      "soldAt": "2026-03-02 00:00:00"
+    },
+    {
+      "id": "780216",
+      "grade": "PSA10",
+      "price": "137499.95",
+      "currency": "HKD",
+      "soldAt": "2026-02-21 00:00:00"
+    },
+    {
+      "id": "1511390",
+      "grade": "PSA10",
+      "price": "99000.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-20 00:00:00"
+    },
+    {
+      "id": "1511392",
+      "grade": "PSA10",
+      "price": "104500.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-19 00:00:00"
+    },
+    {
+      "id": "1511397",
+      "grade": "PSA10",
+      "price": "109450.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-18 00:00:00"
+    },
+    {
+      "id": "780618",
+      "grade": "PSA10",
+      "price": "107140.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-17 00:00:00"
+    },
+    {
+      "id": "780658",
+      "grade": "PSA10",
+      "price": "104500.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-16 00:00:00"
+    },
+    {
+      "id": "1623540",
+      "grade": "PSA10",
+      "price": "104500.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-15 00:00:00"
+    },
+    {
+      "id": "780738",
+      "grade": "PSA10",
+      "price": "104500.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-13 00:00:00"
+    },
+    {
+      "id": "1623544",
+      "grade": "PSA10",
+      "price": "104500.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-12 00:00:00"
+    },
+    {
+      "id": "780776",
+      "grade": "PSA10",
+      "price": "106700.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-09 00:00:00"
+    },
+    {
+      "id": "1623546",
+      "grade": "PSA10",
+      "price": "106700.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-08 00:00:00"
+    },
+    {
+      "id": "780813",
+      "grade": "PSA10",
+      "price": "104390.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-07 00:00:00"
+    },
+    {
+      "id": "780901",
+      "grade": "PSA10",
+      "price": "101750.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-06 00:00:00"
+    },
+    {
+      "id": "781021",
+      "grade": "PSA10",
+      "price": "90750.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-05 00:00:00"
+    },
+    {
+      "id": "1623560",
+      "grade": "PSA10",
+      "price": "90750.00",
+      "currency": "HKD",
+      "soldAt": "2026-02-04 00:00:00"
+    },
+    {
+      "id": "781102",
+      "grade": "PSA10",
+      "price": "85250.00",
+      "currency": "HKD",
+      "soldAt": "2026-01-29 00:00:00"
+    },
+    {
+      "id": "1623565",
+      "grade": "PSA10",
+      "price": "85250.00",
+      "currency": "HKD",
+      "soldAt": "2026-01-28 00:00:00"
+    },
+    {
+      "id": "781118",
+      "grade": "PSA10",
+      "price": "95700.00",
+      "currency": "HKD",
+      "soldAt": "2026-01-27 00:00:00"
+    },
+    {
+      "id": "781132",
+      "grade": "PSA10",
+      "price": "93445.00",
+      "currency": "HKD",
+      "soldAt": "2026-01-26 00:00:00"
+    },
+    {
+      "id": "1623567",
+      "grade": "PSA10",
+      "price": "93445.00",
+      "currency": "HKD",
+      "soldAt": "2026-01-25 00:00:00"
+    },
+    {
+      "id": "781148",
+      "grade": "PSA10",
+      "price": "88000.00",
+      "currency": "HKD",
+      "soldAt": "2026-01-23 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tgrade\tprice\tcurrency\tsoldAt\n2880719\tPSA10\t137500.00\tHKD\t2026-03-05 00:00:00\n2836802\tPSA10\t137500.00\tHKD\t2026-03-04 00:00:00\n2631412\tPSA10\t137500.00\tHKD\t2026-03-03 00:00:00\n2190266\tPSA10\t137500.00\tHKD\t2026-03-02 00:00:00\n780216\tPSA10\t137499.95\tHKD\t2026-02-21 00:00:00\n1511390\tPSA10\t99000.00\tHKD\t2026-02-20 00:00:00\n1511392\tPSA10\t104500.00\tHKD\t2026-02-19 00:00:00\n1511397\tPSA10\t109450.00\tHKD\t2026-02-18 00:00:00\n780618\tPSA10\t107140.00\tHKD\t2026-02-17 00:00:00\n780658\tPSA10\t104500.00\tHKD\t2026-02-16 00:00:00\n1623540\tPSA10\t104500.00\tHKD\t2026-02-15 00:00:00\n780738\tPSA10\t104500.00\tHKD\t2026-02-13 00:00:00\n1623544\tPSA10\t104500.00\tHKD\t2026-02-12 00:00:00\n780776\tPSA10\t106700.00\tHKD\t2026-02-09 00:00:00\n1623546\tPSA10\t106700.00\tHKD\t2026-02-08 00:00:00\n780813\tPSA10\t104390.00\tHKD\t2026-02-07 00:00:00\n780901\tPSA10\t101750.00\tHKD\t2026-02-06 00:00:00\n781021\tPSA10\t90750.00\tHKD\t2026-02-05 00:00:00\n1623560\tPSA10\t90750.00\tHKD\t2026-02-04 00:00:00\n781102\tPSA10\t85250.00\tHKD\t2026-01-29 00:00:00\n1623565\tPSA10\t85250.00\tHKD\t2026-01-28 00:00:00\n781118\tPSA10\t95700.00\tHKD\t2026-01-27 00:00:00\n781132\tPSA10\t93445.00\tHKD\t2026-01-26 00:00:00\n1623567\tPSA10\t93445.00\tHKD\t2026-01-25 00:00:00\n781148\tPSA10\t88000.00\tHKD\t2026-01-23 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 1595
+}

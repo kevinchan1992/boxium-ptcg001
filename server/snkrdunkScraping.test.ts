@@ -145,6 +145,79 @@ describe("fetchPriceHistoryFromApi", () => {
     expect(result).toEqual([]);
   });
 
+  it("should parse relative date '2日前' as 2 days ago in JST", async () => {
+    const mockResponse = {
+      data: {
+        history: [
+          { date: "2日前", price: 1100000, condition: "PSA8以下" },
+          { date: "3日前", price: 2500000, condition: "PSA10" },
+        ],
+      },
+    };
+    (mockedAxios.get as any).mockResolvedValueOnce(mockResponse);
+
+    const result = await fetchPriceHistoryFromApi("100090", "single_card");
+
+    expect(result).toHaveLength(2);
+    
+    // "2日前" should be 2 days ago, not today
+    const twoDaysAgo = result[0].soldAt;
+    const threeDaysAgo = result[1].soldAt;
+    
+    // Both should be UTC midnight
+    expect(twoDaysAgo.getUTCHours()).toBe(0);
+    expect(twoDaysAgo.getUTCMinutes()).toBe(0);
+    
+    // "2日前" should be before "3日前" is before today
+    expect(twoDaysAgo.getTime()).toBeGreaterThan(threeDaysAgo.getTime());
+    
+    // Both should be in the past (not today or future)
+    const todayUtc = new Date();
+    expect(twoDaysAgo.getTime()).toBeLessThan(todayUtc.getTime());
+    expect(threeDaysAgo.getTime()).toBeLessThan(todayUtc.getTime());
+  });
+
+  it("should parse '1日前' as yesterday", async () => {
+    const mockResponse = {
+      data: {
+        history: [
+          { date: "1日前", price: 2500000, condition: "PSA10" },
+        ],
+      },
+    };
+    (mockedAxios.get as any).mockResolvedValueOnce(mockResponse);
+
+    const result = await fetchPriceHistoryFromApi("100090", "single_card");
+    expect(result).toHaveLength(1);
+    
+    const soldAt = result[0].soldAt;
+    // Should be UTC midnight
+    expect(soldAt.getUTCHours()).toBe(0);
+    
+    // Should be yesterday or earlier (accounting for JST offset)
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const twoDaysAgoMs = Date.now() - 2 * oneDayMs;
+    expect(soldAt.getTime()).toBeGreaterThanOrEqual(twoDaysAgoMs);
+    expect(soldAt.getTime()).toBeLessThan(Date.now());
+  });
+
+  it("should produce consistent timestamps for same relative date when called twice", async () => {
+    const mockResponse = {
+      data: {
+        history: [
+          { date: "2日前", price: 1100000, condition: "PSA8以下" },
+        ],
+      },
+    };
+    (mockedAxios.get as any).mockResolvedValue(mockResponse);
+
+    const result1 = await fetchPriceHistoryFromApi("100090");
+    const result2 = await fetchPriceHistoryFromApi("100090");
+
+    // Same relative date called within same second should produce same timestamp
+    expect(result1[0].soldAt.getTime()).toBe(result2[0].soldAt.getTime());
+  });
+
   it("should handle multiple sales on the same day at different prices", async () => {
     const mockResponse = {
       data: {
