@@ -186,9 +186,11 @@ async function updateDataSource(db: any, source: any) {
       }));
 
       // Insert in batches to avoid query too large
+      // Use onDuplicateKeyUpdate with no-op to silently skip duplicates (INSERT IGNORE equivalent)
+      const { sql } = await import('drizzle-orm');
       for (let i = 0; i < priceRecords.length; i += 50) {
         const batch = priceRecords.slice(i, i + 50);
-        await db.insert(priceHistory).values(batch);
+        await db.insert(priceHistory).values(batch).onDuplicateKeyUpdate({ set: { id: sql`id` } });
       }
       console.log(
         `[Scheduler] Inserted ${priceRecords.length} price history records`

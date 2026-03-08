@@ -766,7 +766,9 @@ export async function addPriceHistory(data: {
   const db = await getDb();
   if (!db) return null;
 
-  // Deduplication: skip insert if a record with the same (cardId, source, grade, soldAt) already exists
+  // Deduplication: skip insert if a record with the same (cardId, source, grade, DATE(soldAt), price) already exists
+  // Using DATE() comparison (not exact timestamp) to handle timezone-shifted duplicates
+  // Including price allows same-day multiple sales at different prices (e.g., two PSA10 sales on same day)
   if (data.soldAt) {
     const existing = await db
       .select({ id: priceHistory.id })
@@ -776,7 +778,8 @@ export async function addPriceHistory(data: {
           eq(priceHistory.cardId, data.cardId),
           eq(priceHistory.source, data.source),
           data.grade ? eq(priceHistory.grade, data.grade) : sql`${priceHistory.grade} IS NULL`,
-          eq(priceHistory.soldAt, data.soldAt)
+          sql`DATE(${priceHistory.soldAt}) = DATE(${data.soldAt})`,
+          eq(priceHistory.price, data.price)
         )
       )
       .limit(1);

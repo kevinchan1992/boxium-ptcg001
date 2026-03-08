@@ -3808,3 +3808,28 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 前端賣家中心進入時自動呼叫同步，更新 stripeConnectStatus
 - [ ] 測試完整放款流程：建立訂單 → 完成交易 → 放款給賣家
 - [ ] 儲存 Checkpoint 並部署
+
+---
+
+## 🔧 SNKRDUNK 成交價格爬取修復
+
+- [x] 清除 2,506 筆完全相同的重複記錄
+- [x] 清除 173 筆日期偏移一天的重複記錄（1999xxx 系列）
+- [x] 清除 Lillie 卡 23 筆錯誤記錄（掛牌價混入成交記錄）
+- [x] 修復 scheduler.ts：加入 onDuplicateKeyUpdate 防止未來重複插入
+- [x] 確認 fetchPriceHistoryFromApi 已正確使用 sales-history API（成交記錄）
+- [x] 確認 parseJapaneseDate 已正確使用 Date.UTC（timezone-safe）
+- [ ] 儲存 Checkpoint
+
+---
+
+## 🔧 SNKRDUNK 爬取邏輯統一化
+
+- [x] 全面審查所有爬取相關檔案（scheduler.ts, snkrdunkScraper.ts, persistentSnkrdunkBatchUpdate.ts, routers/pricing.ts 等）
+- [x] 確認所有 priceHistory 插入路徑都使用 fetchPriceHistoryFromApi（sales-history API）
+- [x] 修復 scheduler.ts：加入 onDuplicateKeyUpdate 防止重複插入
+- [x] 修復 addPriceHistory：去重邏輯改為 DATE() 比對 + price 欄位，防止 timezone 偏移重複
+- [x] 確認所有路徑的 soldAt 都使用 parseJapaneseDate（Date.UTC）
+- [x] 確認所有路徑的 HKD 換算都使用 convertJpyToHkd
+- [x] 寫了 12 個單元測試驗證統一後的爬取邏輯（全部通過）
+- [ ] 儲存 Checkpoint
