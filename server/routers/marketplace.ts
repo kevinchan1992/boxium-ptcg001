@@ -550,6 +550,24 @@ export const marketplaceRouter = router({
     }),
 
   // ============================================================
+  // SELLER - Stripe Express Dashboard Login Link
+  // ============================================================
+  getStripeExpressDashboardLink: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const profile = await getSellerProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "賣家資料不存在" });
+      if (!profile.stripeConnectId) throw new TRPCError({ code: "BAD_REQUEST", message: "尚未設定 Stripe 收款帳戶" });
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      try {
+        const loginLink = await stripe.accounts.createLoginLink(profile.stripeConnectId);
+        return { url: loginLink.url };
+      } catch (err: any) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err?.message ?? "無法生成 Stripe Dashboard 連結" });
+      }
+    }),
+
+  // ============================================================
   // ADMIN - Marketplace Management
   // ============================================================
   adminGetStats: adminProcedure

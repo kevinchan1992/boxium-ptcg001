@@ -3779,3 +3779,9 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 已設定時顯示「在 Stripe 查看 ↗」連結（直接跳到 Stripe Dashboard 該帳號頁面）
 - [x] 加入複製 Account ID 按鈕
 - [x] 狀態顯示中文標籤（✅ 已啟用 / ⏳ 審核中 / ⚠️ 受限制 / ❌ 已停用）
+
+## 💳 賣家中心 Stripe Connect 流程修復
+- [x] 後端：加入 getStripeExpressDashboardLink 程序（生成賣家 Express Dashboard 登入連結）
+- [x] 前端：未設定 Stripe 時點擊按鈕直接前往 Stripe Express Onboarding（KYC 設定）
+- [x] 前端：Stripe Connect 未開通時直接跳到 Stripe Dashboard Connect 頁面（移除彈出提示框）
+- [x] 前端：已啟用 Stripe 帳號時顯示「管理收款帳戶」按鈕，點擊後前往 Stripe Express Dashboard

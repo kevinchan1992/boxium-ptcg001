@@ -189,14 +189,21 @@ export default function SellerDashboard() {
   const stripeMutation = trpc.marketplace.startStripeConnectOnboarding.useMutation({
     onSuccess: (data) => {
       if (!data.connectEnabled) {
-        toast.info("請先開通 Stripe Connect 功能", {
-          description: data.message ?? "請先在 Stripe Dashboard 開通 Connect 功能，然後再返回設定收款帳戶。",
-          action: { label: "前往 Stripe Dashboard", onClick: () => window.open(data.onboardingUrl, "_blank") },
-          duration: 10000,
-        });
+        // Stripe Connect not enabled on platform - open Stripe Dashboard to enable it
+        window.open("https://dashboard.stripe.com/connect", "_blank");
+        toast.info("請先在 Stripe Dashboard 開通 Connect 功能，完成後返回此頁面再設定。", { duration: 8000 });
       } else {
+        toast.info("正在跳轉到 Stripe 設定頁面...");
         window.open(data.onboardingUrl, "_blank");
       }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const stripeLoginMutation = trpc.marketplace.getStripeExpressDashboardLink.useMutation({
+    onSuccess: (data) => {
+      toast.info("正在跳轉到 Stripe Express Dashboard...");
+      window.open(data.url, "_blank");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -338,12 +345,23 @@ export default function SellerDashboard() {
             )}
             {sellerProfile.stripeConnectStatus === "active" && (
               <Card className="border-green-200 bg-green-50 mb-6">
-                <CardContent className="flex items-center gap-3 py-4">
-                  <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
-                  <div>
-                    <p className="text-green-800 font-medium">Stripe 收款帳戶已啟用 ✅</p>
-                    <p className="text-sm text-green-700">買家付款後，平台將自動透過 Stripe 轉帳至你的帳戶（扣除 5% 平台服務費）。</p>
+                <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-green-800 font-medium">Stripe 收款帳戶已啟用 ✅</p>
+                      <p className="text-sm text-green-700">買家付款後，平台將自動透過 Stripe 轉帳至你的帳戶（扣除 5% 平台服務費）。</p>
+                    </div>
                   </div>
+                  <Button
+                    onClick={() => stripeLoginMutation.mutate()}
+                    disabled={stripeLoginMutation.isPending}
+                    variant="outline"
+                    className="border-green-600 text-green-700 hover:bg-green-100"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    {stripeLoginMutation.isPending ? "處理中..." : "管理收款帳戶"}
+                  </Button>
                 </CardContent>
               </Card>
             )}
