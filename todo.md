@@ -3819,7 +3819,7 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 修復 scheduler.ts：加入 onDuplicateKeyUpdate 防止未來重複插入
 - [x] 確認 fetchPriceHistoryFromApi 已正確使用 sales-history API（成交記錄）
 - [x] 確認 parseJapaneseDate 已正確使用 Date.UTC（timezone-safe）
-- [ ] 儲存 Checkpoint
+- [x] 儲存 Checkpoint
 
 ---
 
@@ -3832,4 +3832,12 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 確認所有路徑的 soldAt 都使用 parseJapaneseDate（Date.UTC）
 - [x] 確認所有路徑的 HKD 換算都使用 convertJpyToHkd
 - [x] 寫了 12 個單元測試驗證統一後的爬取邏輯（全部通過）
-- [ ] 儲存 Checkpoint
+- [x] 儲存 Checkpoint
+
+---
+
+## 🐛 修復 addPriceHistory UNIQUE INDEX 衝突錯誤
+
+- [x] 檢查資料庫 UNIQUE INDEX 定義：(cardId, source, grade, soldAt) 精確時間戳
+- [x] 修復 addPriceHistory：加入 onDuplicateKeyUpdate 作為最後防線，重複記錄靜默忽略
+- [x] 儲存 Checkpoint

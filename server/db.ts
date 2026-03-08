@@ -789,6 +789,10 @@ export async function addPriceHistory(data: {
     }
   }
 
+  // Use onDuplicateKeyUpdate as a final safety net against UNIQUE INDEX violations
+  // (e.g., race conditions where two concurrent requests both pass the dedup check above)
+  // The UNIQUE INDEX is on (cardId, source, grade, soldAt) - exact timestamp match
+  // This ensures INSERT is idempotent: duplicate records are silently ignored
   const result = await db.insert(priceHistory).values({
     cardId: data.cardId,
     source: data.source,
@@ -799,6 +803,8 @@ export async function addPriceHistory(data: {
     productType: data.productType || "single_card", // Default to single_card
     soldAt: data.soldAt,
     listingUrl: data.listingUrl,
+  }).onDuplicateKeyUpdate({
+    set: { id: sql`id` }, // No-op: keep existing record unchanged
   });
 
   return result;
