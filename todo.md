@@ -3772,3 +3772,10 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 訂單自動完成時發送 Email 給買家和賣家
 - [x] 付款成功時發送 Email 給買家（Stripe Webhook）
 - [x] Admin 更改訂單狀態時發送對應 Email（出貨、完成、取消）
+
+## 💳 Admin 後台賣家 Stripe Connect 資訊改善
+- [x] Admin 賣家資料永遠顯示 Stripe Connect 區塊（無論是否已設定）
+- [x] 未設定時顯示橙色警告提示（說明無法自動轉帳）
+- [x] 已設定時顯示「在 Stripe 查看 ↗」連結（直接跳到 Stripe Dashboard 該帳號頁面）
+- [x] 加入複製 Account ID 按鈕
+- [x] 狀態顯示中文標籤（✅ 已啟用 / ⏳ 審核中 / ⚠️ 受限制 / ❌ 已停用）

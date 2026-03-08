@@ -911,23 +911,55 @@ function SellerDetailDialog({ sellerId, onClose }: { sellerId: number | null; on
             </div>
 
             {/* Stripe Connect Info */}
-            {sp.stripeConnectId && (
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-muted/50 px-4 py-2 border-b">
-                  <p className="text-sm font-semibold">💳 Stripe Connect</p>
-                </div>
-                <div className="divide-y">
-                  <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
-                    <span className="text-muted-foreground">Account ID</span>
-                    <span className="font-mono text-xs break-all">{sp.stripeConnectId}</span>
-                  </div>
-                  <div className="grid grid-cols-2 px-4 py-2.5 text-sm">
-                    <span className="text-muted-foreground">狀態</span>
-                    <Badge className={stripeStatusColor[sp.stripeConnectStatus] ?? ""}>{sp.stripeConnectStatus}</Badge>
-                  </div>
-                </div>
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-4 py-2 border-b flex items-center justify-between">
+                <p className="text-sm font-semibold">💳 Stripe Connect 收款帳戶</p>
+                {sp.stripeConnectId && (
+                  <a
+                    href={`https://dashboard.stripe.com/connect/accounts/${sp.stripeConnectId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    在 Stripe 查看 ↗
+                  </a>
+                )}
               </div>
-            )}
+              <div className="divide-y">
+                <div className="grid grid-cols-2 px-4 py-2.5 text-sm items-center">
+                  <span className="text-muted-foreground">Account ID</span>
+                  {sp.stripeConnectId ? (
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs break-all">{sp.stripeConnectId}</span>
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(sp.stripeConnectId!); toast.success("已複製 Account ID"); }}
+                        className="text-muted-foreground hover:text-foreground shrink-0"
+                        title="複製 Account ID"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground italic text-xs">尚未設定</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 px-4 py-2.5 text-sm items-center">
+                  <span className="text-muted-foreground">狀態</span>
+                  <Badge className={stripeStatusColor[sp.stripeConnectStatus] ?? ""}>
+                    {sp.stripeConnectStatus === 'active' ? '✅ 已啟用' :
+                     sp.stripeConnectStatus === 'pending' ? '⏳ 審核中' :
+                     sp.stripeConnectStatus === 'restricted' ? '⚠️ 受限制' :
+                     sp.stripeConnectStatus === 'disabled' ? '❌ 已停用' :
+                     sp.stripeConnectStatus}
+                  </Badge>
+                </div>
+                {!sp.stripeConnectId && (
+                  <div className="px-4 py-3">
+                    <p className="text-xs text-orange-600">⚠️ 賣家尚未完成 Stripe Connect 設定，訂單完成後無法透過 Stripe 自動轉帳。</p>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Rejection Reason */}
             {sp.rejectReason && (
