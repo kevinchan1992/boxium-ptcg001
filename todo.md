@@ -3785,3 +3785,16 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 前端：未設定 Stripe 時點擊按鈕直接前往 Stripe Express Onboarding（KYC 設定）
 - [x] 前端：Stripe Connect 未開通時直接跳到 Stripe Dashboard Connect 頁面（移除彈出提示框）
 - [x] 前端：已啟用 Stripe 帳號時顯示「管理收款帳戶」按鈕，點擊後前往 Stripe Express Dashboard
+
+---
+
+## 🔔 Stripe Webhook LIVE 模式更新 + 賣家申請審核通知
+
+### 任務清單
+- [ ] 更新 STRIPE_WEBHOOK_SECRET 為 LIVE 模式的 Webhook Secret
+- [ ] 更新 STRIPE_WEBHOOK_SECRET 為 LIVE 模式的 Webhook Secret（需用戶在 Settings → Secrets 手動更新）
+- [x] 在 emailService.ts 新增賣家申請批准 Email 模板
+- [x] 在 emailService.ts 新增賣家申請拒絕 Email 模板
+- [x] 在賣家申請審核 API（adminApproveSeller）加入 Email 通知
+- [x] 測試 Email 通知功能（11 個單元測試全部通過）
+- [ ] 儲存 Checkpoint 並部署

@@ -264,6 +264,63 @@ export function buildOrderCancelledEmail(data: OrderEmailData): { subject: strin
   return { subject, html };
 }
 
+// ─── Seller Application Email Templates ─────────────────────────────────────
+
+export interface SellerApplicationEmailData {
+  displayName: string;
+  rejectReason?: string;
+  siteUrl?: string;
+}
+
+/** Seller application approved — to seller */
+export function buildSellerApprovedEmail(data: SellerApplicationEmailData): { subject: string; html: string } {
+  const siteUrl = data.siteUrl || "https://boxium.asia";
+  const subject = `✅ 賣家申請已批准 — BOXIUM PTCG`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">賣家申請已批准 ✅</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.displayName}</strong>，<br/>
+      恭喜！你的 BOXIUM PTCG 賣家申請已獲批准，現在可以開始在平台上架商品了。
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fff4;border:1px solid #b2f5c8;border-radius:8px;margin:20px 0;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0 0 8px;font-size:14px;color:#16a34a;font-weight:bold;">🎉 接下來的步驟：</p>
+          <ol style="margin:0;padding-left:20px;color:#333;font-size:14px;line-height:1.8;">
+            <li>前往賣家中心設定 <strong>Stripe 收款帳戶</strong>（必須完成才能收取款項）</li>
+            <li>上架你的第一件商品</li>
+            <li>等待買家下單，開始交易！</li>
+          </ol>
+        </td>
+      </tr>
+    </table>
+    <p style="color:#555;font-size:14px;">平台收取 <strong>5% 服務費</strong>，款項在訂單完成後透過 Stripe 自動轉帳至你的帳戶。</p>
+    ${ctaButton("前往賣家中心", `${siteUrl}/seller`)}
+  `);
+  return { subject, html };
+}
+
+/** Seller application rejected — to seller */
+export function buildSellerRejectedEmail(data: SellerApplicationEmailData): { subject: string; html: string } {
+  const siteUrl = data.siteUrl || "https://boxium.asia";
+  const subject = `❌ 賣家申請未獲批准 — BOXIUM PTCG`;
+  const reasonBlock = data.rejectReason
+    ? `<p style="background:#fff3f3;border-left:4px solid #ef4444;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;"><strong>未批准原因：</strong>${data.rejectReason}</p>`
+    : "";
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">賣家申請未獲批准 ❌</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.displayName}</strong>，<br/>
+      很遺憾，你的 BOXIUM PTCG 賣家申請目前未獲批准。
+    </p>
+    ${reasonBlock}
+    <p style="color:#555;font-size:14px;">如你認為此決定有誤，或希望了解更多詳情，請聯絡我們的客服團隊，我們將盡快為你跟進。</p>
+    <p style="color:#555;font-size:14px;">你仍然可以繼續使用 BOXIUM PTCG 平台進行購買。</p>
+    ${ctaButton("聯絡客服", `mailto:support@boxium.asia`)}
+  `);
+  return { subject, html };
+}
+
 // ─── Main send function ───────────────────────────────────────────────────────
 
 export async function sendEmail({

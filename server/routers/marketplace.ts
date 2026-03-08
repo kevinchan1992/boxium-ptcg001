@@ -27,6 +27,7 @@ import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
+import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail } from "../emailService";
 import { marketplaceListings, offers, listingReports } from "../../drizzle/schema_new";
 import { eq, and } from "drizzle-orm";
 
@@ -835,9 +836,12 @@ export const marketplaceRouter = router({
     .mutation(async ({ input }) => {
       const seller = await getSellerProfileById(input.sellerId);
       if (!seller) throw new TRPCError({ code: "NOT_FOUND", message: "賣家不存在" });
+      // Get seller's user info for email
+      const { getUserById } = await import("../userManagement");
+      const sellerUser = await getUserById(seller.userId);
       if (input.approve) {
         await updateSellerProfile(input.sellerId, { isActive: true, rejectReason: null });
-        // Notify seller user of approval
+        // In-app notification
         await createNotification({
           userId: seller.userId,
           type: "system",
@@ -845,6 +849,15 @@ export const marketplaceRouter = router({
           body: "恭喜！你的賣家申請已獲批准，現在可以開始上架商品了。請前往賣家後台設定 Stripe 收款帳戶。",
           linkUrl: "/seller",
         }).catch(err => console.warn("[Seller] Failed to create approval notification:", err));
+        // Email notification
+        if (sellerUser?.email) {
+          const { subject, html } = buildSellerApprovedEmail({
+            displayName: seller.displayName,
+            siteUrl: "https://boxium.asia",
+          });
+          sendEmail({ to: sellerUser.email, subject, html })
+            .catch(err => console.warn("[Seller] Failed to send approval email:", err));
+        }
       } else {
         await updateSellerProfile(input.sellerId, { isActive: false, rejectReason: input.rejectReason ?? null });
         // Deactivate all seller's active listings
@@ -854,7 +867,7 @@ export const marketplaceRouter = router({
             .set({ status: "removed" })
             .where(and(eq(marketplaceListings.sellerId, input.sellerId), eq(marketplaceListings.status, "active")));
         }
-        // Notify seller user of rejection
+        // In-app notification
         await createNotification({
           userId: seller.userId,
           type: "system",
@@ -864,6 +877,16 @@ export const marketplaceRouter = router({
             : "你的賣家申請未獲批准。如有疑問，請聯絡客服。",
           linkUrl: "/seller",
         }).catch(err => console.warn("[Seller] Failed to create rejection notification:", err));
+        // Email notification
+        if (sellerUser?.email) {
+          const { subject, html } = buildSellerRejectedEmail({
+            displayName: seller.displayName,
+            rejectReason: input.rejectReason,
+            siteUrl: "https://boxium.asia",
+          });
+          sendEmail({ to: sellerUser.email, subject, html })
+            .catch(err => console.warn("[Seller] Failed to send rejection email:", err));
+        }
       }
       return { success: true };
     }),
