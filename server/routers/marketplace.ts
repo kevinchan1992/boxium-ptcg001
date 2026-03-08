@@ -551,6 +551,32 @@ export const marketplaceRouter = router({
     }),
 
   // ============================================================
+  // SELLER - Sync Stripe Connect Status
+  // ============================================================
+  syncStripeConnectStatus: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const profile = await getSellerProfileByUserId(ctx.user.id);
+      if (!profile || !profile.stripeConnectId) return { status: profile?.stripeConnectStatus ?? "pending" };
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      try {
+        const account = await stripe.accounts.retrieve(profile.stripeConnectId);
+        const newStatus: "pending" | "active" | "restricted" | "disabled" =
+          account.charges_enabled && account.payouts_enabled ? "active" :
+          account.requirements?.disabled_reason ? "disabled" :
+          (account.requirements?.currently_due?.length ?? 0) > 0 ? "restricted" : "pending";
+        if (newStatus !== profile.stripeConnectStatus) {
+          await updateSellerProfile(profile.id, { stripeConnectStatus: newStatus });
+          console.log(`[StripeSync] Seller ${profile.id} status: ${profile.stripeConnectStatus} -> ${newStatus}`);
+        }
+        return { status: newStatus };
+      } catch (err: any) {
+        console.error(`[StripeSync] Failed to sync seller ${profile.id}:`, err?.message);
+        return { status: profile.stripeConnectStatus };
+      }
+    }),
+
+  // ============================================================
   // SELLER - Stripe Express Dashboard Login Link
   // ============================================================
   getStripeExpressDashboardLink: protectedProcedure

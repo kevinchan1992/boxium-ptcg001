@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -208,6 +208,22 @@ export default function SellerDashboard() {
     onError: (e) => toast.error(e.message),
   });
 
+  const syncStripeMutation = trpc.marketplace.syncStripeConnectStatus.useMutation({
+    onSuccess: (data) => {
+      if (data.status !== sellerProfile?.stripeConnectStatus) {
+        refetchProfile();
+      }
+    },
+  });
+
+  // Auto-sync Stripe status on load if seller has a connectId
+  useEffect(() => {
+    if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus !== "active") {
+      syncStripeMutation.mutate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sellerProfile?.id]);
+
   const [shipDialog, setShipDialog] = useState<{ open: boolean; orderId: number; orderNo: string }>({ open: false, orderId: 0, orderNo: "" });
   const [shipForm, setShipForm] = useState({ shippingMethod: "", trackingNumber: "" });
   const markShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
@@ -289,7 +305,7 @@ export default function SellerDashboard() {
 
         {sellerProfile?.isActive && (
           <>
-            {sellerProfile.stripeConnectStatus === "pending" && (
+            {sellerProfile.stripeConnectStatus === "pending" && !sellerProfile.stripeConnectId && (
               <Card className="border-blue-200 bg-blue-50 mb-6">
                 <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
@@ -303,6 +319,24 @@ export default function SellerDashboard() {
                     className="bg-blue-600 hover:bg-blue-700 text-white">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     {stripeMutation.isPending ? "處理中..." : "設定 Stripe 帳戶"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+            {sellerProfile.stripeConnectStatus === "pending" && sellerProfile.stripeConnectId && (
+              <Card className="border-amber-200 bg-amber-50 mb-6">
+                <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-amber-900">Stripe 帳戶驗證中</p>
+                      <p className="text-sm text-amber-700">你的 Stripe Express 帳戶已連結，正在等待 Stripe 完成驗證。驗證完成後即可自動收款。</p>
+                    </div>
+                  </div>
+                  <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
+                    variant="outline" className="border-amber-600 text-amber-700 hover:bg-amber-100">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    {stripeMutation.isPending ? "處理中..." : "繼續完成驗證"}
                   </Button>
                 </CardContent>
               </Card>

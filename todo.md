@@ -3798,3 +3798,13 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 在賣家申請審核 API（adminApproveSeller）加入 Email 通知
 - [x] 測試 Email 通知功能（11 個單元測試全部通過）
 - [ ] 儲存 Checkpoint 並部署
+
+---
+
+## 💳 Stripe 狀態顯示修復 + 放款流程測試
+
+- [x] 修復賣家中心：已連結 Stripe Express 的賣家（stripeConnectId 存在）不再顯示「設定 Stripe 收款帳戶」橫幅
+- [x] 新增後端 syncStripeConnectStatus API，主動從 Stripe 查詢帳戶狀態並同步
+- [x] 前端賣家中心進入時自動呼叫同步，更新 stripeConnectStatus
+- [ ] 測試完整放款流程：建立訂單 → 完成交易 → 放款給賣家
+- [ ] 儲存 Checkpoint 並部署
