@@ -503,11 +503,19 @@ export default function OrderDetail() {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>商品資訊</h2>
             <div className="flex items-start gap-3">
-              {listing.images && (() => {
-                const imgs = typeof listing.images === "string" ? (() => { try { return JSON.parse(listing.images as string); } catch { return null; } })() : listing.images;
+              {(() => {
+                const imgs = listing.images
+                  ? (typeof listing.images === "string"
+                    ? (() => { try { return JSON.parse(listing.images as string); } catch { return null; } })()
+                    : listing.images)
+                  : null;
                 return imgs?.[0] ? (
                   <img src={imgs[0]} alt={listing.title} className="w-16 h-20 object-contain rounded-lg border bg-gray-100 flex-shrink-0" />
-                ) : null;
+                ) : (
+                  <div className="w-16 h-20 rounded-lg border border-gray-200 flex-shrink-0 flex items-center justify-center" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                    <span className="text-white font-black text-xs tracking-tight text-center leading-tight">BOX<br/>IUM</span>
+                  </div>
+                );
               })()}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">{listing.title}</p>

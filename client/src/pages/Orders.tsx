@@ -117,15 +117,16 @@ function OrderCard({ order }: { order: any }) {
   const canReview = isCompleted && order.sellerType === "seller" && !existingReview;
 
   return (
-    <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+      {/* Brand Header Bar */}
+      <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+        <span className="text-xs text-white/80 font-mono tracking-wide">#{order.orderNo}</span>
+        <OrderStatusBadge status={order.orderStatus} />
+      </div>
       {/* Header */}
       <div className="p-4 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="text-xs text-gray-500 font-mono">#{order.orderNo}</span>
-            <OrderStatusBadge status={order.orderStatus} />
-          </div>
-          <p className="font-medium text-sm truncate text-gray-900">{order.listingTitle ?? "商品"}</p>
+          <p className="font-semibold text-sm truncate text-gray-900">{order.listingTitle ?? "商品"}</p>
           <p className="text-xs text-gray-500 mt-0.5">
             {new Date(order.createdAt).toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric" })}
           </p>
