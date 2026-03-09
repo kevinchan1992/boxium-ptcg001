@@ -732,7 +732,7 @@ export const sellerProfiles = mysqlTable("sellerProfiles", {
   bio: text("bio"),
   avatarUrl: text("avatarUrl"),
   stripeConnectId: varchar("stripeConnectId", { length: 100 }), // Stripe Connect account ID
-  stripeConnectStatus: mysqlEnum("stripeConnectStatus", ["pending", "active", "restricted", "disabled"]).default("pending").notNull(),
+  stripeConnectStatus: mysqlEnum("stripeConnectStatus", ["not_started", "pending", "active", "verified", "restricted", "disabled"]).default("pending").notNull(),
   stripeOnboardingUrl: text("stripeOnboardingUrl"),
   totalSales: int("totalSales").default(0).notNull(),
   avgRating: decimal("avgRating", { precision: 3, scale: 2 }).default("0.00"),
