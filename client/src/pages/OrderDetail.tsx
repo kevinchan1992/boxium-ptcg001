@@ -377,12 +377,12 @@ export default function OrderDetail() {
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}>
                   {statusInfo.label}
                 </span>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{statusInfo.desc}</p>
+                <p className="text-xs text-gray-600 mt-0.5 truncate">{statusInfo.desc}</p>
               </div>
             </div>
             <div className="text-right flex-shrink-0">
               <p className="font-bold text-[#06038d] text-base sm:text-lg">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground capitalize">{order.paymentMethod?.replace("_", " ")}</p>
+              <p className="text-xs text-gray-500 capitalize">{order.paymentMethod?.replace("_", " ")}</p>
             </div>
           </div>
 
@@ -405,7 +405,7 @@ export default function OrderDetail() {
                 </div>
               )}
               {isBuyer && ["shipped", "delivered"].includes(order.orderStatus) && !isWithinDisputeWindow && (
-                <p className="text-xs text-muted-foreground self-center">爭議申請期限已過（7 天）</p>
+                <p className="text-xs text-gray-500 self-center">爬議申請期限已過（7 天）</p>
               )}
               {canReview && (
                 <Button size="sm" variant="outline" className="border-yellow-300 text-yellow-700 hover:bg-yellow-50" onClick={() => setShowReviewDialog(true)}>
@@ -419,7 +419,7 @@ export default function OrderDetail() {
               <span className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1">
                 <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
                 已評價 {review.rating} 星
-                {review.comment && <span className="ml-1 text-muted-foreground">· {review.comment}</span>}
+                {review.comment && <span className="ml-1 text-gray-600">· {review.comment}</span>}
               </span>
             </div>
           )}
@@ -488,12 +488,12 @@ export default function OrderDetail() {
               {listing.images && (() => {
                 const imgs = typeof listing.images === "string" ? (() => { try { return JSON.parse(listing.images as string); } catch { return null; } })() : listing.images;
                 return imgs?.[0] ? (
-                  <img src={imgs[0]} alt={listing.title} className="w-16 h-20 object-contain rounded-lg border bg-muted flex-shrink-0" />
+                  <img src={imgs[0]} alt={listing.title} className="w-16 h-20 object-contain rounded-lg border bg-gray-100 flex-shrink-0" />
                 ) : null;
               })()}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">{listing.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{listing.condition}</p>
+                <p className="text-xs text-gray-600 mt-0.5">{listing.condition}</p>
                 <p className="text-sm font-bold text-[#06038d] mt-1">HKD {parseFloat(listing.priceHkd as string).toFixed(2)}</p>
               </div>
               <Link href={`/marketplace/${listing.id}`}>
@@ -511,15 +511,15 @@ export default function OrderDetail() {
             <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>收貨資料</h2>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2.5">
-                <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <span>{shippingAddr.name}</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <span>{shippingAddr.phone}</span>
               </div>
               <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
                 <span>
                   {shippingAddr.address}
                   {shippingAddr.district ? `，${shippingAddr.district}` : ""}
@@ -535,15 +535,15 @@ export default function OrderDetail() {
           <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>付款摘要</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">商品金額</span>
-              <span>HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</span>
+              <span className="text-gray-500">商品金額</span>
+              <span className="text-gray-800">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">付款方式</span>
-              <span className="capitalize">{order.paymentMethod === "alipay_hk" ? "支付寶 HK" : "Stripe 信用卡"}</span>
+              <span className="text-gray-500">付款方式</span>
+              <span className="text-gray-800 capitalize">{order.paymentMethod === "alipay_hk" ? "支付寶 HK" : "Stripe 信用卡"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">付款狀態</span>
+              <span className="text-gray-500">付款狀態</span>
               <span className={order.paymentStatus === "paid" ? "text-green-600 font-medium" : "text-amber-600"}>
                 {order.paymentStatus === "paid" ? "已付款" : order.paymentStatus === "pending" ? "待付款" : order.paymentStatus === "refunded" ? "已退款" : order.paymentStatus}
               </span>
@@ -557,7 +557,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Order Meta */}
-        <div className="text-xs text-muted-foreground space-y-1 px-1">
+        <div className="text-xs text-gray-500 space-y-1 px-1">
           <p>訂單建立：{new Date(order.createdAt).toLocaleString("zh-HK")}</p>
           <p>最後更新：{new Date(order.updatedAt).toLocaleString("zh-HK")}</p>
         </div>

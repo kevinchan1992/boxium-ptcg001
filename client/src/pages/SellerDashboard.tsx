@@ -259,12 +259,12 @@ export default function SellerDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-background pt-20">
+    <div className="min-h-screen pt-20" style={{ backgroundColor: "#f8f9fa" }}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-bold">賣家中心</h1>
-            <p className="text-muted-foreground text-sm mt-1">管理你的商品、訂單和收款</p>
+            <h1 className="text-2xl font-bold" style={{ color: "#06038d" }}>賣家中心</h1>
+            <p className="text-gray-500 text-sm mt-1">管理你的商品、訂單和收款</p>
           </div>
           {sellerProfile?.isActive && (
             <Button onClick={() => setShowNewListing(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white">
@@ -542,7 +542,7 @@ export default function SellerDashboard() {
 
               <BrandTabsContent value="orders" className="mt-4">
                 {!myOrders?.length ? (
-                  <div className="text-center py-12 text-muted-foreground">
+                  <div className="text-center py-12 text-gray-400">
                     <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>尚無訂單</p>
                   </div>
@@ -554,10 +554,10 @@ export default function SellerDashboard() {
                           <div className="flex items-start justify-between gap-3 flex-wrap">
                             <div className="flex-1 min-w-0">
                               <p className="font-medium truncate">{item.title}</p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm text-gray-600">
                                 HKD {parseFloat(item.priceHkd as string).toFixed(2)} × {item.quantity}
                               </p>
-                              {item.orderNo && <p className="text-xs text-muted-foreground">訂單號：{item.orderNo}</p>}
+                              {item.orderNo && <p className="text-xs text-gray-500">訂單號：{item.orderNo}</p>}
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <Badge className={orderStatusLabel[item.orderStatus]?.color ?? "bg-gray-100 text-gray-800"}>
@@ -575,7 +575,7 @@ export default function SellerDashboard() {
                             </div>
                           </div>
                           {item.shippingName && (
-                            <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1.5 space-y-0.5">
+                            <div className="text-xs text-gray-700 bg-blue-50 border border-blue-100 rounded px-2 py-1.5 space-y-0.5">
                               <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>
                               <p>📍 地址：{(() => {
                                 try {
