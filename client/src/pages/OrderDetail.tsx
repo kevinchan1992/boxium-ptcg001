@@ -286,7 +286,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Status Card */}
-        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div className="bg-card text-card-foreground rounded-xl border shadow-sm overflow-hidden">
           <div className="p-4 flex items-start justify-between gap-2">
             <div className="flex items-center gap-3 min-w-0">
               <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${statusInfo.color}`}>
@@ -337,7 +337,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Order Timeline */}
-        <div className="bg-white rounded-xl border shadow-sm p-5">
+        <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-5">
           <h2 className="font-semibold mb-4 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-[#06038d]" />訂單進度
           </h2>
@@ -379,7 +379,7 @@ export default function OrderDetail() {
 
         {/* Product Info */}
         {listing && (
-          <div className="bg-white rounded-xl border shadow-sm p-4">
+          <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-4">
             <h2 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">商品資訊</h2>
             <div className="flex items-start gap-3">
               {listing.images && (() => {
@@ -404,7 +404,7 @@ export default function OrderDetail() {
 
         {/* Shipping Address */}
         {shippingAddr && (
-          <div className="bg-white rounded-xl border shadow-sm p-4">
+          <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-4">
             <h2 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">收貨資料</h2>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2.5">
@@ -428,7 +428,7 @@ export default function OrderDetail() {
         )}
 
         {/* Payment Summary */}
-        <div className="bg-white rounded-xl border shadow-sm p-4">
+        <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-4">
           <h2 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">付款摘要</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">

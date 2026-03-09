@@ -1,0 +1,8 @@
+{
+  "query": "UPDATE seller_profiles \nSET stripe_connect_id = 'acct_1T8hMxCblQuzQFtP', \n    stripe_connect_status = 'active'\nWHERE user_id = (SELECT id FROM users WHERE email = 'tearshim1004@gmail.com');\n\nSELECT sp.user_id, u.email, sp.stripe_connect_id, sp.stripe_connect_status \nFROM seller_profiles sp \nJOIN users u ON sp.user_id = u.id \nWHERE u.email = 'tearshim1004@gmail.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute UPDATE seller_profiles \nSET stripe_connect_id = 'acct_1T8hMxCblQuzQFtP', \n    stripe_connect_status = 'active'\nWHERE user_id = (SELECT id FROM users WHERE email = 'tearshim1004@gmail.com');\n\nSELECT sp.user_id, u.email, sp.stripe_connect_id, sp.stripe_connect_status \nFROM seller_profiles sp \nJOIN users u ON sp.user_id = u.id \nWHERE u.email = 'tearshim1004@gmail.com';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'mua4eq38uvnrovhujbrepi.seller_profiles' doesn't exist"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "query": "UPDATE sellerProfiles \nSET stripeConnectId = 'acct_1T8hMxCblQuzQFtP', \n    stripeConnectStatus = 'active'\nWHERE userId = (SELECT id FROM users WHERE email = 'tearshim1004@gmail.com');\n\nSELECT sp.userId, u.email, sp.stripeConnectId, sp.stripeConnectStatus \nFROM sellerProfiles sp \nJOIN users u ON sp.userId = u.id \nWHERE u.email = 'tearshim1004@gmail.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute UPDATE sellerProfiles \nSET stripeConnectId = 'acct_1T8hMxCblQuzQFtP', \n    stripeConnectStatus = 'active'\nWHERE userId = (SELECT id FROM users WHERE email = 'tearshim1004@gmail.com');\n\nSELECT sp.userId, u.email, sp.stripeConnectId, sp.stripeConnectStatus \nFROM sellerProfiles sp \nJOIN users u ON sp.userId = u.id \nWHERE u.email = 'tearshim1004@gmail.com';",
+  "rows": [
+    {
+      "userId": "8",
+      "email": "tearshim1004@gmail.com",
+      "stripeConnectId": "acct_1T8hMxCblQuzQFtP",
+      "stripeConnectStatus": "active"
+    }
+  ],
+  "messages": [],
+  "stdout": "userId\temail\tstripeConnectId\tstripeConnectStatus\n8\ttearshim1004@gmail.com\tacct_1T8hMxCblQuzQFtP\tactive\n",
+  "stderr": "",
+  "execution_time_ms": 1835
+}
