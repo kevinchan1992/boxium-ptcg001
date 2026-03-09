@@ -4025,3 +4025,17 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 賣家商品卡片加入社群媒體分享按鈕（Facebook、WhatsApp、X/Twitter、複製連結）
 - [x] 商品詳情頁後端 OG SSR：爬蟲訪問 /marketplace/:id 時動態注入 og:title/og:description/og:image
 - [x] 賣家商品卡片「生成分享圖片」：Canvas 繪製 BOXIUM 品牌框架 + 商品圖 + 名稱 + 價格，下載為 PNG
+
+## ✅ Marketplace 全面優化（2026-03-09）
+- [x] P0：adminUpdateListing 加入商品審核通知（approve/reject 時通知賣家，含拒絕原因）
+- [x] P0：AdminMarketplace ListingsTab 加入拒絕原因 Dialog（快速批准/拒絕按鈕）
+- [x] P0：AdminMarketplace 加入「舉報管理」Tab（顯示舉報列表、狀態更新）
+- [x] P0：AdminMarketplace 加入「放款管理」Tab（顯示已完成訂單的放款狀態）
+- [x] P0：出價接受通知 linkUrl 精確化（指向具體訂單頁 /orders/:orderNo）
+- [x] P1：marketplace router 加入 cancelOffer procedure
+- [x] P1：Orders 頁面加入「我的出價」Tab（顯示出價列表、可取消出價）
+- [x] P2：Notifications 加入類型篩選膠囊按鈕（交易/付款/出價/物流/爭議/系統）
+- [x] P2：notifications router getMyNotifications 加入 type 篩選參數
+- [x] P2：getUserNotifications 函數加入 type 篩選支援
+- [x] P2：updateMyListing 加入降價通知邏輯（通知所有 Wishlist 用戶）
+- [x] P2：AdminMarketplace AlipayPendingTab 確認 Dialog 加入 AI 驗證結果顯示

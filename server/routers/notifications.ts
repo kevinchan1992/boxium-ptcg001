@@ -16,10 +16,11 @@ export const notificationsRouter = router({
       limit: z.number().int().min(1).max(50).default(20),
       offset: z.number().int().min(0).default(0),
       unreadOnly: z.boolean().default(false),
+      type: z.string().optional(),
     }).optional())
     .query(async ({ ctx, input }) => {
-      const { limit = 20, offset = 0, unreadOnly = false } = input ?? {};
-      const notifications = await getUserNotifications(ctx.user.id, { limit, offset, unreadOnly });
+      const { limit = 20, offset = 0, unreadOnly = false, type } = input ?? {};
+      const notifications = await getUserNotifications(ctx.user.id, { limit, offset, unreadOnly, type });
       return notifications;
     }),
 

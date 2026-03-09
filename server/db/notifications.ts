@@ -23,27 +23,21 @@ export async function getUserNotifications(
     limit?: number;
     offset?: number;
     unreadOnly?: boolean;
+    type?: string;
   } = {}
 ): Promise<Notification[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const { limit = 20, offset = 0, unreadOnly = false } = options;
-
-  if (unreadOnly) {
-    return await db
-      .select()
-      .from(notifications)
-      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit)
-      .offset(offset);
-  }
+  const { limit = 20, offset = 0, unreadOnly = false, type } = options;
+  const conditions: any[] = [eq(notifications.userId, userId)];
+  if (unreadOnly) conditions.push(eq(notifications.isRead, false));
+  if (type) conditions.push(eq(notifications.type, type as any));
 
   return await db
     .select()
     .from(notifications)
-    .where(eq(notifications.userId, userId))
+    .where(and(...conditions))
     .orderBy(desc(notifications.createdAt))
     .limit(limit)
     .offset(offset);

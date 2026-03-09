@@ -20,10 +20,11 @@ const typeIcon = (type: string) => {
 export default function Notifications() {
   const { data: user } = trpc.auth.me.useQuery();
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined);
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.notifications.getMyNotifications.useQuery(
-    { limit: 50, offset: 0, unreadOnly },
+    { limit: 50, offset: 0, unreadOnly, type: typeFilter },
     { enabled: !!user }
   );
 
@@ -111,12 +112,13 @@ export default function Notifications() {
       <div className="max-w-2xl mx-auto px-4 mt-6 pb-16">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden p-6">
           {/* Filter Tabs */}
+          {/* Row 1: Read/Unread */}
           <BrandTabs
             defaultValue="all"
             value={unreadOnly ? "unread" : "all"}
             onValueChange={(v) => setUnreadOnly(v === "unread")}
           >
-            <BrandTabsList className="mb-4">
+            <BrandTabsList className="mb-3">
               <BrandTabsTrigger value="all" icon={<Bell className="w-4 h-4" />} label="全部">全部</BrandTabsTrigger>
               <BrandTabsTrigger value="unread" icon={<Check className="w-4 h-4" />} label="未讀">
                 未讀
@@ -127,26 +129,39 @@ export default function Notifications() {
                 )}
               </BrandTabsTrigger>
             </BrandTabsList>
-
-            <BrandTabsContent value="all">
-              <NotificationList
-                notifications={notifications}
-                isLoading={isLoading}
-                unreadOnly={false}
-                markAsReadMutation={markAsReadMutation}
-                deleteMutation={deleteMutation}
-              />
-            </BrandTabsContent>
-            <BrandTabsContent value="unread">
-              <NotificationList
-                notifications={notifications.filter((n: any) => !n.isRead)}
-                isLoading={isLoading}
-                unreadOnly={true}
-                markAsReadMutation={markAsReadMutation}
-                deleteMutation={deleteMutation}
-              />
-            </BrandTabsContent>
           </BrandTabs>
+          {/* Row 2: Type filter */}
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {[
+              { value: undefined, label: "所有類型" },
+              { value: "trade", label: "交易" },
+              { value: "payment", label: "付款" },
+              { value: "offer", label: "出價" },
+              { value: "shipping", label: "物流" },
+              { value: "dispute", label: "爭議" },
+              { value: "system", label: "系統" },
+            ].map(({ value, label }) => (
+              <button
+                key={label}
+                onClick={() => setTypeFilter(value)}
+                className={`text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
+                  typeFilter === value
+                    ? "text-white border-[#06038d]"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-[#06038d] hover:text-[#06038d]"
+                }`}
+                style={typeFilter === value ? { backgroundColor: "#06038d" } : {}}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <NotificationList
+            notifications={notifications}
+            isLoading={isLoading}
+            unreadOnly={unreadOnly}
+            markAsReadMutation={markAsReadMutation}
+            deleteMutation={deleteMutation}
+          />
         </div>
       </div>
     </div>

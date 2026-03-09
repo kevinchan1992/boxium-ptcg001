@@ -7,10 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 import {
   Package, ArrowLeft, CheckCircle, Truck, Clock, XCircle, AlertCircle,
   ChevronDown, ChevronUp, MapPin, Phone, User, CreditCard, Loader2,
-  Star, MessageSquare, Flag
+  Star, MessageSquare, Flag, Tag
 } from "lucide-react";
 
 const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -382,12 +383,84 @@ function OrderCard({ order }: { order: any }) {
   );
 }
 
+function MyOffersTab({ userId }: { userId: number }) {
+  const utils = trpc.useUtils();
+  const { data: offers, isLoading } = trpc.marketplace.getMyOffers.useQuery();
+  const cancelOfferMutation = trpc.marketplace.cancelOffer.useMutation({
+    onSuccess: () => { toast.success("出價已取消"); utils.marketplace.getMyOffers.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const offerStatusLabel: Record<string, { label: string; color: string }> = {
+    pending: { label: "待回覆", color: "bg-yellow-100 text-yellow-800" },
+    accepted: { label: "已接受", color: "bg-green-100 text-green-800" },
+    rejected: { label: "已拒絕", color: "bg-red-100 text-red-800" },
+    expired: { label: "已過期", color: "bg-gray-100 text-gray-600" },
+    cancelled: { label: "已取消", color: "bg-gray-100 text-gray-600" },
+  };
+  if (isLoading) return <div className="text-center py-12 text-muted-foreground"><Loader2 className="w-6 h-6 mx-auto animate-spin" /></div>;
+  if (!offers || offers.length === 0) {
+    return (
+      <div className="text-center py-16 space-y-3">
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "#f0f4ff" }}>
+          <Tag className="w-8 h-8" style={{ color: "#06038d", opacity: 0.3 }} />
+        </div>
+        <p className="font-medium text-gray-500">暫無出價記錄</p>
+        <Link href="/marketplace"><Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">前往商城出價</Button></Link>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {offers.map((offer: any) => (
+        <div key={offer.id} className="rounded-2xl shadow-md overflow-hidden border border-gray-100">
+          <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "linear-gradient(90deg, #06038d 0%, #0a06b5 100%)" }}>
+            <div className="flex items-center gap-2">
+              <Tag className="w-3.5 h-3.5 text-yellow-300" />
+              <span className="text-xs font-bold text-white/80 uppercase tracking-wider">出價 #{offer.id}</span>
+            </div>
+            <Badge className={`text-xs ${offerStatusLabel[offer.status]?.color ?? "bg-gray-100"}`}>
+              {offerStatusLabel[offer.status]?.label ?? offer.status}
+            </Badge>
+          </div>
+          <div className="bg-white p-4 flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-gray-800">出價金額: <span style={{ color: "#06038d" }}>HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</span></p>
+              {offer.message && <p className="text-sm text-gray-500 mt-1">留言: {offer.message}</p>}
+              {offer.rejectionReason && <p className="text-sm text-red-500 mt-1">拒絕原因: {offer.rejectionReason}</p>}
+              <p className="text-xs text-gray-400 mt-1">商品 ID: {offer.listingId} · {new Date(offer.createdAt).toLocaleDateString("zh-HK")}</p>
+              {offer.status === "pending" && (
+                <p className="text-xs text-amber-600 mt-1">到期: {new Date(offer.expiresAt).toLocaleString("zh-HK")}</p>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Link href={`/shop/${offer.listingId}`}>
+                <Button size="sm" variant="outline" className="text-xs">查看商品</Button>
+              </Link>
+              {offer.status === "pending" && (
+                <Button size="sm" variant="outline" className="text-xs border-red-300 text-red-600 hover:bg-red-50"
+                  disabled={cancelOfferMutation.isPending}
+                  onClick={() => cancelOfferMutation.mutate({ offerId: offer.id })}>
+                  取消出價
+                </Button>
+              )}
+              {offer.status === "accepted" && offer.orderId && (
+                <Link href="/orders">
+                  <Button size="sm" className="text-xs" style={{ backgroundColor: "#06038d" }}>前往付款</Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Orders() {
   const { data: me, isLoading: authLoading } = trpc.auth.me.useQuery();
   const { data: orders, isLoading } = trpc.marketplace.getMyOrders.useQuery(undefined, {
     enabled: !!me,
   });
-
   const user = me;
   if (authLoading || isLoading) {
     return (
@@ -450,41 +523,55 @@ export default function Orders() {
       </div>
 
       {/* ── Main Content ── */}
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8">
-        {(!orders || orders.length === 0) ? (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 text-center py-16 space-y-3">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "#f0f4ff" }}>
-              <Package className="w-8 h-8" style={{ color: "#06038d", opacity: 0.3 }} />
-            </div>
-            <p className="font-medium text-gray-500">暫無訂單記錄</p>
-            <Link href="/marketplace">
-              <Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">前往商城購物</Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {activeOrders.length > 0 && (
-              <section>
-                <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: "#06038d", borderColor: "#FFD700" }}>
-                  <CreditCard className="w-4 h-4" />進行中的訂單（{activeOrders.length}）
-                </h2>
-                <div className="space-y-3">
-                  {activeOrders.map(order => <OrderCard key={order.id} order={order} />)}
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6">
+        <BrandTabs defaultValue="orders" variant="light">
+          <BrandTabsList className="mb-4">
+            <BrandTabsTrigger value="orders" icon={<Package className="w-4 h-4" />} label="我的訂單">
+              我的訂單
+              {orders && orders.length > 0 && <span className="ml-1 bg-[#06038d] text-white text-xs rounded-full px-1.5 py-0.5">{orders.length}</span>}
+            </BrandTabsTrigger>
+            <BrandTabsTrigger value="offers" icon={<Tag className="w-4 h-4" />} label="我的出價">我的出價</BrandTabsTrigger>
+          </BrandTabsList>
+          <BrandTabsContent value="orders">
+            {(!orders || orders.length === 0) ? (
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 text-center py-16 space-y-3">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "#f0f4ff" }}>
+                  <Package className="w-8 h-8" style={{ color: "#06038d", opacity: 0.3 }} />
                 </div>
-              </section>
+                <p className="font-medium text-gray-500">暫無訂單記錄</p>
+                <Link href="/marketplace">
+                  <Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">前往商城購物</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {activeOrders.length > 0 && (
+                  <section>
+                    <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: "#06038d", borderColor: "#FFD700" }}>
+                      <CreditCard className="w-4 h-4" />進行中的訂單（{activeOrders.length}）
+                    </h2>
+                    <div className="space-y-3">
+                      {activeOrders.map(order => <OrderCard key={order.id} order={order} />)}
+                    </div>
+                  </section>
+                )}
+                {pastOrders.length > 0 && (
+                  <section>
+                    <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: "#06038d", borderColor: "#FFD700" }}>
+                      <CheckCircle className="w-4 h-4" />歷史訂單（{pastOrders.length}）
+                    </h2>
+                    <div className="space-y-3">
+                      {pastOrders.map(order => <OrderCard key={order.id} order={order} />)}
+                    </div>
+                  </section>
+                )}
+              </div>
             )}
-            {pastOrders.length > 0 && (
-              <section>
-                <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: "#06038d", borderColor: "#FFD700" }}>
-                  <CheckCircle className="w-4 h-4" />歷史訂單（{pastOrders.length}）
-                </h2>
-                <div className="space-y-3">
-                  {pastOrders.map(order => <OrderCard key={order.id} order={order} />)}
-                </div>
-              </section>
-            )}
-          </div>
-        )}
+          </BrandTabsContent>
+          <BrandTabsContent value="offers">
+            <MyOffersTab userId={user.id} />
+          </BrandTabsContent>
+        </BrandTabs>
       </div>
     </div>
   );

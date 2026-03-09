@@ -414,11 +414,38 @@ export const marketplaceRouter = router({
       if (!seller || listing.sellerId !== seller.id) throw new TRPCError({ code: "FORBIDDEN" });
       const { id, ...updateData } = input;
       const updatePayload: Record<string, any> = { ...updateData };
+      const oldPriceHkd = parseFloat(listing.priceHkd as string);
       if (updatePayload.price) {
         updatePayload.priceHkd = parseFloat(updatePayload.price).toFixed(2);
         delete updatePayload.price;
       }
       await updateListing(id, updatePayload);
+      // 降價通知：如果價格降低，通知所有將此商品加入 Wishlist 的用戶
+      if (updatePayload.priceHkd) {
+        const newPrice = parseFloat(updatePayload.priceHkd);
+        if (newPrice < oldPriceHkd) {
+          try {
+            const db = await getDb();
+            if (db) {
+              const { wishlists: wishlistsTable } = await import("../../drizzle/schema_new");
+              const { eq: eqFn } = await import("drizzle-orm");
+              const wishlistUsers = await db.select({ userId: wishlistsTable.userId }).from(wishlistsTable).where(eqFn(wishlistsTable.listingId, id));
+              for (const wu of wishlistUsers) {
+                await createNotification({
+                  userId: wu.userId,
+                  type: "trade",
+                  title: "心願商品降價了！",
+                  body: `「${listing.title}」價格已從 HKD ${oldPriceHkd.toFixed(2)} 降至 HKD ${newPrice.toFixed(2)}，快去看看！`,
+                  linkUrl: `/shop/${id}`,
+                  isRead: false,
+                });
+              }
+            }
+          } catch (e) {
+            console.error("[Wishlist Price Alert] Failed to send notifications:", e);
+          }
+        }
+      }
       return { success: true };
     }),
 
@@ -1630,6 +1657,17 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const seller = await getSellerProfileByUserId(ctx.user.id);
       if (!seller) return [];
       return getSellerOffers(seller.id);
+    }),
+
+  cancelOffer: protectedProcedure
+    .input(z.object({ offerId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const offer = await getOfferById(input.offerId);
+      if (!offer) throw new TRPCError({ code: "NOT_FOUND", message: "出價不存在" });
+      if (offer.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "無權限取消此出價" });
+      if (offer.status !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "只能取消待回覆的出價" });
+      await updateOffer(offer.id, { status: "cancelled", respondedAt: new Date() });
+      return { success: true };
     }),
 
   respondToOffer: protectedProcedure

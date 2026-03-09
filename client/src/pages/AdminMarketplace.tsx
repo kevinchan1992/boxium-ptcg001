@@ -745,6 +745,28 @@ function AlipayPendingTab() {
               {selectedOrder.alipayProofImageUrl && (
                 <img src={selectedOrder.alipayProofImageUrl} alt="付款截圖" className="rounded-lg border max-h-48 object-contain w-full" />
               )}
+              {selectedOrder.aiVerificationResult && (() => {
+                try {
+                  const ai = JSON.parse(selectedOrder.aiVerificationResult);
+                  return (
+                    <div className={`rounded-lg p-3 text-sm border ${
+                      ai.verified ? "bg-green-50 border-green-300" : "bg-red-50 border-red-300"
+                    }`}>
+                      <div className="flex items-center gap-2 font-semibold mb-1">
+                        {ai.verified
+                          ? <span className="text-green-700">✅ AI 驗證：付款截圖有效</span>
+                          : <span className="text-red-700">⚠️ AI 驗證：對比失敗</span>
+                        }
+                        {ai.confidence !== undefined && (
+                          <span className="text-xs text-gray-500 ml-auto">可信度: {Math.round(ai.confidence * 100)}%</span>
+                        )}
+                      </div>
+                      {ai.detectedAmount && <p className="text-xs text-gray-600">偵測金額: HKD {ai.detectedAmount}</p>}
+                      {ai.reason && <p className="text-xs text-gray-600 mt-1">{ai.reason}</p>}
+                    </div>
+                  );
+                } catch { return null; }
+              })()}
               <div><Label>備注（可選）</Label><Input value={note} onChange={e => setNote(e.target.value)} placeholder="例：已在支付寶後台核對，交易號 xxxx" /></div>
               <p className="text-sm text-green-700 bg-green-50 rounded p-2">ℹ️ 確認後系統會自動發送通知給買家和賣家。</p>
               <p className="text-sm text-amber-700 bg-amber-50 rounded p-2">請確認已在支付寶 HK 商戶後台核對到此筆收款後，再點擊確認。</p>
