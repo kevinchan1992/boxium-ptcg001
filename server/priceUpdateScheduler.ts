@@ -305,7 +305,8 @@ export function startAutoCompleteOrdersScheduler() {
                     amount: receivable,
                     currency: 'hkd',
                     destination: sellerProfile.stripeConnectId,
-                    metadata: { order_no: order.orderNo, order_id: order.id.toString(), auto_completed: 'true' },
+                    ...(order.stripePaymentIntentId ? { source_transaction: order.stripePaymentIntentId } : {}),
+                    metadata: { order_no: order.orderNo, order_id: order.id.toString(), auto_completed: 'true', trigger: 'auto_complete_14d' },
                   });
                   await db.update(marketplaceOrders)
                     .set({ payoutStatus: 'paid', stripeTransferId: transfer.id })

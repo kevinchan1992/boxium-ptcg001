@@ -3920,3 +3920,23 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [ ] 測試完整付款 + 轉帳流程
 - [ ] 保存 checkpoint
 
+
+## 🔧 交易流程優化（2026-03-09）
+
+### 問題描述
+1. Stripe 使用 Destination Charge 模式，付款後立即轉帳給賣家，應改為買家確認收貨後才放款
+2. 賣家中心已售出商品應可點擊查看詳情，但不能修改
+3. Admin 商品管理已售出商品只能查看不能修改
+4. 賣家出貨 FORBIDDEN 錯誤（sellerId vs userId 比對問題）
+5. 追蹤號碼應為必填，物流公司改為下拉選單，並提供追蹤連結
+
+### 修復計劃
+- [x] 修改 Stripe 付款模式：Destination Charge → Separate Charges and Transfers（付款時不自動轉帳）
+- [x] 修改 confirmReceipt：買家確認收貨時才執行 stripe.transfers.create()
+- [x] 修改 auto-complete cron job：14 天後自動完成時也執行 stripe.transfers.create()
+- [x] 修復 markOrderShipped FORBIDDEN 錯誤（用 getSellerProfileByUserId 比對）
+- [x] 追蹤號碼改為必填，物流公司改為下拉選單（SF Express、香港郵政等）
+- [x] OrderDetail.tsx 加入追蹤連結生成函數（根據物流公司自動生成查詢連結）
+- [x] 賣家中心已售出商品可點擊查看詳情（唯讀）
+- [x] Admin 商品管理已售出商品只能查看（已售出商品不顯示編輯按鈕）
+- [x] 儲存 Checkpoint 並發布

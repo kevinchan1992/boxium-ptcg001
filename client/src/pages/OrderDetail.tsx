@@ -13,6 +13,30 @@ import {
   Copy, ExternalLink, ShieldCheck, CircleDot
 } from "lucide-react";
 
+// Carrier tracking URL mapping
+const CARRIER_TRACKING: Record<string, { label: string; url: string | null }> = {
+  sf_express: { label: "順豐速運 (SF Express)", url: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/" },
+  hkpost: { label: "香港郵政 (HK Post)", url: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
+  dhl: { label: "DHL", url: "https://www.dhl.com/hk-en/home/tracking.html?tracking-id=" },
+  fedex: { label: "FedEx", url: "https://www.fedex.com/fedextrack/?trknbr=" },
+  ups: { label: "UPS", url: "https://www.ups.com/track?tracknum=" },
+  chunghwa_post: { label: "中華郵政", url: "https://postserv.post.gov.tw/pstmail/main_mail.jsp?targetTxn=EB100&query_type=1&searchItem=" },
+  black_cat: { label: "黑貓宅急", url: "https://www.t-cat.com.tw/Inquire/Trace.aspx?no=" },
+  other: { label: "其他", url: null },
+};
+
+function getCarrierLabel(shippingMethod: string | null | undefined): string {
+  if (!shippingMethod) return "快遞";
+  return CARRIER_TRACKING[shippingMethod]?.label ?? shippingMethod;
+}
+
+function getTrackingUrl(shippingMethod: string | null | undefined, trackingNumber: string): string | null {
+  if (!shippingMethod) return null;
+  const carrier = CARRIER_TRACKING[shippingMethod];
+  if (!carrier?.url) return null;
+  return carrier.url + encodeURIComponent(trackingNumber);
+}
+
 const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; icon: React.ReactNode; desc: string }> = {
   pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: <Clock className="w-4 h-4" />, desc: "等待買家完成付款" },
   payment_received: { label: "已收款", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <CreditCard className="w-4 h-4" />, desc: "付款已確認，等待賣家處理" },
@@ -154,13 +178,21 @@ function OrderTimeline({ order }: { order: any }) {
                 )}
               </div>
               {/* Extra info for shipped step */}
-              {step.key === "shipped" && isCurrent && order.trackingNumber && (
-                <div className="mt-1.5 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 text-xs text-indigo-800">
-                  <span className="font-medium">{order.shippingMethod ?? "快遞"}</span>
-                  <span className="mx-1">·</span>
-                  追蹤號：<span className="font-mono font-bold">{order.trackingNumber}</span>
-                </div>
-              )}
+              {step.key === "shipped" && isCurrent && order.trackingNumber && (() => {
+                const trackUrl = getTrackingUrl(order.shippingMethod, order.trackingNumber);
+                return (
+                  <div className="mt-1.5 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 text-xs text-indigo-800">
+                    <span className="font-medium">{getCarrierLabel(order.shippingMethod)}</span>
+                    <span className="mx-1">·</span>
+                    追蹤號：<span className="font-mono font-bold">{order.trackingNumber}</span>
+                    {trackUrl && (
+                      <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center gap-0.5 text-indigo-600 hover:text-indigo-800 underline">
+                        查詢<ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                );
+              })()}
               {/* Auto-complete notice */}
               {step.key === "completed" && isPending && order.orderStatus === "shipped" && order.autoCompleteAt && (
                 <p className="text-xs text-muted-foreground mt-1">
@@ -345,37 +377,51 @@ export default function OrderDetail() {
         </div>
 
         {/* Shipping Tracking */}
-        {order.trackingNumber && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <Truck className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium text-indigo-900 text-sm">物流資訊</p>
-                <p className="text-sm text-indigo-700 mt-1">
-                  <span className="font-medium">{order.shippingMethod ?? "快遞"}</span>
-                  <span className="mx-2">·</span>
-                  追蹤號：<span className="font-mono font-bold">{order.trackingNumber}</span>
-                  <button
-                    className="ml-2 text-indigo-500 hover:text-indigo-700"
-                    onClick={() => { navigator.clipboard.writeText(order.trackingNumber!); toast.success("追蹤號已複製"); }}
-                  >
-                    <Copy className="w-3.5 h-3.5 inline" />
-                  </button>
-                </p>
-                {order.shippedAt && (
-                  <p className="text-xs text-indigo-600 mt-1">
-                    出貨時間：{new Date(order.shippedAt).toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+        {order.trackingNumber && (() => {
+          const trackUrl = getTrackingUrl(order.shippingMethod, order.trackingNumber);
+          return (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <Truck className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium text-indigo-900 text-sm">物流資訊</p>
+                  <p className="text-sm text-indigo-700 mt-1">
+                    <span className="font-medium">{getCarrierLabel(order.shippingMethod)}</span>
+                    <span className="mx-2">·</span>
+                    追蹤號：<span className="font-mono font-bold">{order.trackingNumber}</span>
+                    <button
+                      className="ml-2 text-indigo-500 hover:text-indigo-700"
+                      onClick={() => { navigator.clipboard.writeText(order.trackingNumber!); toast.success("追蹤號已複製"); }}
+                    >
+                      <Copy className="w-3.5 h-3.5 inline" />
+                    </button>
                   </p>
-                )}
-                {order.autoCompleteAt && order.orderStatus === "shipped" && (
-                  <p className="text-xs text-indigo-500 mt-1">
-                    如未確認收貨，系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成訂單
-                  </p>
-                )}
+                  {trackUrl && (
+                    <a
+                      href={trackUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium underline"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      點擊查詢追蹤狀態
+                    </a>
+                  )}
+                  {order.shippedAt && (
+                    <p className="text-xs text-indigo-600 mt-1">
+                      出貨時間：{new Date(order.shippedAt).toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  )}
+                  {order.autoCompleteAt && order.orderStatus === "shipped" && (
+                    <p className="text-xs text-indigo-500 mt-1">
+                      如未確認收貨，系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成訂單
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Product Info */}
         {listing && (

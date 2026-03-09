@@ -167,15 +167,14 @@ export const marketplaceRouter = router({
           listingId: listing.id.toString(),
         },
       };
+      // NOTE: We use Separate Charges and Transfers (NOT Destination Charge)
+      // Funds stay in platform account until buyer confirms receipt (or 14-day auto-complete)
+      // Transfer to seller happens in confirmReceipt / auto-complete cron job
+      // No transfer_data or application_fee_amount here — platform keeps full amount until order completes
       if (listing.sellerType === "seller" && listing.sellerId) {
         const sellerProfile = await getSellerProfileById(listing.sellerId);
         if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
-          // Destination Charge: buyer pays listing price (total)
-          // Platform takes application_fee (5%) from seller's payout
-          // Seller automatically receives (total - application_fee) = 95% of listing price
-          paymentIntentData.application_fee_amount = Math.round(platformFee * 100);
-          paymentIntentData.transfer_data = { destination: sellerProfile.stripeConnectId };
-          console.log(`[Checkout] Destination charge to ${sellerProfile.stripeConnectId}, buyer pays HKD ${total.toFixed(2)}, platform fee HKD ${platformFee.toFixed(2)}, seller receives HKD ${(subtotal - platformFee).toFixed(2)}`);
+          console.log(`[Checkout] Separate Charges mode for seller ${sellerProfile.stripeConnectId}. Funds held in platform until buyer confirms receipt. Buyer pays HKD ${total.toFixed(2)}, seller will receive HKD ${(subtotal - platformFee).toFixed(2)} after order completes.`);
         }
       }
       const session = await stripeClient.checkout.sessions.create({
@@ -267,51 +266,39 @@ export const marketplaceRouter = router({
         buyerConfirmedAt: new Date(),
         payoutStatus: "processing",
       });
-      // Handle payout for C2C orders
+      // Handle payout for C2C orders - Separate Charges and Transfers mode
+      // Funds were held in platform account; now transfer to seller after buyer confirms receipt
       if (order.sellerType === "seller" && order.sellerId) {
         const sellerProfile = await getSellerProfileByUserId(order.sellerId);
         if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
-          // Check if this was a Destination Charge (funds already transferred automatically)
-          // Destination charges auto-transfer funds when payment completes, so we just mark as paid
           if (order.stripePaymentIntentId) {
             try {
               const Stripe = (await import("stripe")).default;
               const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-              const paymentIntent = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
-              const isDestinationCharge = !!(paymentIntent as any).transfer_data?.destination;
-              if (isDestinationCharge) {
-                // Destination charge: funds already auto-transferred at payment time
-                const transferId = (paymentIntent as any).transfer;
-                await updateMarketplaceOrder(input.orderId, {
-                  payoutStatus: "paid",
-                  stripeTransferId: typeof transferId === "string" ? transferId : null,
-                });
-                console.log(`[Payout] Destination charge - funds auto-transferred for order ${order.orderNo}`);
-              } else {
-                // Legacy: manual transfer (Separate Charges & Transfers)
-                const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
-                const transfer = await stripe.transfers.create({
-                  amount: receivable,
-                  currency: "hkd",
-                  destination: sellerProfile.stripeConnectId,
-                  metadata: { order_no: order.orderNo, order_id: order.id.toString() },
-                });
-                await updateMarketplaceOrder(input.orderId, {
-                  payoutStatus: "paid",
-                  stripeTransferId: transfer.id,
-                });
-                console.log(`[Payout] Manual transfer ${transfer.id} for order ${order.orderNo}`);
-              }
+              // Separate Charges and Transfers: manually transfer seller's receivable amount
+              const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
+              const transfer = await stripe.transfers.create({
+                amount: receivable,
+                currency: "hkd",
+                destination: sellerProfile.stripeConnectId,
+                source_transaction: order.stripePaymentIntentId, // links transfer to original charge
+                metadata: { order_no: order.orderNo, order_id: order.id.toString(), trigger: "buyer_confirmed" },
+              });
+              await updateMarketplaceOrder(input.orderId, {
+                payoutStatus: "paid",
+                stripeTransferId: transfer.id,
+              });
+              console.log(`[Payout] Transfer ${transfer.id} (HKD ${(receivable/100).toFixed(2)}) to seller ${sellerProfile.stripeConnectId} for order ${order.orderNo}`);
               // Notify seller of payout
               await createNotification({
                 userId: order.sellerId,
                 type: "trade",
-                title: "款項已確認 💰",
+                title: "款項已放出 💰",
                 body: `訂單 ${order.orderNo} 買家已確認收貨，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
                 linkUrl: "/seller",
               }).catch(() => {});
             } catch (err: any) {
-              console.error("[Payout] Stripe payout check failed:", err);
+              console.error("[Payout] Stripe transfer failed:", err);
               await updateMarketplaceOrder(input.orderId, {
                 payoutStatus: "failed",
                 stripeTransferError: err.message,
@@ -466,13 +453,15 @@ export const marketplaceRouter = router({
   markOrderShipped: protectedProcedure
     .input(z.object({
       orderId: z.number().int(),
-      trackingNo: z.string().optional(),
-      shippingMethod: z.string().optional(),
+      trackingNo: z.string().min(1, "追蹤號碼為必填"),
+      shippingMethod: z.string().min(1, "物流公司為必填"),
     }))
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
-      if (order.sellerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      // order.sellerId is sellerProfile.id, not user.id — must look up sellerProfile first
+      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      if (!sellerProfile || order.sellerId !== sellerProfile.id) throw new TRPCError({ code: "FORBIDDEN" });
       if (!(["processing", "payment_received"].includes(order.orderStatus))) throw new TRPCError({ code: "BAD_REQUEST", message: "訂單狀態不允許此操作" });
       // Set autoCompleteAt = 14 days from now
       const autoCompleteAt = new Date();
@@ -971,12 +960,11 @@ export const marketplaceRouter = router({
           listingId: listing.id.toString(),
         },
       };
+      // NOTE: Separate Charges and Transfers mode - funds held in platform until buyer confirms receipt
       if (listing.sellerType === "seller" && listing.sellerId) {
         const sellerProfile2 = await getSellerProfileById(listing.sellerId);
         if (sellerProfile2?.stripeConnectId && sellerProfile2.stripeConnectStatus === "active") {
-          paymentIntentData2.application_fee_amount = Math.round(platformFee2 * 100);
-          paymentIntentData2.transfer_data = { destination: sellerProfile2.stripeConnectId };
-          console.log(`[Checkout2] Destination charge to ${sellerProfile2.stripeConnectId}`);
+          console.log(`[Checkout2] Separate Charges mode for seller ${sellerProfile2.stripeConnectId}. Funds held until buyer confirms receipt.`);
         }
       }
       // Create Stripe Checkout Session
@@ -1673,12 +1661,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const offerPaymentIntentData: any = {
         metadata: { orderId: order.id.toString(), orderNo, buyerId: offer.buyerId.toString(), offerId: offer.id.toString() },
       };
+      // NOTE: Separate Charges and Transfers mode - funds held in platform until buyer confirms receipt
       if (listing.sellerType === "seller" && listing.sellerId) {
         const offerSellerProfile = await getSellerProfileById(listing.sellerId);
         if (offerSellerProfile?.stripeConnectId && offerSellerProfile.stripeConnectStatus === "active") {
-          offerPaymentIntentData.application_fee_amount = Math.round(platformFee * 100);
-          offerPaymentIntentData.transfer_data = { destination: offerSellerProfile.stripeConnectId };
-          console.log(`[OfferCheckout] Destination charge to ${offerSellerProfile.stripeConnectId}`);
+          console.log(`[OfferCheckout] Separate Charges mode for seller ${offerSellerProfile.stripeConnectId}. Funds held until buyer confirms receipt.`);
         }
       }
       const session = await stripe.checkout.sessions.create({

@@ -412,9 +412,11 @@ function ListingDetailDialog({ listingId, onClose, onUpdated }: { listingId: num
           ) : (
             <>
               <Button variant="outline" onClick={onClose}>關閉</Button>
-              <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white" onClick={handleEditOpen}>
-                <Edit className="w-4 h-4 mr-2" />編輯商品
-              </Button>
+              {listing?.status !== "sold" && (
+                <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white" onClick={handleEditOpen}>
+                  <Edit className="w-4 h-4 mr-2" />編輯商品
+                </Button>
+              )}
             </>
           )}
         </DialogFooter>
@@ -480,7 +482,7 @@ function ListingsTab() {
                   {listing.status === "active" ? "上架中" : listing.status === "pending_review" ? "待審核" : listing.status === "draft" ? "草稿" : listing.status === "sold" ? "已售出" : "已下架"}
                 </Badge>
                 <Button size="sm" variant="outline" onClick={() => setSelectedListingId(listing.id)}>
-                  <Eye className="w-3 h-3 mr-1" />查看/編輯
+                  <Eye className="w-3 h-3 mr-1" />{listing.status === "sold" ? "查看詳情" : "查看/編輯"}
                 </Button>
                 {listing.status === "pending_review" && (
                   <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"

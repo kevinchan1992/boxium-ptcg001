@@ -228,7 +228,17 @@ export default function SellerDashboard() {
   }, [sellerProfile?.id]);
 
   const [shipDialog, setShipDialog] = useState<{ open: boolean; orderId: number; orderNo: string }>({ open: false, orderId: 0, orderNo: "" });
-  const [shipForm, setShipForm] = useState({ shippingMethod: "", trackingNumber: "" });
+  const [shipForm, setShipForm] = useState({ shippingMethod: "sf_express", trackingNumber: "" });
+  const CARRIERS = [
+    { value: "sf_express", label: "順豐速運 (SF Express)", trackingUrl: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/" },
+    { value: "hkpost", label: "香港郵政 (HK Post)", trackingUrl: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
+    { value: "dhl", label: "DHL", trackingUrl: "https://www.dhl.com/hk-en/home/tracking.html?tracking-id=" },
+    { value: "fedex", label: "FedEx", trackingUrl: "https://www.fedex.com/fedextrack/?trknbr=" },
+    { value: "ups", label: "UPS", trackingUrl: "https://www.ups.com/track?tracknum=" },
+    { value: "chunghwa_post", label: "中華郵政", trackingUrl: "https://postserv.post.gov.tw/pstmail/main_mail.jsp?targetTxn=EB100&query_type=1&searchItem=" },
+    { value: "black_cat", label: "黑貓宅急", trackingUrl: "https://www.t-cat.com.tw/Inquire/Trace.aspx?no=" },
+    { value: "other", label: "其他", trackingUrl: null },
+  ];
   const markShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
     onSuccess: () => {
       toast.success("已標記為已寄出，已通知買家");
@@ -486,8 +496,9 @@ export default function SellerDashboard() {
                         const imgs = listing.images ? JSON.parse(listing.images as string) : null;
                         coverImg = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null;
                       } catch {}
+                      const isSold = listing.status === "sold";
                       return (
-                        <Card key={listing.id}>
+                        <Card key={listing.id} className={isSold ? "opacity-80" : ""}>
                           <CardContent className="flex items-center gap-4 py-3 flex-wrap">
                             <div className="w-14 h-14 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0">
                               {coverImg ? (
@@ -504,15 +515,23 @@ export default function SellerDashboard() {
                                 HKD {parseFloat(listing.priceHkd as string).toFixed(2)} · 庫存 {listing.quantity}
                               </p>
                             </div>
-                            <Badge className={
-                              listing.status === "active" ? "bg-green-100 text-green-800" :
-                              listing.status === "pending_review" ? "bg-yellow-100 text-yellow-800" :
-                              "bg-gray-100 text-gray-800"
-                            }>
-                              {listing.status === "active" ? "上架中" :
-                               listing.status === "pending_review" ? "審核中" :
-                               listing.status === "sold" ? "已售出" : listing.status}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge className={
+                                listing.status === "active" ? "bg-green-100 text-green-800" :
+                                listing.status === "pending_review" ? "bg-yellow-100 text-yellow-800" :
+                                listing.status === "sold" ? "bg-blue-100 text-blue-800" :
+                                "bg-gray-100 text-gray-800"
+                              }>
+                                {listing.status === "active" ? "上架中" :
+                                 listing.status === "pending_review" ? "審核中" :
+                                 listing.status === "sold" ? "已售出" : listing.status}
+                              </Badge>
+                              {isSold && (
+                                <Link href={`/marketplace/listing/${listing.id}`}>
+                                  <Button size="sm" variant="outline" className="text-xs h-7 px-2">查看詳情</Button>
+                                </Link>
+                              )}
+                            </div>
                           </CardContent>
                         </Card>
                       );
@@ -548,7 +567,7 @@ export default function SellerDashboard() {
                                 <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white"
                                   onClick={() => {
                                     setShipDialog({ open: true, orderId: item.orderId ?? item.id, orderNo: item.orderNo ?? "" });
-                                    setShipForm({ shippingMethod: "", trackingNumber: "" });
+                                    setShipForm({ shippingMethod: "sf_express", trackingNumber: "" });
                                   }}>
                                   填寫出貨資料
                                 </Button>
@@ -754,15 +773,16 @@ export default function SellerDashboard() {
           <div className="py-2 space-y-3">
             {shipDialog.orderNo && <p className="text-xs text-muted-foreground">訂單號：{shipDialog.orderNo}</p>}
             <div className="space-y-1.5">
-              <Label>物流公司</Label>
-              <Input
-                placeholder="例：順豐速運、SF Express、香港郵政..."
-                value={shipForm.shippingMethod}
-                onChange={(e) => setShipForm(f => ({ ...f, shippingMethod: e.target.value }))}
-              />
+              <Label>物流公司 <span className="text-red-500">*</span></Label>
+              <Select value={shipForm.shippingMethod} onValueChange={(v) => setShipForm(f => ({ ...f, shippingMethod: v }))}>
+                <SelectTrigger><SelectValue placeholder="選擇物流公司" /></SelectTrigger>
+                <SelectContent>
+                  {CARRIERS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>追蹤號碼（選填）</Label>
+              <Label>追蹤號碼 <span className="text-red-500">*</span></Label>
               <Input
                 placeholder="例：SF1234567890"
                 value={shipForm.trackingNumber}
@@ -774,11 +794,11 @@ export default function SellerDashboard() {
             <Button variant="outline" onClick={() => setShipDialog(d => ({ ...d, open: false }))}>取消</Button>
             <Button
               className="bg-[#06038d] hover:bg-[#0804b8] text-white"
-              disabled={!shipForm.shippingMethod || markShippedMutation.isPending}
+              disabled={!shipForm.shippingMethod || !shipForm.trackingNumber || markShippedMutation.isPending}
               onClick={() => markShippedMutation.mutate({
                 orderId: shipDialog.orderId,
                 shippingMethod: shipForm.shippingMethod,
-                trackingNo: shipForm.trackingNumber || undefined,
+                trackingNo: shipForm.trackingNumber,
               })}
             >
               {markShippedMutation.isPending ? "處理中..." : "確認出貨"}
