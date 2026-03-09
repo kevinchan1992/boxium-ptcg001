@@ -300,7 +300,7 @@ export default function OrderDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background pt-20">
+      <div className="min-h-screen pt-20" style={{ backgroundColor: "#f8f9fa" }}>
         <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-4 animate-pulse">
           <div className="h-8 bg-muted rounded w-1/3" />
           <div className="h-48 bg-muted rounded-xl" />
@@ -312,7 +312,7 @@ export default function OrderDetail() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+      <div className="min-h-screen pt-20 flex items-center justify-center" style={{ backgroundColor: "#f8f9fa" }}>
         <div className="text-center space-y-3">
           <Package className="w-12 h-12 mx-auto text-muted-foreground" />
           <p className="font-medium">訂單不存在或無權查看</p>
@@ -345,19 +345,19 @@ export default function OrderDetail() {
   const canReview = isBuyer && isCompleted && order.sellerType === "seller" && !review;
 
   return (
-    <div className="min-h-screen bg-background pt-20">
+    <div className="min-h-screen pt-20" style={{ backgroundColor: "#f8f9fa" }}>
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link href="/orders">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white">
               <ArrowLeft className="w-4 h-4 mr-1" />返回
             </Button>
           </Link>
           <div>
-            <h1 className="text-xl font-bold">訂單詳情</h1>
+            <h1 className="text-xl font-bold" style={{ color: "#06038d" }}>訂單詳情</h1>
             <button
-              className="text-xs text-muted-foreground font-mono flex items-center gap-1 hover:text-foreground transition-colors"
+              className="text-xs text-gray-500 font-mono flex items-center gap-1 hover:text-gray-700 transition-colors"
               onClick={() => { navigator.clipboard.writeText(order.orderNo); toast.success("訂單號已複製"); }}
             >
               #{order.orderNo}
@@ -367,7 +367,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Status Card */}
-        <div className="bg-card text-card-foreground rounded-xl border shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="p-4 flex items-start justify-between gap-2">
             <div className="flex items-center gap-3 min-w-0">
               <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${statusInfo.color}`}>
@@ -426,9 +426,9 @@ export default function OrderDetail() {
         </div>
 
         {/* Order Timeline */}
-        <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-5">
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#06038d]" />訂單進度
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: "#06038d" }}>
+            <ShieldCheck className="w-4 h-4" style={{ color: "#06038d" }} />訂單進度
           </h2>
           <OrderTimeline order={order} />
         </div>
@@ -437,7 +437,7 @@ export default function OrderDetail() {
         {order.trackingNumber && (() => {
           const trackUrl = getTrackingUrl(order.shippingMethod, order.trackingNumber);
           return (
-            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+            <div className="rounded-xl p-4" style={{ backgroundColor: "#f0f4ff", border: "1px solid #c7d2fe" }}>
               <div className="flex items-start gap-3">
                 <Truck className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
@@ -482,8 +482,8 @@ export default function OrderDetail() {
 
         {/* Product Info */}
         {listing && (
-          <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-4">
-            <h2 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">商品資訊</h2>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+            <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>商品資訊</h2>
             <div className="flex items-start gap-3">
               {listing.images && (() => {
                 const imgs = typeof listing.images === "string" ? (() => { try { return JSON.parse(listing.images as string); } catch { return null; } })() : listing.images;
@@ -507,8 +507,8 @@ export default function OrderDetail() {
 
         {/* Shipping Address */}
         {shippingAddr && (
-          <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-4">
-            <h2 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">收貨資料</h2>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+            <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>收貨資料</h2>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2.5">
                 <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -531,8 +531,8 @@ export default function OrderDetail() {
         )}
 
         {/* Payment Summary */}
-        <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-4">
-          <h2 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">付款摘要</h2>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>付款摘要</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">商品金額</span>

@@ -3,28 +3,26 @@ import { Link } from "wouter";
 import { Bell, Check, CheckCheck, Trash2, Package, DollarSign, AlertTriangle, Info, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
 const typeIcon = (type: string) => {
   switch (type) {
-    case "trade": return <Package className="w-4 h-4 text-blue-400" />;
-    case "payment": return <DollarSign className="w-4 h-4 text-green-400" />;
-    case "system": return <Info className="w-4 h-4 text-gray-400" />;
-    case "alert": return <AlertTriangle className="w-4 h-4 text-yellow-400" />;
-    default: return <Bell className="w-4 h-4 text-gray-400" />;
+    case "trade": return <Package className="w-4 h-4" style={{ color: "#06038d" }} />;
+    case "payment": return <DollarSign className="w-4 h-4 text-green-600" />;
+    case "system": return <Info className="w-4 h-4 text-gray-500" />;
+    case "alert": return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+    default: return <Bell className="w-4 h-4 text-gray-500" />;
   }
 };
-
 
 export default function Notifications() {
   const { data: user } = trpc.auth.me.useQuery();
   const [unreadOnly, setUnreadOnly] = useState(false);
   const utils = trpc.useUtils();
 
-  const { data, isLoading, refetch } = trpc.notifications.getMyNotifications.useQuery(
+  const { data, isLoading } = trpc.notifications.getMyNotifications.useQuery(
     { limit: 50, offset: 0, unreadOnly },
     { enabled: !!user }
   );
@@ -53,11 +51,11 @@ export default function Notifications() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#0a0a1a] flex items-center justify-center">
+      <div className="min-h-screen pt-20 flex items-center justify-center" style={{ backgroundColor: "#f8f9fa" }}>
         <div className="text-center">
-          <Bell className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <p className="text-white text-lg mb-4">請先登入以查看通知</p>
-          <a href="/login"><Button className="bg-[#ffed00] text-black">登入</Button></a>
+          <Bell className="w-16 h-16 mx-auto mb-4" style={{ color: "#06038d", opacity: 0.3 }} />
+          <p className="text-gray-700 text-lg mb-4">請先登入以查看通知</p>
+          <a href="/login"><Button style={{ backgroundColor: "#06038d" }} className="text-white">登入</Button></a>
         </div>
       </div>
     );
@@ -67,23 +65,23 @@ export default function Notifications() {
   const unreadCount = notifications.filter((n: any) => !n.isRead).length;
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] pt-20 pb-12">
+    <div className="min-h-screen pt-20 pb-12" style={{ backgroundColor: "#f8f9fa" }}>
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Link href="/">
-              <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00] p-2">
+              <Button variant="outline" size="sm" className="border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white p-2">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                <Bell className="w-6 h-6 text-[#ffed00]" />
+              <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "#06038d" }}>
+                <Bell className="w-6 h-6" style={{ color: "#FFD700" }} />
                 通知中心
               </h1>
               {unreadCount > 0 && (
-                <p className="text-sm text-gray-400">{unreadCount} 則未讀通知</p>
+                <p className="text-sm text-gray-500">{unreadCount} 則未讀通知</p>
               )}
             </div>
           </div>
@@ -91,7 +89,7 @@ export default function Notifications() {
             <Button
               variant="outline"
               size="sm"
-              className="border-white/20 text-white hover:bg-white/10"
+              className="border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white"
               onClick={() => markAllAsReadMutation.mutate()}
               disabled={markAllAsReadMutation.isPending}
             >
@@ -103,11 +101,11 @@ export default function Notifications() {
 
         {/* Filter Tabs */}
         <Tabs value={unreadOnly ? "unread" : "all"} onValueChange={(v) => setUnreadOnly(v === "unread")} className="mb-4">
-          <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="all" className="text-white data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
+          <TabsList className="bg-white border border-gray-200 shadow-sm">
+            <TabsTrigger value="all" className="text-gray-600 data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
               全部
             </TabsTrigger>
-            <TabsTrigger value="unread" className="text-white data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
+            <TabsTrigger value="unread" className="text-gray-600 data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
               未讀
               {unreadCount > 0 && (
                 <Badge className="ml-2 bg-red-500 text-white text-xs px-1.5 py-0">{unreadCount}</Badge>
@@ -120,12 +118,12 @@ export default function Notifications() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-20 bg-white/5 rounded-lg animate-pulse" />
+              <div key={i} className="h-20 bg-gray-200 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : notifications.length === 0 ? (
           <div className="text-center py-16">
-            <Bell className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <Bell className="w-16 h-16 mx-auto mb-4" style={{ color: "#06038d", opacity: 0.2 }} />
             <p className="text-gray-400 text-lg">
               {unreadOnly ? "沒有未讀通知" : "暫無通知"}
             </p>
@@ -133,26 +131,31 @@ export default function Notifications() {
         ) : (
           <div className="space-y-2">
             {notifications.map((notif: any) => (
-              <Card
+              <div
                 key={notif.id}
-                className={`bg-white/5 border border-white/10 border-l-4 border-l-blue-500/40 transition-all hover:bg-white/8 ${!notif.isRead ? "bg-white/8" : ""}`}
+                className={`bg-white rounded-xl border shadow-sm overflow-hidden transition-all ${
+                  !notif.isRead
+                    ? "border-l-4 border-l-[#06038d] border-gray-200"
+                    : "border-gray-200"
+                }`}
               >
-                <CardContent className="p-4">
+                <div className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex-shrink-0">
+                    <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "#f0f4ff" }}>
                       {typeIcon(notif.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
-                          <p className={`text-sm font-medium ${notif.isRead ? "text-gray-300" : "text-white"}`}>
+                          <p className={`text-sm font-medium ${notif.isRead ? "text-gray-600" : "text-gray-900"}`}>
                             {notif.title}
                             {!notif.isRead && (
-                              <span className="ml-2 inline-block w-2 h-2 bg-blue-400 rounded-full" />
+                              <span className="ml-2 inline-block w-2 h-2 rounded-full" style={{ backgroundColor: "#06038d" }} />
                             )}
                           </p>
-                          <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{notif.body}</p>
-                          <p className="text-xs text-gray-600 mt-1">
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{notif.body}</p>
+                          <p className="text-xs text-gray-400 mt-1">
                             {new Date(notif.createdAt).toLocaleString("zh-HK")}
                           </p>
                         </div>
@@ -161,7 +164,7 @@ export default function Notifications() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 w-7 p-0 text-gray-400 hover:text-green-400"
+                              className="h-7 w-7 p-0 text-gray-400 hover:text-green-600"
                               onClick={() => markAsReadMutation.mutate({ notificationId: notif.id })}
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -170,7 +173,7 @@ export default function Notifications() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                            className="h-7 w-7 p-0 text-gray-400 hover:text-red-500"
                             onClick={() => deleteMutation.mutate({ notificationId: notif.id })}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -182,7 +185,8 @@ export default function Notifications() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="mt-2 h-7 text-xs text-[#ffed00] hover:text-[#ffed00]/80 p-0"
+                            className="mt-2 h-7 text-xs p-0 font-medium hover:underline"
+                            style={{ color: "#06038d" }}
                             onClick={() => !notif.isRead && markAsReadMutation.mutate({ notificationId: notif.id })}
                           >
                             查看詳情 →
@@ -191,8 +195,8 @@ export default function Notifications() {
                       )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         )}

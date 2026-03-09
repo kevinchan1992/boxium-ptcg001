@@ -390,10 +390,10 @@ export default function Orders() {
   const user = me;
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-background pt-20">
+      <div className="min-h-screen pt-20" style={{ backgroundColor: "#f8f9fa" }}>
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-32 bg-muted rounded-xl animate-pulse" />
+            <div key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -402,10 +402,10 @@ export default function Orders() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+      <div className="min-h-screen pt-20 flex items-center justify-center" style={{ backgroundColor: "#f8f9fa" }}>
         <div className="text-center space-y-3">
-          <Package className="w-12 h-12 mx-auto text-muted-foreground" />
-          <p className="font-medium">請先登入查看訂單</p>
+          <Package className="w-12 h-12 mx-auto" style={{ color: "#06038d" }} />
+          <p className="font-medium text-gray-700">請先登入查看訂單</p>
           <Link href="/login"><Button className="bg-[#06038d] text-white">登入</Button></Link>
         </div>
       </div>
@@ -416,17 +416,17 @@ export default function Orders() {
   const pastOrders = (orders ?? []).filter(o => ["completed", "cancelled"].includes(o.orderStatus));
 
   return (
-    <div className="min-h-screen bg-background pt-20">
+    <div className="min-h-screen pt-20" style={{ backgroundColor: "#f8f9fa" }}>
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
         <div className="flex items-center gap-3 mb-6">
           <Link href="/marketplace">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white">
               <ArrowLeft className="w-4 h-4 mr-1" />返回
             </Button>
           </Link>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold">我的訂單</h1>
-            <p className="text-sm text-muted-foreground">共 {orders?.length ?? 0} 筆訂單</p>
+            <h1 className="text-xl sm:text-2xl font-bold" style={{ color: "#06038d" }}>我的訂單</h1>
+            <p className="text-sm text-gray-500">共 {orders?.length ?? 0} 筆訂單</p>
           </div>
         </div>
 
@@ -442,7 +442,7 @@ export default function Orders() {
           <div className="space-y-6">
             {activeOrders.length > 0 && (
               <section className="space-y-3">
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2" style={{ color: "#06038d" }}>
                   <CreditCard className="w-4 h-4" />進行中的訂單（{activeOrders.length}）
                 </h2>
                 {activeOrders.map(order => <OrderCard key={order.id} order={order} />)}
@@ -450,7 +450,7 @@ export default function Orders() {
             )}
             {pastOrders.length > 0 && (
               <section className="space-y-3">
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2" style={{ color: "#06038d" }}>
                   <CheckCircle className="w-4 h-4" />歷史訂單（{pastOrders.length}）
                 </h2>
                 {pastOrders.map(order => <OrderCard key={order.id} order={order} />)}
