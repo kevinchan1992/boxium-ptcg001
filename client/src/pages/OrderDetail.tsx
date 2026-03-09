@@ -697,7 +697,7 @@ export default function OrderDetail() {
 
       {/* Confirm Receipt Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader><DialogTitle>確認收貨</DialogTitle></DialogHeader>
           <div className="py-2 space-y-3">
             <p className="text-sm text-muted-foreground">確認已收到商品後，款項將立即轉帳給賣家。此操作不可撤銷。</p>
@@ -723,7 +723,7 @@ export default function OrderDetail() {
 
       {/* Dispute Dialog */}
       <Dialog open={showDisputeDialog} onOpenChange={(open) => { setShowDisputeDialog(open); if (!open) { setDisputeEvidenceUrls([]); setDisputeReason(""); } }}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Flag className="w-5 h-5 text-red-500" />申請爭議
@@ -787,7 +787,7 @@ export default function OrderDetail() {
 
       {/* Review Dialog */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-400" />評價賣家

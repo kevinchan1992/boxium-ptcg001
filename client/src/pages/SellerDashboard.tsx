@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -276,9 +276,11 @@ function ShareButton({
 export default function SellerDashboard() {
   const [showApply, setShowApply] = useState(false);
   const [showNewListing, setShowNewListing] = useState(false);
+  const [listingStep, setListingStep] = useState<1 | 2 | 3>(1);
   const [applyForm, setApplyForm] = useState({ displayName: "", bio: "" });
   const [listingForm, setListingForm] = useState({
     title: "", description: "", condition: "raw_a", price: "", quantity: "1",
+    minOffer: "", acceptOffers: false,
   });
   const [listingImages, setListingImages] = useState<string[]>([]);
   const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
@@ -322,7 +324,8 @@ export default function SellerDashboard() {
     onSuccess: () => {
       toast.success("商品已提交審核");
       setShowNewListing(false);
-      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1" });
+      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false });
+      setListingStep(1);
       setListingImages([]);
       setSelectedCard(null);
       refetchListings();
@@ -862,7 +865,7 @@ export default function SellerDashboard() {
         </div>
       </div>
       <Dialog open={showApply} onOpenChange={setShowApply}>
-        <DialogContent>
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader><DialogTitle>申請成為賣家</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
@@ -893,113 +896,281 @@ export default function SellerDashboard() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showNewListing} onOpenChange={setShowNewListing}>
-        <DialogContent bottomSheet>
-          <DialogHeader><DialogTitle>上架新商品</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <ImageUploader images={listingImages} onChange={setListingImages} />
-
-            {/* Card Picker */}
-            <div>
-              <Label>關聯卡牌（選選）</Label>
-              {selectedCard ? (
-                <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#06038d]/30 bg-indigo-50/50">
-                  {selectedCard.imageUrl ? (
-                    <img src={selectedCard.imageUrl} alt={selectedCard.name} className="w-10 h-14 object-cover rounded-md border border-gray-200 flex-shrink-0" />
-                  ) : (
-                    <div className="w-10 h-14 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <Layers className="w-4 h-4 text-gray-300" />
+      <Dialog open={showNewListing} onOpenChange={(open) => { setShowNewListing(open); if (!open) setListingStep(1); }}>
+        <DialogContent bottomSheet className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg">
+          {/* Step Header */}
+          <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-gray-900">上架新商品</h2>
+              <button onClick={() => setShowNewListing(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Step Indicator */}
+            <div className="flex items-center gap-0">
+              {[{ n: 1, label: "基本資料" }, { n: 2, label: "定價設定" }, { n: 3, label: "確認上架" }].map(({ n, label }, idx) => (
+                <React.Fragment key={n}>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      listingStep > n ? "bg-[#06038d] text-white" :
+                      listingStep === n ? "bg-[#06038d] text-white ring-4 ring-[#06038d]/20" :
+                      "bg-gray-100 text-gray-400"
+                    }`}>
+                      {listingStep > n ? <Check className="w-3.5 h-3.5" /> : n}
                     </div>
+                    <span className={`text-[10px] font-medium whitespace-nowrap ${
+                      listingStep >= n ? "text-[#06038d]" : "text-gray-400"
+                    }`}>{label}</span>
+                  </div>
+                  {idx < 2 && (
+                    <div className={`flex-1 h-0.5 mb-4 mx-1 transition-all ${
+                      listingStep > n ? "bg-[#06038d]" : "bg-gray-200"
+                    }`} />
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#06038d] truncate">{selectedCard.name}</p>
-                    {selectedCard.nameJa && selectedCard.nameJa !== selectedCard.name && (
-                      <p className="text-xs text-gray-500 truncate">{selectedCard.nameJa}</p>
-                    )}
-                    <div className="flex gap-1 mt-0.5 flex-wrap">
-                      {selectedCard.cardNumber && <span className="text-[10px] text-gray-400">{selectedCard.cardNumber}</span>}
-                      {selectedCard.rarity && <span className="text-[10px] text-amber-600">{selectedCard.rarity}</span>}
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-[#06038d]" onClick={() => setShowCardPicker(true)}>改變</Button>
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-500" onClick={() => setSelectedCard(null)}><X className="w-3 h-3" /></Button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="mt-1 w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 hover:border-[#06038d] hover:text-[#06038d] hover:bg-indigo-50/30 transition-colors"
-                  onClick={() => setShowCardPicker(true)}
-                >
-                  <span className="flex items-center gap-2">
-                    <Layers className="w-4 h-4" />
-                    點擊搜索並關聯卡牌
-                  </span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            <div>
-              <Label>商品名稱 *</Label>
-              <Input className="mt-1" placeholder="例如：Charizard ex 噴火龍 SAR"
-                value={listingForm.title}
-                onChange={(e) => setListingForm(p => ({ ...p, title: e.target.value }))} />
-            </div>
-            <div>
-              <Label>商品描述</Label>
-              <Textarea className="mt-1" placeholder="描述卡牌狀況、版本等..."
-                value={listingForm.description}
-                onChange={(e) => setListingForm(p => ({ ...p, description: e.target.value }))} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>品相 *</Label>
-                <Select value={listingForm.condition} onValueChange={(v) => setListingForm(p => ({ ...p, condition: v }))}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {conditionOptions.map(group => (
-                      <div key={group.group}>
-                        <div className="px-2 py-1 text-xs font-bold text-gray-400 uppercase tracking-wide">{group.group}</div>
-                        {group.items.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
-                      </div>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>數量 *</Label>
-                <Input className="mt-1" type="number" min="1" value={listingForm.quantity}
-                  onChange={(e) => setListingForm(p => ({ ...p, quantity: e.target.value }))} />
-              </div>
-            </div>
-            <div>
-              <Label>售價（HKD）*</Label>
-              <Input className="mt-1" type="number" min="4" step="0.01" placeholder="最低 HKD 4.00"
-                value={listingForm.price}
-                onChange={(e) => setListingForm(p => ({ ...p, price: e.target.value }))} />
-              {listingForm.price && parseFloat(listingForm.price) < 4.00 && (
-                <p className="text-xs text-red-500 mt-1">定價不能低於 HKD 4.00（Stripe 信用卡付款最低限額）</p>
-              )}
+                </React.Fragment>
+              ))}
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewListing(false)}>取消</Button>
-            <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white"
-              disabled={!listingForm.title || !listingForm.price || parseFloat(listingForm.price) < 4.00 || createListingMutation.isPending}
-              onClick={() => createListingMutation.mutate({
-                title: listingForm.title,
-                description: listingForm.description || undefined,
-                condition: listingForm.condition as any,
-                price: parseFloat(listingForm.price),
-                quantity: parseInt(listingForm.quantity),
-                images: listingImages.length > 0 ? listingImages : undefined,
-                cardId: selectedCard?.id ?? undefined,
-              })}>
-              {createListingMutation.isPending ? "提交中..." : "提交審核"}
-            </Button>
-          </DialogFooter>
+
+          {/* Step Content */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+
+            {/* Step 1: Basic Info */}
+            {listingStep === 1 && (
+              <>
+                <ImageUploader images={listingImages} onChange={setListingImages} />
+                {/* Card Picker */}
+                <div>
+                  <Label>關聯卡牌（選填）</Label>
+                  {selectedCard ? (
+                    <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#06038d]/30 bg-indigo-50/50">
+                      {selectedCard.imageUrl ? (
+                        <img src={selectedCard.imageUrl} alt={selectedCard.name} className="w-10 h-14 object-cover rounded-md border border-gray-200 flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-14 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <Layers className="w-4 h-4 text-gray-300" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#06038d] truncate">{selectedCard.name}</p>
+                        {selectedCard.nameJa && selectedCard.nameJa !== selectedCard.name && (
+                          <p className="text-xs text-gray-500 truncate">{selectedCard.nameJa}</p>
+                        )}
+                        <div className="flex gap-1 mt-0.5 flex-wrap">
+                          {selectedCard.cardNumber && <span className="text-[10px] text-gray-400">{selectedCard.cardNumber}</span>}
+                          {selectedCard.rarity && <span className="text-[10px] text-amber-600">{selectedCard.rarity}</span>}
+                        </div>
+                        {selectedCard.referencePrice && (
+                          <p className="text-[10px] text-green-600 font-medium mt-0.5">市場均價 HKD {parseFloat(String(selectedCard.referencePrice)).toFixed(0)}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-[#06038d]" onClick={() => setShowCardPicker(true)}>改變</Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-500" onClick={() => setSelectedCard(null)}><X className="w-3 h-3" /></Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="mt-1 w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 hover:border-[#06038d] hover:text-[#06038d] hover:bg-indigo-50/30 transition-colors"
+                      onClick={() => setShowCardPicker(true)}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Layers className="w-4 h-4" />
+                        點擊搜索並關聯卡牌
+                      </span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <Label>商品名稱 *</Label>
+                  <Input className="mt-1" placeholder="例如：Charizard ex 噴火龍 SAR"
+                    value={listingForm.title}
+                    onChange={(e) => setListingForm(p => ({ ...p, title: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>商品描述</Label>
+                  <Textarea className="mt-1" placeholder="描述卡牌狀況、版本等..."
+                    value={listingForm.description}
+                    onChange={(e) => setListingForm(p => ({ ...p, description: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>品相 *</Label>
+                    <Select value={listingForm.condition} onValueChange={(v) => setListingForm(p => ({ ...p, condition: v }))}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {conditionOptions.map(group => (
+                          <div key={group.group}>
+                            <div className="px-2 py-1 text-xs font-bold text-gray-400 uppercase tracking-wide">{group.group}</div>
+                            {group.items.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                          </div>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>數量 *</Label>
+                    <Input className="mt-1" type="number" min="1" value={listingForm.quantity}
+                      onChange={(e) => setListingForm(p => ({ ...p, quantity: e.target.value }))} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Step 2: Pricing */}
+            {listingStep === 2 && (
+              <>
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3.5">
+                  <p className="text-xs font-semibold text-blue-700 mb-1">商品摘要</p>
+                  <p className="text-sm font-bold text-gray-900 truncate">{listingForm.title}</p>
+                  <div className="flex gap-2 mt-1">
+                    <span className="text-xs text-gray-500">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition}</span>
+                    <span className="text-xs text-gray-400">·</span>
+                    <span className="text-xs text-gray-500">數量 {listingForm.quantity}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label>售價（HKD）*</Label>
+                  {selectedCard?.referencePrice && (
+                    <p className="text-xs text-green-600 mt-0.5 mb-1">參考市場均價：HKD {parseFloat(String(selectedCard.referencePrice)).toFixed(0)}</p>
+                  )}
+                  <Input className="mt-1" type="number" min="4" step="0.01" placeholder="最低 HKD 4.00"
+                    value={listingForm.price}
+                    onChange={(e) => setListingForm(p => ({ ...p, price: e.target.value }))} />
+                  {listingForm.price && parseFloat(listingForm.price) < 4.00 && (
+                    <p className="text-xs text-red-500 mt-1">定價不能低於 HKD 4.00（Stripe 信用卡付款最低限額）</p>
+                  )}
+                  {listingForm.price && parseFloat(listingForm.price) >= 4 && selectedCard?.referencePrice && (() => {
+                    const diff = ((parseFloat(listingForm.price) - parseFloat(String(selectedCard.referencePrice))) / parseFloat(String(selectedCard.referencePrice))) * 100;
+                    return (
+                      <p className={`text-xs mt-1 ${diff < -15 ? "text-amber-600" : diff > 15 ? "text-green-600" : "text-gray-500"}`}>
+                        {diff > 0 ? `高於市場均價 ${diff.toFixed(0)}%` : `低於市場均價 ${Math.abs(diff).toFixed(0)}%`}
+                      </p>
+                    );
+                  })()}
+                </div>
+                <div className="space-y-3 pt-1">
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">接受出價洽議</p>
+                      <p className="text-xs text-gray-500">買家可提交低於定價的出價</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setListingForm(p => ({ ...p, acceptOffers: !p.acceptOffers }))}
+                      className={`w-11 h-6 rounded-full transition-colors relative ${
+                        listingForm.acceptOffers ? "bg-[#06038d]" : "bg-gray-200"
+                      }`}
+                    >
+                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                        listingForm.acceptOffers ? "translate-x-5.5 left-0.5" : "left-0.5"
+                      }`} />
+                    </button>
+                  </div>
+                  {listingForm.acceptOffers && (
+                    <div>
+                      <Label>最低接受出價（HKD，選填）</Label>
+                      <Input className="mt-1" type="number" min="4" step="0.01" placeholder="留空表示不設下限"
+                        value={listingForm.minOffer}
+                        onChange={(e) => setListingForm(p => ({ ...p, minOffer: e.target.value }))} />
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Step 3: Confirm */}
+            {listingStep === 3 && (
+              <>
+                <div className="space-y-3">
+                  {listingImages.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {listingImages.map((url, i) => (
+                        <img key={i} src={url} alt={`圖片 ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
+                      ))}
+                    </div>
+                  )}
+                  <div className="rounded-xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
+                    <div className="flex items-start justify-between px-4 py-3">
+                      <span className="text-xs text-gray-500 w-20 flex-shrink-0">商品名稱</span>
+                      <span className="text-sm font-medium text-gray-900 text-right">{listingForm.title}</span>
+                    </div>
+                    {selectedCard && (
+                      <div className="flex items-center justify-between px-4 py-3">
+                        <span className="text-xs text-gray-500 w-20 flex-shrink-0">關聯卡牌</span>
+                        <span className="text-sm text-gray-900 text-right">{selectedCard.name}</span>
+                      </div>
+                    )}
+                    {listingForm.description && (
+                      <div className="flex items-start justify-between px-4 py-3">
+                        <span className="text-xs text-gray-500 w-20 flex-shrink-0">描述</span>
+                        <span className="text-sm text-gray-700 text-right line-clamp-3">{listingForm.description}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-gray-500 w-20 flex-shrink-0">品相</span>
+                      <span className="text-sm text-gray-900">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-gray-500 w-20 flex-shrink-0">數量</span>
+                      <span className="text-sm text-gray-900">{listingForm.quantity}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-gray-500 w-20 flex-shrink-0">售價</span>
+                      <span className="text-base font-bold text-[#06038d]">HKD {parseFloat(listingForm.price || "0").toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-gray-500 w-20 flex-shrink-0">出價洽議</span>
+                      <span className="text-sm text-gray-900">{listingForm.acceptOffers ? `接受${listingForm.minOffer ? `（最低 HKD ${listingForm.minOffer}）` : ""}` : "不接受"}</span>
+                    </div>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+                    <p className="font-medium">提交後等待審核</p>
+                    <p className="mt-0.5">商品將在管理員審核通過後公開顯示，通常需要 1-2 個工作天。</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Footer Navigation */}
+          <div className="px-5 py-4 border-t border-gray-100 flex gap-2">
+            {listingStep === 1 && (
+              <Button variant="outline" className="flex-1" onClick={() => setShowNewListing(false)}>取消</Button>
+            )}
+            {listingStep > 1 && (
+              <Button variant="outline" className="flex-1" onClick={() => setListingStep(s => (s - 1) as 1 | 2 | 3)}>上一步</Button>
+            )}
+            {listingStep < 3 && (
+              <Button
+                className="flex-1 bg-[#06038d] hover:bg-[#0804b8] text-white"
+                disabled={listingStep === 1 ? !listingForm.title : (listingStep === 2 ? (!listingForm.price || parseFloat(listingForm.price) < 4.00) : false)}
+                onClick={() => setListingStep(s => (s + 1) as 1 | 2 | 3)}
+              >
+                下一步
+              </Button>
+            )}
+            {listingStep === 3 && (
+              <Button
+                className="flex-1 bg-[#06038d] hover:bg-[#0804b8] text-white"
+                disabled={createListingMutation.isPending}
+                onClick={() => createListingMutation.mutate({
+                  title: listingForm.title,
+                  description: listingForm.description || undefined,
+                  condition: listingForm.condition as any,
+                  price: parseFloat(listingForm.price),
+                  quantity: parseInt(listingForm.quantity),
+                  images: listingImages.length > 0 ? listingImages : undefined,
+                  cardId: selectedCard?.id ?? undefined,
+                  minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined,
+                })}
+              >
+                {createListingMutation.isPending ? "提交中..." : "提交審核"}
+              </Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1019,7 +1190,7 @@ export default function SellerDashboard() {
 
       {/* Ship Dialog */}
       <Dialog open={shipDialog.open} onOpenChange={(o) => setShipDialog(d => ({ ...d, open: o }))}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>填寫出貨資料</DialogTitle>
           </DialogHeader>

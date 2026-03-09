@@ -376,6 +376,7 @@ export const marketplaceRouter = router({
       quantity: z.number().int().min(1).default(1),
       cardId: z.number().int().optional(),
       images: z.array(z.string()).max(5).optional(),
+      minOfferHkd: z.number().min(4.00).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const seller = await getSellerProfileByUserId(ctx.user.id);
@@ -394,6 +395,7 @@ export const marketplaceRouter = router({
         images: input.images ? JSON.stringify(input.images) : null,
         status: "pending_review",
         viewCount: 0,
+        minOfferHkd: input.minOfferHkd ? input.minOfferHkd.toFixed(2) as any : null,
       });
       return listing;
     }),

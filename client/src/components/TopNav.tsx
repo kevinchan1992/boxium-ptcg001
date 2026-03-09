@@ -80,7 +80,7 @@ export function TopNav() {
     <>
       {/* Sell Guide Dialog for unauthenticated users */}
       <Dialog open={showSellDialog} onOpenChange={setShowSellDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-[#ffed00]" />

@@ -707,7 +707,7 @@ export default function MarketplaceListing() {
 
       {/* Alipay HK Payment Dialog */}
       <Dialog open={showAlipay} onOpenChange={() => setShowAlipay(false)}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader><DialogTitle>支付寶 HK 付款</DialogTitle></DialogHeader>
 
           {alipayStep === "qr" && (
@@ -931,7 +931,7 @@ export default function MarketplaceListing() {
 
       {/* Shipping Address Dialog */}
       <Dialog open={showShippingDialog} onOpenChange={(open) => { setShowShippingDialog(open); if (!open) { setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港" }); setSelectedSavedAddressId(null); } }}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Truck className="w-5 h-5 text-[#06038d]" />
@@ -1046,7 +1046,7 @@ export default function MarketplaceListing() {
 
       {/* Offer Dialog */}
       <Dialog open={showOfferDialog} onOpenChange={setShowOfferDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Tag className="w-5 h-5 text-yellow-500" />出價洿議
@@ -1103,7 +1103,7 @@ export default function MarketplaceListing() {
 
       {/* Report Dialog */}
       <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Flag className="w-5 h-5 text-red-500" />舉報商品

@@ -4059,3 +4059,12 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 上架商品 Dialog 加入卡牌搜索選擇器（CardPickerDialog）
 - [x] 選擇卡牌後自動帶入商品名稱
 - [x] 已選卡牌顯示卡牌圖片、名稱、卡號、稀有度
+## Dialog 響應式優化 & 上架步驟流程（2026-03-09）
+- [x] TopNav 申請賣家 Dialog 加入 bottomSheet prop
+- [x] SellerDashboard 出貨資料 Dialog 加入 bottomSheet prop
+- [x] SellerDashboard 取消訂單 Dialog 加入 bottomSheet prop
+- [x] MarketplaceListing 出價 Dialog 加入 bottomSheet prop
+- [x] MarketplaceListing 出貨填寫 Dialog 加入 bottomSheet prop
+- [x] MarketplaceListing 確認收貨 Dialog 加入 bottomSheet prop
+- [x] MarketplaceListing 申請退款 Dialog 加入 bottomSheet prop
+- [x] 上架商品 Dialog 改為三步驟流程（基本資料 → 定價 → 確認）

@@ -15,6 +15,7 @@ export interface SelectedCard {
   rarity?: string | null;
   series?: string | null;
   productType: "single_card" | "sealed_product";
+  referencePrice?: number | string | null;
 }
 
 interface CardPickerDialogProps {
@@ -56,6 +57,7 @@ export function CardPickerDialog({ open, onOpenChange, onSelect, selectedCardId 
       rarity: card.rarity ?? null,
       series: card.series ?? null,
       productType: "single_card",
+      referencePrice: (card as any).latestPrice ?? null,
     });
     onOpenChange(false);
     setQuery("");
