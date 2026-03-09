@@ -94,9 +94,11 @@ function DialogContent({
   children,
   showCloseButton = true,
   onEscapeKeyDown,
+  bottomSheet = false,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
+  bottomSheet?: boolean;
 }) {
   const { isComposing } = useDialogComposition();
 
@@ -124,7 +126,21 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border p-6 shadow-lg duration-200",
+          "bg-background z-50 grid gap-4 border p-6 shadow-lg duration-200",
+          bottomSheet
+            ? [
+                // Mobile (<sm): bottom sheet sliding up from bottom
+                "fixed inset-x-0 bottom-0 w-full max-h-[95dvh] overflow-y-auto rounded-t-2xl",
+                "data-[state=open]:animate-in data-[state=closed]:animate-out",
+                "data-[state=open]:slide-in-from-bottom-full data-[state=closed]:slide-out-to-bottom-full",
+                // sm+ (>=640px): centered dialog
+                "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-1.5rem)] sm:max-w-lg sm:max-h-[90vh] sm:rounded-lg",
+                "sm:-translate-x-1/2 sm:-translate-y-1/2",
+                "sm:data-[state=open]:fade-in-0 sm:data-[state=closed]:fade-out-0",
+                "sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:zoom-out-95",
+              ].join(" ")
+            : // Default: always centered dialog
+              "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg",
           className
         )}
         onEscapeKeyDown={handleEscapeKeyDown}

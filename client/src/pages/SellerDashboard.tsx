@@ -894,7 +894,7 @@ export default function SellerDashboard() {
       </Dialog>
 
       <Dialog open={showNewListing} onOpenChange={setShowNewListing}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent bottomSheet>
           <DialogHeader><DialogTitle>上架新商品</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <ImageUploader images={listingImages} onChange={setListingImages} />

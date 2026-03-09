@@ -68,7 +68,7 @@ export function CardPickerDialog({ open, onOpenChange, onSelect, selectedCardId 
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+      <DialogContent bottomSheet className="max-h-[85dvh] sm:max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
         {/* Header */}
         <div className="px-5 pt-5 pb-3 border-b border-gray-100">
           <DialogHeader>
