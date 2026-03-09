@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, LogOut, User, Bell, Tag, ShoppingBag, LogIn } from "lucide-react";
+import { Menu, X, LogOut, User, Bell, Tag, ShoppingBag, LogIn, Package, MessageSquare, CheckCheck, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -15,7 +15,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { zhTW } from "date-fns/locale";
 
 export function TopNav() {
   const { t } = useTranslation();
@@ -24,6 +27,7 @@ export function TopNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [showSellDialog, setShowSellDialog] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const { data: user } = trpc.auth.me.useQuery();
   const logoutMutation = trpc.auth.logout.useMutation({
@@ -33,10 +37,52 @@ export function TopNav() {
     },
   });
 
-  const { data: unreadData } = trpc.notifications.getUnreadCount.useQuery(
+  const utils = trpc.useUtils();
+
+  const { data: unreadData, refetch: refetchUnread } = trpc.notifications.getUnreadCount.useQuery(
     undefined,
     { enabled: !!user, refetchInterval: 30000 }
   );
+
+  const { data: notifData, isLoading: notifLoading } = trpc.notifications.getMyNotifications.useQuery(
+    { limit: 10, offset: 0 },
+    { enabled: !!user && notifOpen, staleTime: 10000 }
+  );
+
+  const markAsReadMutation = trpc.notifications.markAsRead.useMutation({
+    onSuccess: () => {
+      utils.notifications.getUnreadCount.invalidate();
+      utils.notifications.getMyNotifications.invalidate();
+    },
+  });
+
+  const markAllAsReadMutation = trpc.notifications.markAllAsRead.useMutation({
+    onSuccess: () => {
+      utils.notifications.getUnreadCount.invalidate();
+      utils.notifications.getMyNotifications.invalidate();
+      toast.success("已全部標記為已讀");
+    },
+  });
+
+  const handleNotifClick = (notif: { id: number; linkUrl?: string | null; isRead: boolean }) => {
+    if (!notif.isRead) {
+      markAsReadMutation.mutate({ notificationId: notif.id });
+    }
+    setNotifOpen(false);
+    if (notif.linkUrl) {
+      setLocation(notif.linkUrl);
+    }
+  };
+
+  const getNotifIcon = (type: string) => {
+    switch (type) {
+      case "offer": return <MessageSquare className="w-4 h-4 text-yellow-400" />;
+      case "trade": return <Tag className="w-4 h-4 text-green-400" />;
+      case "payment": return <Package className="w-4 h-4 text-blue-400" />;
+      case "shipping": return <Package className="w-4 h-4 text-purple-400" />;
+      default: return <Bell className="w-4 h-4 text-gray-400" />;
+    }
+  };
 
   const navItems = [
     { href: "/", label: t("common.home") },
@@ -166,18 +212,101 @@ export function TopNav() {
 
             {/* Notification Bell — logged-in only */}
             {user && (
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <Link href="/notifications" onClick={handleNavClick}>
-                  <Button variant="ghost" size="sm" className="relative text-white hover:text-[#ffed00] p-2">
-                    <Bell className="w-5 h-5" />
-                    {(unreadData?.count ?? 0) > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                        {(unreadData?.count ?? 0) > 9 ? "9+" : unreadData?.count}
-                      </span>
+              <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
+                <DropdownMenuTrigger asChild>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <Button variant="ghost" size="sm" className="relative text-white hover:text-[#ffed00] p-2">
+                      <Bell className="w-5 h-5" />
+                      {(unreadData?.count ?? 0) > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                          {(unreadData?.count ?? 0) > 9 ? "9+" : unreadData?.count}
+                        </span>
+                      )}
+                    </Button>
+                  </motion.div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80 p-0 bg-[#111] border-white/15 text-white">
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                    <span className="font-semibold text-sm">通知</span>
+                    <div className="flex items-center gap-2">
+                      {(unreadData?.count ?? 0) > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-white/60 hover:text-white"
+                          onClick={() => markAllAsReadMutation.mutate()}
+                        >
+                          <CheckCheck className="w-3.5 h-3.5 mr-1" />
+                          全部已讀
+                        </Button>
+                      )}
+                      <Link href="/notifications" onClick={() => setNotifOpen(false)}>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-white/60 hover:text-white">
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                  {/* Notification list */}
+                  <ScrollArea className="max-h-[360px]">
+                    {notifLoading ? (
+                      <div className="flex items-center justify-center py-8 text-white/40 text-sm">
+                        載入中...
+                      </div>
+                    ) : !notifData || notifData.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 gap-2 text-white/40">
+                        <Bell className="w-8 h-8 opacity-30" />
+                        <span className="text-sm">暫無通知</span>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-white/5">
+                        {notifData.map((notif) => (
+                          <button
+                            key={notif.id}
+                            className={`w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-start gap-3 ${
+                              !notif.isRead ? "bg-white/[0.03]" : ""
+                            }`}
+                            onClick={() => handleNotifClick(notif)}
+                          >
+                            <div className="mt-0.5 flex-shrink-0">
+                              {getNotifIcon(notif.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className={`text-xs font-medium leading-tight ${
+                                  !notif.isRead ? "text-white" : "text-white/70"
+                                }`}>
+                                  {notif.title}
+                                </p>
+                                {!notif.isRead && (
+                                  <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#ffed00] mt-1" />
+                                )}
+                              </div>
+                              {notif.body && (
+                                <p className="text-[11px] text-white/50 mt-0.5 leading-snug line-clamp-2">
+                                  {notif.body}
+                                </p>
+                              )}
+                              <p className="text-[10px] text-white/30 mt-1">
+                                {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: zhTW })}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     )}
-                  </Button>
-                </Link>
-              </motion.div>
+                  </ScrollArea>
+                  {/* Footer */}
+                  <div className="border-t border-white/10 px-4 py-2">
+                    <Link href="/notifications" onClick={() => setNotifOpen(false)}>
+                      <Button variant="ghost" size="sm" className="w-full text-xs text-white/50 hover:text-white h-7">
+                        查看全部通知
+                      </Button>
+                    </Link>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
 
             {/* User icon / auth */}

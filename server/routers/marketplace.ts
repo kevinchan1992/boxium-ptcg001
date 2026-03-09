@@ -1667,13 +1667,19 @@ All three checks must pass for verified to be true. Respond with JSON only match
         status: "pending",
         expiresAt,
       });
-      // Notify seller
+      // Notify seller (in-app)
       await createNotification({
         userId: sellerProfile.userId,
-        type: "trade",
+        type: "offer",
         title: "收到新出價 💰",
         body: `有買家對「${listing.title}」出價 HKD ${input.offerPriceHkd}，請在 48 小時內回應。`,
         linkUrl: "/seller",
+        relatedId: offer.id,
+      }).catch(() => {});
+      // Notify platform owner via Manus notification
+      notifyOwner({
+        title: `新出價通知：${listing.title}`,
+        content: `買家對商品「${listing.title}」出價 HKD ${input.offerPriceHkd}。${input.message ? `買家留言：${input.message}` : ""}\n請前往賣家中心回應。`,
       }).catch(() => {});
       return offer;
     }),

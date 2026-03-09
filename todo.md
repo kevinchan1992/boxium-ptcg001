@@ -4068,3 +4068,11 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] MarketplaceListing 確認收貨 Dialog 加入 bottomSheet prop
 - [x] MarketplaceListing 申請退款 Dialog 加入 bottomSheet prop
 - [x] 上架商品 Dialog 改為三步驟流程（基本資料 → 定價 → 確認）
+
+## 出價通知推播（2026-03-09）
+- [x] 後端：出價時觸發站內通知給賣家（createNotification）
+- [x] 後端：出價時同時呼叫 notifyOwner（平台管理帪收到 Manus 通知）
+- [x] 後端：新增 getMyNotifications tRPC procedure（已存在，確認通過）
+- [x] 前端：TopNav 加入通知鈴鐺圖示（含未讀數量紅點）
+- [x] 前端：通知下拉列表（含出價、訂單等通知）
+- [x] 前端：點擊通知後標記已讀並跳轉對應頁面
