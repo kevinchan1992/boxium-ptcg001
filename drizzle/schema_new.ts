@@ -116,20 +116,21 @@ export const priceHistory = mysqlTable("priceHistory", {
   grade: varchar("grade", { length: 32 }), // Card grade (e.g., "PSA 10", "BGS 9.5") - for single cards
   condition: varchar("condition", { length: 64 }), // Card condition
   quantity: varchar("quantity", { length: 50 }), // Quantity (e.g., "10盒", "1盒") - for sealed products
+  jpyPrice: int("jpyPrice"), // Original JPY price - used for deduplication (stable, unaffected by exchange rate)
   listingUrl: text("listingUrl"), // URL to the listing
   soldAt: timestamp("soldAt"), // Transaction timestamp
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   // UNIQUE index to prevent duplicate price history records
-  // A record is considered duplicate if it has the same cardId, source, grade, soldAt AND price
-  // Including price allows same-day same-grade multiple sales at different prices (common on SNKRDUNK)
+  // Uses jpyPrice (original JPY) instead of HKD price to avoid false duplicates from exchange rate fluctuations
+  // A record is considered duplicate if it has the same cardId, source, grade, soldAt AND jpyPrice
   // This enables INSERT ... ON DUPLICATE KEY UPDATE (no-op) for idempotent batch inserts
-  uniquePriceRecord: uniqueIndex("uniq_price_card_source_grade_soldAt_price").on(
+  uniquePriceRecord: uniqueIndex("uniq_price_card_source_grade_soldAt_jpyPrice").on(
     table.cardId,
     table.source,
     table.grade,
     table.soldAt,
-    table.price
+    table.jpyPrice
   ),
   // Composite index for trending calculations (cardId + soldAt + source + grade)
   // Optimizes queries that filter by cardId, time range, source, and grade

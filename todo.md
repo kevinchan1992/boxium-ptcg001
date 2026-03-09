@@ -3866,3 +3866,35 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 移除 `addPriceHistory` 應用層去重查詢，完全依賴資料庫 UNIQUE INDEX
 - [x] 新增 3 個相對日期解析單元測試（共 15 個，全部通過）
 - [x] 儲存 Checkpoint
+
+- [ ] 查看 card 812832 的 priceHistory 記錄，對比 SNKRDUNK API 原始資料
+- [ ] 分析重複記錄根本原因（parseJapaneseDate 時區 + UNIQUE INDEX）
+- [ ] 修復 JST→HKT 時區轉換（目前存 UTC midnight，顯示時未轉換）
+- [ ] 修復去重邏輯，確保同一筆成交只存一次
+- [ ] 清理 card 812832 的舊錯誤記錄並重新爬取驗證
+
+
+---
+
+## 🔧 統一 SNKRDUNK 爬取邏輯（2026-03-09）
+
+### 背景
+發現平台有多個爬取路徑，各自使用不同版本的邏輯，導致不一致：
+1. Research 頁面自動爬取（CardDetail 觸發）
+2. Admin 批量更新（persistentSnkrdunkBatchUpdate.ts）
+3. 手動添加 SNKRDUNK 數據源（routers.ts）
+
+### 修復內容
+- [x] 新增 jpyPrice 欄位到 priceHistory 表（用 JPY 原始價格去重，不受匯率影響）
+- [x] 清理 120,157 筆重複記錄（相對日期位移造成的重複）
+- [x] 修復 persistentSnkrdunkBatchUpdate.ts 插入邏輯（加入 jpyPrice）
+- [x] 修復 routers.ts 三個插入點（加入 jpyPrice）
+
+### 統一爬取邏輯任務
+- [ ] 分析所有爬取路徑的差異（fetchPriceHistory vs fetchPriceHistoryFromApi）
+- [ ] 建立統一的核心爬取函數（所有路徑共用）
+- [ ] 統一 Research 頁面自動爬取邏輯
+- [ ] 統一 Admin 批量更新邏輯
+- [ ] 統一手動添加數據源邏輯
+- [ ] 清除所有舊版爬取邏輯
+- [ ] 確認所有路徑都正確傳入 jpyPrice

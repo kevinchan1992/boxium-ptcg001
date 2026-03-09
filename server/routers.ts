@@ -829,6 +829,7 @@ export const appRouter = router({
               source: 'snkrdunk',
               price: priceHKD.toString(),
               currency: 'HKD',
+              jpyPrice: priceItem.price, // Original JPY price for stable deduplication
               grade: productType === 'sealed_product' ? undefined : priceItem.grade,
               quantity: productType === 'sealed_product' ? (priceItem.quantity || undefined) : undefined,
               productType,
@@ -1042,6 +1043,7 @@ const snkrdunkId = extractSnkrdunkId(input.url);
               source: "snkrdunk",
               price: priceHkd.toString(),
               currency: "HKD",
+              jpyPrice: priceEntry.price, // Original JPY price for stable deduplication
               grade: priceEntry.grade,
               quantity: priceEntry.quantity, // Add quantity field for sealed products
               productType, // Add productType field
@@ -1108,6 +1110,7 @@ try {
               source: "snkrdunk",
               price: priceHkd.toString(),
               currency: "HKD",
+              jpyPrice: priceEntry.price, // Original JPY price for stable deduplication
               grade: priceEntry.grade,
               quantity: priceEntry.quantity,
               productType,

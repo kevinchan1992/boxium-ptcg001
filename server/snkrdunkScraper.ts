@@ -12,7 +12,8 @@ export interface SnkrdunkCardData {
   imageUrl: string | null;
   styleCode?: string | null; // スタイルコード (e.g., "pkmn-tcg-M2")
   priceHistory: Array<{
-    price: number;
+    price: number;     // Original JPY price
+    jpyPrice: number;  // Same as price (JPY) - kept for clarity
     currency: string;
     soldAt: Date;
     grade?: string; // For single cards (e.g., "PSA 10", "中古")
@@ -118,7 +119,8 @@ export async function scrapeSnkrdunkPage(url: string, productType: "single_card"
  * API endpoint: /v1/apparels/{id}/sales-history
  */
 export async function fetchPriceHistoryFromApi(productId: string, productType: "single_card" | "sealed_product" = "single_card", options?: { timeout?: number; throwOnError?: boolean }): Promise<Array<{
-  price: number;
+  price: number;    // Original JPY price (used as-is for jpyPrice)
+  jpyPrice: number; // Same as price - explicit JPY value for deduplication
   currency: string;
   soldAt: Date;
   grade?: string;
@@ -137,27 +139,28 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
       },
       timeout,
     });
-
     const data = response.data;
     const priceHistory: Array<{
       price: number;
+      jpyPrice: number;
       currency: string;
       soldAt: Date;
       grade?: string;
       quantity?: string;
     }> = [];
-
     // Parse API response
     if (data.history && Array.isArray(data.history)) {
       for (const item of data.history) {
         const record: {
           price: number;
+          jpyPrice: number;
           currency: string;
           soldAt: Date;
           grade?: string;
           quantity?: string;
         } = {
-          price: item.price,
+          price: item.price,       // Original JPY price
+          jpyPrice: item.price,    // Store JPY for stable deduplication (unaffected by exchange rate)
           currency: "JPY",
           soldAt: parseJapaneseDate(item.date),
         };
@@ -173,7 +176,6 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
         priceHistory.push(record);
       }
     }
-
     return priceHistory;
   } catch (error: any) {
     console.error("Error fetching price history from API:", error.message);

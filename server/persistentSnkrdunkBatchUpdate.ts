@@ -175,6 +175,7 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
           source: "snkrdunk" as const,
           price: convertJpyToHkd(entry.price).toString(),
           currency: "HKD",
+          jpyPrice: entry.price, // Original JPY price - used for stable deduplication (unaffected by exchange rate)
           grade: productType === 'single_card' ? (entry.grade || null) : null,
           quantity: productType === 'sealed_product' ? (entry.quantity || null) : null,
           productType,

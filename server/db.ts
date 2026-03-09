@@ -757,6 +757,7 @@ export async function addPriceHistory(data: {
   source: "snkrdunk" | "ebay" | "tcgplayer" | "other";
   price: string;
   currency: string;
+  jpyPrice?: number; // Original JPY price (for SNKRDUNK) - used for stable deduplication
   grade?: string;
   quantity?: string; // For sealed products (e.g., "10盒", "1盒")
   productType?: "single_card" | "sealed_product"; // Product type
@@ -766,10 +767,8 @@ export async function addPriceHistory(data: {
   const db = await getDb();
   if (!db) return null;
 
-  // Deduplication: rely entirely on the database UNIQUE INDEX (cardId, source, grade, soldAt, price)
-  // No application-layer check needed - the DB constraint handles all dedup cases:
-  //   - Same day, same grade, same price → duplicate (ignored)
-  //   - Same day, same grade, different price → allowed (e.g., two PSA10 sales at different prices)
+  // Deduplication: rely entirely on the database UNIQUE INDEX (cardId, source, grade, soldAt, jpyPrice)
+  // jpyPrice (original JPY) is used instead of HKD price to avoid false duplicates from exchange rate fluctuations
   // onDuplicateKeyUpdate is a no-op that silently ignores constraint violations
   // This is the most reliable approach as it avoids race conditions and timezone issues
   const result = await db.insert(priceHistory).values({
@@ -777,6 +776,7 @@ export async function addPriceHistory(data: {
     source: data.source,
     price: data.price,
     currency: data.currency,
+    jpyPrice: data.jpyPrice ?? null,
     grade: data.grade,
     quantity: data.quantity,
     productType: data.productType || "single_card", // Default to single_card

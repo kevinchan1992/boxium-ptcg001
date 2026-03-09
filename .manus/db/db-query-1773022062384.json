@@ -1,0 +1,157 @@
+{
+  "query": "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME;",
+  "rows": [
+    {
+      "TABLE_NAME": "__drizzle_migrations"
+    },
+    {
+      "TABLE_NAME": "backgroundTasks"
+    },
+    {
+      "TABLE_NAME": "blogArticles"
+    },
+    {
+      "TABLE_NAME": "cards"
+    },
+    {
+      "TABLE_NAME": "categories"
+    },
+    {
+      "TABLE_NAME": "dataSourceHealth"
+    },
+    {
+      "TABLE_NAME": "dataSources"
+    },
+    {
+      "TABLE_NAME": "ebayListingsCache"
+    },
+    {
+      "TABLE_NAME": "emailVerificationTokens"
+    },
+    {
+      "TABLE_NAME": "firecrawlUsage"
+    },
+    {
+      "TABLE_NAME": "games"
+    },
+    {
+      "TABLE_NAME": "listingReports"
+    },
+    {
+      "TABLE_NAME": "marketTrends"
+    },
+    {
+      "TABLE_NAME": "marketplaceBanners"
+    },
+    {
+      "TABLE_NAME": "marketplaceListings"
+    },
+    {
+      "TABLE_NAME": "marketplaceOrderItems"
+    },
+    {
+      "TABLE_NAME": "marketplaceOrders"
+    },
+    {
+      "TABLE_NAME": "marketplacePayouts"
+    },
+    {
+      "TABLE_NAME": "marketplaceReviews"
+    },
+    {
+      "TABLE_NAME": "notifications"
+    },
+    {
+      "TABLE_NAME": "oauthAccounts"
+    },
+    {
+      "TABLE_NAME": "offers"
+    },
+    {
+      "TABLE_NAME": "passwordResetTokens"
+    },
+    {
+      "TABLE_NAME": "postShares"
+    },
+    {
+      "TABLE_NAME": "post_tags"
+    },
+    {
+      "TABLE_NAME": "post_versions"
+    },
+    {
+      "TABLE_NAME": "posts"
+    },
+    {
+      "TABLE_NAME": "priceHistory"
+    },
+    {
+      "TABLE_NAME": "priceUpdateSchedule"
+    },
+    {
+      "TABLE_NAME": "scheduleConfig"
+    },
+    {
+      "TABLE_NAME": "scheduleExecutionHistory"
+    },
+    {
+      "TABLE_NAME": "scheduledTasks"
+    },
+    {
+      "TABLE_NAME": "scraperPerformanceLogs"
+    },
+    {
+      "TABLE_NAME": "sealedProducts"
+    },
+    {
+      "TABLE_NAME": "searchStats"
+    },
+    {
+      "TABLE_NAME": "sellerProfiles"
+    },
+    {
+      "TABLE_NAME": "sessions"
+    },
+    {
+      "TABLE_NAME": "snkrdunkListingsCache"
+    },
+    {
+      "TABLE_NAME": "systemSettings"
+    },
+    {
+      "TABLE_NAME": "tags"
+    },
+    {
+      "TABLE_NAME": "trendingCardsCache"
+    },
+    {
+      "TABLE_NAME": "trendingRankingsCache"
+    },
+    {
+      "TABLE_NAME": "uploaded_images"
+    },
+    {
+      "TABLE_NAME": "userSearchLogs"
+    },
+    {
+      "TABLE_NAME": "userShippingAddresses"
+    },
+    {
+      "TABLE_NAME": "users"
+    },
+    {
+      "TABLE_NAME": "viewHistory"
+    },
+    {
+      "TABLE_NAME": "watchlist"
+    },
+    {
+      "TABLE_NAME": "wishlists"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\n__drizzle_migrations\nbackgroundTasks\nblogArticles\ncards\ncategories\ndataSourceHealth\ndataSources\nebayListingsCache\nemailVerificationTokens\nfirecrawlUsage\ngames\nlistingReports\nmarketTrends\nmarketplaceBanners\nmarketplaceListings\nmarketplaceOrderItems\nmarketplaceOrders\nmarketplacePayouts\nmarketplaceReviews\nnotifications\noauthAccounts\noffers\npasswordResetTokens\npostShares\npost_tags\npost_versions\nposts\npriceHistory\npriceUpdateSchedule\nscheduleConfig\nscheduleExecutionHistory\nscheduledTasks\nscraperPerformanceLogs\nsealedProducts\nsearchStats\nsellerProfiles\nsessions\nsnkrdunkListingsCache\nsystemSettings\ntags\ntrendingCardsCache\ntrendingRankingsCache\nuploaded_images\nuserSearchLogs\nuserShippingAddresses\nusers\nviewHistory\nwatchlist\nwishlists\n",
+  "stderr": "",
+  "execution_time_ms": 1556
+}
