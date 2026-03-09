@@ -122,17 +122,17 @@ function OrderCard({ order }: { order: any }) {
       <div className="p-4 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="text-xs text-muted-foreground font-mono">#{order.orderNo}</span>
+            <span className="text-xs text-gray-500 font-mono">#{order.orderNo}</span>
             <OrderStatusBadge status={order.orderStatus} />
           </div>
-          <p className="font-medium text-sm truncate">{order.listingTitle ?? "商品"}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="font-medium text-sm truncate text-gray-900">{order.listingTitle ?? "商品"}</p>
+          <p className="text-xs text-gray-500 mt-0.5">
             {new Date(order.createdAt).toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
         <div className="text-right flex-shrink-0 space-y-1">
           <p className="font-bold text-[#06038d]">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</p>
-          <p className="text-xs text-muted-foreground capitalize">{order.paymentMethod?.replace("_", " ")}</p>
+          <p className="text-xs text-gray-500 capitalize">{order.paymentMethod?.replace("_", " ")}</p>
           <Link href={`/orders/${order.orderNo}`}>
             <Button variant="outline" size="sm" className="text-xs h-7 px-2">查看詳情</Button>
           </Link>
@@ -227,7 +227,7 @@ function OrderCard({ order }: { order: any }) {
 
       {/* Expand toggle */}
       <button
-        className="w-full px-4 py-2.5 border-t text-xs text-muted-foreground hover:bg-muted/30 transition-colors flex items-center justify-center gap-1"
+        className="w-full px-4 py-2.5 border-t text-xs text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
         onClick={() => setExpanded(e => !e)}
       >
         {expanded ? <><ChevronUp className="w-3.5 h-3.5" />收起詳情</> : <><ChevronDown className="w-3.5 h-3.5" />查看詳情</>}
@@ -235,30 +235,30 @@ function OrderCard({ order }: { order: any }) {
 
       {/* Expanded details */}
       {expanded && (
-        <div className="border-t p-4 space-y-3 bg-muted/20">
+        <div className="border-t p-4 space-y-3" style={{ backgroundColor: "#f8f9fa" }}>
           {shippingAddr && (
             <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">收貨資料</p>
-              <div className="text-sm space-y-1">
-                <div className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-muted-foreground" />{shippingAddr.name}</div>
-                <div className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-muted-foreground" />{shippingAddr.phone}</div>
-                <div className="flex items-start gap-2"><MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5" />
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#06038d" }}>收貨資料</p>
+              <div className="text-sm space-y-1 text-gray-800">
+                <div className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-gray-500" />{shippingAddr.name}</div>
+                <div className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-gray-500" />{shippingAddr.phone}</div>
+                <div className="flex items-start gap-2"><MapPin className="w-3.5 h-3.5 text-gray-500 mt-0.5" />
                   <span>{shippingAddr.address}{shippingAddr.district ? `，${shippingAddr.district}` : ""}{shippingAddr.region ? `，${shippingAddr.region}` : ""}</span>
                 </div>
               </div>
             </div>
           )}
-          <Separator />
+          <div className="border-t border-gray-200" />
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">付款資料</p>
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#06038d" }}>付款資料</p>
             <div className="text-sm space-y-1">
-              <div className="flex justify-between"><span className="text-muted-foreground">商品金額</span><span>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
-              <div className="flex justify-between font-medium"><span>總計</span><span className="text-[#06038d]">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">商品金額</span><span className="text-gray-800">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
+              <div className="flex justify-between font-semibold"><span className="text-gray-800">總計</span><span style={{ color: "#06038d" }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
             </div>
           </div>
           {order.listingId && (
-            <Link href={`/marketplace/listing/${order.listingId}`}>
-              <Button variant="outline" size="sm" className="w-full text-xs">查看商品頁面</Button>
+            <Link href={`/marketplace/${order.listingId}`}>
+              <Button variant="outline" size="sm" className="w-full text-xs border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white">查看商品頁面</Button>
             </Link>
           )}
         </div>
