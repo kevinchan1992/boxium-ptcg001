@@ -4003,3 +4003,22 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 訂單超時提醒：新增 startShippingReminderScheduler cron job（每小時 :30 執行），付款後 3 天未出貨自動提醒賣家和 Admin
 - [x] 資料庫新增 shippingReminderSentAt 欄位（防止重複提醒）
 - [x] Admin 爭議管理頁面加入截圖證據顯示
+
+## 🔧 Pricing/Search 頁面顯示最低在售價格（2026-03-09）
+
+- [ ] 研究 SearchResults.tsx 如何獲取最低在售價格
+- [ ] 後端：為 PricingSearch 卡牌列表批量查詢最低在售商品價格
+- [ ] 前端：在 PricingSearch 每張卡牌下方顯示最低在售價格（與 Search 頁面一致）
+
+## 🔧 Pricing/Search 頁面改善（2026-03-09）
+
+- [ ] 後端：cards.search 加入分頁支持（offset/limit + totalCount）
+- [ ] 後端：批量查詢每張卡牌的最低在售商品價格
+- [ ] 前端：PricingSearch 加入分頁功能（與 search 頁面一致）
+- [ ] 前端：每張卡牌下方顯示最低在售商品價格（橙色文字）
+
+## ✅ Pricing/Search 頁面分頁 + 最低在售價格（2026-03-09）
+- [x] 後端：cards.search 已支持 offset 分頁（total + cards）
+- [x] 後端：新增 cards.getLowestListingPrices 批量查詢最低在售商品價格
+- [x] 前端：PricingSearch 加入分頁功能（每頁 50 張，顯示頁碼/總頁數）
+- [x] 前端：每張卡牌下方顯示最低在售商品價格（橙色文字，ShoppingBag 圖示）

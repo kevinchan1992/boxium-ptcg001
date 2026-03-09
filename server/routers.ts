@@ -852,14 +852,45 @@ export const appRouter = router({
           console.error(`[PriceRefresh] Error refreshing card ${cardId}:`, error.message);
           await db.updateDataSourceFetchStatus(dataSource.id, 'error', error.message);
           return {
-            status: 'error' as const,
+             status: 'error' as const,
             message: `Refresh failed: ${error.message}`,
             recordsAdded: 0,
           };
         }
       }),
-  }),
 
+    // Batch query lowest active listing price for a list of card IDs
+    getLowestListingPrices: publicProcedure
+      .input(z.object({
+        cardIds: z.array(z.number()).max(100),
+      }))
+      .query(async ({ input }) => {
+        const dbConn = await (await import('./db')).getDb();
+        if (!dbConn || input.cardIds.length === 0) return { prices: {} };
+        const { marketplaceListings } = await import('../drizzle/schema_new');
+        const { inArray, eq, and, min } = await import('drizzle-orm');
+        const rows = await dbConn
+          .select({
+            cardId: marketplaceListings.cardId,
+            minPrice: min(marketplaceListings.priceHkd),
+          })
+          .from(marketplaceListings)
+          .where(
+            and(
+              inArray(marketplaceListings.cardId, input.cardIds),
+              eq(marketplaceListings.status, 'active')
+            )
+          )
+          .groupBy(marketplaceListings.cardId);
+        const prices: Record<number, number> = {};
+        for (const row of rows) {
+          if (row.cardId !== null && row.minPrice !== null) {
+            prices[row.cardId] = parseFloat(row.minPrice.toString());
+          }
+        }
+        return { prices };
+      }),
+  }),
   prices: router({
     getHistory: publicProcedure
       .input(z.object({
