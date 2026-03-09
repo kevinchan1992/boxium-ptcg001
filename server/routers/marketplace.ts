@@ -27,7 +27,7 @@ import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
-import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail } from "../emailService";
+import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail } from "../emailService";
 import { marketplaceListings, offers, listingReports } from "../../drizzle/schema_new";
 import { eq, and } from "drizzle-orm";
 
@@ -1679,8 +1679,34 @@ All three checks must pass for verified to be true. Respond with JSON only match
       // Notify platform owner via Manus notification
       notifyOwner({
         title: `新出價通知：${listing.title}`,
-        content: `買家對商品「${listing.title}」出價 HKD ${input.offerPriceHkd}。${input.message ? `買家留言：${input.message}` : ""}\n請前往賣家中心回應。`,
+        content: `買家對商品「${listing.title}」出價 HKD ${input.offerPriceHkd}。${input.message ? `買家留言：${input.message}` : ""}
+請前往賣家中心回應。`,
       }).catch(() => {});
+      // Send email notification to seller
+      ;(async () => {
+        try {
+          const { getDb: _getDb } = await import("../db");
+          const db = await _getDb();
+          if (!db) return;
+          const { users: usersTable } = await import("../../drizzle/schema_new");
+          const sellerUsers = await db.select().from(usersTable).where(eq(usersTable.id, sellerProfile.userId)).limit(1);
+          const sellerUser = sellerUsers[0];
+          if (!sellerUser?.email) return;
+          const expiresAtStr = expiresAt.toLocaleString("zh-TW", { timeZone: "Asia/Hong_Kong", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) + " (HKT)";
+          const { subject, html } = buildNewOfferEmail({
+            sellerName: sellerUser.name || "賣家",
+            buyerName: ctx.user.name || "買家",
+            cardName: listing.title,
+            offerAmountHkd: input.offerPriceHkd.toFixed(2),
+            listingPriceHkd: listing.priceHkd ? String(listing.priceHkd) : "—",
+            expiresAt: expiresAtStr,
+            sellerDashboardUrl: `${ctx.req.headers.origin || "https://boxium.asia"}/seller`,
+          });
+          await sendEmail({ to: sellerUser.email, subject, html });
+        } catch (e) {
+          console.error("[makeOffer] Email send failed:", e);
+        }
+      })();
       return offer;
     }),
 

@@ -1010,6 +1010,7 @@ export const offers = mysqlTable("offers", {
   rejectionReason: text("rejectionReason"),
   // If accepted, this links to the resulting order
   orderId: int("orderId"),
+  expiryReminderSentAt: timestamp("expiryReminderSentAt"), // set when 6-hour expiry reminder is sent
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({

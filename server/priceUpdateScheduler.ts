@@ -462,3 +462,114 @@ export function stopShippingReminderScheduler() {
     shippingReminderCronJob = null;
   }
 }
+
+// ─── Offer Expiry Reminder Scheduler ─────────────────────────────────────────
+// Runs every hour at :15 to check for offers expiring within 6 hours
+let offerExpiryReminderCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startOfferExpiryReminderScheduler() {
+  if (offerExpiryReminderCronJob) return;
+  offerExpiryReminderCronJob = cron.schedule(
+    '15 * * * *', // Every hour at :15
+    async () => {
+      try {
+        const { getDb } = await import('./db');
+        const { offers: offersTable } = await import('../drizzle/schema_new');
+        const { and, eq, lte, gte, isNull } = await import('drizzle-orm');
+        const { createNotification } = await import('./db/notifications');
+        const { sendEmail, buildOfferExpiringSoonEmail } = await import('./emailService');
+        const db = await getDb();
+        if (!db) return;
+
+        const now = new Date();
+        // Window: offers expiring between now and 6 hours from now
+        const sixHoursLater = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+        // Only notify once: offers that haven't had expiry reminder sent yet
+        const expiringOffers = await db.select()
+          .from(offersTable)
+          .where(
+            and(
+              eq(offersTable.status, 'pending'),
+              gte(offersTable.expiresAt, now),
+              lte(offersTable.expiresAt, sixHoursLater),
+              isNull(offersTable.expiryReminderSentAt)
+            )
+          )
+          .limit(100);
+
+        if (expiringOffers.length === 0) return;
+        console.log(`[OfferExpiryReminder] Found ${expiringOffers.length} offers expiring within 6 hours`);
+
+        for (const offer of expiringOffers) {
+          try {
+            // Mark reminder as sent first to avoid duplicate sends
+            await db.update(offersTable)
+              .set({ expiryReminderSentAt: now })
+              .where(eq(offersTable.id, offer.id));
+
+            // Get listing info
+            const { getListingById, getSellerProfileById } = await import('./db');
+            const listing = await getListingById(offer.listingId);
+            if (!listing) continue;
+            const sellerProfile = await getSellerProfileById(offer.sellerProfileId);
+            if (!sellerProfile) continue;
+
+            // In-app notification to seller
+            await createNotification({
+              userId: offer.sellerId,
+              type: 'offer',
+              title: '⏰ 出價即將過期',
+              body: `您對「${listing.title}」的出價 HKD ${offer.offerPriceHkd} 將在 6 小時內過期，請盡快回應！`,
+              linkUrl: '/seller',
+              relatedId: offer.id,
+            }).catch(() => {});
+
+            // Email notification to seller
+            const { users: usersTable } = await import('../drizzle/schema_new');
+            const sellerUsers = await db.select().from(usersTable)
+              .where(eq(usersTable.id, offer.sellerId))
+              .limit(1);
+            const sellerUser = sellerUsers[0];
+            if (sellerUser?.email) {
+              const expiresAtStr = offer.expiresAt.toLocaleString('zh-TW', {
+                timeZone: 'Asia/Hong_Kong',
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit',
+              }) + ' (HKT)';
+              // Get buyer name
+              const buyerUsers = await db.select().from(usersTable)
+                .where(eq(usersTable.id, offer.buyerId))
+                .limit(1);
+              const buyerName = buyerUsers[0]?.name || '買家';
+              const { subject, html } = buildOfferExpiringSoonEmail({
+                sellerName: sellerUser.name || '賣家',
+                buyerName,
+                cardName: listing.title,
+                offerAmountHkd: String(offer.offerPriceHkd),
+                listingPriceHkd: listing.priceHkd ? String(listing.priceHkd) : '—',
+                expiresAt: expiresAtStr,
+                sellerDashboardUrl: 'https://boxium.asia/seller',
+              });
+              await sendEmail({ to: sellerUser.email, subject, html });
+            }
+
+            console.log(`[OfferExpiryReminder] Reminder sent for offer ${offer.id}`);
+          } catch (err) {
+            console.error(`[OfferExpiryReminder] Failed to process offer ${offer.id}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[OfferExpiryReminder] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[OfferExpiryReminder] Offer expiry reminder scheduler started');
+}
+
+export function stopOfferExpiryReminderScheduler() {
+  if (offerExpiryReminderCronJob) {
+    offerExpiryReminderCronJob.stop();
+    offerExpiryReminderCronJob = null;
+  }
+}

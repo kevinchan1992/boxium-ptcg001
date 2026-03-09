@@ -305,12 +305,17 @@ export default function SellerDashboard() {
   const { data: myOffers } = trpc.marketplace.getMyOffers.useQuery(
     undefined, { enabled: !!sellerProfile }
   );
+  const { data: sellerOffers } = trpc.marketplace.getSellerOffers.useQuery(
+    undefined, { enabled: !!sellerProfile, refetchInterval: 60000 }
+  );
+  const pendingSellerOffersCount = sellerOffers?.filter((o: any) => o.status === 'pending').length ?? 0;
 
   const utils = trpc.useUtils();
   const respondToOfferMutation = trpc.marketplace.respondToOffer.useMutation({
     onSuccess: (_, vars) => {
       toast.success(vars.action === 'accept' ? '已接受出價' : '已拒絕出價');
       utils.marketplace.getMyOffers.invalidate();
+      utils.marketplace.getSellerOffers.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -633,9 +638,9 @@ export default function SellerDashboard() {
                 <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="訂單管理">訂單管理</BrandTabsTrigger>
                 <BrandTabsTrigger value="offers" icon={<MessageSquare className="w-4 h-4" />} label="出價洿議">
                   出價洿議
-                  {myOffers && myOffers.filter((o: any) => o.status === 'pending').length > 0 && (
-                    <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-yellow-500 text-black rounded-full">
-                      {myOffers.filter((o: any) => o.status === 'pending').length}
+                  {pendingSellerOffersCount > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                      {pendingSellerOffersCount > 99 ? '99+' : pendingSellerOffersCount}
                     </span>
                   )}
                 </BrandTabsTrigger>

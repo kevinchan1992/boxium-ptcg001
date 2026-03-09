@@ -402,3 +402,91 @@ export async function sendOrderEmail({
     return false;
   }
 }
+
+// ─── Offer Email Templates ────────────────────────────────────────────────────
+
+export interface OfferEmailData {
+  sellerName: string;
+  buyerName: string;
+  cardName: string;
+  offerAmountHkd: string;
+  listingPriceHkd: string;
+  expiresAt: string; // e.g. "2026-03-11 18:00 (HKT)"
+  sellerDashboardUrl: string;
+}
+
+/** New offer received — to seller */
+export function buildNewOfferEmail(data: OfferEmailData): { subject: string; html: string } {
+  const subject = `💬 您收到一個新出價 — ${data.cardName}`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">您收到一個新出價 💬</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.sellerName}</strong>，<br/>
+      買家 <strong>${data.buyerName}</strong> 對您的商品提出了出價，請盡快回應。
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #e0e4ff;border-radius:8px;margin:20px 0;">
+      <tr>
+        <td style="padding:12px 16px;">
+          <p style="margin:0;font-size:13px;color:#666;">商品名稱</p>
+          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#1a0dab;">${data.cardName}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;border-top:1px solid #e0e4ff;">
+          <p style="margin:0;font-size:13px;color:#666;">您的定價</p>
+          <p style="margin:4px 0 0;font-size:15px;color:#333;">HKD ${data.listingPriceHkd}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;border-top:1px solid #e0e4ff;">
+          <p style="margin:0;font-size:13px;color:#666;">買家出價</p>
+          <p style="margin:4px 0 0;font-size:20px;font-weight:bold;color:#16a34a;">HKD ${data.offerAmountHkd}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;border-top:1px solid #e0e4ff;">
+          <p style="margin:0;font-size:13px;color:#666;">出價有效期至</p>
+          <p style="margin:4px 0 0;font-size:14px;color:#ef4444;font-weight:bold;">${data.expiresAt}</p>
+        </td>
+      </tr>
+    </table>
+    <p style="color:#555;font-size:14px;">⚠️ 出價將在有效期後自動過期，請盡快登入平台回應。</p>
+    ${ctaButton("前往賣家中心回應出價", data.sellerDashboardUrl)}
+  `);
+  return { subject, html };
+}
+
+/** Offer expiring soon reminder — to seller */
+export function buildOfferExpiringSoonEmail(data: OfferEmailData): { subject: string; html: string } {
+  const subject = `⏰ 出價即將過期 — ${data.cardName}`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#e97316;font-size:22px;">出價即將過期 ⏰</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.sellerName}</strong>，<br/>
+      您有一個出價將在 <strong>6 小時內</strong>過期，請盡快回應！
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff8f0;border:1px solid #fed7aa;border-radius:8px;margin:20px 0;">
+      <tr>
+        <td style="padding:12px 16px;">
+          <p style="margin:0;font-size:13px;color:#666;">商品名稱</p>
+          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#1a0dab;">${data.cardName}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;border-top:1px solid #fed7aa;">
+          <p style="margin:0;font-size:13px;color:#666;">買家出價</p>
+          <p style="margin:4px 0 0;font-size:20px;font-weight:bold;color:#16a34a;">HKD ${data.offerAmountHkd}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;border-top:1px solid #fed7aa;">
+          <p style="margin:0;font-size:13px;color:#666;">過期時間</p>
+          <p style="margin:4px 0 0;font-size:14px;color:#ef4444;font-weight:bold;">${data.expiresAt}</p>
+        </td>
+      </tr>
+    </table>
+    <p style="color:#555;font-size:14px;">若不在有效期內回應，此出價將自動過期，買家需重新出價。</p>
+    ${ctaButton("立即回應出價", data.sellerDashboardUrl)}
+  `);
+  return { subject, html };
+}
