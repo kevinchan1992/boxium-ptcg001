@@ -168,11 +168,11 @@ function OrderTimeline({ order }: { order: any }) {
             {/* Content */}
             <div className="flex-1 pt-1.5 pb-2">
               <div className="flex items-center justify-between gap-2">
-                <p className={`font-medium text-sm ${isPending ? "text-muted-foreground" : "text-foreground"}`}>
+                <p className={`font-medium text-sm ${isPending ? "text-gray-400" : "text-gray-900"}`}>
                   {step.label}
                 </p>
                 {timestamp && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-gray-500">
                     {timestamp.toLocaleDateString("zh-HK", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </span>
                 )}
@@ -195,7 +195,7 @@ function OrderTimeline({ order }: { order: any }) {
               })()}
               {/* Auto-complete notice */}
               {step.key === "completed" && isPending && order.orderStatus === "shipped" && order.autoCompleteAt && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成
                 </p>
               )}

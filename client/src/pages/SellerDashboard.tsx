@@ -420,7 +420,7 @@ export default function SellerDashboard() {
                     <Package className="w-8 h-8 text-blue-500" />
                     <div>
                       <p className="text-2xl font-bold">{myListings?.length ?? 0}</p>
-                      <p className="text-xs text-muted-foreground">上架商品</p>
+                      <p className="text-xs text-gray-600">上架商品</p>
                     </div>
                   </div>
                 </CardContent>
@@ -431,7 +431,7 @@ export default function SellerDashboard() {
                     <ShoppingBag className="w-8 h-8 text-green-500" />
                     <div>
                       <p className="text-2xl font-bold">{salesStats?.completedOrders ?? sellerProfile.totalSales}</p>
-                      <p className="text-xs text-muted-foreground">已完成訂單</p>
+                      <p className="text-xs text-gray-600">已完成訂單</p>
                     </div>
                   </div>
                 </CardContent>
@@ -442,7 +442,7 @@ export default function SellerDashboard() {
                     <DollarSign className="w-8 h-8 text-yellow-500" />
                     <div>
                       <p className="text-2xl font-bold">HK${(salesStats?.thisMonthRevenue ?? 0).toFixed(0)}</p>
-                      <p className="text-xs text-muted-foreground">本月收益</p>
+                      <p className="text-xs text-gray-600">本月收益</p>
                       {salesStats && salesStats.lastMonthRevenue > 0 && (
                         <p className="text-xs mt-0.5 " style={{ color: salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '#22c55e' : '#ef4444' }}>
                           {salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '▲' : '▼'}
@@ -459,7 +459,7 @@ export default function SellerDashboard() {
                     <Star className="w-8 h-8 text-amber-500" />
                     <div>
                       <p className="text-2xl font-bold">{parseFloat(sellerProfile.avgRating as string ?? '0').toFixed(1)}</p>
-                      <p className="text-xs text-muted-foreground">評分 ({sellerProfile.ratingCount} 則)</p>
+                      <p className="text-xs text-gray-600">評分 ({sellerProfile.ratingCount} 則)</p>
                     </div>
                   </div>
                 </CardContent>
@@ -641,8 +641,8 @@ export default function SellerDashboard() {
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm truncate">{offer.listingTitle || '商品'}</p>
                               <p className="text-lg font-bold text-yellow-600 mt-0.5">HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</p>
-                              {offer.message && <p className="text-xs text-muted-foreground mt-1">{offer.message}</p>}
-                              <p className="text-xs text-muted-foreground mt-1">{new Date(offer.createdAt).toLocaleDateString('zh-HK')}</p>
+                              {offer.message && <p className="text-xs text-gray-700 mt-1">{offer.message}</p>}
+                              <p className="text-xs text-gray-500 mt-1">{new Date(offer.createdAt).toLocaleDateString('zh-HK')}</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
                               <Badge className={
