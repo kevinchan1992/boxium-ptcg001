@@ -1282,12 +1282,33 @@ All three checks must pass for verified to be true. Respond with JSON only match
     }),
 
   // ============================================================
+  // BUYER - Upload Dispute Evidence Images
+  // ============================================================
+  uploadDisputeEvidence: protectedProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      imageBase64: z.string(), // base64 encoded image
+      mimeType: z.string().default("image/jpeg"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      const ext = input.mimeType === "image/png" ? "png" : input.mimeType === "image/webp" ? "webp" : "jpg";
+      const key = `dispute-evidence/${order.orderNo}-${Date.now()}.${ext}`;
+      const buffer = Buffer.from(input.imageBase64, "base64");
+      const { url } = await storagePut(key, buffer, input.mimeType);
+      return { success: true, url };
+    }),
+
+  // ============================================================
   // BUYER - Dispute Handling
   // ============================================================
   openDispute: protectedProcedure
     .input(z.object({
       orderId: z.number().int(),
       reason: z.string().min(10).max(1000),
+      evidenceUrls: z.array(z.string().url()).max(3).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
@@ -1314,6 +1335,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         orderStatus: "disputed",
         disputeOpenedAt: new Date(),
         disputeReason: input.reason,
+        disputeEvidenceUrls: input.evidenceUrls ? JSON.stringify(input.evidenceUrls) : null,
       });
       // Notify admin
       await notifyOwner({

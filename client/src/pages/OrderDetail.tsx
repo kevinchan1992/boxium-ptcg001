@@ -216,6 +216,8 @@ export default function OrderDetail() {
   const [showDisputeDialog, setShowDisputeDialog] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
+  const [disputeEvidenceUrls, setDisputeEvidenceUrls] = useState<string[]>([]);
+  const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
 
@@ -236,16 +238,54 @@ export default function OrderDetail() {
     onError: (e) => toast.error(e.message),
   });
 
+  const uploadDisputeEvidenceMutation = trpc.marketplace.uploadDisputeEvidence.useMutation();
+
   const openDisputeMutation = trpc.marketplace.openDispute.useMutation({
     onSuccess: () => {
       toast.success("⚠️ 爭議申請已提交，管理員將盡快處理");
       setShowDisputeDialog(false);
       setDisputeReason("");
+      setDisputeEvidenceUrls([]);
       utils.marketplace.getOrderByNo.invalidate({ orderNo });
       utils.marketplace.getMyOrders.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
+
+  const handleEvidenceUpload = async (e: React.ChangeEvent<HTMLInputElement>, orderId: number) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    if (disputeEvidenceUrls.length + files.length > 3) {
+      toast.error("最多可上傳 3 張截圖");
+      return;
+    }
+    setIsUploadingEvidence(true);
+    try {
+      const newUrls: string[] = [];
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) { toast.error("圖片不能超過 5MB"); continue; }
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve((reader.result as string).split(",")[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const result = await uploadDisputeEvidenceMutation.mutateAsync({
+          orderId,
+          imageBase64: base64,
+          mimeType: file.type,
+        });
+        newUrls.push(result.url);
+      }
+      setDisputeEvidenceUrls(prev => [...prev, ...newUrls]);
+      toast.success(`已上傳 ${newUrls.length} 張截圖`);
+    } catch {
+      toast.error("上傳失敗，請重試");
+    } finally {
+      setIsUploadingEvidence(false);
+      e.target.value = "";
+    }
+  };
 
   const submitReviewMutation = trpc.marketplace.submitReview.useMutation({
     onSuccess: () => {
@@ -550,8 +590,8 @@ export default function OrderDetail() {
       </Dialog>
 
       {/* Dispute Dialog */}
-      <Dialog open={showDisputeDialog} onOpenChange={setShowDisputeDialog}>
-        <DialogContent className="max-w-sm">
+      <Dialog open={showDisputeDialog} onOpenChange={(open) => { setShowDisputeDialog(open); if (!open) { setDisputeEvidenceUrls([]); setDisputeReason(""); } }}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Flag className="w-5 h-5 text-red-500" />申請爭議
@@ -567,13 +607,43 @@ export default function OrderDetail() {
               className="text-sm"
             />
             <div className="text-xs text-muted-foreground text-right">{disputeReason.length}/1000</div>
+            {/* Evidence Image Upload */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">證據截圖（選項，最多 3 張）</p>
+              <div className="flex flex-wrap gap-2">
+                {disputeEvidenceUrls.map((url, i) => (
+                  <div key={i} className="relative w-20 h-20 rounded-md overflow-hidden border border-border">
+                    <img src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => setDisputeEvidenceUrls(prev => prev.filter((_, idx) => idx !== i))}
+                      className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center hover:bg-red-700"
+                    >×</button>
+                  </div>
+                ))}
+                {disputeEvidenceUrls.length < 3 && (
+                  <label className={`w-20 h-20 rounded-md border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors ${isUploadingEvidence ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {isUploadingEvidence
+                      ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                      : <><span className="text-2xl text-muted-foreground">+</span><span className="text-[10px] text-muted-foreground">上傳圖片</span></>}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleEvidenceUpload(e, order.id)}
+                    />
+                  </label>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">支援 JPG、PNG，單張不超過 5MB</p>
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowDisputeDialog(false)}>取消</Button>
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
-              disabled={openDisputeMutation.isPending || disputeReason.trim().length < 10}
-              onClick={() => openDisputeMutation.mutate({ orderId: order.id, reason: disputeReason.trim() })}
+              disabled={openDisputeMutation.isPending || disputeReason.trim().length < 10 || isUploadingEvidence}
+              onClick={() => openDisputeMutation.mutate({ orderId: order.id, reason: disputeReason.trim(), evidenceUrls: disputeEvidenceUrls.length > 0 ? disputeEvidenceUrls : undefined })}
             >
               {openDisputeMutation.isPending
                 ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</>

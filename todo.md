@@ -3968,3 +3968,38 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 
 - [x] 統一 Research（pricing/search）頁面卡片尺寸與 Search 頁面相同（緊湊多列網格，8列）
 - [x] 確保兩個頁面的卡片組件樣式一致（圖片比例、文字截斷、間距）
+
+## 🔧 三個新功能（2026-03-09）
+
+### 1. 爭議截圖上傳
+- [ ] 後端：新增 uploadDisputeEvidence API（上傳圖片到 S3，儲存 URL 到 order）
+- [ ] 後端：更新 openDispute procedure，接受 evidenceUrls 參數
+- [ ] 資料庫：orders 表新增 disputeEvidenceUrls 欄位（JSON 陣列）
+- [ ] 前端：OrderDetail 爭議對話框加入圖片上傳元件（最多 3 張）
+- [ ] 前端：Admin 爭議列表顯示買家上傳的截圖
+
+### 2. 賣家出貨通知
+- [ ] 後端：markOrderShipped 加入發送站內通知給買家（告知追蹤號碼和物流公司）
+- [ ] 前端：確認通知顯示正確
+
+### 3. 訂單超時提醒
+- [ ] 後端：cron job 每天檢查付款後超過 3 天未出貨的訂單
+- [ ] 後端：發送站內通知給賣家提醒出貨
+- [ ] 後端：避免重複發送（記錄已發送提醒的訂單）
+
+### 完成
+- [ ] 儲存 Checkpoint 並發布
+
+## 🔧 修復 pricing/search 頁面卡片尺寸（2026-03-09）
+
+- [ ] 找到 pricing/search 頁面對應的組件（PricingSearch.tsx 或其他）
+- [ ] 將卡片網格改為 8 列緊湊格式（與 research 頁面相同）
+- [ ] 確認電腦版顯示正確
+
+## ✅ 三個新功能完成（2026-03-09）
+
+- [x] 爭議截圖上傳：買家申請爭議時可上傳最多 3 張照片（S3 儲存），Admin 爭議管理頁面顯示截圖證據
+- [x] 賣家出貨通知：markOrderShipped 後自動發送站內通知 + Email 給買家（已在先前版本實作）
+- [x] 訂單超時提醒：新增 startShippingReminderScheduler cron job（每小時 :30 執行），付款後 3 天未出貨自動提醒賣家和 Admin
+- [x] 資料庫新增 shippingReminderSentAt 欄位（防止重複提醒）
+- [x] Admin 爭議管理頁面加入截圖證據顯示

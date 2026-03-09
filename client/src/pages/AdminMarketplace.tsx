@@ -1203,6 +1203,24 @@ function DisputesTab() {
                 <p className="font-medium text-red-700 mb-1">爭議原因：</p>
                 <p className="text-gray-700">{selectedDispute.disputeReason}</p>
               </div>
+              {/* Evidence Images */}
+              {selectedDispute.disputeEvidenceUrls && (() => {
+                try {
+                  const urls: string[] = JSON.parse(selectedDispute.disputeEvidenceUrls);
+                  if (urls.length > 0) return (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-700">買家提供的截圖證據：</p>
+                      <div className="flex flex-wrap gap-2">
+                        {urls.map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-md overflow-hidden border border-border hover:opacity-80 transition-opacity">
+                            <img src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                } catch { return null; }
+              })()}
               <div className="space-y-2">
                 <Label>處理結果</Label>
                 <Select value={outcome} onValueChange={(v) => setOutcome(v as any)}>

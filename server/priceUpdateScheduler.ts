@@ -373,3 +373,92 @@ export function stopAutoCompleteOrdersScheduler() {
     autoCompleteOrdersCronJob = null;
   }
 }
+
+// ============================================================
+// Shipping Overdue Reminder Scheduler
+// Runs every hour: remind sellers who haven't shipped within 3 days of payment
+// ============================================================
+let shippingReminderCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startShippingReminderScheduler() {
+  if (shippingReminderCronJob) return;
+  shippingReminderCronJob = cron.schedule(
+    '30 * * * *', // Every hour at :30
+    async () => {
+      try {
+        const { getDb, getSellerProfileByUserId } = await import('./db');
+        const { marketplaceOrders } = await import('../drizzle/schema_new');
+        const { and, eq, lte, isNull, or } = await import('drizzle-orm');
+        const { createNotification } = await import('./db/notifications');
+        const db = await getDb();
+        if (!db) return;
+
+        const now = new Date();
+        // 3 days ago
+        const threeDaysAgo = new Date(now);
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+        // Find orders that: paid but not shipped, payment received > 3 days ago, reminder not yet sent
+        const overdueOrders = await db.select()
+          .from(marketplaceOrders)
+          .where(
+            and(
+              or(
+                eq(marketplaceOrders.orderStatus, 'payment_received'),
+                eq(marketplaceOrders.orderStatus, 'processing')
+              ),
+              lte(marketplaceOrders.createdAt, threeDaysAgo),
+              isNull(marketplaceOrders.shippingReminderSentAt)
+            )
+          )
+          .limit(50);
+
+        if (overdueOrders.length === 0) return;
+        console.log(`[ShippingReminder] Found ${overdueOrders.length} overdue orders`);
+
+        for (const order of overdueOrders) {
+          try {
+            // Mark reminder as sent
+            await db.update(marketplaceOrders)
+              .set({ shippingReminderSentAt: now })
+              .where(eq(marketplaceOrders.id, order.id));
+
+            // Notify seller
+            if (order.sellerId) {
+              await createNotification({
+                userId: order.sellerId,
+                type: 'trade',
+                title: '⏰ 請盡快安排出貨',
+                body: `訂單 ${order.orderNo} 已付款超過 3 天，請盡快安排出貨並填寫追蹤號碼，以維護良好的賣家評分。`,
+                linkUrl: '/seller',
+              }).catch(() => {});
+            }
+
+            // Notify admin
+            await import('./_core/notification').then(({ notifyOwner }) =>
+              notifyOwner({
+                title: '賣家出貨超時提醒 ⏰',
+                content: `訂單 ${order.orderNo} 已付款超過 3 天，賣家尚未出貨。`,
+              }).catch(() => {})
+            );
+
+            console.log(`[ShippingReminder] Reminder sent for order ${order.orderNo}`);
+          } catch (err) {
+            console.error(`[ShippingReminder] Failed to send reminder for order ${order.orderNo}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[ShippingReminder] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[ShippingReminder] Shipping reminder scheduler started');
+}
+
+export function stopShippingReminderScheduler() {
+  if (shippingReminderCronJob) {
+    shippingReminderCronJob.stop();
+    shippingReminderCronJob = null;
+  }
+}
