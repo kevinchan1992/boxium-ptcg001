@@ -132,6 +132,30 @@ function OrderTimeline({ order }: { order: any }) {
 
   return (
     <div className="relative">
+      <style>{`
+        @keyframes checkmark-pop {
+          0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+          60% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes pulse-ring {
+          0% { box-shadow: 0 0 0 0 rgba(6, 3, 141, 0.4); }
+          70% { box-shadow: 0 0 0 8px rgba(6, 3, 141, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(6, 3, 141, 0); }
+        }
+        @keyframes line-fill {
+          0% { transform: scaleY(0); transform-origin: top; }
+          100% { transform: scaleY(1); transform-origin: top; }
+        }
+        @keyframes fade-slide-in {
+          0% { opacity: 0; transform: translateX(-8px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        .timeline-done-icon { animation: checkmark-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+        .timeline-current-pulse { animation: pulse-ring 2s ease-in-out infinite; }
+        .timeline-line-fill { animation: line-fill 0.5s ease-out both; }
+        .timeline-step-content { animation: fade-slide-in 0.35s ease-out both; }
+      `}</style>
       {TIMELINE_STEPS.map((step, idx) => {
         const stepStatusIdx = STATUS_ORDER.indexOf(step.key);
         const isDone = currentIdx > stepStatusIdx;
@@ -142,34 +166,63 @@ function OrderTimeline({ order }: { order: any }) {
         let timestamp: Date | null = null;
         if (step.key === "pending_payment") timestamp = order.createdAt ? new Date(order.createdAt) : null;
         else if (step.key === "payment_received" && (order.paymentStatus === "paid" || isDone || isCurrent)) {
-          // Use updatedAt as approximation
           timestamp = order.updatedAt ? new Date(order.updatedAt) : null;
         }
         else if (step.key === "shipped" && order.shippedAt) timestamp = new Date(order.shippedAt);
         else if (step.key === "completed" && order.buyerConfirmedAt) timestamp = new Date(order.buyerConfirmedAt);
 
         return (
-          <div key={step.key} className="flex gap-4 pb-6 last:pb-0">
+          <div key={step.key} className="flex gap-4 pb-6 last:pb-0"
+            style={{ animationDelay: `${idx * 0.08}s` }}>
             {/* Connector line */}
             <div className="flex flex-col items-center">
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all ${
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all duration-300 ${
                 isDone
-                  ? "bg-green-500 border-green-500 text-white"
+                  ? "bg-green-500 border-green-500 text-white timeline-done-icon"
                   : isCurrent
-                  ? "bg-[#06038d] border-[#06038d] text-white shadow-lg shadow-blue-200"
+                  ? "bg-[#06038d] border-[#06038d] text-white timeline-current-pulse"
                   : "bg-white border-gray-200 text-gray-300"
-              }`}>
-                {isDone ? <CheckCircle className="w-4 h-4" /> : step.icon}
+              }`}
+              style={isDone ? { animationDelay: `${idx * 0.1}s` } : undefined}>
+                {isDone ? (
+                  <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 8l3.5 3.5L13 5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                      style={{
+                        strokeDasharray: 14,
+                        strokeDashoffset: 0,
+                        animation: `checkmark-draw 0.35s ease-out ${idx * 0.1}s both`
+                      }}
+                    />
+                    <style>{`
+                      @keyframes checkmark-draw {
+                        0% { stroke-dashoffset: 14; }
+                        100% { stroke-dashoffset: 0; }
+                      }
+                    `}</style>
+                  </svg>
+                ) : step.icon}
               </div>
               {idx < TIMELINE_STEPS.length - 1 && (
-                <div className={`w-0.5 flex-1 mt-1 min-h-[20px] ${isDone ? "bg-green-300" : "bg-gray-200"}`} />
+                <div className={`w-0.5 flex-1 mt-1 min-h-[20px] transition-all duration-500 ${
+                  isDone ? "bg-green-300 timeline-line-fill" : "bg-gray-200"
+                }`}
+                style={isDone ? { animationDelay: `${idx * 0.1 + 0.3}s` } : undefined}
+                />
               )}
             </div>
             {/* Content */}
-            <div className="flex-1 pt-1.5 pb-2">
+            <div className="flex-1 pt-1.5 pb-2 timeline-step-content"
+              style={{ animationDelay: `${idx * 0.08 + 0.05}s` }}>
               <div className="flex items-center justify-between gap-2">
-                <p className={`font-medium text-sm ${isPending ? "text-gray-400" : "text-gray-900"}`}>
+                <p className={`font-medium text-sm transition-colors duration-300 ${isPending ? "text-gray-400" : "text-gray-900"}`}>
                   {step.label}
+                  {isCurrent && (
+                    <span className="ml-2 inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#06038d] inline-block animate-bounce" style={{ animationDelay: '0s' }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#06038d] inline-block animate-bounce" style={{ animationDelay: '0.15s' }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#06038d] inline-block animate-bounce" style={{ animationDelay: '0.3s' }} />
+                    </span>
+                  )}
                 </p>
                 {timestamp && (
                   <span className="text-xs text-gray-500">

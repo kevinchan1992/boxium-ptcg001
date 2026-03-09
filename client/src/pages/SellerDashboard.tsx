@@ -515,42 +515,45 @@ export default function SellerDashboard() {
                       } catch {}
                       const isSold = listing.status === "sold";
                       return (
-                        <Card key={listing.id} className={isSold ? "opacity-80" : ""}>
-                          <CardContent className="flex items-center gap-4 py-3 flex-wrap">
-                            <div className="w-14 h-14 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0">
+                        <div key={listing.id} className={`bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden${isSold ? " opacity-80" : ""}`}>
+                          {/* Brand Header Bar */}
+                          <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                            <span className="text-xs text-white/80 font-medium">庫存 {listing.quantity}</span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              listing.status === "active" ? "bg-green-400/20 text-green-200 border border-green-400/30" :
+                              listing.status === "pending_review" ? "bg-yellow-400/20 text-yellow-200 border border-yellow-400/30" :
+                              listing.status === "sold" ? "bg-blue-400/20 text-blue-200 border border-blue-400/30" :
+                              "bg-white/20 text-white/70 border border-white/30"
+                            }`}>
+                              {listing.status === "active" ? "上架中" :
+                               listing.status === "pending_review" ? "審核中" :
+                               listing.status === "sold" ? "已售出" : listing.status}
+                            </span>
+                          </div>
+                          {/* Card Body */}
+                          <div className="flex items-center gap-4 p-4 flex-wrap">
+                            <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
                               {coverImg ? (
                                 <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
-                                  <Package className="w-6 h-6 text-muted-foreground/40" />
+                                  <span className="text-white font-black text-[9px] tracking-tight text-center leading-tight">BOX<br/>IUM</span>
                                 </div>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate">{listing.title}</p>
-                              <p className="text-sm text-muted-foreground">
-                                HKD {parseFloat(listing.priceHkd as string).toFixed(2)} · 庫存 {listing.quantity}
+                              <p className="font-semibold truncate text-gray-900">{listing.title}</p>
+                              <p className="text-sm text-gray-600 mt-0.5">
+                                HKD {parseFloat(listing.priceHkd as string).toFixed(2)}
                               </p>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Badge className={
-                                listing.status === "active" ? "bg-green-100 text-green-800" :
-                                listing.status === "pending_review" ? "bg-yellow-100 text-yellow-800" :
-                                listing.status === "sold" ? "bg-blue-100 text-blue-800" :
-                                "bg-gray-100 text-gray-800"
-                              }>
-                                {listing.status === "active" ? "上架中" :
-                                 listing.status === "pending_review" ? "審核中" :
-                                 listing.status === "sold" ? "已售出" : listing.status}
-                              </Badge>
-                              {isSold && (
-                                <Link href={`/marketplace/${listing.id}`}>
-                                  <Button size="sm" variant="outline" className="text-xs h-7 px-2">查看詳情</Button>
-                                </Link>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
+                            {isSold && (
+                              <Link href={`/marketplace/${listing.id}`}>
+                                <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-[#06038d] text-[#06038d] hover:bg-blue-50">查看詳情</Button>
+                              </Link>
+                            )}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
@@ -566,33 +569,43 @@ export default function SellerDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {(myOrders as any[]).map((item) => (
-                      <Card key={item.id}>
-                        <CardContent className="py-4 space-y-2">
+                      <div key={item.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+                        {/* Brand Header Bar */}
+                        <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                          <span className="text-xs text-white/80 font-medium">
+                            {item.orderNo ? `#${item.orderNo}` : `#${item.id}`}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            item.orderStatus === "completed" ? "bg-green-400/20 text-green-200 border border-green-400/30" :
+                            item.orderStatus === "payment_received" ? "bg-yellow-400/20 text-yellow-200 border border-yellow-400/30" :
+                            item.orderStatus === "shipped" ? "bg-blue-400/20 text-blue-200 border border-blue-400/30" :
+                            item.orderStatus === "disputed" ? "bg-red-400/20 text-red-200 border border-red-400/30" :
+                            "bg-white/20 text-white/70 border border-white/30"
+                          }`}>
+                            {orderStatusLabel[item.orderStatus]?.label ?? item.orderStatus}
+                          </span>
+                        </div>
+                        {/* Card Body */}
+                        <div className="p-4 space-y-3">
                           <div className="flex items-start justify-between gap-3 flex-wrap">
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate">{item.title}</p>
-                              <p className="text-sm text-gray-600">
+                              <p className="font-semibold truncate text-gray-900">{item.title}</p>
+                              <p className="text-sm text-gray-600 mt-0.5">
                                 HKD {parseFloat(item.priceHkd as string).toFixed(2)} × {item.quantity}
                               </p>
-                              {item.orderNo && <p className="text-xs text-gray-500">訂單號：{item.orderNo}</p>}
                             </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge className={orderStatusLabel[item.orderStatus]?.color ?? "bg-gray-100 text-gray-800"}>
-                                {orderStatusLabel[item.orderStatus]?.label ?? item.orderStatus}
-                              </Badge>
-                              {(["processing", "payment_received"].includes(item.orderStatus)) && (
-                                <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white"
-                                  onClick={() => {
-                                    setShipDialog({ open: true, orderId: item.orderId ?? item.id, orderNo: item.orderNo ?? "" });
-                                    setShipForm({ shippingMethod: "sf_express", trackingNumber: "" });
-                                  }}>
-                                  填寫出貨資料
-                                </Button>
-                              )}
-                            </div>
+                            {(["processing", "payment_received"].includes(item.orderStatus)) && (
+                              <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white flex-shrink-0"
+                                onClick={() => {
+                                  setShipDialog({ open: true, orderId: item.orderId ?? item.id, orderNo: item.orderNo ?? "" });
+                                  setShipForm({ shippingMethod: "sf_express", trackingNumber: "" });
+                                }}>
+                                填寫出貨資料
+                              </Button>
+                            )}
                           </div>
                           {item.shippingName && (
-                            <div className="text-xs text-gray-700 bg-blue-50 border border-blue-100 rounded px-2 py-1.5 space-y-0.5">
+                            <div className="text-xs text-gray-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 space-y-1">
                               <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>
                               <p>📍 地址：{(() => {
                                 try {
@@ -609,8 +622,8 @@ export default function SellerDashboard() {
                               {item.trackingNumber && <p>🚚 追蹤號：{item.trackingNumber}</p>}
                             </div>
                           )}
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
