@@ -390,10 +390,12 @@ export default function Orders() {
   const user = me;
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen pt-20" style={{ backgroundColor: "#f8f9fa" }}>
+      <div className="min-h-screen bg-white">
+        {/* Skeleton Hero */}
+        <div className="h-40" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }} />
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
+            <div key={i} className="h-32 bg-gray-100 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -402,11 +404,13 @@ export default function Orders() {
 
   if (!user) {
     return (
-      <div className="min-h-screen pt-20 flex items-center justify-center" style={{ backgroundColor: "#f8f9fa" }}>
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center space-y-3">
-          <Package className="w-12 h-12 mx-auto" style={{ color: "#06038d" }} />
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ background: "#f0f4ff" }}>
+            <Package className="w-10 h-10" style={{ color: "#06038d", opacity: 0.4 }} />
+          </div>
           <p className="font-medium text-gray-700">請先登入查看訂單</p>
-          <Link href="/login"><Button className="bg-[#06038d] text-white">登入</Button></Link>
+          <Link href="/login"><Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">登入</Button></Link>
         </div>
       </div>
     );
@@ -416,44 +420,66 @@ export default function Orders() {
   const pastOrders = (orders ?? []).filter(o => ["completed", "cancelled"].includes(o.orderStatus));
 
   return (
-    <div className="min-h-screen pt-20" style={{ backgroundColor: "#f8f9fa" }}>
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Link href="/marketplace">
-            <Button variant="outline" size="sm" className="border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white">
-              <ArrowLeft className="w-4 h-4 mr-1" />返回
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold" style={{ color: "#06038d" }}>我的訂單</h1>
-            <p className="text-sm text-gray-500">共 {orders?.length ?? 0} 筆訂單</p>
+    <div className="min-h-screen bg-white">
+      {/* ── Hero Banner ── */}
+      <div
+        className="relative"
+        style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}
+      >
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FFD700" }} />
+        <div className="max-w-2xl mx-auto px-4 pt-10 pb-8">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
+              style={{ background: "#FFD700", borderColor: "white" }}
+            >
+              <Package className="w-10 h-10" style={{ color: "#06038d" }} />
+            </div>
+            <div className="text-center md:text-left pb-1 flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-white">我的訂單</h1>
+              <p className="text-white/70 text-sm mt-1">共 {orders?.length ?? 0} 筆訂單</p>
+            </div>
+            <Link href="/marketplace">
+              <Button size="sm" className="font-bold" style={{ background: "#FFD700", color: "#06038d" }}>
+                <ArrowLeft className="w-4 h-4 mr-1" />返回商城
+              </Button>
+            </Link>
           </div>
         </div>
+      </div>
 
+      {/* ── Main Content ── */}
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8">
         {(!orders || orders.length === 0) ? (
-          <div className="text-center py-16 space-y-3">
-            <Package className="w-14 h-14 mx-auto text-muted-foreground opacity-40" />
-            <p className="font-medium text-muted-foreground">暫無訂單記錄</p>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 text-center py-16 space-y-3">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "#f0f4ff" }}>
+              <Package className="w-8 h-8" style={{ color: "#06038d", opacity: 0.3 }} />
+            </div>
+            <p className="font-medium text-gray-500">暫無訂單記錄</p>
             <Link href="/marketplace">
-              <Button className="bg-[#06038d] text-white">前往商城購物</Button>
+              <Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">前往商城購物</Button>
             </Link>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {activeOrders.length > 0 && (
-              <section className="space-y-3">
-                <h2 className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2" style={{ color: "#06038d" }}>
+              <section>
+                <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: "#06038d", borderColor: "#FFD700" }}>
                   <CreditCard className="w-4 h-4" />進行中的訂單（{activeOrders.length}）
                 </h2>
-                {activeOrders.map(order => <OrderCard key={order.id} order={order} />)}
+                <div className="space-y-3">
+                  {activeOrders.map(order => <OrderCard key={order.id} order={order} />)}
+                </div>
               </section>
             )}
             {pastOrders.length > 0 && (
-              <section className="space-y-3">
-                <h2 className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2" style={{ color: "#06038d" }}>
+              <section>
+                <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: "#06038d", borderColor: "#FFD700" }}>
                   <CheckCircle className="w-4 h-4" />歷史訂單（{pastOrders.length}）
                 </h2>
-                {pastOrders.map(order => <OrderCard key={order.id} order={order} />)}
+                <div className="space-y-3">
+                  {pastOrders.map(order => <OrderCard key={order.id} order={order} />)}
+                </div>
               </section>
             )}
           </div>

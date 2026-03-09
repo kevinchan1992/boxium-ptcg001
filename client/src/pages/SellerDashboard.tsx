@@ -249,7 +249,7 @@ export default function SellerDashboard() {
   });
 
   if (!me) return (
-    <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+    <div className="min-h-screen bg-white flex items-center justify-center">
       <div className="text-center">
         <AlertCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
         <p className="text-lg font-medium">請先登入</p>
@@ -259,35 +259,52 @@ export default function SellerDashboard() {
   );
 
   return (
-    <div className="min-h-screen pt-20" style={{ backgroundColor: "#f8f9fa" }}>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: "#06038d" }}>賣家中心</h1>
-            <p className="text-gray-500 text-sm mt-1">管理你的商品、訂單和收款</p>
+    <div className="min-h-screen bg-white">
+      {/* ── Hero Banner ── */}
+      <div
+        className="relative"
+        style={{ background: `linear-gradient(135deg, #06038d 0%, #0a06b5 100%)` }}
+      >
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FFD700" }} />
+        <div className="max-w-5xl mx-auto px-4 pt-10 pb-8">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
+              style={{ background: "#FFD700", borderColor: "white" }}
+            >
+              <ShoppingBag className="w-10 h-10" style={{ color: "#06038d" }} />
+            </div>
+            <div className="text-center md:text-left pb-1 flex-1">
+              <div className="flex items-center gap-3 justify-center md:justify-start flex-wrap">
+                <h1 className="text-2xl md:text-3xl font-bold text-white">賣家中心</h1>
+                {sellerProfile?.isActive && (
+                  <Button onClick={() => setShowNewListing(true)} className="text-sm font-bold" style={{ background: "#FFD700", color: "#06038d" }}>
+                    <Plus className="w-4 h-4 mr-1" />上架新商品
+                  </Button>
+                )}
+              </div>
+              <p className="text-white/70 text-sm mt-1">管理你的商品、訂單和收款</p>
+            </div>
           </div>
-          {sellerProfile?.isActive && (
-            <Button onClick={() => setShowNewListing(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white">
-              <Plus className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">上架新商品</span>
-              <span className="sm:hidden">上架</span>
-            </Button>
-          )}
         </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-6 pb-16">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden p-6">
 
         {!sellerProfile && (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <ShoppingBag className="w-16 h-16 mb-4 text-muted-foreground opacity-40" />
-              <h2 className="text-xl font-semibold mb-2">成為 BOXIUM 賣家</h2>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                在 BOXIUM 平台上架你的寶可夢卡牌，觸及更多買家。平台收取 5% 服務費，款項透過 Stripe 自動轉帳到你的帳戶。
-              </p>
-              <Button onClick={() => setShowApply(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white">
-                申請成為賣家
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ background: "#f0f4ff" }}>
+              <ShoppingBag className="w-10 h-10" style={{ color: "#06038d" }} />
+            </div>
+            <h2 className="text-xl font-bold mb-2" style={{ color: "#06038d" }}>成為 BOXIUM 賣家</h2>
+            <p className="text-gray-500 mb-6 max-w-md">
+              在 BOXIUM 平台上架你的寶可夢卡牡，觸及更多買家。平台收取 5% 服務費，款項透過 Stripe 自動轉帳到你的帳戶。
+            </p>
+            <Button onClick={() => setShowApply(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white font-bold">
+              申請成為賣家
+            </Button>
+          </div>
         )}
 
         {sellerProfile && !sellerProfile.isActive && (
@@ -414,56 +431,56 @@ export default function SellerDashboard() {
             )}
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <Package className="w-8 h-8 text-blue-500" />
-                    <div>
-                      <p className="text-2xl font-bold">{myListings?.length ?? 0}</p>
-                      <p className="text-xs text-gray-600">上架商品</p>
-                    </div>
+              <div className="rounded-xl border border-gray-100 shadow-sm p-4" style={{ background: "#f8faff" }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#e8edff" }}>
+                    <Package className="w-5 h-5" style={{ color: "#06038d" }} />
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <ShoppingBag className="w-8 h-8 text-green-500" />
-                    <div>
-                      <p className="text-2xl font-bold">{salesStats?.completedOrders ?? sellerProfile.totalSales}</p>
-                      <p className="text-xs text-gray-600">已完成訂單</p>
-                    </div>
+                  <div>
+                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{myListings?.length ?? 0}</p>
+                    <p className="text-xs text-gray-500">上架商品</p>
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <DollarSign className="w-8 h-8 text-yellow-500" />
-                    <div>
-                      <p className="text-2xl font-bold">HK${(salesStats?.thisMonthRevenue ?? 0).toFixed(0)}</p>
-                      <p className="text-xs text-gray-600">本月收益</p>
+                </div>
+              </div>
+              <div className="rounded-xl border border-gray-100 shadow-sm p-4" style={{ background: "#f8faff" }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#e8edff" }}>
+                    <ShoppingBag className="w-5 h-5" style={{ color: "#06038d" }} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{salesStats?.completedOrders ?? sellerProfile.totalSales}</p>
+                    <p className="text-xs text-gray-500">已完成訂單</p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-xl border border-gray-100 shadow-sm p-4" style={{ background: "#f8faff" }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#fff8e0" }}>
+                    <DollarSign className="w-5 h-5" style={{ color: "#b8860b" }} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>HK${(salesStats?.thisMonthRevenue ?? 0).toFixed(0)}</p>
+                    <p className="text-xs text-gray-500">本月收益</p>
                       {salesStats && salesStats.lastMonthRevenue > 0 && (
-                        <p className="text-xs mt-0.5 " style={{ color: salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '#22c55e' : '#ef4444' }}>
+                        <p className="text-xs mt-0.5" style={{ color: salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '#22c55e' : '#ef4444' }}>
                           {salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '▲' : '▼'}
                           {Math.abs(((salesStats.thisMonthRevenue - salesStats.lastMonthRevenue) / salesStats.lastMonthRevenue) * 100).toFixed(0)}% 與上月比
                         </p>
                       )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <Star className="w-8 h-8 text-amber-500" />
-                    <div>
-                      <p className="text-2xl font-bold">{parseFloat(sellerProfile.avgRating as string ?? '0').toFixed(1)}</p>
-                      <p className="text-xs text-gray-600">評分 ({sellerProfile.ratingCount} 則)</p>
-                    </div>
+              </div>
+              <div className="rounded-xl border border-gray-100 shadow-sm p-4" style={{ background: "#f8faff" }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#fff8e0" }}>
+                    <Star className="w-5 h-5" style={{ color: "#b8860b" }} />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{parseFloat(sellerProfile.avgRating as string ?? '0').toFixed(1)}</p>
+                    <p className="text-xs text-gray-500">評分 ({sellerProfile.ratingCount} 則)</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <BrandTabs defaultValue="listings">
@@ -675,8 +692,8 @@ export default function SellerDashboard() {
             </BrandTabs>
           </>
         )}
+        </div>
       </div>
-
       <Dialog open={showApply} onOpenChange={setShowApply}>
         <DialogContent>
           <DialogHeader><DialogTitle>申請成為賣家</DialogTitle></DialogHeader>

@@ -300,11 +300,11 @@ export default function OrderDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-20" style={{ backgroundColor: "#f8f9fa" }}>
-        <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-4 animate-pulse">
-          <div className="h-8 bg-muted rounded w-1/3" />
-          <div className="h-48 bg-muted rounded-xl" />
-          <div className="h-32 bg-muted rounded-xl" />
+      <div className="min-h-screen bg-white">
+        <div className="h-40 animate-pulse" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }} />
+        <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8 space-y-4 animate-pulse">
+          <div className="h-48 bg-gray-100 rounded-xl" />
+          <div className="h-32 bg-gray-100 rounded-xl" />
         </div>
       </div>
     );
@@ -312,11 +312,13 @@ export default function OrderDetail() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen pt-20 flex items-center justify-center" style={{ backgroundColor: "#f8f9fa" }}>
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center space-y-3">
-          <Package className="w-12 h-12 mx-auto text-muted-foreground" />
-          <p className="font-medium">訂單不存在或無權查看</p>
-          <Link href="/orders"><Button variant="outline">返回訂單列表</Button></Link>
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ background: "#f0f4ff" }}>
+            <Package className="w-10 h-10" style={{ color: "#06038d", opacity: 0.4 }} />
+          </div>
+          <p className="font-medium text-gray-700">訂單不存在或無權查看</p>
+          <Link href="/orders"><Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">返回訂單列表</Button></Link>
         </div>
       </div>
     );
@@ -345,26 +347,42 @@ export default function OrderDetail() {
   const canReview = isBuyer && isCompleted && order.sellerType === "seller" && !review;
 
   return (
-    <div className="min-h-screen pt-20" style={{ backgroundColor: "#f8f9fa" }}>
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-5">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <Link href="/orders">
-            <Button variant="outline" size="sm" className="border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white">
-              <ArrowLeft className="w-4 h-4 mr-1" />返回
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold" style={{ color: "#06038d" }}>訂單詳情</h1>
-            <button
-              className="text-xs text-gray-500 font-mono flex items-center gap-1 hover:text-gray-700 transition-colors"
-              onClick={() => { navigator.clipboard.writeText(order.orderNo); toast.success("訂單號已複製"); }}
+    <div className="min-h-screen bg-white">
+      {/* ── Hero Banner ── */}
+      <div
+        className="relative"
+        style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}
+      >
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FFD700" }} />
+        <div className="max-w-2xl mx-auto px-4 pt-10 pb-8">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
+              style={{ background: "#FFD700", borderColor: "white" }}
             >
-              #{order.orderNo}
-              <Copy className="w-3 h-3" />
-            </button>
+              <ShieldCheck className="w-10 h-10" style={{ color: "#06038d" }} />
+            </div>
+            <div className="text-center md:text-left pb-1 flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-white">訂單詳情</h1>
+              <button
+                className="text-white/70 text-sm font-mono flex items-center gap-1 mt-1 hover:text-white transition-colors mx-auto md:mx-0"
+                onClick={() => { navigator.clipboard.writeText(order.orderNo); toast.success("訂單號已複製"); }}
+              >
+                #{order.orderNo}
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <Link href="/orders">
+              <Button size="sm" className="font-bold" style={{ background: "#FFD700", color: "#06038d" }}>
+                <ArrowLeft className="w-4 h-4 mr-1" />返回訂單
+              </Button>
+            </Link>
           </div>
         </div>
+      </div>
+
+      {/* ── Main Content ── */}
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-8 space-y-5">
 
         {/* Status Card */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
