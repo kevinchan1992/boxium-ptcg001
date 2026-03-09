@@ -561,10 +561,20 @@ export const marketplaceRouter = router({
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
       try {
         const account = await stripe.accounts.retrieve(profile.stripeConnectId);
+        // Correctly classify disabled_reason:
+        // - "under_review", "requirements.pending_verification" = still under review → pending
+        // - "rejected.*" = truly disabled
+        const disabledReason = account.requirements?.disabled_reason ?? null;
+        const trulyDisabled = disabledReason && (
+          disabledReason.startsWith('rejected.') ||
+          disabledReason === 'other'
+        );
         const newStatus: "pending" | "active" | "restricted" | "disabled" =
           account.charges_enabled && account.payouts_enabled ? "active" :
-          account.requirements?.disabled_reason ? "disabled" :
+          trulyDisabled ? "disabled" :
+          (account.requirements?.pending_verification?.length ?? 0) > 0 ? "pending" :
           (account.requirements?.currently_due?.length ?? 0) > 0 ? "restricted" : "pending";
+        console.log(`[StripeSync] account ${account.id}: charges=${account.charges_enabled}, payouts=${account.payouts_enabled}, disabled_reason=${disabledReason}, currently_due=${account.requirements?.currently_due?.length ?? 0}, pending_verification=${account.requirements?.pending_verification?.length ?? 0} → ${newStatus}`);
         if (newStatus !== profile.stripeConnectStatus) {
           await updateSellerProfile(profile.id, { stripeConnectStatus: newStatus });
           console.log(`[StripeSync] Seller ${profile.id} status: ${profile.stripeConnectStatus} -> ${newStatus}`);

@@ -3899,3 +3899,9 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 清除舊版邏輯（scheduler.ts 已標記 @deprecated 並修復插入邏輯，已確認停用）
 - [x] 確認所有路徑都正確傳入 jpyPrice
 - [x] 資料庫 UNIQUE INDEX 已更新為 uniq_price_card_source_grade_soldAt_jpyPrice
+
+## ✅ Stripe Connect 帳戶狀態修復（2026-03-09）
+- [x] 修復 syncStripeConnectStatus 的狀態判斷邏輯（disabled_reason 正確區分「審批中」vs「真正停用」）
+- [x] 修復 webhook account.updated 的狀態判斷邏輯（與 syncStripeConnectStatus 保持一致）
+- [x] 重置資料庫中兩個帳戶的狀態從 disabled 為 pending，下次登入會自動重新同步
+- [x] 確認代碼中無硬編碼測試模式金鑰

@@ -146,10 +146,20 @@ async function startServer() {
         const sellerProfile = await getSellerProfileByStripeConnectId(stripeConnectId);
         if (sellerProfile) {
           let newStatus: "pending" | "active" | "restricted" | "disabled";
+          // Correctly classify disabled_reason:
+          // - "under_review", "requirements.pending_verification" = still under review → pending
+          // - "rejected.*" or "other" = truly disabled
+          const disabledReason = account.requirements?.disabled_reason ?? null;
+          const trulyDisabled = disabledReason && (
+            disabledReason.startsWith('rejected.') ||
+            disabledReason === 'other'
+          );
           if (account.charges_enabled && account.payouts_enabled) {
             newStatus = "active";
-          } else if (account.requirements?.disabled_reason) {
+          } else if (trulyDisabled) {
             newStatus = "disabled";
+          } else if ((account.requirements?.pending_verification?.length ?? 0) > 0) {
+            newStatus = "pending"; // under review by Stripe
           } else if ((account.requirements?.currently_due?.length ?? 0) > 0) {
             newStatus = "restricted";
           } else {
