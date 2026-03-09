@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, AlertCircle, ShoppingBag } from "lucide-react";
+import { Search, Loader2, AlertCircle, ShoppingBag, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 
@@ -16,6 +16,8 @@ export default function PricingSearch() {
   const [searchQuery, setSearchQuery] = useState(query);
   const [currentPage, setCurrentPage] = useState(1);
   const [, setLocation] = useLocation();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const refreshTriggeredRef = useRef<string>(""); // track query+page to avoid duplicate triggers
 
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -33,12 +35,44 @@ export default function PricingSearch() {
   // Get card IDs for lowest listing price query
   const cardIds = useMemo(() => searchResults.map((c: any) => c.id), [searchResults]);
 
-  // Batch query lowest active listing prices
-  const { data: lowestPricesData } = trpc.cards.getLowestListingPrices.useQuery(
+  // Batch query lowest active listing prices (from SNKRDUNK cache)
+  const { data: lowestPricesData, refetch: refetchPrices } = trpc.cards.getLowestListingPrices.useQuery(
     { cardIds },
     { enabled: cardIds.length > 0 }
   );
   const lowestPrices: Record<number, number> = lowestPricesData?.prices || {};
+
+  // Background cache refresh mutation (stale-while-revalidate)
+  const triggerRefresh = trpc.cards.triggerCacheRefresh.useMutation();
+
+  // When search results load, trigger background cache refresh for cards without fresh cache
+  useEffect(() => {
+    if (cardIds.length === 0 || isLoading) return;
+    const triggerKey = `${query}-${currentPage}`;
+    if (refreshTriggeredRef.current === triggerKey) return; // already triggered for this page
+    refreshTriggeredRef.current = triggerKey;
+
+    // Determine which cards don't have a cached price yet
+    const uncachedIds = cardIds.filter((id: number) => lowestPrices[id] === undefined);
+    if (uncachedIds.length === 0) return;
+
+    // Trigger background scraping for up to 10 uncached cards per page load
+    // (limit to avoid overloading the server)
+    const batchToRefresh = uncachedIds.slice(0, 10);
+    setIsRefreshing(true);
+    triggerRefresh.mutate(
+      { cardIds: batchToRefresh },
+      {
+        onSettled: () => {
+          // After background scraping completes, refetch prices to show updated values
+          setTimeout(() => {
+            refetchPrices();
+            setIsRefreshing(false);
+          }, 3000); // wait 3s for scraping to complete
+        },
+      }
+    );
+  }, [cardIds, isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,9 +136,17 @@ export default function PricingSearch() {
 
       {/* Results Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground">
-          {t("pricing.searchResultsFor")}: "{query}"
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-foreground">
+            {t("pricing.searchResultsFor")}: "{query}"
+          </h2>
+          {isRefreshing && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              <span>更新在售價格中...</span>
+            </div>
+          )}
+        </div>
         {isLoading ? (
           <p className="text-muted-foreground mt-2">{t("pricing.searching")}</p>
         ) : (
@@ -173,15 +215,20 @@ export default function PricingSearch() {
                         #{card.cardNumber}
                       </p>
                     )}
-                    {/* Lowest active listing price */}
-                    {lowestPrice !== undefined && (
+                    {/* Lowest active listing price from SNKRDUNK */}
+                    {lowestPrice !== undefined ? (
                       <div className="flex items-center gap-0.5 mt-0.5">
                         <ShoppingBag className="w-2.5 h-2.5 text-orange-400 flex-shrink-0" />
                         <p className="text-[9px] sm:text-xs font-bold text-orange-400">
                           HK${lowestPrice.toLocaleString()}起
                         </p>
                       </div>
-                    )}
+                    ) : isRefreshing ? (
+                      <div className="flex items-center gap-0.5 mt-0.5">
+                        <RefreshCw className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 animate-spin" />
+                        <p className="text-[9px] sm:text-xs text-muted-foreground">更新中</p>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               );

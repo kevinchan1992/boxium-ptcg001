@@ -860,35 +860,101 @@ export const appRouter = router({
       }),
 
     // Batch query lowest active listing price for a list of card IDs
+    // Source: snkrdunkListingsCache (real SNKRDUNK on-sale listings, price in HKD)
     getLowestListingPrices: publicProcedure
       .input(z.object({
         cardIds: z.array(z.number()).max(100),
       }))
       .query(async ({ input }) => {
+        if (input.cardIds.length === 0) return { prices: {} };
         const dbConn = await (await import('./db')).getDb();
-        if (!dbConn || input.cardIds.length === 0) return { prices: {} };
-        const { marketplaceListings } = await import('../drizzle/schema_new');
-        const { inArray, eq, and, min } = await import('drizzle-orm');
+        if (!dbConn) return { prices: {} };
+        const { snkrdunkListingsCache } = await import('../drizzle/schema_new');
+        const { inArray } = await import('drizzle-orm');
+
+        // Fetch all cache rows for the requested card IDs
         const rows = await dbConn
           .select({
-            cardId: marketplaceListings.cardId,
-            minPrice: min(marketplaceListings.priceHkd),
+            cardId: snkrdunkListingsCache.cardId,
+            listings: snkrdunkListingsCache.listings,
           })
-          .from(marketplaceListings)
-          .where(
-            and(
-              inArray(marketplaceListings.cardId, input.cardIds),
-              eq(marketplaceListings.status, 'active')
-            )
-          )
-          .groupBy(marketplaceListings.cardId);
+          .from(snkrdunkListingsCache)
+          .where(inArray(snkrdunkListingsCache.cardId, input.cardIds));
+
         const prices: Record<number, number> = {};
         for (const row of rows) {
-          if (row.cardId !== null && row.minPrice !== null) {
-            prices[row.cardId] = parseFloat(row.minPrice.toString());
+          try {
+            // listings is stored as JSON string: [{price, currency, grade, url, status}, ...]
+            const items: Array<{ price: number; currency: string; grade: string; status?: string }> =
+              typeof row.listings === 'string' ? JSON.parse(row.listings) : (row.listings as any);
+            // Only consider on-sale items (filter out sold items)
+            const onSaleItems = items.filter((item) => !item.status || item.status === 'on-sale');
+            if (onSaleItems.length > 0) {
+              // price is already in HKD (converted during scraping)
+              const minPrice = Math.min(...onSaleItems.map((item) => item.price));
+              if (isFinite(minPrice) && minPrice > 0) {
+                prices[row.cardId] = Math.round(minPrice * 100) / 100;
+              }
+            }
+          } catch (e) {
+            // Skip malformed cache entries
           }
         }
         return { prices };
+      }),
+
+    // Trigger background cache refresh for a list of card IDs (fire-and-forget)
+    // Used by search results page to pre-warm cache for displayed cards
+    triggerCacheRefresh: publicProcedure
+      .input(z.object({
+        cardIds: z.array(z.number()).max(50),
+      }))
+      .mutation(async ({ input }) => {
+        if (input.cardIds.length === 0) return { triggered: 0 };
+        // Fire-and-forget: don't await, just kick off background scraping
+        (async () => {
+          const dbModule = await import('./db');
+          const { scrapeSnkrdunkListings } = await import('./services/snkrdunkScraperService');
+          let triggered = 0;
+          for (const cardId of input.cardIds) {
+            try {
+              // Check if cache exists and is fresh (hot cache valid)
+              const cache = await dbModule.getSnkrdunkListingsCache(cardId);
+              const now = new Date();
+              if (cache && cache.hotExpiresAt && new Date(cache.hotExpiresAt) > now) {
+                continue; // Hot cache still valid, skip
+              }
+              // Get SNKRDUNK data source for this card
+              const dataSource = await dbModule.getDataSourceByCardIdAndSource(cardId, 'snkrdunk');
+              if (!dataSource || !dataSource.sourceUrl) continue;
+              const snkrdunkIdMatch = dataSource.sourceUrl.match(/\/apparels\/(\d+)/);
+              if (!snkrdunkIdMatch) continue;
+              const snkrdunkId = snkrdunkIdMatch[1];
+              triggered++;
+              // Scrape in background (no await at outer level)
+              scrapeSnkrdunkListings(snkrdunkId).then(async (newListings) => {
+                if (newListings.length > 0) {
+                  const hotExpiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000);
+                  const coldExpiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000);
+                  await dbModule.saveSnkrdunkListingsCache({
+                    cardId,
+                    snkrdunkId,
+                    listings: JSON.stringify(newListings),
+                    hotExpiresAt,
+                    expiresAt: coldExpiresAt,
+                  });
+                  console.log(`[CacheRefresh] Updated cache for cardId=${cardId}: ${newListings.length} listings`);
+                }
+              }).catch((err) => {
+                console.warn(`[CacheRefresh] Failed for cardId=${cardId}:`, err?.message);
+              });
+            } catch (err) {
+              console.warn(`[CacheRefresh] Error processing cardId=${cardId}:`, (err as Error)?.message);
+            }
+          }
+          console.log(`[CacheRefresh] Triggered background refresh for ${triggered} cards`);
+        })();
+        return { triggered: input.cardIds.length };
       }),
   }),
   prices: router({
