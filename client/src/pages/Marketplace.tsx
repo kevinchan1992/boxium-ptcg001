@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Package, ChevronLeft, ChevronRight, X, ShoppingBag, SlidersHorizontal, ChevronDown, ChevronUp, HelpCircle, Heart } from "lucide-react";
+import { Search, Package, ChevronLeft, ChevronRight, X, ShoppingBag, SlidersHorizontal, ChevronDown, ChevronUp, HelpCircle, Heart, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CONDITION_GROUPS, CONDITION_SHORT, CONDITION_BADGE, CONDITION_TOOLTIP, type ConditionValue } from "@/lib/conditions";
@@ -134,13 +134,30 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: { listing: any;
       </div>
 
       {/* Info */}
-      <div className="p-3 space-y-1">
+      <div className="p-3 space-y-1.5">
         <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">
           {listing.title}
         </p>
         <p className="text-base font-bold text-[#0A0A2E]">
           HK${Number(listing.priceHkd).toLocaleString()}
         </p>
+        {/* Seller rating for C2C listings */}
+        {listing.sellerType === "seller" && listing.sellerProfile && (
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            {listing.sellerProfile.ratingCount > 0 ? (
+              <>
+                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                <span className="font-medium text-gray-700">{parseFloat(listing.sellerProfile.avgRating ?? "0").toFixed(1)}</span>
+                <span>({listing.sellerProfile.ratingCount})</span>
+              </>
+            ) : (
+              <span className="text-gray-400">新賣家</span>
+            )}
+            {listing.sellerProfile.displayName && (
+              <span className="ml-auto truncate max-w-[80px] text-gray-400">{listing.sellerProfile.displayName}</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -2688,12 +2688,52 @@ export async function getPublicListings(options: {
     sortBy === 'price_asc' ? asc(marketplaceListings.priceHkd) :
     sortBy === 'price_desc' ? desc(marketplaceListings.priceHkd) :
     desc(marketplaceListings.createdAt);
-  const rows = await db.select().from(marketplaceListings)
+  const rows = await db.select({
+    id: marketplaceListings.id,
+    title: marketplaceListings.title,
+    priceHkd: marketplaceListings.priceHkd,
+    condition: marketplaceListings.condition,
+    status: marketplaceListings.status,
+    images: marketplaceListings.images,
+    sellerType: marketplaceListings.sellerType,
+    sellerId: marketplaceListings.sellerId,
+    quantity: marketplaceListings.quantity,
+    createdAt: marketplaceListings.createdAt,
+    cardId: marketplaceListings.cardId,
+    language: marketplaceListings.language,
+    viewCount: marketplaceListings.viewCount,
+    sellerDisplayName: sellerProfiles.displayName,
+    sellerAvgRating: sellerProfiles.avgRating,
+    sellerRatingCount: sellerProfiles.ratingCount,
+  })
+    .from(marketplaceListings)
+    .leftJoin(sellerProfiles, eq(marketplaceListings.sellerId, sellerProfiles.id))
     .where(and(...conditions))
     .orderBy(orderClause)
     .limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(...conditions));
-  return { listings: rows, total: Number(countRows[0]?.count ?? 0) };
+  // Reshape to include sellerProfile sub-object
+  const listings = rows.map(r => ({
+    id: r.id,
+    title: r.title,
+    priceHkd: r.priceHkd,
+    condition: r.condition,
+    status: r.status,
+    images: r.images,
+    sellerType: r.sellerType,
+    sellerId: r.sellerId,
+    quantity: r.quantity,
+    createdAt: r.createdAt,
+    cardId: r.cardId,
+    language: r.language,
+    viewCount: r.viewCount,
+    sellerProfile: r.sellerType === 'seller' ? {
+      displayName: r.sellerDisplayName ?? '',
+      avgRating: r.sellerAvgRating ?? '0',
+      ratingCount: r.sellerRatingCount ?? 0,
+    } : null,
+  }));
+  return { listings, total: Number(countRows[0]?.count ?? 0) };
 }
 export async function getListingById(id: number) {
   const db = await getDb();

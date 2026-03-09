@@ -4045,3 +4045,14 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] AdminMarketplace 放款管理 Tab（PayoutsTab）正式加入
 - [x] adminUpdateListing 加入 rejectedReason 欄位和審核通知邏輯
 - [x] ListingsTab 加入拒絕按鈕和拒絕原因 Dialog
+
+## 三項功能增強（2026-03-09）
+- [ ] 商品詳情頁整合 SNKRDUNK 市場均價區塊（7 天走勢圖）
+- [ ] 商品列表卡片顯示賣家評分（⭐ 星級 + 評分數）
+- [ ] 訂單頁面已發貨狀態顯示自動完成倒計時
+
+## 三項功能升級（2026-03-09）
+- [x] 商品詳情頁整合 SNKRDUNK 市場均價區塊（7 天走勢圖、PSA10 均價、漲跌幅）
+- [x] getPublicListings 加入 sellerProfile LEFT JOIN（avgRating、ratingCount）
+- [x] 商品列表卡片顯示賣家評分（⭐ 4.8 (23) 格式）
+- [x] 訂單頁面「已發貨」狀態加入自動完成倒計時（進度條 + X 天 X 小時 X 分鐘）

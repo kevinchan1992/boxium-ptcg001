@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -12,6 +12,31 @@ import {
   CreditCard, MapPin, Phone, User, Flag, Star, MessageSquare, Loader2,
   Copy, ExternalLink, ShieldCheck, CircleDot
 } from "lucide-react";
+
+// Auto-complete countdown hook
+function useAutoCompleteCountdown(autoCompleteAt: Date | string | null | undefined) {
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; pct: number } | null>(null);
+  useEffect(() => {
+    if (!autoCompleteAt) return;
+    const target = new Date(autoCompleteAt).getTime();
+    const TOTAL_MS = 14 * 24 * 60 * 60 * 1000;
+    const calc = () => {
+      const now = Date.now();
+      const diff = target - now;
+      if (diff <= 0) { setTimeLeft({ days: 0, hours: 0, minutes: 0, pct: 100 }); return; }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const elapsed = TOTAL_MS - diff;
+      const pct = Math.min(100, Math.max(0, (elapsed / TOTAL_MS) * 100));
+      setTimeLeft({ days, hours, minutes, pct });
+    };
+    calc();
+    const t = setInterval(calc, 60000);
+    return () => clearInterval(t);
+  }, [autoCompleteAt]);
+  return timeLeft;
+}
 
 // Carrier tracking URL mapping
 const CARRIER_TRACKING: Record<string, { label: string; url: string | null }> = {
@@ -386,6 +411,10 @@ export default function OrderDetail() {
 
   const statusInfo = ORDER_STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, color: "bg-gray-100 text-gray-600 border-gray-200", icon: null, desc: "" };
   const canConfirm = isBuyer && (order.orderStatus === "shipped" || order.orderStatus === "delivered");
+  // Auto-complete countdown
+  const autoCompleteCountdown = useAutoCompleteCountdown(
+    order.orderStatus === "shipped" ? order.autoCompleteAt : null
+  );
   // Calculate dispute window: 7 days from shipment
   const DISPUTE_WINDOW_DAYS = 7;
   const disputeDeadline = order.shippedAt ? (() => {
@@ -541,9 +570,33 @@ export default function OrderDetail() {
                     </p>
                   )}
                   {order.autoCompleteAt && order.orderStatus === "shipped" && (
-                    <p className="text-xs text-indigo-500 mt-1">
-                      如未確認收貨，系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成訂單
-                    </p>
+                    <div className="mt-2 rounded-lg border border-indigo-100 bg-indigo-50 p-2.5">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-xs font-medium text-indigo-700">自動確認收貨倒計時</p>
+                        {autoCompleteCountdown && (
+                          <span className="text-xs font-bold text-indigo-800">
+                            {autoCompleteCountdown.days > 0 && `${autoCompleteCountdown.days} 天 `}
+                            {autoCompleteCountdown.hours} 小時 {autoCompleteCountdown.minutes} 分鐘
+                          </span>
+                        )}
+                      </div>
+                      {autoCompleteCountdown && (
+                        <div className="w-full bg-indigo-100 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-1000"
+                            style={{
+                              width: `${autoCompleteCountdown.pct}%`,
+                              background: autoCompleteCountdown.pct > 80
+                                ? "linear-gradient(90deg, #06038d, #e53e3e)"
+                                : "linear-gradient(90deg, #06038d, #4f46e5)"
+                            }}
+                          />
+                        </div>
+                      )}
+                      <p className="text-xs text-indigo-500 mt-1">
+                        如未手動確認，系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成訂單
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
