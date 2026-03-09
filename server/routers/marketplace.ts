@@ -473,7 +473,7 @@ export const marketplaceRouter = router({
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       if (order.sellerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
-      if (order.orderStatus !== "processing") throw new TRPCError({ code: "BAD_REQUEST", message: "訂單狀態不允許此操作" });
+      if (!(["processing", "payment_received"].includes(order.orderStatus))) throw new TRPCError({ code: "BAD_REQUEST", message: "訂單狀態不允許此操作" });
       // Set autoCompleteAt = 14 days from now
       const autoCompleteAt = new Date();
       autoCompleteAt.setDate(autoCompleteAt.getDate() + 14);

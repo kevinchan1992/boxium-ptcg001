@@ -126,10 +126,13 @@ const conditionOptions = [
 const orderStatusLabel: Record<string, { label: string; color: string }> = {
   pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800" },
   paid_held: { label: "已付款", color: "bg-blue-100 text-blue-800" },
+  payment_received: { label: "已收款", color: "bg-blue-100 text-blue-800" },
   processing: { label: "處理中", color: "bg-purple-100 text-purple-800" },
   shipped: { label: "已寄出", color: "bg-indigo-100 text-indigo-800" },
+  delivered: { label: "已送達", color: "bg-teal-100 text-teal-800" },
   completed: { label: "已完成", color: "bg-green-100 text-green-800" },
   cancelled: { label: "已取消", color: "bg-red-100 text-red-800" },
+  disputed: { label: "爭議中", color: "bg-orange-100 text-orange-800" },
 };
 
 export default function SellerDashboard() {
@@ -541,10 +544,10 @@ export default function SellerDashboard() {
                               <Badge className={orderStatusLabel[item.orderStatus]?.color ?? "bg-gray-100 text-gray-800"}>
                                 {orderStatusLabel[item.orderStatus]?.label ?? item.orderStatus}
                               </Badge>
-                              {item.orderStatus === "processing" && (
+                              {(["processing", "payment_received"].includes(item.orderStatus)) && (
                                 <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white"
                                   onClick={() => {
-                                    setShipDialog({ open: true, orderId: item.orderId, orderNo: item.orderNo ?? "" });
+                                    setShipDialog({ open: true, orderId: item.orderId ?? item.id, orderNo: item.orderNo ?? "" });
                                     setShipForm({ shippingMethod: "", trackingNumber: "" });
                                   }}>
                                   填寫出貨資料
