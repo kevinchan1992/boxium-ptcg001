@@ -3905,3 +3905,18 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 修復 webhook account.updated 的狀態判斷邏輯（與 syncStripeConnectStatus 保持一致）
 - [x] 重置資料庫中兩個帳戶的狀態從 disabled 為 pending，下次登入會自動重新同步
 - [x] 確認代碼中無硬編碼測試模式金鑰
+
+## 🔴 修復 Stripe Transfer "No such destination" 錯誤
+
+### 問題描述
+測試付款流程時出現：`No such destination: 'acct_1T8hMxCblQuzQFtP'`
+根本原因：Connect 子帳戶是在 Live Mode 下創建的，但付款時可能使用了 Test Mode 金鑰，或 Transfer 邏輯有問題。
+
+### 任務清單
+- [ ] 確認 Connect 帳戶 acct_1T8hMxCblQuzQFtP 的創建模式（Live/Test）
+- [ ] 確認 checkout session 使用的 Stripe 金鑰模式
+- [ ] 確認 transfer_data.destination 的傳遞邏輯
+- [ ] 修復 Live Mode 下的 Transfer 流程
+- [ ] 測試完整付款 + 轉帳流程
+- [ ] 保存 checkpoint
+

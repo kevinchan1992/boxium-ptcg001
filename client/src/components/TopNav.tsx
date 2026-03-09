@@ -45,7 +45,7 @@ export function TopNav() {
     { href: "/trending", label: t("common.trending") },
     { href: "/blog", label: t("common.blog") },
     { href: "/about", label: t("common.about") },
-    { href: "/marketplace", label: "商城" },
+    // { href: "/marketplace", label: "商城" }, // Hidden: marketplace under testing, access via direct URL /marketplace
   ];
 
   useEffect(() => {
