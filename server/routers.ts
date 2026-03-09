@@ -6,6 +6,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, adminProcedure, protectedProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
+import { scheduledTasks } from "../drizzle/schema_new";
 import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
 import { downloadAndEncodeImage, getBestImageUrl } from "./imageUtils";
@@ -2351,8 +2353,6 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         }
         const dbInstance = await db.getDb();
         if (dbInstance) {
-          const { scheduledTasks } = require('../drizzle/schema_new');
-          const { eq } = require('drizzle-orm');
           await dbInstance.delete(scheduledTasks).where(eq(scheduledTasks.id, input.taskId));
         }
         return { success: true };
