@@ -4056,3 +4056,6 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] getPublicListings 加入 sellerProfile LEFT JOIN（avgRating、ratingCount）
 - [x] 商品列表卡片顯示賣家評分（⭐ 4.8 (23) 格式）
 - [x] 訂單頁面「已發貨」狀態加入自動完成倒計時（進度條 + X 天 X 小時 X 分鐘）
+- [x] 上架商品 Dialog 加入卡牌搜索選擇器（CardPickerDialog）
+- [x] 選擇卡牌後自動帶入商品名稱
+- [x] 已選卡牌顯示卡牌圖片、名稱、卡號、稀有度

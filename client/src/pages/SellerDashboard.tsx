@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
-import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown } from "lucide-react";
+import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown, Layers, ChevronRight } from "lucide-react";
+import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
@@ -280,6 +281,8 @@ export default function SellerDashboard() {
     title: "", description: "", condition: "raw_a", price: "", quantity: "1",
   });
   const [listingImages, setListingImages] = useState<string[]>([]);
+  const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
+  const [showCardPicker, setShowCardPicker] = useState(false);
 
   const { data: me } = trpc.auth.me.useQuery();
   const { data: sellerProfile, refetch: refetchProfile } = trpc.marketplace.getMySellerProfile.useQuery(
@@ -321,6 +324,7 @@ export default function SellerDashboard() {
       setShowNewListing(false);
       setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1" });
       setListingImages([]);
+      setSelectedCard(null);
       refetchListings();
     },
     onError: (e) => toast.error(e.message),
@@ -894,6 +898,49 @@ export default function SellerDashboard() {
           <DialogHeader><DialogTitle>上架新商品</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <ImageUploader images={listingImages} onChange={setListingImages} />
+
+            {/* Card Picker */}
+            <div>
+              <Label>關聯卡牌（選選）</Label>
+              {selectedCard ? (
+                <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#06038d]/30 bg-indigo-50/50">
+                  {selectedCard.imageUrl ? (
+                    <img src={selectedCard.imageUrl} alt={selectedCard.name} className="w-10 h-14 object-cover rounded-md border border-gray-200 flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-14 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <Layers className="w-4 h-4 text-gray-300" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#06038d] truncate">{selectedCard.name}</p>
+                    {selectedCard.nameJa && selectedCard.nameJa !== selectedCard.name && (
+                      <p className="text-xs text-gray-500 truncate">{selectedCard.nameJa}</p>
+                    )}
+                    <div className="flex gap-1 mt-0.5 flex-wrap">
+                      {selectedCard.cardNumber && <span className="text-[10px] text-gray-400">{selectedCard.cardNumber}</span>}
+                      {selectedCard.rarity && <span className="text-[10px] text-amber-600">{selectedCard.rarity}</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-[#06038d]" onClick={() => setShowCardPicker(true)}>改變</Button>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-500" onClick={() => setSelectedCard(null)}><X className="w-3 h-3" /></Button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="mt-1 w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 hover:border-[#06038d] hover:text-[#06038d] hover:bg-indigo-50/30 transition-colors"
+                  onClick={() => setShowCardPicker(true)}
+                >
+                  <span className="flex items-center gap-2">
+                    <Layers className="w-4 h-4" />
+                    點擊搜索並關聯卡牌
+                  </span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
             <div>
               <Label>商品名稱 *</Label>
               <Input className="mt-1" placeholder="例如：Charizard ex 噴火龍 SAR"
@@ -948,12 +995,27 @@ export default function SellerDashboard() {
                 price: parseFloat(listingForm.price),
                 quantity: parseInt(listingForm.quantity),
                 images: listingImages.length > 0 ? listingImages : undefined,
+                cardId: selectedCard?.id ?? undefined,
               })}>
               {createListingMutation.isPending ? "提交中..." : "提交審核"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Card Picker Dialog */}
+      <CardPickerDialog
+        open={showCardPicker}
+        onOpenChange={setShowCardPicker}
+        selectedCardId={selectedCard?.id ?? null}
+        onSelect={(card) => {
+          setSelectedCard(card);
+          // Auto-fill title if empty
+          if (!listingForm.title.trim()) {
+            setListingForm(p => ({ ...p, title: card.name }));
+          }
+        }}
+      />
 
       {/* Ship Dialog */}
       <Dialog open={shipDialog.open} onOpenChange={(o) => setShipDialog(d => ({ ...d, open: o }))}>
