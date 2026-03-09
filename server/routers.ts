@@ -907,7 +907,7 @@ export const appRouter = router({
     // Used by search results page to pre-warm cache for displayed cards
     triggerCacheRefresh: publicProcedure
       .input(z.object({
-        cardIds: z.array(z.number()).max(50),
+        cardIds: z.array(z.number()).max(100),
       }))
       .mutation(async ({ input }) => {
         if (input.cardIds.length === 0) return { triggered: 0 };
