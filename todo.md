@@ -4039,3 +4039,9 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] P2：getUserNotifications 函數加入 type 篩選支援
 - [x] P2：updateMyListing 加入降價通知邏輯（通知所有 Wishlist 用戶）
 - [x] P2：AdminMarketplace AlipayPendingTab 確認 Dialog 加入 AI 驗證結果顯示
+
+## 測試修復（2026-03-09）
+- [x] AdminMarketplace 舉報管理 Tab（ReportsTab）正式加入
+- [x] AdminMarketplace 放款管理 Tab（PayoutsTab）正式加入
+- [x] adminUpdateListing 加入 rejectedReason 欄位和審核通知邏輯
+- [x] ListingsTab 加入拒絕按鈕和拒絕原因 Dialog

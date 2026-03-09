@@ -430,6 +430,8 @@ function ListingsTab() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
+  const [rejectDialogId, setRejectDialogId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const { data, isLoading, refetch } = trpc.marketplace.adminGetListings.useQuery({
     page, pageSize: 20, status: statusFilter === "all" ? undefined : statusFilter
   });
@@ -485,10 +487,16 @@ function ListingsTab() {
                   <Eye className="w-3 h-3 mr-1" />{listing.status === "sold" ? "查看詳情" : "查看/編輯"}
                 </Button>
                 {listing.status === "pending_review" && (
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => updateMutation.mutate({ id: listing.id, status: "active" })}>
-                    <CheckCircle className="w-3 h-3 mr-1" />批准
-                  </Button>
+                  <>
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => updateMutation.mutate({ id: listing.id, status: "active" })}>
+                      <CheckCircle className="w-3 h-3 mr-1" />批准
+                    </Button>
+                    <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50"
+                      onClick={() => { setRejectDialogId(listing.id); setRejectReason(""); }}>
+                      拒絕
+                    </Button>
+                  </>
                 )}
                 {listing.status === "active" && (
                   <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: listing.id, status: "removed" })}>下架</Button>
@@ -508,6 +516,20 @@ function ListingsTab() {
           <Button variant="outline" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一頁</Button>
         </div>
       )}
+      <Dialog open={rejectDialogId !== null} onOpenChange={() => setRejectDialogId(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>拒絕商品上架</DialogTitle></DialogHeader>
+          <Label className="text-sm">拒絕原因（將通知賣家）</Label>
+          <Textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="請輸入具體原因，如：圖片不清晰、描述不符實際等..." rows={3} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialogId(null)}>取消</Button>
+            <Button variant="destructive" disabled={updateMutation.isPending}
+              onClick={() => { if (rejectDialogId) { updateMutation.mutate({ id: rejectDialogId, status: "removed", rejectedReason: rejectReason || undefined }); setRejectDialogId(null); } }}>
+              確認拒絕
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <CreateListingDialog open={showCreate} onClose={() => setShowCreate(false)} onSuccess={refetch} />
       <ListingDetailDialog
         listingId={selectedListingId}
@@ -1595,6 +1617,141 @@ function SalesReportTab() {
   );
 }
 
+// ============================================================
+// REPORTS TAB
+// ============================================================
+function ReportsTab() {
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("pending");
+  const { data, isLoading, refetch } = trpc.marketplace.adminGetReports.useQuery({ page, pageSize: 20, status: statusFilter });
+  const reviewMutation = trpc.marketplace.adminReviewReport.useMutation({
+    onSuccess: () => { toast.success("舉報已處理"); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const [noteDialogId, setNoteDialogId] = useState<number | null>(null);
+  const [adminNote, setAdminNote] = useState("");
+  const [pendingAction, setPendingAction] = useState<"reviewed" | "dismissed" | "actioned">("reviewed");
+  const reasonLabel: Record<string, string> = { fake_item: "假貨", wrong_description: "描述不符", prohibited_item: "禁止商品", scam: "詐騙", other: "其他" };
+  const statusBadge: Record<string, string> = { pending: "bg-yellow-100 text-yellow-800", reviewed: "bg-blue-100 text-blue-800", dismissed: "bg-gray-100 text-gray-700", actioned: "bg-red-100 text-red-800" };
+  const statusLabel: Record<string, string> = { pending: "待處理", reviewed: "已審核", dismissed: "已忽略", actioned: "已處置", all: "全部" };
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        {["all", "pending", "reviewed", "dismissed", "actioned"].map(s => (
+          <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              statusFilter === s ? "bg-[#06038d] text-white border-[#06038d]" : "bg-white text-gray-600 border-gray-200 hover:border-[#06038d]"
+            }`}>{statusLabel[s]}</button>
+        ))}
+      </div>
+      {isLoading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#06038d]" /></div>
+      ) : !data?.reports?.length ? (
+        <div className="text-center py-12 text-gray-400">暫無舉報記錄</div>
+      ) : (
+        <div className="space-y-3">
+          {data.reports.map((r: any) => (
+            <div key={r.id} className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
+                <span className="text-white text-xs font-semibold">舉報 #{r.id} · 商品 #{r.listingId}</span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge[r.status] ?? ""}`}>{statusLabel[r.status] ?? r.status}</span>
+              </div>
+              <div className="p-4 bg-white">
+                <div className="flex flex-wrap gap-2 text-xs text-gray-600 mb-2">
+                  <span className="font-medium">原因：{reasonLabel[r.reason] ?? r.reason}</span>
+                  {r.details && <span className="text-gray-500">· {r.details}</span>}
+                  <span className="text-gray-400 ml-auto">{new Date(r.createdAt).toLocaleString()}</span>
+                </div>
+                {r.adminNote && <p className="text-xs text-blue-700 bg-blue-50 rounded px-2 py-1 mb-2">管理員備注：{r.adminNote}</p>}
+                {r.status === "pending" && (
+                  <div className="flex gap-2 mt-2">
+                    <Button size="sm" variant="outline" className="text-xs border-blue-300 text-blue-700"
+                      onClick={() => { setNoteDialogId(r.id); setPendingAction("reviewed"); setAdminNote(""); }}>標記已審核</Button>
+                    <Button size="sm" variant="outline" className="text-xs border-red-300 text-red-700"
+                      onClick={() => { setNoteDialogId(r.id); setPendingAction("actioned"); setAdminNote(""); }}>已處置</Button>
+                    <Button size="sm" variant="outline" className="text-xs border-gray-300 text-gray-500"
+                      onClick={() => reviewMutation.mutate({ reportId: r.id, status: "dismissed" })}>忽略</Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          <div className="flex justify-between items-center pt-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
+            <span className="text-xs text-gray-500">第 {page} 頁 · 共 {data.total} 筆</span>
+            <Button variant="outline" size="sm" disabled={page * 20 >= (data.total ?? 0)} onClick={() => setPage(p => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
+          </div>
+        </div>
+      )}
+      <Dialog open={noteDialogId !== null} onOpenChange={() => setNoteDialogId(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>處理舉報</DialogTitle></DialogHeader>
+          <Label className="text-sm">管理員備注（選填）</Label>
+          <Textarea value={adminNote} onChange={e => setAdminNote(e.target.value)} placeholder="輸入處理備注..." rows={3} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNoteDialogId(null)}>取消</Button>
+            <Button style={{ background: "#06038d" }} className="text-white" disabled={reviewMutation.isPending}
+              onClick={() => { if (noteDialogId) { reviewMutation.mutate({ reportId: noteDialogId, status: pendingAction, adminNote: adminNote || undefined }); setNoteDialogId(null); } }}>確認</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ============================================================
+// PAYOUTS TAB
+// ============================================================
+function PayoutsTab() {
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = trpc.marketplace.adminGetOrders.useQuery({ page, pageSize: 20, status: "completed" });
+  const totalPayout = data?.orders?.reduce((sum: number, o: any) => sum + (Number(o.sellerAmountHkd) || 0), 0) ?? 0;
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="rounded-xl border border-gray-100 shadow-sm p-4 bg-gradient-to-br from-[#06038d]/5 to-white">
+          <p className="text-xs text-gray-500 mb-1">本頁應付賣家總額</p>
+          <p className="text-2xl font-bold" style={{ color: "#06038d" }}>HKD {totalPayout.toFixed(2)}</p>
+        </div>
+        <div className="rounded-xl border border-gray-100 shadow-sm p-4 bg-gradient-to-br from-green-50 to-white">
+          <p className="text-xs text-gray-500 mb-1">已完成訂單數</p>
+          <p className="text-2xl font-bold text-green-700">{data?.total ?? 0}</p>
+        </div>
+      </div>
+      {isLoading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#06038d]" /></div>
+      ) : !data?.orders?.length ? (
+        <div className="text-center py-12 text-gray-400">暫無已完成訂單</div>
+      ) : (
+        <div className="space-y-3">
+          {data.orders.map((o: any) => (
+            <div key={o.id} className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
+                <span className="text-white text-xs font-semibold">訂單 #{o.orderNo}</span>
+                <span className="text-xs text-yellow-300 font-medium">賣家應收：HKD {Number(o.sellerAmountHkd ?? 0).toFixed(2)}</span>
+              </div>
+              <div className="p-4 bg-white">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+                  <span>買家：{o.buyerName ?? o.buyerId}</span>
+                  <span>賣家：{o.sellerDisplayName ?? o.sellerId}</span>
+                  <span>商品：{o.listingTitle ?? "-"}</span>
+                  <span>付款：{o.paymentMethod === "stripe" ? "Stripe" : "支付寶"}</span>
+                  <span className="text-gray-400 ml-auto">{new Date(o.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+          <div className="flex justify-between items-center pt-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
+            <span className="text-xs text-gray-500">第 {page} 頁 · 共 {data.total} 筆</span>
+            <Button variant="outline" size="sm" disabled={page * 20 >= (data.total ?? 0)} onClick={() => setPage(p => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminMarketplace() {
   const { data: stats } = trpc.marketplace.adminGetStats.useQuery();
   const { data: me } = trpc.auth.me.useQuery();
@@ -1655,6 +1812,8 @@ export default function AdminMarketplace() {
               爭議處理
             </BrandTabsTrigger>
             <BrandTabsTrigger value="sales" icon={<BarChart3 className="w-4 h-4" />} label="銷售總覽">銷售總覽</BrandTabsTrigger>
+            <BrandTabsTrigger value="reports" icon={<Flag className="w-4 h-4" />} label="舉報管理">舉報管理</BrandTabsTrigger>
+            <BrandTabsTrigger value="payouts" icon={<DollarSign className="w-4 h-4" />} label="放款管理">放款管理</BrandTabsTrigger>
           </BrandTabsList>
           <BrandTabsContent value="listings"><ListingsTab /></BrandTabsContent>
           <BrandTabsContent value="orders"><OrdersTab /></BrandTabsContent>
@@ -1663,6 +1822,8 @@ export default function AdminMarketplace() {
           <BrandTabsContent value="banners"><BannersTab /></BrandTabsContent>
           <BrandTabsContent value="disputes"><DisputesTab /></BrandTabsContent>
           <BrandTabsContent value="sales"><SalesReportTab /></BrandTabsContent>
+          <BrandTabsContent value="reports"><ReportsTab /></BrandTabsContent>
+          <BrandTabsContent value="payouts"><PayoutsTab /></BrandTabsContent>
         </BrandTabs>
       </div>
     </div>

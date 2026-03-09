@@ -687,15 +687,44 @@ export const marketplaceRouter = router({
       quantity: z.number().int().min(0).optional(),
       title: z.string().optional(),
       description: z.string().optional(),
+      rejectedReason: z.string().max(500).optional(),
     }))
     .mutation(async ({ input }) => {
-      const { id, ...data } = input;
+      const { id, rejectedReason, ...data } = input;
       const updatePayload: Record<string, any> = { ...data };
       if (updatePayload.price) {
         updatePayload.priceHkd = parseFloat(updatePayload.price).toFixed(2);
         delete updatePayload.price;
       }
+      if (rejectedReason) updatePayload.rejectedReason = rejectedReason;
+      // Fetch listing before update to detect status change
+      const prevListing = await getListingById(id);
       await updateListing(id, updatePayload);
+      // Send notification when status changes to active (approved) or removed (rejected)
+      if (prevListing && data.status && data.status !== prevListing.status) {
+        if (prevListing.sellerType === "seller" && prevListing.sellerId) {
+          const sellerProfile = await getSellerProfileById(prevListing.sellerId);
+          if (sellerProfile?.userId) {
+            if (data.status === "active") {
+              await createNotification({
+                userId: sellerProfile.userId,
+                type: "trade",
+                title: "商品審核通過 ✅",
+                body: `您的商品「${prevListing.title}」已通過審核，現已上架！`,
+                linkUrl: `/marketplace/${id}`,
+              }).catch(() => {});
+            } else if (data.status === "removed") {
+              await createNotification({
+                userId: sellerProfile.userId,
+                type: "trade",
+                title: "商品審核未通過 ❌",
+                body: `您的商品「${prevListing.title}」審核未通過。${rejectedReason ? `原因：${rejectedReason}` : "請修改後重新提交。"}`,
+                linkUrl: `/seller`,
+              }).catch(() => {});
+            }
+          }
+        }
+      }
       return { success: true };
     }),
 
