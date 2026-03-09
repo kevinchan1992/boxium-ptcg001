@@ -227,11 +227,7 @@ function MarketplaceComingSoon() {
 }
 
 export default function Marketplace() {
-  // Show coming soon page in production environment
-  if (import.meta.env.PROD) {
-    return <MarketplaceComingSoon />;
-  }
-
+  // Marketplace is now live - direct URL access only (nav entry hidden)
   return <MarketplaceInner />;
 }
 
