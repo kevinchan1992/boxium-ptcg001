@@ -4022,3 +4022,4 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 後端：新增 cards.getLowestListingPrices 批量查詢最低在售商品價格
 - [x] 前端：PricingSearch 加入分頁功能（每頁 50 張，顯示頁碼/總頁數）
 - [x] 前端：每張卡牌下方顯示最低在售商品價格（橙色文字，ShoppingBag 圖示）
+- [x] 賣家商品卡片加入社群媒體分享按鈕（Facebook、WhatsApp、X/Twitter、複製連結）
