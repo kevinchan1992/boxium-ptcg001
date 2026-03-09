@@ -1151,9 +1151,22 @@ function DisputesTab() {
                   <p className="text-xs text-muted-foreground mt-0.5">
                     HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)} · {order.paymentMethod}
                   </p>
+                  <div className="flex items-center gap-3 mt-1">
+                    {order.buyerName && (
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium">買家：</span>{order.buyerName}
+                        {order.buyerEmail && <span className="ml-1 text-muted-foreground/70">({order.buyerEmail})</span>}
+                      </p>
+                    )}
+                  </div>
+                  {order.shippedAt && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      <span className="font-medium">出貨時間：</span>{new Date(order.shippedAt).toLocaleString("zh-HK")}
+                    </p>
+                  )}
                   {order.disputeOpenedAt && (
                     <p className="text-xs text-red-600 mt-1">
-                      申請時間：{new Date(order.disputeOpenedAt).toLocaleString("zh-HK")}
+                      <span className="font-medium">申請時間：</span>{new Date(order.disputeOpenedAt).toLocaleString("zh-HK")}
                     </p>
                   )}
                   {order.disputeReason && (

@@ -1,4 +1,5 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
+import { alias } from "drizzle-orm/mysql-core";
 import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
 import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";
@@ -3013,13 +3014,19 @@ export async function getDisputedOrders(page = 1, pageSize = 20) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
-  const rows = await db.select().from(marketplaceOrders)
+  const buyerAlias = alias(users, 'buyer');
+  const rows = await db.select({
+    order: marketplaceOrders,
+    buyerName: buyerAlias.name,
+    buyerEmail: buyerAlias.email,
+  }).from(marketplaceOrders)
+    .leftJoin(buyerAlias, eq(marketplaceOrders.buyerId, buyerAlias.id))
     .where(eq(marketplaceOrders.orderStatus, "disputed"))
     .orderBy(desc(marketplaceOrders.disputeOpenedAt))
     .limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
     .where(eq(marketplaceOrders.orderStatus, "disputed"));
-  return { orders: rows, total: Number(countRows[0]?.count ?? 0) };
+  return { orders: rows.map(r => ({ ...r.order, buyerName: r.buyerName, buyerEmail: r.buyerEmail })), total: Number(countRows[0]?.count ?? 0) };
 }
 
 export async function getSellerProfileByStripeConnectId(stripeConnectId: string) {

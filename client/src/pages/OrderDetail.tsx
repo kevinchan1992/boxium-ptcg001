@@ -291,7 +291,16 @@ export default function OrderDetail() {
 
   const statusInfo = ORDER_STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, color: "bg-gray-100 text-gray-600 border-gray-200", icon: null, desc: "" };
   const canConfirm = isBuyer && (order.orderStatus === "shipped" || order.orderStatus === "delivered");
-  const canDispute = isBuyer && ["shipped", "delivered", "payment_received", "processing"].includes(order.orderStatus);
+  // Calculate dispute window: 7 days from shipment
+  const DISPUTE_WINDOW_DAYS = 7;
+  const disputeDeadline = order.shippedAt ? (() => {
+    const d = new Date(order.shippedAt);
+    d.setDate(d.getDate() + DISPUTE_WINDOW_DAYS);
+    return d;
+  })() : null;
+  const disputeDaysLeft = disputeDeadline ? Math.ceil((disputeDeadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+  const isWithinDisputeWindow = disputeDaysLeft !== null ? disputeDaysLeft > 0 : true; // if no shippedAt, allow dispute
+  const canDispute = isBuyer && ["shipped", "delivered", "payment_received", "processing"].includes(order.orderStatus) && isWithinDisputeWindow;
   const isCompleted = order.orderStatus === "completed";
   const canReview = isBuyer && isCompleted && order.sellerType === "seller" && !review;
 
@@ -346,9 +355,17 @@ export default function OrderDetail() {
                 </Button>
               )}
               {canDispute && (
-                <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50" onClick={() => setShowDisputeDialog(true)}>
-                  <Flag className="w-4 h-4 mr-1.5" />申請爭議
-                </Button>
+                <div className="flex flex-col gap-0.5">
+                  <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50" onClick={() => setShowDisputeDialog(true)}>
+                    <Flag className="w-4 h-4 mr-1.5" />申請爭議
+                  </Button>
+                  {disputeDaysLeft !== null && disputeDaysLeft <= 3 && disputeDaysLeft > 0 && (
+                    <p className="text-[10px] text-red-500">還有 {disputeDaysLeft} 天可申請</p>
+                  )}
+                </div>
+              )}
+              {isBuyer && ["shipped", "delivered"].includes(order.orderStatus) && !isWithinDisputeWindow && (
+                <p className="text-xs text-muted-foreground self-center">爭議申請期限已過（7 天）</p>
               )}
               {canReview && (
                 <Button size="sm" variant="outline" className="border-yellow-300 text-yellow-700 hover:bg-yellow-50" onClick={() => setShowReviewDialog(true)}>

@@ -1300,6 +1300,16 @@ All three checks must pass for verified to be true. Respond with JSON only match
       if (order.orderStatus === "disputed") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已在爭議處理中" });
       }
+      // Enforce 7-day dispute window: can only open dispute within 7 days of shipment
+      if (order.shippedAt) {
+        const DISPUTE_WINDOW_DAYS = 7;
+        const shippedDate = new Date(order.shippedAt);
+        const deadlineDate = new Date(shippedDate);
+        deadlineDate.setDate(deadlineDate.getDate() + DISPUTE_WINDOW_DAYS);
+        if (new Date() > deadlineDate) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `爭議申請期限已過（出貨後 ${DISPUTE_WINDOW_DAYS} 天內），如有問題請聯絡客服` });
+        }
+      }
       await updateMarketplaceOrder(input.orderId, {
         orderStatus: "disputed",
         disputeOpenedAt: new Date(),

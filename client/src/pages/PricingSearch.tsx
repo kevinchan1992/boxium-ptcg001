@@ -88,12 +88,12 @@ export default function PricingSearch() {
           </div>
         </div>
       ) : searchResults.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-1.5 sm:gap-2">
           {searchResults.map((card: any) => (
             <div
               key={card.id}
               onClick={() => handleCardClick(card.id)}
-              className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-105 hover:shadow-xl"
+              className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-110 hover:shadow-lg"
             >
               <div className="aspect-[2/3] relative bg-muted">
                 {card.imageUrl ? (
@@ -101,6 +101,7 @@ export default function PricingSearch() {
                     src={card.imageUrl}
                     alt={card.name}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
@@ -108,17 +109,17 @@ export default function PricingSearch() {
                   </div>
                 )}
               </div>
-              <div className="p-3">
-                <h3 className="font-semibold text-foreground text-sm mb-1 truncate">
+              <div className="p-1.5 sm:p-2">
+                <h3 className="font-semibold text-foreground text-[10px] sm:text-xs mb-0.5 truncate">
                   {card.name}
                 </h3>
                 {card.nameJa && (
-                  <p className="text-xs text-muted-foreground mb-1 truncate">
+                  <p className="text-[9px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1 truncate line-clamp-1">
                     {card.nameJa}
                   </p>
                 )}
                 {card.cardNumber && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[9px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">
                     #{card.cardNumber}
                   </p>
                 )}

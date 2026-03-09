@@ -3940,3 +3940,31 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 賣家中心已售出商品可點擊查看詳情（唯讀）
 - [x] Admin 商品管理已售出商品只能查看（已售出商品不顯示編輯按鈕）
 - [x] 儲存 Checkpoint 並發布
+
+## 🔧 訂單爭議流程 + 賣家收款通知（2026-03-09）
+
+### 功能需求
+1. 買家可在出貨後 7 天內申請爭議（填寫原因）
+2. Admin 可處理爭議：決定放款給賣家或退款給買家
+3. 買家確認收貨或 14 天自動完成後，發送站內通知 + Email 給賣家告知放款金額
+
+### 後端任務
+- [x] openDispute procedure 已存在，加入 7 天期限驗證
+- [x] adminResolveDispute procedure 已存在（Admin 處理爭議：release/refund）
+- [x] confirmReceipt 已有賣家收款通知（站內通知 + Email）
+- [x] auto-complete cron job 已有賣家收款通知
+
+### 前端任務
+- [x] OrderDetail.tsx：已出貨狀態加入「申請爭議」按鈕（7 天期限內）
+- [x] OrderDetail.tsx：爭議申請對話框（填寫原因）
+- [x] OrderDetail.tsx：7 天期限倒計時提示（還有 X 天可申請）
+- [x] AdminMarketplace.tsx：爭議管理 tab 已存在（爭議訂單列表 + 處理對話框）
+- [x] AdminMarketplace.tsx：爭議列表加入買家名稱、Email、出貨時間顯示
+
+### 完成
+- [x] 儲存 Checkpoint 並發布
+
+## 🔧 統一卡片顯示尺寸（2026-03-09）
+
+- [x] 統一 Research（pricing/search）頁面卡片尺寸與 Search 頁面相同（緊湊多列網格，8列）
+- [x] 確保兩個頁面的卡片組件樣式一致（圖片比例、文字截斷、間距）
