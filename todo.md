@@ -3891,10 +3891,11 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 修復 routers.ts 三個插入點（加入 jpyPrice）
 
 ### 統一爬取邏輯任務
-- [ ] 分析所有爬取路徑的差異（fetchPriceHistory vs fetchPriceHistoryFromApi）
-- [ ] 建立統一的核心爬取函數（所有路徑共用）
-- [ ] 統一 Research 頁面自動爬取邏輯
-- [ ] 統一 Admin 批量更新邏輯
-- [ ] 統一手動添加數據源邏輯
-- [ ] 清除所有舊版爬取邏輯
-- [ ] 確認所有路徑都正確傳入 jpyPrice
+- [x] 分析所有爬取路徑的差異（fetchPriceHistory vs fetchPriceHistoryFromApi）
+- [x] 建立統一的核心爬取函數（所有路徑共用 fetchPriceHistoryFromApi）
+- [x] 統一 Research 頁面自動爬取邏輯（修復 fetchPriceHistory 型別宣告加入 jpyPrice）
+- [x] 統一 Admin 批量更新邏輯（persistentSnkrdunkBatchUpdate.ts 已用最新版）
+- [x] 統一手動添加數據源邏輯（routers.ts 三個插入點已有 jpyPrice）
+- [x] 清除舊版邏輯（scheduler.ts 已標記 @deprecated 並修復插入邏輯，已確認停用）
+- [x] 確認所有路徑都正確傳入 jpyPrice
+- [x] 資料庫 UNIQUE INDEX 已更新為 uniq_price_card_source_grade_soldAt_jpyPrice

@@ -263,9 +263,13 @@ export function convertJpyToTwd(jpy: number): number {
 /**
  * Update price history only (without re-scraping card data)
  * This function is optimized for scheduled updates where card info doesn't change
+ * 
+ * Returns the same type as fetchPriceHistoryFromApi, including jpyPrice for stable deduplication.
+ * jpyPrice is the original JPY price, unaffected by exchange rate fluctuations.
  */
 export async function fetchPriceHistory(url: string, productType: "single_card" | "sealed_product" = "single_card"): Promise<Array<{
-  price: number;
+  price: number;     // Original JPY price
+  jpyPrice: number;  // Same as price - explicit JPY value for deduplication
   currency: string;
   soldAt: Date;
   grade?: string;

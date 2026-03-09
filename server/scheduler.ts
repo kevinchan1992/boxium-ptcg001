@@ -8,6 +8,11 @@ import { scrapeSnkrdunkPages } from "./snkrdunkAutoCrawler";
 import { calculateAndCacheTrendingRankings } from "./trendingCacheManager";
 
 /**
+ * @deprecated This scheduler is DISABLED and replaced by priceUpdateScheduler.ts
+ * which uses persistentSnkrdunkBatchUpdate.ts for reliable batch processing.
+ * This file is kept for reference only. Do NOT re-enable without updating to use
+ * the unified scraping logic (addPriceHistory with jpyPrice).
+ *
  * Auto-update scheduler for SNKRDUNK data sources
  * Runs every 12 hours to fetch latest price data
  */
@@ -175,25 +180,25 @@ async function updateDataSource(db: any, source: any) {
     const priceData = await fetchPriceHistory(source.sourceUrl);
 
     // Insert price history records
+    // NOTE: This code path is DEPRECATED (scheduler.ts is disabled).
+    // The active path uses persistentSnkrdunkBatchUpdate.ts which calls addPriceHistory() directly.
+    // Kept here for reference; jpyPrice is now included for correct deduplication.
     if (priceData && priceData.length > 0) {
-      const priceRecords = priceData.map((price) => ({
-        cardId: source.cardId,
-        source: "snkrdunk",
-        price: convertJpyToHkd(price.price).toString(),
-        currency: "HKD",
-        soldAt: price.soldAt,
-        grade: price.grade || null,
-      }));
-
-      // Insert in batches to avoid query too large
-      // Use onDuplicateKeyUpdate with no-op to silently skip duplicates (INSERT IGNORE equivalent)
-      const { sql } = await import('drizzle-orm');
-      for (let i = 0; i < priceRecords.length; i += 50) {
-        const batch = priceRecords.slice(i, i + 50);
-        await db.insert(priceHistory).values(batch).onDuplicateKeyUpdate({ set: { id: sql`id` } });
+      // Use addPriceHistory helper (unified logic with jpyPrice deduplication)
+      for (const price of priceData) {
+        await db.addPriceHistory({
+          cardId: source.cardId,
+          source: 'snkrdunk',
+          price: convertJpyToHkd(price.price).toString(),
+          currency: 'HKD',
+          jpyPrice: price.jpyPrice ?? price.price, // Original JPY for stable deduplication
+          soldAt: price.soldAt,
+          grade: price.grade || undefined,
+          productType: 'single_card',
+        });
       }
       console.log(
-        `[Scheduler] Inserted ${priceRecords.length} price history records`
+        `[Scheduler] Inserted ${priceData.length} price history records`
       );
     }
 
