@@ -527,7 +527,7 @@ export default function SellerDashboard() {
                                  listing.status === "sold" ? "已售出" : listing.status}
                               </Badge>
                               {isSold && (
-                                <Link href={`/marketplace/listing/${listing.id}`}>
+                                <Link href={`/marketplace/${listing.id}`}>
                                   <Button size="sm" variant="outline" className="text-xs h-7 px-2">查看詳情</Button>
                                 </Link>
                               )}
@@ -577,7 +577,18 @@ export default function SellerDashboard() {
                           {item.shippingName && (
                             <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1.5 space-y-0.5">
                               <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>
-                              <p>📍 地址：{item.shippingAddress}</p>
+                              <p>📍 地址：{(() => {
+                                try {
+                                  const addr = typeof item.shippingAddress === 'string' ? JSON.parse(item.shippingAddress) : item.shippingAddress;
+                                  if (addr && typeof addr === 'object') {
+                                    const parts = [addr.address, addr.district, addr.region].filter(Boolean);
+                                    return parts.join(', ');
+                                  }
+                                  return item.shippingAddress;
+                                } catch {
+                                  return item.shippingAddress;
+                                }
+                              })()}</p>
                               {item.trackingNumber && <p>🚚 追蹤號：{item.trackingNumber}</p>}
                             </div>
                           )}
