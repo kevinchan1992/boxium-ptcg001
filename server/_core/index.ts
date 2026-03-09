@@ -3,8 +3,9 @@
 process.env.TZ = 'Asia/Hong_Kong';
 
 import "dotenv/config";
-
 import express from "express";
+import fs from "fs";
+import path from "path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
@@ -19,6 +20,7 @@ import { serveStatic, setupVite } from "./vite";
 import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
+import { getListingById } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -368,6 +370,77 @@ async function startServer() {
     } catch (error) {
       console.error("[PaymentProof] Error uploading proof:", error);
       res.status(500).json({ error: "Failed to upload payment proof" });
+    }
+  });
+
+  // ─── OG SSR: Marketplace listing page for social crawlers ───────────────────
+  app.get("/marketplace/:id", async (req, res, next) => {
+    // Only intercept social media crawlers (bots that need SSR meta tags)
+    const ua = (req.headers["user-agent"] || "").toLowerCase();
+    const isCrawler = /facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|googlebot|bingbot|applebot|pinterest|vkshare|w3c_validator|embedly|quora|outbrain|semrushbot|ahrefsbot/.test(ua);
+    if (!isCrawler) return next();
+
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return next();
+
+      const listing = await getListingById(id);
+      if (!listing) return next();
+
+      const price = parseFloat(listing.priceHkd as string);
+      const rawImages = listing.images;
+      let images: string[] | null = null;
+      if (rawImages) {
+        if (Array.isArray(rawImages)) images = rawImages as string[];
+        else if (typeof rawImages === "string") {
+          try { const p = JSON.parse(rawImages); images = Array.isArray(p) ? p : null; } catch {}
+        }
+      }
+      const imageUrl = images && images.length > 0 ? images[0] : "https://boxiumptcg.manus.space/og-image.png";
+      const ogTitle = `${listing.title} - HKD ${price.toFixed(2)} | BOXIUM PTCG`;
+      const ogDescription = listing.description
+        ? `${(listing.description as string).slice(0, 120)}${(listing.description as string).length > 120 ? "..." : ""} | HKD ${price.toFixed(2)}`
+        : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(2)} | BOXIUM PTCG 卡牌商城`;
+      const pageUrl = `https://boxiumptcg.manus.space/marketplace/${id}`;
+
+      // Read the base HTML template
+      let template: string;
+      if (process.env.NODE_ENV === "development") {
+        const clientTemplate = path.resolve(import.meta.dirname, "../..", "client", "index.html");
+        template = await fs.promises.readFile(clientTemplate, "utf-8");
+      } else {
+        const distTemplate = path.resolve(import.meta.dirname, "public", "index.html");
+        template = await fs.promises.readFile(distTemplate, "utf-8");
+      }
+
+      // Inject dynamic OG meta tags
+      const ogTags = [
+        `<meta property="og:type" content="product" />`,
+        `<meta property="og:url" content="${pageUrl}" />`,
+        `<meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
+        `<meta property="og:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
+        `<meta property="og:image" content="${imageUrl}" />`,
+        `<meta property="og:image:width" content="1200" />`,
+        `<meta property="og:image:height" content="630" />`,
+        `<meta property="og:site_name" content="BOXIUM PTCG" />`,
+        `<meta property="og:price:amount" content="${price.toFixed(2)}" />`,
+        `<meta property="og:price:currency" content="HKD" />`,
+        `<meta name="twitter:card" content="summary_large_image" />`,
+        `<meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
+        `<meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
+        `<meta name="twitter:image" content="${imageUrl}" />`,
+        `<title>${ogTitle.replace(/<[^>]*>/g, '')}</title>`,
+      ].join("\n    ");
+
+      // Replace the default OG tags in the template
+      const injected = template
+        .replace(/<title>[^<]*<\/title>/, '') // remove existing title
+        .replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${ogTags}`);
+
+      res.status(200).set({ "Content-Type": "text/html" }).end(injected);
+    } catch (err) {
+      console.error("[OG SSR] Error:", err);
+      next();
     }
   });
 

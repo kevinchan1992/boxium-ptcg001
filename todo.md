@@ -4023,3 +4023,5 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 前端：PricingSearch 加入分頁功能（每頁 50 張，顯示頁碼/總頁數）
 - [x] 前端：每張卡牌下方顯示最低在售商品價格（橙色文字，ShoppingBag 圖示）
 - [x] 賣家商品卡片加入社群媒體分享按鈕（Facebook、WhatsApp、X/Twitter、複製連結）
+- [x] 商品詳情頁後端 OG SSR：爬蟲訪問 /marketplace/:id 時動態注入 og:title/og:description/og:image
+- [x] 賣家商品卡片「生成分享圖片」：Canvas 繪製 BOXIUM 品牌框架 + 商品圖 + 名稱 + 價格，下載為 PNG

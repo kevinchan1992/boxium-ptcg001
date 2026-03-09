@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
-import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check } from "lucide-react";
+import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown } from "lucide-react";
+import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
 
@@ -137,8 +138,37 @@ const orderStatusLabel: Record<string, { label: string; color: string }> = {
 };
 
 // ─── ShareButton ─────────────────────────────────────────────────────────────
-function ShareButton({ listingUrl, shareText, title }: { listingUrl: string; shareText: string; title: string }) {
+function ShareButton({
+  listingUrl, shareText, title, priceHkd, coverImg, condition
+}: {
+  listingUrl: string;
+  shareText: string;
+  title: string;
+  priceHkd?: string;
+  coverImg?: string | null;
+  condition?: string;
+}) {
   const [copied, setCopied] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+
+  const handleGenerateShareImage = async () => {
+    setGeneratingImage(true);
+    try {
+      const dataUrl = await generateShareImage({
+        title,
+        priceHkd: priceHkd ?? "0",
+        imageUrl: coverImg,
+        condition,
+      });
+      downloadShareImage(dataUrl, `boxium-${title.slice(0, 20).replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '-')}.png`);
+      toast.success("分享圖片已下載！");
+    } catch (err) {
+      console.error(err);
+      toast.error("生成圖片失敗，請稍後再試");
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
 
   const handleCopyLink = async () => {
     try {
@@ -208,6 +238,21 @@ function ShareButton({ listingUrl, shareText, title }: { listingUrl: string; sha
             <span className="text-sm text-gray-700">{opt.label}</span>
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={handleGenerateShareImage}
+          disabled={generatingImage}
+          className="flex items-center gap-2.5 cursor-pointer py-2"
+        >
+          {generatingImage ? (
+            <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+          ) : (
+            <ImageDown className="w-4 h-4 text-purple-500" />
+          )}
+          <span className="text-sm text-gray-700">
+            {generatingImage ? "生成中... " : "生成分享圖片"}
+          </span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleCopyLink}
@@ -648,7 +693,14 @@ export default function SellerDashboard() {
                                 </Link>
                               )}
                               {/* Share Button */}
-                              <ShareButton listingUrl={listingUrl} shareText={shareText} title={listing.title} />
+                              <ShareButton
+                                listingUrl={listingUrl}
+                                shareText={shareText}
+                                title={listing.title}
+                                priceHkd={listing.priceHkd as string}
+                                coverImg={coverImg}
+                                condition={listing.condition ?? undefined}
+                              />
                             </div>
                           </div>
                         </div>
