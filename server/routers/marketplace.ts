@@ -1759,6 +1759,17 @@ All three checks must pass for verified to be true. Respond with JSON only match
       return getBuyerOffers(ctx.user.id);
     }),
 
+  getMyOfferForListing: protectedProcedure
+    .input(z.object({ listingId: z.number().int() }))
+    .query(async ({ ctx, input }) => {
+      // Return the buyer's most recent pending offer for this listing
+      const allOffers = await getBuyerOffers(ctx.user.id);
+      const pendingOffer = allOffers.find(
+        (o) => o.listingId === input.listingId && o.status === "pending"
+      );
+      return pendingOffer ?? null;
+    }),
+
   getSellerOffers: protectedProcedure
     .query(async ({ ctx }) => {
       const seller = await getSellerProfileByUserId(ctx.user.id);

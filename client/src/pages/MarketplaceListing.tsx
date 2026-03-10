@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -12,7 +12,7 @@ import {
   AlertCircle, ChevronLeft, ChevronRight, CheckCircle, XCircle,
   Loader2, HelpCircle, Tag, Flag, TrendingUp, TrendingDown, Minus,
   ExternalLink, Heart, ZoomIn, MessageSquare, ShoppingCart, ChevronDown,
-  ChevronUp, Store
+  ChevronUp, Store, X, Clock
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Input } from "@/components/ui/input";
@@ -539,9 +539,15 @@ export default function MarketplaceListing() {
     onSuccess: () => {
       toast.success("出價已送出！賣家將盡快回覆。");
       setShowOfferDialog(false); setOfferAmount(""); setOfferMessage("");
+      utils.marketplace.getMyOfferForListing.invalidate({ listingId: id });
     },
     onError: (e) => toast.error(e.message),
   });
+
+  const { data: myPendingOffer } = trpc.marketplace.getMyOfferForListing.useQuery(
+    { listingId: id },
+    { enabled: !!me && !!id }
+  );
 
   const reportListingMutation = trpc.marketplace.reportListing.useMutation({
     onSuccess: () => {
@@ -808,18 +814,38 @@ export default function MarketplaceListing() {
                 >
                   <Smartphone className="w-4 h-4 mr-2" />支付寶 HK 付款
                 </Button>
-                {/* Offer - always visible for active listings */}
-                <Button
-                  variant="outline"
-                  className="w-full h-11 text-sm border-[#FEDD00] text-[#06038D] hover:bg-[#FEDD00]/10 rounded-xl font-semibold"
-                  disabled={!me}
-                  onClick={() => {
-                    if (!me) { toast.error("請先登入才能出價"); return; }
-                    setShowOfferDialog(true);
-                  }}
-                >
-                  <Tag className="w-4 h-4 mr-2" />出價洽議
-                </Button>
+                {/* Offer - show pending offer status or offer button */}
+                {myPendingOffer ? (
+                  <div className="w-full rounded-xl border-2 border-[#FEDD00] bg-[#FEDD00]/10 p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-[#FEDD00]/30 flex items-center justify-center">
+                          <Clock className="w-4 h-4 text-[#06038D]" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 leading-none">已出價</p>
+                          <p className="font-bold text-[#06038D] text-base leading-tight">
+                            HKD {parseFloat(myPendingOffer.offerPriceHkd as string).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">等待賣家回覆</span>
+                    </div>
+                    <p className="text-xs text-gray-500">出價將於 {new Date(myPendingOffer.expiresAt).toLocaleString("zh-HK", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })} 到期</p>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full h-11 text-sm border-[#FEDD00] text-[#06038D] hover:bg-[#FEDD00]/10 rounded-xl font-semibold"
+                    disabled={!me}
+                    onClick={() => {
+                      if (!me) { toast.error("請先登入才能出價"); return; }
+                      setShowOfferDialog(true);
+                    }}
+                  >
+                    <Tag className="w-4 h-4 mr-2" />出價洽議
+                  </Button>
+                )}
               </div>
             ) : (
               <Button disabled className="w-full h-12 rounded-xl text-base">商品已售出</Button>
@@ -921,8 +947,20 @@ export default function MarketplaceListing() {
 
       {/* ── Alipay Dialog ── */}
       <Dialog open={showAlipay} onOpenChange={() => setShowAlipay(false)}>
-        <DialogContent bottomSheet className="sm:max-w-md">
-          <DialogHeader><DialogTitle>支付寶 HK 付款</DialogTitle></DialogHeader>
+        <DialogContent bottomSheet className="sm:max-w-md p-0 overflow-hidden border-2 border-[#FEDD00]">
+          {/* 深藍色頭部 */}
+          <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#FEDD00]/20 flex items-center justify-center">
+                <Smartphone className="w-4 h-4 text-[#FEDD00]" />
+              </div>
+              <h2 className="text-white font-bold text-lg">支付寶 HK 付款</h2>
+            </div>
+            <button onClick={() => setShowAlipay(false)} className="text-white/60 hover:text-white transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-6">
 
           {alipayStep === "qr" && (
             <div className="space-y-4">
@@ -1074,10 +1112,10 @@ export default function MarketplaceListing() {
                   <p className="mt-1">訂單將標記為「待人工核對」，管理員將在 1-2 個工作天內確認。</p>
                 </div>
               )}
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setAlipayStep("qr")}>返回</Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setAlipayStep("qr")}>返回</Button>
                 <Button
-                  className="bg-[#06038D] hover:bg-[#0804b8] text-white"
+                  className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
                   disabled={!proofUrl || isVerifying || isUploading || createAlipayOrderMutation.isPending}
                   onClick={() => createAlipayOrderMutation.mutate({
                     listingId: listing.id,
@@ -1093,7 +1131,7 @@ export default function MarketplaceListing() {
                 >
                   {createAlipayOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : canSubmitAlipay ? "✅ 提交訂單" : "提交訂單（待核對）"}
                 </Button>
-              </DialogFooter>
+              </div>
             </div>
           )}
 
@@ -1107,19 +1145,26 @@ export default function MarketplaceListing() {
               <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => setShowAlipay(false)}>關閉</Button>
             </div>
           )}
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ── Shipping Dialog ── */}
       <Dialog open={showShippingDialog} onOpenChange={(open) => { setShowShippingDialog(open); if (!open) { setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港" }); setSelectedSavedAddressId(null); } }}>
-        <DialogContent bottomSheet className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Truck className="w-5 h-5 text-[#06038D]" />
-              填寫收貨地址
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
+        <DialogContent bottomSheet className="sm:max-w-md p-0 overflow-hidden border-2 border-[#FEDD00]">
+          {/* 深藍色頭部 */}
+          <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#FEDD00]/20 flex items-center justify-center">
+                <Truck className="w-4 h-4 text-[#FEDD00]" />
+              </div>
+              <h2 className="text-white font-bold text-lg">填寫收貨地址</h2>
+            </div>
+            <button onClick={() => setShowShippingDialog(false)} className="text-white/60 hover:text-white transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-6 space-y-4">
             {savedAddresses && savedAddresses.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">已儲存地址</p>
@@ -1171,10 +1216,10 @@ export default function MarketplaceListing() {
             </div>
             <p className="text-xs text-gray-400">* 必填欄位。收貨地址將提供給賣家安排寄送。</p>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowShippingDialog(false)}>取消</Button>
+          <div className="px-6 pb-6 flex gap-3">
+            <Button variant="outline" className="flex-1 border-gray-200" onClick={() => setShowShippingDialog(false)}>取消</Button>
             <Button
-              className="bg-[#06038D] hover:bg-[#0804b8] text-white"
+              className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
               disabled={!shippingForm.name.trim() || !shippingForm.phone.trim() || !shippingForm.address.trim() || createStripeOrderMutation.isPending}
               onClick={() => {
                 setShowShippingDialog(false);
@@ -1192,26 +1237,37 @@ export default function MarketplaceListing() {
             >
               {createStripeOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</> : <><CreditCard className="w-4 h-4 mr-2" />前往付款</>}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ── Offer Dialog ── */}
       <Dialog open={showOfferDialog} onOpenChange={setShowOfferDialog}>
-        <DialogContent bottomSheet className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Tag className="w-5 h-5 text-[#FEDD00]" />出價洽議
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label className="text-sm font-medium mb-1.5 block text-[#06038D]">
-                出價金額（HKD）
-                {listing?.minOfferHkd && (
-                  <span className="text-gray-400 font-normal ml-1">（最低 HKD {parseFloat(listing.minOfferHkd as string).toFixed(0)}）</span>
+        <DialogContent bottomSheet className="sm:max-w-sm p-0 overflow-hidden border-2 border-[#FEDD00]">
+          {/* 深藍色頭部 */}
+          <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#FEDD00]/20 flex items-center justify-center">
+                <Tag className="w-4 h-4 text-[#FEDD00]" />
+              </div>
+              <h2 className="text-white font-bold text-lg">出價洽議</h2>
+            </div>
+            <button onClick={() => setShowOfferDialog(false)} className="text-white/60 hover:text-white transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-6 space-y-4">
+            {listing?.priceHkd && (
+              <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm">
+                <p className="text-gray-500">市價</p>
+                <p className="font-bold text-[#06038D] text-lg">HKD {parseFloat(listing.priceHkd as string).toFixed(2)}</p>
+                {listing.minOfferHkd && (
+                  <p className="text-xs text-gray-400 mt-1">最低出價：HKD {parseFloat(listing.minOfferHkd as string).toFixed(0)}</p>
                 )}
-              </Label>
+              </div>
+            )}
+            <div>
+              <Label className="text-sm font-medium mb-1.5 block text-[#06038D]">出價金額（HKD） *</Label>
               <Input
                 type="number"
                 placeholder="請輸入出價金額"
@@ -1231,10 +1287,10 @@ export default function MarketplaceListing() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowOfferDialog(false)}>取消</Button>
+          <div className="px-6 pb-6 flex gap-3">
+            <Button variant="outline" className="flex-1 border-gray-200" onClick={() => setShowOfferDialog(false)}>取消</Button>
             <Button
-              className="bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold"
+              className="flex-1 bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold"
               disabled={!offerAmount || parseFloat(offerAmount) <= 0 || makeOfferMutation.isPending}
               onClick={() => {
                 if (!listing || !me) return;
@@ -1249,19 +1305,26 @@ export default function MarketplaceListing() {
             >
               {makeOfferMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "送出出價"}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ── Report Dialog ── */}
       <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
-        <DialogContent bottomSheet className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Flag className="w-5 h-5 text-red-500" />舉報商品
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
+        <DialogContent bottomSheet className="sm:max-w-sm p-0 overflow-hidden border-2 border-red-400">
+          {/* 深藍色頭部 */}
+          <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-red-400/20 flex items-center justify-center">
+                <Flag className="w-4 h-4 text-red-400" />
+              </div>
+              <h2 className="text-white font-bold text-lg">舉報商品</h2>
+            </div>
+            <button onClick={() => setShowReportDialog(false)} className="text-white/60 hover:text-white transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-6 space-y-4">
             <div>
               <Label className="text-sm font-medium mb-1.5 block">舉報原因</Label>
               <Select value={reportReason} onValueChange={setReportReason}>
@@ -1288,10 +1351,10 @@ export default function MarketplaceListing() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowReportDialog(false)}>取消</Button>
+          <div className="px-6 pb-6 flex gap-3">
+            <Button variant="outline" className="flex-1 border-gray-200" onClick={() => setShowReportDialog(false)}>取消</Button>
             <Button
-              variant="destructive"
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold"
               disabled={!reportReason || reportListingMutation.isPending}
               onClick={() => {
                 if (!listing) return;
@@ -1304,7 +1367,7 @@ export default function MarketplaceListing() {
             >
               {reportListingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "提交舉報"}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
