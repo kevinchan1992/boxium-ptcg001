@@ -489,7 +489,7 @@ export default function SellerDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-gray-900">
       {/* ── Hero Banner ── */}
       <div
         className="relative"

@@ -632,7 +632,7 @@ export default function Orders() {
   const pastOrders = (orders ?? []).filter(o => ["completed", "cancelled"].includes(o.orderStatus));
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-gray-900">
       {/* ── Hero Banner ── */}
       <div
         className="relative"

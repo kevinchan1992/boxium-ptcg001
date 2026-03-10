@@ -1728,11 +1728,15 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       .query(async () => {
         const runningTask = await batchTaskManager.getLatestRunningTask('batch_snkrdunk_update');
         if (runningTask) {
+          // Fix: if totalItems is abnormally small (e.g. was set to batchSize instead of total),
+          // use the larger of totalItems and processedItems as the denominator
+          const processedItems = runningTask.processedItems || 0;
+          const totalItems = Math.max(runningTask.totalItems || 0, processedItems);
           return {
             isRunning: true,
             isPaused: runningTask.status === 'paused',
-            totalCards: runningTask.totalItems,
-            processedCards: runningTask.processedItems,
+            totalCards: totalItems,
+            processedCards: processedItems,
             successCount: runningTask.successCount,
             failureCount: runningTask.failureCount,
             totalRecordsAdded: 0,

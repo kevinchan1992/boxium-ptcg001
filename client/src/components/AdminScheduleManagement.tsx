@@ -531,7 +531,7 @@ export function AdminScheduleManagement() {
                   </div>
                 </div>
                 <Progress 
-                  value={(progress.processedCards / progress.totalCards) * 100} 
+                  value={progress.totalCards > 0 ? Math.min(100, (progress.processedCards / progress.totalCards) * 100) : 0} 
                   className="h-2"
                 />
                 <div className="flex items-center justify-between text-xs text-gray-400">
@@ -552,7 +552,7 @@ export function AdminScheduleManagement() {
                     )}
                   </div>
                   <span>
-                    {Math.round((progress.processedCards / progress.totalCards) * 100)}%
+                    {progress.totalCards > 0 ? Math.min(100, Math.round((progress.processedCards / progress.totalCards) * 100)) : 0}%
                   </span>
                 </div>
               </div>
