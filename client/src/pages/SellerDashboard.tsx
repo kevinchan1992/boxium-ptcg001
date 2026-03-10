@@ -1079,6 +1079,38 @@ export default function SellerDashboard() {
                                   <p className="text-xs text-gray-600 mt-1 bg-gray-50 border border-gray-100 rounded px-2 py-1">{offer.message}</p>
                                 )}
                                 <p className="text-xs text-gray-500 mt-1">{new Date(offer.createdAt).toLocaleDateString('zh-HK')}</p>
+                                {/* Expiry Countdown - only show for pending offers */}
+                                {offer.status === 'pending' && offer.expiresAt && (() => {
+                                  const now = Date.now();
+                                  const expiresTs = new Date(offer.expiresAt).getTime();
+                                  const diffMs = expiresTs - now;
+                                  if (diffMs <= 0) {
+                                    return (
+                                      <span className="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">
+                                        <Clock className="w-3 h-3" />已過期
+                                      </span>
+                                    );
+                                  }
+                                  const diffHours = diffMs / (1000 * 60 * 60);
+                                  const diffDays = Math.floor(diffHours / 24);
+                                  const remHours = Math.floor(diffHours % 24);
+                                  const isUrgent = diffHours < 24; // less than 1 day
+                                  const isWarning = diffHours < 48; // less than 2 days
+                                  const label = diffDays > 0
+                                    ? `還有 ${diffDays} 天 ${remHours} 小時到期`
+                                    : `還有 ${Math.floor(diffHours)} 小時到期`;
+                                  return (
+                                    <span className={`inline-flex items-center gap-1 mt-1.5 text-xs font-medium rounded-full px-2 py-0.5 border ${
+                                      isUrgent
+                                        ? 'text-red-600 bg-red-50 border-red-200'
+                                        : isWarning
+                                        ? 'text-amber-600 bg-amber-50 border-amber-200'
+                                        : 'text-gray-500 bg-gray-50 border-gray-200'
+                                    }`}>
+                                      <Clock className="w-3 h-3" />{label}
+                                    </span>
+                                  );
+                                })()}
                               </div>
                             </div>
                             {offer.status === 'pending' && (

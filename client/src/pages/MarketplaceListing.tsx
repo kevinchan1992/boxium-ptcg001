@@ -1298,15 +1298,17 @@ export default function MarketplaceListing() {
             </button>
           </div>
           <div className="p-6 space-y-4 bg-white text-[#06038D]">
-            {listing?.priceHkd && (
-              <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm">
-                <p className="text-gray-500">市價</p>
-                <p className="font-bold text-[#06038D] text-lg">HKD {parseFloat(listing.priceHkd as string).toFixed(2)}</p>
-                {listing.minOfferHkd && (
-                  <p className="text-xs text-gray-400 mt-1">最低出價：HKD {parseFloat(listing.minOfferHkd as string).toFixed(0)}</p>
-                )}
-              </div>
-            )}
+            {listing?.priceHkd && (() => {
+              const listingPrice = parseFloat(listing.priceHkd as string);
+              const minOfferPrice = Math.ceil(listingPrice * 0.7 * 100) / 100;
+              return (
+                <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm">
+                  <p className="text-gray-500">市價</p>
+                  <p className="font-bold text-[#06038D] text-lg">HKD {listingPrice.toFixed(2)}</p>
+                  <p className="text-xs text-gray-500 mt-1">最低可出價：<span className="font-semibold text-[#06038D]">HKD {minOfferPrice.toFixed(0)}</span>（定價 70%）</p>
+                </div>
+              );
+            })()}
             <div>
               <Label className="text-sm font-medium mb-1.5 block text-[#06038D]">出價金額（HKD） *</Label>
               <Input
@@ -1314,8 +1316,27 @@ export default function MarketplaceListing() {
                 placeholder="請輸入出價金額"
                 value={offerAmount}
                 onChange={(e) => setOfferAmount(e.target.value)}
-                className="border-gray-200 focus-visible:ring-[#06038D]"
+                className={`border-gray-200 focus-visible:ring-[#06038D] ${
+                  offerAmount && listing?.priceHkd &&
+                  parseFloat(offerAmount) < Math.ceil(parseFloat(listing.priceHkd as string) * 0.7 * 100) / 100
+                    ? 'border-red-400 focus-visible:ring-red-400'
+                    : ''
+                }`}
               />
+              {offerAmount && listing?.priceHkd && (() => {
+                const listingPrice = parseFloat(listing.priceHkd as string);
+                const minOfferPrice = Math.ceil(listingPrice * 0.7 * 100) / 100;
+                const entered = parseFloat(offerAmount);
+                if (entered > 0 && entered < minOfferPrice) {
+                  return (
+                    <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      出價金額不能低於定價的 70%（最低 HKD {minOfferPrice.toFixed(0)}）
+                    </p>
+                  );
+                }
+                return null;
+              })()}
             </div>
             <div>
               <Label className="text-sm font-medium mb-1.5 block text-[#06038D]">留言（可選）</Label>
@@ -1332,7 +1353,14 @@ export default function MarketplaceListing() {
             <Button variant="outline" className="flex-1 border-gray-200 text-[#06038D]" onClick={() => setShowOfferDialog(false)}>取消</Button>
             <Button
               className="flex-1 bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold"
-              disabled={!offerAmount || parseFloat(offerAmount) <= 0 || makeOfferMutation.isPending}
+              disabled={(() => {
+                if (!offerAmount || parseFloat(offerAmount) <= 0 || makeOfferMutation.isPending) return true;
+                if (listing?.priceHkd) {
+                  const minOfferPrice = Math.ceil(parseFloat(listing.priceHkd as string) * 0.7 * 100) / 100;
+                  if (parseFloat(offerAmount) < minOfferPrice) return true;
+                }
+                return false;
+              })()}
               onClick={() => {
                 if (!listing || !me) return;
                 makeOfferMutation.mutate({

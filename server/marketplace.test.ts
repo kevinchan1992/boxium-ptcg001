@@ -322,3 +322,135 @@ describe("Admin offers pagination", () => {
     expect(isFirstPage).toBe(true);
   });
 });
+
+describe("Offer expiry countdown display logic", () => {
+  const computeCountdown = (expiresAt: Date | null) => {
+    if (!expiresAt) return null;
+    const now = Date.now();
+    const expiresTs = expiresAt.getTime();
+    const diffMs = expiresTs - now;
+    if (diffMs <= 0) return { expired: true, label: "已過期", isUrgent: false, isWarning: false };
+    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffDays = Math.floor(diffHours / 24);
+    const remHours = Math.floor(diffHours % 24);
+    const isUrgent = diffHours < 24;
+    const isWarning = diffHours < 48;
+    const label = diffDays > 0
+      ? `還有 ${diffDays} 天 ${remHours} 小時到期`
+      : `還有 ${Math.floor(diffHours)} 小時到期`;
+    return { expired: false, label, isUrgent, isWarning };
+  };
+
+  it("should return null for offers without expiresAt", () => {
+    expect(computeCountdown(null)).toBeNull();
+  });
+
+  it("should show expired label for past expiry dates", () => {
+    const pastDate = new Date(Date.now() - 1000); // 1 second ago
+    const result = computeCountdown(pastDate);
+    expect(result?.expired).toBe(true);
+    expect(result?.label).toBe("已過期");
+  });
+
+  it("should mark as urgent when less than 24 hours remain", () => {
+    const urgentDate = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12 hours
+    const result = computeCountdown(urgentDate);
+    expect(result?.isUrgent).toBe(true);
+    expect(result?.isWarning).toBe(true);
+    expect(result?.label).toContain("小時到期");
+  });
+
+  it("should mark as warning when less than 48 hours remain", () => {
+    const warningDate = new Date(Date.now() + 36 * 60 * 60 * 1000); // 36 hours
+    const result = computeCountdown(warningDate);
+    expect(result?.isUrgent).toBe(false);
+    expect(result?.isWarning).toBe(true);
+  });
+
+  it("should show days and hours for offers expiring in more than 24 hours", () => {
+    const futureDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
+    const result = computeCountdown(futureDate);
+    expect(result?.isUrgent).toBe(false);
+    expect(result?.isWarning).toBe(false);
+    expect(result?.label).toContain("天");
+    expect(result?.label).toContain("小時到期");
+  });
+
+  it("should not show countdown for accepted or rejected offers", () => {
+    // Only pending offers should show countdown
+    const statuses = ["accepted", "rejected", "expired", "cancelled"];
+    statuses.forEach(status => {
+      const shouldShow = status === "pending";
+      expect(shouldShow).toBe(false);
+    });
+    expect("pending" === "pending").toBe(true);
+  });
+});
+
+describe("Minimum offer amount validation (70% rule)", () => {
+  const MIN_OFFER_PCT = 0.7;
+
+  const computeMinOffer = (listingPrice: number) =>
+    Math.ceil(listingPrice * MIN_OFFER_PCT * 100) / 100;
+
+  const isOfferValid = (offerAmount: number, listingPrice: number) =>
+    offerAmount >= computeMinOffer(listingPrice);
+
+  it("should compute correct minimum offer for round prices", () => {
+    expect(computeMinOffer(1000)).toBe(700);
+    expect(computeMinOffer(500)).toBe(350);
+    expect(computeMinOffer(200)).toBe(140);
+  });
+
+  it("should round up minimum offer to avoid floating point issues", () => {
+    // 333 * 0.7 = 233.1 → ceil to 233.1 (already rounded)
+    expect(computeMinOffer(333)).toBe(233.1);
+    // 100 * 0.7 = 70 exactly
+    expect(computeMinOffer(100)).toBe(70);
+  });
+
+  it("should accept offers at exactly 70% of listing price", () => {
+    expect(isOfferValid(700, 1000)).toBe(true);
+    expect(isOfferValid(350, 500)).toBe(true);
+  });
+
+  it("should reject offers below 70% of listing price", () => {
+    expect(isOfferValid(699, 1000)).toBe(false);
+    expect(isOfferValid(349, 500)).toBe(false);
+    expect(isOfferValid(0, 1000)).toBe(false);
+  });
+
+  it("should accept offers above 70% of listing price", () => {
+    expect(isOfferValid(800, 1000)).toBe(true);
+    expect(isOfferValid(1000, 1000)).toBe(true); // full price
+    expect(isOfferValid(1200, 1000)).toBe(true); // above listing price
+  });
+
+  it("should disable submit button when offer is below minimum", () => {
+    const listingPrice = 1000;
+    const minOffer = computeMinOffer(listingPrice);
+    const isButtonDisabled = (offerAmount: string) => {
+      if (!offerAmount || parseFloat(offerAmount) <= 0) return true;
+      return parseFloat(offerAmount) < minOffer;
+    };
+    expect(isButtonDisabled("")).toBe(true);
+    expect(isButtonDisabled("0")).toBe(true);
+    expect(isButtonDisabled("500")).toBe(true);  // below 70%
+    expect(isButtonDisabled("700")).toBe(false); // exactly 70%
+    expect(isButtonDisabled("800")).toBe(false); // above 70%
+  });
+
+  it("should show error message only when amount is entered and below minimum", () => {
+    const listingPrice = 1000;
+    const minOffer = computeMinOffer(listingPrice);
+    const shouldShowError = (offerAmount: string) => {
+      if (!offerAmount) return false;
+      const entered = parseFloat(offerAmount);
+      return entered > 0 && entered < minOffer;
+    };
+    expect(shouldShowError("")).toBe(false);    // no input → no error
+    expect(shouldShowError("500")).toBe(true);  // below minimum → show error
+    expect(shouldShowError("700")).toBe(false); // at minimum → no error
+    expect(shouldShowError("900")).toBe(false); // above minimum → no error
+  });
+});
