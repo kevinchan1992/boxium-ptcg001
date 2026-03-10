@@ -167,7 +167,7 @@ export function CardPickerDialog({ open, onOpenChange, onSelect, selectedCardId 
                       )}
                       {card.latestPrice && (
                         <p className="text-xs font-semibold text-[#06038D] mt-0.5">
-                          市場均價 HKD {Number(card.latestPrice).toLocaleString()}
+                          PSA 10 市場均價 HKD {Number(card.latestPrice).toLocaleString()}
                         </p>
                       )}
                     </div>

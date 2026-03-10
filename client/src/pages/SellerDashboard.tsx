@@ -286,6 +286,12 @@ export default function SellerDashboard() {
   const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
   const [showCardPicker, setShowCardPicker] = useState(false);
 
+  // Dynamic condition-based price query
+  const { data: conditionPriceData, isLoading: conditionPriceLoading } = trpc.cards.getPriceByCondition.useQuery(
+    { cardId: selectedCard?.id ?? 0, condition: listingForm.condition },
+    { enabled: !!selectedCard?.id && !!listingForm.condition }
+  );
+
   const { data: me } = trpc.auth.me.useQuery();
   const { data: sellerProfile, refetch: refetchProfile } = trpc.marketplace.getMySellerProfile.useQuery(
     undefined, { enabled: !!me }
@@ -961,7 +967,7 @@ export default function SellerDashboard() {
                           {selectedCard.rarity && <span className="text-[10px] text-[#06038D]/70">{selectedCard.rarity}</span>}
                         </div>
                         {selectedCard.referencePrice && (
-                          <p className="text-[10px] text-[#06038D]/80 font-medium mt-0.5">市場均價 HKD {parseFloat(String(selectedCard.referencePrice)).toFixed(0)}</p>
+                          <p className="text-[10px] text-[#06038D]/80 font-medium mt-0.5">PSA 10 市場均價 HKD {parseFloat(String(selectedCard.referencePrice)).toLocaleString()}</p>
                         )}
                       </div>
                       <div className="flex gap-1">
@@ -1033,8 +1039,32 @@ export default function SellerDashboard() {
                 </div>
                 <div>
                   <Label className="text-[#06038D] font-semibold">售價（HKD）*</Label>
-                  {selectedCard?.referencePrice && (
-                    <p className="text-xs text-[#06038D]/70 mt-0.5 mb-1">參考市場均價：HKD {parseFloat(String(selectedCard.referencePrice)).toFixed(0)}</p>
+                  {/* Dynamic condition-based market price */}
+                  {selectedCard && (
+                    <div className="mt-1 mb-2">
+                      {conditionPriceLoading ? (
+                        <p className="text-xs text-[#06038D]/50">查詢市場均價中...</p>
+                      ) : conditionPriceData?.avgPrice ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-semibold text-[#06038D]">
+                            {conditionPriceData.isFallback
+                              ? `PSA 10 市場均價（參考）：HKD ${conditionPriceData.avgPrice.toLocaleString()}`
+                              : `${conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition} 市場均價：HKD ${conditionPriceData.avgPrice.toLocaleString()}`
+                            }
+                          </span>
+                          <span className="text-[10px] text-[#06038D]/40">(基於最近 {conditionPriceData.recordCount} 筆成交)</span>
+                          {conditionPriceData.isFallback && (
+                            <span className="text-[10px] text-amber-600">此品相無成交記錄，顯示 PSA 10 作參考</span>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[#06038D]/40">此品相目前無市場均價資料</p>
+                      )}
+                    </div>
+                  )}
+                  {/* Fallback: show PSA10 reference price if no card selected */}
+                  {!selectedCard && selectedCard === null && false && (
+                    <p className="text-xs text-[#06038D]/70 mt-0.5 mb-1">PSA 10 市場均價：HKD --</p>
                   )}
                   <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="4" step="0.01" placeholder="最低 HKD 4.00"
                     value={listingForm.price}
@@ -1042,11 +1072,13 @@ export default function SellerDashboard() {
                   {listingForm.price && parseFloat(listingForm.price) < 4.00 && (
                     <p className="text-xs text-red-400 mt-1">定價不能低於 HKD 4.00（Stripe 信用卡付款最低限額）</p>
                   )}
-                  {listingForm.price && parseFloat(listingForm.price) >= 4 && selectedCard?.referencePrice && (() => {
-                    const diff = ((parseFloat(listingForm.price) - parseFloat(String(selectedCard.referencePrice))) / parseFloat(String(selectedCard.referencePrice))) * 100;
+                  {listingForm.price && parseFloat(listingForm.price) >= 4 && conditionPriceData?.avgPrice && (() => {
+                    const refPrice = conditionPriceData.avgPrice;
+                    const diff = ((parseFloat(listingForm.price) - refPrice) / refPrice) * 100;
+                    const condLabel = conditionPriceData.isFallback ? 'PSA 10 市場均價' : '市場均價';
                     return (
                       <p className={`text-xs mt-1 ${diff < -15 ? "text-amber-600" : diff > 15 ? "text-green-600" : "text-gray-500"}`}>
-                        {diff > 0 ? `高於市場均價 ${diff.toFixed(0)}%` : `低於市場均價 ${Math.abs(diff).toFixed(0)}%`}
+                        {diff > 0 ? `高於${condLabel} ${diff.toFixed(0)}%` : `低於${condLabel} ${Math.abs(diff).toFixed(0)}%`}
                       </p>
                     );
                   })()}

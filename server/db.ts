@@ -203,6 +203,56 @@ export async function getCardBySnkrdunkId(snkrdunkId: string) {
 
 
 
+/**
+ * Get average price for a card by grade/condition
+ * Returns average of latest 10 records within 6 months for the specified grade
+ */
+export async function getCardPriceByGrade(cardId: number, grade: string): Promise<{ avgPrice: number | null; recordCount: number; grade: string }> {
+  const db = await getDb();
+  if (!db) return { avgPrice: null, recordCount: 0, grade };
+
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  // Get latest 10 records for this grade within 6 months
+  const records = await db
+    .select({ price: priceHistory.price, soldAt: priceHistory.soldAt })
+    .from(priceHistory)
+    .where(
+      and(
+        eq(priceHistory.cardId, cardId),
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.grade, grade),
+        gte(priceHistory.soldAt, sixMonthsAgo)
+      )
+    )
+    .orderBy(desc(priceHistory.soldAt))
+    .limit(10);
+
+  if (records.length === 0) {
+    // Try without time limit if no recent records
+    const allRecords = await db
+      .select({ price: priceHistory.price })
+      .from(priceHistory)
+      .where(
+        and(
+          eq(priceHistory.cardId, cardId),
+          eq(priceHistory.source, 'snkrdunk'),
+          eq(priceHistory.grade, grade)
+        )
+      )
+      .orderBy(desc(priceHistory.soldAt))
+      .limit(10);
+
+    if (allRecords.length === 0) return { avgPrice: null, recordCount: 0, grade };
+    const sum = allRecords.reduce((acc, r) => acc + Number(r.price), 0);
+    return { avgPrice: Math.round(sum / allRecords.length), recordCount: allRecords.length, grade };
+  }
+
+  const sum = records.reduce((acc, r) => acc + Number(r.price), 0);
+  return { avgPrice: Math.round(sum / records.length), recordCount: records.length, grade };
+}
+
 export async function getAllCards() {
   const db = await getDb();
   if (!db) return [];

@@ -526,6 +526,44 @@ export const appRouter = router({
         return dataSource;
       }),
 
+    /**
+     * Get reference price for a card by condition/grade
+     * Used in seller listing dialog to show condition-specific market price
+     */
+    getPriceByCondition: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+        condition: z.string(),
+      }))
+      .query(async ({ input }) => {
+        // Map frontend condition values to database grade values
+        const conditionToGrade: Record<string, string> = {
+          psa10: 'PSA10',
+          psa9: 'PSA9',
+          psa8_below: 'PSA8\u4ee5\u4e0b',
+          bgs10: 'PSA10',
+          bgs9: 'PSA10',
+          bgs8_below: 'PSA10',
+          tag10: 'PSA10',
+          tag9_below: 'PSA10',
+          raw_a: 'A',
+          raw_b: 'B',
+          raw_c: 'C',
+          raw_d: 'D',
+        };
+
+        const grade = conditionToGrade[input.condition] || 'PSA10';
+        const isFallback = ['bgs10','bgs9','bgs8_below','tag10','tag9_below'].includes(input.condition);
+
+        const result = await db.getCardPriceByGrade(input.cardId, grade);
+        return {
+          ...result,
+          condition: input.condition,
+          isFallback,
+          fallbackGrade: isFallback ? 'PSA10' : null,
+        };
+      }),
+
     getPopular: publicProcedure
       .input(z.object({
         limit: z.number().optional().default(10),
