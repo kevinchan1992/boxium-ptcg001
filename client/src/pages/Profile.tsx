@@ -657,7 +657,7 @@ function ShippingAddressSection() {
                       <Check className="w-3 h-3 mr-1" /> 設為預設
                     </Button>
                   )}
-                  <Button size="sm" variant="ghost" onClick={() => handleEdit(addr)} className="h-7 w-7 p-0 transition-all duration-150 hover:scale-110 hover:bg-blue-50 hover:text-blue-600 active:scale-90">
+                  <Button size="sm" variant="ghost" onClick={() => handleEdit(addr)} className="h-7 w-7 p-0 text-blue-500 transition-all duration-150 hover:scale-110 hover:bg-blue-50 hover:text-blue-600 active:scale-90">
                     <Edit2 className="w-3.5 h-3.5" />
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate({ id: addr.id })}
