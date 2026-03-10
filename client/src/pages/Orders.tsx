@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "wouter";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Link, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -160,8 +160,21 @@ function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: stri
   );
 }
 
-function OrderCard({ order }: { order: any }) {
+function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
   const [expanded, setExpanded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Auto-expand and scroll into view when highlighted after payment success
+  useEffect(() => {
+    if (highlight) {
+      setExpanded(true);
+      // Small delay to let the DOM settle before scrolling
+      const timer = setTimeout(() => {
+        cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [highlight]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showDisputeDialog, setShowDisputeDialog] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
@@ -258,7 +271,14 @@ function OrderCard({ order }: { order: any }) {
   const canReview = isCompleted && order.sellerType === "seller" && !existingReview;
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+    <div
+      ref={cardRef}
+      className={`bg-white rounded-2xl shadow-md overflow-hidden transition-all duration-700 ${
+        highlight
+          ? "border-2 border-[#FEDD00] shadow-[0_0_0_4px_rgba(254,221,0,0.25)] ring-2 ring-[#FEDD00]/40"
+          : "border border-gray-100"
+      }`}
+    >
       {/* Brand Header Bar */}
       <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
         <span className="text-xs text-white/80 font-mono tracking-wide">#{order.orderNo}</span>
@@ -676,11 +696,25 @@ function MyOffersTab({ userId }: { userId: number }) {
 }
 
 export default function Orders() {
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const paymentSuccess = searchParams.get("payment") === "success";
+  const highlightOrderNo = searchParams.get("orderNo") ?? "";
+
   const { data: me, isLoading: authLoading } = trpc.auth.me.useQuery();
   const { data: orders, isLoading } = trpc.marketplace.getMyOrders.useQuery(undefined, {
     enabled: !!me,
   });
   const user = me;
+
+  // Show payment success toast once
+  useEffect(() => {
+    if (paymentSuccess && highlightOrderNo) {
+      toast.success(`🎉 付款成功！訂單 #${highlightOrderNo} 已確認，請等待賣家出貨。`, {
+        duration: 6000,
+      });
+    }
+  }, [paymentSuccess, highlightOrderNo]);
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-white">
@@ -770,7 +804,7 @@ export default function Orders() {
                       <CreditCard className="w-4 h-4" />進行中的訂單（{activeOrders.length}）
                     </h2>
                     <div className="space-y-3">
-                      {activeOrders.map(order => <OrderCard key={order.id} order={order} />)}
+                      {activeOrders.map(order => <OrderCard key={order.id} order={order} highlight={!!highlightOrderNo && order.orderNo === highlightOrderNo} />)}
                     </div>
                   </section>
                 )}
@@ -780,7 +814,7 @@ export default function Orders() {
                       <CheckCircle className="w-4 h-4" />歷史訂單（{pastOrders.length}）
                     </h2>
                     <div className="space-y-3">
-                      {pastOrders.map(order => <OrderCard key={order.id} order={order} />)}
+                      {pastOrders.map(order => <OrderCard key={order.id} order={order} highlight={!!highlightOrderNo && order.orderNo === highlightOrderNo} />)}
                     </div>
                   </section>
                 )}

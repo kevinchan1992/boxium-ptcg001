@@ -275,6 +275,9 @@ function ShareButton({
 
 export default function SellerDashboard() {
   const [showApply, setShowApply] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectingOfferId, setRejectingOfferId] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [showNewListing, setShowNewListing] = useState(false);
   const [listingStep, setListingStep] = useState<1 | 2 | 3>(1);
   const [applyForm, setApplyForm] = useState({ displayName: "", bio: "" });
@@ -1121,7 +1124,7 @@ export default function SellerDashboard() {
                                 >接受</Button>
                                 <Button size="sm" variant="outline" className="h-8 text-xs border-red-300 text-red-600 hover:bg-red-50"
                                   disabled={respondToOfferMutation.isPending}
-                                  onClick={() => respondToOfferMutation.mutate({ offerId: offer.id, action: 'reject' })}
+                                  onClick={() => { setRejectingOfferId(offer.id); setRejectionReason(""); setShowRejectDialog(true); }}
                                 >拒絕</Button>
                               </div>
                             )}
@@ -1164,6 +1167,56 @@ export default function SellerDashboard() {
               disabled={!applyForm.displayName || applyMutation.isPending}
               onClick={() => applyMutation.mutate({ displayName: applyForm.displayName, bio: applyForm.bio || undefined })}>
               {applyMutation.isPending ? "提交中..." : "提交申請"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Reject Offer Dialog ──────────────────────────────────────────── */}
+      <Dialog open={showRejectDialog} onOpenChange={(v) => { setShowRejectDialog(v); if (!v) { setRejectingOfferId(null); setRejectionReason(""); } }}>
+        <DialogContent className="max-w-sm bg-white text-gray-900">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>拒絕出價</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-gray-600">你可以選擇填寫拒絕原因，買家將會收到通知。</p>
+            <div>
+              <Label className="text-sm font-medium text-gray-700">拒絕原因（選填）</Label>
+              <Textarea
+                className="mt-1.5 resize-none"
+                placeholder="例如：此出價低於我的底價，請重新出價...（最多 300 字）"
+                maxLength={300}
+                rows={3}
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+              />
+              <p className="text-xs text-gray-400 mt-1 text-right">{rejectionReason.length}/300</p>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs text-amber-700">⚠️ 拒絕後買家將收到通知，此操作不可撤回。</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="text-gray-700 bg-white" onClick={() => setShowRejectDialog(false)}>取消</Button>
+            <Button
+              className="text-white font-bold"
+              style={{ backgroundColor: "#dc2626" }}
+              disabled={respondToOfferMutation.isPending}
+              onClick={() => {
+                if (!rejectingOfferId) return;
+                respondToOfferMutation.mutate(
+                  { offerId: rejectingOfferId, action: 'reject', rejectionReason: rejectionReason.trim() || undefined },
+                  {
+                    onSuccess: () => {
+                      setShowRejectDialog(false);
+                      setRejectingOfferId(null);
+                      setRejectionReason("");
+                    },
+                  }
+                );
+              }}
+            >
+              {respondToOfferMutation.isPending ? "處理中..." : "確認拒絕"}
             </Button>
           </DialogFooter>
         </DialogContent>

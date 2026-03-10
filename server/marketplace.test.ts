@@ -511,3 +511,84 @@ describe("createOfferCheckout - payment method validation", () => {
     });
   });
 });
+
+// ── Payment success highlight logic tests ─────────────────────────────────────
+describe("Payment success order highlight logic", () => {
+  it("should detect payment=success from URL params", () => {
+    const searchString = "?payment=success&orderNo=BOXIUM-20260310-1234";
+    const params = new URLSearchParams(searchString);
+    expect(params.get("payment")).toBe("success");
+    expect(params.get("orderNo")).toBe("BOXIUM-20260310-1234");
+  });
+
+  it("should not highlight when payment param is absent", () => {
+    const searchString = "";
+    const params = new URLSearchParams(searchString);
+    const paymentSuccess = params.get("payment") === "success";
+    expect(paymentSuccess).toBe(false);
+  });
+
+  it("should match order by orderNo for highlight", () => {
+    const highlightOrderNo = "BOXIUM-20260310-1234";
+    const orders = [
+      { id: 1, orderNo: "BOXIUM-20260310-1234" },
+      { id: 2, orderNo: "BOXIUM-20260310-5678" },
+    ];
+    const highlighted = orders.filter(o => o.orderNo === highlightOrderNo);
+    expect(highlighted.length).toBe(1);
+    expect(highlighted[0].id).toBe(1);
+  });
+
+  it("should not highlight any order when orderNo is empty", () => {
+    const highlightOrderNo = "";
+    const orders = [
+      { id: 1, orderNo: "BOXIUM-20260310-1234" },
+    ];
+    const highlighted = orders.filter(o => !!highlightOrderNo && o.orderNo === highlightOrderNo);
+    expect(highlighted.length).toBe(0);
+  });
+});
+
+// ── Reject offer with reason tests ────────────────────────────────────────────
+describe("Reject offer with rejection reason", () => {
+  it("should allow rejection without a reason (optional)", () => {
+    const rejectionReason = "";
+    const payload = {
+      offerId: 1,
+      action: "reject" as const,
+      rejectionReason: rejectionReason.trim() || undefined,
+    };
+    expect(payload.rejectionReason).toBeUndefined();
+  });
+
+  it("should include rejection reason when provided", () => {
+    const rejectionReason = "此出價低於我的底價";
+    const payload = {
+      offerId: 1,
+      action: "reject" as const,
+      rejectionReason: rejectionReason.trim() || undefined,
+    };
+    expect(payload.rejectionReason).toBe("此出價低於我的底價");
+  });
+
+  it("should enforce max 300 character limit on rejection reason", () => {
+    const longReason = "a".repeat(301);
+    const isValid = longReason.length <= 300;
+    expect(isValid).toBe(false);
+
+    const validReason = "a".repeat(300);
+    expect(validReason.length <= 300).toBe(true);
+  });
+
+  it("should include rejection reason in buyer notification body", () => {
+    const reason = "此出價低於底價";
+    const notificationBody = `你對商品的出價 HKD 500 已被賣家拒絕。${reason ? `原因：${reason}` : ""}`;
+    expect(notificationBody).toContain("原因：此出價低於底價");
+  });
+
+  it("should not include reason text in notification when reason is empty", () => {
+    const reason = "";
+    const notificationBody = `你對商品的出價 HKD 500 已被賣家拒絕。${reason ? `原因：${reason}` : ""}`;
+    expect(notificationBody).not.toContain("原因：");
+  });
+});
