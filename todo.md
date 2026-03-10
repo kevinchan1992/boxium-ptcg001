@@ -4220,3 +4220,9 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 新增 IQR 過濾測試案例（包含 サトシのピカチュウ 真實場景測試）
 - [x] 30 個 priceValidator 測試全部通過
 - [x] 儲存 checkpoint
+## 🔧 批量更新跳過時間門檻改為 12 小時
+- [x] 修改 `persistentSnkrdunkBatchUpdate.ts` 中 `SKIP_RECENTLY_UPDATED_HOURS` 從 23 → 12
+- [x] 更新 `persistentSnkrdunkBatchUpdate.test.ts` 中的 23 小時斷言為 12 小時
+- [x] 更新 `batchUpdateResilience.test.ts` 中的 23 小時斷言為 12 小時
+- [x] 更新 `timezone.test.ts` 中的 SKIP_THRESHOLD_HOURS 從 23 → 12（測試邏輯改用 13 小時前作為「應更新」的案例）
+- [x] 儲存 checkpoint

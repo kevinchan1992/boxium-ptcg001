@@ -101,8 +101,8 @@ describe('Batch Update Resilience & Optimization (v7 - Controlled Parallel)', ()
   });
 
   describe('Smart Skip', () => {
-    it('should skip products updated within 23 hours', () => {
-      expect(persistentBatchUpdateCode).toContain('SKIP_RECENTLY_UPDATED_HOURS: 23');
+    it('should skip products updated within 12 hours', () => {
+      expect(persistentBatchUpdateCode).toContain('SKIP_RECENTLY_UPDATED_HOURS: 12');
     });
 
     it('should check lastFetchedAt for skip logic', () => {

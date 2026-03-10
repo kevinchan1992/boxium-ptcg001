@@ -62,7 +62,7 @@ describe('Timezone Configuration', () => {
   describe('Smart Skip Timezone Consistency', () => {
     it('should calculate time differences correctly regardless of timezone', () => {
       // Simulate the smart skip logic
-      const SKIP_THRESHOLD_HOURS = 23;
+      const SKIP_THRESHOLD_HOURS = 12;
       const skipThreshold = SKIP_THRESHOLD_HOURS * 60 * 60 * 1000;
       
       // Card was updated 1 hour ago
@@ -74,9 +74,9 @@ describe('Timezone Configuration', () => {
       // Should be less than threshold (should skip)
       expect(timeSinceLastUpdate).toBeLessThan(skipThreshold);
       
-      // Card was updated 24 hours ago
-      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const timeSinceOldUpdate = now.getTime() - twentyFourHoursAgo.getTime();
+      // Card was updated 13 hours ago
+      const thirteenHoursAgo = new Date(now.getTime() - 13 * 60 * 60 * 1000);
+      const timeSinceOldUpdate = now.getTime() - thirteenHoursAgo.getTime();
       
       // Should be greater than threshold (should NOT skip)
       expect(timeSinceOldUpdate).toBeGreaterThan(skipThreshold);

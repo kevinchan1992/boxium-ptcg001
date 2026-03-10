@@ -132,8 +132,8 @@ describe('SNKRDUNK Batch Update v7 - Controlled Parallel', () => {
       expect(sourceCode).toMatch(/MAX_CONSECUTIVE_ERRORS:\s*50/);
     });
     
-    it('should skip recently updated products (23 hours)', () => {
-      expect(sourceCode).toMatch(/SKIP_RECENTLY_UPDATED_HOURS:\s*23/);
+    it('should skip recently updated products (12 hours)', () => {
+      expect(sourceCode).toMatch(/SKIP_RECENTLY_UPDATED_HOURS:\s*12/);
     });
     
     it('should have MAX_AUTO_RESUME_ATTEMPTS of 3', () => {

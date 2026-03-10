@@ -56,7 +56,7 @@ const CONFIG = {
   PROGRESS_DB_INTERVAL: 50,
   
   // Skip products updated within this many hours
-  SKIP_RECENTLY_UPDATED_HOURS: 23,
+  SKIP_RECENTLY_UPDATED_HOURS: 12,
   
   // Max auto-resume attempts
   MAX_AUTO_RESUME_ATTEMPTS: 3,
