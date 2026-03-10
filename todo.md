@@ -4175,3 +4175,18 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 更新步驟 3 確認頁面顯示接受出價狀態
 - [x] 商品詳情頁根據 allowOffers 欄位決定是否顯示「出價洽議」按鈕
 - [ ] 儲存 checkpoint
+
+## 🔧 Marketplace 全面流程審查修復（2026-03-10）
+
+### 發現的缺口清單：
+
+- [ ] 缺口1：makeOffer 後端缺少 allowOffers 驗證（任何商品都可被出價）
+- [ ] 缺口2：買家出價被接受後，Orders.tsx「前往付款」按鈕只跳轉到 /orders 而非 Stripe 付款頁面
+- [ ] 缺口3：MarketplaceListing 商品頁面出價被接受後沒有付款引導（getMyOfferForListing 只返回 pending）
+- [ ] 缺口4：賣家中心訂單管理顯示 pending_payment 訂單（買家未付款，應過濾）
+- [ ] 缺口5：createStripeOrder session metadata 缺少 orderId（webhook 匹配需要）
+- [ ] 缺口6：Stripe success_url 重定向後 Marketplace.tsx 沒有處理 payment=success 參數
+- [ ] 缺口7：Orders.tsx 的 pending_payment 訂單沒有「重新付款」按鈕
+- [ ] 缺口8：OrderDetail.tsx 的 pending_payment 訂單沒有「前往付款」按鈕
+- [ ] 缺口9：getBuyerOffers 不包含 listingTitle 和 listingImages（買家看不到商品名稱和圖片）
+- [ ] 缺口10：respondToOffer 接受後不通知買家（需要系統通知）

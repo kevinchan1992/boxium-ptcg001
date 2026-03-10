@@ -2973,12 +2973,15 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
-  const conditions = status ? [eq(marketplaceOrders.orderStatus, status as any)] : [];
+  // If no status filter, exclude pending_payment (buyer hasn't paid, not a real order yet)
+  const conditions = status
+    ? [eq(marketplaceOrders.orderStatus, status as any)]
+    : [sql`${marketplaceOrders.orderStatus} != 'pending_payment'`];
   const rows = await db.select().from(marketplaceOrders)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(desc(marketplaceOrders.createdAt)).limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
-    .where(conditions.length ? and(...conditions) : undefined);
+    .where(and(...conditions));
   return { orders: rows, total: Number(countRows[0]?.count ?? 0) };
 }
 export async function getAlipayPendingOrders() {
@@ -3037,7 +3040,12 @@ export async function getSellerOrderItems(sellerId: number) {
   })
     .from(marketplaceOrders)
     .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
-    .where(and(eq(marketplaceOrders.sellerId, sellerId), eq(marketplaceOrders.sellerType, 'seller')))
+    .where(and(
+      eq(marketplaceOrders.sellerId, sellerId),
+      eq(marketplaceOrders.sellerType, 'seller'),
+      // Exclude pending_payment orders - buyer hasn't paid yet, not a real order for seller
+      sql`${marketplaceOrders.orderStatus} != 'pending_payment'`
+    ))
     .orderBy(desc(marketplaceOrders.createdAt));
   return rows;
 }
@@ -3367,7 +3375,29 @@ export async function getOfferById(id: number) {
 export async function getBuyerOffers(buyerId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(offers).where(eq(offers.buyerId, buyerId)).orderBy(desc(offers.createdAt));
+  const rows = await db.select({
+    id: offers.id,
+    listingId: offers.listingId,
+    buyerId: offers.buyerId,
+    sellerId: offers.sellerId,
+    sellerProfileId: offers.sellerProfileId,
+    offerPriceHkd: offers.offerPriceHkd,
+    message: offers.message,
+    status: offers.status,
+    expiresAt: offers.expiresAt,
+    respondedAt: offers.respondedAt,
+    rejectionReason: offers.rejectionReason,
+    orderId: offers.orderId,
+    createdAt: offers.createdAt,
+    updatedAt: offers.updatedAt,
+    listingTitle: marketplaceListings.title,
+    listingImages: marketplaceListings.images,
+  })
+    .from(offers)
+    .leftJoin(marketplaceListings, eq(offers.listingId, marketplaceListings.id))
+    .where(eq(offers.buyerId, buyerId))
+    .orderBy(desc(offers.createdAt));
+  return rows;
 }
 
 export async function getSellerOffers(sellerProfileId: number) {

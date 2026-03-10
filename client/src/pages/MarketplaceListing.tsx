@@ -430,6 +430,27 @@ type VerifyResult = {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
+function OfferPayButton({ orderId }: { orderId: number }) {
+  const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
+    onSuccess: (data) => {
+      toast.success("正在轉向付款頁面...");
+      window.open(data.checkoutUrl, "_blank");
+    },
+    onError: (e: any) => toast.error(e.message || "無法獲取付款連結"),
+  });
+  return (
+    <Button
+      className="w-full h-11 text-white font-bold rounded-xl"
+      style={{ backgroundColor: "#06038d" }}
+      disabled={getCheckoutMutation.isPending}
+      onClick={() => getCheckoutMutation.mutate({ orderId })}
+    >
+      {getCheckoutMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CreditCard className="w-4 h-4 mr-2" />}
+      前往付款
+    </Button>
+  );
+}
+
 export default function MarketplaceListing() {
   const params = useParams<{ id: string }>();
   const id = parseInt(params.id ?? "0");
@@ -817,6 +838,23 @@ export default function MarketplaceListing() {
                 {/* Offer - show pending offer status or offer button (only if allowOffers is true) */}
                 {listing?.allowOffers && (
                   myPendingOffer ? (
+                    myPendingOffer.status === "accepted" && myPendingOffer.orderId ? (
+                      // Offer accepted - show pay button
+                      <div className="w-full rounded-xl border-2 border-green-400 bg-green-50 p-3 space-y-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-green-700 font-semibold leading-none">賣家已接受出價！</p>
+                            <p className="font-bold text-[#06038D] text-base leading-tight">
+                              HKD {parseFloat(myPendingOffer.offerPriceHkd as string).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                        <OfferPayButton orderId={myPendingOffer.orderId} />
+                      </div>
+                    ) : (
                     <div className="w-full rounded-xl border-2 border-[#FEDD00] bg-[#FEDD00]/10 p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -834,6 +872,7 @@ export default function MarketplaceListing() {
                       </div>
                       <p className="text-xs text-gray-500">出價將於 {new Date(myPendingOffer.expiresAt).toLocaleString("zh-HK", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })} 到期</p>
                     </div>
+                    )
                   ) : (
                     <Button
                       variant="outline"

@@ -230,6 +230,68 @@ export const marketplaceRouter = router({
       return { order, items };
     }),
 
+  // Get or create Stripe checkout URL for a pending_payment order
+  getOrderCheckoutUrl: protectedProcedure
+    .input(z.object({ orderId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
+      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "無權限" });
+      if (order.orderStatus !== "pending_payment") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不需要付款" });
+      // If existing Stripe session is still valid, retrieve it
+      if (order.stripeSessionId) {
+        try {
+          const Stripe = (await import("stripe")).default;
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+          const existingSession = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+          if (existingSession.status === "open" && existingSession.url) {
+            return { checkoutUrl: existingSession.url };
+          }
+        } catch (e) {
+          console.warn("[getOrderCheckoutUrl] Failed to retrieve existing session:", e);
+        }
+      }
+      // Create a new Stripe checkout session
+      const listing = await getListingById(order.listingId!);
+      if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
+      const totalHkd = parseFloat(order.subtotalHkd as string);
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [{
+          price_data: {
+            currency: "hkd",
+            product_data: { name: listing.title },
+            unit_amount: Math.round(totalHkd * 100),
+          },
+          quantity: 1,
+        }],
+        mode: "payment",
+        customer_email: ctx.user.email ?? undefined,
+        client_reference_id: ctx.user.id.toString(),
+        metadata: {
+          orderId: order.id.toString(),
+          orderNo: order.orderNo,
+          buyerId: ctx.user.id.toString(),
+          listingId: (order.listingId ?? "").toString(),
+        },
+        payment_intent_data: {
+          metadata: {
+            orderId: order.id.toString(),
+            orderNo: order.orderNo,
+            buyerId: ctx.user.id.toString(),
+          },
+        },
+        success_url: `${origin}/orders?payment=success&orderNo=${order.orderNo}`,
+        cancel_url: `${origin}/orders`,
+        allow_promotion_codes: true,
+      });
+      await updateMarketplaceOrder(order.id, { stripeSessionId: session.id });
+      return { checkoutUrl: session.url! };
+    }),
+
   // Submit Alipay HK proof screenshot
   submitAlipayProof: protectedProcedure
     .input(z.object({
@@ -1693,12 +1755,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const listing = await getListingById(input.listingId);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
       if (listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架" });
-      // All active listings accept offers by default
+      // Check if listing allows offers
+      if (!listing.allowOffers) throw new TRPCError({ code: "BAD_REQUEST", message: "此商品不接受出價" });
+      if (!listing.sellerId) throw new TRPCError({ code: "BAD_REQUEST", message: "平台商品不支持出價" });
       const minOffer = listing.minOfferHkd ? parseFloat(listing.minOfferHkd as string) : 0;
       if (minOffer > 0 && input.offerPriceHkd < minOffer) {
         throw new TRPCError({ code: "BAD_REQUEST", message: `出價不得低於 HKD ${minOffer}` });
       }
-      if (!listing.sellerId) throw new TRPCError({ code: "BAD_REQUEST", message: "平台商品不支持出價" });
       const sellerProfile = await getSellerProfileById(listing.sellerId);
       if (!sellerProfile) throw new TRPCError({ code: "NOT_FOUND", message: "賣家不存在" });
       // Expire in 48 hours
@@ -1764,8 +1827,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
   getMyOfferForListing: protectedProcedure
     .input(z.object({ listingId: z.number().int() }))
     .query(async ({ ctx, input }) => {
-      // Return the buyer's most recent pending offer for this listing
+      // Return the buyer's most recent pending or accepted offer for this listing
       const allOffers = await getBuyerOffers(ctx.user.id);
+      // Priority: accepted (needs payment) > pending (awaiting seller response)
+      const acceptedOffer = allOffers.find(
+        (o) => o.listingId === input.listingId && o.status === "accepted"
+      );
+      if (acceptedOffer) return acceptedOffer;
       const pendingOffer = allOffers.find(
         (o) => o.listingId === input.listingId && o.status === "pending"
       );

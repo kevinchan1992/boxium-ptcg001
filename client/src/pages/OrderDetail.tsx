@@ -13,6 +13,27 @@ import {
   Copy, ExternalLink, ShieldCheck, CircleDot
 } from "lucide-react";
 
+function PayOrderButton({ orderId }: { orderId: number }) {
+  const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
+    onSuccess: (data) => {
+      toast.success("正在轉向付款頁面...");
+      window.open(data.checkoutUrl, "_blank");
+    },
+    onError: (e: any) => toast.error(e.message || "無法獲取付款連結"),
+  });
+  return (
+    <Button
+      className="text-white font-bold"
+      style={{ backgroundColor: "#06038d" }}
+      disabled={getCheckoutMutation.isPending}
+      onClick={() => getCheckoutMutation.mutate({ orderId })}
+    >
+      {getCheckoutMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CreditCard className="w-4 h-4 mr-2" />}
+      前往付款
+    </Button>
+  );
+}
+
 // Auto-complete countdown hook
 function useAutoCompleteCountdown(autoCompleteAt: Date | string | null | undefined) {
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; pct: number } | null>(null);
@@ -486,6 +507,19 @@ export default function OrderDetail() {
             </div>
           </div>
 
+          {/* Action Buttons - pending_payment: show pay button */}
+          {isBuyer && order.orderStatus === "pending_payment" && order.paymentMethod === "stripe" && (
+            <div className="px-4 pb-4 flex flex-wrap gap-2 border-t pt-3">
+              <PayOrderButton orderId={order.id} />
+            </div>
+          )}
+          {isBuyer && order.orderStatus === "pending_payment" && order.paymentMethod === "alipay_hk" && (
+            <div className="px-4 pb-4 border-t pt-3">
+              <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />等待支付寶 HK 付款確認
+              </span>
+            </div>
+          )}
           {/* Action Buttons */}
           {(canConfirm || canDispute || canReview) && (
             <div className="px-4 pb-4 flex flex-wrap gap-2 border-t pt-3">

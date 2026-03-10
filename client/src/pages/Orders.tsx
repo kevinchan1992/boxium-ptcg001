@@ -60,6 +60,28 @@ function OrderStatusBadge({ status }: { status: string }) {
   );
 }
 
+function PayOrderButton({ orderId }: { orderId: number }) {
+  const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
+    onSuccess: (data) => {
+      toast.success("正在轉向付款頁面...");
+      window.open(data.checkoutUrl, "_blank");
+    },
+    onError: (e: any) => toast.error(e.message || "無法獲取付款連結"),
+  });
+  return (
+    <Button
+      size="sm"
+      className="text-white font-bold"
+      style={{ backgroundColor: "#06038d" }}
+      disabled={getCheckoutMutation.isPending}
+      onClick={() => getCheckoutMutation.mutate({ orderId })}
+    >
+      {getCheckoutMutation.isPending ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1.5" />}
+      前往付款
+    </Button>
+  );
+}
+
 function OrderCard({ order }: { order: any }) {
   const [expanded, setExpanded] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -234,8 +256,11 @@ function OrderCard({ order }: { order: any }) {
             </span>
           )}
           {isPending && order.paymentMethod === "stripe" && (
+            <PayOrderButton orderId={order.id} />
+          )}
+          {isPending && order.paymentMethod === "alipay_hk" && (
             <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />等待付款確認
+              <Clock className="w-3.5 h-3.5" />等待支付寶 HK 付款確認
             </span>
           )}
           {isDisputed && (
@@ -519,17 +544,35 @@ function MyOffersTab({ userId }: { userId: number }) {
               {offerStatusLabel[offer.status]?.label ?? offer.status}
             </Badge>
           </div>
-          <div className="bg-white p-4 flex items-center justify-between gap-3">
+          <div className="bg-white p-4 flex items-start gap-3">
+            {/* Listing thumbnail */}
+            {(() => {
+              const imgs = (() => { try { return JSON.parse(offer.listingImages ?? '[]'); } catch { return []; } })();
+              const thumb = imgs[0];
+              return thumb ? (
+                <div className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
+                  <img src={thumb} alt={offer.listingTitle ?? '商品'} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="flex-shrink-0 w-14 h-14 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
+                  <span className="text-2xl">🃏</span>
+                </div>
+              );
+            })()}
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-800">出價金額: <span style={{ color: "#06038d" }}>HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</span></p>
+              {offer.listingTitle && <p className="font-semibold text-sm text-gray-900 truncate mb-0.5">{offer.listingTitle}</p>}
+              <p className="font-medium text-gray-800">出價金額: <span style={{ color: "#06038d" }}>HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</span></p>
               {offer.message && <p className="text-sm text-gray-500 mt-1">留言: {offer.message}</p>}
               {offer.rejectionReason && <p className="text-sm text-red-500 mt-1">拒絕原因: {offer.rejectionReason}</p>}
-              <p className="text-xs text-gray-400 mt-1">商品 ID: {offer.listingId} · {new Date(offer.createdAt).toLocaleDateString("zh-HK")}</p>
+              <p className="text-xs text-gray-400 mt-1">{new Date(offer.createdAt).toLocaleDateString("zh-HK")}</p>
               {offer.status === "pending" && (
                 <p className="text-xs text-amber-600 mt-1">到期: {new Date(offer.expiresAt).toLocaleString("zh-HK")}</p>
               )}
+              {offer.status === "accepted" && (
+                <p className="text-xs text-green-600 mt-1 font-medium">✅ 賣家已接受出價，請盡快完成付款</p>
+              )}
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 flex-shrink-0">
               <Link href={`/shop/${offer.listingId}`}>
                 <Button size="sm" variant="outline" className="text-xs text-[#06038d] border-[#06038d]/40 hover:bg-[#06038d]/5">查看商品</Button>
               </Link>
@@ -541,9 +584,7 @@ function MyOffersTab({ userId }: { userId: number }) {
                 </Button>
               )}
               {offer.status === "accepted" && offer.orderId && (
-                <Link href="/orders">
-                  <Button size="sm" className="text-xs" style={{ backgroundColor: "#06038d" }}>前往付款</Button>
-                </Link>
+                <PayOrderButton orderId={offer.orderId} />
               )}
             </div>
           </div>
