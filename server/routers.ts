@@ -861,16 +861,18 @@ export const appRouter = router({
           }
 
           // Step 5: Write to priceHistory table (exactly like batch update)
+          const { validateAndFilterPriceHistory } = await import('./utils/priceValidator');
+          const validatedPriceHistory = validateAndFilterPriceHistory(priceHistoryData, productType);
           let recordsAdded = 0;
-          for (const priceItem of priceHistoryData) {
+          for (const priceItem of validatedPriceHistory) {
             const priceHKD = convertJpyToHkd(priceItem.price);
             await db.addPriceHistory({
               cardId: cardId,
               source: 'snkrdunk',
               price: priceHKD.toString(),
               currency: 'HKD',
-              jpyPrice: priceItem.price, // Original JPY price for stable deduplication
-              grade: productType === 'sealed_product' ? undefined : priceItem.grade,
+              jpyPrice: priceItem.jpyPrice ?? priceItem.price, // Original JPY price for stable deduplication
+              grade: productType === 'sealed_product' ? undefined : (priceItem.normalisedGrade ?? priceItem.grade),
               quantity: productType === 'sealed_product' ? (priceItem.quantity || undefined) : undefined,
               productType,
               soldAt: priceItem.soldAt,

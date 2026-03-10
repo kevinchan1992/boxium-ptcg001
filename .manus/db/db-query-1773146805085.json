@@ -1,0 +1,170 @@
+{
+  "query": "\nSELECT ph.id, ph.cardId, ph.grade, CAST(ph.price AS DECIMAL(10,2)) as hkdPrice, ph.jpyPrice, DATE(ph.soldAt) as soldDate\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.nameJa LIKE '%サトシのピカチュウ%'\n  AND ph.grade = 'PSA10'\nORDER BY ph.soldAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT ph.id, ph.cardId, ph.grade, CAST(ph.price AS DECIMAL(10,2)) as hkdPrice, ph.jpyPrice, DATE(ph.soldAt) as soldDate\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.nameJa LIKE '%サトシのピカチュウ%'\n  AND ph.grade = 'PSA10'\nORDER BY ph.soldAt DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "3775650",
+      "cardId": "781694",
+      "grade": "PSA10",
+      "hkdPrice": "10725.00",
+      "jpyPrice": "195000",
+      "soldDate": "2026-03-10"
+    },
+    {
+      "id": "3634247",
+      "cardId": "781690",
+      "grade": "PSA10",
+      "hkdPrice": "14300.00",
+      "jpyPrice": "260000",
+      "soldDate": "2026-03-10"
+    },
+    {
+      "id": "3776827",
+      "cardId": "781687",
+      "grade": "PSA10",
+      "hkdPrice": "11000.00",
+      "jpyPrice": "200000",
+      "soldDate": "2026-03-09"
+    },
+    {
+      "id": "3630302",
+      "cardId": "813178",
+      "grade": "PSA10",
+      "hkdPrice": "15290.00",
+      "jpyPrice": "278000",
+      "soldDate": "2026-03-09"
+    },
+    {
+      "id": "3514972",
+      "cardId": "781665",
+      "grade": "PSA10",
+      "hkdPrice": "14025.00",
+      "jpyPrice": "255000",
+      "soldDate": "2026-03-09"
+    },
+    {
+      "id": "3514758",
+      "cardId": "781669",
+      "grade": "PSA10",
+      "hkdPrice": "11550.00",
+      "jpyPrice": "210000",
+      "soldDate": "2026-03-09"
+    },
+    {
+      "id": "3512525",
+      "cardId": "781690",
+      "grade": "PSA10",
+      "hkdPrice": "13035.00",
+      "jpyPrice": "237000",
+      "soldDate": "2026-03-09"
+    },
+    {
+      "id": "3512524",
+      "cardId": "781690",
+      "grade": "PSA10",
+      "hkdPrice": "13749.95",
+      "jpyPrice": "249999",
+      "soldDate": "2026-03-09"
+    },
+    {
+      "id": "3514759",
+      "cardId": "781669",
+      "grade": "PSA10",
+      "hkdPrice": "1155.00",
+      "jpyPrice": "21000",
+      "soldDate": "2026-03-08"
+    },
+    {
+      "id": "3512479",
+      "cardId": "781697",
+      "grade": "PSA10",
+      "hkdPrice": "13200.00",
+      "jpyPrice": "240000",
+      "soldDate": "2026-03-08"
+    },
+    {
+      "id": "3495108",
+      "cardId": "813178",
+      "grade": "PSA10",
+      "hkdPrice": "15290.00",
+      "jpyPrice": "278000",
+      "soldDate": "2026-03-08"
+    },
+    {
+      "id": "3296082",
+      "cardId": "781662",
+      "grade": "PSA10",
+      "hkdPrice": "9900.00",
+      "jpyPrice": "180000",
+      "soldDate": "2026-03-07"
+    },
+    {
+      "id": "3295929",
+      "cardId": "781665",
+      "grade": "PSA10",
+      "hkdPrice": "13200.00",
+      "jpyPrice": "240000",
+      "soldDate": "2026-03-07"
+    },
+    {
+      "id": "3295640",
+      "cardId": "781669",
+      "grade": "PSA10",
+      "hkdPrice": "11000.00",
+      "jpyPrice": "200000",
+      "soldDate": "2026-03-07"
+    },
+    {
+      "id": "3293669",
+      "cardId": "781687",
+      "grade": "PSA10",
+      "hkdPrice": "11548.90",
+      "jpyPrice": "209980",
+      "soldDate": "2026-03-07"
+    },
+    {
+      "id": "3290061",
+      "cardId": "781690",
+      "grade": "PSA10",
+      "hkdPrice": "9900.00",
+      "jpyPrice": "180000",
+      "soldDate": "2026-03-07"
+    },
+    {
+      "id": "3288308",
+      "cardId": "781697",
+      "grade": "PSA10",
+      "hkdPrice": "11550.00",
+      "jpyPrice": "210000",
+      "soldDate": "2026-03-07"
+    },
+    {
+      "id": "3288257",
+      "cardId": "781694",
+      "grade": "PSA10",
+      "hkdPrice": "11000.00",
+      "jpyPrice": "200000",
+      "soldDate": "2026-03-07"
+    },
+    {
+      "id": "3775651",
+      "cardId": "781694",
+      "grade": "PSA10",
+      "hkdPrice": "11000.00",
+      "jpyPrice": "200000",
+      "soldDate": "2026-03-06"
+    },
+    {
+      "id": "3515055",
+      "cardId": "781662",
+      "grade": "PSA10",
+      "hkdPrice": "9900.00",
+      "jpyPrice": "180000",
+      "soldDate": "2026-03-06"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tgrade\thkdPrice\tjpyPrice\tsoldDate\n3775650\t781694\tPSA10\t10725.00\t195000\t2026-03-10\n3634247\t781690\tPSA10\t14300.00\t260000\t2026-03-10\n3776827\t781687\tPSA10\t11000.00\t200000\t2026-03-09\n3630302\t813178\tPSA10\t15290.00\t278000\t2026-03-09\n3514972\t781665\tPSA10\t14025.00\t255000\t2026-03-09\n3514758\t781669\tPSA10\t11550.00\t210000\t2026-03-09\n3512525\t781690\tPSA10\t13035.00\t237000\t2026-03-09\n3512524\t781690\tPSA10\t13749.95\t249999\t2026-03-09\n3514759\t781669\tPSA10\t1155.00\t21000\t2026-03-08\n3512479\t781697\tPSA10\t13200.00\t240000\t2026-03-08\n3495108\t813178\tPSA10\t15290.00\t278000\t2026-03-08\n3296082\t781662\tPSA10\t9900.00\t180000\t2026-03-07\n3295929\t781665\tPSA10\t13200.00\t240000\t2026-03-07\n3295640\t781669\tPSA10\t11000.00\t200000\t2026-03-07\n3293669\t781687\tPSA10\t11548.90\t209980\t2026-03-07\n3290061\t781690\tPSA10\t9900.00\t180000\t2026-03-07\n3288308\t781697\tPSA10\t11550.00\t210000\t2026-03-07\n3288257\t781694\tPSA10\t11000.00\t200000\t2026-03-07\n3775651\t781694\tPSA10\t11000.00\t200000\t2026-03-06\n3515055\t781662\tPSA10\t9900.00\t180000\t2026-03-06\n",
+  "stderr": "",
+  "execution_time_ms": 1663
+}

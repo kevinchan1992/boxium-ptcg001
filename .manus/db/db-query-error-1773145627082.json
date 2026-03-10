@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, card_id, grade, price, currency, jpy_price, sold_at, source\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND CAST(price AS DECIMAL) < 2000\nORDER BY sold_at DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, card_id, grade, price, currency, jpy_price, sold_at, source\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND CAST(price AS DECIMAL) < 2000\nORDER BY sold_at DESC\nLIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'card_id' in 'field list'"
+  ]
+}

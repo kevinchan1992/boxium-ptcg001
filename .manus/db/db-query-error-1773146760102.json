@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT ph.id, ph.card_id, ph.grade, ph.price, ph.jpy_price, ph.sold_at, ph.source, c.name_jp, c.set_code\nFROM price_history ph\nJOIN cards c ON ph.card_id = c.id\nWHERE c.name_jp LIKE '%サトシのピカチュウ%'\n  AND ph.grade = 'PSA10'\nORDER BY ph.sold_at DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT ph.id, ph.card_id, ph.grade, ph.price, ph.jpy_price, ph.sold_at, ph.source, c.name_jp, c.set_code\nFROM price_history ph\nJOIN cards c ON ph.card_id = c.id\nWHERE c.name_jp LIKE '%サトシのピカチュウ%'\n  AND ph.grade = 'PSA10'\nORDER BY ph.sold_at DESC\nLIMIT 20;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 2: Table 'mua4eq38uvnrovhujbrepi.price_history' doesn't exist"
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "query": "SELECT c.id, c.name, c.nameJa, ds.sourceUrl\nFROM cards c\nJOIN dataSources ds ON ds.cardId = c.id\nWHERE (c.name LIKE '%Satoshi%' OR c.nameJa LIKE '%サトシ%' OR c.name LIKE '%SM-P%076%')\n  AND ds.source = 'snkrdunk'\nLIMIT 5;\n\nSELECT c.id, c.name, c.nameJa, ds.sourceUrl\nFROM cards c\nJOIN dataSources ds ON ds.cardId = c.id\nWHERE ds.sourceUrl LIKE '%snkrdunk%'\n  AND (c.name LIKE '%Pikachu%' OR c.nameJa LIKE '%ピカチュウ%')\n  AND c.name LIKE '%SM-P%'\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id, c.name, c.nameJa, ds.sourceUrl\nFROM cards c\nJOIN dataSources ds ON ds.cardId = c.id\nWHERE (c.name LIKE '%Satoshi%' OR c.nameJa LIKE '%サトシ%' OR c.name LIKE '%SM-P%076%')\n  AND ds.source = 'snkrdunk'\nLIMIT 5;\n\nSELECT c.id, c.name, c.nameJa, ds.sourceUrl\nFROM cards c\nJOIN dataSources ds ON ds.cardId = c.id\nWHERE ds.sourceUrl LIKE '%snkrdunk%'\n  AND (c.name LIKE '%Pikachu%' OR c.nameJa LIKE '%ピカチュウ%')\n  AND c.name LIKE '%SM-P%'\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "544858",
+      "name": "Ash's Aipom [2006 VS 010/019](Movie Release Commemorative VS Pack \"Manaphy of the Blue Sea\")",
+      "nameJa": "サトシのエイパム [2006 VS 010/019](映画公開記念VSパック「蒼海のマナフィ」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/435175"
+    },
+    {
+      "id": "544868",
+      "name": "Ash's Grovyle [2005 VS 001/020](Movie Release Commemorative VS Pack \"Wave-Guided Lucario\")",
+      "nameJa": "サトシのジュプトル [2005 VS 001/020](映画公開記念VSパック「波導のルカリオ」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/435185"
+    },
+    {
+      "id": "544869",
+      "name": "Ash's Phanpy [2005 VS 004/020](Movie Release Commemorative VS Pack \"Wave-Guided Lucario\")",
+      "nameJa": "サトシのゴマゾウ [2005 VS 004/020](映画公開記念VSパック「波導のルカリオ」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/435188"
+    },
+    {
+      "id": "544874",
+      "name": "Ash's Swellow [2005 VS 007/020](Movie Release Commemorative VS Pack \"Wave-Guided Lucario\")",
+      "nameJa": "サトシのオオスバメ [2005 VS 007/020](映画公開記念VSパック「波導のルカリオ」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/435191"
+    },
+    {
+      "id": "545452",
+      "name": "Ash's Torkoal [2004 VS 009/019](Movie Release Commemorative VS Pack \"Deoxys of the Sky\")",
+      "nameJa": "サトシのコータス [2004 VS 009/019](映画公開記念VSパック「裂空のデオキシス」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/435213"
+    },
+    {
+      "id": "id",
+      "name": "name",
+      "nameJa": "nameJa",
+      "sourceUrl": "sourceUrl"
+    },
+    {
+      "id": "546079",
+      "name": "Extinguisher Pikachu: PROMO[SM-P 209](SM-P Promotional cards)",
+      "nameJa": "火消し姿のピカチュウ: プロモ[SM-P 209](プロモーションカード「SM-P」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/93063"
+    },
+    {
+      "id": "546081",
+      "name": "Hakama Pikachu: PROMO[SM-P 208](SM-P Promotional cards)",
+      "nameJa": "袴姿のピカチュウ: プロモ[SM-P 208](プロモーションカード「SM-P」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/93062"
+    },
+    {
+      "id": "546082",
+      "name": "Pikachu: PROMO[SM-P 400](SM-P Promotional cards)",
+      "nameJa": "ピカチュウ: プロモ[SM-P 400](プロモーションカード「SM-P」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/93060"
+    },
+    {
+      "id": "546083",
+      "name": "Detective Pikachu P [SM-P 338](Promotional Cards \"Special Jumbo Card Pack Detective Pikachu Charizard GX Ver.\")",
+      "nameJa": "名探偵ピカチュウ P [SM-P 338](プロモーションカード「スペシャルジャンボカードパック 名探偵ピカチュウ リザードンGX Ver.」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/93066"
+    },
+    {
+      "id": "546084",
+      "name": "Yokohama Pikachu: PROMO[SM-P 281](SM-P Promotional cards)",
+      "nameJa": "ヨコハマのピカチュウ: プロモ[SM-P 281](プロモーションカード「SM-P」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/93068"
+    },
+    {
+      "id": "546085",
+      "name": "Pikachu: PROMO[SM-P 369](SM-P Promotional cards)",
+      "nameJa": "ピカチュウ: プロモ[SM-P 369](プロモーションカード「SM-P」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/93071"
+    },
+    {
+      "id": "546087",
+      "name": "Pikachu GX: PROMO[SM-P 393](SM-P Promotional cards)",
+      "nameJa": "ピカチュウGX: プロモ[SM-P 393](プロモーションカード「SM-P」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/93069"
+    },
+    {
+      "id": "546088",
+      "name": "Yokohama Pikachu: PROMO[SM-P 280](SM-P Promotional cards)",
+      "nameJa": "ヨコハマのピカチュウ: プロモ[SM-P 280](プロモーションカード「SM-P」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/93067"
+    },
+    {
+      "id": "546089",
+      "name": "Detective Pikachu: PROMO[SM-P 337](SM-P Promotional cards)",
+      "nameJa": "名探偵ピカチュウ: プロモ[SM-P 337](プロモーションカード「SM-P」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/93080"
+    },
+    {
+      "id": "546091",
+      "name": "Yokohama Pikachu: PROMO[SM-P 283](SM-P Promotional cards)",
+      "nameJa": "ヨコハマのピカチュウ: プロモ[SM-P 283](プロモーションカード「SM-P」)",
+      "sourceUrl": "https://snkrdunk.com/apparels/93078"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tnameJa\tsourceUrl\n544858\tAsh's Aipom [2006 VS 010/019](Movie Release Commemorative VS Pack \"Manaphy of the Blue Sea\")\tサトシのエイパム [2006 VS 010/019](映画公開記念VSパック「蒼海のマナフィ」)\thttps://snkrdunk.com/apparels/435175\n544868\tAsh's Grovyle [2005 VS 001/020](Movie Release Commemorative VS Pack \"Wave-Guided Lucario\")\tサトシのジュプトル [2005 VS 001/020](映画公開記念VSパック「波導のルカリオ」)\thttps://snkrdunk.com/apparels/435185\n544869\tAsh's Phanpy [2005 VS 004/020](Movie Release Commemorative VS Pack \"Wave-Guided Lucario\")\tサトシのゴマゾウ [2005 VS 004/020](映画公開記念VSパック「波導のルカリオ」)\thttps://snkrdunk.com/apparels/435188\n544874\tAsh's Swellow [2005 VS 007/020](Movie Release Commemorative VS Pack \"Wave-Guided Lucario\")\tサトシのオオスバメ [2005 VS 007/020](映画公開記念VSパック「波導のルカリオ」)\thttps://snkrdunk.com/apparels/435191\n545452\tAsh's Torkoal [2004 VS 009/019](Movie Release Commemorative VS Pack \"Deoxys of the Sky\")\tサトシのコータス [2004 VS 009/019](映画公開記念VSパック「裂空のデオキシス」)\thttps://snkrdunk.com/apparels/435213\nid\tname\tnameJa\tsourceUrl\n546079\tExtinguisher Pikachu: PROMO[SM-P 209](SM-P Promotional cards)\t火消し姿のピカチュウ: プロモ[SM-P 209](プロモーションカード「SM-P」)\thttps://snkrdunk.com/apparels/93063\n546081\tHakama Pikachu: PROMO[SM-P 208](SM-P Promotional cards)\t袴姿のピカチュウ: プロモ[SM-P 208](プロモーションカード「SM-P」)\thttps://snkrdunk.com/apparels/93062\n546082\tPikachu: PROMO[SM-P 400](SM-P Promotional cards)\tピカチュウ: プロモ[SM-P 400](プロモーションカード「SM-P」)\thttps://snkrdunk.com/apparels/93060\n546083\tDetective Pikachu P [SM-P 338](Promotional Cards \"Special Jumbo Card Pack Detective Pikachu Charizard GX Ver.\")\t名探偵ピカチュウ P [SM-P 338](プロモーションカード「スペシャルジャンボカードパック 名探偵ピカチュウ リザードンGX Ver.」)\thttps://snkrdunk.com/apparels/93066\n546084\tYokohama Pikachu: PROMO[SM-P 281](SM-P Promotional cards)\tヨコハマのピカチュウ: プロモ[SM-P 281](プロモーションカード「SM-P」)\thttps://snkrdunk.com/apparels/93068\n546085\tPikachu: PROMO[SM-P 369](SM-P Promotional cards)\tピカチュウ: プロモ[SM-P 369](プロモーションカード「SM-P」)\thttps://snkrdunk.com/apparels/93071\n546087\tPikachu GX: PROMO[SM-P 393](SM-P Promotional cards)\tピカチュウGX: プロモ[SM-P 393](プロモーションカード「SM-P」)\thttps://snkrdunk.com/apparels/93069\n546088\tYokohama Pikachu: PROMO[SM-P 280](SM-P Promotional cards)\tヨコハマのピカチュウ: プロモ[SM-P 280](プロモーションカード「SM-P」)\thttps://snkrdunk.com/apparels/93067\n546089\tDetective Pikachu: PROMO[SM-P 337](SM-P Promotional cards)\t名探偵ピカチュウ: プロモ[SM-P 337](プロモーションカード「SM-P」)\thttps://snkrdunk.com/apparels/93080\n546091\tYokohama Pikachu: PROMO[SM-P 283](SM-P Promotional cards)\tヨコハマのピカチュウ: プロモ[SM-P 283](プロモーションカード「SM-P」)\thttps://snkrdunk.com/apparels/93078\n",
+  "stderr": "",
+  "execution_time_ms": 1886
+}

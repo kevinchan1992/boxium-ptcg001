@@ -1,0 +1,210 @@
+{
+  "query": "SELECT id, cardId, grade, price, currency, jpyPrice, soldAt, source\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND CAST(price AS DECIMAL) < 2000\nORDER BY soldAt DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, cardId, grade, price, currency, jpyPrice, soldAt, source\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND CAST(price AS DECIMAL) < 2000\nORDER BY soldAt DESC\nLIMIT 20;",
+  "rows": [
+    {
+      "id": "3840625",
+      "cardId": "542255",
+      "grade": "PSA10",
+      "price": "1292.50",
+      "currency": "HKD",
+      "jpyPrice": "23500",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3836040",
+      "cardId": "545484",
+      "grade": "PSA10",
+      "price": "439.95",
+      "currency": "HKD",
+      "jpyPrice": "7999",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3835216",
+      "cardId": "545512",
+      "grade": "PSA10",
+      "price": "1584.00",
+      "currency": "HKD",
+      "jpyPrice": "28800",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3835215",
+      "cardId": "545512",
+      "grade": "PSA10",
+      "price": "1595.00",
+      "currency": "HKD",
+      "jpyPrice": "29000",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3834585",
+      "cardId": "545517",
+      "grade": "PSA10",
+      "price": "1210.00",
+      "currency": "HKD",
+      "jpyPrice": "22000",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3833069",
+      "cardId": "545550",
+      "grade": "PSA10",
+      "price": "880.00",
+      "currency": "HKD",
+      "jpyPrice": "16000",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3833068",
+      "cardId": "545550",
+      "grade": "PSA10",
+      "price": "896.45",
+      "currency": "HKD",
+      "jpyPrice": "16299",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3833067",
+      "cardId": "545550",
+      "grade": "PSA10",
+      "price": "899.25",
+      "currency": "HKD",
+      "jpyPrice": "16350",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3833066",
+      "cardId": "545550",
+      "grade": "PSA10",
+      "price": "906.40",
+      "currency": "HKD",
+      "jpyPrice": "16480",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3833065",
+      "cardId": "545550",
+      "grade": "PSA10",
+      "price": "924.00",
+      "currency": "HKD",
+      "jpyPrice": "16800",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3833018",
+      "cardId": "545553",
+      "grade": "PSA10",
+      "price": "1017.45",
+      "currency": "HKD",
+      "jpyPrice": "18499",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3833017",
+      "cardId": "545553",
+      "grade": "PSA10",
+      "price": "961.40",
+      "currency": "HKD",
+      "jpyPrice": "17480",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3833016",
+      "cardId": "545553",
+      "grade": "PSA10",
+      "price": "984.50",
+      "currency": "HKD",
+      "jpyPrice": "17900",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3833015",
+      "cardId": "545553",
+      "grade": "PSA10",
+      "price": "948.75",
+      "currency": "HKD",
+      "jpyPrice": "17250",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3832693",
+      "cardId": "545561",
+      "grade": "PSA10",
+      "price": "726.00",
+      "currency": "HKD",
+      "jpyPrice": "13200",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3832642",
+      "cardId": "545558",
+      "grade": "PSA10",
+      "price": "460.90",
+      "currency": "HKD",
+      "jpyPrice": "8380",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3832032",
+      "cardId": "545568",
+      "grade": "PSA10",
+      "price": "440.00",
+      "currency": "HKD",
+      "jpyPrice": "8000",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3831265",
+      "cardId": "545583",
+      "grade": "PSA10",
+      "price": "604.95",
+      "currency": "HKD",
+      "jpyPrice": "10999",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3831264",
+      "cardId": "545583",
+      "grade": "PSA10",
+      "price": "659.89",
+      "currency": "HKD",
+      "jpyPrice": "11998",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    },
+    {
+      "id": "3831040",
+      "cardId": "545587",
+      "grade": "PSA10",
+      "price": "1155.00",
+      "currency": "HKD",
+      "jpyPrice": "21000",
+      "soldAt": "2026-03-10 00:00:00",
+      "source": "snkrdunk"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tgrade\tprice\tcurrency\tjpyPrice\tsoldAt\tsource\n3840625\t542255\tPSA10\t1292.50\tHKD\t23500\t2026-03-10 00:00:00\tsnkrdunk\n3836040\t545484\tPSA10\t439.95\tHKD\t7999\t2026-03-10 00:00:00\tsnkrdunk\n3835216\t545512\tPSA10\t1584.00\tHKD\t28800\t2026-03-10 00:00:00\tsnkrdunk\n3835215\t545512\tPSA10\t1595.00\tHKD\t29000\t2026-03-10 00:00:00\tsnkrdunk\n3834585\t545517\tPSA10\t1210.00\tHKD\t22000\t2026-03-10 00:00:00\tsnkrdunk\n3833069\t545550\tPSA10\t880.00\tHKD\t16000\t2026-03-10 00:00:00\tsnkrdunk\n3833068\t545550\tPSA10\t896.45\tHKD\t16299\t2026-03-10 00:00:00\tsnkrdunk\n3833067\t545550\tPSA10\t899.25\tHKD\t16350\t2026-03-10 00:00:00\tsnkrdunk\n3833066\t545550\tPSA10\t906.40\tHKD\t16480\t2026-03-10 00:00:00\tsnkrdunk\n3833065\t545550\tPSA10\t924.00\tHKD\t16800\t2026-03-10 00:00:00\tsnkrdunk\n3833018\t545553\tPSA10\t1017.45\tHKD\t18499\t2026-03-10 00:00:00\tsnkrdunk\n3833017\t545553\tPSA10\t961.40\tHKD\t17480\t2026-03-10 00:00:00\tsnkrdunk\n3833016\t545553\tPSA10\t984.50\tHKD\t17900\t2026-03-10 00:00:00\tsnkrdunk\n3833015\t545553\tPSA10\t948.75\tHKD\t17250\t2026-03-10 00:00:00\tsnkrdunk\n3832693\t545561\tPSA10\t726.00\tHKD\t13200\t2026-03-10 00:00:00\tsnkrdunk\n3832642\t545558\tPSA10\t460.90\tHKD\t8380\t2026-03-10 00:00:00\tsnkrdunk\n3832032\t545568\tPSA10\t440.00\tHKD\t8000\t2026-03-10 00:00:00\tsnkrdunk\n3831265\t545583\tPSA10\t604.95\tHKD\t10999\t2026-03-10 00:00:00\tsnkrdunk\n3831264\t545583\tPSA10\t659.89\tHKD\t11998\t2026-03-10 00:00:00\tsnkrdunk\n3831040\t545587\tPSA10\t1155.00\tHKD\t21000\t2026-03-10 00:00:00\tsnkrdunk\n",
+  "stderr": "",
+  "execution_time_ms": 1634
+}

@@ -1,0 +1,59 @@
+{
+  "query": "-- 查看 PSA10 記錄中 jpyPrice 的分佈（找出異常低價）\nSELECT \n  CASE \n    WHEN jpyPrice IS NULL THEN 'NULL'\n    WHEN jpyPrice < 5000 THEN 'Under 5000 JPY'\n    WHEN jpyPrice < 10000 THEN '5000-10000 JPY'\n    WHEN jpyPrice < 20000 THEN '10000-20000 JPY'\n    WHEN jpyPrice < 50000 THEN '20000-50000 JPY'\n    WHEN jpyPrice < 100000 THEN '50000-100000 JPY'\n    ELSE 'Over 100000 JPY'\n  END as price_range,\n  COUNT(*) as count,\n  MIN(CAST(price AS DECIMAL)) as min_hkd,\n  MAX(CAST(price AS DECIMAL)) as max_hkd,\n  AVG(CAST(price AS DECIMAL)) as avg_hkd\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\nGROUP BY price_range\nORDER BY MIN(jpyPrice);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute -- 查看 PSA10 記錄中 jpyPrice 的分佈（找出異常低價）\nSELECT \n  CASE \n    WHEN jpyPrice IS NULL THEN 'NULL'\n    WHEN jpyPrice < 5000 THEN 'Under 5000 JPY'\n    WHEN jpyPrice < 10000 THEN '5000-10000 JPY'\n    WHEN jpyPrice < 20000 THEN '10000-20000 JPY'\n    WHEN jpyPrice < 50000 THEN '20000-50000 JPY'\n    WHEN jpyPrice < 100000 THEN '50000-100000 JPY'\n    ELSE 'Over 100000 JPY'\n  END as price_range,\n  COUNT(*) as count,\n  MIN(CAST(price AS DECIMAL)) as min_hkd,\n  MAX(CAST(price AS DECIMAL)) as max_hkd,\n  AVG(CAST(price AS DECIMAL)) as avg_hkd\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\nGROUP BY price_range\nORDER BY MIN(jpyPrice);",
+  "rows": [
+    {
+      "price_range": "NULL",
+      "count": "149",
+      "min_hkd": "29",
+      "max_hkd": "195500",
+      "avg_hkd": "5528.2013"
+    },
+    {
+      "price_range": "Under 5000 JPY",
+      "count": "4769",
+      "min_hkd": "55",
+      "max_hkd": "275",
+      "avg_hkd": "233.2592"
+    },
+    {
+      "price_range": "5000-10000 JPY",
+      "count": "28553",
+      "min_hkd": "275",
+      "max_hkd": "550",
+      "avg_hkd": "407.7056"
+    },
+    {
+      "price_range": "10000-20000 JPY",
+      "count": "20270",
+      "min_hkd": "550",
+      "max_hkd": "1100",
+      "avg_hkd": "780.8686"
+    },
+    {
+      "price_range": "20000-50000 JPY",
+      "count": "18606",
+      "min_hkd": "1100",
+      "max_hkd": "2750",
+      "avg_hkd": "1740.8162"
+    },
+    {
+      "price_range": "50000-100000 JPY",
+      "count": "10990",
+      "min_hkd": "2750",
+      "max_hkd": "5500",
+      "avg_hkd": "4046.2610"
+    },
+    {
+      "price_range": "Over 100000 JPY",
+      "count": "17726",
+      "min_hkd": "5500",
+      "max_hkd": "770000",
+      "avg_hkd": "22723.0484"
+    }
+  ],
+  "messages": [],
+  "stdout": "price_range\tcount\tmin_hkd\tmax_hkd\tavg_hkd\nNULL\t149\t29\t195500\t5528.2013\nUnder 5000 JPY\t4769\t55\t275\t233.2592\n5000-10000 JPY\t28553\t275\t550\t407.7056\n10000-20000 JPY\t20270\t550\t1100\t780.8686\n20000-50000 JPY\t18606\t1100\t2750\t1740.8162\n50000-100000 JPY\t10990\t2750\t5500\t4046.2610\nOver 100000 JPY\t17726\t5500\t770000\t22723.0484\n",
+  "stderr": "",
+  "execution_time_ms": 2018
+}

@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT ph.id, ph.cardId, ph.grade, ph.price, ph.jpyPrice, ph.soldAt\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.nameJp LIKE '%サトシのピカチュウ%'\n  AND ph.grade = 'PSA10'\nORDER BY ph.soldAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT ph.id, ph.cardId, ph.grade, ph.price, ph.jpyPrice, ph.soldAt\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE c.nameJp LIKE '%サトシのピカチュウ%'\n  AND ph.grade = 'PSA10'\nORDER BY ph.soldAt DESC\nLIMIT 20;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'c.namejp' in 'where clause'"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_anomalies,\n  SUM(CASE WHEN jpyPrice IS NULL THEN 1 ELSE 0 END) as null_jpyprice_count,\n  SUM(CASE WHEN jpyPrice IS NOT NULL AND jpyPrice < 5000 THEN 1 ELSE 0 END) as very_low_jpy_count,\n  MIN(CAST(price AS DECIMAL)) as min_hkd,\n  MAX(CAST(price AS DECIMAL)) as max_hkd\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND (jpyPrice IS NULL OR jpyPrice < 5000 OR CAST(price AS DECIMAL) < 300);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  COUNT(*) as total_anomalies,\n  SUM(CASE WHEN jpyPrice IS NULL THEN 1 ELSE 0 END) as null_jpyprice_count,\n  SUM(CASE WHEN jpyPrice IS NOT NULL AND jpyPrice < 5000 THEN 1 ELSE 0 END) as very_low_jpy_count,\n  MIN(CAST(price AS DECIMAL)) as min_hkd,\n  MAX(CAST(price AS DECIMAL)) as max_hkd\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND (jpyPrice IS NULL OR jpyPrice < 5000 OR CAST(price AS DECIMAL) < 300);",
+  "rows": [
+    {
+      "total_anomalies": "6796",
+      "null_jpyprice_count": "149",
+      "very_low_jpy_count": "4769",
+      "min_hkd": "29",
+      "max_hkd": "195500"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_anomalies\tnull_jpyprice_count\tvery_low_jpy_count\tmin_hkd\tmax_hkd\n6796\t149\t4769\t29\t195500\n",
+  "stderr": "",
+  "execution_time_ms": 2324
+}

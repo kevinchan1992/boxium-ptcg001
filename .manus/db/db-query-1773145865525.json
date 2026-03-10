@@ -1,0 +1,52 @@
+{
+  "query": "SELECT \n  CASE \n    WHEN jpyPrice IS NULL THEN 'NULL jpyPrice'\n    WHEN jpyPrice < 5000 THEN 'Under 5000 JPY'\n    WHEN jpyPrice < 10000 THEN '5000-10000 JPY'\n    WHEN jpyPrice < 20000 THEN '10000-20000 JPY'\n    WHEN jpyPrice < 50000 THEN '20000-50000 JPY'\n    WHEN jpyPrice < 100000 THEN '50000-100000 JPY'\n    ELSE 'Over 100000 JPY'\n  END as price_range,\n  COUNT(*) as count,\n  ROUND(MIN(CAST(price AS DECIMAL)),0) as min_hkd,\n  ROUND(MAX(CAST(price AS DECIMAL)),0) as max_hkd\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\nGROUP BY 1\nORDER BY MIN(IFNULL(jpyPrice, 0));",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  CASE \n    WHEN jpyPrice IS NULL THEN 'NULL jpyPrice'\n    WHEN jpyPrice < 5000 THEN 'Under 5000 JPY'\n    WHEN jpyPrice < 10000 THEN '5000-10000 JPY'\n    WHEN jpyPrice < 20000 THEN '10000-20000 JPY'\n    WHEN jpyPrice < 50000 THEN '20000-50000 JPY'\n    WHEN jpyPrice < 100000 THEN '50000-100000 JPY'\n    ELSE 'Over 100000 JPY'\n  END as price_range,\n  COUNT(*) as count,\n  ROUND(MIN(CAST(price AS DECIMAL)),0) as min_hkd,\n  ROUND(MAX(CAST(price AS DECIMAL)),0) as max_hkd\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\nGROUP BY 1\nORDER BY MIN(IFNULL(jpyPrice, 0));",
+  "rows": [
+    {
+      "price_range": "NULL jpyPrice",
+      "count": "149",
+      "min_hkd": "29",
+      "max_hkd": "195500"
+    },
+    {
+      "price_range": "Under 5000 JPY",
+      "count": "4769",
+      "min_hkd": "55",
+      "max_hkd": "275"
+    },
+    {
+      "price_range": "5000-10000 JPY",
+      "count": "28553",
+      "min_hkd": "275",
+      "max_hkd": "550"
+    },
+    {
+      "price_range": "10000-20000 JPY",
+      "count": "20270",
+      "min_hkd": "550",
+      "max_hkd": "1100"
+    },
+    {
+      "price_range": "20000-50000 JPY",
+      "count": "18606",
+      "min_hkd": "1100",
+      "max_hkd": "2750"
+    },
+    {
+      "price_range": "50000-100000 JPY",
+      "count": "10990",
+      "min_hkd": "2750",
+      "max_hkd": "5500"
+    },
+    {
+      "price_range": "Over 100000 JPY",
+      "count": "17726",
+      "min_hkd": "5500",
+      "max_hkd": "770000"
+    }
+  ],
+  "messages": [],
+  "stdout": "price_range\tcount\tmin_hkd\tmax_hkd\nNULL jpyPrice\t149\t29\t195500\nUnder 5000 JPY\t4769\t55\t275\n5000-10000 JPY\t28553\t275\t550\n10000-20000 JPY\t20270\t550\t1100\n20000-50000 JPY\t18606\t1100\t2750\n50000-100000 JPY\t10990\t2750\t5500\nOver 100000 JPY\t17726\t5500\t770000\n",
+  "stderr": "",
+  "execution_time_ms": 1909
+}

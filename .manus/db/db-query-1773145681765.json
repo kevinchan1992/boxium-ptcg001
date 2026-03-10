@@ -1,0 +1,145 @@
+{
+  "query": "SELECT id, cardId, grade, CAST(price AS DECIMAL) as price_hkd, currency, jpyPrice, DATE(soldAt) as sold_date\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND jpyPrice IS NULL\n  AND CAST(price AS DECIMAL) < 2000\nORDER BY soldAt DESC\nLIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, cardId, grade, CAST(price AS DECIMAL) as price_hkd, currency, jpyPrice, DATE(soldAt) as sold_date\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND jpyPrice IS NULL\n  AND CAST(price AS DECIMAL) < 2000\nORDER BY soldAt DESC\nLIMIT 15;",
+  "rows": [
+    {
+      "id": "403136",
+      "cardId": "270290",
+      "grade": "PSA10",
+      "price_hkd": "978",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "402508",
+      "cardId": "270306",
+      "grade": "PSA10",
+      "price_hkd": "657",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "403056",
+      "cardId": "270292",
+      "grade": "PSA10",
+      "price_hkd": "155",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "402847",
+      "cardId": "270298",
+      "grade": "PSA10",
+      "price_hkd": "188",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "402447",
+      "cardId": "270308",
+      "grade": "PSA10",
+      "price_hkd": "391",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "401910",
+      "cardId": "270320",
+      "grade": "PSA10",
+      "price_hkd": "496",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "402978",
+      "cardId": "270294",
+      "grade": "PSA10",
+      "price_hkd": "1065",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "402907",
+      "cardId": "270296",
+      "grade": "PSA10",
+      "price_hkd": "469",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "402705",
+      "cardId": "270302",
+      "grade": "PSA10",
+      "price_hkd": "1173",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "402603",
+      "cardId": "270304",
+      "grade": "PSA10",
+      "price_hkd": "1108",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "402156",
+      "cardId": "270314",
+      "grade": "PSA10",
+      "price_hkd": "845",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "402011",
+      "cardId": "270318",
+      "grade": "PSA10",
+      "price_hkd": "311",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "401845",
+      "cardId": "270322",
+      "grade": "PSA10",
+      "price_hkd": "297",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "401784",
+      "cardId": "270324",
+      "grade": "PSA10",
+      "price_hkd": "469",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    },
+    {
+      "id": "403215",
+      "cardId": "270288",
+      "grade": "PSA10",
+      "price_hkd": "1598",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "sold_date": "2026-02-17"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tgrade\tprice_hkd\tcurrency\tjpyPrice\tsold_date\n403136\t270290\tPSA10\t978\tHKD\tNULL\t2026-02-17\n402508\t270306\tPSA10\t657\tHKD\tNULL\t2026-02-17\n403056\t270292\tPSA10\t155\tHKD\tNULL\t2026-02-17\n402847\t270298\tPSA10\t188\tHKD\tNULL\t2026-02-17\n402447\t270308\tPSA10\t391\tHKD\tNULL\t2026-02-17\n401910\t270320\tPSA10\t496\tHKD\tNULL\t2026-02-17\n402978\t270294\tPSA10\t1065\tHKD\tNULL\t2026-02-17\n402907\t270296\tPSA10\t469\tHKD\tNULL\t2026-02-17\n402705\t270302\tPSA10\t1173\tHKD\tNULL\t2026-02-17\n402603\t270304\tPSA10\t1108\tHKD\tNULL\t2026-02-17\n402156\t270314\tPSA10\t845\tHKD\tNULL\t2026-02-17\n402011\t270318\tPSA10\t311\tHKD\tNULL\t2026-02-17\n401845\t270322\tPSA10\t297\tHKD\tNULL\t2026-02-17\n401784\t270324\tPSA10\t469\tHKD\tNULL\t2026-02-17\n403215\t270288\tPSA10\t1598\tHKD\tNULL\t2026-02-17\n",
+  "stderr": "",
+  "execution_time_ms": 1914
+}

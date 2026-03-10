@@ -1,0 +1,120 @@
+{
+  "query": "SELECT id, cardId, grade, price, currency, jpyPrice, soldAt, source, listingUrl\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND jpyPrice IS NULL\nORDER BY soldAt DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, cardId, grade, price, currency, jpyPrice, soldAt, source, listingUrl\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND jpyPrice IS NULL\nORDER BY soldAt DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "402222",
+      "cardId": "270312",
+      "grade": "PSA10",
+      "price": "2604.06",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "soldAt": "2026-02-17 00:00:00",
+      "source": "ebay",
+      "listingUrl": "https://www.ebay.com/itm/397380148131?hash=item5c85b3dba3:g:XwIAAeSwctdpOiJV"
+    },
+    {
+      "id": "401784",
+      "cardId": "270324",
+      "grade": "PSA10",
+      "price": "469.12",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "soldAt": "2026-02-17 00:00:00",
+      "source": "ebay",
+      "listingUrl": "https://www.ebay.com/itm/388702470667?hash=item5a8079020b:g:aukAAeSwIURpagAv"
+    },
+    {
+      "id": "402156",
+      "cardId": "270314",
+      "grade": "PSA10",
+      "price": "844.56",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "soldAt": "2026-02-17 00:00:00",
+      "source": "ebay",
+      "listingUrl": "https://www.ebay.com/itm/406423456061?hash=item5ea0b9c93d:g:yJkAAeSwEE5pJmgc"
+    },
+    {
+      "id": "401910",
+      "cardId": "270320",
+      "grade": "PSA10",
+      "price": "496.18",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "soldAt": "2026-02-17 00:00:00",
+      "source": "ebay",
+      "listingUrl": "https://www.ebay.com/itm/406368110517?hash=item5e9d6d47b5:g:iS4AAeSwj5BpEZaE"
+    },
+    {
+      "id": "401708",
+      "cardId": "270326",
+      "grade": "PSA10",
+      "price": "3870.90",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "soldAt": "2026-02-17 00:00:00",
+      "source": "ebay",
+      "listingUrl": "https://www.ebay.com/itm/376658399439?hash=item57b29710cf:g:sHsAAeSwcqxo~cLO"
+    },
+    {
+      "id": "401649",
+      "cardId": "270328",
+      "grade": "PSA10",
+      "price": "3633.41",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "soldAt": "2026-02-17 00:00:00",
+      "source": "ebay",
+      "listingUrl": "https://www.ebay.com/itm/267526602668?hash=item3e49d3ffac:g:TnYAAeSwz2NpTpsh"
+    },
+    {
+      "id": "402067",
+      "cardId": "270316",
+      "grade": "PSA10",
+      "price": "2729.18",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "soldAt": "2026-02-17 00:00:00",
+      "source": "ebay",
+      "listingUrl": "https://www.ebay.com/itm/267554230702?hash=item3e4b7991ae:g:CWsAAeSwl2NpcpEu"
+    },
+    {
+      "id": "402011",
+      "cardId": "270318",
+      "grade": "PSA10",
+      "price": "311.24",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "soldAt": "2026-02-17 00:00:00",
+      "source": "ebay",
+      "listingUrl": "https://www.ebay.com/itm/406354859234?hash=item5e9ca314e2:g:fH8AAeSw0PhpCr2v"
+    },
+    {
+      "id": "401845",
+      "cardId": "270322",
+      "grade": "PSA10",
+      "price": "297.16",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "soldAt": "2026-02-17 00:00:00",
+      "source": "ebay",
+      "listingUrl": "https://www.ebay.com/itm/366119618682?hash=item553e6e087a:g:Fu8AAeSwSytpZSyu"
+    },
+    {
+      "id": "402327",
+      "cardId": "270310",
+      "grade": "PSA10",
+      "price": "3517.12",
+      "currency": "HKD",
+      "jpyPrice": "NULL",
+      "soldAt": "2026-02-17 00:00:00",
+      "source": "ebay",
+      "listingUrl": "https://www.ebay.com/itm/177870785514?hash=item2969eccbea:g:NS8AAeSwgWRpZhN2"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tgrade\tprice\tcurrency\tjpyPrice\tsoldAt\tsource\tlistingUrl\n402222\t270312\tPSA10\t2604.06\tHKD\tNULL\t2026-02-17 00:00:00\tebay\thttps://www.ebay.com/itm/397380148131?hash=item5c85b3dba3:g:XwIAAeSwctdpOiJV\n401784\t270324\tPSA10\t469.12\tHKD\tNULL\t2026-02-17 00:00:00\tebay\thttps://www.ebay.com/itm/388702470667?hash=item5a8079020b:g:aukAAeSwIURpagAv\n402156\t270314\tPSA10\t844.56\tHKD\tNULL\t2026-02-17 00:00:00\tebay\thttps://www.ebay.com/itm/406423456061?hash=item5ea0b9c93d:g:yJkAAeSwEE5pJmgc\n401910\t270320\tPSA10\t496.18\tHKD\tNULL\t2026-02-17 00:00:00\tebay\thttps://www.ebay.com/itm/406368110517?hash=item5e9d6d47b5:g:iS4AAeSwj5BpEZaE\n401708\t270326\tPSA10\t3870.90\tHKD\tNULL\t2026-02-17 00:00:00\tebay\thttps://www.ebay.com/itm/376658399439?hash=item57b29710cf:g:sHsAAeSwcqxo~cLO\n401649\t270328\tPSA10\t3633.41\tHKD\tNULL\t2026-02-17 00:00:00\tebay\thttps://www.ebay.com/itm/267526602668?hash=item3e49d3ffac:g:TnYAAeSwz2NpTpsh\n402067\t270316\tPSA10\t2729.18\tHKD\tNULL\t2026-02-17 00:00:00\tebay\thttps://www.ebay.com/itm/267554230702?hash=item3e4b7991ae:g:CWsAAeSwl2NpcpEu\n402011\t270318\tPSA10\t311.24\tHKD\tNULL\t2026-02-17 00:00:00\tebay\thttps://www.ebay.com/itm/406354859234?hash=item5e9ca314e2:g:fH8AAeSw0PhpCr2v\n401845\t270322\tPSA10\t297.16\tHKD\tNULL\t2026-02-17 00:00:00\tebay\thttps://www.ebay.com/itm/366119618682?hash=item553e6e087a:g:Fu8AAeSwSytpZSyu\n402327\t270310\tPSA10\t3517.12\tHKD\tNULL\t2026-02-17 00:00:00\tebay\thttps://www.ebay.com/itm/177870785514?hash=item2969eccbea:g:NS8AAeSwgWRpZhN2\n",
+  "stderr": "",
+  "execution_time_ms": 1976
+}

@@ -1,0 +1,160 @@
+{
+  "query": "SELECT c.id as card_id, c.name, ds.sourceUrl,\n  ph.id as ph_id, ph.grade, CAST(ph.price AS DECIMAL) as price_hkd, ph.jpyPrice, DATE(ph.soldAt) as sold_date\nFROM cards c\nJOIN dataSources ds ON ds.cardId = c.id AND ds.source = 'snkrdunk'\nJOIN priceHistory ph ON ph.cardId = c.id AND ph.source = 'snkrdunk'\nWHERE c.name LIKE '%SM-P%076%'\n  AND ph.grade IN ('PSA10', 'PSA 10')\nORDER BY ph.soldAt DESC\nLIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id as card_id, c.name, ds.sourceUrl,\n  ph.id as ph_id, ph.grade, CAST(ph.price AS DECIMAL) as price_hkd, ph.jpyPrice, DATE(ph.soldAt) as sold_date\nFROM cards c\nJOIN dataSources ds ON ds.cardId = c.id AND ds.source = 'snkrdunk'\nJOIN priceHistory ph ON ph.cardId = c.id AND ph.source = 'snkrdunk'\nWHERE c.name LIKE '%SM-P%076%'\n  AND ph.grade IN ('PSA10', 'PSA 10')\nORDER BY ph.soldAt DESC\nLIMIT 15;",
+  "rows": [
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "3514758",
+      "grade": "PSA10",
+      "price_hkd": "11550",
+      "jpyPrice": "210000",
+      "sold_date": "2026-03-09"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "3514759",
+      "grade": "PSA10",
+      "price_hkd": "1155",
+      "jpyPrice": "21000",
+      "sold_date": "2026-03-08"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "3295640",
+      "grade": "PSA10",
+      "price_hkd": "11000",
+      "jpyPrice": "200000",
+      "sold_date": "2026-03-07"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "3514763",
+      "grade": "PSA10",
+      "price_hkd": "10340",
+      "jpyPrice": "188000",
+      "sold_date": "2026-03-06"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "3514761",
+      "grade": "PSA10",
+      "price_hkd": "11000",
+      "jpyPrice": "200000",
+      "sold_date": "2026-03-06"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "3514764",
+      "grade": "PSA10",
+      "price_hkd": "11550",
+      "jpyPrice": "210000",
+      "sold_date": "2026-03-05"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "3634098",
+      "grade": "PSA10",
+      "price_hkd": "10340",
+      "jpyPrice": "188000",
+      "sold_date": "2026-03-05"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "2851193",
+      "grade": "PSA10",
+      "price_hkd": "9790",
+      "jpyPrice": "178000",
+      "sold_date": "2026-03-04"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "2358547",
+      "grade": "PSA10",
+      "price_hkd": "7150",
+      "jpyPrice": "130000",
+      "sold_date": "2026-03-02"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "3295647",
+      "grade": "PSA10",
+      "price_hkd": "6599",
+      "jpyPrice": "119980",
+      "sold_date": "2026-03-01"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "1967205",
+      "grade": "PSA10",
+      "price_hkd": "5995",
+      "jpyPrice": "109000",
+      "sold_date": "2026-02-28"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "3514769",
+      "grade": "PSA10",
+      "price_hkd": "6598",
+      "jpyPrice": "119970",
+      "sold_date": "2026-02-28"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "2851197",
+      "grade": "PSA10",
+      "price_hkd": "6598",
+      "jpyPrice": "119970",
+      "sold_date": "2026-02-27"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "1449476",
+      "grade": "PSA10",
+      "price_hkd": "5500",
+      "jpyPrice": "99999",
+      "sold_date": "2026-02-25"
+    },
+    {
+      "card_id": "781669",
+      "name": "Ash's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)",
+      "sourceUrl": "https://snkrdunk.com/apparels/91261",
+      "ph_id": "3514770",
+      "grade": "PSA10",
+      "price_hkd": "5500",
+      "jpyPrice": "99999",
+      "sold_date": "2026-02-22"
+    }
+  ],
+  "messages": [],
+  "stdout": "card_id\tname\tsourceUrl\tph_id\tgrade\tprice_hkd\tjpyPrice\tsold_date\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t3514758\tPSA10\t11550\t210000\t2026-03-09\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t3514759\tPSA10\t1155\t21000\t2026-03-08\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t3295640\tPSA10\t11000\t200000\t2026-03-07\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t3514763\tPSA10\t10340\t188000\t2026-03-06\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t3514761\tPSA10\t11000\t200000\t2026-03-06\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t3514764\tPSA10\t11550\t210000\t2026-03-05\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t3634098\tPSA10\t10340\t188000\t2026-03-05\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t2851193\tPSA10\t9790\t178000\t2026-03-04\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t2358547\tPSA10\t7150\t130000\t2026-03-02\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t3295647\tPSA10\t6599\t119980\t2026-03-01\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t1967205\tPSA10\t5995\t109000\t2026-02-28\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t3514769\tPSA10\t6598\t119970\t2026-02-28\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t2851197\tPSA10\t6598\t119970\t2026-02-27\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t1449476\tPSA10\t5500\t99999\t2026-02-25\n781669\tAsh's Pikachu: PROMO[SM-P 076](SM-P Promotional cards)\thttps://snkrdunk.com/apparels/91261\t3514770\tPSA10\t5500\t99999\t2026-02-22\n",
+  "stderr": "",
+  "execution_time_ms": 1693
+}

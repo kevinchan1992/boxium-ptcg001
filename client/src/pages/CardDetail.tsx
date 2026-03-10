@@ -314,8 +314,31 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
       return (price / Math.max(qty, 1)).toFixed(2);
     } else {
-      // Single card: average of recent PSA 10 transactions (unchanged)
-      const avg = activeRecentPrices.reduce((sum: number, p: any) => sum + parseFloat(p.price), 0) / activeRecentPrices.length;
+      // Single card: average of recent PSA 10 transactions with IQR outlier filtering.
+      // This prevents a single mis-classified or anomalous record from skewing the
+      // reference price (e.g. a JPY 21,000 record mixed with JPY 180,000-210,000 records).
+      const prices = activeRecentPrices
+        .map((p: any) => parseFloat(p.price))
+        .filter((v: number) => !isNaN(v) && v > 0);
+      if (prices.length === 0) return "N/A";
+
+      let filteredPrices = prices;
+      if (prices.length >= 4) {
+        const sorted = [...prices].sort((a, b) => a - b);
+        const q1 = sorted[Math.floor((sorted.length - 1) * 0.25)];
+        const q3 = sorted[Math.floor((sorted.length - 1) * 0.75)];
+        const iqr = q3 - q1;
+        // 2.5× IQR: tighter than the storage-layer filter (3×) so display is cleaner
+        const lower = q1 - 2.5 * iqr;
+        const upper = q3 + 2.5 * iqr;
+        const candidate = prices.filter((p: number) => p >= lower && p <= upper);
+        // Only apply filter if it keeps at least half the records (safety fallback)
+        if (candidate.length >= Math.ceil(prices.length * 0.5)) {
+          filteredPrices = candidate;
+        }
+      }
+
+      const avg = filteredPrices.reduce((sum: number, p: number) => sum + p, 0) / filteredPrices.length;
       return avg.toFixed(2);
     }
   };

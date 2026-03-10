@@ -1,0 +1,130 @@
+{
+  "query": "\nSELECT ph.cardId, ph.grade, CAST(ph.price AS DECIMAL(10,2)) as hkdPrice, ph.jpyPrice, DATE(ph.soldAt) as soldDate, c.nameJa\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE ph.grade = 'PSA10'\n  AND CAST(ph.price AS DECIMAL) BETWEEN 1000 AND 1500\nORDER BY ph.soldAt DESC\nLIMIT 15;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT ph.cardId, ph.grade, CAST(ph.price AS DECIMAL(10,2)) as hkdPrice, ph.jpyPrice, DATE(ph.soldAt) as soldDate, c.nameJa\nFROM priceHistory ph\nJOIN cards c ON ph.cardId = c.id\nWHERE ph.grade = 'PSA10'\n  AND CAST(ph.price AS DECIMAL) BETWEEN 1000 AND 1500\nORDER BY ph.soldAt DESC\nLIMIT 15;\n",
+  "rows": [
+    {
+      "cardId": "542255",
+      "grade": "PSA10",
+      "hkdPrice": "1292.50",
+      "jpyPrice": "23500",
+      "soldDate": "2026-03-10",
+      "nameJa": "グレイシアEX RR [XY10 018/078](拡張パック「めざめる超王」)"
+    },
+    {
+      "cardId": "545517",
+      "grade": "PSA10",
+      "hkdPrice": "1210.00",
+      "jpyPrice": "22000",
+      "soldDate": "2026-03-10",
+      "nameJa": "ブラッキーVMAX HR[S6a 094/069](強化拡張パック「イーブイヒーローズ」)"
+    },
+    {
+      "cardId": "545553",
+      "grade": "PSA10",
+      "hkdPrice": "1017.45",
+      "jpyPrice": "18499",
+      "soldDate": "2026-03-10",
+      "nameJa": "ブラッキーV CSR[S8b 244/184](ハイクラスパック「VMAXクライマックス」)"
+    },
+    {
+      "cardId": "545587",
+      "grade": "PSA10",
+      "hkdPrice": "1155.00",
+      "jpyPrice": "21000",
+      "soldDate": "2026-03-10",
+      "nameJa": "ブラッキーVMAX CSR[S8b 245/184](ハイクラスパック「VMAXクライマックス」)"
+    },
+    {
+      "cardId": "545592",
+      "grade": "PSA10",
+      "hkdPrice": "1082.40",
+      "jpyPrice": "19680",
+      "soldDate": "2026-03-10",
+      "nameJa": "ミミッキュVMAX (アセロラ) CSR[S8b 234/184](ハイクラスパック「VMAXクライマックス」)"
+    },
+    {
+      "cardId": "545592",
+      "grade": "PSA10",
+      "hkdPrice": "1082.95",
+      "jpyPrice": "19690",
+      "soldDate": "2026-03-10",
+      "nameJa": "ミミッキュVMAX (アセロラ) CSR[S8b 234/184](ハイクラスパック「VMAXクライマックス」)"
+    },
+    {
+      "cardId": "545592",
+      "grade": "PSA10",
+      "hkdPrice": "1089.00",
+      "jpyPrice": "19800",
+      "soldDate": "2026-03-10",
+      "nameJa": "ミミッキュVMAX (アセロラ) CSR[S8b 234/184](ハイクラスパック「VMAXクライマックス」)"
+    },
+    {
+      "cardId": "545933",
+      "grade": "PSA10",
+      "hkdPrice": "1199.00",
+      "jpyPrice": "21800",
+      "soldDate": "2026-03-10",
+      "nameJa": "セレナ SR [s11a 081/068](強化拡張パック『白熱のアルカナ』)"
+    },
+    {
+      "cardId": "545933",
+      "grade": "PSA10",
+      "hkdPrice": "1155.00",
+      "jpyPrice": "21000",
+      "soldDate": "2026-03-10",
+      "nameJa": "セレナ SR [s11a 081/068](強化拡張パック『白熱のアルカナ』)"
+    },
+    {
+      "cardId": "545933",
+      "grade": "PSA10",
+      "hkdPrice": "1222.21",
+      "jpyPrice": "22222",
+      "soldDate": "2026-03-10",
+      "nameJa": "セレナ SR [s11a 081/068](強化拡張パック『白熱のアルカナ』)"
+    },
+    {
+      "cardId": "545933",
+      "grade": "PSA10",
+      "hkdPrice": "1237.50",
+      "jpyPrice": "22500",
+      "soldDate": "2026-03-10",
+      "nameJa": "セレナ SR [s11a 081/068](強化拡張パック『白熱のアルカナ』)"
+    },
+    {
+      "cardId": "545958",
+      "grade": "PSA10",
+      "hkdPrice": "1391.50",
+      "jpyPrice": "25300",
+      "soldDate": "2026-03-10",
+      "nameJa": "モンスターボール  [S8a-G 002/015](『25th アニバーサリー ゴールデンボックス』)"
+    },
+    {
+      "cardId": "545958",
+      "grade": "PSA10",
+      "hkdPrice": "1364.00",
+      "jpyPrice": "24800",
+      "soldDate": "2026-03-10",
+      "nameJa": "モンスターボール  [S8a-G 002/015](『25th アニバーサリー ゴールデンボックス』)"
+    },
+    {
+      "cardId": "546159",
+      "grade": "PSA10",
+      "hkdPrice": "1375.00",
+      "jpyPrice": "25000",
+      "soldDate": "2026-03-10",
+      "nameJa": "ミュウツーVSTAR UR[S10b 091/071](強化拡張パック「Pokemon GO」)"
+    },
+    {
+      "cardId": "781605",
+      "grade": "PSA10",
+      "hkdPrice": "1324.40",
+      "jpyPrice": "24080",
+      "soldDate": "2026-03-10",
+      "nameJa": "カメックス: プロモ[S8a-P 003/025](プロモカードパック 25th ANNIVERSARY edition)"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\tgrade\thkdPrice\tjpyPrice\tsoldDate\tnameJa\n542255\tPSA10\t1292.50\t23500\t2026-03-10\tグレイシアEX RR [XY10 018/078](拡張パック「めざめる超王」)\n545517\tPSA10\t1210.00\t22000\t2026-03-10\tブラッキーVMAX HR[S6a 094/069](強化拡張パック「イーブイヒーローズ」)\n545553\tPSA10\t1017.45\t18499\t2026-03-10\tブラッキーV CSR[S8b 244/184](ハイクラスパック「VMAXクライマックス」)\n545587\tPSA10\t1155.00\t21000\t2026-03-10\tブラッキーVMAX CSR[S8b 245/184](ハイクラスパック「VMAXクライマックス」)\n545592\tPSA10\t1082.40\t19680\t2026-03-10\tミミッキュVMAX (アセロラ) CSR[S8b 234/184](ハイクラスパック「VMAXクライマックス」)\n545592\tPSA10\t1082.95\t19690\t2026-03-10\tミミッキュVMAX (アセロラ) CSR[S8b 234/184](ハイクラスパック「VMAXクライマックス」)\n545592\tPSA10\t1089.00\t19800\t2026-03-10\tミミッキュVMAX (アセロラ) CSR[S8b 234/184](ハイクラスパック「VMAXクライマックス」)\n545933\tPSA10\t1199.00\t21800\t2026-03-10\tセレナ SR [s11a 081/068](強化拡張パック『白熱のアルカナ』)\n545933\tPSA10\t1155.00\t21000\t2026-03-10\tセレナ SR [s11a 081/068](強化拡張パック『白熱のアルカナ』)\n545933\tPSA10\t1222.21\t22222\t2026-03-10\tセレナ SR [s11a 081/068](強化拡張パック『白熱のアルカナ』)\n545933\tPSA10\t1237.50\t22500\t2026-03-10\tセレナ SR [s11a 081/068](強化拡張パック『白熱のアルカナ』)\n545958\tPSA10\t1391.50\t25300\t2026-03-10\tモンスターボール  [S8a-G 002/015](『25th アニバーサリー ゴールデンボックス』)\n545958\tPSA10\t1364.00\t24800\t2026-03-10\tモンスターボール  [S8a-G 002/015](『25th アニバーサリー ゴールデンボックス』)\n546159\tPSA10\t1375.00\t25000\t2026-03-10\tミュウツーVSTAR UR[S10b 091/071](強化拡張パック「Pokemon GO」)\n781605\tPSA10\t1324.40\t24080\t2026-03-10\tカメックス: プロモ[S8a-P 003/025](プロモカードパック 25th ANNIVERSARY edition)\n",
+  "stderr": "",
+  "execution_time_ms": 1588
+}

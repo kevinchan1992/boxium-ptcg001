@@ -1,0 +1,16 @@
+{
+  "query": "-- 統計異常低價 PSA10 記錄（JPY < 5000 或 HKD < 300）\nSELECT \n  COUNT(*) as total_anomalies,\n  SUM(CASE WHEN jpyPrice IS NULL THEN 1 ELSE 0 END) as null_jpyprice,\n  SUM(CASE WHEN jpyPrice < 5000 AND jpyPrice IS NOT NULL THEN 1 ELSE 0 END) as very_low_jpy,\n  SUM(CASE WHEN CAST(price AS DECIMAL) < 300 THEN 1 ELSE 0 END) as low_hkd\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND (jpyPrice IS NULL OR jpyPrice < 5000 OR CAST(price AS DECIMAL) < 300);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute -- 統計異常低價 PSA10 記錄（JPY < 5000 或 HKD < 300）\nSELECT \n  COUNT(*) as total_anomalies,\n  SUM(CASE WHEN jpyPrice IS NULL THEN 1 ELSE 0 END) as null_jpyprice,\n  SUM(CASE WHEN jpyPrice < 5000 AND jpyPrice IS NOT NULL THEN 1 ELSE 0 END) as very_low_jpy,\n  SUM(CASE WHEN CAST(price AS DECIMAL) < 300 THEN 1 ELSE 0 END) as low_hkd\nFROM priceHistory\nWHERE grade IN ('PSA10', 'PSA 10')\n  AND (jpyPrice IS NULL OR jpyPrice < 5000 OR CAST(price AS DECIMAL) < 300);",
+  "rows": [
+    {
+      "total_anomalies": "6796",
+      "null_jpyprice": "149",
+      "very_low_jpy": "4769",
+      "low_hkd": "6699"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_anomalies\tnull_jpyprice\tvery_low_jpy\tlow_hkd\n6796\t149\t4769\t6699\n",
+  "stderr": "",
+  "execution_time_ms": 1760
+}

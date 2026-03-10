@@ -166,11 +166,15 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
     const productType: "single_card" | "sealed_product" = 
       product.productType === 'sealed_product' ? 'sealed_product' : 'single_card';
     
-    const priceHistory = await fetchPriceHistoryFromApi(
+    const rawPriceHistory = await fetchPriceHistoryFromApi(
       product.snkrdunkId, 
       productType,
       { timeout: CONFIG.REQUEST_TIMEOUT, throwOnError: true }
     );
+
+    // Validate and filter using unified validator (grade normalisation + min-price + IQR)
+    const { validateAndFilterPriceHistory } = await import('./utils/priceValidator');
+    const priceHistory = validateAndFilterPriceHistory(rawPriceHistory ?? [], productType);
     
     // Step 2: Batch insert all price records at once
     if (priceHistory && priceHistory.length > 0) {
@@ -183,8 +187,8 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
           source: "snkrdunk" as const,
           price: convertJpyToHkd(entry.price).toString(),
           currency: "HKD",
-          jpyPrice: entry.price, // Original JPY price - used for stable deduplication (unaffected by exchange rate)
-          grade: productType === 'single_card' ? (entry.grade || null) : null,
+          jpyPrice: entry.jpyPrice ?? entry.price, // Original JPY price - used for stable deduplication
+          grade: productType === 'single_card' ? (entry.normalisedGrade ?? null) : null,
           quantity: productType === 'sealed_product' ? (entry.quantity || null) : null,
           productType,
           soldAt: entry.soldAt,

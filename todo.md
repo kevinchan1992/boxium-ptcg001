@@ -4208,3 +4208,15 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ## 🆕 出價與訂單 UX 優化（2026-03-10 第二批）
 - [x] 付款成功後自動高亮展開對應訂單卡片（/orders?payment=success&orderNo=xxx）
 - [x] 賣家拒絕出價時的原因輸入 Dialog 及買家通知
+## 🐛 修復 PSA10 參考價格顯示錯誤（IQR 異常值過濾）
+### 問題
+サトシのピカチュウ SM-P 076 的 PSA10 參考價格顯示 HKD 1,155（JPY 21,000），實際市場價格應為 JPY 180,000–210,000（約 HKD 9,900–11,550）。
+### 根本原因
+最低價格門檻（PSA10 ≥ JPY 10,000）無法過濾統計異常值。JPY 21,000 通過了門檻，但相對於同一卡牌的正常交易記錄（JPY 180,000–210,000）是極端異常值。
+### 修復
+- [x] 前端 `CardDetail.tsx` `calculateReferencePrice` 函數加入 IQR 過濾（2.5× IQR 乘數）：計算 Q1/Q3/IQR，過濾 [Q1-2.5×IQR, Q3+2.5×IQR] 範圍外的記錄後再取平均值
+- [x] 後端 `priceValidator.ts` 已有 `filterOutliersByIQR` 函數（3× IQR），確認對批次爬取記錄有效
+- [x] 修正 `priceValidator.test.ts` 中錯誤的測試（JPY 21,000 通過最低門檻是正確行為，應由 IQR 過濾）
+- [x] 新增 IQR 過濾測試案例（包含 サトシのピカチュウ 真實場景測試）
+- [x] 30 個 priceValidator 測試全部通過
+- [x] 儲存 checkpoint

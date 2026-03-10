@@ -184,8 +184,11 @@ async function updateDataSource(db: any, source: any) {
     // The active path uses persistentSnkrdunkBatchUpdate.ts which calls addPriceHistory() directly.
     // Kept here for reference; jpyPrice is now included for correct deduplication.
     if (priceData && priceData.length > 0) {
+      // Validate and filter using unified validator (grade normalisation + min-price + IQR)
+      const { validateAndFilterPriceHistory } = await import('./utils/priceValidator');
+      const validatedPriceData = validateAndFilterPriceHistory(priceData, 'single_card');
       // Use addPriceHistory helper (unified logic with jpyPrice deduplication)
-      for (const price of priceData) {
+      for (const price of validatedPriceData) {
         await db.addPriceHistory({
           cardId: source.cardId,
           source: 'snkrdunk',
@@ -193,12 +196,12 @@ async function updateDataSource(db: any, source: any) {
           currency: 'HKD',
           jpyPrice: price.jpyPrice ?? price.price, // Original JPY for stable deduplication
           soldAt: price.soldAt,
-          grade: price.grade || undefined,
+          grade: price.normalisedGrade ?? price.grade ?? undefined,
           productType: 'single_card',
         });
       }
       console.log(
-        `[Scheduler] Inserted ${priceData.length} price history records`
+        `[Scheduler] Inserted ${validatedPriceData.length}/${priceData.length} price history records (after validation)`
       );
     }
 
@@ -606,15 +609,18 @@ export async function autoCrawlSnkrdunk(startPage: number = 1, endPage: number =
           sourceUrl: url,
         });
 
-        // Add price history
-        for (const priceEntry of cardData.priceHistory) {
+        // Add price history (with unified validator)
+        const { validateAndFilterPriceHistory } = await import('./utils/priceValidator');
+        const validatedHistory = validateAndFilterPriceHistory(cardData.priceHistory, 'single_card');
+        for (const priceEntry of validatedHistory) {
           const priceHkd = convertJpyToHkd(priceEntry.price);
           await db.addPriceHistory({
             cardId,
             source: "snkrdunk",
             price: priceHkd.toString(),
             currency: "HKD",
-            grade: priceEntry.grade,
+            jpyPrice: priceEntry.jpyPrice ?? priceEntry.price,
+            grade: priceEntry.normalisedGrade ?? priceEntry.grade ?? undefined,
             soldAt: priceEntry.soldAt,
             listingUrl: url,
           });

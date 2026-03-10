@@ -1,0 +1,8 @@
+{
+  "query": "SELECT ph.id, ph.card_id, ph.grade, ph.price, ph.currency, ph.jpy_price, ph.sold_at, ph.source\nFROM price_history ph\nWHERE ph.grade IN ('PSA10', 'PSA 10')\n  AND CAST(ph.price AS DECIMAL) < 2000\nORDER BY ph.sold_at DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT ph.id, ph.card_id, ph.grade, ph.price, ph.currency, ph.jpy_price, ph.sold_at, ph.source\nFROM price_history ph\nWHERE ph.grade IN ('PSA10', 'PSA 10')\n  AND CAST(ph.price AS DECIMAL) < 2000\nORDER BY ph.sold_at DESC\nLIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'mua4eq38uvnrovhujbrepi.price_history' doesn't exist"
+  ]
+}
