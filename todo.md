@@ -4144,4 +4144,15 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 修復賣家 Dashboard「買家出價」頁面不顯示出價的 bug
 - [x] 修改三個 Dialog（填寫收貨地址、支付寶付款、出價洽議）底部背景為白色
 - [x] 修改三個 Dialog 底部文字顏色為 LOGO 藍色 #06038D
+- [x] 儲存 checkpoint (version: cee190fb)
+
+## 🐛 修復三個 Dialog 的 X 重疊和黑色線問題
+- [x] 移除 shadcn DialogContent 自帶的 X 關閉按鈕（三個 Dialog 各自有自訂 X）
+- [x] 修復頭部與 body 之間的兩條黑色線（border/divide 問題）
+- [ ] 儲存 checkpoint
+
+## 🐛 修復「送出出價」按鈕無反應
+- [ ] 調查前後端 makeOffer 的錯誤原因
+- [ ] 修復 makeOffer 流程，確保出價成功送出並通知賣家
+- [ ] 確保賣家中心「買家出價」tab 顯示新出價
 - [ ] 儲存 checkpoint
