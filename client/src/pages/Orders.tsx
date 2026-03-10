@@ -136,7 +136,7 @@ function OrderCard({ order }: { order: any }) {
           <p className="font-bold text-[#06038d]">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</p>
           <p className="text-xs text-gray-500 capitalize">{order.paymentMethod?.replace("_", " ")}</p>
           <Link href={`/orders/${order.orderNo}`}>
-            <Button variant="outline" size="sm" className="text-xs h-7 px-2">查看詳情</Button>
+            <Button variant="outline" size="sm" className="text-xs h-7 px-2 text-[#06038D] border-[#06038D]/30 hover:bg-[#06038D]/5">查看詳情</Button>
           </Link>
         </div>
       </div>
@@ -311,7 +311,16 @@ function OrderCard({ order }: { order: any }) {
               rows={4}
               className="text-sm"
             />
-            <div className="text-xs text-muted-foreground text-right">{disputeReason.length}/1000</div>
+            <div className="flex items-center justify-between">
+              {disputeReason.trim().length < 10 && disputeReason.length > 0 ? (
+                <p className="text-xs text-red-500">還需輸入 {10 - disputeReason.trim().length} 個字</p>
+              ) : disputeReason.trim().length >= 10 ? (
+                <p className="text-xs text-green-600">✓ 內容已符合要求</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">至少輸入 10 個字</p>
+              )}
+              <span className="text-xs text-muted-foreground">{disputeReason.length}/1000</span>
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowDisputeDialog(false)}>取消</Button>

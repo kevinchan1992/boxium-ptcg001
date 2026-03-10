@@ -808,17 +808,18 @@ export default function MarketplaceListing() {
                 >
                   <Smartphone className="w-4 h-4 mr-2" />支付寶 HK 付款
                 </Button>
-                {/* Offer */}
-                {(listing as any).allowOffers && (
-                  <Button
-                    variant="outline"
-                    className="w-full h-11 text-sm border-[#FEDD00] text-[#06038D] hover:bg-[#FEDD00]/10 rounded-xl font-semibold"
-                    disabled={!me}
-                    onClick={() => setShowOfferDialog(true)}
-                  >
-                    <Tag className="w-4 h-4 mr-2" />出價洽議
-                  </Button>
-                )}
+                {/* Offer - always visible for active listings */}
+                <Button
+                  variant="outline"
+                  className="w-full h-11 text-sm border-[#FEDD00] text-[#06038D] hover:bg-[#FEDD00]/10 rounded-xl font-semibold"
+                  disabled={!me}
+                  onClick={() => {
+                    if (!me) { toast.error("請先登入才能出價"); return; }
+                    setShowOfferDialog(true);
+                  }}
+                >
+                  <Tag className="w-4 h-4 mr-2" />出價洽議
+                </Button>
               </div>
             ) : (
               <Button disabled className="w-full h-12 rounded-xl text-base">商品已售出</Button>

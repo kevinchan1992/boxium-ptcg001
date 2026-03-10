@@ -1691,7 +1691,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const listing = await getListingById(input.listingId);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
       if (listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架" });
-      if (!listing.allowOffers) throw new TRPCError({ code: "BAD_REQUEST", message: "此商品不接受出價" });
+      // All active listings accept offers by default
       const minOffer = listing.minOfferHkd ? parseFloat(listing.minOfferHkd as string) : 0;
       if (minOffer > 0 && input.offerPriceHkd < minOffer) {
         throw new TRPCError({ code: "BAD_REQUEST", message: `出價不得低於 HKD ${minOffer}` });

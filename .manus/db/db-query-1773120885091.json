@@ -1,0 +1,194 @@
+{
+  "query": "DESCRIBE marketplaceListings;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute DESCRIBE marketplaceListings;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "sellerType",
+      "Type": "enum('platform','seller')",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "sellerId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "cardId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "title",
+      "Type": "varchar(200)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "description",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "condition",
+      "Type": "enum('psa10','psa9','psa8_below','bgs10','bgs9','bgs8_below','tag10','tag9_below','raw_a','raw_b','raw_c','raw_d')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "raw_a",
+      "Extra": ""
+    },
+    {
+      "Field": "language",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "priceHkd",
+      "Type": "decimal(10,2)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "quantity",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "remainingQuantity",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "images",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "refMarketPriceHkd",
+      "Type": "decimal(10,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "refMarketPriceDate",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('draft','pending_review','active','sold','removed')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "draft",
+      "Extra": ""
+    },
+    {
+      "Field": "rejectedReason",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "allowOffers",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "minOfferHkd",
+      "Type": "decimal(10,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "viewCount",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "favoriteCount",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "listedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nsellerType\tenum('platform','seller')\tNO\tMUL\tNULL\t\nsellerId\tint\tYES\tMUL\tNULL\t\ncardId\tint\tYES\tMUL\tNULL\t\ntitle\tvarchar(200)\tNO\t\tNULL\t\ndescription\ttext\tYES\t\tNULL\t\ncondition\tenum('psa10','psa9','psa8_below','bgs10','bgs9','bgs8_below','tag10','tag9_below','raw_a','raw_b','raw_c','raw_d')\tNO\t\traw_a\t\nlanguage\tvarchar(20)\tYES\t\tNULL\t\npriceHkd\tdecimal(10,2)\tNO\tMUL\tNULL\t\nquantity\tint\tNO\t\t1\t\nremainingQuantity\tint\tNO\t\t1\t\nimages\ttext\tYES\t\tNULL\t\nrefMarketPriceHkd\tdecimal(10,2)\tYES\t\tNULL\t\nrefMarketPriceDate\ttimestamp\tYES\t\tNULL\t\nstatus\tenum('draft','pending_review','active','sold','removed')\tNO\t\tdraft\t\nrejectedReason\ttext\tYES\t\tNULL\t\nallowOffers\ttinyint(1)\tNO\t\t0\t\nminOfferHkd\tdecimal(10,2)\tYES\t\tNULL\t\nviewCount\tint\tNO\t\t0\t\nfavoriteCount\tint\tNO\t\t0\t\nlistedAt\ttimestamp\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\n",
+  "stderr": "",
+  "execution_time_ms": 1509
+}

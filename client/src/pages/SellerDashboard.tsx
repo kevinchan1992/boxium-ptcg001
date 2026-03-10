@@ -1095,13 +1095,54 @@ export default function SellerDashboard() {
 
       {/* ─── Edit Listing Dialog ─────────────────────────────────────────── */}
       <Dialog open={showEditDialog} onOpenChange={(open) => { setShowEditDialog(open); if (!open) setEditingListing(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle style={{ color: '#06038D' }}>編輯商品資訊</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
+        <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg">
+          {/* Header - same style as new listing */}
+          <div className="px-5 pt-5 pb-4" style={{backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00'}}>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-white">編輯商品資訊</h2>
+                {editingListing && (
+                  <p className="text-xs text-white/60 mt-0.5 truncate max-w-[260px]">{editingListing.title}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setShowEditDialog(false)}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Form Content */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-white">
+            {/* Summary card */}
+            {editingListing && (
+              <div className="flex items-center gap-3 p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
+                {(() => {
+                  let coverImg: string | null = null;
+                  try {
+                    const imgs = editingListing.images ? JSON.parse(editingListing.images as string) : null;
+                    coverImg = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null;
+                  } catch {}
+                  return coverImg ? (
+                    <img src={coverImg} alt={editingListing.title} className="w-12 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
+                  ) : (
+                    <div className="w-12 h-16 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #06038d 0%, #0a06b5 100%)' }}>
+                      <span className="text-white font-black text-[8px] tracking-tight text-center leading-tight">BOX<br/>IUM</span>
+                    </div>
+                  );
+                })()}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[#06038D] truncate">{editingListing.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">現售價 HKD {parseFloat(editingListing.priceHkd as string).toFixed(2)}</p>
+                  <p className="text-xs text-gray-400">庫存 {editingListing.quantity} 件</p>
+                </div>
+              </div>
+            )}
+
             <div>
-              <Label className="text-sm font-medium text-gray-700">商品名稱</Label>
+              <Label className="text-[#06038D] font-semibold">商品名稱</Label>
               <Input
                 className="mt-1"
                 value={editForm.title}
@@ -1110,7 +1151,7 @@ export default function SellerDashboard() {
               />
             </div>
             <div>
-              <Label className="text-sm font-medium text-gray-700">商品描述</Label>
+              <Label className="text-[#06038D] font-semibold">商品描述</Label>
               <Textarea
                 className="mt-1 resize-none"
                 rows={3}
@@ -1121,21 +1162,21 @@ export default function SellerDashboard() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-sm font-medium text-gray-700">售價（HKD）</Label>
+                <Label className="text-[#06038D] font-semibold">售價（HKD）</Label>
+                <p className="text-xs text-gray-400 mb-1">最低 HKD 4.00</p>
                 <Input
-                  className="mt-1"
                   type="number"
                   min="4"
                   step="0.01"
                   value={editForm.price}
                   onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))}
-                  placeholder="最低 HKD 4.00"
+                  placeholder="100.00"
                 />
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-700">庫存數量</Label>
+                <Label className="text-[#06038D] font-semibold">庫存數量</Label>
+                <p className="text-xs text-gray-400 mb-1">最少 1 件</p>
                 <Input
-                  className="mt-1"
                   type="number"
                   min="1"
                   value={editForm.quantity}
@@ -1145,10 +1186,12 @@ export default function SellerDashboard() {
               </div>
             </div>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>取消</Button>
+
+          {/* Footer */}
+          <div className="px-5 py-4 border-t border-gray-100 bg-white flex gap-3">
+            <Button variant="outline" className="flex-1 h-11 border-gray-300" onClick={() => setShowEditDialog(false)}>取消</Button>
             <Button
-              className="font-bold"
+              className="flex-1 h-11 font-bold text-base"
               style={{ background: '#FEDD00', color: '#06038D' }}
               disabled={updateListingMutation.isPending}
               onClick={() => {
@@ -1166,10 +1209,10 @@ export default function SellerDashboard() {
                 });
               }}
             >
-              {updateListingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {updateListingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               儲存更改
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
