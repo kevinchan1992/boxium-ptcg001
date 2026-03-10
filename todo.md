@@ -4226,3 +4226,12 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 更新 `batchUpdateResilience.test.ts` 中的 23 小時斷言為 12 小時
 - [x] 更新 `timezone.test.ts` 中的 SKIP_THRESHOLD_HOURS 從 23 → 12（測試邏輯改用 13 小時前作為「應更新」的案例）
 - [x] 儲存 checkpoint
+## 🕐 批量更新排程改為每日兩次（01:00 和 13:00）
+- [x] Schema 新增 snkrdunkUpdateTime2 欄位（第二次執行時間，預設 13:00）
+- [x] 直接 SQL ALTER TABLE 新增欄位並設定現有記錄（01:00 / 13:00）
+- [x] 更新 db.ts 的 updatePriceUpdateSchedule 支援 snkrdunkUpdateTime2
+- [x] 更新 priceUpdateScheduler.ts 支援雙 cron job（snkrdunkCronJob / snkrdunkCronJob2）
+- [x] 更新前端 Admin 排程管理 UI 顯示並可設定兩個時間（並排雙欄）
+- [x] 更新 routers.ts 的 updatePriceUpdateSchedule 加入 snkrdunkUpdateTime2 參數
+- [x] TypeScript 0 錯誤，Smart Skip 12 小時測試通過
+- [x] 儲存 checkpoint

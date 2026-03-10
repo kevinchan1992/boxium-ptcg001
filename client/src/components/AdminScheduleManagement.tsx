@@ -322,6 +322,7 @@ export function AdminScheduleManagement() {
   // 本地狀態
   const [snkrdunkEnabled, setSnkrdunkEnabled] = useState(schedule?.snkrdunkEnabled ?? false);
   const [snkrdunkTime, setSnkrdunkTime] = useState(schedule?.snkrdunkUpdateTime ?? "01:00");
+  const [snkrdunkTime2, setSnkrdunkTime2] = useState((schedule as any)?.snkrdunkUpdateTime2 ?? "13:00");
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   
   // 當 schedule 數據載入時同步更新本地狀態
@@ -329,6 +330,7 @@ export function AdminScheduleManagement() {
     if (schedule) {
       setSnkrdunkEnabled(schedule.snkrdunkEnabled);
       setSnkrdunkTime(schedule.snkrdunkUpdateTime);
+      setSnkrdunkTime2((schedule as any)?.snkrdunkUpdateTime2 ?? "13:00");
     }
   }, [schedule]);
   
@@ -351,7 +353,8 @@ export function AdminScheduleManagement() {
     updateSchedule.mutate({
       snkrdunkEnabled,
       snkrdunkUpdateTime: snkrdunkTime,
-    });
+      snkrdunkUpdateTime2: snkrdunkTime2 || null,
+    } as any);
   };
   
   // 手動觸發 SNKRDUNK 批量更新
@@ -438,14 +441,30 @@ export function AdminScheduleManagement() {
             </div>
             
             {snkrdunkEnabled && (
-              <div className="space-y-2">
-                <Label className="text-white">更新時間（香港時間）</Label>
-                <Input
-                  type="time"
-                  value={snkrdunkTime}
-                  onChange={(e) => setSnkrdunkTime(e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white max-w-xs"
-                />
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-white">第一次更新時間（香港時間）</Label>
+                    <Input
+                      type="time"
+                      value={snkrdunkTime}
+                      onChange={(e) => setSnkrdunkTime(e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white">第二次更新時間（香港時間）</Label>
+                    <Input
+                      type="time"
+                      value={snkrdunkTime2}
+                      onChange={(e) => setSnkrdunkTime2(e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">
+                  每日執行兩次：{snkrdunkTime} 和 {snkrdunkTime2}（香港時間）
+                </p>
                 <p className="text-xs text-gray-400">
                   最後執行時間：{schedule?.snkrdunkLastExecutedAt 
                     ? formatHKLocale(schedule.snkrdunkLastExecutedAt, {

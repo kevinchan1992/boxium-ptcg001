@@ -578,7 +578,8 @@ export type InsertArticleGenerationHistory = typeof articleGenerationHistory.$in
 export const priceUpdateSchedule = mysqlTable("priceUpdateSchedule", {
   id: int("id").autoincrement().primaryKey(),
   snkrdunkEnabled: boolean("snkrdunkEnabled").default(false).notNull(), // Whether SNKRDUNK update is enabled
-  snkrdunkUpdateTime: varchar("snkrdunkUpdateTime", { length: 8 }).default("09:00").notNull(), // Daily update time (HH:mm format)
+  snkrdunkUpdateTime: varchar("snkrdunkUpdateTime", { length: 8 }).default("01:00").notNull(), // First daily update time (HH:mm format)
+  snkrdunkUpdateTime2: varchar("snkrdunkUpdateTime2", { length: 8 }).default("13:00"), // Second daily update time (HH:mm format, null = disabled)
   snkrdunkLastExecutedAt: timestamp("snkrdunkLastExecutedAt"), // Last SNKRDUNK update execution time
   timezone: varchar("timezone", { length: 64 }).default("Asia/Hong_Kong").notNull(), // Timezone
   createdAt: timestamp("createdAt").defaultNow().notNull(),

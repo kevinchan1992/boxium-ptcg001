@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, snkrdunkEnabled, snkrdunkUpdateTime, snkrdunkUpdateTime2, timezone FROM priceUpdateSchedule LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, snkrdunkEnabled, snkrdunkUpdateTime, snkrdunkUpdateTime2, timezone FROM priceUpdateSchedule LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "snkrdunkEnabled": "1",
+      "snkrdunkUpdateTime": "01:00",
+      "snkrdunkUpdateTime2": "13:00",
+      "timezone": "Asia/Hong_Kong"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsnkrdunkEnabled\tsnkrdunkUpdateTime\tsnkrdunkUpdateTime2\ttimezone\n1\t1\t01:00\t13:00\tAsia/Hong_Kong\n",
+  "stderr": "",
+  "execution_time_ms": 1499
+}

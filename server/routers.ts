@@ -2061,6 +2061,7 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       .input(z.object({
         snkrdunkEnabled: z.boolean().optional(),
         snkrdunkUpdateTime: z.string().optional(),
+        snkrdunkUpdateTime2: z.string().nullable().optional(),
         // eBay 已停用，保留參數但忽略
         ebayEnabled: z.boolean().optional(),
         ebayUpdateTime: z.string().optional(),
