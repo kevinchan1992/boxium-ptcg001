@@ -4125,3 +4125,18 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 
 - [ ] 修復「申請爭議」提交按鈕無法點擊的問題
 - [ ] 升級編輯商品 UI 為 bottomSheet 風格
+
+## 🎨 Admin Marketplace 新增商品 UI 升級
+- [x] 將 /admin/marketplace 的「新增平台商品」按鈕連結到新版 3-step bottomSheet UI
+- [x] 新增卡牌搜索（CardPickerDialog）關聯功能
+- [x] 新增市場均價參考（conditionPriceData）
+- [x] 刪除舊版 CreateListingDialog（max-w-lg 非 bottomSheet 版本）
+- [x] 確認前後端 TypeScript 無錯誤
+
+## 🎨 商品詳情頁 Dialog UI 升級 + 買家出價狀態顯示
+- [ ] 重設計「填寫收貨地址」Dialog 為 bottomSheet 風格（深藍頭部 + 黃色邊框）
+- [ ] 重設計「支付寶 HK 付款」Dialog 為 bottomSheet 風格
+- [ ] 重設計「出價洽議」Dialog 為 bottomSheet 風格
+- [ ] 商品詳情頁：若買家已出價，在「出價洽議」按鈕區域顯示已出價金額及等待狀態
+- [ ] 確認前後端 TypeScript 無錯誤
+- [ ] 保存 checkpoint

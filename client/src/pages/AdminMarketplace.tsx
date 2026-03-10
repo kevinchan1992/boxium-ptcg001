@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -11,8 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Image, Trash2, ToggleLeft, ToggleRight, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Image, Trash2, ToggleLeft, ToggleRight, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers } from "lucide-react";
 import { CONDITION_GROUPS } from "@/lib/conditions";
+import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 
 const conditionLabel: Record<string, string> = {
   psa10: "PSA 10", psa9: "PSA 9", psa8_below: "PSA 8↓",
@@ -137,69 +138,342 @@ function ImageUploader({ images, onChange, maxImages = 5 }: { images: string[]; 
   );
 }
 
+const conditionOptions = [
+  { group: "PSA", items: [
+    { value: "psa10", label: "PSA 10" },
+    { value: "psa9", label: "PSA 9" },
+    { value: "psa8_below", label: "PSA 8 以下" },
+  ]},
+  { group: "BGS", items: [
+    { value: "bgs10", label: "BGS 10" },
+    { value: "bgs9", label: "BGS 9" },
+    { value: "bgs8_below", label: "BGS 8 以下" },
+  ]},
+  { group: "TAG", items: [
+    { value: "tag10", label: "TAG 10" },
+    { value: "tag9_below", label: "TAG 9 以下" },
+  ]},
+  { group: "Raw 卡", items: [
+    { value: "raw_a", label: "A品" },
+    { value: "raw_b", label: "B品" },
+    { value: "raw_c", label: "C品" },
+    { value: "raw_d", label: "D品" },
+  ]},
+];
+
 function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess: () => void }) {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active" });
   const [images, setImages] = useState<string[]>([]);
-  const reset = () => { setForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active" }); setImages([]); };
+  const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
+  const [showCardPicker, setShowCardPicker] = useState(false);
+
+  const { data: conditionPriceData, isLoading: conditionPriceLoading } = trpc.cards.getPriceByCondition.useQuery(
+    { cardId: selectedCard?.id ?? 0, condition: form.condition },
+    { enabled: !!selectedCard?.id && !!form.condition }
+  );
+
+  const reset = () => {
+    setForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active" });
+    setImages([]);
+    setSelectedCard(null);
+    setStep(1);
+  };
+
   const createMutation = trpc.marketplace.adminCreatePlatformListing.useMutation({
-    onSuccess: () => { toast.success("商品已上架"); onSuccess(); onClose(); reset(); },
+    onSuccess: () => { toast.success("平台商品已上架"); onSuccess(); onClose(); reset(); },
     onError: (e) => toast.error(e.message),
   });
+
   return (
-    <Dialog open={open} onOpenChange={() => { onClose(); reset(); }}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>新增平台商品</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          <div><Label>商品名稱 *</Label><Input className="mt-1" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="例：PSA 10 皮卡丘 SM-P 288" /></div>
-          <div><Label>描述</Label><Textarea className="mt-1" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} /></div>
-          <ImageUploader images={images} onChange={setImages} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label>品相 *</Label>
-              <Select value={form.condition} onValueChange={v => setForm(f => ({ ...f, condition: v }))}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CONDITION_GROUPS.map(group => (
-                    <div key={group.group}>
-                      <div className="px-2 py-1 text-xs font-bold text-gray-400 uppercase tracking-wide">{group.group}</div>
-                      {group.items.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+    <>
+      <Dialog open={open} onOpenChange={(o) => { if (!o) { onClose(); reset(); } }}>
+        <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg">
+          {/* Step Header */}
+          <div className="px-5 pt-5 pb-4" style={{backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00'}}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-white">新增平台商品</h2>
+              <button onClick={() => { onClose(); reset(); }} className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Step Indicator */}
+            <div className="flex items-center gap-0">
+              {[{ n: 1, label: "基本資料" }, { n: 2, label: "定價設定" }, { n: 3, label: "確認上架" }].map(({ n, label }, idx) => (
+                <React.Fragment key={n}>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      step > n ? "bg-[#FEDD00] text-[#06038D]" :
+                      step === n ? "bg-[#FEDD00] text-[#06038D] ring-4 ring-[#FEDD00]/30" :
+                      "bg-white/20 text-white/50"
+                    }`}>
+                      {step > n ? <Check className="w-3.5 h-3.5" /> : n}
                     </div>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>狀態</Label>
-              <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">立即上架</SelectItem>
-                  <SelectItem value="draft">草稿</SelectItem>
-                </SelectContent>
-              </Select>
+                    <span className={`text-[10px] font-medium whitespace-nowrap ${
+                      step >= n ? "text-[#FEDD00]" : "text-white/40"
+                    }`}>{label}</span>
+                  </div>
+                  {idx < 2 && (
+                    <div className={`flex-1 h-0.5 mb-4 mx-1 transition-all ${
+                      step > n ? "bg-[#FEDD00]" : "bg-white/20"
+                    }`} />
+                  )}
+                </React.Fragment>
+              ))}
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div><Label>售價 (HKD) *</Label><Input className="mt-1" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0.00" min="0" step="0.01" /></div>
-            <div><Label>數量 *</Label><Input className="mt-1" type="number" value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} min="1" /></div>
+
+          {/* Step Content */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-white">
+
+            {/* Step 1: Basic Info */}
+            {step === 1 && (
+              <>
+                <ImageUploader images={images} onChange={setImages} />
+                {/* Card Picker */}
+                <div>
+                  <Label className="text-[#06038D] font-semibold">關聯卡牌（選填）</Label>
+                  {selectedCard ? (
+                    <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#06038D]/30 bg-[#06038D]/5">
+                      {selectedCard.imageUrl ? (
+                        <img src={selectedCard.imageUrl} alt={selectedCard.name} className="w-10 h-14 object-cover rounded-md border border-gray-200 flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-14 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <Layers className="w-4 h-4 text-gray-300" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#06038D] truncate">{selectedCard.name}</p>
+                        {selectedCard.nameJa && selectedCard.nameJa !== selectedCard.name && (
+                          <p className="text-xs text-gray-500 truncate">{selectedCard.nameJa}</p>
+                        )}
+                        <div className="flex gap-1 mt-0.5 flex-wrap">
+                          {selectedCard.cardNumber && <span className="text-[10px] text-gray-400">{selectedCard.cardNumber}</span>}
+                          {selectedCard.rarity && <span className="text-[10px] text-[#06038D]/70">{selectedCard.rarity}</span>}
+                        </div>
+                        {selectedCard.referencePrice && (
+                          <p className="text-[10px] text-[#06038D]/80 font-medium mt-0.5">PSA 10 市場均價 HKD {parseFloat(String(selectedCard.referencePrice)).toLocaleString()}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-[#06038D] hover:bg-[#06038D]/10" onClick={() => setShowCardPicker(true)}>改變</Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-500" onClick={() => setSelectedCard(null)}><X className="w-3 h-3" /></Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="mt-1 w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-dashed border-[#06038D]/30 text-sm text-[#06038D]/60 hover:border-[#06038D] hover:text-[#06038D] hover:bg-[#06038D]/5 transition-colors"
+                      onClick={() => setShowCardPicker(true)}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Layers className="w-4 h-4" />
+                        點擊搜索並關聯卡牌
+                      </span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-[#06038D] font-semibold">商品名稱 *</Label>
+                  <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder="例如：PSA 10 皮卡丘 SM-P 288"
+                    value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-[#06038D] font-semibold">商品描述</Label>
+                  <Textarea className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder="描述卡牌狀況、版本等..."
+                    value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[#06038D] font-semibold">品相 *</Label>
+                    <Select value={form.condition} onValueChange={v => setForm(f => ({ ...f, condition: v }))}>
+                      <SelectTrigger className="mt-1 bg-white border-[#06038D]/30 text-[#06038D]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {conditionOptions.map(group => (
+                          <div key={group.group}>
+                            <div className="px-2 py-1 text-xs font-bold text-gray-400 uppercase tracking-wide">{group.group}</div>
+                            {group.items.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                          </div>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[#06038D] font-semibold">數量 *</Label>
+                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]" type="number" min="1" value={form.quantity}
+                      onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[#06038D] font-semibold">上架狀態</Label>
+                  <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
+                    <SelectTrigger className="mt-1 bg-white border-[#06038D]/30 text-[#06038D]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">立即上架</SelectItem>
+                      <SelectItem value="draft">草稿（暫不公開）</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {/* Step 2: Pricing */}
+            {step === 2 && (
+              <>
+                <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3.5">
+                  <p className="text-xs font-semibold text-[#06038D] mb-1">商品摘要</p>
+                  <p className="text-sm font-bold text-[#06038D] truncate">{form.title}</p>
+                  <div className="flex gap-2 mt-1">
+                    <span className="text-xs text-[#06038D]/60">{conditionOptions.flatMap(g => g.items).find(i => i.value === form.condition)?.label ?? form.condition}</span>
+                    <span className="text-xs text-[#06038D]/40">·</span>
+                    <span className="text-xs text-[#06038D]/60">數量 {form.quantity}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[#06038D] font-semibold">售價（HKD）*</Label>
+                  {selectedCard && (
+                    <div className="mt-1 mb-2">
+                      {conditionPriceLoading ? (
+                        <p className="text-xs text-[#06038D]/50">查詢市場均價中...</p>
+                      ) : conditionPriceData?.avgPrice ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-semibold text-[#06038D]">
+                            {conditionPriceData.isFallback
+                              ? `PSA 10 市場均價（參考）：HKD ${conditionPriceData.avgPrice.toLocaleString()}`
+                              : `${conditionOptions.flatMap(g => g.items).find(i => i.value === form.condition)?.label ?? form.condition} 市場均價：HKD ${conditionPriceData.avgPrice.toLocaleString()}`
+                            }
+                          </span>
+                          <span className="text-[10px] text-[#06038D]/40">(基於最近 {conditionPriceData.recordCount} 筆成交)</span>
+                          {conditionPriceData.isFallback && (
+                            <span className="text-[10px] text-amber-600">此品相無成交記錄，顯示 PSA 10 作參考</span>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[#06038D]/40">此品相目前無市場均價資料</p>
+                      )}
+                    </div>
+                  )}
+                  <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="0" step="0.01" placeholder="0.00"
+                    value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
+                  {form.price && parseFloat(form.price) >= 0 && conditionPriceData?.avgPrice && (() => {
+                    const refPrice = conditionPriceData.avgPrice;
+                    const diff = ((parseFloat(form.price) - refPrice) / refPrice) * 100;
+                    const condLabel = conditionPriceData.isFallback ? 'PSA 10 市場均價' : '市場均價';
+                    return (
+                      <p className={`text-xs mt-1 ${diff < -15 ? "text-amber-600" : diff > 15 ? "text-green-600" : "text-gray-500"}`}>
+                        {diff > 0 ? `高於${condLabel} ${diff.toFixed(0)}%` : `低於${condLabel} ${Math.abs(diff).toFixed(0)}%`}
+                      </p>
+                    );
+                  })()}
+                </div>
+              </>
+            )}
+
+            {/* Step 3: Confirm */}
+            {step === 3 && (
+              <>
+                <div className="space-y-3">
+                  {images.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {images.map((url, i) => (
+                        <img key={i} src={url} alt={`圖片 ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
+                      ))}
+                    </div>
+                  )}
+                  <div className="rounded-xl border border-[#06038D]/20 divide-y divide-[#06038D]/10 overflow-hidden bg-white">
+                    <div className="flex items-start justify-between px-4 py-3">
+                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">商品名稱</span>
+                      <span className="text-sm font-medium text-[#06038D] text-right">{form.title}</span>
+                    </div>
+                    {selectedCard && (
+                      <div className="flex items-center justify-between px-4 py-3">
+                        <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">關聯卡牌</span>
+                        <span className="text-sm text-[#06038D] text-right">{selectedCard.name}</span>
+                      </div>
+                    )}
+                    {form.description && (
+                      <div className="flex items-start justify-between px-4 py-3">
+                        <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">描述</span>
+                        <span className="text-sm text-[#06038D]/80 text-right line-clamp-3">{form.description}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">品相</span>
+                      <span className="text-sm text-[#06038D]">{conditionOptions.flatMap(g => g.items).find(i => i.value === form.condition)?.label ?? form.condition}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">數量</span>
+                      <span className="text-sm text-[#06038D]">{form.quantity}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">售價</span>
+                      <span className="text-base font-bold text-[#06038D]">HKD {parseFloat(form.price || "0").toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">狀態</span>
+                      <span className="text-sm text-[#06038D]">{form.status === 'active' ? '立即上架' : '草稿'}</span>
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800">
+                    <p className="font-medium">平台商品直接上架</p>
+                    <p className="mt-0.5">作為管理員上架的商品無需審核，選擇「立即上架」後即可在市場顯示。</p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => { onClose(); reset(); }}>取消</Button>
-          <Button
-            onClick={() => createMutation.mutate({
-              title: form.title, description: form.description,
-              condition: form.condition as any, price: parseFloat(form.price),
-              quantity: parseInt(form.quantity), status: form.status as any,
-              images: images.length > 0 ? images : undefined
-            })}
-            disabled={!form.title || !form.price || createMutation.isPending}
-            className="bg-[#06038d] hover:bg-[#0804b8] text-white">
-            {createMutation.isPending ? "上架中..." : "確認上架"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+
+          {/* Footer Navigation */}
+          <div className="px-5 py-4 flex gap-2 bg-white" style={{borderTop: '1px solid rgba(6,3,141,0.15)'}}>
+            {step === 1 && (
+              <Button variant="outline" className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white" onClick={() => { onClose(); reset(); }}>取消</Button>
+            )}
+            {step > 1 && (
+              <Button variant="outline" className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white" onClick={() => setStep(s => (s - 1) as 1 | 2 | 3)}>上一步</Button>
+            )}
+            {step < 3 && (
+              <Button
+                className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
+                disabled={step === 1 ? !form.title : (step === 2 ? !form.price : false)}
+                onClick={() => setStep(s => (s + 1) as 1 | 2 | 3)}
+              >
+                下一步
+              </Button>
+            )}
+            {step === 3 && (
+              <Button
+                className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
+                disabled={createMutation.isPending}
+                onClick={() => createMutation.mutate({
+                  title: form.title,
+                  description: form.description || undefined,
+                  condition: form.condition as any,
+                  price: parseFloat(form.price),
+                  quantity: parseInt(form.quantity),
+                  status: form.status as any,
+                  images: images.length > 0 ? images : undefined,
+                  cardId: selectedCard?.id ?? undefined,
+                })}
+              >
+                {createMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />上架中...</> : "確認上架"}
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      <CardPickerDialog
+        open={showCardPicker}
+        onOpenChange={setShowCardPicker}
+        selectedCardId={selectedCard?.id ?? null}
+        onSelect={(card) => {
+          setSelectedCard(card);
+          if (!form.title.trim()) {
+            setForm(f => ({ ...f, title: card.name }));
+          }
+        }}
+      />
+    </>
   );
 }
 

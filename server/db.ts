@@ -2924,7 +2924,50 @@ export async function updateMarketplaceOrder(id: number, data: Partial<InsertMar
 export async function getBuyerOrders(buyerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.select().from(marketplaceOrders).where(eq(marketplaceOrders.buyerId, buyerId)).orderBy(desc(marketplaceOrders.createdAt));
+  const rows = await db.select({
+    id: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    buyerId: marketplaceOrders.buyerId,
+    sellerId: marketplaceOrders.sellerId,
+    sellerType: marketplaceOrders.sellerType,
+    listingId: marketplaceOrders.listingId,
+    quantity: marketplaceOrders.quantity,
+    unitPriceHkd: marketplaceOrders.unitPriceHkd,
+    subtotalHkd: marketplaceOrders.subtotalHkd,
+    platformFeeHkd: marketplaceOrders.platformFeeHkd,
+    sellerReceivableHkd: marketplaceOrders.sellerReceivableHkd,
+    paymentMethod: marketplaceOrders.paymentMethod,
+    paymentStatus: marketplaceOrders.paymentStatus,
+    orderStatus: marketplaceOrders.orderStatus,
+    shippingName: marketplaceOrders.shippingName,
+    shippingPhone: marketplaceOrders.shippingPhone,
+    shippingAddress: marketplaceOrders.shippingAddress,
+    shippingMethod: marketplaceOrders.shippingMethod,
+    trackingNumber: marketplaceOrders.trackingNumber,
+    shippedAt: marketplaceOrders.shippedAt,
+    autoCompleteAt: marketplaceOrders.autoCompleteAt,
+    payoutStatus: marketplaceOrders.payoutStatus,
+    stripePaymentIntentId: marketplaceOrders.stripePaymentIntentId,
+    stripeTransferId: marketplaceOrders.stripeTransferId,
+    disputeOpenedAt: marketplaceOrders.disputeOpenedAt,
+    disputeReason: marketplaceOrders.disputeReason,
+    disputeEvidenceUrls: marketplaceOrders.disputeEvidenceUrls,
+    disputeResolution: marketplaceOrders.disputeResolution,
+    disputeResolvedAt: marketplaceOrders.disputeResolvedAt,
+    buyerConfirmedAt: marketplaceOrders.buyerConfirmedAt,
+    alipayProofImageUrl: marketplaceOrders.alipayProofImageUrl,
+    createdAt: marketplaceOrders.createdAt,
+    updatedAt: marketplaceOrders.updatedAt,
+    // Listing info for display
+    listingTitle: marketplaceListings.title,
+    listingImages: marketplaceListings.images,
+    listingCondition: marketplaceListings.condition,
+  })
+    .from(marketplaceOrders)
+    .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
+    .where(eq(marketplaceOrders.buyerId, buyerId))
+    .orderBy(desc(marketplaceOrders.createdAt));
+  return rows;
 }
 export async function getAdminOrders(page = 1, pageSize = 20, status?: string) {
   const db = await getDb();
