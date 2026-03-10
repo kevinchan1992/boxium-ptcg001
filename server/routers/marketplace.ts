@@ -462,6 +462,50 @@ export const marketplaceRouter = router({
       return { success: true };
     }),
 
+  // Batch deactivate (remove) multiple listings at once
+  batchDeactivateListings: protectedProcedure
+    .input(z.object({ ids: z.array(z.number().int()).min(1).max(100) }))
+    .mutation(async ({ ctx, input }) => {
+      const seller = await getSellerProfileByUserId(ctx.user.id);
+      if (!seller) throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Verify all listings belong to this seller
+      const { marketplaceListings } = await import("../../drizzle/schema_new");
+      const { eq: eqFn, inArray: inArrayFn } = await import("drizzle-orm");
+      const listings = await db.select({ id: marketplaceListings.id, sellerId: marketplaceListings.sellerId })
+        .from(marketplaceListings)
+        .where(inArrayFn(marketplaceListings.id, input.ids));
+      const unauthorized = listings.filter(l => l.sellerId !== seller.id);
+      if (unauthorized.length > 0) throw new TRPCError({ code: "FORBIDDEN", message: "部分商品不屬於你" });
+      // Batch update status to removed
+      await db.update(marketplaceListings)
+        .set({ status: "removed" })
+        .where(inArrayFn(marketplaceListings.id, input.ids));
+      return { success: true, count: input.ids.length };
+    }),
+
+  // Batch reactivate (active) multiple listings at once
+  batchReactivateListings: protectedProcedure
+    .input(z.object({ ids: z.array(z.number().int()).min(1).max(100) }))
+    .mutation(async ({ ctx, input }) => {
+      const seller = await getSellerProfileByUserId(ctx.user.id);
+      if (!seller) throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { marketplaceListings } = await import("../../drizzle/schema_new");
+      const { eq: eqFn, inArray: inArrayFn } = await import("drizzle-orm");
+      const listings = await db.select({ id: marketplaceListings.id, sellerId: marketplaceListings.sellerId })
+        .from(marketplaceListings)
+        .where(inArrayFn(marketplaceListings.id, input.ids));
+      const unauthorized = listings.filter(l => l.sellerId !== seller.id);
+      if (unauthorized.length > 0) throw new TRPCError({ code: "FORBIDDEN", message: "部分商品不屬於你" });
+      await db.update(marketplaceListings)
+        .set({ status: "active" })
+        .where(inArrayFn(marketplaceListings.id, input.ids));
+      return { success: true, count: input.ids.length };
+    }),
+
   getMySellerOrders: protectedProcedure
     .query(async ({ ctx }) => {
       const seller = await getSellerProfileByUserId(ctx.user.id);

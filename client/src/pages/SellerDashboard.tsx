@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
-import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown, Layers, ChevronRight } from "lucide-react";
+import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown, Layers, ChevronRight, Pencil, EyeOff, Eye, Trash2, CheckSquare, Square, ChevronDown } from "lucide-react";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -325,6 +325,81 @@ export default function SellerDashboard() {
     },
     onError: (e) => toast.error(e.message),
   });
+
+  // ─── Edit / Deactivate / Batch state ─────────────────────────────────────
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingListing, setEditingListing] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", price: "", quantity: "" });
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [batchMode, setBatchMode] = useState(false);
+
+  const updateListingMutation = trpc.marketplace.updateMyListing.useMutation({
+    onSuccess: () => {
+      toast.success("商品已更新");
+      setShowEditDialog(false);
+      setEditingListing(null);
+      refetchListings();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deactivateMutation = trpc.marketplace.deleteMyListing.useMutation({
+    onSuccess: () => { toast.success("商品已下架"); refetchListings(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const reactivateMutation = trpc.marketplace.updateMyListing.useMutation({
+    onSuccess: () => { toast.success("商品已重新上架，等待審核"); refetchListings(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const batchDeactivateMutation = trpc.marketplace.batchDeactivateListings.useMutation({
+    onSuccess: (data) => {
+      toast.success(`已下架 ${data.count} 件商品`);
+      setSelectedIds(new Set());
+      setBatchMode(false);
+      refetchListings();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const batchReactivateMutation = trpc.marketplace.batchReactivateListings.useMutation({
+    onSuccess: (data) => {
+      toast.success(`已重新上架 ${data.count} 件商品，等待審核`);
+      setSelectedIds(new Set());
+      setBatchMode(false);
+      refetchListings();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const openEditDialog = (listing: any) => {
+    setEditingListing(listing);
+    setEditForm({
+      title: listing.title ?? "",
+      description: listing.description ?? "",
+      price: parseFloat(listing.priceHkd as string).toFixed(2),
+      quantity: String(listing.quantity ?? 1),
+    });
+    setShowEditDialog(true);
+  };
+
+  const toggleSelectId = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!myListings) return;
+    if (selectedIds.size === myListings.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(myListings.map((l: any) => l.id)));
+    }
+  };
 
   const applyMutation = trpc.marketplace.applyAsSeller.useMutation({
     onSuccess: () => { toast.success("申請已提交，等待審批"); setShowApply(false); refetchProfile(); },
@@ -657,10 +732,53 @@ export default function SellerDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {/* Add new listing button at top of list */}
-                    <div className="flex justify-end mb-2">
+                    {/* Toolbar */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-8 border-[#06038d] text-[#06038d] hover:bg-blue-50"
+                          onClick={() => { setBatchMode(v => !v); setSelectedIds(new Set()); }}
+                        >
+                          {batchMode ? <X className="w-3 h-3 mr-1" /> : <CheckSquare className="w-3 h-3 mr-1" />}
+                          {batchMode ? "取消批量" : "批量管理"}
+                        </Button>
+                        {batchMode && (
+                          <>
+                            <Button size="sm" variant="outline" className="text-xs h-8" onClick={toggleSelectAll}>
+                              {selectedIds.size === myListings.length ? <CheckSquare className="w-3 h-3 mr-1" /> : <Square className="w-3 h-3 mr-1" />}
+                              {selectedIds.size === myListings.length ? "取消全選" : "全選"}
+                            </Button>
+                            {selectedIds.size > 0 && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-8 border-red-400 text-red-600 hover:bg-red-50"
+                                  disabled={batchDeactivateMutation.isPending}
+                                  onClick={() => batchDeactivateMutation.mutate({ ids: Array.from(selectedIds) })}
+                                >
+                                  <EyeOff className="w-3 h-3 mr-1" />
+                                  下架 ({selectedIds.size})
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-8 border-green-500 text-green-700 hover:bg-green-50"
+                                  disabled={batchReactivateMutation.isPending}
+                                  onClick={() => batchReactivateMutation.mutate({ ids: Array.from(selectedIds) })}
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  重新上架 ({selectedIds.size})
+                                </Button>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
                       <Button
-                        className="font-bold flex items-center gap-2"
+                        className="font-bold flex items-center gap-2 text-sm h-8"
                         style={{ background: '#FEDD00', color: '#06038D' }}
                         onClick={() => setShowNewListing(true)}
                       >
@@ -668,6 +786,7 @@ export default function SellerDashboard() {
                         上架新商品
                       </Button>
                     </div>
+
                     {myListings.map((listing) => {
                       let coverImg: string | null = null;
                       try {
@@ -675,26 +794,45 @@ export default function SellerDashboard() {
                         coverImg = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null;
                       } catch {}
                       const isSold = listing.status === "sold";
+                      const isRemoved = listing.status === "removed";
+                      const isActive = listing.status === "active";
+                      const isSelected = selectedIds.has(listing.id);
                       const listingUrl = `${window.location.origin}/marketplace/${listing.id}`;
                       const shareText = `「${listing.title}」 HKD ${parseFloat(listing.priceHkd as string).toFixed(2)} - BOXIUM PTCG`;
                       return (
-                        <div key={listing.id} className={`bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden${isSold ? " opacity-80" : ""}`}>
+                        <div
+                          key={listing.id}
+                          className={`bg-white rounded-2xl shadow-md border overflow-hidden transition-all ${
+                            isSelected ? "border-[#06038d] ring-2 ring-[#06038d]/20" : "border-gray-100"
+                          }${isSold ? " opacity-80" : ""}`}
+                          onClick={batchMode ? () => toggleSelectId(listing.id) : undefined}
+                          style={batchMode ? { cursor: "pointer" } : undefined}
+                        >
                           {/* Brand Header Bar */}
                           <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                            <span className="text-xs text-white/80 font-medium">庫存 {listing.quantity}</span>
+                            <div className="flex items-center gap-2">
+                              {batchMode && (
+                                <div className="w-4 h-4 rounded border-2 border-white/60 flex items-center justify-center" style={isSelected ? { background: '#FEDD00', borderColor: '#FEDD00' } : {}}>
+                                  {isSelected && <Check className="w-3 h-3" style={{ color: '#06038D' }} />}
+                                </div>
+                              )}
+                              <span className="text-xs text-white/80 font-medium">庫存 {listing.quantity}</span>
+                            </div>
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                              listing.status === "active" ? "bg-green-400/20 text-green-200 border border-green-400/30" :
+                              isActive ? "bg-green-400/20 text-green-200 border border-green-400/30" :
                               listing.status === "pending_review" ? "bg-yellow-400/20 text-yellow-200 border border-yellow-400/30" :
-                              listing.status === "sold" ? "bg-blue-400/20 text-blue-200 border border-blue-400/30" :
+                              isSold ? "bg-blue-400/20 text-blue-200 border border-blue-400/30" :
+                              isRemoved ? "bg-red-400/20 text-red-200 border border-red-400/30" :
                               "bg-white/20 text-white/70 border border-white/30"
                             }`}>
-                              {listing.status === "active" ? "上架中" :
+                              {isActive ? "上架中" :
                                listing.status === "pending_review" ? "審核中" :
-                               listing.status === "sold" ? "已售出" : listing.status}
+                               isSold ? "已售出" :
+                               isRemoved ? "已下架" : listing.status}
                             </span>
                           </div>
                           {/* Card Body */}
-                          <div className="flex items-center gap-4 p-4 flex-wrap">
+                          <div className="flex items-center gap-3 p-4 flex-wrap">
                             <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
                               {coverImg ? (
                                 <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
@@ -706,26 +844,68 @@ export default function SellerDashboard() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold truncate text-gray-900">{listing.title}</p>
-                              <p className="text-sm text-gray-600 mt-0.5">
+                              <p className="text-sm font-bold mt-0.5" style={{ color: '#06038D' }}>
                                 HKD {parseFloat(listing.priceHkd as string).toFixed(2)}
                               </p>
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              {isSold && (
-                                <Link href={`/marketplace/${listing.id}`}>
-                                  <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-[#06038d] text-[#06038d] hover:bg-blue-50">查看詳情</Button>
-                                </Link>
-                              )}
-                              {/* Share Button */}
-                              <ShareButton
-                                listingUrl={listingUrl}
-                                shareText={shareText}
-                                title={listing.title}
-                                priceHkd={listing.priceHkd as string}
-                                coverImg={coverImg}
-                                condition={listing.condition ?? undefined}
-                              />
-                            </div>
+                            {!batchMode && (
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                {/* Edit button */}
+                                {!isSold && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-7 px-2 border-[#06038d] text-[#06038d] hover:bg-blue-50"
+                                    onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}
+                                  >
+                                    <Pencil className="w-3 h-3 mr-1" />
+                                    編輯
+                                  </Button>
+                                )}
+                                {/* Deactivate / Reactivate */}
+                                {isActive && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-7 px-2 border-red-400 text-red-600 hover:bg-red-50"
+                                    disabled={deactivateMutation.isPending}
+                                    onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}
+                                  >
+                                    <EyeOff className="w-3 h-3 mr-1" />
+                                    下架
+                                  </Button>
+                                )}
+                                {isRemoved && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-7 px-2 border-green-500 text-green-700 hover:bg-green-50"
+                                    disabled={reactivateMutation.isPending}
+                                    onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}
+                                  >
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    重新上架
+                                  </Button>
+                                )}
+                                {/* View detail */}
+                                {(isSold || isActive) && (
+                                  <Link href={`/marketplace/${listing.id}`}>
+                                    <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-gray-300 text-gray-600 hover:bg-gray-50">
+                                      <ExternalLink className="w-3 h-3" />
+                                    </Button>
+                                  </Link>
+                                )}
+                                {/* Share Button */}
+                                <ShareButton
+                                  listingUrl={listingUrl}
+                                  shareText={shareText}
+                                  title={listing.title}
+                                  priceHkd={listing.priceHkd as string}
+                                  coverImg={coverImg}
+                                  condition={listing.condition ?? undefined}
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -908,6 +1088,86 @@ export default function SellerDashboard() {
               disabled={!applyForm.displayName || applyMutation.isPending}
               onClick={() => applyMutation.mutate({ displayName: applyForm.displayName, bio: applyForm.bio || undefined })}>
               {applyMutation.isPending ? "提交中..." : "提交申請"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Edit Listing Dialog ─────────────────────────────────────────── */}
+      <Dialog open={showEditDialog} onOpenChange={(open) => { setShowEditDialog(open); if (!open) setEditingListing(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle style={{ color: '#06038D' }}>編輯商品資訊</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-sm font-medium text-gray-700">商品名稱</Label>
+              <Input
+                className="mt-1"
+                value={editForm.title}
+                onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                placeholder="商品名稱"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-700">商品描述</Label>
+              <Textarea
+                className="mt-1 resize-none"
+                rows={3}
+                value={editForm.description}
+                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="商品描述（可選）"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">售價（HKD）</Label>
+                <Input
+                  className="mt-1"
+                  type="number"
+                  min="4"
+                  step="0.01"
+                  value={editForm.price}
+                  onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))}
+                  placeholder="最低 HKD 4.00"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700">庫存數量</Label>
+                <Input
+                  className="mt-1"
+                  type="number"
+                  min="1"
+                  value={editForm.quantity}
+                  onChange={e => setEditForm(f => ({ ...f, quantity: e.target.value }))}
+                  placeholder="1"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>取消</Button>
+            <Button
+              className="font-bold"
+              style={{ background: '#FEDD00', color: '#06038D' }}
+              disabled={updateListingMutation.isPending}
+              onClick={() => {
+                if (!editingListing) return;
+                const price = parseFloat(editForm.price);
+                const quantity = parseInt(editForm.quantity);
+                if (isNaN(price) || price < 4) { toast.error("售價不能低於 HKD 4.00"); return; }
+                if (isNaN(quantity) || quantity < 1) { toast.error("庫存數量不能小於 1"); return; }
+                updateListingMutation.mutate({
+                  id: editingListing.id,
+                  title: editForm.title || undefined,
+                  description: editForm.description || undefined,
+                  price,
+                  quantity,
+                });
+              }}
+            >
+              {updateListingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              儲存更改
             </Button>
           </DialogFooter>
         </DialogContent>
