@@ -645,9 +645,9 @@ export default function SellerDashboard() {
               <BrandTabsContent value="listings" className="mt-4">
                 {!myListings?.length ? (
                   <div className="text-center py-12 text-muted-foreground">
-                    <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <Package className="w-12 h-12 mx-auto mb-3" style={{color:'#06038D', opacity:0.4}} />
                     <p>尚未上架任何商品</p>
-                    <Button className="mt-4 bg-[#06038d] hover:bg-[#0804b8] text-white" onClick={() => setShowNewListing(true)}>上架第一件商品</Button>
+                    <Button className="mt-4 font-bold" style={{background:'#FEDD00', color:'#06038D'}} onClick={() => setShowNewListing(true)}>上架第一件商品</Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
