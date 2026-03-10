@@ -4149,10 +4149,16 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ## 🐛 修復三個 Dialog 的 X 重疊和黑色線問題
 - [x] 移除 shadcn DialogContent 自帶的 X 關閉按鈕（三個 Dialog 各自有自訂 X）
 - [x] 修復頭部與 body 之間的兩條黑色線（border/divide 問題）
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint (version: cd783b6c)
 
 ## 🐛 修復「送出出價」按鈕無反應
 - [x] 調查前後端 makeOffer 的錯誤原因（前端多餘 sellerId 檢查導致靜默退出）
 - [x] 修復 makeOffer 流程，移除多餘的 sellerId 檢查，直接讓後端處理
 - [x] 確保賣家中心「買家出價」 tab 顯示新出價
+- [x] 儲存 checkpoint (version: cd783b6c)
+
+## 🎨 賣家中心「買家出價」和「放款記錄」UI 統一
+- [x] 查看訂單管理卡片 UI 代碼（深藍頂部 + 白色內容）
+- [x] 重設計「買家出價」卡片為訂單管理風格
+- [x] 重設計「放款記錄」卡片為訂單管理風格
 - [ ] 儲存 checkpoint

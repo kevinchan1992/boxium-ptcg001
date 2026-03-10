@@ -992,19 +992,31 @@ export default function SellerDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {(myPayouts as any[]).map((payout) => (
-                      <Card key={payout.id}>
-                        <CardContent className="flex items-center justify-between py-4">
+                      <div key={payout.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+                        {/* Brand Header Bar */}
+                        <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                          <span className="text-xs text-white/80 font-medium">
+                            #{payout.id}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            payout.status === "completed"
+                              ? "bg-green-400/20 text-green-200 border border-green-400/30"
+                              : "bg-yellow-400/20 text-yellow-200 border border-yellow-400/30"
+                          }`}>
+                            {payout.status === "completed" ? "已放款" : "處理中"}
+                          </span>
+                        </div>
+                        {/* Card Body */}
+                        <div className="p-4 flex items-center justify-between">
                           <div>
-                            <p className="font-medium">HKD {parseFloat(payout.amountHkd ?? payout.amount ?? 0).toFixed(2)}</p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="font-semibold text-gray-900">HKD {parseFloat(payout.amountHkd ?? payout.amount ?? 0).toFixed(2)}</p>
+                            <p className="text-sm text-gray-500 mt-0.5">
                               {new Date(payout.createdAt).toLocaleDateString("zh-HK")}
                             </p>
                           </div>
-                          <Badge className={payout.status === "completed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                            {payout.status === "completed" ? "已放款" : "處理中"}
-                          </Badge>
-                        </CardContent>
-                      </Card>
+                          <DollarSign className="w-5 h-5 text-[#06038d]/30" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -1019,39 +1031,48 @@ export default function SellerDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {(sellerOffers as any[]).map((offer) => (
-                      <Card key={offer.id}>
-                        <CardContent className="py-4">
-                          <div className="flex items-start justify-between gap-3">
+                      <div key={offer.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+                        {/* Brand Header Bar */}
+                        <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                          <span className="text-xs text-white/80 font-medium">
+                            #{offer.id}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            offer.status === 'accepted'
+                              ? 'bg-green-400/20 text-green-200 border border-green-400/30'
+                              : offer.status === 'rejected'
+                              ? 'bg-red-400/20 text-red-200 border border-red-400/30'
+                              : 'bg-yellow-400/20 text-yellow-200 border border-yellow-400/30'
+                          }`}>
+                            {offer.status === 'pending' ? '待回覆' : offer.status === 'accepted' ? '已接受' : '已拒絕'}
+                          </span>
+                        </div>
+                        {/* Card Body */}
+                        <div className="p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-3 flex-wrap">
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{offer.listingTitle || '商品'}</p>
-                              <p className="text-lg font-bold text-yellow-600 mt-0.5">HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</p>
-                              {offer.message && <p className="text-xs text-gray-700 mt-1">{offer.message}</p>}
+                              <p className="font-semibold truncate text-gray-900">{offer.listingTitle || '商品'}</p>
+                              <p className="text-lg font-bold text-[#06038d] mt-0.5">HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</p>
+                              {offer.message && (
+                                <p className="text-xs text-gray-600 mt-1 bg-gray-50 border border-gray-100 rounded px-2 py-1">{offer.message}</p>
+                              )}
                               <p className="text-xs text-gray-500 mt-1">{new Date(offer.createdAt).toLocaleDateString('zh-HK')}</p>
                             </div>
-                            <div className="flex flex-col items-end gap-2">
-                              <Badge className={
-                                offer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                offer.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                                'bg-red-100 text-red-800'
-                              }>
-                                {offer.status === 'pending' ? '待回覆' : offer.status === 'accepted' ? '已接受' : '已拒絕'}
-                              </Badge>
-                              {offer.status === 'pending' && (
-                                <div className="flex gap-2">
-                                  <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
-                                    disabled={respondToOfferMutation.isPending}
-                                    onClick={() => respondToOfferMutation.mutate({ offerId: offer.id, action: 'accept' })}
-                                  >接受</Button>
-                                  <Button size="sm" variant="outline" className="h-7 text-xs border-red-300 text-red-600 hover:bg-red-50"
-                                    disabled={respondToOfferMutation.isPending}
-                                    onClick={() => respondToOfferMutation.mutate({ offerId: offer.id, action: 'reject' })}
-                                  >拒絕</Button>
-                                </div>
-                              )}
-                            </div>
+                            {offer.status === 'pending' && (
+                              <div className="flex gap-2 flex-shrink-0">
+                                <Button size="sm" className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                  disabled={respondToOfferMutation.isPending}
+                                  onClick={() => respondToOfferMutation.mutate({ offerId: offer.id, action: 'accept' })}
+                                >接受</Button>
+                                <Button size="sm" variant="outline" className="h-8 text-xs border-red-300 text-red-600 hover:bg-red-50"
+                                  disabled={respondToOfferMutation.isPending}
+                                  onClick={() => respondToOfferMutation.mutate({ offerId: offer.id, action: 'reject' })}
+                                >拒絕</Button>
+                              </div>
+                            )}
                           </div>
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
