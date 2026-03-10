@@ -531,7 +531,7 @@ function MyOffersTab({ userId }: { userId: number }) {
             </div>
             <div className="flex flex-col gap-2">
               <Link href={`/shop/${offer.listingId}`}>
-                <Button size="sm" variant="outline" className="text-xs">查看商品</Button>
+                <Button size="sm" variant="outline" className="text-xs text-[#06038d] border-[#06038d]/40 hover:bg-[#06038d]/5">查看商品</Button>
               </Link>
               {offer.status === "pending" && (
                 <Button size="sm" variant="outline" className="text-xs border-red-300 text-red-600 hover:bg-red-50"

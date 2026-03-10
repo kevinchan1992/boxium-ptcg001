@@ -1050,13 +1050,36 @@ export default function SellerDashboard() {
                         {/* Card Body */}
                         <div className="p-4 space-y-3">
                           <div className="flex items-start justify-between gap-3 flex-wrap">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold truncate text-gray-900">{offer.listingTitle || '商品'}</p>
-                              <p className="text-lg font-bold text-[#06038d] mt-0.5">HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</p>
-                              {offer.message && (
-                                <p className="text-xs text-gray-600 mt-1 bg-gray-50 border border-gray-100 rounded px-2 py-1">{offer.message}</p>
-                              )}
-                              <p className="text-xs text-gray-500 mt-1">{new Date(offer.createdAt).toLocaleDateString('zh-HK')}</p>
+                            {/* Thumbnail + Info */}
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                              {(() => {
+                                let imgUrl: string | null = null;
+                                try {
+                                  const imgs = typeof offer.listingImages === 'string'
+                                    ? JSON.parse(offer.listingImages)
+                                    : offer.listingImages;
+                                  if (Array.isArray(imgs) && imgs.length > 0) imgUrl = imgs[0];
+                                } catch {}
+                                return imgUrl ? (
+                                  <img
+                                    src={imgUrl}
+                                    alt={offer.listingTitle || '商品'}
+                                    className="w-14 h-14 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-14 h-14 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
+                                    <Package className="w-6 h-6 text-gray-300" />
+                                  </div>
+                                );
+                              })()}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold truncate text-gray-900">{offer.listingTitle || '商品'}</p>
+                                <p className="text-lg font-bold text-[#06038d] mt-0.5">HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</p>
+                                {offer.message && (
+                                  <p className="text-xs text-gray-600 mt-1 bg-gray-50 border border-gray-100 rounded px-2 py-1">{offer.message}</p>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">{new Date(offer.createdAt).toLocaleDateString('zh-HK')}</p>
+                              </div>
                             </div>
                             {offer.status === 'pending' && (
                               <div className="flex gap-2 flex-shrink-0">
