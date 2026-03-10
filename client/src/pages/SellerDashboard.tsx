@@ -652,7 +652,7 @@ export default function SellerDashboard() {
                   <div className="text-center py-12 text-muted-foreground">
                     <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>尚未上架任何商品</p>
-                    <Button className="mt-4" onClick={() => setShowNewListing(true)}>上架第一件商品</Button>
+                    <Button className="mt-4 bg-[#06038d] hover:bg-[#0804b8] text-white" onClick={() => setShowNewListing(true)}>上架第一件商品</Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -938,7 +938,7 @@ export default function SellerDashboard() {
           </div>
 
           {/* Step Content */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 text-gray-900" style={{backgroundColor: '#ffffff'}}>
 
             {/* Step 1: Basic Info */}
             {listingStep === 1 && (
