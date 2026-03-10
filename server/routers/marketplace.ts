@@ -708,6 +708,7 @@ export const marketplaceRouter = router({
       cardId: z.number().int().optional(),
       images: z.array(z.string()).max(5).optional(),
       status: z.enum(["draft", "active"]).default("active"),
+      allowOffers: z.boolean().default(false),
     }))
     .mutation(async ({ input }) => {
       const listing = await createListing({
@@ -720,6 +721,7 @@ export const marketplaceRouter = router({
         cardId: input.cardId,
         images: input.images ? JSON.stringify(input.images) : null,
         status: input.status,
+        allowOffers: input.allowOffers,
         viewCount: 0,
       });
       return listing;

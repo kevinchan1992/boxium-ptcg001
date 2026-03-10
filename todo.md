@@ -4168,3 +4168,10 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 前端解析 listingImages JSON 取第一張圖片作縮圖
 - [x] 在卡片內容區左側顯示 48x48 縮圖
 - [ ] 儲存 checkpoint
+
+## 🛒 Admin 新增平台商品加入接受買家出價選項
+- [x] Admin 新增商品步驟 2 加入「接受買家出價」Toggle（與賣家中心 UI 一致）
+- [x] 更新 adminCreatePlatformListing 後端 API 接受 allowOffers 參數
+- [x] 更新步驟 3 確認頁面顯示接受出價狀態
+- [x] 商品詳情頁根據 allowOffers 欄位決定是否顯示「出價洽議」按鈕
+- [ ] 儲存 checkpoint

@@ -163,7 +163,7 @@ const conditionOptions = [
 
 function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess: () => void }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [form, setForm] = useState({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active" });
+  const [form, setForm] = useState({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active", allowOffers: false });
   const [images, setImages] = useState<string[]>([]);
   const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
   const [showCardPicker, setShowCardPicker] = useState(false);
@@ -174,7 +174,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
   );
 
   const reset = () => {
-    setForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active" });
+    setForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active", allowOffers: false });
     setImages([]);
     setSelectedCard(null);
     setStep(1);
@@ -330,6 +330,25 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
                     <span className="text-xs text-[#06038D]/60">數量 {form.quantity}</span>
                   </div>
                 </div>
+                <div className="bg-white border border-[#06038D]/20 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#06038D]">接受買家出價</p>
+                      <p className="text-xs text-[#06038D]/50 mt-0.5">買家可提交低於定價的出價</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, allowOffers: !f.allowOffers }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        form.allowOffers ? 'bg-[#06038D]' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        form.allowOffers ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
+                </div>
                 <div>
                   <Label className="text-[#06038D] font-semibold">售價（HKD）*</Label>
                   {selectedCard && (
@@ -414,6 +433,10 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
                       <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">狀態</span>
                       <span className="text-sm text-[#06038D]">{form.status === 'active' ? '立即上架' : '草稿'}</span>
                     </div>
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">接受出價</span>
+                      <span className={`text-sm font-medium ${form.allowOffers ? 'text-green-600' : 'text-gray-400'}`}>{form.allowOffers ? '是，接受買家出價' : '否，不接受出價'}</span>
+                    </div>
                   </div>
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800">
                     <p className="font-medium">平台商品直接上架</p>
@@ -454,6 +477,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
                   status: form.status as any,
                   images: images.length > 0 ? images : undefined,
                   cardId: selectedCard?.id ?? undefined,
+                  allowOffers: form.allowOffers,
                 })}
               >
                 {createMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />上架中...</> : "確認上架"}

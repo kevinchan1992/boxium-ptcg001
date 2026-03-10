@@ -814,37 +814,39 @@ export default function MarketplaceListing() {
                 >
                   <Smartphone className="w-4 h-4 mr-2" />支付寶 HK 付款
                 </Button>
-                {/* Offer - show pending offer status or offer button */}
-                {myPendingOffer ? (
-                  <div className="w-full rounded-xl border-2 border-[#FEDD00] bg-[#FEDD00]/10 p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-[#FEDD00]/30 flex items-center justify-center">
-                          <Clock className="w-4 h-4 text-[#06038D]" />
+                {/* Offer - show pending offer status or offer button (only if allowOffers is true) */}
+                {listing?.allowOffers && (
+                  myPendingOffer ? (
+                    <div className="w-full rounded-xl border-2 border-[#FEDD00] bg-[#FEDD00]/10 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-[#FEDD00]/30 flex items-center justify-center">
+                            <Clock className="w-4 h-4 text-[#06038D]" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 leading-none">已出價</p>
+                            <p className="font-bold text-[#06038D] text-base leading-tight">
+                              HKD {parseFloat(myPendingOffer.offerPriceHkd as string).toFixed(2)}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-500 leading-none">已出價</p>
-                          <p className="font-bold text-[#06038D] text-base leading-tight">
-                            HKD {parseFloat(myPendingOffer.offerPriceHkd as string).toFixed(2)}
-                          </p>
-                        </div>
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">等待賣家回覆</span>
                       </div>
-                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">等待賣家回覆</span>
+                      <p className="text-xs text-gray-500">出價將於 {new Date(myPendingOffer.expiresAt).toLocaleString("zh-HK", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })} 到期</p>
                     </div>
-                    <p className="text-xs text-gray-500">出價將於 {new Date(myPendingOffer.expiresAt).toLocaleString("zh-HK", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })} 到期</p>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    className="w-full h-11 text-sm border-[#FEDD00] text-[#06038D] hover:bg-[#FEDD00]/10 rounded-xl font-semibold"
-                    disabled={!me}
-                    onClick={() => {
-                      if (!me) { toast.error("請先登入才能出價"); return; }
-                      setShowOfferDialog(true);
-                    }}
-                  >
-                    <Tag className="w-4 h-4 mr-2" />出價洽議
-                  </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full h-11 text-sm border-[#FEDD00] text-[#06038D] hover:bg-[#FEDD00]/10 rounded-xl font-semibold"
+                      disabled={!me}
+                      onClick={() => {
+                        if (!me) { toast.error("請先登入才能出價"); return; }
+                        setShowOfferDialog(true);
+                      }}
+                    >
+                      <Tag className="w-4 h-4 mr-2" />出價洽議
+                    </Button>
+                  )
                 )}
               </div>
             ) : (
