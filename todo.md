@@ -4235,3 +4235,10 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 更新 routers.ts 的 updatePriceUpdateSchedule 加入 snkrdunkUpdateTime2 參數
 - [x] TypeScript 0 錯誤，Smart Skip 12 小時測試通過
 - [x] 儲存 checkpoint
+## ⏰ 付款逾時自動取消訂單（每小時掃描）
+- [x] 確認現有排程器已完整實作（priceUpdateScheduler.ts + index.ts 已啟動）
+- [x] 確認邏輯：每小時 :30 掃描 pending_payment 超過 24 小時的訂單，取消訂單、恢復 listing 狀態、通知買家和賣家
+- [x] 確認 listing 狀態流程：pending_payment 時 listing 仍為 active，只在付款確認後才標記 sold
+- [x] 撰寫 paymentTimeout.test.ts（26 個測試：cutoff 計算、狀態過濾、庫存恢復、通知邏輯、cron 設定、批次處理、狀態機整合）
+- [x] TypeScript 0 錯誤，26/26 測試通過
+- [x] 儲存 checkpoint
