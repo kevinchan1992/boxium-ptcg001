@@ -11,15 +11,46 @@
  *   SV-P 003   (set code + space + number)
  *   110/080    (number/total, no set code)
  *   S5I 085/070 (set code + space + number/total)
+ *   SV10 125/098 (set code with digits + space + number/total)
  */
 
 export interface CardNumberParts {
   /** Numeric part, e.g. "288", "085" */
   number: string;
-  /** Set/series code, e.g. "SM-P", "XY-P", "S5I" – upper-cased */
+  /** Set/series code, e.g. "SM-P", "XY-P", "S5I", "SV10" – upper-cased */
   setCode: string | null;
   /** Total (denominator) when format is "num/total", e.g. "070" */
   total: string | null;
+}
+
+/**
+ * Determine whether a query string looks like a pure series/set code query.
+ * Pure series codes: SV10, SV9, SV8a, S12a, SM8b, XY5, etc.
+ * These are alphanumeric codes (letters + optional digits + optional letters)
+ * that do NOT contain a slash or space followed by a card number.
+ *
+ * Examples:
+ *   "SV10"  → true  (series code only)
+ *   "SV9"   → true
+ *   "SV8a"  → true
+ *   "S12a"  → true
+ *   "SM-P"  → true  (promo series)
+ *   "SV10 125/098" → false (has card number)
+ *   "Pikachu" → false (card name)
+ *   "125/098" → false (card number only)
+ */
+export function isPureSeriesCodeQuery(query: string): boolean {
+  const trimmed = query.trim().toUpperCase();
+  // Must be a pure alphanumeric set code (letters + digits + optional trailing letters)
+  // Examples: SV10, SV9, SV8A, S12A, SM8B, XY5, DP4, L3, MC, PCG
+  // Also allow hyphenated promo codes: SM-P, XY-P, SV-P, BW-P
+  // Must NOT contain spaces or slashes (those indicate a full card number)
+  if (/\s|\//.test(trimmed)) return false;
+  // Must match the pattern of a set code: starts with letters, may have digits, may end with letters
+  // At least 2 chars, no more than 8 chars
+  if (trimmed.length < 2 || trimmed.length > 8) return false;
+  // Pattern: letters (1-4) + optional hyphen + optional letters (1-2) + optional digits (1-3) + optional letters (1-2)
+  return /^[A-Z]{1,4}(?:-[A-Z]{1,3})?(?:\d{1,3}[A-Z]{0,2})?$/.test(trimmed);
 }
 
 /**
@@ -31,6 +62,7 @@ export interface CardNumberParts {
  *   "sm-p288"    → { number:"288", setCode:"SM-P", total:null }
  *   "085/070"    → { number:"085", setCode:null,   total:"070" }
  *   "S5I 085/070"→ { number:"085", setCode:"S5I",  total:"070" }
+ *   "SV10 125/098"→{ number:"125", setCode:"SV10", total:"098" }
  *   "288"        → { number:"288", setCode:null,   total:null }
  */
 export function parseCardNumber(raw: string): CardNumberParts | null {
@@ -38,6 +70,17 @@ export function parseCardNumber(raw: string): CardNumberParts | null {
 
   // Strip common prefixes like "PROMO", "#", etc. before parsing
   let s = raw.trim().toUpperCase().replace(/^(PROMO|CARD|#)\s*/i, '');
+
+  // Pattern: SET_CODE (with optional digits suffix like SV10, SV8a, S12a) + space + NUMBER/TOTAL
+  // e.g. "SV10 125/098", "S12a 085/070", "SM8b 045/100"
+  const setWithDigitsThenNumber = s.match(/^([A-Z]{1,4}(?:-[A-Z]{1,3})?\d{0,3}[A-Z]{0,2})\s+(\d{1,4})(?:\/(\d{1,4}))?$/);
+  if (setWithDigitsThenNumber) {
+    return {
+      setCode: setWithDigitsThenNumber[1],
+      number: setWithDigitsThenNumber[2],
+      total: setWithDigitsThenNumber[3] ?? null,
+    };
+  }
 
   // Pattern: SET_CODE + optional separator + NUMBER (e.g. "SM-P 288", "SM-P288")
   // Set codes: letters, optional hyphen, optional letter (SM-P, XY-P, SV-P, PCG-P, BW-P, S5I, SC, etc.)

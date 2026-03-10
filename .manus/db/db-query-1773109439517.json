@@ -1,0 +1,50 @@
+{
+  "query": "SELECT DISTINCT series, cardNumber FROM cards WHERE cardNumber LIKE 'SV10%' LIMIT 10; SELECT DISTINCT series FROM cards WHERE series IS NOT NULL ORDER BY series DESC LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT DISTINCT series, cardNumber FROM cards WHERE cardNumber LIKE 'SV10%' LIMIT 10; SELECT DISTINCT series FROM cards WHERE series IS NOT NULL ORDER BY series DESC LIMIT 30;",
+  "rows": [
+    {
+      "series": "NULL",
+      "cardNumber": "SV10 127/098"
+    },
+    {
+      "series": "NULL",
+      "cardNumber": "SV10 071/098"
+    },
+    {
+      "series": "NULL",
+      "cardNumber": "SV10 068/098"
+    },
+    {
+      "series": "NULL",
+      "cardNumber": "SV10 084/098"
+    },
+    {
+      "series": "NULL",
+      "cardNumber": "SV10 083/098"
+    },
+    {
+      "series": "NULL",
+      "cardNumber": "SV10 046/098"
+    },
+    {
+      "series": "NULL",
+      "cardNumber": "SV10 026/098"
+    },
+    {
+      "series": "NULL",
+      "cardNumber": "SV10 057/098"
+    },
+    {
+      "series": "NULL",
+      "cardNumber": "SV10 072/098"
+    },
+    {
+      "series": "NULL",
+      "cardNumber": "SV10 111/098"
+    }
+  ],
+  "messages": [],
+  "stdout": "series\tcardNumber\nNULL\tSV10 127/098\nNULL\tSV10 071/098\nNULL\tSV10 068/098\nNULL\tSV10 084/098\nNULL\tSV10 083/098\nNULL\tSV10 046/098\nNULL\tSV10 026/098\nNULL\tSV10 057/098\nNULL\tSV10 072/098\nNULL\tSV10 111/098\n",
+  "stderr": "",
+  "execution_time_ms": 1907
+}

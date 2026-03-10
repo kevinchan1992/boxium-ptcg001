@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, name, series, setName, cardNumber FROM cards WHERE cardNumber LIKE 'SV10 %' OR cardNumber LIKE 'SV10/%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, series, setName, cardNumber FROM cards WHERE cardNumber LIKE 'SV10 %' OR cardNumber LIKE 'SV10/%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "810152",
+      "name": "Team Rocket's Tarountula C [SV10 008/098](Expansion Pack \"Glory of Team Rocket\")",
+      "series": "NULL",
+      "setName": "NULL",
+      "cardNumber": "SV10 008/098"
+    },
+    {
+      "id": "810153",
+      "name": "Team Rocket's Porygon C [SV10 081/098](Expansion Pack \"Glory of Team Rocket\")",
+      "series": "NULL",
+      "setName": "NULL",
+      "cardNumber": "SV10 081/098"
+    },
+    {
+      "id": "810166",
+      "name": "Team Rocket's Porygon-Z U [SV10 083/098](Expansion Pack \"Glory of Team Rocket\")",
+      "series": "NULL",
+      "setName": "NULL",
+      "cardNumber": "SV10 083/098"
+    },
+    {
+      "id": "810168",
+      "name": "Team Rocket's Meowth C [SV10 078/098](Expansion Pack \"Glory of Team Rocket\")",
+      "series": "NULL",
+      "setName": "NULL",
+      "cardNumber": "SV10 078/098"
+    },
+    {
+      "id": "810169",
+      "name": "Team Rocket's Porygon2 C [SV10 082/098](Expansion Pack \"Glory of Team Rocket\")",
+      "series": "NULL",
+      "setName": "NULL",
+      "cardNumber": "SV10 082/098"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tseries\tsetName\tcardNumber\n810152\tTeam Rocket's Tarountula C [SV10 008/098](Expansion Pack \"Glory of Team Rocket\")\tNULL\tNULL\tSV10 008/098\n810153\tTeam Rocket's Porygon C [SV10 081/098](Expansion Pack \"Glory of Team Rocket\")\tNULL\tNULL\tSV10 081/098\n810166\tTeam Rocket's Porygon-Z U [SV10 083/098](Expansion Pack \"Glory of Team Rocket\")\tNULL\tNULL\tSV10 083/098\n810168\tTeam Rocket's Meowth C [SV10 078/098](Expansion Pack \"Glory of Team Rocket\")\tNULL\tNULL\tSV10 078/098\n810169\tTeam Rocket's Porygon2 C [SV10 082/098](Expansion Pack \"Glory of Team Rocket\")\tNULL\tNULL\tSV10 082/098\n",
+  "stderr": "",
+  "execution_time_ms": 1593
+}

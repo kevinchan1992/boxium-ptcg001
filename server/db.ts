@@ -1,6 +1,6 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
-import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery } from './utils/cardNumberNormalize';
+import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
 import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";
 import { ENV } from './_core/env';
@@ -38,15 +38,80 @@ export async function searchCards(query: string, limit: number = 20, offset: num
   const db = await getDb();
   if (!db) return { cards: [], total: 0 };
 
+  const trimmedQuery = query.trim();
+
+  // ── Pure series code query (e.g. "SV10", "SV8a", "SM-P") ──────────────────
+  // When the user types only a set code, do a prefix match on cardNumber
+  // so that "SV10" returns exactly the SV10 series ("SV10 125/098", etc.)
+  // and NOT cards from other series that happen to contain those characters.
+  if (isPureSeriesCodeQuery(trimmedQuery)) {
+    const setCode = trimmedQuery.toUpperCase();
+    // Match "SV10 xxx" (set code followed by space) OR exact set code
+    const matchingCards = await db
+      .select()
+      .from(cards)
+      .where(
+        or(
+          like(cards.cardNumber, `${setCode} %`),
+          like(cards.cardNumber, `${setCode}/%`),
+        )
+      );
+
+    if (matchingCards.length === 0) return { cards: [], total: 0 };
+
+    // Get latest SNKRDUNK PSA 10 price for each card
+    const cardIds = matchingCards.map(c => c.id);
+    const latestPrices = await db
+      .select({
+        cardId: priceHistory.cardId,
+        price: priceHistory.price,
+        soldAt: priceHistory.soldAt,
+      })
+      .from(priceHistory)
+      .where(
+        and(
+          inArray(priceHistory.cardId, cardIds),
+          eq(priceHistory.source, 'snkrdunk'),
+          eq(priceHistory.grade, 'PSA10')
+        )
+      )
+      .orderBy(desc(priceHistory.soldAt));
+
+    const priceMap = new Map<number, number>();
+    for (const price of latestPrices) {
+      if (!priceMap.has(price.cardId)) {
+        priceMap.set(price.cardId, Number(price.price));
+      }
+    }
+
+    // Sort: cards with price first (highest price first), then cards without price
+    const sortedCards = matchingCards.sort((a, b) => {
+      const priceA = priceMap.get(a.id) || 0;
+      const priceB = priceMap.get(b.id) || 0;
+      return priceB - priceA;
+    });
+
+    const cardsWithPrice = sortedCards.map(card => ({
+      ...card,
+      latestPrice: priceMap.get(card.id) || null,
+    }));
+
+    return {
+      cards: cardsWithPrice.slice(offset, offset + limit),
+      total: cardsWithPrice.length,
+    };
+  }
+
+  // ── General search (card name or card number with explicit number) ──────────
   // Build smart search conditions with card number normalization
   // This handles format variants like "SM-P 288", "288/SM-P", "288 sm-p"
-  const cardNumberPatterns = generateCardNumberPatterns(query);
-  const normalizedQuery = normalizeCardQuery(query);
+  const cardNumberPatterns = generateCardNumberPatterns(trimmedQuery);
+  const normalizedQuery = normalizeCardQuery(trimmedQuery);
 
   // Build card number conditions: original query + all format variants
   const cardNumberConditions = [
-    like(cards.cardNumber, `%${query}%`),
-    ...(normalizedQuery !== query ? [like(cards.cardNumber, `%${normalizedQuery}%`)] : []),
+    like(cards.cardNumber, `%${trimmedQuery}%`),
+    ...(normalizedQuery !== trimmedQuery ? [like(cards.cardNumber, `%${normalizedQuery}%`)] : []),
     ...cardNumberPatterns.map(pattern => like(cards.cardNumber, pattern)),
   ];
 
@@ -56,8 +121,8 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     .from(cards)
     .where(
       or(
-        like(cards.name, `%${query}%`),
-        like(cards.nameJa, `%${query}%`),
+        like(cards.name, `%${trimmedQuery}%`),
+        like(cards.nameJa, `%${trimmedQuery}%`),
         ...cardNumberConditions
       )
     );

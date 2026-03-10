@@ -902,7 +902,7 @@ export default function SellerDashboard() {
       </Dialog>
 
       <Dialog open={showNewListing} onOpenChange={(open) => { setShowNewListing(open); if (!open) setListingStep(1); }}>
-        <DialogContent bottomSheet className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg">
+        <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg">
           {/* Step Header */}
           <div className="px-5 pt-5 pb-4 border-b border-white/10" style={{backgroundColor: '#06038D'}}>
             <div className="flex items-center justify-between mb-3">
