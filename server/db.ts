@@ -3373,7 +3373,29 @@ export async function getBuyerOffers(buyerId: number) {
 export async function getSellerOffers(sellerProfileId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(offers).where(eq(offers.sellerProfileId, sellerProfileId)).orderBy(desc(offers.createdAt));
+  const rows = await db.select({
+    id: offers.id,
+    listingId: offers.listingId,
+    buyerId: offers.buyerId,
+    sellerId: offers.sellerId,
+    sellerProfileId: offers.sellerProfileId,
+    offerPriceHkd: offers.offerPriceHkd,
+    message: offers.message,
+    status: offers.status,
+    expiresAt: offers.expiresAt,
+    respondedAt: offers.respondedAt,
+    rejectionReason: offers.rejectionReason,
+    orderId: offers.orderId,
+    createdAt: offers.createdAt,
+    updatedAt: offers.updatedAt,
+    listingTitle: marketplaceListings.title,
+    listingImages: marketplaceListings.images,
+  })
+    .from(offers)
+    .leftJoin(marketplaceListings, eq(offers.listingId, marketplaceListings.id))
+    .where(eq(offers.sellerProfileId, sellerProfileId))
+    .orderBy(desc(offers.createdAt));
+  return rows;
 }
 
 export async function getListingOffers(listingId: number) {

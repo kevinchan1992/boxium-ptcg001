@@ -1011,14 +1011,14 @@ export default function SellerDashboard() {
               </BrandTabsContent>
 
               <BrandTabsContent value="offers" className="mt-4">
-                {!myOffers?.length ? (
+                {!sellerOffers?.length ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>尚無買家出價</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {(myOffers as any[]).map((offer) => (
+                    {(sellerOffers as any[]).map((offer) => (
                       <Card key={offer.id}>
                         <CardContent className="py-4">
                           <div className="flex items-start justify-between gap-3">

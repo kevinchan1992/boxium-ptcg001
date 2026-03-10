@@ -4139,4 +4139,9 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 重設計「出價洽議」 Dialog 為 bottomSheet 風格
 - [x] 商品詳情頁：若買家已出價，在「出價洽議」按鈕區域顯示已出價金額及等待狀態
 - [x] 確認前後端 TypeScript 無錯誤
+- [x] 儲存 checkpoint (version: 9aea1b41)
+## 🐛 修復賣家出價頁面 + Dialog UI 修正
+- [x] 修復賣家 Dashboard「買家出價」頁面不顯示出價的 bug
+- [x] 修改三個 Dialog（填寫收貨地址、支付寶付款、出價洽議）底部背景為白色
+- [x] 修改三個 Dialog 底部文字顏色為 LOGO 藍色 #06038D
 - [ ] 儲存 checkpoint

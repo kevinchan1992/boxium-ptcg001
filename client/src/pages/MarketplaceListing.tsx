@@ -960,7 +960,7 @@ export default function MarketplaceListing() {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="p-6">
+          <div className="p-6 bg-white text-[#06038D]">
 
           {alipayStep === "qr" && (
             <div className="space-y-4">
@@ -1030,7 +1030,7 @@ export default function MarketplaceListing() {
               </div>
               <p className="text-xs text-gray-400">* 必填欄位。如不需要寄送可跳過。</p>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setAlipayStep("qr")}>返回</Button>
+                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("qr")}>返回</Button>
                 <Button
                   className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white"
                   disabled={!alipayShippingForm.name.trim() || !alipayShippingForm.phone.trim() || !alipayShippingForm.address.trim()}
@@ -1113,7 +1113,7 @@ export default function MarketplaceListing() {
                 </div>
               )}
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setAlipayStep("qr")}>返回</Button>
+                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("qr")}>返回</Button>
                 <Button
                   className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
                   disabled={!proofUrl || isVerifying || isUploading || createAlipayOrderMutation.isPending}
@@ -1140,7 +1140,7 @@ export default function MarketplaceListing() {
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
-              <p className="font-bold text-lg text-gray-900">訂單已提交！</p>
+              <p className="font-bold text-lg text-[#06038D]">訂單已提交！</p>
               <p className="text-sm text-gray-500">我們將在核對收款後確認你的訂單，通常需要 1-2 個工作天。</p>
               <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => setShowAlipay(false)}>關閉</Button>
             </div>
@@ -1164,7 +1164,7 @@ export default function MarketplaceListing() {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-4 bg-white text-[#06038D]">
             {savedAddresses && savedAddresses.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">已儲存地址</p>
@@ -1216,8 +1216,8 @@ export default function MarketplaceListing() {
             </div>
             <p className="text-xs text-gray-400">* 必填欄位。收貨地址將提供給賣家安排寄送。</p>
           </div>
-          <div className="px-6 pb-6 flex gap-3">
-            <Button variant="outline" className="flex-1 border-gray-200" onClick={() => setShowShippingDialog(false)}>取消</Button>
+          <div className="px-6 pb-6 flex gap-3 bg-white">
+            <Button variant="outline" className="flex-1 border-gray-200 text-[#06038D]" onClick={() => setShowShippingDialog(false)}>取消</Button>
             <Button
               className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
               disabled={!shippingForm.name.trim() || !shippingForm.phone.trim() || !shippingForm.address.trim() || createStripeOrderMutation.isPending}
@@ -1256,7 +1256,7 @@ export default function MarketplaceListing() {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-4 bg-white text-[#06038D]">
             {listing?.priceHkd && (
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm">
                 <p className="text-gray-500">市價</p>
@@ -1287,8 +1287,8 @@ export default function MarketplaceListing() {
               />
             </div>
           </div>
-          <div className="px-6 pb-6 flex gap-3">
-            <Button variant="outline" className="flex-1 border-gray-200" onClick={() => setShowOfferDialog(false)}>取消</Button>
+          <div className="px-6 pb-6 flex gap-3 bg-white">
+            <Button variant="outline" className="flex-1 border-gray-200 text-[#06038D]" onClick={() => setShowOfferDialog(false)}>取消</Button>
             <Button
               className="flex-1 bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold"
               disabled={!offerAmount || parseFloat(offerAmount) <= 0 || makeOfferMutation.isPending}
