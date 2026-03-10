@@ -451,7 +451,7 @@ export default function OrderDetail() {
   const canReview = isBuyer && isCompleted && order.sellerType === "seller" && !review;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-gray-900">
       {/* ── Hero Banner ── */}
       <div
         className="relative"
@@ -641,7 +641,7 @@ export default function OrderDetail() {
 
         {/* Product Info */}
         {listing && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-gray-900">
             <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>商品資訊</h2>
             <div className="flex items-start gap-3">
               {(() => {
@@ -664,7 +664,7 @@ export default function OrderDetail() {
                 <p className="text-sm font-bold text-[#06038d] mt-1">HKD {parseFloat(listing.priceHkd as string).toFixed(2)}</p>
               </div>
               <Link href={`/marketplace/${listing.id}`}>
-                <Button variant="outline" size="sm" className="text-xs flex-shrink-0">
+                <Button variant="outline" size="sm" className="text-xs flex-shrink-0 text-gray-700 border-gray-300 bg-white hover:bg-gray-50">
                   <ExternalLink className="w-3 h-3 mr-1" />查看
                 </Button>
               </Link>
@@ -674,7 +674,7 @@ export default function OrderDetail() {
 
         {/* Shipping Address */}
         {shippingAddr && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-gray-900">
             <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>收貨資料</h2>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2.5">
