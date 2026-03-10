@@ -204,7 +204,7 @@ export function TopNav() {
             <motion.button
               onClick={handleSellClick}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-1.5 bg-[#ffed00] text-black text-sm font-bold px-3 py-1.5 rounded-md hover:bg-[#ffed00]/90 transition-colors whitespace-nowrap"
+              className="flex items-center gap-1.5 bg-[#FFD700] text-[#06038d] text-sm font-bold px-3 py-1.5 rounded-md hover:bg-[#FFD700]/90 transition-colors whitespace-nowrap"
             >
               <Tag className="w-3.5 h-3.5 flex-shrink-0" />
               <span>出售商品</span>
