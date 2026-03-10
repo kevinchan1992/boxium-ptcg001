@@ -63,7 +63,7 @@ function ImageUploader({
 
   return (
     <div className="space-y-2">
-      <Label>商品圖片（最多 {maxImages} 張）</Label>
+      <Label className="text-[#06038D] font-semibold">商品圖片（最多 {maxImages} 張）</Label>
       {images.length > 0 && (
         <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
           {images.map((url, idx) => (
@@ -80,18 +80,18 @@ function ImageUploader({
       )}
       {images.length < maxImages && (
         <div
-          className="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors"
+          className="border-2 border-dashed border-[#06038D]/30 rounded-lg p-4 text-center cursor-pointer hover:border-[#06038D] hover:bg-[#06038D]/5 transition-colors"
           onClick={() => fileInputRef.current?.click()}
           onDrop={handleDrop}
           onDragOver={e => e.preventDefault()}
         >
           {uploading ? (
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 text-[#06038D]/60">
               <Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm">上傳中...</span>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-1 text-muted-foreground">
-              <ImagePlus className="w-6 h-6" />
+            <div className="flex flex-col items-center gap-1 text-[#06038D]/60">
+              <ImagePlus className="w-6 h-6 text-[#06038D]/50" />
               <span className="text-sm">點擊或拖放圖片上傳</span>
               <span className="text-xs">支援 JPG、PNG、WebP，每張最大 10MB</span>
             </div>
@@ -1066,11 +1066,11 @@ export default function SellerDashboard() {
                       type="button"
                       onClick={() => setListingForm(p => ({ ...p, acceptOffers: !p.acceptOffers }))}
                       className={`w-11 h-6 rounded-full transition-colors relative ${
-                        listingForm.acceptOffers ? "bg-[#06038d]" : "bg-gray-200"
+                        listingForm.acceptOffers ? "bg-[#FEDD00]" : "bg-gray-200"
                       }`}
                     >
-                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                        listingForm.acceptOffers ? "translate-x-5.5 left-0.5" : "left-0.5"
+                      <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-transform ${
+                        listingForm.acceptOffers ? "translate-x-5.5 left-0.5 bg-[#06038D]" : "left-0.5 bg-white"
                       }`} />
                     </button>
                   </div>
