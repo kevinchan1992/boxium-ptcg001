@@ -657,6 +657,17 @@ export default function SellerDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3">
+                    {/* Add new listing button at top of list */}
+                    <div className="flex justify-end mb-2">
+                      <Button
+                        className="font-bold flex items-center gap-2"
+                        style={{ background: '#FEDD00', color: '#06038D' }}
+                        onClick={() => setShowNewListing(true)}
+                      >
+                        <Plus className="w-4 h-4" />
+                        上架新商品
+                      </Button>
+                    </div>
                     {myListings.map((listing) => {
                       let coverImg: string | null = null;
                       try {
