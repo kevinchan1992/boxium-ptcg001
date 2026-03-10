@@ -292,6 +292,105 @@ export const marketplaceRouter = router({
       return { checkoutUrl: session.url! };
     }),
 
+  // Create checkout for accepted offer - supports Stripe or Alipay HK
+  createOfferCheckout: protectedProcedure
+    .input(z.object({
+      offerId: z.number().int(),
+      paymentMethod: z.enum(["stripe", "alipay_hk"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Get offer and validate
+      const offerRows = await getBuyerOffers(ctx.user.id);
+      const offer = offerRows.find((o: any) => o.id === input.offerId);
+      if (!offer) throw new TRPCError({ code: "NOT_FOUND", message: "出價不存在" });
+      if (offer.status !== "accepted") throw new TRPCError({ code: "BAD_REQUEST", message: "此出價尚未被接受" });
+      if (!offer.orderId) throw new TRPCError({ code: "BAD_REQUEST", message: "此出價尚未建立訂單" });
+
+      const order = await getMarketplaceOrderById(offer.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
+      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "無權限" });
+      if (order.orderStatus !== "pending_payment") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已付款或不需要付款" });
+
+      const totalHkd = parseFloat(order.subtotalHkd as string);
+
+      // Alipay HK: update order payment method and return static link
+      if (input.paymentMethod === "alipay_hk") {
+        await updateMarketplaceOrder(order.id, { paymentMethod: "alipay_hk" });
+        return {
+          paymentMethod: "alipay_hk" as const,
+          alipayLink: ALIPAY_HK_STATIC_LINK,
+          amount: totalHkd.toFixed(2),
+          orderNo: order.orderNo,
+          orderId: order.id,
+        };
+      }
+
+      // Stripe: validate minimum amount
+      if (totalHkd < 4.00) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `此出價金額 HKD ${totalHkd.toFixed(2)} 低於 Stripe 最低付款金額 HKD 4.00，請改用支付寶 HK 付款。`,
+        });
+      }
+
+      // Stripe: update order payment method
+      await updateMarketplaceOrder(order.id, { paymentMethod: "stripe" });
+
+      // Reuse existing valid session
+      if (order.stripeSessionId) {
+        try {
+          const Stripe = (await import("stripe")).default;
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+          const existingSession = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+          if (existingSession.status === "open" && existingSession.url) {
+            return { paymentMethod: "stripe" as const, checkoutUrl: existingSession.url };
+          }
+        } catch (e) {
+          console.warn("[createOfferCheckout] Failed to retrieve existing session:", e);
+        }
+      }
+
+      // Create new Stripe Checkout Session
+      const listing = await getListingById(order.listingId!);
+      const listingTitle = listing?.title ?? offer.listingTitle ?? "出價商品";
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [{
+          price_data: {
+            currency: "hkd",
+            product_data: { name: listingTitle },
+            unit_amount: Math.round(totalHkd * 100),
+          },
+          quantity: 1,
+        }],
+        mode: "payment",
+        customer_email: ctx.user.email ?? undefined,
+        client_reference_id: ctx.user.id.toString(),
+        metadata: {
+          orderId: order.id.toString(),
+          orderNo: order.orderNo,
+          buyerId: ctx.user.id.toString(),
+          listingId: (order.listingId ?? "").toString(),
+          offerId: input.offerId.toString(),
+        },
+        payment_intent_data: {
+          metadata: {
+            orderId: order.id.toString(),
+            orderNo: order.orderNo,
+            buyerId: ctx.user.id.toString(),
+          },
+        },
+        success_url: `${origin}/orders?payment=success&orderNo=${order.orderNo}`,
+        cancel_url: `${origin}/orders`,
+        allow_promotion_codes: true,
+      });
+      await updateMarketplaceOrder(order.id, { stripeSessionId: session.id });
+      return { paymentMethod: "stripe" as const, checkoutUrl: session.url! };
+    }),
+
   // Submit Alipay HK proof screenshot
   submitAlipayProof: protectedProcedure
     .input(z.object({

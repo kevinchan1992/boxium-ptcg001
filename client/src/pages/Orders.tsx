@@ -60,25 +60,103 @@ function OrderStatusBadge({ status }: { status: string }) {
   );
 }
 
-function PayOrderButton({ orderId }: { orderId: number }) {
-  const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
+function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: string }) {
+  const [open, setOpen] = useState(false);
+  const [alipayStep, setAlipayStep] = useState(false);
+  const createOfferCheckout = trpc.marketplace.createOfferCheckout.useMutation({
     onSuccess: (data) => {
-      toast.success("正在轉向付款頁面...");
-      window.open(data.checkoutUrl, "_blank");
+      if (data.paymentMethod === "stripe") {
+        toast.success("正在轉向 Stripe 付款頁面...");
+        window.open((data as any).checkoutUrl, "_blank");
+        setOpen(false);
+      } else {
+        // Alipay HK: show QR code step
+        setAlipayStep(true);
+        window.open((data as any).alipayLink, "_blank");
+      }
     },
-    onError: (e: any) => toast.error(e.message || "無法獲取付款連結"),
+    onError: (e: any) => toast.error(e.message || "無法建立付款"),
   });
+
   return (
-    <Button
-      size="sm"
-      className="text-white font-bold"
-      style={{ backgroundColor: "#06038d" }}
-      disabled={getCheckoutMutation.isPending}
-      onClick={() => getCheckoutMutation.mutate({ orderId })}
-    >
-      {getCheckoutMutation.isPending ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1.5" />}
-      前往付款
-    </Button>
+    <>
+      <Button
+        size="sm"
+        className="text-white font-bold"
+        style={{ backgroundColor: "#06038d" }}
+        onClick={() => { setOpen(true); setAlipayStep(false); }}
+      >
+        <CreditCard className="w-4 h-4 mr-1.5" />
+        立即付款
+      </Button>
+
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setAlipayStep(false); }}>
+        <DialogContent className="max-w-sm bg-white text-gray-900">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>
+              選擇付款方式
+            </DialogTitle>
+          </DialogHeader>
+
+          {!alipayStep ? (
+            <div className="space-y-3 py-2">
+              <p className="text-sm text-gray-500">付款金額：<span className="font-bold text-gray-900">HKD {parseFloat(amount).toFixed(2)}</span></p>
+
+              {/* Stripe */}
+              <button
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-[#06038d] hover:bg-[#f0f4ff] transition-all text-left group"
+                disabled={createOfferCheckout.isPending}
+                onClick={() => createOfferCheckout.mutate({ offerId, paymentMethod: "stripe" })}
+              >
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#635bff" }}>
+                  <CreditCard className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 group-hover:text-[#06038d]">Stripe 信用卡</p>
+                  <p className="text-xs text-gray-500">Visa / Mastercard / 其他信用卡</p>
+                </div>
+                {createOfferCheckout.isPending ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-gray-300 group-hover:text-[#06038d] text-lg">›</span>}
+              </button>
+
+              {/* Alipay HK */}
+              <button
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-[#1677ff] hover:bg-[#f0f7ff] transition-all text-left group"
+                disabled={createOfferCheckout.isPending}
+                onClick={() => createOfferCheckout.mutate({ offerId, paymentMethod: "alipay_hk" })}
+              >
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#1677ff" }}>
+                  <span className="text-white font-bold text-lg">支</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 group-hover:text-[#1677ff]">支付寶 HK</p>
+                  <p className="text-xs text-gray-500">AlipayHK 電子錢包付款</p>
+                </div>
+                {createOfferCheckout.isPending ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-gray-300 group-hover:text-[#1677ff] text-lg">›</span>}
+              </button>
+
+              <p className="text-xs text-gray-400 text-center pt-1">所有付款均通過加密傳輸保護</p>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2 text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "#e6f4ff" }}>
+                <span className="text-3xl">📲</span>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">支付寶 HK 付款頁面已開啟</p>
+                <p className="text-sm text-gray-500 mt-1">請在新視窗完成付款，然後回到此頁面上傳付款截圖</p>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
+                <p className="text-xs text-amber-700 font-medium">⚠️ 付款後需要</p>
+                <p className="text-xs text-amber-600 mt-0.5">前往訂單詳情頁上傳支付寶付款截圖，以便管理員確認收款</p>
+              </div>
+              <Button className="w-full text-white font-bold" style={{ backgroundColor: "#06038d" }} onClick={() => setOpen(false)}>
+                我已完成付款
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -256,7 +334,10 @@ function OrderCard({ order }: { order: any }) {
             </span>
           )}
           {isPending && order.paymentMethod === "stripe" && (
-            <PayOrderButton orderId={order.id} />
+            <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: "#06038d" }}
+              onClick={() => { window.location.href = `/orders/${order.orderNo}`; }}>
+              <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
+            </Button>
           )}
           {isPending && order.paymentMethod === "alipay_hk" && (
             <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
@@ -584,7 +665,7 @@ function MyOffersTab({ userId }: { userId: number }) {
                 </Button>
               )}
               {offer.status === "accepted" && offer.orderId && (
-                <PayOrderButton orderId={offer.orderId} />
+                <OfferPaymentButton offerId={offer.id} amount={offer.offerPriceHkd} />
               )}
             </div>
           </div>

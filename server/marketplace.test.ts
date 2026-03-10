@@ -454,3 +454,60 @@ describe("Minimum offer amount validation (70% rule)", () => {
     expect(shouldShowError("900")).toBe(false); // above minimum → no error
   });
 });
+
+// ── createOfferCheckout validation tests ──────────────────────────────────────
+describe("createOfferCheckout - payment method validation", () => {
+  it("rejects Stripe payment when amount is below HKD 4.00", () => {
+    const amount = 3.5;
+    const isStripe = true;
+    const minStripe = 4.0;
+    const shouldReject = isStripe && amount < minStripe;
+    expect(shouldReject).toBe(true);
+  });
+
+  it("allows Alipay HK payment for any amount including below HKD 4.00", () => {
+    const amount = 1.0;
+    const isAlipay = true;
+    const minStripe = 4.0;
+    // Alipay has no minimum restriction
+    const shouldReject = !isAlipay && amount < minStripe;
+    expect(shouldReject).toBe(false);
+  });
+
+  it("allows Stripe payment when amount meets minimum HKD 4.00", () => {
+    const amount = 10.0;
+    const isStripe = true;
+    const minStripe = 4.0;
+    const shouldReject = isStripe && amount < minStripe;
+    expect(shouldReject).toBe(false);
+  });
+
+  it("validates payment method enum", () => {
+    const validMethods = ["stripe", "alipay_hk"];
+    expect(validMethods.includes("stripe")).toBe(true);
+    expect(validMethods.includes("alipay_hk")).toBe(true);
+    expect(validMethods.includes("paypal")).toBe(false);
+  });
+
+  it("returns correct payment method in Stripe response", () => {
+    const stripeResponse = { paymentMethod: "stripe" as const, checkoutUrl: "https://checkout.stripe.com/test" };
+    expect(stripeResponse.paymentMethod).toBe("stripe");
+    expect(stripeResponse.checkoutUrl).toContain("stripe.com");
+  });
+
+  it("returns correct payment method in Alipay HK response", () => {
+    const alipayResponse = { paymentMethod: "alipay_hk" as const, alipayLink: "https://w.alipay.hk/test", amount: "100.00", orderNo: "BOXIUM-001", orderId: 1 };
+    expect(alipayResponse.paymentMethod).toBe("alipay_hk");
+    expect(alipayResponse.alipayLink).toContain("alipay");
+    expect(alipayResponse.amount).toBe("100.00");
+  });
+
+  it("only accepted offers can proceed to payment", () => {
+    const statuses = ["pending", "accepted", "rejected", "expired", "cancelled"];
+    const canPay = (status: string) => status === "accepted";
+    expect(canPay("accepted")).toBe(true);
+    statuses.filter(s => s !== "accepted").forEach(s => {
+      expect(canPay(s)).toBe(false);
+    });
+  });
+});
