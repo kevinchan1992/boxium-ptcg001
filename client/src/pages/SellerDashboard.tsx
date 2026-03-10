@@ -426,11 +426,6 @@ export default function SellerDashboard() {
             <div className="text-center md:text-left pb-1 flex-1">
               <div className="flex items-center gap-3 justify-center md:justify-start flex-wrap">
                 <h1 className="text-2xl md:text-3xl font-bold text-white">賣家中心</h1>
-                {sellerProfile?.isActive && (
-                  <Button onClick={() => setShowNewListing(true)} className="text-sm font-bold" style={{ background: "#FEDD00", color: "#06038d" }}>
-                    <Plus className="w-4 h-4 mr-1" />上架新商品
-                  </Button>
-                )}
               </div>
               <p className="text-white/70 text-sm mt-1">管理你的商品、訂單和收款</p>
             </div>
@@ -490,8 +485,8 @@ export default function SellerDashboard() {
                   <div className="flex items-center gap-3">
                     <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-blue-900">設定 Stripe 收款帳戶</p>
-                      <p className="text-sm text-blue-700">完成 Stripe Connect 設定後才能收取款項。平台將透過 Stripe 自動轉帳給你。</p>
+                      <p className="font-bold text-blue-900">設定 Stripe 收款帳戶</p>
+                      <p className="text-sm text-blue-700">完成 <strong>Stripe Connect</strong> 設定後才能收取款項。平台將透過 <strong>Stripe</strong> 自動轉帳給你。</p>
                     </div>
                   </div>
                   <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
@@ -636,8 +631,8 @@ export default function SellerDashboard() {
               <BrandTabsList>
                 <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="我的商品">我的商品</BrandTabsTrigger>
                 <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="訂單管理">訂單管理</BrandTabsTrigger>
-                <BrandTabsTrigger value="offers" icon={<MessageSquare className="w-4 h-4" />} label="出價洿議">
-                  出價洿議
+                <BrandTabsTrigger value="offers" icon={<MessageSquare className="w-4 h-4" />} label="買家出價">
+                  買家出價
                   {pendingSellerOffersCount > 0 && (
                     <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
                       {pendingSellerOffersCount > 99 ? '99+' : pendingSellerOffersCount}
@@ -822,7 +817,7 @@ export default function SellerDashboard() {
                 {!myOffers?.length ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>尚無出價洿議</p>
+                    <p>尚無買家出價</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -1059,7 +1054,7 @@ export default function SellerDashboard() {
                 <div className="space-y-3 pt-1">
                   <div className="flex items-center justify-between p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
                     <div>
-                      <p className="text-sm font-medium text-[#06038D]">接受出價洿議</p>
+                      <p className="text-sm font-medium text-[#06038D]">接受買家出價</p>
                       <p className="text-xs text-[#06038D]/50">買家可提交低於定價的出價</p>
                     </div>
                     <button
@@ -1127,7 +1122,7 @@ export default function SellerDashboard() {
                       <span className="text-base font-bold text-[#06038D]">HKD {parseFloat(listingForm.price || "0").toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">出價洿議</span>
+                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">買家出價</span>
                       <span className="text-sm text-[#06038D]">{listingForm.acceptOffers ? `接受${listingForm.minOffer ? `（最低 HKD ${listingForm.minOffer}）` : ""}` : "不接受"}</span>
                     </div>
                   </div>
