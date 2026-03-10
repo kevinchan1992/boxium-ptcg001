@@ -48,7 +48,7 @@ export default function SellerPublicProfile() {
           <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
           <p className="text-white text-lg mb-2">找不到此賣家</p>
           <Link href="/marketplace">
-            <Button className="bg-[#ffed00] text-black hover:bg-[#ffed00]/90">返回商城</Button>
+            <Button className="bg-[#FEDD00] text-black hover:bg-[#FEDD00]/90">返回商城</Button>
           </Link>
         </div>
       </div>
@@ -63,7 +63,7 @@ export default function SellerPublicProfile() {
       <div className="max-w-4xl mx-auto px-4">
         {/* Back button */}
         <Link href="/marketplace">
-          <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00] mb-4 p-2">
+          <Button variant="ghost" size="sm" className="text-white hover:text-[#FEDD00] mb-4 p-2">
             <ArrowLeft className="w-4 h-4 mr-2" />
             返回商城
           </Button>
@@ -74,7 +74,7 @@ export default function SellerPublicProfile() {
           <CardContent className="p-6">
             <div className="flex items-start gap-5">
               {/* Avatar */}
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#ffed00] to-[#06038d] flex items-center justify-center flex-shrink-0 text-2xl font-bold text-white">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FEDD00] to-[#06038d] flex items-center justify-center flex-shrink-0 text-2xl font-bold text-white">
                 {seller.avatarUrl ? (
                   <img src={seller.avatarUrl} alt={seller.displayName} className="w-full h-full rounded-full object-cover" />
                 ) : (
@@ -150,7 +150,7 @@ export default function SellerPublicProfile() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {listings.map((listing: any) => (
                   <Link key={listing.id} href={`/marketplace/${listing.id}`}>
-                    <Card className="bg-white/5 border border-white/10 hover:border-[#ffed00]/40 transition-all cursor-pointer group">
+                    <Card className="bg-white/5 border border-white/10 hover:border-[#FEDD00]/40 transition-all cursor-pointer group">
                       <CardContent className="p-0">
                         {listing.images?.[0] ? (
                           <img
@@ -164,11 +164,11 @@ export default function SellerPublicProfile() {
                           </div>
                         )}
                         <div className="p-3">
-                          <p className="text-white text-sm font-medium line-clamp-2 group-hover:text-[#ffed00] transition-colors">
+                          <p className="text-white text-sm font-medium line-clamp-2 group-hover:text-[#FEDD00] transition-colors">
                             {listing.title}
                           </p>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-[#ffed00] font-bold text-sm">
+                            <span className="text-[#FEDD00] font-bold text-sm">
                               HKD {parseFloat(listing.priceHkd).toLocaleString()}
                             </span>
                             <Badge variant="outline" className="text-xs border-white/20 text-gray-400">

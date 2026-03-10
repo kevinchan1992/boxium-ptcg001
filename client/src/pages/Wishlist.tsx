@@ -107,7 +107,7 @@ export default function Wishlist() {
               return (
                 <div
                   key={item.wishlistId}
-                  className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-[#FFD700] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+                  className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-[#FEDD00] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
                   onClick={() => setLocation(`/marketplace/${listing.id}`)}
                 >
                   {/* Image */}

@@ -31,7 +31,7 @@ export default function LanguageSwitcher() {
         <Button
           variant="ghost"
           size="sm"
-          className="gap-2 text-white hover:text-[#ffed00] hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-yellow-500/20 active:scale-95"
+          className="gap-2 text-white hover:text-[#FEDD00] hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-yellow-500/20 active:scale-95"
         >
           <Globe className="h-4 w-4" />
           <span className="hidden sm:inline">{currentLanguage.flag} {currentLanguage.name}</span>

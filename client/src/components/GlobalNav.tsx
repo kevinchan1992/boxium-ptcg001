@@ -41,7 +41,7 @@ export function GlobalNav() {
       <Button
         onClick={toggleMenu}
         className="w-10 h-10 rounded-full shadow-md transition-all hover:scale-105"
-        style={{ backgroundColor: "#ffed00", color: "#06038d" }}
+        style={{ backgroundColor: "#FEDD00", color: "#06038d" }}
       >
         {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </Button>

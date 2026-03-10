@@ -31,7 +31,7 @@ import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/
 
 // ─── Brand tokens ──────────────────────────────────────────────
 const BRAND_BLUE = "#06038d";
-const BRAND_YELLOW = "#FFD700";
+const BRAND_YELLOW = "#FEDD00";
 
 export default function Profile() {
   const { t, i18n } = useTranslation();

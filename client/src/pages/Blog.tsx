@@ -133,7 +133,7 @@ export default function Blog() {
             {featuredPost && (
               <div className="mb-16">
                 <div className="flex items-center gap-3 mb-6">
-                  <TrendingUp className="w-7 h-7 text-[#FFD700]" />
+                  <TrendingUp className="w-7 h-7 text-[#FEDD00]" />
                   <h2 className="text-xl md:text-xl font-bold text-[#0033CC]">
                     {t('blogPage.featuredPost')}
                   </h2>
@@ -159,7 +159,7 @@ export default function Blog() {
                               AI 生成
                             </Badge>
                           )}
-                          <Badge className="bg-[#FFD700] text-[#0033CC] hover:bg-[#FFD700]/90">精選文章</Badge>
+                          <Badge className="bg-[#FEDD00] text-[#0033CC] hover:bg-[#FEDD00]/90">精選文章</Badge>
                         </div>
                         <h3 className="text-xl sm:text-2xl md:text-2xl font-bold text-gray-900 mb-4 line-clamp-2 group-hover:text-[#0033CC] transition-colors">
                           {getLocalizedContent(featuredPost, 'title')}

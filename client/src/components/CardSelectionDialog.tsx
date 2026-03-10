@@ -145,7 +145,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
       }}
       title={
         <span className="flex items-center gap-2 text-white">
-          <BarChart3 className="w-5 h-5 text-[#ffed00]" />
+          <BarChart3 className="w-5 h-5 text-[#FEDD00]" />
           插入卡牌市場數據
         </span>
       }
@@ -168,7 +168,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
         {selectedCardIds.length > 0 && (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary" className="bg-[#ffed00]/20 text-[#ffed00] border-[#ffed00]/30">
+              <Badge variant="secondary" className="bg-[#FEDD00]/20 text-[#FEDD00] border-[#FEDD00]/30">
                 已選擇 {selectedCardIds.length} 張卡牌
               </Badge>
               <span className="text-xs text-gray-400 flex items-center gap-1">
@@ -217,7 +217,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
 
               {isLoadingDetails ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 className="w-7 h-7 animate-spin text-[#ffed00]" />
+                  <Loader2 className="w-7 h-7 animate-spin text-[#FEDD00]" />
                   <span className="ml-3 text-gray-400 text-sm">正在從資料庫提取完整數據...</span>
                 </div>
               ) : cardDetails && cardDetails.length > 0 ? (
@@ -239,7 +239,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                             </Badge>
                           )}
                           {card.rarity && (
-                            <Badge variant="outline" className="border-[#ffed00]/30 text-[#ffed00] text-[10px] px-1.5 py-0">
+                            <Badge variant="outline" className="border-[#FEDD00]/30 text-[#FEDD00] text-[10px] px-1.5 py-0">
                               {card.rarity}
                             </Badge>
                           )}
@@ -323,7 +323,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                     {card.peakPrice > 0 && (
                       <div className="px-3 py-2 bg-zinc-800/50 border-t border-zinc-700 flex items-center gap-2 flex-wrap">
                         <span className="text-xs text-gray-400">🏆 歷史最高價</span>
-                        <span className="text-sm font-semibold text-[#ffed00]">HKD${Math.round(card.peakPrice).toLocaleString()}</span>
+                        <span className="text-sm font-semibold text-[#FEDD00]">HKD${Math.round(card.peakPrice).toLocaleString()}</span>
                         {card.peakDate && (
                           <span className="text-xs text-gray-500">({new Date(card.peakDate).toLocaleDateString('zh-TW')})</span>
                         )}
@@ -340,7 +340,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
             <>
               {isLoading ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 className="w-7 h-7 animate-spin text-[#ffed00]" />
+                  <Loader2 className="w-7 h-7 animate-spin text-[#FEDD00]" />
                 </div>
               ) : debouncedQuery.length === 0 ? (
                 <div className="text-center py-10 text-gray-400 text-sm">請輸入搜尋關鍵字查找卡牌</div>
@@ -349,8 +349,8 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                   {cards.map((card) => (
                     <div
                       key={card.id}
-                      className={`relative bg-zinc-800 rounded-lg border-2 transition-all cursor-pointer hover:border-[#ffed00]/50 ${
-                        selectedCardIds.includes(card.id) ? 'border-[#ffed00] ring-2 ring-[#ffed00]/30' : 'border-zinc-700'
+                      className={`relative bg-zinc-800 rounded-lg border-2 transition-all cursor-pointer hover:border-[#FEDD00]/50 ${
+                        selectedCardIds.includes(card.id) ? 'border-[#FEDD00] ring-2 ring-[#FEDD00]/30' : 'border-zinc-700'
                       }`}
                       onClick={() => toggleCardSelection(card.id)}
                     >
@@ -358,7 +358,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                         <Checkbox
                           checked={selectedCardIds.includes(card.id)}
                           onCheckedChange={() => toggleCardSelection(card.id)}
-                          className="bg-zinc-900 border-zinc-600 data-[state=checked]:bg-[#ffed00] data-[state=checked]:border-[#ffed00]"
+                          className="bg-zinc-900 border-zinc-600 data-[state=checked]:bg-[#FEDD00] data-[state=checked]:border-[#FEDD00]"
                         />
                       </div>
                       <div className="aspect-[2.5/3.5] overflow-hidden rounded-t-lg">
@@ -368,7 +368,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                         <div className="text-xs font-medium text-white line-clamp-2 leading-tight">{card.name}</div>
                         {card.cardNumber && <div className="text-[10px] text-gray-400">{card.cardNumber}</div>}
                         {card.latestPrice && (
-                          <div className="text-[10px] text-[#ffed00] font-semibold">HKD${Number(card.latestPrice).toLocaleString()}</div>
+                          <div className="text-[10px] text-[#FEDD00] font-semibold">HKD${Number(card.latestPrice).toLocaleString()}</div>
                         )}
                       </div>
                     </div>
@@ -399,7 +399,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
             <Button
               onClick={handleInsert}
               disabled={!cardDetails || cardDetails.length === 0}
-              className="bg-[#ffed00] text-[#06038d] hover:bg-[#ffed00]/90 font-semibold flex-1"
+              className="bg-[#FEDD00] text-[#06038d] hover:bg-[#FEDD00]/90 font-semibold flex-1"
             >
               插入數據 {cardDetails && `(${cardDetails.length} 張)`}
             </Button>
@@ -407,7 +407,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
             <Button
               onClick={handlePreview}
               disabled={selectedCardIds.length === 0}
-              className="bg-[#ffed00] text-[#06038d] hover:bg-[#ffed00]/90 font-semibold flex-1"
+              className="bg-[#FEDD00] text-[#06038d] hover:bg-[#FEDD00]/90 font-semibold flex-1"
             >
               預覽數據 {selectedCardIds.length > 0 && `(${selectedCardIds.length})`}
             </Button>

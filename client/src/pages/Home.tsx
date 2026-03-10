@@ -46,7 +46,7 @@ function TrendingCardsGrid() {
             });
             setLocation(`/card/${card.id}`);
           }}
-          className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer hover:scale-105 border-2 border-transparent hover:border-[#ffed00]"
+          className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer hover:scale-105 border-2 border-transparent hover:border-[#FEDD00]"
         >
           {/* Card Image */}
           <div className="aspect-[2.5/3.5] bg-gray-100 relative overflow-hidden">
@@ -148,11 +148,11 @@ export default function Home() {
             {/* Key Stats - Responsive layout */}
             <div className="grid grid-cols-2 gap-2 md:gap-5 w-full max-w-md px-2">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
-                <div className="text-base md:text-2xl font-bold text-[#ffed00] mb-0.5">{stats?.totalCards || 0}+</div>
+                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">{stats?.totalCards || 0}+</div>
                 <div className="text-white/80 text-[9px] md:text-xs">{t("home.trackedCards")}</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
-                <div className="text-base md:text-2xl font-bold text-[#ffed00] mb-0.5">2</div>
+                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">2</div>
                 <div className="text-white/80 text-[9px] md:text-xs">{t("home.dataSources")}</div>
               </div>
             </div>
@@ -162,7 +162,7 @@ export default function Home() {
               <Link href="/research">
                 <Button
                   className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
-                  style={{ backgroundColor: "#ffed00", color: "#06038d" }}
+                  style={{ backgroundColor: "#FEDD00", color: "#06038d" }}
                 >
                   {t("home.startExploring")}
                 </Button>
@@ -220,7 +220,7 @@ export default function Home() {
             </div>
 
             {/* eBay */}
-            <div className="bg-white rounded-xl p-6 md:p-8 shadow-md border-l-4" style={{ borderColor: "#ffed00" }}>
+            <div className="bg-white rounded-xl p-6 md:p-8 shadow-md border-l-4" style={{ borderColor: "#FEDD00" }}>
               <img src="/ebay-logo.png" alt="eBay" className="h-8 md:h-10 mb-4 max-w-[120px] md:max-w-[180px] object-contain" />
               <p className="text-gray-600 mb-6 text-sm md:text-base leading-relaxed">
                 {t("home.ebayDesc")}

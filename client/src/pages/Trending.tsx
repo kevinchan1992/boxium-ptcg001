@@ -143,7 +143,7 @@ export default function Trending() {
                 className="flex-col md:flex-row gap-1 md:gap-2 py-3 md:py-3 text-xs md:text-sm font-medium"
                 style={{
                   color: activeTab === 'searches' ? '#06038D' : '#6B7280',
-                  backgroundColor: activeTab === 'searches' ? '#FFED00' : 'transparent',
+                  backgroundColor: activeTab === 'searches' ? '#FEDD00' : 'transparent',
                 }}
               >
                 <Flame className="w-4 h-4 md:w-5 md:h-5" />
@@ -155,7 +155,7 @@ export default function Trending() {
                 className="flex-col md:flex-row gap-1 md:gap-2 py-3 md:py-3 text-xs md:text-sm font-medium"
                 style={{
                   color: activeTab === 'priceIncrease' ? '#06038D' : '#6B7280',
-                  backgroundColor: activeTab === 'priceIncrease' ? '#FFED00' : 'transparent',
+                  backgroundColor: activeTab === 'priceIncrease' ? '#FEDD00' : 'transparent',
                 }}
               >
                 <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />
@@ -167,7 +167,7 @@ export default function Trending() {
                 className="flex-col md:flex-row gap-1 md:gap-2 py-3 md:py-3 text-xs md:text-sm font-medium"
                 style={{
                   color: activeTab === 'priceDecrease' ? '#06038D' : '#6B7280',
-                  backgroundColor: activeTab === 'priceDecrease' ? '#FFED00' : 'transparent',
+                  backgroundColor: activeTab === 'priceDecrease' ? '#FEDD00' : 'transparent',
                 }}
               >
                 <TrendingDown className="w-4 h-4 md:w-5 md:h-5" />
@@ -219,7 +219,7 @@ function RankingCard({ card, rank, type }: { card: any; rank: number; type: Tren
   };
 
   const getRankBadgeStyle = () => {
-    if (rank === 1) return { backgroundColor: "#FFED00", color: "#06038D", fontSize: "1.5rem", fontWeight: "bold" };
+    if (rank === 1) return { backgroundColor: "#FEDD00", color: "#06038D", fontSize: "1.5rem", fontWeight: "bold" };
     if (rank === 2) return { backgroundColor: "#D1D5DB", color: "#06038D", fontSize: "1.25rem", fontWeight: "bold" };
     if (rank === 3) return { backgroundColor: "#CD7F32", color: "white", fontSize: "1.25rem", fontWeight: "bold" };
     return { backgroundColor: "#F3F4F6", color: "#6B7280", fontSize: "1rem", fontWeight: "600" };

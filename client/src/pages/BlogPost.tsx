@@ -188,7 +188,7 @@ export default function BlogPost() {
                   size="lg"
                   variant="outline"
                   onClick={handleCopyLink}
-                  className="border-2 border-gray-300 text-gray-700 hover:bg-yellow-50 hover:border-[#FFD700] hover:text-gray-900 transition-all"
+                  className="border-2 border-gray-300 text-gray-700 hover:bg-yellow-50 hover:border-[#FEDD00] hover:text-gray-900 transition-all"
                 >
                   複製連結
                 </Button>
@@ -224,7 +224,7 @@ export default function BlogPost() {
                   <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold text-[#0033CC] mt-12 md:mt-16 mb-6 md:mb-8 leading-tight" {...props} />
                 ),
                 h2: ({ ...props }: any) => (
-                  <h2 className="text-xl sm:text-2xl md:text-2xl font-bold text-[#0033CC] mt-10 md:mt-14 mb-5 md:mb-7 leading-tight border-b-4 border-[#FFD700] pb-3" {...props} />
+                  <h2 className="text-xl sm:text-2xl md:text-2xl font-bold text-[#0033CC] mt-10 md:mt-14 mb-5 md:mb-7 leading-tight border-b-4 border-[#FEDD00] pb-3" {...props} />
                 ),
                 h3: ({ ...props }: any) => (
                   <h3 className="text-lg sm:text-xl md:text-xl font-bold text-gray-900 mt-8 md:mt-12 mb-4 md:mb-6 leading-tight" {...props} />
@@ -252,7 +252,7 @@ export default function BlogPost() {
                 ),
                 // 引用區塊設計 - 使用 logo 黃色
                 blockquote: ({ ...props }: any) => (
-                  <blockquote className="border-l-8 border-[#FFD700] pl-6 md:pl-8 py-4 md:py-6 italic text-gray-600 my-8 md:my-10 bg-yellow-50 rounded-r-lg text-sm sm:text-base md:text-base leading-relaxed" {...props} />
+                  <blockquote className="border-l-8 border-[#FEDD00] pl-6 md:pl-8 py-4 md:py-6 italic text-gray-600 my-8 md:my-10 bg-yellow-50 rounded-r-lg text-sm sm:text-base md:text-base leading-relaxed" {...props} />
                 ),
                 // 程式碼設計
                 code: ({ node, inline, ...props }: any) =>
@@ -279,7 +279,7 @@ export default function BlogPost() {
                 ),
                 // 分隔線設計
                 hr: ({ ...props }: any) => (
-                  <hr className="my-10 md:my-14 border-t-4 border-[#FFD700]" {...props} />
+                  <hr className="my-10 md:my-14 border-t-4 border-[#FEDD00]" {...props} />
                 ),
                 // 強調文字設計
                 strong: ({ ...props }: any) => (
@@ -324,7 +324,7 @@ export default function BlogPost() {
                   size="lg"
                   variant="outline"
                   onClick={handleCopyLink}
-                  className="border-2 border-gray-300 text-gray-700 hover:bg-yellow-50 hover:border-[#FFD700] hover:text-gray-900 transition-all"
+                  className="border-2 border-gray-300 text-gray-700 hover:bg-yellow-50 hover:border-[#FEDD00] hover:text-gray-900 transition-all"
                 >
                   複製連結
                 </Button>

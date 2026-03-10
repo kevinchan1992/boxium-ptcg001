@@ -21,7 +21,7 @@ const BANNERS = [
     cta: "立即選購",
     ctaConditions: ["psa10"],
     gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]",
-    accent: "#FFD700",
+    accent: "#FEDD00",
     badge: "PSA 10",
     badgeClass: "bg-yellow-400 text-[#06038d]",
     emoji: "🏆",
@@ -90,7 +90,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: { listing: any;
 
   return (
     <div
-      className="group cursor-pointer bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-[#FFD700] hover:shadow-xl hover:shadow-yellow-100 hover:-translate-y-1 hover:scale-[1.02] transition-all duration-200"
+      className="group cursor-pointer bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-[#FEDD00] hover:shadow-xl hover:shadow-yellow-100 hover:-translate-y-1 hover:scale-[1.02] transition-all duration-200"
       onClick={() => setLocation(`/marketplace/${listing.id}`)}
     >
       {/* Image */}
@@ -116,7 +116,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: { listing: any;
         {/* Official badge */}
         {listing.sellerType === "platform" && (
           <div className="absolute top-2 right-2">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#0A0A2E] text-[#FFD700]">
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#0A0A2E] text-[#FEDD00]">
               官方
             </span>
           </div>
@@ -216,11 +216,11 @@ function MarketplaceComingSoon() {
       <div className="text-center max-w-md mt-16">
         {/* Icon */}
         <div className="w-24 h-24 rounded-full bg-[#06038d] flex items-center justify-center mx-auto mb-6 shadow-lg">
-          <ShoppingBag className="w-12 h-12 text-[#FFD700]" />
+          <ShoppingBag className="w-12 h-12 text-[#FEDD00]" />
         </div>
 
         {/* Brand */}
-        <div className="inline-flex items-center gap-2 bg-[#06038d] text-[#FFD700] font-bold text-sm px-4 py-1.5 rounded-full mb-4">
+        <div className="inline-flex items-center gap-2 bg-[#06038d] text-[#FEDD00] font-bold text-sm px-4 py-1.5 rounded-full mb-4">
           BOXIUM 商城
         </div>
 
@@ -234,9 +234,9 @@ function MarketplaceComingSoon() {
 
         {/* Decorative dots */}
         <div className="flex justify-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "0ms" }} />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#FEDD00] animate-bounce" style={{ animationDelay: "0ms" }} />
           <span className="w-2.5 h-2.5 rounded-full bg-[#06038d] animate-bounce" style={{ animationDelay: "150ms" }} />
-          <span className="w-2.5 h-2.5 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "300ms" }} />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#FEDD00] animate-bounce" style={{ animationDelay: "300ms" }} />
         </div>
       </div>
     </div>
@@ -515,7 +515,7 @@ function MarketplaceInner() {
               {/* Text */}
               <div className="text-left">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-[#FFD700] font-bold text-xl leading-none">商城</span>
+                  <span className="text-[#FEDD00] font-bold text-xl leading-none">商城</span>
                 </div>
                 <p className="text-xs text-gray-300 mt-0.5">精選寶可夢卡牌 · 安全交易</p>
               </div>
@@ -530,7 +530,7 @@ function MarketplaceInner() {
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="搜尋卡牌名稱、編號..."
-                  className="pl-9 pr-8 bg-white border-0 text-gray-900 placeholder:text-gray-400 h-9 rounded-lg focus-visible:ring-2 focus-visible:ring-[#FFD700]"
+                  className="pl-9 pr-8 bg-white border-0 text-gray-900 placeholder:text-gray-400 h-9 rounded-lg focus-visible:ring-2 focus-visible:ring-[#FEDD00]"
                 />
                 {searchInput && (
                   <button
@@ -544,7 +544,7 @@ function MarketplaceInner() {
               </div>
               <Button
                 type="submit"
-                className="bg-[#FFD700] hover:bg-[#e6c200] text-[#0A0A2E] font-bold h-9 px-5 rounded-lg shrink-0"
+                className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#0A0A2E] font-bold h-9 px-5 rounded-lg shrink-0"
               >
                 搜尋
               </Button>

@@ -38,7 +38,7 @@ function ShareStatisticsCard() {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Share2 className="w-5 h-5 text-[#ffed00]" />
+            <Share2 className="w-5 h-5 text-[#FEDD00]" />
             <div>
               <CardTitle className="text-white text-base">分享統計</CardTitle>
               <CardDescription className="text-xs">
@@ -103,7 +103,7 @@ function ShareStatisticsCard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-[#ffed00] text-[#06038d]">
+                    <tr className="bg-[#FEDD00] text-[#06038d]">
                       <th className="px-3 py-2 text-left font-semibold">#</th>
                       <th className="px-3 py-2 text-left font-semibold">文章標題</th>
                       <th className="px-3 py-2 text-center font-semibold">總計</th>
@@ -117,11 +117,11 @@ function ShareStatisticsCard() {
                       <tr key={stat.postId} className="border-b border-zinc-800 hover:bg-zinc-800/50">
                         <td className="px-3 py-2 text-gray-500">{i + 1}</td>
                         <td className="px-3 py-2 text-white">
-                          <a href={`/blog/${stat.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#ffed00] transition-colors line-clamp-1">
+                          <a href={`/blog/${stat.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#FEDD00] transition-colors line-clamp-1">
                             {stat.title}
                           </a>
                         </td>
-                        <td className="px-3 py-2 text-center"><Badge className="bg-[#ffed00] text-[#06038d] hover:bg-[#ffed00]/90">{stat.total}</Badge></td>
+                        <td className="px-3 py-2 text-center"><Badge className="bg-[#FEDD00] text-[#06038d] hover:bg-[#FEDD00]/90">{stat.total}</Badge></td>
                         <td className="px-3 py-2 text-center text-blue-400">{stat.facebook}</td>
                         <td className="px-3 py-2 text-center text-green-400">{stat.whatsapp}</td>
                         <td className="px-3 py-2 text-center text-yellow-400">{stat.copyLink}</td>
@@ -321,7 +321,7 @@ export function AdminBlogManagement() {
                     variant="outline"
                     size="sm"
                     onClick={() => { setIsSelectMode(!isSelectMode); setSelectedPostIds([]); }}
-                    className={`h-8 text-xs border-zinc-700 ${isSelectMode ? 'bg-[#ffed00] text-[#06038d] border-[#ffed00]' : 'text-white hover:bg-zinc-800'}`}
+                    className={`h-8 text-xs border-zinc-700 ${isSelectMode ? 'bg-[#FEDD00] text-[#06038d] border-[#FEDD00]' : 'text-white hover:bg-zinc-800'}`}
                   >
                     {isSelectMode ? '取消選擇' : '批量操作'}
                   </Button>
@@ -564,7 +564,7 @@ export function AdminBlogManagement() {
                                   <Button
                                     size="sm" variant="ghost"
                                     onClick={() => handleEdit(post)}
-                                    className="h-7 w-7 p-0 text-gray-400 hover:text-[#ffed00]"
+                                    className="h-7 w-7 p-0 text-gray-400 hover:text-[#FEDD00]"
                                     title="編輯文章"
                                   >
                                     <PenLine className="w-3.5 h-3.5" />
@@ -632,7 +632,7 @@ export function AdminBlogManagement() {
                               onClick={() => setCurrentPage(page)}
                               className={`h-7 w-7 p-0 text-xs ${
                                 currentPage === page
-                                  ? 'bg-[#ffed00] text-[#06038d] hover:bg-[#ffed00]/90'
+                                  ? 'bg-[#FEDD00] text-[#06038d] hover:bg-[#FEDD00]/90'
                                   : 'border-zinc-700 text-white hover:bg-zinc-800'
                               }`}
                             >
@@ -940,7 +940,7 @@ function AIArticleGenerator({
                 <Button
                   type="button" variant="outline" size="sm"
                   onClick={() => setCardSelectionDialogOpen(true)}
-                  className="h-7 text-xs border-[#ffed00] text-[#ffed00] hover:bg-[#ffed00]/10"
+                  className="h-7 text-xs border-[#FEDD00] text-[#FEDD00] hover:bg-[#FEDD00]/10"
                 >
                   🎴 插入卡牌資料
                 </Button>

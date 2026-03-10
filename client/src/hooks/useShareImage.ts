@@ -124,7 +124,7 @@ export async function generateShareImage(options: ShareImageOptions): Promise<st
   // ── Top accent bar ───────────────────────────────────────────────────────────
   const accentGrad = ctx.createLinearGradient(0, 0, W, 0);
   accentGrad.addColorStop(0, "#f5c800");
-  accentGrad.addColorStop(1, "#ffd700");
+  accentGrad.addColorStop(1, "#FEDD00");
   ctx.fillStyle = accentGrad;
   ctx.fillRect(0, 0, W, 12);
 
@@ -237,7 +237,7 @@ export async function generateShareImage(options: ShareImageOptions): Promise<st
 
   const priceGrad = ctx.createLinearGradient(priceX, priceY, priceX + priceW, priceY);
   priceGrad.addColorStop(0, "#f5c800");
-  priceGrad.addColorStop(1, "#ffd700");
+  priceGrad.addColorStop(1, "#FEDD00");
   ctx.fillStyle = priceGrad;
   roundedRect(ctx, priceX, priceY, priceW, priceH, 16);
   ctx.fill();

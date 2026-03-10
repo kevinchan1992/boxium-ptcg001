@@ -129,7 +129,7 @@ export function TopNav() {
         <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-[#ffed00]" />
+              <ShoppingBag className="w-5 h-5 text-[#FEDD00]" />
               成為賣家，輕鬆出售卡牌
             </DialogTitle>
           </DialogHeader>
@@ -144,7 +144,7 @@ export function TopNav() {
                 "自動通知買家，輕鬆管理訂單",
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm">
-                  <span className="text-[#ffed00] font-bold mt-0.5">✓</span>
+                  <span className="text-[#FEDD00] font-bold mt-0.5">✓</span>
                   <span>{item}</span>
                 </div>
               ))}
@@ -162,7 +162,7 @@ export function TopNav() {
               免費註冊
             </Button>
             <Button
-              className="flex-1 bg-[#ffed00] text-black hover:bg-[#ffed00]/90 font-bold"
+              className="flex-1 bg-[#FEDD00] text-black hover:bg-[#FEDD00]/90 font-bold"
               onClick={() => { setShowSellDialog(false); setLocation("/login"); }}
             >
               <LogIn className="w-4 h-4 mr-2" />
@@ -204,7 +204,7 @@ export function TopNav() {
             <motion.button
               onClick={handleSellClick}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-1.5 bg-[#FFD700] text-[#06038d] text-sm font-bold px-3 py-1.5 rounded-md hover:bg-[#FFD700]/90 transition-colors whitespace-nowrap"
+              className="flex items-center gap-1.5 bg-[#FEDD00] text-[#06038d] text-sm font-bold px-3 py-1.5 rounded-md hover:bg-[#FEDD00]/90 transition-colors whitespace-nowrap"
             >
               <Tag className="w-3.5 h-3.5 flex-shrink-0" />
               <span>出售商品</span>
@@ -215,7 +215,7 @@ export function TopNav() {
               <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
                 <DropdownMenuTrigger asChild>
                   <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                    <Button variant="ghost" size="sm" className="relative text-white hover:text-[#ffed00] p-2">
+                    <Button variant="ghost" size="sm" className="relative text-white hover:text-[#FEDD00] p-2">
                       <Bell className="w-5 h-5" />
                       {(unreadData?.count ?? 0) > 0 && (
                         <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
@@ -280,7 +280,7 @@ export function TopNav() {
                                   {notif.title}
                                 </p>
                                 {!notif.isRead && (
-                                  <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#ffed00] mt-1" />
+                                  <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#FEDD00] mt-1" />
                                 )}
                               </div>
                               {notif.body && (
@@ -313,7 +313,7 @@ export function TopNav() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-white hover:text-[#ffed00] p-2">
+                  <Button variant="ghost" size="sm" className="text-white hover:text-[#FEDD00] p-2">
                     <User className="w-5 h-5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -345,7 +345,7 @@ export function TopNav() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-white hover:text-[#ffed00] p-2"
+                className="text-white hover:text-[#FEDD00] p-2"
                 onClick={() => setLocation("/login")}
               >
                 <User className="w-5 h-5" />
@@ -393,13 +393,13 @@ export function TopNav() {
                     onClick={handleNavClick}
                     className={`flex items-center text-sm font-medium py-2 px-3 rounded-lg transition-colors ${
                       isActive(item.href)
-                        ? "text-[#ffed00] bg-white/5"
+                        ? "text-[#FEDD00] bg-white/5"
                         : "text-white/70 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     {item.label}
                     {isActive(item.href) && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#ffed00]" />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#FEDD00]" />
                     )}
                   </Link>
                 </motion.div>
@@ -413,7 +413,7 @@ export function TopNav() {
               >
                 <button
                   onClick={() => { handleNavClick(); handleSellClick(); }}
-                  className="w-full flex items-center text-sm font-medium text-[#ffed00] hover:text-[#ffed00]/80 hover:bg-white/5 py-2 px-3 rounded-lg transition-colors"
+                  className="w-full flex items-center text-sm font-medium text-[#FEDD00] hover:text-[#FEDD00]/80 hover:bg-white/5 py-2 px-3 rounded-lg transition-colors"
                 >
                   <Tag className="w-4 h-4 mr-2" />
                   出售商品
@@ -459,7 +459,7 @@ export function TopNav() {
                     </Button>
                     <Button
                       size="sm"
-                      className="flex-1 bg-[#ffed00] text-black hover:bg-[#ffed00]/90 text-xs"
+                      className="flex-1 bg-[#FEDD00] text-black hover:bg-[#FEDD00]/90 text-xs"
                       onClick={() => { setLocation("/register"); handleNavClick(); }}
                     >
                       註冊

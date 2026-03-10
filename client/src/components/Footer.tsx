@@ -45,10 +45,10 @@ export default function Footer() {
               <li><Link href="/disclaimer" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.disclaimer")}</Link></li>
             </ul>
             <div className="flex gap-4">
-              <a href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Facebook">
+              <a href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#FEDD00] transition-colors" title="Facebook">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="https://www.instagram.com/boxium.gamecard?igsh=MTBha2wyNWR4d3lpcQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#ffed00] transition-colors" title="Instagram">
+              <a href="https://www.instagram.com/boxium.gamecard?igsh=MTBha2wyNWR4d3lpcQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#FEDD00] transition-colors" title="Instagram">
                 <Instagram className="h-5 w-5" />
               </a>
             </div>

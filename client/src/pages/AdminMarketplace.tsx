@@ -1325,7 +1325,7 @@ function BannersTab() {
   const [form, setForm] = useState({
     title: "", subtitle: "", cta: "立即選購",
     gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]",
-    accentColor: "#FFD700", badge: "", emoji: "🏆", sortOrder: 0, isActive: true,
+    accentColor: "#FEDD00", badge: "", emoji: "🏆", sortOrder: 0, isActive: true,
   });
 
   const createMutation = trpc.marketplace.adminCreateBanner.useMutation({
@@ -1341,7 +1341,7 @@ function BannersTab() {
     onError: (e) => toast.error(e.message),
   });
 
-  const resetForm = () => setForm({ title: "", subtitle: "", cta: "立即選購", gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]", accentColor: "#FFD700", badge: "", emoji: "🏆", sortOrder: 0, isActive: true });
+  const resetForm = () => setForm({ title: "", subtitle: "", cta: "立即選購", gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]", accentColor: "#FEDD00", badge: "", emoji: "🏆", sortOrder: 0, isActive: true });
 
   const openEdit = (b: any) => {
     setEditBanner(b);

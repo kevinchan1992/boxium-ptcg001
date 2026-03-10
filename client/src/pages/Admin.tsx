@@ -20,7 +20,7 @@ export default function Admin() {
       <div className="max-w-full sm:max-w-[640px] md:max-w-[768px] lg:max-w-[1024px] xl:max-w-[1280px] 2xl:max-w-[1400px] mx-auto space-y-4 sm:space-y-6 md:space-y-8">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-1 h-10 rounded-full" style={{ background: "#FFD700" }} />
+          <div className="w-1 h-10 rounded-full" style={{ background: "#FEDD00" }} />
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white">{t("admin.title")}</h1>
             <p className="text-sm text-gray-400">{t("admin.statistics")}</p>
@@ -56,7 +56,7 @@ export default function Admin() {
         <div className="border-t border-white/10 pt-6">
           <h3 className="text-base font-semibold text-white mb-3">商場管理</h3>
           <Link href="/admin/marketplace">
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-[#06038d] text-white rounded-lg hover:bg-[#0804b8] transition-colors text-sm font-medium border border-[#FFD700]/30">
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-[#06038d] text-white rounded-lg hover:bg-[#0804b8] transition-colors text-sm font-medium border border-[#FEDD00]/30">
               🛒 進入商場管理後台
             </button>
           </Link>

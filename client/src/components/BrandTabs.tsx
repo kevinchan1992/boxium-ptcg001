@@ -9,14 +9,14 @@
  *  - light: gray-50 bg, for white-background pages (Profile, AdminMarketplace)
  *  - dark:  white/5 bg, for dark-background pages (Admin)
  *
- * Active state: #06038d pill + #FFD700 bottom accent bar
+ * Active state: #06038d pill + #FEDD00 bottom accent bar
  */
 
 import { ReactNode, createContext, useContext, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const BRAND_BLUE = "#06038d";
-const BRAND_YELLOW = "#FFD700";
+const BRAND_YELLOW = "#FEDD00";
 
 // ─── Context ─────────────────────────────────────────────────────────────────
 interface TabsCtx {

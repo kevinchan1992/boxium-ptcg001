@@ -166,7 +166,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Eye className="w-5 h-5 text-[#ffed00]" />
+            <Eye className="w-5 h-5 text-[#FEDD00]" />
             文章預覽
           </h2>
           <p className="text-sm text-gray-400 mt-1">確認文章內容後發布</p>
@@ -262,7 +262,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
 
           {/* Excerpt */}
           {currentArticle.excerpt && (
-            <p className="text-lg text-gray-600 leading-relaxed border-l-4 border-[#FFD700] pl-4 py-2 bg-yellow-50">
+            <p className="text-lg text-gray-600 leading-relaxed border-l-4 border-[#FEDD00] pl-4 py-2 bg-yellow-50">
               {currentArticle.excerpt}
             </p>
           )}
@@ -609,14 +609,14 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
             <ReactMarkdown
               components={{
                 h1: ({ node, ...props }) => <h1 className="text-3xl font-bold text-[#0033CC] mt-8 mb-4" {...props} />,
-                h2: ({ node, ...props }) => <h2 className="text-2xl font-bold text-[#0033CC] mt-6 mb-3 pb-2 border-b-2 border-[#FFD700]" {...props} />,
+                h2: ({ node, ...props }) => <h2 className="text-2xl font-bold text-[#0033CC] mt-6 mb-3 pb-2 border-b-2 border-[#FEDD00]" {...props} />,
                 h3: ({ node, ...props }) => <h3 className="text-xl font-bold text-[#0033CC] mt-4 mb-2" {...props} />,
                 p: ({ node, ...props }) => <p className="text-lg leading-relaxed mb-4" {...props} />,
                 ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-4 space-y-2" {...props} />,
                 ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-4 space-y-2" {...props} />,
                 li: ({ node, ...props }) => <li className="text-lg leading-relaxed" {...props} />,
                 blockquote: ({ node, ...props }) => (
-                  <blockquote className="border-l-4 border-[#FFD700] pl-4 py-2 my-4 bg-yellow-50 italic text-gray-700" {...props} />
+                  <blockquote className="border-l-4 border-[#FEDD00] pl-4 py-2 my-4 bg-yellow-50 italic text-gray-700" {...props} />
                 ),
                 code: ({ node, ...props }) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono" {...props} />,
                 pre: ({ node, ...props }) => <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4" {...props} />,
@@ -686,7 +686,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
         onOpenChange={setShowAIEditDialog}
         title={
           <span className="flex items-center gap-2 text-white">
-            <Wand2 className="w-5 h-5 text-[#ffed00]" />
+            <Wand2 className="w-5 h-5 text-[#FEDD00]" />
             AI 編輯文章
           </span>
         }

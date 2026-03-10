@@ -414,12 +414,12 @@ export default function SellerDashboard() {
         className="relative"
         style={{ background: `linear-gradient(135deg, #06038d 0%, #0a06b5 100%)` }}
       >
-        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FFD700" }} />
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FEDD00" }} />
         <div className="max-w-5xl mx-auto px-4 pt-10 pb-8">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
             <div
               className="w-20 h-20 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
-              style={{ background: "#FFD700", borderColor: "white" }}
+              style={{ background: "#FEDD00", borderColor: "white" }}
             >
               <ShoppingBag className="w-10 h-10" style={{ color: "#06038d" }} />
             </div>
@@ -427,7 +427,7 @@ export default function SellerDashboard() {
               <div className="flex items-center gap-3 justify-center md:justify-start flex-wrap">
                 <h1 className="text-2xl md:text-3xl font-bold text-white">賣家中心</h1>
                 {sellerProfile?.isActive && (
-                  <Button onClick={() => setShowNewListing(true)} className="text-sm font-bold" style={{ background: "#FFD700", color: "#06038d" }}>
+                  <Button onClick={() => setShowNewListing(true)} className="text-sm font-bold" style={{ background: "#FEDD00", color: "#06038d" }}>
                     <Plus className="w-4 h-4 mr-1" />上架新商品
                   </Button>
                 )}
@@ -904,10 +904,10 @@ export default function SellerDashboard() {
       <Dialog open={showNewListing} onOpenChange={(open) => { setShowNewListing(open); if (!open) setListingStep(1); }}>
         <DialogContent bottomSheet className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg">
           {/* Step Header */}
-          <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+          <div className="px-5 pt-5 pb-4 border-b border-white/10" style={{backgroundColor: '#06038D'}}>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-bold text-gray-900">上架新商品</h2>
-              <button onClick={() => setShowNewListing(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+              <h2 className="text-base font-bold text-white">上架新商品</h2>
+              <button onClick={() => setShowNewListing(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -917,19 +917,19 @@ export default function SellerDashboard() {
                 <React.Fragment key={n}>
                   <div className="flex flex-col items-center gap-1">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      listingStep > n ? "bg-[#06038d] text-white" :
-                      listingStep === n ? "bg-[#06038d] text-white ring-4 ring-[#06038d]/20" :
-                      "bg-gray-100 text-gray-400"
+                      listingStep > n ? "bg-[#FEDD00] text-[#06038D]" :
+                      listingStep === n ? "bg-[#FEDD00] text-[#06038D] ring-4 ring-[#FEDD00]/30" :
+                      "bg-white/20 text-white/50"
                     }`}>
                       {listingStep > n ? <Check className="w-3.5 h-3.5" /> : n}
                     </div>
                     <span className={`text-[10px] font-medium whitespace-nowrap ${
-                      listingStep >= n ? "text-[#06038d]" : "text-gray-400"
+                      listingStep >= n ? "text-[#FEDD00]" : "text-white/40"
                     }`}>{label}</span>
                   </div>
                   {idx < 2 && (
                     <div className={`flex-1 h-0.5 mb-4 mx-1 transition-all ${
-                      listingStep > n ? "bg-[#06038d]" : "bg-gray-200"
+                      listingStep > n ? "bg-[#FEDD00]" : "bg-white/20"
                     }`} />
                   )}
                 </React.Fragment>
@@ -938,7 +938,7 @@ export default function SellerDashboard() {
           </div>
 
           {/* Step Content */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 text-gray-900" style={{backgroundColor: '#ffffff'}}>
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{backgroundColor: '#06038D'}}>
 
             {/* Step 1: Basic Info */}
             {listingStep === 1 && (
@@ -946,9 +946,9 @@ export default function SellerDashboard() {
                 <ImageUploader images={listingImages} onChange={setListingImages} />
                 {/* Card Picker */}
                 <div>
-                  <Label>關聯卡牌（選填）</Label>
+                  <Label className="text-white/80">關聯卡牌（選填）</Label>
                   {selectedCard ? (
-                    <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#06038d]/30 bg-indigo-50/50">
+                    <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#FEDD00]/40 bg-white/10">
                       {selectedCard.imageUrl ? (
                         <img src={selectedCard.imageUrl} alt={selectedCard.name} className="w-10 h-14 object-cover rounded-md border border-gray-200 flex-shrink-0" />
                       ) : (
@@ -957,27 +957,27 @@ export default function SellerDashboard() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[#06038d] truncate">{selectedCard.name}</p>
+                        <p className="text-sm font-semibold text-[#FEDD00] truncate">{selectedCard.name}</p>
                         {selectedCard.nameJa && selectedCard.nameJa !== selectedCard.name && (
-                          <p className="text-xs text-gray-500 truncate">{selectedCard.nameJa}</p>
+                          <p className="text-xs text-white/50 truncate">{selectedCard.nameJa}</p>
                         )}
                         <div className="flex gap-1 mt-0.5 flex-wrap">
-                          {selectedCard.cardNumber && <span className="text-[10px] text-gray-400">{selectedCard.cardNumber}</span>}
-                          {selectedCard.rarity && <span className="text-[10px] text-amber-600">{selectedCard.rarity}</span>}
+                          {selectedCard.cardNumber && <span className="text-[10px] text-white/40">{selectedCard.cardNumber}</span>}
+                          {selectedCard.rarity && <span className="text-[10px] text-[#FEDD00]/70">{selectedCard.rarity}</span>}
                         </div>
                         {selectedCard.referencePrice && (
-                          <p className="text-[10px] text-green-600 font-medium mt-0.5">市場均價 HKD {parseFloat(String(selectedCard.referencePrice)).toFixed(0)}</p>
+                          <p className="text-[10px] text-[#FEDD00]/80 font-medium mt-0.5">市場均價 HKD {parseFloat(String(selectedCard.referencePrice)).toFixed(0)}</p>
                         )}
                       </div>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-[#06038d]" onClick={() => setShowCardPicker(true)}>改變</Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-[#FEDD00] hover:bg-white/10" onClick={() => setShowCardPicker(true)}>改變</Button>
                         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-500" onClick={() => setSelectedCard(null)}><X className="w-3 h-3" /></Button>
                       </div>
                     </div>
                   ) : (
                     <button
                       type="button"
-                      className="mt-1 w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 hover:border-[#06038d] hover:text-[#06038d] hover:bg-indigo-50/30 transition-colors"
+                      className="mt-1 w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-dashed border-white/30 text-sm text-white/60 hover:border-[#FEDD00] hover:text-[#FEDD00] hover:bg-white/5 transition-colors"
                       onClick={() => setShowCardPicker(true)}
                     >
                       <span className="flex items-center gap-2">
@@ -989,22 +989,22 @@ export default function SellerDashboard() {
                   )}
                 </div>
                 <div>
-                  <Label>商品名稱 *</Label>
-                  <Input className="mt-1" placeholder="例如：Charizard ex 噴火龍 SAR"
+                  <Label className="text-white/80">商品名稱 *</Label>
+                  <Input className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[#FEDD00]" placeholder="例如：Charizard ex 噴火龍 SAR"
                     value={listingForm.title}
                     onChange={(e) => setListingForm(p => ({ ...p, title: e.target.value }))} />
                 </div>
                 <div>
-                  <Label>商品描述</Label>
-                  <Textarea className="mt-1" placeholder="描述卡牌狀況、版本等..."
+                  <Label className="text-white/80">商品描述</Label>
+                  <Textarea className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[#FEDD00]" placeholder="描述卡牌狀況、版本等..."
                     value={listingForm.description}
                     onChange={(e) => setListingForm(p => ({ ...p, description: e.target.value }))} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>品相 *</Label>
+                    <Label className="text-white/80">品相 *</Label>
                     <Select value={listingForm.condition} onValueChange={(v) => setListingForm(p => ({ ...p, condition: v }))}>
-                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="mt-1 bg-white/10 border-white/20 text-white"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {conditionOptions.map(group => (
                           <div key={group.group}>
@@ -1016,8 +1016,8 @@ export default function SellerDashboard() {
                     </Select>
                   </div>
                   <div>
-                    <Label>數量 *</Label>
-                    <Input className="mt-1" type="number" min="1" value={listingForm.quantity}
+                    <Label className="text-white/80">數量 *</Label>
+                    <Input className="mt-1 bg-white/10 border-white/20 text-white focus:border-[#FEDD00]" type="number" min="1" value={listingForm.quantity}
                       onChange={(e) => setListingForm(p => ({ ...p, quantity: e.target.value }))} />
                   </div>
                 </div>
@@ -1027,25 +1027,25 @@ export default function SellerDashboard() {
             {/* Step 2: Pricing */}
             {listingStep === 2 && (
               <>
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3.5">
-                  <p className="text-xs font-semibold text-blue-700 mb-1">商品摘要</p>
-                  <p className="text-sm font-bold text-gray-900 truncate">{listingForm.title}</p>
+                <div className="bg-white/10 border border-white/20 rounded-xl p-3.5">
+                  <p className="text-xs font-semibold text-[#FEDD00] mb-1">商品摘要</p>
+                  <p className="text-sm font-bold text-white truncate">{listingForm.title}</p>
                   <div className="flex gap-2 mt-1">
-                    <span className="text-xs text-gray-500">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition}</span>
-                    <span className="text-xs text-gray-400">·</span>
-                    <span className="text-xs text-gray-500">數量 {listingForm.quantity}</span>
+                    <span className="text-xs text-white/60">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition}</span>
+                    <span className="text-xs text-white/40">·</span>
+                    <span className="text-xs text-white/60">數量 {listingForm.quantity}</span>
                   </div>
                 </div>
                 <div>
-                  <Label>售價（HKD）*</Label>
+                  <Label className="text-white/80">售價（HKD）*</Label>
                   {selectedCard?.referencePrice && (
-                    <p className="text-xs text-green-600 mt-0.5 mb-1">參考市場均價：HKD {parseFloat(String(selectedCard.referencePrice)).toFixed(0)}</p>
+                    <p className="text-xs text-[#FEDD00]/80 mt-0.5 mb-1">參考市場均價：HKD {parseFloat(String(selectedCard.referencePrice)).toFixed(0)}</p>
                   )}
-                  <Input className="mt-1" type="number" min="4" step="0.01" placeholder="最低 HKD 4.00"
+                  <Input className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[#FEDD00]" type="number" min="4" step="0.01" placeholder="最低 HKD 4.00"
                     value={listingForm.price}
                     onChange={(e) => setListingForm(p => ({ ...p, price: e.target.value }))} />
                   {listingForm.price && parseFloat(listingForm.price) < 4.00 && (
-                    <p className="text-xs text-red-500 mt-1">定價不能低於 HKD 4.00（Stripe 信用卡付款最低限額）</p>
+                    <p className="text-xs text-red-400 mt-1">定價不能低於 HKD 4.00（Stripe 信用卡付款最低限額）</p>
                   )}
                   {listingForm.price && parseFloat(listingForm.price) >= 4 && selectedCard?.referencePrice && (() => {
                     const diff = ((parseFloat(listingForm.price) - parseFloat(String(selectedCard.referencePrice))) / parseFloat(String(selectedCard.referencePrice))) * 100;
@@ -1057,10 +1057,10 @@ export default function SellerDashboard() {
                   })()}
                 </div>
                 <div className="space-y-3 pt-1">
-                  <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50">
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-white/20 bg-white/10">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">接受出價洽議</p>
-                      <p className="text-xs text-gray-500">買家可提交低於定價的出價</p>
+                      <p className="text-sm font-medium text-white">接受出價洿議</p>
+                      <p className="text-xs text-white/50">買家可提交低於定價的出價</p>
                     </div>
                     <button
                       type="button"
@@ -1076,8 +1076,8 @@ export default function SellerDashboard() {
                   </div>
                   {listingForm.acceptOffers && (
                     <div>
-                      <Label>最低接受出價（HKD，選填）</Label>
-                      <Input className="mt-1" type="number" min="4" step="0.01" placeholder="留空表示不設下限"
+                      <Label className="text-white/80">最低接受出價（HKD，選填）</Label>
+                      <Input className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[#FEDD00]" type="number" min="4" step="0.01" placeholder="留空表示不設下限"
                         value={listingForm.minOffer}
                         onChange={(e) => setListingForm(p => ({ ...p, minOffer: e.target.value }))} />
                     </div>
@@ -1097,41 +1097,41 @@ export default function SellerDashboard() {
                       ))}
                     </div>
                   )}
-                  <div className="rounded-xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
+                  <div className="rounded-xl border border-white/20 divide-y divide-white/10 overflow-hidden bg-white/5">
                     <div className="flex items-start justify-between px-4 py-3">
-                      <span className="text-xs text-gray-500 w-20 flex-shrink-0">商品名稱</span>
-                      <span className="text-sm font-medium text-gray-900 text-right">{listingForm.title}</span>
+                      <span className="text-xs text-white/50 w-20 flex-shrink-0">商品名稱</span>
+                      <span className="text-sm font-medium text-white text-right">{listingForm.title}</span>
                     </div>
                     {selectedCard && (
                       <div className="flex items-center justify-between px-4 py-3">
-                        <span className="text-xs text-gray-500 w-20 flex-shrink-0">關聯卡牌</span>
-                        <span className="text-sm text-gray-900 text-right">{selectedCard.name}</span>
+                        <span className="text-xs text-white/50 w-20 flex-shrink-0">關聯卡牌</span>
+                        <span className="text-sm text-white text-right">{selectedCard.name}</span>
                       </div>
                     )}
                     {listingForm.description && (
                       <div className="flex items-start justify-between px-4 py-3">
-                        <span className="text-xs text-gray-500 w-20 flex-shrink-0">描述</span>
-                        <span className="text-sm text-gray-700 text-right line-clamp-3">{listingForm.description}</span>
+                        <span className="text-xs text-white/50 w-20 flex-shrink-0">描述</span>
+                        <span className="text-sm text-white/80 text-right line-clamp-3">{listingForm.description}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-xs text-gray-500 w-20 flex-shrink-0">品相</span>
-                      <span className="text-sm text-gray-900">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition}</span>
+                      <span className="text-xs text-white/50 w-20 flex-shrink-0">品相</span>
+                      <span className="text-sm text-white">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition}</span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-xs text-gray-500 w-20 flex-shrink-0">數量</span>
-                      <span className="text-sm text-gray-900">{listingForm.quantity}</span>
+                      <span className="text-xs text-white/50 w-20 flex-shrink-0">數量</span>
+                      <span className="text-sm text-white">{listingForm.quantity}</span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-xs text-gray-500 w-20 flex-shrink-0">售價</span>
-                      <span className="text-base font-bold text-[#06038d]">HKD {parseFloat(listingForm.price || "0").toFixed(2)}</span>
+                      <span className="text-xs text-white/50 w-20 flex-shrink-0">售價</span>
+                      <span className="text-base font-bold text-[#FEDD00]">HKD {parseFloat(listingForm.price || "0").toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-xs text-gray-500 w-20 flex-shrink-0">出價洽議</span>
-                      <span className="text-sm text-gray-900">{listingForm.acceptOffers ? `接受${listingForm.minOffer ? `（最低 HKD ${listingForm.minOffer}）` : ""}` : "不接受"}</span>
+                      <span className="text-xs text-white/50 w-20 flex-shrink-0">出價洿議</span>
+                      <span className="text-sm text-white">{listingForm.acceptOffers ? `接受${listingForm.minOffer ? `（最低 HKD ${listingForm.minOffer}）` : ""}` : "不接受"}</span>
                     </div>
                   </div>
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+                  <div className="bg-[#FEDD00]/10 border border-[#FEDD00]/30 rounded-xl p-3 text-xs text-[#FEDD00]">
                     <p className="font-medium">提交後等待審核</p>
                     <p className="mt-0.5">商品將在管理員審核通過後公開顯示，通常需要 1-2 個工作天。</p>
                   </div>
@@ -1141,16 +1141,16 @@ export default function SellerDashboard() {
           </div>
 
           {/* Footer Navigation */}
-          <div className="px-5 py-4 border-t border-gray-100 flex gap-2">
+          <div className="px-5 py-4 border-t border-white/10 flex gap-2" style={{backgroundColor: '#06038D'}}>
             {listingStep === 1 && (
-              <Button variant="outline" className="flex-1" onClick={() => setShowNewListing(false)}>取消</Button>
+              <Button variant="outline" className="flex-1 border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent" onClick={() => setShowNewListing(false)}>取消</Button>
             )}
             {listingStep > 1 && (
-              <Button variant="outline" className="flex-1" onClick={() => setListingStep(s => (s - 1) as 1 | 2 | 3)}>上一步</Button>
+              <Button variant="outline" className="flex-1 border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent" onClick={() => setListingStep(s => (s - 1) as 1 | 2 | 3)}>上一步</Button>
             )}
             {listingStep < 3 && (
               <Button
-                className="flex-1 bg-[#06038d] hover:bg-[#0804b8] text-white"
+                className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
                 disabled={listingStep === 1 ? !listingForm.title : (listingStep === 2 ? (!listingForm.price || parseFloat(listingForm.price) < 4.00) : false)}
                 onClick={() => setListingStep(s => (s + 1) as 1 | 2 | 3)}
               >
@@ -1159,7 +1159,7 @@ export default function SellerDashboard() {
             )}
             {listingStep === 3 && (
               <Button
-                className="flex-1 bg-[#06038d] hover:bg-[#0804b8] text-white"
+                className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
                 disabled={createListingMutation.isPending}
                 onClick={() => createListingMutation.mutate({
                   title: listingForm.title,

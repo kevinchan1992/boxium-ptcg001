@@ -500,12 +500,12 @@ export default function Orders() {
         className="relative"
         style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}
       >
-        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FFD700" }} />
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FEDD00" }} />
         <div className="max-w-2xl mx-auto px-4 pt-10 pb-8">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
             <div
               className="w-20 h-20 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
-              style={{ background: "#FFD700", borderColor: "white" }}
+              style={{ background: "#FEDD00", borderColor: "white" }}
             >
               <Package className="w-10 h-10" style={{ color: "#06038d" }} />
             </div>
@@ -514,7 +514,7 @@ export default function Orders() {
               <p className="text-white/70 text-sm mt-1">共 {orders?.length ?? 0} 筆訂單</p>
             </div>
             <Link href="/marketplace">
-              <Button size="sm" className="font-bold" style={{ background: "#FFD700", color: "#06038d" }}>
+              <Button size="sm" className="font-bold" style={{ background: "#FEDD00", color: "#06038d" }}>
                 <ArrowLeft className="w-4 h-4 mr-1" />返回商城
               </Button>
             </Link>
@@ -547,7 +547,7 @@ export default function Orders() {
               <div className="space-y-8">
                 {activeOrders.length > 0 && (
                   <section>
-                    <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: "#06038d", borderColor: "#FFD700" }}>
+                    <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: "#06038d", borderColor: "#FEDD00" }}>
                       <CreditCard className="w-4 h-4" />進行中的訂單（{activeOrders.length}）
                     </h2>
                     <div className="space-y-3">
@@ -557,7 +557,7 @@ export default function Orders() {
                 )}
                 {pastOrders.length > 0 && (
                   <section>
-                    <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: "#06038d", borderColor: "#FFD700" }}>
+                    <h2 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: "#06038d", borderColor: "#FEDD00" }}>
                       <CheckCircle className="w-4 h-4" />歷史訂單（{pastOrders.length}）
                     </h2>
                     <div className="space-y-3">
