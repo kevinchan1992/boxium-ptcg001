@@ -1998,6 +1998,113 @@ function ReportsTab() {
 }
 
 // ============================================================
+// OFFERS TAB
+// ============================================================
+function OffersTab() {
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const { data, isLoading } = trpc.marketplace.adminGetOffers.useQuery({
+    page,
+    pageSize: 20,
+    status: statusFilter === "all" ? undefined : statusFilter,
+  });
+
+  const offerStatusLabel: Record<string, string> = {
+    pending: "待回覆",
+    accepted: "已接受",
+    rejected: "已拒絕",
+    expired: "已過期",
+    cancelled: "已取消",
+  };
+  const offerStatusColor: Record<string, string> = {
+    pending: "bg-yellow-100 text-yellow-800",
+    accepted: "bg-green-100 text-green-800",
+    rejected: "bg-red-100 text-red-800",
+    expired: "bg-gray-100 text-gray-600",
+    cancelled: "bg-gray-100 text-gray-500",
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Filter */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium text-gray-600">篩選狀態：</span>
+        {["all", "pending", "accepted", "rejected", "expired", "cancelled"].map(s => (
+          <button
+            key={s}
+            onClick={() => { setStatusFilter(s); setPage(1); }}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              statusFilter === s
+                ? "bg-[#06038d] text-white border-[#06038d]"
+                : "bg-white text-gray-600 border-gray-200 hover:border-[#06038d]/40"
+            }`}
+          >
+            {s === "all" ? "全部" : offerStatusLabel[s]}
+          </button>
+        ))}
+        <span className="ml-auto text-xs text-gray-400">共 {data?.total ?? 0} 筆</span>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#06038d]" /></div>
+      ) : !data?.offers?.length ? (
+        <div className="text-center py-12 text-gray-400">暫無出價記錄</div>
+      ) : (
+        <div className="space-y-3">
+          {data.offers.map((o: any) => (
+            <div key={o.id} className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
+                <span className="text-white text-xs font-semibold">出價 #{o.id}</span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${offerStatusColor[o.status] ?? "bg-gray-100 text-gray-600"}`}>
+                  {offerStatusLabel[o.status] ?? o.status}
+                </span>
+              </div>
+              <div className="p-4 bg-white space-y-2">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                  <span className="font-medium text-[#06038d]">
+                    HKD {Number(o.offerPriceHkd ?? 0).toFixed(2)}
+                  </span>
+                  {o.listingPriceHkd && (
+                    <span className="text-gray-400 text-xs self-center">
+                      定價 HKD {Number(o.listingPriceHkd).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-600">
+                  <span className="font-medium">商品：</span>{o.listingTitle ?? `ID ${o.listingId}`}
+                </div>
+                <div className="text-xs text-gray-600">
+                  <span className="font-medium">買家：</span>{o.buyerName ?? "-"}
+                  {o.buyerEmail && <span className="text-gray-400 ml-1">({o.buyerEmail})</span>}
+                </div>
+                {o.message && (
+                  <div className="text-xs text-gray-500 bg-gray-50 rounded p-2 border-l-2 border-[#06038d]/30">
+                    &ldquo;{o.message}&rdquo;
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-xs text-gray-400 pt-1">
+                  <span>出價時間：{new Date(o.createdAt).toLocaleString()}</span>
+                  {o.expiresAt && (
+                    <span className={new Date(o.expiresAt) < new Date() ? "text-red-400" : ""}>
+                      到期：{new Date(o.expiresAt).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+          <div className="flex justify-between items-center pt-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
+            <span className="text-xs text-gray-500">第 {page} 頁 · 共 {data.total} 筆</span>
+            <Button variant="outline" size="sm" disabled={page * 20 >= (data.total ?? 0)} onClick={() => setPage(p => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // PAYOUTS TAB
 // ============================================================
 function PayoutsTab() {
@@ -2112,6 +2219,7 @@ export default function AdminMarketplace() {
             <BrandTabsTrigger value="sales" icon={<BarChart3 className="w-4 h-4" />} label="銷售總覽">銷售總覽</BrandTabsTrigger>
             <BrandTabsTrigger value="reports" icon={<Flag className="w-4 h-4" />} label="舉報管理">舉報管理</BrandTabsTrigger>
             <BrandTabsTrigger value="payouts" icon={<DollarSign className="w-4 h-4" />} label="放款管理">放款管理</BrandTabsTrigger>
+            <BrandTabsTrigger value="offers" icon={<Tag className="w-4 h-4" />} label="出價管理">出價管理</BrandTabsTrigger>
           </BrandTabsList>
           <BrandTabsContent value="listings"><ListingsTab /></BrandTabsContent>
           <BrandTabsContent value="orders"><OrdersTab /></BrandTabsContent>
@@ -2122,6 +2230,7 @@ export default function AdminMarketplace() {
           <BrandTabsContent value="sales"><SalesReportTab /></BrandTabsContent>
           <BrandTabsContent value="reports"><ReportsTab /></BrandTabsContent>
           <BrandTabsContent value="payouts"><PayoutsTab /></BrandTabsContent>
+          <BrandTabsContent value="offers"><OffersTab /></BrandTabsContent>
         </BrandTabs>
       </div>
     </div>

@@ -4190,3 +4190,9 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [ ] 缺口8：OrderDetail.tsx 的 pending_payment 訂單沒有「前往付款」按鈕
 - [ ] 缺口9：getBuyerOffers 不包含 listingTitle 和 listingImages（買家看不到商品名稱和圖片）
 - [ ] 缺口10：respondToOffer 接受後不通知買家（需要系統通知）
+
+## ⏰ 三個 Marketplace 自動化改進
+- [ ] 後端加入出價過期自動清理定時任務（每小時掃描 pending 且 expiresAt 已過的出價標記為 expired）
+- [ ] 後端加入付款逾時自動取消訂單定時任務（每小時掃描 pending_payment 且超過 24 小時的訂單自動取消）
+- [ ] Admin 後台加入「出價管理」tab（查看所有出價記錄、篩選狀態、顯示買家賣家資訊）
+- [ ] 儲存 checkpoint

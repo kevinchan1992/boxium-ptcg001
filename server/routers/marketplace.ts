@@ -853,6 +853,46 @@ export const marketplaceRouter = router({
       return getAlipayPendingOrders();
     }),
 
+  adminGetOffers: adminProcedure
+    .input(z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(50).default(20),
+      status: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { users, marketplaceListings: listings } = await import('../../drizzle/schema_new');
+      const { desc, count: drizzleCount } = await import('drizzle-orm');
+      const offset = (input.page - 1) * input.pageSize;
+      const whereClause = input.status ? eq(offers.status, input.status as any) : undefined;
+      const [totalResult, rows] = await Promise.all([
+        db.select({ count: drizzleCount() }).from(offers).where(whereClause),
+        db.select({
+          id: offers.id,
+          status: offers.status,
+          offerPriceHkd: offers.offerPriceHkd,
+          message: offers.message,
+          expiresAt: offers.expiresAt,
+          createdAt: offers.createdAt,
+          listingId: offers.listingId,
+          listingTitle: listings.title,
+          listingPriceHkd: listings.priceHkd,
+          buyerId: offers.buyerId,
+          buyerName: users.name,
+          buyerEmail: users.email,
+        })
+          .from(offers)
+          .leftJoin(listings, eq(offers.listingId, listings.id))
+          .leftJoin(users, eq(offers.buyerId, users.id))
+          .where(whereClause)
+          .orderBy(desc(offers.createdAt))
+          .limit(input.pageSize)
+          .offset(offset),
+      ]);
+      return { offers: rows, total: totalResult[0]?.count ?? 0 };
+    }),
+
   adminConfirmAlipayPayment: adminProcedure
     .input(z.object({
       orderId: z.number().int(),

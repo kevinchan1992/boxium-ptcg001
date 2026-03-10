@@ -397,6 +397,11 @@ export default function OrderDetail() {
     onError: (e) => toast.error(e.message),
   });
 
+  // Auto-complete countdown - MUST be called unconditionally before any conditional returns
+  const autoCompleteCountdown = useAutoCompleteCountdown(
+    data?.order?.orderStatus === "shipped" ? data?.order?.autoCompleteAt : null
+  );
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white">
@@ -432,10 +437,6 @@ export default function OrderDetail() {
 
   const statusInfo = ORDER_STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, color: "bg-gray-100 text-gray-600 border-gray-200", icon: null, desc: "" };
   const canConfirm = isBuyer && (order.orderStatus === "shipped" || order.orderStatus === "delivered");
-  // Auto-complete countdown
-  const autoCompleteCountdown = useAutoCompleteCountdown(
-    order.orderStatus === "shipped" ? order.autoCompleteAt : null
-  );
   // Calculate dispute window: 7 days from shipment
   const DISPUTE_WINDOW_DAYS = 7;
   const disputeDeadline = order.shippedAt ? (() => {

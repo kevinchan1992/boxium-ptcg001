@@ -573,3 +573,149 @@ export function stopOfferExpiryReminderScheduler() {
     offerExpiryReminderCronJob = null;
   }
 }
+
+// ─── Offer Expiry Auto-Cleanup Scheduler ─────────────────────────────────────
+// Runs every hour at :45 to mark expired pending offers as 'expired'
+let offerExpiryCleanupCronJob: ReturnType<typeof cron.schedule> | null = null;
+export function startOfferExpiryCleanupScheduler() {
+  if (offerExpiryCleanupCronJob) return;
+  offerExpiryCleanupCronJob = cron.schedule(
+    '45 * * * *', // Every hour at :45
+    async () => {
+      try {
+        const { getDb } = await import('./db');
+        const { offers: offersTable } = await import('../drizzle/schema_new');
+        const { and, eq, lt } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) return;
+        const now = new Date();
+        // Find all pending offers where expiresAt has passed
+        const expiredOffers = await db.select({ id: offersTable.id })
+          .from(offersTable)
+          .where(
+            and(
+              eq(offersTable.status, 'pending'),
+              lt(offersTable.expiresAt, now)
+            )
+          );
+        if (expiredOffers.length === 0) return;
+        console.log(`[OfferExpiryCleanup] Marking ${expiredOffers.length} offers as expired`);
+        // Batch update all expired offers
+        await db.update(offersTable)
+          .set({ status: 'expired' })
+          .where(
+            and(
+              eq(offersTable.status, 'pending'),
+              lt(offersTable.expiresAt, now)
+            )
+          );
+        console.log(`[OfferExpiryCleanup] Successfully marked ${expiredOffers.length} offers as expired`);
+      } catch (err) {
+        console.error('[OfferExpiryCleanup] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[OfferExpiryCleanup] Offer expiry cleanup scheduler started (every hour at :45)');
+}
+export function stopOfferExpiryCleanupScheduler() {
+  if (offerExpiryCleanupCronJob) {
+    offerExpiryCleanupCronJob.stop();
+    offerExpiryCleanupCronJob = null;
+  }
+}
+
+// ─── Payment Timeout Auto-Cancel Scheduler ───────────────────────────────────
+// Runs every hour at :30 to cancel pending_payment orders older than 24 hours
+let paymentTimeoutCancelCronJob: ReturnType<typeof cron.schedule> | null = null;
+export function startPaymentTimeoutCancelScheduler() {
+  if (paymentTimeoutCancelCronJob) return;
+  paymentTimeoutCancelCronJob = cron.schedule(
+    '30 * * * *', // Every hour at :30
+    async () => {
+      try {
+        const { getDb } = await import('./db');
+        const { marketplaceOrders, marketplaceOrderItems, marketplaceListings } = await import('../drizzle/schema_new');
+        const { and, eq, lt } = await import('drizzle-orm');
+        const { createNotification } = await import('./db/notifications');
+        const db = await getDb();
+        if (!db) return;
+        const now = new Date();
+        const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+        // Find pending_payment orders older than 24 hours
+        const timedOutOrders = await db.select({
+          id: marketplaceOrders.id,
+          orderNo: marketplaceOrders.orderNo,
+          buyerId: marketplaceOrders.buyerId,
+          sellerId: marketplaceOrders.sellerId,
+          createdAt: marketplaceOrders.createdAt,
+        })
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.orderStatus, 'pending_payment'),
+              lt(marketplaceOrders.createdAt, cutoff)
+            )
+          );
+        if (timedOutOrders.length === 0) return;
+        console.log(`[PaymentTimeout] Found ${timedOutOrders.length} timed-out orders to cancel`);
+        for (const order of timedOutOrders) {
+          try {
+            // Cancel the order
+            await db.update(marketplaceOrders)
+              .set({ orderStatus: 'cancelled', updatedAt: now })
+              .where(eq(marketplaceOrders.id, order.id));
+            // Get order items to restore listing stock
+            const items = await db.select()
+              .from(marketplaceOrderItems)
+              .where(eq(marketplaceOrderItems.orderId, order.id));
+            // Restore listing status back to 'active' if it was marked as sold
+            for (const item of items) {
+              await db.update(marketplaceListings)
+                .set({ status: 'active' })
+                .where(
+                  and(
+                    eq(marketplaceListings.id, item.listingId),
+                    eq(marketplaceListings.status, 'sold')
+                  )
+                );
+            }
+            // Notify buyer
+            await createNotification({
+              userId: order.buyerId,
+              type: 'order',
+              title: '訂單已自動取消',
+              body: `訂單 #${order.orderNo} 因超過 24 小時未完成付款，已自動取消。`,
+              linkUrl: '/orders',
+              relatedId: order.id,
+            }).catch(() => {});
+            // Notify seller (only if it's a C2C listing with a seller)
+            if (order.sellerId != null) {
+              await createNotification({
+                userId: order.sellerId,
+                type: 'order',
+                title: '買家未付款，訂單已取消',
+                body: `訂單 #${order.orderNo} 因買家超過 24 小時未完成付款，已自動取消，商品已重新上架。`,
+                linkUrl: '/seller',
+                relatedId: order.id,
+              }).catch(() => {});
+            }
+            console.log(`[PaymentTimeout] Cancelled order ${order.orderNo} (id: ${order.id})`);
+          } catch (err) {
+            console.error(`[PaymentTimeout] Failed to cancel order ${order.id}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[PaymentTimeout] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[PaymentTimeout] Payment timeout cancel scheduler started (every hour at :30)');
+}
+export function stopPaymentTimeoutCancelScheduler() {
+  if (paymentTimeoutCancelCronJob) {
+    paymentTimeoutCancelCronJob.stop();
+    paymentTimeoutCancelCronJob = null;
+  }
+}

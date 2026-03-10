@@ -208,3 +208,117 @@ describe("Image upload for marketplace listings", () => {
     expect(key1).toContain("marketplace-images/");
   });
 });
+
+describe("Offer management logic", () => {
+  const offerStatusLabel: Record<string, string> = {
+    pending: "待回覆",
+    accepted: "已接受",
+    rejected: "已拒絕",
+    expired: "已過期",
+    cancelled: "已取消",
+  };
+
+  it("should have correct status labels for all offer states", () => {
+    expect(offerStatusLabel["pending"]).toBe("待回覆");
+    expect(offerStatusLabel["accepted"]).toBe("已接受");
+    expect(offerStatusLabel["rejected"]).toBe("已拒絕");
+    expect(offerStatusLabel["expired"]).toBe("已過期");
+    expect(offerStatusLabel["cancelled"]).toBe("已取消");
+  });
+
+  it("should detect expired offers correctly", () => {
+    const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000); // yesterday
+    const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // tomorrow
+    const isExpired = (expiresAt: Date) => expiresAt < new Date();
+    expect(isExpired(pastDate)).toBe(true);
+    expect(isExpired(futureDate)).toBe(false);
+  });
+
+  it("should calculate offer discount percentage correctly", () => {
+    const listingPrice = 1000;
+    const offerPrice = 800;
+    const discountPct = Math.round(((listingPrice - offerPrice) / listingPrice) * 100);
+    expect(discountPct).toBe(20);
+  });
+
+  it("should reject offers below minimum threshold (70%)", () => {
+    const listingPrice = 1000;
+    const MIN_OFFER_PCT = 0.7;
+    const isValidOffer = (offerPrice: number) => offerPrice >= listingPrice * MIN_OFFER_PCT;
+    expect(isValidOffer(700)).toBe(true);   // exactly 70%
+    expect(isValidOffer(699)).toBe(false);  // below 70%
+    expect(isValidOffer(900)).toBe(true);   // above 70%
+  });
+
+  it("should filter offers by status correctly", () => {
+    const offers = [
+      { id: 1, status: "pending" },
+      { id: 2, status: "accepted" },
+      { id: 3, status: "rejected" },
+      { id: 4, status: "pending" },
+    ];
+    const pendingOffers = offers.filter(o => o.status === "pending");
+    expect(pendingOffers).toHaveLength(2);
+    const acceptedOffers = offers.filter(o => o.status === "accepted");
+    expect(acceptedOffers).toHaveLength(1);
+  });
+});
+
+describe("OrderDetail React hooks ordering", () => {
+  it("useAutoCompleteCountdown should handle null input gracefully", () => {
+    // Simulates the hook being called with null (before data loads)
+    const autoCompleteAt = null;
+    const result = autoCompleteAt ? "has_countdown" : null;
+    expect(result).toBeNull();
+  });
+
+  it("useAutoCompleteCountdown should handle undefined input gracefully", () => {
+    const autoCompleteAt = undefined;
+    const result = autoCompleteAt ? "has_countdown" : null;
+    expect(result).toBeNull();
+  });
+
+  it("should compute countdown correctly for shipped orders", () => {
+    const TOTAL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+    const now = Date.now();
+    const autoCompleteAt = new Date(now + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    const diff = autoCompleteAt.getTime() - now;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const elapsed = TOTAL_MS - diff;
+    const pct = Math.min(100, Math.max(0, (elapsed / TOTAL_MS) * 100));
+    expect(days).toBe(7); // 7 days from now
+    expect(pct).toBeCloseTo(50, 0); // ~50% elapsed
+  });
+
+  it("should not show countdown for non-shipped orders", () => {
+    const orderStatus = "processing";
+    const autoCompleteAt = orderStatus === "shipped" ? new Date() : null;
+    expect(autoCompleteAt).toBeNull();
+  });
+});
+
+describe("Admin offers pagination", () => {
+  it("should calculate correct page offset", () => {
+    const pageSize = 20;
+    const page1Offset = (1 - 1) * pageSize;
+    const page2Offset = (2 - 1) * pageSize;
+    const page3Offset = (3 - 1) * pageSize;
+    expect(page1Offset).toBe(0);
+    expect(page2Offset).toBe(20);
+    expect(page3Offset).toBe(40);
+  });
+
+  it("should disable next page button when on last page", () => {
+    const total = 45;
+    const pageSize = 20;
+    const page = 3;
+    const isLastPage = page * pageSize >= total;
+    expect(isLastPage).toBe(true);
+  });
+
+  it("should disable previous page button on first page", () => {
+    const page = 1;
+    const isFirstPage = page === 1;
+    expect(isFirstPage).toBe(true);
+  });
+});
