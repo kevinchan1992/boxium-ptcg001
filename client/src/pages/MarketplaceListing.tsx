@@ -1294,8 +1294,6 @@ export default function MarketplaceListing() {
               disabled={!offerAmount || parseFloat(offerAmount) <= 0 || makeOfferMutation.isPending}
               onClick={() => {
                 if (!listing || !me) return;
-                const sellerId = (listing as any).sellerId;
-                if (!sellerId) return;
                 makeOfferMutation.mutate({
                   listingId: listing.id,
                   offerPriceHkd: parseFloat(offerAmount),

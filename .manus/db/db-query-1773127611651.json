@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, title, sellerId, sellerType, status FROM marketplaceListings ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, sellerId, sellerType, status FROM marketplaceListings ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "120002",
+      "title": "測試 - 003",
+      "sellerId": "NULL",
+      "sellerType": "platform",
+      "status": "active"
+    },
+    {
+      "id": "120001",
+      "title": "測試 - 002",
+      "sellerId": "NULL",
+      "sellerType": "platform",
+      "status": "active"
+    },
+    {
+      "id": "90001",
+      "title": "Easter's  Pikachu: PROMO[SM-P 055](SM-P Promotional cards)",
+      "sellerId": "1",
+      "sellerType": "seller",
+      "status": "active"
+    },
+    {
+      "id": "60001",
+      "title": "測試001",
+      "sellerId": "1",
+      "sellerType": "seller",
+      "status": "sold"
+    },
+    {
+      "id": "30001",
+      "title": "psa",
+      "sellerId": "NULL",
+      "sellerType": "platform",
+      "status": "sold"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tsellerId\tsellerType\tstatus\n120002\t測試 - 003\tNULL\tplatform\tactive\n120001\t測試 - 002\tNULL\tplatform\tactive\n90001\tEaster's  Pikachu: PROMO[SM-P 055](SM-P Promotional cards)\t1\tseller\tactive\n60001\t測試001\t1\tseller\tsold\n30001\tpsa\tNULL\tplatform\tsold\n",
+  "stderr": "",
+  "execution_time_ms": 1666
+}

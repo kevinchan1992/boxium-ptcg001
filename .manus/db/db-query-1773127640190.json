@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, title, sellerId, sellerType, status FROM marketplaceListings WHERE id = 120002;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, sellerId, sellerType, status FROM marketplaceListings WHERE id = 120002;",
+  "rows": [
+    {
+      "id": "120002",
+      "title": "測試 - 003",
+      "sellerId": "NULL",
+      "sellerType": "platform",
+      "status": "active"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tsellerId\tsellerType\tstatus\n120002\t測試 - 003\tNULL\tplatform\tactive\n",
+  "stderr": "",
+  "execution_time_ms": 1565
+}
