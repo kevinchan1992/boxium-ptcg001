@@ -461,7 +461,7 @@ export default function SellerDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sellerProfile?.id]);
 
-  const [shipDialog, setShipDialog] = useState<{ open: boolean; orderId: number; orderNo: string }>({ open: false, orderId: 0, orderNo: "" });
+  const [shipDialog, setShipDialog] = useState<{ open: boolean; orderId: number; orderNo: string; shippingName?: string; shippingPhone?: string; shippingAddress?: string }>({ open: false, orderId: 0, orderNo: "" });
   const [shipForm, setShipForm] = useState({ shippingMethod: "sf_express", trackingNumber: "" });
   const CARRIERS = [
     { value: "sf_express", label: "順豐速運 (SF Express)", trackingUrl: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/" },
@@ -970,7 +970,14 @@ export default function SellerDashboard() {
                             {(["processing", "payment_received", "paid_held"].includes(item.orderStatus)) && (
                               <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white flex-shrink-0"
                                 onClick={() => {
-                                  setShipDialog({ open: true, orderId: item.orderId ?? item.id, orderNo: item.orderNo ?? "" });
+                                  setShipDialog({
+                                    open: true,
+                                    orderId: item.orderId ?? item.id,
+                                    orderNo: item.orderNo ?? "",
+                                    shippingName: item.shippingName ?? undefined,
+                                    shippingPhone: item.shippingPhone ?? undefined,
+                                    shippingAddress: item.shippingAddress ?? undefined,
+                                  });
                                   setShipForm({ shippingMethod: "sf_express", trackingNumber: "" });
                                 }}>
                                 填寫出貨資料
@@ -1701,6 +1708,26 @@ export default function SellerDashboard() {
           </DialogHeader>
           <div className="py-2 space-y-3">
             {shipDialog.orderNo && <p className="text-xs text-muted-foreground">訂單號：{shipDialog.orderNo}</p>}
+            {/* 買家收件資訊 */}
+            {shipDialog.shippingName && (
+              <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 space-y-1">
+                <p className="text-xs font-semibold text-blue-700 mb-1">📦 買家收件資訊</p>
+                <p className="text-xs text-gray-700">收件人：{shipDialog.shippingName}{shipDialog.shippingPhone ? ` · ${shipDialog.shippingPhone}` : ""}</p>
+                {shipDialog.shippingAddress && (
+                  <p className="text-xs text-gray-700">地址：{(() => {
+                    try {
+                      const addr = typeof shipDialog.shippingAddress === "string" ? JSON.parse(shipDialog.shippingAddress) : shipDialog.shippingAddress;
+                      if (addr && typeof addr === "object") {
+                        return [addr.address, addr.district, addr.region].filter(Boolean).join(", ");
+                      }
+                      return String(shipDialog.shippingAddress);
+                    } catch {
+                      return String(shipDialog.shippingAddress);
+                    }
+                  })()}</p>
+                )}
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label>物流公司 <span className="text-red-500">*</span></Label>
               <Select value={shipForm.shippingMethod} onValueChange={(v) => setShipForm(f => ({ ...f, shippingMethod: v }))}>

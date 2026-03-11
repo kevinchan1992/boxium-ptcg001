@@ -458,27 +458,52 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
   const page = options?.page ?? 1;
   const pageSize = options?.pageSize ?? 20;
   const offset = (page - 1) * pageSize;
-  const searchQuery = options?.search?.toLowerCase();
+  const rawSearch = options?.search?.trim() ?? "";
+  const searchQuery = rawSearch.toLowerCase();
   const statusFilter = options?.status ?? "all";
 
-  // Build WHERE conditions for search and status
-  const conditions = [];
-  if (searchQuery) {
-    conditions.push(
-      or(
-        like(cards.name, `%${searchQuery}%`),
-        like(cards.nameJa, `%${searchQuery}%`),
-        like(dataSources.sourceUrl, `%${searchQuery}%`)
-      )
-    );
-  }
+  // ── Base conditions (status + gameId) ─────────────────────────────────
+  const conditions: ReturnType<typeof eq>[] = [];
   if (statusFilter !== "all") {
     conditions.push(eq(dataSources.lastFetchStatus, statusFilter));
   }
   if (options?.gameId) {
     conditions.push(eq(dataSources.gameId, options.gameId));
   }
-  const whereConditions = conditions.length > 0 ? and(...conditions) : undefined;
+
+  // ── Smart search: sync with searchCards logic ─────────────────────────
+  let searchCondition: ReturnType<typeof or> | undefined;
+  if (rawSearch) {
+    if (isPureSeriesCodeQuery(rawSearch)) {
+      // Pure series code (e.g. "SV9", "SV8a"): prefix-match on cardNumber
+      const setCode = rawSearch.toUpperCase();
+      searchCondition = or(
+        like(cards.cardNumber, `${setCode} %`),
+        like(cards.cardNumber, `${setCode}/%`),
+      );
+    } else {
+      // General search: card name (zh/ja), card number variants, URL
+      const cardNumberPatterns = generateCardNumberPatterns(rawSearch);
+      const normalizedQuery = normalizeCardQuery(rawSearch);
+      const cardNumberConditions = [
+        like(cards.cardNumber, `%${rawSearch}%`),
+        ...(normalizedQuery !== rawSearch ? [like(cards.cardNumber, `%${normalizedQuery}%`)] : []),
+        ...cardNumberPatterns.map(pattern => like(cards.cardNumber, pattern)),
+      ];
+      searchCondition = or(
+        like(cards.name, `%${searchQuery}%`),
+        like(cards.nameJa, `%${searchQuery}%`),
+        like(dataSources.sourceUrl, `%${searchQuery}%`),
+        ...cardNumberConditions,
+      );
+    }
+  }
+
+  const allConditions = [
+    ...conditions,
+    ...(searchCondition ? [searchCondition] : []),
+  ];
+  const whereConditions = allConditions.length > 0 ? and(...allConditions) : undefined;
 
   // Get total count with search filter
   const countResult = await db
@@ -502,9 +527,12 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
       lastFetchStatus: dataSources.lastFetchStatus,
       fetchErrorMessage: dataSources.fetchErrorMessage,
       createdAt: dataSources.createdAt,
+      gameId: dataSources.gameId,
       card: {
         id: cards.id,
         name: cards.name,
+        nameJa: cards.nameJa,
+        cardNumber: cards.cardNumber,
         imageUrl: cards.imageUrl,
       },
     })
@@ -2569,27 +2597,50 @@ export async function getAllFilteredDataSourceIds(options?: { search?: string; s
   const db = await getDb();
   if (!db) return [];
 
-  const searchQuery = options?.search?.toLowerCase();
+  const rawSearch = options?.search?.trim() ?? "";
+  const searchQuery = rawSearch.toLowerCase();
   const statusFilter = options?.status ?? "all";
 
-  // Build WHERE conditions for search and status
-  const conditions = [];
-  if (searchQuery) {
-    conditions.push(
-      or(
-        like(cards.name, `%${searchQuery}%`),
-        like(cards.nameJa, `%${searchQuery}%`),
-        like(dataSources.sourceUrl, `%${searchQuery}%`)
-      )
-    );
-  }
+  // ── Base conditions (status + gameId) ─────────────────────────────────
+  const conditions: ReturnType<typeof eq>[] = [];
   if (statusFilter !== "all") {
     conditions.push(eq(dataSources.lastFetchStatus, statusFilter));
   }
   if (options?.gameId) {
     conditions.push(eq(dataSources.gameId, options.gameId));
   }
-  const whereConditions = conditions.length > 0 ? and(...conditions) : undefined;
+
+  // ── Smart search: sync with searchCards logic ─────────────────────────
+  let searchCondition: ReturnType<typeof or> | undefined;
+  if (rawSearch) {
+    if (isPureSeriesCodeQuery(rawSearch)) {
+      const setCode = rawSearch.toUpperCase();
+      searchCondition = or(
+        like(cards.cardNumber, `${setCode} %`),
+        like(cards.cardNumber, `${setCode}/%`),
+      );
+    } else {
+      const cardNumberPatterns = generateCardNumberPatterns(rawSearch);
+      const normalizedQuery = normalizeCardQuery(rawSearch);
+      const cardNumberConditions = [
+        like(cards.cardNumber, `%${rawSearch}%`),
+        ...(normalizedQuery !== rawSearch ? [like(cards.cardNumber, `%${normalizedQuery}%`)] : []),
+        ...cardNumberPatterns.map(pattern => like(cards.cardNumber, pattern)),
+      ];
+      searchCondition = or(
+        like(cards.name, `%${searchQuery}%`),
+        like(cards.nameJa, `%${searchQuery}%`),
+        like(dataSources.sourceUrl, `%${searchQuery}%`),
+        ...cardNumberConditions,
+      );
+    }
+  }
+
+  const allConditions = [
+    ...conditions,
+    ...(searchCondition ? [searchCondition] : []),
+  ];
+  const whereConditions = allConditions.length > 0 ? and(...allConditions) : undefined;
 
   try {
     const result = await db

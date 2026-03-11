@@ -873,17 +873,35 @@ function OrdersTab() {
         <div className="space-y-2">
           {orders.map((order: any) => (
             <div key={order.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono text-sm font-medium">{order.orderNo}</span>
-                  <Badge className={orderStatusColor[order.orderStatus] ?? ""}>{orderStatusLabel[order.orderStatus] ?? order.orderStatus}</Badge>
-                  <Badge variant="outline" className={order.paymentMethod === "stripe" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}>
-                    {order.paymentMethod === "stripe" ? "Stripe" : "支付寶 HK"}
-                  </Badge>
-                </div>
-                <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
-                  <span>HKD {parseFloat(order.subtotalHkd as string || "0").toFixed(2)}</span>
-                  <span>{new Date(order.createdAt).toLocaleDateString("zh-HK")}</span>
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                {/* Product Thumbnail */}
+                {(() => {
+                  try {
+                    const imgs = typeof order.listingImages === 'string'
+                      ? JSON.parse(order.listingImages)
+                      : order.listingImages;
+                    const firstImg = Array.isArray(imgs) ? imgs[0] : null;
+                    if (firstImg) return (
+                      <img src={firstImg} alt="" className="w-12 h-14 object-cover rounded border border-gray-200 flex-shrink-0 hidden sm:block" />
+                    );
+                  } catch {}
+                  return <div className="w-12 h-14 rounded border border-gray-200 bg-gray-100 flex-shrink-0 hidden sm:flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-gray-300" /></div>;
+                })()}
+                <div className="flex-1 min-w-0">
+                  {order.listingTitle && (
+                    <p className="text-xs text-muted-foreground truncate mb-0.5">{order.listingTitle}</p>
+                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-sm font-medium">{order.orderNo}</span>
+                    <Badge className={orderStatusColor[order.orderStatus] ?? ""}>{orderStatusLabel[order.orderStatus] ?? order.orderStatus}</Badge>
+                    <Badge variant="outline" className={order.paymentMethod === "stripe" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}>
+                      {order.paymentMethod === "stripe" ? "Stripe" : "支付寶 HK"}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
+                    <span>HKD {parseFloat(order.subtotalHkd as string || "0").toFixed(2)}</span>
+                    <span>{new Date(order.createdAt).toLocaleDateString("zh-HK")}</span>
+                  </div>
                 </div>
               </div>
               <Button size="sm" variant="outline" onClick={() => { setSelectedOrder(order); setNote(order.adminNote ?? ""); setTrackingNumber(order.trackingNumber ?? ""); setShippingMethod(order.shippingMethod ?? "sf_express"); }}>
