@@ -4424,3 +4424,6 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] /api/marketplace-preview/:id 端點（Marketplace 商品分享縮圖預覽）
 - [x] card-preview 加入 meta refresh 自動跳轉到 /card/:id（已存在）
 - [x] MarketplaceListing 加入分享按鈕（Share2 圖標），指向 /api/marketplace-preview/:id
+
+- [x] Marketplace 商品 OG 圖片合成（BOXIUM logo + 價格標籤 + 狀態標籤 + 品牌標語）
+- [x] 確認卡牌 OG 圖片有 BOXIUM logo（左上角黃色邊框），已正常顯示

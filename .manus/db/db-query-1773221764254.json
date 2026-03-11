@@ -1,0 +1,31 @@
+{
+  "query": "SELECT id, title, images, priceHkd, `condition` FROM marketplaceListings WHERE images IS NOT NULL AND images != 'null' AND images != '[]' AND images != '' ORDER BY id DESC LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, images, priceHkd, `condition` FROM marketplaceListings WHERE images IS NOT NULL AND images != 'null' AND images != '[]' AND images != '' ORDER BY id DESC LIMIT 3;",
+  "rows": [
+    {
+      "id": "120003",
+      "title": "002",
+      "images": "[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1773129866459-55dorgy53ix.png\"]",
+      "priceHkd": "1000.00",
+      "condition": "raw_a"
+    },
+    {
+      "id": "120002",
+      "title": "測試 - 003",
+      "images": "[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1773126682872-7wli8gs4ohq.png\"]",
+      "priceHkd": "1500.00",
+      "condition": "psa9"
+    },
+    {
+      "id": "120001",
+      "title": "測試 - 002",
+      "images": "[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1773126647401-m9jqkwr3mah.png\"]",
+      "priceHkd": "150.00",
+      "condition": "psa10"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\timages\tpriceHkd\tcondition\n120003\t002\t[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1773129866459-55dorgy53ix.png\"]\t1000.00\traw_a\n120002\t測試 - 003\t[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1773126682872-7wli8gs4ohq.png\"]\t1500.00\tpsa9\n120001\t測試 - 002\t[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1773126647401-m9jqkwr3mah.png\"]\t150.00\tpsa10\n",
+  "stderr": "",
+  "execution_time_ms": 1594
+}

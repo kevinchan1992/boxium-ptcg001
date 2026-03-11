@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, title, images, cardId, priceHkd, `condition` FROM marketplaceListings WHERE images IS NOT NULL AND images != 'null' AND images != '[]' AND images != '' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, images, cardId, priceHkd, `condition` FROM marketplaceListings WHERE images IS NOT NULL AND images != 'null' AND images != '[]' AND images != '' LIMIT 5;",
+  "rows": [
+    {
+      "id": "2",
+      "title": "測試使用001 - Easter's Pikachu 055/SM-P Promo",
+      "images": "[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/WhatsApp Image 2026-03-03 at 15.47.28-original-1772526706329-medc5jql89j.jpg\"]",
+      "cardId": "NULL",
+      "priceHkd": "5.00",
+      "condition": "raw_a"
+    },
+    {
+      "id": "30001",
+      "title": "psa",
+      "images": "[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1772783261976-cnc1yam0vw.png\"]",
+      "cardId": "NULL",
+      "priceHkd": "1.00",
+      "condition": "psa10"
+    },
+    {
+      "id": "60001",
+      "title": "測試001",
+      "images": "[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1773031215466-fey4nlqgq3n.png\"]",
+      "cardId": "NULL",
+      "priceHkd": "10.00",
+      "condition": "raw_a"
+    },
+    {
+      "id": "90001",
+      "title": "Easter's  Pikachu: PROMO[SM-P 055](SM-P Promotional cards)",
+      "images": "[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/WhatsApp Image 2026-03-03 at 15.47.28-original-1773115900885-ol47e6ezt6q.jpg\"]",
+      "cardId": "781646",
+      "priceHkd": "100.00",
+      "condition": "raw_a"
+    },
+    {
+      "id": "120001",
+      "title": "測試 - 002",
+      "images": "[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1773126647401-m9jqkwr3mah.png\"]",
+      "cardId": "721177",
+      "priceHkd": "150.00",
+      "condition": "psa10"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\timages\tcardId\tpriceHkd\tcondition\n2\t測試使用001 - Easter's Pikachu 055/SM-P Promo\t[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/WhatsApp Image 2026-03-03 at 15.47.28-original-1772526706329-medc5jql89j.jpg\"]\tNULL\t5.00\traw_a\n30001\tpsa\t[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1772783261976-cnc1yam0vw.png\"]\tNULL\t1.00\tpsa10\n60001\t測試001\t[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1773031215466-fey4nlqgq3n.png\"]\tNULL\t10.00\traw_a\n90001\tEaster's  Pikachu: PROMO[SM-P 055](SM-P Promotional cards)\t[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/WhatsApp Image 2026-03-03 at 15.47.28-original-1773115900885-ol47e6ezt6q.jpg\"]\t781646\t100.00\traw_a\n120001\t測試 - 002\t[\"https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/marketplace-images/customcolor_logo_customcolor_background-original-1773126647401-m9jqkwr3mah.png\"]\t721177\t150.00\tpsa10\n",
+  "stderr": "",
+  "execution_time_ms": 1594
+}

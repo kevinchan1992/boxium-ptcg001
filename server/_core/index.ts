@@ -21,7 +21,7 @@ import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoComplet
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import { getListingById, getCardById, getSealedProductById } from "../db";
-import { composeOgImage, composeAndCacheOgImage, getDefaultOgImageUrl } from "../ogImageComposer";
+import { composeOgImage, composeAndCacheOgImage, getDefaultOgImageUrl, composeAndCacheMarketplaceOgImage } from "../ogImageComposer";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -556,7 +556,18 @@ async function startServer() {
         const card = await getCardById(listing.cardId);
         if (card?.imageUrl) imageUrl = card.imageUrl;
       }
-      const ogImage = imageUrl || getDefaultOgImageUrl();
+      // Try to get/generate marketplace-specific OG image (card image + price badge + logo)
+      let ogImage = imageUrl || getDefaultOgImageUrl();
+      if (imageUrl) {
+        const composedUrl = await composeAndCacheMarketplaceOgImage(
+          id,
+          imageUrl,
+          listing.title as string,
+          price,
+          (listing.condition as string) || "mint"
+        );
+        if (composedUrl) ogImage = composedUrl;
+      }
 
       const ogTitle = `${listing.title} - HKD ${price.toFixed(0)} | BOXIUM PTCG`;
       const ogDescription = listing.description

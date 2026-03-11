@@ -235,3 +235,188 @@ export async function ensureOgImageExists(cardId: number, cardImageUrl: string |
 export function getDefaultOgImageUrl(): string {
   return DEFAULT_OG_IMAGE;
 }
+
+// In-memory cache for marketplace listing OG images
+const marketplaceOgImageCache = new Map<number, string>();
+const marketplaceOgImageGenerating = new Set<number>();
+
+/**
+ * Get the S3 key for a marketplace listing's OG image
+ */
+function getMarketplaceOgImageS3Key(listingId: number): string {
+  return `og-images/marketplace-${listingId}.png`;
+}
+
+/**
+ * Check if marketplace OG image already exists in S3.
+ * Returns null if not found or on error.
+ */
+async function getExistingMarketplaceS3Url(listingId: number): Promise<string | null> {
+  try {
+    const s3Key = getMarketplaceOgImageS3Key(listingId);
+    const { url } = await storageGet(s3Key);
+    const checkResponse = await fetch(url, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(3000),
+    });
+    if (checkResponse.ok) {
+      marketplaceOgImageCache.set(listingId, url);
+      return url;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Compose a marketplace listing OG image:
+ * - Dark navy background (1200x630)
+ * - Product image on the left (60% width)
+ * - Right panel: BOXIUM logo + title + price badge (yellow) + condition badge
+ * - Bottom bar with brand tagline
+ */
+export async function composeMarketplaceOgImage(
+  imageUrl: string,
+  title: string,
+  priceHkd: number,
+  condition: string
+): Promise<Buffer | null> {
+  try {
+    const [productBuffer, logoBuffer] = await Promise.all([
+      fetchImageBuffer(imageUrl),
+      fetchImageBuffer(BOXIUM_LOGO_URL),
+    ]);
+
+    // --- Product image: fill left 60% of canvas ---
+    const productAreaW = Math.round(OG_WIDTH * 0.60);
+    const productAreaH = OG_HEIGHT;
+    const resizedProduct = await sharp(productBuffer)
+      .resize(productAreaW, productAreaH, { fit: "cover", position: "centre" })
+      .toBuffer();
+
+    // --- Logo: top-right area ---
+    const logoMeta = await sharp(logoBuffer).metadata();
+    const logoAspect = (logoMeta.width || 2048) / (logoMeta.height || 1228);
+    const logoW = 180;
+    const logoH = Math.round(logoW / logoAspect);
+    const resizedLogo = await sharp(logoBuffer)
+      .resize(logoW, logoH, { fit: "fill" })
+      .toBuffer();
+
+    // --- Right panel text via SVG overlay ---
+    const rightX = productAreaW + 20; // right panel starts here
+    const rightW = OG_WIDTH - productAreaW - 20;
+    const logoLeft = productAreaW + Math.round((OG_WIDTH - productAreaW - logoW) / 2);
+    const logoTop = 30;
+
+    // Truncate title for display
+    const displayTitle = title.length > 50 ? title.slice(0, 48) + "…" : title;
+    // Split title into two lines if needed
+    const titleLine1 = displayTitle.slice(0, 24);
+    const titleLine2 = displayTitle.length > 24 ? displayTitle.slice(24) : "";
+
+    // Condition label translation
+    const conditionMap: Record<string, string> = {
+      mint: "Mint",
+      near_mint: "Near Mint",
+      excellent: "Excellent",
+      good: "Good",
+      played: "Played",
+      poor: "Poor",
+    };
+    const conditionLabel = conditionMap[condition] || condition;
+
+    // Price formatted
+    const priceStr = `HKD ${priceHkd.toLocaleString("en-HK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+    // SVG for right-panel text elements
+    const svgOverlay = `<svg width="${OG_WIDTH}" height="${OG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  <!-- Vertical divider line -->
+  <line x1="${productAreaW}" y1="0" x2="${productAreaW}" y2="${OG_HEIGHT}" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <!-- Title text -->
+  <text x="${rightX + Math.round(rightW / 2)}" y="${logoTop + logoH + 40}" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">${titleLine1.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</text>
+  ${titleLine2 ? `<text x="${rightX + Math.round(rightW / 2)}" y="${logoTop + logoH + 70}" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">${titleLine2.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</text>` : ""}
+  <!-- Price badge background (yellow) -->
+  <rect x="${rightX + 20}" y="${OG_HEIGHT / 2 - 10}" width="${rightW - 40}" height="64" rx="10" fill="#FEDD00"/>
+  <!-- Price text -->
+  <text x="${rightX + Math.round(rightW / 2)}" y="${OG_HEIGHT / 2 + 30}" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#06038D" text-anchor="middle" dominant-baseline="middle">${priceStr.replace(/&/g, "&amp;")}</text>
+  <!-- Condition badge background -->
+  <rect x="${rightX + Math.round(rightW / 2) - 60}" y="${OG_HEIGHT / 2 + 70}" width="120" height="34" rx="8" fill="rgba(255,255,255,0.15)"/>
+  <!-- Condition text -->
+  <text x="${rightX + Math.round(rightW / 2)}" y="${OG_HEIGHT / 2 + 87}" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" dominant-baseline="middle">${conditionLabel.replace(/&/g, "&amp;")}</text>
+  <!-- Bottom brand bar -->
+  <rect x="0" y="${OG_HEIGHT - 44}" width="${OG_WIDTH}" height="44" fill="#06038D"/>
+  <text x="${OG_WIDTH / 2}" y="${OG_HEIGHT - 16}" font-family="Arial, sans-serif" font-size="15" fill="white" text-anchor="middle" dominant-baseline="middle">BOXIUM PTCG • boxium.asia</text>
+</svg>`;
+
+    const svgBuffer = Buffer.from(svgOverlay);
+
+    // Compose: dark background + product image (left) + logo (right-top) + SVG overlay
+    const composed = await sharp({
+      create: {
+        width: OG_WIDTH,
+        height: OG_HEIGHT,
+        channels: 3,
+        background: { r: 10, g: 10, b: 30 }, // dark navy
+      },
+    })
+      .composite([
+        { input: resizedProduct, left: 0, top: 0 },
+        { input: resizedLogo, left: logoLeft, top: logoTop },
+        { input: svgBuffer, left: 0, top: 0 },
+      ])
+      .png({ quality: 90 })
+      .toBuffer();
+
+    return composed;
+  } catch (err) {
+    console.error("[OG Composer] Failed to compose marketplace image:", err);
+    return null;
+  }
+}
+
+/**
+ * Get OG image URL for a marketplace listing.
+ * - Returns cached URL immediately if available
+ * - If not cached, starts background generation and returns null (caller uses card image)
+ */
+export async function composeAndCacheMarketplaceOgImage(
+  listingId: number,
+  imageUrl: string,
+  title: string,
+  priceHkd: number,
+  condition: string
+): Promise<string | null> {
+  // 1. Check in-memory cache
+  const cached = marketplaceOgImageCache.get(listingId);
+  if (cached) return cached;
+
+  // 2. Check S3 (with 3s timeout)
+  const s3Url = await Promise.race([
+    getExistingMarketplaceS3Url(listingId),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+  ]);
+  if (s3Url) return s3Url;
+
+  // 3. Not cached — generate in background
+  if (!marketplaceOgImageGenerating.has(listingId)) {
+    marketplaceOgImageGenerating.add(listingId);
+    (async () => {
+      try {
+        const composed = await composeMarketplaceOgImage(imageUrl, title, priceHkd, condition);
+        if (!composed) return;
+        const s3Key = getMarketplaceOgImageS3Key(listingId);
+        const { url } = await storagePut(s3Key, composed, "image/png");
+        marketplaceOgImageCache.set(listingId, url);
+        console.log(`[OG Composer] Marketplace background generation complete for listing ${listingId}: ${url}`);
+      } catch (err) {
+        console.error(`[OG Composer] Marketplace background generation failed for listing ${listingId}:`, err);
+      } finally {
+        marketplaceOgImageGenerating.delete(listingId);
+      }
+    })().catch(() => {});
+  }
+
+  return null; // Caller will use fallback image
+}
