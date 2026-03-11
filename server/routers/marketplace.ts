@@ -1695,18 +1695,30 @@ All three checks must pass for verified to be true. Respond with JSON only match
   uploadDisputeEvidence: protectedProcedure
     .input(z.object({
       orderId: z.number().int(),
-      imageBase64: z.string(), // base64 encoded image
+      fileBase64: z.string(), // base64 encoded file (image or video)
       mimeType: z.string().default("image/jpeg"),
     }))
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
-      const ext = input.mimeType === "image/png" ? "png" : input.mimeType === "image/webp" ? "webp" : "jpg";
+      // Determine file extension from MIME type (support images and videos)
+      const mimeExtMap: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/jpg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "image/gif": "gif",
+        "video/mp4": "mp4",
+        "video/webm": "webm",
+        "video/quicktime": "mov",
+        "video/x-msvideo": "avi",
+      };
+      const ext = mimeExtMap[input.mimeType] ?? "bin";
       const key = `dispute-evidence/${order.orderNo}-${Date.now()}.${ext}`;
-      const buffer = Buffer.from(input.imageBase64, "base64");
+      const buffer = Buffer.from(input.fileBase64, "base64");
       const { url } = await storagePut(key, buffer, input.mimeType);
-      return { success: true, url };
+      return { success: true, url, mimeType: input.mimeType };
     }),
 
   // ============================================================

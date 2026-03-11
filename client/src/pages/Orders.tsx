@@ -226,6 +226,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeEvidenceUrls, setDisputeEvidenceUrls] = useState<string[]>([]);
+  const [disputeEvidenceMimeTypes, setDisputeEvidenceMimeTypes] = useState<string[]>([]);
   const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -246,14 +247,20 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     if (disputeEvidenceUrls.length + files.length > 3) {
-      toast.error("最多可上傳 3 張截圖");
+      toast.error("最多可上傳 3 個檔案");
       return;
     }
     setIsUploadingEvidence(true);
     try {
       const newUrls: string[] = [];
+      const newMimeTypes: string[] = [];
       for (const file of files) {
-        if (file.size > 5 * 1024 * 1024) { toast.error("圖片不能超過 5MB"); continue; }
+        const isVideo = file.type.startsWith("video/");
+        const maxSize = isVideo ? 30 * 1024 * 1024 : 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+          toast.error(isVideo ? "影片不能超過 30MB" : "圖片不能超過 5MB");
+          continue;
+        }
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve((reader.result as string).split(",")[1]);
@@ -262,13 +269,15 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
         });
         const result = await uploadDisputeEvidenceMutation.mutateAsync({
           orderId,
-          imageBase64: base64,
+          fileBase64: base64,
           mimeType: file.type,
         });
         newUrls.push(result.url);
+        newMimeTypes.push(result.mimeType ?? file.type);
       }
       setDisputeEvidenceUrls(prev => [...prev, ...newUrls]);
-      toast.success(`已上傳 ${newUrls.length} 張截圖`);
+      setDisputeEvidenceMimeTypes(prev => [...prev, ...newMimeTypes]);
+      toast.success(`已上傳 ${newUrls.length} 個檔案`);
     } catch {
       toast.error("上傳失敗，請重試");
     } finally {
@@ -283,6 +292,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
       setShowDisputeDialog(false);
       setDisputeReason("");
       setDisputeEvidenceUrls([]);
+      setDisputeEvidenceMimeTypes([]);
       utils.marketplace.getMyOrders.invalidate();
     },
     onError: (e) => toast.error(e.message),
@@ -555,18 +565,27 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
             </div>
             {/* Evidence Upload */}
             <div className="space-y-2">
-              <p className="text-sm font-medium">證據截圖（選填，最多 3 張）</p>
+              <p className="text-sm font-medium">證據檔案（選填，最多 3 個）</p>
               <div className="flex gap-2 flex-wrap">
-                {disputeEvidenceUrls.map((url, i) => (
-                  <div key={i} className="relative w-20 h-20 rounded-md overflow-hidden border border-border">
-                    <img src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setDisputeEvidenceUrls(prev => prev.filter((_, idx) => idx !== i))}
-                      className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-black/80"
-                    >×</button>
-                  </div>
-                ))}
+                {disputeEvidenceUrls.map((url, i) => {
+                  const isVideo = (disputeEvidenceMimeTypes[i] ?? "").startsWith("video/");
+                  return (
+                    <div key={i} className="relative w-20 h-20 rounded-md overflow-hidden border border-border bg-black">
+                      {isVideo
+                        ? <video src={url} className="w-full h-full object-cover" muted playsInline />
+                        : <img src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />}
+                      {isVideo && <span className="absolute bottom-0.5 left-0.5 bg-black/60 text-white text-xs px-1 rounded">影片</span>}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDisputeEvidenceUrls(prev => prev.filter((_, idx) => idx !== i));
+                          setDisputeEvidenceMimeTypes(prev => prev.filter((_, idx) => idx !== i));
+                        }}
+                        className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-black/80"
+                      >×</button>
+                    </div>
+                  );
+                })}
                 {disputeEvidenceUrls.length < 3 && (
                   <label className={`w-20 h-20 rounded-md border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors ${isUploadingEvidence ? 'opacity-50 pointer-events-none' : ''}`}>
                     {isUploadingEvidence
@@ -585,11 +604,11 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
                   </label>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">支援 JPG、PNG、MP4 等格式，每張不超過 5MB</p>
+              <p className="text-xs text-muted-foreground">支援圖片（JPG/PNG/WebP，最大5MB）或影片（MP4/WebM，最大30MB）</p>
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => { setShowDisputeDialog(false); setDisputeReason(""); setDisputeEvidenceUrls([]); }}>取消</Button>
+            <Button variant="outline" onClick={() => { setShowDisputeDialog(false); setDisputeReason(""); setDisputeEvidenceUrls([]); setDisputeEvidenceMimeTypes([]); }}>取消</Button>
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={openDisputeMutation.isPending || disputeReason.trim().length < 10 || isUploadingEvidence}

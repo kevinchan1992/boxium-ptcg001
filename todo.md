@@ -4502,3 +4502,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
   - 問題：後端有 `buyerCancelOrder` API，但訂單列表頁沒有取消按鈕
   - 修復：加入 `BuyerCancelButton` 組件，在 `pending_payment` 狀態顯示取消按鈕
 
+
+---
+
+## 新功能開發（2026-03-11）
+
+- [x] 自動確認收貨機制：出貨後 X 天未確認自動完成訂單並放款（排程任務）— 已修復 sellerId Bug 和 source_transaction Bug
+- [x] 申訴證據上傳功能：買家申訴時可上傳圖片/影片至 S3，管理員可在爭議頁面查看（含影片預覽）

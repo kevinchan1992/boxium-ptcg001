@@ -266,7 +266,7 @@ export function startAutoCompleteOrdersScheduler() {
     '0 * * * *', // Every hour at :00
     async () => {
       try {
-        const { getDb, getSellerProfileByUserId } = await import('./db');
+        const { getDb, getSellerProfileById } = await import('./db');
         const { marketplaceOrders } = await import('../drizzle/schema_new');
         const { and, eq, lte, isNotNull } = await import('drizzle-orm');
         const { createNotification } = await import('./db/notifications');
@@ -314,62 +314,78 @@ export function startAutoCompleteOrdersScheduler() {
 
             // Trigger Stripe Transfer payout if C2C order
             if (order.sellerType === 'seller' && order.sellerId) {
-              const sellerProfile = await getSellerProfileByUserId(order.sellerId);
+              // IMPORTANT: order.sellerId = sellerProfiles.id, NOT users.id
+              const sellerProfile = await getSellerProfileById(order.sellerId);
+              const sellerUserId = sellerProfile?.userId;
               if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === 'active') {
                 try {
                   const Stripe = (await import('stripe')).default;
                   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
                   const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
+                  // Get Charge ID from PaymentIntent (source_transaction requires ch_xxx, not pi_xxx)
+                  let chargeId: string | undefined;
+                  if (order.stripePaymentIntentId) {
+                    try {
+                      const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, { expand: ['latest_charge'] });
+                      chargeId = typeof pi.latest_charge === 'string' ? pi.latest_charge : (pi.latest_charge as any)?.id;
+                    } catch { /* ignore, transfer without source_transaction */ }
+                  }
                   const transfer = await stripe.transfers.create({
                     amount: receivable,
                     currency: 'hkd',
                     destination: sellerProfile.stripeConnectId,
-                    ...(order.stripePaymentIntentId ? { source_transaction: order.stripePaymentIntentId } : {}),
+                    ...(chargeId ? { source_transaction: chargeId } : {}),
                     metadata: { order_no: order.orderNo, order_id: order.id.toString(), auto_completed: 'true', trigger: 'auto_complete_14d' },
                   });
                   await db.update(marketplaceOrders)
                     .set({ payoutStatus: 'paid', stripeTransferId: transfer.id })
                     .where(eq(marketplaceOrders.id, order.id));
-                  // Notify seller: Stripe payout transferred
-                  await createNotification({
-                    userId: order.sellerId,
-                    type: 'trade',
-                    title: '款項已自動轉帳 💰',
-                    body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨），HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
-                    linkUrl: '/seller',
-                  }).catch(() => {});
-                  // Send auto-completed email to seller
-                  try {
-                    const { sendOrderEmail, buildOrderAutoCompletedSellerEmail, getOrderEmailData } = await import('./emailService');
-                    const emailData = await getOrderEmailData(order);
-                    const { subject, html } = buildOrderAutoCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
-                    await sendOrderEmail({ userId: order.sellerId, subject, html });
-                  } catch (emailErr: any) {
-                    console.warn(`[AutoComplete] Seller email failed for order ${order.orderNo}:`, emailErr.message);
+                  // Notify seller: Stripe payout transferred (use sellerUserId = users.id)
+                  if (sellerUserId) {
+                    await createNotification({
+                      userId: sellerUserId,
+                      type: 'trade',
+                      title: '款項已自動轉帳 💰',
+                      body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨），HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
+                      linkUrl: '/seller',
+                    }).catch(() => {});
+                    // Send auto-completed email to seller
+                    try {
+                      const { sendOrderEmail, buildOrderAutoCompletedSellerEmail, getOrderEmailData } = await import('./emailService');
+                      const emailData = await getOrderEmailData(order);
+                      const { subject, html } = buildOrderAutoCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
+                      await sendOrderEmail({ userId: sellerUserId, subject, html });
+                    } catch (emailErr: any) {
+                      console.warn(`[AutoComplete] Seller email failed for order ${order.orderNo}:`, emailErr.message);
+                    }
                   }
                 } catch (err: any) {
                   console.error(`[AutoComplete] Stripe transfer failed for order ${order.orderNo}:`, err.message);
                   await db.update(marketplaceOrders)
                     .set({ payoutStatus: 'failed', stripeTransferError: err.message })
                     .where(eq(marketplaceOrders.id, order.id));
-                  // Notify seller: payout failed
-                  await createNotification({
-                    userId: order.sellerId,
-                    type: 'trade',
-                    title: '訂單自動完成，款項轉帳失敗 ⚠️',
-                    body: `訂單 ${order.orderNo} 已自動完成，但款項轉帳失敗，請聯絡客服處理。`,
-                    linkUrl: '/seller',
-                  }).catch(() => {});
+                  // Notify seller: payout failed (use sellerUserId = users.id)
+                  if (sellerUserId) {
+                    await createNotification({
+                      userId: sellerUserId,
+                      type: 'trade',
+                      title: '訂單自動完成，款項轉帳失敗 ⚠️',
+                      body: `訂單 ${order.orderNo} 已自動完成，但款項轉帳失敗，請聯絡客服處理。`,
+                      linkUrl: '/seller',
+                    }).catch(() => {});
+                  }
                 }
               } else {
                 // Seller has no Stripe Connect or not active - notify them to contact admin
-                await createNotification({
-                  userId: order.sellerId,
-                  type: 'trade',
-                  title: '訂單已自動完成 ✅',
-                  body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨）。款項將由平台管理員安排轉帳，請留意後續通知。`,
-                  linkUrl: '/seller',
-                }).catch(() => {});
+                if (sellerUserId) {
+                  await createNotification({
+                    userId: sellerUserId,
+                    type: 'trade',
+                    title: '訂單已自動完成 ✅',
+                    body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨）。款項將由平台管理員安排轉帳，請留意後續通知。`,
+                    linkUrl: '/seller',
+                  }).catch(() => {});
+                }
               }
             }
             console.log(`[AutoComplete] Order ${order.orderNo} auto-completed`);
@@ -405,7 +421,7 @@ export function startShippingReminderScheduler() {
     '30 * * * *', // Every hour at :30
     async () => {
       try {
-        const { getDb, getSellerProfileByUserId } = await import('./db');
+        const { getDb, getSellerProfileById } = await import('./db');
         const { marketplaceOrders } = await import('../drizzle/schema_new');
         const { and, eq, lte, isNull, or } = await import('drizzle-orm');
         const { createNotification } = await import('./db/notifications');
@@ -442,15 +458,18 @@ export function startShippingReminderScheduler() {
               .set({ shippingReminderSentAt: now })
               .where(eq(marketplaceOrders.id, order.id));
 
-            // Notify seller
+            // Notify seller (order.sellerId = sellerProfiles.id, must resolve to users.id)
             if (order.sellerId) {
-              await createNotification({
-                userId: order.sellerId,
-                type: 'trade',
-                title: '⏰ 請盡快安排出貨',
-                body: `訂單 ${order.orderNo} 已付款超過 3 天，請盡快安排出貨並填寫追蹤號碼，以維護良好的賣家評分。`,
-                linkUrl: '/seller',
-              }).catch(() => {});
+              const sellerProf = await getSellerProfileById(order.sellerId);
+              if (sellerProf?.userId) {
+                await createNotification({
+                  userId: sellerProf.userId,
+                  type: 'trade',
+                  title: '⏰ 請盡快安排出貨',
+                  body: `訂單 ${order.orderNo} 已付款超過 3 天，請盡快安排出貨並填寫追蹤號碼，以維護良好的賣家評分。`,
+                  linkUrl: '/seller',
+                }).catch(() => {});
+              }
             }
 
             // Notify admin
@@ -653,7 +672,7 @@ export function startPaymentTimeoutCancelScheduler() {
     '30 * * * *', // Every hour at :30
     async () => {
       try {
-        const { getDb } = await import('./db');
+        const { getDb, getSellerProfileById } = await import('./db');
         const { marketplaceOrders, marketplaceOrderItems, marketplaceListings } = await import('../drizzle/schema_new');
         const { and, eq, lt } = await import('drizzle-orm');
         const { createNotification } = await import('./db/notifications');
@@ -709,15 +728,19 @@ export function startPaymentTimeoutCancelScheduler() {
               relatedId: order.id,
             }).catch(() => {});
             // Notify seller (only if it's a C2C listing with a seller)
+            // IMPORTANT: order.sellerId = sellerProfiles.id, NOT users.id
             if (order.sellerId != null) {
-              await createNotification({
-                userId: order.sellerId,
-                type: 'order',
-                title: '買家未付款，訂單已取消',
-                body: `訂單 #${order.orderNo} 因買家超過 24 小時未完成付款，已自動取消，商品已重新上架。`,
-                linkUrl: '/seller',
-                relatedId: order.id,
-              }).catch(() => {});
+              const sellerProf = await getSellerProfileById(order.sellerId);
+              if (sellerProf?.userId) {
+                await createNotification({
+                  userId: sellerProf.userId,
+                  type: 'order',
+                  title: '買家未付款，訂單已取消',
+                  body: `訂單 #${order.orderNo} 因買家超過 24 小時未完成付款，已自動取消，商品已重新上架。`,
+                  linkUrl: '/seller',
+                  relatedId: order.id,
+                }).catch(() => {});
+              }
             }
             console.log(`[PaymentTimeout] Cancelled order ${order.orderNo} (id: ${order.id})`);
           } catch (err) {

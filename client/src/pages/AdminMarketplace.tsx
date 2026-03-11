@@ -1674,19 +1674,33 @@ function DisputesTab() {
                 <p className="font-medium text-red-700 mb-1">爭議原因：</p>
                 <p className="text-gray-700">{selectedDispute.disputeReason}</p>
               </div>
-              {/* Evidence Images */}
+              {/* Evidence Images / Videos */}
               {selectedDispute.disputeEvidenceUrls && (() => {
                 try {
                   const urls: string[] = JSON.parse(selectedDispute.disputeEvidenceUrls);
                   if (urls.length > 0) return (
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-700">買家提供的截圖證據：</p>
+                      <p className="text-sm font-medium text-gray-700">買家提供的證據：</p>
                       <div className="flex flex-wrap gap-2">
-                        {urls.map((url, i) => (
-                          <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-md overflow-hidden border border-border hover:opacity-80 transition-opacity">
-                            <img src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />
-                          </a>
-                        ))}
+                        {urls.map((url, i) => {
+                          // Detect video by URL extension
+                          const isVideo = /\.(mp4|webm|mov|avi)$/i.test(url);
+                          return isVideo ? (
+                            <div key={i} className="relative w-32 h-24 rounded-md overflow-hidden border border-border bg-black">
+                              <video
+                                src={url}
+                                className="w-full h-full object-cover"
+                                controls
+                                playsInline
+                              />
+                              <a href={url} target="_blank" rel="noopener noreferrer" className="absolute top-0.5 right-0.5 bg-black/60 text-white text-xs px-1 rounded hover:bg-black/80">開新標籤</a>
+                            </div>
+                          ) : (
+                            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-md overflow-hidden border border-border hover:opacity-80 transition-opacity">
+                              <img src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />
+                            </a>
+                          );
+                        })}
                       </div>
                     </div>
                   );
