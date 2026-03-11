@@ -429,8 +429,11 @@ export const marketplaceRouter = router({
       });
       // Handle payout for C2C orders - Separate Charges and Transfers mode
       // Funds were held in platform account; now transfer to seller after buyer confirms receipt
+      // NOTE: order.sellerId = sellerProfiles.id (NOT users.id)
+      let sellerUserIdForNotify: number | null = null;
       if (order.sellerType === "seller" && order.sellerId) {
-        const sellerProfile = await getSellerProfileByUserId(order.sellerId);
+        const sellerProfile = await getSellerProfileById(order.sellerId); // FIX: use getSellerProfileById, not ByUserId
+        sellerUserIdForNotify = sellerProfile?.userId ?? null;
         if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
           if (order.stripePaymentIntentId) {
             try {
@@ -438,26 +441,33 @@ export const marketplaceRouter = router({
               const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
               // Separate Charges and Transfers: manually transfer seller's receivable amount
               const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
-              const transfer = await stripe.transfers.create({
+              // source_transaction requires Charge ID (ch_xxx), NOT Payment Intent ID (pi_xxx)
+              // Retrieve the latest charge from the PaymentIntent
+              const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, { expand: ["latest_charge"] });
+              const chargeId = typeof pi.latest_charge === "string" ? pi.latest_charge : (pi.latest_charge as any)?.id;
+              const transferPayload: any = {
                 amount: receivable,
                 currency: "hkd",
                 destination: sellerProfile.stripeConnectId,
-                source_transaction: order.stripePaymentIntentId, // links transfer to original charge
                 metadata: { order_no: order.orderNo, order_id: order.id.toString(), trigger: "buyer_confirmed" },
-              });
+              };
+              if (chargeId) transferPayload.source_transaction = chargeId;
+              const transfer = await stripe.transfers.create(transferPayload);
               await updateMarketplaceOrder(input.orderId, {
                 payoutStatus: "paid",
                 stripeTransferId: transfer.id,
               });
               console.log(`[Payout] Transfer ${transfer.id} (HKD ${(receivable/100).toFixed(2)}) to seller ${sellerProfile.stripeConnectId} for order ${order.orderNo}`);
-              // Notify seller of payout
-              await createNotification({
-                userId: order.sellerId,
-                type: "trade",
-                title: "款項已放出 💰",
-                body: `訂單 ${order.orderNo} 買家已確認收貨，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
-                linkUrl: "/seller",
-              }).catch(() => {});
+              // Notify seller of payout (use sellerProfile.userId, NOT order.sellerId)
+              if (sellerUserIdForNotify) {
+                await createNotification({
+                  userId: sellerUserIdForNotify,
+                  type: "trade",
+                  title: "款項已放出 💰",
+                  body: `訂單 ${order.orderNo} 買家已確認收貨，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
+                  linkUrl: "/seller",
+                }).catch(() => {});
+              }
             } catch (err: any) {
               console.error("[Payout] Stripe transfer failed:", err);
               await updateMarketplaceOrder(input.orderId, {
@@ -478,15 +488,15 @@ export const marketplaceRouter = router({
           priceHkd: emailData.priceHkd,
         });
         await sendOrderEmail({ userId: order.buyerId, subject: buyerSubject, html: buyerHtml });
-        // Send completed email to seller (C2C only)
-        if (order.sellerType === "seller" && order.sellerId) {
+        // Send completed email to seller (C2C only) - use sellerProfile.userId, NOT order.sellerId
+        if (order.sellerType === "seller" && sellerUserIdForNotify) {
           const { subject: sellerSubject, html: sellerHtml } = buildOrderCompletedSellerEmail({
             orderNo: order.orderNo,
             itemName: emailData.itemName,
             priceHkd: emailData.priceHkd,
             receivableHkd: emailData.receivableHkd,
           });
-          await sendOrderEmail({ userId: order.sellerId, subject: sellerSubject, html: sellerHtml });
+          await sendOrderEmail({ userId: sellerUserIdForNotify, subject: sellerSubject, html: sellerHtml });
         }
       } catch (emailErr: any) {
         console.warn("[Order] Completed email failed:", emailErr.message);
@@ -1066,15 +1076,18 @@ export const marketplaceRouter = router({
         body: `訂單 ${order.orderNo} 的支付寶 HK 付款已由管理員確認，訂單現在進入處理中。${input.note ? `備註：${input.note}` : ""}`,
         linkUrl: `/orders/${order.orderNo}`,
       }).catch(() => {});
-      // Notify seller of new order
+      // Notify seller of new order (use sellerProfile.userId, NOT order.sellerId)
       if (order.sellerId) {
-        await createNotification({
-          userId: order.sellerId,
-          type: "trade",
-          title: "新訂單已付款 🎉",
-          body: `訂單 ${order.orderNo} 買家已完成付款，請盡快安排出貨。`,
-          linkUrl: "/seller",
-        }).catch(() => {});
+        const sellerProf = await getSellerProfileById(order.sellerId);
+        if (sellerProf?.userId) {
+          await createNotification({
+            userId: sellerProf.userId,
+            type: "trade",
+            title: "新訂單已付款 🎉",
+            body: `訂單 ${order.orderNo} 買家已完成付款，請盡快安排出貨。`,
+            linkUrl: "/seller",
+          }).catch(() => {});
+        }
       }
       return { success: true };
     }),
@@ -1106,15 +1119,18 @@ export const marketplaceRouter = router({
             body: `訂單 ${order.orderNo} 的支付寶 HK 付款已由管理員確認，訂單現在進入處理中。${input.note ? `備註：${input.note}` : ""}`,
             linkUrl: `/orders/${order.orderNo}`,
           }).catch(() => {});
-          // Notify seller of new order
+          // Notify seller of new order (use sellerProfile.userId, NOT order.sellerId)
           if (order.sellerId) {
-            await createNotification({
-              userId: order.sellerId,
-              type: "trade",
-              title: "新訂單已付款 🎉",
-              body: `訂單 ${order.orderNo} 買家已完成支付寶 HK 付款，請盡快安排出貨。`,
-              linkUrl: "/seller",
-            }).catch(() => {});
+            const batchSellerProf = await getSellerProfileById(order.sellerId);
+            if (batchSellerProf?.userId) {
+              await createNotification({
+                userId: batchSellerProf.userId,
+                type: "trade",
+                title: "新訂單已付款 🎉",
+                body: `訂單 ${order.orderNo} 買家已完成支付寶 HK 付款，請盡快安排出貨。`,
+                linkUrl: "/seller",
+              }).catch(() => {});
+            }
           }
           results.push({ orderId, success: true });
         } catch (err: any) {
@@ -1167,6 +1183,33 @@ export const marketplaceRouter = router({
           linkUrl: `/orders/${order.orderNo}`,
         }).catch(err => console.warn("[Admin] Failed to notify buyer of status change:", err));
       }
+      // If admin manually completes a C2C order, trigger Stripe payout (Bug 14 fix)
+      if (input.orderStatus === "completed" && order.sellerType === "seller" && order.sellerId) {
+        const adminCompleteSellerProf = await getSellerProfileById(order.sellerId);
+        if (adminCompleteSellerProf?.stripeConnectId && adminCompleteSellerProf.stripeConnectStatus === "active" && order.stripePaymentIntentId) {
+          try {
+            const Stripe = (await import("stripe")).default;
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+            const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
+            // source_transaction requires Charge ID (ch_xxx), NOT Payment Intent ID (pi_xxx)
+            const adminPi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, { expand: ["latest_charge"] });
+            const adminChargeId = typeof adminPi.latest_charge === "string" ? adminPi.latest_charge : (adminPi.latest_charge as any)?.id;
+            const adminTransferPayload: any = {
+              amount: receivable,
+              currency: "hkd",
+              destination: adminCompleteSellerProf.stripeConnectId,
+              metadata: { order_no: order.orderNo, trigger: "admin_completed" },
+            };
+            if (adminChargeId) adminTransferPayload.source_transaction = adminChargeId;
+            const transfer = await stripe.transfers.create(adminTransferPayload);
+            await updateMarketplaceOrder(input.orderId, { payoutStatus: "paid", stripeTransferId: transfer.id });
+            console.log(`[Admin] Payout transfer ${transfer.id} for order ${order.orderNo}`);
+          } catch (err: any) {
+            console.error("[Admin] Stripe transfer failed on complete:", err.message);
+            await updateMarketplaceOrder(input.orderId, { payoutStatus: "failed", stripeTransferError: err.message });
+          }
+        }
+      }
       // Send email for key status changes
       if (["shipped", "completed", "cancelled"].includes(input.orderStatus)) {
         try {
@@ -1178,9 +1221,13 @@ export const marketplaceRouter = router({
           } else if (input.orderStatus === "completed") {
             const { subject: bs, html: bh } = buildOrderCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
             await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh });
+            // Use sellerProfile.userId, NOT order.sellerId
             if (order.sellerType === "seller" && order.sellerId) {
-              const { subject: ss, html: sh } = buildOrderCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
-              await sendOrderEmail({ userId: order.sellerId, subject: ss, html: sh });
+              const adminEmailSellerProf = await getSellerProfileById(order.sellerId);
+              if (adminEmailSellerProf?.userId) {
+                const { subject: ss, html: sh } = buildOrderCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
+                await sendOrderEmail({ userId: adminEmailSellerProf.userId, subject: ss, html: sh });
+              }
             }
           } else if (input.orderStatus === "cancelled") {
             const { subject, html } = buildOrderCancelledEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, note: input.note });
@@ -1703,15 +1750,18 @@ All three checks must pass for verified to be true. Respond with JSON only match
         title: "新爭議申請 ⚠️",
         content: `訂單 ${order.orderNo} 買家申請爭議。原因：${input.reason}`,
       }).catch(() => {});
-      // Notify seller
+      // Notify seller (use sellerProfile.userId, NOT order.sellerId)
       if (order.sellerId) {
-        await createNotification({
-          userId: order.sellerId,
-          type: "trade",
-          title: "訂單爭議申請 ⚠️",
-          body: `訂單 ${order.orderNo} 買家已申請爭議，請等待管理員處理。`,
-          linkUrl: "/seller",
-        }).catch(() => {});
+        const disputeNotifySellerProf = await getSellerProfileById(order.sellerId);
+        if (disputeNotifySellerProf?.userId) {
+          await createNotification({
+            userId: disputeNotifySellerProf.userId,
+            type: "trade",
+            title: "訂單爭議申請 ⚠️",
+            body: `訂單 ${order.orderNo} 買家已申請爭議，請等待管理員處理。`,
+            linkUrl: "/seller",
+          }).catch(() => {});
+        }
       }
       return { success: true };
     }),
@@ -1806,24 +1856,34 @@ All three checks must pass for verified to be true. Respond with JSON only match
         disputeResolutionHistory: newHistory,
         payoutStatus: input.outcome === "release_seller" ? "processing" : "failed",
       });
-      // If refunding buyer, trigger Stripe Refund
-      if (input.outcome === "refund_buyer" && order.stripePaymentIntentId) {
-        try {
-          const Stripe = (await import("stripe")).default;
-          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-          await stripe.refunds.create({
-            payment_intent: order.stripePaymentIntentId,
-            metadata: { order_no: order.orderNo, dispute_resolved: "refund_buyer" },
-          });
-          console.log(`[Dispute] Stripe refund created for order ${order.orderNo}`);
-        } catch (err: any) {
-          console.error(`[Dispute] Stripe refund failed for order ${order.orderNo}:`, err.message);
+      // If refunding buyer, trigger Stripe Refund and restore listing to active
+      if (input.outcome === "refund_buyer") {
+        // Restore listing to active so it can be purchased again
+        if (order.listingId) {
+          await updateListing(order.listingId, { status: "active" });
+          console.log(`[Dispute] Listing ${order.listingId} restored to active after refund`);
+        }
+        if (order.stripePaymentIntentId) {
+          try {
+            const Stripe = (await import("stripe")).default;
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+            await stripe.refunds.create({
+              payment_intent: order.stripePaymentIntentId,
+              metadata: { order_no: order.orderNo, dispute_resolved: "refund_buyer" },
+            });
+            console.log(`[Dispute] Stripe refund created for order ${order.orderNo}`);
+          } catch (err: any) {
+            console.error(`[Dispute] Stripe refund failed for order ${order.orderNo}:`, err.message);
+          }
         }
       }
       // If releasing to seller, trigger payout
-      if (input.outcome === "release_seller" && order.sellerType === "seller" && order.sellerId) {
-        const sellerProfile = await getSellerProfileByUserId(order.sellerId);
-        if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
+      // NOTE: order.sellerId = sellerProfiles.id (NOT users.id)
+      let disputeSellerUserId: number | null = null;
+      if (order.sellerType === "seller" && order.sellerId) {
+        const sellerProfile = await getSellerProfileById(order.sellerId); // FIX: use getSellerProfileById
+        disputeSellerUserId = sellerProfile?.userId ?? null;
+        if (input.outcome === "release_seller" && sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
           try {
             const Stripe = (await import("stripe")).default;
             const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
@@ -1848,10 +1908,10 @@ All three checks must pass for verified to be true. Respond with JSON only match
         body: `訂單 ${order.orderNo} 的爭議已由管理員處理。結果：${input.resolution}`,
         linkUrl: "/orders",
       }).catch(() => {});
-      // Notify seller
-      if (order.sellerId) {
+      // Notify seller (use sellerProfile.userId, NOT order.sellerId)
+      if (disputeSellerUserId) {
         await createNotification({
-          userId: order.sellerId,
+          userId: disputeSellerUserId,
           type: "trade",
           title: "爭議已處理 ✅",
           body: `訂單 ${order.orderNo} 的爭議已由管理員處理。`,
@@ -1872,12 +1932,12 @@ All three checks must pass for verified to be true. Respond with JSON only match
           });
           await sendOrderEmail({ userId: order.buyerId, subject, html });
         } else if (input.outcome === "release_seller") {
-          // Completed email to buyer and seller
+          // Completed email to buyer and seller (use sellerProfile.userId, NOT order.sellerId)
           const { subject: bs, html: bh } = buildOrderCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
           await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh });
-          if (order.sellerId) {
+          if (disputeSellerUserId) {
             const { subject: ss, html: sh } = buildOrderCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
-            await sendOrderEmail({ userId: order.sellerId, subject: ss, html: sh });
+            await sendOrderEmail({ userId: disputeSellerUserId, subject: ss, html: sh });
           }
         }
       } catch (emailErr: any) {

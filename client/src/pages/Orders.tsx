@@ -161,6 +161,51 @@ function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: stri
   );
 }
 
+function BuyerCancelButton({ orderId, onSuccess }: { orderId: number; onSuccess: () => void }) {
+  const [showDialog, setShowDialog] = useState(false);
+  const cancelMutation = trpc.marketplace.buyerCancelOrder.useMutation({
+    onSuccess: () => {
+      toast.success("訂單已取消");
+      setShowDialog(false);
+      onSuccess();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        className="text-xs border-gray-300 text-gray-600 hover:bg-gray-50"
+        onClick={() => setShowDialog(true)}
+      >
+        <XCircle className="w-3.5 h-3.5 mr-1" />取消訂單
+      </Button>
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-sm bg-white text-gray-900">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-gray-900">確認取消訂單</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600 py-2">確定要取消此訂單？取消後商品將重新上架。</p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowDialog(false)}>返回</Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-red-300 text-red-600 hover:bg-red-50"
+              disabled={cancelMutation.isPending}
+              onClick={() => cancelMutation.mutate({ orderId })}
+            >
+              {cancelMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+              確認取消
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -265,7 +310,8 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
   })();
 
   const canConfirm = order.orderStatus === "shipped" || order.orderStatus === "delivered";
-  const canDispute = ["shipped", "delivered", "payment_received", "processing", "paid_held"].includes(order.orderStatus);
+  // NOTE: paid_held is NOT in backend allowedStatuses for openDispute, so removed here to match backend
+  const canDispute = ["shipped", "delivered", "payment_received", "processing"].includes(order.orderStatus);
   const isCompleted = order.orderStatus === "completed";
   const isPending = order.orderStatus === "pending_payment";
   const isDisputed = order.orderStatus === "disputed";
@@ -356,11 +402,14 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
             </span>
           )}
           {isPending && (
-            <Link href={`/orders/${order.orderNo}`}>
-              <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: "#06038d" }}>
-                <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
-              </Button>
-            </Link>
+            <>
+              <Link href={`/orders/${order.orderNo}`}>
+                <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: "#06038d" }}>
+                  <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
+                </Button>
+              </Link>
+              <BuyerCancelButton orderId={order.id} onSuccess={() => utils.marketplace.getMyOrders.invalidate()} />
+            </>
           )}
           {isWaitingShipment && (
             <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1">

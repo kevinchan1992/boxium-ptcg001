@@ -4427,3 +4427,78 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 - [x] Marketplace 商品 OG 圖片合成（BOXIUM logo + 價格標籤 + 狀態標籤 + 品牌標語）
 - [x] 確認卡牌 OG 圖片有 BOXIUM logo（左上角黃色邊框），已正常顯示
+
+
+---
+
+## 🛒 商城功能全面測試與修復（2026-03-11）
+
+### 測試範圍
+以買家、賣家、管理員三個角色，全面測試商城功能，包括 1-3 筆成交、申訴流程、支付流程。
+
+### 發現問題與修復狀態
+
+#### 🔴 嚴重 Bug（已修復）
+
+- [x] **Bug 1: confirmReceipt 使用錯誤的 sellerId 查找賣家**
+  - 問題：`getSellerProfileByUserId(order.sellerId)` 但 `order.sellerId` 是 `sellerProfiles.id`，不是 `users.id`
+  - 修復：改為 `getSellerProfileById(order.sellerId)`
+  - 影響：確認收貨後 Stripe 轉帳失敗，賣家無法收款
+
+- [x] **Bug 2: adminResolveDispute 使用錯誤的 sellerId 查找賣家**
+  - 問題：同 Bug 1，爭議解決時 Stripe 轉帳和通知發送到錯誤用戶
+  - 修復：改為 `getSellerProfileById(order.sellerId)`，並使用 `sellerProfile.userId` 發送通知
+
+- [x] **Bug 3: adminConfirmAlipayPayment 通知發送到錯誤用戶**
+  - 問題：`createNotification({ userId: order.sellerId })` 但 `order.sellerId` 是 `sellerProfiles.id`
+  - 修復：先取 `getSellerProfileById(order.sellerId).userId` 再發通知
+
+- [x] **Bug 4: adminBatchConfirmAlipayPayment 通知發送到錯誤用戶**
+  - 問題：同 Bug 3
+  - 修復：同 Bug 3
+
+- [x] **Bug 5: openDispute 通知發送到錯誤用戶**
+  - 問題：同 Bug 3
+  - 修復：同 Bug 3
+
+- [x] **Bug 6: adminUpdateOrderStatus completed 狀態通知/郵件發送到錯誤用戶**
+  - 問題：`sendOrderEmail({ userId: order.sellerId })` 但 `order.sellerId` 是 `sellerProfiles.id`
+  - 修復：使用 `getSellerProfileById(order.sellerId).userId`
+
+- [x] **Bug 7: Stripe Webhook 通知發送到錯誤用戶**
+  - 問題：同 Bug 3，webhook 中 `createNotification({ userId: order.sellerId })`
+  - 修復：同 Bug 3
+
+- [x] **Bug 13: Stripe 轉帳使用 Payment Intent ID 作為 source_transaction**
+  - 問題：`source_transaction` 需要 Charge ID（`ch_xxx`），但系統傳入 Payment Intent ID（`pi_xxx`）
+  - 修復：先從 PaymentIntent 取得 `latest_charge`，再用 Charge ID 作為 `source_transaction`
+  - 影響：confirmReceipt 和 adminUpdateOrderStatus 的 Stripe 轉帳均受影響
+
+#### 🟡 中等 Bug（已修復）
+
+- [x] **Bug 8: getSellerOrderItems 缺少 disputeReason 等爭議欄位**
+  - 問題：賣家在 SellerDashboard 看不到申訴原因和結果
+  - 修復：在 `getSellerOrderItems` 查詢中加入 `disputeOpenedAt, disputeReason, disputeEvidenceUrls, disputeResolution, disputeResolvedAt`
+
+- [x] **Bug 9: SellerDashboard 沒有顯示爭議訂單詳情**
+  - 問題：賣家無法在訂單列表看到申訴原因和處理結果
+  - 修復：加入爭議狀態顯示區塊（申訴原因、申訴時間、爭議結果）
+
+- [x] **Bug 10: 前後端申訴狀態不一致（paid_held）**
+  - 問題：前端 `canDispute` 包含 `paid_held`，但後端 `openDispute` 不允許此狀態
+  - 修復：前端移除 `paid_held` 狀態，與後端保持一致
+
+- [x] **Bug 11: adminResolveDispute 退款時未恢復 listing 狀態**
+  - 問題：退款給買家後，商品 listing 仍為 `sold`，無法重新購買
+  - 修復：退款時調用 `updateListing(order.listingId, { status: "active" })`
+
+- [x] **Bug 14: adminUpdateOrderStatus 手動完成訂單未觸發 Stripe 轉帳**
+  - 問題：管理員手動將訂單設為 `completed` 時，沒有觸發賣家 Stripe 轉帳
+  - 修復：加入 Stripe 轉帳邏輯（同 confirmReceipt 的修復）
+
+#### 🟢 輕微問題（已修復）
+
+- [x] **Bug 12: Orders.tsx 缺少買家取消待付款訂單的按鈕**
+  - 問題：後端有 `buyerCancelOrder` API，但訂單列表頁沒有取消按鈕
+  - 修復：加入 `BuyerCancelButton` 組件，在 `pending_payment` 狀態顯示取消按鈕
+

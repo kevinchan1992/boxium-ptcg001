@@ -125,16 +125,19 @@ async function startServer() {
           } catch (emailErr: any) {
             console.warn('[Webhook] Order confirmed email failed:', emailErr.message);
           }
-          // Notify seller of new paid order
+          // Notify seller of new paid order (use sellerProfile.userId, NOT order.sellerId)
           if (order.sellerId) {
-            await createNotification({
-              userId: order.sellerId,
-              type: 'trade',
-              title: '新訂單已付款 🎉',
-              body: `訂單 ${order.orderNo} 買家已完成 Stripe 付款，請盡快安排出貨。`,
-
-              linkUrl: "/seller",
-            }).catch(() => {});
+            const { getSellerProfileById } = await import('../db');
+            const webhookSellerProf = await getSellerProfileById(order.sellerId);
+            if (webhookSellerProf?.userId) {
+              await createNotification({
+                userId: webhookSellerProf.userId,
+                type: 'trade',
+                title: '新訂單已付款 🎉',
+                body: `訂單 ${order.orderNo} 買家已完成 Stripe 付款，請盡快安排出貨。`,
+                linkUrl: "/seller",
+              }).catch(() => {});
+            }
           }
         }
       } else if (event.type === "payment_intent.payment_failed") {
