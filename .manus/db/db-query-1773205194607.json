@@ -1,0 +1,120 @@
+{
+  "query": "SELECT id, orderNo, orderStatus, sellerType, sellerId, buyerId, subtotalHkd, paymentMethod, trackingNumber FROM marketplaceOrders ORDER BY id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, orderNo, orderStatus, sellerType, sellerId, buyerId, subtotalHkd, paymentMethod, trackingNumber FROM marketplaceOrders ORDER BY id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "150001",
+      "orderNo": "BOXIUM-20260311-6785",
+      "orderStatus": "payment_received",
+      "sellerType": "platform",
+      "sellerId": "NULL",
+      "buyerId": "330001",
+      "subtotalHkd": "1000.00",
+      "paymentMethod": "alipay_hk",
+      "trackingNumber": "NULL"
+    },
+    {
+      "id": "120001",
+      "orderNo": "BOXIUM-20260310-9374",
+      "orderStatus": "cancelled",
+      "sellerType": "seller",
+      "sellerId": "1",
+      "buyerId": "330001",
+      "subtotalHkd": "100.00",
+      "paymentMethod": "stripe",
+      "trackingNumber": "NULL"
+    },
+    {
+      "id": "90002",
+      "orderNo": "BOXIUM-20260309-7593",
+      "orderStatus": "cancelled",
+      "sellerType": "seller",
+      "sellerId": "1",
+      "buyerId": "330001",
+      "subtotalHkd": "10.00",
+      "paymentMethod": "stripe",
+      "trackingNumber": "SF12345678"
+    },
+    {
+      "id": "90001",
+      "orderNo": "BOXIUM-20260309-3343",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "sellerId": "NULL",
+      "buyerId": "1",
+      "subtotalHkd": "4.00",
+      "paymentMethod": "stripe",
+      "trackingNumber": "NULL"
+    },
+    {
+      "id": "60002",
+      "orderNo": "BOXIUM-20260306-8982",
+      "orderStatus": "payment_received",
+      "sellerType": "platform",
+      "sellerId": "NULL",
+      "buyerId": "8",
+      "subtotalHkd": "1.00",
+      "paymentMethod": "alipay_hk",
+      "trackingNumber": "NULL"
+    },
+    {
+      "id": "60001",
+      "orderNo": "BOXIUM-20260306-4268",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "sellerId": "NULL",
+      "buyerId": "8",
+      "subtotalHkd": "4500.00",
+      "paymentMethod": "stripe",
+      "trackingNumber": "NULL"
+    },
+    {
+      "id": "30001",
+      "orderNo": "BOXIUM-20260305-8362",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "sellerId": "NULL",
+      "buyerId": "8",
+      "subtotalHkd": "4500.00",
+      "paymentMethod": "stripe",
+      "trackingNumber": "NULL"
+    },
+    {
+      "id": "3",
+      "orderNo": "BOXIUM-20260303-6773",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "sellerId": "NULL",
+      "buyerId": "1",
+      "subtotalHkd": "4500.00",
+      "paymentMethod": "stripe",
+      "trackingNumber": "NULL"
+    },
+    {
+      "id": "2",
+      "orderNo": "BOXIUM-20260303-7583",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "sellerId": "NULL",
+      "buyerId": "1",
+      "subtotalHkd": "4500.00",
+      "paymentMethod": "stripe",
+      "trackingNumber": "NULL"
+    },
+    {
+      "id": "1",
+      "orderNo": "BOXIUM-20260303-2333",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "sellerId": "NULL",
+      "buyerId": "1",
+      "subtotalHkd": "4500.00",
+      "paymentMethod": "stripe",
+      "trackingNumber": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torderNo\torderStatus\tsellerType\tsellerId\tbuyerId\tsubtotalHkd\tpaymentMethod\ttrackingNumber\n150001\tBOXIUM-20260311-6785\tpayment_received\tplatform\tNULL\t330001\t1000.00\talipay_hk\tNULL\n120001\tBOXIUM-20260310-9374\tcancelled\tseller\t1\t330001\t100.00\tstripe\tNULL\n90002\tBOXIUM-20260309-7593\tcancelled\tseller\t1\t330001\t10.00\tstripe\tSF12345678\n90001\tBOXIUM-20260309-3343\tcancelled\tplatform\tNULL\t1\t4.00\tstripe\tNULL\n60002\tBOXIUM-20260306-8982\tpayment_received\tplatform\tNULL\t8\t1.00\talipay_hk\tNULL\n60001\tBOXIUM-20260306-4268\tcancelled\tplatform\tNULL\t8\t4500.00\tstripe\tNULL\n30001\tBOXIUM-20260305-8362\tcancelled\tplatform\tNULL\t8\t4500.00\tstripe\tNULL\n3\tBOXIUM-20260303-6773\tcancelled\tplatform\tNULL\t1\t4500.00\tstripe\tNULL\n2\tBOXIUM-20260303-7583\tcancelled\tplatform\tNULL\t1\t4500.00\tstripe\tNULL\n1\tBOXIUM-20260303-2333\tcancelled\tplatform\tNULL\t1\t4500.00\tstripe\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1539
+}

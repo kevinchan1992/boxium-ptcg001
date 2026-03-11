@@ -487,7 +487,7 @@ export default function SellerDashboard() {
       <div className="text-center">
         <AlertCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
         <p className="text-lg font-medium">請先登入</p>
-        <Link href="/login"><Button className="mt-4">登入</Button></Link>
+        <Link href="/login"><Button className="mt-4 text-white font-bold" style={{ backgroundColor: "#06038d" }}>登入</Button></Link>
       </div>
     </div>
   );

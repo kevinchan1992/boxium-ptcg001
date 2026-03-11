@@ -1,0 +1,157 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "backgroundTasks"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "blogArticles"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "cards"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "categories"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "dataSourceHealth"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "dataSources"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "ebayListingsCache"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "emailVerificationTokens"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "firecrawlUsage"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "games"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "listingReports"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "marketTrends"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "marketplaceBanners"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "marketplaceListings"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "marketplaceOrderItems"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "marketplaceOrders"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "marketplacePayouts"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "marketplaceReviews"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "notifications"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "oauthAccounts"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "offers"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "passwordResetTokens"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "postShares"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "post_tags"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "post_versions"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "posts"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "priceHistory"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "priceUpdateSchedule"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "scheduleConfig"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "scheduleExecutionHistory"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "scheduledTasks"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "scraperPerformanceLogs"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "sealedProducts"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "searchStats"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "sellerProfiles"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "sessions"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "snkrdunkListingsCache"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "systemSettings"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "tags"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "trendingCardsCache"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "trendingRankingsCache"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "uploaded_images"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "userSearchLogs"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "userShippingAddresses"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "users"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "viewHistory"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "watchlist"
+    },
+    {
+      "Tables_in_Mua4eQ38uVnrovHUJBRepi": "wishlists"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_Mua4eQ38uVnrovHUJBRepi\n__drizzle_migrations\nbackgroundTasks\nblogArticles\ncards\ncategories\ndataSourceHealth\ndataSources\nebayListingsCache\nemailVerificationTokens\nfirecrawlUsage\ngames\nlistingReports\nmarketTrends\nmarketplaceBanners\nmarketplaceListings\nmarketplaceOrderItems\nmarketplaceOrders\nmarketplacePayouts\nmarketplaceReviews\nnotifications\noauthAccounts\noffers\npasswordResetTokens\npostShares\npost_tags\npost_versions\nposts\npriceHistory\npriceUpdateSchedule\nscheduleConfig\nscheduleExecutionHistory\nscheduledTasks\nscraperPerformanceLogs\nsealedProducts\nsearchStats\nsellerProfiles\nsessions\nsnkrdunkListingsCache\nsystemSettings\ntags\ntrendingCardsCache\ntrendingRankingsCache\nuploaded_images\nuserSearchLogs\nuserShippingAddresses\nusers\nviewHistory\nwatchlist\nwishlists\n",
+  "stderr": "",
+  "execution_time_ms": 1580
+}

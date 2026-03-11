@@ -4309,3 +4309,21 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 更新 i18n 顯示文字（zh-TW.json、en.json）
 - [x] 更新單元測試（43/43 通過）
 - [x] 儲存 checkpoint
+## 🛒 Marketplace 三角色流程全面完善
+- [x] 後端 Bug 修復：Admin 用戶查詢 platform 類型訂單（新增 getPlatformOrders 函數）
+- [x] getMySellerOrders 路由：Admin 用戶特殊處理，返回所有 platform 類型訂單
+- [x] markOrderShipped 後端：允許 paid_held 狀態也可以出貨（原只允許 processing/payment_received）
+- [x] adminUpdateOrderStatus 後端：支持填寫 trackingNumber 和 shippingMethod
+- [x] Orders.tsx（買家）：加入 paid_held 狀態標籤「已付款，等待出貨」
+- [x] Orders.tsx（買家）：isWaitingShipment 顯示「付款成功，等待賣家出貨」提示
+- [x] Orders.tsx（買家）：isPending 狀態顯示「前往付款」按鈕
+- [x] OrderDetail.tsx（買家）：paid_held/processing 狀態顯示「等待賣家出貨」提示
+- [x] SellerDashboard.tsx（賣家）：paid_held 狀態顯示「已付款，請出貨」標籤
+- [x] SellerDashboard.tsx（賣家）：paid_held/payment_received/processing 三種狀態均顯示出貨按鈕
+- [x] SellerDashboard.tsx（賣家）：出貨後顯示追蹤號碼和出貨日期
+- [x] SellerDashboard.tsx（賣家）：修復登入按鈕樣式為品牌藍色
+- [x] AdminMarketplace.tsx（Admin）：加入 paid_held 狀態標籤
+- [x] AdminMarketplace.tsx（Admin）：訂單管理 Dialog 加入收件資訊顯示（收件人/電話/地址）
+- [x] AdminMarketplace.tsx（Admin）：訂單管理 Dialog 加入出貨資料填寫區塊（物流方式+追蹤號碼）
+- [x] TypeScript 0 錯誤
+- [x] 儲存 checkpoint
