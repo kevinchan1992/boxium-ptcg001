@@ -20,7 +20,7 @@ import { serveStatic, setupVite } from "./vite";
 import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
-import { getListingById } from "../db";
+import { getListingById, getCardById, getSealedProductById } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -370,6 +370,69 @@ async function startServer() {
     } catch (error) {
       console.error("[PaymentProof] Error uploading proof:", error);
       res.status(500).json({ error: "Failed to upload payment proof" });
+    }
+  });
+
+  // ─── OG SSR: Card detail page for social crawlers ─────────────────────────
+  app.get("/card/:id", async (req, res, next) => {
+    const ua = (req.headers["user-agent"] || "").toLowerCase();
+    const isCrawler = /facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|googlebot|bingbot|applebot|pinterest|vkshare|w3c_validator|embedly|quora|outbrain|semrushbot|ahrefsbot/.test(ua);
+    if (!isCrawler) return next();
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return next();
+      // Try single card first, then sealed product
+      let cardName: string | null = null;
+      let cardImageUrl: string | null = null;
+      let cardDesc: string | null = null;
+      const card = await getCardById(id);
+      if (card) {
+        cardName = card.name || null;
+        cardImageUrl = card.imageUrl || null;
+        cardDesc = card.setName ? `${card.setName} | PSA 10 價格追蹤` : null;
+      } else {
+        const sealed = await getSealedProductById(id);
+        if (sealed) {
+          cardName = sealed.name || null;
+          cardImageUrl = sealed.imageUrl || null;
+          cardDesc = sealed.setName ? `${sealed.setName} | 卡盒價格追蹤` : null;
+        }
+      }
+      if (!cardName) return next();
+      const imageUrl = cardImageUrl || "https://boxiumptcg.manus.space/og-image.png";
+      const ogTitle = `${cardName} - BOXIUM PTCG`;
+      const ogDescription = cardDesc || `查看 ${cardName} 的最新 PSA 10 成交價格、價格趨勢與市場分析。`;
+      const pageUrl = `https://boxium.asia/card/${id}`;
+      let template: string;
+      if (process.env.NODE_ENV === "development") {
+        const clientTemplate = path.resolve(import.meta.dirname, "../..", "client", "index.html");
+        template = await fs.promises.readFile(clientTemplate, "utf-8");
+      } else {
+        const distTemplate = path.resolve(import.meta.dirname, "public", "index.html");
+        template = await fs.promises.readFile(distTemplate, "utf-8");
+      }
+      const ogTags = [
+        `<meta property="og:type" content="website" />`,
+        `<meta property="og:url" content="${pageUrl}" />`,
+        `<meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
+        `<meta property="og:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
+        `<meta property="og:image" content="${imageUrl}" />`,
+        `<meta property="og:image:width" content="1200" />`,
+        `<meta property="og:image:height" content="630" />`,
+        `<meta property="og:site_name" content="BOXIUM PTCG" />`,
+        `<meta name="twitter:card" content="summary_large_image" />`,
+        `<meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
+        `<meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
+        `<meta name="twitter:image" content="${imageUrl}" />`,
+        `<title>${ogTitle.replace(/<[^>]*>/g, '')}</title>`,
+      ].join("\n    ");
+      const injected = template
+        .replace(/<title>[^<]*<\/title>/, '')
+        .replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${ogTags}`);
+      res.status(200).set({ "Content-Type": "text/html" }).end(injected);
+    } catch (err) {
+      console.error("[OG SSR Card] Error:", err);
+      next();
     }
   });
 

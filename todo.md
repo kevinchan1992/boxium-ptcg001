@@ -4360,8 +4360,7 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 儲存 checkpoint
 
 ## 🔗 卡牌詳情頁動態 Open Graph 分享預覽圖片
-- [ ] 後端：新增 /api/og/:cardId 路由，返回卡牌的 og:image、og:title、og:description
-- [ ] 前端：卡牌詳情頁動態更新 document head 的 og:image（使用卡牌圖片 URL）
-- [ ] 前端：同步更新 og:title（卡牌名稱 - BOXIUM PTCG）和 og:description
-- [ ] 確認 WhatsApp/Facebook 分享預覽顯示卡牌圖片
-- [ ] TypeScript 0 錯誤並儲存 checkpoint
+- [x] 後端：新增 /card/:id OG SSR 路由，爆蟲偵測到爬蟲時返回包含卡牌圖片的動態 HTML
+- [x] 後端：對單卡和密封商品均支援，自動判斷卡牌類型
+- [x] 後端： og:image 使用卡牌圖片 URL，og:title 為卡牌名稱，og:description 為卡牌系列和價格追蹤資訊
+- [x] TypeScript 0 錯誤並儲存 checkpoint
