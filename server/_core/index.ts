@@ -21,6 +21,7 @@ import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoComplet
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import { getListingById, getCardById, getSealedProductById } from "../db";
+import { composeOgImage, getDefaultOgImageUrl } from "../ogImageComposer";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -373,6 +374,41 @@ async function startServer() {
     }
   });
 
+  // ─── OG Image Composer API: returns card image with BOXIUM logo watermark ────────
+  app.get("/api/og-image/:cardId", async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.cardId, 10);
+      if (isNaN(cardId)) return res.redirect(getDefaultOgImageUrl());
+
+      // Look up card image URL
+      let cardImageUrl: string | null = null;
+      const card = await getCardById(cardId);
+      if (card) {
+        cardImageUrl = card.imageUrl || null;
+      } else {
+        const sealed = await getSealedProductById(cardId);
+        if (sealed) cardImageUrl = sealed.imageUrl || null;
+      }
+
+      if (!cardImageUrl) return res.redirect(getDefaultOgImageUrl());
+
+      // Compose image with logo watermark
+      const composed = await composeOgImage(cardImageUrl);
+      if (!composed) return res.redirect(getDefaultOgImageUrl());
+
+      // Cache for 1 hour (3600s)
+      res.set({
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=3600",
+        "Content-Length": composed.length.toString(),
+      });
+      res.status(200).end(composed);
+    } catch (err) {
+      console.error("[OG Image API] Error:", err);
+      res.redirect(getDefaultOgImageUrl());
+    }
+  });
+
   // ─── OG SSR: Card detail page for social crawlers ─────────────────────────
   app.get("/card/:id", async (req, res, next) => {
     const ua = (req.headers["user-agent"] || "").toLowerCase();
@@ -399,7 +435,13 @@ async function startServer() {
         }
       }
       if (!cardName) return next();
-      const imageUrl = cardImageUrl || "https://boxiumptcg.manus.space/og-image.png";
+      // Use composed OG image with BOXIUM logo watermark
+      const origin = req.headers["x-forwarded-host"]
+        ? `https://${req.headers["x-forwarded-host"]}`
+        : (process.env.NODE_ENV === "production" ? "https://boxium.asia" : `https://${req.headers.host}`);
+      const imageUrl = cardImageUrl
+        ? `${origin}/api/og-image/${id}`
+        : getDefaultOgImageUrl();
       const ogTitle = `${cardName} - BOXIUM PTCG`;
       const ogDescription = cardDesc || `查看 ${cardName} 的最新 PSA 10 成交價格、價格趨勢與市場分析。`;
       const pageUrl = `https://boxium.asia/card/${id}`;
@@ -427,7 +469,9 @@ async function startServer() {
         `<title>${ogTitle.replace(/<[^>]*>/g, '')}</title>`,
       ].join("\n    ");
       const injected = template
-        .replace(/<title>[^<]*<\/title>/, '')
+        .replace(/<title>[^<]*<\/title>/, '') // remove existing title
+        .replace(/<meta\s+property="og:[^"]*"[^>]*\/>/g, '') // remove all og: meta tags
+        .replace(/<meta\s+name="twitter:[^"]*"[^>]*\/>/g, '') // remove all twitter: meta tags
         .replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${ogTags}`);
       res.status(200).set({ "Content-Type": "text/html" }).end(injected);
     } catch (err) {
@@ -498,6 +542,8 @@ async function startServer() {
       // Replace the default OG tags in the template
       const injected = template
         .replace(/<title>[^<]*<\/title>/, '') // remove existing title
+        .replace(/<meta\s+property="og:[^"]*"[^>]*\/>/g, '') // remove all og: meta tags
+        .replace(/<meta\s+name="twitter:[^"]*"[^>]*\/>/g, '') // remove all twitter: meta tags
         .replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${ogTags}`);
 
       res.status(200).set({ "Content-Type": "text/html" }).end(injected);

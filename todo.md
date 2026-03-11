@@ -4364,3 +4364,9 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 後端：對單卡和密封商品均支援，自動判斷卡牌類型
 - [x] 後端： og:image 使用卡牌圖片 URL，og:title 為卡牌名稱，og:description 為卡牌系列和價格追蹤資訊
 - [x] TypeScript 0 錯誤並儲存 checkpoint
+
+## 🖼️ OG 分享圖片加入 BOXIUM LOGO 水印
+- [x] 安裝 sharp 套件，確認 BOXIUM LOGO CDN URL
+- [x] 後端新增 /api/og-image/:cardId API，合成卡牌圖片 + 左上角 LOGO 水印
+- [x] 修改 OG SSR 路由，og:image 指向合成圖片 API
+- [x] TypeScript 0 錯誤並儲存 checkpoint
