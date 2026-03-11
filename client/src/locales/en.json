@@ -76,7 +76,7 @@
     "topRanking": "Top Ranking",
     "topRankingDesc": "Discover the hottest cards in the market, track investors' choices",
     "trendingCards": "Trending Cards",
-    "trendingCardsDesc": "Based on PSA 10 graded 7-day min/max transaction price change",
+    "trendingCardsDesc": "Based on PSA 10 this-week vs last-week weighted average price change (outlier-filtered)",
     "dataSourcesDesc": "Integrate the world's leading card trading platforms to ensure data accuracy and real-time",
     "snkrdunkDesc": "Japan's leading card trading platform, providing the latest PSA 10 graded card transaction data and market trend analysis",
     "realtimeData": "Real-time transaction data",
@@ -213,7 +213,7 @@
     "errorMessage": "Error Message",
     "trendingCards": {
       "title": "Trending Cards Management",
-      "description": "Manage TOP 5 trending cards displayed on homepage, calculated based on PSA10 grade 7-day min/max transaction price change",
+      "description": "Manage TOP 5 trending cards displayed on homepage, calculated based on PSA10 this-week vs last-week weighted average price change (IQR outlier filter + 7-day half-life time-decay weighting)",
       "recalculate": "Recalculate",
       "calculating": "Calculating...",
       "calculateSuccess": "Trending cards calculation completed",

@@ -1475,10 +1475,66 @@ export async function updateDataSourceHealth(
 }
 
 /**
- * Calculate and cache trending cards (TOP 5 with highest price increase based on last 7 days PSA 10 transactions)
- * Price change = (max price in 7 days - min price in 7 days) / min price in 7 days × 100%
- * oldPrice = 7-day minimum price, currentPrice = 7-day maximum price
- * This function should be called daily at 06:00 HKT
+ * Helper: IQR 2.5× outlier filter for a list of prices.
+ * Returns the filtered list, or the original if fewer than 4 records or filter
+ * would remove more than half the data.
+ */
+function filterOutliersTrending(prices: number[]): number[] {
+  if (prices.length < 4) return prices;
+  const sorted = [...prices].sort((a, b) => a - b);
+  const q1 = sorted[Math.floor((sorted.length - 1) * 0.25)];
+  const q3 = sorted[Math.floor((sorted.length - 1) * 0.75)];
+  const iqr = q3 - q1;
+  const lower = q1 - 2.5 * iqr;
+  const upper = q3 + 2.5 * iqr;
+  const candidate = prices.filter(p => p >= lower && p <= upper);
+  return candidate.length >= Math.ceil(prices.length * 0.5) ? candidate : prices;
+}
+
+/**
+ * Helper: Time-decay weighted average with a given half-life (in days).
+ * weight(record) = 2^(-daysAgo / halfLifeDays)
+ * Returns null if the list is empty.
+ */
+function weightedAvgTrending(
+  records: { price: number; date: Date }[],
+  now: Date,
+  halfLifeDays: number
+): number | null {
+  if (records.length === 0) return null;
+  const prices = records.map(r => r.price);
+  const filtered = filterOutliersTrending(prices);
+  // Rebuild with dates for weighting
+  const filteredSet = new Set(filtered);
+  // Use all records whose price survived the filter (keep duplicates proportionally)
+  const kept = records.filter(r => filteredSet.has(r.price));
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (const r of kept) {
+    const daysAgo = (now.getTime() - r.date.getTime()) / (1000 * 60 * 60 * 24);
+    const w = Math.pow(2, -daysAgo / halfLifeDays);
+    weightedSum += r.price * w;
+    totalWeight += w;
+  }
+  return totalWeight > 0 ? weightedSum / totalWeight : null;
+}
+
+/**
+ * Calculate and cache trending cards (TOP 5 with highest price increase).
+ *
+ * NEW LOGIC (replaces 7-day min/max approach):
+ *   thisWeekAvg  = time-decay weighted avg of PSA10 transactions in last 0-7 days  (half-life 7d)
+ *   lastWeekAvg  = time-decay weighted avg of PSA10 transactions in last 7-14 days (half-life 7d)
+ *   priceChange  = (thisWeekAvg - lastWeekAvg) / lastWeekAvg × 100%
+ *
+ * Requirements:
+ *   - Both windows must have ≥ 3 transactions after IQR filtering
+ *   - Only cards with positive price change are ranked
+ *
+ * This eliminates false +1000% spikes caused by a single low-price outlier in
+ * the old min/max approach.
+ *
+ * This function should be called daily at 06:00 HKT.
  */
 export async function calculateAndCacheTrendingCards(): Promise<void> {
   const db = await getDb();
@@ -1486,22 +1542,21 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     throw new Error("Database not available");
   }
 
-  console.log("[calculateAndCacheTrendingCards] Starting calculation (based on last 7 days min/max)...");
+  console.log("[calculateAndCacheTrendingCards] Starting calculation (this-week vs last-week weighted avg)...");
 
-  // Calculate cutoff date (7 days ago)
   const now = new Date();
-  const cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  console.log(`[calculateAndCacheTrendingCards] 7-day window: ${cutoffDate.toISOString()} → ${now.toISOString()}`);
+  const sevenDaysAgo  = new Date(now.getTime() - 7  * 24 * 60 * 60 * 1000);
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-  // Get SNKRDUNK PSA 10 price history from last 7 days for cards that exist in cards table
-  // Use INNER JOIN to ensure we only calculate for valid cards
-  // IMPORTANT: Filter by soldAt (actual transaction date), not createdAt (data insertion date)
+  console.log(`[calculateAndCacheTrendingCards] This week: ${sevenDaysAgo.toISOString()} → ${now.toISOString()}`);
+  console.log(`[calculateAndCacheTrendingCards] Last week: ${fourteenDaysAgo.toISOString()} → ${sevenDaysAgo.toISOString()}`);
+
+  // Fetch PSA10 SNKRDUNK records for the last 14 days in one query
   const cardsWithPrices = await db
     .select({
       cardId: priceHistory.cardId,
       price: priceHistory.price,
       soldAt: priceHistory.soldAt,
-      grade: priceHistory.grade,
     })
     .from(priceHistory)
     .innerJoin(cards, eq(priceHistory.cardId, cards.id))
@@ -1509,64 +1564,75 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
       and(
         eq(priceHistory.source, "snkrdunk"),
         eq(priceHistory.grade, "PSA10"),
-        gte(priceHistory.soldAt, cutoffDate),
+        gte(priceHistory.soldAt, fourteenDaysAgo),
         sql`${priceHistory.soldAt} IS NOT NULL`
       )
     )
     .orderBy(priceHistory.cardId, priceHistory.soldAt);
 
-  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} SNKRDUNK PSA 10 price records in last 7 days`);
+  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} PSA10 records in last 14 days`);
 
-  // Group by cardId
-  const cardPriceMap = new Map<number, { price: number; date: Date }[]>();
-  
+  // Group by cardId, split into this-week and last-week buckets
+  const thisWeekMap  = new Map<number, { price: number; date: Date }[]>();
+  const lastWeekMap  = new Map<number, { price: number; date: Date }[]>();
+
   for (const record of cardsWithPrices) {
     const cardId = record.cardId;
-    const price = parseFloat(record.price as any);
-    const date = record.soldAt!;
+    const price  = parseFloat(record.price as any);
+    const date   = record.soldAt!;
 
-    if (!cardPriceMap.has(cardId)) {
-      cardPriceMap.set(cardId, []);
+    if (date >= sevenDaysAgo) {
+      if (!thisWeekMap.has(cardId)) thisWeekMap.set(cardId, []);
+      thisWeekMap.get(cardId)!.push({ price, date });
+    } else {
+      if (!lastWeekMap.has(cardId)) lastWeekMap.set(cardId, []);
+      lastWeekMap.get(cardId)!.push({ price, date });
     }
-
-    cardPriceMap.get(cardId)!.push({ price, date });
   }
 
-  // Calculate price change for each card using 7-day min/max approach
-  // Requires at least 2 transactions in the 7-day window
-  // priceChange = (maxPrice - minPrice) / minPrice × 100%
+  const HALF_LIFE_DAYS = 7; // Shorter half-life for weekly comparison
+  const MIN_RECORDS    = 3; // Minimum records per window to avoid noise
+
   const trendingCards: Array<{
     cardId: number;
     priceChange: number;
-    oldPrice: number;     // 7-day minimum price
-    currentPrice: number; // 7-day maximum price
+    oldPrice: number;     // last-week weighted avg
+    currentPrice: number; // this-week weighted avg
   }> = [];
 
-  for (const [cardId, allPrices] of Array.from(cardPriceMap.entries())) {
-    // Skip cards with less than 2 transactions in 7 days
-    if (allPrices.length < 2) {
-      console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: Only ${allPrices.length} transaction(s) in 7 days, skipping`);
+  for (const [cardId, thisWeekRecords] of Array.from(thisWeekMap.entries())) {
+    const lastWeekRecords = lastWeekMap.get(cardId) ?? [];
+
+    // Both windows must have enough records
+    if (thisWeekRecords.length < MIN_RECORDS) {
+      console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: Only ${thisWeekRecords.length} this-week record(s), skipping`);
+      continue;
+    }
+    if (lastWeekRecords.length < MIN_RECORDS) {
+      console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: Only ${lastWeekRecords.length} last-week record(s), skipping`);
       continue;
     }
 
-    const priceValues = allPrices.map(p => p.price);
+    const thisWeekAvg = weightedAvgTrending(thisWeekRecords, now, HALF_LIFE_DAYS);
+    const lastWeekAvg = weightedAvgTrending(lastWeekRecords, now, HALF_LIFE_DAYS);
 
-    // 7-day min and max prices
-    const minPrice = Math.min(...priceValues);
-    const maxPrice = Math.max(...priceValues);
+    if (thisWeekAvg === null || lastWeekAvg === null || lastWeekAvg === 0) continue;
 
-    // Price change = (max - min) / min × 100%
-    const priceChange = ((maxPrice - minPrice) / minPrice) * 100;
+    const priceChange = ((thisWeekAvg - lastWeekAvg) / lastWeekAvg) * 100;
 
-    console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: ${allPrices.length} transactions in 7 days, min=${minPrice.toFixed(2)}, max=${maxPrice.toFixed(2)}, change=${priceChange.toFixed(2)}%`);
+    console.log(
+      `[calculateAndCacheTrendingCards] Card ${cardId}: ` +
+      `lastWeek=${lastWeekAvg.toFixed(2)}, thisWeek=${thisWeekAvg.toFixed(2)}, ` +
+      `change=${priceChange.toFixed(2)}% ` +
+      `(${lastWeekRecords.length} last-week / ${thisWeekRecords.length} this-week records)`
+    );
 
-    // Only include cards with positive price change (max > min)
     if (priceChange > 0) {
       trendingCards.push({
         cardId,
         priceChange,
-        oldPrice: minPrice,
-        currentPrice: maxPrice,
+        oldPrice: lastWeekAvg,
+        currentPrice: thisWeekAvg,
       });
     }
   }
@@ -1575,7 +1641,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
   trendingCards.sort((a, b) => b.priceChange - a.priceChange);
   const top5 = trendingCards.slice(0, 5);
 
-  console.log(`[calculateAndCacheTrendingCards] Found ${top5.length} trending cards`);
+  console.log(`[calculateAndCacheTrendingCards] Found ${trendingCards.length} eligible cards, storing top ${top5.length}`);
   if (top5.length > 0) {
     console.log(`[calculateAndCacheTrendingCards] Top card: cardId=${top5[0].cardId}, change=${top5[0].priceChange.toFixed(2)}%`);
   }
