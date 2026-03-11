@@ -4382,3 +4382,24 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 修正 ShareButton：複製連結和 WhatsApp/Facebook 分享 URL 固定使用 https://boxium.asia
 - [x] 修改 OG SSR 路由：og:image 改用 S3 快取 URL（composeAndCacheOgImage）
 - [x] TypeScript 0 錯誤並儲存 checkpoint
+
+---
+
+## 🔗 OG 分享功能（WhatsApp/Facebook/Telegram 卡牌縮圖預覽）
+
+### 目標
+分享卡牌連結時，WhatsApp/Facebook/Telegram 顯示卡牌縮圖（小圖格式）+ 卡牌名稱
+
+### 已完成
+- [x] 安裝 sharp 套件，建立 server/ogImageComposer.ts（合成 1200x630 卡牌圖 + BOXIUM LOGO 水印）
+- [x] 新增 /api/og-image/:cardId 端點（即時合成並快取至 S3）
+- [x] 新增 /api/og-meta/:cardId JSON API 端點（供 Cloudflare Workers 調用）
+- [x] server/_core/index.ts 加入 /card/:id OG SSR 路由（偵測爬蟲 User-Agent）
+- [x] client/index.html 更新 twitter:card 為 summary（小縮圖格式）
+- [x] ShareButton.tsx 分享 URL 固定使用 boxium.asia 正式域名
+- [x] 建立 cloudflare-workers/og-worker.js（邊緣層爬蟲攔截 + OG 注入）
+- [x] 建立 cloudflare-workers/README.md（Cloudflare Workers 部署指引）
+
+### 待用戶操作
+- [ ] 在 Cloudflare Dashboard 部署 og-worker.js 並設定路由規則
+- [ ] 測試 WhatsApp 分享效果（curl 模擬或 Facebook Sharing Debugger）

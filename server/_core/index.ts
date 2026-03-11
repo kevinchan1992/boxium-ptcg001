@@ -409,6 +409,49 @@ async function startServer() {
     }
   });
 
+  // ─── OG Meta JSON API: for Cloudflare Workers edge-level OG injection ──────
+  app.get("/api/og-meta/:cardId", async (req, res) => {
+    try {
+      const id = parseInt(req.params.cardId, 10);
+      if (isNaN(id)) return res.status(400).json({ error: "Invalid card ID" });
+      let name: string | null = null;
+      let imageUrl: string | null = null;
+      let description: string | null = null;
+      const card = await getCardById(id);
+      if (card) {
+        name = card.name || null;
+        imageUrl = card.imageUrl || null;
+        description = card.setName ? `${card.setName} | PSA 10 價格追蹤` : null;
+      } else {
+        const sealed = await getSealedProductById(id);
+        if (sealed) {
+          name = sealed.name || null;
+          imageUrl = sealed.imageUrl || null;
+          description = sealed.setName ? `${sealed.setName} | 卡盒價格追蹤` : null;
+        }
+      }
+      if (!name) return res.status(404).json({ error: "Card not found" });
+      // Get composed OG image with BOXIUM logo watermark (S3 cached)
+      let ogImageUrl = getDefaultOgImageUrl();
+      if (imageUrl) {
+        const s3Url = await composeAndCacheOgImage(id, imageUrl);
+        if (s3Url) ogImageUrl = s3Url;
+      }
+      res.set({
+        "Cache-Control": "public, max-age=3600",
+        "Access-Control-Allow-Origin": "*",
+      }).json({
+        title: `${name} - BOXIUM PTCG`,
+        description: description || `查看 ${name} 的最新 PSA 10 成交價格、價格趨勢與市場分析。`,
+        image: ogImageUrl,
+        url: `https://boxium.asia/card/${id}`,
+      });
+    } catch (err) {
+      console.error("[OG Meta API] Error:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // ─── OG SSR: Card detail page for social crawlers ─────────────────────────
   app.get("/card/:id", async (req, res, next) => {
     const ua = (req.headers["user-agent"] || "").toLowerCase();
