@@ -3051,7 +3051,40 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string) {
   const conditions = status
     ? [eq(marketplaceOrders.orderStatus, status as any)]
     : [sql`${marketplaceOrders.orderStatus} != 'pending_payment'`];
-  const rows = await db.select().from(marketplaceOrders)
+  const rows = await db.select({
+    id: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    buyerId: marketplaceOrders.buyerId,
+    sellerId: marketplaceOrders.sellerId,
+    sellerType: marketplaceOrders.sellerType,
+    listingId: marketplaceOrders.listingId,
+    unitPriceHkd: marketplaceOrders.unitPriceHkd,
+    quantity: marketplaceOrders.quantity,
+    subtotalHkd: marketplaceOrders.subtotalHkd,
+    platformFeeHkd: marketplaceOrders.platformFeeHkd,
+    sellerReceivableHkd: marketplaceOrders.sellerReceivableHkd,
+    paymentMethod: marketplaceOrders.paymentMethod,
+    paymentStatus: marketplaceOrders.paymentStatus,
+    orderStatus: marketplaceOrders.orderStatus,
+    shippingName: marketplaceOrders.shippingName,
+    shippingPhone: marketplaceOrders.shippingPhone,
+    shippingAddress: marketplaceOrders.shippingAddress,
+    shippingMethod: marketplaceOrders.shippingMethod,
+    trackingNumber: marketplaceOrders.trackingNumber,
+    shippedAt: marketplaceOrders.shippedAt,
+    autoCompleteAt: marketplaceOrders.autoCompleteAt,
+    payoutStatus: marketplaceOrders.payoutStatus,
+    stripeSessionId: marketplaceOrders.stripeSessionId,
+    stripePaymentIntentId: marketplaceOrders.stripePaymentIntentId,
+    createdAt: marketplaceOrders.createdAt,
+    updatedAt: marketplaceOrders.updatedAt,
+    // From listing join
+    listingTitle: marketplaceListings.title,
+    listingImages: marketplaceListings.images,
+    listingCondition: marketplaceListings.condition,
+  })
+    .from(marketplaceOrders)
+    .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
     .where(and(...conditions))
     .orderBy(desc(marketplaceOrders.createdAt)).limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)

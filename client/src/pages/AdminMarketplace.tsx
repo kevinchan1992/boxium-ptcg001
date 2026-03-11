@@ -905,6 +905,30 @@ function OrdersTab() {
           <DialogHeader><DialogTitle>訂單管理 — {selectedOrder?.orderNo}</DialogTitle></DialogHeader>
           {selectedOrder && (
             <div className="space-y-4">
+              {/* Product Thumbnail */}
+              {(selectedOrder.listingTitle || selectedOrder.listingImages) && (
+                <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+                  {selectedOrder.listingImages && (() => {
+                    try {
+                      const imgs = typeof selectedOrder.listingImages === 'string'
+                        ? JSON.parse(selectedOrder.listingImages)
+                        : selectedOrder.listingImages;
+                      const firstImg = Array.isArray(imgs) ? imgs[0] : null;
+                      if (firstImg) return (
+                        <img src={firstImg} alt="商品" className="w-16 h-20 object-cover rounded-md border border-gray-200 flex-shrink-0" />
+                      );
+                    } catch {}
+                    return null;
+                  })()}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground mb-0.5">商品</p>
+                    <p className="text-sm font-medium line-clamp-2">{selectedOrder.listingTitle || '未知商品'}</p>
+                    {selectedOrder.listingCondition && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{selectedOrder.listingCondition}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               {/* Order Info */}
               <div className="grid grid-cols-2 gap-2 text-sm bg-gray-50 rounded-lg p-3">
                 <span className="text-muted-foreground">付款方式</span>

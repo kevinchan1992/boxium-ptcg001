@@ -720,6 +720,11 @@ export function AdminDataSources() {
               <div className="flex items-center gap-4">
                 <h2 className="text-base sm:text-lg font-semibold text-foreground">
                   數據源列表
+                  {(searchQuery || gameFilter !== undefined || statusFilter !== "all") && dataSourcesQuery.data && (
+                    <span className="ml-2 text-sm font-normal text-muted-foreground">
+                      篩選結果：{dataSourcesQuery.data.total} 條
+                    </span>
+                  )}
                 </h2>
                 {dataSourcesQuery.data && dataSourcesQuery.data?.data?.length > 0 && (
                   <div className="flex items-center gap-2">
@@ -835,10 +840,15 @@ export function AdminDataSources() {
                         ) : (
                           <XCircle className="w-4 h-4 text-red-500" />
                         )}
-                        {/* Game Type Badge */}
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
-                          {source.gameId === 1 ? 'Pokémon' : source.gameId === 2 ? 'One Piece' : '未知'}
-                        </span>
+                        {/* Game Type Badge - dynamic from games table */}
+                        {(() => {
+                          const game = gamesQuery.data?.find(g => g.id === source.gameId);
+                          return (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                              {game ? (game.nameZh || game.name) : (source.gameId ? `Game #${source.gameId}` : '未知')}
+                            </span>
+                          );
+                        })()}
                         {/* Product Type Badge */}
                         <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
                           {source.productType === 'single_card' ? '單卡' : '卡盒'}
