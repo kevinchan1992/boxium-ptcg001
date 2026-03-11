@@ -128,7 +128,7 @@
     "topRanking": "熱門排行",
     "topRankingDesc": "發現市場上最熱門的卡牌，跟蹤投資者的選擇",
     "trendingCards": "熱門卡牌",
-    "trendingCardsDesc": "基於 PSA 10 評級最近 30 天成交價格漲幅",
+    "trendingCardsDesc": "基於 PSA 10 評級最近 7 天成交價格漲幅",
     "dataSourcesDesc": "整合全球領先的卡牌交易平台，確保數據的準確性和實時性",
     "snkrdunkDesc": "日本領先的卡牌交易平台，提供最新的 PSA 10 評級卡牌交易數據和市場趨勢分析",
     "realtimeData": "實時交易數據",
@@ -264,7 +264,7 @@
     "errorMessage": "錯誤訊息",
     "trendingCards": {
       "title": "熱門卡牌管理",
-      "description": "管理首頁顯示的熱門卡牌 TOP 5，基於 PSA10 評級最近 1 個月成交價格漲幅計算",
+      "description": "管理首頁顯示的熱門卡牌 TOP 5，基於 PSA10 評級最近 7 天最低/最高成交價格漲幅計算",
       "recalculate": "重新計算",
       "calculating": "計算中...",
       "calculateSuccess": "熱門卡牌計算完成",

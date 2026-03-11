@@ -4250,3 +4250,11 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 撰寫 paymentReminder.test.ts（27 個測試：時間窗口計算、重複防護、狀態過濾、通知內容、cron 設定、批次處理）
 - [x] TypeScript 0 錯誤，27/27 測試通過
 - [x] 儲存 checkpoint
+## 🔥 熱門卡牌計算邏輯改為 7 天最低/最高 PSA10 價格漲幅
+- [x] 修改 db.ts 的 calculateAndCacheTrendingCards()：時間窗口從 30 天改為 7 天，計算方式從「最舊/最新成交價」改為「7 天內最低/最高成交價漲幅」
+- [x] 更新前端 i18n zh-TW.json：　30 天」改為　77 天」
+- [x] 更新前端 i18n en.json：同步更新英文描述
+- [x] 更新 zh-TW.json admin.trendingCards.description：　30 天」改為　77 天最低/最高」
+- [x] 撰寫 trendingCards7d.test.ts（22 個測試：時間窗口、最低/最高價計算、最少 2 筆、排名、窗口外過濾、緩存欄位映射、與舊邏輯比較）
+- [x] TypeScript 0 錯誤，22/22 測試通過
+- [x] 儲存 checkpoint

@@ -1475,7 +1475,9 @@ export async function updateDataSourceHealth(
 }
 
 /**
- * Calculate and cache trending cards (TOP 5 with highest price increase based on last 1 month PSA 10 transactions)
+ * Calculate and cache trending cards (TOP 5 with highest price increase based on last 7 days PSA 10 transactions)
+ * Price change = (max price in 7 days - min price in 7 days) / min price in 7 days × 100%
+ * oldPrice = 7-day minimum price, currentPrice = 7-day maximum price
  * This function should be called daily at 06:00 HKT
  */
 export async function calculateAndCacheTrendingCards(): Promise<void> {
@@ -1484,13 +1486,14 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     throw new Error("Database not available");
   }
 
-  console.log("[calculateAndCacheTrendingCards] Starting calculation (based on last 1 month)...");
+  console.log("[calculateAndCacheTrendingCards] Starting calculation (based on last 7 days min/max)...");
 
-  // Calculate cutoff date (1 month ago = 30 days)
-  const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  console.log(`[calculateAndCacheTrendingCards] Cutoff date: ${cutoffDate.toISOString()}`);
+  // Calculate cutoff date (7 days ago)
+  const now = new Date();
+  const cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  console.log(`[calculateAndCacheTrendingCards] 7-day window: ${cutoffDate.toISOString()} → ${now.toISOString()}`);
 
-  // Get SNKRDUNK PSA 10 price history from last 1 month for cards that exist in cards table
+  // Get SNKRDUNK PSA 10 price history from last 7 days for cards that exist in cards table
   // Use INNER JOIN to ensure we only calculate for valid cards
   // IMPORTANT: Filter by soldAt (actual transaction date), not createdAt (data insertion date)
   const cardsWithPrices = await db
@@ -1498,7 +1501,6 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
       cardId: priceHistory.cardId,
       price: priceHistory.price,
       soldAt: priceHistory.soldAt,
-      createdAt: priceHistory.createdAt,
       grade: priceHistory.grade,
     })
     .from(priceHistory)
@@ -1513,7 +1515,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     )
     .orderBy(priceHistory.cardId, priceHistory.soldAt);
 
-  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} SNKRDUNK PSA 10 price records in last 1 month`);
+  console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} SNKRDUNK PSA 10 price records in last 7 days`);
 
   // Group by cardId
   const cardPriceMap = new Map<number, { price: number; date: Date }[]>();
@@ -1521,7 +1523,6 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
   for (const record of cardsWithPrices) {
     const cardId = record.cardId;
     const price = parseFloat(record.price as any);
-    // Use soldAt as the transaction date (already filtered for NOT NULL)
     const date = record.soldAt!;
 
     if (!cardPriceMap.has(cardId)) {
@@ -1531,42 +1532,41 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     cardPriceMap.get(cardId)!.push({ price, date });
   }
 
-  // Calculate price change for each card (requires at least 2 transactions in 1 month)
+  // Calculate price change for each card using 7-day min/max approach
+  // Requires at least 2 transactions in the 7-day window
+  // priceChange = (maxPrice - minPrice) / minPrice × 100%
   const trendingCards: Array<{
     cardId: number;
     priceChange: number;
-    oldPrice: number;
-    currentPrice: number;
+    oldPrice: number;     // 7-day minimum price
+    currentPrice: number; // 7-day maximum price
   }> = [];
 
   for (const [cardId, allPrices] of Array.from(cardPriceMap.entries())) {
-    // Sort by date (oldest first)
-    const prices = allPrices.sort((a, b) => a.date.getTime() - b.date.getTime());
-    
-    // Skip cards with less than 2 transactions in 1 month
-    if (prices.length < 2) {
-      console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: Only ${prices.length} transaction(s) in 1 month, skipping`);
+    // Skip cards with less than 2 transactions in 7 days
+    if (allPrices.length < 2) {
+      console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: Only ${allPrices.length} transaction(s) in 7 days, skipping`);
       continue;
     }
-    
-    // Current price = latest transaction
-    const currentPrice = prices[prices.length - 1].price;
-    
-    // Old price = earliest transaction (1 month ago)
-    const oldPrice = prices[0].price;
-    
-    // Calculate percentage change
-    const priceChange = ((currentPrice - oldPrice) / oldPrice) * 100;
-    
-    console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: ${prices.length} transactions in 1 month, change=${priceChange.toFixed(2)}%`);
 
-    // Only include cards with positive price change
+    const priceValues = allPrices.map(p => p.price);
+
+    // 7-day min and max prices
+    const minPrice = Math.min(...priceValues);
+    const maxPrice = Math.max(...priceValues);
+
+    // Price change = (max - min) / min × 100%
+    const priceChange = ((maxPrice - minPrice) / minPrice) * 100;
+
+    console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: ${allPrices.length} transactions in 7 days, min=${minPrice.toFixed(2)}, max=${maxPrice.toFixed(2)}, change=${priceChange.toFixed(2)}%`);
+
+    // Only include cards with positive price change (max > min)
     if (priceChange > 0) {
       trendingCards.push({
         cardId,
         priceChange,
-        oldPrice,
-        currentPrice,
+        oldPrice: minPrice,
+        currentPrice: maxPrice,
       });
     }
   }
