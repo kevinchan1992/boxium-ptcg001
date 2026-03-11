@@ -523,6 +523,17 @@ export const marketplaceRouter = router({
 
   getMyListings: protectedProcedure
     .query(async ({ ctx }) => {
+      const isAdmin = ctx.user.role === 'admin';
+      if (isAdmin) {
+        // Admin: return all platform official listings (sellerType = 'platform')
+        const db = await getDb();
+        if (!db) return [];
+        const { marketplaceListings: ml } = await import("../../drizzle/schema_new");
+        const { eq: eqFn, desc: descFn } = await import("drizzle-orm");
+        return db.select().from(ml)
+          .where(eqFn(ml.sellerType, 'platform'))
+          .orderBy(descFn(ml.createdAt));
+      }
       const seller = await getSellerProfileByUserId(ctx.user.id);
       if (!seller) return [];
       return getSellerListings(seller.id);

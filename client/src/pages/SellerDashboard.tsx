@@ -299,8 +299,9 @@ export default function SellerDashboard() {
   const { data: sellerProfile, refetch: refetchProfile } = trpc.marketplace.getMySellerProfile.useQuery(
     undefined, { enabled: !!me }
   );
+  const isAdmin = me?.role === 'admin';
   const { data: myListings, refetch: refetchListings } = trpc.marketplace.getMyListings.useQuery(
-    undefined, { enabled: !!sellerProfile }
+    undefined, { enabled: !!sellerProfile || isAdmin }
   );
   const { data: myOrders } = trpc.marketplace.getMySellerOrders.useQuery(
     undefined, { enabled: !!sellerProfile }
@@ -520,7 +521,7 @@ export default function SellerDashboard() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-6 pb-16">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden p-6">
 
-        {!sellerProfile && (
+        {!sellerProfile && !isAdmin && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ background: "#f0f4ff" }}>
               <ShoppingBag className="w-10 h-10" style={{ color: "#06038d" }} />
@@ -561,9 +562,9 @@ export default function SellerDashboard() {
           </Card>
         )}
 
-        {sellerProfile?.isActive && (
+        {(sellerProfile?.isActive || isAdmin) && (
           <>
-            {sellerProfile.stripeConnectStatus === "pending" && !sellerProfile.stripeConnectId && (
+            {!isAdmin && sellerProfile?.stripeConnectStatus === "pending" && !sellerProfile?.stripeConnectId && (
               <Card className="border-blue-200 bg-blue-50 mb-6">
                 <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
@@ -581,7 +582,7 @@ export default function SellerDashboard() {
                 </CardContent>
               </Card>
             )}
-            {sellerProfile.stripeConnectStatus === "pending" && sellerProfile.stripeConnectId && (
+            {!isAdmin && sellerProfile?.stripeConnectStatus === "pending" && sellerProfile?.stripeConnectId && (
               <Card className="border-amber-200 bg-amber-50 mb-6">
                 <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
@@ -599,7 +600,7 @@ export default function SellerDashboard() {
                 </CardContent>
               </Card>
             )}
-            {sellerProfile.stripeConnectStatus === "restricted" && (
+            {!isAdmin && sellerProfile?.stripeConnectStatus === "restricted" && (
               <Card className="border-yellow-200 bg-yellow-50 mb-6">
                 <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
@@ -617,7 +618,7 @@ export default function SellerDashboard() {
                 </CardContent>
               </Card>
             )}
-            {sellerProfile.stripeConnectStatus === "disabled" && (
+            {!isAdmin && sellerProfile?.stripeConnectStatus === "disabled" && (
               <Card className="border-red-200 bg-red-50 mb-6">
                 <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
@@ -635,7 +636,7 @@ export default function SellerDashboard() {
                 </CardContent>
               </Card>
             )}
-            {sellerProfile.stripeConnectStatus === "active" && (
+            {!isAdmin && sellerProfile?.stripeConnectStatus === "active" && (
               <Card className="border-green-200 bg-green-50 mb-6">
                 <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
@@ -676,7 +677,7 @@ export default function SellerDashboard() {
                     <ShoppingBag className="w-5 h-5" style={{ color: "#06038d" }} />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{salesStats?.completedOrders ?? sellerProfile.totalSales}</p>
+                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{salesStats?.completedOrders ?? sellerProfile?.totalSales ?? 0}</p>
                     <p className="text-xs text-gray-500">已完成訂單</p>
                   </div>
                 </div>
@@ -704,8 +705,8 @@ export default function SellerDashboard() {
                     <Star className="w-5 h-5" style={{ color: "#b8860b" }} />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{parseFloat(sellerProfile.avgRating as string ?? '0').toFixed(1)}</p>
-                    <p className="text-xs text-gray-500">評分 ({sellerProfile.ratingCount} 則)</p>
+                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{parseFloat((sellerProfile?.avgRating as string) ?? '0').toFixed(1)}</p>
+                    <p className="text-xs text-gray-500">評分 ({sellerProfile?.ratingCount ?? 0} 則)</p>
                   </div>
                 </div>
               </div>

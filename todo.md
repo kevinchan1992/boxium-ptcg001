@@ -4278,3 +4278,11 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] AdminMarketplace.tsx 爭議處理 Dialog 加入「管理員備註」欄位和歷史記錄顯示區域
 - [x] TypeScript 0 錯誤，53/53 相關測試通過
 - [x] 儲存 checkpoint
+
+## 🏪 Admin 商品同步至賣家中心 + 隱藏 Stripe Connect 設定
+- [x] 了解賣家中心商品查詢邏輯（getSellerListings 的 sellerId 過濾條件）
+- [x] 修復賣家中心「我的商品」同步顯示 Admin 上架的官方商品（isOfficialListing 標記）
+- [x] Admin 帳號在賣家中心隱藏「設定 Stripe 收款帳戶」提示橫幅
+- [x] 確認官方商品付款流程：收款直接進平台 Stripe，不需要 Stripe Connect 轉帳
+- [x] 撰寫測試（69/69 marketplace 測試通過）
+- [x] 儲存 checkpoint
