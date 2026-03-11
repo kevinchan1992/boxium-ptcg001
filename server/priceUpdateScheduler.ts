@@ -738,3 +738,85 @@ export function stopPaymentTimeoutCancelScheduler() {
     paymentTimeoutCancelCronJob = null;
   }
 }
+
+// ─── Payment Reminder Scheduler ──────────────────────────────────────────────
+// Runs every hour at :45 to remind buyers of pending_payment orders created
+// between 12 and 13 hours ago (i.e. 12 hours before the 24-hour auto-cancel).
+// Uses paymentReminderSentAt to ensure each order is only reminded once.
+let paymentReminderCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startPaymentReminderScheduler() {
+  if (paymentReminderCronJob) return;
+  paymentReminderCronJob = cron.schedule(
+    '45 * * * *', // Every hour at :45
+    async () => {
+      try {
+        const { getDb } = await import('./db');
+        const { marketplaceOrders } = await import('../drizzle/schema_new');
+        const { and, eq, lt, gte, isNull } = await import('drizzle-orm');
+        const { createNotification } = await import('./db/notifications');
+        const db = await getDb();
+        if (!db) return;
+
+        const now = new Date();
+        // Window: orders created between 12 and 13 hours ago
+        const windowStart = new Date(now.getTime() - 13 * 60 * 60 * 1000); // 13h ago
+        const windowEnd   = new Date(now.getTime() - 12 * 60 * 60 * 1000); // 12h ago
+
+        const ordersToRemind = await db.select({
+          id: marketplaceOrders.id,
+          orderNo: marketplaceOrders.orderNo,
+          buyerId: marketplaceOrders.buyerId,
+          createdAt: marketplaceOrders.createdAt,
+        })
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.orderStatus, 'pending_payment'),
+              gte(marketplaceOrders.createdAt, windowStart),
+              lt(marketplaceOrders.createdAt, windowEnd),
+              isNull(marketplaceOrders.paymentReminderSentAt)
+            )
+          )
+          .limit(100);
+
+        if (ordersToRemind.length === 0) return;
+        console.log(`[PaymentReminder] Found ${ordersToRemind.length} orders to remind`);
+
+        for (const order of ordersToRemind) {
+          try {
+            // Mark reminder as sent first to avoid duplicate sends
+            await db.update(marketplaceOrders)
+              .set({ paymentReminderSentAt: now })
+              .where(eq(marketplaceOrders.id, order.id));
+
+            // Send in-app notification to buyer
+            await createNotification({
+              userId: order.buyerId,
+              type: 'order',
+              title: '⏰ 訂單即將自動取消',
+              body: `訂單 #${order.orderNo} 尚未完成付款，將在約 12 小時後自動取消，請盡快完成付款。`,
+              linkUrl: `/orders/${order.orderNo}`,
+              relatedId: order.id,
+            }).catch(() => {});
+
+            console.log(`[PaymentReminder] Sent reminder for order ${order.orderNo} (id: ${order.id})`);
+          } catch (err) {
+            console.error(`[PaymentReminder] Failed to send reminder for order ${order.id}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[PaymentReminder] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[PaymentReminder] Payment reminder scheduler started (every hour at :45)');
+}
+
+export function stopPaymentReminderScheduler() {
+  if (paymentReminderCronJob) {
+    paymentReminderCronJob.stop();
+    paymentReminderCronJob = null;
+  }
+}

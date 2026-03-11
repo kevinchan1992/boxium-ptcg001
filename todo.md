@@ -4242,3 +4242,11 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 撰寫 paymentTimeout.test.ts（26 個測試：cutoff 計算、狀態過濾、庫存恢復、通知邏輯、cron 設定、批次處理、狀態機整合）
 - [x] TypeScript 0 錯誤，26/26 測試通過
 - [x] 儲存 checkpoint
+## 🔔 買家付款提醒通知（訂單建立後 12 小時）
+- [x] 了解現有排程器結構，確認需新增 paymentReminderSentAt 欄位防重複發送
+- [x] 在 schema_new.ts 新增 paymentReminderSentAt 欄位，並執行 SQL ALTER TABLE
+- [x] 在 priceUpdateScheduler.ts 新增 paymentReminderCronJob（每小時 :45，掃描建立後 12-13 小時的 pending_payment 訂單）
+- [x] 在 index.ts 引入並啟動 startPaymentReminderScheduler()
+- [x] 撰寫 paymentReminder.test.ts（27 個測試：時間窗口計算、重複防護、狀態過濾、通知內容、cron 設定、批次處理）
+- [x] TypeScript 0 錯誤，27/27 測試通過
+- [x] 儲存 checkpoint

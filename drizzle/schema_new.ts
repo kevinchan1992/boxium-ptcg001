@@ -847,6 +847,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   disputeResolvedAt: timestamp("disputeResolvedAt"),
   disputeResolution: text("disputeResolution"),
   shippingReminderSentAt: timestamp("shippingReminderSentAt"), // tracks when overdue reminder was sent
+  paymentReminderSentAt: timestamp("paymentReminderSentAt"), // tracks when 12-hour payment reminder was sent
   payoutStatus: mysqlEnum("payoutStatus", ["not_applicable", "pending", "processing", "completed", "paid", "failed"]).default("pending").notNull(),
   stripeTransferError: text("stripeTransferError"),
   paymentExpiresAt: timestamp("paymentExpiresAt"),

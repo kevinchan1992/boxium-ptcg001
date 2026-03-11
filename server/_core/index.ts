@@ -17,7 +17,7 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import { getListingById } from "../db";
@@ -527,6 +527,8 @@ async function startServer() {
     startOfferExpiryCleanupScheduler();
     // Start the payment timeout cancel scheduler (every hour at :30)
     startPaymentTimeoutCancelScheduler();
+    // Start the payment reminder scheduler (every hour at :45, reminds buyers 12h before auto-cancel)
+    startPaymentReminderScheduler();
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();
