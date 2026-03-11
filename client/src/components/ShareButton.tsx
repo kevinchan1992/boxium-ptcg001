@@ -17,8 +17,10 @@ interface ShareButtonProps {
 
 export function ShareButton({ cardName, cardId }: ShareButtonProps) {
   const { t } = useTranslation();
-  // Always use the production domain for sharing, regardless of the current environment
-  const shareUrl = `https://boxium.asia/card/${cardId}`;
+  // Use /api/card-preview/:id for sharing - this URL is handled by Express in production
+  // Crawlers (WhatsApp, Facebook, Telegram) see dynamic OG tags with card image
+  // Users are immediately redirected to the real card page /card/:id
+  const shareUrl = `https://boxium.asia/api/card-preview/${cardId}`;
   const shareText = `${cardName} - BOXIUM PTCG`;
 
   const handleShareFacebook = () => {

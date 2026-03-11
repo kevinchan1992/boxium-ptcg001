@@ -452,6 +452,85 @@ async function startServer() {
     }
   });
 
+  // ─── Card Preview API: works in production (Express handles /api/* routes) ──
+  // Share links point to /api/card-preview/:id which redirects to /card/:id
+  // Crawlers (WhatsApp, Facebook, Telegram) see dynamic OG tags
+  // Users get immediately redirected to the real card page
+  app.get("/api/card-preview/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.redirect(`https://boxium.asia/`);
+
+      let cardName: string | null = null;
+      let cardImageUrl: string | null = null;
+      let cardDesc: string | null = null;
+
+      const card = await getCardById(id);
+      if (card) {
+        cardName = card.name || null;
+        cardImageUrl = card.imageUrl || null;
+        cardDesc = card.setName ? `${card.setName} | PSA 10 價格追蹤` : null;
+      } else {
+        const sealed = await getSealedProductById(id);
+        if (sealed) {
+          cardName = sealed.name || null;
+          cardImageUrl = sealed.imageUrl || null;
+          cardDesc = sealed.setName ? `${sealed.setName} | 卡盒價格追蹤` : null;
+        }
+      }
+
+      if (!cardName) return res.redirect(`https://boxium.asia/card/${id}`);
+
+      // Get composed OG image with BOXIUM logo watermark (S3 cached)
+      let ogImageUrl = getDefaultOgImageUrl();
+      if (cardImageUrl) {
+        const s3Url = await composeAndCacheOgImage(id, cardImageUrl);
+        if (s3Url) ogImageUrl = s3Url;
+      }
+
+      const ogTitle = `${cardName} - BOXIUM PTCG`;
+      const ogDescription = cardDesc || `查看 ${cardName} 的最新 PSA 10 成交價格、價格趨勢與市場分析。`;
+      const cardUrl = `https://boxium.asia/card/${id}`;
+      const previewUrl = `https://boxium.asia/api/card-preview/${id}`;
+
+      // Return a minimal HTML page with OG tags + instant JS redirect
+      // Crawlers read the OG tags; users are redirected to the real card page
+      const html = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="0; url=${cardUrl}" />
+  <title>${ogTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</title>
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="${previewUrl}" />
+  <meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
+  <meta property="og:description" content="${ogDescription.replace(/"/g, '&quot;')}" />
+  <meta property="og:image" content="${ogImageUrl}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="BOXIUM PTCG" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
+  <meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />
+  <meta name="twitter:image" content="${ogImageUrl}" />
+  <link rel="canonical" href="${cardUrl}" />
+</head>
+<body>
+  <script>window.location.replace("${cardUrl}");</script>
+  <p>正在跳轉到卡牌頁面... <a href="${cardUrl}">點此前往</a></p>
+</body>
+</html>`;
+
+      res.status(200).set({
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      }).end(html);
+    } catch (err) {
+      console.error("[Card Preview API] Error:", err);
+      res.redirect(`https://boxium.asia/card/${req.params.id}`);
+    }
+  });
+
   // ─── OG SSR: Card detail page for social crawlers ─────────────────────────
   app.get("/card/:id", async (req, res, next) => {
     const ua = (req.headers["user-agent"] || "").toLowerCase();

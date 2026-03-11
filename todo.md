@@ -4403,3 +4403,19 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ### 待用戶操作
 - [ ] 在 Cloudflare Dashboard 部署 og-worker.js 並設定路由規則
 - [ ] 測試 WhatsApp 分享效果（curl 模擬或 Facebook Sharing Debugger）
+
+---
+
+## 🔗 OG 分享功能修復（Production 環境）
+
+### 問題描述
+Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無法被觸發，因為 Manus 平台在 production 模式下直接用 Cloudflare 服務靜態 build 的 `index.html`，Express 只處理 `/api/*` 路由。
+
+### 解決方案
+新增 `/api/card-preview/:id` 端點（Express 可處理），回傳包含動態 OG tags 的 HTML，並透過 `<meta http-equiv="refresh">` 和 JS 自動跳轉到真正的卡牌頁面 `/card/:id`。
+
+### 任務清單
+- [x] 新增 `/api/card-preview/:id` Express 端點（回傳動態 OG HTML + 自動跳轉）
+- [x] 更新 `ShareButton.tsx` 分享 URL 指向 `/api/card-preview/:id`
+- [x] 測試 dev server 端點正常（卡牌名稱、圖片、描述均正確）
+- [ ] Publish 並測試 production 環境
