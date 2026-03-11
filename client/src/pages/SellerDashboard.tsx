@@ -846,7 +846,21 @@ export default function SellerDashboard() {
                   <div className="text-center py-12 text-muted-foreground">
                     <Package className="w-12 h-12 mx-auto mb-3" style={{color:'#06038D', opacity:0.4}} />
                     <p>尚未上架任何商品</p>
-                    <Button className="mt-4 font-bold" style={{background:'#FEDD00', color:'#06038D'}} onClick={() => setShowNewListing(true)}>上架第一件商品</Button>
+                    <Button
+                      className="mt-4 font-bold"
+                      style={sellerProfile?.stripeConnectStatus === 'active' ? {background:'#FEDD00', color:'#06038D'} : {}}
+                      disabled={sellerProfile?.stripeConnectStatus !== 'active'}
+                      title={sellerProfile?.stripeConnectStatus !== 'active' ? '請先完成 Stripe Connect 收款帳戶設定' : undefined}
+                      onClick={() => {
+                        if (sellerProfile?.stripeConnectStatus !== 'active') {
+                          toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
+                          return;
+                        }
+                        setShowNewListing(true);
+                      }}
+                    >
+                      上架第一件商品
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -897,8 +911,16 @@ export default function SellerDashboard() {
                       </div>
                       <Button
                         className="font-bold flex items-center gap-2 text-sm h-8"
-                        style={{ background: '#FEDD00', color: '#06038D' }}
-                        onClick={() => setShowNewListing(true)}
+                        style={sellerProfile?.stripeConnectStatus === 'active' ? { background: '#FEDD00', color: '#06038D' } : {}}
+                        onClick={() => {
+                          if (sellerProfile?.stripeConnectStatus !== 'active') {
+                            toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
+                            return;
+                          }
+                          setShowNewListing(true);
+                        }}
+                        disabled={sellerProfile?.stripeConnectStatus !== 'active'}
+                        title={sellerProfile?.stripeConnectStatus !== 'active' ? '請先完成 Stripe Connect 收款帳戶設定' : undefined}
                       >
                         <Plus className="w-4 h-4" />
                         上架新商品

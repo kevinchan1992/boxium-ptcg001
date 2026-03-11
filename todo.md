@@ -4509,3 +4509,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 - [x] 自動確認收貨機制：出貨後 X 天未確認自動完成訂單並放款（排程任務）— 已修復 sellerId Bug 和 source_transaction Bug
 - [x] 申訴證據上傳功能：買家申訴時可上傳圖片/影片至 S3，管理員可在爭議頁面查看（含影片預覽）
+
+---
+
+## 功能限制：Stripe Connect 未完成不可上架商品（2026-03-11）
+
+- [x] 後端：createListing 和 updateListing（status: active）時驗證賣家 Stripe Connect 狀態
+- [x] 後端：若 stripeConnectStatus !== "active" 則拋出 FORBIDDEN 錯誤
+- [x] 前端：SellerDashboard 已有 Stripe Connect 未完成警示橫幅（四種狀態）
+- [x] 前端：Stripe Connect 未完成時禁用「上架商品」和「上架第一件商品」按鈕
+- [x] 前端：警示橫幅提供直接跳轉到 Stripe Connect 設定的連結

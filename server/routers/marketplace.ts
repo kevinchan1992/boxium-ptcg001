@@ -564,6 +564,7 @@ export const marketplaceRouter = router({
       const seller = await getSellerProfileByUserId(ctx.user.id);
       if (!seller) throw new TRPCError({ code: "FORBIDDEN", message: "請先申請成為賣家" });
       if (!seller.isActive) throw new TRPCError({ code: "FORBIDDEN", message: "賣家帳號尚未獲批准" });
+      if (seller.stripeConnectStatus !== "active") throw new TRPCError({ code: "FORBIDDEN", message: "請先完成 Stripe Connect 收款帳戶設定，才能上架商品" });
 
       const listing = await createListing({
         sellerType: "seller",
@@ -596,6 +597,10 @@ export const marketplaceRouter = router({
       if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
       const seller = await getSellerProfileByUserId(ctx.user.id);
       if (!seller || listing.sellerId !== seller.id) throw new TRPCError({ code: "FORBIDDEN" });
+      // 若試圖將商品狀態改為 active，需要驗證 Stripe Connect 已完成
+      if (input.status === "active" && seller.stripeConnectStatus !== "active") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "請先完成 Stripe Connect 收款帳戶設定，才能上架商品" });
+      }
       const { id, ...updateData } = input;
       const updatePayload: Record<string, any> = { ...updateData };
       const oldPriceHkd = parseFloat(listing.priceHkd as string);
