@@ -2,9 +2,14 @@
  * OG Image Composer
  * Composites a card image with the BOXIUM logo watermark in the top-left corner.
  * Uploads the result to S3 and caches the URL to avoid repeated composition.
+ *
+ * Performance strategy:
+ * 1. Check in-memory cache first (fastest, cleared on restart)
+ * 2. Check S3 by attempting storageGet (persists across restarts)
+ * 3. If not in S3, compose and upload in background, return default URL immediately
  */
 import sharp from "sharp";
-import { storagePut } from "./storage";
+import { storagePut, storageGet } from "./storage";
 
 const BOXIUM_LOGO_URL = "https://boxiumptcg.manus.space/boxium-logo.png";
 const DEFAULT_OG_IMAGE = "https://boxiumptcg.manus.space/og-image.png";
@@ -20,6 +25,9 @@ const LOGO_PADDING = 20;
 // In-memory cache: cardId -> S3 URL (cleared on server restart)
 const ogImageCache = new Map<number, string>();
 
+// Track in-progress generations to avoid duplicate work
+const ogImageGenerating = new Set<number>();
+
 /**
  * Fetch an image from a URL and return as Buffer
  */
@@ -34,32 +42,84 @@ async function fetchImageBuffer(url: string): Promise<Buffer> {
 }
 
 /**
- * Compose a card image with BOXIUM logo watermark, upload to S3, and return the public URL.
- * Results are cached in memory to avoid repeated composition.
+ * Get the S3 key for a card's OG image
+ */
+function getOgImageS3Key(cardId: number): string {
+  return `og-images/card-${cardId}.png`;
+}
+
+/**
+ * Check if OG image already exists in S3 and return its URL.
+ * Returns null if not found or on error.
+ */
+async function getExistingS3Url(cardId: number): Promise<string | null> {
+  try {
+    const s3Key = getOgImageS3Key(cardId);
+    const { url } = await storageGet(s3Key);
+    // Verify the URL is accessible (storageGet may return a URL even if file doesn't exist)
+    const checkResponse = await fetch(url, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(3000),
+    });
+    if (checkResponse.ok) {
+      // Cache in memory for future requests
+      ogImageCache.set(cardId, url);
+      return url;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Compose and upload OG image to S3 in the background.
+ * Updates the in-memory cache when done.
+ */
+async function generateAndCacheInBackground(cardId: number, cardImageUrl: string): Promise<void> {
+  if (ogImageGenerating.has(cardId)) return; // Already in progress
+  ogImageGenerating.add(cardId);
+  try {
+    const composed = await composeOgImage(cardImageUrl);
+    if (!composed) return;
+
+    const s3Key = getOgImageS3Key(cardId);
+    const { url } = await storagePut(s3Key, composed, "image/png");
+    ogImageCache.set(cardId, url);
+    console.log(`[OG Composer] Background generation complete for card ${cardId}: ${url}`);
+  } catch (err) {
+    console.error(`[OG Composer] Background generation failed for card ${cardId}:`, err);
+  } finally {
+    ogImageGenerating.delete(cardId);
+  }
+}
+
+/**
+ * Get OG image URL for a card.
+ * - Returns cached URL immediately if available (in-memory or S3)
+ * - If not cached, starts background generation and returns default URL
+ * - This ensures /api/card-preview always responds within 1-2 seconds
+ *
  * @param cardId - The card database ID (used as cache key)
  * @param cardImageUrl - The URL of the card image
- * @returns S3 public URL of the composed image, or null if composition fails
+ * @returns S3 URL if cached, default URL if generation is in progress
  */
 export async function composeAndCacheOgImage(cardId: number, cardImageUrl: string): Promise<string | null> {
-  // Return cached URL if available
+  // 1. Check in-memory cache (fastest)
   const cached = ogImageCache.get(cardId);
   if (cached) return cached;
 
-  try {
-    const composed = await composeOgImage(cardImageUrl);
-    if (!composed) return null;
+  // 2. Check S3 (persists across server restarts) - with short timeout
+  const s3Url = await Promise.race([
+    getExistingS3Url(cardId),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+  ]);
+  if (s3Url) return s3Url;
 
-    // Upload to S3 with a stable key based on cardId
-    const s3Key = `og-images/card-${cardId}.png`;
-    const { url } = await storagePut(s3Key, composed, "image/png");
-
-    // Cache the S3 URL in memory
-    ogImageCache.set(cardId, url);
-    return url;
-  } catch (err) {
-    console.error(`[OG Composer] Failed to compose/upload image for card ${cardId}:`, err);
-    return null;
-  }
+  // 3. Not in cache - start background generation, return default URL immediately
+  // This prevents request timeout in production
+  generateAndCacheInBackground(cardId, cardImageUrl).catch(() => {});
+  return null; // Caller will use default OG image
 }
 
 /**
