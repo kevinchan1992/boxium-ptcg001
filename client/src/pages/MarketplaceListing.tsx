@@ -12,7 +12,7 @@ import {
   AlertCircle, ChevronLeft, ChevronRight, CheckCircle, XCircle,
   Loader2, HelpCircle, Tag, Flag, TrendingUp, TrendingDown, Minus,
   ExternalLink, Heart, ZoomIn, MessageSquare, ShoppingCart, ChevronDown,
-  ChevronUp, Store, X, Clock
+  ChevronUp, Store, X, Clock, Share2
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Input } from "@/components/ui/input";
@@ -745,6 +745,20 @@ export default function MarketplaceListing() {
                 </span>
                 <p className="text-white/60 text-xs mt-1">庫存：{listing.quantity} 件</p>
               </div>
+              <button
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/api/marketplace-preview/${listing.id}`;
+                  if (navigator.share) {
+                    navigator.share({ title: listing.title, url: shareUrl }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(shareUrl).then(() => toast.success("分享連結已複製！")).catch(() => toast.error("複製失敗"));
+                  }
+                }}
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-all bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                title="分享商品"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
               <button
                 onClick={() => {
                   if (!me) { toast.error("請先登入才能收藏"); return; }

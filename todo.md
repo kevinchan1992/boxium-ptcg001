@@ -4421,3 +4421,6 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] Publish 並測試 production 環境
 
 - [x] 卡牌更新時預生成 OG 圖片（每張只生成一次，S3 已存在則跳過）
+- [x] /api/marketplace-preview/:id 端點（Marketplace 商品分享縮圖預覽）
+- [x] card-preview 加入 meta refresh 自動跳轉到 /card/:id（已存在）
+- [x] MarketplaceListing 加入分享按鈕（Share2 圖標），指向 /api/marketplace-preview/:id

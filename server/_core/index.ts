@@ -492,6 +492,7 @@ async function startServer() {
       const ogDescription = cardDesc || `查看 ${cardName} 的最新 PSA 10 成交價格、價格趨勢與市場分析。`;
       const cardUrl = `https://boxium.asia/card/${id}`;
       const previewUrl = `https://boxium.asia/api/card-preview/${id}`;
+      // Note: previewUrl is the canonical share URL; meta refresh + JS redirect send users to cardUrl
 
       // Return a minimal HTML page with OG tags + instant JS redirect
       // Crawlers read the OG tags; users are redirected to the real card page
@@ -528,6 +529,77 @@ async function startServer() {
     } catch (err) {
       console.error("[Card Preview API] Error:", err);
       res.redirect(`https://boxium.asia/card/${req.params.id}`);
+    }
+  });
+
+  // ─── Share Preview: Marketplace listing (crawlers see OG tags, users get redirected) ──
+  app.get("/api/marketplace-preview/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.redirect(`https://boxium.asia/marketplace`);
+
+      const listing = await getListingById(id);
+      if (!listing) return res.redirect(`https://boxium.asia/marketplace`);
+
+      const price = parseFloat(listing.priceHkd as string);
+      const rawImages = listing.images;
+      let images: string[] | null = null;
+      if (rawImages) {
+        if (Array.isArray(rawImages)) images = rawImages as string[];
+        else if (typeof rawImages === "string") {
+          try { const p = JSON.parse(rawImages); images = Array.isArray(p) ? p : null; } catch {}
+        }
+      }
+      // Use first listing image, or fall back to card image from associated card
+      let imageUrl = images && images.length > 0 ? images[0] : null;
+      if (!imageUrl && listing.cardId) {
+        const card = await getCardById(listing.cardId);
+        if (card?.imageUrl) imageUrl = card.imageUrl;
+      }
+      const ogImage = imageUrl || getDefaultOgImageUrl();
+
+      const ogTitle = `${listing.title} - HKD ${price.toFixed(0)} | BOXIUM PTCG`;
+      const ogDescription = listing.description
+        ? `${(listing.description as string).slice(0, 120)}${(listing.description as string).length > 120 ? "..." : ""} | HKD ${price.toFixed(0)}`
+        : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(0)} | BOXIUM PTCG 卡牌商城`;
+      const listingUrl = `https://boxium.asia/marketplace/${id}`;
+      const previewUrl = `https://boxium.asia/api/marketplace-preview/${id}`;
+
+      const html = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="0; url=${listingUrl}" />
+  <title>${ogTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</title>
+  <meta property="og:type" content="product" />
+  <meta property="og:url" content="${previewUrl}" />
+  <meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
+  <meta property="og:description" content="${ogDescription.replace(/"/g, '&quot;')}" />
+  <meta property="og:image" content="${ogImage}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="BOXIUM PTCG" />
+  <meta property="og:price:amount" content="${price.toFixed(2)}" />
+  <meta property="og:price:currency" content="HKD" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
+  <meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />
+  <meta name="twitter:image" content="${ogImage}" />
+  <link rel="canonical" href="${listingUrl}" />
+</head>
+<body>
+  <script>window.location.replace("${listingUrl}");</script>
+  <p>正在跳轉到商品頁面... <a href="${listingUrl}">點此前往</a></p>
+</body>
+</html>`;
+
+      res.status(200).set({
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      }).end(html);
+    } catch (err) {
+      console.error("[Marketplace Preview API] Error:", err);
+      res.redirect(`https://boxium.asia/marketplace/${req.params.id}`);
     }
   });
 
