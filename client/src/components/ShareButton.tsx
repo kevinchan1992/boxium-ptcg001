@@ -17,7 +17,8 @@ interface ShareButtonProps {
 
 export function ShareButton({ cardName, cardId }: ShareButtonProps) {
   const { t } = useTranslation();
-  const shareUrl = `${window.location.origin}/card/${cardId}`;
+  // Always use the production domain for sharing, regardless of the current environment
+  const shareUrl = `https://boxium.asia/card/${cardId}`;
   const shareText = `${cardName} - BOXIUM PTCG`;
 
   const handleShareFacebook = () => {

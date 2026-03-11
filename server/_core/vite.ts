@@ -47,6 +47,8 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
+const CRAWLER_UA_REGEX = /facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|googlebot|bingbot|applebot|pinterest|vkshare|w3c_validator|embedly|quora|outbrain|semrushbot|ahrefsbot/i;
+
 export function serveStatic(app: Express) {
   const distPath =
     process.env.NODE_ENV === "development"
@@ -61,7 +63,13 @@ export function serveStatic(app: Express) {
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // BUT if the request is from a social crawler, pass to OG SSR routes instead
+  app.use("*", (req, res, next) => {
+    const ua = req.headers["user-agent"] || "";
+    if (CRAWLER_UA_REGEX.test(ua)) {
+      // Let OG SSR routes handle this
+      return next();
+    }
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

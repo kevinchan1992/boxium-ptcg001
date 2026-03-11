@@ -21,7 +21,7 @@ import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoComplet
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import { getListingById, getCardById, getSealedProductById } from "../db";
-import { composeOgImage, getDefaultOgImageUrl } from "../ogImageComposer";
+import { composeOgImage, composeAndCacheOgImage, getDefaultOgImageUrl } from "../ogImageComposer";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -435,13 +435,13 @@ async function startServer() {
         }
       }
       if (!cardName) return next();
-      // Use composed OG image with BOXIUM logo watermark
-      const origin = req.headers["x-forwarded-host"]
-        ? `https://${req.headers["x-forwarded-host"]}`
-        : (process.env.NODE_ENV === "production" ? "https://boxium.asia" : `https://${req.headers.host}`);
-      const imageUrl = cardImageUrl
-        ? `${origin}/api/og-image/${id}`
-        : getDefaultOgImageUrl();
+      // Use composed OG image with BOXIUM logo watermark, uploaded to S3 for stable URL
+      // S3 URLs are permanent and accessible by all crawlers (WhatsApp, Facebook, etc.)
+      let imageUrl = getDefaultOgImageUrl();
+      if (cardImageUrl) {
+        const s3Url = await composeAndCacheOgImage(id, cardImageUrl);
+        if (s3Url) imageUrl = s3Url;
+      }
       const ogTitle = `${cardName} - BOXIUM PTCG`;
       const ogDescription = cardDesc || `查看 ${cardName} 的最新 PSA 10 成交價格、價格趨勢與市場分析。`;
       const pageUrl = `https://boxium.asia/card/${id}`;
@@ -473,7 +473,14 @@ async function startServer() {
         .replace(/<meta\s+property="og:[^"]*"[^>]*\/>/g, '') // remove all og: meta tags
         .replace(/<meta\s+name="twitter:[^"]*"[^>]*\/>/g, '') // remove all twitter: meta tags
         .replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${ogTags}`);
-      res.status(200).set({ "Content-Type": "text/html" }).end(injected);
+      res.status(200).set({
+        "Content-Type": "text/html",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Pragma": "no-cache",
+        "Surrogate-Control": "no-store",
+        "CDN-Cache-Control": "no-store",
+        "Cloudflare-CDN-Cache-Control": "no-store",
+      }).end(injected);
     } catch (err) {
       console.error("[OG SSR Card] Error:", err);
       next();

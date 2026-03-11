@@ -4368,5 +4368,17 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 ## 🖼️ OG 分享圖片加入 BOXIUM LOGO 水印
 - [x] 安裝 sharp 套件，確認 BOXIUM LOGO CDN URL
 - [x] 後端新增 /api/og-image/:cardId API，合成卡牌圖片 + 左上角 LOGO 水印
-- [x] 修改 OG SSR 路由，og:image 指向合成圖片 API
+- [x] 修改 OG SSR 路由，og:image 指向 S3 快取 URL
+- [x] 修正 vite.ts serveStatic：爬蟲請求 next() 讓 OG SSR 路由處理
+- [x] OG SSR 回應加入 Cache-Control: no-store 防止 Cloudflare 快取
+- [x] TypeScript 0 錯誤並儲存 checkpoint
+
+## 🔗 WhatsApp/複製連結分享圖片水印（S3 快取方案）
+- [ ] 修改 ogImageComposer.ts：合成後上傳至 S3，回傳永久公開 URL（快取避免重複合成）
+- [ ] 修改 OG SSR 路由：og:image 改用 S3 URL，確保移除預設 og: meta tags
+- [ ] TypeScript 0 錯誤並儲存 checkpoint
+
+## 🔗 修正分享連結使用正式域名 boxium.asia
+- [x] 修正 ShareButton：複製連結和 WhatsApp/Facebook 分享 URL 固定使用 https://boxium.asia
+- [x] 修改 OG SSR 路由：og:image 改用 S3 快取 URL（composeAndCacheOgImage）
 - [x] TypeScript 0 錯誤並儲存 checkpoint

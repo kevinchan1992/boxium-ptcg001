@@ -1,9 +1,10 @@
 /**
  * OG Image Composer
  * Composites a card image with the BOXIUM logo watermark in the top-left corner.
- * Returns a PNG buffer suitable for serving as og:image.
+ * Uploads the result to S3 and caches the URL to avoid repeated composition.
  */
 import sharp from "sharp";
+import { storagePut } from "./storage";
 
 const BOXIUM_LOGO_URL = "https://boxiumptcg.manus.space/boxium-logo.png";
 const DEFAULT_OG_IMAGE = "https://boxiumptcg.manus.space/og-image.png";
@@ -15,6 +16,9 @@ const OG_HEIGHT = 630;
 // Logo dimensions: resize logo to ~20% of card width, placed at top-left with padding
 const LOGO_WIDTH = 200;
 const LOGO_PADDING = 20;
+
+// In-memory cache: cardId -> S3 URL (cleared on server restart)
+const ogImageCache = new Map<number, string>();
 
 /**
  * Fetch an image from a URL and return as Buffer
@@ -30,9 +34,37 @@ async function fetchImageBuffer(url: string): Promise<Buffer> {
 }
 
 /**
- * Compose a card image with BOXIUM logo watermark.
+ * Compose a card image with BOXIUM logo watermark, upload to S3, and return the public URL.
+ * Results are cached in memory to avoid repeated composition.
+ * @param cardId - The card database ID (used as cache key)
  * @param cardImageUrl - The URL of the card image
- * @returns PNG buffer with logo watermark, or null if composition fails
+ * @returns S3 public URL of the composed image, or null if composition fails
+ */
+export async function composeAndCacheOgImage(cardId: number, cardImageUrl: string): Promise<string | null> {
+  // Return cached URL if available
+  const cached = ogImageCache.get(cardId);
+  if (cached) return cached;
+
+  try {
+    const composed = await composeOgImage(cardImageUrl);
+    if (!composed) return null;
+
+    // Upload to S3 with a stable key based on cardId
+    const s3Key = `og-images/card-${cardId}.png`;
+    const { url } = await storagePut(s3Key, composed, "image/png");
+
+    // Cache the S3 URL in memory
+    ogImageCache.set(cardId, url);
+    return url;
+  } catch (err) {
+    console.error(`[OG Composer] Failed to compose/upload image for card ${cardId}:`, err);
+    return null;
+  }
+}
+
+/**
+ * Compose a card image with BOXIUM logo watermark.
+ * Returns raw PNG buffer (used by /api/og-image/:cardId for direct serving).
  */
 export async function composeOgImage(cardImageUrl: string): Promise<Buffer | null> {
   try {
@@ -48,17 +80,14 @@ export async function composeOgImage(cardImageUrl: string): Promise<Buffer | nul
     const cardH = cardMeta.height || 560;
 
     // Calculate canvas layout: card centered, with dark background
-    // For portrait cards (typical TCG cards), place card on left-center area
     const cardAspect = cardW / cardH;
-    
+
     // Fit card into OG canvas while maintaining aspect ratio
     let fitW: number, fitH: number;
     if (cardAspect > OG_WIDTH / OG_HEIGHT) {
-      // Wider than canvas ratio - fit by width
       fitW = OG_WIDTH;
       fitH = Math.round(OG_WIDTH / cardAspect);
     } else {
-      // Taller than canvas ratio - fit by height
       fitH = OG_HEIGHT;
       fitW = Math.round(OG_HEIGHT * cardAspect);
     }
@@ -92,17 +121,9 @@ export async function composeOgImage(cardImageUrl: string): Promise<Buffer | nul
     })
       .composite([
         // Card image centered
-        {
-          input: resizedCard,
-          left: cardLeft,
-          top: cardTop,
-        },
+        { input: resizedCard, left: cardLeft, top: cardTop },
         // BOXIUM logo at top-left corner with padding
-        {
-          input: resizedLogo,
-          left: LOGO_PADDING,
-          top: LOGO_PADDING,
-        },
+        { input: resizedLogo, left: LOGO_PADDING, top: LOGO_PADDING },
       ])
       .png({ quality: 90 })
       .toBuffer();
