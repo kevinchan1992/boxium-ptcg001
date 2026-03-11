@@ -4258,3 +4258,23 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 撰寫 trendingCards7d.test.ts（22 個測試：時間窗口、最低/最高價計算、最少 2 筆、排名、窗口外過濾、緩存欄位映射、與舊邏輯比較）
 - [x] TypeScript 0 錯誤，22/22 測試通過
 - [x] 儲存 checkpoint
+## 🛒 訂單詳情頁「取消訂單」按鈕 + 支付寶視窗滾動修復 + 爭議歷史記錄
+- [ ] 訂單詳情頁：在 pending_payment 狀態加入「取消訂單」按鈕，點擊後確認對話框，確認後取消訂單並釋放商品庫存
+- [ ] 後端：新增 cancelOrder tRPC mutation（只允許買家取消 pending_payment 訂單）
+- [ ] 支付寶 HK 付款視窗：修復 Dialog 內容無法向下滾動的問題（加入 overflow-y-auto + max-h 限制）
+- [ ] 爭議處理：加入「儲存處理備註」功能，儲存後顯示歷史爭議處理記錄（時間、處理人、備註）
+- [ ] 後端：新增 disputeResolutionLogs 表或在現有爭議表加入 resolutionHistory JSON 欄位
+- [ ] 撰寫相關測試
+- [ ] TypeScript 0 錯誤
+- [ ] 儲存 checkpoint
+
+## 🛒 訂單詳情頁「取消訂單」按鈕 + 支付寶視窗完整顯示 + 爭議歷史記錄
+- [x] 後端新增 buyerCancelOrder mutation（只允許 pending_payment 狀態、24 小時內、買家本人取消）
+- [x] 前端 OrderDetail.tsx 加入「取消訂單」按鈕（帶確認 Dialog 和原因輸入）
+- [x] 修復支付寶 HK 付款 Dialog：移除 bottomSheet prop，改為普通置中 Dialog，完整顯示所有內容（包括底部確認按鈕）
+- [x] 資料庫新增 disputeResolutionHistory 欄位（JSON 格式，追加歷史記錄）
+- [x] schema_new.ts 新增 disputeResolutionHistory 欄位
+- [x] adminResolveDispute mutation 加入 adminNote 可選欄位，每次處理後追加歷史記錄
+- [x] AdminMarketplace.tsx 爭議處理 Dialog 加入「管理員備註」欄位和歷史記錄顯示區域
+- [x] TypeScript 0 錯誤，53/53 相關測試通過
+- [x] 儲存 checkpoint

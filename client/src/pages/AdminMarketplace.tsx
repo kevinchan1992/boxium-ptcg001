@@ -1445,6 +1445,7 @@ function DisputesTab() {
   const [page, setPage] = useState(1);
   const [selectedDispute, setSelectedDispute] = useState<any>(null);
   const [resolution, setResolution] = useState("");
+  const [adminNote, setAdminNote] = useState("");
   const [outcome, setOutcome] = useState<"refund_buyer" | "release_seller" | "partial">("refund_buyer");
   const utils = trpc.useUtils();
 
@@ -1454,11 +1455,12 @@ function DisputesTab() {
       toast.success("✅ 爭議已處理");
       setSelectedDispute(null);
       setResolution("");
+      setAdminNote("");
       utils.marketplace.adminGetDisputes.invalidate();
       utils.marketplace.adminGetOrders.invalidate();
     },
     onError: (e) => toast.error(e.message),
-  });
+  });;
 
   if (isLoading) return <div className="py-8 text-center text-muted-foreground">載入中...</div>;
 
@@ -1585,6 +1587,44 @@ function DisputesTab() {
                   rows={3}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>管理員備註（內部，不通知用戶）</Label>
+                <Textarea
+                  placeholder="可記錄內部處理筆記、跟進事項等（選填）"
+                  value={adminNote}
+                  onChange={e => setAdminNote(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              {/* 爭議歷史記錄 */}
+              {selectedDispute?.disputeResolutionHistory && (() => {
+                try {
+                  const history: Array<{timestamp: string; outcome: string; resolution: string; adminNote?: string}> = JSON.parse(selectedDispute.disputeResolutionHistory);
+                  if (history.length === 0) return null;
+                  return (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">欷史處理記錄</Label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {history.map((entry, i) => (
+                          <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`font-medium px-1.5 py-0.5 rounded text-white text-[10px] ${
+                                entry.outcome === 'refund_buyer' ? 'bg-red-500' :
+                                entry.outcome === 'release_seller' ? 'bg-green-600' : 'bg-amber-500'
+                              }`}>
+                                {entry.outcome === 'refund_buyer' ? '退款買家' : entry.outcome === 'release_seller' ? '放款賣家' : '部分處理'}
+                              </span>
+                              <span className="text-gray-400">{new Date(entry.timestamp).toLocaleString('zh-HK')}</span>
+                            </div>
+                            <p className="text-gray-700">{entry.resolution}</p>
+                            {entry.adminNote && <p className="text-gray-500 mt-1 italic">備註：{entry.adminNote}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                } catch { return null; }
+              })()}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
                 <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
                 {outcome === "refund_buyer" && "選擇退款後，訂單將標記為已取消，賣家不會收到款項。"}
@@ -1602,6 +1642,7 @@ function DisputesTab() {
                 orderId: selectedDispute.id,
                 resolution: resolution.trim(),
                 outcome,
+                adminNote: adminNote.trim() || undefined,
               })}
             >
               {resolveMutation.isPending

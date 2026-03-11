@@ -1661,6 +1661,58 @@ All three checks must pass for verified to be true. Respond with JSON only match
     }),
 
   // ============================================================
+  // BUYER - Cancel Order (pending_payment only)
+  // ============================================================
+  buyerCancelOrder: protectedProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      reason: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
+      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "只有買家可以取消訂單" });
+      if (order.orderStatus !== "pending_payment") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "只有待付款的訂單可以取消" });
+      }
+      await updateMarketplaceOrder(input.orderId, {
+        orderStatus: "cancelled",
+      });
+      // If listing was marked sold, restore it to active
+      if (order.listingId) {
+        const listing = await getListingById(order.listingId);
+        if (listing && listing.status === "sold") {
+          const db = await getDb();
+          if (db) {
+            await db.update(marketplaceListings)
+              .set({ status: "active" })
+              .where(eq(marketplaceListings.id, order.listingId));
+          }
+        }
+      }
+      // Notify owner
+      await notifyOwner({
+        title: "買家取消訂單",
+        content: `訂單 ${order.orderNo} 已由買家取消。${input.reason ? `原因：${input.reason}` : ""}`,
+      }).catch(() => {});
+      // Send cancellation email
+      try {
+        const { sendOrderEmail, buildOrderCancelledEmail, getOrderEmailData } = await import("../emailService");
+        const emailData = await getOrderEmailData(order);
+        const { subject, html } = buildOrderCancelledEmail({
+          orderNo: order.orderNo,
+          itemName: emailData.itemName,
+          priceHkd: emailData.priceHkd,
+          note: input.reason ?? "買家主動取消",
+        });
+        await sendOrderEmail({ userId: order.buyerId, subject, html });
+      } catch (emailErr: any) {
+        console.warn("[BuyerCancel] Email failed:", emailErr.message);
+      }
+      return { success: true };
+    }),
+
+  // ============================================================
   // ADMIN - Resolve Dispute
   // ============================================================
   adminResolveDispute: adminProcedure
@@ -1668,19 +1720,34 @@ All three checks must pass for verified to be true. Respond with JSON only match
       orderId: z.number().int(),
       resolution: z.string().min(5).max(1000),
       outcome: z.enum(["refund_buyer", "release_seller", "partial"]),
+      adminNote: z.string().max(500).optional(),
     }))
     .mutation(async ({ input }) => {
-      const order = await getMarketplaceOrderById(input.orderId);
+      const { orderId, resolution, outcome, adminNote } = input;
+      const order = await getMarketplaceOrderById(orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       if (order.orderStatus !== "disputed") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不在爭議狀態" });
       }
       // Determine final order status based on outcome
-      const finalStatus = input.outcome === "refund_buyer" ? "cancelled" : "completed";
+      const finalStatus = outcome === "refund_buyer" ? "cancelled" : "completed";
+      // Build resolution history entry
+      const historyEntry = {
+        timestamp: new Date().toISOString(),
+        outcome,
+        resolution,
+        adminNote: adminNote ?? null,
+      };
+      const existingHistory: any[] = (() => {
+        try { return order.disputeResolutionHistory ? JSON.parse(order.disputeResolutionHistory as string) : []; }
+        catch { return []; }
+      })();
+      const newHistory = JSON.stringify([...existingHistory, historyEntry]);
       await updateMarketplaceOrder(input.orderId, {
         orderStatus: finalStatus,
         disputeResolvedAt: new Date(),
         disputeResolution: `[${input.outcome}] ${input.resolution}`,
+        disputeResolutionHistory: newHistory,
         payoutStatus: input.outcome === "release_seller" ? "processing" : "failed",
       });
       // If refunding buyer, trigger Stripe Refund

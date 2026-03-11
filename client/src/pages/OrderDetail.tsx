@@ -312,8 +312,10 @@ export default function OrderDetail() {
   const [, navigate] = useLocation();
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showDisputeDialog, setShowDisputeDialog] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeEvidenceUrls, setDisputeEvidenceUrls] = useState<string[]>([]);
   const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
@@ -326,6 +328,17 @@ export default function OrderDetail() {
     { orderNo },
     { enabled: !!orderNo }
   );
+
+  const buyerCancelMutation = trpc.marketplace.buyerCancelOrder.useMutation({
+    onSuccess: () => {
+      toast.success("❌ 訂單已取消");
+      setShowCancelDialog(false);
+      setCancelReason("");
+      utils.marketplace.getOrderByNo.invalidate({ orderNo });
+      utils.marketplace.getMyOrders.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const confirmReceiptMutation = trpc.marketplace.confirmReceipt.useMutation({
     onSuccess: () => {
@@ -508,17 +521,33 @@ export default function OrderDetail() {
             </div>
           </div>
 
-          {/* Action Buttons - pending_payment: show pay button */}
+          {/* Action Buttons - pending_payment: show pay button + cancel button */}
           {isBuyer && order.orderStatus === "pending_payment" && order.paymentMethod === "stripe" && (
             <div className="px-4 pb-4 flex flex-wrap gap-2 border-t pt-3">
               <PayOrderButton orderId={order.id} />
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+                onClick={() => setShowCancelDialog(true)}
+              >
+                <XCircle className="w-4 h-4 mr-1.5" />取消訂單
+              </Button>
             </div>
           )}
           {isBuyer && order.orderStatus === "pending_payment" && order.paymentMethod === "alipay_hk" && (
-            <div className="px-4 pb-4 border-t pt-3">
+            <div className="px-4 pb-4 border-t pt-3 flex flex-wrap items-center gap-2">
               <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />等待支付寶 HK 付款確認
               </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+                onClick={() => setShowCancelDialog(true)}
+              >
+                <XCircle className="w-4 h-4 mr-1.5" />取消訂單
+              </Button>
             </div>
           )}
           {/* Action Buttons */}
@@ -729,6 +758,43 @@ export default function OrderDetail() {
           <p>最後更新：{new Date(order.updatedAt).toLocaleString("zh-HK")}</p>
         </div>
       </div>
+
+      {/* Cancel Order Dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={(open) => { setShowCancelDialog(open); if (!open) setCancelReason(""); }}>
+        <DialogContent bottomSheet className="sm:max-w-sm">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><XCircle className="w-5 h-5 text-red-500" />取消訂單</DialogTitle></DialogHeader>
+          <div className="py-2 space-y-3">
+            <p className="text-sm text-muted-foreground">確認要取消此訂單？取消後訂單將無法恢復。</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-800">
+              <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
+              只有「待付款」狀態的訂單可以取消。付款後如需退款請申請爭議。
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">取消原因（選填）</p>
+              <Textarea
+                placeholder="請說明取消原因，例如：誤購、不需要等"
+                value={cancelReason}
+                onChange={e => setCancelReason(e.target.value)}
+                rows={3}
+                className="text-sm"
+                maxLength={500}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCancelDialog(false)}>保留訂單</Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={buyerCancelMutation.isPending}
+              onClick={() => buyerCancelMutation.mutate({ orderId: order.id, reason: cancelReason.trim() || undefined })}
+            >
+              {buyerCancelMutation.isPending
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</>
+                : <><XCircle className="w-4 h-4 mr-2" />確認取消</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirm Receipt Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>

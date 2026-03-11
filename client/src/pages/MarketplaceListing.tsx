@@ -988,7 +988,7 @@ export default function MarketplaceListing() {
 
       {/* ── Alipay Dialog ── */}
       <Dialog open={showAlipay} onOpenChange={() => setShowAlipay(false)}>
-        <DialogContent bottomSheet showCloseButton={false} className="sm:max-w-md p-0 overflow-hidden border-2 border-[#FEDD00] gap-0">
+        <DialogContent showCloseButton={false} className="sm:max-w-md p-0 overflow-visible border-2 border-[#FEDD00] gap-0">
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
