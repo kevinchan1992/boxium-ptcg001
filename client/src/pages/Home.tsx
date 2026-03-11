@@ -184,7 +184,7 @@ export default function Home() {
                 {t("home.trendingCards")}
               </h2>
             </div>
-            <p className="text-gray-600 text-xs md:text-sm max-w-2xl mx-auto px-2">
+            <p className="text-gray-600 text-xs md:text-sm max-w-2xl mx-auto px-2 font-semibold">
               {t("home.trendingCardsDesc")}
             </p>
           </div>

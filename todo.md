@@ -4358,3 +4358,10 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 前端：顯示統計摘要（累計銷售額、手續費、淨收入、已完成/待出貨訂單數）
 - [x] TypeScript 0 錯誤
 - [x] 儲存 checkpoint
+
+## 🔗 卡牌詳情頁動態 Open Graph 分享預覽圖片
+- [ ] 後端：新增 /api/og/:cardId 路由，返回卡牌的 og:image、og:title、og:description
+- [ ] 前端：卡牌詳情頁動態更新 document head 的 og:image（使用卡牌圖片 URL）
+- [ ] 前端：同步更新 og:title（卡牌名稱 - BOXIUM PTCG）和 og:description
+- [ ] 確認 WhatsApp/Facebook 分享預覽顯示卡牌圖片
+- [ ] TypeScript 0 錯誤並儲存 checkpoint
