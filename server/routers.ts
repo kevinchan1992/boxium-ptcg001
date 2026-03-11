@@ -17,6 +17,7 @@ import * as batchTaskManager from "./batchTaskManager";
 import { restartScheduler } from "./batchUpdateScheduler";
 import { restartPriceUpdateScheduler } from "./priceUpdateScheduler";
 import { pricingRouter } from "./routers/pricing";
+import { ensureOgImageExists } from "./ogImageComposer";
 import { templatesRouter } from "./routers/templates";
 import { diagnosticsRouter } from "./routers/diagnostics";
 
@@ -1182,6 +1183,8 @@ const snkrdunkId = extractSnkrdunkId(input.url);
                 cardNumber,
               });
             }
+            // Pre-generate OG image once (idempotent: skips if already in S3)
+            ensureOgImageExists(productId, cardData.imageUrl || null).catch(() => {});
           }
 
           // Add data source (now guaranteed to be new)
@@ -1259,6 +1262,8 @@ try {
               nameJa: cardData.nameJa,
               imageUrl: cardData.imageUrl || undefined,
             });
+            // Pre-generate OG image once (idempotent: skips if already in S3)
+            ensureOgImageExists(dataSource.cardId, cardData.imageUrl || null).catch(() => {});
           }
 
           // Save new price history

@@ -196,6 +196,40 @@ export async function composeOgImage(cardImageUrl: string): Promise<Buffer | nul
 }
 
 /**
+ * Ensure an OG image exists in S3 for a card.
+ * - If already in S3 (or in-memory cache), does nothing (idempotent)
+ * - If not yet generated, triggers background generation
+ * - Safe to call on every card update; generation only happens once per card
+ *
+ * @param cardId - The card database ID
+ * @param cardImageUrl - The URL of the card image (used for composition)
+ */
+export async function ensureOgImageExists(cardId: number, cardImageUrl: string | null | undefined): Promise<void> {
+  if (!cardImageUrl) return; // No image to compose from
+
+  // If already in memory cache, nothing to do
+  if (ogImageCache.has(cardId)) return;
+
+  // If already generating, nothing to do
+  if (ogImageGenerating.has(cardId)) return;
+
+  // Check S3 quickly (3 second timeout)
+  const s3Url = await Promise.race([
+    getExistingS3Url(cardId),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+  ]);
+
+  if (s3Url) {
+    // Already in S3, cache it and done
+    ogImageCache.set(cardId, s3Url);
+    return;
+  }
+
+  // Not in S3 yet — generate in background (fire and forget)
+  generateAndCacheInBackground(cardId, cardImageUrl).catch(() => {});
+}
+
+/**
  * Get the default OG image URL (fallback)
  */
 export function getDefaultOgImageUrl(): string {

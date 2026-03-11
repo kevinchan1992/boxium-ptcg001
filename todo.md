@@ -4419,3 +4419,5 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 更新 `ShareButton.tsx` 分享 URL 指向 `/api/card-preview/:id`
 - [x] 測試 dev server 端點正常（卡牌名稱、圖片、描述均正確）
 - [ ] Publish 並測試 production 環境
+
+- [x] 卡牌更新時預生成 OG 圖片（每張只生成一次，S3 已存在則跳過）
