@@ -193,23 +193,18 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const activePriceHistory = isSealedProduct ? sealedPriceHistory : priceHistory;
   const activePriceLoading = isSealedProduct ? sealedPriceLoading : priceLoading;
 
-  // 動態時間範圍調整：2個月 → 3個月 → 6個月
-  const [timeRangeDays, setTimeRangeDays] = useState(60);
-  const [actualMonths, setActualMonths] = useState(2);
-
-  useEffect(() => {
-    setTimeRangeDays(60);
-    setActualMonths(2);
-  }, [cardId]);
+  // 固定取最近 50 筆，時間範圍 6 個月（180 天）
+  // 使用時間衰減加權平均（半衰期 14 天），不再需要動態擴展時間範圍
 
   // 獨立查詢 PSA 10 價格歷史用於計算參考價格 (single cards only)
+  // 取最近 50 筆，時間範圍 6 個月（180 天）
   const { data: psa10PriceHistory = [], isLoading: psa10Loading } = trpc.prices.getHistory.useQuery(
     {
       cardId: cardId!,
       source: "snkrdunk",
       grade: "PSA10",
-      limit: 10,
-      days: timeRangeDays,
+      limit: 50,
+      days: 180,
     },
     { enabled: !!cardId && !isSealedProduct, retry: 1 }
   );
@@ -221,36 +216,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       productType: 'sealed_product',
       source: "snkrdunk",
       limit: 10,
-      days: timeRangeDays,
+      days: 60,
     },
     { enabled: !!cardId && isSealedProduct, retry: 1 }
   );
 
   const activeRecentPrices = isSealedProduct ? sealedRecentPrices : psa10PriceHistory;
   const activeRecentLoading = isSealedProduct ? sealedRecentLoading : psa10Loading;
-
-  // 動態調整時間範圍
-  useEffect(() => {
-    if (activeRecentLoading) return;
-    
-    const recordCount = activeRecentPrices.length;
-    
-    if (recordCount >= 3) {
-      if (timeRangeDays === 60) setActualMonths(2);
-      else if (timeRangeDays === 90) setActualMonths(3);
-      else if (timeRangeDays === 180) setActualMonths(6);
-    } else {
-      if (timeRangeDays === 60) {
-        setTimeRangeDays(90);
-        setActualMonths(3);
-      } else if (timeRangeDays === 90) {
-        setTimeRangeDays(180);
-        setActualMonths(6);
-      } else if (timeRangeDays === 180) {
-        setActualMonths(6);
-      }
-    }
-  }, [activeRecentPrices.length, timeRangeDays, activeRecentLoading]);
 
   // Fetch price trend data
   // For single cards: use existing API
@@ -300,7 +272,10 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
   // Calculate reference price
   // For sealed products: latest transaction price ÷ quantity (reflects per-unit value)
-  // For single cards: average of recent PSA 10 transactions (unchanged)
+  // For single cards: time-decay weighted average with 14-day half-life + IQR outlier filtering.
+  //   weight(i) = 2^(-daysAgo / 14)
+  //   refPrice  = Σ(price_i × weight_i) / Σ(weight_i)
+  // This ensures recent transactions dominate while older records contribute proportionally less.
   const calculateReferencePrice = () => {
     if (activeRecentPrices.length === 0) return "N/A";
     
@@ -314,32 +289,51 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
       return (price / Math.max(qty, 1)).toFixed(2);
     } else {
-      // Single card: average of recent PSA 10 transactions with IQR outlier filtering.
-      // This prevents a single mis-classified or anomalous record from skewing the
-      // reference price (e.g. a JPY 21,000 record mixed with JPY 180,000-210,000 records).
-      const prices = activeRecentPrices
-        .map((p: any) => parseFloat(p.price))
-        .filter((v: number) => !isNaN(v) && v > 0);
-      if (prices.length === 0) return "N/A";
+      // Single card: time-decay weighted average (half-life = 14 days) with IQR outlier filtering.
+      const records = activeRecentPrices
+        .map((p: any) => ({
+          price: parseFloat(p.price),
+          soldAt: p.soldAt ? new Date(p.soldAt) : null,
+        }))
+        .filter((r: { price: number; soldAt: Date | null }) => !isNaN(r.price) && r.price > 0);
 
-      let filteredPrices = prices;
+      if (records.length === 0) return "N/A";
+
+      const prices = records.map((r: { price: number; soldAt: Date | null }) => r.price);
+
+      // Step 1: IQR 2.5× outlier filtering (skip if fewer than 4 records)
+      let filteredRecords = records;
       if (prices.length >= 4) {
-        const sorted = [...prices].sort((a, b) => a - b);
+        const sorted = [...prices].sort((a: number, b: number) => a - b);
         const q1 = sorted[Math.floor((sorted.length - 1) * 0.25)];
         const q3 = sorted[Math.floor((sorted.length - 1) * 0.75)];
         const iqr = q3 - q1;
-        // 2.5× IQR: tighter than the storage-layer filter (3×) so display is cleaner
         const lower = q1 - 2.5 * iqr;
         const upper = q3 + 2.5 * iqr;
-        const candidate = prices.filter((p: number) => p >= lower && p <= upper);
-        // Only apply filter if it keeps at least half the records (safety fallback)
-        if (candidate.length >= Math.ceil(prices.length * 0.5)) {
-          filteredPrices = candidate;
+        const candidate = records.filter((r: { price: number; soldAt: Date | null }) => r.price >= lower && r.price <= upper);
+        // Safety fallback: only apply if at least half the records remain
+        if (candidate.length >= Math.ceil(records.length * 0.5)) {
+          filteredRecords = candidate;
         }
       }
 
-      const avg = filteredPrices.reduce((sum: number, p: number) => sum + p, 0) / filteredPrices.length;
-      return avg.toFixed(2);
+      // Step 2: Time-decay weighted average (half-life = 14 days)
+      const HALF_LIFE_DAYS = 14;
+      const now = Date.now();
+      let weightedSum = 0;
+      let totalWeight = 0;
+
+      for (const r of filteredRecords) {
+        const daysAgo = r.soldAt
+          ? (now - r.soldAt.getTime()) / (1000 * 60 * 60 * 24)
+          : 0; // If no date, treat as today (full weight)
+        const weight = Math.pow(2, -daysAgo / HALF_LIFE_DAYS);
+        weightedSum += r.price * weight;
+        totalWeight += weight;
+      }
+
+      if (totalWeight === 0) return "N/A";
+      return (weightedSum / totalWeight).toFixed(2);
     }
   };
   
@@ -497,9 +491,9 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-2">
               {isSealedProduct ? (
-                t("cardDetail.basedOnLatestSealedRecords", { count: recordCount, months: actualMonths })
+                t("cardDetail.basedOnLatestSealedRecords", { count: recordCount, months: 2 })
               ) : (
-                t("cardDetail.basedOnLatestRecords", { count: recordCount, months: actualMonths })
+                t("cardDetail.basedOnLatestRecordsWeighted", { count: recordCount })
               )}
               {priceTrend && (
                 <span className="ml-2">· {t("cardDetail.priceTrend")}</span>

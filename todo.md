@@ -4286,3 +4286,11 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 確認官方商品付款流程：收款直接進平台 Stripe，不需要 Stripe Connect 轉帳
 - [x] 撰寫測試（69/69 marketplace 測試通過）
 - [x] 儲存 checkpoint
+
+## 📊 PSA 10 參考價格：時間衰減加權平均（半衰期 14 天）
+- [x] 修改 CardDetail.tsx：limit 改為 50，days 改為 180（6 個月）
+- [x] 修改 calculateReferencePrice：加入半衰期 14 天時間衰減加權計算
+- [x] 更新 i18n 顯示文字（zh-TW.json、en.json）
+- [x] 確認熱門卡牌排行計算邏輯不需要修改（目的不同）
+- [x] 撰寫測試（25/25 通過）
+- [ ] 儲存 checkpoint

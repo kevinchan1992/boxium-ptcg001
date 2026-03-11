@@ -122,6 +122,7 @@
     "referencePrice": "Reference Price",
     "basedOnRecords": "Based on {{count}} transaction records",
     "basedOnLatestRecords": "Based on the latest {{count}} PSA 10 transactions within the past {{months}} months",
+    "basedOnLatestRecordsWeighted": "Based on {{count}} PSA 10 transactions, weighted by recency",
     "priceHistory": "Price History",
     "date": "Date",
     "price": "Price",
