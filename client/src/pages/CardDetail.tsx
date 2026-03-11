@@ -193,18 +193,19 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const activePriceHistory = isSealedProduct ? sealedPriceHistory : priceHistory;
   const activePriceLoading = isSealedProduct ? sealedPriceLoading : priceLoading;
 
-  // 固定取最近 50 筆，時間範圍 6 個月（180 天）
-  // 使用時間衰減加權平均（半衰期 14 天），不再需要動態擴展時間範圍
-
+  // PSA 10 參考價格計算策略 v3：
+  // - 主要路徑：最近 30 天的所有成交記錄，半衰期 7 天時間衰減加權，不做 IQR
+  // - 備用路徑：若 30 天不足 3 筆，自動擴展至 90 天
+  // 時間窗口本身即是過濾器，避免 IQR 把市場急漲後的新高價誤判為異常值
   // 獨立查詢 PSA 10 價格歷史用於計算參考價格 (single cards only)
-  // 取最近 50 筆，時間範圍 6 個月（180 天）
+  // 取最多 90 天的記錄，前端再按 30/90 天窗口篩選
   const { data: psa10PriceHistory = [], isLoading: psa10Loading } = trpc.prices.getHistory.useQuery(
     {
       cardId: cardId!,
       source: "snkrdunk",
       grade: "PSA10",
-      limit: 50,
-      days: 180,
+      limit: 500, // 取足夠多，讓前端按時間窗口篩選
+      days: 90,   // 最多 90 天（備用路徑上限）
     },
     { enabled: !!cardId && !isSealedProduct, retry: 1 }
   );
@@ -272,10 +273,12 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
   // Calculate reference price
   // For sealed products: latest transaction price ÷ quantity (reflects per-unit value)
-  // For single cards: time-decay weighted average with 14-day half-life + IQR outlier filtering.
-  //   weight(i) = 2^(-daysAgo / 14)
+  // For single cards: v3 - time-decay weighted average with 7-day half-life, NO IQR.
+  //   Primary window: last 30 days (time window itself acts as filter)
+  //   Fallback: extend to 90 days if fewer than 3 records in last 30 days
+  //   weight(i) = 2^(-daysAgo / 7)
   //   refPrice  = Σ(price_i × weight_i) / Σ(weight_i)
-  // This ensures recent transactions dominate while older records contribute proportionally less.
+  //   IQR removed: prevents new highs from being filtered as outliers during rapid price surges
   const calculateReferencePrice = () => {
     if (activeRecentPrices.length === 0) return "N/A";
     
@@ -289,41 +292,41 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
       return (price / Math.max(qty, 1)).toFixed(2);
     } else {
-      // Single card: time-decay weighted average (half-life = 14 days) with IQR outlier filtering.
-      const records = activeRecentPrices
+      // Single card: time-decay weighted average (half-life = 7 days), NO IQR
+      const allRecords = activeRecentPrices
         .map((p: any) => ({
           price: parseFloat(p.price),
           soldAt: p.soldAt ? new Date(p.soldAt) : null,
         }))
         .filter((r: { price: number; soldAt: Date | null }) => !isNaN(r.price) && r.price > 0);
 
-      if (records.length === 0) return "N/A";
+      if (allRecords.length === 0) return "N/A";
 
-      const prices = records.map((r: { price: number; soldAt: Date | null }) => r.price);
+      // Step 1: Apply 30-day primary window
+      const now = Date.now();
+      const MS_30D = 30 * 24 * 60 * 60 * 1000;
+      const MS_90D = 90 * 24 * 60 * 60 * 1000;
+      let records = allRecords.filter((r: { price: number; soldAt: Date | null }) =>
+        r.soldAt ? (now - r.soldAt.getTime()) <= MS_30D : true
+      );
 
-      // Step 1: IQR 2.5× outlier filtering (skip if fewer than 4 records)
-      let filteredRecords = records;
-      if (prices.length >= 4) {
-        const sorted = [...prices].sort((a: number, b: number) => a - b);
-        const q1 = sorted[Math.floor((sorted.length - 1) * 0.25)];
-        const q3 = sorted[Math.floor((sorted.length - 1) * 0.75)];
-        const iqr = q3 - q1;
-        const lower = q1 - 2.5 * iqr;
-        const upper = q3 + 2.5 * iqr;
-        const candidate = records.filter((r: { price: number; soldAt: Date | null }) => r.price >= lower && r.price <= upper);
-        // Safety fallback: only apply if at least half the records remain
-        if (candidate.length >= Math.ceil(records.length * 0.5)) {
-          filteredRecords = candidate;
-        }
+      // Step 2: Fallback to 90-day window if fewer than 3 records in last 30 days
+      if (records.length < 3) {
+        records = allRecords.filter((r: { price: number; soldAt: Date | null }) =>
+          r.soldAt ? (now - r.soldAt.getTime()) <= MS_90D : true
+        );
       }
 
-      // Step 2: Time-decay weighted average (half-life = 14 days)
-      const HALF_LIFE_DAYS = 14;
-      const now = Date.now();
+      if (records.length === 0) return "N/A";
+
+      // Step 3: Time-decay weighted average (half-life = 7 days)
+      // 7-day half-life: records from 1 week ago have 50% weight, 2 weeks ago have 25%
+      // This makes the reference price highly responsive to recent market conditions
+      const HALF_LIFE_DAYS = 7;
       let weightedSum = 0;
       let totalWeight = 0;
 
-      for (const r of filteredRecords) {
+      for (const r of records) {
         const daysAgo = r.soldAt
           ? (now - r.soldAt.getTime()) / (1000 * 60 * 60 * 24)
           : 0; // If no date, treat as today (full weight)

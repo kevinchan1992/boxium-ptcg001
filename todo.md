@@ -4300,4 +4300,12 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 加入 IQR 過濾 + 半衰期 7 天時間衰減加權（兩週各需 ≥3 筆）
 - [x] 更新 i18n 顯示文字（zh-TW.json、en.json）
 - [x] 撰寫測試（18/18 通過）
+- [x] 儲存 checkpoint
+
+## 📊 PSA 10 參考價格計算邏輯 v3：30天窗口 + 半衰期7天 + 移除IQR
+- [x] 修改 CardDetail.tsx：改用 days=30 窗口，半衰期從 14 天改為 7 天，移除 IQR 過濾
+- [x] 冷門卡備用：若 30 天不足 3 筆，擴展至 90 天
+- [x] 同步更新 calculateAndCacheTrendingCards：移除 IQR，保持半衰期 7 天邏輯
+- [x] 更新 i18n 顯示文字（zh-TW.json、en.json）
+- [x] 更新單元測試（43/43 通過）
 - [ ] 儲存 checkpoint

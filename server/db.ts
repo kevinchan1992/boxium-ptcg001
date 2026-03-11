@@ -1495,6 +1495,11 @@ function filterOutliersTrending(prices: number[]): number[] {
  * Helper: Time-decay weighted average with a given half-life (in days).
  * weight(record) = 2^(-daysAgo / halfLifeDays)
  * Returns null if the list is empty.
+ *
+ * NOTE: IQR filtering intentionally removed (v3).
+ * The 7-day time window itself acts as the filter.
+ * IQR was causing new market highs to be incorrectly removed as outliers
+ * during rapid price surges, producing artificially low weighted averages.
  */
 function weightedAvgTrending(
   records: { price: number; date: Date }[],
@@ -1502,15 +1507,9 @@ function weightedAvgTrending(
   halfLifeDays: number
 ): number | null {
   if (records.length === 0) return null;
-  const prices = records.map(r => r.price);
-  const filtered = filterOutliersTrending(prices);
-  // Rebuild with dates for weighting
-  const filteredSet = new Set(filtered);
-  // Use all records whose price survived the filter (keep duplicates proportionally)
-  const kept = records.filter(r => filteredSet.has(r.price));
   let weightedSum = 0;
   let totalWeight = 0;
-  for (const r of kept) {
+  for (const r of records) {
     const daysAgo = (now.getTime() - r.date.getTime()) / (1000 * 60 * 60 * 24);
     const w = Math.pow(2, -daysAgo / halfLifeDays);
     weightedSum += r.price * w;
