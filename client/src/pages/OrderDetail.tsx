@@ -85,6 +85,7 @@ function getTrackingUrl(shippingMethod: string | null | undefined, trackingNumbe
 
 const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; icon: React.ReactNode; desc: string }> = {
   pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: <Clock className="w-4 h-4" />, desc: "等待買家完成付款" },
+  paid_held: { label: "已付款，等待出貨", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-4 h-4" />, desc: "付款已確認，等待賣家出貨" },
   payment_received: { label: "已收款", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <CreditCard className="w-4 h-4" />, desc: "付款已確認，等待賣家處理" },
   processing: { label: "處理中", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-4 h-4" />, desc: "賣家正在準備出貨" },
   shipped: { label: "已出貨", color: "bg-indigo-100 text-indigo-800 border-indigo-200", icon: <Truck className="w-4 h-4" />, desc: "商品已寄出，請耐心等候" },
@@ -103,7 +104,7 @@ const TIMELINE_STEPS = [
   { key: "completed", label: "確認收貨", icon: <CheckCircle className="w-4 h-4" /> },
 ];
 
-const STATUS_ORDER = ["pending_payment", "payment_received", "processing", "shipped", "delivered", "completed"];
+const STATUS_ORDER = ["pending_payment", "paid_held", "payment_received", "processing", "shipped", "delivered", "completed"];
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hovered, setHovered] = useState(0);
@@ -459,7 +460,7 @@ export default function OrderDetail() {
   })() : null;
   const disputeDaysLeft = disputeDeadline ? Math.ceil((disputeDeadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   const isWithinDisputeWindow = disputeDaysLeft !== null ? disputeDaysLeft > 0 : true; // if no shippedAt, allow dispute
-  const canDispute = isBuyer && ["shipped", "delivered", "payment_received", "processing"].includes(order.orderStatus) && isWithinDisputeWindow;
+  const canDispute = isBuyer && ["shipped", "delivered", "payment_received", "processing", "paid_held"].includes(order.orderStatus) && isWithinDisputeWindow;
   const isCompleted = order.orderStatus === "completed";
   const canReview = isBuyer && isCompleted && order.sellerType === "seller" && !review;
 
@@ -548,6 +549,14 @@ export default function OrderDetail() {
               >
                 <XCircle className="w-4 h-4 mr-1.5" />取消訂單
               </Button>
+            </div>
+          )}
+          {/* paid_held / payment_received / processing: waiting for seller to ship */}
+          {isBuyer && ["paid_held", "payment_received", "processing"].includes(order.orderStatus) && (
+            <div className="px-4 pb-4 border-t pt-3">
+              <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 inline-flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5" />付款已成功，等待賣家出貨中...
+              </span>
             </div>
           )}
           {/* Action Buttons */}

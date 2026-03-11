@@ -16,6 +16,7 @@ import {
 
 const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: <Clock className="w-3.5 h-3.5" /> },
+  paid_held: { label: "已付款，等待出貨", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-3.5 h-3.5" /> },
   payment_received: { label: "已收款", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <CreditCard className="w-3.5 h-3.5" /> },
   processing: { label: "已付款，等待出貨", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-3.5 h-3.5" /> },
   shipped: { label: "已出貨", color: "bg-indigo-100 text-indigo-800 border-indigo-200", icon: <Truck className="w-3.5 h-3.5" /> },
@@ -264,10 +265,11 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
   })();
 
   const canConfirm = order.orderStatus === "shipped" || order.orderStatus === "delivered";
-  const canDispute = ["shipped", "delivered", "payment_received", "processing"].includes(order.orderStatus);
+  const canDispute = ["shipped", "delivered", "payment_received", "processing", "paid_held"].includes(order.orderStatus);
   const isCompleted = order.orderStatus === "completed";
   const isPending = order.orderStatus === "pending_payment";
   const isDisputed = order.orderStatus === "disputed";
+  const isWaitingShipment = ["paid_held", "payment_received", "processing"].includes(order.orderStatus);
   const canReview = isCompleted && order.sellerType === "seller" && !existingReview;
 
   return (
@@ -353,15 +355,16 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
               已評價 {existingReview.rating} 星
             </span>
           )}
-          {isPending && order.paymentMethod === "stripe" && (
-            <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: "#06038d" }}
-              onClick={() => { window.location.href = `/orders/${order.orderNo}`; }}>
-              <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
-            </Button>
+          {isPending && (
+            <Link href={`/orders/${order.orderNo}`}>
+              <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: "#06038d" }}>
+                <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
+              </Button>
+            </Link>
           )}
-          {isPending && order.paymentMethod === "alipay_hk" && (
-            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />等待支付寶 HK 付款確認
+          {isWaitingShipment && (
+            <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+              <Package className="w-3.5 h-3.5" />付款成功，等待賣家出貨
             </span>
           )}
           {isDisputed && (

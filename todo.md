@@ -4308,4 +4308,4 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 同步更新 calculateAndCacheTrendingCards：移除 IQR，保持半衰期 7 天邏輯
 - [x] 更新 i18n 顯示文字（zh-TW.json、en.json）
 - [x] 更新單元測試（43/43 通過）
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint

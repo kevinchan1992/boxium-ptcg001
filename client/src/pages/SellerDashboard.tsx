@@ -128,9 +128,9 @@ const conditionOptions = [
 
 const orderStatusLabel: Record<string, { label: string; color: string }> = {
   pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800" },
-  paid_held: { label: "已付款", color: "bg-blue-100 text-blue-800" },
-  payment_received: { label: "已收款", color: "bg-blue-100 text-blue-800" },
-  processing: { label: "處理中", color: "bg-purple-100 text-purple-800" },
+  paid_held: { label: "已付款，請出貨", color: "bg-blue-100 text-blue-800" },
+  payment_received: { label: "已收款，請出貨", color: "bg-blue-100 text-blue-800" },
+  processing: { label: "處理中，請出貨", color: "bg-purple-100 text-purple-800" },
   shipped: { label: "已寄出", color: "bg-indigo-100 text-indigo-800" },
   delivered: { label: "已送達", color: "bg-teal-100 text-teal-800" },
   completed: { label: "已完成", color: "bg-green-100 text-green-800" },
@@ -945,14 +945,29 @@ export default function SellerDashboard() {
                         </div>
                         {/* Card Body */}
                         <div className="p-4 space-y-3">
-                          <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="flex items-start gap-3">
+                            {/* Product Thumbnail */}
+                            {(() => {
+                              const imgs = (() => { try { return JSON.parse(item.listingImages ?? '[]'); } catch { return []; } })();
+                              const thumb = imgs[0];
+                              return thumb ? (
+                                <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
+                                  <img src={thumb} alt={item.title ?? '商品'} className="w-full h-full object-cover" />
+                                </div>
+                              ) : (
+                                <div className="flex-shrink-0 w-12 h-12 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
+                                  <span className="text-xl">🃏</span>
+                                </div>
+                              );
+                            })()}
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold truncate text-gray-900">{item.title}</p>
                               <p className="text-sm text-gray-600 mt-0.5">
                                 HKD {parseFloat(item.priceHkd as string).toFixed(2)} × {item.quantity}
                               </p>
+                              <p className="text-xs text-gray-400 mt-0.5">{new Date(item.createdAt).toLocaleDateString('zh-HK')}</p>
                             </div>
-                            {(["processing", "payment_received"].includes(item.orderStatus)) && (
+                            {(["processing", "payment_received", "paid_held"].includes(item.orderStatus)) && (
                               <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white flex-shrink-0"
                                 onClick={() => {
                                   setShipDialog({ open: true, orderId: item.orderId ?? item.id, orderNo: item.orderNo ?? "" });
@@ -978,6 +993,20 @@ export default function SellerDashboard() {
                                 }
                               })()}</p>
                               {item.trackingNumber && <p>🚚 追蹤號：{item.trackingNumber}</p>}
+                              {item.shippedAt && <p>📅 出貨日期：{new Date(item.shippedAt).toLocaleDateString('zh-HK')}</p>}
+                            </div>
+                          )}
+                          {/* Show shipping status for shipped orders */}
+                          {item.orderStatus === 'shipped' && !item.shippingName && (
+                            <div className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
+                              🚚 已寄出{item.trackingNumber ? `，追蹤號：${item.trackingNumber}` : ''}
+                            </div>
+                          )}
+                          {/* Completed order summary */}
+                          {item.orderStatus === 'completed' && (
+                            <div className="text-xs text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              訂單已完成，收到 HKD {parseFloat(item.sellerReceivableHkd ?? item.priceHkd ?? '0').toFixed(2)}
                             </div>
                           )}
                         </div>

@@ -10,7 +10,7 @@ import {
   getAdminListings, getSellerListings, getAdminListingDetail,
   getSellerProfileByUserId, getSellerProfileById, createSellerProfile, updateSellerProfile, getAllSellerProfiles, getAdminSellerDetail,
   createMarketplaceOrder, getMarketplaceOrderById, getMarketplaceOrderByNo, updateMarketplaceOrder, getBuyerOrders, getAdminOrders, getAlipayPendingOrders, generateOrderNo,
-  createOrderItems, getOrderItems, getSellerOrderItems,
+  createOrderItems, getOrderItems, getSellerOrderItems, getPlatformOrders,
   getSellerPayouts, getMarketplaceStats, getSalesReport,
   getActiveBanners, getAllBanners, createBanner, updateBanner, deleteBanner,
   getUserWishlist, isInWishlist, addToWishlistListing, removeFromWishlistListing, getWishlistListingIds,
@@ -680,6 +680,10 @@ export const marketplaceRouter = router({
 
   getMySellerOrders: protectedProcedure
     .query(async ({ ctx }) => {
+      // Admin users see all platform orders (sellerType='platform')
+      if (ctx.user.role === 'admin') {
+        return getPlatformOrders();
+      }
       const seller = await getSellerProfileByUserId(ctx.user.id);
       if (!seller) return [];
       return getSellerOrderItems(seller.id);
@@ -707,7 +711,7 @@ export const marketplaceRouter = router({
       // order.sellerId is sellerProfile.id, not user.id — must look up sellerProfile first
       const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
       if (!sellerProfile || order.sellerId !== sellerProfile.id) throw new TRPCError({ code: "FORBIDDEN" });
-      if (!(["processing", "payment_received"].includes(order.orderStatus))) throw new TRPCError({ code: "BAD_REQUEST", message: "訂單狀態不允許此操作" });
+      if (!(["processing", "payment_received", "paid_held"].includes(order.orderStatus))) throw new TRPCError({ code: "BAD_REQUEST", message: "訂單狀態不允許此操作" });
       // Set autoCompleteAt = 14 days from now
       const autoCompleteAt = new Date();
       autoCompleteAt.setDate(autoCompleteAt.getDate() + 14);
@@ -1091,12 +1095,18 @@ export const marketplaceRouter = router({
       orderId: z.number().int(),
       orderStatus: z.enum(["processing", "shipped", "delivered", "completed", "cancelled", "disputed"]),
       note: z.string().optional(),
+      trackingNumber: z.string().optional(),
+      shippingMethod: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       const updates: Record<string, any> = { orderStatus: input.orderStatus };
-      if (input.orderStatus === "shipped") updates.shippedAt = new Date();
+      if (input.orderStatus === "shipped") {
+        updates.shippedAt = new Date();
+        if (input.trackingNumber) updates.trackingNumber = input.trackingNumber;
+        if (input.shippingMethod) updates.shippingMethod = input.shippingMethod;
+      }
       if (input.orderStatus === "delivered") {
         const autoComplete = new Date();
         autoComplete.setDate(autoComplete.getDate() + 14);

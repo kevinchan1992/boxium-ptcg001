@@ -3115,6 +3115,50 @@ export async function getSellerOrderItems(sellerId: number) {
     .orderBy(desc(marketplaceOrders.createdAt));
   return rows;
 }
+export async function getPlatformOrders() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select({
+    id: marketplaceOrders.id,
+    orderId: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    listingId: marketplaceOrders.listingId,
+    buyerId: marketplaceOrders.buyerId,
+    sellerId: marketplaceOrders.sellerId,
+    sellerType: marketplaceOrders.sellerType,
+    priceHkd: marketplaceOrders.unitPriceHkd,
+    quantity: marketplaceOrders.quantity,
+    subtotalHkd: marketplaceOrders.subtotalHkd,
+    platformFeeHkd: marketplaceOrders.platformFeeHkd,
+    sellerReceivableHkd: marketplaceOrders.sellerReceivableHkd,
+    paymentMethod: marketplaceOrders.paymentMethod,
+    paymentStatus: marketplaceOrders.paymentStatus,
+    orderStatus: marketplaceOrders.orderStatus,
+    shippingName: marketplaceOrders.shippingName,
+    shippingPhone: marketplaceOrders.shippingPhone,
+    shippingAddress: marketplaceOrders.shippingAddress,
+    shippingMethod: marketplaceOrders.shippingMethod,
+    trackingNumber: marketplaceOrders.trackingNumber,
+    shippedAt: marketplaceOrders.shippedAt,
+    autoCompleteAt: marketplaceOrders.autoCompleteAt,
+    payoutStatus: marketplaceOrders.payoutStatus,
+    createdAt: marketplaceOrders.createdAt,
+    updatedAt: marketplaceOrders.updatedAt,
+    title: marketplaceListings.title,
+    listingImages: marketplaceListings.images,
+    listingCondition: marketplaceListings.condition,
+  })
+    .from(marketplaceOrders)
+    .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
+    .where(and(
+      eq(marketplaceOrders.sellerType, 'platform'),
+      // Exclude pending_payment orders - buyer hasn't paid yet
+      sql`${marketplaceOrders.orderStatus} != 'pending_payment'`
+    ))
+    .orderBy(desc(marketplaceOrders.createdAt));
+  return rows;
+}
+
 export async function getPendingPayoutItems() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

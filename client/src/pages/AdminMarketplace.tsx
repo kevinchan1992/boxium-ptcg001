@@ -38,7 +38,7 @@ const orderStatusColor: Record<string, string> = {
   disputed: "bg-red-100 text-red-800",
 };
 const orderStatusLabel: Record<string, string> = {
-  pending_payment: "待付款", payment_received: "已收款", processing: "處理中",
+  pending_payment: "待付款", paid_held: "已付款，待出貨", payment_received: "已收款", processing: "處理中",
   shipped: "已發貨", delivered: "已送達", completed: "已完成",
   cancelled: "已取消", disputed: "爭議中",
 };
@@ -843,11 +843,13 @@ function OrdersTab() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [note, setNote] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [shippingMethod, setShippingMethod] = useState("sf_express");
   const { data, isLoading, refetch } = trpc.marketplace.adminGetOrders.useQuery({
     page, pageSize: 20, status: statusFilter === "all" ? undefined : statusFilter
   });
   const updateStatusMutation = trpc.marketplace.adminUpdateOrderStatus.useMutation({
-    onSuccess: () => { toast.success("訂單狀態已更新"); refetch(); setSelectedOrder(null); },
+    onSuccess: () => { toast.success("訂單狀態已更新"); refetch(); setSelectedOrder(null); setTrackingNumber(""); },
     onError: (e) => toast.error(e.message)
   });
   const orders = data?.orders ?? [];
@@ -884,7 +886,7 @@ function OrdersTab() {
                   <span>{new Date(order.createdAt).toLocaleDateString("zh-HK")}</span>
                 </div>
               </div>
-              <Button size="sm" variant="outline" onClick={() => { setSelectedOrder(order); setNote(order.adminNote ?? ""); }}>
+              <Button size="sm" variant="outline" onClick={() => { setSelectedOrder(order); setNote(order.adminNote ?? ""); setTrackingNumber(order.trackingNumber ?? ""); setShippingMethod(order.shippingMethod ?? "sf_express"); }}>
                 <Edit className="w-3 h-3 mr-1" />管理
               </Button>
             </div>
@@ -899,25 +901,108 @@ function OrdersTab() {
         </div>
       )}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>訂單管理 — {selectedOrder?.orderNo}</DialogTitle></DialogHeader>
           {selectedOrder && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              {/* Order Info */}
+              <div className="grid grid-cols-2 gap-2 text-sm bg-gray-50 rounded-lg p-3">
                 <span className="text-muted-foreground">付款方式</span>
                 <span>{selectedOrder.paymentMethod === "stripe" ? "Stripe" : "支付寶 HK"}</span>
                 <span className="text-muted-foreground">訂單金額</span>
                 <span className="font-medium">HKD {parseFloat(selectedOrder.subtotalHkd || "0").toFixed(2)}</span>
                 <span className="text-muted-foreground">當前狀態</span>
                 <Badge className={orderStatusColor[selectedOrder.orderStatus] ?? ""}>{orderStatusLabel[selectedOrder.orderStatus]}</Badge>
+                <span className="text-muted-foreground">訂單日期</span>
+                <span>{new Date(selectedOrder.createdAt).toLocaleDateString("zh-HK")}</span>
+                {selectedOrder.sellerType && (
+                  <><span className="text-muted-foreground">賣家類型</span>
+                  <span>{selectedOrder.sellerType === 'platform' ? '平台官方' : '一般賣家'}</span></>
+                )}
               </div>
+              {/* Buyer Shipping Info */}
+              {selectedOrder.shippingName && (
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 space-y-1 text-sm">
+                  <p className="font-medium text-blue-800 mb-1.5">📦 收件資訊</p>
+                  <p><span className="text-muted-foreground">收件人：</span>{selectedOrder.shippingName}</p>
+                  {selectedOrder.shippingPhone && <p><span className="text-muted-foreground">電話：</span>{selectedOrder.shippingPhone}</p>}
+                  {selectedOrder.shippingAddress && (
+                    <p><span className="text-muted-foreground">地址：</span>{(() => {
+                      try {
+                        const addr = JSON.parse(selectedOrder.shippingAddress);
+                        if (addr && typeof addr === 'object') {
+                          return [addr.address, addr.district, addr.region].filter(Boolean).join(', ');
+                        }
+                        return selectedOrder.shippingAddress;
+                      } catch { return selectedOrder.shippingAddress; }
+                    })()}</p>
+                  )}
+                  {selectedOrder.trackingNumber && (
+                    <p><span className="text-muted-foreground">追蹤號：</span><strong>{selectedOrder.trackingNumber}</strong></p>
+                  )}
+                  {selectedOrder.shippedAt && (
+                    <p><span className="text-muted-foreground">出貨日期：</span>{new Date(selectedOrder.shippedAt).toLocaleDateString("zh-HK")}</p>
+                  )}
+                </div>
+              )}
+              {/* Ship Action: show when status needs shipping */}
+              {["processing", "payment_received", "paid_held"].includes(selectedOrder.orderStatus) && (
+                <div className="border border-indigo-200 rounded-lg p-3 bg-indigo-50 space-y-3">
+                  <p className="font-medium text-indigo-800 text-sm">🚚 填寫出貨資料</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">物流方式</Label>
+                      <Select value={shippingMethod} onValueChange={setShippingMethod}>
+                        <SelectTrigger className="mt-1 h-8 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sf_express">順豐</SelectItem>
+                          <SelectItem value="hk_post">香港郵政</SelectItem>
+                          <SelectItem value="pickup">自取</SelectItem>
+                          <SelectItem value="other">其他</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">追蹤號碼</Label>
+                      <Input
+                        className="mt-1 h-8 text-sm"
+                        placeholder="輸入追蹤號碼"
+                        value={trackingNumber}
+                        onChange={e => setTrackingNumber(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                    disabled={updateStatusMutation.isPending}
+                    onClick={() => updateStatusMutation.mutate({
+                      orderId: selectedOrder.id,
+                      orderStatus: "shipped",
+                      note,
+                      trackingNumber: trackingNumber || undefined,
+                      shippingMethod: shippingMethod || undefined,
+                    })}>
+                    確認出貨
+                  </Button>
+                </div>
+              )}
+              {/* Status Update */}
               <div>
                 <Label>更新狀態</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {["processing", "shipped", "delivered", "completed", "cancelled", "disputed"].map(s => (
                     <Button key={s} size="sm" variant="outline"
                       disabled={selectedOrder.orderStatus === s || updateStatusMutation.isPending}
-                      onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, orderStatus: s as any, note })}>
+                      onClick={() => updateStatusMutation.mutate({
+                        orderId: selectedOrder.id,
+                        orderStatus: s as any,
+                        note,
+                        trackingNumber: s === 'shipped' ? (trackingNumber || undefined) : undefined,
+                        shippingMethod: s === 'shipped' ? (shippingMethod || undefined) : undefined,
+                      })}>
                       {orderStatusLabel[s] ?? s}
                     </Button>
                   ))}
