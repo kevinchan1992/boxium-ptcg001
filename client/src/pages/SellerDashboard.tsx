@@ -273,6 +273,119 @@ function ShareButton({
   );
 }
 
+// ─── EarningsTab ─────────────────────────────────────────────────────────────
+function EarningsTab() {
+  const { data: me } = trpc.auth.me.useQuery();
+  const { data: sellerProfile } = trpc.marketplace.getMySellerProfile.useQuery(
+    undefined, { enabled: !!me }
+  );
+  const isAdmin = me?.role === 'admin';
+  const { data: earningsData, isLoading } = trpc.marketplace.getSellerEarnings.useQuery(
+    undefined, { enabled: !!sellerProfile || isAdmin }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-[#06038d]" />
+      </div>
+    );
+  }
+
+  const summary = earningsData?.summary ?? { totalRevenue: 0, totalFees: 0, totalEarnings: 0, completedCount: 0, pendingCount: 0 };
+  const orders = earningsData?.orders ?? [];
+
+  return (
+    <div className="space-y-4">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
+          <p className="text-xs text-gray-500 mb-1">已完成訂單</p>
+          <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{summary.completedCount}</p>
+          <p className="text-xs text-gray-400 mt-1">待出貨/運送中 {summary.pendingCount} 筆</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
+          <p className="text-xs text-gray-500 mb-1">累計銷售額</p>
+          <p className="text-2xl font-bold" style={{ color: "#06038d" }}>HKD {summary.totalRevenue.toFixed(0)}</p>
+          <p className="text-xs text-gray-400 mt-1">平台手續費 HKD {summary.totalFees.toFixed(0)}</p>
+        </div>
+        <div className="col-span-2 bg-gradient-to-r from-[#06038d] to-[#0a06b5] rounded-2xl shadow-md p-4">
+          <p className="text-xs text-white/70 mb-1">累計淨收入</p>
+          <p className="text-3xl font-bold text-white">HKD {summary.totalEarnings.toFixed(2)}</p>
+          <p className="text-xs text-white/60 mt-1">扣除平台手續費後實際收款金額</p>
+        </div>
+      </div>
+
+      {/* Orders List */}
+      {!orders.length ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p>尚無已完成訂單</p>
+          <p className="text-sm mt-1">訂單完成後將顯示收款明細</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-gray-600">收款明細（{orders.length} 筆）</p>
+          {(orders as any[]).map((order) => (
+            <div key={order.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+              {/* Brand Header Bar */}
+              <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                <span className="text-xs text-white/80 font-medium">訂單 #{order.orderNo ?? order.id}</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-400/20 text-green-200 border border-green-400/30">
+                  已完成
+                </span>
+              </div>
+              {/* Card Body */}
+              <div className="p-4 space-y-3">
+                {/* Product Info */}
+                <div className="flex items-start gap-3">
+                  {(() => {
+                    let imgUrl: string | null = null;
+                    try {
+                      const imgs = typeof order.listingImages === 'string'
+                        ? JSON.parse(order.listingImages)
+                        : order.listingImages;
+                      if (Array.isArray(imgs) && imgs.length > 0) imgUrl = imgs[0];
+                    } catch {}
+                    return imgUrl ? (
+                      <img src={imgUrl} alt={order.title || '商品'} className="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Package className="w-5 h-5 text-gray-400" />
+                      </div>
+                    );
+                  })()}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm truncate">{order.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      完成日期：{order.completedAt ? new Date(order.completedAt).toLocaleDateString('zh-HK') : new Date(order.updatedAt).toLocaleDateString('zh-HK')}
+                    </p>
+                  </div>
+                </div>
+                {/* Price Breakdown */}
+                <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">訂單金額</span>
+                    <span className="font-medium">HKD {parseFloat(order.subtotalHkd ?? '0').toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">平台手續費 ({parseFloat(order.platformFeeRate ?? '0.05') * 100}%)</span>
+                    <span className="text-red-500">- HKD {parseFloat(order.platformFeeHkd ?? '0').toFixed(2)}</span>
+                  </div>
+                  <div className="border-t border-gray-200 pt-1.5 flex justify-between">
+                    <span className="font-semibold text-gray-800">淨收入</span>
+                    <span className="font-bold text-green-600">HKD {parseFloat(order.sellerReceivableHkd ?? order.subtotalHkd ?? '0').toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SellerDashboard() {
   const [showApply, setShowApply] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -725,6 +838,7 @@ export default function SellerDashboard() {
                   )}
                 </BrandTabsTrigger>
                 <BrandTabsTrigger value="payouts" icon={<Wallet className="w-4 h-4" />} label="放款記錄">放款記錄</BrandTabsTrigger>
+                <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label="收款記錄">收款記錄</BrandTabsTrigger>
               </BrandTabsList>
 
               <BrandTabsContent value="listings" className="mt-4">
@@ -1171,6 +1285,10 @@ export default function SellerDashboard() {
                     ))}
                   </div>
                 )}
+              </BrandTabsContent>
+
+              <BrandTabsContent value="earnings" className="mt-4">
+                <EarningsTab />
               </BrandTabsContent>
             </BrandTabs>
           </>

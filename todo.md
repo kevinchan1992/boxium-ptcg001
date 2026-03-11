@@ -4343,3 +4343,18 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] SellerDashboard 出貨 Dialog 顯示買家收件資訊（地址、電話）
 
 - [x] 數據源列表搜尋邏輯同步 Research 頁面（支援系列名稱如 SV9 置頂）
+
+## ⏰ 訂單自動完成機制 + 賣家收款記錄
+- [ ] 後端：訂單出貨後 7 天自動完成（scheduler 定時任務）
+- [ ] 後端：新增 getSellerEarnings tRPC 路由（收款記錄）
+- [ ] 前端：SellerDashboard 加入「收款記錄」tab
+- [ ] 前端：顯示已完成訂單的收款金額、手續費、淨收入
+- [ ] TypeScript 0 錯誤並儲存 checkpoint
+
+## ✅ 賣家收款記錄功能完成
+- [x] 後端：新增 getSellerEarnings tRPC 路由（收款記錄，含已完成訂單和統計摘要）
+- [x] 前端：SellerDashboard 加入「收款記錄」tab（EarningsTab 元件）
+- [x] 前端：顯示已完成訂單的收款金額、平台手續費、淨收入
+- [x] 前端：顯示統計摘要（累計銷售額、手續費、淨收入、已完成/待出貨訂單數）
+- [x] TypeScript 0 錯誤
+- [x] 儲存 checkpoint

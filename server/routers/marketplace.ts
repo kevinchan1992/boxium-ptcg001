@@ -697,6 +697,41 @@ export const marketplaceRouter = router({
     }),
 
   // ============================================================
+  // SELLER - Get Earnings Summary (completed orders)
+  // ============================================================
+  getSellerEarnings: protectedProcedure
+    .query(async ({ ctx }) => {
+      let orders: any[];
+      if (ctx.user.role === 'admin') {
+        orders = await getPlatformOrders();
+      } else {
+        const seller = await getSellerProfileByUserId(ctx.user.id);
+        if (!seller) return {
+          orders: [],
+          summary: { totalRevenue: 0, totalFees: 0, totalEarnings: 0, completedCount: 0, pendingCount: 0 }
+        };
+        orders = await getSellerOrderItems(seller.id);
+      }
+      const completedOrders = orders.filter((o: any) => o.orderStatus === 'completed');
+      const pendingOrders = orders.filter((o: any) =>
+        ['processing', 'payment_received', 'paid_held', 'shipped'].includes(o.orderStatus)
+      );
+      const totalRevenue = completedOrders.reduce((sum: number, o: any) => sum + parseFloat(o.subtotalHkd ?? '0'), 0);
+      const totalFees = completedOrders.reduce((sum: number, o: any) => sum + parseFloat(o.platformFeeHkd ?? '0'), 0);
+      const totalEarnings = completedOrders.reduce((sum: number, o: any) => sum + parseFloat(o.sellerReceivableHkd ?? '0'), 0);
+      return {
+        orders: completedOrders,
+        summary: {
+          totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+          totalFees: parseFloat(totalFees.toFixed(2)),
+          totalEarnings: parseFloat(totalEarnings.toFixed(2)),
+          completedCount: completedOrders.length,
+          pendingCount: pendingOrders.length,
+        }
+      };
+    }),
+
+  // ============================================================
   // SELLER - Mark Order Shipped
   // ============================================================
   markOrderShipped: protectedProcedure
