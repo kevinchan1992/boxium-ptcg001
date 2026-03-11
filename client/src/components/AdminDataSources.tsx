@@ -30,25 +30,29 @@ export function AdminDataSources() {
   const pausedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "success" | "pending" | "failed">("all");
+  const [gameFilter, setGameFilter] = useState<number | undefined>(undefined); // undefined = all games
 
   // Clear selected items when filter changes
   useEffect(() => {
     setSelectedIds([]);
-  }, [statusFilter, searchQuery]);
+  }, [statusFilter, searchQuery, gameFilter]);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
 
   const utils = trpc.useUtils();
+  const gamesQuery = trpc.admin.getGames.useQuery();
   const dataSourcesQuery = trpc.admin.getDataSources.useQuery({ 
     page, 
     pageSize,
     search: searchQuery || undefined,
     status: statusFilter,
+    gameId: gameFilter,
   });
   const statsQuery = trpc.admin.getDataSourceStats.useQuery();
   const allFilteredIdsQuery = trpc.admin.getAllFilteredDataSourceIds.useQuery({
     search: searchQuery || undefined,
     status: statusFilter,
+    gameId: gameFilter,
   });
   const allUrlsQuery = trpc.admin.getAllDataSourceUrls.useQuery(); // Get all URLs for deduplication
 
@@ -638,24 +642,46 @@ export function AdminDataSources() {
 
           {/* Data Sources List */}
           <Card className="p-6 bg-card border-border">
-            <div className="mb-4 flex items-center gap-4 flex-wrap">
+            <div className="mb-4 flex items-center gap-3 flex-wrap">
               <Input
                 type="text"
-                placeholder="搜尋卡牌名稱或 URL..."
+                placeholder="搜尋卡牌名稱（中/日文）或 URL..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setPage(1); // Reset to first page when searching
                 }}
-                className="max-w-md"
+                className="max-w-sm"
               />
               <div className="flex items-center gap-2">
-                <Label className="text-sm text-muted-foreground">狀態篩選：</Label>
+                <Label className="text-sm text-muted-foreground whitespace-nowrap">遊戲類別：</Label>
+                <Select
+                  value={gameFilter === undefined ? "all" : String(gameFilter)}
+                  onValueChange={(value) => {
+                    setGameFilter(value === "all" ? undefined : Number(value));
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="全部遊戲" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全部遊戲</SelectItem>
+                    {gamesQuery.data?.map((game) => (
+                      <SelectItem key={game.id} value={String(game.id)}>
+                        {game.nameZh || game.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-sm text-muted-foreground whitespace-nowrap">狀態篩選：</Label>
                 <Select value={statusFilter} onValueChange={(value: any) => {
                   setStatusFilter(value);
                   setPage(1); // Reset to first page when filtering
                 }}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[160px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -674,6 +700,21 @@ export function AdminDataSources() {
                   </SelectContent>
                 </Select>
               </div>
+              {(searchQuery || gameFilter !== undefined || statusFilter !== "all") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setGameFilter(undefined);
+                    setStatusFilter("all");
+                    setPage(1);
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  清除篩選
+                </Button>
+              )}
             </div>
             <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
               <div className="flex items-center gap-4">

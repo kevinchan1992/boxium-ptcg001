@@ -4327,3 +4327,13 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] AdminMarketplace.tsx（Admin）：訂單管理 Dialog 加入出貨資料填寫區塊（物流方式+追蹤號碼）
 - [x] TypeScript 0 錯誤
 - [x] 儲存 checkpoint
+
+## 🔍 Admin 數據源列表搜尋和篩選改善
+- [x] 搜尋邏輯同步最新版本：加入日文名稱（nameJa）搜尋支援
+- [x] getAllFilteredDataSourceIds 同步加入 nameJa 搜尋和 gameId 篩選
+- [x] 後端 getDataSources 路由加入 gameId 篩選參數
+- [x] 新增 getGames tRPC 路由（從 games 表動態讀取）
+- [x] 前端加入「遊戲類別」篩選下拉（動態讀取，支援 Pokémon TCG / One Piece 等）
+- [x] 搜尋 placeholder 更新為「搜尋卡牌名稱（中/日文）或 URL...」
+- [x] 加入「清除篩選」快速重置按鈕（有任何篩選條件時顯示）
+- [x] TypeScript 0 錯誤

@@ -1061,6 +1061,7 @@ export const appRouter = router({
         pageSize: z.number().min(1).max(100).optional(),
         search: z.string().optional(),
         status: z.enum(["all", "success", "pending", "failed"]).optional(),
+        gameId: z.number().int().positive().optional(),
       }).optional())
       .query(async ({ ctx, input }) => {
         const sources = await db.getDataSources(input);
@@ -1077,10 +1078,29 @@ export const appRouter = router({
       .input(z.object({
         search: z.string().optional(),
         status: z.enum(["all", "success", "pending", "failed"]).optional(),
+        gameId: z.number().int().positive().optional(),
       }).optional())
       .query(async ({ input }) => {
         const ids = await db.getAllFilteredDataSourceIds(input);
         return ids;
+      }),
+
+    getGames: publicProcedure
+      .query(async () => {
+        const dbInstance = await db.getDb();
+        if (!dbInstance) return [];
+        const { games } = await import('../drizzle/schema_new');
+        const { asc } = await import('drizzle-orm');
+        const result = await dbInstance.select({
+          id: games.id,
+          code: games.code,
+          name: games.name,
+          nameZh: games.nameZh,
+          nameJa: games.nameJa,
+          isActive: games.isActive,
+          sortOrder: games.sortOrder,
+        }).from(games).where(eq(games.isActive, true)).orderBy(asc(games.sortOrder), asc(games.id));
+        return result;
       }),
 
     getAllDataSourceUrls: publicProcedure

@@ -1,0 +1,24 @@
+{
+  "query": "SELECT id, code, name, nameZh, isActive FROM games ORDER BY sortOrder, id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, code, name, nameZh, isActive FROM games ORDER BY sortOrder, id;",
+  "rows": [
+    {
+      "id": "1",
+      "code": "pokemon",
+      "name": "Pokémon TCG",
+      "nameZh": "寶可夢集換式卡牌遊戲",
+      "isActive": "1"
+    },
+    {
+      "id": "2",
+      "code": "one_piece",
+      "name": "One Piece Card Game",
+      "nameZh": "海賊王卡牌遊戲",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tname\tnameZh\tisActive\n1\tpokemon\tPokémon TCG\t寶可夢集換式卡牌遊戲\t1\n2\tone_piece\tOne Piece Card Game\t海賊王卡牌遊戲\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1595
+}

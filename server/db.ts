@@ -451,7 +451,7 @@ export async function checkDataSourceExists(url: string): Promise<boolean> {
   return result.length > 0;
 }
 
-export async function getDataSources(options?: { page?: number; pageSize?: number; search?: string; status?: "all" | "success" | "pending" | "failed" }) {
+export async function getDataSources(options?: { page?: number; pageSize?: number; search?: string; status?: "all" | "success" | "pending" | "failed"; gameId?: number }) {
   const db = await getDb();
   if (!db) return { data: [], total: 0, totalPages: 0 };
 
@@ -467,12 +467,16 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
     conditions.push(
       or(
         like(cards.name, `%${searchQuery}%`),
+        like(cards.nameJa, `%${searchQuery}%`),
         like(dataSources.sourceUrl, `%${searchQuery}%`)
       )
     );
   }
   if (statusFilter !== "all") {
     conditions.push(eq(dataSources.lastFetchStatus, statusFilter));
+  }
+  if (options?.gameId) {
+    conditions.push(eq(dataSources.gameId, options.gameId));
   }
   const whereConditions = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -2561,7 +2565,7 @@ export async function getDataSourceStats() {
 /**
  * Get all data source IDs that match the filter criteria
  */
-export async function getAllFilteredDataSourceIds(options?: { search?: string; status?: "all" | "success" | "pending" | "failed" }) {
+export async function getAllFilteredDataSourceIds(options?: { search?: string; status?: "all" | "success" | "pending" | "failed"; gameId?: number }) {
   const db = await getDb();
   if (!db) return [];
 
@@ -2574,12 +2578,16 @@ export async function getAllFilteredDataSourceIds(options?: { search?: string; s
     conditions.push(
       or(
         like(cards.name, `%${searchQuery}%`),
+        like(cards.nameJa, `%${searchQuery}%`),
         like(dataSources.sourceUrl, `%${searchQuery}%`)
       )
     );
   }
   if (statusFilter !== "all") {
     conditions.push(eq(dataSources.lastFetchStatus, statusFilter));
+  }
+  if (options?.gameId) {
+    conditions.push(eq(dataSources.gameId, options.gameId));
   }
   const whereConditions = conditions.length > 0 ? and(...conditions) : undefined;
 
