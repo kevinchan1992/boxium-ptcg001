@@ -7,74 +7,127 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="py-8 px-4 sm:px-6 border-t" style={{ backgroundColor: "#06038d" }}>
-      <div className="max-w-6xl mx-auto">
-        {/* Brand Section */}
-        <div className="mb-6">
-          <Link href="/">
-            <img
-              src="/boxium-logo.png"
-              alt="BOXIUM Logo"
-              className="h-8 md:h-12 lg:h-14 mb-3 cursor-pointer hover:scale-105 hover:opacity-90 transition-all duration-300"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            />
-          </Link>
-          <p className="text-white/80 text-sm leading-relaxed max-w-2xl">
-            {t("footer.description")}
-          </p>
-        </div>
+    <footer style={{ backgroundColor: "#06038d" }} className="border-t border-white/10">
+      {/* Main footer content */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        {/*
+          Responsive grid:
+          - Mobile  (< sm):  1 col, stacked
+          - Tablet  (sm–lg): 2 cols
+          - Desktop (≥ lg):  4 cols side-by-side
+        */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
 
-        {/* Two Column Layout: Quick Links + About Us */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-          {/* Quick Links */}
+          {/* Col 1 – Brand */}
+          <div className="sm:col-span-2 lg:col-span-1">
+            <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+              <img
+                src="/boxium-logo.png"
+                alt="BOXIUM Logo"
+                className="h-8 mb-3 cursor-pointer hover:opacity-90 transition-opacity"
+              />
+            </Link>
+            <p className="text-white/70 text-xs leading-relaxed">
+              {t("footer.description")}
+            </p>
+          </div>
+
+          {/* Col 2 – Quick Links */}
           <div>
-            <h4 className="text-white font-bold mb-3 text-sm">{t("footer.quickLinks")}</h4>
+            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">
+              {t("footer.quickLinks")}
+            </h4>
             <ul className="space-y-2">
-              <li><Link href="/research" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.cardSearch")}</Link></li>
-              <li><Link href="/trending" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.trending")}</Link></li>
-              <li><Link href="/blog" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.blog")}</Link></li>
-              <li><Link href="/pricing" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.pricing")}</Link></li>
+              <li>
+                <Link href="/research" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  {t("footer.cardSearch")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/trending" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  {t("footer.trending")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  {t("footer.blog")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  {t("footer.pricing")}
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* About Us + Social Links */}
+          {/* Col 3 – About Us */}
           <div>
-            <h4 className="text-white font-bold mb-3 text-sm">{t("footer.aboutUs")}</h4>
-            <ul className="space-y-2 mb-4">
-              <li><Link href="/about" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.platformIntro")}</Link></li>
-              <li><Link href="/disclaimer" className="text-white/80 hover:text-white transition-colors text-sm">{t("footer.disclaimer")}</Link></li>
+            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">
+              {t("footer.aboutUs")}
+            </h4>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/about" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  {t("footer.platformIntro")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/disclaimer" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  {t("footer.disclaimer")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  {t("footer.terms")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  {t("footer.privacy")}
+                </Link>
+              </li>
             </ul>
-            <div className="flex gap-4">
-              <a href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#FEDD00] transition-colors" title="Facebook">
-                <Facebook className="h-5 w-5" />
+          </div>
+
+          {/* Col 4 – Social */}
+          <div>
+            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">
+              {t("footer.followUs") || "Follow Us"}
+            </h4>
+            <div className="flex gap-3">
+              <a
+                href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Facebook"
+                className="flex items-center justify-center w-8 h-8 rounded-full border border-white/20 text-white/70 hover:text-[#FEDD00] hover:border-[#FEDD00] transition-colors"
+              >
+                <Facebook className="h-4 w-4" />
               </a>
-              <a href="https://www.instagram.com/boxium.gamecard?igsh=MTBha2wyNWR4d3lpcQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#FEDD00] transition-colors" title="Instagram">
-                <Instagram className="h-5 w-5" />
+              <a
+                href="https://www.instagram.com/boxium.gamecard?igsh=MTBha2wyNWR4d3lpcQ%3D%3D&utm_source=qr"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Instagram"
+                className="flex items-center justify-center w-8 h-8 rounded-full border border-white/20 text-white/70 hover:text-[#FEDD00] hover:border-[#FEDD00] transition-colors"
+              >
+                <Instagram className="h-4 w-4" />
               </a>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Bottom Links - Single Row */}
-        <div className="border-t border-white/20 pt-6">
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-3">
-            <Link href="/terms" className="text-white/80 hover:text-white transition-colors text-xs py-2 px-1">
-              {t("footer.terms")}
-            </Link>
-            <span className="text-white/40">|</span>
-            <Link href="/privacy" className="text-white/80 hover:text-white transition-colors text-xs py-2 px-1">
-              {t("footer.privacy")}
-            </Link>
-            <span className="text-white/40">|</span>
-            <Link href="/disclaimer" className="text-white/80 hover:text-white transition-colors text-xs py-2 px-1">
-              {t("footer.disclaimer")}
-            </Link>
-            <span className="text-white/40">|</span>
-            <Link href="/about" className="text-white/80 hover:text-white transition-colors text-xs py-2 px-1">
-              {t("footer.about")}
-            </Link>
-          </div>
-          <p className="text-center text-white/60 text-xs">© {currentYear} BOXIUM. All rights reserved. | Luck in Every Box</p>
+      {/* Bottom bar */}
+      <div className="border-t border-white/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-white/50 text-xs">
+            © {currentYear} BOXIUM. All rights reserved.
+          </p>
+          <p className="text-white/40 text-xs tracking-wide">
+            Luck in Every Box
+          </p>
         </div>
       </div>
     </footer>
