@@ -4519,3 +4519,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 前端：SellerDashboard 已有 Stripe Connect 未完成警示橫幅（四種狀態）
 - [x] 前端：Stripe Connect 未完成時禁用「上架商品」和「上架第一件商品」按鈕
 - [x] 前端：警示橫幅提供直接跳轉到 Stripe Connect 設定的連結
+
+---
+
+## 批量新增 SNKRDUNK 卡牌失敗修復（2026-03-12）
+
+- [x] 修復 addDataSource 中全表掃描重複檢查（改用 sourceIdentifier 索引查詢）
+- [x] 修復 addSnkrdunkSource 中每次新增都查詢 10000 條記錄的問題（改用 getDataSourceByCardIdAndSource）
+- [x] 前端批量大小從 50 降至 10（避免後端 DB 並發競爭）
+- [x] 前端加入 URL 類型驗證（過濾 /information/ 和 /articles/ 等無效 URL）
+- [x] 前端批次間隔從 2s 增至 3s

@@ -1214,11 +1214,8 @@ const snkrdunkId = extractSnkrdunkId(input.url);
             });
           }
 
-          // Get and update data source status
-          const { data: dataSources } = await db.getDataSources({ pageSize: 10000 });
-          const newDataSource = dataSources.find(
-            (ds) => ds.cardId === productId && ds.source === "snkrdunk"
-          );
+          // Get and update data source status using indexed query (avoid full table scan)
+          const newDataSource = await db.getDataSourceByCardIdAndSource(productId, "snkrdunk");
           if (newDataSource) {
             await db.updateDataSourceFetchStatus(newDataSource.id, "success");
           }

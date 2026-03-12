@@ -128,11 +128,25 @@ export function AdminDataSources() {
       return;
     }
 
-    // Validate all URLs
-    const invalidUrls = urls.filter(url => !url.includes("snkrdunk.com"));
+    // Validate all URLs - must be snkrdunk.com AND must have /apparels/ or /trading-cards/ path
+    const invalidUrls = urls.filter(url => {
+      if (!url.includes("snkrdunk.com")) return true;
+      // Must have /apparels/ or /trading-cards/ path to extract product ID
+      const hasValidPath = /\/apparels\/\d+/.test(url) || /\/trading-cards\/\d+/.test(url);
+      return !hasValidPath;
+    });
     if (invalidUrls.length > 0) {
-      toast.error(`發現 ${invalidUrls.length} 個無效連結，請確保所有連結都來自 snkrdunk.com`);
-      return;
+      const invalidSample = invalidUrls.slice(0, 3).join('\n');
+      toast.error(`發現 ${invalidUrls.length} 個無效連結（需包含 /apparels/ 或 /trading-cards/ 路徑）：\n${invalidSample}`);
+      // Filter out invalid URLs instead of blocking entirely
+      const validUrls = urls.filter(url => {
+        if (!url.includes("snkrdunk.com")) return false;
+        return /\/apparels\/\d+/.test(url) || /\/trading-cards\/\d+/.test(url);
+      });
+      if (validUrls.length === 0) return;
+      // Continue with valid URLs only
+      toast.info(`將繼續處理 ${validUrls.length} 個有效連結`);
+      urls.splice(0, urls.length, ...validUrls);
     }
 
     // Deduplicate URLs - use all URLs from database, not just current page
@@ -165,8 +179,9 @@ export function AdminDataSources() {
 
     try {
       // Process URLs in parallel batches with rate limiting
-      const BATCH_SIZE = 50; // Process 50 URLs at a time to avoid rate limits
-      const DELAY_BETWEEN_BATCHES = 2000; // 2 second delay between batches
+      // Reduced from 50 to 10 to avoid DB concurrency issues and SNKRDUNK rate limiting
+      const BATCH_SIZE = 10; // Process 10 URLs at a time
+      const DELAY_BETWEEN_BATCHES = 3000; // 3 second delay between batches
       
       pausedRef.current = false;
       setIsPaused(false);

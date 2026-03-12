@@ -553,13 +553,26 @@ export async function addDataSource(data: Omit<InsertDataSource, "id" | "created
   // Normalize URL by removing query parameters and fragments
   const normalizedUrl = data.sourceUrl.split('?')[0].split('#')[0];
   
-  // Check if URL already exists (normalized comparison)
-  const allSources = await db.select().from(dataSources);
-  const isDuplicate = allSources.some(source => {
-    const existingNormalized = source.sourceUrl.split('?')[0].split('#')[0];
-    return existingNormalized === normalizedUrl;
-  });
-  
+  // Check if URL already exists using indexed query (avoid full table scan)
+  // First try by sourceIdentifier (most efficient), then by normalized URL
+  let isDuplicate = false;
+  if (data.sourceIdentifier) {
+    const existing = await db
+      .select({ id: dataSources.id })
+      .from(dataSources)
+      .where(eq(dataSources.sourceIdentifier, data.sourceIdentifier))
+      .limit(1);
+    isDuplicate = existing.length > 0;
+  }
+  if (!isDuplicate) {
+    const existing = await db
+      .select({ id: dataSources.id })
+      .from(dataSources)
+      .where(eq(dataSources.sourceUrl, normalizedUrl))
+      .limit(1);
+    isDuplicate = existing.length > 0;
+  }
+
   if (isDuplicate) {
     console.log(`[Database] Data source already exists: ${normalizedUrl}`);
     return null; // Return null if duplicate
