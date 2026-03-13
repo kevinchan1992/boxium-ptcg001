@@ -252,6 +252,50 @@ function ExecutionHistory() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* SNKRDUNK 執行歷史 */}
+        <div className="space-y-3">
+          <h3 className="text-white font-medium text-sm sm:text-base lg:text-lg">💰 SNKRDUNK 批量更新歷史</h3>
+          {(history as any).snkrdunk && (history as any).snkrdunk.length > 0 ? (
+            <div className="space-y-2">
+              {(history as any).snkrdunk.map((record: any) => (
+                <div key={record.id} className="p-3 lg:p-4 bg-gray-800 rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className={`font-medium text-xs sm:text-sm lg:text-base ${getStatusColor(record.status)}`}>
+                      {getStatusText(record.status)}
+                    </span>
+                    <span className="text-xs sm:text-sm text-gray-400">
+                      {record.executionType === 'manual' ? '手動觸發' : record.executionType === 'catchup' ? '補執行' : '自動排程'}
+                    </span>
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-300 space-y-1">
+                    <div>開始時間：{formatDate(record.startedAt)}</div>
+                    {record.completedAt && (
+                      <div>完成時間：{formatDate(record.completedAt)}</div>
+                    )}
+                    {record.durationMs && (
+                      <div>耗時：{formatDuration(record.durationMs)}</div>
+                    )}
+                    {(record.snkrdunkSuccessCount != null || record.snkrdunkRecordsAdded != null) && (
+                      <div className="text-green-400">
+                        成功: {record.snkrdunkSuccessCount ?? 0} 張 | 新增記錄: {record.snkrdunkRecordsAdded ?? 0}
+                      </div>
+                    )}
+                    {record.snkrdunkFailureCount > 0 && (
+                      <div className="text-red-400">失敗: {record.snkrdunkFailureCount} 張</div>
+                    )}
+                    {record.errorMessage && (
+                      <div className="text-red-400 mt-2">錯誤：{record.errorMessage}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-gray-400 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
+              尚無執行記錄
+            </div>
+          )}
+        </div>
         {/* Trending 執行歷史 */}
         <div className="space-y-3">
           <h3 className="text-white font-medium text-sm sm:text-base lg:text-lg">🔥 熱門卡牌計算歷史</h3>
@@ -264,7 +308,7 @@ function ExecutionHistory() {
                       {getStatusText(record.status)}
                     </span>
                     <span className="text-xs sm:text-sm text-gray-400">
-                      {record.executionType === 'manual' ? '手動觸發' : '自動排程'}
+                      {record.executionType === 'manual' ? '手動觸發' : record.executionType === 'catchup' ? '補執行' : '自動排程'}
                     </span>
                   </div>
                   <div className="text-xs sm:text-sm text-gray-300 space-y-1">
@@ -328,8 +372,8 @@ export function AdminScheduleManagement() {
   // 當 schedule 數據載入時同步更新本地狀態
   useEffect(() => {
     if (schedule) {
-      setSnkrdunkEnabled(schedule.snkrdunkEnabled);
-      setSnkrdunkTime(schedule.snkrdunkUpdateTime);
+      setSnkrdunkEnabled(schedule.snkrdunkEnabled ?? false);
+      setSnkrdunkTime(schedule.snkrdunkUpdateTime ?? "01:00");
       setSnkrdunkTime2((schedule as any)?.snkrdunkUpdateTime2 ?? "13:00");
     }
   }, [schedule]);
@@ -465,6 +509,22 @@ export function AdminScheduleManagement() {
                 <p className="text-xs text-gray-400">
                   每日執行兩次：{snkrdunkTime} 和 {snkrdunkTime2}（香港時間）
                 </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    (schedule as any)?.snkrdunkSchedulerRunning
+                      ? 'bg-green-900 text-green-300'
+                      : 'bg-red-900 text-red-300'
+                  }`}>
+                    排程1 {(schedule as any)?.snkrdunkSchedulerRunning ? '✓ 運行中' : '✗ 未運行'}
+                  </span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    (schedule as any)?.snkrdunkScheduler2Running
+                      ? 'bg-green-900 text-green-300'
+                      : 'bg-red-900 text-red-300'
+                  }`}>
+                    排程2 {(schedule as any)?.snkrdunkScheduler2Running ? '✓ 運行中' : '✗ 未運行'}
+                  </span>
+                </div>
                 <p className="text-xs text-gray-400">
                   最後執行時間：{schedule?.snkrdunkLastExecutedAt 
                     ? formatHKLocale(schedule.snkrdunkLastExecutedAt, {

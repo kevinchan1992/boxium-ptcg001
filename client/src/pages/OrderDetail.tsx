@@ -385,7 +385,7 @@ export default function OrderDetail() {
         });
         const result = await uploadDisputeEvidenceMutation.mutateAsync({
           orderId,
-          imageBase64: base64,
+          fileBase64: base64,
           mimeType: file.type,
         });
         newUrls.push(result.url);

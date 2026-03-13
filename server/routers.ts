@@ -2076,7 +2076,13 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
     getPriceUpdateSchedule: publicProcedure
       .query(async () => {
         const schedule = await db.getPriceUpdateSchedule();
-        return schedule;
+        const { getPriceUpdateSchedulerStatus } = await import('./priceUpdateScheduler');
+        const schedulerStatus = getPriceUpdateSchedulerStatus();
+        return {
+          ...schedule,
+          snkrdunkSchedulerRunning: schedulerStatus.snkrdunkSchedulerRunning,
+          snkrdunkScheduler2Running: schedulerStatus.snkrdunkScheduler2Running,
+        };
       }),
 
     updatePriceUpdateSchedule: adminProcedure

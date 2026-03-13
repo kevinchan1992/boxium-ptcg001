@@ -656,7 +656,7 @@ export type InsertNotification = typeof notifications.$inferInsert;
 export const scheduleExecutionHistory = mysqlTable("scheduleExecutionHistory", {
   id: int("id").autoincrement().primaryKey(),
   scheduleType: varchar("scheduleType", { length: 50 }).notNull(), // e.g., "snkrdunk_daily_update", "ebay_daily_update"
-  executionType: mysqlEnum("executionType", ["scheduled", "manual"]).notNull(), // Scheduled or manual trigger
+  executionType: mysqlEnum("executionType", ["scheduled", "manual", "catchup"]).notNull(), // Scheduled or manual trigger
   status: mysqlEnum("status", ["running", "completed", "failed"]).notNull(),
   startedAt: timestamp("startedAt").notNull(),
   completedAt: timestamp("completedAt"),

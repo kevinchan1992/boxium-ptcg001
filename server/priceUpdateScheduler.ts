@@ -6,6 +6,81 @@ let snkrdunkCronJob: ReturnType<typeof cron.schedule> | null = null;
 let snkrdunkCronJob2: ReturnType<typeof cron.schedule> | null = null;
 
 /**
+ * Check if a scheduled time was missed since last execution.
+ * Returns true if the given HH:mm time has passed today (or yesterday) since lastExecutedAt.
+ * Uses a 23-hour window to avoid double-execution.
+ */
+function wasMissedSince(updateTime: string, lastExecutedAt: Date | null | undefined): boolean {
+  const now = new Date();
+  // Convert now to HKT
+  const hktOffset = 8 * 60 * 60 * 1000;
+  const nowHKT = new Date(now.getTime() + hktOffset);
+  const [schedHour, schedMin] = updateTime.split(':').map(Number);
+
+  // Build today's scheduled time in HKT
+  const todayHKT = new Date(nowHKT);
+  todayHKT.setUTCHours(schedHour, schedMin, 0, 0);
+  const todayScheduledUTC = new Date(todayHKT.getTime() - hktOffset);
+
+  // Build yesterday's scheduled time in HKT
+  const yesterdayScheduledUTC = new Date(todayScheduledUTC.getTime() - 24 * 60 * 60 * 1000);
+
+  // Determine the most recent scheduled time that has already passed
+  const mostRecentScheduled = todayScheduledUTC <= now ? todayScheduledUTC : yesterdayScheduledUTC;
+
+  if (!lastExecutedAt) {
+    // Never executed — treat as missed if scheduled time was within last 24h
+    return mostRecentScheduled <= now && (now.getTime() - mostRecentScheduled.getTime()) < 24 * 60 * 60 * 1000;
+  }
+
+  const lastExec = new Date(lastExecutedAt);
+  // Missed if the most recent scheduled time is after the last execution
+  return mostRecentScheduled > lastExec && mostRecentScheduled <= now;
+}
+
+/**
+ * Execute a catch-up SNKRDUNK batch update (for missed scheduled runs).
+ */
+async function runCatchupSnkrdunkUpdate(reason: string) {
+  console.log(`[PriceUpdateScheduler] Running catch-up SNKRDUNK update: ${reason}`);
+  const startTime = new Date();
+  let historyId: number | null = null;
+  try {
+    historyId = await addScheduleExecutionHistory({
+      scheduleType: 'snkrdunk_update',
+      executionType: 'catchup',
+      status: 'running',
+      startedAt: startTime,
+    });
+    const { taskId, totalCards } = await executePersistentSnkrdunkBatchUpdate();
+    console.log(`[PriceUpdateScheduler] Catch-up started, task ID: ${taskId}, total cards: ${totalCards}`);
+    await updateSnkrdunkLastExecutedAt();
+    const endTime = new Date();
+    if (historyId !== null) {
+      await updateScheduleExecutionHistory(historyId, {
+        status: 'completed',
+        completedAt: endTime,
+        durationMs: endTime.getTime() - startTime.getTime(),
+        snkrdunkSuccessCount: 0,
+        snkrdunkFailureCount: 0,
+        snkrdunkRecordsAdded: 0,
+      });
+    }
+  } catch (error) {
+    console.error('[PriceUpdateScheduler] Catch-up SNKRDUNK update failed:', error);
+    if (historyId !== null) {
+      const endTime = new Date();
+      await updateScheduleExecutionHistory(historyId, {
+        status: 'failed',
+        completedAt: endTime,
+        durationMs: endTime.getTime() - startTime.getTime(),
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+}
+
+/**
  * Initialize price update scheduler
  * This function should be called when the server starts
  */
@@ -28,6 +103,31 @@ export async function initPriceUpdateScheduler() {
       if (config.snkrdunkUpdateTime2) {
         startSnkrdunkScheduler(config.snkrdunkUpdateTime2, 2);
       }
+
+      // ── Catch-up check: run if any scheduled time was missed ──
+      // Delay slightly to allow DB connections to stabilize
+      setTimeout(async () => {
+        try {
+          // Re-fetch config to get latest lastExecutedAt
+          const freshConfig = await getPriceUpdateSchedule();
+          if (!freshConfig?.snkrdunkEnabled) return;
+
+          const missed1 = wasMissedSince(freshConfig.snkrdunkUpdateTime, freshConfig.snkrdunkLastExecutedAt);
+          const missed2 = freshConfig.snkrdunkUpdateTime2
+            ? wasMissedSince(freshConfig.snkrdunkUpdateTime2, freshConfig.snkrdunkLastExecutedAt)
+            : false;
+
+          if (missed1 || missed2) {
+            const reason = `missed scheduled run (slot1=${missed1}, slot2=${missed2}), last executed: ${freshConfig.snkrdunkLastExecutedAt?.toISOString() ?? 'never'}`;
+            console.log(`[PriceUpdateScheduler] Detected missed execution — ${reason}`);
+            await runCatchupSnkrdunkUpdate(reason);
+          } else {
+            console.log('[PriceUpdateScheduler] No missed executions detected, skipping catch-up');
+          }
+        } catch (err) {
+          console.error('[PriceUpdateScheduler] Catch-up check failed:', err);
+        }
+      }, 15000); // wait 15s after server start
     }
 
     console.log('[PriceUpdateScheduler] Price update scheduler initialized successfully');
