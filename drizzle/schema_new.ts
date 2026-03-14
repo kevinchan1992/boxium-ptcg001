@@ -581,6 +581,7 @@ export const priceUpdateSchedule = mysqlTable("priceUpdateSchedule", {
   snkrdunkUpdateTime: varchar("snkrdunkUpdateTime", { length: 8 }).default("01:00").notNull(), // First daily update time (HH:mm format)
   snkrdunkUpdateTime2: varchar("snkrdunkUpdateTime2", { length: 8 }).default("13:00"), // Second daily update time (HH:mm format, null = disabled)
   snkrdunkLastExecutedAt: timestamp("snkrdunkLastExecutedAt"), // Last SNKRDUNK update execution time
+  snkrdunkLastCatchupAt: timestamp("snkrdunkLastCatchupAt"), // Last catch-up execution time (used for cooldown — one catch-up per HKT day)
   timezone: varchar("timezone", { length: 64 }).default("Asia/Hong_Kong").notNull(), // Timezone
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

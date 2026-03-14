@@ -29,6 +29,7 @@
 import * as db from './db';
 import * as batchTaskManager from './batchTaskManager';
 import { extractSnkrdunkId, fetchPriceHistoryFromApi, convertJpyToHkd } from './snkrdunkScraper';
+import { getRecentlyViewedCardIds } from './db';
 
 // ─── Configuration (v7.1 - Fixed Metadata) ──────────────────
 const CONFIG = {
@@ -446,14 +447,29 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
     }
   }
   
-  // Sort: oldest first (haven't been updated in longest time)
+  // Get recently viewed/searched card IDs for priority ordering (last 7 days)
+  let recentCardIds: Set<number> = new Set();
+  try {
+    recentCardIds = await getRecentlyViewedCardIds(7);
+    console.log(`[BatchUpdate] Found ${recentCardIds.size} recently viewed cards to prioritize`);
+  } catch (err) {
+    console.warn('[BatchUpdate] Failed to fetch recently viewed cards, using default order:', err);
+  }
+
+  // Sort: recently viewed first, then oldest-updated first
   productsToUpdate.sort((a, b) => {
+    const aRecent = recentCardIds.has(a.id);
+    const bRecent = recentCardIds.has(b.id);
+    // Priority tier 1: recently viewed cards come first
+    if (aRecent && !bRecent) return -1;
+    if (!aRecent && bRecent) return 1;
+    // Priority tier 2: within same tier, oldest-updated comes first
     const aTime = a.lastFetchedAt?.getTime() || 0;
     const bTime = b.lastFetchedAt?.getTime() || 0;
     return aTime - bTime;
   });
   
-  console.log(`[BatchUpdate] Found ${allProducts.length} products, skipping ${skippedCount} recently updated, updating ${productsToUpdate.length}`);
+  console.log(`[BatchUpdate] Found ${allProducts.length} products, skipping ${skippedCount} recently updated, updating ${productsToUpdate.length} (${recentCardIds.size > 0 ? `${Math.min(recentCardIds.size, productsToUpdate.length)} priority cards first` : 'default order'})`);
 
   const taskId = await batchTaskManager.createBatchTask('batch_snkrdunk_update', productsToUpdate.length);
 

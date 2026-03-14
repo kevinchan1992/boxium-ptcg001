@@ -1499,8 +1499,22 @@ export async function updateSnkrdunkLastExecutedAt() {
     .where(eq(priceUpdateSchedule.id, existing.id));
 }
 
-
-
+/**
+ * Update last catch-up execution time for SNKRDUNK (used for cooldown — one catch-up per HKT day)
+ */
+export async function updateSnkrdunkLastCatchupAt() {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+  const existing = await getPriceUpdateSchedule();
+  if (!existing) {
+    throw new Error("Price update schedule not found");
+  }
+  await db.update(priceUpdateSchedule)
+    .set({ snkrdunkLastCatchupAt: new Date() } as any)
+    .where(eq(priceUpdateSchedule.id, existing.id));
+}
 
 // DEPRECATED: Functions using deleted table 'dataSourceHealth'
 export async function getDataSourceHealth() {
@@ -1766,6 +1780,29 @@ export async function getCachedTrendingCards() {
   return result;
 }
 
+
+/**
+ * Get recently viewed/searched card IDs for priority batch update ordering.
+ * Returns a Set of cardIds that were searched/viewed in the past N days,
+ * ordered by recency (most recent first).
+ */
+export async function getRecentlyViewedCardIds(days: number = 7): Promise<Set<number>> {
+  const db = await getDb();
+  if (!db) return new Set();
+  const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const { userSearchLogs } = await import('../drizzle/schema_new');
+  try {
+    const results = await db
+      .select({ cardId: userSearchLogs.cardId })
+      .from(userSearchLogs)
+      .where(gte(userSearchLogs.createdAt, cutoffDate))
+      .groupBy(userSearchLogs.cardId)
+      .orderBy(desc(sql`MAX(${userSearchLogs.createdAt})`));
+    return new Set(results.map(r => r.cardId));
+  } catch {
+    return new Set();
+  }
+}
 
 /**
  * Get trending cards by search popularity

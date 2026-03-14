@@ -1,5 +1,5 @@
 import * as cron from 'node-cron';
-import { getPriceUpdateSchedule, updateSnkrdunkLastExecutedAt, addScheduleExecutionHistory, updateScheduleExecutionHistory } from './db';
+import { getPriceUpdateSchedule, updateSnkrdunkLastExecutedAt, updateSnkrdunkLastCatchupAt, addScheduleExecutionHistory, updateScheduleExecutionHistory } from './db';
 import { executePersistentSnkrdunkBatchUpdate } from './persistentSnkrdunkBatchUpdate';
 
 let snkrdunkCronJob: ReturnType<typeof cron.schedule> | null = null;
@@ -39,6 +39,21 @@ function wasMissedSince(updateTime: string, lastExecutedAt: Date | null | undefi
 }
 
 /**
+ * Check if catch-up is on cooldown (already ran today in HKT).
+ * Returns true if a catch-up was already performed today (HKT date).
+ */
+function isCatchupOnCooldown(lastCatchupAt: Date | null | undefined): boolean {
+  if (!lastCatchupAt) return false;
+  const hktOffset = 8 * 60 * 60 * 1000;
+  const nowHKT = new Date(Date.now() + hktOffset);
+  const lastHKT = new Date(lastCatchupAt.getTime() + hktOffset);
+  // Compare HKT calendar date (YYYY-MM-DD)
+  const nowDate = `${nowHKT.getUTCFullYear()}-${nowHKT.getUTCMonth()}-${nowHKT.getUTCDate()}`;
+  const lastDate = `${lastHKT.getUTCFullYear()}-${lastHKT.getUTCMonth()}-${lastHKT.getUTCDate()}`;
+  return nowDate === lastDate;
+}
+
+/**
  * Execute a catch-up SNKRDUNK batch update (for missed scheduled runs).
  */
 async function runCatchupSnkrdunkUpdate(reason: string) {
@@ -55,6 +70,7 @@ async function runCatchupSnkrdunkUpdate(reason: string) {
     const { taskId, totalCards } = await executePersistentSnkrdunkBatchUpdate();
     console.log(`[PriceUpdateScheduler] Catch-up started, task ID: ${taskId}, total cards: ${totalCards}`);
     await updateSnkrdunkLastExecutedAt();
+    await updateSnkrdunkLastCatchupAt(); // Record catch-up time for cooldown
     const endTime = new Date();
     if (historyId !== null) {
       await updateScheduleExecutionHistory(historyId, {
@@ -118,9 +134,16 @@ export async function initPriceUpdateScheduler() {
             : false;
 
           if (missed1 || missed2) {
-            const reason = `missed scheduled run (slot1=${missed1}, slot2=${missed2}), last executed: ${freshConfig.snkrdunkLastExecutedAt?.toISOString() ?? 'never'}`;
-            console.log(`[PriceUpdateScheduler] Detected missed execution — ${reason}`);
-            await runCatchupSnkrdunkUpdate(reason);
+            // Check cooldown: only one catch-up per HKT calendar day
+            const lastCatchupAt = (freshConfig as any).snkrdunkLastCatchupAt as Date | null | undefined;
+            if (isCatchupOnCooldown(lastCatchupAt)) {
+              const lastCatchupStr = lastCatchupAt ? new Date(lastCatchupAt).toISOString() : 'never';
+              console.log(`[PriceUpdateScheduler] Catch-up cooldown active (already ran today HKT at ${lastCatchupStr}), skipping`);
+            } else {
+              const reason = `missed scheduled run (slot1=${missed1}, slot2=${missed2}), last executed: ${freshConfig.snkrdunkLastExecutedAt?.toISOString() ?? 'never'}`;
+              console.log(`[PriceUpdateScheduler] Detected missed execution — ${reason}`);
+              await runCatchupSnkrdunkUpdate(reason);
+            }
           } else {
             console.log('[PriceUpdateScheduler] No missed executions detected, skipping catch-up');
           }
