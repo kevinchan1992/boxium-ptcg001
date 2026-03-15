@@ -12,12 +12,21 @@ const ITEMS_PER_PAGE = 50;
 export default function PricingSearch() {
   const { t } = useTranslation();
   const searchParams = useSearch();
-  const query = new URLSearchParams(searchParams).get("q") || "";
+  const params = new URLSearchParams(searchParams);
+  const query = params.get("q") || "";
+  // Read page from URL param so browser back/forward restores it
+  const pageFromUrl = parseInt(params.get("page") || "1", 10);
+  const currentPage = isNaN(pageFromUrl) || pageFromUrl < 1 ? 1 : pageFromUrl;
+
   const [searchQuery, setSearchQuery] = useState(query);
-  const [currentPage, setCurrentPage] = useState(1);
   const [, setLocation] = useLocation();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshTriggeredRef = useRef<string>(""); // track query+page to avoid duplicate triggers
+
+  // Sync search input when URL query changes
+  useEffect(() => {
+    setSearchQuery(query);
+  }, [query]);
 
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -79,7 +88,7 @@ export default function PricingSearch() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      setCurrentPage(1);
+      // New search always resets to page 1
       setLocation(`/pricing/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
@@ -89,7 +98,11 @@ export default function PricingSearch() {
   };
 
   const goToPage = (page: number) => {
-    setCurrentPage(page);
+    // Update URL with new page number so browser back/forward works
+    const newParams = new URLSearchParams();
+    newParams.set("q", query);
+    if (page > 1) newParams.set("page", String(page));
+    setLocation(`/pricing/search?${newParams.toString()}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

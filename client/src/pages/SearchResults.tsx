@@ -9,11 +9,20 @@ import { Button } from "@/components/ui/button";
 
 export default function SearchResults() {
   const searchParams = useSearch();
-  const query = new URLSearchParams(searchParams).get("q") || "";
+  const params = new URLSearchParams(searchParams);
+  const query = params.get("q") || "";
+  // Read page from URL param so browser back/forward restores it
+  const pageFromUrl = parseInt(params.get("page") || "1", 10);
+  const currentPage = isNaN(pageFromUrl) || pageFromUrl < 1 ? 1 : pageFromUrl;
+
   const [searchQuery, setSearchQuery] = useState(query);
   const [, setLocation] = useLocation();
-  const [currentPage, setCurrentPage] = useState(1);
   const limit = 50;
+
+  // Sync search input when URL query changes
+  useEffect(() => {
+    setSearchQuery(query);
+  }, [query]);
 
   // Calculate offset based on current page
   const offset = (currentPage - 1) * limit;
@@ -39,27 +48,21 @@ export default function SearchResults() {
   // Calculate total pages
   const totalPages = Math.ceil(totalResults / limit);
   
-  // Reset page when query changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [query]);
-  
-  // Page navigation handlers
+  // Navigate to a specific page by updating URL (preserves query)
   const goToPage = (page: number) => {
-    setCurrentPage(page);
+    const newParams = new URLSearchParams();
+    newParams.set("q", query);
+    if (page > 1) newParams.set("page", String(page));
+    setLocation(`/search?${newParams.toString()}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      goToPage(currentPage - 1);
-    }
+    if (currentPage > 1) goToPage(currentPage - 1);
   };
   
   const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      goToPage(currentPage + 1);
-    }
+    if (currentPage < totalPages) goToPage(currentPage + 1);
   };
   
   // Generate page numbers to display (show max 7 pages)
@@ -116,6 +119,7 @@ export default function SearchResults() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      // New search always resets to page 1
       setLocation(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
