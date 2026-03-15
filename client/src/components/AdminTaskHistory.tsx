@@ -111,6 +111,23 @@ export function AdminTaskHistory() {
     },
   });
 
+  const cleanOldRecordsMutation = trpc.admin.cleanOldRecords.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success(
+          `清理完成！已刪除 ${data.deletedTasks} 條任務記錄、${data.deletedHistory} 條排程歷史（30 天前）`,
+          { duration: 6000 }
+        );
+      } else {
+        toast.error('清理失敗，請稍後再試');
+      }
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`清理失敗：${error.message}`);
+    },
+  });
+
   const deleteTaskMutation = trpc.admin.deleteTask.useMutation({
     onSuccess: () => {
       toast.success("任務記錄已刪除");
@@ -242,23 +259,32 @@ export function AdminTaskHistory() {
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="border-red-800 text-red-400 hover:text-red-300 hover:bg-red-900/20">
-                    <Trash2 className="w-4 h-4 mr-1" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-red-800 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                    disabled={cleanOldRecordsMutation.isPending}
+                  >
+                    {cleanOldRecordsMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4 mr-1" />
+                    )}
                     清理舊記錄
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="bg-gray-900 border-gray-800">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="text-white">確認清理舊記錄？</AlertDialogTitle>
+                    <AlertDialogTitle className="text-white">確認清理 30 天前的記錄？</AlertDialogTitle>
                     <AlertDialogDescription className="text-gray-400">
-                      將保留最近 50 條記錄，刪除其餘已完成或失敗的任務記錄。運行中和暫停的任務不會被刪除。
+                      將刪除 <span className="text-orange-400 font-medium">30 天前</span>的所有已完成或失敗的任務記錄，以及排程執行歷史。運行中和暫停的任務不會被刪除。此操作不可逆。
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel className="bg-gray-800 border-gray-700 text-gray-300">取消</AlertDialogCancel>
                     <AlertDialogAction
                       className="bg-red-600 hover:bg-red-700"
-                      onClick={() => cleanOldTasksMutation.mutate({ keepCount: 50 })}
+                      onClick={() => cleanOldRecordsMutation.mutate({ daysToKeep: 30 })}
                     >
                       確認清理
                     </AlertDialogAction>

@@ -6,8 +6,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, adminProcedure, protectedProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
-import { scheduledTasks } from "../drizzle/schema_new";
+import { eq, lt, and, sql } from "drizzle-orm";
+import { scheduledTasks, scheduleExecutionHistory } from "../drizzle/schema_new";
 import * as db from "./db";
 import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
 import { downloadAndEncodeImage, getBestImageUrl } from "./imageUtils";
@@ -2429,6 +2429,32 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
           await dbInstance.delete(scheduledTasks).where(eq(scheduledTasks.id, input.taskId));
         }
         return { success: true };
+      }),
+    cleanOldRecords: adminProcedure
+      .input(z.object({
+        daysToKeep: z.number().min(7).max(365).optional().default(30),
+      }))
+      .mutation(async ({ input }) => {
+        const dbInstance = await db.getDb();
+        if (!dbInstance) return { success: false, deletedTasks: 0, deletedHistory: 0 };
+        const cutoffDate = new Date(Date.now() - input.daysToKeep * 24 * 60 * 60 * 1000);
+        // Delete old completed/failed batch tasks (keep running/paused)
+        const tasksResult = await dbInstance
+          .delete(scheduledTasks)
+          .where(
+            and(
+              lt(scheduledTasks.createdAt, cutoffDate),
+              sql`${scheduledTasks.status} NOT IN ('running', 'paused')`
+            )
+          );
+        const deletedTasks = Number((tasksResult as any)[0]?.affectedRows || 0);
+        // Delete old schedule execution history
+        const historyResult = await dbInstance
+          .delete(scheduleExecutionHistory)
+          .where(lt(scheduleExecutionHistory.startedAt, cutoffDate));
+        const deletedHistory = Number((historyResult as any)[0]?.affectedRows || 0);
+        console.log(`[Admin] Cleaned old records: ${deletedTasks} tasks, ${deletedHistory} schedule history (older than ${input.daysToKeep} days)`);
+        return { success: true, deletedTasks, deletedHistory };
       }),
 
     // User Management APIs
