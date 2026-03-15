@@ -815,7 +815,7 @@ async function startServer() {
     
     // Recover stalled batch tasks from previous server instance, then auto-resume if eligible
     import('../batchTaskManager').then(({ recoverStalledTasks }) => {
-      recoverStalledTasks(30).then(async result => {
+      recoverStalledTasks(60).then(async result => { // 60 min: batch updates flush DB every 50 items, so 60 min is safe
         if (result.recoveredCount > 0) {
           console.log(`[Server] Recovered ${result.recoveredCount} stalled task(s) from previous instance`);
         }

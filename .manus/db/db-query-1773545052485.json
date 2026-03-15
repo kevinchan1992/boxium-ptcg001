@@ -1,0 +1,18 @@
+{
+  "query": "SELECT scheduleType, enabled, cronExpression, timezone, lastExecutedAt, nextExecutionAt FROM scheduleConfig;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT scheduleType, enabled, cronExpression, timezone, lastExecutedAt, nextExecutionAt FROM scheduleConfig;",
+  "rows": [
+    {
+      "scheduleType": "batch_update_daily",
+      "enabled": "1",
+      "cronExpression": "0 1 * * *",
+      "timezone": "Asia/Hong_Kong",
+      "lastExecutedAt": "2026-03-14 17:06:12",
+      "nextExecutionAt": "2026-03-15 17:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "scheduleType\tenabled\tcronExpression\ttimezone\tlastExecutedAt\tnextExecutionAt\nbatch_update_daily\t1\t0 1 * * *\tAsia/Hong_Kong\t2026-03-14 17:06:12\t2026-03-15 17:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 1617
+}

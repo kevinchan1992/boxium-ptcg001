@@ -140,9 +140,16 @@ export async function initPriceUpdateScheduler() {
               const lastCatchupStr = lastCatchupAt ? new Date(lastCatchupAt).toISOString() : 'never';
               console.log(`[PriceUpdateScheduler] Catch-up cooldown active (already ran today HKT at ${lastCatchupStr}), skipping`);
             } else {
-              const reason = `missed scheduled run (slot1=${missed1}, slot2=${missed2}), last executed: ${freshConfig.snkrdunkLastExecutedAt?.toISOString() ?? 'never'}`;
-              console.log(`[PriceUpdateScheduler] Detected missed execution — ${reason}`);
-              await runCatchupSnkrdunkUpdate(reason);
+              // Also skip if autoResumeOnStartup already picked up a running/recently-failed task
+              const { isSnkrdunkBatchUpdateRunning } = await import('./persistentSnkrdunkBatchUpdate');
+              const alreadyRunning = await isSnkrdunkBatchUpdateRunning();
+              if (alreadyRunning) {
+                console.log('[PriceUpdateScheduler] Catch-up skipped: autoResumeOnStartup already resumed an active task');
+              } else {
+                const reason = `missed scheduled run (slot1=${missed1}, slot2=${missed2}), last executed: ${freshConfig.snkrdunkLastExecutedAt?.toISOString() ?? 'never'}`;
+                console.log(`[PriceUpdateScheduler] Detected missed execution — ${reason}`);
+                await runCatchupSnkrdunkUpdate(reason);
+              }
             }
           } else {
             console.log('[PriceUpdateScheduler] No missed executions detected, skipping catch-up');

@@ -59,8 +59,8 @@ const CONFIG = {
   // Skip products updated within this many hours
   SKIP_RECENTLY_UPDATED_HOURS: 12,
   
-  // Max auto-resume attempts
-  MAX_AUTO_RESUME_ATTEMPTS: 3,
+  // Max auto-resume attempts (raised from 3 to 20 to survive frequent sandbox restarts)
+  MAX_AUTO_RESUME_ATTEMPTS: 20,
 };
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -423,6 +423,15 @@ async function runControlledParallelProcessing(
 }
 
 /**
+ * Check if a SNKRDUNK batch update is currently running.
+ * Used by priceUpdateScheduler to avoid triggering a new catch-up
+ * when autoResumeOnStartup has already resumed an active task.
+ */
+export async function isSnkrdunkBatchUpdateRunning(): Promise<boolean> {
+  return batchTaskManager.hasRunningTask('batch_snkrdunk_update');
+}
+
+/**
  * Execute SNKRDUNK batch update with persistent task tracking.
  */
 export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: number; totalCards: number; skippedCards: number }> {
@@ -582,22 +591,47 @@ export async function autoResumeOnStartup(): Promise<void> {
     if (!database) return;
     
     const { scheduledTasks } = await import('../drizzle/schema_new');
-    const { eq, and, gt, desc } = await import('drizzle-orm');
+    const { eq, and, gt, or, desc } = await import('drizzle-orm');
     
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    // Look back 24 hours for tasks that were interrupted (either still 'running' or
+    // recently marked 'failed' by recoverStalledTasks on this startup).
+    // recoverStalledTasks runs BEFORE autoResumeOnStartup, so a task that was
+    // 'running' during the previous session is now 'failed' with completedAt set
+    // to the current startup time. We detect those by checking completedAt within
+    // the last 2 minutes AND the error message contains 'Auto-recovered'.
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
     
-    const candidates = await database
+    // First priority: still-running tasks (rare but possible)
+    const runningCandidates = await database
       .select()
       .from(scheduledTasks)
       .where(
         and(
           eq(scheduledTasks.taskType, 'batch_snkrdunk_update'),
           eq(scheduledTasks.status, 'running'),
-          gt(scheduledTasks.updatedAt, twoHoursAgo),
+          gt(scheduledTasks.updatedAt, twentyFourHoursAgo),
         )
       )
       .orderBy(desc(scheduledTasks.updatedAt))
       .limit(1);
+    
+    // Second priority: tasks just marked failed by recoverStalledTasks (within last 2 min)
+    const recentlyFailedCandidates = await database
+      .select()
+      .from(scheduledTasks)
+      .where(
+        and(
+          eq(scheduledTasks.taskType, 'batch_snkrdunk_update'),
+          eq(scheduledTasks.status, 'failed'),
+          gt(scheduledTasks.completedAt, twoMinutesAgo),
+          gt(scheduledTasks.processedItems, 0), // must have made some progress
+        )
+      )
+      .orderBy(desc(scheduledTasks.completedAt))
+      .limit(1);
+    
+    const candidates = runningCandidates.length > 0 ? runningCandidates : recentlyFailedCandidates;
     
     if (candidates.length === 0) {
       console.log('[BatchUpdate] No eligible tasks for auto-resume');
@@ -616,9 +650,22 @@ export async function autoResumeOnStartup(): Promise<void> {
     }
     
     if (resumeCount > CONFIG.MAX_AUTO_RESUME_ATTEMPTS) {
-      console.log(`[BatchUpdate] Task ${task.id} exceeded max resume attempts (${resumeCount}), marking as failed`);
-      await batchTaskManager.completeTask(task.id, 'failed');
+      console.log(`[BatchUpdate] Task ${task.id} exceeded max resume attempts (${resumeCount}), marking as failed permanently`);
+      // Don't call completeTask again if already failed
+      if (task.status !== 'failed') {
+        await batchTaskManager.completeTask(task.id, 'failed');
+      }
       return;
+    }
+    
+    // If the task was marked 'failed' by recoverStalledTasks, reset it to 'running'
+    // so runControlledParallelProcessing can update its progress normally.
+    if (task.status === 'failed') {
+      await database
+        .update(scheduledTasks)
+        .set({ status: 'running', completedAt: null, errorMessage: null, updatedAt: new Date() })
+        .where(eq(scheduledTasks.id, task.id));
+      console.log(`[BatchUpdate] Reset task ${task.id} from failed → running for auto-resume`);
     }
     
     // Use SKIP_RECENTLY_UPDATED_HOURS to determine remaining products
@@ -634,6 +681,12 @@ export async function autoResumeOnStartup(): Promise<void> {
     });
     
     const alreadyDone = allProducts.length - remainingProducts.length;
+    
+    if (remainingProducts.length === 0) {
+      console.log(`[BatchUpdate] Task ${task.id} has no remaining products to process (all ${alreadyDone} already updated within ${CONFIG.SKIP_RECENTLY_UPDATED_HOURS}h), marking as completed`);
+      await batchTaskManager.completeTask(task.id, 'completed');
+      return;
+    }
     
     console.log(`[BatchUpdate] Auto-resuming task ${task.id} (${alreadyDone} already done by lastFetchedAt, ${remainingProducts.length} remaining, resume #${resumeCount})`);
     
