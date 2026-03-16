@@ -4575,3 +4575,14 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] Research 頁面支援 URL ?q= 參數自動填入搜尋詞
 - [x] 撰寫 vitest 測試（12 個測試全部通過）
 
+
+## 🔍 即時搜尋建議下拉面板（2026-03-16）
+
+- [x] 建立 CardSearchDropdown 共用組件（含 debounce 300ms、卡牌圖片、名稱顯示）
+- [x] 後端複用現有 trpc.cards.search（回傳前 5 筆卡牌含圖片，無需新增 procedure）
+- [x] 整合到 Research 頁面搜尋框
+- [x] 整合到 Pricing 頁面搜尋框（含 PricingSearch 搜尋結果頁）
+- [x] 點擊建議項目後跳轉到對應卡牌頁面
+- [x] 支援鍵盤導航（↑↓ 選擇、Enter 確認、Esc 關閉）
+- [x] 點擊外部區域自動關閉下拉面板
+- [x] 撰寫 vitest 測試（14 個測試全部通過）

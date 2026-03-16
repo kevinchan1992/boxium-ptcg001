@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ReactCrop, { type Crop as CropType } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 
 export default function Pricing() {
   const { t } = useTranslation();
@@ -228,20 +229,19 @@ export default function Pricing() {
           {t("pricing.subtitle")}
         </p>
 
-        {/* Search Box */}
-        <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder=""
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-16 py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
-            />
-            {/* Typing Animation Placeholder */}
-            {!searchQuery && randomCardNames.length > 0 && (
-              <div className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground text-sm">
+        {/* Search Box with Dropdown */}
+        <CardSearchDropdown
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSubmit={(q) => {
+            if (q.trim()) setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
+          }}
+          className="max-w-2xl mx-auto"
+          inputClassName="pr-16 py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
+          cardLinkPrefix="card"
+          placeholderOverlay={
+            !searchQuery && randomCardNames.length > 0 ? (
+              <div className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground text-sm z-10">
                 <TypeAnimation
                   sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
                   wrapper="span"
@@ -249,18 +249,19 @@ export default function Pricing() {
                   repeat={Infinity}
                 />
               </div>
-            )}
-            {/* Camera Button */}
+            ) : undefined
+          }
+          rightElement={
             <button
               type="button"
               onClick={handleCameraClick}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10"
               title={t('pricing.imageSearch') || '圖片搜尋'}
             >
               <Camera className="w-5 h-5" />
             </button>
-          </div>
-        </form>
+          }
+        />
 
         {/* Top Gainers - Daily Price Increase Top 5 */}
         <div className="flex justify-center gap-4 mt-12 flex-wrap">
