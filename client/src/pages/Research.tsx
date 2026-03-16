@@ -307,6 +307,7 @@ export default function Home() {
             }}
             cardLinkPrefix="card"
             inputClassName="w-full py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary pr-16"
+            placeholder=""
           />
           {/* Typing Animation Placeholder (only when input is empty) */}
           {!searchQuery && randomCardNames.length > 0 && (
