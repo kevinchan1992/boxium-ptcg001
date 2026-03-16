@@ -34,7 +34,7 @@ interface CardSearchDropdownProps {
   placeholderOverlay?: React.ReactNode;
   /** CSS class forwarded to the <Input> element */
   inputClassName?: string;
-  /** Where to navigate on card click: "card" → /card/:id, "pricing" → /pricing/card/:id */
+  /** Where to navigate on card click: "card" → /card/:id, "pricing/card" → /pricing/card/:id */
   cardLinkPrefix?: "card" | "pricing/card";
 }
 
@@ -64,8 +64,6 @@ export function CardSearchDropdown({
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
     if (value.trim().length >= 2) {
-      // If suppress flag is set, only update debouncedQuery (for fresh fetch)
-      // but do NOT open the dropdown
       debounceTimer.current = setTimeout(() => {
         setDebouncedQuery(value.trim());
       }, 300);
@@ -115,6 +113,17 @@ export function CardSearchDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ── Close dropdown (used on submit / card click / Esc) ───────────────────
+  const closeDropdown = useCallback(() => {
+    setIsOpen(false);
+    setActiveIndex(-1);
+    suppressRef.current = true;
+    // Force clear debouncedQuery so the useEffect that re-opens the dropdown
+    // cannot fire even when the component stays mounted (same-path navigation)
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    setDebouncedQuery("");
+  }, []);
+
   // ── Keyboard navigation ───────────────────────────────────────────────────
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -127,23 +136,19 @@ export function CardSearchDropdown({
         e.preventDefault();
         setActiveIndex(i => Math.max(i - 1, -1));
       } else if (e.key === "Escape") {
-        setIsOpen(false);
-        setActiveIndex(-1);
-        suppressRef.current = true;
+        closeDropdown();
       } else if (e.key === "Enter" && activeIndex >= 0) {
         e.preventDefault();
         const card = suggestions[activeIndex];
         if (card) handleCardClick(card);
       }
     },
-    [isOpen, suggestions, activeIndex]
+    [isOpen, suggestions, activeIndex, closeDropdown]
   );
 
   // ── Card click ────────────────────────────────────────────────────────────
   const handleCardClick = (card: any) => {
-    setIsOpen(false);
-    setActiveIndex(-1);
-    suppressRef.current = true;
+    closeDropdown();
     setLocation(`/${cardLinkPrefix}/${card.id}`);
   };
 
@@ -152,12 +157,6 @@ export function CardSearchDropdown({
     e.preventDefault();
     closeDropdown();
     onSubmit(value);
-  };
-
-  const closeDropdown = () => {
-    setIsOpen(false);
-    setActiveIndex(-1);
-    suppressRef.current = true;
   };
 
   const showDropdown = isOpen && debouncedQuery.length >= 2 && (isFetching || suggestions.length > 0);
