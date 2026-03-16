@@ -1,72 +1,106 @@
 {
   "title": "Terms of Service",
-  "lastUpdated": "Last Updated: February 14, 2026",
-  "intro": "Welcome to Boxium (hereinafter referred to as \"the Platform\"). These Terms of Service (hereinafter referred to as \"the Terms\") govern your rights and obligations when using the services provided by the Platform. By using the Platform, you acknowledge that you have read, understood, and agreed to accept all contents of these Terms. If you do not agree with any part of these Terms, please do not use the Platform.",
-  
+  "lastUpdated": "Last Updated: March 16, 2026",
+  "intro": "Welcome to Boxium (hereinafter referred to as 'the Platform'). These Terms of Service (hereinafter referred to as 'the Terms') govern your rights and obligations when using the services provided by the Platform. By using the Platform, you acknowledge that you have read, understood, and agree to be bound by all the contents of these Terms. If you do not agree with any part of these Terms, please do not use the Platform.",
   "section1": {
-    "title": "1. Service Content",
-    "p1": "Boxium is a card price information platform designed specifically for Pokémon Trading Card Game (PTCG) enthusiasts and collectors. The Platform integrates data sources from multiple global markets to provide users with real-time, accurate card price information, price trend analysis, and market research tools.",
+    "title": "1. Services",
+    "p1": "Boxium is a one-stop marketplace platform designed for Pokémon Trading Card Game (PTCG) enthusiasts, collectors, and investors. The Platform integrates data from multiple global markets and provides a secure PSA 10 graded card secondary marketplace.",
     "p2": "The services provided by the Platform include but are not limited to:",
     "services": [
-      "Card price inquiry and comparison",
-      "Price history trend charts",
-      "Market data analysis and research tools",
-      "Favorites function",
-      "Price alert notifications (if applicable)"
+      "Card Research: Search card information and view PSA 10 historical transaction price trends",
+      "Price Lookup: Real-time display of PSA 10 listings, integrating SNKRDUNK and eBay market data",
+      "Market Trends: 24-hour trending rankings to track price movements in real time",
+      "Marketplace: PSA 10 graded card buy and sell trading platform",
+      "Seller Dashboard: Listing management, order management, and earnings tracking",
+      "Wishlist: Save target cards and track price changes",
+      "Image Search: Upload card images for intelligent recognition"
     ],
-    "p3": "The Platform reserves the right to modify, suspend, or terminate all or part of the services at any time without prior notice to users."
+    "p3": "The Platform reserves the right to modify, suspend, or terminate all or part of its services at any time without prior notice to users."
   },
-  
   "section2": {
-    "title": "2. User Responsibilities",
-    "p1": "When using the Platform, you agree to comply with the following regulations:",
+    "title": "2. User Accounts and Responsibilities",
+    "p1": "When using the Platform, you agree to comply with the following rules:",
     "rules": [
-      "You shall not use the Platform for any illegal activities or activities that infringe upon the rights of others",
-      "You shall not interfere with or disrupt the normal operation of the Platform",
-      "You shall not access the Platform's systems or data without authorization",
-      "You shall not use automated tools (such as web scrapers) to extract large amounts of data from the Platform",
-      "You shall not use the information provided by the Platform for commercial purposes unless you have obtained written consent from the Platform"
+      "Do not use the Platform for any illegal activities or activities that infringe upon the rights of others",
+      "Do not interfere with or disrupt the normal operation of the Platform",
+      "Do not access the Platform's systems or data without authorization",
+      "Do not use automated tools (such as crawlers) to bulk-scrape Platform data",
+      "Do not use information provided by the Platform for commercial purposes without written consent from the Platform",
+      "Do not provide false personal information or impersonate others"
     ],
-    "p2": "If you violate the above regulations, the Platform has the right to immediately suspend or terminate your access privileges without assuming any liability."
+    "p2": "If you violate the above rules, the Platform has the right to immediately suspend or terminate your access without any liability."
   },
-  
   "section3": {
-    "title": "3. Information Accuracy and Disclaimer",
-    "p1": "The Platform strives to provide accurate and real-time card price information. However, due to market price fluctuations, data source delays, or technical limitations, the Platform cannot guarantee the complete accuracy, timeliness, or completeness of the information provided.",
-    "p2": "The price information provided by the Platform is for reference only and does not constitute any investment advice or trading recommendations.",
-    "p3": "Users should make their own judgments and bear all risks and responsibilities arising from the use of the Platform's information. The Platform shall not be liable for any direct, indirect, incidental, special, or consequential losses suffered by users due to the use or inability to use the Platform's services."
+    "title": "3. Marketplace Terms",
+    "p1": "The Platform provides a PSA 10 graded card secondary marketplace service, subject to the following specific terms:",
+    "subsection1": {
+      "title": "3.1 Seller Responsibilities",
+      "items": [
+        "Sellers must ensure that items listed are genuine PSA 10 graded cards and accurately describe the condition of the items",
+        "Sellers must complete shipment within the agreed timeframe after receiving payment",
+        "Sellers must complete Stripe Connect account setup before listing items on the Platform",
+        "Sellers must not list fraudulent items or engage in deceptive transactions",
+        "Sellers bear full responsibility for the authenticity, legality, and accuracy of descriptions of their listed items"
+      ]
+    },
+    "subsection2": {
+      "title": "3.2 Buyer Responsibilities",
+      "items": [
+        "Buyers should carefully read item descriptions and seller reviews before purchasing",
+        "Once a buyer confirms receipt, the transaction is deemed complete",
+        "If a buyer does not confirm receipt within the specified time, the system will automatically complete the order",
+        "If a buyer has a dispute regarding an item, they must submit a dispute request within the specified time after receipt"
+      ]
+    },
+    "subsection3": {
+      "title": "3.3 Platform Role",
+      "items": [
+        "The platform acts as an intermediary between buyers and sellers and does not guarantee product quality",
+        "The platform reserves the right to review and reject product listing applications",
+        "Transaction funds are held in escrow by the platform and transferred to the seller after the buyer confirms receipt",
+        "The platform charges a transaction fee of 5% of the final sale price, automatically deducted from the seller's payment upon transaction completion. The fee includes payment processing costs"
+      ]
+    }
   },
-  
   "section4": {
-    "title": "4. Intellectual Property Rights",
-    "p1": "All content on the Platform, including but not limited to text, images, charts, logos, interface design, code, and data compilation, is protected by copyright law, trademark law, and other intellectual property laws. Without the Platform's written consent, you may not copy, modify, distribute, display, publish, or otherwise use any content from the Platform.",
-    "p2": "Pokémon, Pokémon Trading Card Game, and related trademarks are registered trademarks of The Pokémon Company. The Platform has no official affiliation or authorization relationship with The Pokémon Company."
+    "title": "4. Information Accuracy and Disclaimer",
+    "p1": "The Platform strives to provide accurate and up-to-date card price information. However, due to market price fluctuations, data source delays, or technical limitations, the Platform cannot guarantee the complete accuracy, timeliness, or completeness of the information provided.",
+    "p2": "The price information provided by the Platform is for reference only and does not constitute any investment or trading advice.",
+    "p3": "Users should exercise their own judgment and bear all risks and responsibilities arising from the use of Platform information. The Platform is not liable for any direct, indirect, incidental, special, or consequential losses suffered by users due to the use of or inability to use the Platform's services."
   },
-  
   "section5": {
-    "title": "5. Third-Party Links",
-    "p1": "The Platform may contain links to third-party websites or services. These links are provided for user convenience only, and the Platform is not responsible for the content, privacy policies, or practices of third-party websites. Users should assume all risks when accessing third-party websites."
+    "title": "5. Payments and Refunds",
+    "p1": "The Platform uses Stripe as its payment processing service provider. All transactions are processed through secure encrypted channels.",
+    "p2": "Refund Policy:",
+    "refundPolicy": [
+      "If an item significantly does not match its description, buyers may apply for a refund within 3 business days of receipt",
+      "Refund applications must be accompanied by relevant evidence (such as photos or videos)",
+      "The Platform will review refund applications within 5 business days of receipt",
+      "Upon approval, refunds will be returned to the original payment method within 7–14 business days",
+      "Transaction fees are non-refundable"
+    ]
   },
-  
   "section6": {
     "title": "6. Privacy Protection",
-    "p1": "The Platform values the protection of user privacy. For information on how the Platform collects, uses, and protects your personal data, please refer to our",
+    "p1": "The Platform values the protection of users' privacy. For information on how the Platform collects, uses, and protects your personal data, please refer to our ",
     "privacyLink": "Privacy Policy"
   },
-  
   "section7": {
-    "title": "7. Modification of Terms",
-    "p1": "The Platform reserves the right to modify these Terms at any time. Modified Terms will be published on this page with the last update date noted. If you continue to use the Platform after the Terms have been modified, it indicates that you agree to accept the modified Terms. We recommend that you regularly review this page to stay informed of the latest Terms of Service."
+    "title": "7. Intellectual Property",
+    "p1": "All content on the Platform, including but not limited to text, images, charts, logos, interface design, code, and data arrangements, is protected by copyright law, trademark law, and other intellectual property laws. Without the Platform's written consent, you may not copy, modify, distribute, display, publish, or otherwise use any content from the Platform.",
+    "p2": "Pokémon, Pokémon Trading Card Game, and related trademarks are registered trademarks of The Pokémon Company. The Platform has no official affiliation with or authorization from The Pokémon Company."
   },
-  
   "section8": {
-    "title": "8. Governing Law and Jurisdiction",
-    "p1": "The interpretation, validity, and performance of these Terms shall be governed by the laws of the Hong Kong Special Administrative Region. Any disputes arising from these Terms shall be subject to the jurisdiction of the Hong Kong Special Administrative Region courts as the court of first instance."
+    "title": "8. Amendments to Terms",
+    "p1": "The Platform reserves the right to modify these Terms at any time. Amended Terms will be published on this page with the last updated date noted. If you continue to use the Platform after the Terms are amended, you are deemed to have agreed to the amended Terms. We recommend that you regularly review this page to stay informed of the latest Terms of Service."
   },
-  
   "section9": {
-    "title": "9. Contact Us",
-    "p1": "If you have any questions or suggestions regarding these Terms of Service, please feel free to contact us through the following methods:",
-    "email": "Email: support@boxium.com"
+    "title": "9. Governing Law and Jurisdiction",
+    "p1": "The interpretation, validity, and performance of these Terms shall be governed by the laws of the Hong Kong Special Administrative Region. For any disputes arising from these Terms, both parties agree to submit to the jurisdiction of the courts of the Hong Kong Special Administrative Region as the court of first instance."
+  },
+  "section10": {
+    "title": "10. Contact Us",
+    "p1": "If you have any questions or suggestions regarding these Terms of Service, please contact us:",
+    "email": "Email: support@boxium.asia"
   }
 }

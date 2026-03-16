@@ -1,19 +1,20 @@
 {
   "title": "Privacy Policy",
-  "lastUpdated": "Last Updated: February 14, 2026",
-  "intro": "Boxium (hereinafter referred to as \"the Platform\" or \"we\") values the protection of your privacy. This Privacy Policy (hereinafter referred to as \"this Policy\") explains how we collect, use, disclose, and protect the personal data you provide when using the Platform's services. Please read this Policy carefully to understand our approach to handling personal data.",
-  
+  "lastUpdated": "Last Updated: March 16, 2026",
+  "intro": "Boxium (hereinafter referred to as 'the Platform' or 'we') values the protection of your privacy. This Privacy Policy (hereinafter referred to as 'this Policy') explains how we collect, use, disclose, and protect the personal data you provide when using our services. Please read this Policy carefully to understand how we handle your personal data.",
   "section1": {
     "title": "1. Collection of Personal Data",
     "p1": "When you use the Platform's services, we may collect the following types of personal data:",
     "subsection1": {
-      "title": "1.1 Data You Actively Provide",
-      "p1": "When you register an account, use specific features, or contact us, you may actively provide the following data:",
+      "title": "1.1 Data You Voluntarily Provide",
+      "p1": "When you register an account, use certain features, or contact us, you may voluntarily provide the following data:",
       "items": [
         "Email address",
         "Username",
-        "Personal preference settings (such as favorite cards, price alert settings, etc.)",
-        "Other information you enter when using the Platform's features"
+        "Personal preference settings (such as saved cards, wishlist, etc.)",
+        "Seller information (such as Stripe Connect account, item descriptions, etc.)",
+        "Transaction-related information (such as delivery address, order records, etc.)",
+        "Other information you enter when using Platform features"
       ]
     },
     "subsection2": {
@@ -24,23 +25,27 @@
         "Browser type and version",
         "Operating system",
         "Access time and date",
-        "Pages viewed and feature usage records",
+        "Pages visited and feature usage records",
+        "Search history (card search keywords)",
         "Information collected by cookies and similar technologies"
       ]
     }
   },
-  
   "section2": {
-    "title": "2. Purpose of Using Personal Data",
+    "title": "2. Purposes of Using Personal Data",
     "p1": "We collect your personal data primarily for the following purposes:",
     "purposes": [
       {
-        "title": "Providing Services:",
-        "desc": "To provide you with core services such as card price inquiries, price trend analysis, and favorites management"
+        "title": "Service Provision:",
+        "desc": "To provide you with core services including card research, price lookup, market trend analysis, and marketplace transactions"
       },
       {
-        "title": "Improving Services:",
-        "desc": "To analyze user behavior and preferences, and optimize platform features and user experience"
+        "title": "Transaction Processing:",
+        "desc": "To process transactions, payments, refunds, and dispute resolution between buyers and sellers"
+      },
+      {
+        "title": "Service Improvement:",
+        "desc": "To analyze user behavior and preferences to optimize Platform features and user experience"
       },
       {
         "title": "Personalized Experience:",
@@ -48,11 +53,11 @@
       },
       {
         "title": "Notifications and Communication:",
-        "desc": "To send you service updates, price alerts, or other important notifications"
+        "desc": "To send you order updates, transaction notifications, service updates, or other important notices"
       },
       {
         "title": "Security Maintenance:",
-        "desc": "To detect, prevent, and address fraud, abuse, or other illegal activities"
+        "desc": "To detect, prevent, and handle fraud, abuse, or other illegal activities"
       },
       {
         "title": "Legal Compliance:",
@@ -60,51 +65,52 @@
       }
     ]
   },
-  
   "section3": {
     "title": "3. Disclosure and Sharing of Personal Data",
     "p1": "We do not sell your personal data to third parties. We may disclose or share your personal data in the following circumstances:",
     "scenarios": [
       {
         "title": "Service Providers:",
-        "desc": "We may share your data with third-party service providers who assist us in providing services (such as cloud storage services, data analysis tools, etc.). These service providers may only use your data within the scope of providing services and must comply with confidentiality obligations"
+        "desc": "We may share your data with third-party service providers who assist us in providing services (such as cloud storage services, data analytics tools, etc.). These service providers may only use your data within the scope of providing services and are subject to confidentiality obligations"
       },
       {
         "title": "Legal Requirements:",
-        "desc": "When required by law, regulations, court orders, or government agencies, we may need to disclose your data"
+        "desc": "When required by law, regulation, court order, or government authority, we may need to disclose your data"
       },
       {
         "title": "Protection of Rights:",
         "desc": "To protect the rights, property, or safety of the Platform, users, or the public, we may need to disclose your data"
       },
       {
-        "title": "Business Transfers:",
+        "title": "Business Transfer:",
         "desc": "If the Platform undergoes a merger, acquisition, or asset sale, your personal data may be transferred as part of the business assets"
+      },
+      {
+        "title": "Payment Service Providers:",
+        "desc": "We use Stripe to process payments. Related payment information will be handled in accordance with Stripe's privacy policy. We do not store complete credit card information"
       }
     ]
   },
-  
   "section4": {
     "title": "4. Cookies and Tracking Technologies",
-    "p1": "The Platform uses cookies and similar tracking technologies to improve your user experience. Cookies are small text files stored on your device that record your preference settings, login status, and usage behavior.",
+    "p1": "The Platform uses cookies and similar tracking technologies to improve your experience. Cookies are small text files stored on your device that record your preference settings, login status, and usage behavior.",
     "p2": "The types of cookies we use include:",
     "types": [
       {
         "title": "Essential Cookies:",
-        "desc": "These cookies are necessary for the basic functionality of the Platform, such as maintaining your login status"
+        "desc": "These cookies are necessary for the basic functioning of the Platform, such as maintaining your login status"
       },
       {
         "title": "Functional Cookies:",
-        "desc": "These cookies are used to remember your preference settings and provide a more personalized experience"
+        "desc": "These cookies remember your preference settings to provide a more personalized experience"
       },
       {
         "title": "Analytical Cookies:",
         "desc": "These cookies help us understand how users use the Platform so we can improve our services"
       }
     ],
-    "p3": "You can manage or delete cookies through your browser settings. However, please note that disabling cookies may affect some features of the Platform."
+    "p3": "You can manage or delete cookies through your browser settings. Please note that disabling cookies may affect some features of the Platform."
   },
-  
   "section5": {
     "title": "5. Data Security",
     "p1": "We take reasonable technical and organizational measures to protect your personal data from unauthorized access, use, disclosure, modification, or destruction. These measures include but are not limited to:",
@@ -113,70 +119,64 @@
       "Restricting employee and service provider access to personal data",
       "Regularly reviewing and updating security measures"
     ],
-    "p2": "However, please note that no method of internet transmission or electronic storage is 100% secure. While we strive to protect your data, we cannot guarantee absolute security."
+    "p2": "However, please note that no method of internet transmission or electronic storage is 100% secure. Although we strive to protect your data, we cannot guarantee absolute security."
   },
-  
   "section6": {
     "title": "6. Data Retention Period",
-    "p1": "We only retain your personal data for the period necessary to achieve the purpose of collection. When your data is no longer needed, we will securely delete or anonymize it. The specific retention period depends on the data type and purpose of use, for example:",
+    "p1": "We retain your personal data only for as long as necessary to fulfill the purposes for which it was collected. When your data is no longer needed, we will securely delete or anonymize it. Specific retention periods depend on the type of data and purpose of use, for example:",
     "periods": [
-      "Account data: Retained during the validity period of your account and for a reasonable period after account deletion",
-      "Usage records: Typically retained for 12 to 24 months",
-      "Data required by law: Retained according to the period stipulated by law"
+      "Account data: retained during the validity of your account and for a reasonable period after account deletion",
+      "Usage records: typically retained for 12 to 24 months",
+      "Legally required data: retained in accordance with legally mandated periods"
     ]
   },
-  
   "section7": {
     "title": "7. Your Rights",
     "p1": "Under applicable personal data protection laws, you have the following rights regarding your personal data:",
     "rights": [
       {
-        "title": "Right to Access:",
+        "title": "Right of Access:",
         "desc": "You have the right to access the personal data we hold about you"
       },
       {
-        "title": "Right to Rectification:",
+        "title": "Right of Rectification:",
         "desc": "If your personal data is inaccurate or incomplete, you have the right to request correction"
       },
       {
-        "title": "Right to Erasure:",
+        "title": "Right of Erasure:",
         "desc": "In certain circumstances, you have the right to request deletion of your personal data"
       },
       {
-        "title": "Right to Restriction of Processing:",
-        "desc": "In certain circumstances, you have the right to request that we restrict the processing of your personal data"
+        "title": "Right to Restrict Processing:",
+        "desc": "In certain circumstances, you have the right to request that we restrict our processing of your personal data"
       },
       {
         "title": "Right to Data Portability:",
-        "desc": "You have the right to request to receive your personal data in a structured, commonly used, and machine-readable format"
+        "desc": "You have the right to receive your personal data in a structured, commonly used, and machine-readable format"
       },
       {
         "title": "Right to Object:",
         "desc": "You have the right to object to our processing of your personal data based on legitimate interests"
       }
     ],
-    "p2": "If you wish to exercise any of the above rights, please contact us through the following contact methods. We will respond to your request within a reasonable period."
+    "p2": "If you wish to exercise the above rights, please contact us through the contact information below. We will respond to your request within a reasonable timeframe."
   },
-  
   "section8": {
     "title": "8. Children's Privacy",
-    "p1": "The Platform's services are intended for the general public, and we do not knowingly collect personal data from children under 13 years of age. If you are a parent or guardian and discover that your child has provided us with personal data without your consent, please contact us, and we will delete the relevant data as soon as possible."
+    "p1": "The Platform's services are intended for the general public. We do not intentionally collect personal data from children under the age of 13. If you are a parent or guardian and discover that your child has provided us with personal data without your consent, please contact us and we will delete the relevant data as soon as possible."
   },
-  
   "section9": {
-    "title": "9. Cross-Border Data Transfer",
-    "p1": "Your personal data may be transferred to locations outside your country or region for processing or storage. We will ensure that these data transfers comply with applicable personal data protection laws and take appropriate protective measures."
+    "title": "9. Cross-Border Data Transfers",
+    "p1": "Your personal data may be transferred to and processed or stored in locations outside your country or region. We will ensure that such data transfers comply with applicable personal data protection laws and that appropriate protective measures are in place."
   },
-  
   "section10": {
-    "title": "10. Policy Modifications",
-    "p1": "We may modify this Privacy Policy from time to time. The modified policy will be published on this page with the last update date noted. If the modifications are significant, we will notify you via email or platform notifications. We recommend that you regularly review this page to stay informed of the latest Privacy Policy."
+    "title": "10. Policy Amendments",
+    "p1": "We may amend this Privacy Policy from time to time. Amended policies will be published on this page with the last updated date noted. If the amendments are significant, we will notify you by email or platform notification. We recommend that you regularly review this page to stay informed of the latest Privacy Policy."
   },
-  
   "section11": {
     "title": "11. Contact Us",
-    "p1": "If you have any questions, comments, or wish to exercise your personal data rights regarding this Privacy Policy, please feel free to contact us through the following methods:",
-    "email": "Email: privacy@boxium.com",
-    "support": "Customer Service: support@boxium.com"
+    "p1": "If you have any questions, comments, or wish to exercise your personal data rights regarding this Privacy Policy, please contact us:",
+    "email": "Email: privacy@boxium.asia",
+    "support": "Support: support@boxium.asia"
   }
 }
