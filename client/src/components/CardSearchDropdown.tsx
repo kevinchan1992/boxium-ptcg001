@@ -8,6 +8,14 @@
  *   - Mobile  (<640px): vertical list (3 items, image thumbnail + name + price)
  *   - Tablet  (640-1023px): 3-column grid
  *   - Desktop (1024px+): 5-column grid
+ *
+ * How the suppress mechanism works (fixes same-path navigation bug):
+ *   closeDropdown() sets suppressRef.current = true AND clears debouncedQuery.
+ *   The debounce useEffect: when suppress=true, it ALWAYS forces isOpen=false and
+ *   debouncedQuery="" (no early return), preventing stale debouncedQuery from
+ *   triggering the reopen effect.
+ *   The tRPC query is disabled when debouncedQuery is empty, so no data arrives.
+ *   suppressRef is only cleared when the user physically types (onChange fires).
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Search } from "lucide-react";
@@ -53,36 +61,48 @@ export function CardSearchDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  // When user submits, suppress dropdown until they type again
+  /**
+   * suppressRef: when true, ANY value update from the parent will be ignored
+   * (dropdown stays closed, debouncedQuery stays empty).
+   * Only cleared when the user physically types into the input.
+   */
   const suppressRef = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Debounce ────────────────────────────────────────────
+  // ── Debounce ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
+    if (suppressRef.current) {
+      // CRITICAL: Do NOT early-return here. We must actively force the dropdown
+      // closed and clear debouncedQuery so the reopen effect cannot fire.
+      // (An early-return would leave debouncedQuery at its old value, which
+      // would trigger the reopen effect via suggestions.length changing.)
+      setIsOpen(false);
+      setActiveIndex(-1);
+      setDebouncedQuery("");
+      return;
+    }
+
     if (value.trim().length >= 2) {
-      // If suppressed (just submitted / card clicked), skip debounce entirely.
-      // The parent may update `value` via URL sync (e.g. PricingSearch syncing
-      // searchQuery from URL after same-path navigation) — we must NOT re-open.
-      if (suppressRef.current) return;
       debounceTimer.current = setTimeout(() => {
         setDebouncedQuery(value.trim());
       }, 300);
     } else {
       setDebouncedQuery("");
       setIsOpen(false);
-      // Only lift suppress when the query is cleared (user erased the input)
-      suppressRef.current = false;
     }
+
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
   }, [value]);
 
-  // ── Fetch suggestions ─────────────────────────────────────────────────────────────────────
+  // ── Fetch suggestions ─────────────────────────────────────────────────────
+  // Bind `enabled` to debouncedQuery so that when we clear it (on suppress),
+  // the query is immediately disabled and no stale data triggers a reopen.
   const { data, isFetching } = trpc.cards.search.useQuery(
     { query: debouncedQuery, limit: 5, offset: 0 },
     {
@@ -98,13 +118,14 @@ export function CardSearchDropdown({
   const mobileSuggestions = allSuggestions.slice(0, 3);
   const tabletSuggestions = allSuggestions.slice(0, 3);
 
-  // Show dropdown when we have results — but respect suppress flag
+  // Open dropdown when results arrive — only if not suppressed
   useEffect(() => {
-    if (debouncedQuery.length >= 2 && !suppressRef.current) {
+    if (suppressRef.current) return;
+    if (debouncedQuery.length >= 2) {
       setIsOpen(true);
       setActiveIndex(-1);
     }
-  }, [debouncedQuery, suggestions.length]);
+  }, [debouncedQuery, suggestions.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Close on outside click ────────────────────────────────────────────────
   useEffect(() => {
@@ -118,14 +139,14 @@ export function CardSearchDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ── Close dropdown (used on submit / card click / Esc) ───────────────────
+  // ── Close dropdown (submit / card click / Esc) ────────────────────────────
   const closeDropdown = useCallback(() => {
+    // Set suppress BEFORE clearing state so the debounce effect (triggered by
+    // any subsequent value update) immediately sees suppress=true.
+    suppressRef.current = true;
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
     setIsOpen(false);
     setActiveIndex(-1);
-    suppressRef.current = true;
-    // Force clear debouncedQuery so the useEffect that re-opens the dropdown
-    // cannot fire even when the component stays mounted (same-path navigation)
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
     setDebouncedQuery("");
   }, []);
 
@@ -177,7 +198,7 @@ export function CardSearchDropdown({
             placeholder={placeholder}
             value={value}
             onChange={(e) => {
-              // When user types again after submit, lift suppress
+              // User is physically typing → lift suppress so dropdown can reopen
               suppressRef.current = false;
               onChange(e.target.value);
             }}
@@ -292,7 +313,7 @@ export function CardSearchDropdown({
               </div>
 
               {/* Footer hint */}
-              <div className="mt-2 pt-2 border-t border-border flex items-center justify-between px-1">
+              <div className="flex items-center justify-between mt-2 px-1">
                 <p className="text-[10px] text-muted-foreground">
                   顯示前 {suggestions.length} 筆結果
                 </p>
