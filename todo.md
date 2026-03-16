@@ -4594,3 +4594,8 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 桌面版（lg+）：5 列橫排
 - [x] 每張卡牌下方顯示最新 PSA10 價格（HKD）
 - [x] 無價格時顯示「暫無價格」提示
+
+## 🐛 修復 CardSearchDropdown 路由跳轉後未關閉（2026-03-16）
+
+- [x] 監聴路由變更（useLocation），路由改變時自動關閉下拉面板
+- [x] 確保 PricingSearch 頁面的搜尋框在跳轉後正確關閉

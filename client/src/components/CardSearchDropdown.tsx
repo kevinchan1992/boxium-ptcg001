@@ -49,13 +49,23 @@ export function CardSearchDropdown({
   inputClassName = "",
   cardLinkPrefix = "card",
 }: CardSearchDropdownProps) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevLocationRef = useRef(location);
+
+  // ── Close dropdown on route change ───────────────────────────────────────
+  useEffect(() => {
+    if (location !== prevLocationRef.current) {
+      prevLocationRef.current = location;
+      setIsOpen(false);
+      setActiveIndex(-1);
+    }
+  }, [location]);
 
   // ── Debounce ──────────────────────────────────────────────────────────────
   useEffect(() => {
