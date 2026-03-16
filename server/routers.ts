@@ -903,8 +903,7 @@ export const appRouter = router({
       }),
 
     // Batch query lowest active listing price for a list of card IDs
-    // Source: snkrdunkListingsCache + ebayListingsCache (PSA10 on-sale listings, price in HKD)
-    // Returns the lowest price across both sources for each card
+    // Source: snkrdunkListingsCache (real SNKRDUNK on-sale listings, price in HKD)
     getLowestListingPrices: publicProcedure
       .input(z.object({
         cardIds: z.array(z.number()).max(100),
@@ -913,14 +912,11 @@ export const appRouter = router({
         if (input.cardIds.length === 0) return { prices: {} };
         const dbConn = await (await import('./db')).getDb();
         if (!dbConn) return { prices: {} };
-        const { snkrdunkListingsCache, ebayListingsCache } = await import('../drizzle/schema_new');
+        const { snkrdunkListingsCache } = await import('../drizzle/schema_new');
         const { inArray } = await import('drizzle-orm');
-        const { convertToHKD } = await import('./utils/currency');
 
-        const prices: Record<number, number> = {};
-
-        // --- SNKRDUNK listings (price already in HKD) ---
-        const snkrRows = await dbConn
+        // Fetch all cache rows for the requested card IDs
+        const rows = await dbConn
           .select({
             cardId: snkrdunkListingsCache.cardId,
             listings: snkrdunkListingsCache.listings,
@@ -928,62 +924,25 @@ export const appRouter = router({
           .from(snkrdunkListingsCache)
           .where(inArray(snkrdunkListingsCache.cardId, input.cardIds));
 
-        for (const row of snkrRows) {
+        const prices: Record<number, number> = {};
+        for (const row of rows) {
           try {
+            // listings is stored as JSON string: [{price, currency, grade, url, status}, ...]
             const items: Array<{ price: number; currency: string; grade: string; status?: string }> =
               typeof row.listings === 'string' ? JSON.parse(row.listings) : (row.listings as any);
+            // Only consider on-sale items (filter out sold items)
             const onSaleItems = items.filter((item) => !item.status || item.status === 'on-sale');
             if (onSaleItems.length > 0) {
               // price is already in HKD (converted during scraping)
               const minPrice = Math.min(...onSaleItems.map((item) => item.price));
               if (isFinite(minPrice) && minPrice > 0) {
-                const rounded = Math.round(minPrice * 100) / 100;
-                if (!prices[row.cardId] || rounded < prices[row.cardId]) {
-                  prices[row.cardId] = rounded;
-                }
+                prices[row.cardId] = Math.round(minPrice * 100) / 100;
               }
             }
           } catch (e) {
             // Skip malformed cache entries
           }
         }
-
-        // --- eBay listings (price in original currency, need conversion) ---
-        const ebayRows = await dbConn
-          .select({
-            cardId: ebayListingsCache.cardId,
-            listings: ebayListingsCache.listings,
-          })
-          .from(ebayListingsCache)
-          .where(inArray(ebayListingsCache.cardId, input.cardIds));
-
-        for (const row of ebayRows) {
-          try {
-            const items: Array<{ price: number; currency: string; grade?: string; condition?: string }> =
-              typeof row.listings === 'string' ? JSON.parse(row.listings) : (row.listings as any);
-            // Only PSA 10 graded items
-            const psa10Items = items.filter((item) => {
-              const grade = (item.grade || '').toLowerCase();
-              const condition = (item.condition || '').toLowerCase();
-              return grade.includes('psa 10') || grade.includes('psa10') ||
-                     condition.includes('psa 10') || condition.includes('psa10');
-            });
-            if (psa10Items.length > 0) {
-              const minPriceHKD = Math.min(
-                ...psa10Items.map((item) => convertToHKD(item.price, item.currency || 'USD'))
-              );
-              if (isFinite(minPriceHKD) && minPriceHKD > 0) {
-                const rounded = Math.round(minPriceHKD * 100) / 100;
-                if (!prices[row.cardId] || rounded < prices[row.cardId]) {
-                  prices[row.cardId] = rounded;
-                }
-              }
-            }
-          } catch (e) {
-            // Skip malformed eBay cache entries
-          }
-        }
-
         return { prices };
       }),
 

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Search, Loader2, AlertCircle, ShoppingBag, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
-import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 
 const ITEMS_PER_PAGE = 50;
 
@@ -22,7 +21,6 @@ export default function PricingSearch() {
   const [searchQuery, setSearchQuery] = useState(query);
   const [, setLocation] = useLocation();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [dropdownKey, setDropdownKey] = useState(0); // Force CardSearchDropdown remount on submit
   const refreshTriggeredRef = useRef<string>(""); // track query+page to avoid duplicate triggers
 
   // Sync search input when URL query changes
@@ -135,20 +133,20 @@ export default function PricingSearch() {
         ]}
       />
 
-      {/* Search Bar with Dropdown */}
+      {/* Search Bar */}
       <div className="mb-8">
-        <CardSearchDropdown
-          key={dropdownKey}  // Force remount on submit to close dropdown
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSubmit={(q) => {
-            setDropdownKey(k => k + 1); // Increment key to force remount
-            if (q.trim()) setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
-          }}
-          className="max-w-2xl"
-          inputClassName="pr-4 py-6 text-lg bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
-          cardLinkPrefix="pricing"
-        />
+        <form onSubmit={handleSearch} className="relative max-w-2xl">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder={t("pricing.searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-6 text-lg bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </form>
       </div>
 
       {/* Results Header */}
