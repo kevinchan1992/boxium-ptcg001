@@ -5,7 +5,7 @@
  * image cards below the input.  Keyboard navigation (↑ ↓ Enter Esc) is supported.
  *
  * Responsive layout:
- *   - Mobile  (<640px): vertical list (1 column, image thumbnail + name + price)
+ *   - Mobile  (<640px): vertical list (3 items, image thumbnail + name + price)
  *   - Tablet  (640-1023px): 3-column grid
  *   - Desktop (1024px+): 5-column grid
  */
@@ -49,36 +49,30 @@ export function CardSearchDropdown({
   inputClassName = "",
   cardLinkPrefix = "card",
 }: CardSearchDropdownProps) {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  // When user submits, suppress dropdown until they type again
+  const suppressRef = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Track full URL (pathname + search) to detect query-string changes too
-  const prevFullUrlRef = useRef(typeof window !== 'undefined' ? window.location.href : location);
-
-  // ── Close dropdown on route change (including query string changes) ────────
-  useEffect(() => {
-    const currentUrl = window.location.href;
-    if (currentUrl !== prevFullUrlRef.current) {
-      prevFullUrlRef.current = currentUrl;
-      setIsOpen(false);
-      setActiveIndex(-1);
-    }
-  }, [location]);
 
   // ── Debounce ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
     if (value.trim().length >= 2) {
+      // If suppress flag is set, only update debouncedQuery (for fresh fetch)
+      // but do NOT open the dropdown
       debounceTimer.current = setTimeout(() => {
         setDebouncedQuery(value.trim());
       }, 300);
     } else {
       setDebouncedQuery("");
       setIsOpen(false);
+      suppressRef.current = false;
     }
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -97,13 +91,13 @@ export function CardSearchDropdown({
 
   // Desktop shows 5 results; mobile/tablet shows 3
   const allSuggestions = data?.cards?.slice(0, 5) ?? [];
-  const suggestions = allSuggestions; // full list used for keyboard nav & desktop grid
+  const suggestions = allSuggestions;
   const mobileSuggestions = allSuggestions.slice(0, 3);
   const tabletSuggestions = allSuggestions.slice(0, 3);
 
-  // Show dropdown when we have results
+  // Show dropdown when we have results — but respect suppress flag
   useEffect(() => {
-    if (debouncedQuery.length >= 2) {
+    if (debouncedQuery.length >= 2 && !suppressRef.current) {
       setIsOpen(true);
       setActiveIndex(-1);
     }
@@ -135,6 +129,7 @@ export function CardSearchDropdown({
       } else if (e.key === "Escape") {
         setIsOpen(false);
         setActiveIndex(-1);
+        suppressRef.current = true;
       } else if (e.key === "Enter" && activeIndex >= 0) {
         e.preventDefault();
         const card = suggestions[activeIndex];
@@ -148,14 +143,21 @@ export function CardSearchDropdown({
   const handleCardClick = (card: any) => {
     setIsOpen(false);
     setActiveIndex(-1);
+    suppressRef.current = true;
     setLocation(`/${cardLinkPrefix}/${card.id}`);
   };
 
   // ── Form submit ───────────────────────────────────────────────────────────
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsOpen(false);
+    closeDropdown();
     onSubmit(value);
+  };
+
+  const closeDropdown = () => {
+    setIsOpen(false);
+    setActiveIndex(-1);
+    suppressRef.current = true;
   };
 
   const showDropdown = isOpen && debouncedQuery.length >= 2 && (isFetching || suggestions.length > 0);
@@ -170,9 +172,15 @@ export function CardSearchDropdown({
             type="text"
             placeholder={placeholder}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => {
+              // When user types again after submit, lift suppress
+              suppressRef.current = false;
+              onChange(e.target.value);
+            }}
             onFocus={() => {
-              if (debouncedQuery.length >= 2 && suggestions.length > 0) setIsOpen(true);
+              if (!suppressRef.current && debouncedQuery.length >= 2 && suggestions.length > 0) {
+                setIsOpen(true);
+              }
             }}
             onKeyDown={handleKeyDown}
             className={`w-full pl-12 ${inputClassName}`}
@@ -288,7 +296,7 @@ export function CardSearchDropdown({
                   type="button"
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    setIsOpen(false);
+                    closeDropdown();
                     onSubmit(value);
                   }}
                   className="text-[10px] text-primary hover:underline"
