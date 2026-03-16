@@ -3,6 +3,11 @@
  * A reusable search input with an auto-complete dropdown that shows card images.
  * Debounces the query (300 ms), fetches up to 5 results, and renders them as
  * image cards below the input.  Keyboard navigation (↑ ↓ Enter Esc) is supported.
+ *
+ * Responsive layout:
+ *   - Mobile  (<640px): vertical list (1 column, image thumbnail + name + price)
+ *   - Tablet  (640-1023px): 3-column grid
+ *   - Desktop (1024px+): 5-column grid
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Search } from "lucide-react";
@@ -10,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { LazyImage } from "@/components/LazyImage";
 import { useLocation } from "wouter";
+import { formatCurrency } from "@/lib/formatCurrency";
 
 interface CardSearchDropdownProps {
   /** Controlled value */
@@ -177,24 +183,25 @@ export function CardSearchDropdown({
             </div>
           ) : (
             <div className="p-2">
-              <div className="grid grid-cols-5 gap-2">
+              {/* ── Mobile: vertical list ── */}
+              <div className="flex flex-col gap-1 sm:hidden">
                 {suggestions.map((card: any, idx: number) => (
                   <button
                     key={card.id}
                     type="button"
                     onMouseDown={(e) => {
-                      e.preventDefault(); // prevent input blur before click
+                      e.preventDefault();
                       handleCardClick(card);
                     }}
                     onMouseEnter={() => setActiveIndex(idx)}
-                    className={`flex flex-col items-center gap-1 p-1.5 rounded-lg transition-colors text-left group ${
+                    className={`flex items-center gap-3 p-2 rounded-lg transition-colors text-left ${
                       activeIndex === idx
                         ? "bg-primary/10 ring-1 ring-primary/30"
                         : "hover:bg-muted"
                     }`}
                   >
-                    {/* Card image */}
-                    <div className="w-full aspect-[2/3] rounded-md overflow-hidden bg-muted flex-shrink-0">
+                    {/* Thumbnail */}
+                    <div className="w-10 h-14 rounded-md overflow-hidden bg-muted flex-shrink-0">
                       {card.imageUrl ? (
                         <LazyImage
                           src={card.imageUrl}
@@ -202,24 +209,60 @@ export function CardSearchDropdown({
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                          No Image
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[8px]">
+                          No Img
                         </div>
                       )}
                     </div>
-                    {/* Card name */}
-                    <p className="text-xs text-foreground leading-tight line-clamp-2 text-center w-full">
-                      {card.name || card.nameJa || "—"}
-                    </p>
-                    {/* Card number */}
-                    {card.cardNumber && (
-                      <p className="text-[10px] text-muted-foreground truncate w-full text-center">
-                        {card.cardNumber}
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground leading-tight line-clamp-2 font-medium">
+                        {card.name || card.nameJa || "—"}
                       </p>
-                    )}
+                      {card.cardNumber && (
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                          {card.cardNumber}
+                        </p>
+                      )}
+                      {/* PSA10 price */}
+                      <p className={`text-xs mt-1 font-semibold ${card.latestPrice ? "text-primary" : "text-muted-foreground"}`}>
+                        {card.latestPrice
+                          ? formatCurrency(card.latestPrice, "HKD")
+                          : "暫無價格"}
+                      </p>
+                    </div>
                   </button>
                 ))}
               </div>
+
+              {/* ── Tablet: 3-column grid ── */}
+              <div className="hidden sm:grid lg:hidden grid-cols-3 gap-2">
+                {suggestions.map((card: any, idx: number) => (
+                  <CardGridItem
+                    key={card.id}
+                    card={card}
+                    idx={idx}
+                    activeIndex={activeIndex}
+                    onMouseDown={() => handleCardClick(card)}
+                    onMouseEnter={() => setActiveIndex(idx)}
+                  />
+                ))}
+              </div>
+
+              {/* ── Desktop: 5-column grid ── */}
+              <div className="hidden lg:grid grid-cols-5 gap-2">
+                {suggestions.map((card: any, idx: number) => (
+                  <CardGridItem
+                    key={card.id}
+                    card={card}
+                    idx={idx}
+                    activeIndex={activeIndex}
+                    onMouseDown={() => handleCardClick(card)}
+                    onMouseEnter={() => setActiveIndex(idx)}
+                  />
+                ))}
+              </div>
+
               {/* Footer hint */}
               <div className="mt-2 pt-2 border-t border-border flex items-center justify-between px-1">
                 <p className="text-[10px] text-muted-foreground">
@@ -242,5 +285,63 @@ export function CardSearchDropdown({
         </div>
       )}
     </div>
+  );
+}
+
+// ── Shared grid card item (tablet + desktop) ──────────────────────────────────
+interface CardGridItemProps {
+  card: any;
+  idx: number;
+  activeIndex: number;
+  onMouseDown: () => void;
+  onMouseEnter: () => void;
+}
+
+function CardGridItem({ card, idx, activeIndex, onMouseDown, onMouseEnter }: CardGridItemProps) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onMouseDown();
+      }}
+      onMouseEnter={onMouseEnter}
+      className={`flex flex-col items-center gap-1 p-1.5 rounded-lg transition-colors text-left group ${
+        activeIndex === idx
+          ? "bg-primary/10 ring-1 ring-primary/30"
+          : "hover:bg-muted"
+      }`}
+    >
+      {/* Card image */}
+      <div className="w-full aspect-[2/3] rounded-md overflow-hidden bg-muted flex-shrink-0">
+        {card.imageUrl ? (
+          <LazyImage
+            src={card.imageUrl}
+            alt={card.name || ""}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+            No Image
+          </div>
+        )}
+      </div>
+      {/* Card name */}
+      <p className="text-xs text-foreground leading-tight line-clamp-2 text-center w-full">
+        {card.name || card.nameJa || "—"}
+      </p>
+      {/* Card number */}
+      {card.cardNumber && (
+        <p className="text-[10px] text-muted-foreground truncate w-full text-center">
+          {card.cardNumber}
+        </p>
+      )}
+      {/* PSA10 price */}
+      <p className={`text-[10px] font-semibold w-full text-center ${card.latestPrice ? "text-primary" : "text-muted-foreground"}`}>
+        {card.latestPrice
+          ? formatCurrency(card.latestPrice, "HKD")
+          : "暫無價格"}
+      </p>
+    </button>
   );
 }
