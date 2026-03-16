@@ -141,7 +141,7 @@ export default function Pricing() {
         toast.success(`找到卡牌：${cardName}`);
         setShowImageDialog(false);
         setSearchQuery(cardName);
-        setLocation(`/card/${result.bestMatch.id}`);
+        setLocation(`/pricing/${result.bestMatch.id}`);
       } else if (result.success && result.identification) {
         const cardName = result.identification.cardName || result.identification.cardNameJa;
         if (cardName) {
