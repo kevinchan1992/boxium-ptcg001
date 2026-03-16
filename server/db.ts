@@ -1,6 +1,6 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
-import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery } from './utils/cardNumberNormalize';
+import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
 import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";
 import { ENV } from './_core/env';
@@ -46,7 +46,6 @@ export async function searchCards(query: string, limit: number = 20, offset: num
   // and NOT cards from other series that happen to contain those characters.
   if (isPureSeriesCodeQuery(trimmedQuery)) {
     const setCode = trimmedQuery.toUpperCase();
-    // Match "SV10 xxx" (set code followed by space) OR exact set code
     const matchingCards = await db
       .select()
       .from(cards)
@@ -59,73 +58,50 @@ export async function searchCards(query: string, limit: number = 20, offset: num
 
     if (matchingCards.length === 0) return { cards: [], total: 0 };
 
-    // Get latest SNKRDUNK PSA 10 price for each card
     const cardIds = matchingCards.map(c => c.id);
     const latestPrices = await db
-      .select({
-        cardId: priceHistory.cardId,
-        price: priceHistory.price,
-        soldAt: priceHistory.soldAt,
-      })
+      .select({ cardId: priceHistory.cardId, price: priceHistory.price, soldAt: priceHistory.soldAt })
       .from(priceHistory)
-      .where(
-        and(
-          inArray(priceHistory.cardId, cardIds),
-          eq(priceHistory.source, 'snkrdunk'),
-          eq(priceHistory.grade, 'PSA10')
-        )
-      )
+      .where(and(inArray(priceHistory.cardId, cardIds), eq(priceHistory.source, 'snkrdunk'), eq(priceHistory.grade, 'PSA10')))
       .orderBy(desc(priceHistory.soldAt));
 
     const priceMap = new Map<number, number>();
     for (const price of latestPrices) {
-      if (!priceMap.has(price.cardId)) {
-        priceMap.set(price.cardId, Number(price.price));
-      }
+      if (!priceMap.has(price.cardId)) priceMap.set(price.cardId, Number(price.price));
     }
-
-    // Sort: cards with price first (highest price first), then cards without price
-    const sortedCards = matchingCards.sort((a, b) => {
-      const priceA = priceMap.get(a.id) || 0;
-      const priceB = priceMap.get(b.id) || 0;
-      return priceB - priceA;
-    });
-
-    const cardsWithPrice = sortedCards.map(card => ({
-      ...card,
-      latestPrice: priceMap.get(card.id) || null,
-    }));
-
-    return {
-      cards: cardsWithPrice.slice(offset, offset + limit),
-      total: cardsWithPrice.length,
-    };
+    const sortedCards = matchingCards.sort((a, b) => (priceMap.get(b.id) || 0) - (priceMap.get(a.id) || 0));
+    const cardsWithPrice = sortedCards.map(card => ({ ...card, latestPrice: priceMap.get(card.id) || null }));
+    return { cards: cardsWithPrice.slice(offset, offset + limit), total: cardsWithPrice.length };
   }
 
-  // ── General search (card name or card number with explicit number) ──────────
-  // Build smart search conditions with card number normalization
-  // This handles format variants like "SM-P 288", "288/SM-P", "288 sm-p"
-  const cardNumberPatterns = generateCardNumberPatterns(trimmedQuery);
-  const normalizedQuery = normalizeCardQuery(trimmedQuery);
+  // ── Multi-token fuzzy search ───────────────────────────────────────────────
+  // Tokenize the query: "pikachu sm-p" → ["pikachu", "sm-p"]
+  // Each token must match at least one of: name, nameJa, cardNumber
+  // All tokens must match (AND logic across tokens, OR logic within each token)
+  const tokens = tokenizeSearchQuery(trimmedQuery);
+  if (tokens.length === 0) return { cards: [], total: 0 };
 
-  // Build card number conditions: original query + all format variants
-  const cardNumberConditions = [
-    like(cards.cardNumber, `%${trimmedQuery}%`),
-    ...(normalizedQuery !== trimmedQuery ? [like(cards.cardNumber, `%${normalizedQuery}%`)] : []),
-    ...cardNumberPatterns.map(pattern => like(cards.cardNumber, pattern)),
-  ];
+  // Build per-token conditions
+  const tokenConditions = tokens.map(token => {
+    const { namePatterns, cardNumberPatterns: cnPatterns } = buildTokenPatterns(token);
+    const conditions = [
+      ...namePatterns.map(p => like(cards.name, p)),
+      ...namePatterns.map(p => like(cards.nameJa, p)),
+      ...cnPatterns.map(p => like(cards.cardNumber, p)),
+    ];
+    // Each token: card must match at least one field
+    return or(...conditions)!;
+  });
 
-  // First, get matching cards
+  // All tokens must match
+  const whereCondition = tokenConditions.length === 1
+    ? tokenConditions[0]
+    : and(...tokenConditions);
+
   const matchingCards = await db
     .select()
     .from(cards)
-    .where(
-      or(
-        like(cards.name, `%${trimmedQuery}%`),
-        like(cards.nameJa, `%${trimmedQuery}%`),
-        ...cardNumberConditions
-      )
-    );
+    .where(whereCondition);
 
   if (matchingCards.length === 0) return { cards: [], total: 0 };
 
@@ -471,31 +447,33 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
     conditions.push(eq(dataSources.gameId, options.gameId));
   }
 
-  // ── Smart search: sync with searchCards logic ─────────────────────────
-  let searchCondition: ReturnType<typeof or> | undefined;
+   // ── Smart search: multi-token fuzzy matching ───────────────────────────
+  let searchCondition: ReturnType<typeof and> | ReturnType<typeof or> | undefined;
   if (rawSearch) {
     if (isPureSeriesCodeQuery(rawSearch)) {
-      // Pure series code (e.g. "SV9", "SV8a"): prefix-match on cardNumber
       const setCode = rawSearch.toUpperCase();
       searchCondition = or(
         like(cards.cardNumber, `${setCode} %`),
         like(cards.cardNumber, `${setCode}/%`),
       );
     } else {
-      // General search: card name (zh/ja), card number variants, URL
-      const cardNumberPatterns = generateCardNumberPatterns(rawSearch);
-      const normalizedQuery = normalizeCardQuery(rawSearch);
-      const cardNumberConditions = [
-        like(cards.cardNumber, `%${rawSearch}%`),
-        ...(normalizedQuery !== rawSearch ? [like(cards.cardNumber, `%${normalizedQuery}%`)] : []),
-        ...cardNumberPatterns.map(pattern => like(cards.cardNumber, pattern)),
-      ];
-      searchCondition = or(
-        like(cards.name, `%${searchQuery}%`),
-        like(cards.nameJa, `%${searchQuery}%`),
-        like(dataSources.sourceUrl, `%${searchQuery}%`),
-        ...cardNumberConditions,
-      );
+      // Multi-token: each token must match at least one of name/nameJa/cardNumber/sourceUrl
+      const tokens = tokenizeSearchQuery(rawSearch);
+      if (tokens.length > 0) {
+        const tokenConditions = tokens.map(token => {
+          const { namePatterns, cardNumberPatterns: cnPatterns } = buildTokenPatterns(token);
+          const conds = [
+            ...namePatterns.map(p => like(cards.name, p)),
+            ...namePatterns.map(p => like(cards.nameJa, p)),
+            ...cnPatterns.map(p => like(cards.cardNumber, p)),
+            like(dataSources.sourceUrl, `%${token}%`),
+          ];
+          return or(...conds)!;
+        });
+        searchCondition = tokenConditions.length === 1
+          ? tokenConditions[0]
+          : and(...tokenConditions);
+      }
     }
   }
 
@@ -2660,8 +2638,8 @@ export async function getAllFilteredDataSourceIds(options?: { search?: string; s
     conditions.push(eq(dataSources.gameId, options.gameId));
   }
 
-  // ── Smart search: sync with searchCards logic ─────────────────────────
-  let searchCondition: ReturnType<typeof or> | undefined;
+   // ── Smart search: multi-token fuzzy matching ───────────────────────────
+  let searchCondition: ReturnType<typeof and> | ReturnType<typeof or> | undefined;
   if (rawSearch) {
     if (isPureSeriesCodeQuery(rawSearch)) {
       const setCode = rawSearch.toUpperCase();
@@ -2670,19 +2648,22 @@ export async function getAllFilteredDataSourceIds(options?: { search?: string; s
         like(cards.cardNumber, `${setCode}/%`),
       );
     } else {
-      const cardNumberPatterns = generateCardNumberPatterns(rawSearch);
-      const normalizedQuery = normalizeCardQuery(rawSearch);
-      const cardNumberConditions = [
-        like(cards.cardNumber, `%${rawSearch}%`),
-        ...(normalizedQuery !== rawSearch ? [like(cards.cardNumber, `%${normalizedQuery}%`)] : []),
-        ...cardNumberPatterns.map(pattern => like(cards.cardNumber, pattern)),
-      ];
-      searchCondition = or(
-        like(cards.name, `%${searchQuery}%`),
-        like(cards.nameJa, `%${searchQuery}%`),
-        like(dataSources.sourceUrl, `%${searchQuery}%`),
-        ...cardNumberConditions,
-      );
+      const tokens = tokenizeSearchQuery(rawSearch);
+      if (tokens.length > 0) {
+        const tokenConditions = tokens.map(token => {
+          const { namePatterns, cardNumberPatterns: cnPatterns } = buildTokenPatterns(token);
+          const conds = [
+            ...namePatterns.map(p => like(cards.name, p)),
+            ...namePatterns.map(p => like(cards.nameJa, p)),
+            ...cnPatterns.map(p => like(cards.cardNumber, p)),
+            like(dataSources.sourceUrl, `%${token}%`),
+          ];
+          return or(...conds)!;
+        });
+        searchCondition = tokenConditions.length === 1
+          ? tokenConditions[0]
+          : and(...tokenConditions);
+      }
     }
   }
 
@@ -2694,9 +2675,7 @@ export async function getAllFilteredDataSourceIds(options?: { search?: string; s
 
   try {
     const result = await db
-      .select({
-        id: dataSources.id,
-      })
+      .select({ id: dataSources.id })
       .from(dataSources)
       .leftJoin(cards, eq(dataSources.cardId, cards.id))
       .where(whereConditions);

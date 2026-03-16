@@ -4539,3 +4539,27 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 手機：單欄垂直堆疊
 - [x] 平板：2 欄
 - [x] 桌面：4 欄水平排列
+
+## ✅ 多 Token 模糊搜尋功能實作（2026-03-16）
+
+### 問題描述
+搜尋「pikachu sm-p」或「pikachu 288」返回 0 結果，只有完整的「pikachu sm-p 288」才能搜尋到。
+
+### 解決方案
+- [x] 在 `server/utils/cardNumberNormalize.ts` 新增 `tokenizeSearchQuery()` 函數：將查詢字串分割為 token（純卡號如「SM-P 288」保持為一個 token，混合查詢如「pikachu sm-p」分割為多個 token）
+- [x] 新增 `buildTokenPatterns()` 函數：為每個 token 生成 LIKE 模式（name、nameJa、cardNumber）
+- [x] 新增 `isPureCardNumberQuery()` 輔助函數：嚴格判斷是否為純卡號格式（防止「PIKACHU」被誤判為 set code）
+- [x] 更新 `server/db.ts` 的 `searchCards` 函數：使用多 token AND 邏輯
+- [x] 更新 `server/db.ts` 的 `getDataSources` 函數：使用多 token AND 邏輯
+- [x] 更新 `server/db.ts` 的 `getAllFilteredDataSourceIds` 函數：使用多 token AND 邏輯
+- [x] 新增 38 個 vitest 測試（全部通過）
+
+### 搜尋行為
+| 查詢 | 結果 |
+|------|------|
+| `pikachu` | 名稱包含「pikachu」的所有卡牌 |
+| `pikachu sm-p` | 名稱含「pikachu」**且**卡號含「SM-P」的卡牌 |
+| `pikachu 288` | 名稱含「pikachu」**且**卡號含「288」的卡牌 |
+| `pikachu sm-p 288` | 名稱含「pikachu」**且**卡號含「SM-P」**且**卡號含「288」的卡牌 |
+| `SM-P 288` | 卡號為「SM-P 288」的卡牌（保持為一個 token） |
+

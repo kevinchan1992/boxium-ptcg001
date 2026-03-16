@@ -4,6 +4,8 @@ import {
   generateCardNumberPatterns,
   isCardNumberQuery,
   normalizeCardQuery,
+  tokenizeSearchQuery,
+  buildTokenPatterns,
 } from './utils/cardNumberNormalize';
 
 describe('parseCardNumber', () => {
@@ -134,5 +136,66 @@ describe('isCardNumberQuery', () => {
 
   it('does NOT detect "Gyarados Pretend" as card number query', () => {
     expect(isCardNumberQuery('Gyarados Pretend')).toBe(false);
+  });
+});
+
+describe('tokenizeSearchQuery', () => {
+  it('keeps "SM-P 288" as single token (it is a card number)', () => {
+    expect(tokenizeSearchQuery('SM-P 288')).toEqual(['SM-P 288']);
+  });
+
+  it('keeps "SV10 125/098" as single token', () => {
+    expect(tokenizeSearchQuery('SV10 125/098')).toEqual(['SV10 125/098']);
+  });
+
+  it('splits "pikachu sm-p" into two tokens', () => {
+    expect(tokenizeSearchQuery('pikachu sm-p')).toEqual(['pikachu', 'sm-p']);
+  });
+
+  it('splits "pikachu 288" into two tokens', () => {
+    expect(tokenizeSearchQuery('pikachu 288')).toEqual(['pikachu', '288']);
+  });
+
+  it('splits "pikachu sm-p 288" into three tokens', () => {
+    expect(tokenizeSearchQuery('pikachu sm-p 288')).toEqual(['pikachu', 'sm-p', '288']);
+  });
+
+  it('returns single token for plain name "pikachu"', () => {
+    expect(tokenizeSearchQuery('pikachu')).toEqual(['pikachu']);
+  });
+
+  it('returns empty array for empty string', () => {
+    expect(tokenizeSearchQuery('')).toEqual([]);
+  });
+
+  it('returns empty array for whitespace only', () => {
+    expect(tokenizeSearchQuery('   ')).toEqual([]);
+  });
+});
+
+describe('buildTokenPatterns', () => {
+  it('builds name and cardNumber patterns for "pikachu"', () => {
+    const { namePatterns, cardNumberPatterns } = buildTokenPatterns('pikachu');
+    expect(namePatterns).toContain('%pikachu%');
+    expect(cardNumberPatterns).toContain('%PIKACHU%');
+  });
+
+  it('builds cardNumber patterns for "sm-p" (set code)', () => {
+    const { cardNumberPatterns } = buildTokenPatterns('sm-p');
+    expect(cardNumberPatterns).toContain('%SM-P%');
+    // As a pure series code, should also include prefix patterns
+    expect(cardNumberPatterns).toContain('SM-P %');
+    expect(cardNumberPatterns).toContain('SM-P/%');
+  });
+
+  it('builds cardNumber patterns for "288" (pure number)', () => {
+    const { cardNumberPatterns } = buildTokenPatterns('288');
+    expect(cardNumberPatterns).toContain('%288%');
+  });
+
+  it('builds multiple cardNumber patterns for "SM-P 288"', () => {
+    const { cardNumberPatterns } = buildTokenPatterns('SM-P 288');
+    expect(cardNumberPatterns).toContain('%SM-P 288%');
+    expect(cardNumberPatterns).toContain('%288/SM-P%');
   });
 });

@@ -200,3 +200,117 @@ export function normalizeCardQuery(query: string): string {
   }
   return parts.number;
 }
+
+/**
+ * Determine whether a query looks like a "pure card number" (not a card name).
+ * A pure card number consists only of:
+ *   - Set codes (letters, optional hyphen, optional digits/letters): SM-P, SV10, XY-P
+ *   - Numbers: 288, 125
+ *   - Separators: space, slash
+ * It does NOT contain words that look like card names (e.g. "pikachu", "gyarados").
+ *
+ * The key heuristic: every whitespace-separated token must be either:
+ *   1. A pure series code (e.g. "SM-P", "SV10")
+ *   2. A pure number or number/total (e.g. "288", "085/070")
+ */
+function isPureCardNumberQuery(query: string): boolean {
+  const trimmed = query.trim().toUpperCase();
+  if (!trimmed) return false;
+  // Must parse as a card number
+  const parsed = parseCardNumber(trimmed);
+  if (!parsed) return false;
+  // Each token must be either a set code or a number
+  const tokens = trimmed.split(/\s+/);
+  for (const token of tokens) {
+    // Pure number (with optional /total), e.g. "288", "085/070"
+    if (/^\d{1,4}(?:\/\d{1,4})?$/.test(token)) continue;
+    // Set code pattern: strictly letters-only prefix (1-4 chars) + optional hyphen+letters (1-3 chars)
+    //   + optional digit suffix (1-3 digits) + optional trailing letters (1-2 chars)
+    // Total max length: 4 + 1 + 3 + 3 + 2 = 13 chars, but real set codes are ≤ 8 chars
+    // Key constraint: the initial letter block is at most 4 letters (not 5+)
+    // This prevents "PIKACHU" (7 letters) from matching as a set code
+    if (/^[A-Z]{1,4}(?:-[A-Z]{1,3})?\d{0,3}[A-Z]{0,2}$/.test(token) && token.length <= 8) continue;
+    // Anything else (e.g. "PIKACHU") means it's NOT a pure card number
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Split a search query into tokens for multi-keyword fuzzy search.
+ *
+ * Strategy:
+ * 1. If the full query is a pure card number (e.g. "SM-P 288", "SV10 125/098"),
+ *    keep it as one token so card number pattern matching works correctly.
+ * 2. Otherwise, split on whitespace and treat each word as a separate token.
+ *    This allows "pikachu sm-p" to match cards whose name contains "pikachu"
+ *    AND whose cardNumber contains "SM-P".
+ *
+ * Examples:
+ *   "pikachu"          → ["pikachu"]
+ *   "pikachu sm-p"     → ["pikachu", "sm-p"]
+ *   "pikachu 288"      → ["pikachu", "288"]
+ *   "pikachu sm-p 288" → ["pikachu", "sm-p", "288"]
+ *   "SM-P 288"         → ["SM-P 288"]  (kept as one token – it's a card number)
+ *   "SV10 125/098"     → ["SV10 125/098"]  (kept as one token)
+ */
+export function tokenizeSearchQuery(query: string): string[] {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  // If the whole query is a pure card number (e.g. "SM-P 288", "SV10 125/098"), keep as one token
+  if (isPureCardNumberQuery(trimmed)) {
+    return [trimmed];
+  }
+
+  // Otherwise split on whitespace, filter empty strings
+  const tokens = trimmed.split(/\s+/).filter(t => t.length > 0);
+  return tokens;
+}
+
+/**
+ * Build a set of LIKE patterns for a single token.
+ * A token can be a card name fragment, a set code, or a card number.
+ */
+export function buildTokenPatterns(token: string): {
+  namePatterns: string[];
+  cardNumberPatterns: string[];
+} {
+  const upper = token.toUpperCase();
+  const lower = token.toLowerCase();
+
+  // Card number patterns for this token
+  const cnPatterns = new Set<string>();
+
+  // Always include a raw LIKE on cardNumber
+  cnPatterns.add(`%${upper}%`);
+
+  // If token looks like a set code (e.g. "SM-P", "SV10"), also match as prefix
+  if (isPureSeriesCodeQuery(token)) {
+    cnPatterns.add(`${upper} %`);
+    cnPatterns.add(`${upper}/%`);
+  }
+
+  // If token parses as a card number fragment, add all format variants
+  const parsed = parseCardNumber(token);
+  if (parsed) {
+    const { number, setCode, total } = parsed;
+    if (setCode && number) {
+      cnPatterns.add(`%${setCode} ${number}%`);
+      cnPatterns.add(`%${setCode}${number}%`);
+      cnPatterns.add(`%${number}/${setCode}%`);
+      cnPatterns.add(`%${number} ${setCode}%`);
+      cnPatterns.add(`%${setCode}%${number}%`);
+    } else if (number && total) {
+      cnPatterns.add(`%${number}/${total}%`);
+      cnPatterns.add(`%${number}%${total}%`);
+    } else if (number) {
+      cnPatterns.add(`%${number}%`);
+    }
+  }
+
+  return {
+    namePatterns: [`%${lower}%`],
+    cardNumberPatterns: Array.from(cnPatterns),
+  };
+}
