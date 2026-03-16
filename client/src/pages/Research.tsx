@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { TypeAnimation } from 'react-type-animation';
@@ -29,8 +29,16 @@ interface MatchedCard {
 
 export default function Home() {
   const { t } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearch();
+  const initialQuery = new URLSearchParams(searchParams).get('q') || '';
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [, setLocation] = useLocation();
+
+  // Sync search query when URL param changes
+  useEffect(() => {
+    const q = new URLSearchParams(searchParams).get('q') || '';
+    setSearchQuery(q);
+  }, [searchParams]);
   const [showImageDialog, setShowImageDialog] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);

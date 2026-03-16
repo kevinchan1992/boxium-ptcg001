@@ -1783,6 +1783,33 @@ export async function getRecentlyViewedCardIds(days: number = 7): Promise<Set<nu
 }
 
 /**
+ * Get top viewed/searched card IDs for hot card polling.
+ * Returns an ordered array of cardIds (most viewed first) in the past N days.
+ * Used by the hot card polling scheduler to update the most popular cards first.
+ */
+export async function getTopViewedCardIds(limit: number = 100, days: number = 7): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const { userSearchLogs } = await import('../drizzle/schema_new');
+  try {
+    const results = await db
+      .select({
+        cardId: userSearchLogs.cardId,
+        viewCount: sql<number>`COUNT(*)`.as('viewCount'),
+      })
+      .from(userSearchLogs)
+      .where(gte(userSearchLogs.createdAt, cutoffDate))
+      .groupBy(userSearchLogs.cardId)
+      .orderBy(desc(sql`COUNT(*)`), desc(sql`MAX(${userSearchLogs.createdAt})`))
+      .limit(limit);
+    return results.map(r => r.cardId);
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Get trending cards by search popularity
  * Returns cards with the most searches in the specified time range
  */

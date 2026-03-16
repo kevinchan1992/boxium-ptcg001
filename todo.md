@@ -4563,3 +4563,15 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 | `pikachu sm-p 288` | 名稱含「pikachu」**且**卡號含「SM-P」**且**卡號含「288」的卡牌 |
 | `SM-P 288` | 卡號為「SM-P 288」的卡牌（保持為一個 token） |
 
+
+## 🔧 熱門卡牌快速更新 + Research 搜尋入口（2026-03-16）
+
+- [x] 在 priceUpdateScheduler.ts 新增 hotCardPolling 排程（每 30 分鐘）
+- [x] 新增 getTopViewedCardIds(limit) 函數（從 userSearchLogs 取得最近 7 天查看次數最多的卡牌）
+- [x] 熱門卡牌更新使用獨立任務類型（不影響主批量更新）
+- [x] Admin UI 顯示熱門卡牌更新狀態（含手動觸發按鈕）
+- [x] 確認 /research 頁面使用相同的多 token 搜尋邏輯（透過共用 searchCards 函數）
+- [x] 在搜尋結果頁面加入 Research 頁面入口連結
+- [x] Research 頁面支援 URL ?q= 參數自動填入搜尋詞
+- [x] 撰寫 vitest 測試（12 個測試全部通過）
+
