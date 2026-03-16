@@ -172,27 +172,16 @@ export default function SearchResults() {
         </div>
 
         {/* Results Header with H1 */}
-        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-          <div>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
-              {query ? `搜尋「${query}」的寶可夢卡牌價格` : '搜尋寶可夢卡牌價格'}
-            </h1>
-            {isLoading ? (
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">搜尋中...</p>
-            ) : (
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
-                找到 {searchResults.length} 張卡牌
-              </p>
-            )}
-          </div>
-          {query && (
-            <a
-              href={`/research?q=${encodeURIComponent(query)}`}
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-primary hover:text-primary/80 border border-primary/30 hover:border-primary/60 rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap bg-primary/5 hover:bg-primary/10"
-            >
-              <Lightbulb className="w-3.5 h-3.5" />
-              在 Research 頁面查看分析
-            </a>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
+            {query ? `搜尋「${query}」的寶可夢卡牌價格` : '搜尋寶可夢卡牌價格'}
+          </h1>
+          {isLoading ? (
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">搜尋中...</p>
+          ) : (
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
+              找到 {searchResults.length} 張卡牌
+            </p>
           )}
         </div>
 
