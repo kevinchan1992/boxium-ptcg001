@@ -4599,3 +4599,8 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 - [x] 監聴路由變更（useLocation），路由改變時自動關閉下拉面板
 - [x] 確保 PricingSearch 頁面的搜尋框在跳轉後正確關閉
+
+## 🐛 修復 Pricing 頁面下拉面板未關閉 + 手機/平板顯示數量（2026-03-16）
+
+- [x] 修復路由變更偵測：改用 window.location.href（含 query string）取代純 pathname，解決同路徑不同參數的跳轉偵測問題
+- [x] 手機版和平板版下拉面板改為只顯示 3 個搜尋選項

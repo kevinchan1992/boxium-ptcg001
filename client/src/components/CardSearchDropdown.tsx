@@ -56,12 +56,14 @@ export function CardSearchDropdown({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const prevLocationRef = useRef(location);
+  // Track full URL (pathname + search) to detect query-string changes too
+  const prevFullUrlRef = useRef(typeof window !== 'undefined' ? window.location.href : location);
 
-  // ── Close dropdown on route change ───────────────────────────────────────
+  // ── Close dropdown on route change (including query string changes) ────────
   useEffect(() => {
-    if (location !== prevLocationRef.current) {
-      prevLocationRef.current = location;
+    const currentUrl = window.location.href;
+    if (currentUrl !== prevFullUrlRef.current) {
+      prevFullUrlRef.current = currentUrl;
       setIsOpen(false);
       setActiveIndex(-1);
     }
@@ -93,7 +95,11 @@ export function CardSearchDropdown({
     }
   );
 
-  const suggestions = data?.cards?.slice(0, 5) ?? [];
+  // Desktop shows 5 results; mobile/tablet shows 3
+  const allSuggestions = data?.cards?.slice(0, 5) ?? [];
+  const suggestions = allSuggestions; // full list used for keyboard nav & desktop grid
+  const mobileSuggestions = allSuggestions.slice(0, 3);
+  const tabletSuggestions = allSuggestions.slice(0, 3);
 
   // Show dropdown when we have results
   useEffect(() => {
@@ -193,9 +199,9 @@ export function CardSearchDropdown({
             </div>
           ) : (
             <div className="p-2">
-              {/* ── Mobile: vertical list ── */}
+              {/* ── Mobile: vertical list (3 items) ── */}
               <div className="flex flex-col gap-1 sm:hidden">
-                {suggestions.map((card: any, idx: number) => (
+                {mobileSuggestions.map((card: any, idx: number) => (
                   <button
                     key={card.id}
                     type="button"
@@ -245,9 +251,9 @@ export function CardSearchDropdown({
                 ))}
               </div>
 
-              {/* ── Tablet: 3-column grid ── */}
+              {/* ── Tablet: 3-column grid (3 items) ── */}
               <div className="hidden sm:grid lg:hidden grid-cols-3 gap-2">
-                {suggestions.map((card: any, idx: number) => (
+                {tabletSuggestions.map((card: any, idx: number) => (
                   <CardGridItem
                     key={card.id}
                     card={card}
