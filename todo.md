@@ -4604,3 +4604,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 - [x] 修復路由變更偵測：改用 window.location.href（含 query string）取代純 pathname，解決同路徑不同參數的跳轉偵測問題
 - [x] 手機版和平板版下拉面板改為只顯示 3 個搜尋選項
+
+## 💰 最低在售價格納入 eBay PSA10（2026-03-16）
+
+- [x] 分析 getLowestListingPrices 和 eBay 資料表結構（ebayListingsCache，price in USD，grade: "PSA 10"）
+- [x] 修改 getLowestListingPrices 同時查詢 eBay PSA10 在售價格，USD→HKD 轉換後取兩者最低值
+- [x] 確認 PricingSearch 頁面已使用 getLowestListingPrices（Research 的 latestPrice 不修改）
