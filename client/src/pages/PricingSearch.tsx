@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Loader2, AlertCircle, ShoppingBag, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
+import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 
 const ITEMS_PER_PAGE = 50;
 
@@ -18,14 +19,23 @@ export default function PricingSearch() {
   const pageFromUrl = parseInt(params.get("page") || "1", 10);
   const currentPage = isNaN(pageFromUrl) || pageFromUrl < 1 ? 1 : pageFromUrl;
 
+  // IMPORTANT: initialise searchQuery from URL query directly.
+  // Do NOT sync searchQuery from URL after mount — this prevents the dropdown
+  // from re-opening when the URL changes after a search submission.
   const [searchQuery, setSearchQuery] = useState(query);
   const [, setLocation] = useLocation();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshTriggeredRef = useRef<string>(""); // track query+page to avoid duplicate triggers
 
-  // Sync search input when URL query changes
+  // Sync the visible input text when the user navigates back/forward (URL changes)
+  // but NOT when the component first mounts from a search submission.
+  const prevQueryRef = useRef(query);
   useEffect(() => {
-    setSearchQuery(query);
+    // Only sync if the URL query actually changed (e.g., browser back/forward)
+    if (query !== prevQueryRef.current) {
+      prevQueryRef.current = query;
+      setSearchQuery(query);
+    }
   }, [query]);
 
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -133,20 +143,18 @@ export default function PricingSearch() {
         ]}
       />
 
-      {/* Search Bar */}
-      <div className="mb-8">
-        <form onSubmit={handleSearch} className="relative max-w-2xl">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder={t("pricing.searchPlaceholder")}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-6 text-lg bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
-            />
-          </div>
-        </form>
+      {/* Search Bar with Dropdown */}
+      <div className="mb-8 max-w-2xl">
+        <CardSearchDropdown
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSubmit={(q) => {
+            if (q.trim()) setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
+          }}
+          cardLinkPrefix="pricing"
+          inputClassName="py-6 text-lg bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
+          placeholder={t("pricing.searchPlaceholder")}
+        />
       </div>
 
       {/* Results Header */}

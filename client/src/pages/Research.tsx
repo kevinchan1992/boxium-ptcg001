@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star } from "lucide-react";
+import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
@@ -296,39 +297,38 @@ export default function Home() {
           {t("research.searchPlaceholder")}
         </p>
 
-        {/* Search Box */}
-        <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder=""
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-16 py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
-            />
-            {/* Typing Animation Placeholder */}
-            {!searchQuery && randomCardNames.length > 0 && (
-              <div className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground text-sm">
-                <TypeAnimation
-                  sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
-                  wrapper="span"
-                  speed={50}
-                  repeat={Infinity}
-                />
-              </div>
-            )}
-            {/* Camera Button */}
-            <button
-              type="button"
-              onClick={handleCameraClick}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              title="圖片搜尋"
-            >
-              <Camera className="w-5 h-5" />
-            </button>
-          </div>
-        </form>
+        {/* Search Box with Dropdown */}
+        <div className="relative max-w-2xl mx-auto">
+          <CardSearchDropdown
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={(q) => {
+              if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
+            }}
+            cardLinkPrefix="card"
+            inputClassName="w-full py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary pr-16"
+          />
+          {/* Typing Animation Placeholder (only when input is empty) */}
+          {!searchQuery && randomCardNames.length > 0 && (
+            <div className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground text-sm z-0">
+              <TypeAnimation
+                sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
+                wrapper="span"
+                speed={50}
+                repeat={Infinity}
+              />
+            </div>
+          )}
+          {/* Camera Button */}
+          <button
+            type="button"
+            onClick={handleCameraClick}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10"
+            title="圖片搜尋"
+          >
+            <Camera className="w-5 h-5" />
+          </button>
+        </div>
 
         {/* Top Gainers - Daily Price Increase Top 5 */}
         <div className="grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 mt-12 w-full">

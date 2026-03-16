@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Search, Loader2, AlertCircle, Lightbulb } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { Button } from "@/components/ui/button";
+import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 
 export default function SearchResults() {
   const searchParams = useSearch();
@@ -19,9 +20,13 @@ export default function SearchResults() {
   const [, setLocation] = useLocation();
   const limit = 50;
 
-  // Sync search input when URL query changes
+  // Sync input text only on browser back/forward, NOT on search submission
+  const prevQueryRef = useRef(query);
   useEffect(() => {
-    setSearchQuery(query);
+    if (query !== prevQueryRef.current) {
+      prevQueryRef.current = query;
+      setSearchQuery(query);
+    }
   }, [query]);
 
   // Calculate offset based on current page
@@ -155,20 +160,18 @@ export default function SearchResults() {
           ]}
         />
         
-        {/* Search Bar */}
-        <div className="mb-4 sm:mb-6 md:mb-8">
-          <form onSubmit={handleSearch} className="relative max-w-2xl">
-            <div className="relative">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="搜尋卡牌..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-4 sm:py-5 md:py-6 text-sm sm:text-base md:text-lg bg-card border-border rounded-lg sm:rounded-xl focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </form>
+        {/* Search Bar with Dropdown */}
+        <div className="mb-4 sm:mb-6 md:mb-8 max-w-2xl">
+          <CardSearchDropdown
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={(q) => {
+              if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
+            }}
+            cardLinkPrefix="card"
+            inputClassName="py-4 sm:py-5 md:py-6 text-sm sm:text-base md:text-lg bg-card border-border rounded-lg sm:rounded-xl focus:ring-2 focus:ring-primary"
+            placeholder="搜尋卡牌..."
+          />
         </div>
 
         {/* Results Header with H1 */}
