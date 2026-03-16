@@ -22,6 +22,7 @@ export default function PricingSearch() {
   const [searchQuery, setSearchQuery] = useState(query);
   const [, setLocation] = useLocation();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [dropdownKey, setDropdownKey] = useState(0); // Force CardSearchDropdown remount on submit
   const refreshTriggeredRef = useRef<string>(""); // track query+page to avoid duplicate triggers
 
   // Sync search input when URL query changes
@@ -137,9 +138,11 @@ export default function PricingSearch() {
       {/* Search Bar with Dropdown */}
       <div className="mb-8">
         <CardSearchDropdown
+          key={dropdownKey}  // Force remount on submit to close dropdown
           value={searchQuery}
           onChange={setSearchQuery}
           onSubmit={(q) => {
+            setDropdownKey(k => k + 1); // Increment key to force remount
             if (q.trim()) setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
           }}
           className="max-w-2xl"

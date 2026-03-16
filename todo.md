@@ -4610,3 +4610,4 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 分析 getLowestListingPrices 和 eBay 資料表結構（ebayListingsCache，price in USD，grade: "PSA 10"）
 - [x] 修改 getLowestListingPrices 同時查詢 eBay PSA10 在售價格，USD→HKD 轉換後取兩者最低值
 - [x] 確認 PricingSearch 頁面已使用 getLowestListingPrices（Research 的 latestPrice 不修改）
+- [x] Fix: PricingSearch 頁面下拉面板提交搜尋後不關閉（用 key prop 強制 remount 修復）
