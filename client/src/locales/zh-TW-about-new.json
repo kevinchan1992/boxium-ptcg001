@@ -1,0 +1,43 @@
+{
+  "aboutPage": {
+    "title": "關於 BOXIUM",
+    "subtitle": "Pokémon TCG 收藏家與投資者的一站式市場平台",
+    "trackedCards": "已追蹤卡牌",
+    "dataSources": "資料來源",
+    "ourMission": "我們的使命",
+    "missionContent": "BOXIUM 致力於為 Pokémon TCG 收藏家、投資者及賣家提供最準確、最即時的市場數據與交易環境。我們整合全球主要交易平台的真實成交記錄，並提供安全可靠的 PSA 10 卡牌二手市場，讓用戶在同一平台完成研究、比價及交易，做出明智的收藏與投資決策。",
+    "coreServices": "核心服務",
+    "platformFeatures": "平台特色",
+    "contactInfo": "如有任何問題或建議，歡迎透過平台提供的聯絡方式與我們聯繫。",
+    "services": {
+      "cardSearch": {
+        "title": "卡牌研究",
+        "description": "整合全球市場數據，快速找到目標卡牌。支援中文、英文、日文多語言搜尋，涵蓋 {{count}} 張熱門卡牌資訊，並提供 PSA 10 歷史成交價格趨勢圖表。"
+      },
+      "priceTracking": {
+        "title": "價格查詢",
+        "description": "即時顯示 PSA 10 在售商品，整合 SNKRDUNK 及 eBay 市場數據，讓您在購買前輕鬆比較全球最低在售價格。"
+      },
+      "marketTrends": {
+        "title": "市場趨勢",
+        "description": "24 小時熱門排行榜，即時掌握價格飆升和暴跌動態。搜尋熱度、價格變化、新上架卡牌一目了然。"
+      },
+      "marketplace": {
+        "title": "二手市場",
+        "description": "安全可靠的 PSA 10 卡牌交易平台。賣家可輕鬆上架商品，買家可瀏覽、出價及購買，所有交易均透過平台安全處理。"
+      }
+    },
+    "features": {
+      "realData": "真實交易數據（非估價）",
+      "autoUpdate": "自動更新機制（12 小時更新一次）",
+      "multiCurrency": "多貨幣支援（HKD/TWD/JPY/USD）",
+      "responsive": "響應式設計（手機/桌面完美適配）",
+      "securePayment": "安全支付系統（Stripe 加密處理）",
+      "sellerDashboard": "賣家管理後台（商品、訂單、收益一站管理）"
+    },
+    "sources": {
+      "snkrdunk": "日本最大的球鞋和卡牌交易平台，提供真實成交價格記錄，專注 PSA 10 高評級市場數據",
+      "ebay": "全球最大的拍賣平台，涵蓋國際市場的卡牌交易數據，提供多元化的價格參考"
+    }
+  }
+}

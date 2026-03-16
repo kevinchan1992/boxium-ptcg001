@@ -96,10 +96,36 @@ export default function Terms() {
                 {content.section3.title}
               </h2>
               <p className="mb-4">{content.section3.p1}</p>
-              <p className="mb-4">
-                <strong>{content.section3.p2}</strong>
-              </p>
-              <p className="mb-4">{content.section3.p3}</p>
+              {content.section3.subsection1 && (
+                <div className="mb-4">
+                  <h3 className="font-semibold mb-2" style={{ color: "#06038d" }}>{content.section3.subsection1.title}</h3>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    {content.section3.subsection1.items.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {content.section3.subsection2 && (
+                <div className="mb-4">
+                  <h3 className="font-semibold mb-2" style={{ color: "#06038d" }}>{content.section3.subsection2.title}</h3>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    {content.section3.subsection2.items.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {content.section3.subsection3 && (
+                <div className="mb-4">
+                  <h3 className="font-semibold mb-2" style={{ color: "#06038d" }}>{content.section3.subsection3.title}</h3>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    {content.section3.subsection3.items.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </section>
 
             {/* Section 4 */}
@@ -108,7 +134,8 @@ export default function Terms() {
                 {content.section4.title}
               </h2>
               <p className="mb-4">{content.section4.p1}</p>
-              <p>{content.section4.p2}</p>
+              {content.section4.p2 && <p className="mb-2">{content.section4.p2}</p>}
+              {content.section4.p3 && <p>{content.section4.p3}</p>}
             </section>
 
             {/* Section 5 */}
@@ -117,6 +144,14 @@ export default function Terms() {
                 {content.section5.title}
               </h2>
               <p className="mb-4">{content.section5.p1}</p>
+              {content.section5.p2 && <p className="mb-2 font-medium">{content.section5.p2}</p>}
+              {content.section5.refundPolicy && (
+                <ul className="list-disc list-inside space-y-2 ml-4">
+                  {content.section5.refundPolicy.map((item: string, i: number) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              )}
             </section>
 
             {/* Section 6 */}
@@ -155,8 +190,18 @@ export default function Terms() {
                 {content.section9.title}
               </h2>
               <p className="mb-4">{content.section9.p1}</p>
-              <p className="ml-4">{content.section9.email}</p>
             </section>
+
+            {/* Section 10 */}
+            {content.section10 && (
+              <section>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4" style={{ color: "#06038d" }}>
+                  {content.section10.title}
+                </h2>
+                <p className="mb-4">{content.section10.p1}</p>
+                <p className="ml-4 font-medium">{content.section10.email}</p>
+              </section>
+            )}
           </div>
         </div>
     

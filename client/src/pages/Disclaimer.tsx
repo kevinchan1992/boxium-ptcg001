@@ -1,4 +1,4 @@
-import { AlertTriangle, Shield, Clock, ExternalLink, Server, Scale, Users, Lock, Copyright, Calendar } from "lucide-react";
+import { AlertTriangle, Shield, Clock, ExternalLink, Server, Scale, Users, Lock, Copyright, Calendar, ShoppingCart } from "lucide-react";
 import Footer from "@/components/Footer";
 import PageHead from "@/components/PageHead";
 import StructuredData from "@/components/StructuredData";
@@ -8,7 +8,7 @@ export default function Disclaimer() {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
   
-  const lastUpdated = currentLang === 'ja' ? '2026年2月18日' : currentLang === 'en' ? 'February 18, 2026' : '2026年2月18日';
+  const lastUpdated = currentLang === 'ja' ? '2026年3月16日' : currentLang === 'en' ? 'March 16, 2026' : '2026年3月16日';
 
   // FAQ Structured Data for SEO
   const faqStructuredData = {
@@ -77,6 +77,11 @@ export default function Disclaimer() {
       icon: <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />,
       title: t('disclaimerPage.sections.priceData.title'),
       content: t('disclaimerPage.sections.priceData.content')
+    },
+    {
+      icon: <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />,
+      title: t('disclaimerPage.sections.marketplaceDisclaimer.title'),
+      content: t('disclaimerPage.sections.marketplaceDisclaimer.content')
     },
     {
       icon: <Shield className="w-5 h-5 sm:w-6 sm:h-6" />,
