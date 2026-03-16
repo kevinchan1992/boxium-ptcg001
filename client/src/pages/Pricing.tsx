@@ -148,7 +148,7 @@ export default function Pricing() {
           toast.info(`識別到「${cardName}」，正在進行文字搜尋...`);
           setShowImageDialog(false);
           setSearchQuery(cardName);
-          setLocation(`/search?q=${encodeURIComponent(cardName)}`);
+          setLocation(`/pricing/search?q=${encodeURIComponent(cardName)}`);
         } else {
           toast.error(result.error || '無法識別卡牌，請嘗試其他圖片');
         }
