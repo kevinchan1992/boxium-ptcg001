@@ -238,7 +238,7 @@ export default function Pricing() {
           }}
           className="max-w-2xl mx-auto"
           inputClassName="pr-16 py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
-          cardLinkPrefix="card"
+          cardLinkPrefix="pricing"
           placeholderOverlay={
             !searchQuery && randomCardNames.length > 0 ? (
               <div className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground text-sm z-10">

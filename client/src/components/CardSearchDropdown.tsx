@@ -34,8 +34,8 @@ interface CardSearchDropdownProps {
   placeholderOverlay?: React.ReactNode;
   /** CSS class forwarded to the <Input> element */
   inputClassName?: string;
-  /** Where to navigate on card click: "card" → /card/:id, "pricing/card" → /pricing/card/:id */
-  cardLinkPrefix?: "card" | "pricing/card";
+  /** Where to navigate on card click: "card" → /card/:id, "pricing" → /pricing/:id, "pricing/card" → /pricing/card/:id */
+  cardLinkPrefix?: "card" | "pricing" | "pricing/card";
 }
 
 export function CardSearchDropdown({
@@ -59,17 +59,22 @@ export function CardSearchDropdown({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Debounce ──────────────────────────────────────────────────────────────
+  // ── Debounce ────────────────────────────────────────────
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
     if (value.trim().length >= 2) {
+      // If suppressed (just submitted / card clicked), skip debounce entirely.
+      // The parent may update `value` via URL sync (e.g. PricingSearch syncing
+      // searchQuery from URL after same-path navigation) — we must NOT re-open.
+      if (suppressRef.current) return;
       debounceTimer.current = setTimeout(() => {
         setDebouncedQuery(value.trim());
       }, 300);
     } else {
       setDebouncedQuery("");
       setIsOpen(false);
+      // Only lift suppress when the query is cleared (user erased the input)
       suppressRef.current = false;
     }
     return () => {
@@ -77,7 +82,7 @@ export function CardSearchDropdown({
     };
   }, [value]);
 
-  // ── Fetch suggestions ─────────────────────────────────────────────────────
+  // ── Fetch suggestions ─────────────────────────────────────────────────────────────────────
   const { data, isFetching } = trpc.cards.search.useQuery(
     { query: debouncedQuery, limit: 5, offset: 0 },
     {

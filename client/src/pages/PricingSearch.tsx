@@ -144,7 +144,7 @@ export default function PricingSearch() {
           }}
           className="max-w-2xl"
           inputClassName="pr-4 py-6 text-lg bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
-          cardLinkPrefix="card"
+          cardLinkPrefix="pricing"
         />
       </div>
 
