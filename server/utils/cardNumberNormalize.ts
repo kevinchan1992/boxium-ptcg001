@@ -1,78 +1,168 @@
 /**
  * Card Number Normalization Utility
  *
- * Handles various card number format variants so that searches like
- * "SM-P 288", "288/SM-P", "288 sm-p", "sm-p288", "PROMO 288/SM-P" all
- * resolve to the same card.
+ * Handles all card number formats in the database:
  *
- * Common formats in the database:
- *   SM-P 288   (set code + space + number)
- *   XY-P 151   (set code + space + number)
- *   SV-P 003   (set code + space + number)
- *   110/080    (number/total, no set code)
- *   S5I 085/070 (set code + space + number/total)
- *   SV10 125/098 (set code with digits + space + number/total)
+ *   TYPE A – Hyphen format (One Piece / ST decks):
+ *     ST01-012, OP01-032, EB01-001
+ *     Set code = letters + 2-digit number, then hyphen, then card number
+ *
+ *   TYPE B – Promo format:
+ *     SM-P 288, XY-P 151, SV-P 003
+ *     Set code = letters + hyphen + letter, then space + number
+ *
+ *   TYPE C – Set+Space format (modern Pokémon):
+ *     SV10 125/098, SM12 085/070, S12a 034/100
+ *     Set code = letters + digits + optional letters, then space + number/total
+ *
+ *   TYPE D – Pure number/total:
+ *     085/070, 110/080
+ *
+ *   TYPE E – Pure number:
+ *     288, 001
  */
 
 export interface CardNumberParts {
-  /** Numeric part, e.g. "288", "085" */
   number: string;
-  /** Set/series code, e.g. "SM-P", "XY-P", "S5I", "SV10" – upper-cased */
   setCode: string | null;
-  /** Total (denominator) when format is "num/total", e.g. "070" */
   total: string | null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SERIES CODE DETECTION
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
- * Determine whether a query string looks like a pure series/set code query.
- * Pure series codes: SV10, SV9, SV8a, S12a, SM8b, XY5, etc.
- * These are alphanumeric codes (letters + optional digits + optional letters)
- * that do NOT contain a slash or space followed by a card number.
+ * Detect the "type" of a set code prefix so we know which separator to use
+ * when building LIKE patterns.
  *
- * Examples:
- *   "SV10"  → true  (series code only)
- *   "SV9"   → true
- *   "SV8a"  → true
- *   "S12a"  → true
- *   "SM-P"  → true  (promo series)
- *   "SV10 125/098" → false (has card number)
- *   "Pikachu" → false (card name)
- *   "125/098" → false (card number only)
+ * Returns:
+ *   "hyphen"  – e.g. ST01, OP01, EB01  → cards stored as ST01-xxx
+ *   "promo"   – e.g. SM-P, XY-P, SV-P  → cards stored as SM-P 288
+ *   "space"   – e.g. SV10, SM12, S12a   → cards stored as SV10 125/098
+ *   null      – not a set code
  */
-export function isPureSeriesCodeQuery(query: string): boolean {
-  const trimmed = query.trim().toUpperCase();
-  // Must be a pure alphanumeric set code (letters + digits + optional trailing letters)
-  // Examples: SV10, SV9, SV8A, S12A, SM8B, XY5, DP4, L3, MC, PCG
-  // Also allow hyphenated promo codes: SM-P, XY-P, SV-P, BW-P
-  // Must NOT contain spaces or slashes (those indicate a full card number)
-  if (/\s|\//.test(trimmed)) return false;
-  // Must match the pattern of a set code: starts with letters, may have digits, may end with letters
-  // At least 2 chars, no more than 8 chars
-  if (trimmed.length < 2 || trimmed.length > 8) return false;
-  // Pattern: letters (1-4) + optional hyphen + optional letters (1-2) + optional digits (1-3) + optional letters (1-2)
-  return /^[A-Z]{1,4}(?:-[A-Z]{1,3})?(?:\d{1,3}[A-Z]{0,2})?$/.test(trimmed);
+function detectSetCodeType(code: string): "hyphen" | "promo" | "space" | null {
+  const upper = code.trim().toUpperCase();
+  if (!upper) return null;
+
+  // Promo codes: letters + hyphen + letter(s), e.g. SM-P, XY-P, SV-P, BW-P, PCG-P
+  if (/^[A-Z]{1,4}-[A-Z]{1,3}$/.test(upper)) return "promo";
+
+  // Hyphen-format set codes: 2-4 letters + exactly 2 digits, e.g. ST01, OP01, EB01, ST13
+  // These sets store cards as "ST01-012" (hyphen separator)
+  if (/^[A-Z]{2,4}\d{2}$/.test(upper)) {
+    // Distinguish from space-format: ST/OP/EB series use hyphens; SV/SM/XY/S use spaces
+    const prefix = upper.match(/^([A-Z]+)/)?.[1] ?? "";
+    // Known hyphen-format series prefixes
+    if (/^(ST|OP|EB)$/.test(prefix)) return "hyphen";
+    // SV, SM, XY, S, BW, DP, L, etc. use space format
+    return "space";
+  }
+
+  // Space-format set codes: letters + digits + optional trailing letters
+  // e.g. SV10, SV8a, SM12, S12a, SM8b, XY5, DP4
+  if (/^[A-Z]{1,4}\d{1,3}[A-Z]{0,2}$/.test(upper)) return "space";
+
+  // Short letter-only codes that are known series (e.g. "SM" as a prefix for SM series)
+  // These are partial prefixes typed by the user
+  if (/^[A-Z]{2,4}$/.test(upper)) {
+    const knownHyphenPrefixes = ["ST", "OP", "EB"];
+    if (knownHyphenPrefixes.includes(upper)) return "hyphen";
+    return "space";
+  }
+
+  return null;
 }
 
 /**
- * Parse a raw card number string into its constituent parts.
- * Handles all known formats:
- *   "SM-P 288"   → { number:"288", setCode:"SM-P", total:null }
- *   "288/SM-P"   → { number:"288", setCode:"SM-P", total:null }
- *   "288 SM-P"   → { number:"288", setCode:"SM-P", total:null }
- *   "sm-p288"    → { number:"288", setCode:"SM-P", total:null }
- *   "085/070"    → { number:"085", setCode:null,   total:"070" }
- *   "S5I 085/070"→ { number:"085", setCode:"S5I",  total:"070" }
- *   "SV10 125/098"→{ number:"125", setCode:"SV10", total:"098" }
- *   "288"        → { number:"288", setCode:null,   total:null }
+ * Determine whether a query string looks like a pure series/set code query
+ * (user typed only a set code, no card number yet).
+ *
+ * Examples:
+ *   "SV10"   → true   (space-format series)
+ *   "SM-P"   → true   (promo series)
+ *   "ST01"   → true   (hyphen-format series)
+ *   "SM"     → true   (partial SM prefix)
+ *   "OP"     → true   (partial OP prefix)
+ *   "ST"     → true   (partial ST prefix)
+ *   "ST01-012"  → false (has card number)
+ *   "SV10 125"  → false (has card number)
+ *   "Pikachu"   → false (card name)
+ *   "125/098"   → false (card number only)
  */
+export function isPureSeriesCodeQuery(query: string): boolean {
+  const trimmed = query.trim().toUpperCase();
+  if (!trimmed) return false;
+  // Must not contain spaces or slashes (those indicate a full card number)
+  // Exception: promo codes like "SM-P" contain a hyphen but no space/slash
+  if (/[\s/]/.test(trimmed)) return false;
+  // Must be 2–8 characters
+  if (trimmed.length < 2 || trimmed.length > 8) return false;
+  // Must match a set code pattern
+  return detectSetCodeType(trimmed) !== null;
+}
+
+/**
+ * Build all LIKE patterns for a pure series code prefix search.
+ * Handles all three storage formats (hyphen, promo, space).
+ *
+ * "ST01"  → ["ST01-%"]                       (hyphen format)
+ * "ST"    → ["ST%-%"]                         (any ST series)
+ * "SM-P"  → ["SM-P %"]                        (promo format)
+ * "SM"    → ["SM-P %", "SM% %", "SM%-%"]      (all SM variants)
+ * "SV10"  → ["SV10 %"]                        (space format)
+ * "SV"    → ["SV% %"]                         (any SV series)
+ */
+export function buildSeriesPrefixPatterns(query: string): string[] {
+  const upper = query.trim().toUpperCase();
+  const type = detectSetCodeType(upper);
+  const patterns = new Set<string>();
+
+  if (!type) return [];
+
+  if (type === "hyphen") {
+    // e.g. ST01 → "ST01-%", ST → "ST%-%"
+    patterns.add(`${upper}-%`);
+    // If it's just the letter prefix (ST, OP, EB), also match all numbered variants
+    if (/^[A-Z]+$/.test(upper)) {
+      patterns.add(`${upper}%-%`);
+    }
+  } else if (type === "promo") {
+    // e.g. SM-P → "SM-P %"
+    patterns.add(`${upper} %`);
+    patterns.add(`${upper}%`); // some entries may not have space
+  } else if (type === "space") {
+    // e.g. SV10 → "SV10 %", SM → "SM% %" + "SM-% %" (covers SM-P promo too)
+    patterns.add(`${upper} %`);
+    // If it's a short letter-only prefix, also match numbered variants
+    if (/^[A-Z]+$/.test(upper)) {
+      patterns.add(`${upper}% %`);
+      // Also cover promo variants: SM → SM-P
+      patterns.add(`${upper}-% %`);
+      patterns.add(`${upper}-%`);
+    }
+  }
+
+  return Array.from(patterns);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CARD NUMBER PARSING
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function parseCardNumber(raw: string): CardNumberParts | null {
   if (!raw || !raw.trim()) return null;
 
-  // Strip common prefixes like "PROMO", "#", etc. before parsing
   let s = raw.trim().toUpperCase().replace(/^(PROMO|CARD|#)\s*/i, '');
 
-  // Pattern: SET_CODE (with optional digits suffix like SV10, SV8a, S12a) + space + NUMBER/TOTAL
-  // e.g. "SV10 125/098", "S12a 085/070", "SM8b 045/100"
+  // TYPE A: Hyphen format – "ST01-012", "OP05-065"
+  const hyphenFormat = s.match(/^([A-Z]{2,4}\d{2})-(\d{1,4})$/);
+  if (hyphenFormat) {
+    return { setCode: hyphenFormat[1], number: hyphenFormat[2], total: null };
+  }
+
+  // TYPE C: Set code + space + number/total – "SV10 125/098", "SM12 085/070"
   const setWithDigitsThenNumber = s.match(/^([A-Z]{1,4}(?:-[A-Z]{1,3})?\d{0,3}[A-Z]{0,2})\s+(\d{1,4})(?:\/(\d{1,4}))?$/);
   if (setWithDigitsThenNumber) {
     return {
@@ -82,8 +172,7 @@ export function parseCardNumber(raw: string): CardNumberParts | null {
     };
   }
 
-  // Pattern: SET_CODE + optional separator + NUMBER (e.g. "SM-P 288", "SM-P288")
-  // Set codes: letters, optional hyphen, optional letter (SM-P, XY-P, SV-P, PCG-P, BW-P, S5I, SC, etc.)
+  // TYPE B: Promo – "SM-P 288", "XY-P 151"
   const setThenNumber = s.match(/^([A-Z]{1,5}(?:-[A-Z]{1,3})?)\s*[/ ]?\s*(\d{1,4})(?:\/(\d{1,4}))?$/);
   if (setThenNumber) {
     return {
@@ -93,65 +182,38 @@ export function parseCardNumber(raw: string): CardNumberParts | null {
     };
   }
 
-  // Pattern: NUMBER + separator + SET_CODE (e.g. "288/SM-P", "288 SM-P", "288 sm-p")
+  // Reversed: "288/SM-P", "288 SM-P"
   const numberThenSet = s.match(/^(\d{1,4})\s*[/ ]\s*([A-Z]{1,5}(?:-[A-Z]{1,3})?)$/);
   if (numberThenSet) {
-    return {
-      number: numberThenSet[1],
-      setCode: numberThenSet[2],
-      total: null,
-    };
+    return { number: numberThenSet[1], setCode: numberThenSet[2], total: null };
   }
 
-  // Pattern: NUMBER/TOTAL (e.g. "085/070", "110/080")
+  // TYPE D: number/total
   const numberSlashTotal = s.match(/^(\d{1,4})\/(\d{1,4})$/);
   if (numberSlashTotal) {
-    return {
-      number: numberSlashTotal[1],
-      setCode: null,
-      total: numberSlashTotal[2],
-    };
+    return { number: numberSlashTotal[1], setCode: null, total: numberSlashTotal[2] };
   }
 
-  // Pattern: pure number (e.g. "288")
+  // TYPE E: pure number
   const pureNumber = s.match(/^(\d{1,4})$/);
   if (pureNumber) {
-    return {
-      number: pureNumber[1],
-      setCode: null,
-      total: null,
-    };
+    return { number: pureNumber[1], setCode: null, total: null };
   }
 
-  // Pattern: extract card number from compound string (e.g. "PROMO 288/SM-P", "SM-P PROMO 288")
-  // Try to find NUMBER/SET_CODE or SET_CODE/NUMBER embedded in the string
+  // Embedded patterns
   const embeddedNumberThenSet = s.match(/(\d{1,4})\s*[/ ]\s*([A-Z]{1,5}(?:-[A-Z]{1,3})?)/);
   if (embeddedNumberThenSet) {
-    return {
-      number: embeddedNumberThenSet[1],
-      setCode: embeddedNumberThenSet[2],
-      total: null,
-    };
+    return { number: embeddedNumberThenSet[1], setCode: embeddedNumberThenSet[2], total: null };
   }
 
   const embeddedSetThenNumber = s.match(/([A-Z]{1,5}(?:-[A-Z]{1,3})?)\s+(\d{1,4})/);
   if (embeddedSetThenNumber) {
-    return {
-      setCode: embeddedSetThenNumber[1],
-      number: embeddedSetThenNumber[2],
-      total: null,
-    };
+    return { setCode: embeddedSetThenNumber[1], number: embeddedSetThenNumber[2], total: null };
   }
 
   return null;
 }
 
-/**
- * Generate all plausible cardNumber LIKE patterns for a given query.
- *
- * For example, "288 sm-p" → ["%288%SM-P%", "%SM-P%288%", "%SM-P 288%", "%288/SM-P%"]
- * This lets us match any format stored in the database.
- */
 export function generateCardNumberPatterns(query: string): string[] {
   const parts = parseCardNumber(query);
   if (!parts) return [];
@@ -160,12 +222,19 @@ export function generateCardNumberPatterns(query: string): string[] {
   const patterns = new Set<string>();
 
   if (setCode && number) {
-    // All common separator variants
-    patterns.add(`%${setCode} ${number}%`);   // "SM-P 288"  (DB canonical)
-    patterns.add(`%${setCode}${number}%`);     // "SM-PP288"
-    patterns.add(`%${number}/${setCode}%`);    // "288/SM-P"
-    patterns.add(`%${number} ${setCode}%`);    // "288 SM-P"
-    patterns.add(`%${setCode}%${number}%`);    // fallback wildcard
+    const type = detectSetCodeType(setCode);
+    if (type === "hyphen") {
+      // ST01-012 format
+      patterns.add(`%${setCode}-${number}%`);
+      patterns.add(`%${setCode}%${number}%`);
+    } else {
+      // Space / promo format
+      patterns.add(`%${setCode} ${number}%`);
+      patterns.add(`%${setCode}${number}%`);
+      patterns.add(`%${number}/${setCode}%`);
+      patterns.add(`%${number} ${setCode}%`);
+      patterns.add(`%${setCode}%${number}%`);
+    }
   } else if (number && total) {
     patterns.add(`%${number}/${total}%`);
     patterns.add(`%${number}%${total}%`);
@@ -176,61 +245,36 @@ export function generateCardNumberPatterns(query: string): string[] {
   return Array.from(patterns);
 }
 
-/**
- * Determine whether a query string looks like a card number query
- * (as opposed to a card name query).
- */
 export function isCardNumberQuery(query: string): boolean {
   return parseCardNumber(query.trim()) !== null;
 }
 
-/**
- * Normalize a search query for consistent matching.
- * Returns the canonical form (SET_CODE + space + NUMBER) if parseable,
- * otherwise returns the original query trimmed.
- */
 export function normalizeCardQuery(query: string): string {
   const parts = parseCardNumber(query);
   if (!parts) return query.trim();
   if (parts.setCode && parts.number) {
+    const type = detectSetCodeType(parts.setCode);
+    if (type === "hyphen") return `${parts.setCode}-${parts.number}`;
     return `${parts.setCode} ${parts.number}`;
   }
-  if (parts.number && parts.total) {
-    return `${parts.number}/${parts.total}`;
-  }
+  if (parts.number && parts.total) return `${parts.number}/${parts.total}`;
   return parts.number;
 }
 
 /**
  * Determine whether a query looks like a "pure card number" (not a card name).
- * A pure card number consists only of:
- *   - Set codes (letters, optional hyphen, optional digits/letters): SM-P, SV10, XY-P
- *   - Numbers: 288, 125
- *   - Separators: space, slash
- * It does NOT contain words that look like card names (e.g. "pikachu", "gyarados").
- *
- * The key heuristic: every whitespace-separated token must be either:
- *   1. A pure series code (e.g. "SM-P", "SV10")
- *   2. A pure number or number/total (e.g. "288", "085/070")
  */
 function isPureCardNumberQuery(query: string): boolean {
   const trimmed = query.trim().toUpperCase();
   if (!trimmed) return false;
-  // Must parse as a card number
   const parsed = parseCardNumber(trimmed);
   if (!parsed) return false;
-  // Each token must be either a set code or a number
   const tokens = trimmed.split(/\s+/);
   for (const token of tokens) {
-    // Pure number (with optional /total), e.g. "288", "085/070"
     if (/^\d{1,4}(?:\/\d{1,4})?$/.test(token)) continue;
-    // Set code pattern: strictly letters-only prefix (1-4 chars) + optional hyphen+letters (1-3 chars)
-    //   + optional digit suffix (1-3 digits) + optional trailing letters (1-2 chars)
-    // Total max length: 4 + 1 + 3 + 3 + 2 = 13 chars, but real set codes are ≤ 8 chars
-    // Key constraint: the initial letter block is at most 4 letters (not 5+)
-    // This prevents "PIKACHU" (7 letters) from matching as a set code
     if (/^[A-Z]{1,4}(?:-[A-Z]{1,3})?\d{0,3}[A-Z]{0,2}$/.test(token) && token.length <= 8) continue;
-    // Anything else (e.g. "PIKACHU") means it's NOT a pure card number
+    // Hyphen format token like "ST01-012" – entire token is a card number
+    if (/^[A-Z]{2,4}\d{2}-\d{1,4}$/.test(token)) continue;
     return false;
   }
   return true;
@@ -239,38 +283,28 @@ function isPureCardNumberQuery(query: string): boolean {
 /**
  * Split a search query into tokens for multi-keyword fuzzy search.
  *
- * Strategy:
- * 1. If the full query is a pure card number (e.g. "SM-P 288", "SV10 125/098"),
- *    keep it as one token so card number pattern matching works correctly.
- * 2. Otherwise, split on whitespace and treat each word as a separate token.
- *    This allows "pikachu sm-p" to match cards whose name contains "pikachu"
- *    AND whose cardNumber contains "SM-P".
- *
  * Examples:
  *   "pikachu"          → ["pikachu"]
  *   "pikachu sm-p"     → ["pikachu", "sm-p"]
  *   "pikachu 288"      → ["pikachu", "288"]
- *   "pikachu sm-p 288" → ["pikachu", "sm-p", "288"]
- *   "SM-P 288"         → ["SM-P 288"]  (kept as one token – it's a card number)
- *   "SV10 125/098"     → ["SV10 125/098"]  (kept as one token)
+ *   "SM-P 288"         → ["SM-P 288"]   (kept as one token – card number)
+ *   "SV10 125/098"     → ["SV10 125/098"]
+ *   "ST01-012"         → ["ST01-012"]   (kept as one token)
  */
 export function tokenizeSearchQuery(query: string): string[] {
   const trimmed = query.trim();
   if (!trimmed) return [];
 
-  // If the whole query is a pure card number (e.g. "SM-P 288", "SV10 125/098"), keep as one token
   if (isPureCardNumberQuery(trimmed)) {
     return [trimmed];
   }
 
-  // Otherwise split on whitespace, filter empty strings
   const tokens = trimmed.split(/\s+/).filter(t => t.length > 0);
   return tokens;
 }
 
 /**
  * Build a set of LIKE patterns for a single token.
- * A token can be a card name fragment, a set code, or a card number.
  */
 export function buildTokenPatterns(token: string): {
   namePatterns: string[];
@@ -279,16 +313,16 @@ export function buildTokenPatterns(token: string): {
   const upper = token.toUpperCase();
   const lower = token.toLowerCase();
 
-  // Card number patterns for this token
   const cnPatterns = new Set<string>();
 
-  // Always include a raw LIKE on cardNumber
+  // Raw LIKE on cardNumber (catches most cases)
   cnPatterns.add(`%${upper}%`);
 
-  // If token looks like a set code (e.g. "SM-P", "SV10"), also match as prefix
+  // If token is a pure series code, add prefix patterns
   if (isPureSeriesCodeQuery(token)) {
-    cnPatterns.add(`${upper} %`);
-    cnPatterns.add(`${upper}/%`);
+    for (const p of buildSeriesPrefixPatterns(token)) {
+      cnPatterns.add(p);
+    }
   }
 
   // If token parses as a card number fragment, add all format variants
@@ -296,11 +330,17 @@ export function buildTokenPatterns(token: string): {
   if (parsed) {
     const { number, setCode, total } = parsed;
     if (setCode && number) {
-      cnPatterns.add(`%${setCode} ${number}%`);
-      cnPatterns.add(`%${setCode}${number}%`);
-      cnPatterns.add(`%${number}/${setCode}%`);
-      cnPatterns.add(`%${number} ${setCode}%`);
-      cnPatterns.add(`%${setCode}%${number}%`);
+      const type = detectSetCodeType(setCode);
+      if (type === "hyphen") {
+        cnPatterns.add(`%${setCode}-${number}%`);
+        cnPatterns.add(`%${setCode}%${number}%`);
+      } else {
+        cnPatterns.add(`%${setCode} ${number}%`);
+        cnPatterns.add(`%${setCode}${number}%`);
+        cnPatterns.add(`%${number}/${setCode}%`);
+        cnPatterns.add(`%${number} ${setCode}%`);
+        cnPatterns.add(`%${setCode}%${number}%`);
+      }
     } else if (number && total) {
       cnPatterns.add(`%${number}/${total}%`);
       cnPatterns.add(`%${number}%${total}%`);

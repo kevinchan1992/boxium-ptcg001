@@ -1,6 +1,6 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
-import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns } from './utils/cardNumberNormalize';
+import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns, buildSeriesPrefixPatterns } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
 import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";
 import { ENV } from './_core/env';
@@ -40,21 +40,17 @@ export async function searchCards(query: string, limit: number = 20, offset: num
 
   const trimmedQuery = query.trim();
 
-  // ── Pure series code query (e.g. "SV10", "SV8a", "SM-P") ──────────────────
-  // When the user types only a set code, do a prefix match on cardNumber
-  // so that "SV10" returns exactly the SV10 series ("SV10 125/098", etc.)
-  // and NOT cards from other series that happen to contain those characters.
+  // ── Pure series code query (e.g. "SV10", "SM-P", "ST01", "SM", "ST") ───────
+  // When the user types only a set code or partial prefix, do a prefix match
+  // on cardNumber using format-aware patterns.
   if (isPureSeriesCodeQuery(trimmedQuery)) {
-    const setCode = trimmedQuery.toUpperCase();
+    const patterns = buildSeriesPrefixPatterns(trimmedQuery);
+    if (patterns.length === 0) return { cards: [], total: 0 };
+
     const matchingCards = await db
       .select()
       .from(cards)
-      .where(
-        or(
-          like(cards.cardNumber, `${setCode} %`),
-          like(cards.cardNumber, `${setCode}/%`),
-        )
-      );
+      .where(or(...patterns.map(p => like(cards.cardNumber, p))));
 
     if (matchingCards.length === 0) return { cards: [], total: 0 };
 
@@ -451,11 +447,10 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
   let searchCondition: ReturnType<typeof and> | ReturnType<typeof or> | undefined;
   if (rawSearch) {
     if (isPureSeriesCodeQuery(rawSearch)) {
-      const setCode = rawSearch.toUpperCase();
-      searchCondition = or(
-        like(cards.cardNumber, `${setCode} %`),
-        like(cards.cardNumber, `${setCode}/%`),
-      );
+      const patterns = buildSeriesPrefixPatterns(rawSearch);
+      if (patterns.length > 0) {
+        searchCondition = or(...patterns.map(p => like(cards.cardNumber, p)));
+      }
     } else {
       // Multi-token: each token must match at least one of name/nameJa/cardNumber/sourceUrl
       const tokens = tokenizeSearchQuery(rawSearch);
@@ -2669,11 +2664,10 @@ export async function getAllFilteredDataSourceIds(options?: { search?: string; s
   let searchCondition: ReturnType<typeof and> | ReturnType<typeof or> | undefined;
   if (rawSearch) {
     if (isPureSeriesCodeQuery(rawSearch)) {
-      const setCode = rawSearch.toUpperCase();
-      searchCondition = or(
-        like(cards.cardNumber, `${setCode} %`),
-        like(cards.cardNumber, `${setCode}/%`),
-      );
+      const patterns = buildSeriesPrefixPatterns(rawSearch);
+      if (patterns.length > 0) {
+        searchCondition = or(...patterns.map(p => like(cards.cardNumber, p)));
+      }
     } else {
       const tokens = tokenizeSearchQuery(rawSearch);
       if (tokens.length > 0) {

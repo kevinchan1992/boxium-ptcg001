@@ -4638,3 +4638,28 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] SellerDashboard：新增 PayoutProofThumbnail 組件（縮圖 + 點擊放大 lightbox）
 - [x] 爭議處理：確認 adminResolveDispute API 已完整實作（退款/放款/部分處理 + 通知買賣雙方）
 - [x] TypeScript 0 errors，開發伺服器正常運行
+
+---
+## 🔍 搜尋邏輯優化（2026-03-17）
+
+**問題描述（從截圖觀察）：**
+
+| 搜尋詞 | 期望結果 | 實際結果 |
+|--------|----------|----------|
+| `ST01-012` | 找到 ST01-012 的卡牌 | ✅ 找到 13 張（正常） |
+| `ST01` | 找到 ST01 系列所有卡牌 | ❌ 找到 0 張 |
+| `ST` | 找到 ST 系列卡牌 | ❌ 找到 26 張「Test Booster Box」（無關結果） |
+| `sm-p` | 找到 SM-P 系列卡牌 | ✅ 找到 444 張（正常） |
+| `sm` | 找到 SM 系列卡牌 | ❌ 找到 0 張 |
+
+**根本原因分析：**
+- `ST01` 被 `isPureCardNumberQuery()` 判斷為「純卡號格式」，但 `ST01` 沒有 `-` 分隔符，導致搜尋失敗
+- `sm` 短字串可能被 token 邏輯過濾或不匹配任何欄位
+- `ST` 只有 2 個字元，匹配了商品名稱中含「ST」的無關記錄（如「Test」）
+
+**待修復：**
+- [x] 分析 `searchCards` 函數的 token 分割和 LIKE 查詢邏輯
+- [x] 修復卡號前綴搜尋（`ST01` 應匹配 `ST01-xxx`，`sm` 應匹配 `SM-P xxx`）
+- [x] 加入格式感知的前綴匹配（hyphen/promo/space 三種格式）
+- [x] 卡號前綴優先匹配 `cardNumber` 欄位，避免污染名稱搜尋
+- [x] 62 個 vitest 測試全部通過
