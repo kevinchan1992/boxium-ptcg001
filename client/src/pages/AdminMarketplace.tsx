@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 
@@ -500,7 +501,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
   );
 }
 
-function ListingDetailDialog({ listingId, onClose, onUpdated }: { listingId: number | null; onClose: () => void; onUpdated: () => void }) {
+function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders }: { listingId: number | null; onClose: () => void; onUpdated: () => void; onViewOrders?: (listingId: number) => void }) {
   const [editMode, setEditMode] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
   const [editForm, setEditForm] = useState({ title: "", description: "", price: "", quantity: "", status: "" });
@@ -822,6 +823,12 @@ function ListingDetailDialog({ listingId, onClose, onUpdated }: { listingId: num
               ) : (
                 <>
                   <Button variant="outline" className="border-[#06038d]/30 text-[#06038d]" onClick={onClose}>關閉</Button>
+                  {orderCount > 0 && onViewOrders && (
+                    <Button variant="outline" className="border-[#06038d]/30 text-[#06038d] hover:bg-[#06038d]/10"
+                      onClick={() => { onViewOrders(listingId!); onClose(); }}>
+                      <ShoppingBag className="w-4 h-4 mr-2" />查看訂單 ({orderCount})
+                    </Button>
+                  )}
                   {isPlatformListing && listing.status !== 'sold' && (
                     <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white" onClick={handleEditOpen}>
                       <Edit className="w-4 h-4 mr-2" />編輯商品
@@ -837,13 +844,16 @@ function ListingDetailDialog({ listingId, onClose, onUpdated }: { listingId: num
   );
 }
 
-function ListingsTab() {
+function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => void }) {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
   const [rejectDialogId, setRejectDialogId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showBatchRejectDialog, setShowBatchRejectDialog] = useState(false);
+  const [batchRejectReason, setBatchRejectReason] = useState("");
   const { data, isLoading, refetch } = trpc.marketplace.adminGetListings.useQuery({
     page, pageSize: 20, status: statusFilter === "all" ? undefined : statusFilter
   });
@@ -851,15 +861,35 @@ function ListingsTab() {
     onSuccess: () => { toast.success("已更新"); refetch(); },
     onError: (e) => toast.error(e.message)
   });
+  const batchUpdateMutation = trpc.marketplace.adminBatchUpdateListingStatus.useMutation({
+    onSuccess: (res) => {
+      toast.success(`已批量更新 ${res.updated} 個商品${res.notified > 0 ? `，已通知 ${res.notified} 位賣家` : ''}`);
+      setSelectedIds(new Set());
+      refetch();
+    },
+    onError: (e) => toast.error(e.message)
+  });
   const listings = data?.listings ?? [];
   const total = data?.total ?? 0;
+  const allIds = listings.map((l: any) => l.id);
+  const allSelected = allIds.length > 0 && allIds.every((id: number) => selectedIds.has(id));
+  const someSelected = selectedIds.size > 0;
+  const toggleAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(allIds));
+  };
+  const toggleOne = (id: number) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedIds(next);
+  };
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           {["all", "active", "pending_review", "draft", "sold", "removed"].map(s => (
             <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
-              onClick={() => { setStatusFilter(s); setPage(1); }}
+              onClick={() => { setStatusFilter(s); setPage(1); setSelectedIds(new Set()); }}
               className={statusFilter === s ? "bg-[#06038d] text-white" : "text-gray-700 bg-white"}>
               {s === "all" ? "全部" : s === "active" ? "上架中" : s === "pending_review" ? "待審核" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : "已下架"}
             </Button>
@@ -869,6 +899,38 @@ function ListingsTab() {
           <Plus className="w-4 h-4 mr-2" />新增平台商品
         </Button>
       </div>
+      {/* Batch toolbar */}
+      {someSelected && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-[#06038d] rounded-xl text-white">
+          <span className="text-sm font-medium">已選 {selectedIds.size} 個商品</span>
+          <div className="flex items-center gap-2 ml-auto">
+            <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white text-xs"
+              disabled={batchUpdateMutation.isPending}
+              onClick={() => batchUpdateMutation.mutate({ ids: Array.from(selectedIds), status: 'active' })}>
+              <CheckCircle className="w-3 h-3 mr-1" />批量審核通過
+            </Button>
+            <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white text-xs"
+              disabled={batchUpdateMutation.isPending}
+              onClick={() => { setShowBatchRejectDialog(true); setBatchRejectReason(''); }}>
+              <X className="w-3 h-3 mr-1" />批量下架
+            </Button>
+            <Button size="sm" variant="outline" className="text-white border-white/40 hover:bg-white/10 text-xs"
+              onClick={() => setSelectedIds(new Set())}>
+              取消選取
+            </Button>
+          </div>
+        </div>
+      )}
+      {/* Select all row */}
+      {listings.length > 0 && !isLoading && (
+        <div className="flex items-center gap-2 px-1">
+          <Checkbox id="select-all" checked={allSelected} onCheckedChange={toggleAll}
+            className="border-gray-400" />
+          <label htmlFor="select-all" className="text-sm text-gray-600 cursor-pointer select-none">
+            {allSelected ? '取消全選' : '全選本頁'}
+          </label>
+        </div>
+      )}
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">載入中...</div>
       ) : listings.length === 0 ? (
@@ -876,10 +938,16 @@ function ListingsTab() {
       ) : (
         <div className="space-y-3">
           {listings.map((listing: any) => (
-            <div key={listing.id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div key={listing.id} className={`rounded-xl border shadow-sm overflow-hidden transition-all ${selectedIds.has(listing.id) ? 'border-[#06038d] ring-2 ring-[#06038d]/20' : 'border-gray-200'}`}>
               {/* Header bar */}
               <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
                 <div className="flex items-center gap-2 flex-wrap">
+                  <Checkbox
+                    checked={selectedIds.has(listing.id)}
+                    onCheckedChange={() => toggleOne(listing.id)}
+                    className="border-white/60 data-[state=checked]:bg-[#FEDD00] data-[state=checked]:border-[#FEDD00] flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  />
                   <span className="text-white text-sm font-semibold font-mono">#{listing.id} · {listing.title}</span>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     listing.condition === 'PSA10' ? 'bg-yellow-400 text-yellow-900' :
@@ -970,11 +1038,41 @@ function ListingsTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Batch delist confirm dialog */}
+      <Dialog open={showBatchRejectDialog} onOpenChange={setShowBatchRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-[#06038d]">批量下架確認</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">確定要下架已選的 <strong>{selectedIds.size}</strong> 個商品嗎？</p>
+          <div className="space-y-2">
+            <Label className="text-sm">下架原因（選填，將通知賣家）</Label>
+            <Textarea value={batchRejectReason} onChange={e => setBatchRejectReason(e.target.value)}
+              placeholder="請輸入下架原因..." rows={3} className="text-gray-900" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="text-gray-700" onClick={() => setShowBatchRejectDialog(false)}>取消</Button>
+            <Button variant="destructive" disabled={batchUpdateMutation.isPending}
+              onClick={() => {
+                batchUpdateMutation.mutate({
+                  ids: Array.from(selectedIds),
+                  status: 'removed',
+                  rejectedReason: batchRejectReason || undefined
+                });
+                setShowBatchRejectDialog(false);
+              }}>
+              {batchUpdateMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              確認批量下架
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <CreateListingDialog open={showCreate} onClose={() => setShowCreate(false)} onSuccess={refetch} />
       <ListingDetailDialog
         listingId={selectedListingId}
         onClose={() => setSelectedListingId(null)}
         onUpdated={refetch}
+        onViewOrders={onViewOrders}
       />
     </div>
   );
@@ -998,7 +1096,7 @@ function exportToCSV(rows: any[], filename: string) {
   URL.revokeObjectURL(url);
 }
 
-function OrdersTab() {
+function OrdersTab({ listingFilter, onClearListingFilter }: { listingFilter?: number | null; onClearListingFilter?: () => void }) {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sellerTypeFilter, setSellerTypeFilter] = useState<'all' | 'platform' | 'seller'>('all');
@@ -1037,6 +1135,7 @@ function OrdersTab() {
     sellerType: sellerTypeFilter,
     dateFrom: qDateFrom,
     dateTo: qDateTo,
+    listingId: listingFilter ?? undefined,
   });
   const updateStatusMutation = trpc.marketplace.adminUpdateOrderStatus.useMutation({
     onSuccess: () => { toast.success("訂單狀態已更新"); refetch(); setSelectedOrder(null); setTrackingNumber(""); },
@@ -1074,6 +1173,19 @@ function OrdersTab() {
 
   return (
     <div className="space-y-4">
+      {/* Listing filter banner */}
+      {listingFilter && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-[#06038d]/10 border border-[#06038d]/20 rounded-xl">
+          <ShoppingBag className="w-4 h-4 text-[#06038d] flex-shrink-0" />
+          <span className="text-sm text-[#06038d] font-medium">目前顯示商品 #{listingFilter} 的相關訂單</span>
+          <button
+            className="ml-auto text-xs text-[#06038d]/70 hover:text-[#06038d] underline"
+            onClick={() => { onClearListingFilter?.(); }}
+          >
+            清除篩選
+          </button>
+        </div>
+      )}
       {/* Row 1: Status filters + seller type filter */}
       <div className="flex items-center gap-2 flex-wrap">
         {["all", "pending_payment", "payment_received", "processing", "shipped", "completed", "disputed"].map(s => (
@@ -1258,7 +1370,21 @@ function OrdersTab() {
           <div className="bg-[#06038d] px-6 py-4 flex items-center justify-between">
             <div>
               <h2 className="text-white font-bold text-lg tracking-wide">訂單管理</h2>
-              <p className="text-[#FEDD00] text-sm font-mono mt-0.5">{selectedOrder?.orderNo}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-[#FEDD00] text-sm font-mono">{selectedOrder?.orderNo}</p>
+                <button
+                  className="text-white/60 hover:text-white transition-colors"
+                  title="複製訂單號"
+                  onClick={() => {
+                    if (selectedOrder?.orderNo) {
+                      navigator.clipboard.writeText(selectedOrder.orderNo);
+                      toast.success('訂單號已複製');
+                    }
+                  }}
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
             {selectedOrder && (
               <Badge className={`${orderStatusColor[selectedOrder.orderStatus] ?? ''} text-xs px-3 py-1`}>
@@ -3523,10 +3649,17 @@ export default function AdminMarketplace() {
     );
   }
 
+  const [ordersListingFilter, setOrdersListingFilter] = useState<number | null>(null);
+
+  const handleViewOrders = (listingId: number) => {
+    setOrdersListingFilter(listingId);
+    setActiveSection('orders');
+  };
+
   const renderContent = () => {
     switch (activeSection) {
-      case 'listings': return <ListingsTab />;
-      case 'orders': return <OrdersTab />;
+      case 'listings': return <ListingsTab onViewOrders={handleViewOrders} />;
+      case 'orders': return <OrdersTab listingFilter={ordersListingFilter} onClearListingFilter={() => setOrdersListingFilter(null)} />;
       case 'alipay': return <AlipayPendingTab />;
       case 'sellers': return <SellersTab />;
       case 'disputes': return <DisputesTab />;
@@ -3534,7 +3667,7 @@ export default function AdminMarketplace() {
       case 'reports': return <ReportsTab />;
       case 'payouts': return <PayoutsTab />;
       case 'offers': return <OffersTab />;
-      default: return <ListingsTab />;
+      default: return <ListingsTab onViewOrders={handleViewOrders} />;
     }
   };
 

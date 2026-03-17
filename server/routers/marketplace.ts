@@ -1028,9 +1028,10 @@ export const marketplaceRouter = router({
       dateFrom: z.string().optional(), // YYYY-MM-DD
       dateTo: z.string().optional(),   // YYYY-MM-DD
       payoutFilter: z.string().optional(), // 'pending_alipay' for unpaid alipay orders
+      listingId: z.number().int().optional(), // filter by specific listing
     }))
     .query(async ({ input }) => {
-      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType, input.dateFrom, input.dateTo, input.payoutFilter);
+      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType, input.dateFrom, input.dateTo, input.payoutFilter, input.listingId);
     }),
 
   // Fix historical platform order fees (set platformFeeHkd=0, sellerReceivableHkd=subtotalHkd for all platform orders)
@@ -2259,6 +2260,62 @@ All three checks must pass for verified to be true. Respond with JSON only match
         note: r.manualPayoutNote ?? '',
         proofUrl: r.manualPayoutProofUrl ?? '',
       }));
+    }),
+
+  adminBatchUpdateListingStatus: adminProcedure
+    .input(z.object({
+      ids: z.array(z.number().int()).min(1).max(100),
+      status: z.enum(["active", "removed", "pending_review"]),
+      rejectedReason: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { ids, status, rejectedReason } = input;
+      // Fetch all listings to send notifications
+      const listings = await db.select({
+        id: marketplaceListings.id,
+        title: marketplaceListings.title,
+        sellerType: marketplaceListings.sellerType,
+        sellerId: marketplaceListings.sellerId,
+        status: marketplaceListings.status,
+      }).from(marketplaceListings)
+        .where(sql`${marketplaceListings.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
+      // Batch update
+      const updatePayload: Record<string, any> = { status };
+      if (rejectedReason) updatePayload.rejectedReason = rejectedReason;
+      await db.update(marketplaceListings)
+        .set(updatePayload)
+        .where(sql`${marketplaceListings.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
+      // Send notifications to affected sellers
+      let notified = 0;
+      for (const listing of listings) {
+        if (listing.sellerType === 'seller' && listing.sellerId && listing.status !== status) {
+          const sellerProfile = await getSellerProfileById(listing.sellerId);
+          if (sellerProfile?.userId) {
+            if (status === 'active') {
+              await createNotification({
+                userId: sellerProfile.userId,
+                type: 'trade',
+                title: '商品審核通過 ✅',
+                body: `您的商品「${listing.title}」已通過審核，現已上架！`,
+                linkUrl: `/marketplace/${listing.id}`,
+              }).catch(() => {});
+              notified++;
+            } else if (status === 'removed') {
+              await createNotification({
+                userId: sellerProfile.userId,
+                type: 'trade',
+                title: '商品已下架 ❌',
+                body: `您的商品「${listing.title}」已被下架。${rejectedReason ? `原因：${rejectedReason}` : ''}`,
+                linkUrl: `/seller`,
+              }).catch(() => {});
+              notified++;
+            }
+          }
+        }
+      }
+      return { success: true, updated: ids.length, notified };
     }),
 
   // ============================================================
