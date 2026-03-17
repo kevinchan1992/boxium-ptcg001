@@ -536,187 +536,302 @@ function ListingDetailDialog({ listingId, onClose, onUpdated }: { listingId: num
     setEditMode(true);
   };
 
+  const isPlatformListing = listing?.sellerType === 'platform';
+
   return (
     <Dialog open={!!listingId} onOpenChange={() => { onClose(); setEditMode(false); setImgIdx(0); }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5" />
-            {editMode ? "編輯商品" : "商品詳情"}
-          </DialogTitle>
-        </DialogHeader>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
-        ) : listing ? (
-          <div className="space-y-5">
-            {/* Image Gallery */}
-            {images.length > 0 && (
-              <div className="relative">
-                <div className="aspect-square max-h-64 w-full rounded-xl overflow-hidden bg-muted flex items-center justify-center">
-                  <img src={images[imgIdx]} alt={listing.title} className="w-full h-full object-contain" />
-                </div>
-                {images.length > 1 && (
-                  <>
-                    <button onClick={() => setImgIdx(i => (i - 1 + images.length) % images.length)}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1">
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => setImgIdx(i => (i + 1) % images.length)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1">
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                    <div className="flex justify-center gap-1 mt-2">
-                      {images.map((_, i) => (
-                        <button key={i} onClick={() => setImgIdx(i)}
-                          className={`w-2 h-2 rounded-full transition-colors ${i === imgIdx ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {editMode ? (
-              /* Edit Form */
-              <div className="space-y-4">
-                <div><Label>商品名稱</Label><Input className="mt-1" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} /></div>
-                <div><Label>描述</Label><Textarea className="mt-1" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} rows={3} /></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><Label>售價 (HKD)</Label><Input className="mt-1" type="number" value={editForm.price} onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))} min="4" step="0.01" /></div>
-                  <div><Label>庫存數量</Label><Input className="mt-1" type="number" value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: e.target.value }))} min="0" /></div>
-                </div>
-                <div>
-                  <Label>狀態</Label>
-                  <Select value={editForm.status} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
-                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">上架中</SelectItem>
-                      <SelectItem value="pending_review">待審核</SelectItem>
-                      <SelectItem value="draft">草稿</SelectItem>
-                      <SelectItem value="removed">已下架</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ) : (
-              /* View Mode */
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-lg">{listing.title}</h3>
-                  {listing.description && <p className="text-sm text-muted-foreground mt-1">{listing.description}</p>}
-                </div>
-
-                {/* Key Info Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
-                  <div className="bg-gray-50 rounded-lg p-3 text-gray-700">
-                    <p className="text-xs text-muted-foreground mb-1">售價</p>
-                    <p className="font-bold text-lg">HKD {parseFloat(listing.priceHkd as string || "0").toFixed(2)}</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-3 text-gray-700">
-                    <p className="text-xs text-muted-foreground mb-1">庫存</p>
-                    <p className="font-bold text-lg">{listing.quantity}</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-3 text-gray-700">
-                    <p className="text-xs text-muted-foreground mb-1">品相</p>
-                    <Badge className={conditionColor[listing.condition] ?? ""}>{conditionLabel[listing.condition] ?? listing.condition}</Badge>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-3 text-gray-700">
-                    <p className="text-xs text-muted-foreground mb-1">訂單數</p>
-                    <p className="font-bold text-lg">{orderCount}</p>
-                  </div>
-                </div>
-
-                {/* Status & Type */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge className={listing.status === "active" ? "bg-green-100 text-green-800" : listing.status === "pending_review" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}>
-                    {listing.status === "active" ? "上架中" : listing.status === "pending_review" ? "待審核" : listing.status === "draft" ? "草稿" : listing.status === "sold" ? "已售出" : "已下架"}
-                  </Badge>
-                  <Badge variant="outline" className={listing.sellerType === "platform" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}>
-                    {listing.sellerType === "platform" ? "官方商品" : "C2C 賣家"}
-                  </Badge>
-                </div>
-
-                {/* Dates */}
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>上架時間：{new Date(listing.createdAt).toLocaleString("zh-HK")}</span>
-                  </div>
-                  {listing.listedAt && (
-                    <div className="flex items-center gap-2">
-                      <Tag className="w-3.5 h-3.5" />
-                      <span>正式上架：{new Date(listing.listedAt).toLocaleString("zh-HK")}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Seller Info (C2C only) */}
-                {listing.sellerType === "seller" && (
-                  <div className="border rounded-lg p-3 space-y-2">
-                    <p className="text-sm font-medium flex items-center gap-2"><User2 className="w-4 h-4" />賣家資訊</p>
-                    {sellerProfile ? (
-                      <div className="text-sm space-y-1">
-                        <div className="flex items-center gap-2">
-                          {sellerProfile.avatarUrl && <img src={sellerProfile.avatarUrl} className="w-8 h-8 rounded-full object-cover" alt="" />}
-                          <div>
-                            <p className="font-medium">{sellerProfile.displayName}</p>
-                            {sellerUser && <p className="text-xs text-muted-foreground">{sellerUser.email}</p>}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>總銷售：{sellerProfile.totalSales}</span>
-                          <span>評分：{sellerProfile.avgRating ?? "N/A"} ({sellerProfile.ratingCount} 評)</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">賣家資料不可用</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Rejection Reason */}
-                {listing.rejectedReason && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-sm font-medium text-red-800">拒絕原因</p>
-                    <p className="text-sm text-red-700 mt-1">{listing.rejectedReason}</p>
-                  </div>
-                )}
-              </div>
+      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-xl overflow-hidden">
+        {/* ── Header ─────────────────────────────────── */}
+        <div className="bg-[#06038d] px-6 py-4 flex items-center justify-between flex-shrink-0">
+          <div>
+            <h2 className="text-white font-bold text-lg tracking-wide">
+              {editMode ? '編輯商品' : '商品詳情'}
+            </h2>
+            {listing && (
+              <p className="text-[#FEDD00] text-xs font-mono mt-0.5">ID #{listing.id}</p>
             )}
           </div>
-        ) : null}
+          <div className="flex items-center gap-2">
+            {listing && (
+              <Badge className={listing.sellerType === 'platform'
+                ? 'bg-[#FEDD00] text-[#06038d] font-bold border-0'
+                : 'bg-white/20 text-white border-white/30'}>
+                {listing.sellerType === 'platform' ? '平台商品' : 'C2C 賣家'}
+              </Badge>
+            )}
+          </div>
+        </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          {editMode ? (
-            <>
-              <Button variant="outline" onClick={() => setEditMode(false)}>取消</Button>
-              <Button
-                className="bg-[#06038d] hover:bg-[#0804b8] text-white"
-                disabled={updateMutation.isPending}
-                onClick={() => updateMutation.mutate({
-                  id: listingId!,
-                  title: editForm.title || undefined,
-                  description: editForm.description || undefined,
-                  price: parseFloat(editForm.price) || undefined,
-                  quantity: parseInt(editForm.quantity) ?? undefined,
-                  status: editForm.status as any || undefined,
-                })}>
-                {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                儲存變更
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={onClose}>關閉</Button>
-              {listing?.status !== "sold" && (
-                <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white" onClick={handleEditOpen}>
-                  <Edit className="w-4 h-4 mr-2" />編輯商品
-                </Button>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16 bg-white">
+            <Loader2 className="w-8 h-8 animate-spin text-[#06038d]" />
+          </div>
+        ) : listing ? (
+          <div className="bg-white">
+
+            {/* ── 賣家商品唯讀提示 ─────────────────────── */}
+            {!isPlatformListing && (
+              <div className="mx-5 mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-amber-800">
+                  此商品由 <strong>{sellerProfile?.displayName ?? '賣家'}</strong> 上架，Admin 不建議直接編輯賣家商品內容。如需調整，請聯絡賣家或使用狀態管理功能。
+                </p>
+              </div>
+            )}
+
+            <div className="p-5 space-y-4">
+
+              {/* ── 商品圖片 ─────────────────────────── */}
+              {images.length > 0 && (
+                <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                  <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
+                    <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <Package className="w-3.5 h-3.5" />商品圖片
+                    </p>
+                  </div>
+                  <div className="p-3">
+                    <div className="relative">
+                      <div className="aspect-video max-h-56 w-full rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                        <img src={images[imgIdx]} alt={listing.title} className="w-full h-full object-contain" />
+                      </div>
+                      {images.length > 1 && (
+                        <>
+                          <button onClick={() => setImgIdx(i => (i - 1 + images.length) % images.length)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#06038d]/70 hover:bg-[#06038d] text-white rounded-full p-1.5">
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => setImgIdx(i => (i + 1) % images.length)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#06038d]/70 hover:bg-[#06038d] text-white rounded-full p-1.5">
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                          <div className="flex justify-center gap-1.5 mt-2">
+                            {images.map((_, i) => (
+                              <button key={i} onClick={() => setImgIdx(i)}
+                                className={`w-2 h-2 rounded-full transition-colors ${i === imgIdx ? 'bg-[#06038d]' : 'bg-gray-300'}`} />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
-            </>
-          )}
-        </DialogFooter>
+
+              {editMode && isPlatformListing ? (
+                /* ── 編輯表單（僅平台商品） ─────────── */
+                <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                  <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
+                    <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <Edit className="w-3.5 h-3.5" />編輯商品資料
+                    </p>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div>
+                      <Label className="text-xs text-gray-600 font-medium">商品名稱</Label>
+                      <Input className="mt-1 border-[#06038d]/30 focus:border-[#06038d]" value={editForm.title}
+                        onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 font-medium">商品描述</Label>
+                      <Textarea className="mt-1 border-[#06038d]/30 focus:border-[#06038d]" value={editForm.description}
+                        onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} rows={3} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs text-gray-600 font-medium">售價 (HKD)</Label>
+                        <Input className="mt-1 border-[#06038d]/30 focus:border-[#06038d]" type="number"
+                          value={editForm.price} onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))} min="4" step="0.01" />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-600 font-medium">庫存數量</Label>
+                        <Input className="mt-1 border-[#06038d]/30 focus:border-[#06038d]" type="number"
+                          value={editForm.quantity} onChange={e => setEditForm(f => ({ ...f, quantity: e.target.value }))} min="0" />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 font-medium">上架狀態</Label>
+                      <Select value={editForm.status} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
+                        <SelectTrigger className="mt-1 border-[#06038d]/30"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">上架中</SelectItem>
+                          <SelectItem value="pending_review">待審核</SelectItem>
+                          <SelectItem value="draft">草稿</SelectItem>
+                          <SelectItem value="removed">已下架</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* ── 商品資料（查看模式） ─────────────── */
+                <>
+                  {/* 基本資訊 */}
+                  <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                    <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
+                      <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <Package className="w-3.5 h-3.5" />商品資訊
+                      </p>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-base leading-snug">{listing.title}</h3>
+                        {listing.description && <p className="text-sm text-gray-600 mt-1 leading-relaxed">{listing.description}</p>}
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-[#06038d]/[0.04] rounded-lg p-3">
+                          <p className="text-xs text-gray-500 mb-1">售價</p>
+                          <p className="font-bold text-[#06038d] text-lg">HKD {parseFloat(listing.priceHkd as string || '0').toFixed(2)}</p>
+                        </div>
+                        <div className="bg-[#06038d]/[0.04] rounded-lg p-3">
+                          <p className="text-xs text-gray-500 mb-1">庫存</p>
+                          <p className="font-bold text-gray-900 text-lg">{listing.quantity}</p>
+                        </div>
+                        <div className="bg-[#06038d]/[0.04] rounded-lg p-3">
+                          <p className="text-xs text-gray-500 mb-1">品相</p>
+                          <Badge className={conditionColor[listing.condition] ?? ''}>{conditionLabel[listing.condition] ?? listing.condition}</Badge>
+                        </div>
+                        <div className="bg-[#06038d]/[0.04] rounded-lg p-3">
+                          <p className="text-xs text-gray-500 mb-1">訂單數</p>
+                          <p className="font-bold text-gray-900 text-lg">{orderCount}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap pt-1">
+                        <Badge className={listing.status === 'active' ? 'bg-green-100 text-green-800' : listing.status === 'pending_review' ? 'bg-yellow-100 text-yellow-800' : listing.status === 'sold' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
+                          {listing.status === 'active' ? '上架中' : listing.status === 'pending_review' ? '待審核' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
+                        </Badge>
+                        {(listing as any).cardNumber && <Badge variant="outline" className="font-mono text-xs border-[#06038d]/30 text-[#06038d]">#{(listing as any).cardNumber}</Badge>}
+                        {listing.allowOffers && <Badge variant="outline" className="text-xs border-green-300 text-green-700">接受出價</Badge>}
+                      </div>
+                      <div className="text-xs text-gray-500 space-y-1 pt-1">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="w-3 h-3" />
+                          <span>建立時間：{new Date(listing.createdAt).toLocaleString('zh-HK')}</span>
+                        </div>
+                        {listing.listedAt && (
+                          <div className="flex items-center gap-1.5">
+                            <Tag className="w-3 h-3" />
+                            <span>正式上架：{new Date(listing.listedAt).toLocaleString('zh-HK')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 賣家資訊（C2C 商品） */}
+                  {!isPlatformListing && (
+                    <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                      <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
+                        <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                          <User2 className="w-3.5 h-3.5" />賣家資訊
+                        </p>
+                      </div>
+                      <div className="p-4">
+                        {sellerProfile ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                              {sellerProfile.avatarUrl
+                                ? <img src={sellerProfile.avatarUrl} className="w-10 h-10 rounded-full object-cover border-2 border-[#06038d]/20" alt="" />
+                                : <div className="w-10 h-10 rounded-full bg-[#06038d]/10 flex items-center justify-center"><User2 className="w-5 h-5 text-[#06038d]" /></div>
+                              }
+                              <div>
+                                <p className="font-semibold text-gray-900">{sellerProfile.displayName}</p>
+                                {sellerUser && <p className="text-xs text-gray-500">{sellerUser.email}</p>}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-center">
+                              <div className="bg-[#06038d]/[0.04] rounded-lg p-2">
+                                <p className="text-xs text-gray-500">總銷售</p>
+                                <p className="font-bold text-[#06038d]">{sellerProfile.totalSales}</p>
+                              </div>
+                              <div className="bg-[#06038d]/[0.04] rounded-lg p-2">
+                                <p className="text-xs text-gray-500">評分</p>
+                                <p className="font-bold text-[#06038d]">{sellerProfile.avgRating ?? 'N/A'}</p>
+                              </div>
+                              <div className="bg-[#06038d]/[0.04] rounded-lg p-2">
+                                <p className="text-xs text-gray-500">評價數</p>
+                                <p className="font-bold text-[#06038d]">{sellerProfile.ratingCount}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">賣家資料不可用</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 狀態管理（賣家商品也可以調整狀態） */}
+                  <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                    <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
+                      <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider">狀態管理</p>
+                    </div>
+                    <div className="p-4">
+                      <div className="flex flex-wrap gap-2">
+                        {['active', 'pending_review', 'draft', 'removed'].map(s => (
+                          <Button key={s} size="sm"
+                            variant={listing.status === s ? 'default' : 'outline'}
+                            className={listing.status === s
+                              ? 'bg-[#06038d] text-white'
+                              : 'border-[#06038d]/30 text-[#06038d] hover:bg-[#06038d]/10'}
+                            disabled={listing.status === s || updateMutation.isPending}
+                            onClick={() => updateMutation.mutate({ id: listingId!, status: s as any })}>
+                            {s === 'active' ? '上架中' : s === 'pending_review' ? '待審核' : s === 'draft' ? '草稿' : '已下架'}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 拒絕原因 */}
+                  {listing.rejectedReason && (
+                    <div className="rounded-lg border border-red-200 overflow-hidden">
+                      <div className="bg-red-50 px-4 py-2 border-b border-red-200">
+                        <p className="text-red-700 font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5" />拒絕原因
+                        </p>
+                      </div>
+                      <div className="p-4">
+                        <p className="text-sm text-red-700">{listing.rejectedReason}</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* ── Footer ───────────────────────────────── */}
+            <div className="px-5 pb-5 flex justify-end gap-3">
+              {editMode ? (
+                <>
+                  <Button variant="outline" className="border-[#06038d]/30 text-[#06038d]" onClick={() => setEditMode(false)}>取消</Button>
+                  <Button
+                    className="bg-[#06038d] hover:bg-[#0804b8] text-white"
+                    disabled={updateMutation.isPending}
+                    onClick={() => updateMutation.mutate({
+                      id: listingId!,
+                      title: editForm.title || undefined,
+                      description: editForm.description || undefined,
+                      price: parseFloat(editForm.price) || undefined,
+                      quantity: parseInt(editForm.quantity) ?? undefined,
+                      status: editForm.status as any || undefined,
+                    })}>
+                    {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    儲存變更
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" className="border-[#06038d]/30 text-[#06038d]" onClick={onClose}>關閉</Button>
+                  {isPlatformListing && listing.status !== 'sold' && (
+                    <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white" onClick={handleEditOpen}>
+                      <Edit className="w-4 h-4 mr-2" />編輯商品
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );
@@ -1157,7 +1272,7 @@ function OrdersTab() {
 
               {/* ── 商品資訊 ─────────────────────────── */}
               <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
-                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
                   <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
                     <Package className="w-3.5 h-3.5" />商品資訊
                   </p>
@@ -1184,7 +1299,7 @@ function OrdersTab() {
 
               {/* ── 訂單詳情 ─────────────────────────── */}
               <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
-                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
                   <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
                     <CreditCard className="w-3.5 h-3.5" />訂單詳情
                   </p>
@@ -1220,7 +1335,7 @@ function OrdersTab() {
 
               {/* ── 買家資料 ─────────────────────────── */}
               <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
-                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
                   <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
                     <User2 className="w-3.5 h-3.5" />買家資料
                   </p>
@@ -1235,7 +1350,7 @@ function OrdersTab() {
               {/* ── 賣家資料 ─────────────────────────── */}
               {selectedOrder.sellerType === 'seller' && (
                 <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
-                  <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                  <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
                     <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5" />賣家資料
                     </p>
@@ -1252,7 +1367,7 @@ function OrdersTab() {
 
               {/* ── 物流資訊 ─────────────────────────── */}
               <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
-                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
                   <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
                     <Package className="w-3.5 h-3.5" />物流 / 收件資訊
                   </p>
@@ -1334,7 +1449,7 @@ function OrdersTab() {
 
               {/* ── 狀態更新 ─────────────────────────── */}
               <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
-                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
                   <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider">更新訂單狀態</p>
                 </div>
                 <div className="p-3">
@@ -1358,7 +1473,7 @@ function OrdersTab() {
 
               {/* ── Admin 內部備注 ────────────────────── */}
               <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
-                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
                   <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5" />Admin 內部備注
                   </p>
