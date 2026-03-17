@@ -759,48 +759,66 @@ function ListingsTab() {
       ) : listings.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground"><Package className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無商品</p></div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {listings.map((listing: any) => (
-            <div key={listing.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white text-gray-900">
-              <div className="flex-1 min-w-0">
+            <div key={listing.id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              {/* Header bar */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium truncate">{listing.title}</span>
-                  <Badge variant="outline" className={conditionColor[listing.condition] ?? ""}>{conditionLabel[listing.condition] ?? listing.condition}</Badge>
-                  <Badge variant="outline" className={listing.sellerType === "platform" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}>
-                    {listing.sellerType === "platform" ? "官方" : "賣家"}
-                  </Badge>
+                  <span className="text-white text-sm font-semibold font-mono">#{listing.id} · {listing.title}</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    listing.condition === 'PSA10' ? 'bg-yellow-400 text-yellow-900' :
+                    listing.condition === 'PSA9' ? 'bg-green-300 text-green-900' :
+                    'bg-white/20 text-white'
+                  }`}>{conditionLabel[listing.condition] ?? listing.condition}</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    listing.sellerType === 'platform' ? 'bg-blue-200 text-blue-900' : 'bg-orange-200 text-orange-900'
+                  }`}>{listing.sellerType === 'platform' ? '官方' : '賣家'}</span>
                 </div>
-                <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
-                  <span>HKD {parseFloat(listing.priceHkd as string || "0").toFixed(2)}</span>
-                  <span>庫存: {listing.quantity}</span>
-                  <span>{new Date(listing.createdAt).toLocaleDateString("zh-HK")}</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    listing.status === 'active' ? 'bg-green-200 text-green-900' :
+                    listing.status === 'pending_review' ? 'bg-yellow-200 text-yellow-900' :
+                    listing.status === 'sold' ? 'bg-gray-300 text-gray-800' :
+                    'bg-red-200 text-red-900'
+                  }`}>
+                    {listing.status === 'active' ? '上架中' : listing.status === 'pending_review' ? '待審核' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
+                  </span>
+                  <span className="text-white/80 text-xs">{new Date(listing.createdAt).toLocaleDateString('zh-HK')}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge className={listing.status === "active" ? "bg-green-100 text-green-800" : listing.status === "pending_review" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}>
-                  {listing.status === "active" ? "上架中" : listing.status === "pending_review" ? "待審核" : listing.status === "draft" ? "草稿" : listing.status === "sold" ? "已售出" : "已下架"}
-                </Badge>
-                <Button size="sm" variant="outline" onClick={() => setSelectedListingId(listing.id)}>
-                  <Eye className="w-3 h-3 mr-1" />{listing.status === "sold" ? "查看詳情" : "查看/編輯"}
-                </Button>
-                {listing.status === "pending_review" && (
-                  <>
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
-                      onClick={() => updateMutation.mutate({ id: listing.id, status: "active" })}>
-                      <CheckCircle className="w-3 h-3 mr-1" />批准
-                    </Button>
-                    <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50"
-                      onClick={() => { setRejectDialogId(listing.id); setRejectReason(""); }}>
-                      拒絕
-                    </Button>
-                  </>
-                )}
-                {listing.status === "active" && (
-                  <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: listing.id, status: "removed" })}>下架</Button>
-                )}
-                {listing.status === "removed" && (
-                  <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: listing.id, status: "active" })}>重新上架</Button>
-                )}
+              {/* Content */}
+              <div className="px-4 py-3 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-4 text-sm text-gray-700">
+                    <span className="font-semibold text-gray-900">HKD {parseFloat(listing.priceHkd as string || '0').toFixed(2)}</span>
+                    <span className="text-gray-500">庫存: {listing.quantity}</span>
+                    {listing.sellerDisplayName && <span className="text-gray-500">賣家: {listing.sellerDisplayName}</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button size="sm" variant="outline" className="text-xs" onClick={() => setSelectedListingId(listing.id)}>
+                    <Eye className="w-3 h-3 mr-1" />{listing.status === 'sold' ? '查看詳情' : '查看/編輯'}
+                  </Button>
+                  {listing.status === 'pending_review' && (
+                    <>
+                      <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => updateMutation.mutate({ id: listing.id, status: 'active' })}>
+                        <CheckCircle className="w-3 h-3 mr-1" />批准
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-xs border-red-300 text-red-600 hover:bg-red-50"
+                        onClick={() => { setRejectDialogId(listing.id); setRejectReason(''); }}>
+                        拒絕
+                      </Button>
+                    </>
+                  )}
+                  {listing.status === 'active' && (
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => updateMutation.mutate({ id: listing.id, status: 'removed' })}>下架</Button>
+                  )}
+                  {listing.status === 'removed' && (
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => updateMutation.mutate({ id: listing.id, status: 'active' })}>重新上架</Button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -973,43 +991,90 @@ function OrdersTab() {
       ) : filteredOrders.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground"><ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{searchQuery ? '未找到符合的訂單' : '暫無訂單'}</p></div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {filteredOrders.map((order: any) => (
-            <div key={order.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white text-gray-900">
-              <div className="flex items-start gap-3 flex-1 min-w-0">
-                {/* Product Thumbnail */}
-                {(() => {
-                  try {
-                    const imgs = typeof order.listingImages === 'string'
-                      ? JSON.parse(order.listingImages)
-                      : order.listingImages;
-                    const firstImg = Array.isArray(imgs) ? imgs[0] : null;
-                    if (firstImg) return (
-                      <img src={firstImg} alt="" className="w-12 h-14 object-cover rounded border border-gray-200 flex-shrink-0 hidden sm:block" />
-                    );
-                  } catch {}
-                  return <div className="w-12 h-14 rounded border border-gray-200 bg-gray-100 flex-shrink-0 hidden sm:flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-gray-300" /></div>;
-                })()}
-                <div className="flex-1 min-w-0">
-                  {order.listingTitle && (
-                    <p className="text-xs text-muted-foreground truncate mb-0.5">{order.listingTitle}</p>
-                  )}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm font-medium">{order.orderNo}</span>
-                    <Badge className={orderStatusColor[order.orderStatus] ?? ""}>{orderStatusLabel[order.orderStatus] ?? order.orderStatus}</Badge>
-                    <Badge variant="outline" className={order.paymentMethod === "stripe" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}>
-                      {order.paymentMethod === "stripe" ? "Stripe" : "支付寶 HK"}
-                    </Badge>
+            <div key={order.id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              {/* Header bar */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-white text-sm font-semibold font-mono">{order.orderNo}</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    order.orderStatus === 'completed' ? 'bg-green-200 text-green-900' :
+                    order.orderStatus === 'shipped' ? 'bg-blue-200 text-blue-900' :
+                    order.orderStatus === 'processing' || order.orderStatus === 'payment_received' ? 'bg-yellow-200 text-yellow-900' :
+                    order.orderStatus === 'disputed' ? 'bg-red-200 text-red-900' :
+                    order.orderStatus === 'cancelled' ? 'bg-gray-300 text-gray-800' :
+                    'bg-white/20 text-white'
+                  }`}>{orderStatusLabel[order.orderStatus] ?? order.orderStatus}</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    order.paymentMethod === 'stripe' ? 'bg-purple-200 text-purple-900' : 'bg-blue-200 text-blue-900'
+                  }`}>{order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</span>
+                  {order.sellerType === 'platform' && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/20 text-white">平台商品</span>}
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-white/80 text-xs">{new Date(order.createdAt).toLocaleDateString('zh-HK')}</span>
+                  <span className="text-yellow-300 text-xs font-semibold">賣家應收：HKD {parseFloat(order.sellerReceivableHkd || order.subtotalHkd || '0').toFixed(2)}</span>
+                </div>
+              </div>
+              {/* Three-column content */}
+              <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 bg-white">
+                {/* Col 1: Product */}
+                <div className="px-4 py-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-1.5">商品資料</p>
+                  <p className="text-sm font-medium text-gray-900 line-clamp-2">{order.listingTitle ?? '商品'}</p>
+                  <div className="mt-1.5 space-y-0.5 text-xs text-gray-600">
+                    <p>數量：{order.quantity ?? 1} · 單價：HKD {parseFloat(order.priceHkd || order.subtotalHkd || '0').toFixed(2)}</p>
+                    <p>小計：HKD {parseFloat(order.subtotalHkd || '0').toFixed(2)}</p>
+                    {order.sellerType === 'platform' ? (
+                      <p className="text-blue-600">平台商品免手續費</p>
+                    ) : (
+                      <p>手續費：HKD {parseFloat(order.platformFeeHkd || '0').toFixed(2)}</p>
+                    )}
+                    <p className="font-semibold text-[#06038d]">賣家淨收：HKD {parseFloat(order.sellerReceivableHkd || order.subtotalHkd || '0').toFixed(2)}</p>
+                    <p className="text-gray-400">付款：{order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</p>
+                    {order.stripePaymentIntentId && <p className="text-gray-400 font-mono text-[10px] truncate">PI: {order.stripePaymentIntentId}</p>}
                   </div>
-                  <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
-                    <span>HKD {parseFloat(order.subtotalHkd as string || "0").toFixed(2)}</span>
-                    <span>{new Date(order.createdAt).toLocaleDateString("zh-HK")}</span>
+                </div>
+                {/* Col 2: Buyer */}
+                <div className="px-4 py-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-1.5">買家資料</p>
+                  <p className="text-sm font-medium text-gray-900">{order.buyerName ?? order.shippingName ?? '不明'}</p>
+                  <div className="mt-1.5 space-y-0.5 text-xs text-gray-600">
+                    {order.buyerEmail && <p>{order.buyerEmail}</p>}
+                    {order.buyerPhone && <p>{order.buyerPhone}</p>}
+                    {order.shippingAddress && (
+                      <p className="text-gray-500">收件資料：{(() => {
+                        try {
+                          const addr = JSON.parse(order.shippingAddress);
+                          if (addr && typeof addr === 'object') {
+                            const name = addr.name || order.shippingName || '';
+                            const phone = addr.phone || order.shippingPhone || '';
+                            const address = [addr.address, addr.district, addr.region].filter(Boolean).join(', ');
+                            return [name, phone, address].filter(Boolean).join(' · ');
+                          }
+                          return order.shippingAddress;
+                        } catch { return order.shippingAddress; }
+                      })()}</p>
+                    )}
+                  </div>
+                </div>
+                {/* Col 3: Seller + Actions */}
+                <div className="px-4 py-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-1.5">賣家資料</p>
+                  <p className="text-sm font-medium text-gray-900">{order.sellerType === 'platform' ? '平台自有商品' : (order.sellerName ?? '不明')}</p>
+                  <div className="mt-1.5 space-y-0.5 text-xs text-gray-600">
+                    {order.shippingMethod && <p>物流：{order.shippingMethod === 'sf_express' ? '順豐' : order.shippingMethod === 'hk_post' ? '香港郵政' : order.shippingMethod === 'pickup' ? '自取' : order.shippingMethod}</p>}
+                    {order.trackingNumber && <p>追蹤號：{order.trackingNumber}</p>}
+                    {order.shippedAt && <p>出貨日：{new Date(order.shippedAt).toLocaleDateString('zh-HK')}</p>}
+                  </div>
+                  <div className="mt-3">
+                    <Button size="sm" variant="outline" className="text-xs w-full sm:w-auto"
+                      onClick={() => { setSelectedOrder(order); setNote(order.adminNote ?? ''); setTrackingNumber(order.trackingNumber ?? ''); setShippingMethod(order.shippingMethod ?? 'sf_express'); }}>
+                      <Edit className="w-3 h-3 mr-1" />管理訂單
+                    </Button>
                   </div>
                 </div>
               </div>
-              <Button size="sm" variant="outline" onClick={() => { setSelectedOrder(order); setNote(order.adminNote ?? ""); setTrackingNumber(order.trackingNumber ?? ""); setShippingMethod(order.shippingMethod ?? "sf_express"); }}>
-                <Edit className="w-3 h-3 mr-1" />管理
-              </Button>
             </div>
           ))}
         </div>
@@ -1245,37 +1310,43 @@ function AlipayPendingTab() {
           <p>暫無待核對的支付寶 HK 訂單</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {orders.map((order: any) => (
-            <div key={order.id} className={`border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white text-gray-900 transition-colors ${selectedIds.has(order.id) ? "border-green-400 bg-green-50" : ""}`}>
-              <div className="flex items-start gap-3 flex-1">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(order.id)}
-                  onChange={() => toggleSelect(order.id)}
-                  className="w-4 h-4 mt-1 rounded border-gray-300 flex-shrink-0"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm font-medium">{order.orderNo}</span>
-                    <Badge className="bg-yellow-100 text-yellow-800">待核對</Badge>
-                    {order.shippingName && <span className="text-xs text-muted-foreground">買家：{order.shippingName}</span>}
-                  </div>
-                  <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
-                    <span className="font-medium text-foreground">HKD {parseFloat(order.subtotalHkd as string || "0").toFixed(2)}</span>
-                    <span>{new Date(order.createdAt).toLocaleString("zh-HK")}</span>
-                    {order.alipayProofImageUrl && (
-                      <a href={order.alipayProofImageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
-                        <Eye className="w-3 h-3" />查看截圖
-                      </a>
-                    )}
-                  </div>
+            <div key={order.id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              {/* Header bar */}
+              <div className={`flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0] ${selectedIds.has(order.id) ? 'ring-2 ring-green-400 ring-inset' : ''}`}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(order.id)}
+                    onChange={() => toggleSelect(order.id)}
+                    className="w-4 h-4 rounded border-gray-300 flex-shrink-0"
+                  />
+                  <span className="text-white text-sm font-semibold font-mono">{order.orderNo}</span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-200 text-yellow-900">待核對</span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-200 text-blue-900">支付寶 HK</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-white/80 text-xs">{new Date(order.createdAt).toLocaleDateString('zh-HK')}</span>
+                  <span className="text-yellow-300 text-xs font-semibold">HKD {parseFloat(order.subtotalHkd as string || '0').toFixed(2)}</span>
                 </div>
               </div>
-              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0"
-                onClick={() => { setSelectedOrder(order); setNote(""); }}>
-                <CheckCircle className="w-3 h-3 mr-1" />確認收款
-              </Button>
+              {/* Content */}
+              <div className="px-4 py-3 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex-1 space-y-0.5 text-xs text-gray-600">
+                  {order.shippingName && <p>買家：<span className="font-medium text-gray-900">{order.shippingName}</span></p>}
+                  {order.listingTitle && <p>商品：{order.listingTitle}</p>}
+                  {order.alipayProofImageUrl && (
+                    <a href={order.alipayProofImageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 mt-1">
+                      <Eye className="w-3 h-3" />查看付款截圖
+                    </a>
+                  )}
+                </div>
+                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0"
+                  onClick={() => { setSelectedOrder(order); setNote(""); }}>
+                  <CheckCircle className="w-3 h-3 mr-1" />確認收款
+                </Button>
+              </div>
             </div>
           ))}
         </div>
@@ -1600,46 +1671,54 @@ function SellersTab() {
       ) : sellers.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground"><Users className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無賣家申請</p></div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {sellers.map((seller: any) => (
-            <div key={seller.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white text-gray-900">
-              <div className="flex-1">
+            <div key={seller.id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              {/* Header bar */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium">{seller.displayName}</span>
-                  <Badge className={seller.isActive ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                    {seller.isActive ? "已批准" : "待審核"}
-                  </Badge>
-                  <Badge variant="outline" className={seller.stripeConnectStatus === "active" ? "bg-green-100 text-green-800" : seller.stripeConnectStatus === "pending" ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"}>
-                    Stripe: {seller.stripeConnectStatus}
-                  </Badge>
+                  <span className="text-white text-sm font-semibold">#{seller.id} · {seller.displayName}</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    seller.isActive ? 'bg-green-200 text-green-900' : 'bg-yellow-200 text-yellow-900'
+                  }`}>{seller.isActive ? '已批准' : '待審核'}</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    seller.stripeConnectStatus === 'active' ? 'bg-green-200 text-green-900' :
+                    seller.stripeConnectStatus === 'pending' ? 'bg-yellow-200 text-yellow-900' :
+                    'bg-red-200 text-red-900'
+                  }`}>Stripe: {seller.stripeConnectStatus}</span>
                 </div>
-                <div className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
-                  <span>總銷售: {seller.totalSales}</span>
-                  <span>評分: {seller.rating ?? "N/A"}</span>
-                  <span>申請: {new Date(seller.createdAt).toLocaleDateString("zh-HK")}</span>
-                </div>
-                {seller.rejectReason && (
-                  <div className="mt-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
-                    拒絕原因：{seller.rejectReason}
-                  </div>
-                )}
+                <span className="text-white/80 text-xs">申請：{new Date(seller.createdAt).toLocaleDateString('zh-HK')}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => setSelectedSellerId(seller.id)}>
-                  <Eye className="w-3 h-3 mr-1" />查看詳情
-                </Button>
-                {!seller.isActive ? (
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
-                    disabled={approveMutation.isPending}
-                    onClick={() => approveMutation.mutate({ sellerId: seller.id, approve: true })}>
-                    <CheckCircle className="w-3 h-3 mr-1" />批准
+              {/* Content */}
+              <div className="px-4 py-3 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-4 text-xs text-gray-600">
+                    <span>總銷售: <span className="font-medium text-gray-900">{seller.totalSales}</span></span>
+                    <span>評分: <span className="font-medium text-gray-900">{seller.rating ?? 'N/A'}</span></span>
+                  </div>
+                  {seller.rejectReason && (
+                    <div className="mt-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+                      拒絕原因：{seller.rejectReason}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="text-xs" onClick={() => setSelectedSellerId(seller.id)}>
+                    <Eye className="w-3 h-3 mr-1" />查看詳情
                   </Button>
-                ) : (
-                  <Button size="sm" variant="outline" className="text-red-600 border-red-300 hover:bg-red-50"
-                    onClick={() => { setRejectDialog({ open: true, sellerId: seller.id, sellerName: seller.displayName }); setRejectReason(""); }}>
-                    停用
-                  </Button>
-                )}
+                  {!seller.isActive ? (
+                    <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 text-white"
+                      disabled={approveMutation.isPending}
+                      onClick={() => approveMutation.mutate({ sellerId: seller.id, approve: true })}>
+                      <CheckCircle className="w-3 h-3 mr-1" />批准
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-300 hover:bg-red-50"
+                      onClick={() => { setRejectDialog({ open: true, sellerId: seller.id, sellerName: seller.displayName }); setRejectReason(""); }}>
+                      停用
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -1759,64 +1838,82 @@ function DisputesTab() {
             const priority = (order.disputePriority ?? "medium") as "high" | "medium" | "low";
             const pCfg = priorityConfig[priority];
             return (
-            <div key={order.id} className="border rounded-xl p-4 bg-red-50 border-red-200">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="font-mono text-xs text-muted-foreground">#{order.orderNo}</span>
-                    <span className="text-xs bg-red-100 text-red-700 border border-red-200 rounded-full px-2 py-0.5">爭議中</span>
-                    {/* Priority badge + toggle */}
-                    <div className="flex items-center gap-1">
-                      <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${pCfg.color}`}>優先級：{pCfg.label}</span>
-                      <div className="flex gap-0.5">
-                        {(["high", "medium", "low"] as const).map(p => (
-                          <button key={p} title={priorityConfig[p].label}
-                            disabled={setPriorityMutation.isPending}
-                            onClick={() => setPriorityMutation.mutate({ orderId: order.id, priority: p })}
-                            className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${
-                              priority === p ? `${priorityConfig[p].color} font-bold` : "border-gray-200 text-gray-400 hover:border-gray-400"
-                            }`}>
-                            {priorityConfig[p].label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+            <div key={order.id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              {/* Header bar */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-white text-sm font-semibold font-mono">{order.orderNo}</span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-200 text-red-900">爭議中</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    priority === 'high' ? 'bg-red-300 text-red-900' :
+                    priority === 'medium' ? 'bg-yellow-200 text-yellow-900' :
+                    'bg-green-200 text-green-900'
+                  }`}>優先級：{pCfg.label}</span>
+                  {/* Priority toggle buttons */}
+                  <div className="flex gap-0.5">
+                    {(["high", "medium", "low"] as const).map(p => (
+                      <button key={p} title={priorityConfig[p].label}
+                        disabled={setPriorityMutation.isPending}
+                        onClick={() => setPriorityMutation.mutate({ orderId: order.id, priority: p })}
+                        className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${
+                          priority === p ? 'bg-white text-[#06038d] font-bold border-white' : 'border-white/40 text-white/70 hover:border-white'
+                        }`}>
+                        {priorityConfig[p].label}
+                      </button>
+                    ))}
                   </div>
-                  <p className="font-medium text-sm">{order.listingTitle ?? "商品"}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)} · {order.paymentMethod}
-                  </p>
-                  <div className="flex items-center gap-3 mt-1">
-                    {order.buyerName && (
-                      <p className="text-xs text-muted-foreground">
-                        <span className="font-medium">買家：</span>{order.buyerName}
-                        {order.buyerEmail && <span className="ml-1 text-muted-foreground/70">({order.buyerEmail})</span>}
-                      </p>
-                    )}
-                  </div>
-                  {order.shippedAt && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      <span className="font-medium">出貨時間：</span>{new Date(order.shippedAt).toLocaleString("zh-HK")}
-                    </p>
-                  )}
+                </div>
+                <div className="flex items-center gap-3">
                   {order.disputeOpenedAt && (
-                    <p className="text-xs text-red-600 mt-1">
-                      <span className="font-medium">申請時間：</span>{new Date(order.disputeOpenedAt).toLocaleString("zh-HK")}
-                    </p>
+                    <span className="text-red-300 text-xs">申請：{new Date(order.disputeOpenedAt).toLocaleDateString('zh-HK')}</span>
                   )}
-                  {order.disputeReason && (
-                    <div className="mt-2 bg-white border border-red-200 rounded-lg p-2.5 text-xs text-gray-700">
-                      <span className="font-medium text-red-600">爭議原因：</span>{order.disputeReason}
-                    </div>
+                  <span className="text-yellow-300 text-xs font-semibold">HKD {parseFloat(order.subtotalHkd ?? '0').toFixed(2)}</span>
+                </div>
+              </div>
+              {/* Three-column content */}
+              <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 bg-white">
+                {/* Col 1: Product */}
+                <div className="px-4 py-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-1.5">商品資料</p>
+                  <p className="text-sm font-medium text-gray-900 line-clamp-2">{order.listingTitle ?? '商品'}</p>
+                  <div className="mt-1.5 space-y-0.5 text-xs text-gray-600">
+                    <p>金額：HKD {parseFloat(order.subtotalHkd ?? '0').toFixed(2)}</p>
+                    <p>付款：{order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</p>
+                    {order.shippedAt && <p>出貨：{new Date(order.shippedAt).toLocaleDateString('zh-HK')}</p>}
+                  </div>
+                </div>
+                {/* Col 2: Dispute reason */}
+                <div className="px-4 py-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-1.5">爭議詳情</p>
+                  {order.disputeReason ? (
+                    <p className="text-xs text-gray-700 line-clamp-4">{order.disputeReason}</p>
+                  ) : (
+                    <p className="text-xs text-gray-400">未提供原因</p>
+                  )}
+                  {order.buyerName && (
+                    <p className="text-xs text-gray-600 mt-2">
+                      買家：<span className="font-medium text-gray-900">{order.buyerName}</span>
+                      {order.buyerEmail && <span className="ml-1 text-gray-400">({order.buyerEmail})</span>}
+                    </p>
                   )}
                 </div>
-                <Button
-                  size="sm"
-                  className="bg-[#06038d] hover:bg-[#06038d]/90 text-white flex-shrink-0"
-                  onClick={() => { setSelectedDispute(order); setResolution(""); setOutcome("refund_buyer"); }}
-                >
-                  <Edit className="w-4 h-4 mr-1" />處理
-                </Button>
+                {/* Col 3: Actions */}
+                <div className="px-4 py-3 flex flex-col justify-between">
+                  <div className="space-y-0.5 text-xs text-gray-600">
+                    <p className="text-xs font-semibold text-gray-500 mb-1.5">賣家資料</p>
+                    <p>{order.sellerType === 'platform' ? '平台自有商品' : (order.sellerName ?? '不明')}</p>
+                    {order.trackingNumber && <p>追蹤號：{order.trackingNumber}</p>}
+                  </div>
+                  <div className="mt-3">
+                    <Button
+                      size="sm"
+                      className="text-xs w-full sm:w-auto bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+                      onClick={() => { setSelectedDispute(order); setResolution(""); setOutcome("refund_buyer"); }}
+                    >
+                      <Edit className="w-3 h-3 mr-1" />處理爭議
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
             );
