@@ -1,0 +1,9 @@
+{
+  "query": "\nSELECT \n  sp.id as seller_profile_id,\n  sp.userId,\n  sp.displayName,\n  sp.isActive,\n  sp.stripeConnectStatus,\n  mo.id as order_id,\n  mo.orderNo,\n  mo.sellerId as order_seller_id,\n  mo.orderStatus,\n  mo.sellerType\nFROM sellerProfiles sp\nLEFT JOIN marketplaceOrders mo ON mo.sellerId = sp.id\nWHERE mo.orderStatus IN ('processing', 'payment_received', 'paid_held')\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT \n  sp.id as seller_profile_id,\n  sp.userId,\n  sp.displayName,\n  sp.isActive,\n  sp.stripeConnectStatus,\n  mo.id as order_id,\n  mo.orderNo,\n  mo.sellerId as order_seller_id,\n  mo.orderStatus,\n  mo.sellerType\nFROM sellerProfiles sp\nLEFT JOIN marketplaceOrders mo ON mo.sellerId = sp.id\nWHERE mo.orderStatus IN ('processing', 'payment_received', 'paid_held')\nLIMIT 20;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1562
+}

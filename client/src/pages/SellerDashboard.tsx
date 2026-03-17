@@ -443,6 +443,9 @@ export default function SellerDashboard() {
     onError: (e) => toast.error(e.message),
   });
 
+  // ─── Listing filter state ─────────────────────────────────────────────────
+  const [listingFilter, setListingFilter] = useState<'all' | 'active' | 'sold' | 'removed' | 'pending_review'>('all');
+
   // ─── Edit / Deactivate / Batch state ─────────────────────────────────────
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
@@ -842,6 +845,60 @@ export default function SellerDashboard() {
               </BrandTabsList>
 
               <BrandTabsContent value="listings" className="mt-4">
+                {/* Listing Filter Sidebar + Content */}
+                {(() => {
+                  const filterCategories = [
+                    { key: 'all' as const, label: '全部', count: myListings?.length ?? 0 },
+                    { key: 'active' as const, label: '上架中', count: myListings?.filter((l: any) => l.status === 'active').length ?? 0 },
+                    { key: 'sold' as const, label: '已售出', count: myListings?.filter((l: any) => l.status === 'sold').length ?? 0 },
+                    { key: 'pending_review' as const, label: '審核中', count: myListings?.filter((l: any) => l.status === 'pending_review').length ?? 0 },
+                    { key: 'removed' as const, label: '已下架', count: myListings?.filter((l: any) => l.status === 'removed').length ?? 0 },
+                  ];
+                  const filteredListings = listingFilter === 'all'
+                    ? (myListings ?? [])
+                    : (myListings ?? []).filter((l: any) => l.status === listingFilter);
+                  return (
+                    <div className="flex gap-4">
+                      {/* Left Sidebar */}
+                      <div className="hidden sm:flex flex-col gap-1 w-32 flex-shrink-0">
+                        {filterCategories.map(cat => (
+                          <button
+                            key={cat.key}
+                            onClick={() => { setListingFilter(cat.key); setSelectedIds(new Set()); setBatchMode(false); }}
+                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                              listingFilter === cat.key
+                                ? 'bg-[#06038d] text-white shadow-sm'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            <span>{cat.label}</span>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                              listingFilter === cat.key ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                            }`}>{cat.count}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {/* Mobile: horizontal scroll tabs */}
+                      <div className="flex sm:hidden gap-2 overflow-x-auto pb-1 mb-2 w-full">
+                        {filterCategories.map(cat => (
+                          <button
+                            key={cat.key}
+                            onClick={() => { setListingFilter(cat.key); setSelectedIds(new Set()); setBatchMode(false); }}
+                            className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              listingFilter === cat.key
+                                ? 'bg-[#06038d] text-white'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}
+                          >
+                            {cat.label}
+                            <span className={`text-[10px] px-1 py-0.5 rounded-full ${
+                              listingFilter === cat.key ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'
+                            }`}>{cat.count}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {/* Main Content */}
+                      <div className="flex-1 min-w-0">
                 {!myListings?.length ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Package className="w-12 h-12 mx-auto mb-3" style={{color:'#06038D', opacity:0.4}} />
@@ -879,8 +936,8 @@ export default function SellerDashboard() {
                         {batchMode && (
                           <>
                             <Button size="sm" variant="outline" className="text-xs h-8" onClick={toggleSelectAll}>
-                              {selectedIds.size === myListings.length ? <CheckSquare className="w-3 h-3 mr-1" /> : <Square className="w-3 h-3 mr-1" />}
-                              {selectedIds.size === myListings.length ? "取消全選" : "全選"}
+                              {selectedIds.size === filteredListings.length ? <CheckSquare className="w-3 h-3 mr-1" /> : <Square className="w-3 h-3 mr-1" />}
+                              {selectedIds.size === filteredListings.length ? "取消全選" : "全選"}
                             </Button>
                             {selectedIds.size > 0 && (
                               <>
@@ -927,7 +984,12 @@ export default function SellerDashboard() {
                       </Button>
                     </div>
 
-                    {myListings.map((listing) => {
+                    {filteredListings.length === 0 ? (
+                      <div className="text-center py-10 text-gray-400">
+                        <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                        <p className="text-sm">此類別無商品</p>
+                      </div>
+                    ) : filteredListings.map((listing: any) => {
                       let coverImg: string | null = null;
                       try {
                         const imgs = listing.images ? JSON.parse(listing.images as string) : null;
@@ -1052,6 +1114,10 @@ export default function SellerDashboard() {
                     })}
                   </div>
                 )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </BrandTabsContent>
 
               <BrandTabsContent value="orders" className="mt-4">

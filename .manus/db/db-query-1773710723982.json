@@ -1,0 +1,30 @@
+{
+  "query": "\nSELECT mo.id, mo.orderNo, mo.sellerId, mo.orderStatus, mo.sellerType, sp.id as spId, sp.userId, sp.isActive\nFROM marketplaceOrders mo\nLEFT JOIN sellerProfiles sp ON sp.id = mo.sellerId\nWHERE mo.orderStatus IN ('processing', 'payment_received', 'paid_held', 'shipped')\nORDER BY mo.createdAt DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT mo.id, mo.orderNo, mo.sellerId, mo.orderStatus, mo.sellerType, sp.id as spId, sp.userId, sp.isActive\nFROM marketplaceOrders mo\nLEFT JOIN sellerProfiles sp ON sp.id = mo.sellerId\nWHERE mo.orderStatus IN ('processing', 'payment_received', 'paid_held', 'shipped')\nORDER BY mo.createdAt DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "id": "150001",
+      "orderNo": "BOXIUM-20260311-6785",
+      "sellerId": "NULL",
+      "orderStatus": "payment_received",
+      "sellerType": "platform",
+      "spId": "NULL",
+      "userId": "NULL",
+      "isActive": "NULL"
+    },
+    {
+      "id": "60002",
+      "orderNo": "BOXIUM-20260306-8982",
+      "sellerId": "NULL",
+      "orderStatus": "payment_received",
+      "sellerType": "platform",
+      "spId": "NULL",
+      "userId": "NULL",
+      "isActive": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torderNo\tsellerId\torderStatus\tsellerType\tspId\tuserId\tisActive\n150001\tBOXIUM-20260311-6785\tNULL\tpayment_received\tplatform\tNULL\tNULL\tNULL\n60002\tBOXIUM-20260306-8982\tNULL\tpayment_received\tplatform\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1572
+}

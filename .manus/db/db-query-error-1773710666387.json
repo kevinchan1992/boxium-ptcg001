@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  sp.id as seller_profile_id,\n  sp.user_id,\n  sp.display_name,\n  sp.is_active,\n  sp.stripe_connect_status,\n  mo.id as order_id,\n  mo.order_no,\n  mo.seller_id as order_seller_id,\n  mo.order_status,\n  mo.seller_type\nFROM seller_profiles sp\nLEFT JOIN marketplace_orders mo ON mo.seller_id = sp.id\nWHERE mo.order_status IN ('processing', 'payment_received', 'paid_held')\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT \n  sp.id as seller_profile_id,\n  sp.user_id,\n  sp.display_name,\n  sp.is_active,\n  sp.stripe_connect_status,\n  mo.id as order_id,\n  mo.order_no,\n  mo.seller_id as order_seller_id,\n  mo.order_status,\n  mo.seller_type\nFROM seller_profiles sp\nLEFT JOIN marketplace_orders mo ON mo.seller_id = sp.id\nWHERE mo.order_status IN ('processing', 'payment_received', 'paid_held')\nLIMIT 20;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 2: Table 'mua4eq38uvnrovhujbrepi.seller_profiles' doesn't exist"
+  ]
+}

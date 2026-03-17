@@ -1,0 +1,110 @@
+{
+  "query": "\nSELECT mo.id, mo.orderNo, mo.sellerId, mo.orderStatus, mo.sellerType, sp.id as spId, sp.userId, sp.isActive\nFROM marketplaceOrders mo\nLEFT JOIN sellerProfiles sp ON sp.id = mo.sellerId\nORDER BY mo.createdAt DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT mo.id, mo.orderNo, mo.sellerId, mo.orderStatus, mo.sellerType, sp.id as spId, sp.userId, sp.isActive\nFROM marketplaceOrders mo\nLEFT JOIN sellerProfiles sp ON sp.id = mo.sellerId\nORDER BY mo.createdAt DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "id": "150001",
+      "orderNo": "BOXIUM-20260311-6785",
+      "sellerId": "NULL",
+      "orderStatus": "payment_received",
+      "sellerType": "platform",
+      "spId": "NULL",
+      "userId": "NULL",
+      "isActive": "NULL"
+    },
+    {
+      "id": "120001",
+      "orderNo": "BOXIUM-20260310-9374",
+      "sellerId": "1",
+      "orderStatus": "cancelled",
+      "sellerType": "seller",
+      "spId": "1",
+      "userId": "8",
+      "isActive": "1"
+    },
+    {
+      "id": "90002",
+      "orderNo": "BOXIUM-20260309-7593",
+      "sellerId": "1",
+      "orderStatus": "cancelled",
+      "sellerType": "seller",
+      "spId": "1",
+      "userId": "8",
+      "isActive": "1"
+    },
+    {
+      "id": "90001",
+      "orderNo": "BOXIUM-20260309-3343",
+      "sellerId": "NULL",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "spId": "NULL",
+      "userId": "NULL",
+      "isActive": "NULL"
+    },
+    {
+      "id": "60002",
+      "orderNo": "BOXIUM-20260306-8982",
+      "sellerId": "NULL",
+      "orderStatus": "payment_received",
+      "sellerType": "platform",
+      "spId": "NULL",
+      "userId": "NULL",
+      "isActive": "NULL"
+    },
+    {
+      "id": "60001",
+      "orderNo": "BOXIUM-20260306-4268",
+      "sellerId": "NULL",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "spId": "NULL",
+      "userId": "NULL",
+      "isActive": "NULL"
+    },
+    {
+      "id": "30001",
+      "orderNo": "BOXIUM-20260305-8362",
+      "sellerId": "NULL",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "spId": "NULL",
+      "userId": "NULL",
+      "isActive": "NULL"
+    },
+    {
+      "id": "3",
+      "orderNo": "BOXIUM-20260303-6773",
+      "sellerId": "NULL",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "spId": "NULL",
+      "userId": "NULL",
+      "isActive": "NULL"
+    },
+    {
+      "id": "2",
+      "orderNo": "BOXIUM-20260303-7583",
+      "sellerId": "NULL",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "spId": "NULL",
+      "userId": "NULL",
+      "isActive": "NULL"
+    },
+    {
+      "id": "1",
+      "orderNo": "BOXIUM-20260303-2333",
+      "sellerId": "NULL",
+      "orderStatus": "cancelled",
+      "sellerType": "platform",
+      "spId": "NULL",
+      "userId": "NULL",
+      "isActive": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torderNo\tsellerId\torderStatus\tsellerType\tspId\tuserId\tisActive\n150001\tBOXIUM-20260311-6785\tNULL\tpayment_received\tplatform\tNULL\tNULL\tNULL\n120001\tBOXIUM-20260310-9374\t1\tcancelled\tseller\t1\t8\t1\n90002\tBOXIUM-20260309-7593\t1\tcancelled\tseller\t1\t8\t1\n90001\tBOXIUM-20260309-3343\tNULL\tcancelled\tplatform\tNULL\tNULL\tNULL\n60002\tBOXIUM-20260306-8982\tNULL\tpayment_received\tplatform\tNULL\tNULL\tNULL\n60001\tBOXIUM-20260306-4268\tNULL\tcancelled\tplatform\tNULL\tNULL\tNULL\n30001\tBOXIUM-20260305-8362\tNULL\tcancelled\tplatform\tNULL\tNULL\tNULL\n3\tBOXIUM-20260303-6773\tNULL\tcancelled\tplatform\tNULL\tNULL\tNULL\n2\tBOXIUM-20260303-7583\tNULL\tcancelled\tplatform\tNULL\tNULL\tNULL\n1\tBOXIUM-20260303-2333\tNULL\tcancelled\tplatform\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1501
+}

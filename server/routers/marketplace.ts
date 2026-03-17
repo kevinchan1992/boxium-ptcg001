@@ -758,10 +758,15 @@ export const marketplaceRouter = router({
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
-      // order.sellerId is sellerProfile.id, not user.id — must look up sellerProfile first
-      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
-      if (!sellerProfile || order.sellerId !== sellerProfile.id) throw new TRPCError({ code: "FORBIDDEN" });
-      if (!(["processing", "payment_received", "paid_held"].includes(order.orderStatus))) throw new TRPCError({ code: "BAD_REQUEST", message: "訂單狀態不允許此操作" });
+      // Admin can ship platform orders (sellerType='platform', sellerId=null)
+      if (ctx.user.role === 'admin' && order.sellerType === 'platform') {
+        // Admin is allowed — skip seller profile check
+      } else {
+        // order.sellerId is sellerProfile.id, not user.id — must look up sellerProfile first
+        const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+        if (!sellerProfile || order.sellerId !== sellerProfile.id) throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      if (!["processing", "payment_received", "paid_held"].includes(order.orderStatus)) throw new TRPCError({ code: "BAD_REQUEST", message: "訂單狀態不允許此操作" });
       // Set autoCompleteAt = 14 days from now
       const autoCompleteAt = new Date();
       autoCompleteAt.setDate(autoCompleteAt.getDate() + 14);

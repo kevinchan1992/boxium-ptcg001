@@ -4575,3 +4575,21 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] Research 頁面支援 URL ?q= 參數自動填入搜尋詞
 - [x] 撰寫 vitest 測試（12 個測試全部通過）
 
+
+---
+
+## ✅ 修復賣家頁面兩個問題
+
+### 問題 1：確認出貨 FORBIDDEN 錯誤
+- **根本原因**：`markOrderShipped` 的授權邏輯只檢查 `sellerProfile.id`，但平台訂單（`sellerType='platform'`）的 `sellerId` 是 `null`，導致 admin 用戶確認出貨時返回 FORBIDDEN
+- [x] 修復 `markOrderShipped`：admin 用戶處理平台訂單時跳過 sellerProfile 比對
+- [x] TypeScript 0 errors
+
+### 問題 2：「我的商品」頁面加入左側分類篩選欄
+- [x] 加入 `listingFilter` state（all / active / sold / pending_review / removed）
+- [x] 電腦版：左側垂直篩選欄（顯示各類別數量徽章）
+- [x] 手機版：頂部橫向捲動標籤列
+- [x] 篩選後的商品列表使用 `filteredListings`
+- [x] 切換分類時自動清除批量選取狀態
+- [x] TypeScript 0 errors
+- [x] 保存 checkpoint
