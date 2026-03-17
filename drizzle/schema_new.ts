@@ -852,6 +852,8 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   paymentReminderSentAt: timestamp("paymentReminderSentAt"), // tracks when 12-hour payment reminder was sent
   payoutStatus: mysqlEnum("payoutStatus", ["not_applicable", "pending", "processing", "completed", "paid", "failed"]).default("pending").notNull(),
   stripeTransferError: text("stripeTransferError"),
+  manualPayoutAt: timestamp("manualPayoutAt"), // For alipay_hk orders: when admin manually paid out
+  manualPayoutNote: varchar("manualPayoutNote", { length: 500 }), // Admin note for manual payout
   paymentExpiresAt: timestamp("paymentExpiresAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),

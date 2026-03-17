@@ -1202,6 +1202,93 @@ export const marketplaceRouter = router({
       return { results, successCount, failCount: results.length - successCount };
     }),
 
+  // Manual payout for alipay_hk orders (record offline bank transfer)
+  adminManualPayout: adminProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      note: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
+      if (order.sellerType !== 'seller') throw new TRPCError({ code: "BAD_REQUEST", message: "平台自有商品無需放款" });
+      await updateMarketplaceOrder(input.orderId, {
+        payoutStatus: "paid",
+        manualPayoutAt: new Date(),
+        manualPayoutNote: input.note ?? "管理員手動標記已放款",
+      });
+      // Notify seller of payout
+      if (order.sellerId) {
+        const sellerProf = await getSellerProfileById(order.sellerId);
+        if (sellerProf?.userId) {
+          await createNotification({
+            userId: sellerProf.userId,
+            type: "trade",
+            title: "款項已放款 💰",
+            body: `訂單 ${order.orderNo} 的款項 HKD ${parseFloat(order.sellerReceivableHkd as string).toFixed(2)} 已由管理員手動放款。${input.note ? `備註：${input.note}` : ""}`,
+            linkUrl: "/seller",
+          }).catch(() => {});
+        }
+      }
+      return { success: true, message: "已標記為手動放款" };
+    }),
+
+  // Query Stripe Transfer status for a specific order
+  adminGetStripeTransferStatus: adminProcedure
+    .input(z.object({ orderId: z.number().int() }))
+    .query(async ({ input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      // If already has a transfer ID, fetch it from Stripe
+      if (order.stripeTransferId) {
+        try {
+          const Stripe = (await import("stripe")).default;
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+          const transfer = await stripe.transfers.retrieve(order.stripeTransferId);
+          return {
+            status: "completed" as const,
+            transferId: transfer.id,
+            amount: transfer.amount / 100,
+            currency: transfer.currency.toUpperCase(),
+            created: new Date(transfer.created * 1000).toISOString(),
+            destination: typeof transfer.destination === 'string' ? transfer.destination : (transfer.destination as any)?.id,
+            reversals: transfer.reversals?.data?.length ?? 0,
+            reversed: transfer.reversed,
+          };
+        } catch (err: any) {
+          return { status: "fetch_error" as const, error: err.message, transferId: order.stripeTransferId };
+        }
+      }
+      // No transfer yet - diagnose why
+      const reasons: string[] = [];
+      if (order.paymentMethod !== 'stripe') {
+        return { status: "not_applicable" as const, reason: "非 Stripe 付款訂單" };
+      }
+      if (order.sellerType === 'platform') {
+        return { status: "not_applicable" as const, reason: "平台自有商品，無需放款給賣家" };
+      }
+      if (order.orderStatus !== 'completed') {
+        reasons.push(`訂單尚未完成（目前狀態：${order.orderStatus}）`);
+      }
+      if (order.payoutStatus === 'failed') {
+        reasons.push(`放款失敗：${order.stripeTransferError ?? '未知原因'}`);
+      }
+      if (order.sellerId) {
+        const sellerProf = await getSellerProfileById(order.sellerId);
+        if (!sellerProf?.stripeConnectId) reasons.push("賣家尚未設定 Stripe Connect 帳戶");
+        else if (sellerProf.stripeConnectStatus !== 'active') reasons.push(`賣家 Stripe Connect 狀態：${sellerProf.stripeConnectStatus ?? '未啟用'}`);
+      } else {
+        reasons.push("找不到賣家資料");
+      }
+      if (!order.stripePaymentIntentId) reasons.push("缺少 Stripe Payment Intent ID");
+      return {
+        status: "pending" as const,
+        payoutStatus: order.payoutStatus,
+        reasons: reasons.length > 0 ? reasons : ["等待訂單完成後自動放款"],
+        stripeTransferError: order.stripeTransferError,
+      };
+    }),
+
   adminUpdateOrderStatus: adminProcedure
     .input(z.object({
       orderId: z.number().int(),

@@ -2293,8 +2293,226 @@ const payoutStatusBadge: Record<string, { label: string; color: string }> = {
   pending: { label: "待放款", color: "bg-yellow-100 text-yellow-800" },
   processing: { label: "處理中", color: "bg-blue-100 text-blue-800" },
   paid: { label: "已放款", color: "bg-green-100 text-green-800" },
+  completed: { label: "已放款", color: "bg-green-100 text-green-800" },
   failed: { label: "放款失敗", color: "bg-red-100 text-red-800" },
+  not_applicable: { label: "不適用", color: "bg-gray-100 text-gray-500" },
 };
+
+// Individual payout order card with Stripe transfer status and manual payout
+function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () => void }) {
+  const [showStripeStatus, setShowStripeStatus] = useState(false);
+  const [showManualPayoutDialog, setShowManualPayoutDialog] = useState(false);
+  const [manualNote, setManualNote] = useState('');
+  const utils = trpc.useUtils();
+
+  const stripeStatusQuery = trpc.marketplace.adminGetStripeTransferStatus.useQuery(
+    { orderId: o.id },
+    { enabled: showStripeStatus && o.paymentMethod === 'stripe' && o.sellerType === 'seller' }
+  );
+
+  const manualPayoutMutation = trpc.marketplace.adminManualPayout.useMutation({
+    onSuccess: () => {
+      setShowManualPayoutDialog(false);
+      setManualNote('');
+      onRefresh();
+    },
+  });
+
+  const payout = payoutStatusBadge[o.payoutStatus ?? 'pending'] ?? payoutStatusBadge.pending;
+  const sellerReceivable = Number(o.sellerReceivableHkd ?? 0);
+  const subtotal = Number(o.subtotalHkd ?? 0);
+  const platformFee = Number(o.platformFeeHkd ?? 0);
+  const isPlatform = o.sellerType === 'platform';
+  const isAlipay = o.paymentMethod === 'alipay_hk';
+  const isStripe = o.paymentMethod === 'stripe';
+  const isAlreadyPaid = o.payoutStatus === 'paid' || o.payoutStatus === 'completed';
+
+  return (
+    <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Order Header */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
+        <div className="flex items-center gap-3">
+          <span className="text-white text-sm font-semibold">#{o.orderNo}</span>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${payout.color}`}>{payout.label}</span>
+          {isAlipay && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-200 text-blue-900 font-medium">支付寶 HK</span>}
+          {isStripe && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-200 text-purple-900 font-medium">Stripe</span>}
+          {isPlatform && <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 font-medium">平台商品</span>}
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-white/70">{new Date(o.createdAt).toLocaleDateString('zh-HK')}</span>
+          <span className="text-sm text-yellow-300 font-bold">賣家應收：HKD {sellerReceivable.toFixed(2)}</span>
+        </div>
+      </div>
+      {/* Order Body */}
+      <div className="p-4 bg-white grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Product Info */}
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">商品資料</p>
+          <p className="text-sm font-medium text-gray-800">{o.listingTitle ?? '（平台商品）'}</p>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+            <span>數量：{o.quantity ?? 1}</span>
+            <span>單價：HKD {Number(o.unitPriceHkd ?? 0).toFixed(2)}</span>
+            <span>小計：HKD {subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+            {isPlatform ? (
+              <span className="text-gray-400">平台商品免手續費</span>
+            ) : (
+              <span>手續費：HKD {platformFee.toFixed(2)}</span>
+            )}
+            <span className="text-[#06038d] font-medium">賣家淨收：HKD {sellerReceivable.toFixed(2)}</span>
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mt-1">
+            <span>付款方式：{isStripe ? 'Stripe 信用卡' : isAlipay ? '支付寶 HK' : o.paymentMethod ?? '-'}</span>
+            {o.stripePaymentIntentId && <span className="text-gray-400">PI: {o.stripePaymentIntentId.slice(0, 20)}...</span>}
+            {o.stripeTransferId && <span className="text-green-600">Transfer: {o.stripeTransferId.slice(0, 20)}...</span>}
+          </div>
+        </div>
+        {/* Buyer Info */}
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">買家資料</p>
+          <p className="text-sm font-medium text-gray-800">{o.buyerName ?? `用戶 #${o.buyerId}`}</p>
+          {o.buyerEmail && <p className="text-xs text-gray-500">{o.buyerEmail}</p>}
+          {o.buyerPhone && <p className="text-xs text-gray-500">{o.buyerPhone}</p>}
+          {o.shippingName && (
+            <div className="mt-2 text-xs text-gray-500 space-y-0.5">
+              <p className="font-medium text-gray-600">收件資料：</p>
+              <p>{o.shippingName}{o.shippingPhone ? ` · ${o.shippingPhone}` : ''}</p>
+              {o.shippingAddress && (() => {
+                try {
+                  const addr = typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : o.shippingAddress;
+                  if (addr && typeof addr === 'object') {
+                    return <p>{[addr.address, addr.district, addr.region].filter(Boolean).join(', ')}</p>;
+                  }
+                  return <p>{o.shippingAddress}</p>;
+                } catch { return <p>{o.shippingAddress}</p>; }
+              })()}
+            </div>
+          )}
+        </div>
+        {/* Seller Info + Payout Actions */}
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">賣家資料</p>
+          {isPlatform ? (
+            <p className="text-sm font-medium text-gray-800">平台自有商品</p>
+          ) : (
+            <>
+              <p className="text-sm font-medium text-gray-800">{o.sellerDisplayName ?? `賣家 #${o.sellerId}`}</p>
+              {o.sellerUserName && o.sellerUserName !== o.sellerDisplayName && (
+                <p className="text-xs text-gray-500">真實姓名：{o.sellerUserName}</p>
+              )}
+              {o.sellerUserEmail && <p className="text-xs text-gray-500">{o.sellerUserEmail}</p>}
+              {o.sellerUserPhone && <p className="text-xs text-gray-500">{o.sellerUserPhone}</p>}
+              {o.sellerStripeConnectId && (
+                <p className="text-xs text-gray-400 mt-1">Stripe Connect: {o.sellerStripeConnectId.slice(0, 20)}...</p>
+              )}
+              <span className={`text-xs px-1.5 py-0.5 rounded ${o.sellerStripeConnectStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                {o.sellerStripeConnectStatus ?? '未設定'}
+              </span>
+            </>
+          )}
+          {/* Shipping info */}
+          {o.trackingNumber && (
+            <div className="mt-2 text-xs text-gray-500">
+              <p>物流：{o.shippingMethod ?? '-'}</p>
+              <p>追蹤號：{o.trackingNumber}</p>
+              {o.shippedAt && <p>出貨日：{new Date(o.shippedAt).toLocaleDateString('zh-HK')}</p>}
+            </div>
+          )}
+          {/* Payout action buttons */}
+          {!isPlatform && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {/* Manual payout for alipay_hk */}
+              {isAlipay && !isAlreadyPaid && (
+                <Button size="sm" variant="outline" className="text-xs border-green-500 text-green-700 hover:bg-green-50"
+                  onClick={() => setShowManualPayoutDialog(true)}>
+                  💰 手動標記已放款
+                </Button>
+              )}
+              {/* Manual payout record for alipay already paid */}
+              {isAlipay && isAlreadyPaid && o.manualPayoutAt && (
+                <div className="text-xs text-green-700 bg-green-50 rounded px-2 py-1">
+                  ✅ 已手動放款：{new Date(o.manualPayoutAt).toLocaleDateString('zh-HK')}
+                  {o.manualPayoutNote && <span className="ml-1 text-gray-500">({o.manualPayoutNote})</span>}
+                </div>
+              )}
+              {/* Stripe transfer status button */}
+              {isStripe && (
+                <Button size="sm" variant="outline" className="text-xs border-purple-400 text-purple-700 hover:bg-purple-50"
+                  onClick={() => setShowStripeStatus(s => !s)}>
+                  {showStripeStatus ? '隱藏' : '查看'} Stripe 放款狀態
+                </Button>
+              )}
+            </div>
+          )}
+          {/* Stripe transfer status panel */}
+          {showStripeStatus && isStripe && (
+            <div className="mt-2 rounded-lg border border-purple-200 bg-purple-50 p-3 text-xs">
+              {stripeStatusQuery.isLoading ? (
+                <div className="flex items-center gap-2 text-purple-600"><Loader2 className="w-3 h-3 animate-spin" /> 查詢 Stripe 放款狀態中...</div>
+              ) : stripeStatusQuery.data ? (() => {
+                const s = stripeStatusQuery.data;
+                if (s.status === 'completed') return (
+                  <div className="space-y-1">
+                    <p className="font-semibold text-green-700">✅ Stripe 放款已完成</p>
+                    <p className="text-gray-600">Transfer ID: {(s as any).transferId}</p>
+                    <p className="text-gray-600">金額：{(s as any).currency} {Number((s as any).amount).toFixed(2)}</p>
+                    <p className="text-gray-600">放款日期：{new Date((s as any).created).toLocaleString('zh-HK')}</p>
+                    <p className="text-gray-600">目標帳戶：{(s as any).destination}</p>
+                    {(s as any).reversed && <p className="text-red-600">⚠️ 此 Transfer 已被撤銷</p>}
+                  </div>
+                );
+                if (s.status === 'pending') return (
+                  <div className="space-y-1">
+                    <p className="font-semibold text-yellow-700">⏳ 尚未放款</p>
+                    {(s as any).reasons?.map((r: string, i: number) => (
+                      <p key={i} className="text-gray-600">• {r}</p>
+                    ))}
+                    {(s as any).stripeTransferError && (
+                      <p className="text-red-600 mt-1">錯誤詳情：{(s as any).stripeTransferError}</p>
+                    )}
+                  </div>
+                );
+                if (s.status === 'not_applicable') return (
+                  <p className="text-gray-500">{(s as any).reason}</p>
+                );
+                if (s.status === 'fetch_error') return (
+                  <div>
+                    <p className="font-semibold text-red-700">❌ 查詢失敗</p>
+                    <p className="text-gray-600">Transfer ID: {(s as any).transferId}</p>
+                    <p className="text-red-600">{(s as any).error}</p>
+                  </div>
+                );
+                return null;
+              })() : null}
+            </div>
+          )}
+          {/* Manual payout dialog */}
+          {showManualPayoutDialog && (
+            <div className="mt-2 rounded-lg border border-green-300 bg-green-50 p-3 space-y-2">
+              <p className="text-xs font-semibold text-green-800">手動標記已放款</p>
+              <p className="text-xs text-gray-600">賣家應收：HKD {sellerReceivable.toFixed(2)}</p>
+              <input
+                className="w-full text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-green-400"
+                placeholder="備注（例如：已轉帳至 FPS 12345678）"
+                value={manualNote}
+                onChange={e => setManualNote(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 text-white"
+                  disabled={manualPayoutMutation.isPending}
+                  onClick={() => manualPayoutMutation.mutate({ orderId: o.id, note: manualNote || undefined })}>
+                  {manualPayoutMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : '確認放款'}
+                </Button>
+                <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowManualPayoutDialog(false)}>取消</Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function PayoutsTab() {
   const [page, setPage] = useState(1);
@@ -2392,101 +2610,9 @@ function PayoutsTab() {
         <div className="text-center py-12 text-gray-400">暫無已完成訂單</div>
       ) : (
         <div className="space-y-3">
-          {data.orders.map((o: any) => {
-            const payout = payoutStatusBadge[o.payoutStatus ?? 'pending'] ?? payoutStatusBadge.pending;
-            const sellerReceivable = Number(o.sellerReceivableHkd ?? 0);
-            const subtotal = Number(o.subtotalHkd ?? 0);
-            const platformFee = Number(o.platformFeeHkd ?? 0);
-            return (
-              <div key={o.id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                {/* Order Header */}
-                <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
-                  <div className="flex items-center gap-3">
-                    <span className="text-white text-sm font-semibold">#{o.orderNo}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${payout.color}`}>{payout.label}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-white/70">{new Date(o.createdAt).toLocaleDateString('zh-HK')}</span>
-                    <span className="text-sm text-yellow-300 font-bold">賣家應收：HKD {sellerReceivable.toFixed(2)}</span>
-                  </div>
-                </div>
-                {/* Order Body */}
-                <div className="p-4 bg-white grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  {/* Product Info */}
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">商品資料</p>
-                    <p className="text-sm font-medium text-gray-800">{o.listingTitle ?? '（平台商品）'}</p>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
-                      <span>數量：{o.quantity ?? 1}</span>
-                      <span>單價：HKD {Number(o.unitPriceHkd ?? 0).toFixed(2)}</span>
-                      <span>小計：HKD {subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
-                      <span>手續費：HKD {platformFee.toFixed(2)}</span>
-                      <span className="text-[#06038d] font-medium">賣家淨收：HKD {sellerReceivable.toFixed(2)}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mt-1">
-                      <span>付款方式：{o.paymentMethod === 'stripe' ? 'Stripe 信用卡' : o.paymentMethod === 'alipay_hk' ? '支付寶 HK' : o.paymentMethod ?? '-'}</span>
-                      {o.stripePaymentIntentId && <span className="text-gray-400">PI: {o.stripePaymentIntentId.slice(0, 20)}...</span>}
-                      {o.stripeTransferId && <span className="text-green-600">Transfer: {o.stripeTransferId.slice(0, 20)}...</span>}
-                    </div>
-                  </div>
-                  {/* Buyer Info */}
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">買家資料</p>
-                    <p className="text-sm font-medium text-gray-800">{o.buyerName ?? `用戶 #${o.buyerId}`}</p>
-                    {o.buyerEmail && <p className="text-xs text-gray-500">{o.buyerEmail}</p>}
-                    {o.buyerPhone && <p className="text-xs text-gray-500">{o.buyerPhone}</p>}
-                    {o.shippingName && (
-                      <div className="mt-2 text-xs text-gray-500 space-y-0.5">
-                        <p className="font-medium text-gray-600">收件資料：</p>
-                        <p>{o.shippingName}{o.shippingPhone ? ` · ${o.shippingPhone}` : ''}</p>
-                        {o.shippingAddress && (() => {
-                          try {
-                            const addr = typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : o.shippingAddress;
-                            if (addr && typeof addr === 'object') {
-                              return <p>{[addr.address, addr.district, addr.region].filter(Boolean).join(', ')}</p>;
-                            }
-                            return <p>{o.shippingAddress}</p>;
-                          } catch { return <p>{o.shippingAddress}</p>; }
-                        })()}
-                      </div>
-                    )}
-                  </div>
-                  {/* Seller Info */}
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">賣家資料</p>
-                    {o.sellerType === 'platform' ? (
-                      <p className="text-sm font-medium text-gray-800">平台自有商品</p>
-                    ) : (
-                      <>
-                        <p className="text-sm font-medium text-gray-800">{o.sellerDisplayName ?? `賣家 #${o.sellerId}`}</p>
-                        {o.sellerUserName && o.sellerUserName !== o.sellerDisplayName && (
-                          <p className="text-xs text-gray-500">真實姓名：{o.sellerUserName}</p>
-                        )}
-                        {o.sellerUserEmail && <p className="text-xs text-gray-500">{o.sellerUserEmail}</p>}
-                        {o.sellerUserPhone && <p className="text-xs text-gray-500">{o.sellerUserPhone}</p>}
-                        {o.sellerStripeConnectId && (
-                          <p className="text-xs text-gray-400 mt-1">Stripe Connect: {o.sellerStripeConnectId.slice(0, 20)}...</p>
-                        )}
-                        <span className={`text-xs px-1.5 py-0.5 rounded ${o.sellerStripeConnectStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                          {o.sellerStripeConnectStatus ?? '未設定'}
-                        </span>
-                      </>
-                    )}
-                    {/* Shipping info */}
-                    {o.trackingNumber && (
-                      <div className="mt-2 text-xs text-gray-500">
-                        <p>物流：{o.shippingMethod ?? '-'}</p>
-                        <p>追蹤號：{o.trackingNumber}</p>
-                        {o.shippedAt && <p>出貨日：{new Date(o.shippedAt).toLocaleDateString('zh-HK')}</p>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {data.orders.map((o: any) => (
+            <PayoutOrderCard key={o.id} order={o} onRefresh={() => utils.marketplace.adminGetOrders.invalidate()} />
+          ))}
           <div className="flex justify-between items-center pt-2">
             <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
             <span className="text-xs text-gray-500">第 {page} 頁 · 共 {data.total} 筆</span>
