@@ -4663,3 +4663,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 加入格式感知的前綴匹配（hyphen/promo/space 三種格式）
 - [x] 卡號前綴優先匹配 `cardNumber` 欄位，避免污染名稱搜尋
 - [x] 62 個 vitest 測試全部通過
+
+---
+## 🏗️ 管理後台三項新功能（2026-03-17）
+- [x] 放款管理 CSV 匹出：後端 adminExportPayoutsCsv API（欄位：訂單號、賣家、金額、放款日期、備注）
+- [x] 放款管理 CSV 匹出：前端「匹出放款記錄」按鈕 + 月份選擇器，觸發下載
+- [x] 批量放款截圖上傳：後端 adminBatchManualPayout 支援接收 proofUrl
+- [x] 批量放款截圖上傳：前端批量確認面板加入圖片上傳（上傳至 S3 後共用同一張截圖）
+- [x] 爭議管理徽章：後端 getMarketplaceStats 加入 unresolvedDisputeCount
+- [x] 爭議管理徽章：前端左側選單「爭議處理」項目旁顯示紅色數字徽章

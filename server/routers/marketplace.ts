@@ -28,8 +28,8 @@ import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
 import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail } from "../emailService";
-import { marketplaceListings, offers, listingReports, marketplaceOrders } from "../../drizzle/schema_new";
-import { eq, and } from "drizzle-orm";
+import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users } from "../../drizzle/schema_new";
+import { eq, and, isNotNull, desc, sql } from 'drizzle-orm';
 
 // Platform fee rate (5% for C2C listings only)
 const PLATFORM_FEE_RATE = 0.05;
@@ -1251,6 +1251,7 @@ export const marketplaceRouter = router({
     .input(z.object({
       orderIds: z.array(z.number().int()).min(1).max(50),
       note: z.string().optional(),
+      proofUrl: z.string().url().optional(), // Shared proof screenshot for all orders in batch
     }))
     .mutation(async ({ input }) => {
       const results: { orderId: number; orderNo: string; success: boolean; error?: string }[] = [];
@@ -1260,11 +1261,13 @@ export const marketplaceRouter = router({
           if (!order) { results.push({ orderId, orderNo: '', success: false, error: '訂單不存在' }); continue; }
           if (order.paymentMethod !== 'alipay_hk') { results.push({ orderId, orderNo: order.orderNo ?? '', success: false, error: '非支付寶 HK 訂單' }); continue; }
           if (order.payoutStatus === 'paid') { results.push({ orderId, orderNo: order.orderNo ?? '', success: false, error: '已放款' }); continue; }
-          await updateMarketplaceOrder(orderId, {
+          const batchUpdateData: Record<string, any> = {
             payoutStatus: "paid",
             manualPayoutAt: new Date(),
             manualPayoutNote: input.note ?? "管理員批量標記已放款",
-          });
+          };
+          if (input.proofUrl) batchUpdateData.manualPayoutProofUrl = input.proofUrl;
+          await updateMarketplaceOrder(orderId, batchUpdateData);
           // Notify seller (C2C only)
           if (order.sellerId && order.sellerType === 'seller') {
             const sellerProf = await getSellerProfileById(order.sellerId);
@@ -2184,6 +2187,63 @@ All three checks must pass for verified to be true. Respond with JSON only match
     }))
     .query(async ({ input }) => {
       return getDisputedOrders(input.page, input.pageSize, input.search);
+    }),
+
+  // Export payout records as CSV
+  adminExportPayoutsCsv: adminProcedure
+    .input(z.object({
+      month: z.string().optional(), // 'YYYY-MM' format, defaults to current month
+      paymentMethod: z.enum(['all', 'alipay_hk', 'stripe']).default('all'),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { alias } = await import('drizzle-orm/mysql-core');
+      const sellerAlias = alias(users, 'sellerAlias');
+      // Determine date range
+      let fromDate: Date;
+      let toDate: Date;
+      if (input.month) {
+        const [year, mon] = input.month.split('-').map(Number);
+        fromDate = new Date(year, mon - 1, 1);
+        toDate = new Date(year, mon, 1);
+      } else {
+        const now = new Date();
+        fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        toDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      }
+      const conditions: any[] = [
+        eq(marketplaceOrders.payoutStatus, 'paid'),
+        isNotNull(marketplaceOrders.manualPayoutAt),
+        sql`${marketplaceOrders.manualPayoutAt} >= ${fromDate}`,
+        sql`${marketplaceOrders.manualPayoutAt} < ${toDate}`,
+      ];
+      if (input.paymentMethod !== 'all') {
+        conditions.push(eq(marketplaceOrders.paymentMethod, input.paymentMethod as any));
+      }
+      const rows = await db.select({
+        orderNo: marketplaceOrders.orderNo,
+        sellerDisplayName: sellerProfiles.displayName,
+        sellerUserName: sellerAlias.name,
+        sellerReceivableHkd: marketplaceOrders.sellerReceivableHkd,
+        paymentMethod: marketplaceOrders.paymentMethod,
+        manualPayoutAt: marketplaceOrders.manualPayoutAt,
+        manualPayoutNote: marketplaceOrders.manualPayoutNote,
+        manualPayoutProofUrl: marketplaceOrders.manualPayoutProofUrl,
+      }).from(marketplaceOrders)
+        .leftJoin(sellerProfiles, eq(marketplaceOrders.sellerId, sellerProfiles.id))
+        .leftJoin(sellerAlias, eq(sellerProfiles.userId, sellerAlias.id))
+        .where(and(...conditions))
+        .orderBy(desc(marketplaceOrders.manualPayoutAt));
+      return rows.map(r => ({
+        orderNo: r.orderNo ?? '',
+        sellerName: r.sellerDisplayName ?? r.sellerUserName ?? '平台',
+        amountHkd: parseFloat(r.sellerReceivableHkd as string ?? '0').toFixed(2),
+        paymentMethod: r.paymentMethod === 'alipay_hk' ? '支付寶 HK' : 'Stripe',
+        payoutDate: r.manualPayoutAt ? new Date(r.manualPayoutAt).toLocaleDateString('zh-HK') : '',
+        note: r.manualPayoutNote ?? '',
+        proofUrl: r.manualPayoutProofUrl ?? '',
+      }));
     }),
 
   // ============================================================

@@ -2841,6 +2841,20 @@ function PayoutsTab() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batchNote, setBatchNote] = useState('');
   const [showBatchDialog, setShowBatchDialog] = useState(false);
+  const [batchProofFile, setBatchProofFile] = useState<File | null>(null);
+  const [batchProofPreview, setBatchProofPreview] = useState<string | null>(null);
+  const [isUploadingProof, setIsUploadingProof] = useState(false);
+  const batchProofInputRef = useRef<HTMLInputElement>(null);
+  // CSV export state
+  const [exportMonth, setExportMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [showExportPanel, setShowExportPanel] = useState(false);
+  const exportQuery = trpc.marketplace.adminExportPayoutsCsv.useQuery(
+    { month: exportMonth, paymentMethod: 'all' },
+    { enabled: false }
+  );
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.marketplace.adminGetOrders.useQuery({
     page, pageSize: 20,
@@ -2850,14 +2864,67 @@ function PayoutsTab() {
   });
   const batchPayoutMutation = trpc.marketplace.adminBatchManualPayout.useMutation({
     onSuccess: (result) => {
-      alert(`批量放款完成：${result.successCount}/${result.totalCount} 筆成功`);
+      toast.success(`批量放款完成：${result.successCount}/${result.totalCount} 筆成功`);
       setSelectedIds(new Set());
       setShowBatchDialog(false);
       setBatchNote('');
+      setBatchProofFile(null);
+      setBatchProofPreview(null);
       utils.marketplace.adminGetOrders.invalidate();
     },
-    onError: (err) => alert('批量放款失敗：' + err.message),
+    onError: (err) => toast.error('批量放款失敗：' + err.message),
   });
+
+  const handleBatchProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBatchProofFile(file);
+    const reader = new FileReader();
+    reader.onload = ev => setBatchProofPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleBatchPayout = async () => {
+    let proofUrl: string | undefined;
+    if (batchProofFile) {
+      setIsUploadingProof(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', batchProofFile);
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error('上傳失敗');
+        const data = await res.json();
+        proofUrl = data.url;
+      } catch (err: any) {
+        toast.error('截圖上傳失敗：' + err.message);
+        setIsUploadingProof(false);
+        return;
+      }
+      setIsUploadingProof(false);
+    }
+    batchPayoutMutation.mutate({ orderIds: Array.from(selectedIds), note: batchNote || undefined, proofUrl });
+  };
+
+  const handleExportMonthCsv = async () => {
+    try {
+      const result = await utils.marketplace.adminExportPayoutsCsv.fetch({ month: exportMonth, paymentMethod: 'all' });
+      if (!result.length) { toast.info('本月無放款記錄'); return; }
+      const rows = result.map(r => ({
+        '訂單號': r.orderNo,
+        '賣家': r.sellerName,
+        '付款方式': r.paymentMethod,
+        '放款金額 (HKD)': r.amountHkd,
+        '放款日期': r.payoutDate,
+        '備注': r.note,
+        '截圖連結': r.proofUrl,
+      }));
+      exportToCSV(rows, `放款記錄_${exportMonth}.csv`);
+      toast.success(`已匯出 ${result.length} 筆放款記錄`);
+      setShowExportPanel(false);
+    } catch (err: any) {
+      toast.error('匯出失敗：' + err.message);
+    }
+  };
 
   // Alipay pending orders on current page (for select all)
   const pendingAlipayOrders = (data?.orders ?? []).filter(
@@ -2939,6 +3006,15 @@ function PayoutsTab() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Export monthly payout CSV */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs text-green-700 border-green-300 bg-white hover:bg-green-50"
+            onClick={() => setShowExportPanel(v => !v)}
+          >
+            <Download className="w-3.5 h-3.5 mr-1" />匯出放款記錄
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -2982,6 +3058,31 @@ function PayoutsTab() {
           </Button>
         </div>
       </div>
+
+      {/* Export panel */}
+      {showExportPanel && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex flex-wrap items-end gap-3">
+          <div>
+            <p className="text-xs font-semibold text-green-800 mb-1">匯出放款記錄 CSV</p>
+            <p className="text-xs text-gray-500 mb-2">欄位：訂單號、賣家、付款方式、放款金額、放款日期、備注、截圖連結</p>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-600">月份：</label>
+              <input
+                type="month"
+                value={exportMonth}
+                onChange={e => setExportMonth(e.target.value)}
+                className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-900 focus:outline-none focus:border-green-400"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 text-white" onClick={handleExportMonthCsv}>
+              <Download className="w-3 h-3 mr-1" />下載 CSV
+            </Button>
+            <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => setShowExportPanel(false)}>取消</Button>
+          </div>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
@@ -3041,16 +3142,44 @@ function PayoutsTab() {
             value={batchNote}
             onChange={e => setBatchNote(e.target.value)}
           />
+          {/* Proof screenshot upload */}
+          <div>
+            <p className="text-xs font-medium text-gray-700 mb-1.5">付款截圖（可選，所有訂單共用同一張）</p>
+            <input
+              ref={batchProofInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleBatchProofChange}
+            />
+            {batchProofPreview ? (
+              <div className="relative inline-block">
+                <img src={batchProofPreview} alt="截圖預覽" className="h-24 w-auto rounded border border-green-300 object-cover" />
+                <button
+                  onClick={() => { setBatchProofFile(null); setBatchProofPreview(null); }}
+                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
+                >×</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => batchProofInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-green-400 rounded text-xs text-green-700 hover:bg-green-100 transition-colors"
+              >
+                <ImagePlus className="w-3.5 h-3.5" />上傳付款截圖
+              </button>
+            )}
+          </div>
           <div className="flex gap-2">
             <Button
               size="sm"
               className="text-xs bg-green-600 hover:bg-green-700 text-white"
-              disabled={batchPayoutMutation.isPending}
-              onClick={() => batchPayoutMutation.mutate({ orderIds: Array.from(selectedIds), note: batchNote || undefined })}
+              disabled={batchPayoutMutation.isPending || isUploadingProof}
+              onClick={handleBatchPayout}
             >
-              {batchPayoutMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : '確認批量放款'}
+              {(batchPayoutMutation.isPending || isUploadingProof) ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+              {isUploadingProof ? '上傳截圖中...' : batchPayoutMutation.isPending ? '放款中...' : '確認批量放款'}
             </Button>
-            <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => setShowBatchDialog(false)}>取消</Button>
+            <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => { setShowBatchDialog(false); setBatchProofFile(null); setBatchProofPreview(null); }}>取消</Button>
           </div>
         </div>
       )}
@@ -3082,7 +3211,7 @@ const sidebarMenuItems: SidebarItem[] = [
   { key: 'orders', label: '訂單管理', icon: ShoppingBag },
   { key: 'alipay', label: '支付寶核對', icon: DollarSign, badgeKey: 'pendingAlipayConfirmation' },
   { key: 'sellers', label: '賣家管理', icon: Users },
-  { key: 'disputes', label: '爭議處理', icon: Flag },
+  { key: 'disputes', label: '爭議處理', icon: Flag, badgeKey: 'unresolvedDisputeCount' },
   { key: 'sales', label: '銷售總覽', icon: BarChart3 },
   { key: 'reports', label: '舉報管理', icon: Flag },
   { key: 'payouts', label: '放款管理', icon: DollarSign },

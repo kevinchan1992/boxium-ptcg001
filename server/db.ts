@@ -3464,6 +3464,8 @@ export async function getMarketplaceStats() {
     .where(and(eq(marketplaceOrders.paymentMethod, 'alipay_hk'), eq(marketplaceOrders.paymentStatus, 'pending')));
   const [sellerCount] = await db.select({ count: sql<number>`count(*)` }).from(sellerProfiles).where(eq(sellerProfiles.isActive, true));
   const [pendingReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.status, 'pending_review'));
+  // Unresolved disputes count
+  const [disputeCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders).where(eq(marketplaceOrders.orderStatus, 'disputed'));
   // Sales revenue stats - all paid orders (total sales includes platform orders; fees only for C2C seller orders)
   const paidStatuses = ['payment_received', 'processing', 'shipped', 'delivered', 'completed'];
   const [totalRevenue] = await db.select({
@@ -3502,6 +3504,7 @@ export async function getMarketplaceStats() {
     pendingAlipayConfirmation: Number(pendingAlipay?.count ?? 0),
     activeSellerCount: Number(sellerCount?.count ?? 0),
     pendingReviewListings: Number(pendingReview?.count ?? 0),
+    unresolvedDisputeCount: Number(disputeCount?.count ?? 0),
     // Sales revenue
     totalSalesHkd: parseFloat(totalRevenue?.totalSales ?? '0'),
     totalFeesHkd: parseFloat(totalFeeRevenue?.totalFees ?? '0'), // C2C only
