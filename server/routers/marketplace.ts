@@ -1027,9 +1027,10 @@ export const marketplaceRouter = router({
       sellerType: z.enum(['all', 'platform', 'seller']).default('all'),
       dateFrom: z.string().optional(), // YYYY-MM-DD
       dateTo: z.string().optional(),   // YYYY-MM-DD
+      payoutFilter: z.string().optional(), // 'pending_alipay' for unpaid alipay orders
     }))
     .query(async ({ input }) => {
-      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType, input.dateFrom, input.dateTo);
+      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType, input.dateFrom, input.dateTo, input.payoutFilter);
     }),
 
   // Fix historical platform order fees (set platformFeeHkd=0, sellerReceivableHkd=subtotalHkd for all platform orders)
@@ -1103,6 +1104,7 @@ export const marketplaceRouter = router({
           listingId: offers.listingId,
           listingTitle: listings.title,
           listingPriceHkd: listings.priceHkd,
+          listingImages: listings.images,
           buyerId: offers.buyerId,
           buyerName: users.name,
           buyerEmail: users.email,

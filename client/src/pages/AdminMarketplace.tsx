@@ -789,11 +789,21 @@ function ListingsTab() {
               </div>
               {/* Content */}
               <div className="px-4 py-3 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-4 text-sm text-gray-700">
-                    <span className="font-semibold text-gray-900">HKD {parseFloat(listing.priceHkd as string || '0').toFixed(2)}</span>
-                    <span className="text-gray-500">庫存: {listing.quantity}</span>
-                    {listing.sellerDisplayName && <span className="text-gray-500">賣家: {listing.sellerDisplayName}</span>}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {(() => {
+                    try {
+                      const imgs = typeof listing.images === 'string' ? JSON.parse(listing.images) : listing.images;
+                      const firstImg = Array.isArray(imgs) ? imgs[0] : null;
+                      if (firstImg) return <img src={firstImg} alt="" className="w-12 h-14 object-cover rounded border border-gray-200 flex-shrink-0" />;
+                    } catch {}
+                    return null;
+                  })()}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-4 text-sm text-gray-700">
+                      <span className="font-semibold text-gray-900">HKD {parseFloat(listing.priceHkd as string || '0').toFixed(2)}</span>
+                      <span className="text-gray-500">庫存: {listing.quantity}</span>
+                      {listing.sellerDisplayName && <span className="text-gray-500">賣家: {listing.sellerDisplayName}</span>}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1972,11 +1982,23 @@ function DisputesTab() {
                 {/* Col 1: Product */}
                 <div className="px-4 py-3">
                   <p className="text-xs font-semibold text-gray-500 mb-1.5">商品資料</p>
-                  <p className="text-sm font-medium text-gray-900 line-clamp-2">{order.listingTitle ?? '商品'}</p>
-                  <div className="mt-1.5 space-y-0.5 text-xs text-gray-600">
-                    <p>金額：HKD {parseFloat(order.subtotalHkd ?? '0').toFixed(2)}</p>
-                    <p>付款：{order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</p>
-                    {order.shippedAt && <p>出貨：{new Date(order.shippedAt).toLocaleDateString('zh-HK')}</p>}
+                  <div className="flex items-start gap-3">
+                    {(() => {
+                      try {
+                        const imgs = typeof order.listingImages === 'string' ? JSON.parse(order.listingImages) : order.listingImages;
+                        const firstImg = Array.isArray(imgs) ? imgs[0] : null;
+                        if (firstImg) return <img src={firstImg} alt="" className="w-14 h-16 object-cover rounded-md border border-gray-200 flex-shrink-0" />;
+                      } catch {}
+                      return <div className="w-14 h-16 bg-gray-100 rounded-md border border-gray-200 flex-shrink-0 flex items-center justify-center"><span className="text-gray-300 text-xs">無圖</span></div>;
+                    })()}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 line-clamp-2">{order.listingTitle ?? '商品'}</p>
+                      <div className="mt-1.5 space-y-0.5 text-xs text-gray-600">
+                        <p>金額：HKD {parseFloat(order.subtotalHkd ?? '0').toFixed(2)}</p>
+                        <p>付款：{order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</p>
+                        {order.shippedAt && <p>出貨：{new Date(order.shippedAt).toLocaleDateString('zh-HK')}</p>}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 {/* Col 2: Dispute reason */}
@@ -2463,8 +2485,18 @@ function OffersTab() {
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-gray-600">
-                  <span className="font-medium">商品：</span>{o.listingTitle ?? `ID ${o.listingId}`}
+                <div className="flex items-center gap-3">
+                  {(() => {
+                    try {
+                      const imgs = typeof o.listingImages === 'string' ? JSON.parse(o.listingImages) : o.listingImages;
+                      const firstImg = Array.isArray(imgs) ? imgs[0] : null;
+                      if (firstImg) return <img src={firstImg} alt="" className="w-10 h-12 object-cover rounded border border-gray-200 flex-shrink-0" />;
+                    } catch {}
+                    return null;
+                  })()}
+                  <div className="text-xs text-gray-600">
+                    <span className="font-medium">商品：</span>{o.listingTitle ?? `ID ${o.listingId}`}
+                  </div>
                 </div>
                 <div className="text-xs text-gray-600">
                   <span className="font-medium">買家：</span>{o.buyerName ?? "-"}
@@ -2594,24 +2626,36 @@ function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () =>
         {/* Product Info */}
         <div className="space-y-1">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">商品資料</p>
-          <p className="text-sm font-medium text-gray-800">{o.listingTitle ?? '（平台商品）'}</p>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
-            <span>數量：{o.quantity ?? 1}</span>
-            <span>單價：HKD {Number(o.unitPriceHkd ?? 0).toFixed(2)}</span>
-            <span>小計：HKD {subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
-            {isPlatform ? (
-              <span className="text-gray-400">平台商品免手續費</span>
-            ) : (
-              <span>手續費：HKD {platformFee.toFixed(2)}</span>
-            )}
-            <span className="text-[#06038d] font-medium">賣家淨收：HKD {sellerReceivable.toFixed(2)}</span>
-          </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mt-1">
-            <span>付款方式：{isStripe ? 'Stripe 信用卡' : isAlipay ? '支付寶 HK' : o.paymentMethod ?? '-'}</span>
-            {o.stripePaymentIntentId && <span className="text-gray-400">PI: {o.stripePaymentIntentId.slice(0, 20)}...</span>}
-            {o.stripeTransferId && <span className="text-green-600">Transfer: {o.stripeTransferId.slice(0, 20)}...</span>}
+          <div className="flex items-start gap-3">
+            {(() => {
+              try {
+                const imgs = typeof o.listingImages === 'string' ? JSON.parse(o.listingImages) : o.listingImages;
+                const firstImg = Array.isArray(imgs) ? imgs[0] : null;
+                if (firstImg) return <img src={firstImg} alt="" className="w-14 h-16 object-cover rounded-md border border-gray-200 flex-shrink-0" />;
+              } catch {}
+              return <div className="w-14 h-16 bg-gray-100 rounded-md border border-gray-200 flex-shrink-0 flex items-center justify-center"><span className="text-gray-300 text-xs">無圖</span></div>;
+            })()}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-800">{o.listingTitle ?? '（平台商品）'}</p>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mt-1">
+                <span>數量：{o.quantity ?? 1}</span>
+                <span>單價：HKD {Number(o.unitPriceHkd ?? 0).toFixed(2)}</span>
+                <span>小計：HKD {subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+                {isPlatform ? (
+                  <span className="text-gray-400">平台商品免手續費</span>
+                ) : (
+                  <span>手續費：HKD {platformFee.toFixed(2)}</span>
+                )}
+                <span className="text-[#06038d] font-medium">賣家淨收：HKD {sellerReceivable.toFixed(2)}</span>
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mt-1">
+                <span>付款方式：{isStripe ? 'Stripe 信用卡' : isAlipay ? '支付寶 HK' : o.paymentMethod ?? '-'}</span>
+                {o.stripePaymentIntentId && <span className="text-gray-400">PI: {o.stripePaymentIntentId.slice(0, 20)}...</span>}
+                {o.stripeTransferId && <span className="text-green-600">Transfer: {o.stripeTransferId.slice(0, 20)}...</span>}
+              </div>
+            </div>
           </div>
         </div>
         {/* Buyer Info */}
@@ -2793,9 +2837,13 @@ function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () =>
 function PayoutsTab() {
   const [page, setPage] = useState(1);
   const [sellerTypeFilter, setSellerTypeFilter] = useState<'all' | 'platform' | 'seller'>('all');
+  const [payoutFilter, setPayoutFilter] = useState<'all' | 'pending_alipay'>('all');
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.marketplace.adminGetOrders.useQuery({
-    page, pageSize: 20, status: "completed", sellerType: sellerTypeFilter
+    page, pageSize: 20,
+    status: payoutFilter === 'pending_alipay' ? 'completed' : 'completed',
+    sellerType: sellerTypeFilter,
+    payoutFilter: payoutFilter === 'all' ? undefined : payoutFilter,
   });
   const fixFeesMutation = trpc.marketplace.adminFixPlatformOrderFees.useMutation({
     onSuccess: (result) => {
@@ -2827,20 +2875,39 @@ function PayoutsTab() {
     <div className="space-y-4">
       {/* Toolbar: filter + fix button */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">訂單類型：</span>
-          <div className="flex rounded-lg overflow-hidden border border-gray-200">
-            {filterOptions.map(opt => (
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">訂單類型：</span>
+            <div className="flex rounded-lg overflow-hidden border border-gray-200">
+              {filterOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => { setSellerTypeFilter(opt.value); setPage(1); }}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                    sellerTypeFilter === opt.value
+                      ? 'bg-[#06038d] text-white'
+                      : 'bg-white text-gray-900 hover:bg-gray-50'
+                  }`}
+                >{opt.label}</button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">放款狀態：</span>
+            <div className="flex rounded-lg overflow-hidden border border-gray-200">
               <button
-                key={opt.value}
-                onClick={() => { setSellerTypeFilter(opt.value); setPage(1); }}
+                onClick={() => { setPayoutFilter('all'); setPage(1); }}
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                  sellerTypeFilter === opt.value
-                    ? 'bg-[#06038d] text-white'
-                    : 'bg-white text-gray-900 hover:bg-gray-50'
+                  payoutFilter === 'all' ? 'bg-[#06038d] text-white' : 'bg-white text-gray-900 hover:bg-gray-50'
                 }`}
-              >{opt.label}</button>
-            ))}
+              >全部</button>
+              <button
+                onClick={() => { setPayoutFilter('pending_alipay'); setPage(1); }}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  payoutFilter === 'pending_alipay' ? 'bg-amber-500 text-white' : 'bg-white text-amber-700 hover:bg-amber-50'
+                }`}
+              >待放款（支付寶）</button>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">

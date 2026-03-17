@@ -3190,7 +3190,7 @@ export async function getBuyerOrders(buyerId: number) {
     .orderBy(desc(marketplaceOrders.createdAt));
   return rows;
 }
-export async function getAdminOrders(page = 1, pageSize = 20, status?: string, sellerType?: string, dateFrom?: string, dateTo?: string) {
+export async function getAdminOrders(page = 1, pageSize = 20, status?: string, sellerType?: string, dateFrom?: string, dateTo?: string, payoutFilter?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
@@ -3211,6 +3211,11 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
     const endDate = new Date(dateTo);
     endDate.setDate(endDate.getDate() + 1);
     conditions.push(sql`${marketplaceOrders.createdAt} < ${endDate.getTime()}`);
+  }
+  // Optional payout filter: 'pending_alipay' = alipay_hk orders with payoutStatus != 'paid'
+  if (payoutFilter === 'pending_alipay') {
+    conditions.push(eq(marketplaceOrders.paymentMethod, 'alipay_hk'));
+    conditions.push(sql`${marketplaceOrders.payoutStatus} != 'paid'`);
   }
   // Alias for buyer and seller user joins to avoid column name conflicts
   const { alias } = await import('drizzle-orm/mysql-core');
@@ -3622,15 +3627,18 @@ export async function getDisputedOrders(page = 1, pageSize = 20, search?: string
     order: marketplaceOrders,
     buyerName: buyerAlias.name,
     buyerEmail: buyerAlias.email,
+    listingImages: marketplaceListings.images,
+    listingTitle: marketplaceListings.title,
   }).from(marketplaceOrders)
     .leftJoin(buyerAlias, eq(marketplaceOrders.buyerId, buyerAlias.id))
+    .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
     .where(buildWhere())
     .orderBy(desc(marketplaceOrders.disputeOpenedAt))
     .limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
     .leftJoin(buyerAlias, eq(marketplaceOrders.buyerId, buyerAlias.id))
     .where(buildWhere());
-  return { orders: rows.map(r => ({ ...r.order, buyerName: r.buyerName, buyerEmail: r.buyerEmail })), total: Number(countRows[0]?.count ?? 0) };
+  return { orders: rows.map(r => ({ ...r.order, buyerName: r.buyerName, buyerEmail: r.buyerEmail, listingImages: r.listingImages, listingTitle: r.listingTitle })), total: Number(countRows[0]?.count ?? 0) };
 }
 
 export async function getSellerProfileByStripeConnectId(stripeConnectId: string) {
