@@ -2710,9 +2710,9 @@ function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () =>
             </div>
           )}
           {/* Payout action buttons */}
-          {!isPlatform && (
+          {(isAlipay || (!isPlatform && isStripe)) && (
             <div className="mt-3 flex flex-wrap gap-2">
-              {/* Manual payout for alipay_hk */}
+              {/* Manual payout for alipay_hk (both platform and seller orders) */}
               {isAlipay && !isAlreadyPaid && (
                 <Button size="sm" variant="outline" className="text-xs border-green-500 text-green-700 hover:bg-green-50"
                   onClick={() => setShowManualPayoutDialog(true)}>
@@ -2838,6 +2838,9 @@ function PayoutsTab() {
   const [page, setPage] = useState(1);
   const [sellerTypeFilter, setSellerTypeFilter] = useState<'all' | 'platform' | 'seller'>('all');
   const [payoutFilter, setPayoutFilter] = useState<'all' | 'pending_alipay'>('all');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [batchNote, setBatchNote] = useState('');
+  const [showBatchDialog, setShowBatchDialog] = useState(false);
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.marketplace.adminGetOrders.useQuery({
     page, pageSize: 20,
@@ -2845,6 +2848,31 @@ function PayoutsTab() {
     sellerType: sellerTypeFilter,
     payoutFilter: payoutFilter === 'all' ? undefined : payoutFilter,
   });
+  const batchPayoutMutation = trpc.marketplace.adminBatchManualPayout.useMutation({
+    onSuccess: (result) => {
+      alert(`批量放款完成：${result.successCount}/${result.totalCount} 筆成功`);
+      setSelectedIds(new Set());
+      setShowBatchDialog(false);
+      setBatchNote('');
+      utils.marketplace.adminGetOrders.invalidate();
+    },
+    onError: (err) => alert('批量放款失敗：' + err.message),
+  });
+
+  // Alipay pending orders on current page (for select all)
+  const pendingAlipayOrders = (data?.orders ?? []).filter(
+    (o: any) => o.paymentMethod === 'alipay_hk' && o.payoutStatus !== 'paid'
+  );
+  const allPendingSelected = pendingAlipayOrders.length > 0 && pendingAlipayOrders.every((o: any) => selectedIds.has(o.id));
+
+  const toggleSelectAll = () => {
+    if (allPendingSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pendingAlipayOrders.map((o: any) => o.id)));
+    }
+  };
+
   const fixFeesMutation = trpc.marketplace.adminFixPlatformOrderFees.useMutation({
     onSuccess: (result) => {
       alert(result.message);
@@ -2976,6 +3004,57 @@ function PayoutsTab() {
           <p className="text-xl font-bold text-amber-700">HKD {totalFee.toFixed(2)}</p>
         </div>
       </div>
+      {/* Batch action bar */}
+      {pendingAlipayOrders.length > 0 && (
+        <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={allPendingSelected}
+              onChange={toggleSelectAll}
+              className="w-4 h-4 accent-amber-500"
+            />
+            <span className="text-xs font-medium text-amber-800">
+              {allPendingSelected ? `已全選 ${pendingAlipayOrders.length} 筆待放款訂單` : `全選本頁 ${pendingAlipayOrders.length} 筆待放款（支付寶）訂單`}
+            </span>
+          </label>
+          {selectedIds.size > 0 && (
+            <Button
+              size="sm"
+              className="text-xs bg-amber-500 hover:bg-amber-600 text-white ml-auto"
+              onClick={() => setShowBatchDialog(true)}
+            >
+              💰 批量標記已放款（{selectedIds.size} 筆）
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Batch payout dialog */}
+      {showBatchDialog && (
+        <div className="p-4 bg-green-50 border border-green-300 rounded-lg space-y-3">
+          <p className="text-sm font-semibold text-green-800">批量標記已放款 — 共 {selectedIds.size} 筆訂單</p>
+          <p className="text-xs text-gray-600">此操作將把所選訂單標記為已放款，並通知相關賣家（C2C 訂單）。</p>
+          <input
+            className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:border-green-400 bg-white text-gray-900"
+            placeholder="批量備注（例如：2026年3月份支付寶 HK 放款）"
+            value={batchNote}
+            onChange={e => setBatchNote(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="text-xs bg-green-600 hover:bg-green-700 text-white"
+              disabled={batchPayoutMutation.isPending}
+              onClick={() => batchPayoutMutation.mutate({ orderIds: Array.from(selectedIds), note: batchNote || undefined })}
+            >
+              {batchPayoutMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : '確認批量放款'}
+            </Button>
+            <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => setShowBatchDialog(false)}>取消</Button>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#06038d]" /></div>
       ) : !data?.orders?.length ? (

@@ -1219,7 +1219,10 @@ export const marketplaceRouter = router({
     .mutation(async ({ input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
-      if (order.sellerType !== 'seller') throw new TRPCError({ code: "BAD_REQUEST", message: "平台自有商品無需放款" });
+      // Allow alipay_hk orders for both platform and seller (admin records receipt)
+      if (order.paymentMethod !== 'alipay_hk' && order.sellerType !== 'seller') {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "僅支付寶 HK 訂單或 C2C 訂單可手動標記放款" });
+      }
       const updateData: Record<string, any> = {
         payoutStatus: "paid",
         manualPayoutAt: new Date(),
@@ -1227,8 +1230,8 @@ export const marketplaceRouter = router({
       };
       if (input.proofUrl) updateData.manualPayoutProofUrl = input.proofUrl;
       await updateMarketplaceOrder(input.orderId, updateData);
-      // Notify seller of payout
-      if (order.sellerId) {
+      // Notify seller of payout (only for C2C seller orders)
+      if (order.sellerId && order.sellerType === 'seller') {
         const sellerProf = await getSellerProfileById(order.sellerId);
         if (sellerProf?.userId) {
           await createNotification({
@@ -1241,6 +1244,47 @@ export const marketplaceRouter = router({
         }
       }
       return { success: true, message: "已標記為手動放款" };
+    }),
+
+  // Batch manual payout for multiple alipay_hk orders
+  adminBatchManualPayout: adminProcedure
+    .input(z.object({
+      orderIds: z.array(z.number().int()).min(1).max(50),
+      note: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const results: { orderId: number; orderNo: string; success: boolean; error?: string }[] = [];
+      for (const orderId of input.orderIds) {
+        try {
+          const order = await getMarketplaceOrderById(orderId);
+          if (!order) { results.push({ orderId, orderNo: '', success: false, error: '訂單不存在' }); continue; }
+          if (order.paymentMethod !== 'alipay_hk') { results.push({ orderId, orderNo: order.orderNo ?? '', success: false, error: '非支付寶 HK 訂單' }); continue; }
+          if (order.payoutStatus === 'paid') { results.push({ orderId, orderNo: order.orderNo ?? '', success: false, error: '已放款' }); continue; }
+          await updateMarketplaceOrder(orderId, {
+            payoutStatus: "paid",
+            manualPayoutAt: new Date(),
+            manualPayoutNote: input.note ?? "管理員批量標記已放款",
+          });
+          // Notify seller (C2C only)
+          if (order.sellerId && order.sellerType === 'seller') {
+            const sellerProf = await getSellerProfileById(order.sellerId);
+            if (sellerProf?.userId) {
+              await createNotification({
+                userId: sellerProf.userId,
+                type: "trade",
+                title: "款項已放款 💰",
+                body: `訂單 ${order.orderNo} 的款項 HKD ${parseFloat(order.sellerReceivableHkd as string).toFixed(2)} 已由管理員放款。${input.note ? `備註：${input.note}` : ""}`,
+                linkUrl: "/seller",
+              }).catch(() => {});
+            }
+          }
+          results.push({ orderId, orderNo: order.orderNo ?? '', success: true });
+        } catch (err: any) {
+          results.push({ orderId, orderNo: '', success: false, error: err.message });
+        }
+      }
+      const successCount = results.filter(r => r.success).length;
+      return { results, successCount, totalCount: input.orderIds.length };
     }),
 
   // Query Stripe Transfer status for a specific order

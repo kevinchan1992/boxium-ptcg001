@@ -4627,3 +4627,14 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 - [ ] 放款管理加入日期範圍篩選（本月/上月/自訂日期）和 CSV 匯出
 - [ ] 爭議優先級持久化到資料庫（disputePriority 欄位 + API）
+
+---
+## ✅ 放款管理批量操作 + 賣家截圖預覽（2026-03-17）
+- [x] PayoutOrderCard：修復支付寶 HK 訂單「標記已放款」按鈕顯示（payoutStatus 判斷修正）
+- [x] PayoutsTab：加入批量選取 state（selectedIds）和全選 checkbox
+- [x] PayoutsTab：加入「批量標記已放款」按鈕（顯示選取數量）
+- [x] PayoutsTab：加入批量放款確認面板（備注輸入 + 確認按鈕）
+- [x] 後端 adminBatchManualPayout：批量標記多筆支付寶 HK 訂單已放款，並通知 C2C 賣家
+- [x] SellerDashboard：新增 PayoutProofThumbnail 組件（縮圖 + 點擊放大 lightbox）
+- [x] 爭議處理：確認 adminResolveDispute API 已完整實作（退款/放款/部分處理 + 通知買賣雙方）
+- [x] TypeScript 0 errors，開發伺服器正常運行

@@ -16,6 +16,52 @@ import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
 
+// ─── PayoutProofThumbnail ────────────────────────────────────────────────────
+function PayoutProofThumbnail({ url }: { url: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="block mt-1 group relative w-20 h-14 rounded overflow-hidden border border-gray-200 hover:border-[#06038d] transition-colors"
+        title="點擊查看付款截圖"
+      >
+        <img src={url} alt="付款截圖" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+          </svg>
+        </div>
+      </button>
+      <p className="text-xs text-gray-500 mt-0.5">點擊縮圖可放大查看</p>
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => setOpen(false)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh] p-2" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute -top-3 -right-3 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg text-gray-700 hover:bg-gray-100 z-10"
+            >
+              ×
+            </button>
+            <img src={url} alt="付款截圖" className="max-w-full max-h-[85vh] rounded-lg shadow-xl object-contain" />
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center mt-2 text-xs text-white/70 hover:text-white underline"
+            >
+              在新標籤頁開啟原圖
+            </a>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── ImageUploader ────────────────────────────────────────────────────────────
 function ImageUploader({
   images,
@@ -1293,17 +1339,7 @@ export default function SellerDashboard() {
                                 </p>
                               )}
                               {payout.manualPayoutProofUrl && (
-                                <a
-                                  href={payout.manualPayoutProofUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 text-xs text-[#06038d] hover:text-[#0a06b5] underline"
-                                >
-                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
-                                  查看付款截圖
-                                </a>
+                                <PayoutProofThumbnail url={payout.manualPayoutProofUrl} />
                               )}
                             </div>
                           )}
