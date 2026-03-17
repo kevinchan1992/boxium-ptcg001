@@ -31,10 +31,22 @@ import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNew
 import { marketplaceListings, offers, listingReports } from "../../drizzle/schema_new";
 import { eq, and } from "drizzle-orm";
 
-// Platform fee rate (5% for C2C listings)
+// Platform fee rate (5% for C2C listings only)
 const PLATFORM_FEE_RATE = 0.05;
 // Alipay HK static payment link
 const ALIPAY_HK_STATIC_LINK = "https://w.alipay.hk/s12/3RYKWzGXrQ";
+
+/**
+ * Calculate platform fee for an order.
+ * Platform-owned listings (sellerType='platform') are exempt from platform fees.
+ * Only C2C listings (sellerType='seller') are charged the platform fee.
+ */
+function calcPlatformFee(sellerType: string | null | undefined, amount: number): number {
+  return sellerType === 'seller' ? amount * PLATFORM_FEE_RATE : 0;
+}
+function calcSellerReceivable(sellerType: string | null | undefined, amount: number): number {
+  return amount - calcPlatformFee(sellerType, amount);
+}
 
 export const marketplaceRouter = router({
   // ============================================================
@@ -1421,8 +1433,8 @@ export const marketplaceRouter = router({
         unitPriceHkd: price.toFixed(2),
         quantity: 1,
         platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
-        platformFeeHkd: (price * PLATFORM_FEE_RATE).toFixed(2),
-        sellerReceivableHkd: (price * (1 - PLATFORM_FEE_RATE)).toFixed(2),
+        platformFeeHkd: calcPlatformFee(listing.sellerType, price).toFixed(2),
+        sellerReceivableHkd: calcSellerReceivable(listing.sellerType, price).toFixed(2),
         stripePaymentIntentId: session.payment_intent as string ?? null,
         stripeSessionId: session.id,
         shippingName: input.shippingAddress?.name ?? null,
@@ -1556,8 +1568,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
         unitPriceHkd: price.toFixed(2),
         quantity: 1,
         platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
-        platformFeeHkd: (price * PLATFORM_FEE_RATE).toFixed(2),
-        sellerReceivableHkd: (price * (1 - PLATFORM_FEE_RATE)).toFixed(2),
+        platformFeeHkd: calcPlatformFee(listing.sellerType, price).toFixed(2),
+        sellerReceivableHkd: calcSellerReceivable(listing.sellerType, price).toFixed(2),
         alipayMerchantTransId: null,
         alipayProofImageUrl: input.proofImageUrl,
         shippingName: input.shippingAddress?.name ?? null,
@@ -2235,7 +2247,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       if (!listing || listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架" });
       const offerPrice = parseFloat(offer.offerPriceHkd as string);
       // Platform fee is deducted from seller's payout (buyer pays offer price only)
-      const platformFee = offerPrice * PLATFORM_FEE_RATE;
+      // Platform-owned listings are exempt from platform fees
+      const platformFee = calcPlatformFee(listing.sellerType, offerPrice);
       const orderNo = await generateOrderNo();
       const order = await createMarketplaceOrder({
         orderNo,
@@ -2250,7 +2263,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         subtotalHkd: offerPrice.toFixed(2),
         platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
         platformFeeHkd: platformFee.toFixed(2),
-        sellerReceivableHkd: (offerPrice - platformFee).toFixed(2),
+        sellerReceivableHkd: calcSellerReceivable(listing.sellerType, offerPrice).toFixed(2),
         orderStatus: "pending_payment",
         autoCompleteAt: null as any,
       });

@@ -2300,20 +2300,29 @@ function PayoutsTab() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = trpc.marketplace.adminGetOrders.useQuery({ page, pageSize: 20, status: "completed" });
   // Fix: use sellerReceivableHkd (correct field name from backend)
-  const totalPayout = data?.orders?.reduce((sum: number, o: any) => sum + (Number(o.sellerReceivableHkd) || 0), 0) ?? 0;
+  // Platform orders (sellerType='platform') have platformFeeHkd=0, sellerReceivableHkd=subtotalHkd
+  const totalPayout = data?.orders?.reduce((sum: number, o: any) => {
+    // For platform orders, no payout needed (platform keeps all revenue)
+    if (o.sellerType === 'platform') return sum;
+    return sum + (Number(o.sellerReceivableHkd) || 0);
+  }, 0) ?? 0;
   const totalSubtotal = data?.orders?.reduce((sum: number, o: any) => sum + (Number(o.subtotalHkd) || 0), 0) ?? 0;
   const totalFee = data?.orders?.reduce((sum: number, o: any) => sum + (Number(o.platformFeeHkd) || 0), 0) ?? 0;
+  const c2cOrderCount = data?.orders?.filter((o: any) => o.sellerType === 'seller').length ?? 0;
+  const platformOrderCount = data?.orders?.filter((o: any) => o.sellerType === 'platform').length ?? 0;
   return (
     <div className="space-y-4">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div className="rounded-xl border border-gray-100 shadow-sm p-4 bg-gradient-to-br from-[#06038d]/5 to-white">
-          <p className="text-xs text-gray-500 mb-1">本頁應付賣家總額</p>
+          <p className="text-xs text-gray-500 mb-1">本頁應付 C2C 賣家總額</p>
           <p className="text-xl font-bold" style={{ color: "#06038d" }}>HKD {totalPayout.toFixed(2)}</p>
+          <p className="text-xs text-gray-400 mt-1">C2C 訂單 {c2cOrderCount} 筆</p>
         </div>
         <div className="rounded-xl border border-gray-100 shadow-sm p-4 bg-gradient-to-br from-green-50 to-white">
           <p className="text-xs text-gray-500 mb-1">已完成訂單數</p>
           <p className="text-xl font-bold text-green-700">{data?.total ?? 0}</p>
+          <p className="text-xs text-gray-400 mt-1">平台 {platformOrderCount} 筆 · C2C {c2cOrderCount} 筆</p>
         </div>
         <div className="rounded-xl border border-gray-100 shadow-sm p-4 bg-gradient-to-br from-blue-50 to-white">
           <p className="text-xs text-gray-500 mb-1">本頁交易總額（買家付）</p>
