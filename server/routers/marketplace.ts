@@ -1460,6 +1460,20 @@ export const marketplaceRouter = router({
       return { success: true };
     }),
 
+  adminSaveOrderNote: adminProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      adminNote: z.string().max(2000),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      await db.update(marketplaceOrders)
+        .set({ adminNote: input.adminNote, updatedAt: new Date() })
+        .where(eq(marketplaceOrders.id, input.orderId));
+      return { success: true };
+    }),
+
   adminGetSellers: adminProcedure
     .input(z.object({
       page: z.number().int().min(1).default(1),

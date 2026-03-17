@@ -857,6 +857,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   manualPayoutNote: varchar("manualPayoutNote", { length: 500 }), // Admin note for manual payout
   manualPayoutProofUrl: text("manualPayoutProofUrl"), // S3 URL of payment proof screenshot
   paymentExpiresAt: timestamp("paymentExpiresAt"),
+  adminNote: text("adminNote"), // Admin internal note for this order
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   stripeSessionId: varchar("stripeSessionId", { length: 200 }),

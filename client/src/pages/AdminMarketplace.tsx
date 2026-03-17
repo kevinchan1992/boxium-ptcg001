@@ -890,6 +890,7 @@ function OrdersTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [note, setNote] = useState("");
+  const [adminNote, setAdminNote] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [shippingMethod, setShippingMethod] = useState("sf_express");
   // Date range filter
@@ -924,6 +925,10 @@ function OrdersTab() {
   });
   const updateStatusMutation = trpc.marketplace.adminUpdateOrderStatus.useMutation({
     onSuccess: () => { toast.success("訂單狀態已更新"); refetch(); setSelectedOrder(null); setTrackingNumber(""); },
+    onError: (e) => toast.error(e.message)
+  });
+  const saveNoteMutation = trpc.marketplace.adminSaveOrderNote.useMutation({
+    onSuccess: () => { toast.success("備注已儲存"); refetch(); },
     onError: (e) => toast.error(e.message)
   });
   const orders = data?.orders ?? [];
@@ -1115,7 +1120,7 @@ function OrdersTab() {
                   </div>
                   <div className="mt-3">
                     <Button size="sm" variant="outline" className="text-xs w-full sm:w-auto text-gray-700 bg-white"
-                      onClick={() => { setSelectedOrder(order); setNote(order.adminNote ?? ''); setTrackingNumber(order.trackingNumber ?? ''); setShippingMethod(order.shippingMethod ?? 'sf_express'); }}>
+                      onClick={() => { setSelectedOrder(order); setNote(''); setAdminNote(order.adminNote ?? ''); setTrackingNumber(order.trackingNumber ?? ''); setShippingMethod(order.shippingMethod ?? 'sf_express'); }}>
                       <Edit className="w-3 h-3 mr-1" />管理訂單
                     </Button>
                   </div>
@@ -1133,138 +1138,248 @@ function OrdersTab() {
         </div>
       )}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>訂單管理 — {selectedOrder?.orderNo}</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-xl overflow-hidden">
+          {/* Header - LOGO Deep Blue */}
+          <div className="bg-[#06038d] px-6 py-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-white font-bold text-lg tracking-wide">訂單管理</h2>
+              <p className="text-[#FEDD00] text-sm font-mono mt-0.5">{selectedOrder?.orderNo}</p>
+            </div>
+            {selectedOrder && (
+              <Badge className={`${orderStatusColor[selectedOrder.orderStatus] ?? ''} text-xs px-3 py-1`}>
+                {orderStatusLabel[selectedOrder.orderStatus]}
+              </Badge>
+            )}
+          </div>
+
           {selectedOrder && (
-            <div className="space-y-4">
-              {/* Product Thumbnail */}
-              {(selectedOrder.listingTitle || selectedOrder.listingImages) && (
-                <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+            <div className="p-5 space-y-4 bg-white">
+
+              {/* ── 商品資訊 ─────────────────────────── */}
+              <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                  <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <Package className="w-3.5 h-3.5" />商品資訊
+                  </p>
+                </div>
+                <div className="p-3 flex items-center gap-3">
                   {selectedOrder.listingImages && (() => {
                     try {
-                      const imgs = typeof selectedOrder.listingImages === 'string'
-                        ? JSON.parse(selectedOrder.listingImages)
-                        : selectedOrder.listingImages;
+                      const imgs = typeof selectedOrder.listingImages === 'string' ? JSON.parse(selectedOrder.listingImages) : selectedOrder.listingImages;
                       const firstImg = Array.isArray(imgs) ? imgs[0] : null;
-                      if (firstImg) return (
-                        <img src={firstImg} alt="商品" className="w-16 h-20 object-cover rounded-md border border-gray-200 flex-shrink-0" />
-                      );
+                      if (firstImg) return <img src={firstImg} alt="商品" className="w-14 h-18 object-cover rounded-md border border-gray-200 flex-shrink-0" style={{height:'4.5rem'}} />;
                     } catch {}
-                    return null;
+                    return <div className="w-14 h-18 bg-gray-100 rounded-md flex items-center justify-center flex-shrink-0" style={{height:'4.5rem'}}><Package className="w-5 h-5 text-gray-400" /></div>;
                   })()}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground mb-0.5">商品</p>
-                    <p className="text-sm font-medium line-clamp-2">{selectedOrder.listingTitle || '未知商品'}</p>
-                    {selectedOrder.listingCondition && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{selectedOrder.listingCondition}</p>
-                    )}
+                    <p className="font-semibold text-gray-900 line-clamp-2">{selectedOrder.listingTitle || '未知商品'}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {selectedOrder.listingCondition && <Badge variant="outline" className="text-xs">{conditionLabel[selectedOrder.listingCondition] ?? selectedOrder.listingCondition}</Badge>}
+                      <span className="text-xs text-gray-500">數量：{selectedOrder.quantity ?? 1}</span>
+                    </div>
+                    <p className="text-[#06038d] font-bold mt-1">HKD {parseFloat(selectedOrder.subtotalHkd || '0').toFixed(2)}</p>
                   </div>
                 </div>
-              )}
-              {/* Order Info */}
-              <div className="grid grid-cols-2 gap-2 text-sm bg-gray-50 rounded-lg p-3">
-                <span className="text-muted-foreground">付款方式</span>
-                <span>{selectedOrder.paymentMethod === "stripe" ? "Stripe" : "支付寶 HK"}</span>
-                <span className="text-muted-foreground">訂單金額</span>
-                <span className="font-medium">HKD {parseFloat(selectedOrder.subtotalHkd || "0").toFixed(2)}</span>
-                <span className="text-muted-foreground">當前狀態</span>
-                <Badge className={orderStatusColor[selectedOrder.orderStatus] ?? ""}>{orderStatusLabel[selectedOrder.orderStatus]}</Badge>
-                <span className="text-muted-foreground">訂單日期</span>
-                <span>{new Date(selectedOrder.createdAt).toLocaleDateString("zh-HK")}</span>
-                {selectedOrder.sellerType && (
-                  <><span className="text-muted-foreground">賣家類型</span>
-                  <span>{selectedOrder.sellerType === 'platform' ? '平台官方' : '一般賣家'}</span></>
-                )}
               </div>
-              {/* Buyer Shipping Info */}
-              {selectedOrder.shippingName && (
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 space-y-1 text-sm">
-                  <p className="font-medium text-blue-800 mb-1.5">📦 收件資訊</p>
-                  <p><span className="text-muted-foreground">收件人：</span>{selectedOrder.shippingName}</p>
-                  {selectedOrder.shippingPhone && <p><span className="text-muted-foreground">電話：</span>{selectedOrder.shippingPhone}</p>}
-                  {selectedOrder.shippingAddress && (
-                    <p><span className="text-muted-foreground">地址：</span>{(() => {
-                      try {
-                        const addr = JSON.parse(selectedOrder.shippingAddress);
-                        if (addr && typeof addr === 'object') {
-                          return [addr.address, addr.district, addr.region].filter(Boolean).join(', ');
-                        }
-                        return selectedOrder.shippingAddress;
-                      } catch { return selectedOrder.shippingAddress; }
-                    })()}</p>
-                  )}
-                  {selectedOrder.trackingNumber && (
-                    <p><span className="text-muted-foreground">追蹤號：</span><strong>{selectedOrder.trackingNumber}</strong></p>
-                  )}
-                  {selectedOrder.shippedAt && (
-                    <p><span className="text-muted-foreground">出貨日期：</span>{new Date(selectedOrder.shippedAt).toLocaleDateString("zh-HK")}</p>
-                  )}
+
+              {/* ── 訂單詳情 ─────────────────────────── */}
+              <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                  <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <CreditCard className="w-3.5 h-3.5" />訂單詳情
+                  </p>
+                </div>
+                <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <span className="text-gray-500">訂單編號</span>
+                  <span className="font-mono text-xs text-gray-800">{selectedOrder.orderNo}</span>
+                  <span className="text-gray-500">付款方式</span>
+                  <span className="flex items-center gap-1">
+                    {selectedOrder.paymentMethod === 'stripe' ? <><CreditCard className="w-3.5 h-3.5 text-blue-600" />Stripe</> : <><Banknote className="w-3.5 h-3.5 text-green-600" />支付寶 HK</>}
+                  </span>
+                  <span className="text-gray-500">訂單金額</span>
+                  <span className="font-semibold text-[#06038d]">HKD {parseFloat(selectedOrder.subtotalHkd || '0').toFixed(2)}</span>
+                  <span className="text-gray-500">平台手續費</span>
+                  <span className="text-gray-700">HKD {parseFloat(selectedOrder.platformFeeHkd || '0').toFixed(2)} ({(parseFloat(selectedOrder.platformFeeRate || '0.05') * 100).toFixed(0)}%)</span>
+                  <span className="text-gray-500">賣家應收</span>
+                  <span className="font-semibold text-emerald-700">HKD {parseFloat(selectedOrder.sellerReceivableHkd || '0').toFixed(2)}</span>
+                  <span className="text-gray-500">賣家類型</span>
+                  <span>{selectedOrder.sellerType === 'platform' ? '平台官方' : '一般賣家'}</span>
+                  <span className="text-gray-500">下單日期</span>
+                  <span>{new Date(selectedOrder.createdAt).toLocaleString('zh-HK')}</span>
+                  {selectedOrder.buyerConfirmedAt && <><span className="text-gray-500">買家確認</span><span>{new Date(selectedOrder.buyerConfirmedAt).toLocaleDateString('zh-HK')}</span></>}
+                  <span className="text-gray-500">放款狀態</span>
+                  <span className={`font-medium ${selectedOrder.payoutStatus === 'paid' ? 'text-green-600' : selectedOrder.payoutStatus === 'failed' ? 'text-red-600' : 'text-amber-600'}`}>
+                    {selectedOrder.payoutStatus === 'paid' ? '已放款' : selectedOrder.payoutStatus === 'failed' ? '放款失敗' : selectedOrder.payoutStatus === 'completed' ? '已完成' : '待放款'}
+                  </span>
+                  {selectedOrder.stripeTransferId && <><span className="text-gray-500">Stripe Transfer</span><span className="font-mono text-xs">{selectedOrder.stripeTransferId}</span></>}
+                  {selectedOrder.stripeTransferError && <><span className="text-gray-500">轉帳錯誤</span><span className="text-red-600 text-xs">{selectedOrder.stripeTransferError}</span></>}
+                  {selectedOrder.manualPayoutAt && <><span className="text-gray-500">手動放款日</span><span>{new Date(selectedOrder.manualPayoutAt).toLocaleDateString('zh-HK')}</span></>}
+                  {selectedOrder.manualPayoutNote && <><span className="text-gray-500">放款備注</span><span className="text-xs">{selectedOrder.manualPayoutNote}</span></>}
+                </div>
+              </div>
+
+              {/* ── 買家資料 ─────────────────────────── */}
+              <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                  <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <User2 className="w-3.5 h-3.5" />買家資料
+                  </p>
+                </div>
+                <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <span className="text-gray-500">姓名</span><span>{selectedOrder.buyerName || '—'}</span>
+                  <span className="text-gray-500">電郵</span><span className="text-xs break-all">{selectedOrder.buyerEmail || '—'}</span>
+                  <span className="text-gray-500">電話</span><span>{selectedOrder.buyerPhone || '—'}</span>
+                </div>
+              </div>
+
+              {/* ── 賣家資料 ─────────────────────────── */}
+              {selectedOrder.sellerType === 'seller' && (
+                <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                  <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                    <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5" />賣家資料
+                    </p>
+                  </div>
+                  <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <span className="text-gray-500">店舖名稱</span><span>{selectedOrder.sellerDisplayName || '—'}</span>
+                    <span className="text-gray-500">姓名</span><span>{selectedOrder.sellerUserName || '—'}</span>
+                    <span className="text-gray-500">電郵</span><span className="text-xs break-all">{selectedOrder.sellerUserEmail || '—'}</span>
+                    <span className="text-gray-500">電話</span><span>{selectedOrder.sellerUserPhone || '—'}</span>
+                    {selectedOrder.sellerStripeConnectId && <><span className="text-gray-500">Stripe Connect</span><span className="font-mono text-xs">{selectedOrder.sellerStripeConnectId}</span></>}
+                  </div>
                 </div>
               )}
-              {/* Ship Action: show when status needs shipping */}
-              {["processing", "payment_received", "paid_held"].includes(selectedOrder.orderStatus) && (
-                <div className="border border-indigo-200 rounded-lg p-3 bg-indigo-50 space-y-3">
-                  <p className="font-medium text-indigo-800 text-sm">🚚 填寫出貨資料</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs">物流方式</Label>
-                      <Select value={shippingMethod} onValueChange={setShippingMethod}>
-                        <SelectTrigger className="mt-1 h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sf_express">順豐</SelectItem>
-                          <SelectItem value="hk_post">香港郵政</SelectItem>
-                          <SelectItem value="pickup">自取</SelectItem>
-                          <SelectItem value="other">其他</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs">追蹤號碼</Label>
-                      <Input
-                        className="mt-1 h-8 text-sm"
-                        placeholder="輸入追蹤號碼"
-                        value={trackingNumber}
-                        onChange={e => setTrackingNumber(e.target.value)}
-                      />
-                    </div>
+
+              {/* ── 物流資訊 ─────────────────────────── */}
+              <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                  <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <Package className="w-3.5 h-3.5" />物流 / 收件資訊
+                  </p>
+                </div>
+                <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <span className="text-gray-500">收件人</span><span>{selectedOrder.shippingName || '—'}</span>
+                  <span className="text-gray-500">電話</span><span>{selectedOrder.shippingPhone || '—'}</span>
+                  <span className="text-gray-500">地址</span>
+                  <span>{selectedOrder.shippingAddress ? (() => {
+                    try {
+                      const addr = JSON.parse(selectedOrder.shippingAddress);
+                      if (addr && typeof addr === 'object') return [addr.address, addr.district, addr.region].filter(Boolean).join(', ');
+                      return selectedOrder.shippingAddress;
+                    } catch { return selectedOrder.shippingAddress; }
+                  })() : '—'}</span>
+                  <span className="text-gray-500">物流方式</span><span>{selectedOrder.shippingMethod || '—'}</span>
+                  <span className="text-gray-500">追蹤號碼</span>
+                  <span className="font-mono text-xs">{selectedOrder.trackingNumber || selectedOrder.trackingNo || '—'}</span>
+                  <span className="text-gray-500">出貨日期</span>
+                  <span>{selectedOrder.shippedAt ? new Date(selectedOrder.shippedAt).toLocaleDateString('zh-HK') : '—'}</span>
+                  {selectedOrder.autoCompleteAt && <><span className="text-gray-500">自動完成</span><span>{new Date(selectedOrder.autoCompleteAt).toLocaleDateString('zh-HK')}</span></>}
+                </div>
+              </div>
+
+              {/* ── 爭議資訊（如有） ─────────────────── */}
+              {selectedOrder.disputeOpenedAt && (
+                <div className="rounded-lg border border-red-200 overflow-hidden">
+                  <div className="bg-red-50 px-4 py-2 border-b border-red-200">
+                    <p className="text-red-700 font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5" />爭議資訊
+                    </p>
                   </div>
-                  <Button
-                    size="sm"
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                    disabled={updateStatusMutation.isPending}
-                    onClick={() => updateStatusMutation.mutate({
-                      orderId: selectedOrder.id,
-                      orderStatus: "shipped",
-                      note,
-                      trackingNumber: trackingNumber || undefined,
-                      shippingMethod: shippingMethod || undefined,
-                    })}>
-                    確認出貨
+                  <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <span className="text-gray-500">開啟時間</span><span>{new Date(selectedOrder.disputeOpenedAt).toLocaleDateString('zh-HK')}</span>
+                    <span className="text-gray-500">爭議原因</span><span className="col-span-1">{selectedOrder.disputeReason || '—'}</span>
+                    {selectedOrder.disputeResolvedAt && <><span className="text-gray-500">解決時間</span><span>{new Date(selectedOrder.disputeResolvedAt).toLocaleDateString('zh-HK')}</span></>}
+                    {selectedOrder.disputeResolution && <><span className="text-gray-500">解決方式</span><span>{selectedOrder.disputeResolution}</span></>}
+                  </div>
+                </div>
+              )}
+
+              {/* ── 出貨操作（待出貨時顯示） ─────────── */}
+              {['processing', 'payment_received', 'paid_held'].includes(selectedOrder.orderStatus) && (
+                <div className="rounded-lg border-2 border-[#FEDD00] bg-yellow-50 overflow-hidden">
+                  <div className="bg-[#FEDD00] px-4 py-2">
+                    <p className="text-[#06038d] font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <Package className="w-3.5 h-3.5" />填寫出貨資料
+                    </p>
+                  </div>
+                  <div className="p-3 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-gray-600">物流方式</Label>
+                        <Select value={shippingMethod} onValueChange={setShippingMethod}>
+                          <SelectTrigger className="mt-1 h-8 text-sm border-[#06038d]/30">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="sf_express">順豐</SelectItem>
+                            <SelectItem value="hk_post">香港郵政</SelectItem>
+                            <SelectItem value="pickup">自取</SelectItem>
+                            <SelectItem value="other">其他</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-600">追蹤號碼</Label>
+                        <Input className="mt-1 h-8 text-sm border-[#06038d]/30" placeholder="輸入追蹤號碼" value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} />
+                      </div>
+                    </div>
+                    <Button size="sm" className="w-full bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+                      disabled={updateStatusMutation.isPending}
+                      onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, orderStatus: 'shipped', note, trackingNumber: trackingNumber || undefined, shippingMethod: shippingMethod || undefined })}>
+                      {updateStatusMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}確認出貨
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── 狀態更新 ─────────────────────────── */}
+              <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                  <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider">更新訂單狀態</p>
+                </div>
+                <div className="p-3">
+                  <div className="flex flex-wrap gap-2">
+                    {['processing', 'shipped', 'delivered', 'completed', 'cancelled', 'disputed'].map(s => (
+                      <Button key={s} size="sm"
+                        variant={selectedOrder.orderStatus === s ? 'default' : 'outline'}
+                        className={selectedOrder.orderStatus === s ? 'bg-[#06038d] text-white' : 'border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/10'}
+                        disabled={selectedOrder.orderStatus === s || updateStatusMutation.isPending}
+                        onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, orderStatus: s as any, note, trackingNumber: s === 'shipped' ? (trackingNumber || undefined) : undefined, shippingMethod: s === 'shipped' ? (shippingMethod || undefined) : undefined })}>
+                        {orderStatusLabel[s] ?? s}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <Label className="text-xs text-gray-600">通知備注（發送給買家）</Label>
+                    <Input className="mt-1 h-8 text-sm border-[#06038d]/30" placeholder="可選：附加說明文字" value={note} onChange={e => setNote(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Admin 內部備注 ────────────────────── */}
+              <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                <div className="bg-[#06038d]/8 px-4 py-2 border-b border-[#06038d]/15">
+                  <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5" />Admin 內部備注
+                  </p>
+                </div>
+                <div className="p-3 space-y-2">
+                  <Textarea
+                    className="text-sm border-[#06038d]/30 resize-none"
+                    placeholder="僅限 Admin 可見的內部備注..."
+                    rows={3}
+                    value={adminNote}
+                    onChange={e => setAdminNote(e.target.value)}
+                  />
+                  <Button size="sm"
+                    className="bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+                    disabled={saveNoteMutation.isPending}
+                    onClick={() => saveNoteMutation.mutate({ orderId: selectedOrder.id, adminNote })}>
+                    {saveNoteMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Check className="w-3.5 h-3.5 mr-1.5" />}儲存備注
                   </Button>
                 </div>
-              )}
-              {/* Status Update */}
-              <div>
-                <Label>更新狀態</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {["processing", "shipped", "delivered", "completed", "cancelled", "disputed"].map(s => (
-                    <Button key={s} size="sm" variant="outline"
-                      disabled={selectedOrder.orderStatus === s || updateStatusMutation.isPending}
-                      onClick={() => updateStatusMutation.mutate({
-                        orderId: selectedOrder.id,
-                        orderStatus: s as any,
-                        note,
-                        trackingNumber: s === 'shipped' ? (trackingNumber || undefined) : undefined,
-                        shippingMethod: s === 'shipped' ? (shippingMethod || undefined) : undefined,
-                      })}>
-                      {orderStatusLabel[s] ?? s}
-                    </Button>
-                  ))}
-                </div>
               </div>
-              <div><Label>Admin 備注</Label><Textarea value={note} onChange={e => setNote(e.target.value)} rows={2} /></div>
+
             </div>
           )}
         </DialogContent>
