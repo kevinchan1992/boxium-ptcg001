@@ -755,9 +755,9 @@ function ListingsTab() {
         </Button>
       </div>
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">載入中...</div>
+        <div className="text-center py-12 text-gray-500">載入中...</div>
       ) : listings.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground"><Package className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無商品</p></div>
+        <div className="text-center py-12 text-gray-500"><Package className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無商品</p></div>
       ) : (
         <div className="space-y-3">
           {listings.map((listing: any) => (
@@ -797,7 +797,7 @@ function ListingsTab() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Button size="sm" variant="outline" className="text-xs" onClick={() => setSelectedListingId(listing.id)}>
+                  <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => setSelectedListingId(listing.id)}>
                     <Eye className="w-3 h-3 mr-1" />{listing.status === 'sold' ? '查看詳情' : '查看/編輯'}
                   </Button>
                   {listing.status === 'pending_review' && (
@@ -813,10 +813,10 @@ function ListingsTab() {
                     </>
                   )}
                   {listing.status === 'active' && (
-                    <Button size="sm" variant="outline" className="text-xs" onClick={() => updateMutation.mutate({ id: listing.id, status: 'removed' })}>下架</Button>
+                    <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => updateMutation.mutate({ id: listing.id, status: 'removed' })}>下架</Button>
                   )}
                   {listing.status === 'removed' && (
-                    <Button size="sm" variant="outline" className="text-xs" onClick={() => updateMutation.mutate({ id: listing.id, status: 'active' })}>重新上架</Button>
+                    <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => updateMutation.mutate({ id: listing.id, status: 'active' })}>重新上架</Button>
                   )}
                 </div>
               </div>
@@ -826,9 +826,9 @@ function ListingsTab() {
       )}
       {total > 20 && (
         <div className="flex justify-center gap-2">
-          <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}>上一頁</Button>
-          <span className="flex items-center text-sm text-muted-foreground">第 {page} 頁 / 共 {Math.ceil(total / 20)} 頁</span>
-          <Button variant="outline" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一頁</Button>
+          <Button variant="outline" className="text-gray-700 bg-white" disabled={page === 1} onClick={() => setPage(p => p - 1)}>上一頁</Button>
+          <span className="flex items-center text-sm text-gray-600">第 {page} 頁 / 共 {Math.ceil(total / 20)} 頁</span>
+          <Button variant="outline" className="text-gray-700 bg-white" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一頁</Button>
         </div>
       )}
       <Dialog open={rejectDialogId !== null} onOpenChange={() => setRejectDialogId(null)}>
@@ -955,7 +955,7 @@ function OrdersTab() {
       {/* Row 2: Date range + search + export */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted-foreground font-medium">日期：</span>
+          <span className="text-xs text-gray-600 font-medium">日期：</span>
           {(["all", "this_month", "last_month", "custom"] as const).map(p => (
             <Button key={p} size="sm" variant={datePreset === p ? "default" : "outline"}
               onClick={() => { setDatePreset(p); setPage(1); }}
@@ -966,30 +966,30 @@ function OrdersTab() {
           {datePreset === "custom" && (
             <div className="flex items-center gap-1.5">
               <Input type="date" className="h-8 w-36 text-xs" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} />
-              <span className="text-xs text-muted-foreground">至</span>
+              <span className="text-xs text-gray-600">至</span>
               <Input type="date" className="h-8 w-36 text-xs" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} />
             </div>
           )}
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400" />
             <Input
-              className="pl-8 h-8 w-48 text-sm"
+              className="pl-8 h-8 w-48 text-sm bg-white text-gray-900"
               placeholder="搜尋訂單號 / 商品"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={orders.length === 0}>
+          <Button size="sm" variant="outline" className="text-gray-700 bg-white" onClick={handleExportCSV} disabled={orders.length === 0}>
             <Download className="w-3.5 h-3.5 mr-1" />匯出 CSV
           </Button>
         </div>
       </div>
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">載入中...</div>
+        <div className="text-center py-12 text-gray-500">載入中...</div>
       ) : filteredOrders.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground"><ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{searchQuery ? '未找到符合的訂單' : '暫無訂單'}</p></div>
+        <div className="text-center py-12 text-gray-500"><ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{searchQuery ? '未找到符合的訂單' : '暫無訂單'}</p></div>
       ) : (
         <div className="space-y-3">
           {filteredOrders.map((order: any) => (
@@ -1021,18 +1021,39 @@ function OrdersTab() {
                 {/* Col 1: Product */}
                 <div className="px-4 py-3">
                   <p className="text-xs font-semibold text-gray-500 mb-1.5">商品資料</p>
-                  <p className="text-sm font-medium text-gray-900 line-clamp-2">{order.listingTitle ?? '商品'}</p>
-                  <div className="mt-1.5 space-y-0.5 text-xs text-gray-600">
-                    <p>數量：{order.quantity ?? 1} · 單價：HKD {parseFloat(order.priceHkd || order.subtotalHkd || '0').toFixed(2)}</p>
-                    <p>小計：HKD {parseFloat(order.subtotalHkd || '0').toFixed(2)}</p>
-                    {order.sellerType === 'platform' ? (
-                      <p className="text-blue-600">平台商品免手續費</p>
-                    ) : (
-                      <p>手續費：HKD {parseFloat(order.platformFeeHkd || '0').toFixed(2)}</p>
-                    )}
-                    <p className="font-semibold text-[#06038d]">賣家淨收：HKD {parseFloat(order.sellerReceivableHkd || order.subtotalHkd || '0').toFixed(2)}</p>
-                    <p className="text-gray-400">付款：{order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</p>
-                    {order.stripePaymentIntentId && <p className="text-gray-400 font-mono text-[10px] truncate">PI: {order.stripePaymentIntentId}</p>}
+                  <div className="flex items-start gap-3">
+                    {/* Thumbnail */}
+                    {(() => {
+                      try {
+                        const imgs = typeof order.listingImages === 'string'
+                          ? JSON.parse(order.listingImages)
+                          : order.listingImages;
+                        const firstImg = Array.isArray(imgs) ? imgs[0] : null;
+                        if (firstImg) return (
+                          <img src={firstImg} alt="" className="w-14 h-16 object-cover rounded-md border border-gray-200 flex-shrink-0" />
+                        );
+                      } catch {}
+                      return (
+                        <div className="w-14 h-16 rounded-md border border-gray-200 bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                          <ShoppingBag className="w-5 h-5 text-gray-300" />
+                        </div>
+                      );
+                    })()}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 line-clamp-2">{order.listingTitle ?? '商品'}</p>
+                      <div className="mt-1.5 space-y-0.5 text-xs text-gray-600">
+                        <p>數量：{order.quantity ?? 1} · 單價： HKD {parseFloat(order.priceHkd || order.subtotalHkd || '0').toFixed(2)}</p>
+                        <p>小計： HKD {parseFloat(order.subtotalHkd || '0').toFixed(2)}</p>
+                        {order.sellerType === 'platform' ? (
+                          <p className="text-blue-600">平台商品免手續費</p>
+                        ) : (
+                          <p>手續費： HKD {parseFloat(order.platformFeeHkd || '0').toFixed(2)}</p>
+                        )}
+                        <p className="font-semibold text-[#06038d]">賣家淨收： HKD {parseFloat(order.sellerReceivableHkd || order.subtotalHkd || '0').toFixed(2)}</p>
+                        <p className="text-gray-400">付款：{order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</p>
+                        {order.stripePaymentIntentId && <p className="text-gray-400 font-mono text-[10px] truncate">PI: {order.stripePaymentIntentId}</p>}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 {/* Col 2: Buyer */}
@@ -1068,7 +1089,7 @@ function OrdersTab() {
                     {order.shippedAt && <p>出貨日：{new Date(order.shippedAt).toLocaleDateString('zh-HK')}</p>}
                   </div>
                   <div className="mt-3">
-                    <Button size="sm" variant="outline" className="text-xs w-full sm:w-auto"
+                    <Button size="sm" variant="outline" className="text-xs w-full sm:w-auto text-gray-700 bg-white"
                       onClick={() => { setSelectedOrder(order); setNote(order.adminNote ?? ''); setTrackingNumber(order.trackingNumber ?? ''); setShippingMethod(order.shippingMethod ?? 'sf_express'); }}>
                       <Edit className="w-3 h-3 mr-1" />管理訂單
                     </Button>
@@ -1081,9 +1102,9 @@ function OrdersTab() {
       )}
       {total > 20 && (
         <div className="flex justify-center gap-2">
-          <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}>上一頁</Button>
-          <span className="flex items-center text-sm text-muted-foreground">第 {page} 頁 / 共 {Math.ceil(total / 20)} 頁</span>
-          <Button variant="outline" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一頁</Button>
+          <Button variant="outline" className="text-gray-700 bg-white" disabled={page === 1} onClick={() => setPage(p => p - 1)}>上一頁</Button>
+          <span className="flex items-center text-sm text-gray-600">第 {page} 頁 / 共 {Math.ceil(total / 20)} 頁</span>
+          <Button variant="outline" className="text-gray-700 bg-white" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一頁</Button>
         </div>
       )}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
@@ -1228,7 +1249,8 @@ function OrdersTab() {
 }
 
 function AlipayPendingTab() {
-  const { data: orders, isLoading, refetch } = trpc.marketplace.adminGetAlipayPending.useQuery();
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
+  const { data: orders, isLoading, refetch } = trpc.marketplace.adminGetAlipayPending.useQuery({ dateFilter });
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [note, setNote] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -1277,6 +1299,23 @@ function AlipayPendingTab() {
         </div>
       </div>
 
+      {/* Date filter */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-muted-foreground font-medium">日期篩選：</span>
+        {(["all", "today", "week", "month"] as const).map(f => (
+          <button key={f}
+            onClick={() => { setDateFilter(f); setSelectedIds(new Set()); }}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              dateFilter === f
+                ? "bg-[#06038d] text-white border-[#06038d]"
+                : "bg-white text-gray-900 border-gray-200 hover:border-[#06038d]/40"
+            }`}>
+            {f === "all" ? "全部" : f === "today" ? "今日" : f === "week" ? "本週" : "本月"}
+          </button>
+        ))}
+        <span className="ml-auto text-xs text-gray-400">共 {orders?.length ?? 0} 筆待核對</span>
+      </div>
+
       {/* Batch actions toolbar */}
       {orders && orders.length > 0 && (
         <div className="flex items-center justify-between bg-gray-50 border rounded-lg px-4 py-2">
@@ -1303,9 +1342,9 @@ function AlipayPendingTab() {
       )}
 
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">載入中...</div>
+        <div className="text-center py-12 text-gray-500">載入中...</div>
       ) : !orders || orders.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-12 text-gray-500">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 opacity-30 text-green-500" />
           <p>暫無待核對的支付寶 HK 訂單</p>
         </div>
@@ -1626,10 +1665,12 @@ function SellerDetailDialog({ sellerId, onClose }: { sellerId: number | null; on
 
 function SellersTab() {
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [selectedSellerId, setSelectedSellerId] = useState<number | null>(null);
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; sellerId: number; sellerName: string }>({ open: false, sellerId: 0, sellerName: "" });
   const [rejectReason, setRejectReason] = useState("");
-  const { data, isLoading, refetch } = trpc.marketplace.adminGetSellers.useQuery({ page, pageSize: 20 });
+  const { data, isLoading, refetch } = trpc.marketplace.adminGetSellers.useQuery({ page, pageSize: 20, search: searchQuery || undefined });
   const approveMutation = trpc.marketplace.adminApproveSeller.useMutation({
     onSuccess: (_, vars) => {
       toast.success(vars.approve ? "賣家已批准，已通知申請人" : "賣家已拒絕/停用，已通知申請人");
@@ -1660,16 +1701,40 @@ function SellersTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">共 {total} 位賣家</span>
-        <Button size="sm" variant="outline" onClick={handleExportSellersCSV} disabled={sellers.length === 0}>
-          <Download className="w-3.5 h-3.5 mr-1" />匯出 CSV
-        </Button>
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Search bar */}
+        <form
+          className="flex items-center gap-2 flex-1 min-w-[220px] max-w-sm"
+          onSubmit={(e) => { e.preventDefault(); setSearchQuery(searchInput.trim()); setPage(1); }}
+        >
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="搜尋賣家名稱或電郵..."
+              className="pl-8 h-8 text-sm bg-white text-gray-900"
+            />
+          </div>
+          <Button type="submit" size="sm" className="bg-[#06038d] text-white h-8 px-3">搜尋</Button>
+          {searchQuery && (
+            <Button type="button" size="sm" variant="outline" className="h-8 px-2 text-gray-500"
+              onClick={() => { setSearchInput(""); setSearchQuery(""); setPage(1); }}>
+              清除
+            </Button>
+          )}
+        </form>
+        <div className="flex items-center gap-2 ml-auto">
+          <span className="text-sm text-gray-600">共 {total} 位賣家</span>
+          <Button size="sm" variant="outline" className="text-gray-700 bg-white" onClick={handleExportSellersCSV} disabled={sellers.length === 0}>
+            <Download className="w-3.5 h-3.5 mr-1" />匯出 CSV
+          </Button>
+        </div>
       </div>
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">載入中...</div>
+        <div className="text-center py-12 text-gray-500">載入中...</div>
       ) : sellers.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground"><Users className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無賣家申請</p></div>
+        <div className="text-center py-12 text-gray-500"><Users className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無賣家申請</p></div>
       ) : (
         <div className="space-y-3">
           {sellers.map((seller: any) => (
@@ -1703,7 +1768,7 @@ function SellersTab() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" className="text-xs" onClick={() => setSelectedSellerId(seller.id)}>
+                  <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => setSelectedSellerId(seller.id)}>
                     <Eye className="w-3 h-3 mr-1" />查看詳情
                   </Button>
                   {!seller.isActive ? (
@@ -1726,9 +1791,9 @@ function SellersTab() {
       )}
       {total > 20 && (
         <div className="flex justify-center gap-2">
-          <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}>上一頁</Button>
-          <span className="flex items-center text-sm text-muted-foreground">第 {page} 頁 / 共 {Math.ceil(total / 20)} 頁</span>
-          <Button variant="outline" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一頁</Button>
+          <Button variant="outline" className="text-gray-700 bg-white" disabled={page === 1} onClick={() => setPage(p => p - 1)}>上一頁</Button>
+          <span className="flex items-center text-sm text-gray-600">第 {page} 頁 / 共 {Math.ceil(total / 20)} 頁</span>
+          <Button variant="outline" className="text-gray-700 bg-white" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一頁</Button>
         </div>
       )}
 
@@ -1742,11 +1807,11 @@ function SellersTab() {
             <DialogTitle>停用賣家帳號</DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-muted-foreground">停用 <strong>{rejectDialog.sellerName}</strong> 的賣家資格，其所有商品將自動下架，並通知申請人。</p>
+            <p className="text-sm text-gray-600">停用 <strong>{rejectDialog.sellerName}</strong> 的賣家資格，其所有商品將自動下架，並通知申請人。</p>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">拒絕/停用原因（選填，將發送給用戶）</label>
               <textarea
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] resize-none bg-background text-foreground"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] resize-none bg-white text-gray-900"
                 rows={3}
                 placeholder="例：資料不完整、違反平台規則..."
                 value={rejectReason}
@@ -1799,7 +1864,7 @@ function DisputesTab() {
     onError: (e) => toast.error(e.message),
   });;
 
-  if (isLoading) return <div className="py-8 text-center text-muted-foreground">載入中...</div>;
+  if (isLoading) return <div className="py-8 text-center text-gray-500">載入中...</div>;
 
   const disputes = data?.orders ?? [];
   const filteredDisputes = priorityFilter === "all" ? disputes
@@ -1815,7 +1880,7 @@ function DisputesTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground font-medium">優先級：</span>
+          <span className="text-xs text-gray-600 font-medium">優先級：</span>
           {(["all", "high", "medium", "low"] as const).map(p => (
             <Button key={p} size="sm" variant={priorityFilter === p ? "default" : "outline"}
               onClick={() => setPriorityFilter(p)}
@@ -1824,11 +1889,11 @@ function DisputesTab() {
             </Button>
           ))}
         </div>
-        <span className="text-sm text-muted-foreground">共 {data?.total ?? 0} 筆爭議</span>
+        <span className="text-sm text-gray-600">共 {data?.total ?? 0} 筆爭議</span>
       </div>
 
       {filteredDisputes.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-12 text-gray-500">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-400" />
           <p>目前沒有待處理的爭議</p>
         </div>
@@ -2105,9 +2170,9 @@ function SalesReportTab() {
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-base">每月銷售明細</h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">顯示最近</span>
+          <span className="text-sm text-gray-600">顯示最近</span>
           <Select value={String(months)} onValueChange={v => setMonths(Number(v))}>
-            <SelectTrigger className="w-28">
+            <SelectTrigger className="w-28 bg-white text-gray-900 border-gray-200">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -2142,9 +2207,9 @@ function SalesReportTab() {
 
       {/* Monthly Table */}
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />載入中...</div>
+        <div className="text-center py-12 text-gray-500"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />載入中...</div>
       ) : monthly.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground"><BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無銷售數據</p></div>
+        <div className="text-center py-12 text-gray-500"><BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無銷售數據</p></div>
       ) : (
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full text-sm">
@@ -2168,7 +2233,7 @@ function SalesReportTab() {
                   ? ((row.totalSalesHkd - prev.totalSalesHkd) / prev.totalSalesHkd * 100)
                   : null;
                 return (
-                  <tr key={row.yearMonth} className="border-b hover:bg-muted/30 transition-colors">
+                  <tr key={row.yearMonth} className="border-b hover:bg-gray-50 transition-colors text-gray-900">
                     <td className="px-4 py-3 font-medium">{fmtYearMonth(row.yearMonth)}</td>
                     <td className="px-4 py-3 text-right font-semibold text-[#06038d]">HKD {fmtHkd(row.totalSalesHkd)}</td>
                     <td className="px-4 py-3 text-right text-blue-700">HKD {fmtHkd(row.platformSalesHkd)}</td>
@@ -2185,7 +2250,7 @@ function SalesReportTab() {
                           {growth >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                           {Math.abs(growth).toFixed(1)}%
                         </span>
-                      ) : <span className="text-muted-foreground text-xs">—</span>}
+                        ) : <span className="text-gray-400 text-xs">—</span>}
                     </td>
                   </tr>
                 );
@@ -2271,9 +2336,9 @@ function ReportsTab() {
             </div>
           ))}
           <div className="flex justify-between items-center pt-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
+            <Button variant="outline" size="sm" className="text-gray-700 bg-white" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
             <span className="text-xs text-gray-500">第 {page} 頁 · 共 {data.total} 筆</span>
-            <Button variant="outline" size="sm" disabled={page * 20 >= (data.total ?? 0)} onClick={() => setPage(p => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
+            <Button variant="outline" size="sm" className="text-gray-700 bg-white" disabled={page * 20 >= (data.total ?? 0)} onClick={() => setPage(p => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
           </div>
         </div>
       )}
@@ -2283,7 +2348,7 @@ function ReportsTab() {
           <Label className="text-sm">管理員備注（選填）</Label>
           <Textarea value={adminNote} onChange={e => setAdminNote(e.target.value)} placeholder="輸入處理備注..." rows={3} />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setNoteDialogId(null)}>取消</Button>
+            <Button variant="outline" className="text-gray-700 bg-white" onClick={() => setNoteDialogId(null)}>取消</Button>
             <Button style={{ background: "#06038d" }} className="text-white" disabled={reviewMutation.isPending}
               onClick={() => { if (noteDialogId) { reviewMutation.mutate({ reportId: noteDialogId, status: pendingAction, adminNote: adminNote || undefined }); setNoteDialogId(null); } }}>確認</Button>
           </DialogFooter>
@@ -2390,9 +2455,9 @@ function OffersTab() {
             </div>
           ))}
           <div className="flex justify-between items-center pt-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
+            <Button variant="outline" size="sm" className="text-gray-700 bg-white" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
             <span className="text-xs text-gray-500">第 {page} 頁 · 共 {data.total} 筆</span>
-            <Button variant="outline" size="sm" disabled={page * 20 >= (data.total ?? 0)} onClick={() => setPage(p => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
+            <Button variant="outline" size="sm" className="text-gray-700 bg-white" disabled={page * 20 >= (data.total ?? 0)} onClick={() => setPage(p => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
           </div>
         </div>
       )}
@@ -2618,7 +2683,7 @@ function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () =>
                   onClick={() => manualPayoutMutation.mutate({ orderId: o.id, note: manualNote || undefined })}>
                   {manualPayoutMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : '確認放款'}
                 </Button>
-                <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowManualPayoutDialog(false)}>取消</Button>
+                <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => setShowManualPayoutDialog(false)}>取消</Button>
               </div>
             </div>
           )}
@@ -2685,7 +2750,7 @@ function PayoutsTab() {
           <Button
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs text-gray-700 bg-white"
             disabled={!data?.orders?.length}
             onClick={() => {
               const rows = (data?.orders ?? []).map((o: any) => ({
@@ -2757,9 +2822,9 @@ function PayoutsTab() {
             <PayoutOrderCard key={o.id} order={o} onRefresh={() => utils.marketplace.adminGetOrders.invalidate()} />
           ))}
           <div className="flex justify-between items-center pt-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
+            <Button variant="outline" size="sm" className="text-gray-700 bg-white" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
             <span className="text-xs text-gray-500">第 {page} 頁 · 共 {data.total} 筆</span>
-            <Button variant="outline" size="sm" disabled={page * 20 >= (data.total ?? 0)} onClick={() => setPage(p => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
+            <Button variant="outline" size="sm" className="text-gray-700 bg-white" disabled={page * 20 >= (data.total ?? 0)} onClick={() => setPage(p => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
           </div>
         </div>
       )}
@@ -2941,12 +3006,12 @@ export default function AdminMarketplace() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 p-4 lg:p-6">
+        <main className="flex-1 min-w-0 p-4 lg:p-6 bg-white text-gray-900">
           {/* Breadcrumb */}
-          <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground mb-4">
-            <Link href="/admin" className="hover:text-foreground">Admin</Link>
+          <div className="hidden lg:flex items-center gap-2 text-xs text-gray-500 mb-4">
+            <Link href="/admin" className="hover:text-gray-900">Admin</Link>
             <span>/</span>
-            <span className="text-foreground font-medium">{currentLabel}</span>
+            <span className="text-gray-900 font-medium">{currentLabel}</span>
           </div>
           {renderContent()}
         </main>

@@ -1071,8 +1071,11 @@ export const marketplaceRouter = router({
     }),
 
   adminGetAlipayPending: adminProcedure
-    .query(async () => {
-      return getAlipayPendingOrders();
+    .input(z.object({
+      dateFilter: z.enum(['all', 'today', 'week', 'month']).optional().default('all'),
+    }).optional())
+    .query(async ({ input }) => {
+      return getAlipayPendingOrders(input?.dateFilter ?? 'all');
     }),
 
   adminGetOffers: adminProcedure
@@ -1409,9 +1412,10 @@ export const marketplaceRouter = router({
     .input(z.object({
       page: z.number().int().min(1).default(1),
       pageSize: z.number().int().min(1).max(50).default(20),
+      search: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      return getAllSellerProfiles(input.page, input.pageSize);
+      return getAllSellerProfiles(input.page, input.pageSize, input.search);
     }),
 
   adminGetSellerDetail: adminProcedure

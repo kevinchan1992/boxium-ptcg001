@@ -2950,12 +2950,52 @@ export async function updateSellerProfile(id: number, data: Partial<InsertSeller
   if (!db) throw new Error("Database not available");
   await db.update(sellerProfiles).set({ ...data, updatedAt: new Date() }).where(eq(sellerProfiles.id, id));
 }
-export async function getAllSellerProfiles(page = 1, pageSize = 20) {
+export async function getAllSellerProfiles(page = 1, pageSize = 20, search?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
-  const rows = await db.select().from(sellerProfiles).orderBy(desc(sellerProfiles.createdAt)).limit(pageSize).offset(offset);
-  const countRows = await db.select({ count: sql<number>`count(*)` }).from(sellerProfiles);
+  // Join with users to get email and real name for search
+  const usersAlias = alias(users, 'u');
+  const baseQuery = db
+    .select({
+      id: sellerProfiles.id,
+      userId: sellerProfiles.userId,
+      displayName: sellerProfiles.displayName,
+      bio: sellerProfiles.bio,
+      avatarUrl: sellerProfiles.avatarUrl,
+      stripeConnectId: sellerProfiles.stripeConnectId,
+      stripeConnectStatus: sellerProfiles.stripeConnectStatus,
+      stripeOnboardingUrl: sellerProfiles.stripeOnboardingUrl,
+      totalSales: sellerProfiles.totalSales,
+      avgRating: sellerProfiles.avgRating,
+      ratingCount: sellerProfiles.ratingCount,
+      isActive: sellerProfiles.isActive,
+      rejectReason: sellerProfiles.rejectReason,
+      createdAt: sellerProfiles.createdAt,
+      updatedAt: sellerProfiles.updatedAt,
+      // From users join
+      email: usersAlias.email,
+      realName: usersAlias.name,
+    })
+    .from(sellerProfiles)
+    .leftJoin(usersAlias, eq(sellerProfiles.userId, usersAlias.id));
+  
+  const searchCondition = search
+    ? sql`(${sellerProfiles.displayName} LIKE ${`%${search}%`} OR ${usersAlias.email} LIKE ${`%${search}%`} OR ${usersAlias.name} LIKE ${`%${search}%`})`
+    : undefined;
+  
+  const rows = await baseQuery
+    .where(searchCondition)
+    .orderBy(desc(sellerProfiles.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+  
+  const countQuery = db
+    .select({ count: sql<number>`count(*)` })
+    .from(sellerProfiles)
+    .leftJoin(usersAlias, eq(sellerProfiles.userId, usersAlias.id))
+    .where(searchCondition);
+  const countRows = await countQuery;
   return { sellers: rows, total: Number(countRows[0]?.count ?? 0) };
 }
 
@@ -3233,11 +3273,29 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
     .where(and(...conditions));
   return { orders: rows, total: Number(countRows[0]?.count ?? 0) };
 }
-export async function getAlipayPendingOrders() {
+export async function getAlipayPendingOrders(dateFilter?: 'all' | 'today' | 'week' | 'month') {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const now = new Date();
+  let fromDate: Date | null = null;
+  if (dateFilter === 'today') {
+    fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else if (dateFilter === 'week') {
+    const day = now.getDay(); // 0=Sun
+    fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+  } else if (dateFilter === 'month') {
+    fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  const { gte } = await import('drizzle-orm');
+  const conditions: ReturnType<typeof eq>[] = [
+    eq(marketplaceOrders.paymentMethod, 'alipay_hk'),
+    eq(marketplaceOrders.paymentStatus, 'pending'),
+  ];
+  if (fromDate) {
+    conditions.push(gte(marketplaceOrders.createdAt, fromDate) as any);
+  }
   return db.select().from(marketplaceOrders)
-    .where(and(eq(marketplaceOrders.paymentMethod, 'alipay_hk'), eq(marketplaceOrders.paymentStatus, 'pending')))
+    .where(and(...conditions))
     .orderBy(desc(marketplaceOrders.createdAt));
 }
 
