@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
@@ -521,6 +521,13 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders }: { 
   const sellerUser = data?.sellerUser;
   const orderCount = data?.orderCount ?? 0;
 
+  // Order history timeline
+  const { data: listingOrdersData, isLoading: ordersLoading } = trpc.marketplace.adminGetListingOrders.useQuery(
+    { listingId: listingId!, limit: 8 },
+    { enabled: !!listingId && !editMode }
+  );
+  const listingOrders = listingOrdersData ?? [];
+
   const images: string[] = (() => {
     try { return listing?.images ? JSON.parse(listing.images) : []; } catch { return []; }
   })();
@@ -813,6 +820,86 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders }: { 
                       </div>
                       <div className="p-4">
                         <p className="text-sm text-red-700">{listing.rejectedReason}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 訂單歷史時間軸 */}
+                  {!editMode && (
+                    <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                      <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15 flex items-center justify-between">
+                        <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5" />訂單歷史
+                        </p>
+                        {orderCount > 0 && onViewOrders && (
+                          <button
+                            className="text-xs text-[#06038d] hover:underline flex items-center gap-1"
+                            onClick={() => { onViewOrders(listingId!); onClose(); }}
+                          >
+                            查看全部 ({orderCount}) <ExternalLink className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        {ordersLoading ? (
+                          <div className="flex items-center gap-2 text-gray-400 text-sm">
+                            <Loader2 className="w-4 h-4 animate-spin" />載入中...
+                          </div>
+                        ) : listingOrders.length === 0 ? (
+                          <p className="text-sm text-gray-400">此商品尚無訂單記錄。</p>
+                        ) : (
+                          <div className="space-y-0">
+                            {listingOrders.map((order: any, idx: number) => {
+                              const statusColors: Record<string, string> = {
+                                processing: 'bg-yellow-400',
+                                shipped: 'bg-blue-400',
+                                delivered: 'bg-indigo-400',
+                                completed: 'bg-emerald-500',
+                                cancelled: 'bg-gray-400',
+                                disputed: 'bg-red-400',
+                                pending_payment: 'bg-orange-400',
+                                payment_received: 'bg-teal-400',
+                              };
+                              const statusLabels: Record<string, string> = {
+                                processing: '處理中', shipped: '已出貨', delivered: '已送達',
+                                completed: '已完成', cancelled: '已取消', disputed: '爭議中',
+                                pending_payment: '待付款', payment_received: '已付款',
+                              };
+                              const dot = statusColors[order.orderStatus] ?? 'bg-gray-400';
+                              const isLast = idx === listingOrders.length - 1;
+                              return (
+                                <div key={order.id} className="flex gap-3">
+                                  {/* Timeline line */}
+                                  <div className="flex flex-col items-center">
+                                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1 ${dot}`} />
+                                    {!isLast && <div className="w-px flex-1 bg-gray-200 my-1" />}
+                                  </div>
+                                  {/* Content */}
+                                  <div className={`pb-3 flex-1 ${isLast ? '' : ''}`}>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="text-xs font-mono text-gray-500">{order.orderNo}</span>
+                                      <span className={`text-xs px-1.5 py-0.5 rounded-full text-white font-medium ${dot}`}>
+                                        {statusLabels[order.orderStatus] ?? order.orderStatus}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="text-xs text-gray-600">
+                                        {order.buyerName ?? order.buyerEmail ?? '買家不明'}
+                                      </span>
+                                      <span className="text-xs text-gray-400">·</span>
+                                      <span className="text-xs font-semibold text-[#06038d]">
+                                        HKD {parseFloat(order.subtotalHkd || '0').toFixed(0)}
+                                      </span>
+                                      <span className="text-xs text-gray-400 ml-auto">
+                                        {new Date(order.createdAt).toLocaleDateString('zh-HK', { month: 'short', day: 'numeric' })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1220,6 +1307,35 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
     exportToCSV(rows, `選定訂單_${new Date().toISOString().slice(0,10)}.csv`);
   };
 
+  // Batch shipping dialog state
+  const [showBatchShippingDialog, setShowBatchShippingDialog] = useState(false);
+  const [batchTrackingNumber, setBatchTrackingNumber] = useState('');
+  const [batchShippingMethod, setBatchShippingMethod] = useState('sf_express');
+  const batchUpdateShippingMutation = trpc.marketplace.adminBatchUpdateShipping.useMutation({
+    onSuccess: (data) => {
+      toast.success(`批量出貨完成：${data.successCount} 筆成功${data.failCount > 0 ? `，${data.failCount} 筆失敗` : ''}`);
+      refetch();
+      setSelectedOrderIds(new Set());
+      setShowBatchShippingDialog(false);
+      setBatchTrackingNumber('');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Batch payout dialog state
+  const [showBatchPayoutDialog, setShowBatchPayoutDialog] = useState(false);
+  const [batchPayoutNote, setBatchPayoutNote] = useState('');
+  const batchMarkPayoutMutation = trpc.marketplace.adminBatchMarkPayout.useMutation({
+    onSuccess: (data) => {
+      toast.success(`批量放款完成：${data.successCount} 筆成功${data.failCount > 0 ? `，${data.failCount} 筆失敗（可能訂單非已完成狀態）` : ''}`);
+      refetch();
+      setSelectedOrderIds(new Set());
+      setShowBatchPayoutDialog(false);
+      setBatchPayoutNote('');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const handleExportCSV = () => {
     const rows = orders.map((o: any) => ({
       '訂單號': o.orderNo,
@@ -1311,18 +1427,28 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       </div>
       {/* Batch selection toolbar */}
       {selectedOrderIds.size > 0 && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-[#06038d]/10 border border-[#06038d]/20 rounded-xl">
+        <div className="flex items-center gap-2 flex-wrap px-4 py-2.5 bg-[#06038d]/10 border border-[#06038d]/20 rounded-xl">
           <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll}
             className="w-4 h-4 rounded border-gray-300 flex-shrink-0" />
           <span className="text-sm text-[#06038d] font-medium">已選 {selectedOrderIds.size} 筆訂單</span>
-          <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white ml-auto"
-            onClick={handleExportSelectedCSV}>
-            <Download className="w-3.5 h-3.5 mr-1" />匯出選定訂單 CSV
-          </Button>
-          <button className="text-xs text-[#06038d]/70 hover:text-[#06038d] underline"
-            onClick={() => setSelectedOrderIds(new Set())}>
-            取消全選
-          </button>
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
+            <Button size="sm" variant="outline" className="text-gray-700 bg-white border-gray-300"
+              onClick={handleExportSelectedCSV}>
+              <Download className="w-3.5 h-3.5 mr-1" />匯出 CSV
+            </Button>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setShowBatchShippingDialog(true)}>
+              <Package className="w-3.5 h-3.5 mr-1" />批量更新物流
+            </Button>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => setShowBatchPayoutDialog(true)}>
+              <Banknote className="w-3.5 h-3.5 mr-1" />批量標記已放款
+            </Button>
+            <button className="text-xs text-[#06038d]/70 hover:text-[#06038d] underline"
+              onClick={() => setSelectedOrderIds(new Set())}>
+              取消全選
+            </button>
+          </div>
         </div>
       )}
       {isLoading ? (
@@ -1734,6 +1860,105 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
           )}
         </DialogContent>
       </Dialog>
+      {/* Batch shipping dialog */}
+      <Dialog open={showBatchShippingDialog} onOpenChange={setShowBatchShippingDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5 text-blue-600" />
+              批量更新物流狀態
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              <p>將對 <strong>{selectedOrderIds.size} 筆訂單</strong>標記為「已出貨」並發送通知給買家。</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">物流方式</label>
+              <div className="flex rounded-lg overflow-hidden border border-gray-200">
+                {([{ value: 'sf_express', label: '順豐' }, { value: 'hk_post', label: '香港郵政' }, { value: 'pickup', label: '自取' }] as const).map(opt => (
+                  <button key={opt.value}
+                    onClick={() => setBatchShippingMethod(opt.value)}
+                    className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+                      batchShippingMethod === opt.value ? 'bg-[#06038d] text-white' : 'bg-white text-gray-900 hover:bg-gray-50'
+                    }`}>{opt.label}</button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">統一追蹤號 <span className="text-gray-400 font-normal">(可留空)</span></label>
+              <Input
+                placeholder="輸入物流追蹤號（所有訂單使用相同追蹤號）"
+                value={batchTrackingNumber}
+                onChange={e => setBatchTrackingNumber(e.target.value)}
+                className="bg-white text-gray-900"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="text-gray-700 bg-white" onClick={() => setShowBatchShippingDialog(false)}>
+              取消
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={batchUpdateShippingMutation.isPending}
+              onClick={() => batchUpdateShippingMutation.mutate({
+                orderIds: Array.from(selectedOrderIds),
+                trackingNumber: batchTrackingNumber || undefined,
+                shippingMethod: batchShippingMethod,
+              })}
+            >
+              {batchUpdateShippingMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Package className="w-3.5 h-3.5 mr-1.5" />}
+              確認出貨
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Batch payout dialog */}
+      <Dialog open={showBatchPayoutDialog} onOpenChange={setShowBatchPayoutDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Banknote className="w-5 h-5 text-emerald-600" />
+              批量標記已放款
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm text-emerald-800">
+              <p>將對 <strong>{selectedOrderIds.size} 筆訂單</strong>標記為「已放款」。</p>
+              <p className="mt-1 text-xs text-emerald-700">注意：僅適用於狀態為「已完成」的訂單，其他狀態的訂單將會被計入失敗數。</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">放款備注 <span className="text-gray-400 font-normal">(可留空)</span></label>
+              <Textarea
+                placeholder="輸入放款備注..."
+                rows={2}
+                value={batchPayoutNote}
+                onChange={e => setBatchPayoutNote(e.target.value)}
+                className="bg-white text-gray-900"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="text-gray-700 bg-white" onClick={() => setShowBatchPayoutDialog(false)}>
+              取消
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              disabled={batchMarkPayoutMutation.isPending}
+              onClick={() => batchMarkPayoutMutation.mutate({
+                orderIds: Array.from(selectedOrderIds),
+                note: batchPayoutNote || undefined,
+              })}
+            >
+              {batchMarkPayoutMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Check className="w-3.5 h-3.5 mr-1.5" />}
+              確認放款
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Listing detail dialog triggered from order detail */}
       {viewListingId && (
         <ListingDetailDialog

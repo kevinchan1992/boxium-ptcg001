@@ -4749,3 +4749,16 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 保存 checkpoint
 
 ---
+
+## ✅ 批量物流更新 + 訂單歷史時間軸 + 批量標記已放款
+
+- [x] 後端 adminBatchUpdateShipping：批量將訂單標記為已出貨，支援統一追蹤號或個別追蹤號
+- [x] 後端 adminBatchMarkPayout：批量將訂單標記為已放款，支援備注
+- [x] 後端 adminGetListingOrders：取得指定商品的最近訂單摘要
+- [x] 前端 OrdersTab 批量工具列：加入「批量更新物流」按鈕，開啟 Dialog 填入追蹤號
+- [x] 前端 OrdersTab 批量工具列：加入「批量標記已放款」按鈕，開啟確認 Dialog
+- [x] 前端 ListingDetailDialog：加入訂單歷史時間軸區塊，顯示最近訂單摘要
+- [x] 撰寫 16 項單元測試（admin-batch-shipping-payout.test.ts）
+- [x] 保存 checkpoint
+
+---

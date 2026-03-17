@@ -2760,4 +2760,127 @@ All three checks must pass for verified to be true. Respond with JSON only match
         ratingCount: seller.ratingCount,
       };
     }),
+
+  // ============================================================
+  // ADMIN - Batch update shipping status
+  // ============================================================
+  adminBatchUpdateShipping: adminProcedure
+    .input(z.object({
+      orderIds: z.array(z.number().int()).min(1).max(100),
+      trackingNumber: z.string().max(200).optional(),
+      shippingMethod: z.string().max(100).optional(),
+      // Per-order tracking numbers (overrides global trackingNumber if provided)
+      perOrderTracking: z.array(z.object({
+        orderId: z.number().int(),
+        trackingNumber: z.string().max(200),
+      })).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const now = new Date();
+      let successCount = 0;
+      let failCount = 0;
+      const trackingMap = new Map<number, string>();
+      if (input.perOrderTracking) {
+        input.perOrderTracking.forEach(({ orderId, trackingNumber }) => trackingMap.set(orderId, trackingNumber));
+      }
+      for (const orderId of input.orderIds) {
+        try {
+          const order = await getMarketplaceOrderById(orderId);
+          if (!order) { failCount++; continue; }
+          const tracking = trackingMap.get(orderId) ?? input.trackingNumber;
+          const updates: Record<string, any> = {
+            orderStatus: 'shipped',
+            shippedAt: now,
+            updatedAt: now,
+          };
+          if (tracking) updates.trackingNumber = tracking;
+          if (input.shippingMethod) updates.shippingMethod = input.shippingMethod;
+          await updateMarketplaceOrder(orderId, updates);
+          // Notify buyer
+          await createNotification({
+            userId: order.buyerId,
+            type: 'trade',
+            title: '訂單已出貨 📦',
+            body: `訂單 ${order.orderNo} 已出貨${tracking ? `，物流追蹤號：${tracking}` : ''}，請注意查收。`,
+            linkUrl: `/orders/${order.orderNo}`,
+          }).catch(() => {});
+          successCount++;
+        } catch (err) {
+          console.error(`[AdminBatchShipping] Failed for order ${orderId}:`, err);
+          failCount++;
+        }
+      }
+      return { successCount, failCount };
+    }),
+
+  // ============================================================
+  // ADMIN - Batch mark orders as paid out
+  // ============================================================
+  adminBatchMarkPayout: adminProcedure
+    .input(z.object({
+      orderIds: z.array(z.number().int()).min(1).max(100),
+      note: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const now = new Date();
+      let successCount = 0;
+      let failCount = 0;
+      for (const orderId of input.orderIds) {
+        try {
+          const order = await getMarketplaceOrderById(orderId);
+          if (!order) { failCount++; continue; }
+          // Only allow payout for completed orders
+          if (order.orderStatus !== 'completed') { failCount++; continue; }
+          const updates: Record<string, any> = {
+            payoutStatus: 'paid',
+            manualPayoutAt: now,
+            updatedAt: now,
+          };
+          if (input.note) updates.manualPayoutNote = input.note;
+          await updateMarketplaceOrder(orderId, updates);
+          successCount++;
+        } catch (err) {
+          console.error(`[AdminBatchPayout] Failed for order ${orderId}:`, err);
+          failCount++;
+        }
+      }
+      return { successCount, failCount };
+    }),
+
+  // ============================================================
+  // ADMIN - Get recent orders for a listing (for timeline)
+  // ============================================================
+  adminGetListingOrders: adminProcedure
+    .input(z.object({
+      listingId: z.number().int(),
+      limit: z.number().int().min(1).max(20).default(10),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const rows = await db
+        .select({
+          id: marketplaceOrders.id,
+          orderNo: marketplaceOrders.orderNo,
+          orderStatus: marketplaceOrders.orderStatus,
+          payoutStatus: marketplaceOrders.payoutStatus,
+          subtotalHkd: marketplaceOrders.subtotalHkd,
+          sellerReceivableHkd: marketplaceOrders.sellerReceivableHkd,
+          createdAt: marketplaceOrders.createdAt,
+          shippedAt: marketplaceOrders.shippedAt,
+          buyerId: marketplaceOrders.buyerId,
+          buyerName: users.name,
+          buyerEmail: users.email,
+        })
+        .from(marketplaceOrders)
+        .leftJoin(users, eq(marketplaceOrders.buyerId, users.id))
+        .where(eq(marketplaceOrders.listingId, input.listingId))
+        .orderBy(desc(marketplaceOrders.createdAt))
+        .limit(input.limit);
+      return rows;
+    }),
 });
