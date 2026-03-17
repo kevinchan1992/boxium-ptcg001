@@ -1870,6 +1870,7 @@ function DisputesTab() {
   const [adminNote, setAdminNote] = useState("");
   const [outcome, setOutcome] = useState<"refund_buyer" | "release_seller" | "partial">("refund_buyer");
   const [priorityFilter, setPriorityFilter] = useState<"all" | "high" | "medium" | "low">("all");
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'resolved' | 'all'>('pending');
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const utils = trpc.useUtils();
@@ -1880,7 +1881,7 @@ function DisputesTab() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data, isLoading } = trpc.marketplace.adminGetDisputes.useQuery({ page, pageSize: 20, search: debouncedSearch || undefined });
+  const { data, isLoading } = trpc.marketplace.adminGetDisputes.useQuery({ page, pageSize: 20, search: debouncedSearch || undefined, status: statusFilter });
   const setPriorityMutation = trpc.marketplace.adminSetDisputePriority.useMutation({
     onSuccess: () => utils.marketplace.adminGetDisputes.invalidate(),
     onError: (e) => toast.error('設定優先級失敗：' + e.message),
@@ -1911,6 +1912,26 @@ function DisputesTab() {
 
   return (
     <div className="space-y-4">
+      {/* Status filter tabs */}
+      <div className="flex items-center gap-1 border-b border-gray-200 pb-0">
+        {([['pending', '待處理', 'text-red-600 border-red-500'], ['resolved', '已解決', 'text-green-600 border-green-500'], ['all', '全部', 'text-[#06038d] border-[#06038d]']] as const).map(([val, label, activeClass]) => (
+          <button
+            key={val}
+            onClick={() => { setStatusFilter(val); setPage(1); }}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              statusFilter === val
+                ? activeClass
+                : 'text-gray-500 border-transparent hover:text-gray-700'
+            }`}
+          >
+            {label}
+            {val === 'pending' && (data?.total ?? 0) > 0 && statusFilter === 'pending' && (
+              <span className="ml-1.5 bg-red-100 text-red-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{data?.total ?? 0}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-gray-600 font-medium">優先級：</span>
@@ -1931,13 +1952,13 @@ function DisputesTab() {
             />
           </div>
         </div>
-        <span className="text-sm text-gray-600">共 {data?.total ?? 0} 筆爭議</span>
+        <span className="text-sm text-gray-600">共 {data?.total ?? 0} 筆{statusFilter === 'pending' ? '待處理' : statusFilter === 'resolved' ? '已解決' : ''}爭議</span>
       </div>
 
       {filteredDisputes.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-400" />
-          <p>目前沒有待處理的爭議</p>
+          <p>{statusFilter === 'resolved' ? '目前沒有已解決的爭議記錄' : statusFilter === 'all' ? '目前沒有任何爭議記錄' : '目前沒有待處理的爭議 🎉'}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -1948,9 +1969,13 @@ function DisputesTab() {
             <div key={order.id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               {/* Header bar */}
               <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-white text-sm font-semibold font-mono">{order.orderNo}</span>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-200 text-red-900">爭議中</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-white text-sm font-semibold font-mono">{order.orderNo}</span>
+                  {order.disputeResolvedAt ? (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-200 text-green-900">已解決</span>
+                  ) : (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-200 text-red-900">爭議中</span>
+                  )}
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     priority === 'high' ? 'bg-red-300 text-red-900' :
                     priority === 'medium' ? 'bg-yellow-200 text-yellow-900' :
@@ -1971,9 +1996,11 @@ function DisputesTab() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {order.disputeOpenedAt && (
+                  {order.disputeResolvedAt ? (
+                    <span className="text-green-300 text-xs">解決：{new Date(order.disputeResolvedAt).toLocaleDateString('zh-HK')}</span>
+                  ) : order.disputeOpenedAt ? (
                     <span className="text-red-300 text-xs">申請：{new Date(order.disputeOpenedAt).toLocaleDateString('zh-HK')}</span>
-                  )}
+                  ) : null}
                   <span className="text-yellow-300 text-xs font-semibold">HKD {parseFloat(order.subtotalHkd ?? '0').toFixed(2)}</span>
                 </div>
               </div>
@@ -2932,6 +2959,14 @@ function PayoutsTab() {
   );
   const allPendingSelected = pendingAlipayOrders.length > 0 && pendingAlipayOrders.every((o: any) => selectedIds.has(o.id));
 
+  // Calculate total amount for selected orders
+  const selectedOrdersTotal = (data?.orders ?? []).filter((o: any) => selectedIds.has(o.id)).reduce(
+    (sum: number, o: any) => sum + (Number(o.sellerReceivableHkd) || 0), 0
+  );
+  const selectedOrdersBreakdown = (data?.orders ?? []).filter((o: any) => selectedIds.has(o.id)).map(
+    (o: any) => ({ orderNo: o.orderNo, sellerName: o.sellerName ?? '賣家', amount: Number(o.sellerReceivableHkd) || 0 })
+  );
+
   const toggleSelectAll = () => {
     if (allPendingSelected) {
       setSelectedIds(new Set());
@@ -3134,8 +3169,29 @@ function PayoutsTab() {
       {/* Batch payout dialog */}
       {showBatchDialog && (
         <div className="p-4 bg-green-50 border border-green-300 rounded-lg space-y-3">
-          <p className="text-sm font-semibold text-green-800">批量標記已放款 — 共 {selectedIds.size} 筆訂單</p>
-          <p className="text-xs text-gray-600">此操作將把所選訂單標記為已放款，並通知相關賣家（C2C 訂單）。</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-semibold text-green-800">批量標記已放款 — 共 {selectedIds.size} 筆訂單</p>
+              <p className="text-xs text-gray-600 mt-0.5">此操作將把所選訂單標記為已放款，並通知相關賣家（C2C 訂單）。</p>
+            </div>
+            {/* Total amount highlight */}
+            <div className="text-right bg-white rounded-lg border border-green-300 px-3 py-2 ml-4 shrink-0">
+              <p className="text-[10px] text-gray-500">合計放款金額</p>
+              <p className="text-lg font-bold text-green-700">HKD {selectedOrdersTotal.toFixed(2)}</p>
+              <p className="text-[10px] text-gray-400">共 {selectedIds.size} 筆訂單</p>
+            </div>
+          </div>
+          {/* Per-order breakdown */}
+          {selectedOrdersBreakdown.length > 0 && (
+            <div className="bg-white rounded border border-green-200 divide-y divide-green-100 max-h-32 overflow-y-auto">
+              {selectedOrdersBreakdown.map(item => (
+                <div key={item.orderNo} className="flex items-center justify-between px-3 py-1.5">
+                  <span className="text-xs text-gray-600">{item.orderNo} · {item.sellerName}</span>
+                  <span className="text-xs font-medium text-gray-800">HKD {item.amount.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <input
             className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:border-green-400 bg-white text-gray-900"
             placeholder="批量備注（例如：2026年3月份支付寶 HK 放款）"

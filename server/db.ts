@@ -3602,13 +3602,25 @@ export async function getWishlistListingIds(userId: number): Promise<number[]> {
 // DISPUTE & REVIEW DB HELPERS
 // ============================================================
 
-export async function getDisputedOrders(page = 1, pageSize = 20, search?: string) {
+export async function getDisputedOrders(page = 1, pageSize = 20, search?: string, status: 'pending' | 'resolved' | 'all' = 'pending') {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
   const buyerAlias = alias(users, 'buyer');
   const buildWhere = () => {
-    const baseCondition = eq(marketplaceOrders.orderStatus, "disputed");
+    // Status filter: pending = currently disputed, resolved = has disputeResolvedAt, all = both
+    let baseCondition: any;
+    if (status === 'pending') {
+      baseCondition = eq(marketplaceOrders.orderStatus, "disputed");
+    } else if (status === 'resolved') {
+      baseCondition = isNotNull(marketplaceOrders.disputeResolvedAt);
+    } else {
+      // 'all': either currently disputed OR has been resolved
+      baseCondition = or(
+        eq(marketplaceOrders.orderStatus, "disputed"),
+        isNotNull(marketplaceOrders.disputeResolvedAt)
+      );
+    }
     if (!search || !search.trim()) return baseCondition;
     const q = `%${search.trim()}%`;
     return and(

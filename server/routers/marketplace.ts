@@ -2184,9 +2184,10 @@ All three checks must pass for verified to be true. Respond with JSON only match
       page: z.number().int().min(1).default(1),
       pageSize: z.number().int().min(1).max(50).default(20),
       search: z.string().optional(),
+      status: z.enum(['pending', 'resolved', 'all']).default('pending'),
     }))
     .query(async ({ input }) => {
-      return getDisputedOrders(input.page, input.pageSize, input.search);
+      return getDisputedOrders(input.page, input.pageSize, input.search, input.status);
     }),
 
   // Export payout records as CSV

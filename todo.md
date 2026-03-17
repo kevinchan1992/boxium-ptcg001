@@ -4672,3 +4672,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 批量放款截圖上傳：前端批量確認面板加入圖片上傳（上傳至 S3 後共用同一張截圖）
 - [x] 爭議管理徽章：後端 getMarketplaceStats 加入 unresolvedDisputeCount
 - [x] 爭議管理徽章：前端左側選單「爭議處理」項目旁顯示紅色數字徽章
+
+---
+## 🏗️ 管理後台功能擴展（2026-03-17 第二批）
+- [x] 批量放款金額總計：確認面板顯示「共 X 筆，合計 HKD XXX」，附明細可滞動列表
+- [x] 爭議處理篩選器：加入待處理/已解決/全部 tab，已解決卡片顯示綠色標記和解決日期
+- [x] 爭議處理後端：adminGetDisputes 支援 status 篩選參數（pending/resolved/all）
+- [x] Stripe Connect 自動轉帳：已實作（訂單完成時自動觸發），無需額外實作
