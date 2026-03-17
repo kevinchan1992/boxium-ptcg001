@@ -3150,14 +3150,18 @@ export async function getBuyerOrders(buyerId: number) {
     .orderBy(desc(marketplaceOrders.createdAt));
   return rows;
 }
-export async function getAdminOrders(page = 1, pageSize = 20, status?: string) {
+export async function getAdminOrders(page = 1, pageSize = 20, status?: string, sellerType?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
   // If no status filter, exclude pending_payment (buyer hasn't paid, not a real order yet)
-  const conditions = status
+  const conditions: any[] = status
     ? [eq(marketplaceOrders.orderStatus, status as any)]
     : [sql`${marketplaceOrders.orderStatus} != 'pending_payment'`];
+  // Optional sellerType filter
+  if (sellerType) {
+    conditions.push(eq(marketplaceOrders.sellerType, sellerType as any));
+  }
   // Alias for buyer and seller user joins to avoid column name conflicts
   const { alias } = await import('drizzle-orm/mysql-core');
   const buyerAlias = alias(users, 'buyerAlias');

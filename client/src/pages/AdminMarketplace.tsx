@@ -2298,7 +2298,19 @@ const payoutStatusBadge: Record<string, { label: string; color: string }> = {
 
 function PayoutsTab() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = trpc.marketplace.adminGetOrders.useQuery({ page, pageSize: 20, status: "completed" });
+  const [sellerTypeFilter, setSellerTypeFilter] = useState<'all' | 'platform' | 'seller'>('all');
+  const utils = trpc.useUtils();
+  const { data, isLoading } = trpc.marketplace.adminGetOrders.useQuery({
+    page, pageSize: 20, status: "completed", sellerType: sellerTypeFilter
+  });
+  const fixFeesMutation = trpc.marketplace.adminFixPlatformOrderFees.useMutation({
+    onSuccess: (result) => {
+      alert(result.message);
+      utils.marketplace.adminGetOrders.invalidate();
+    },
+    onError: (err) => alert('修復失敗：' + err.message),
+  });
+
   // Fix: use sellerReceivableHkd (correct field name from backend)
   // Platform orders (sellerType='platform') have platformFeeHkd=0, sellerReceivableHkd=subtotalHkd
   const totalPayout = data?.orders?.reduce((sum: number, o: any) => {
@@ -2310,8 +2322,49 @@ function PayoutsTab() {
   const totalFee = data?.orders?.reduce((sum: number, o: any) => sum + (Number(o.platformFeeHkd) || 0), 0) ?? 0;
   const c2cOrderCount = data?.orders?.filter((o: any) => o.sellerType === 'seller').length ?? 0;
   const platformOrderCount = data?.orders?.filter((o: any) => o.sellerType === 'platform').length ?? 0;
+
+  const filterOptions: { value: 'all' | 'platform' | 'seller'; label: string }[] = [
+    { value: 'all', label: '全部' },
+    { value: 'seller', label: '僅 C2C' },
+    { value: 'platform', label: '僅平台' },
+  ];
+
   return (
     <div className="space-y-4">
+      {/* Toolbar: filter + fix button */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">訂單類型：</span>
+          <div className="flex rounded-lg overflow-hidden border border-gray-200">
+            {filterOptions.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => { setSellerTypeFilter(opt.value); setPage(1); }}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  sellerTypeFilter === opt.value
+                    ? 'bg-[#06038d] text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >{opt.label}</button>
+            ))}
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs border-red-200 text-red-600 hover:bg-red-50"
+          disabled={fixFeesMutation.isPending}
+          onClick={() => {
+            if (confirm('確定要將所有平台訂單的手續費修正為 0？此操作不可復原。')) {
+              fixFeesMutation.mutate();
+            }
+          }}
+        >
+          {fixFeesMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+          修復歷史平台訂單手續費
+        </Button>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div className="rounded-xl border border-gray-100 shadow-sm p-4 bg-gradient-to-br from-[#06038d]/5 to-white">

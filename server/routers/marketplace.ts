@@ -1024,9 +1024,48 @@ export const marketplaceRouter = router({
       page: z.number().int().min(1).default(1),
       pageSize: z.number().int().min(1).max(50).default(20),
       status: z.string().optional(),
+      sellerType: z.enum(['all', 'platform', 'seller']).default('all'),
     }))
     .query(async ({ input }) => {
-      return getAdminOrders(input.page, input.pageSize, input.status);
+      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType);
+    }),
+
+  // Fix historical platform order fees (set platformFeeHkd=0, sellerReceivableHkd=subtotalHkd for all platform orders)
+  adminFixPlatformOrderFees: adminProcedure
+    .mutation(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+      const { sql: drizzleSql } = await import('drizzle-orm');
+      const { marketplaceOrders } = await import('../../drizzle/schema_new');
+      // Find all platform orders with incorrect fees
+      const platformOrders = await db.select({
+        id: marketplaceOrders.id,
+        orderNo: marketplaceOrders.orderNo,
+        subtotalHkd: marketplaceOrders.subtotalHkd,
+        platformFeeHkd: marketplaceOrders.platformFeeHkd,
+        sellerReceivableHkd: marketplaceOrders.sellerReceivableHkd,
+      }).from(marketplaceOrders)
+        .where(and(
+          eq(marketplaceOrders.sellerType, 'platform' as any),
+          drizzleSql`${marketplaceOrders.platformFeeHkd} != '0.00'`
+        ));
+      if (platformOrders.length === 0) {
+        return { fixed: 0, message: '所有平台訂單手續費已正確，無需修復' };
+      }
+      // Fix each order: set platformFeeHkd=0, sellerReceivableHkd=subtotalHkd
+      let fixedCount = 0;
+      for (const order of platformOrders) {
+        await db.update(marketplaceOrders)
+          .set({
+            platformFeeHkd: '0.00',
+            sellerReceivableHkd: order.subtotalHkd,
+            platformFeeRate: '0.0000',
+          })
+          .where(eq(marketplaceOrders.id, order.id));
+        fixedCount++;
+      }
+      console.log(`[AdminFix] Fixed ${fixedCount} platform orders with incorrect fees`);
+      return { fixed: fixedCount, message: `已修復 ${fixedCount} 筆平台訂單的手續費記錄` };
     }),
 
   adminGetAlipayPending: adminProcedure
