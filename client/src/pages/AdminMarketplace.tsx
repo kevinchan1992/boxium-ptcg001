@@ -5,13 +5,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Image, Trash2, ToggleLeft, ToggleRight, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote } from "lucide-react";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 
@@ -838,9 +837,28 @@ function ListingsTab() {
   );
 }
 
+function exportToCSV(rows: any[], filename: string) {
+  if (!rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => headers.map(h => {
+      const val = row[h] ?? '';
+      const str = String(val).replace(/"/g, '""');
+      return str.includes(',') || str.includes('\n') || str.includes('"') ? `"${str}"` : str;
+    }).join(','))
+  ].join('\n');
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function OrdersTab() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [note, setNote] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
@@ -854,24 +872,64 @@ function OrdersTab() {
   });
   const orders = data?.orders ?? [];
   const total = data?.total ?? 0;
+  const filteredOrders = searchQuery.trim()
+    ? orders.filter((o: any) =>
+        o.orderNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.listingTitle?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : orders;
+
+  const handleExportCSV = () => {
+    const rows = orders.map((o: any) => ({
+      '訂單號': o.orderNo,
+      '商品': o.listingTitle,
+      '狀態': orderStatusLabel[o.orderStatus] ?? o.orderStatus,
+      '付款方式': o.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK',
+      '金額 (HKD)': parseFloat(o.subtotalHkd || '0').toFixed(2),
+      '手續費 (HKD)': parseFloat(o.platformFeeHkd || '0').toFixed(2),
+      '賣家應收 (HKD)': parseFloat(o.sellerReceivableHkd || '0').toFixed(2),
+      '訂單日期': new Date(o.createdAt).toLocaleDateString('zh-HK'),
+      '追蹤號': o.trackingNumber ?? '',
+      '收件人': o.shippingName ?? '',
+      '收件電話': o.shippingPhone ?? '',
+    }));
+    exportToCSV(rows, `訂單列表_${new Date().toISOString().slice(0,10)}.csv`);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 flex-wrap">
-        {["all", "pending_payment", "payment_received", "processing", "shipped", "completed", "disputed"].map(s => (
-          <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
-            onClick={() => { setStatusFilter(s); setPage(1); }}
-            className={statusFilter === s ? "bg-[#06038d] text-white" : ""}>
-            {s === "all" ? "全部" : orderStatusLabel[s] ?? s}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          {["all", "pending_payment", "payment_received", "processing", "shipped", "completed", "disputed"].map(s => (
+            <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
+              onClick={() => { setStatusFilter(s); setPage(1); }}
+              className={statusFilter === s ? "bg-[#06038d] text-white" : ""}>
+              {s === "all" ? "全部" : orderStatusLabel[s] ?? s}
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              className="pl-8 h-8 w-48 text-sm"
+              placeholder="搜尋訂單號 / 商品"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={orders.length === 0}>
+            <Download className="w-3.5 h-3.5 mr-1" />匯出 CSV
           </Button>
-        ))}
+        </div>
       </div>
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">載入中...</div>
-      ) : orders.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground"><ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無訂單</p></div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground"><ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{searchQuery ? '未找到符合的訂單' : '暫無訂單'}</p></div>
       ) : (
         <div className="space-y-2">
-          {orders.map((order: any) => (
+          {filteredOrders.map((order: any) => (
             <div key={order.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card">
               <div className="flex items-start gap-3 flex-1 min-w-0">
                 {/* Product Thumbnail */}
@@ -1797,176 +1855,7 @@ function DisputesTab() {
   );
 }
 
-function BannersTab() {
-  const utils = trpc.useUtils();
-  const { data: banners = [], isLoading } = trpc.marketplace.adminGetBanners.useQuery();
-  const [showForm, setShowForm] = useState(false);
-  const [editBanner, setEditBanner] = useState<any | null>(null);
-  const [form, setForm] = useState({
-    title: "", subtitle: "", cta: "立即選購",
-    gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]",
-    accentColor: "#FEDD00", badge: "", emoji: "🏆", sortOrder: 0, isActive: true,
-  });
-
-  const createMutation = trpc.marketplace.adminCreateBanner.useMutation({
-    onSuccess: () => { toast.success("廣告已新增"); utils.marketplace.adminGetBanners.invalidate(); setShowForm(false); resetForm(); },
-    onError: (e) => toast.error(e.message),
-  });
-  const updateMutation = trpc.marketplace.adminUpdateBanner.useMutation({
-    onSuccess: () => { toast.success("廣告已更新"); utils.marketplace.adminGetBanners.invalidate(); setEditBanner(null); },
-    onError: (e) => toast.error(e.message),
-  });
-  const deleteMutation = trpc.marketplace.adminDeleteBanner.useMutation({
-    onSuccess: () => { toast.success("廣告已刪除"); utils.marketplace.adminGetBanners.invalidate(); },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const resetForm = () => setForm({ title: "", subtitle: "", cta: "立即選購", gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]", accentColor: "#FEDD00", badge: "", emoji: "🏆", sortOrder: 0, isActive: true });
-
-  const openEdit = (b: any) => {
-    setEditBanner(b);
-    setForm({ title: b.title, subtitle: b.subtitle, cta: b.cta, gradient: b.gradient, accentColor: b.accentColor, badge: b.badge, emoji: b.emoji, sortOrder: b.sortOrder, isActive: b.isActive });
-  };
-
-  const handleSubmitCreate = () => {
-    if (!form.title.trim()) { toast.error("請輸入標題"); return; }
-    createMutation.mutate({ ...form });
-  };
-
-  const handleSubmitUpdate = () => {
-    if (!editBanner) return;
-    updateMutation.mutate({ id: editBanner.id, ...form });
-  };
-
-  const BannerForm = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div className="sm:col-span-2">
-        <Label>標題 *</Label>
-        <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="例：PSA 10 精品展示" />
-      </div>
-      <div className="sm:col-span-2">
-        <Label>副標題</Label>
-        <Input value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} placeholder="例：精選頂級評級卡牌，每張都是投資价値" />
-      </div>
-      <div>
-        <Label>CTA 按鈕文字</Label>
-        <Input value={form.cta} onChange={e => setForm(f => ({ ...f, cta: e.target.value }))} placeholder="立即選購" />
-      </div>
-      <div>
-        <Label>Emoji 圖標</Label>
-        <Input value={form.emoji} onChange={e => setForm(f => ({ ...f, emoji: e.target.value }))} placeholder="🏆" />
-      </div>
-      <div>
-        <Label>徽章文字</Label>
-        <Input value={form.badge} onChange={e => setForm(f => ({ ...f, badge: e.target.value }))} placeholder="例：PSA 認證" />
-      </div>
-      <div>
-        <Label>強調色</Label>
-        <div className="flex items-center gap-2">
-          <input type="color" value={form.accentColor} onChange={e => setForm(f => ({ ...f, accentColor: e.target.value }))} className="w-10 h-10 rounded cursor-pointer border" />
-          <Input value={form.accentColor} onChange={e => setForm(f => ({ ...f, accentColor: e.target.value }))} className="flex-1" />
-        </div>
-      </div>
-      <div>
-        <Label>排列順序</Label>
-        <Input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))} />
-      </div>
-      <div className="flex items-center gap-2">
-        <Label>狀態</Label>
-        <button type="button" onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))} className="flex items-center gap-1 text-sm">
-          {form.isActive ? <ToggleRight className="w-6 h-6 text-green-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
-          {form.isActive ? "啟用" : "停用"}
-        </button>
-      </div>
-      <div className="sm:col-span-2">
-        <Label>Gradient CSS 類名</Label>
-        <Input value={form.gradient} onChange={e => setForm(f => ({ ...f, gradient: e.target.value }))} placeholder="from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]" />
-        <p className="text-xs text-muted-foreground mt-1">Tailwind gradient class，例：from-blue-900 via-blue-800 to-blue-700</p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold text-lg">廣告 Banner 管理</h3>
-          <p className="text-sm text-muted-foreground">管理商城首頁輪播廣告，支援新增、編輯、刪除及排序</p>
-        </div>
-        <Button onClick={() => { setShowForm(true); resetForm(); }} className="bg-[#06038d] hover:bg-[#0a06b5] text-white">
-          <Plus className="w-4 h-4 mr-1" />新增 Banner
-        </Button>
-      </div>
-
-      {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">載入中...</div>
-      ) : banners.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Image className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p>暫無 Banner，點擊「新增 Banner」開始創建</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {banners.map((b: any) => (
-            <div key={b.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="text-2xl">{b.emoji}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium truncate">{b.title}</span>
-                    <Badge className={b.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}>
-                      {b.isActive ? "啟用" : "停用"}
-                    </Badge>
-                    {b.badge && <Badge variant="outline">{b.badge}</Badge>}
-                  </div>
-                  <p className="text-sm text-muted-foreground truncate">{b.subtitle}</p>
-                  <p className="text-xs text-muted-foreground">排序: {b.sortOrder} · CTA: {b.cta}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => openEdit(b)}>
-                  <Edit className="w-3 h-3 mr-1" />編輯
-                </Button>
-                <Button size="sm" variant="outline" className="text-red-600 border-red-300 hover:bg-red-50"
-                  onClick={() => { if (confirm("確定刪除此 Banner？")) deleteMutation.mutate({ id: b.id }); }}>
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Create Dialog */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>新增廣告 Banner</DialogTitle></DialogHeader>
-          <BannerForm />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)}>取消</Button>
-            <Button onClick={handleSubmitCreate} disabled={createMutation.isPending} className="bg-[#06038d] text-white">
-              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "建立 Banner"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={!!editBanner} onOpenChange={(o) => { if (!o) setEditBanner(null); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>編輯 Banner</DialogTitle></DialogHeader>
-          <BannerForm />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditBanner(null)}>取消</Button>
-            <Button onClick={handleSubmitUpdate} disabled={updateMutation.isPending} className="bg-[#06038d] text-white">
-              {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "儲存變更"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+// BannersTab removed - Banner functionality has been deprecated
 
 function SalesReportTab() {
   const [months, setMonths] = useState(12);
@@ -2023,6 +1912,26 @@ function SalesReportTab() {
               <SelectItem value="36">36 個月</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={monthly.length === 0}
+            onClick={() => {
+              const rows = monthly.map(r => ({
+                '月份': fmtYearMonth(r.yearMonth),
+                '銷售總額 (HKD)': r.totalSalesHkd.toFixed(2),
+                '平台直售 (HKD)': r.platformSalesHkd.toFixed(2),
+                'C2C 銷售 (HKD)': r.sellerSalesHkd.toFixed(2),
+                '手續費收入 (HKD)': r.sellerFeesHkd.toFixed(2),
+                '訂單數': r.orderCount,
+                'Stripe 訂單': r.stripeCount,
+                '支付寶 訂單': r.alipayCount,
+              }));
+              exportToCSV(rows, `銷售總覽_${new Date().toISOString().slice(0,10)}.csv`);
+            }}
+          >
+            <Download className="w-3.5 h-3.5 mr-1" />匯出 CSV
+          </Button>
         </div>
       </div>
 
@@ -2567,20 +2476,49 @@ function PayoutsTab() {
             ))}
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-xs border-red-200 text-red-600 hover:bg-red-50"
-          disabled={fixFeesMutation.isPending}
-          onClick={() => {
-            if (confirm('確定要將所有平台訂單的手續費修正為 0？此操作不可復原。')) {
-              fixFeesMutation.mutate();
-            }
-          }}
-        >
-          {fixFeesMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
-          修復歷史平台訂單手續費
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled={!data?.orders?.length}
+            onClick={() => {
+              const rows = (data?.orders ?? []).map((o: any) => ({
+                '訂單號': o.orderNo,
+                '商品': o.listingTitle,
+                '賣家類型': o.sellerType === 'platform' ? '平台官方' : 'C2C',
+                '賣家': o.sellerName ?? '',
+                '買家': o.buyerName ?? '',
+                '付款方式': o.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK',
+                '交易金額 (HKD)': parseFloat(o.subtotalHkd || '0').toFixed(2),
+                '手續費 (HKD)': parseFloat(o.platformFeeHkd || '0').toFixed(2),
+                '賣家應收 (HKD)': parseFloat(o.sellerReceivableHkd || '0').toFixed(2),
+                '放款狀態': o.payoutStatus ?? 'pending',
+                '放款日期': o.manualPayoutAt ? new Date(o.manualPayoutAt).toLocaleDateString('zh-HK') : '',
+                '放款備注': o.manualPayoutNote ?? '',
+                'Stripe Transfer ID': o.stripeTransferId ?? '',
+                '訂單日期': new Date(o.createdAt).toLocaleDateString('zh-HK'),
+              }));
+              exportToCSV(rows, `放款管理_${new Date().toISOString().slice(0,10)}.csv`);
+            }}
+          >
+            <Download className="w-3.5 h-3.5 mr-1" />匯出 CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs border-red-200 text-red-600 hover:bg-red-50"
+            disabled={fixFeesMutation.isPending}
+            onClick={() => {
+              if (confirm('確定要將所有平台訂單的手續費修正為 0？此操作不可復原。')) {
+                fixFeesMutation.mutate();
+              }
+            }}
+          >
+            {fixFeesMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+            修復歷史平台訂單手續費
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -2624,11 +2562,26 @@ function PayoutsTab() {
   );
 }
 
+// Sidebar menu items configuration
+type SidebarItem = { key: string; label: string; icon: any; badgeKey?: string };
+const sidebarMenuItems: SidebarItem[] = [
+  { key: 'listings', label: '商品管理', icon: Package, badgeKey: 'pendingReviewListings' },
+  { key: 'orders', label: '訂單管理', icon: ShoppingBag },
+  { key: 'alipay', label: '支付寶核對', icon: DollarSign, badgeKey: 'pendingAlipayConfirmation' },
+  { key: 'sellers', label: '賣家管理', icon: Users },
+  { key: 'disputes', label: '爭議處理', icon: Flag },
+  { key: 'sales', label: '銷售總覽', icon: BarChart3 },
+  { key: 'reports', label: '舉報管理', icon: Flag },
+  { key: 'payouts', label: '放款管理', icon: DollarSign },
+  { key: 'offers', label: '出價管理', icon: Tag },
+];
+
 export default function AdminMarketplace() {
   const { data: stats } = trpc.marketplace.adminGetStats.useQuery();
   const { data: me } = trpc.auth.me.useQuery();
-  // 🔧 開發環境繞過 admin 權限檢查（不影響生產環境）
   const isDev = import.meta.env.DEV;
+  const [activeSection, setActiveSection] = useState('listings');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (!isDev && (!me || me.role !== "admin")) {
     return (
@@ -2642,63 +2595,156 @@ export default function AdminMarketplace() {
     );
   }
 
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'listings': return <ListingsTab />;
+      case 'orders': return <OrdersTab />;
+      case 'alipay': return <AlipayPendingTab />;
+      case 'sellers': return <SellersTab />;
+      case 'disputes': return <DisputesTab />;
+      case 'sales': return <SalesReportTab />;
+      case 'reports': return <ReportsTab />;
+      case 'payouts': return <PayoutsTab />;
+      case 'offers': return <OffersTab />;
+      default: return <ListingsTab />;
+    }
+  };
+
+  const currentLabel = sidebarMenuItems.find(i => i.key === activeSection)?.label ?? '商品管理';
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/admin">
-            <Button variant="outline" size="sm"><ArrowLeft className="w-4 h-4 mr-2" />返回 Admin</Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">商場管理後台</h1>
-            <p className="text-sm text-muted-foreground">管理商品、訂單、賣家及支付寶 HK 收款核對</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <div className="lg:hidden sticky top-0 z-40 bg-[#06038d] text-white px-4 py-3 flex items-center justify-between shadow-md">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 rounded hover:bg-white/10">
+            <Layers className="w-5 h-5" />
+          </button>
+          <span className="font-semibold text-sm">商場管理後台</span>
+        </div>
+        <span className="text-xs bg-white/20 px-2 py-1 rounded">{currentLabel}</span>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <div className="absolute left-0 top-0 bottom-0 w-64 bg-[#06038d] text-white shadow-xl overflow-y-auto">
+            <div className="p-4 border-b border-white/10">
+              <Link href="/admin" className="flex items-center gap-2 text-white/70 hover:text-white text-xs mb-3">
+                <ArrowLeft className="w-3 h-3" />返回 Admin
+              </Link>
+              <h2 className="text-lg font-bold">商場管理</h2>
+            </div>
+            {/* Mobile Stats */}
+            <div className="p-3 border-b border-white/10 grid grid-cols-2 gap-2">
+              <div className="bg-white/10 rounded-lg p-2 text-center">
+                <p className="text-lg font-bold">{stats?.activeListings ?? 0}</p>
+                <p className="text-[10px] text-white/60">上架商品</p>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2 text-center">
+                <p className="text-lg font-bold">{stats?.totalOrders ?? 0}</p>
+                <p className="text-[10px] text-white/60">總訂單</p>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2 text-center">
+                <p className="text-lg font-bold">{stats?.pendingAlipayConfirmation ?? 0}</p>
+                <p className="text-[10px] text-white/60">待核對支付寶</p>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2 text-center">
+                <p className="text-lg font-bold">{stats?.activeSellerCount ?? 0}</p>
+                <p className="text-[10px] text-white/60">活躍賣家</p>
+              </div>
+            </div>
+            {/* Mobile Nav */}
+            <nav className="p-2">
+              {sidebarMenuItems.map(item => {
+                const Icon = item.icon;
+                const isActive = activeSection === item.key;
+                const badgeVal = item.badgeKey ? (stats as any)?.[item.badgeKey] ?? 0 : 0;
+                return (
+                  <button key={item.key}
+                    onClick={() => { setActiveSection(item.key); setSidebarOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all mb-0.5 ${
+                      isActive ? 'bg-white/20 text-white font-semibold' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}>
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {badgeVal > 0 && <span className="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 min-w-[20px] text-center">{badgeVal}</span>}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
         </div>
+      )}
 
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-          <StatCard title="上架商品" value={stats?.activeListings ?? 0} icon={Package} color="bg-blue-100 text-blue-700" />
-          <StatCard title="總訂單" value={stats?.totalOrders ?? 0} icon={ShoppingBag} color="bg-purple-100 text-purple-700" />
-          <StatCard title="待核對支付寶" value={stats?.pendingAlipayConfirmation ?? 0} icon={AlertCircle} color="bg-amber-100 text-amber-700" />
-          <StatCard title="活躍賣家" value={stats?.activeSellerCount ?? 0} icon={Users} color="bg-green-100 text-green-700" />
-          <StatCard title="待審核商品" value={stats?.pendingReviewListings ?? 0} icon={Clock} color="bg-orange-100 text-orange-700" />
-        </div>
+      <div className="flex">
+        {/* Desktop Sidebar */}
+        <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-[#06038d] text-white sticky top-0 self-start">
+          <div className="p-4 border-b border-white/10">
+            <Link href="/admin" className="flex items-center gap-2 text-white/70 hover:text-white text-xs mb-3">
+              <ArrowLeft className="w-3 h-3" />返回 Admin
+            </Link>
+            <h2 className="text-lg font-bold">商場管理後台</h2>
+            <p className="text-xs text-white/50 mt-0.5">管理商品、訂單、賣家及財務</p>
+          </div>
+          {/* Desktop Stats */}
+          <div className="p-3 border-b border-white/10">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white/10 rounded-lg p-2 text-center">
+                <p className="text-lg font-bold">{stats?.activeListings ?? 0}</p>
+                <p className="text-[10px] text-white/60">上架商品</p>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2 text-center">
+                <p className="text-lg font-bold">{stats?.totalOrders ?? 0}</p>
+                <p className="text-[10px] text-white/60">總訂單</p>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2 text-center">
+                <p className="text-lg font-bold">{stats?.pendingAlipayConfirmation ?? 0}</p>
+                <p className="text-[10px] text-white/60">待核對支付寶</p>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2 text-center">
+                <p className="text-lg font-bold">{stats?.activeSellerCount ?? 0}</p>
+                <p className="text-[10px] text-white/60">活躍賣家</p>
+              </div>
+            </div>
+            {(stats?.pendingReviewListings ?? 0) > 0 && (
+              <div className="mt-2 bg-orange-500/20 text-orange-200 rounded-lg p-2 text-xs text-center">
+                {stats?.pendingReviewListings} 個商品待審核
+              </div>
+            )}
+          </div>
+          {/* Desktop Nav */}
+          <nav className="flex-1 p-2 overflow-y-auto">
+            {sidebarMenuItems.map(item => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.key;
+              const badgeVal = item.badgeKey ? (stats as any)?.[item.badgeKey] ?? 0 : 0;
+              return (
+                <button key={item.key}
+                  onClick={() => setActiveSection(item.key)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all mb-0.5 ${
+                    isActive ? 'bg-white/20 text-white font-semibold shadow-sm' : 'text-white/70 hover:bg-white/10 hover:text-white'
+                  }`}>
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {badgeVal > 0 && <span className="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 min-w-[20px] text-center">{badgeVal}</span>}
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
 
-        <BrandTabs defaultValue="listings" variant="light">
-          <BrandTabsList wrap className="mb-2">
-            <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="商品管理">
-              商品管理
-              {(stats?.pendingReviewListings ?? 0) > 0 && (
-                <span className="ml-1 bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5">{stats?.pendingReviewListings}</span>
-              )}
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="訂單管理">訂單管理</BrandTabsTrigger>
-            <BrandTabsTrigger value="alipay" icon={<DollarSign className="w-4 h-4" />} label="支付寶核對">
-              支付寶核對
-              {(stats?.pendingAlipayConfirmation ?? 0) > 0 && (
-                <span className="ml-1 bg-amber-500 text-white text-xs rounded-full px-1.5 py-0.5">{stats?.pendingAlipayConfirmation}</span>
-              )}
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="sellers" icon={<Users className="w-4 h-4" />} label="賣家管理">賣家管理</BrandTabsTrigger>
-            <BrandTabsTrigger value="banners" icon={<Image className="w-4 h-4" />} label="廣告 Banner">廣告 Banner</BrandTabsTrigger>
-            <BrandTabsTrigger value="disputes" icon={<Flag className="w-4 h-4" />} label="爭議處理">
-              爭議處理
-            </BrandTabsTrigger>
-            <BrandTabsTrigger value="sales" icon={<BarChart3 className="w-4 h-4" />} label="銷售總覽">銷售總覽</BrandTabsTrigger>
-            <BrandTabsTrigger value="reports" icon={<Flag className="w-4 h-4" />} label="舉報管理">舉報管理</BrandTabsTrigger>
-            <BrandTabsTrigger value="payouts" icon={<DollarSign className="w-4 h-4" />} label="放款管理">放款管理</BrandTabsTrigger>
-            <BrandTabsTrigger value="offers" icon={<Tag className="w-4 h-4" />} label="出價管理">出價管理</BrandTabsTrigger>
-          </BrandTabsList>
-          <BrandTabsContent value="listings"><ListingsTab /></BrandTabsContent>
-          <BrandTabsContent value="orders"><OrdersTab /></BrandTabsContent>
-          <BrandTabsContent value="alipay"><AlipayPendingTab /></BrandTabsContent>
-          <BrandTabsContent value="sellers"><SellersTab /></BrandTabsContent>
-          <BrandTabsContent value="banners"><BannersTab /></BrandTabsContent>
-          <BrandTabsContent value="disputes"><DisputesTab /></BrandTabsContent>
-          <BrandTabsContent value="sales"><SalesReportTab /></BrandTabsContent>
-          <BrandTabsContent value="reports"><ReportsTab /></BrandTabsContent>
-          <BrandTabsContent value="payouts"><PayoutsTab /></BrandTabsContent>
-          <BrandTabsContent value="offers"><OffersTab /></BrandTabsContent>
-        </BrandTabs>
+        {/* Main Content */}
+        <main className="flex-1 min-w-0 p-4 lg:p-6">
+          {/* Breadcrumb */}
+          <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground mb-4">
+            <Link href="/admin" className="hover:text-foreground">Admin</Link>
+            <span>/</span>
+            <span className="text-foreground font-medium">{currentLabel}</span>
+          </div>
+          {renderContent()}
+        </main>
       </div>
     </div>
   );
