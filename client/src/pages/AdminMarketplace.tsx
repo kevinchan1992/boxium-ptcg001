@@ -609,19 +609,19 @@ function ListingDetailDialog({ listingId, onClose, onUpdated }: { listingId: num
 
                 {/* Key Info Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
-                  <div className="bg-muted/40 rounded-lg p-3">
+                  <div className="bg-gray-50 rounded-lg p-3 text-gray-700">
                     <p className="text-xs text-muted-foreground mb-1">售價</p>
                     <p className="font-bold text-lg">HKD {parseFloat(listing.priceHkd as string || "0").toFixed(2)}</p>
                   </div>
-                  <div className="bg-muted/40 rounded-lg p-3">
+                  <div className="bg-gray-50 rounded-lg p-3 text-gray-700">
                     <p className="text-xs text-muted-foreground mb-1">庫存</p>
                     <p className="font-bold text-lg">{listing.quantity}</p>
                   </div>
-                  <div className="bg-muted/40 rounded-lg p-3">
+                  <div className="bg-gray-50 rounded-lg p-3 text-gray-700">
                     <p className="text-xs text-muted-foreground mb-1">品相</p>
                     <Badge className={conditionColor[listing.condition] ?? ""}>{conditionLabel[listing.condition] ?? listing.condition}</Badge>
                   </div>
-                  <div className="bg-muted/40 rounded-lg p-3">
+                  <div className="bg-gray-50 rounded-lg p-3 text-gray-700">
                     <p className="text-xs text-muted-foreground mb-1">訂單數</p>
                     <p className="font-bold text-lg">{orderCount}</p>
                   </div>
@@ -761,7 +761,7 @@ function ListingsTab() {
       ) : (
         <div className="space-y-2">
           {listings.map((listing: any) => (
-            <div key={listing.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card">
+            <div key={listing.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white text-gray-900">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium truncate">{listing.title}</span>
@@ -863,8 +863,34 @@ function OrdersTab() {
   const [note, setNote] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [shippingMethod, setShippingMethod] = useState("sf_express");
+  // Date range filter
+  const [datePreset, setDatePreset] = useState<"all" | "this_month" | "last_month" | "custom">("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+  // Compute date range from preset
+  const getDateRange = () => {
+    const now = new Date();
+    if (datePreset === "this_month") {
+      const from = new Date(now.getFullYear(), now.getMonth(), 1);
+      const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return { dateFrom: from.toISOString().slice(0, 10), dateTo: to.toISOString().slice(0, 10) };
+    } else if (datePreset === "last_month") {
+      const from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const to = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { dateFrom: from.toISOString().slice(0, 10), dateTo: to.toISOString().slice(0, 10) };
+    } else if (datePreset === "custom") {
+      return { dateFrom: dateFrom || undefined, dateTo: dateTo || undefined };
+    }
+    return { dateFrom: undefined, dateTo: undefined };
+  };
+  const { dateFrom: qDateFrom, dateTo: qDateTo } = getDateRange();
+
   const { data, isLoading, refetch } = trpc.marketplace.adminGetOrders.useQuery({
-    page, pageSize: 20, status: statusFilter === "all" ? undefined : statusFilter
+    page, pageSize: 20,
+    status: statusFilter === "all" ? undefined : statusFilter,
+    dateFrom: qDateFrom,
+    dateTo: qDateTo,
   });
   const updateStatusMutation = trpc.marketplace.adminUpdateOrderStatus.useMutation({
     onSuccess: () => { toast.success("訂單狀態已更新"); refetch(); setSelectedOrder(null); setTrackingNumber(""); },
@@ -898,15 +924,34 @@ function OrdersTab() {
 
   return (
     <div className="space-y-4">
+      {/* Row 1: Status filters */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {["all", "pending_payment", "payment_received", "processing", "shipped", "completed", "disputed"].map(s => (
+          <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
+            onClick={() => { setStatusFilter(s); setPage(1); }}
+            className={statusFilter === s ? "bg-[#06038d] text-white" : ""}>
+            {s === "all" ? "全部" : orderStatusLabel[s] ?? s}
+          </Button>
+        ))}
+      </div>
+      {/* Row 2: Date range + search + export */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
-          {["all", "pending_payment", "payment_received", "processing", "shipped", "completed", "disputed"].map(s => (
-            <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
-              onClick={() => { setStatusFilter(s); setPage(1); }}
-              className={statusFilter === s ? "bg-[#06038d] text-white" : ""}>
-              {s === "all" ? "全部" : orderStatusLabel[s] ?? s}
+          <span className="text-xs text-muted-foreground font-medium">日期：</span>
+          {(["all", "this_month", "last_month", "custom"] as const).map(p => (
+            <Button key={p} size="sm" variant={datePreset === p ? "default" : "outline"}
+              onClick={() => { setDatePreset(p); setPage(1); }}
+              className={datePreset === p ? "bg-[#06038d] text-white" : ""}>
+              {p === "all" ? "全部" : p === "this_month" ? "本月" : p === "last_month" ? "上月" : "自訂"}
             </Button>
           ))}
+          {datePreset === "custom" && (
+            <div className="flex items-center gap-1.5">
+              <Input type="date" className="h-8 w-36 text-xs" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} />
+              <span className="text-xs text-muted-foreground">至</span>
+              <Input type="date" className="h-8 w-36 text-xs" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} />
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -930,7 +975,7 @@ function OrdersTab() {
       ) : (
         <div className="space-y-2">
           {filteredOrders.map((order: any) => (
-            <div key={order.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card">
+            <div key={order.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white text-gray-900">
               <div className="flex items-start gap-3 flex-1 min-w-0">
                 {/* Product Thumbnail */}
                 {(() => {
@@ -1202,7 +1247,7 @@ function AlipayPendingTab() {
       ) : (
         <div className="space-y-2">
           {orders.map((order: any) => (
-            <div key={order.id} className={`border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card transition-colors ${selectedIds.has(order.id) ? "border-green-400 bg-green-50" : ""}`}>
+            <div key={order.id} className={`border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white text-gray-900 transition-colors ${selectedIds.has(order.id) ? "border-green-400 bg-green-50" : ""}`}>
               <div className="flex items-start gap-3 flex-1">
                 <input
                   type="checkbox"
@@ -1371,7 +1416,7 @@ function SellerDetailDialog({ sellerId, onClose }: { sellerId: number | null; on
 
             {/* Account Info Section */}
             <div className="border rounded-lg overflow-hidden">
-              <div className="bg-muted/50 px-4 py-2 border-b">
+              <div className="bg-gray-50 px-4 py-2 border-b text-gray-700">
                 <p className="text-sm font-semibold">👤 帳號資訊</p>
               </div>
               <div className="divide-y">
@@ -1412,7 +1457,7 @@ function SellerDetailDialog({ sellerId, onClose }: { sellerId: number | null; on
 
             {/* Seller Stats Section */}
             <div className="border rounded-lg overflow-hidden">
-              <div className="bg-muted/50 px-4 py-2 border-b">
+              <div className="bg-gray-50 px-4 py-2 border-b text-gray-700">
                 <p className="text-sm font-semibold">📊 銷售統計</p>
               </div>
               <div className="grid grid-cols-2 divide-x divide-y">
@@ -1441,7 +1486,7 @@ function SellerDetailDialog({ sellerId, onClose }: { sellerId: number | null; on
 
             {/* Stripe Connect Info */}
             <div className="border rounded-lg overflow-hidden">
-              <div className="bg-muted/50 px-4 py-2 border-b flex items-center justify-between">
+              <div className="bg-gray-50 px-4 py-2 border-b text-gray-700 flex items-center justify-between">
                 <p className="text-sm font-semibold">💳 Stripe Connect 收款帳戶</p>
                 {sp.stripeConnectId && (
                   <a
@@ -1525,8 +1570,31 @@ function SellersTab() {
   });
   const sellers = data?.sellers ?? [];
   const total = data?.total ?? 0;
+
+  const handleExportSellersCSV = () => {
+    const rows = sellers.map((s: any) => ({
+      '賣家 ID': s.id,
+      '顯示名稱': s.displayName,
+      '真實姓名': s.realName ?? '',
+      '電郵': s.email ?? '',
+      '電話': s.phone ?? '',
+      '狀態': s.isActive ? '已批准' : '待審核',
+      'Stripe Connect': s.stripeConnectStatus ?? '',
+      '總銷售筆數': s.totalSales ?? 0,
+      '評分': s.rating ?? '',
+      '申請日期': new Date(s.createdAt).toLocaleDateString('zh-HK'),
+    }));
+    exportToCSV(rows, `賣家列表_${new Date().toISOString().slice(0,10)}.csv`);
+  };
+
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">共 {total} 位賣家</span>
+        <Button size="sm" variant="outline" onClick={handleExportSellersCSV} disabled={sellers.length === 0}>
+          <Download className="w-3.5 h-3.5 mr-1" />匯出 CSV
+        </Button>
+      </div>
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">載入中...</div>
       ) : sellers.length === 0 ? (
@@ -1534,7 +1602,7 @@ function SellersTab() {
       ) : (
         <div className="space-y-2">
           {sellers.map((seller: any) => (
-            <div key={seller.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card">
+            <div key={seller.id} className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white text-gray-900">
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium">{seller.displayName}</span>
@@ -1632,6 +1700,9 @@ function DisputesTab() {
   const [resolution, setResolution] = useState("");
   const [adminNote, setAdminNote] = useState("");
   const [outcome, setOutcome] = useState<"refund_buyer" | "release_seller" | "partial">("refund_buyer");
+  // Priority labels stored locally (orderId -> priority)
+  const [priorities, setPriorities] = useState<Record<number, "high" | "medium" | "low">>({});
+  const [priorityFilter, setPriorityFilter] = useState<"all" | "high" | "medium" | "low">("all");
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.marketplace.adminGetDisputes.useQuery({ page, pageSize: 20 });
@@ -1650,31 +1721,63 @@ function DisputesTab() {
   if (isLoading) return <div className="py-8 text-center text-muted-foreground">載入中...</div>;
 
   const disputes = data?.orders ?? [];
+  const filteredDisputes = priorityFilter === "all" ? disputes
+    : disputes.filter((o: any) => (priorities[o.id] ?? "medium") === priorityFilter);
+
+  const priorityConfig = {
+    high: { label: "高", color: "bg-red-100 text-red-700 border-red-300" },
+    medium: { label: "中", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
+    low: { label: "低", color: "bg-green-100 text-green-700 border-green-300" },
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-lg flex items-center gap-2">
-          <Flag className="w-5 h-5 text-red-500" />
-          爭議訂單管理
-        </h3>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-medium">優先級：</span>
+          {(["all", "high", "medium", "low"] as const).map(p => (
+            <Button key={p} size="sm" variant={priorityFilter === p ? "default" : "outline"}
+              onClick={() => setPriorityFilter(p)}
+              className={priorityFilter === p ? "bg-[#06038d] text-white" : ""}>
+              {p === "all" ? "全部" : priorityConfig[p].label}
+            </Button>
+          ))}
+        </div>
         <span className="text-sm text-muted-foreground">共 {data?.total ?? 0} 筆爭議</span>
       </div>
 
-      {disputes.length === 0 ? (
+      {filteredDisputes.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-400" />
           <p>目前沒有待處理的爭議</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {disputes.map((order: any) => (
+          {filteredDisputes.map((order: any) => {
+            const priority = priorities[order.id] ?? "medium";
+            const pCfg = priorityConfig[priority];
+            return (
             <div key={order.id} className="border rounded-xl p-4 bg-red-50 border-red-200">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="font-mono text-xs text-muted-foreground">#{order.orderNo}</span>
                     <span className="text-xs bg-red-100 text-red-700 border border-red-200 rounded-full px-2 py-0.5">爭議中</span>
+                    {/* Priority badge + toggle */}
+                    <div className="flex items-center gap-1">
+                      <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${pCfg.color}`}>優先級：{pCfg.label}</span>
+                      <div className="flex gap-0.5">
+                        {(["high", "medium", "low"] as const).map(p => (
+                          <button key={p} title={priorityConfig[p].label}
+                            onClick={() => setPriorities(prev => ({ ...prev, [order.id]: p }))}
+                            className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${
+                              priority === p ? `${priorityConfig[p].color} font-bold` : "border-gray-200 text-gray-400 hover:border-gray-400"
+                            }`}>
+                            {priorityConfig[p].label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                   <p className="font-medium text-sm">{order.listingTitle ?? "商品"}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -1713,7 +1816,9 @@ function DisputesTab() {
                 </Button>
               </div>
             </div>
-          ))}
+            );
+          })}
+          {/* end disputes map */}
         </div>
       )}
 
@@ -1944,7 +2049,7 @@ function SalesReportTab() {
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-muted/50 border-b">
+              <tr className="bg-gray-50 border-b text-gray-700">
                 <th className="text-left px-4 py-3 font-medium">月份</th>
                 <th className="text-right px-4 py-3 font-medium">銷售總額</th>
                 <th className="text-right px-4 py-3 font-medium">平台直售</th>
@@ -1987,7 +2092,7 @@ function SalesReportTab() {
               })}
             </tbody>
             <tfoot>
-              <tr className="bg-muted/50 font-semibold">
+              <tr className="bg-gray-50 font-semibold text-gray-900">
                 <td className="px-4 py-3">合計</td>
                 <td className="px-4 py-3 text-right text-[#06038d]">HKD {fmtHkd(monthly.reduce((s, r) => s + r.totalSalesHkd, 0))}</td>
                 <td className="px-4 py-3 text-right text-blue-700">HKD {fmtHkd(monthly.reduce((s, r) => s + r.platformSalesHkd, 0))}</td>

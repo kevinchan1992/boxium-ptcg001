@@ -1025,9 +1025,11 @@ export const marketplaceRouter = router({
       pageSize: z.number().int().min(1).max(50).default(20),
       status: z.string().optional(),
       sellerType: z.enum(['all', 'platform', 'seller']).default('all'),
+      dateFrom: z.string().optional(), // YYYY-MM-DD
+      dateTo: z.string().optional(),   // YYYY-MM-DD
     }))
     .query(async ({ input }) => {
-      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType);
+      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType, input.dateFrom, input.dateTo);
     }),
 
   // Fix historical platform order fees (set platformFeeHkd=0, sellerReceivableHkd=subtotalHkd for all platform orders)

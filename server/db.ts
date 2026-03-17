@@ -3150,7 +3150,7 @@ export async function getBuyerOrders(buyerId: number) {
     .orderBy(desc(marketplaceOrders.createdAt));
   return rows;
 }
-export async function getAdminOrders(page = 1, pageSize = 20, status?: string, sellerType?: string) {
+export async function getAdminOrders(page = 1, pageSize = 20, status?: string, sellerType?: string, dateFrom?: string, dateTo?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
@@ -3161,6 +3161,16 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
   // Optional sellerType filter
   if (sellerType) {
     conditions.push(eq(marketplaceOrders.sellerType, sellerType as any));
+  }
+  // Optional date range filter
+  if (dateFrom) {
+    conditions.push(sql`${marketplaceOrders.createdAt} >= ${new Date(dateFrom).getTime()}`);
+  }
+  if (dateTo) {
+    // Add 1 day to include the full end date
+    const endDate = new Date(dateTo);
+    endDate.setDate(endDate.getDate() + 1);
+    conditions.push(sql`${marketplaceOrders.createdAt} < ${endDate.getTime()}`);
   }
   // Alias for buyer and seller user joins to avoid column name conflicts
   const { alias } = await import('drizzle-orm/mysql-core');
