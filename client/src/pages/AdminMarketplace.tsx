@@ -745,7 +745,7 @@ function ListingsTab() {
           {["all", "active", "pending_review", "draft", "sold", "removed"].map(s => (
             <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
               onClick={() => { setStatusFilter(s); setPage(1); }}
-              className={statusFilter === s ? "bg-[#06038d] text-white" : ""}>
+              className={statusFilter === s ? "bg-[#06038d] text-white" : "text-gray-700 bg-white"}>
               {s === "all" ? "全部" : s === "active" ? "上架中" : s === "pending_review" ? "待審核" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : "已下架"}
             </Button>
           ))}
@@ -929,7 +929,7 @@ function OrdersTab() {
         {["all", "pending_payment", "payment_received", "processing", "shipped", "completed", "disputed"].map(s => (
           <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
             onClick={() => { setStatusFilter(s); setPage(1); }}
-            className={statusFilter === s ? "bg-[#06038d] text-white" : ""}>
+            className={statusFilter === s ? "bg-[#06038d] text-white" : "text-gray-700 bg-white"}>
             {s === "all" ? "全部" : orderStatusLabel[s] ?? s}
           </Button>
         ))}
@@ -941,7 +941,7 @@ function OrdersTab() {
           {(["all", "this_month", "last_month", "custom"] as const).map(p => (
             <Button key={p} size="sm" variant={datePreset === p ? "default" : "outline"}
               onClick={() => { setDatePreset(p); setPage(1); }}
-              className={datePreset === p ? "bg-[#06038d] text-white" : ""}>
+              className={datePreset === p ? "bg-[#06038d] text-white" : "text-gray-700 bg-white"}>
               {p === "all" ? "全部" : p === "this_month" ? "本月" : p === "last_month" ? "上月" : "自訂"}
             </Button>
           ))}
@@ -1700,12 +1700,14 @@ function DisputesTab() {
   const [resolution, setResolution] = useState("");
   const [adminNote, setAdminNote] = useState("");
   const [outcome, setOutcome] = useState<"refund_buyer" | "release_seller" | "partial">("refund_buyer");
-  // Priority labels stored locally (orderId -> priority)
-  const [priorities, setPriorities] = useState<Record<number, "high" | "medium" | "low">>({});
   const [priorityFilter, setPriorityFilter] = useState<"all" | "high" | "medium" | "low">("all");
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.marketplace.adminGetDisputes.useQuery({ page, pageSize: 20 });
+  const setPriorityMutation = trpc.marketplace.adminSetDisputePriority.useMutation({
+    onSuccess: () => utils.marketplace.adminGetDisputes.invalidate(),
+    onError: (e) => toast.error('設定優先級失敗：' + e.message),
+  });
   const resolveMutation = trpc.marketplace.adminResolveDispute.useMutation({
     onSuccess: () => {
       toast.success("✅ 爭議已處理");
@@ -1722,7 +1724,7 @@ function DisputesTab() {
 
   const disputes = data?.orders ?? [];
   const filteredDisputes = priorityFilter === "all" ? disputes
-    : disputes.filter((o: any) => (priorities[o.id] ?? "medium") === priorityFilter);
+    : disputes.filter((o: any) => (o.disputePriority ?? "medium") === priorityFilter);
 
   const priorityConfig = {
     high: { label: "高", color: "bg-red-100 text-red-700 border-red-300" },
@@ -1738,7 +1740,7 @@ function DisputesTab() {
           {(["all", "high", "medium", "low"] as const).map(p => (
             <Button key={p} size="sm" variant={priorityFilter === p ? "default" : "outline"}
               onClick={() => setPriorityFilter(p)}
-              className={priorityFilter === p ? "bg-[#06038d] text-white" : ""}>
+              className={priorityFilter === p ? "bg-[#06038d] text-white" : "text-gray-700 bg-white"}>
               {p === "all" ? "全部" : priorityConfig[p].label}
             </Button>
           ))}
@@ -1754,7 +1756,7 @@ function DisputesTab() {
       ) : (
         <div className="space-y-3">
           {filteredDisputes.map((order: any) => {
-            const priority = priorities[order.id] ?? "medium";
+            const priority = (order.disputePriority ?? "medium") as "high" | "medium" | "low";
             const pCfg = priorityConfig[priority];
             return (
             <div key={order.id} className="border rounded-xl p-4 bg-red-50 border-red-200">
@@ -1769,7 +1771,8 @@ function DisputesTab() {
                       <div className="flex gap-0.5">
                         {(["high", "medium", "low"] as const).map(p => (
                           <button key={p} title={priorityConfig[p].label}
-                            onClick={() => setPriorities(prev => ({ ...prev, [order.id]: p }))}
+                            disabled={setPriorityMutation.isPending}
+                            onClick={() => setPriorityMutation.mutate({ orderId: order.id, priority: p })}
                             className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${
                               priority === p ? `${priorityConfig[p].color} font-bold` : "border-gray-200 text-gray-400 hover:border-gray-400"
                             }`}>
@@ -2134,7 +2137,7 @@ function ReportsTab() {
         {["all", "pending", "reviewed", "dismissed", "actioned"].map(s => (
           <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-              statusFilter === s ? "bg-[#06038d] text-white border-[#06038d]" : "bg-white text-gray-600 border-gray-200 hover:border-[#06038d]"
+              statusFilter === s ? "bg-[#06038d] text-white border-[#06038d]" : "bg-white text-gray-900 border-gray-200 hover:border-[#06038d]"
             }`}>{statusLabel[s]}</button>
         ))}
       </div>
@@ -2232,7 +2235,7 @@ function OffersTab() {
             className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
               statusFilter === s
                 ? "bg-[#06038d] text-white border-[#06038d]"
-                : "bg-white text-gray-600 border-gray-200 hover:border-[#06038d]/40"
+                : "bg-white text-gray-900 border-gray-200 hover:border-[#06038d]/40"
             }`}
           >
             {s === "all" ? "全部" : offerStatusLabel[s]}
@@ -2575,7 +2578,7 @@ function PayoutsTab() {
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                   sellerTypeFilter === opt.value
                     ? 'bg-[#06038d] text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                    : 'bg-white text-gray-900 hover:bg-gray-50'
                 }`}
               >{opt.label}</button>
             ))}

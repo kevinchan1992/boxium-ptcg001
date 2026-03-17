@@ -848,6 +848,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   disputeResolvedAt: timestamp("disputeResolvedAt"),
   disputeResolution: text("disputeResolution"),
   disputeResolutionHistory: text("disputeResolutionHistory"), // JSON array of {timestamp, outcome, resolution, adminNote}
+  disputePriority: mysqlEnum("disputePriority", ["high", "medium", "low"]).default("medium"),
   shippingReminderSentAt: timestamp("shippingReminderSentAt"), // tracks when overdue reminder was sent
   paymentReminderSentAt: timestamp("paymentReminderSentAt"), // tracks when 12-hour payment reminder was sent
   payoutStatus: mysqlEnum("payoutStatus", ["not_applicable", "pending", "processing", "completed", "paid", "failed"]).default("pending").notNull(),

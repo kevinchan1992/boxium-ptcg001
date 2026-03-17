@@ -28,7 +28,7 @@ import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
 import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail } from "../emailService";
-import { marketplaceListings, offers, listingReports } from "../../drizzle/schema_new";
+import { marketplaceListings, offers, listingReports, marketplaceOrders } from "../../drizzle/schema_new";
 import { eq, and } from "drizzle-orm";
 
 // Platform fee rate (5% for C2C listings only)
@@ -1289,6 +1289,21 @@ export const marketplaceRouter = router({
         reasons: reasons.length > 0 ? reasons : ["等待訂單完成後自動放款"],
         stripeTransferError: order.stripeTransferError,
       };
+    }),
+
+  adminSetDisputePriority: adminProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      priority: z.enum(["high", "medium", "low"]),
+    }))
+    .mutation(async ({ input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      const db = await getDb();
+      await db!.update(marketplaceOrders)
+        .set({ disputePriority: input.priority })
+        .where(eq(marketplaceOrders.id, input.orderId));
+      return { success: true };
     }),
 
   adminUpdateOrderStatus: adminProcedure
