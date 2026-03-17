@@ -1251,12 +1251,17 @@ export default function SellerDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {(myPayouts as any[]).map((payout) => (
-                      <div key={payout.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+                      <div key={`${payout.source ?? 'stripe'}-${payout.id}`} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
                         {/* Brand Header Bar */}
                         <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                          <span className="text-xs text-white/80 font-medium">
-                            #{payout.id}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-white/80 font-medium">
+                              {payout.orderNo ? `#${payout.orderNo}` : `#${payout.id}`}
+                            </span>
+                            {payout.source === 'alipay_hk' && (
+                              <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-300/30 text-blue-100">支付寶 HK</span>
+                            )}
+                          </div>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                             payout.status === "completed"
                               ? "bg-green-400/20 text-green-200 border border-green-400/30"
@@ -1266,14 +1271,42 @@ export default function SellerDashboard() {
                           </span>
                         </div>
                         {/* Card Body */}
-                        <div className="p-4 flex items-center justify-between">
-                          <div>
-                            <p className="font-semibold text-gray-900">HKD {parseFloat(payout.amountHkd ?? payout.amount ?? 0).toFixed(2)}</p>
-                            <p className="text-sm text-gray-500 mt-0.5">
-                              {new Date(payout.createdAt).toLocaleDateString("zh-HK")}
-                            </p>
+                        <div className="p-4 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-semibold text-gray-900">HKD {parseFloat(payout.amountHkd ?? payout.amount ?? 0).toFixed(2)}</p>
+                              <p className="text-sm text-gray-500 mt-0.5">
+                                {payout.createdAt ? new Date(payout.createdAt).toLocaleDateString("zh-HK") : '-'}
+                              </p>
+                              {payout.listingTitle && (
+                                <p className="text-xs text-gray-400 mt-0.5">{payout.listingTitle}</p>
+                              )}
+                            </div>
+                            <DollarSign className="w-5 h-5 text-[#06038d]/30" />
                           </div>
-                          <DollarSign className="w-5 h-5 text-[#06038d]/30" />
+                          {/* Alipay HK manual payout details */}
+                          {payout.source === 'alipay_hk' && (
+                            <div className="border-t border-gray-100 pt-2 space-y-1.5">
+                              {payout.manualPayoutNote && (
+                                <p className="text-xs text-gray-600">
+                                  <span className="font-medium">備注：</span>{payout.manualPayoutNote}
+                                </p>
+                              )}
+                              {payout.manualPayoutProofUrl && (
+                                <a
+                                  href={payout.manualPayoutProofUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-xs text-[#06038d] hover:text-[#0a06b5] underline"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  查看付款截圖
+                                </a>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

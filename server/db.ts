@@ -3426,7 +3426,35 @@ export async function updatePayout(id: number, data: Partial<InsertMarketplacePa
 export async function getSellerPayouts(sellerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.select().from(marketplacePayouts).where(eq(marketplacePayouts.sellerId, sellerId)).orderBy(desc(marketplacePayouts.createdAt));
+  // Stripe payouts from marketplacePayouts table
+  const stripePays = await db.select().from(marketplacePayouts).where(eq(marketplacePayouts.sellerId, sellerId)).orderBy(desc(marketplacePayouts.createdAt));
+  // Alipay HK manual payouts from marketplaceOrders table
+  const alipayPays = await db.select({
+    id: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    amountHkd: marketplaceOrders.sellerReceivableHkd,
+    createdAt: marketplaceOrders.manualPayoutAt,
+    status: sql<string>`'completed'`,
+    paymentMethod: marketplaceOrders.paymentMethod,
+    manualPayoutNote: marketplaceOrders.manualPayoutNote,
+    manualPayoutProofUrl: marketplaceOrders.manualPayoutProofUrl,
+  }).from(marketplaceOrders)
+    .where(and(
+      eq(marketplaceOrders.sellerId, sellerId),
+      eq(marketplaceOrders.paymentMethod, 'alipay_hk'),
+      eq(marketplaceOrders.payoutStatus, 'paid'),
+      isNotNull(marketplaceOrders.manualPayoutAt)
+    ))
+    .orderBy(desc(marketplaceOrders.manualPayoutAt));
+  // Merge and sort by date
+  const stripeFormatted = stripePays.map(p => ({ ...p, source: 'stripe' as const }));
+  const alipayFormatted = alipayPays.map(p => ({ ...p, source: 'alipay_hk' as const }));
+  const all = [...stripeFormatted, ...alipayFormatted].sort((a, b) => {
+    const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const db2 = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return db2 - da;
+  });
+  return all;
 }
 export async function getMarketplaceStats() {
   const db = await getDb();
@@ -3572,22 +3600,36 @@ export async function getWishlistListingIds(userId: number): Promise<number[]> {
 // DISPUTE & REVIEW DB HELPERS
 // ============================================================
 
-export async function getDisputedOrders(page = 1, pageSize = 20) {
+export async function getDisputedOrders(page = 1, pageSize = 20, search?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
   const buyerAlias = alias(users, 'buyer');
+  const buildWhere = () => {
+    const baseCondition = eq(marketplaceOrders.orderStatus, "disputed");
+    if (!search || !search.trim()) return baseCondition;
+    const q = `%${search.trim()}%`;
+    return and(
+      baseCondition,
+      or(
+        like(marketplaceOrders.orderNo, q),
+        like(buyerAlias.name, q),
+        like(buyerAlias.email, q)
+      )
+    );
+  };
   const rows = await db.select({
     order: marketplaceOrders,
     buyerName: buyerAlias.name,
     buyerEmail: buyerAlias.email,
   }).from(marketplaceOrders)
     .leftJoin(buyerAlias, eq(marketplaceOrders.buyerId, buyerAlias.id))
-    .where(eq(marketplaceOrders.orderStatus, "disputed"))
+    .where(buildWhere())
     .orderBy(desc(marketplaceOrders.disputeOpenedAt))
     .limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
-    .where(eq(marketplaceOrders.orderStatus, "disputed"));
+    .leftJoin(buyerAlias, eq(marketplaceOrders.buyerId, buyerAlias.id))
+    .where(buildWhere());
   return { orders: rows.map(r => ({ ...r.order, buyerName: r.buyerName, buyerEmail: r.buyerEmail })), total: Number(countRows[0]?.count ?? 0) };
 }
 

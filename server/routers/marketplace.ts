@@ -1212,16 +1212,19 @@ export const marketplaceRouter = router({
     .input(z.object({
       orderId: z.number().int(),
       note: z.string().optional(),
+      proofUrl: z.string().url().optional(), // S3 URL of payment proof screenshot
     }))
     .mutation(async ({ input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
       if (order.sellerType !== 'seller') throw new TRPCError({ code: "BAD_REQUEST", message: "平台自有商品無需放款" });
-      await updateMarketplaceOrder(input.orderId, {
+      const updateData: Record<string, any> = {
         payoutStatus: "paid",
         manualPayoutAt: new Date(),
         manualPayoutNote: input.note ?? "管理員手動標記已放款",
-      });
+      };
+      if (input.proofUrl) updateData.manualPayoutProofUrl = input.proofUrl;
+      await updateMarketplaceOrder(input.orderId, updateData);
       // Notify seller of payout
       if (order.sellerId) {
         const sellerProf = await getSellerProfileById(order.sellerId);
@@ -1230,7 +1233,7 @@ export const marketplaceRouter = router({
             userId: sellerProf.userId,
             type: "trade",
             title: "款項已放款 💰",
-            body: `訂單 ${order.orderNo} 的款項 HKD ${parseFloat(order.sellerReceivableHkd as string).toFixed(2)} 已由管理員手動放款。${input.note ? `備註：${input.note}` : ""}`,
+            body: `訂單 ${order.orderNo} 的款項 HKD ${parseFloat(order.sellerReceivableHkd as string).toFixed(2)} 已由管理員手動放款。${input.note ? `備註：${input.note}` : ""}請到賣家後台查看放款詳情。`,
             linkUrl: "/seller",
           }).catch(() => {});
         }
@@ -2131,9 +2134,10 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .input(z.object({
       page: z.number().int().min(1).default(1),
       pageSize: z.number().int().min(1).max(50).default(20),
+      search: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      return getDisputedOrders(input.page, input.pageSize);
+      return getDisputedOrders(input.page, input.pageSize, input.search);
     }),
 
   // ============================================================

@@ -855,6 +855,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   stripeTransferError: text("stripeTransferError"),
   manualPayoutAt: timestamp("manualPayoutAt"), // For alipay_hk orders: when admin manually paid out
   manualPayoutNote: varchar("manualPayoutNote", { length: 500 }), // Admin note for manual payout
+  manualPayoutProofUrl: text("manualPayoutProofUrl"), // S3 URL of payment proof screenshot
   paymentExpiresAt: timestamp("paymentExpiresAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
