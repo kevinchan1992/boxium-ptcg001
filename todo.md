@@ -4737,3 +4737,15 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 修復買家資料：姓名、電郵、電話的值文字顏色（應為深色）
 - [ ] 修復商品資訊：品相標籤文字顏色（應為深色）
 - [ ] 修復物流/收件資訊：收件人、電話、地址的值文字顏色（應為深色）
+
+## ✅ 訂單批量匯出 + 訂單數跳轉 + 商品詳情連結
+
+- [x] OrdersTab 每行加入 checkbox 多選
+- [x] 批量操作工具列：顯示已選筆數 + 「匯出選定訂單 CSV」按鈕
+- [x] 全選/取消全選 checkbox（表頭）
+- [x] ListingDetailDialog 訂單數統計卡片加入點擊跳轉（與「查看訂單」按鈕行為一致）
+- [x] OrderDetailDialog 加入「查看商品詳情」連結，點擊開啟 ListingDetailDialog
+- [x] 撰寫 19 項單元測試（admin-order-batch-export.test.ts）
+- [x] 保存 checkpoint
+
+---

@@ -691,9 +691,29 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders }: { 
                           <p className="text-xs text-gray-500 mb-1">品相</p>
                           <Badge className={conditionColor[listing.condition] ?? ''}>{conditionLabel[listing.condition] ?? listing.condition}</Badge>
                         </div>
-                        <div className="bg-[#06038d]/[0.04] rounded-lg p-3">
+                        <div
+                          className={`bg-[#06038d]/[0.04] rounded-lg p-3 transition-all ${
+                            orderCount > 0 && onViewOrders
+                              ? 'cursor-pointer hover:bg-[#06038d]/[0.12] hover:ring-1 hover:ring-[#06038d]/30'
+                              : ''
+                          }`}
+                          onClick={() => {
+                            if (orderCount > 0 && onViewOrders && listingId) {
+                              onViewOrders(listingId);
+                              onClose();
+                            }
+                          }}
+                          title={orderCount > 0 ? '點擊查看相關訂單' : undefined}
+                        >
                           <p className="text-xs text-gray-500 mb-1">訂單數</p>
-                          <p className="font-bold text-gray-900 text-lg">{orderCount}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className={`font-bold text-lg ${
+                              orderCount > 0 ? 'text-[#06038d]' : 'text-gray-900'
+                            }`}>{orderCount}</p>
+                            {orderCount > 0 && onViewOrders && (
+                              <ExternalLink className="w-3 h-3 text-[#06038d]/60" />
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap pt-1">
@@ -1096,12 +1116,13 @@ function exportToCSV(rows: any[], filename: string) {
   URL.revokeObjectURL(url);
 }
 
-function OrdersTab({ listingFilter, onClearListingFilter }: { listingFilter?: number | null; onClearListingFilter?: () => void }) {
+function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { listingFilter?: number | null; onClearListingFilter?: () => void; onViewOrders?: (listingId: number) => void }) {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sellerTypeFilter, setSellerTypeFilter] = useState<'all' | 'platform' | 'seller'>('all');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [viewListingId, setViewListingId] = useState<number | null>(null);
   const [note, setNote] = useState("");
   const [adminNote, setAdminNote] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
@@ -1153,6 +1174,51 @@ function OrdersTab({ listingFilter, onClearListingFilter }: { listingFilter?: nu
         o.listingTitle?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : orders;
+
+  // Batch selection state
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<number>>(new Set());
+  const toggleOrderSelect = (id: number) => {
+    setSelectedOrderIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const isAllSelected = filteredOrders.length > 0 && filteredOrders.every((o: any) => selectedOrderIds.has(o.id));
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedOrderIds(prev => {
+        const next = new Set(prev);
+        filteredOrders.forEach((o: any) => next.delete(o.id));
+        return next;
+      });
+    } else {
+      setSelectedOrderIds(prev => {
+        const next = new Set(prev);
+        filteredOrders.forEach((o: any) => next.add(o.id));
+        return next;
+      });
+    }
+  };
+
+  const handleExportSelectedCSV = () => {
+    const selected = filteredOrders.filter((o: any) => selectedOrderIds.has(o.id));
+    if (!selected.length) { toast.error('請先勾選訂單'); return; }
+    const rows = selected.map((o: any) => ({
+      '訂單號': o.orderNo,
+      '商品': o.listingTitle,
+      '狀態': orderStatusLabel[o.orderStatus] ?? o.orderStatus,
+      '付款方式': o.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK',
+      '金額 (HKD)': parseFloat(o.subtotalHkd || '0').toFixed(2),
+      '手續費 (HKD)': parseFloat(o.platformFeeHkd || '0').toFixed(2),
+      '賣家應收 (HKD)': parseFloat(o.sellerReceivableHkd || '0').toFixed(2),
+      '訂單日期': new Date(o.createdAt).toLocaleDateString('zh-HK'),
+      '追蹤號': o.trackingNumber ?? '',
+      '收件人': o.shippingName ?? '',
+      '收件電話': o.shippingPhone ?? '',
+    }));
+    exportToCSV(rows, `選定訂單_${new Date().toISOString().slice(0,10)}.csv`);
+  };
 
   const handleExportCSV = () => {
     const rows = orders.map((o: any) => ({
@@ -1228,7 +1294,7 @@ function OrdersTab({ listingFilter, onClearListingFilter }: { listingFilter?: nu
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400" />
             <Input
@@ -1239,21 +1305,53 @@ function OrdersTab({ listingFilter, onClearListingFilter }: { listingFilter?: nu
             />
           </div>
           <Button size="sm" variant="outline" className="text-gray-700 bg-white" onClick={handleExportCSV} disabled={orders.length === 0}>
-            <Download className="w-3.5 h-3.5 mr-1" />匯出 CSV
+            <Download className="w-3.5 h-3.5 mr-1" />匯出全部 CSV
           </Button>
         </div>
       </div>
+      {/* Batch selection toolbar */}
+      {selectedOrderIds.size > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-[#06038d]/10 border border-[#06038d]/20 rounded-xl">
+          <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll}
+            className="w-4 h-4 rounded border-gray-300 flex-shrink-0" />
+          <span className="text-sm text-[#06038d] font-medium">已選 {selectedOrderIds.size} 筆訂單</span>
+          <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white ml-auto"
+            onClick={handleExportSelectedCSV}>
+            <Download className="w-3.5 h-3.5 mr-1" />匯出選定訂單 CSV
+          </Button>
+          <button className="text-xs text-[#06038d]/70 hover:text-[#06038d] underline"
+            onClick={() => setSelectedOrderIds(new Set())}>
+            取消全選
+          </button>
+        </div>
+      )}
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">載入中...</div>
       ) : filteredOrders.length === 0 ? (
         <div className="text-center py-12 text-gray-500"><ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{searchQuery ? '未找到符合的訂單' : '暫無訂單'}</p></div>
       ) : (
         <div className="space-y-3">
+          {/* Select all header row */}
+          <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+            <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll}
+              className="w-4 h-4 rounded border-gray-300 flex-shrink-0" />
+            <span className="text-xs text-gray-600 font-medium">
+              {isAllSelected ? '取消全選' : '全選本頁'} ({filteredOrders.length} 筆)
+            </span>
+          </div>
           {filteredOrders.map((order: any) => (
-            <div key={order.id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div key={order.id} className={`rounded-xl border shadow-sm overflow-hidden transition-all ${
+              selectedOrderIds.has(order.id) ? 'border-[#06038d]/50 ring-1 ring-[#06038d]/30' : 'border-gray-200'
+            }`}>
               {/* Header bar */}
               <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
                 <div className="flex items-center gap-2 flex-wrap">
+                  <input type="checkbox"
+                    checked={selectedOrderIds.has(order.id)}
+                    onChange={() => toggleOrderSelect(order.id)}
+                    onClick={e => e.stopPropagation()}
+                    className="w-4 h-4 rounded border-white/50 bg-white/20 flex-shrink-0"
+                  />
                   <span className="text-white text-sm font-semibold font-mono">{order.orderNo}</span>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     order.orderStatus === 'completed' ? 'bg-green-200 text-green-900' :
@@ -1396,12 +1494,23 @@ function OrdersTab({ listingFilter, onClearListingFilter }: { listingFilter?: nu
           {selectedOrder && (
             <div className="p-5 space-y-4 bg-white">
 
-              {/* ── 商品資訊 ─────────────────────────── */}
+                {/* ── 商品資訊 ──────────────────── */}
               <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
-                <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
+                <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15 flex items-center justify-between">
                   <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
                     <Package className="w-3.5 h-3.5" />商品資訊
                   </p>
+                  {selectedOrder.listingId && (
+                    <button
+                      className="flex items-center gap-1 text-xs text-[#06038d]/70 hover:text-[#06038d] transition-colors"
+                      onClick={() => {
+                        setSelectedOrder(null);
+                        setViewListingId(selectedOrder.listingId);
+                      }}
+                    >
+                      <ExternalLink className="w-3 h-3" />查看商品詳情
+                    </button>
+                  )}
                 </div>
                 <div className="p-3 flex items-center gap-3">
                   {selectedOrder.listingImages && (() => {
@@ -1625,6 +1734,18 @@ function OrdersTab({ listingFilter, onClearListingFilter }: { listingFilter?: nu
           )}
         </DialogContent>
       </Dialog>
+      {/* Listing detail dialog triggered from order detail */}
+      {viewListingId && (
+        <ListingDetailDialog
+          listingId={viewListingId}
+          onClose={() => setViewListingId(null)}
+          onUpdated={() => {}}
+          onViewOrders={(id) => {
+            setViewListingId(null);
+            if (onViewOrders) onViewOrders(id);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -3659,7 +3780,7 @@ export default function AdminMarketplace() {
   const renderContent = () => {
     switch (activeSection) {
       case 'listings': return <ListingsTab onViewOrders={handleViewOrders} />;
-      case 'orders': return <OrdersTab listingFilter={ordersListingFilter} onClearListingFilter={() => setOrdersListingFilter(null)} />;
+      case 'orders': return <OrdersTab listingFilter={ordersListingFilter} onClearListingFilter={() => setOrdersListingFilter(null)} onViewOrders={handleViewOrders} />;
       case 'alipay': return <AlipayPendingTab />;
       case 'sellers': return <SellersTab />;
       case 'disputes': return <DisputesTab />;
