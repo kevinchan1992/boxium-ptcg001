@@ -594,6 +594,7 @@ export default function SellerDashboard() {
       toast.success("已標記為已寄出，已通知買家");
       setShipDialog({ open: false, orderId: 0, orderNo: "" });
       setShipForm({ shippingMethod: "", trackingNumber: "" });
+      utils.marketplace.getMySellerOrders.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
