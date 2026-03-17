@@ -3158,6 +3158,11 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string) {
   const conditions = status
     ? [eq(marketplaceOrders.orderStatus, status as any)]
     : [sql`${marketplaceOrders.orderStatus} != 'pending_payment'`];
+  // Alias for buyer and seller user joins to avoid column name conflicts
+  const { alias } = await import('drizzle-orm/mysql-core');
+  const buyerAlias = alias(users, 'buyerAlias');
+  const sellerAlias = alias(users, 'sellerAlias');
+
   const rows = await db.select({
     id: marketplaceOrders.id,
     orderNo: marketplaceOrders.orderNo,
@@ -3183,15 +3188,31 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string) {
     payoutStatus: marketplaceOrders.payoutStatus,
     stripeSessionId: marketplaceOrders.stripeSessionId,
     stripePaymentIntentId: marketplaceOrders.stripePaymentIntentId,
+    stripeTransferId: marketplaceOrders.stripeTransferId,
     createdAt: marketplaceOrders.createdAt,
     updatedAt: marketplaceOrders.updatedAt,
     // From listing join
     listingTitle: marketplaceListings.title,
     listingImages: marketplaceListings.images,
     listingCondition: marketplaceListings.condition,
+    // Buyer info
+    buyerName: buyerAlias.name,
+    buyerEmail: buyerAlias.email,
+    buyerPhone: buyerAlias.phone,
+    // Seller info (from sellerProfiles + sellerAlias users)
+    sellerDisplayName: sellerProfiles.displayName,
+    sellerUserId: sellerProfiles.userId,
+    sellerUserName: sellerAlias.name,
+    sellerUserEmail: sellerAlias.email,
+    sellerUserPhone: sellerAlias.phone,
+    sellerStripeConnectId: sellerProfiles.stripeConnectId,
+    sellerStripeConnectStatus: sellerProfiles.stripeConnectStatus,
   })
     .from(marketplaceOrders)
     .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
+    .leftJoin(buyerAlias, eq(marketplaceOrders.buyerId, buyerAlias.id))
+    .leftJoin(sellerProfiles, eq(marketplaceOrders.sellerId, sellerProfiles.id))
+    .leftJoin(sellerAlias, eq(sellerProfiles.userId, sellerAlias.id))
     .where(and(...conditions))
     .orderBy(desc(marketplaceOrders.createdAt)).limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
