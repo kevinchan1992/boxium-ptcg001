@@ -19,10 +19,10 @@ import {
 // ─── TCG Series Config (只保留 3 種 + 全部) ──────────────────────────────────
 
 const TCG_SERIES = [
-  { value: "all",      label: "全部",      emoji: "🎴", color: "bg-[#06038D] text-white",         border: "border-[#06038D]" },
-  { value: "pokemon",  label: "Pokémon",   emoji: "⚡", color: "bg-yellow-400 text-[#06038D]",    border: "border-yellow-400" },
-  { value: "onepiece", label: "One Piece", emoji: "🏴‍☠️", color: "bg-red-600 text-white",           border: "border-red-600" },
-  { value: "yugioh",   label: "Yu-Gi-Oh!", emoji: "🔮", color: "bg-purple-700 text-white",         border: "border-purple-700" },
+  { value: "all",      label: "全部",      emoji: "🎴", logo: null,                                                                                                                                      color: "bg-[#06038D] text-white",         border: "border-[#06038D]" },
+  { value: "pokemon",  label: "Pokémon",   emoji: "⚡",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  color: "bg-yellow-400 text-[#06038D]",    border: "border-yellow-400" },
+  { value: "onepiece", label: "One Piece", emoji: "🏴‍☠️", logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", color: "bg-red-600 text-white",           border: "border-red-600" },
+  { value: "yugioh",   label: "Yu-Gi-Oh!", emoji: "🔮",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  color: "bg-purple-700 text-white",         border: "border-purple-700" },
 ];
 
 const TCG_SERIES_BADGE: Record<string, string> = {
@@ -238,7 +238,15 @@ function SidebarFilter({
                     : "text-gray-600 hover:bg-gray-50 hover:text-[#06038D]"
                 }`}
               >
-                <span className="text-base">{s.emoji}</span>
+                {s.logo ? (
+                  <img
+                    src={s.logo}
+                    alt={s.label}
+                    className="w-8 h-5 object-contain flex-shrink-0"
+                  />
+                ) : (
+                  <span className="text-base">{s.emoji}</span>
+                )}
                 {s.label}
                 {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#FEDD00]" />}
               </button>

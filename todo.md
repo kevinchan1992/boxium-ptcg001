@@ -4872,3 +4872,7 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 ## 🔲 Marketplace 輸入框文字顏色修復
 - [x] 修復左側篩選欄價格範圍輸入框文字顏色（白色改為黑色）
+
+## 🔲 Marketplace TCG 系列 Logo
+- [x] 上傳 Pokémon、One Piece、Yu-Gi-Oh! Logo 到 CDN
+- [x] 在左側篩選欄 TCG 系列選項左邊加入對應 Logo 圖片
