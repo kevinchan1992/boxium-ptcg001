@@ -4762,3 +4762,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 保存 checkpoint
 
 ---
+
+## ✅ 商品管理 checkbox 樣式統一
+
+- [x] ListingsTab 全選列改成灰色背景列（與 OrdersTab 一致）
+- [x] ListingsTab 每張商品卡片的 checkbox 改成原生 input（與 OrdersTab 一致）
+- [x] 儲存 checkpoint
+

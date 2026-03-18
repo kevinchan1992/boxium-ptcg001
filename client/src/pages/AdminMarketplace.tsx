@@ -1030,12 +1030,12 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
       )}
       {/* Select all row */}
       {listings.length > 0 && !isLoading && (
-        <div className="flex items-center gap-2 px-1">
-          <Checkbox id="select-all" checked={allSelected} onCheckedChange={toggleAll}
-            className="border-gray-400" />
-          <label htmlFor="select-all" className="text-sm text-gray-600 cursor-pointer select-none">
-            {allSelected ? '取消全選' : '全選本頁'}
-          </label>
+        <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+          <input type="checkbox" checked={allSelected} onChange={toggleAll}
+            className="w-4 h-4 rounded border-gray-300 flex-shrink-0" />
+          <span className="text-xs text-gray-600 font-medium">
+            {allSelected ? '取消全選' : '全選本頁'} ({listings.length} 個)
+          </span>
         </div>
       )}
       {isLoading ? (
@@ -1049,11 +1049,11 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
               {/* Header bar */}
               <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Checkbox
+                  <input type="checkbox"
                     checked={selectedIds.has(listing.id)}
-                    onCheckedChange={() => toggleOne(listing.id)}
-                    className="border-white/60 data-[state=checked]:bg-[#FEDD00] data-[state=checked]:border-[#FEDD00] flex-shrink-0"
-                    onClick={(e) => e.stopPropagation()}
+                    onChange={() => toggleOne(listing.id)}
+                    onClick={e => e.stopPropagation()}
+                    className="w-4 h-4 rounded border-white/50 bg-white/20 flex-shrink-0"
                   />
                   <span className="text-white text-sm font-semibold font-mono">#{listing.id} · {listing.title}</span>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
