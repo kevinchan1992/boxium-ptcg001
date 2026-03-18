@@ -4859,3 +4859,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 改為左側固定篩選欄 + 右側商品區的雙欄佈局
 - [x] TCG 分類圖標導航只保留 3 種（全部/Pokémon/One Piece/Yu-Gi-Oh!）
 - [x] 設計優化
+
+## 🔲 Marketplace 溢出和響應式修復
+- [x] 修復 Hero 區和 Banner 消失問題（Navbar 高度遮蓋）
+- [x] 修復左側篩選欄溢出視窗邊界
+- [x] 修復商品區太窄問題
+- [x] 確保不同設備（桌面/平板/手機）正確顯示

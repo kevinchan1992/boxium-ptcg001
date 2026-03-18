@@ -674,17 +674,17 @@ export default function Marketplace() {
 
       {/* ── Main Content: Left Sidebar + Right Products ── */}
       <div className="max-w-7xl mx-auto px-4 py-5">
-        <div className="flex gap-6">
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
 
           {/* ── Left Sidebar (desktop) ── */}
-          <div className="hidden lg:block sticky top-4 self-start">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 w-56">
+          <div className="hidden lg:block" style={{ width: '224px', flexShrink: 0, position: 'sticky', top: '1rem', alignSelf: 'flex-start' }}>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <SidebarFilter {...sidebarProps} />
             </div>
           </div>
 
           {/* ── Right: Products Area ── */}
-          <div className="flex-1 min-w-0">
+          <div style={{ flex: 1, minWidth: 0 }}>
 
             {/* Top bar: count + sort + mobile filter */}
             <div className="flex items-center justify-between mb-4 gap-3">
@@ -775,7 +775,7 @@ export default function Marketplace() {
 
             {/* Product Grid */}
             {isLoading && page === 1 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
                 {Array.from({ length: 10 }).map((_, i) => <ProductCardSkeleton key={i} />)}
               </div>
             ) : allListings.length === 0 ? (
@@ -799,7 +799,7 @@ export default function Marketplace() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
                   {allListings.map((listing: any) => (
                     <ProductCard
                       key={listing.id}
