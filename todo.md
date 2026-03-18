@@ -4790,3 +4790,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] Header 和 Footer 固定不滚動，關閉按鈕不再被遣蓋
 - [x] 儲存 checkpoint
 
+
+## ✅ 修復 OrderDetailDialog 視窗問題
+
+- [x] DialogContent 改為 flex flex-col h-[92vh]，header 固定，內容可滚動
+- [x] 白色底色上所有欄位値文字改為 text-gray-800（賣家類型、下單日期、姓名、電郵、電話、收件人、物流方式、追蹤號碼等）
+- [x] 確保關閉按鈕不被遣蓋（header flex-shrink-0）
+- [x] 儲存 checkpoint
+

@@ -1659,9 +1659,9 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
         </div>
       )}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-xl overflow-hidden">
+        <DialogContent className="max-w-2xl h-[92vh] flex flex-col p-0 gap-0 rounded-xl overflow-hidden">
           {/* Header - LOGO Deep Blue */}
-          <div className="bg-[#06038d] px-6 py-4 flex items-center justify-between">
+          <div className="bg-[#06038d] px-6 py-4 flex items-center justify-between flex-shrink-0">
             <div>
               <h2 className="text-white font-bold text-lg tracking-wide">訂單管理</h2>
               <div className="flex items-center gap-2 mt-0.5">
@@ -1688,7 +1688,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
           </div>
 
           {selectedOrder && (
-            <div className="p-5 space-y-4 bg-white">
+            <div className="p-5 space-y-4 bg-white flex-1 overflow-y-auto min-h-0">
 
                 {/* ── 商品資訊 ──────────────────── */}
               <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
@@ -1749,18 +1749,18 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                   <span className="text-gray-500">賣家應收</span>
                   <span className="font-semibold text-emerald-700">HKD {parseFloat(selectedOrder.sellerReceivableHkd || '0').toFixed(2)}</span>
                   <span className="text-gray-500">賣家類型</span>
-                  <span>{selectedOrder.sellerType === 'platform' ? '平台官方' : '一般賣家'}</span>
+                  <span className="text-gray-800">{selectedOrder.sellerType === 'platform' ? '平台官方' : '一般賣家'}</span>
                   <span className="text-gray-500">下單日期</span>
-                  <span>{new Date(selectedOrder.createdAt).toLocaleString('zh-HK')}</span>
-                  {selectedOrder.buyerConfirmedAt && <><span className="text-gray-500">買家確認</span><span>{new Date(selectedOrder.buyerConfirmedAt).toLocaleDateString('zh-HK')}</span></>}
+                  <span className="text-gray-800">{new Date(selectedOrder.createdAt).toLocaleString('zh-HK')}</span>
+                  {selectedOrder.buyerConfirmedAt && <><span className="text-gray-500">買家確認</span><span className="text-gray-800">{new Date(selectedOrder.buyerConfirmedAt).toLocaleDateString('zh-HK')}</span></>}
                   <span className="text-gray-500">放款狀態</span>
                   <span className={`font-medium ${selectedOrder.payoutStatus === 'paid' ? 'text-green-600' : selectedOrder.payoutStatus === 'failed' ? 'text-red-600' : 'text-amber-600'}`}>
                     {selectedOrder.payoutStatus === 'paid' ? '已放款' : selectedOrder.payoutStatus === 'failed' ? '放款失敗' : selectedOrder.payoutStatus === 'completed' ? '已完成' : '待放款'}
                   </span>
-                  {selectedOrder.stripeTransferId && <><span className="text-gray-500">Stripe Transfer</span><span className="font-mono text-xs">{selectedOrder.stripeTransferId}</span></>}
+                  {selectedOrder.stripeTransferId && <><span className="text-gray-500">Stripe Transfer</span><span className="font-mono text-xs text-gray-800">{selectedOrder.stripeTransferId}</span></>}
                   {selectedOrder.stripeTransferError && <><span className="text-gray-500">轉帳錯誤</span><span className="text-red-600 text-xs">{selectedOrder.stripeTransferError}</span></>}
-                  {selectedOrder.manualPayoutAt && <><span className="text-gray-500">手動放款日</span><span>{new Date(selectedOrder.manualPayoutAt).toLocaleDateString('zh-HK')}</span></>}
-                  {selectedOrder.manualPayoutNote && <><span className="text-gray-500">放款備注</span><span className="text-xs">{selectedOrder.manualPayoutNote}</span></>}
+                  {selectedOrder.manualPayoutAt && <><span className="text-gray-500">手動放款日</span><span className="text-gray-800">{new Date(selectedOrder.manualPayoutAt).toLocaleDateString('zh-HK')}</span></>}
+                  {selectedOrder.manualPayoutNote && <><span className="text-gray-500">放款備注</span><span className="text-xs text-gray-800">{selectedOrder.manualPayoutNote}</span></>}
                 </div>
               </div>
 
@@ -1772,9 +1772,9 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                   </p>
                 </div>
                 <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <span className="text-gray-500">姓名</span><span>{selectedOrder.buyerName || '—'}</span>
-                  <span className="text-gray-500">電郵</span><span className="text-xs break-all">{selectedOrder.buyerEmail || '—'}</span>
-                  <span className="text-gray-500">電話</span><span>{selectedOrder.buyerPhone || '—'}</span>
+                  <span className="text-gray-500">姓名</span><span className="text-gray-800">{selectedOrder.buyerName || '—'}</span>
+                  <span className="text-gray-500">電郵</span><span className="text-xs break-all text-gray-800">{selectedOrder.buyerEmail || '—'}</span>
+                  <span className="text-gray-500">電話</span><span className="text-gray-800">{selectedOrder.buyerPhone || '—'}</span>
                 </div>
               </div>
 
@@ -1787,10 +1787,10 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                     </p>
                   </div>
                   <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <span className="text-gray-500">店舖名稱</span><span>{selectedOrder.sellerDisplayName || '—'}</span>
-                    <span className="text-gray-500">姓名</span><span>{selectedOrder.sellerUserName || '—'}</span>
-                    <span className="text-gray-500">電郵</span><span className="text-xs break-all">{selectedOrder.sellerUserEmail || '—'}</span>
-                    <span className="text-gray-500">電話</span><span>{selectedOrder.sellerUserPhone || '—'}</span>
+                    <span className="text-gray-500">店舖名稱</span><span className="text-gray-800">{selectedOrder.sellerDisplayName || '—'}</span>
+                    <span className="text-gray-500">姓名</span><span className="text-gray-800">{selectedOrder.sellerUserName || '—'}</span>
+                    <span className="text-gray-500">電郵</span><span className="text-xs break-all text-gray-800">{selectedOrder.sellerUserEmail || '—'}</span>
+                    <span className="text-gray-500">電話</span><span className="text-gray-800">{selectedOrder.sellerUserPhone || '—'}</span>
                     {selectedOrder.sellerStripeConnectId && <><span className="text-gray-500">Stripe Connect</span><span className="font-mono text-xs">{selectedOrder.sellerStripeConnectId}</span></>}
                   </div>
                 </div>
@@ -1804,22 +1804,22 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                   </p>
                 </div>
                 <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <span className="text-gray-500">收件人</span><span>{selectedOrder.shippingName || '—'}</span>
-                  <span className="text-gray-500">電話</span><span>{selectedOrder.shippingPhone || '—'}</span>
+                  <span className="text-gray-500">收件人</span><span className="text-gray-800">{selectedOrder.shippingName || '—'}</span>
+                  <span className="text-gray-500">電話</span><span className="text-gray-800">{selectedOrder.shippingPhone || '—'}</span>
                   <span className="text-gray-500">地址</span>
-                  <span>{selectedOrder.shippingAddress ? (() => {
+                  <span className="text-gray-800">{selectedOrder.shippingAddress ? (() => {
                     try {
                       const addr = JSON.parse(selectedOrder.shippingAddress);
                       if (addr && typeof addr === 'object') return [addr.address, addr.district, addr.region].filter(Boolean).join(', ');
                       return selectedOrder.shippingAddress;
                     } catch { return selectedOrder.shippingAddress; }
                   })() : '—'}</span>
-                  <span className="text-gray-500">物流方式</span><span>{selectedOrder.shippingMethod || '—'}</span>
+                  <span className="text-gray-500">物流方式</span><span className="text-gray-800">{selectedOrder.shippingMethod || '—'}</span>
                   <span className="text-gray-500">追蹤號碼</span>
-                  <span className="font-mono text-xs">{selectedOrder.trackingNumber || selectedOrder.trackingNo || '—'}</span>
+                  <span className="font-mono text-xs text-gray-800">{selectedOrder.trackingNumber || selectedOrder.trackingNo || '—'}</span>
                   <span className="text-gray-500">出貨日期</span>
-                  <span>{selectedOrder.shippedAt ? new Date(selectedOrder.shippedAt).toLocaleDateString('zh-HK') : '—'}</span>
-                  {selectedOrder.autoCompleteAt && <><span className="text-gray-500">自動完成</span><span>{new Date(selectedOrder.autoCompleteAt).toLocaleDateString('zh-HK')}</span></>}
+                  <span className="text-gray-800">{selectedOrder.shippedAt ? new Date(selectedOrder.shippedAt).toLocaleDateString('zh-HK') : '—'}</span>
+                  {selectedOrder.autoCompleteAt && <><span className="text-gray-500">自動完成</span><span className="text-gray-800">{new Date(selectedOrder.autoCompleteAt).toLocaleDateString('zh-HK')}</span></>}
                 </div>
               </div>
 
@@ -1832,10 +1832,10 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                     </p>
                   </div>
                   <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <span className="text-gray-500">開啟時間</span><span>{new Date(selectedOrder.disputeOpenedAt).toLocaleDateString('zh-HK')}</span>
-                    <span className="text-gray-500">爭議原因</span><span className="col-span-1">{selectedOrder.disputeReason || '—'}</span>
-                    {selectedOrder.disputeResolvedAt && <><span className="text-gray-500">解決時間</span><span>{new Date(selectedOrder.disputeResolvedAt).toLocaleDateString('zh-HK')}</span></>}
-                    {selectedOrder.disputeResolution && <><span className="text-gray-500">解決方式</span><span>{selectedOrder.disputeResolution}</span></>}
+                    <span className="text-gray-500">開啟時間</span><span className="text-gray-800">{new Date(selectedOrder.disputeOpenedAt).toLocaleDateString('zh-HK')}</span>
+                    <span className="text-gray-500">爭議原因</span><span className="col-span-1 text-gray-800">{selectedOrder.disputeReason || '—'}</span>
+                    {selectedOrder.disputeResolvedAt && <><span className="text-gray-500">解決時間</span><span className="text-gray-800">{new Date(selectedOrder.disputeResolvedAt).toLocaleDateString('zh-HK')}</span></>}
+                    {selectedOrder.disputeResolution && <><span className="text-gray-500">解決方式</span><span className="text-gray-800">{selectedOrder.disputeResolution}</span></>}
                   </div>
                 </div>
               )}
