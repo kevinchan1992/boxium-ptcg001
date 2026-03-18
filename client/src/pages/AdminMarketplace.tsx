@@ -286,17 +286,29 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
                 </div>
                 <div>
                   <Label className="text-[#06038D] font-semibold">TCG 系列 *</Label>
-                  <Select value={form.tcgSeries} onValueChange={v => setForm(f => ({ ...f, tcgSeries: v }))}>
-                    <SelectTrigger className="mt-1 bg-white border-[#06038D]/30 text-[#06038D]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pokemon">Pokémon TCG</SelectItem>
-                      <SelectItem value="onepiece">One Piece TCG</SelectItem>
-                      <SelectItem value="yugioh">Yu-Gi-Oh!</SelectItem>
-                      <SelectItem value="dragonball">Dragon Ball Super</SelectItem>
-                      <SelectItem value="mtg">Magic: The Gathering</SelectItem>
-                      <SelectItem value="other">其他 TCG</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    {[
+                      { value: "pokemon",  label: "Pokémon",   logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif" },
+                      { value: "onepiece", label: "One Piece",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif" },
+                      { value: "yugioh",   label: "Yu-Gi-Oh!",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp" },
+                    ].map(series => (
+                      <button
+                        key={series.value}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, tcgSeries: series.value }))}
+                        className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border-2 transition-all ${
+                          form.tcgSeries === series.value
+                            ? "border-[#06038D] bg-[#06038D]/5 shadow-sm"
+                            : "border-gray-200 bg-white hover:border-[#06038D]/40"
+                        }`}
+                      >
+                        <img src={series.logo} alt={series.label} className="h-6 w-auto object-contain" />
+                        <span className={`text-[10px] font-semibold ${
+                          form.tcgSeries === series.value ? "text-[#06038D]" : "text-gray-500"
+                        }`}>{series.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>

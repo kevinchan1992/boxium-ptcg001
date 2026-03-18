@@ -25,6 +25,12 @@ const TCG_SERIES = [
   { value: "yugioh",   label: "Yu-Gi-Oh!", emoji: "🔮",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  color: "bg-purple-700 text-white",         border: "border-purple-700" },
 ];
 
+const TCG_SERIES_LOGO: Record<string, string> = {
+  pokemon:  "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",
+  onepiece: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif",
+  yugioh:   "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",
+};
+
 const TCG_SERIES_BADGE: Record<string, string> = {
   pokemon:  "bg-yellow-100 text-yellow-800",
   onepiece: "bg-red-100 text-red-800",
@@ -137,22 +143,28 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
             </span>
           )}
         </div>
-        {listing.sellerType === "seller" && listing.sellerProfile && (
-          <div className="flex items-center gap-1 text-[11px] text-gray-500 mt-0.5">
-            {listing.sellerProfile.ratingCount > 0 ? (
-              <>
-                <Star className="w-3 h-3 fill-[#FEDD00] text-[#FEDD00]" />
-                <span className="font-medium text-gray-700">{parseFloat(listing.sellerProfile.avgRating ?? "0").toFixed(1)}</span>
-                <span>({listing.sellerProfile.ratingCount})</span>
-              </>
-            ) : (
-              <span className="text-gray-400">新賣家</span>
-            )}
-            {listing.sellerProfile.displayName && (
-              <span className="ml-auto truncate max-w-[80px] text-gray-400">{listing.sellerProfile.displayName}</span>
-            )}
-          </div>
-        )}
+        <div className="flex items-center justify-between mt-0.5">
+          {listing.sellerType === "seller" && listing.sellerProfile ? (
+            <div className="flex items-center gap-1 text-[11px] text-gray-500">
+              {listing.sellerProfile.ratingCount > 0 ? (
+                <>
+                  <Star className="w-3 h-3 fill-[#FEDD00] text-[#FEDD00]" />
+                  <span className="font-medium text-gray-700">{parseFloat(listing.sellerProfile.avgRating ?? "0").toFixed(1)}</span>
+                  <span>({listing.sellerProfile.ratingCount})</span>
+                </>
+              ) : (
+                <span className="text-gray-400">新賣家</span>
+              )}
+            </div>
+          ) : <span />}
+          {listing.tcgSeries && TCG_SERIES_LOGO[listing.tcgSeries] && (
+            <img
+              src={TCG_SERIES_LOGO[listing.tcgSeries]}
+              alt={TCG_SERIES_LABEL[listing.tcgSeries] ?? listing.tcgSeries}
+              className="h-4 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity"
+            />
+          )}
+        </div>
       </div>
     </div>
   );

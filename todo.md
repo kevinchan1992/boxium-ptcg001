@@ -4876,3 +4876,8 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 ## 🔲 Marketplace TCG 系列 Logo
 - [x] 上傳 Pokémon、One Piece、Yu-Gi-Oh! Logo 到 CDN
 - [x] 在左側篩選欄 TCG 系列選項左邊加入對應 Logo 圖片
+
+## 🔲 TCG Logo 整合（卡片 + 上架表單）
+- [ ] 商品卡片右下角加入 TCG 系列小型 Logo
+- [ ] 賣家上架表單 TCG 系列選擇加入 Logo 圖示
+- [ ] Admin 上架表單 TCG 系列選擇加入 Logo 圖示
