@@ -991,6 +991,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
 function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => void }) {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [seriesFilter, setSeriesFilter] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
   const [rejectDialogId, setRejectDialogId] = useState<number | null>(null);
@@ -999,7 +1000,9 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
   const [showBatchRejectDialog, setShowBatchRejectDialog] = useState(false);
   const [batchRejectReason, setBatchRejectReason] = useState("");
   const { data, isLoading, refetch } = trpc.marketplace.adminGetListings.useQuery({
-    page, pageSize: 20, status: statusFilter === "all" ? undefined : statusFilter
+    page, pageSize: 20,
+    status: statusFilter === "all" ? undefined : statusFilter,
+    tcgSeries: seriesFilter === "all" ? undefined : seriesFilter as any,
   });
   const updateMutation = trpc.marketplace.adminUpdateListing.useMutation({
     onSuccess: () => { toast.success("已更新"); refetch(); },
@@ -1066,6 +1069,32 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
         <Button onClick={() => setShowCreate(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white">
           <Plus className="w-4 h-4 mr-2" />新增平台商品
         </Button>
+      </div>
+      {/* TCG Series Filter */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-gray-500 font-medium">TCG 系列：</span>
+        {[
+          { value: 'all', label: '全部', logo: null },
+          { value: 'pokemon', label: 'Pokémon', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif' },
+          { value: 'onepiece', label: 'One Piece', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif' },
+          { value: 'yugioh', label: 'Yu-Gi-Oh!', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp' },
+        ].map(({ value, label, logo }) => (
+          <button
+            key={value}
+            onClick={() => { setSeriesFilter(value); setPage(1); setSelectedIds(new Set()); }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+              seriesFilter === value
+                ? 'bg-[#06038d] text-white border-[#06038d]'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-[#06038d]/40'
+            }`}
+          >
+            {logo && <img src={logo} alt={label} className="h-4 object-contain" />}
+            {label}
+          </button>
+        ))}
+        {seriesFilter !== 'all' && (
+          <span className="text-xs text-gray-400 ml-1">共 {total} 件</span>
+        )}
       </div>
       {/* Batch toolbar */}
       {someSelected && (

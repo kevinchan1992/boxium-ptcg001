@@ -527,7 +527,13 @@ export default function MarketplaceListing() {
       return null;
     })();
     const imageUrl = images && images.length > 0 ? images[0] : "";
-    const title = `${listing.title} - HKD ${price.toFixed(2)} | BOXIUM PTCG`;
+    const tcgSeriesLabel: Record<string, string> = {
+      pokemon: 'Pok\u00e9mon', onepiece: 'One Piece', yugioh: 'Yu-Gi-Oh!',
+    };
+    const seriesPrefix = (listing as any).tcgSeries && tcgSeriesLabel[(listing as any).tcgSeries as string]
+      ? `[${tcgSeriesLabel[(listing as any).tcgSeries as string]}] `
+      : '';
+    const title = `${seriesPrefix}${listing.title} - HKD ${price.toFixed(2)} | BOXIUM PTCG`;
     const description = listing.description
       ? `${listing.description.slice(0, 120)}${listing.description.length > 120 ? "..." : ""} | HKD ${price.toFixed(2)}`
       : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(2)} | BOXIUM PTCG 卡牌商城`;

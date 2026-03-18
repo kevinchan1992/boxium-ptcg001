@@ -4888,3 +4888,6 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] Admin 上架表單 Step 3「允許出價」開啟後加入最低出價金額欄位
 - [x] 商品詳情頁（/marketplace/{id}）標題旁加入 TCG 系列 Logo
 - [x] Admin 批量上架功能：CSV 匯入多件商品 + 複製現有商品
+- [x] 批量上架 CSV 加入 image_url 欄位支援圖片 URL
+- [x] 商品詳情頁 SEO 標題加入 TCG 系列名稱（如「[Pokémon] 商品名稱」）
+- [x] Admin Marketplace 管理頁加入 TCG 系列篩選（Pokémon / One Piece / Yu-Gi-Oh!）

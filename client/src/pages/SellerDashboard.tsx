@@ -504,6 +504,7 @@ export default function SellerDashboard() {
   const [csvRows, setCsvRows] = useState<Array<{
     title: string; description: string; condition: string; price: string;
     quantity: string; tcgSeries: string; allowOffers: string; minOffer: string;
+    imageUrls: string[];
     _status: 'pending' | 'uploading' | 'done' | 'error'; _error?: string;
   }>>([]);
   const [bulkUploading, setBulkUploading] = useState(false);
@@ -516,6 +517,11 @@ export default function SellerDashboard() {
       const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
       const obj: Record<string, string> = {};
       headers.forEach((h, i) => { obj[h] = vals[i] ?? ''; });
+      // Support multiple image URLs separated by | or ; in image_url column
+      const rawImgField = obj['image_url'] ?? obj['image_urls'] ?? obj['圖片'] ?? '';
+      const imageUrls = rawImgField
+        ? rawImgField.split(/[|;]/).map(u => u.trim()).filter(Boolean)
+        : [];
       return {
         title: obj['title'] ?? obj['商品名稱'] ?? '',
         description: obj['description'] ?? obj['描述'] ?? '',
@@ -525,6 +531,7 @@ export default function SellerDashboard() {
         tcgSeries: obj['tcg_series'] ?? obj['系列'] ?? 'pokemon',
         allowOffers: obj['allow_offers'] ?? obj['允許出價'] ?? 'false',
         minOffer: obj['min_offer'] ?? obj['最低出價'] ?? '',
+        imageUrls,
         _status: 'pending' as const,
       };
     }).filter(r => r.title);
@@ -1598,17 +1605,18 @@ export default function SellerDashboard() {
             {/* CSV Template Download */}
             <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3">
               <p className="text-xs font-semibold text-[#06038D] mb-1">欄位說明（CSV 標題列）</p>
-              <p className="text-xs text-gray-500 font-mono">title, description, condition, price, quantity, tcg_series, allow_offers, min_offer</p>
+              <p className="text-xs text-gray-500 font-mono">title, description, condition, price, quantity, tcg_series, allow_offers, min_offer, image_url</p>
               <div className="mt-2 text-xs text-gray-400 space-y-0.5">
                 <p>• condition: psa10 / psa9 / psa8_below / raw_a / raw_b / raw_c / raw_d</p>
                 <p>• tcg_series: pokemon / onepiece / yugioh</p>
                 <p>• allow_offers: true / false</p>
                 <p>• min_offer: 最低出價金額（可留空）</p>
+                <p>• image_url: 公開圖片 URL，多張用 | 分隔（可留空）</p>
               </div>
               <button
                 className="mt-2 text-xs text-[#06038D] underline font-medium"
                 onClick={() => {
-                  const csv = 'title,description,condition,price,quantity,tcg_series,allow_offers,min_offer\n示範商品,全新未拆封,raw_a,500,1,pokemon,false,';
+                  const csv = 'title,description,condition,price,quantity,tcg_series,allow_offers,min_offer,image_url\n示範商品,全新未拆封,raw_a,500,1,pokemon,false,,https://example.com/image.jpg';
                   const blob = new Blob([csv], { type: 'text/csv' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a'); a.href = url; a.download = 'boxium-bulk-template.csv'; a.click();
@@ -1650,6 +1658,7 @@ export default function SellerDashboard() {
                   <table className="w-full text-xs">
                     <thead className="bg-[#06038D] text-white">
                       <tr>
+                        <th className="px-3 py-2 text-center">圖片</th>
                         <th className="px-3 py-2 text-left">商品名稱</th>
                         <th className="px-3 py-2 text-left">品相</th>
                         <th className="px-3 py-2 text-right">售價</th>
@@ -1665,7 +1674,17 @@ export default function SellerDashboard() {
                           row._status === 'error' ? 'bg-red-50' :
                           row._status === 'uploading' ? 'bg-yellow-50' : 'bg-white'
                         }`}>
-                          <td className="px-3 py-2 max-w-[140px] truncate">{row.title}</td>
+                          <td className="px-3 py-2 text-center">
+                            {row.imageUrls.length > 0 ? (
+                              <div className="flex items-center gap-1 justify-center">
+                                <img src={row.imageUrls[0]} alt="" className="w-8 h-8 object-cover rounded border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                {row.imageUrls.length > 1 && <span className="text-[10px] text-gray-400">+{row.imageUrls.length - 1}</span>}
+                              </div>
+                            ) : (
+                              <span className="text-gray-300 text-[10px]">無</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 max-w-[120px] truncate">{row.title}</td>
                           <td className="px-3 py-2">{row.condition}</td>
                           <td className="px-3 py-2 text-right">HKD {parseFloat(row.price || '0').toFixed(2)}</td>
                           <td className="px-3 py-2 text-center">{row.quantity}</td>
@@ -1713,7 +1732,7 @@ export default function SellerDashboard() {
                     try {
                       const row = csvRows[i];
                       const priceNum = parseFloat(row.price);
-                      if (isNaN(priceNum) || priceNum <= 0) throw new Error('售僷格式錯誤');
+                      if (isNaN(priceNum) || priceNum <= 0) throw new Error('售價格式錯誤');
                       // Use trpc client directly
                       await new Promise<void>((resolve, reject) => {
                         const utils2 = { resolve, reject };
@@ -1734,6 +1753,7 @@ export default function SellerDashboard() {
                                   allowOffers: row.allowOffers === 'true',
                                   minOfferHkd: row.allowOffers === 'true' && row.minOffer ? parseFloat(row.minOffer) : undefined,
                                   tcgSeries: seriesMap[row.tcgSeries] ?? 'pokemon',
+                                  images: row.imageUrls.length > 0 ? row.imageUrls.slice(0, 5) : undefined,
                                 }
                               }),
                             });

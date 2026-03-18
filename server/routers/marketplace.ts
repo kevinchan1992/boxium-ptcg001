@@ -931,9 +931,10 @@ export const marketplaceRouter = router({
       page: z.number().int().min(1).default(1),
       pageSize: z.number().int().min(1).max(50).default(20),
       status: z.string().optional(),
+      tcgSeries: z.enum(["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).optional(),
     }))
     .query(async ({ input }) => {
-      return getAdminListings(input.page, input.pageSize, input.status);
+      return getAdminListings(input.page, input.pageSize, input.status, input.tcgSeries);
     }),
 
   adminGetListingDetail: adminProcedure

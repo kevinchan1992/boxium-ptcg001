@@ -3089,11 +3089,13 @@ export async function updateListing(id: number, data: Partial<InsertMarketplaceL
   if (!db) throw new Error("Database not available");
   await db.update(marketplaceListings).set({ ...data, updatedAt: new Date() }).where(eq(marketplaceListings.id, id));
 }
-export async function getAdminListings(page = 1, pageSize = 20, status?: string) {
+export async function getAdminListings(page = 1, pageSize = 20, status?: string, tcgSeries?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
-  const conditions = status ? [eq(marketplaceListings.status, status as any)] : [];
+  const conditions: any[] = [];
+  if (status) conditions.push(eq(marketplaceListings.status, status as any));
+  if (tcgSeries) conditions.push(eq(marketplaceListings.tcgSeries, tcgSeries as any));
   const rows = await db.select().from(marketplaceListings)
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(desc(marketplaceListings.createdAt)).limit(pageSize).offset(offset);
