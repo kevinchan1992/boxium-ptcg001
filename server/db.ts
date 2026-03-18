@@ -2998,9 +2998,10 @@ export async function getPublicListings(options: {
   page?: number; pageSize?: number; search?: string;
   condition?: string; conditions?: string[]; sellerType?: string; minPrice?: number; maxPrice?: number;
   sortBy?: 'newest' | 'price_asc' | 'price_desc';
+  tcgSeries?: string;
 }) {
   const db = await getDb();
-  const { page = 1, pageSize = 20, search, condition, conditions: conditionList, sellerType, minPrice, maxPrice, sortBy = 'newest' } = options;
+  const { page = 1, pageSize = 20, search, condition, conditions: conditionList, sellerType, minPrice, maxPrice, sortBy = 'newest', tcgSeries } = options;
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
   const conditions = [eq(marketplaceListings.status, 'active')];
@@ -3012,6 +3013,7 @@ export async function getPublicListings(options: {
     conditions.push(eq(marketplaceListings.condition, condition as any));
   }
   if (sellerType) conditions.push(eq(marketplaceListings.sellerType, sellerType as any));
+  if (tcgSeries) conditions.push(eq(marketplaceListings.tcgSeries, tcgSeries as any));
   if (minPrice != null) conditions.push(sql`${marketplaceListings.priceHkd} >= ${minPrice}`);
   if (maxPrice != null) conditions.push(sql`${marketplaceListings.priceHkd} <= ${maxPrice}`);
   const orderClause =
@@ -3031,6 +3033,7 @@ export async function getPublicListings(options: {
     createdAt: marketplaceListings.createdAt,
     cardId: marketplaceListings.cardId,
     language: marketplaceListings.language,
+    tcgSeries: marketplaceListings.tcgSeries,
     viewCount: marketplaceListings.viewCount,
     sellerDisplayName: sellerProfiles.displayName,
     sellerAvgRating: sellerProfiles.avgRating,
@@ -3056,6 +3059,7 @@ export async function getPublicListings(options: {
     createdAt: r.createdAt,
     cardId: r.cardId,
     language: r.language,
+    tcgSeries: r.tcgSeries,
     viewCount: r.viewCount,
     sellerProfile: r.sellerType === 'seller' ? {
       displayName: r.sellerDisplayName ?? '',

@@ -63,6 +63,7 @@ export const marketplaceRouter = router({
       minPrice: z.number().optional(),
       maxPrice: z.number().optional(),
       sortBy: z.enum(["newest", "price_asc", "price_desc"]).optional(),
+      tcgSeries: z.enum(["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).optional(),
     }))
     .query(async ({ input }) => {
       return getPublicListings(input);
@@ -571,6 +572,7 @@ export const marketplaceRouter = router({
       cardId: z.number().int().optional(),
       images: z.array(z.string()).max(5).optional(),
       minOfferHkd: z.number().min(4.00).optional(),
+      tcgSeries: z.enum(["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).default("pokemon"),
     }))
     .mutation(async ({ ctx, input }) => {
       const seller = await getSellerProfileByUserId(ctx.user.id);
@@ -591,6 +593,7 @@ export const marketplaceRouter = router({
         status: "pending_review",
         viewCount: 0,
         minOfferHkd: input.minOfferHkd ? input.minOfferHkd.toFixed(2) as any : null,
+        tcgSeries: input.tcgSeries,
       });
       return listing;
     }),
@@ -952,6 +955,7 @@ export const marketplaceRouter = router({
       images: z.array(z.string()).max(5).optional(),
       status: z.enum(["draft", "active"]).default("active"),
       allowOffers: z.boolean().default(false),
+      tcgSeries: z.enum(["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).default("pokemon"),
     }))
     .mutation(async ({ input }) => {
       const listing = await createListing({
@@ -966,6 +970,7 @@ export const marketplaceRouter = router({
         status: input.status,
         allowOffers: input.allowOffers,
         viewCount: 0,
+        tcgSeries: input.tcgSeries,
       });
       return listing;
     }),
@@ -979,6 +984,7 @@ export const marketplaceRouter = router({
       title: z.string().optional(),
       description: z.string().optional(),
       rejectedReason: z.string().max(500).optional(),
+      tcgSeries: z.enum(["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).optional(),
     }))
     .mutation(async ({ input }) => {
       const { id, rejectedReason, ...data } = input;

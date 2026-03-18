@@ -163,7 +163,7 @@ const conditionOptions = [
 
 function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess: () => void }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [form, setForm] = useState({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active", allowOffers: false });
+  const [form, setForm] = useState({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active", allowOffers: false, tcgSeries: "pokemon" as string });
   const [images, setImages] = useState<string[]>([]);
   const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
   const [showCardPicker, setShowCardPicker] = useState(false);
@@ -174,7 +174,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
   );
 
   const reset = () => {
-    setForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active", allowOffers: false });
+    setForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", status: "active", allowOffers: false, tcgSeries: "pokemon" });
     setImages([]);
     setSelectedCard(null);
     setStep(1);
@@ -283,6 +283,20 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
                   <Label className="text-[#06038D] font-semibold">商品描述</Label>
                   <Textarea className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder="描述卡牌狀況、版本等..."
                     value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} />
+                </div>
+                <div>
+                  <Label className="text-[#06038D] font-semibold">TCG 系列 *</Label>
+                  <Select value={form.tcgSeries} onValueChange={v => setForm(f => ({ ...f, tcgSeries: v }))}>
+                    <SelectTrigger className="mt-1 bg-white border-[#06038D]/30 text-[#06038D]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pokemon">Pokémon TCG</SelectItem>
+                      <SelectItem value="onepiece">One Piece TCG</SelectItem>
+                      <SelectItem value="yugioh">Yu-Gi-Oh!</SelectItem>
+                      <SelectItem value="dragonball">Dragon Ball Super</SelectItem>
+                      <SelectItem value="mtg">Magic: The Gathering</SelectItem>
+                      <SelectItem value="other">其他 TCG</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -478,6 +492,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
                   images: images.length > 0 ? images : undefined,
                   cardId: selectedCard?.id ?? undefined,
                   allowOffers: form.allowOffers,
+                  tcgSeries: form.tcgSeries as any,
                 })}
               >
                 {createMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />上架中...</> : "確認上架"}

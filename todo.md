@@ -4837,3 +4837,25 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 前端：列印訂單按鈕改為下拉選單，提供三種格式（隨貨單、出貨標籤、退款確認單）
 - [x] 撰寫單元測試
 - [x] 儲存 checkpoint
+
+## 🔲 Marketplace 重新設計（TCG 綜合商城）
+- [ ] 後端：Schema 加入 tcgSeries 欄位（pokemon, onepiece, yugioh, dragonball, mtg, other）
+- [ ] 後端：getListings API 支援 tcgSeries 篩選
+- [ ] 後端：DB migration push
+- [ ] 前端：Hero 搜尋區（精簡深藍背景 + 大型居中搜尋框 + TCG 品牌標語）
+- [ ] 前端：TCG 系列分類圖標導航（圓形圖標 + 文字，可橫向滾動）
+- [ ] 前端：頂部橫向篩選 Chips（移除左側欄，改為頂部展開式篩選面板）
+- [ ] 前端：商品網格優化（1:1 圖片 + 更大價格 + 品相標籤 + TCG 系列標籤）
+- [ ] 前端：無限滾動替代分頁
+- [ ] 前端：精選推薦橫向滾動區
+- [ ] 前端：信任區移到底部
+- [ ] 前端：響應式設計（桌面5列/平板3列/手機2列）
+- [ ] 撰寫單元測試
+- [ ] 儲存 checkpoint
+
+
+## 🔲 Marketplace 佈局修改（左側篩選欄 + 右側商品）
+- [x] Hero 標語只保留 Pokémon、One Piece、Yu-Gi-Oh!
+- [x] 改為左側固定篩選欄 + 右側商品區的雙欄佈局
+- [x] TCG 分類圖標導航只保留 3 種（全部/Pokémon/One Piece/Yu-Gi-Oh!）
+- [x] 設計優化

@@ -725,6 +725,22 @@ export default function MarketplaceListing() {
               >
                 {listing.sellerType === "platform" ? "🏻 BOXIUM 官方" : "👤 個人賣家"}
               </Badge>
+              {listing.tcgSeries && (
+                <Badge variant="outline" className={
+                  listing.tcgSeries === "pokemon" ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+                  listing.tcgSeries === "onepiece" ? "bg-red-50 text-red-700 border-red-200" :
+                  listing.tcgSeries === "yugioh" ? "bg-purple-50 text-purple-700 border-purple-200" :
+                  listing.tcgSeries === "dragonball" ? "bg-orange-50 text-orange-700 border-orange-200" :
+                  listing.tcgSeries === "mtg" ? "bg-teal-50 text-teal-700 border-teal-200" :
+                  "bg-gray-50 text-gray-700 border-gray-200"
+                }>
+                  {listing.tcgSeries === "pokemon" ? "Pokémon" :
+                   listing.tcgSeries === "onepiece" ? "One Piece" :
+                   listing.tcgSeries === "yugioh" ? "Yu-Gi-Oh!" :
+                   listing.tcgSeries === "dragonball" ? "Dragon Ball" :
+                   listing.tcgSeries === "mtg" ? "MTG" : "其他 TCG"}
+                </Badge>
+              )}
               {!isAvailable && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">已售出</Badge>}
             </div>
 

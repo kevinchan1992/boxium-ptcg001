@@ -442,7 +442,7 @@ export default function SellerDashboard() {
   const [applyForm, setApplyForm] = useState({ displayName: "", bio: "" });
   const [listingForm, setListingForm] = useState({
     title: "", description: "", condition: "raw_a", price: "", quantity: "1",
-    minOffer: "", acceptOffers: false,
+    minOffer: "", acceptOffers: false, tcgSeries: "pokemon" as string,
   });
   const [listingImages, setListingImages] = useState<string[]>([]);
   const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
@@ -576,7 +576,7 @@ export default function SellerDashboard() {
     onSuccess: () => {
       toast.success("商品已提交審核");
       setShowNewListing(false);
-      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false });
+      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon" });
       setListingStep(1);
       setListingImages([]);
       setSelectedCard(null);
@@ -1773,6 +1773,20 @@ export default function SellerDashboard() {
                     value={listingForm.description}
                     onChange={(e) => setListingForm(p => ({ ...p, description: e.target.value }))} />
                 </div>
+                <div>
+                  <Label className="text-[#06038D] font-semibold">TCG 系列 *</Label>
+                  <Select value={listingForm.tcgSeries} onValueChange={(v) => setListingForm(p => ({ ...p, tcgSeries: v }))}>
+                    <SelectTrigger className="mt-1 bg-white border-[#06038D]/30 text-[#06038D]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pokemon">Pokémon TCG</SelectItem>
+                      <SelectItem value="onepiece">One Piece TCG</SelectItem>
+                      <SelectItem value="yugioh">Yu-Gi-Oh!</SelectItem>
+                      <SelectItem value="dragonball">Dragon Ball Super</SelectItem>
+                      <SelectItem value="mtg">Magic: The Gathering</SelectItem>
+                      <SelectItem value="other">其他 TCG</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-[#06038D] font-semibold">品相 *</Label>
@@ -1969,6 +1983,7 @@ export default function SellerDashboard() {
                   images: listingImages.length > 0 ? listingImages : undefined,
                   cardId: selectedCard?.id ?? undefined,
                   minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined,
+                  tcgSeries: listingForm.tcgSeries as any,
                 })}
               >
                 {createListingMutation.isPending ? "提交中..." : "提交審核"}

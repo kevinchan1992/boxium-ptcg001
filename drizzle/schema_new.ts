@@ -763,6 +763,7 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   description: text("description"),
   condition: mysqlEnum("condition", ["psa10", "psa9", "psa8_below", "bgs10", "bgs9", "bgs8_below", "tag10", "tag9_below", "raw_a", "raw_b", "raw_c", "raw_d"]).notNull().default("raw_a"),
   language: varchar("language", { length: 20 }),
+  tcgSeries: mysqlEnum("tcgSeries", ["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).default("pokemon").notNull(),
   // Pricing
   priceHkd: decimal("priceHkd", { precision: 10, scale: 2 }).notNull(), // HKD
   quantity: int("quantity").default(1).notNull(),
