@@ -499,6 +499,38 @@ export default function SellerDashboard() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batchMode, setBatchMode] = useState(false);
 
+  // ─── Bulk Upload state ────────────────────────────────────────────────────
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [csvRows, setCsvRows] = useState<Array<{
+    title: string; description: string; condition: string; price: string;
+    quantity: string; tcgSeries: string; allowOffers: string; minOffer: string;
+    _status: 'pending' | 'uploading' | 'done' | 'error'; _error?: string;
+  }>>([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
+
+  const parseCsv = (text: string) => {
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) { toast.error('CSV 至少需要一行標題和一行資料'); return; }
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
+    const rows = lines.slice(1).map(line => {
+      const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => { obj[h] = vals[i] ?? ''; });
+      return {
+        title: obj['title'] ?? obj['商品名稱'] ?? '',
+        description: obj['description'] ?? obj['描述'] ?? '',
+        condition: obj['condition'] ?? obj['品相'] ?? 'raw_a',
+        price: obj['price'] ?? obj['售價'] ?? '',
+        quantity: obj['quantity'] ?? obj['數量'] ?? '1',
+        tcgSeries: obj['tcg_series'] ?? obj['系列'] ?? 'pokemon',
+        allowOffers: obj['allow_offers'] ?? obj['允許出價'] ?? 'false',
+        minOffer: obj['min_offer'] ?? obj['最低出價'] ?? '',
+        _status: 'pending' as const,
+      };
+    }).filter(r => r.title);
+    setCsvRows(rows);
+  };
+
   const updateListingMutation = trpc.marketplace.updateMyListing.useMutation({
     onSuccess: () => {
       toast.success("商品已更新");
@@ -1042,20 +1074,32 @@ export default function SellerDashboard() {
                           </>
                         )}
                       </div>
-                      <Button
-                        className="font-bold flex items-center gap-2 text-sm h-8"
-                        style={{ background: '#FEDD00', color: '#06038D' }}
-                        onClick={() => {
-                          if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
-                            toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
-                            return;
-                          }
-                          setShowNewListing(true);
-                        }}
-                      >
-                        <Plus className="w-4 h-4" />
-                        上架新商品
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {isAdmin && (
+                          <Button
+                            variant="outline"
+                            className="font-bold flex items-center gap-2 text-sm h-8 border-[#06038D] text-[#06038D] hover:bg-[#06038D]/10 bg-white"
+                            onClick={() => setShowBulkUpload(true)}
+                          >
+                            <Layers className="w-4 h-4" />
+                            批量上架
+                          </Button>
+                        )}
+                        <Button
+                          className="font-bold flex items-center gap-2 text-sm h-8"
+                          style={{ background: '#FEDD00', color: '#06038D' }}
+                          onClick={() => {
+                            if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
+                              toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
+                              return;
+                            }
+                            setShowNewListing(true);
+                          }}
+                        >
+                          <Plus className="w-4 h-4" />
+                          上架新商品
+                        </Button>
+                      </div>
                     </div>
 
                     {filteredListings.length === 0 ? (
@@ -1183,6 +1227,35 @@ export default function SellerDashboard() {
                                       <ExternalLink className="w-3 h-3" />
                                     </Button>
                                   </Link>
+                                )}
+                                {/* Admin: Duplicate listing */}
+                                {isAdmin && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-7 px-2 border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/10"
+                                    title="複製此商品"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setListingForm({
+                                        title: listing.title ?? '',
+                                        description: listing.description ?? '',
+                                        condition: listing.condition ?? 'raw_a',
+                                        price: parseFloat(listing.priceHkd as string).toFixed(2),
+                                        quantity: String(listing.quantity ?? 1),
+                                        tcgSeries: (listing as any).tcgSeries ?? 'pokemon',
+                                        acceptOffers: !!(listing as any).allowOffers,
+                                        minOffer: (listing as any).minOfferHkd ? String(parseFloat((listing as any).minOfferHkd)) : '',
+                                      });
+                                      setListingImages([]);
+                                      setSelectedCard(null);
+                                      setListingStep(1);
+                                      setShowNewListing(true);
+                                      toast.info('已複製商品資訊，請檢查後上架');
+                                    }}
+                                  >
+                                    <Layers className="w-3 h-3" />
+                                  </Button>
                                 )}
                                 {/* Share Button */}
                                 <ShareButton
@@ -1509,6 +1582,194 @@ export default function SellerDashboard() {
         )}
         </div>
       </div>
+      {/* ─── Bulk Upload Dialog ─────────────────────────────────────────── */}
+      <Dialog open={showBulkUpload} onOpenChange={(open) => { setShowBulkUpload(open); if (!open) { setCsvRows([]); setBulkUploading(false); } }}>
+        <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-2xl">
+          <div className="px-5 pt-5 pb-4" style={{backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00'}}>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-base font-bold text-white">批量上架商品</h2>
+              <button onClick={() => setShowBulkUpload(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-white/60 text-xs">上傳 CSV 檔案一次上架多件商品</p>
+          </div>
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            {/* CSV Template Download */}
+            <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3">
+              <p className="text-xs font-semibold text-[#06038D] mb-1">欄位說明（CSV 標題列）</p>
+              <p className="text-xs text-gray-500 font-mono">title, description, condition, price, quantity, tcg_series, allow_offers, min_offer</p>
+              <div className="mt-2 text-xs text-gray-400 space-y-0.5">
+                <p>• condition: psa10 / psa9 / psa8_below / raw_a / raw_b / raw_c / raw_d</p>
+                <p>• tcg_series: pokemon / onepiece / yugioh</p>
+                <p>• allow_offers: true / false</p>
+                <p>• min_offer: 最低出價金額（可留空）</p>
+              </div>
+              <button
+                className="mt-2 text-xs text-[#06038D] underline font-medium"
+                onClick={() => {
+                  const csv = 'title,description,condition,price,quantity,tcg_series,allow_offers,min_offer\n示範商品,全新未拆封,raw_a,500,1,pokemon,false,';
+                  const blob = new Blob([csv], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a'); a.href = url; a.download = 'boxium-bulk-template.csv'; a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                下載範本 CSV
+              </button>
+            </div>
+            {/* File Upload */}
+            {csvRows.length === 0 && (
+              <div
+                className="border-2 border-dashed border-[#06038D]/30 rounded-xl p-6 text-center cursor-pointer hover:border-[#06038D]/60 transition-colors"
+                onClick={() => document.getElementById('csv-file-input')?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files[0];
+                  if (file) { const reader = new FileReader(); reader.onload = (ev) => parseCsv(ev.target?.result as string); reader.readAsText(file); }
+                }}
+              >
+                <Layers className="w-8 h-8 mx-auto mb-2 text-[#06038D]/40" />
+                <p className="text-sm font-medium text-[#06038D]">點擊或拖曳 CSV 檔案至此</p>
+                <p className="text-xs text-gray-400 mt-1">支援 .csv 格式</p>
+                <input id="csv-file-input" type="file" accept=".csv" className="hidden" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) { const reader = new FileReader(); reader.onload = (ev) => parseCsv(ev.target?.result as string); reader.readAsText(file); }
+                }} />
+              </div>
+            )}
+            {/* Preview Table */}
+            {csvRows.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold text-[#06038D]">預覽 {csvRows.length} 件商品</p>
+                  <button className="text-xs text-gray-400 underline" onClick={() => setCsvRows([])}>重新上傳</button>
+                </div>
+                <div className="overflow-x-auto rounded-xl border border-[#06038D]/20">
+                  <table className="w-full text-xs">
+                    <thead className="bg-[#06038D] text-white">
+                      <tr>
+                        <th className="px-3 py-2 text-left">商品名稱</th>
+                        <th className="px-3 py-2 text-left">品相</th>
+                        <th className="px-3 py-2 text-right">售價</th>
+                        <th className="px-3 py-2 text-center">數量</th>
+                        <th className="px-3 py-2 text-center">系列</th>
+                        <th className="px-3 py-2 text-center">狀態</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvRows.map((row, i) => (
+                        <tr key={i} className={`border-t border-[#06038D]/10 ${
+                          row._status === 'done' ? 'bg-green-50' :
+                          row._status === 'error' ? 'bg-red-50' :
+                          row._status === 'uploading' ? 'bg-yellow-50' : 'bg-white'
+                        }`}>
+                          <td className="px-3 py-2 max-w-[140px] truncate">{row.title}</td>
+                          <td className="px-3 py-2">{row.condition}</td>
+                          <td className="px-3 py-2 text-right">HKD {parseFloat(row.price || '0').toFixed(2)}</td>
+                          <td className="px-3 py-2 text-center">{row.quantity}</td>
+                          <td className="px-3 py-2 text-center">{row.tcgSeries}</td>
+                          <td className="px-3 py-2 text-center">
+                            {row._status === 'pending' && <span className="text-gray-400">• 待上架</span>}
+                            {row._status === 'uploading' && <span className="text-yellow-600">⏳ 上架中</span>}
+                            {row._status === 'done' && <span className="text-green-600">✓ 完成</span>}
+                            {row._status === 'error' && <span className="text-red-600" title={row._error}>✗ 失敗</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+          {csvRows.length > 0 && (
+            <div className="px-5 py-4 bg-white" style={{borderTop: '1px solid rgba(6,3,141,0.15)'}}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs text-gray-500">
+                  {csvRows.filter(r => r._status === 'done').length} / {csvRows.length} 件完成
+                </span>
+                {csvRows.some(r => r._status === 'error') && (
+                  <span className="text-xs text-red-500">{csvRows.filter(r => r._status === 'error').length} 件失敗</span>
+                )}
+              </div>
+              <Button
+                className="w-full font-bold"
+                style={{ background: '#FEDD00', color: '#06038D' }}
+                disabled={bulkUploading || csvRows.every(r => r._status === 'done')}
+                onClick={async () => {
+                  setBulkUploading(true);
+                  const conditionMap: Record<string, string> = {
+                    psa10: 'psa10', psa9: 'psa9', psa8_below: 'psa8_below',
+                    bgs10: 'bgs10', bgs9: 'bgs9', bgs8_below: 'bgs8_below',
+                    tag10: 'tag10', tag9_below: 'tag9_below',
+                    raw_a: 'raw_a', raw_b: 'raw_b', raw_c: 'raw_c', raw_d: 'raw_d',
+                  };
+                  const seriesMap: Record<string, string> = { pokemon: 'pokemon', onepiece: 'onepiece', yugioh: 'yugioh' };
+                  for (let i = 0; i < csvRows.length; i++) {
+                    if (csvRows[i]._status === 'done') continue;
+                    setCsvRows(prev => prev.map((r, idx) => idx === i ? { ...r, _status: 'uploading' } : r));
+                    try {
+                      const row = csvRows[i];
+                      const priceNum = parseFloat(row.price);
+                      if (isNaN(priceNum) || priceNum <= 0) throw new Error('售僷格式錯誤');
+                      // Use trpc client directly
+                      await new Promise<void>((resolve, reject) => {
+                        const utils2 = { resolve, reject };
+                        void (async () => {
+                          try {
+                            // We need to call the mutation imperatively
+                            const result = await fetch('/api/trpc/marketplace.adminCreatePlatformListing', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                json: {
+                                  title: row.title,
+                                  description: row.description || undefined,
+                                  condition: conditionMap[row.condition] ?? 'raw_a',
+                                  price: priceNum,
+                                  quantity: parseInt(row.quantity) || 1,
+                                  status: 'active',
+                                  allowOffers: row.allowOffers === 'true',
+                                  minOfferHkd: row.allowOffers === 'true' && row.minOffer ? parseFloat(row.minOffer) : undefined,
+                                  tcgSeries: seriesMap[row.tcgSeries] ?? 'pokemon',
+                                }
+                              }),
+                            });
+                            if (!result.ok) throw new Error(`HTTP ${result.status}`);
+                            const data = await result.json();
+                            if (data?.error) throw new Error(data.error.message ?? '上架失敗');
+                            utils2.resolve();
+                          } catch (err) { utils2.reject(err); }
+                        })();
+                      });
+                      setCsvRows(prev => prev.map((r, idx) => idx === i ? { ...r, _status: 'done' } : r));
+                    } catch (err: any) {
+                      setCsvRows(prev => prev.map((r, idx) => idx === i ? { ...r, _status: 'error', _error: err?.message ?? '未知錯誤' } : r));
+                    }
+                    // Small delay to avoid rate limiting
+                    await new Promise(r => setTimeout(r, 300));
+                  }
+                  setBulkUploading(false);
+                  refetchListings();
+                  const doneCount = csvRows.filter(r => r._status === 'done').length + 1;
+                  toast.success(`批量上架完成！${doneCount} 件商品已上架`);
+                }}
+              >
+                {bulkUploading ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />上架中...</>
+                ) : csvRows.every(r => r._status === 'done') ? (
+                  '全部完成'
+                ) : (
+                  `確認上架 ${csvRows.filter(r => r._status === 'pending' || r._status === 'error').length} 件商品`
+                )}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={showApply} onOpenChange={setShowApply}>
         <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader><DialogTitle>申請成為賣家</DialogTitle></DialogHeader>
@@ -1997,22 +2258,38 @@ export default function SellerDashboard() {
                     </div>
                   </div>
                   {isAdmin && (
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
-                      <div>
-                        <p className="text-sm font-medium text-[#06038D]">接受買家出價</p>
-                        <p className="text-xs text-[#06038D]/50">買家可提交低於定價的出價</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
+                        <div>
+                          <p className="text-sm font-medium text-[#06038D]">接受買家出價</p>
+                          <p className="text-xs text-[#06038D]/50">買家可提交低於定價的出價</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setListingForm(p => ({ ...p, acceptOffers: !p.acceptOffers }))}
+                          className={`w-11 h-6 rounded-full transition-colors relative ${
+                            listingForm.acceptOffers ? "bg-[#FEDD00]" : "bg-gray-200"
+                          }`}
+                        >
+                          <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-transform ${
+                            listingForm.acceptOffers ? "translate-x-5.5 left-0.5 bg-[#06038D]" : "left-0.5 bg-white"
+                          }`} />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setListingForm(p => ({ ...p, acceptOffers: !p.acceptOffers }))}
-                        className={`w-11 h-6 rounded-full transition-colors relative ${
-                          listingForm.acceptOffers ? "bg-[#FEDD00]" : "bg-gray-200"
-                        }`}
-                      >
-                        <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-transform ${
-                          listingForm.acceptOffers ? "translate-x-5.5 left-0.5 bg-[#06038D]" : "left-0.5 bg-white"
-                        }`} />
-                      </button>
+                      {listingForm.acceptOffers && (
+                        <div>
+                          <Label className="text-[#06038D] font-semibold text-xs">最低接受出價（HKD，選填）</Label>
+                          <Input
+                            className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D] h-9 text-sm"
+                            type="number"
+                            min="4"
+                            step="0.01"
+                            placeholder="留空表示不設下限"
+                            value={listingForm.minOffer}
+                            onChange={(e) => setListingForm(p => ({ ...p, minOffer: e.target.value }))}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-xs text-[#06038D]">
@@ -2063,7 +2340,12 @@ export default function SellerDashboard() {
                     tcgSeries: listingForm.tcgSeries as any,
                   };
                   if (isAdmin) {
-                    adminCreateListingMutation.mutate({ ...payload, status: 'active', allowOffers: listingForm.acceptOffers });
+                    adminCreateListingMutation.mutate({
+                      ...payload,
+                      status: 'active',
+                      allowOffers: listingForm.acceptOffers,
+                      minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined,
+                    });
                   } else {
                     createListingMutation.mutate({ ...payload, minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined });
                   }

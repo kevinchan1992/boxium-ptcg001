@@ -746,6 +746,19 @@ export default function MarketplaceListing() {
 
             {/* Title */}
             <div>
+              {(() => {
+                const tcgLogos: Record<string, { logo: string; label: string }> = {
+                  pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pok\u00e9mon" },
+                  onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
+                  yugioh:   { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  label: "Yu-Gi-Oh!" },
+                };
+                const series = tcgLogos[(listing as any).tcgSeries as string];
+                return series ? (
+                  <div className="mb-2">
+                    <img src={series.logo} alt={series.label} className="h-6 w-auto object-contain" />
+                  </div>
+                ) : null;
+              })()}
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{listing.title}</h1>
               {listing.description && (
                 <p className="text-gray-500 mt-1.5 text-sm leading-relaxed line-clamp-2">{listing.description}</p>
