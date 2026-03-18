@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -376,15 +376,32 @@ function SidebarFilter({
 
 export default function Marketplace() {
   const [, setLocation] = useLocation();
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [sellerType, setSellerType] = useState<string>("all");
-  const [tcgSeries, setTcgSeries] = useState<string>("all");
-  const [priceMin, setPriceMin] = useState<string>("");
-  const [priceMax, setPriceMax] = useState<string>("");
+  const searchStr = useSearch();
+
+  // 初始化時從 URL 讀取篩選狀態
+  const initParams = useMemo(() => {
+    const p = new URLSearchParams(searchStr);
+    return {
+      search: p.get("search") ?? "",
+      series: p.get("series") ?? "all",
+      sellerType: p.get("seller") ?? "all",
+      sortBy: (p.get("sort") ?? "newest") as "newest" | "price_asc" | "price_desc",
+      priceMin: p.get("min") ?? "",
+      priceMax: p.get("max") ?? "",
+      conditions: p.get("cond") ? p.get("cond")!.split(",") : [] as string[],
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 只在首次載入時讀取
+
+  const [search, setSearch] = useState(initParams.search);
+  const [searchInput, setSearchInput] = useState(initParams.search);
+  const [selectedConditions, setSelectedConditions] = useState<string[]>(initParams.conditions);
+  const [sellerType, setSellerType] = useState<string>(initParams.sellerType);
+  const [tcgSeries, setTcgSeries] = useState<string>(initParams.series);
+  const [priceMin, setPriceMin] = useState<string>(initParams.priceMin);
+  const [priceMax, setPriceMax] = useState<string>(initParams.priceMax);
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">("newest");
+  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">(initParams.sortBy);
   const [allListings, setAllListings] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [bannerIdx, setBannerIdx] = useState(0);
@@ -490,6 +507,20 @@ export default function Marketplace() {
       setHasMore(data.listings.length === PAGE_SIZE);
     }
   }, [data, page]);
+
+  // 篩選變更時同步 URL
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (search) p.set("search", search);
+    if (tcgSeries !== "all") p.set("series", tcgSeries);
+    if (sellerType !== "all") p.set("seller", sellerType);
+    if (sortBy !== "newest") p.set("sort", sortBy);
+    if (priceMin) p.set("min", priceMin);
+    if (priceMax) p.set("max", priceMax);
+    if (selectedConditions.length > 0) p.set("cond", selectedConditions.join(","));
+    const qs = p.toString();
+    setLocation("/marketplace" + (qs ? "?" + qs : ""), { replace: true });
+  }, [search, tcgSeries, sellerType, sortBy, priceMin, priceMax, selectedConditions, setLocation]);
 
   const resetAndSearch = useCallback(() => {
     setPage(1);
