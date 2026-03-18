@@ -585,6 +585,19 @@ export default function SellerDashboard() {
     onError: (e) => toast.error(e.message),
   });
 
+  const adminCreateListingMutation = trpc.marketplace.adminCreatePlatformListing.useMutation({
+    onSuccess: () => {
+      toast.success("商品已成功上架");
+      setShowNewListing(false);
+      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon" });
+      setListingStep(1);
+      setListingImages([]);
+      setSelectedCard(null);
+      refetchListings();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const stripeMutation = trpc.marketplace.startStripeConnectOnboarding.useMutation({
     onSuccess: (data) => {
       if (!data.connectEnabled) {
@@ -1981,20 +1994,26 @@ export default function SellerDashboard() {
             {listingStep === 3 && (
               <Button
                 className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
-                disabled={createListingMutation.isPending}
-                onClick={() => createListingMutation.mutate({
-                  title: listingForm.title,
-                  description: listingForm.description || undefined,
-                  condition: listingForm.condition as any,
-                  price: parseFloat(listingForm.price),
-                  quantity: parseInt(listingForm.quantity),
-                  images: listingImages.length > 0 ? listingImages : undefined,
-                  cardId: selectedCard?.id ?? undefined,
-                  minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined,
-                  tcgSeries: listingForm.tcgSeries as any,
-                })}
+                disabled={createListingMutation.isPending || adminCreateListingMutation.isPending}
+                onClick={() => {
+                  const payload = {
+                    title: listingForm.title,
+                    description: listingForm.description || undefined,
+                    condition: listingForm.condition as any,
+                    price: parseFloat(listingForm.price),
+                    quantity: parseInt(listingForm.quantity),
+                    images: listingImages.length > 0 ? listingImages : undefined,
+                    cardId: selectedCard?.id ?? undefined,
+                    tcgSeries: listingForm.tcgSeries as any,
+                  };
+                  if (isAdmin) {
+                    adminCreateListingMutation.mutate({ ...payload, status: 'active', allowOffers: false });
+                  } else {
+                    createListingMutation.mutate({ ...payload, minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined });
+                  }
+                }}
               >
-                {createListingMutation.isPending ? "提交中..." : "提交審核"}
+                {(createListingMutation.isPending || adminCreateListingMutation.isPending) ? "提交中..." : isAdmin ? "確認上架" : "提交審核"}
               </Button>
             )}
           </div>
