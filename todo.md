@@ -4869,3 +4869,6 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 ## 🔲 Marketplace 按鈕溢出修復
 - [x] 修復右上角「最新上架」排序按鈕溢出視窗右邊界
 - [x] 修復 Hero 右側裝飾卡片溢出視窗右邊界
+
+## 🔲 Marketplace 輸入框文字顏色修復
+- [x] 修復左側篩選欄價格範圍輸入框文字顏色（白色改為黑色）

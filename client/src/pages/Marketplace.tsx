@@ -337,14 +337,14 @@ function SidebarFilter({
             placeholder="最低"
             value={priceMin}
             onChange={e => { setPriceMin(e.target.value); resetAndSearch(); }}
-            className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D] min-w-0"
+            className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D] min-w-0 text-gray-900 placeholder:text-gray-400"
           />
           <Input
             type="number"
             placeholder="最高"
             value={priceMax}
             onChange={e => { setPriceMax(e.target.value); resetAndSearch(); }}
-            className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D] min-w-0"
+            className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D] min-w-0 text-gray-900 placeholder:text-gray-400"
           />
         </div>
       </div>
