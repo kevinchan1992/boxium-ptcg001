@@ -4882,3 +4882,6 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 賣家上架表單 TCG 系列選擇加入 Logo 圖示
 - [ ] Admin 上架表單 TCG 系列選擇加入 Logo 圖示
 - [x] 修復賣家 Dashboard「上架新商品」按鈕無法點擊的問題
+- [x] Admin 上架表單 Step 3 加入「允許出價」開關
+- [x] 賣家 Dashboard 商品列表每行加入 TCG 系列 Logo 標籤
+- [x] Admin 成功上架後顯示「查看商品」按鈕（跳轉到 /marketplace/{id}）

@@ -585,9 +585,27 @@ export default function SellerDashboard() {
     onError: (e) => toast.error(e.message),
   });
 
+  const [newListingId, setNewListingId] = useState<number | null>(null);
   const adminCreateListingMutation = trpc.marketplace.adminCreatePlatformListing.useMutation({
-    onSuccess: () => {
-      toast.success("商品已成功上架");
+    onSuccess: (data) => {
+      const id = data?.id ?? null;
+      setNewListingId(id);
+      toast.success(
+        <div className="flex items-center gap-3">
+          <span>商品已成功上架</span>
+          {id && (
+            <a
+              href={`/marketplace/${id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-bold text-[#06038D] whitespace-nowrap"
+            >
+              查看商品 →
+            </a>
+          )}
+        </div>,
+        { duration: 8000 }
+      );
       setShowNewListing(false);
       setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon" });
       setListingStep(1);
@@ -1102,9 +1120,22 @@ export default function SellerDashboard() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold truncate text-gray-900">{listing.title}</p>
-                              <p className="text-sm font-bold mt-0.5" style={{ color: '#06038D' }}>
-                                HKD {parseFloat(listing.priceHkd as string).toFixed(2)}
-                              </p>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                {(() => {
+                                  const tcgLogos: Record<string, { logo: string; label: string }> = {
+                                    pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
+                                    onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
+                                    yugioh:   { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  label: "Yu-Gi-Oh!" },
+                                  };
+                                  const series = tcgLogos[listing.tcgSeries as string];
+                                  return series ? (
+                                    <img src={series.logo} alt={series.label} title={series.label} className="h-4 w-auto object-contain opacity-80" />
+                                  ) : null;
+                                })()}
+                                <p className="text-sm font-bold" style={{ color: '#06038D' }}>
+                                  HKD {parseFloat(listing.priceHkd as string).toFixed(2)}
+                                </p>
+                              </div>
                             </div>
                             {!batchMode && (
                               <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -1965,9 +1996,34 @@ export default function SellerDashboard() {
                       <span className="text-sm text-[#06038D]">{listingForm.acceptOffers ? `接受${listingForm.minOffer ? `（最低 HKD ${listingForm.minOffer}）` : ""}` : "不接受"}</span>
                     </div>
                   </div>
+                  {isAdmin && (
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
+                      <div>
+                        <p className="text-sm font-medium text-[#06038D]">接受買家出價</p>
+                        <p className="text-xs text-[#06038D]/50">買家可提交低於定價的出價</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setListingForm(p => ({ ...p, acceptOffers: !p.acceptOffers }))}
+                        className={`w-11 h-6 rounded-full transition-colors relative ${
+                          listingForm.acceptOffers ? "bg-[#FEDD00]" : "bg-gray-200"
+                        }`}
+                      >
+                        <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-transform ${
+                          listingForm.acceptOffers ? "translate-x-5.5 left-0.5 bg-[#06038D]" : "left-0.5 bg-white"
+                        }`} />
+                      </button>
+                    </div>
+                  )}
                   <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-xs text-[#06038D]">
-                    <p className="font-medium">提交後等待審核</p>
-                    <p className="mt-0.5">商品將在管理員審核通過後公開顯示，通常需要 1-2 個工作天。</p>
+                    {isAdmin ? (
+                      <p className="font-medium">確認後直接公開上架</p>
+                    ) : (
+                      <>
+                        <p className="font-medium">提交後等待審核</p>
+                        <p className="mt-0.5">商品將在管理員審核通過後公開顯示，通常需要 1-2 個工作天。</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </>
@@ -2007,7 +2063,7 @@ export default function SellerDashboard() {
                     tcgSeries: listingForm.tcgSeries as any,
                   };
                   if (isAdmin) {
-                    adminCreateListingMutation.mutate({ ...payload, status: 'active', allowOffers: false });
+                    adminCreateListingMutation.mutate({ ...payload, status: 'active', allowOffers: listingForm.acceptOffers });
                   } else {
                     createListingMutation.mutate({ ...payload, minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined });
                   }
