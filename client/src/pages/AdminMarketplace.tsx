@@ -501,7 +501,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
   );
 }
 
-function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders }: { listingId: number | null; onClose: () => void; onUpdated: () => void; onViewOrders?: (listingId: number) => void }) {
+function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOpenOrder }: { listingId: number | null; onClose: () => void; onUpdated: () => void; onViewOrders?: (listingId: number) => void; onOpenOrder?: (orderId: number) => void }) {
   const [editMode, setEditMode] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
   const [editForm, setEditForm] = useState({ title: "", description: "", price: "", quantity: "", status: "" });
@@ -878,9 +878,20 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders }: { 
                                   <div className={`pb-3 flex-1 ${isLast ? '' : ''}`}>
                                     <div className="flex items-center justify-between gap-2">
                                       <span className="text-xs font-mono text-gray-500">{order.orderNo}</span>
-                                      <span className={`text-xs px-1.5 py-0.5 rounded-full text-white font-medium ${dot}`}>
-                                        {statusLabels[order.orderStatus] ?? order.orderStatus}
-                                      </span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className={`text-xs px-1.5 py-0.5 rounded-full text-white font-medium ${dot}`}>
+                                          {statusLabels[order.orderStatus] ?? order.orderStatus}
+                                        </span>
+                                        {onOpenOrder && (
+                                          <button
+                                            className="p-0.5 rounded hover:bg-[#06038d]/10 text-[#06038d]/60 hover:text-[#06038d] transition-colors"
+                                            title="開啟訂單詳情"
+                                            onClick={() => onOpenOrder(order.id)}
+                                          >
+                                            <ExternalLink className="w-3 h-3" />
+                                          </button>
+                                        )}
+                                      </div>
                                     </div>
                                     <div className="flex items-center gap-2 mt-0.5">
                                       <span className="text-xs text-gray-600">
@@ -990,6 +1001,30 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
     if (next.has(id)) next.delete(id); else next.add(id);
     setSelectedIds(next);
   };
+
+  const handleExportListingsCSV = () => {
+    const selected = listings.filter((l: any) => selectedIds.has(l.id));
+    if (selected.length === 0) return;
+    const headers = ['ID', '標題', '狀態', '品相', '售價(HKD)', '庫存', '賣家類型', '上架日期'];
+    const rows = selected.map((l: any) => [
+      l.id,
+      `"${(l.title ?? '').replace(/"/g, '""')}"`,
+      l.status,
+      l.condition ?? '',
+      parseFloat(l.priceHkd || '0').toFixed(2),
+      l.quantity ?? 0,
+      l.sellerType === 'platform' ? '平台' : 'C2C',
+      l.createdAt ? new Date(l.createdAt).toLocaleDateString('zh-HK') : '',
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `listings-export-${Date.now()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`已匯出 ${selected.length} 個商品`);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -1008,23 +1043,45 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
       </div>
       {/* Batch toolbar */}
       {someSelected && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-[#06038d] rounded-xl text-white">
+        <div className="flex items-center gap-3 px-4 py-3 bg-[#06038d] rounded-xl text-white flex-wrap">
           <span className="text-sm font-medium">已選 {selectedIds.size} 個商品</span>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
+            {/* Batch status change dropdown */}
+            <select
+              className="text-xs rounded px-2 py-1.5 bg-white/15 border border-white/30 text-white cursor-pointer"
+              defaultValue=""
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) return;
+                batchUpdateMutation.mutate({ ids: Array.from(selectedIds), status: val as any });
+                e.target.value = '';
+              }}
+              disabled={batchUpdateMutation.isPending}
+            >
+              <option value="" disabled className="text-gray-800">更改狀態為...</option>
+              <option value="active" className="text-gray-800">✅ 上架中</option>
+              <option value="pending_review" className="text-gray-800">🔄 待審核</option>
+              <option value="draft" className="text-gray-800">📝 草稿</option>
+              <option value="removed" className="text-gray-800">❌ 下架</option>
+            </select>
             <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white text-xs"
               disabled={batchUpdateMutation.isPending}
               onClick={() => batchUpdateMutation.mutate({ ids: Array.from(selectedIds), status: 'active' })}>
-              <CheckCircle className="w-3 h-3 mr-1" />批量審核通過
+              <CheckCircle className="w-3 h-3 mr-1" />審核通過
             </Button>
             <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white text-xs"
               disabled={batchUpdateMutation.isPending}
               onClick={() => { setShowBatchRejectDialog(true); setBatchRejectReason(''); }}>
-              <X className="w-3 h-3 mr-1" />批量下架
+              <X className="w-3 h-3 mr-1" />下架
             </Button>
-            <Button size="sm" variant="outline" className="text-white border-white/40 hover:bg-white/10 text-xs"
+            <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white text-xs border border-white/30"
+              onClick={handleExportListingsCSV}>
+              <Download className="w-3 h-3 mr-1" />匯出 CSV
+            </Button>
+            <button className="text-xs text-white/70 hover:text-white underline"
               onClick={() => setSelectedIds(new Set())}>
-              取消選取
-            </Button>
+              取消
+            </button>
           </div>
         </div>
       )}
@@ -1036,6 +1093,9 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
           <span className="text-xs text-gray-600 font-medium">
             {allSelected ? '取消全選' : '全選本頁'} ({listings.length} 個)
           </span>
+          {selectedIds.size > 0 && !allSelected && (
+            <span className="text-xs text-[#06038d] font-semibold ml-auto">已選 {selectedIds.size} 個</span>
+          )}
         </div>
       )}
       {isLoading ? (
@@ -1180,6 +1240,10 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
         onClose={() => setSelectedListingId(null)}
         onUpdated={refetch}
         onViewOrders={onViewOrders}
+        onOpenOrder={(orderId) => {
+          // Switch to orders tab with the specific order
+          toast.info(`請切換到訂單管理查看訂單 #${orderId}`);
+        }}
       />
     </div>
   );
@@ -1311,6 +1375,8 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
   const [showBatchShippingDialog, setShowBatchShippingDialog] = useState(false);
   const [batchTrackingNumber, setBatchTrackingNumber] = useState('');
   const [batchShippingMethod, setBatchShippingMethod] = useState('sf_express');
+  const [batchShippingMode, setBatchShippingMode] = useState<'unified' | 'individual'>('unified');
+  const [individualTrackingMap, setIndividualTrackingMap] = useState<Record<number, string>>({});
   const batchUpdateShippingMutation = trpc.marketplace.adminBatchUpdateShipping.useMutation({
     onSuccess: (data) => {
       toast.success(`批量出貨完成：${data.successCount} 筆成功${data.failCount > 0 ? `，${data.failCount} 筆失敗` : ''}`);
@@ -1318,6 +1384,8 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       setSelectedOrderIds(new Set());
       setShowBatchShippingDialog(false);
       setBatchTrackingNumber('');
+      setBatchShippingMode('unified');
+      setIndividualTrackingMap({});
     },
     onError: (e) => toast.error(e.message),
   });
@@ -1464,6 +1532,9 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
             <span className="text-xs text-gray-600 font-medium">
               {isAllSelected ? '取消全選' : '全選本頁'} ({filteredOrders.length} 筆)
             </span>
+            {selectedOrderIds.size > 0 && !isAllSelected && (
+              <span className="text-xs text-[#06038d] font-semibold ml-auto">已選 {selectedOrderIds.size} 筆</span>
+            )}
           </div>
           {filteredOrders.map((order: any) => (
             <div key={order.id} className={`rounded-xl border shadow-sm overflow-hidden transition-all ${
@@ -1862,7 +1933,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       </Dialog>
       {/* Batch shipping dialog */}
       <Dialog open={showBatchShippingDialog} onOpenChange={setShowBatchShippingDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="w-5 h-5 text-blue-600" />
@@ -1872,6 +1943,29 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
           <div className="space-y-4 py-2">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
               <p>將對 <strong>{selectedOrderIds.size} 筆訂單</strong>標記為「已出貨」並發送通知給買家。</p>
+            </div>
+            {/* Mode toggle */}
+            <div className="flex rounded-lg overflow-hidden border border-gray-200">
+              <button
+                onClick={() => setBatchShippingMode('unified')}
+                className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                  batchShippingMode === 'unified' ? 'bg-[#06038d] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}>
+                📦 統一追蹤號
+              </button>
+              <button
+                onClick={() => {
+                  setBatchShippingMode('individual');
+                  // Pre-populate with empty strings for each selected order
+                  const map: Record<number, string> = {};
+                  Array.from(selectedOrderIds).forEach(id => { map[id] = individualTrackingMap[id] ?? ''; });
+                  setIndividualTrackingMap(map);
+                }}
+                className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                  batchShippingMode === 'individual' ? 'bg-[#06038d] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}>
+                📝 逐筆填入追蹤號
+              </button>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">物流方式</label>
@@ -1885,28 +1979,65 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                 ))}
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">統一追蹤號 <span className="text-gray-400 font-normal">(可留空)</span></label>
-              <Input
-                placeholder="輸入物流追蹤號（所有訂單使用相同追蹤號）"
-                value={batchTrackingNumber}
-                onChange={e => setBatchTrackingNumber(e.target.value)}
-                className="bg-white text-gray-900"
-              />
-            </div>
+            {batchShippingMode === 'unified' ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">統一追蹤號 <span className="text-gray-400 font-normal">(可留空)</span></label>
+                <Input
+                  placeholder="輸入物流追蹤號（所有訂單使用相同追蹤號）"
+                  value={batchTrackingNumber}
+                  onChange={e => setBatchTrackingNumber(e.target.value)}
+                  className="bg-white text-gray-900"
+                />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">逐筆輸入追蹤號</label>
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                  {Array.from(selectedOrderIds).map(orderId => {
+                    const order = orders.find((o: any) => o.id === orderId);
+                    return (
+                      <div key={orderId} className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-gray-600 w-36 flex-shrink-0 truncate">
+                          {order?.orderNo ?? `#${orderId}`}
+                        </span>
+                        <Input
+                          placeholder="追蹤號（可留空）"
+                          value={individualTrackingMap[orderId] ?? ''}
+                          onChange={e => setIndividualTrackingMap(prev => ({ ...prev, [orderId]: e.target.value }))}
+                          className="bg-white text-gray-900 text-xs h-8 flex-1"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" className="text-gray-700 bg-white" onClick={() => setShowBatchShippingDialog(false)}>
+            <Button variant="outline" className="text-gray-700 bg-white" onClick={() => { setShowBatchShippingDialog(false); setBatchShippingMode('unified'); setIndividualTrackingMap({}); }}>
               取消
             </Button>
             <Button
               className="bg-blue-600 hover:bg-blue-700 text-white"
               disabled={batchUpdateShippingMutation.isPending}
-              onClick={() => batchUpdateShippingMutation.mutate({
-                orderIds: Array.from(selectedOrderIds),
-                trackingNumber: batchTrackingNumber || undefined,
-                shippingMethod: batchShippingMethod,
-              })}
+              onClick={() => {
+                if (batchShippingMode === 'unified') {
+                  batchUpdateShippingMutation.mutate({
+                    orderIds: Array.from(selectedOrderIds),
+                    trackingNumber: batchTrackingNumber || undefined,
+                    shippingMethod: batchShippingMethod,
+                  });
+                } else {
+                  // Individual mode: send per-order tracking numbers
+                  batchUpdateShippingMutation.mutate({
+                    orderIds: Array.from(selectedOrderIds),
+                    perOrderTracking: Object.entries(individualTrackingMap)
+                      .filter(([, v]) => v.trim())
+                      .map(([k, v]) => ({ orderId: Number(k), trackingNumber: v.trim() })),
+                    shippingMethod: batchShippingMethod,
+                  });
+                }
+              }}
             >
               {batchUpdateShippingMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Package className="w-3.5 h-3.5 mr-1.5" />}
               確認出貨
@@ -1968,6 +2099,16 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
           onViewOrders={(id) => {
             setViewListingId(null);
             if (onViewOrders) onViewOrders(id);
+          }}
+          onOpenOrder={(orderId) => {
+            // Find the order from current orders list and open its detail dialog
+            const found = orders.find((o: any) => o.id === orderId);
+            if (found) {
+              setViewListingId(null);
+              setSelectedOrder(found);
+            } else {
+              toast.info('請在訂單管理中搜尋訂單詳情');
+            }
           }}
         />
       )}
@@ -3978,6 +4119,8 @@ const sidebarMenuItems: SidebarItem[] = [
 
 export default function AdminMarketplace() {
   const { data: stats } = trpc.marketplace.adminGetStats.useQuery();
+  const { data: pendingPayoutData } = trpc.marketplace.adminGetPendingPayoutCount.useQuery();
+  const pendingPayoutCount = pendingPayoutData?.count ?? 0;
   const { data: me } = trpc.auth.me.useQuery();
   const isDev = import.meta.env.DEV;
   const [activeSection, setActiveSection] = useState('listings');
@@ -4062,6 +4205,14 @@ export default function AdminMarketplace() {
                 <p className="text-[10px] text-white/60">活躍賣家</p>
               </div>
             </div>
+            {pendingPayoutCount > 0 && (
+              <button
+                className="mt-2 w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 rounded-lg p-2 text-xs text-center transition-colors"
+                onClick={() => { setActiveSection('orders'); setSidebarOpen(false); }}
+              >
+                💰 {pendingPayoutCount} 筆待放款訂單
+              </button>
+            )}
             {/* Mobile Nav */}
             <nav className="p-2">
               {sidebarMenuItems.map(item => {
@@ -4119,6 +4270,14 @@ export default function AdminMarketplace() {
               <div className="mt-2 bg-orange-500/20 text-orange-200 rounded-lg p-2 text-xs text-center">
                 {stats?.pendingReviewListings} 個商品待審核
               </div>
+            )}
+            {pendingPayoutCount > 0 && (
+              <button
+                className="mt-2 w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 rounded-lg p-2 text-xs text-center transition-colors"
+                onClick={() => setActiveSection('orders')}
+              >
+                💰 {pendingPayoutCount} 筆待放款訂單
+              </button>
             )}
           </div>
           {/* Desktop Nav */}

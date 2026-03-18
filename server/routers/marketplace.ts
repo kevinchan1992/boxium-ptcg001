@@ -29,7 +29,7 @@ import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
 import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail } from "../emailService";
 import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users } from "../../drizzle/schema_new";
-import { eq, and, isNotNull, desc, sql } from 'drizzle-orm';
+import { eq, and, isNotNull, isNull, or, desc, sql } from 'drizzle-orm';
 
 // Platform fee rate (5% for C2C listings only)
 const PLATFORM_FEE_RATE = 0.05;
@@ -2882,5 +2882,27 @@ All three checks must pass for verified to be true. Respond with JSON only match
         .orderBy(desc(marketplaceOrders.createdAt))
         .limit(input.limit);
       return rows;
+    }),
+
+  // ============================================================
+  // ADMIN - Get count of orders pending payout (completed but not paid out)
+  // ============================================================
+  adminGetPendingPayoutCount: adminProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const rows = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(marketplaceOrders)
+        .where(
+          and(
+            eq(marketplaceOrders.orderStatus, 'completed'),
+            or(
+              isNull(marketplaceOrders.payoutStatus),
+              eq(marketplaceOrders.payoutStatus, 'pending')
+            )
+          )
+        );
+      return { count: Number(rows[0]?.count ?? 0) };
     }),
 });

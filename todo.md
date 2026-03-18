@@ -4769,3 +4769,17 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] ListingsTab 每張商品卡片的 checkbox 改成原生 input（與 OrdersTab 一致）
 - [x] 儲存 checkpoint
 
+
+## ✅ 六個 Admin 功能擴充
+
+- [x] 商品管理全選列加入「已選 N 個」計數
+- [x] 商品管理批量工具列加入「批量更改狀態」下拉選單（上架/草稿/待審核）
+- [x] 商品管理批量工具列加入「批量匯出 CSV」功能
+- [x] 訂單管理全選列加入「已選 N 個」計數
+- [x] 批量物流 Dialog 加入「逐筆填入追蹤號」模式
+- [x] 商品詳情訂單歷史時間軸每筆訂單旁加入「快速開啟訂單詳情」圖示按鈕
+- [x] 後端加入 adminGetPendingPayoutCount
+- [x] Admin Dashboard 加入「待放款訂單提醒」統計卡，點擊跳轉到訂單管理
+- [x] 撰寫 20 項單元測試（admin-six-features.test.ts）
+- [x] 儲存 checkpoint
+
