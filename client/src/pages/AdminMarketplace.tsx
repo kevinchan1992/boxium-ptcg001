@@ -1337,6 +1337,12 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
     onError: (e) => toast.error(e.message)
   });
 
+  // Order messages (sent to buyer)
+  const orderMessagesQuery = trpc.marketplace.adminGetOrderMessages.useQuery(
+    { orderId: selectedOrder?.id ?? 0 },
+    { enabled: !!selectedOrder?.id }
+  );
+
   const orders = data?.orders ?? [];
   const total = data?.total ?? 0;
   const filteredOrders = searchQuery.trim()
@@ -1420,6 +1426,18 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       setSelectedOrderIds(new Set());
       setShowBatchPayoutDialog(false);
       setBatchPayoutNote('');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Batch note dialog state
+  const [showBatchNoteDialog, setShowBatchNoteDialog] = useState(false);
+  const [batchNoteInput, setBatchNoteInput] = useState('');
+  const batchAddNoteMutation = trpc.marketplace.adminBatchAddNote.useMutation({
+    onSuccess: (data) => {
+      toast.success(`已為 ${data.count} 筆訂單新增備注`);
+      setShowBatchNoteDialog(false);
+      setBatchNoteInput('');
     },
     onError: (e) => toast.error(e.message),
   });
@@ -1531,6 +1549,10 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
             <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={() => setShowBatchPayoutDialog(true)}>
               <Banknote className="w-3.5 h-3.5 mr-1" />批量標記已放款
+            </Button>
+            <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white"
+              onClick={() => setShowBatchNoteDialog(true)}>
+              <FileText className="w-3.5 h-3.5 mr-1" />批量新增備注
             </Button>
             <button className="text-xs text-[#06038d]/70 hover:text-[#06038d] underline"
               onClick={() => setSelectedOrderIds(new Set())}>
@@ -2002,23 +2024,42 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                 </div>
               </div>
 
-              {/* ── 發送訊息給買家 ────────────────── */}
+               {/* ── 發送訊息給買家 ──────────────── */}
               <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
                 <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
                   <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
                     <MessageSquare className="w-3.5 h-3.5" />發送訊息給買家
                   </p>
                 </div>
-                <div className="p-3">
+                <div className="p-3 space-y-3">
                   <Button size="sm" variant="outline" className="border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/10"
-                    onClick={() => setShowSendMessageDialog(true)}>
-                    <MessageSquare className="w-3.5 h-3.5 mr-1.5" />發送訊息給買家
+                    onClick={() => { setShowSendMessageDialog(true); orderMessagesQuery.refetch(); }}>
+                    <MessageSquare className="w-3.5 h-3.5 mr-1.5" />發送新訊息給買家
                   </Button>
+                  {/* 訊息歷史 */}
+                  {orderMessagesQuery.isLoading ? (
+                    <div className="flex items-center gap-2 text-xs text-gray-400"><Loader2 className="w-3 h-3 animate-spin" />載入中...</div>
+                  ) : (orderMessagesQuery.data ?? []).length > 0 ? (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-500">已發送訊息記錄</p>
+                      {(orderMessagesQuery.data ?? []).map((msg: any) => (
+                        <div key={msg.id} className="bg-blue-50 border border-blue-100 rounded-lg p-2.5">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-blue-800">{msg.subject}</span>
+                            <span className="text-xs text-gray-400">{new Date(msg.createdAt).toLocaleString('zh-HK')}</span>
+                          </div>
+                          {msg.operatorName && <p className="text-xs text-gray-400">by {msg.operatorName}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400">尚未發送過訊息</p>
+                  )}
                 </div>
-              </div>
+               </div>
 
-              {/* ── 列印訂單按鈕 ──────────────────── */}
-              <div className="flex justify-end pb-2">
+               {/* ── 列印訂單按鈕（三種範本） ───────── */}
+              <div className="flex justify-end gap-2 pb-2">
                 <Button size="sm" variant="outline" className="border-gray-300 text-gray-600 hover:bg-gray-50 print:hidden"
                   onClick={() => {
                     const order = selectedOrder;
@@ -2028,7 +2069,28 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                     printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>訂單 ${order.orderNo}</title><style>body{font-family:sans-serif;padding:24px;font-size:13px;color:#111}.header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #06038d;padding-bottom:12px;margin-bottom:16px}.logo-box{background:#f5c518;border:2px solid #06038d;border-radius:6px;padding:6px 14px;font-size:20px;font-weight:900;color:#06038d;letter-spacing:2px}.company-info{text-align:right;font-size:11px;color:#555;line-height:1.6}h1{font-size:16px;margin-bottom:4px;color:#06038d}h2{font-size:13px;border-bottom:1px solid #ccc;padding-bottom:4px;margin-top:16px;color:#06038d}table{width:100%;border-collapse:collapse}td{padding:4px 8px;vertical-align:top}td:first-child{color:#555;width:120px}.footer{margin-top:24px;border-top:1px solid #ccc;padding-top:8px;font-size:10px;color:#999;text-align:center}@media print{button{display:none}}</style></head><body><div class="header"><div class="logo-box">BOXIUM</div><div class="company-info"><strong>BOXIUM PTCG</strong><br/>www.boxium.asia<br/>香港卡片交易平台</div></div><h1>隨貨單據 / 訂單確認</h1><p style="color:#555;font-size:12px">訂單編號: ${order.orderNo}</p><h2>商品資訊</h2><table><tr><td>商品</td><td>${order.listingTitle || '未知'}</td></tr><tr><td>品相</td><td>${order.listingCondition || '—'}</td></tr><tr><td>數量</td><td>${order.quantity ?? 1}</td></tr><tr><td>金額</td><td>HKD ${parseFloat(order.subtotalHkd || '0').toFixed(2)}</td></tr></table><h2>買家資料</h2><table><tr><td>姓名</td><td>${order.buyerName || '—'}</td></tr><tr><td>電郵</td><td>${order.buyerEmail || '—'}</td></tr><tr><td>電話</td><td>${order.buyerPhone || '—'}</td></tr></table><h2>物流 / 收件資訊</h2><table><tr><td>收件人</td><td>${order.shippingName || '—'}</td></tr><tr><td>電話</td><td>${order.shippingPhone || '—'}</td></tr><tr><td>地址</td><td>${addr}</td></tr><tr><td>物流方式</td><td>${order.shippingMethod || '—'}</td></tr><tr><td>追蹤號碼</td><td>${order.trackingNumber || order.trackingNo || '—'}</td></tr></table><h2>訂單詳情</h2><table><tr><td>訂單金額</td><td>HKD ${parseFloat(order.subtotalHkd || '0').toFixed(2)}</td></tr><tr><td>平台手續費</td><td>HKD ${parseFloat(order.platformFeeHkd || '0').toFixed(2)}</td></tr><tr><td>賣家應收</td><td>HKD ${parseFloat(order.sellerReceivableHkd || '0').toFixed(2)}</td></tr><tr><td>付款方式</td><td>${order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</td></tr><tr><td>下單日期</td><td>${new Date(order.createdAt).toLocaleString('zh-HK')}</td></tr></table><script>window.print();window.close();<\/script></body></html>`);
                     printWindow.document.close();
                   }}>
-                  <Printer className="w-3.5 h-3.5 mr-1.5" />列印訂單
+                  <Printer className="w-3.5 h-3.5 mr-1.5" />隨貨單
+                </Button>
+                <Button size="sm" variant="outline" className="border-gray-300 text-gray-600 hover:bg-gray-50 print:hidden"
+                  onClick={() => {
+                    const order = selectedOrder;
+                    const printWindow = window.open('', '_blank');
+                    if (!printWindow || !order) return;
+                    const addr = (() => { try { const a = JSON.parse(order.shippingAddress || '{}'); return [a.address, a.district, a.region].filter(Boolean).join(', '); } catch { return order.shippingAddress || '—'; } })();
+                    printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>出貨標籤 ${order.orderNo}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:sans-serif;background:#fff}@page{size:100mm 150mm;margin:0}.label{width:100mm;height:150mm;padding:8mm;border:1px solid #000;display:flex;flex-direction:column;gap:4mm}.logo-row{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #06038d;padding-bottom:3mm}.logo-box{background:#f5c518;border:2px solid #06038d;border-radius:4px;padding:3px 8px;font-size:14px;font-weight:900;color:#06038d;letter-spacing:1px}.order-no{font-size:9px;color:#555}.section-title{font-size:8px;font-weight:bold;color:#06038d;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:1mm}.info-row{font-size:10px;color:#111;margin-bottom:1mm}.info-label{color:#555;font-size:9px}.barcode-area{border:1px dashed #ccc;padding:3mm;text-align:center;font-family:monospace;font-size:11px;letter-spacing:2px;font-weight:bold}.footer{font-size:8px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:2mm}@media print{button{display:none}}</style></head><body><div class="label"><div class="logo-row"><div class="logo-box">BOXIUM</div><div class="order-no">${order.orderNo}</div></div><div><div class="section-title">收件人</div><div class="info-row">${order.shippingName || '—'} &nbsp; ${order.shippingPhone || ''}</div><div class="info-row">${addr}</div></div><div><div class="section-title">商品</div><div class="info-row">${order.listingTitle || '未知'} (${order.listingCondition || '—'})</div></div><div><div class="section-title">物流</div><div class="info-row">${order.shippingMethod || '—'}</div></div><div class="barcode-area">${order.trackingNumber || order.trackingNo || '尚未發貨'}</div><div class="footer">BOXIUM PTCG &bull; www.boxium.asia</div></div><script>window.print();window.close();<\/script></body></html>`);
+                    printWindow.document.close();
+                  }}>
+                  <Printer className="w-3.5 h-3.5 mr-1.5" />出貨標籤
+                </Button>
+                <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50 print:hidden"
+                  onClick={() => {
+                    const order = selectedOrder;
+                    const printWindow = window.open('', '_blank');
+                    if (!printWindow || !order) return;
+                    printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>退款確認單 ${order.orderNo}</title><style>body{font-family:sans-serif;padding:24px;font-size:13px;color:#111}.header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #dc2626;padding-bottom:12px;margin-bottom:16px}.logo-box{background:#f5c518;border:2px solid #06038d;border-radius:6px;padding:6px 14px;font-size:20px;font-weight:900;color:#06038d;letter-spacing:2px}.company-info{text-align:right;font-size:11px;color:#555;line-height:1.6}h1{font-size:16px;margin-bottom:4px;color:#dc2626}h2{font-size:13px;border-bottom:1px solid #ccc;padding-bottom:4px;margin-top:16px;color:#dc2626}table{width:100%;border-collapse:collapse}td{padding:4px 8px;vertical-align:top}td:first-child{color:#555;width:140px}.refund-box{background:#fef2f2;border:2px solid #dc2626;border-radius:8px;padding:16px;margin:16px 0;text-align:center}.refund-amount{font-size:28px;font-weight:900;color:#dc2626}.refund-label{font-size:12px;color:#666;margin-top:4px}.footer{margin-top:24px;border-top:1px solid #ccc;padding-top:8px;font-size:10px;color:#999;text-align:center}@media print{button{display:none}}</style></head><body><div class="header"><div class="logo-box">BOXIUM</div><div class="company-info"><strong>BOXIUM PTCG</strong><br/>www.boxium.asia<br/>香港卡片交易平台</div></div><h1>退款確認單</h1><div class="refund-box"><div class="refund-amount">HKD ${parseFloat(order.subtotalHkd || '0').toFixed(2)}</div><div class="refund-label">退款金額</div></div><h2>訂單資訊</h2><table><tr><td>訂單編號</td><td>${order.orderNo}</td></tr><tr><td>商品</td><td>${order.listingTitle || '未知'}</td></tr><tr><td>數量</td><td>${order.quantity ?? 1}</td></tr><tr><td>付款方式</td><td>${order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</td></tr></table><h2>買家資料</h2><table><tr><td>姓名</td><td>${order.buyerName || '—'}</td></tr><tr><td>電郵</td><td>${order.buyerEmail || '—'}</td></tr><tr><td>電話</td><td>${order.buyerPhone || '—'}</td></tr></table><p style="margin-top:16px;font-size:12px;color:#555">退款將於 3-7 工作日內退回至原付款帳戶。如有疑問，請聯繫 BOXIUM PTCG 客服。</p><div class="footer">列印日期: ${new Date().toLocaleDateString('zh-HK')} &bull; BOXIUM PTCG &bull; www.boxium.asia</div><script>window.print();window.close();<\/script></body></html>`);
+                    printWindow.document.close();
+                  }}>
+                  <Printer className="w-3.5 h-3.5 mr-1.5" />退款確認單
                 </Button>
               </div>
 
@@ -2242,6 +2304,58 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
             >
               {batchMarkPayoutMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Check className="w-3.5 h-3.5 mr-1.5" />}
               確認放款
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Batch Note Dialog */}
+      <Dialog open={showBatchNoteDialog} onOpenChange={setShowBatchNoteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-amber-500" />
+              批量新增備注
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+              <p>將為已選 <strong>{selectedOrderIds.size}</strong> 筆訂單新增相同的內部備注，不會更改訂單狀態。</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">備注內容</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {['等待補貨', '已訂貨', '已出貨，等待物流', '買家已確認', '特殊處理', '等待驗證'].map(preset => (
+                  <button key={preset} type="button"
+                    className="text-xs px-2 py-1 rounded border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors"
+                    onClick={() => setBatchNoteInput(preset)}>
+                    {preset}
+                  </button>
+                ))}
+              </div>
+              <Textarea
+                className="border-amber-300 focus:border-amber-500 resize-none"
+                placeholder="輸入備注內容..."
+                rows={3}
+                value={batchNoteInput}
+                onChange={e => setBatchNoteInput(e.target.value)}
+                maxLength={500}
+              />
+              <p className="text-xs text-gray-400 mt-1">{batchNoteInput.length}/500</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBatchNoteDialog(false)}>取消</Button>
+            <Button
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+              disabled={!batchNoteInput.trim() || batchAddNoteMutation.isPending}
+              onClick={() => batchAddNoteMutation.mutate({
+                orderIds: Array.from(selectedOrderIds),
+                note: batchNoteInput.trim(),
+              })}
+            >
+              {batchAddNoteMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Check className="w-3.5 h-3.5 mr-1.5" />}
+              確認新增備注
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -29,7 +29,7 @@ import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
 import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail } from "../emailService";
 import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory } from "../../drizzle/schema_new";
-import { eq, and, isNotNull, isNull, or, desc, sql } from 'drizzle-orm';
+import { eq, and, isNotNull, isNull, or, desc, sql, inArray, like } from 'drizzle-orm';
 
 // Platform fee rate (5% for C2C listings only)
 const PLATFORM_FEE_RATE = 0.05;
@@ -2975,6 +2975,58 @@ All three checks must pass for verified to be true. Respond with JSON only match
         entryType: 'note',
       });
       return { success: true };
+    }),
+  // ============================================================
+  // ADMIN - Batch Add Note to Multiple Orders
+  // ============================================================
+  adminBatchAddNote: adminProcedure
+    .input(z.object({
+      orderIds: z.array(z.number().int()).min(1).max(100),
+      note: z.string().min(1).max(500),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const adminUser = ctx.user;
+      const orders = await db
+        .select({ id: marketplaceOrders.id, orderStatus: marketplaceOrders.orderStatus })
+        .from(marketplaceOrders)
+        .where(inArray(marketplaceOrders.id, input.orderIds));
+      if (orders.length === 0) throw new TRPCError({ code: 'NOT_FOUND', message: '找不到訂單' });
+      const entries = orders.map(order => ({
+        orderId: order.id,
+        fromStatus: order.orderStatus,
+        toStatus: order.orderStatus,
+        operatorId: adminUser?.id ?? null,
+        operatorName: adminUser?.name ?? 'Admin',
+        note: `[備注] ${input.note}`,
+        entryType: 'note' as const,
+      }));
+      await db.insert(orderStatusHistory).values(entries);
+      return { success: true, count: orders.length };
+    }),
+  // ============================================================
+  // ADMIN - Get Order Messages (sent to buyer)
+  // ============================================================
+  adminGetOrderMessages: adminProcedure
+    .input(z.object({ orderId: z.number().int() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const rows = await db
+        .select()
+        .from(orderStatusHistory)
+        .where(
+          and(
+            eq(orderStatusHistory.orderId, input.orderId),
+            like(orderStatusHistory.note, '[發送訊息給買家]%')
+          )
+        )
+        .orderBy(desc(orderStatusHistory.createdAt));
+      return rows.map(r => ({
+        ...r,
+        subject: r.note?.replace(/^\[發送訊息給買家\] 主旨: /, '') ?? '',
+      }));
     }),
   // ============================================================
   adminGetPendingPayoutCount: adminProcedure

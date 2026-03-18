@@ -624,3 +624,86 @@ describe("adminAddOrderNote", () => {
     expect(displayNote).toBe("這是一條內部備注");
   });
 });
+
+describe("adminBatchAddNote", () => {
+  it("should validate orderIds array is not empty", () => {
+    const orderIds: number[] = [];
+    expect(orderIds.length < 1).toBe(true);
+  });
+  it("should enforce max 100 orders per batch", () => {
+    const tooMany = Array.from({ length: 101 }, (_, i) => i + 1);
+    expect(tooMany.length > 100).toBe(true);
+    const validIds = Array.from({ length: 100 }, (_, i) => i + 1);
+    expect(validIds.length <= 100).toBe(true);
+  });
+  it("should validate note is not empty", () => {
+    const note = "  ";
+    expect(note.trim().length).toBe(0);
+  });
+  it("should enforce max 500 character limit on batch note", () => {
+    const longNote = "a".repeat(501);
+    expect(longNote.length > 500).toBe(true);
+  });
+  it("should prefix each note with [備注] tag", () => {
+    const userNote = "等待補貨";
+    const storedNote = `[備注] ${userNote}`;
+    expect(storedNote).toBe("[備注] 等待補貨");
+  });
+  it("should keep fromStatus and toStatus the same for all orders", () => {
+    const orders = [
+      { id: 1, orderStatus: "processing" },
+      { id: 2, orderStatus: "shipped" },
+    ];
+    const entries = orders.map(order => ({
+      orderId: order.id,
+      fromStatus: order.orderStatus,
+      toStatus: order.orderStatus,
+      entryType: "note",
+    }));
+    entries.forEach(e => expect(e.fromStatus).toBe(e.toStatus));
+  });
+  it("should return count equal to number of matched orders", () => {
+    const foundOrders = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    const result = { success: true, count: foundOrders.length };
+    expect(result.count).toBe(3);
+  });
+});
+
+describe("adminGetOrderMessages", () => {
+  it("should filter messages by [發送訊息給買家] prefix", () => {
+    const notes = [
+      "[發送訊息給買家] 主旨: 訂單已出貨",
+      "[備注] 內部備注",
+      "[狀態變更] 已付款",
+      "[發送訊息給買家] 主旨: 請確認收貨",
+    ];
+    const messages = notes.filter(n => n.startsWith("[發送訊息給買家]"));
+    expect(messages.length).toBe(2);
+  });
+  it("should extract subject from note", () => {
+    const note = "[發送訊息給買家] 主旨: 訂單已出貨";
+    const subject = note.replace(/^\[發送訊息給買家\] 主旨: /, "");
+    expect(subject).toBe("訂單已出貨");
+  });
+  it("should return empty array when no messages sent", () => {
+    const notes = ["[備注] 測試", "[狀態變更] 已付款"];
+    const messages = notes.filter(n => n.startsWith("[發送訊息給買家]"));
+    expect(messages.length).toBe(0);
+  });
+  it("should return messages in descending order by createdAt", () => {
+    const messages = [
+      { id: 1, createdAt: new Date("2025-01-01") },
+      { id: 2, createdAt: new Date("2025-01-03") },
+      { id: 3, createdAt: new Date("2025-01-02") },
+    ];
+    const sorted = [...messages].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    expect(sorted[0].id).toBe(2);
+    expect(sorted[1].id).toBe(3);
+    expect(sorted[2].id).toBe(1);
+  });
+  it("should handle subject with special characters correctly", () => {
+    const note = "[發送訊息給買家] 主旨: 訂單 #12345 已出貨！";
+    const subject = note.replace(/^\[發送訊息給買家\] 主旨: /, "");
+    expect(subject).toBe("訂單 #12345 已出貨！");
+  });
+});

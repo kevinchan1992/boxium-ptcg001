@@ -4828,3 +4828,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 撰寫單元測試（adminAddOrderNote 6 項測試，共 75 項通過）
 - [x] 儲存 checkpoint
 
+
+## 🔲 批量備注 + 買家訊息歷史 + 列印範本選擇
+- [x] 後端：加入 adminBatchAddNote procedure（批量為多筆訂單寫入備注）
+- [x] 後端：加入 adminGetOrderMessages procedure（查詢訂單的已發送訊息記錄）
+- [x] 前端：OrdersTab 批量工具列加入「批量新增備注」按鈕和 Dialog
+- [x] 前端：OrderDetailDialog 發送訊息區塊下方加入已發送訊息歷史列表
+- [x] 前端：列印訂單按鈕改為下拉選單，提供三種格式（隨貨單、出貨標籤、退款確認單）
+- [x] 撰寫單元測試
+- [x] 儲存 checkpoint
