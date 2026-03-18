@@ -28,7 +28,7 @@ import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
 import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail } from "../emailService";
-import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users } from "../../drizzle/schema_new";
+import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory } from "../../drizzle/schema_new";
 import { eq, and, isNotNull, isNull, or, desc, sql } from 'drizzle-orm';
 
 // Platform fee rate (5% for C2C listings only)
@@ -1458,6 +1458,21 @@ export const marketplaceRouter = router({
           console.warn("[Admin] Order status email failed:", emailErr.message);
         }
       }
+      // Record status change in history
+      try {
+        const db2 = await getDb();
+        if (db2) {
+          await db2.insert(orderStatusHistory).values({
+            orderId: input.orderId,
+            fromStatus: order.orderStatus,
+            toStatus: input.orderStatus,
+            operatorName: 'Admin',
+            note: input.note || null,
+          });
+        }
+      } catch (histErr: any) {
+        console.warn('[Admin] Failed to record status history:', histErr.message);
+      }
       return { success: true };
     }),
 
@@ -2886,6 +2901,58 @@ All three checks must pass for verified to be true. Respond with JSON only match
 
   // ============================================================
   // ADMIN - Get count of orders pending payout (completed but not paid out)
+  // ============================================================
+  // ADMIN - Order Status History
+  // ============================================================
+  adminGetOrderHistory: adminProcedure
+    .input(z.object({ orderId: z.number().int() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const rows = await db
+        .select()
+        .from(orderStatusHistory)
+        .where(eq(orderStatusHistory.orderId, input.orderId))
+        .orderBy(desc(orderStatusHistory.createdAt));
+      return rows;
+    }),
+
+  // ============================================================
+  // ADMIN - Send Message to Buyer
+  // ============================================================
+  adminSendBuyerMessage: adminProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      subject: z.string().min(1).max(200),
+      message: z.string().min(1).max(2000),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      // Get order with buyer info
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND', message: '找不到訂單' });
+      // Create in-app notification for buyer
+      await createNotification({
+        userId: order.buyerId,
+        type: 'order_message',
+        title: `[Admin] ${input.subject}`,
+        body: input.message,
+        linkUrl: `/orders/${order.orderNo}`,
+      });
+      // Log to status history
+      const adminUser = ctx.user;
+      await db.insert(orderStatusHistory).values({
+        orderId: input.orderId,
+        fromStatus: order.orderStatus,
+        toStatus: order.orderStatus,
+        operatorId: adminUser?.id ?? null,
+        operatorName: adminUser?.name ?? 'Admin',
+        note: `[發送訊息給買家] 主旨: ${input.subject}`,
+      });
+      return { success: true };
+    }),
+
   // ============================================================
   adminGetPendingPayoutCount: adminProcedure
     .query(async () => {

@@ -1051,3 +1051,22 @@ export const listingReports = mysqlTable("listingReports", {
 }));
 export type ListingReport = typeof listingReports.$inferSelect;
 export type InsertListingReport = typeof listingReports.$inferInsert;
+
+/**
+ * Order Status History - tracks every status change for admin audit trail
+ */
+export const orderStatusHistory = mysqlTable("orderStatusHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(), // FK to marketplaceOrders
+  fromStatus: varchar("fromStatus", { length: 50 }), // previous status (null for first entry)
+  toStatus: varchar("toStatus", { length: 50 }).notNull(), // new status
+  operatorId: int("operatorId"), // FK to users (null = system)
+  operatorName: varchar("operatorName", { length: 100 }), // snapshot of operator name
+  note: varchar("note", { length: 500 }), // optional admin note
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  orderIdIdx: index("osh_orderId_idx").on(table.orderId),
+  createdAtIdx: index("osh_createdAt_idx").on(table.createdAt),
+}));
+export type OrderStatusHistory = typeof orderStatusHistory.$inferSelect;
+export type InsertOrderStatusHistory = typeof orderStatusHistory.$inferInsert;

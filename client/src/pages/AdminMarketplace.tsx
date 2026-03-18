@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
@@ -1316,6 +1316,22 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
     onSuccess: () => { toast.success("備注已儲存"); refetch(); },
     onError: (e) => toast.error(e.message)
   });
+
+  // Send message to buyer
+  const [showSendMessageDialog, setShowSendMessageDialog] = useState(false);
+  const [sendMessageSubject, setSendMessageSubject] = useState('');
+  const [sendMessageBody, setSendMessageBody] = useState('');
+  const sendMessageMutation = trpc.marketplace.adminSendBuyerMessage.useMutation({
+    onSuccess: () => { toast.success('訊息已發送給買家'); setShowSendMessageDialog(false); setSendMessageSubject(''); setSendMessageBody(''); },
+    onError: (e) => toast.error(e.message)
+  });
+
+  // Order status history
+  const orderHistoryQuery = trpc.marketplace.adminGetOrderHistory.useQuery(
+    { orderId: selectedOrder?.id ?? 0 },
+    { enabled: !!selectedOrder?.id }
+  );
+
   const orders = data?.orders ?? [];
   const total = data?.total ?? 0;
   const filteredOrders = searchQuery.trim()
@@ -1720,7 +1736,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 line-clamp-2">{selectedOrder.listingTitle || '未知商品'}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      {selectedOrder.listingCondition && <Badge variant="outline" className="text-xs">{conditionLabel[selectedOrder.listingCondition] ?? selectedOrder.listingCondition}</Badge>}
+                      {selectedOrder.listingCondition && <Badge variant="outline" className="text-xs text-gray-800 border-gray-300">{conditionLabel[selectedOrder.listingCondition] ?? selectedOrder.listingCondition}</Badge>}
                       <span className="text-xs text-gray-500">數量：{selectedOrder.quantity ?? 1}</span>
                     </div>
                     <p className="text-[#06038d] font-bold mt-1">HKD {parseFloat(selectedOrder.subtotalHkd || '0').toFixed(2)}</p>
@@ -1739,7 +1755,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                   <span className="text-gray-500">訂單編號</span>
                   <span className="font-mono text-xs text-gray-800">{selectedOrder.orderNo}</span>
                   <span className="text-gray-500">付款方式</span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 text-gray-800">
                     {selectedOrder.paymentMethod === 'stripe' ? <><CreditCard className="w-3.5 h-3.5 text-blue-600" />Stripe</> : <><Banknote className="w-3.5 h-3.5 text-green-600" />支付寶 HK</>}
                   </span>
                   <span className="text-gray-500">訂單金額</span>
@@ -1926,8 +1942,103 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                 </div>
               </div>
 
+              {/* ── 狀態變更歷史 ──────────────────── */}
+              <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
+                  <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />狀態變更歷史
+                  </p>
+                </div>
+                <div className="p-3">
+                  {orderHistoryQuery.isLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="w-3.5 h-3.5 animate-spin" />載入中...</div>
+                  ) : (orderHistoryQuery.data ?? []).length === 0 ? (
+                    <p className="text-sm text-gray-400">尚無狀態變更記錄</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {(orderHistoryQuery.data ?? []).map((h: any) => (
+                        <div key={h.id} className="flex items-start gap-2.5">
+                          <div className="w-2 h-2 rounded-full bg-[#06038d] mt-1.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-medium text-gray-700">{h.fromStatus && h.toStatus && h.fromStatus !== h.toStatus ? `${orderStatusLabel[h.fromStatus] ?? h.fromStatus} → ${orderStatusLabel[h.toStatus] ?? h.toStatus}` : (orderStatusLabel[h.toStatus] ?? h.toStatus)}</span>
+                              {h.operatorName && <span className="text-xs text-gray-400">by {h.operatorName}</span>}
+                            </div>
+                            {h.note && <p className="text-xs text-gray-500 mt-0.5">{h.note}</p>}
+                            <p className="text-xs text-gray-400">{new Date(h.createdAt).toLocaleString('zh-HK')}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── 發送訊息給買家 ────────────────── */}
+              <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
+                <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
+                  <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5" />發送訊息給買家
+                  </p>
+                </div>
+                <div className="p-3">
+                  <Button size="sm" variant="outline" className="border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/10"
+                    onClick={() => setShowSendMessageDialog(true)}>
+                    <MessageSquare className="w-3.5 h-3.5 mr-1.5" />發送訊息給買家
+                  </Button>
+                </div>
+              </div>
+
+              {/* ── 列印訂單按鈕 ──────────────────── */}
+              <div className="flex justify-end pb-2">
+                <Button size="sm" variant="outline" className="border-gray-300 text-gray-600 hover:bg-gray-50 print:hidden"
+                  onClick={() => {
+                    const order = selectedOrder;
+                    const printWindow = window.open('', '_blank');
+                    if (!printWindow || !order) return;
+                    const addr = (() => { try { const a = JSON.parse(order.shippingAddress || '{}'); return [a.address, a.district, a.region].filter(Boolean).join(', '); } catch { return order.shippingAddress || '—'; } })();
+                    printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>訂單 ${order.orderNo}</title><style>body{font-family:sans-serif;padding:24px;font-size:13px;color:#111}h1{font-size:18px;margin-bottom:4px}h2{font-size:14px;border-bottom:1px solid #ccc;padding-bottom:4px;margin-top:16px}table{width:100%;border-collapse:collapse}td{padding:4px 8px;vertical-align:top}td:first-child{color:#555;width:120px}@media print{button{display:none}}</style></head><body><h1>訂單單據</h1><p style="color:#555;font-size:12px">${order.orderNo}</p><h2>商品資訊</h2><table><tr><td>商品</td><td>${order.listingTitle || '未知'}</td></tr><tr><td>品相</td><td>${order.listingCondition || '—'}</td></tr><tr><td>數量</td><td>${order.quantity ?? 1}</td></tr><tr><td>金額</td><td>HKD ${parseFloat(order.subtotalHkd || '0').toFixed(2)}</td></tr></table><h2>買家資料</h2><table><tr><td>姓名</td><td>${order.buyerName || '—'}</td></tr><tr><td>電郵</td><td>${order.buyerEmail || '—'}</td></tr><tr><td>電話</td><td>${order.buyerPhone || '—'}</td></tr></table><h2>物流 / 收件資訊</h2><table><tr><td>收件人</td><td>${order.shippingName || '—'}</td></tr><tr><td>電話</td><td>${order.shippingPhone || '—'}</td></tr><tr><td>地址</td><td>${addr}</td></tr><tr><td>物流方式</td><td>${order.shippingMethod || '—'}</td></tr><tr><td>追蹤號碼</td><td>${order.trackingNumber || order.trackingNo || '—'}</td></tr></table><h2>訂單詳情</h2><table><tr><td>訂單金額</td><td>HKD ${parseFloat(order.subtotalHkd || '0').toFixed(2)}</td></tr><tr><td>平台手續費</td><td>HKD ${parseFloat(order.platformFeeHkd || '0').toFixed(2)}</td></tr><tr><td>賣家應收</td><td>HKD ${parseFloat(order.sellerReceivableHkd || '0').toFixed(2)}</td></tr><tr><td>付款方式</td><td>${order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</td></tr><tr><td>下單日期</td><td>${new Date(order.createdAt).toLocaleString('zh-HK')}</td></tr></table><script>window.print();window.close();<\/script></body></html>`);
+                    printWindow.document.close();
+                  }}>
+                  <Printer className="w-3.5 h-3.5 mr-1.5" />列印訂單
+                </Button>
+              </div>
+
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Send message to buyer dialog */}
+      <Dialog open={showSendMessageDialog} onOpenChange={setShowSendMessageDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-[#06038d]" />
+              發送訊息給買家
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              <p>訊息將以站內通知形式發送給買家。</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">主旨</label>
+              <Input className="mt-1 border-[#06038d]/30" placeholder="輸入主旨..." value={sendMessageSubject} onChange={e => setSendMessageSubject(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">訊息內容</label>
+              <Textarea className="mt-1 border-[#06038d]/30 resize-none" placeholder="輸入訊息內容..." rows={4} value={sendMessageBody} onChange={e => setSendMessageBody(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowSendMessageDialog(false)}>取消</Button>
+            <Button className="bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+              disabled={sendMessageMutation.isPending || !sendMessageSubject.trim() || !sendMessageBody.trim()}
+              onClick={() => selectedOrder && sendMessageMutation.mutate({ orderId: selectedOrder.id, subject: sendMessageSubject, message: sendMessageBody })}>
+              {sendMessageMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}發送
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       {/* Batch shipping dialog */}

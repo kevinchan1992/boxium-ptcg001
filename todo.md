@@ -4798,3 +4798,23 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 確保關閉按鈕不被遣蓋（header flex-shrink-0）
 - [x] 儲存 checkpoint
 
+
+## ✅ OrderDetailDialog 三個新功能
+
+- [x] 後端：加入 order_status_history 表（orderId, fromStatus, toStatus, operatorId, operatorName, note, createdAt）
+- [x] 後端： adminUpdateOrderStatus 中自動寫入 order_status_history 記錄
+- [x] 後端：加入 adminGetOrderHistory procedure
+- [x] 後端：加入 adminSendBuyerMessage procedure（發送通知給買家）
+- [x] 前端： OrderDetailDialog 加入「狀態變更歷史」時間軸區塊
+- [x] 前端： OrderDetailDialog 底部加入「列印訂單」按鈕，開新視窗列印
+- [x] 前端：買家資料區塊加入「發送訊息給買家」按鈕，開啟 Dialog 填寫訊息
+- [x] 撰寫 18 項單元測試（admin-order-detail-features.test.ts）
+- [x] 儲存 checkpoint
+
+
+## ✅ 修復 OrderDetailDialog 付款方式和品相白色文字
+
+- [x] 商品資訊區塊的「品相」 Badge 改為 text-gray-800 border-gray-300
+- [x] 訂單詳情區塊的「付款方式」値文字改為 text-gray-800
+- [x] 儲存 checkpoint
+
