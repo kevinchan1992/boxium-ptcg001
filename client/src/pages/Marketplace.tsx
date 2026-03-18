@@ -545,16 +545,16 @@ export default function Marketplace() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F5F7]">
+    <div className="min-h-screen bg-[#F4F5F7] overflow-x-hidden">
 
       {/* ── Hero Section ── */}
       <div className="bg-gradient-to-b from-[#06038D] via-[#0a06b0] to-[#06038D] relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-20 -right-20 w-80 h-80 bg-[#FEDD00]/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-[#FEDD00]/5 rounded-full blur-3xl" />
-          {/* Decorative card shapes */}
-          <div className="absolute top-4 right-8 w-16 h-22 bg-white/5 rounded-lg rotate-12 hidden md:block" />
-          <div className="absolute top-8 right-24 w-12 h-16 bg-[#FEDD00]/10 rounded-lg -rotate-6 hidden md:block" />
+          {/* Decorative card shapes - contained within overflow-hidden parent */}
+          <div className="absolute top-4 right-4 w-14 h-20 bg-white/5 rounded-lg rotate-12 hidden lg:block" />
+          <div className="absolute top-8 right-20 w-10 h-14 bg-[#FEDD00]/10 rounded-lg -rotate-6 hidden lg:block" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 pt-7 pb-6 relative z-10">
@@ -716,7 +716,7 @@ export default function Marketplace() {
 
               {/* Sort */}
               <Select value={sortBy} onValueChange={v => { setSortBy(v as typeof sortBy); resetAndSearch(); }}>
-                <SelectTrigger className="w-32 h-8 text-xs border-gray-200 bg-white focus:ring-[#06038D] rounded-full shrink-0">
+                <SelectTrigger className="w-28 h-8 text-xs border-gray-200 bg-white focus:ring-[#06038D] rounded-full shrink-0 max-w-[7rem]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
