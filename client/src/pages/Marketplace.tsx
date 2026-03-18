@@ -99,6 +99,14 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Sold out overlay */}
+        {(listing.remainingQuantity === 0 || listing.status === 'sold') && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+            <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+              <span className="text-[#06038D] font-bold text-sm tracking-wider">已售出</span>
+            </div>
+          </div>
+        )}
 
         {/* Top badges */}
         <div className="absolute top-2 left-2 right-2 flex items-start justify-between">
@@ -482,6 +490,10 @@ export default function Marketplace() {
     return () => clearInterval(t);
   }, [bannerPaused, activeBanners.length]);
 
+  // Hot keywords (dynamic)
+  const { data: hotKeywordsData } = trpc.marketplace.getHotKeywords.useQuery({ limit: 6, days: 7 });
+  const logSearchMutation = trpc.marketplace.logSearch.useMutation();
+
   // Auth + wishlist
   const { data: me } = trpc.auth.me.useQuery();
   const utils = trpc.useUtils();
@@ -668,28 +680,36 @@ export default function Marketplace() {
               {/* Hot search tags */}
               <div className="flex items-center gap-2 mt-2.5 flex-wrap">
                 <span className="text-white/40 text-[10px] font-medium shrink-0">熱門：</span>
-                {[
-                  { label: 'PSA 10', search: 'PSA 10', series: 'all' },
-                  { label: 'Charizard', search: 'Charizard', series: 'pokemon' },
-                  { label: 'Luffy', search: 'Luffy', series: 'onepiece' },
-                  { label: 'Blue-Eyes', search: 'Blue-Eyes', series: 'yugioh' },
-                  { label: 'Pikachu', search: 'Pikachu', series: 'pokemon' },
-                  { label: 'Nami', search: 'Nami', series: 'onepiece' },
-                ].map(tag => (
-                  <button
-                    key={tag.label}
-                    type="button"
-                    onClick={() => {
-                      setSearchInput(tag.search);
-                      setSearch(tag.search);
-                      if (tag.series !== 'all') setTcgSeries(tag.series);
-                      resetAndSearch();
-                    }}
-                    className="text-[10px] sm:text-xs text-white/60 hover:text-[#FEDD00] hover:bg-white/10 px-2 py-0.5 rounded-full border border-white/10 hover:border-[#FEDD00]/40 transition-all"
-                  >
-                    {tag.label}
-                  </button>
-                ))}
+{(() => {
+                    // Show dynamic hot keywords if available, otherwise show static fallback
+                    const STATIC_TAGS = [
+                      { label: 'PSA 10', search: 'PSA 10', series: 'all' },
+                      { label: 'Charizard', search: 'Charizard', series: 'pokemon' },
+                      { label: 'Luffy', search: 'Luffy', series: 'onepiece' },
+                      { label: 'Blue-Eyes', search: 'Blue-Eyes', series: 'yugioh' },
+                      { label: 'Pikachu', search: 'Pikachu', series: 'pokemon' },
+                      { label: 'Nami', search: 'Nami', series: 'onepiece' },
+                    ];
+                    const dynamicTags: { label: string; search: string; series: string }[] = hotKeywordsData && hotKeywordsData.length >= 3
+                      ? hotKeywordsData.map((k: { keyword: string; tcgSeries: string | null; count: number }) => ({ label: k.keyword, search: k.keyword, series: k.tcgSeries ?? 'all' }))
+                      : STATIC_TAGS;
+                    return dynamicTags.map((tag: { label: string; search: string; series: string }) => (
+                      <button
+                        key={tag.label}
+                        type="button"
+                        onClick={() => {
+                          setSearchInput(tag.search);
+                          setSearch(tag.search);
+                          if (tag.series && tag.series !== 'all') setTcgSeries(tag.series);
+                          logSearchMutation.mutate({ keyword: tag.search, tcgSeries: tag.series !== 'all' ? tag.series : undefined });
+                          resetAndSearch();
+                        }}
+                        className="text-[10px] sm:text-xs text-white/60 hover:text-[#FEDD00] hover:bg-white/10 px-2 py-0.5 rounded-full border border-white/10 hover:border-[#FEDD00]/40 transition-all"
+                      >
+                        {tag.label}
+                      </button>
+                    ));
+                  })()}
               </div>
             </form>
           </div>

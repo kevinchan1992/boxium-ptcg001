@@ -28,7 +28,7 @@ import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
 import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail } from "../emailService";
-import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory } from "../../drizzle/schema_new";
+import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs } from "../../drizzle/schema_new";
 import { eq, and, isNotNull, isNull, or, desc, sql, inArray, like } from 'drizzle-orm';
 
 // Platform fee rate (5% for C2C listings only)
@@ -52,6 +52,48 @@ export const marketplaceRouter = router({
   // ============================================================
   // PUBLIC - Listings
   // ============================================================
+  // ============================================================
+  // PUBLIC - Hot Search Keywords
+  // ============================================================
+  logSearch: publicProcedure
+    .input(z.object({
+      keyword: z.string().min(1).max(200),
+      tcgSeries: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) return { ok: false };
+      await db.insert(marketplaceSearchLogs).values({
+        keyword: input.keyword.trim().toLowerCase(),
+        tcgSeries: input.tcgSeries ?? null,
+        userId: ctx.user?.id ?? null,
+      });
+      return { ok: true };
+    }),
+
+  getHotKeywords: publicProcedure
+    .input(z.object({
+      limit: z.number().int().min(1).max(20).default(8),
+      days: z.number().int().min(1).max(90).default(7),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const since = new Date(Date.now() - input.days * 24 * 60 * 60 * 1000);
+      const rows = await db
+        .select({
+          keyword: marketplaceSearchLogs.keyword,
+          tcgSeries: marketplaceSearchLogs.tcgSeries,
+          count: sql<number>`COUNT(*) as count`,
+        })
+        .from(marketplaceSearchLogs)
+        .where(sql`${marketplaceSearchLogs.createdAt} >= ${since}`)
+        .groupBy(marketplaceSearchLogs.keyword, marketplaceSearchLogs.tcgSeries)
+        .orderBy(desc(sql`COUNT(*)`)) 
+        .limit(input.limit);
+      return rows;
+    }),
+
   getListings: publicProcedure
     .input(z.object({
       page: z.number().int().min(1).default(1),

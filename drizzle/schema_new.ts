@@ -1072,3 +1072,19 @@ export const orderStatusHistory = mysqlTable("orderStatusHistory", {
 }));
 export type OrderStatusHistory = typeof orderStatusHistory.$inferSelect;
 export type InsertOrderStatusHistory = typeof orderStatusHistory.$inferInsert;
+
+/**
+ * Marketplace Search Logs - records search keywords for hot search statistics
+ */
+export const marketplaceSearchLogs = mysqlTable("marketplaceSearchLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  keyword: varchar("keyword", { length: 200 }).notNull(),
+  tcgSeries: varchar("tcgSeries", { length: 50 }),
+  userId: int("userId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  keywordIdx: index("msl_keyword_idx").on(table.keyword),
+  createdAtIdx: index("msl_createdAt_idx").on(table.createdAt),
+}));
+export type MarketplaceSearchLog = typeof marketplaceSearchLogs.$inferSelect;
+export type InsertMarketplaceSearchLog = typeof marketplaceSearchLogs.$inferInsert;
