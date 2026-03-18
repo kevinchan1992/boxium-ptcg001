@@ -688,6 +688,51 @@ export default function Marketplace() {
         </div>
       </div>
 
+      {/* ── TCG Series Quick Filter ── */}
+      <div className="max-w-7xl mx-auto px-4 mt-4">
+        <div className="grid grid-cols-4 gap-3">
+          {TCG_SERIES.map(s => {
+            const isActive = tcgSeries === s.value;
+            return (
+              <button
+                key={s.value}
+                onClick={() => {
+                  setTcgSeries(s.value);
+                  resetAndSearch();
+                }}
+                className={`relative flex flex-col items-center justify-center gap-2 py-4 px-3 rounded-2xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm ${
+                  isActive
+                    ? 'border-[#06038D] bg-[#06038D] shadow-lg shadow-[#06038D]/20'
+                    : 'border-gray-100 bg-white hover:border-[#06038D]/30 hover:shadow-md'
+                }`}
+              >
+                {s.logo ? (
+                  <img
+                    src={s.logo}
+                    alt={s.label}
+                    className={`h-7 sm:h-9 w-auto object-contain transition-all ${
+                      isActive ? 'brightness-0 invert' : ''
+                    }`}
+                  />
+                ) : (
+                  <span className={`text-sm font-bold ${
+                    isActive ? 'text-white' : 'text-[#06038D]'
+                  }`}>全部</span>
+                )}
+                <span className={`text-[10px] sm:text-xs font-semibold ${
+                  isActive ? 'text-white/90' : 'text-gray-500'
+                }`}>
+                  {s.value === 'all' ? '所有系列' : s.label}
+                </span>
+                {isActive && (
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#FEDD00]" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* ── Main Content: Left Sidebar + Right Products ── */}
       <div className="max-w-7xl mx-auto py-5" style={{ paddingLeft: '1rem', paddingRight: '1rem', boxSizing: 'border-box', overflow: 'hidden' }}>
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', overflow: 'hidden' }}>

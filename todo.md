@@ -4891,3 +4891,4 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 批量上架 CSV 加入 image_url 欄位支援圖片 URL
 - [x] 商品詳情頁 SEO 標題加入 TCG 系列名稱（如「[Pokémon] 商品名稱」）
 - [x] Admin Marketplace 管理頁加入 TCG 系列篩選（Pokémon / One Piece / Yu-Gi-Oh!）
+- [x] Marketplace 首頁加入 TCG 系列快速篩選 Logo 按鈕
