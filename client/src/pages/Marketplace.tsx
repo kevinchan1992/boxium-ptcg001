@@ -199,7 +199,7 @@ function SidebarFilter({
   resetAndSearch: () => void;
 }) {
   return (
-    <aside className="w-56 shrink-0 space-y-5">
+    <aside className="w-full space-y-5 overflow-hidden">
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -331,21 +331,20 @@ function SidebarFilter({
             </button>
           )}
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="grid grid-cols-2 gap-1.5 items-center">
           <Input
             type="number"
             placeholder="最低"
             value={priceMin}
             onChange={e => { setPriceMin(e.target.value); resetAndSearch(); }}
-            className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D]"
+            className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D] min-w-0"
           />
-          <span className="text-gray-400 text-xs shrink-0">—</span>
           <Input
             type="number"
             placeholder="最高"
             value={priceMax}
             onChange={e => { setPriceMax(e.target.value); resetAndSearch(); }}
-            className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D]"
+            className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D] min-w-0"
           />
         </div>
       </div>
@@ -549,12 +548,9 @@ export default function Marketplace() {
 
       {/* ── Hero Section ── */}
       <div className="bg-gradient-to-b from-[#06038D] via-[#0a06b0] to-[#06038D] relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none" style={{overflow:'hidden'}}>
           <div className="absolute -top-20 -right-20 w-80 h-80 bg-[#FEDD00]/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-[#FEDD00]/5 rounded-full blur-3xl" />
-          {/* Decorative card shapes - contained within overflow-hidden parent */}
-          <div className="absolute top-4 right-4 w-14 h-20 bg-white/5 rounded-lg rotate-12 hidden lg:block" />
-          <div className="absolute top-8 right-20 w-10 h-14 bg-[#FEDD00]/10 rounded-lg -rotate-6 hidden lg:block" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 pt-7 pb-6 relative z-10">
@@ -673,21 +669,21 @@ export default function Marketplace() {
       </div>
 
       {/* ── Main Content: Left Sidebar + Right Products ── */}
-      <div className="max-w-7xl mx-auto px-4 py-5">
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+      <div className="max-w-7xl mx-auto py-5" style={{ paddingLeft: '1rem', paddingRight: '1rem', boxSizing: 'border-box', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', overflow: 'hidden' }}>
 
           {/* ── Left Sidebar (desktop) ── */}
-          <div className="hidden lg:block" style={{ width: '224px', flexShrink: 0, position: 'sticky', top: '1rem', alignSelf: 'flex-start' }}>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="hidden lg:block" style={{ width: '240px', flexShrink: 0, position: 'sticky', top: '1rem', alignSelf: 'flex-start', overflow: 'hidden' }}>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" style={{ width: '240px', boxSizing: 'border-box', overflow: 'hidden' }}>
               <SidebarFilter {...sidebarProps} />
             </div>
           </div>
 
           {/* ── Right: Products Area ── */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
 
             {/* Top bar: count + sort + mobile filter */}
-            <div className="flex items-center justify-between mb-4 gap-3">
+            <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
               <div className="flex items-center gap-3">
                 {/* Mobile filter toggle */}
                 <button
@@ -716,10 +712,10 @@ export default function Marketplace() {
 
               {/* Sort */}
               <Select value={sortBy} onValueChange={v => { setSortBy(v as typeof sortBy); resetAndSearch(); }}>
-                <SelectTrigger className="w-28 h-8 text-xs border-gray-200 bg-white focus:ring-[#06038D] rounded-full shrink-0 max-w-[7rem]">
+                <SelectTrigger className="h-8 text-xs border-gray-200 bg-white focus:ring-[#06038D] rounded-full shrink-0" style={{width:'7.5rem'}}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent align="end">
                   <SelectItem value="newest">最新上架</SelectItem>
                   <SelectItem value="price_asc">價格低→高</SelectItem>
                   <SelectItem value="price_desc">價格高→低</SelectItem>
