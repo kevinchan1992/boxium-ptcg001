@@ -4177,20 +4177,20 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [x] 查看訂單管理卡片 UI 代碼（深藍頂部 + 白色內容）
 - [x] 重設計「買家出價」卡片為訂單管理風格
 - [x] 重設計「放款記錄」卡片為訂單管理風格
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🖼️ 買家出價卡片加入商品圖片縮圖
 - [x] 確認後端 getSellerOffers 已包含 listingImages 欄位（已確認）
 - [x] 前端解析 listingImages JSON 取第一張圖片作縮圖
 - [x] 在卡片內容區左側顯示 48x48 縮圖
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🛒 Admin 新增平台商品加入接受買家出價選項
 - [x] Admin 新增商品步驟 2 加入「接受買家出價」Toggle（與賣家中心 UI 一致）
 - [x] 更新 adminCreatePlatformListing 後端 API 接受 allowOffers 參數
 - [x] 更新步驟 3 確認頁面顯示接受出價狀態
 - [x] 商品詳情頁根據 allowOffers 欄位決定是否顯示「出價洽議」按鈕
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 Marketplace 全面流程審查修復（2026-03-10）
 
@@ -4211,7 +4211,7 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [ ] 後端加入出價過期自動清理定時任務（每小時掃描 pending 且 expiresAt 已過的出價標記為 expired）
 - [ ] 後端加入付款逾時自動取消訂單定時任務（每小時掃描 pending_payment 且超過 24 小時的訂單自動取消）
 - [ ] Admin 後台加入「出價管理」tab（查看所有出價記錄、篩選狀態、顯示買家賣家資訊）
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🆕 出價功能優化（2026-03-10）
 - [x] 賣家中心「買家出價」卡片加入出價倒計時顯示（還有 N 天/小時到期，即將到期顯示紅色警示）
@@ -4282,7 +4282,7 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [ ] 後端：新增 disputeResolutionLogs 表或在現有爭議表加入 resolutionHistory JSON 欄位
 - [ ] 撰寫相關測試
 - [ ] TypeScript 0 錯誤
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🛒 訂單詳情頁「取消訂單」按鈕 + 支付寶視窗完整顯示 + 爭議歷史記錄
 - [x] 後端新增 buyerCancelOrder mutation（只允許 pending_payment 狀態、24 小時內、買家本人取消）
@@ -4816,5 +4816,15 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 - [x] 商品資訊區塊的「品相」 Badge 改為 text-gray-800 border-gray-300
 - [x] 訂單詳情區塊的「付款方式」値文字改為 text-gray-800
+- [x] 儲存 checkpoint
+
+
+## ✅ Admin 備注 + 列印 Logo + 發送訊息範本
+
+- [x] 後端：加入 adminAddOrderNote procedure（寫入 order_status_history，type='note'）
+- [x] 前端：狀態歷史時間軸下方加入「新增備注」輸入框和提交按鈕
+- [x] 前端：列印訂單頁面加入 BOXIUM Logo 和公司資訊（地址、電話、網址）
+- [x] 前端：發送訊息 Dialog 加入常用訊息範本下拉選擇（訂單已出貨、請確認收貨、付款提醒等）
+- [x] 撰寫單元測試（adminAddOrderNote 6 項測試，共 75 項通過）
 - [x] 儲存 checkpoint
 

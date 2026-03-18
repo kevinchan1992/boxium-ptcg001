@@ -1331,6 +1331,11 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
     { orderId: selectedOrder?.id ?? 0 },
     { enabled: !!selectedOrder?.id }
   );
+  const [adminNoteInput, setAdminNoteInput] = useState('');
+  const addOrderNoteMutation = trpc.marketplace.adminAddOrderNote.useMutation({
+    onSuccess: () => { toast.success('備注已新增'); setAdminNoteInput(''); orderHistoryQuery.refetch(); },
+    onError: (e) => toast.error(e.message)
+  });
 
   const orders = data?.orders ?? [];
   const total = data?.total ?? 0;
@@ -1946,31 +1951,54 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
               <div className="rounded-lg border border-[#06038d]/20 overflow-hidden">
                 <div className="bg-[#06038d]/[0.06] px-4 py-2 border-b border-[#06038d]/15">
                   <p className="text-[#06038d] font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />狀態變更歷史
+                    <Clock className="w-3.5 h-3.5" />狀態變更歷史 &amp; 備注
                   </p>
                 </div>
-                <div className="p-3">
+                <div className="p-3 space-y-3">
                   {orderHistoryQuery.isLoading ? (
                     <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="w-3.5 h-3.5 animate-spin" />載入中...</div>
                   ) : (orderHistoryQuery.data ?? []).length === 0 ? (
-                    <p className="text-sm text-gray-400">尚無狀態變更記錄</p>
+                    <p className="text-sm text-gray-400">尚無記錄</p>
                   ) : (
                     <div className="space-y-2">
                       {(orderHistoryQuery.data ?? []).map((h: any) => (
                         <div key={h.id} className="flex items-start gap-2.5">
-                          <div className="w-2 h-2 rounded-full bg-[#06038d] mt-1.5 flex-shrink-0" />
+                          <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${h.entryType === 'note' ? 'bg-amber-400' : 'bg-[#06038d]'}`} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-medium text-gray-700">{h.fromStatus && h.toStatus && h.fromStatus !== h.toStatus ? `${orderStatusLabel[h.fromStatus] ?? h.fromStatus} → ${orderStatusLabel[h.toStatus] ?? h.toStatus}` : (orderStatusLabel[h.toStatus] ?? h.toStatus)}</span>
+                              {h.entryType === 'note' ? (
+                                <span className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">備注</span>
+                              ) : (
+                                <span className="text-xs font-medium text-gray-700">{h.fromStatus && h.toStatus && h.fromStatus !== h.toStatus ? `${orderStatusLabel[h.fromStatus] ?? h.fromStatus} → ${orderStatusLabel[h.toStatus] ?? h.toStatus}` : (orderStatusLabel[h.toStatus] ?? h.toStatus)}</span>
+                              )}
                               {h.operatorName && <span className="text-xs text-gray-400">by {h.operatorName}</span>}
                             </div>
-                            {h.note && <p className="text-xs text-gray-500 mt-0.5">{h.note}</p>}
+                            {h.note && <p className="text-xs text-gray-600 mt-0.5">{h.entryType === 'note' ? h.note.replace(/^\[備注\] /, '') : h.note}</p>}
                             <p className="text-xs text-gray-400">{new Date(h.createdAt).toLocaleString('zh-HK')}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
+                  {/* 新增備注輸入區 */}
+                  <div className="border-t border-gray-100 pt-3">
+                    <p className="text-xs font-medium text-gray-600 mb-1.5">新增 Admin 備注</p>
+                    <div className="flex gap-2">
+                      <Input
+                        className="flex-1 text-sm border-[#06038d]/30 h-8"
+                        placeholder="輸入內部備注（不更改訂單狀態）..."
+                        value={adminNoteInput}
+                        onChange={e => setAdminNoteInput(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && adminNoteInput.trim() && selectedOrder) { addOrderNoteMutation.mutate({ orderId: selectedOrder.id, note: adminNoteInput.trim() }); } }}
+                        maxLength={500}
+                      />
+                      <Button size="sm" className="h-8 bg-amber-500 hover:bg-amber-600 text-white px-3 flex-shrink-0"
+                        disabled={!adminNoteInput.trim() || addOrderNoteMutation.isPending || !selectedOrder}
+                        onClick={() => selectedOrder && adminNoteInput.trim() && addOrderNoteMutation.mutate({ orderId: selectedOrder.id, note: adminNoteInput.trim() })}>
+                        {addOrderNoteMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '新增'}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1997,7 +2025,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                     const printWindow = window.open('', '_blank');
                     if (!printWindow || !order) return;
                     const addr = (() => { try { const a = JSON.parse(order.shippingAddress || '{}'); return [a.address, a.district, a.region].filter(Boolean).join(', '); } catch { return order.shippingAddress || '—'; } })();
-                    printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>訂單 ${order.orderNo}</title><style>body{font-family:sans-serif;padding:24px;font-size:13px;color:#111}h1{font-size:18px;margin-bottom:4px}h2{font-size:14px;border-bottom:1px solid #ccc;padding-bottom:4px;margin-top:16px}table{width:100%;border-collapse:collapse}td{padding:4px 8px;vertical-align:top}td:first-child{color:#555;width:120px}@media print{button{display:none}}</style></head><body><h1>訂單單據</h1><p style="color:#555;font-size:12px">${order.orderNo}</p><h2>商品資訊</h2><table><tr><td>商品</td><td>${order.listingTitle || '未知'}</td></tr><tr><td>品相</td><td>${order.listingCondition || '—'}</td></tr><tr><td>數量</td><td>${order.quantity ?? 1}</td></tr><tr><td>金額</td><td>HKD ${parseFloat(order.subtotalHkd || '0').toFixed(2)}</td></tr></table><h2>買家資料</h2><table><tr><td>姓名</td><td>${order.buyerName || '—'}</td></tr><tr><td>電郵</td><td>${order.buyerEmail || '—'}</td></tr><tr><td>電話</td><td>${order.buyerPhone || '—'}</td></tr></table><h2>物流 / 收件資訊</h2><table><tr><td>收件人</td><td>${order.shippingName || '—'}</td></tr><tr><td>電話</td><td>${order.shippingPhone || '—'}</td></tr><tr><td>地址</td><td>${addr}</td></tr><tr><td>物流方式</td><td>${order.shippingMethod || '—'}</td></tr><tr><td>追蹤號碼</td><td>${order.trackingNumber || order.trackingNo || '—'}</td></tr></table><h2>訂單詳情</h2><table><tr><td>訂單金額</td><td>HKD ${parseFloat(order.subtotalHkd || '0').toFixed(2)}</td></tr><tr><td>平台手續費</td><td>HKD ${parseFloat(order.platformFeeHkd || '0').toFixed(2)}</td></tr><tr><td>賣家應收</td><td>HKD ${parseFloat(order.sellerReceivableHkd || '0').toFixed(2)}</td></tr><tr><td>付款方式</td><td>${order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</td></tr><tr><td>下單日期</td><td>${new Date(order.createdAt).toLocaleString('zh-HK')}</td></tr></table><script>window.print();window.close();<\/script></body></html>`);
+                    printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>訂單 ${order.orderNo}</title><style>body{font-family:sans-serif;padding:24px;font-size:13px;color:#111}.header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #06038d;padding-bottom:12px;margin-bottom:16px}.logo-box{background:#f5c518;border:2px solid #06038d;border-radius:6px;padding:6px 14px;font-size:20px;font-weight:900;color:#06038d;letter-spacing:2px}.company-info{text-align:right;font-size:11px;color:#555;line-height:1.6}h1{font-size:16px;margin-bottom:4px;color:#06038d}h2{font-size:13px;border-bottom:1px solid #ccc;padding-bottom:4px;margin-top:16px;color:#06038d}table{width:100%;border-collapse:collapse}td{padding:4px 8px;vertical-align:top}td:first-child{color:#555;width:120px}.footer{margin-top:24px;border-top:1px solid #ccc;padding-top:8px;font-size:10px;color:#999;text-align:center}@media print{button{display:none}}</style></head><body><div class="header"><div class="logo-box">BOXIUM</div><div class="company-info"><strong>BOXIUM PTCG</strong><br/>www.boxium.asia<br/>香港卡片交易平台</div></div><h1>隨貨單據 / 訂單確認</h1><p style="color:#555;font-size:12px">訂單編號: ${order.orderNo}</p><h2>商品資訊</h2><table><tr><td>商品</td><td>${order.listingTitle || '未知'}</td></tr><tr><td>品相</td><td>${order.listingCondition || '—'}</td></tr><tr><td>數量</td><td>${order.quantity ?? 1}</td></tr><tr><td>金額</td><td>HKD ${parseFloat(order.subtotalHkd || '0').toFixed(2)}</td></tr></table><h2>買家資料</h2><table><tr><td>姓名</td><td>${order.buyerName || '—'}</td></tr><tr><td>電郵</td><td>${order.buyerEmail || '—'}</td></tr><tr><td>電話</td><td>${order.buyerPhone || '—'}</td></tr></table><h2>物流 / 收件資訊</h2><table><tr><td>收件人</td><td>${order.shippingName || '—'}</td></tr><tr><td>電話</td><td>${order.shippingPhone || '—'}</td></tr><tr><td>地址</td><td>${addr}</td></tr><tr><td>物流方式</td><td>${order.shippingMethod || '—'}</td></tr><tr><td>追蹤號碼</td><td>${order.trackingNumber || order.trackingNo || '—'}</td></tr></table><h2>訂單詳情</h2><table><tr><td>訂單金額</td><td>HKD ${parseFloat(order.subtotalHkd || '0').toFixed(2)}</td></tr><tr><td>平台手續費</td><td>HKD ${parseFloat(order.platformFeeHkd || '0').toFixed(2)}</td></tr><tr><td>賣家應收</td><td>HKD ${parseFloat(order.sellerReceivableHkd || '0').toFixed(2)}</td></tr><tr><td>付款方式</td><td>${order.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK'}</td></tr><tr><td>下單日期</td><td>${new Date(order.createdAt).toLocaleString('zh-HK')}</td></tr></table><script>window.print();window.close();<\/script></body></html>`);
                     printWindow.document.close();
                   }}>
                   <Printer className="w-3.5 h-3.5 mr-1.5" />列印訂單
@@ -2021,6 +2049,25 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
           <div className="space-y-3 py-2">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
               <p>訊息將以站內通知形式發送給買家。</p>
+            </div>
+            {/* 常用訊息範本 */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">常用範本</label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: '訂單已出貨', subject: '您的訂單已出貨', body: `您好，您的訂單 ${selectedOrder?.orderNo ?? ''} 已於今日出貨，請注意查收。如有問題請隨時聯繫我們。` },
+                  { label: '請確認收貨', subject: '請確認收貨', body: `您好，您的訂單 ${selectedOrder?.orderNo ?? ''} 已到達，請登入平台確認收貨，感謝您的支持！` },
+                  { label: '付款提醒', subject: '訂單付款提醒', body: `您好，您的訂單 ${selectedOrder?.orderNo ?? ''} 尚未完成付款，請儘早完成付款以便我們尽快處理您的訂單。` },
+                  { label: '等候貨源', subject: '訂單處理中', body: `您好，您的訂單 ${selectedOrder?.orderNo ?? ''} 目前正在處理中，預計將於近日出貨，請耐心等候。` },
+                  { label: '等候貨源', subject: '訂單延遲通知', body: `您好，您的訂單 ${selectedOrder?.orderNo ?? ''} 因貨源問題將稍延出貨，我們深感歉意，如需取消請聯繫客服。` },
+                ].map(tpl => (
+                  <button key={tpl.label} type="button"
+                    className="text-xs px-2 py-1 rounded border border-[#06038d]/30 text-[#06038d] hover:bg-[#06038d]/10 transition-colors"
+                    onClick={() => { setSendMessageSubject(tpl.subject); setSendMessageBody(tpl.body); }}>
+                    {tpl.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700">主旨</label>

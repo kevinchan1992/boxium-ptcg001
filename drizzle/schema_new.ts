@@ -1063,6 +1063,7 @@ export const orderStatusHistory = mysqlTable("orderStatusHistory", {
   operatorId: int("operatorId"), // FK to users (null = system)
   operatorName: varchar("operatorName", { length: 100 }), // snapshot of operator name
   note: varchar("note", { length: 500 }), // optional admin note
+  entryType: varchar("entryType", { length: 20 }).default('status_change').notNull(), // 'status_change' | 'note'
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   orderIdIdx: index("osh_orderId_idx").on(table.orderId),

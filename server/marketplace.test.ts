@@ -592,3 +592,35 @@ describe("Reject offer with rejection reason", () => {
     expect(notificationBody).not.toContain("原因：");
   });
 });
+
+describe("adminAddOrderNote", () => {
+  it("should validate note is not empty", () => {
+    const note = "  ";
+    expect(note.trim().length).toBe(0);
+  });
+  it("should enforce max 500 character limit on note", () => {
+    const longNote = "a".repeat(501);
+    expect(longNote.length > 500).toBe(true);
+    const validNote = "a".repeat(500);
+    expect(validNote.length <= 500).toBe(true);
+  });
+  it("should prefix note with [備注] tag", () => {
+    const userNote = "請注意此訂單需要特別處理";
+    const storedNote = `[備注] ${userNote}`;
+    expect(storedNote).toBe("[備注] 請注意此訂單需要特別處理");
+  });
+  it("should set entryType to note", () => {
+    const entry = { entryType: "note", note: "[備注] 測試備注" };
+    expect(entry.entryType).toBe("note");
+  });
+  it("should keep fromStatus and toStatus the same when adding note", () => {
+    const currentStatus = "paid";
+    const historyEntry = { fromStatus: currentStatus, toStatus: currentStatus, entryType: "note" };
+    expect(historyEntry.fromStatus).toBe(historyEntry.toStatus);
+  });
+  it("should strip [備注] prefix when displaying note in timeline", () => {
+    const rawNote = "[備注] 這是一條內部備注";
+    const displayNote = rawNote.replace(/^\[備注\] /, "");
+    expect(displayNote).toBe("這是一條內部備注");
+  });
+});

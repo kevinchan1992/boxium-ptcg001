@@ -2954,6 +2954,29 @@ All three checks must pass for verified to be true. Respond with JSON only match
     }),
 
   // ============================================================
+  adminAddOrderNote: adminProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      note: z.string().min(1).max(500),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND', message: '訂單不存在' });
+      const adminUser = ctx.user;
+      await db.insert(orderStatusHistory).values({
+        orderId: input.orderId,
+        fromStatus: order.orderStatus,
+        toStatus: order.orderStatus,
+        operatorId: adminUser?.id ?? null,
+        operatorName: adminUser?.name ?? 'Admin',
+        note: `[備注] ${input.note}`,
+        entryType: 'note',
+      });
+      return { success: true };
+    }),
+  // ============================================================
   adminGetPendingPayoutCount: adminProcedure
     .query(async () => {
       const db = await getDb();
