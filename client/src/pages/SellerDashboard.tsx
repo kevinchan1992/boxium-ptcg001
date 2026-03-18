@@ -952,11 +952,9 @@ export default function SellerDashboard() {
                     <p>尚未上架任何商品</p>
                     <Button
                       className="mt-4 font-bold"
-                      style={sellerProfile?.stripeConnectStatus === 'active' ? {background:'#FEDD00', color:'#06038D'} : {}}
-                      disabled={sellerProfile?.stripeConnectStatus !== 'active'}
-                      title={sellerProfile?.stripeConnectStatus !== 'active' ? '請先完成 Stripe Connect 收款帳戶設定' : undefined}
+                      style={{ background: '#FEDD00', color: '#06038D' }}
                       onClick={() => {
-                        if (sellerProfile?.stripeConnectStatus !== 'active') {
+                        if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
                           toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
                           return;
                         }
@@ -1015,16 +1013,14 @@ export default function SellerDashboard() {
                       </div>
                       <Button
                         className="font-bold flex items-center gap-2 text-sm h-8"
-                        style={sellerProfile?.stripeConnectStatus === 'active' ? { background: '#FEDD00', color: '#06038D' } : {}}
+                        style={{ background: '#FEDD00', color: '#06038D' }}
                         onClick={() => {
-                          if (sellerProfile?.stripeConnectStatus !== 'active') {
+                          if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
                             toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
                             return;
                           }
                           setShowNewListing(true);
                         }}
-                        disabled={sellerProfile?.stripeConnectStatus !== 'active'}
-                        title={sellerProfile?.stripeConnectStatus !== 'active' ? '請先完成 Stripe Connect 收款帳戶設定' : undefined}
                       >
                         <Plus className="w-4 h-4" />
                         上架新商品
