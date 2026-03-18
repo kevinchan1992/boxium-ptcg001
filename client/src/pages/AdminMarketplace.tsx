@@ -548,8 +548,8 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
 
   return (
     <Dialog open={!!listingId} onOpenChange={() => { onClose(); setEditMode(false); setImgIdx(0); }}>
-      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-xl overflow-hidden">
-        {/* ── Header ─────────────────────────────────── */}
+      <DialogContent className="max-w-2xl h-[92vh] flex flex-col p-0 gap-0 rounded-xl overflow-hidden">
+        {/* ── Header ───────────────────────────────────────────── */}
         <div className="bg-[#06038d] px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div>
             <h2 className="text-white font-bold text-lg tracking-wide">
@@ -575,7 +575,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
             <Loader2 className="w-8 h-8 animate-spin text-[#06038d]" />
           </div>
         ) : listing ? (
-          <div className="bg-white">
+          <div className="bg-white flex-1 overflow-y-auto flex flex-col min-h-0">
 
             {/* ── 賣家商品唯讀提示 ─────────────────────── */}
             {!isPlatformListing && (
@@ -917,9 +917,8 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                 </>
               )}
             </div>
-
-            {/* ── Footer ───────────────────────────────── */}
-            <div className="px-5 pb-5 flex justify-end gap-3">
+            {/* ── Footer ──────────────────────────────────────────── */}
+            <div className="px-5 pb-5 pt-3 flex justify-end gap-3 flex-shrink-0 border-t border-gray-100 bg-white mt-auto">
               {editMode ? (
                 <>
                   <Button variant="outline" className="border-[#06038d]/30 text-[#06038d]" onClick={() => setEditMode(false)}>取消</Button>

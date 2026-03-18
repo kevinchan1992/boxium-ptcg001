@@ -4783,3 +4783,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 撰寫 20 項單元測試（admin-six-features.test.ts）
 - [x] 儲存 checkpoint
 
+
+## ✅ 修復 ListingDetailDialog 視窗顯示問題
+
+- [x] DialogContent 改為 flex flex-col h-[92vh]，內容區域加入 flex-1 overflow-y-auto
+- [x] Header 和 Footer 固定不滚動，關閉按鈕不再被遣蓋
+- [x] 儲存 checkpoint
+
