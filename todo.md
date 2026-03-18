@@ -4893,3 +4893,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] Admin Marketplace 管理頁加入 TCG 系列篩選（Pokémon / One Piece / Yu-Gi-Oh!）
 - [x] Marketplace 首頁加入 TCG 系列快速篩選 Logo 按鈕
 - [x] Marketplace 系列篩選加入 URL 參數同步（?series=pokemon&search=...&sort=...）
+- [x] 各系列快速篩選卡片顯示在售商品數量
+- [x] 搜尋欄下方加入熱門搜尋標籤
+- [ ] 商品卡片分享按鈕加入「複製連結」功能
+- [x] 各系列快速篩選卡片顯示在售商品數量
+- [x] 搜尋欄下方加入熱門搜尋標籤
+- [x] 商品卡片分享按鈕加入複製連結功能

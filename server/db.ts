@@ -3045,6 +3045,19 @@ export async function getPublicListings(options: {
     .orderBy(orderClause)
     .limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(...conditions));
+  // Series counts (always based on active status only, no other filters)
+  const seriesCountRows = await db.select({
+    series: marketplaceListings.tcgSeries,
+    count: sql<number>`count(*)`
+  }).from(marketplaceListings)
+    .where(eq(marketplaceListings.status, 'active'))
+    .groupBy(marketplaceListings.tcgSeries);
+  const seriesCounts: Record<string, number> = { all: 0 };
+  for (const row of seriesCountRows) {
+    const s = row.series ?? 'other';
+    seriesCounts[s] = Number(row.count);
+    seriesCounts.all = (seriesCounts.all ?? 0) + Number(row.count);
+  }
   // Reshape to include sellerProfile sub-object
   const listings = rows.map(r => ({
     id: r.id,
@@ -3067,7 +3080,7 @@ export async function getPublicListings(options: {
       ratingCount: r.sellerRatingCount ?? 0,
     } : null,
   }));
-  return { listings, total: Number(countRows[0]?.count ?? 0) };
+  return { listings, total: Number(countRows[0]?.count ?? 0), seriesCounts };
 }
 export async function getListingById(id: number) {
   const db = await getDb();

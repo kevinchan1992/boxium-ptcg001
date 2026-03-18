@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search, Package, ChevronLeft, ChevronRight, X, ShoppingBag,
   SlidersHorizontal, Heart, Star, Tag, Shield, Award,
-  ShoppingCart, TrendingUp, Zap, Loader2, ArrowUp, Filter
+  ShoppingCart, TrendingUp, Zap, Loader2, ArrowUp, Filter, Share2, Copy, Check
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -60,6 +60,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
   onWishlistToggle?: (id: number) => void;
 }) {
   const [, setLocation] = useLocation();
+  const [copied, setCopied] = useState(false);
   const images: string[] | null = (() => {
     try { return listing.images ? JSON.parse(listing.images) : null; }
     catch { return null; }
@@ -67,6 +68,16 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
   const coverImage = images && images.length > 0 ? images[0] : null;
   const conditionKey = listing.condition as ConditionValue;
   const isWishlisted = wishlistIds?.includes(listing.id) ?? false;
+
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/marketplace/${listing.id}${listing.tcgSeries && listing.tcgSeries !== 'all' ? `?series=${listing.tcgSeries}` : ''}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      toast.success('連結已複製！');
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => toast.error('複製失敗'));
+  };
 
   return (
     <div
@@ -157,13 +168,22 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
               )}
             </div>
           ) : <span />}
-          {listing.tcgSeries && TCG_SERIES_LOGO[listing.tcgSeries] && (
-            <img
-              src={TCG_SERIES_LOGO[listing.tcgSeries]}
-              alt={TCG_SERIES_LABEL[listing.tcgSeries] ?? listing.tcgSeries}
-              className="h-4 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity"
-            />
-          )}
+          <div className="flex items-center gap-1.5">
+            {listing.tcgSeries && TCG_SERIES_LOGO[listing.tcgSeries] && (
+              <img
+                src={TCG_SERIES_LOGO[listing.tcgSeries]}
+                alt={TCG_SERIES_LABEL[listing.tcgSeries] ?? listing.tcgSeries}
+                className="h-4 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity"
+              />
+            )}
+            <button
+              onClick={handleCopyLink}
+              className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:text-[#06038D] hover:bg-gray-100 transition-all"
+              title="複製商品連結"
+            >
+              {copied ? <Check className="w-3 h-3 text-green-500" /> : <Share2 className="w-3 h-3" />}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -492,6 +512,7 @@ export default function Marketplace() {
   }), [page, search, selectedConditions, sellerType, tcgSeries, sortBy, priceMin, priceMax]);
 
   const { data, isLoading, isFetching } = trpc.marketplace.getListings.useQuery(queryInput);
+  const seriesCounts = data?.seriesCounts ?? {};
 
   useEffect(() => {
     if (data?.listings) {
@@ -644,6 +665,32 @@ export default function Marketplace() {
                   搜尋
                 </Button>
               </div>
+              {/* Hot search tags */}
+              <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                <span className="text-white/40 text-[10px] font-medium shrink-0">熱門：</span>
+                {[
+                  { label: 'PSA 10', search: 'PSA 10', series: 'all' },
+                  { label: 'Charizard', search: 'Charizard', series: 'pokemon' },
+                  { label: 'Luffy', search: 'Luffy', series: 'onepiece' },
+                  { label: 'Blue-Eyes', search: 'Blue-Eyes', series: 'yugioh' },
+                  { label: 'Pikachu', search: 'Pikachu', series: 'pokemon' },
+                  { label: 'Nami', search: 'Nami', series: 'onepiece' },
+                ].map(tag => (
+                  <button
+                    key={tag.label}
+                    type="button"
+                    onClick={() => {
+                      setSearchInput(tag.search);
+                      setSearch(tag.search);
+                      if (tag.series !== 'all') setTcgSeries(tag.series);
+                      resetAndSearch();
+                    }}
+                    className="text-[10px] sm:text-xs text-white/60 hover:text-[#FEDD00] hover:bg-white/10 px-2 py-0.5 rounded-full border border-white/10 hover:border-[#FEDD00]/40 transition-all"
+                  >
+                    {tag.label}
+                  </button>
+                ))}
+              </div>
             </form>
           </div>
         </div>
@@ -724,6 +771,7 @@ export default function Marketplace() {
         <div className="grid grid-cols-4 gap-3">
           {TCG_SERIES.map(s => {
             const isActive = tcgSeries === s.value;
+            const count = seriesCounts[s.value];
             return (
               <button
                 key={s.value}
@@ -731,7 +779,7 @@ export default function Marketplace() {
                   setTcgSeries(s.value);
                   resetAndSearch();
                 }}
-                className={`relative flex flex-col items-center justify-center gap-2 py-4 px-3 rounded-2xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm ${
+                className={`relative flex flex-col items-center justify-center gap-1.5 py-3.5 px-3 rounded-2xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm ${
                   isActive
                     ? 'border-[#06038D] bg-[#06038D] shadow-lg shadow-[#06038D]/20'
                     : 'border-gray-100 bg-white hover:border-[#06038D]/30 hover:shadow-md'
@@ -741,7 +789,7 @@ export default function Marketplace() {
                   <img
                     src={s.logo}
                     alt={s.label}
-                    className={`h-7 sm:h-9 w-auto object-contain transition-all ${
+                    className={`h-6 sm:h-8 w-auto object-contain transition-all ${
                       isActive ? 'brightness-0 invert' : ''
                     }`}
                   />
@@ -755,8 +803,15 @@ export default function Marketplace() {
                 }`}>
                   {s.value === 'all' ? '所有系列' : s.label}
                 </span>
+                {count != null && (
+                  <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {count} 件
+                  </span>
+                )}
                 {isActive && (
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#FEDD00]" />
+                  <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#FEDD00]" />
                 )}
               </button>
             );
