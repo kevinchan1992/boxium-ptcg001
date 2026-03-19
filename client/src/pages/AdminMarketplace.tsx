@@ -532,6 +532,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
   const [editMode, setEditMode] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
   const [editForm, setEditForm] = useState({ title: "", description: "", price: "", quantity: "", status: "" });
+  const utils = trpc.useUtils();
 
   const { data, isLoading, refetch } = trpc.marketplace.adminGetListingDetail.useQuery(
     { id: listingId! },
@@ -539,7 +540,14 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
   );
 
   const updateMutation = trpc.marketplace.adminUpdateListing.useMutation({
-    onSuccess: () => { toast.success("已更新商品資料"); setEditMode(false); refetch(); onUpdated(); },
+    onSuccess: () => {
+      toast.success("已更新商品資料");
+      setEditMode(false);
+      refetch();
+      onUpdated();
+      utils.marketplace.adminGetStats.invalidate();
+      utils.marketplace.adminGetPendingPayoutCount.invalidate();
+    },
     onError: (e) => toast.error(e.message),
   });
 
@@ -999,13 +1007,18 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showBatchRejectDialog, setShowBatchRejectDialog] = useState(false);
   const [batchRejectReason, setBatchRejectReason] = useState("");
+  const utils = trpc.useUtils();
+  const invalidateStats = () => {
+    utils.marketplace.adminGetStats.invalidate();
+    utils.marketplace.adminGetPendingPayoutCount.invalidate();
+  };
   const { data, isLoading, refetch } = trpc.marketplace.adminGetListings.useQuery({
     page, pageSize: 20,
     status: statusFilter === "all" ? undefined : statusFilter,
     tcgSeries: seriesFilter === "all" ? undefined : seriesFilter as any,
   });
   const updateMutation = trpc.marketplace.adminUpdateListing.useMutation({
-    onSuccess: () => { toast.success("已更新"); refetch(); },
+    onSuccess: () => { toast.success("已更新"); refetch(); invalidateStats(); },
     onError: (e) => toast.error(e.message)
   });
   const batchUpdateMutation = trpc.marketplace.adminBatchUpdateListingStatus.useMutation({
@@ -1013,6 +1026,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
       toast.success(`已批量更新 ${res.updated} 個商品${res.notified > 0 ? `，已通知 ${res.notified} 位賣家` : ''}`);
       setSelectedIds(new Set());
       refetch();
+      invalidateStats();
     },
     onError: (e) => toast.error(e.message)
   });
@@ -1323,6 +1337,11 @@ function exportToCSV(rows: any[], filename: string) {
 }
 
 function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { listingFilter?: number | null; onClearListingFilter?: () => void; onViewOrders?: (listingId: number) => void }) {
+  const utils = trpc.useUtils();
+  const invalidateStats = () => {
+    utils.marketplace.adminGetStats.invalidate();
+    utils.marketplace.adminGetPendingPayoutCount.invalidate();
+  };
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sellerTypeFilter, setSellerTypeFilter] = useState<'all' | 'platform' | 'seller'>('all');
@@ -1365,7 +1384,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
     listingId: listingFilter ?? undefined,
   });
   const updateStatusMutation = trpc.marketplace.adminUpdateOrderStatus.useMutation({
-    onSuccess: () => { toast.success("訂單狀態已更新"); refetch(); setSelectedOrder(null); setTrackingNumber(""); },
+    onSuccess: () => { toast.success("訂單狀態已更新"); refetch(); setSelectedOrder(null); setTrackingNumber(""); invalidateStats(); },
     onError: (e) => toast.error(e.message)
   });
   const saveNoteMutation = trpc.marketplace.adminSaveOrderNote.useMutation({
@@ -2451,9 +2470,14 @@ function AlipayPendingTab() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batchNote, setBatchNote] = useState("");
   const [showBatchDialog, setShowBatchDialog] = useState(false);
+  const utils = trpc.useUtils();
+  const invalidateStats = () => {
+    utils.marketplace.adminGetStats.invalidate();
+    utils.marketplace.adminGetPendingPayoutCount.invalidate();
+  };
 
   const confirmMutation = trpc.marketplace.adminConfirmAlipayPayment.useMutation({
-    onSuccess: () => { toast.success("已確認收款，已通知買家"); refetch(); setSelectedOrder(null); },
+    onSuccess: () => { toast.success("已確認收款，已通知買家"); refetch(); setSelectedOrder(null); invalidateStats(); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -2463,6 +2487,7 @@ function AlipayPendingTab() {
       refetch();
       setSelectedIds(new Set());
       setShowBatchDialog(false);
+      invalidateStats();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -2866,12 +2891,14 @@ function SellersTab() {
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; sellerId: number; sellerName: string }>({ open: false, sellerId: 0, sellerName: "" });
   const [rejectReason, setRejectReason] = useState("");
   const { data, isLoading, refetch } = trpc.marketplace.adminGetSellers.useQuery({ page, pageSize: 20, search: searchQuery || undefined });
+  const utils = trpc.useUtils();
   const approveMutation = trpc.marketplace.adminApproveSeller.useMutation({
     onSuccess: (_, vars) => {
       toast.success(vars.approve ? "賣家已批准，已通知申請人" : "賣家已拒絕/停用，已通知申請人");
       setRejectDialog({ open: false, sellerId: 0, sellerName: "" });
       setRejectReason("");
       refetch();
+      utils.marketplace.adminGetStats.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -4068,6 +4095,8 @@ function PayoutsTab() {
       setBatchProofFile(null);
       setBatchProofPreview(null);
       utils.marketplace.adminGetOrders.invalidate();
+      utils.marketplace.adminGetStats.invalidate();
+      utils.marketplace.adminGetPendingPayoutCount.invalidate();
     },
     onError: (err) => toast.error('批量放款失敗：' + err.message),
   });

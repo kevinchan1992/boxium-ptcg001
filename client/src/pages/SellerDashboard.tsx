@@ -549,12 +549,12 @@ export default function SellerDashboard() {
   });
 
   const deactivateMutation = trpc.marketplace.deleteMyListing.useMutation({
-    onSuccess: () => { toast.success("商品已下架"); refetchListings(); },
+    onSuccess: () => { toast.success("商品已下架"); refetchListings(); utils.marketplace.getMySellerProfile.invalidate(); },
     onError: (e) => toast.error(e.message),
   });
 
   const reactivateMutation = trpc.marketplace.updateMyListing.useMutation({
-    onSuccess: () => { toast.success("商品已重新上架，等待審核"); refetchListings(); },
+    onSuccess: () => { toast.success("商品已重新上架，等待審核"); refetchListings(); utils.marketplace.getMySellerProfile.invalidate(); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -564,6 +564,7 @@ export default function SellerDashboard() {
       setSelectedIds(new Set());
       setBatchMode(false);
       refetchListings();
+      utils.marketplace.getMySellerProfile.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -574,6 +575,7 @@ export default function SellerDashboard() {
       setSelectedIds(new Set());
       setBatchMode(false);
       refetchListings();
+      utils.marketplace.getMySellerProfile.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });

@@ -4903,3 +4903,5 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 熱門搜尋標籤改為後端動態統計資料
 - [ ] 商品卡片加入已售出遮罩
 - [x] 修復 TCG 系列篩選卡片選中狀態下 Logo 消失問題
+- [ ] 修復 Admin 審核商品後紅點和待審核提示未即時更新問題
+- [x] 修復 Admin 審核商品後紅點和待審核提示未即時更新問題（全平台 mutation invalidate 修復）
