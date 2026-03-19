@@ -5047,3 +5047,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 後端 adminRejectAlipayPayment：拒絕後清空 alipayProofImageUrl 欄位（已存在）
 - [x] 前端 OrderDetail.tsx：截圖縮圖已顯示（點擊可放大）
 - [ ] 保存 checkpoint
+
+## 支付流程狀態一致性修復 (2026-03-19)
+- [x] 修復 schema_new.ts：paymentStatus 枚舉加入 'cancelled' 選項
+- [x] 執行資料庫遷移：ALTER TABLE marketplaceOrders MODIFY COLUMN paymentStatus
+- [x] 修復 getAlipayPendingOrders：排除 orderStatus = 'cancelled' 的訂單（防止已取消訂單出現在支付寶核對列表）
+- [x] 修復 buyerCancelOrder：取消時同步更新 paymentStatus = 'cancelled' 並清空 alipayProofImageUrl
+- [x] 修復 adminUpdateOrderStatus cancelled：同步更新 paymentStatus = 'cancelled' 並清空截圖
+- [x] 修復 submitAlipayProof：加入訂單狀態驗證（已取消/已付款不允許上傳截圖）
+- [x] 修復資料庫中 BOXIUM-20260319-5893 訂單狀態（orderStatus/paymentStatus 更新為 cancelled）
+- [ ] 保存 checkpoint

@@ -820,7 +820,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   alipayMerchantTransId: varchar("alipayMerchantTransId", { length: 100 }),
   alipayProofImageUrl: text("alipayProofImageUrl"), // S3 URL of payment proof screenshot
   aiVerificationResult: text("aiVerificationResult"), // JSON: { verified, detectedAmount, confidence, reason }
-  paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "failed", "refunded"]).default("pending").notNull(),
+  paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "failed", "refunded", "cancelled"]).default("pending").notNull(),
   // Order status
   orderStatus: mysqlEnum("orderStatus", [
     "pending_payment",

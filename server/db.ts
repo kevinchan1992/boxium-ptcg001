@@ -3319,10 +3319,11 @@ export async function getAlipayPendingOrders(dateFilter?: 'all' | 'today' | 'wee
   } else if (dateFilter === 'month') {
     fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
   }
-  const { gte } = await import('drizzle-orm');
+  const { gte, ne } = await import('drizzle-orm');
   const conditions: ReturnType<typeof eq>[] = [
     eq(marketplaceOrders.paymentMethod, 'alipay_hk'),
     eq(marketplaceOrders.paymentStatus, 'pending'),
+    ne(marketplaceOrders.orderStatus, 'cancelled'),
   ];
   if (fromDate) {
     conditions.push(gte(marketplaceOrders.createdAt, fromDate) as any);

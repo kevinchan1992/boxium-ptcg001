@@ -476,7 +476,9 @@ export const marketplaceRouter = router({
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
-      if (order.paymentMethod !== "alipay_hk") throw new TRPCError({ code: "BAD_REQUEST" });
+      if (order.paymentMethod !== "alipay_hk") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不是支付寶 HK 付款" });
+      if (order.orderStatus === "cancelled") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已取消，無法上傳付款截圖" });
+      if (order.paymentStatus === "paid") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已付款確認，無需重複上傳" });
 
       const buffer = Buffer.from(input.proofImageBase64, "base64");
       const key = `alipay-proofs/${order.orderNo}-${Date.now()}.jpg`;
@@ -1490,6 +1492,12 @@ export const marketplaceRouter = router({
         autoComplete.setDate(autoComplete.getDate() + 14);
         updates.autoCompleteAt = autoComplete;
       }
+      // When cancelling, also update paymentStatus and clear any pending Alipay proof
+      if (input.orderStatus === "cancelled") {
+        updates.paymentStatus = "cancelled";
+        updates.alipayProofImageUrl = null;
+        updates.aiVerificationResult = null;
+      }
       await updateMarketplaceOrder(input.orderId, updates);
       // Notify buyer of status change
       const statusMessages: Record<string, { title: string; content: string }> = {
@@ -2152,6 +2160,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
       await updateMarketplaceOrder(input.orderId, {
         orderStatus: "cancelled",
+        paymentStatus: "cancelled",
+        alipayProofImageUrl: null,
+        aiVerificationResult: null,
       });
       // If listing was marked sold, restore it to active
       if (order.listingId) {
