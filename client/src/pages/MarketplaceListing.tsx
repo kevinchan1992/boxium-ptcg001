@@ -1113,8 +1113,9 @@ export default function MarketplaceListing() {
                 </a>
               </div>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-                <p className="font-medium">付款備注請填寫：</p>
-                <p className="font-mono mt-1">{listing.title.substring(0, 30)}</p>
+                <p className="font-medium">付款備注填寫欄位請填寫商品編號：</p>
+                <p className="font-mono mt-1 text-sm font-bold tracking-wide">#BOXIUM-{listing.id}</p>
+                <p className="text-amber-600 mt-1">請務必填寫以上編號，方便核對付款</p>
               </div>
               <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white"
                 onClick={() => setAlipayStep("shipping")}>

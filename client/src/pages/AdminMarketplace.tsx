@@ -591,7 +591,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
               {editMode ? '編輯商品' : '商品詳情'}
             </h2>
             {listing && (
-              <p className="text-[#FEDD00] text-xs font-mono mt-0.5">ID #{listing.id}</p>
+              <p className="text-[#FEDD00] text-xs font-mono mt-0.5">#BOXIUM-{listing.id}</p>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -1184,7 +1184,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
                     onClick={e => e.stopPropagation()}
                     className="w-4 h-4 rounded border-white/50 bg-white/20 flex-shrink-0"
                   />
-                  <span className="text-white text-sm font-semibold font-mono">#{listing.id} · {listing.title}</span>
+                  <span className="text-white text-sm font-semibold font-mono">#BOXIUM-{listing.id} · {listing.title}</span>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     listing.condition === 'PSA10' ? 'bg-yellow-400 text-yellow-900' :
                     listing.condition === 'PSA9' ? 'bg-green-300 text-green-900' :
@@ -1838,6 +1838,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 line-clamp-2">{selectedOrder.listingTitle || '未知商品'}</p>
                     <div className="flex items-center gap-2 mt-1">
+                      {selectedOrder.listingId && <span className="text-xs font-mono text-[#06038d]/70">#BOXIUM-{selectedOrder.listingId}</span>}
                       {selectedOrder.listingCondition && <Badge variant="outline" className="text-xs text-gray-800 border-gray-300">{conditionLabel[selectedOrder.listingCondition] ?? selectedOrder.listingCondition}</Badge>}
                       <span className="text-xs text-gray-500">數量：{selectedOrder.quantity ?? 1}</span>
                     </div>
@@ -3590,7 +3591,7 @@ function ReportsTab() {
           {data.reports.map((r: any) => (
             <div key={r.id} className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
-                <span className="text-white text-xs font-semibold">舉報 #{r.id} · 商品 #{r.listingId}</span>
+                <span className="text-white text-xs font-semibold">舉報 #{r.id} · 商品 #BOXIUM-{r.listingId}</span>
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge[r.status] ?? ""}`}>{statusLabel[r.status] ?? r.status}</span>
               </div>
               <div className="p-4 bg-white">
@@ -3719,7 +3720,7 @@ function OffersTab() {
                     return null;
                   })()}
                   <div className="text-xs text-gray-600">
-                    <span className="font-medium">商品：</span>{o.listingTitle ?? `ID ${o.listingId}`}
+                    <span className="font-medium">商品：</span>{o.listingTitle ?? `#BOXIUM-${o.listingId}`}
                   </div>
                 </div>
                 <div className="text-xs text-gray-600">

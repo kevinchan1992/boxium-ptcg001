@@ -1145,7 +1145,8 @@ export default function SellerDashboard() {
                                   {isSelected && <Check className="w-3 h-3" style={{ color: '#06038D' }} />}
                                 </div>
                               )}
-                              <span className="text-xs text-white/80 font-medium">庫存 {listing.quantity}</span>
+                              <span className="text-xs text-white/80 font-medium">#BOXIUM-{listing.id}</span>
+                              <span className="text-xs text-white/50">庫存 {listing.quantity}</span>
                             </div>
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                               isActive ? "bg-green-400/20 text-green-200 border border-green-400/30" :

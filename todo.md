@@ -4926,3 +4926,15 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 市場參考價「查看詳細行情」連結改為內部 /card/:id 頁面
 - [x] 市場參考價底部說明文字加入品相標籤
 - [x] 保存 checkpoint
+
+---
+
+## 🔢 商品編號格式統一改為 #BOXIUM-XXXXX + 支付寶備注更新
+
+- [ ] AdminMarketplace.tsx 商品列表標題 listing.id 改為 #BOXIUM-{id}
+- [ ] AdminMarketplace.tsx 商品詳情 Dialog 中的 ID 顯示改為 #BOXIUM-{id}
+- [ ] SellerDashboard.tsx 商品列表中的 listing.id 顯示改為 #BOXIUM-{id}
+- [ ] MarketplaceListing.tsx 商品詳情頁的 listing id 顯示改為 #BOXIUM-{id}
+- [ ] Marketplace.tsx 商品卡片中的 listing id 顯示改為 #BOXIUM-{id}
+- [ ] 支付寶 HK 付款備注提示改為顯示 #BOXIUM-{id} 格式
+- [ ] 保存 checkpoint
