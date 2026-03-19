@@ -718,12 +718,24 @@ async function startServer() {
           try { const p = JSON.parse(rawImages); images = Array.isArray(p) ? p : null; } catch {}
         }
       }
-      const imageUrl = images && images.length > 0 ? images[0] : "https://boxiumptcg.manus.space/og-image.png";
-      const ogTitle = `${listing.title} - HKD ${price.toFixed(2)} | BOXIUM PTCG`;
+      const rawImageUrl = images && images.length > 0 ? images[0] : null;
+      // Try to get/generate marketplace-specific OG image (card image + price badge + logo)
+      let ogImageUrl = rawImageUrl || getDefaultOgImageUrl();
+      if (rawImageUrl) {
+        const composedUrl = await composeAndCacheMarketplaceOgImage(
+          id,
+          rawImageUrl,
+          listing.title as string,
+          price,
+          (listing.condition as string) || "mint"
+        );
+        if (composedUrl) ogImageUrl = composedUrl;
+      }
+      const ogTitle = `${listing.title} - HKD ${price.toFixed(0)} | BOXIUM PTCG`;
       const ogDescription = listing.description
-        ? `${(listing.description as string).slice(0, 120)}${(listing.description as string).length > 120 ? "..." : ""} | HKD ${price.toFixed(2)}`
-        : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(2)} | BOXIUM PTCG 卡牌商城`;
-      const pageUrl = `https://boxiumptcg.manus.space/marketplace/${id}`;
+        ? `${(listing.description as string).slice(0, 120)}${(listing.description as string).length > 120 ? "..." : ""} | HKD ${price.toFixed(0)}`
+        : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(0)} | BOXIUM PTCG 卡牌商城`;
+      const pageUrl = `https://boxium.asia/marketplace/${id}`;
 
       // Read the base HTML template
       let template: string;
@@ -741,7 +753,7 @@ async function startServer() {
         `<meta property="og:url" content="${pageUrl}" />`,
         `<meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
         `<meta property="og:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
-        `<meta property="og:image" content="${imageUrl}" />`,
+        `<meta property="og:image" content="${ogImageUrl}" />`,
         `<meta property="og:image:width" content="1200" />`,
         `<meta property="og:image:height" content="630" />`,
         `<meta property="og:site_name" content="BOXIUM PTCG" />`,
@@ -750,7 +762,7 @@ async function startServer() {
         `<meta name="twitter:card" content="summary_large_image" />`,
         `<meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
         `<meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
-        `<meta name="twitter:image" content="${imageUrl}" />`,
+        `<meta name="twitter:image" content="${ogImageUrl}" />`,
         `<title>${ogTitle.replace(/<[^>]*>/g, '')}</title>`,
       ].join("\n    ");
 

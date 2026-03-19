@@ -4966,3 +4966,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 支付寶核對頁面：在列表中顯示 AI 驗證結果（aiVerificationResult）
 - [x] 賣家儀表板：出價管理標籤頁優化（築選器/商品編號/前往商品連結）
 - [x] 保存 checkpoint
+
+---
+
+## ✅ 商品詳情頁分享圖片修復
+
+- [x] 修復 /marketplace/:id 爬蟲路由使用 composeAndCacheMarketplaceOgImage 生成帶 BOXIUM logo 的合成圖片
+- [x] 統一 og:url 為 boxium.asia 域名
+- [x] 保存 checkpoint
