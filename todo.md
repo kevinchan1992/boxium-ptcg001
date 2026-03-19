@@ -5007,4 +5007,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] PayOrderButton upload 步驟：AI 驗證失敗時強制重新上傳（移除「可繼續提交」黃色提示，改為錯誤提示 + 重新上傳）
 - [x] 訂單詳情頁加入重新上傳截圖入口（已提交截圖但 AI 驗證失敗的訂單）
 - [x] 修復 submitAlipayProof 後端未儲存 alipayProofImageUrl 到資料庫的問題
+- [x] 保存 checkpoint (version: 5c3a8e16)
+
+
+---
+
+### ✅ 管理員後台拒絕付款 + 支付寶視窗統一
+- [x] 管理員後台加入「拒絕付款」按鈕（含原因輸入 Dialog，提交後通知買家）
+- [x] 後端新增 adminRejectAlipayPayment API（更新訂單狀態回 pending_payment + 通知買家）
+- [x] OrderDetail.tsx 支付寶 HK 流程統一改用 MarketplaceListing 相同視窗（select → qr → shipping → upload → done）
 - [ ] 保存 checkpoint

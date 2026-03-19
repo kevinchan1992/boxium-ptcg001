@@ -1284,6 +1284,32 @@ export const marketplaceRouter = router({
       return { results, successCount, failCount: results.length - successCount };
     }),
 
+  adminRejectAlipayPayment: adminProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      reason: z.string().min(1, "請填寫拒絕原因"),
+    }))
+    .mutation(async ({ input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      // Reset order back to pending_payment and clear proof
+      await updateMarketplaceOrder(input.orderId, {
+        paymentStatus: "pending",
+        orderStatus: "pending_payment",
+        alipayProofImageUrl: null,
+        aiVerificationResult: null,
+      });
+      // Notify buyer of rejection with reason
+      await createNotification({
+        userId: order.buyerId,
+        type: "trade",
+        title: "支付寶 HK 付款截圖未通過審核 ❌",
+        body: `訂單 ${order.orderNo} 的付款截圖未通過審核，請重新上傳正確截圖。原因：${input.reason}`,
+        linkUrl: `/orders/${order.orderNo}`,
+      }).catch(() => {});
+      return { success: true };
+    }),
+
   // Manual payout for alipay_hk orders (record offline bank transfer)
   adminManualPayout: adminProcedure
     .input(z.object({

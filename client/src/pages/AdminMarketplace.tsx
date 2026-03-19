@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer, XCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
@@ -2498,6 +2498,13 @@ function AlipayPendingTab() {
     onError: (e) => toast.error(e.message),
   });
 
+  const [rejectOrder, setRejectOrder] = useState<any>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const rejectMutation = trpc.marketplace.adminRejectAlipayPayment.useMutation({
+    onSuccess: () => { toast.success("已拒絕付款，已通知買家重新上傳"); refetch(); setRejectOrder(null); setRejectReason(""); },
+    onError: (e) => toast.error(e.message),
+  });
+
   const batchConfirmMutation = trpc.marketplace.adminBatchConfirmAlipayPayment.useMutation({
     onSuccess: (data) => {
       toast.success(`批量審核完成：${data.successCount} 筆成功${data.failCount > 0 ? `，${data.failCount} 筆失敗` : ""}`);
@@ -2658,10 +2665,16 @@ function AlipayPendingTab() {
                     } catch { return null; }
                   })()}
                 </div>
-                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0"
-                  onClick={() => { setSelectedOrder(order); setNote(""); }}>
-                  <CheckCircle className="w-3 h-3 mr-1" />確認收款
-                </Button>
+                <div className="flex gap-2 flex-shrink-0">
+                  <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50"
+                    onClick={() => { setRejectOrder(order); setRejectReason(""); }}>
+                    <XCircle className="w-3 h-3 mr-1" />拒絕
+                  </Button>
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => { setSelectedOrder(order); setNote(""); }}>
+                    <CheckCircle className="w-3 h-3 mr-1" />確認收款
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
@@ -2714,6 +2727,44 @@ function AlipayPendingTab() {
             <Button className="bg-green-600 hover:bg-green-700 text-white" disabled={confirmMutation.isPending}
               onClick={() => confirmMutation.mutate({ orderId: selectedOrder.id, note })}>
               {confirmMutation.isPending ? "確認中..." : "確認已收款"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject payment dialog */}
+      <Dialog open={!!rejectOrder} onOpenChange={(v) => { if (!v) { setRejectOrder(null); setRejectReason(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-red-700"><XCircle className="w-5 h-5" />拒絕支付寶 HK 付款</DialogTitle></DialogHeader>
+          {rejectOrder && (
+            <div className="space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+                <p>訂單：<strong>{rejectOrder.orderNo}</strong></p>
+                <p>金額：<strong>HKD {parseFloat(rejectOrder.subtotalHkd || "0").toFixed(2)}</strong></p>
+                {rejectOrder.shippingName && <p>買家：<strong>{rejectOrder.shippingName}</strong></p>}
+              </div>
+              {rejectOrder.alipayProofImageUrl && (
+                <img src={rejectOrder.alipayProofImageUrl} alt="付款截圖" className="rounded-lg border max-h-48 object-contain w-full" />
+              )}
+              <div>
+                <Label className="text-sm font-medium">拒絕原因 *</Label>
+                <Input
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  placeholder="例：截圖金額不符、截圖不清晰、收款方不符等"
+                  className="mt-1.5"
+                />
+              </div>
+              <p className="text-sm text-red-700 bg-red-50 rounded p-2">⚠️ 拒絕後訂單將回到「待付款」狀態，買家將收到通知並被要求重新上傳截圖。</p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRejectOrder(null); setRejectReason(""); }}>取消</Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={rejectMutation.isPending || !rejectReason.trim()}
+              onClick={() => rejectMutation.mutate({ orderId: rejectOrder.id, reason: rejectReason.trim() })}>
+              {rejectMutation.isPending ? "拒絕中..." : "確認拒絕"}
             </Button>
           </DialogFooter>
         </DialogContent>
