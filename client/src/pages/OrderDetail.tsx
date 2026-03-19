@@ -273,14 +273,24 @@ function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listi
                   )}
                 </div>
               </div>
+              {verifyResult && !verifyResult.verified && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+                  <p className="font-medium">⚠️ 如確認已付款，可繼續提交</p>
+                  <p className="mt-1">訂單將標記為「待人工核對」，管理員將在 1-2 個工作天內確認。</p>
+                </div>
+              )}
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("shipping")}>返回</Button>
                 <Button
                   className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
-                  disabled={!canSubmitProof || isVerifying || isUploading || submitProofMutation.isPending}
-                  onClick={() => { if (canSubmitProof) { setAlipayStep("done"); utils.marketplace.getOrderByNo.invalidate(); utils.marketplace.getMyOrders.invalidate(); } }}
+                  disabled={!proofUrl || isVerifying || isUploading}
+                  onClick={() => {
+                    setAlipayStep("done");
+                    utils.marketplace.getOrderByNo.invalidate();
+                    utils.marketplace.getMyOrders.invalidate();
+                  }}
                 >
-                  {submitProofMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : "✅ 提交訂單"}
+                  {submitProofMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : canSubmitProof ? "✅ 提交訂單" : "提交訂單（待核對）"}
                 </Button>
               </div>
             </div>
@@ -898,6 +908,18 @@ export default function OrderDetail() {
           )}
         </div>
 
+        {/* Payment Rejected Banner */}
+        {isBuyer && order.orderStatus === "pending_payment" && order.paymentMethod === "alipay_hk" && (order as any).paymentRejectionReason && (
+          <div className="bg-red-50 border border-red-300 rounded-xl p-4 flex items-start gap-3">
+            <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-red-800 text-sm">付款截圖已被拒絕</p>
+              <p className="text-red-700 text-xs mt-1">管理員拒絕原因：{(order as any).paymentRejectionReason}</p>
+              <p className="text-red-600 text-xs mt-1">請重新上傳正確的付款截圖，或選擇其他付款方式。</p>
+            </div>
+          </div>
+        )}
+
         {/* Order Timeline */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: "#06038d" }}>
@@ -1063,7 +1085,19 @@ export default function OrderDetail() {
               <div className="mt-3 pt-3 border-t border-gray-100">
                 {order.alipayProofImageUrl ? (
                   <div className="space-y-2">
-                    <p className="text-xs text-gray-500 font-medium">支付寶 HK 付款截圖</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-500 font-medium">支付寶 HK 付款截圖</p>
+                      {order.orderStatus === "pending_payment" && !((order as any).paymentRejectionReason) && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">
+                          <Loader2 className="w-3 h-3 animate-spin" />截圖審核中
+                        </span>
+                      )}
+                      {order.orderStatus === "pending_payment" && (order as any).paymentRejectionReason && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-700 border border-red-200 rounded-full px-2 py-0.5">
+                          <XCircle className="w-3 h-3" />已被拒絕
+                        </span>
+                      )}
+                    </div>
                     <img
                       src={order.alipayProofImageUrl}
                       alt="付款截圖"

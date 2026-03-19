@@ -5016,4 +5016,25 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 管理員後台加入「拒絕付款」按鈕（含原因輸入 Dialog，提交後通知買家）
 - [x] 後端新增 adminRejectAlipayPayment API（更新訂單狀態回 pending_payment + 通知買家）
 - [x] OrderDetail.tsx 支付寶 HK 流程統一改用 MarketplaceListing 相同視窗（select → qr → shipping → upload → done）
+- [x] 保存 checkpoint (version: 9503b582)
+
+---
+
+## 🔧## ✅ 拒絕通知 + 截圖審核中 + 批量拒絕
+- [x] 確認 DB schema 是否有 paymentRejectionReason 欄位，若無則新增（用 SQL 直接新增）
+- [x] 更新 adminRejectAlipayPayment API 儲存拒絕原因到 DB
+- [x] OrderDetail.tsx 加入「付款被拒絕」提示橫幅（顯示拒絕原因）
+- [x] OrderDetail.tsx 付款摘要加入「截圖審核中」狀態標籤
+- [x] AdminMarketplace.tsx 支付寶待核對列表加入批量拒絕功能（含原因輸入 Dialog）
+- [x] 使用 adminRejectAlipayPayment 循環實現批量拒絕（無需新增後端 API）
+---
+## ✅ OrderDetail upload 步驟完全對齊 MarketplaceListing
+- [x] SQL 直接新增 paymentRejectionReason 欄位
+- [x] 更新 adminRejectAlipayPayment API 儲存 paymentRejectionReason 到 DB
+- [x] OrderDetail PayOrderButton upload 步驟：加入 AI 驗證結果顯示（對齊 MarketplaceListing）
+- [x] OrderDetail upload 步驟：驗證失敗顯示詳細錯誤項目（收款方/金額/狀態）+ 重新上傳連結
+- [x] OrderDetail upload 步驟：驗證失敗仍可提交（黃色提示 + 提交按鈕）
+- [x] 訂單詳情頁加入「付款被拒絕」提示橫幅（顯示 paymentRejectionReason）
+- [x] 訂單詳情頁付款摘要加入「截圖審核中」狀態標籤
+- [x] AdminMarketplace 支付寶待核對列表加入批量拒絕功能
 - [ ] 保存 checkpoint

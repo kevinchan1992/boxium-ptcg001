@@ -1292,12 +1292,13 @@ export const marketplaceRouter = router({
     .mutation(async ({ input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
-      // Reset order back to pending_payment and clear proof
+      // Reset order back to pending_payment, clear proof, save rejection reason
       await updateMarketplaceOrder(input.orderId, {
         paymentStatus: "pending",
         orderStatus: "pending_payment",
         alipayProofImageUrl: null,
         aiVerificationResult: null,
+        paymentRejectionReason: input.reason,
       });
       // Notify buyer of rejection with reason
       await createNotification({

@@ -859,6 +859,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   manualPayoutProofUrl: text("manualPayoutProofUrl"), // S3 URL of payment proof screenshot
   paymentExpiresAt: timestamp("paymentExpiresAt"),
   adminNote: text("adminNote"), // Admin internal note for this order
+  paymentRejectionReason: text("paymentRejectionReason"), // Reason for rejecting alipay payment (shown to buyer)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   stripeSessionId: varchar("stripeSessionId", { length: 200 }),

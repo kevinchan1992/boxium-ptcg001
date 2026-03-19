@@ -2505,6 +2505,20 @@ function AlipayPendingTab() {
     onError: (e) => toast.error(e.message),
   });
 
+  const [showBatchRejectDialog, setShowBatchRejectDialog] = useState(false);
+  const [batchRejectReason, setBatchRejectReason] = useState("");
+  const batchRejectMutation = trpc.marketplace.adminRejectAlipayPayment.useMutation({
+    onSuccess: () => {
+      toast.success("批量拒絕完成");
+      refetch();
+      setSelectedIds(new Set());
+      setShowBatchRejectDialog(false);
+      setBatchRejectReason("");
+      invalidateStats();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const batchConfirmMutation = trpc.marketplace.adminBatchConfirmAlipayPayment.useMutation({
     onSuccess: (data) => {
       toast.success(`批量審核完成：${data.successCount} 筆成功${data.failCount > 0 ? `，${data.failCount} 筆失敗` : ""}`);
@@ -2589,14 +2603,25 @@ function AlipayPendingTab() {
             <span className="text-gray-600">全選 ({selectedIds.size}/{allIds.length})</span>
           </label>
           {selectedIds.size > 0 && (
-            <Button
-              size="sm"
-              className="bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => { setBatchNote(""); setShowBatchDialog(true); }}
-            >
-              <CheckCircle className="w-3 h-3 mr-1" />
-              批量確認 ({selectedIds.size} 筆)
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => { setBatchNote(""); setShowBatchDialog(true); }}
+              >
+                <CheckCircle className="w-3 h-3 mr-1" />
+                批量確認 ({selectedIds.size} 筆)
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+                onClick={() => { setBatchRejectReason(""); setShowBatchRejectDialog(true); }}
+              >
+                <XCircle className="w-3 h-3 mr-1" />
+                批量拒絕 ({selectedIds.size} 筆)
+              </Button>
+            </div>
           )}
         </div>
       )}
@@ -2765,6 +2790,51 @@ function AlipayPendingTab() {
               disabled={rejectMutation.isPending || !rejectReason.trim()}
               onClick={() => rejectMutation.mutate({ orderId: rejectOrder.id, reason: rejectReason.trim() })}>
               {rejectMutation.isPending ? "拒絕中..." : "確認拒絕"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Batch reject dialog */}
+      <Dialog open={showBatchRejectDialog} onOpenChange={setShowBatchRejectDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="text-red-700">批量拒絕支付寶 HK 付款</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+              <p>將拒絕以下 <strong>{selectedIds.size}</strong> 筆訂單的支付寶 HK 付款：</p>
+              <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+                {orders?.filter((o: any) => selectedIds.has(o.id)).map((o: any) => (
+                  <li key={o.id} className="flex justify-between">
+                    <span className="font-mono">{o.orderNo}</span>
+                    <span className="font-medium">HKD {parseFloat(o.subtotalHkd || "0").toFixed(2)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <Label>拒絕原因 *</Label>
+              <Input
+                value={batchRejectReason}
+                onChange={e => setBatchRejectReason(e.target.value)}
+                placeholder="例：付款金額不符、截圖不清晰、收款方不符合"
+                className="mt-1"
+              />
+            </div>
+            <p className="text-sm text-red-700 bg-red-50 rounded p-2">⚠️ 拒絕後系統會自動通知所有買家重新上傳截圖。</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBatchRejectDialog(false)}>取消</Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={!batchRejectReason.trim() || batchRejectMutation.isPending}
+              onClick={async () => {
+                const ids = Array.from(selectedIds);
+                for (const id of ids) {
+                  await batchRejectMutation.mutateAsync({ orderId: id, reason: batchRejectReason });
+                }
+              }}
+            >
+              {batchRejectMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />拒絕中...</> : `拒絕 ${selectedIds.size} 筆訂單`}
             </Button>
           </DialogFooter>
         </DialogContent>
