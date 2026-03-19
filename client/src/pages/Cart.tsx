@@ -81,6 +81,15 @@ export default function Cart() {
     },
   });
 
+  const clearUnavailableMutation = trpc.marketplace.clearUnavailableCartItems.useMutation({
+    onSuccess: (data) => {
+      utils.marketplace.getMyCart.invalidate();
+      utils.marketplace.getCartCount.invalidate();
+      toast.success(`已移除 ${data.removed} 件無效商品`);
+    },
+    onError: () => toast.error("移除失敗，請重試"),
+  });
+
   const [showCheckout, setShowCheckout] = useState(false);
   const [form, setForm] = useState<CheckoutForm>({
     shippingMethod: "sf_cod",
@@ -121,6 +130,23 @@ export default function Cart() {
     () => activeItems.reduce((sum, item) => sum + Number(item.priceHkd), 0),
     [activeItems]
   );
+
+  // Items expiring within 3 days
+  const soonExpiringItems = useMemo(() => {
+    const threeDaysFromNow = Date.now() + 3 * 24 * 60 * 60 * 1000;
+    return activeItems.filter(item => item.expiresAt && new Date(item.expiresAt).getTime() < threeDaysFromNow);
+  }, [activeItems]);
+
+  // Group active items by seller for batch checkout display
+  const itemsBySeller = useMemo(() => {
+    const groups: Record<number, typeof activeItems> = {};
+    for (const item of activeItems) {
+      const sid = item.sellerId ?? 0;
+      if (!groups[sid]) groups[sid] = [];
+      groups[sid].push(item);
+    }
+    return Object.entries(groups).map(([sellerId, items]) => ({ sellerId: Number(sellerId), items }));
+  }, [activeItems]);
 
   if (!user) {
     return (
@@ -200,12 +226,36 @@ export default function Cart() {
                 </div>
               )}
 
+              {/* Soon expiring warning */}
+              {soonExpiringItems.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-amber-700">
+                    <span className="font-semibold">{soonExpiringItems.length} 件商品即將到期：</span>
+                    {soonExpiringItems.map(item => {
+                      const daysLeft = Math.ceil((new Date(item.expiresAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                      return <span key={item.cartItemId} className="block text-xs mt-0.5">{item.title.slice(0, 30)}... 剩餘 {daysLeft} 天</span>;
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Unavailable items */}
               {unavailableItems.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm border border-red-100 overflow-hidden">
-                  <div className="flex items-center gap-2 px-5 py-3 border-b border-red-50 bg-red-50/50">
-                    <AlertCircle className="w-4 h-4 text-red-400" />
-                    <span className="font-semibold text-red-600 text-sm">已下架商品（{unavailableItems.length}）</span>
+                  <div className="flex items-center justify-between px-5 py-3 border-b border-red-50 bg-red-50/50">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-red-400" />
+                      <span className="font-semibold text-red-600 text-sm">已下架商品（{unavailableItems.length}）</span>
+                    </div>
+                    <button
+                      onClick={() => clearUnavailableMutation.mutate()}
+                      disabled={clearUnavailableMutation.isPending}
+                      className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      一鍵清理
+                    </button>
                   </div>
                   <div className="divide-y divide-gray-50">
                     {unavailableItems.map((item) => (
@@ -429,27 +479,65 @@ function CheckoutDialog({
     };
   };
 
-  const handleCheckout = () => {
-    if (!canSubmit) return;
-    const shippingAddress = buildShippingAddress();
+  // Batch checkout state: track which items have been processed
+  const [batchProgress, setBatchProgress] = useState<{ total: number; done: number; errors: number } | null>(null);
 
-    // For cart, we process each item individually
-    // In a real scenario, you might want to batch them or handle multi-seller orders
-    if (form.paymentMethod === "stripe") {
-      // Process first active item (for MVP, process one at a time)
-      const item = activeItems[0];
-      createStripeOrderMutation.mutate({
-        listingId: item.listingId,
-        shippingAddress,
-      });
-    } else {
-      const item = activeItems[0];
-      createAlipayOrderMutation.mutate({
-        listingId: item.listingId,
-        proofImageUrl: "",
-        shippingAddress,
-      });
+  const handleCheckout = async () => {
+    if (!canSubmit || batchProgress) return;
+    const shippingAddress = buildShippingAddress();
+    const items = [...activeItems];
+    setBatchProgress({ total: items.length, done: 0, errors: 0 });
+
+    let done = 0;
+    let errors = 0;
+
+    for (const item of items) {
+      try {
+        if (form.paymentMethod === "stripe") {
+          // For Stripe: open first item's checkout URL, create orders for rest
+          if (done === 0) {
+            await new Promise<void>((resolve, reject) => {
+              createStripeOrderMutation.mutate({ listingId: item.listingId, shippingAddress }, {
+                onSuccess: () => resolve(),
+                onError: (e) => reject(e),
+              });
+            });
+          } else {
+            // For remaining items, create alipay orders (seller will contact for payment)
+            await new Promise<void>((resolve, reject) => {
+              createAlipayOrderMutation.mutate({ listingId: item.listingId, proofImageUrl: "", shippingAddress }, {
+                onSuccess: () => resolve(),
+                onError: (e) => reject(e),
+              });
+            });
+          }
+        } else {
+          await new Promise<void>((resolve, reject) => {
+            createAlipayOrderMutation.mutate({ listingId: item.listingId, proofImageUrl: "", shippingAddress }, {
+              onSuccess: () => resolve(),
+              onError: (e) => reject(e),
+            });
+          });
+        }
+        done++;
+      } catch {
+        errors++;
+      }
+      setBatchProgress({ total: items.length, done: done + errors, errors });
     }
+
+    utils.marketplace.getMyCart.invalidate();
+    utils.marketplace.getCartCount.invalidate();
+
+    if (errors === 0) {
+      toast.success(`已成功建立 ${done} 個訂單！`);
+      if (form.paymentMethod === "alipay_hk") setLocation("/orders");
+    } else {
+      toast.warning(`建立了 ${done} 個訂單，${errors} 個失敗，請檢查訂單頁面`);
+      setLocation("/orders");
+    }
+    setBatchProgress(null);
+    onClose();
   };
 
   return (
@@ -621,11 +709,26 @@ function CheckoutDialog({
           </div>
 
           {activeItems.length > 1 && (
-            <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-100">
-              <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-700">
-                購物車中有 {activeItems.length} 件商品，目前每次結帳處理第一件商品。請完成付款後返回購物車繼續結帳其他商品。
+            <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-700">
+                將為 {activeItems.length} 件商品建立 {activeItems.length} 個訂單（每個賣家各一個）。Stripe 結帳時會開啟第一個訂單的付款頁，其餘訂單請到「我的訂單」完成支付。
               </p>
+            </div>
+          )}
+
+          {batchProgress && (
+            <div className="bg-[#06038D]/5 rounded-lg p-3">
+              <div className="flex justify-between text-sm text-[#06038D] font-medium mb-2">
+                <span>正在建立訂單...</span>
+                <span>{batchProgress.done} / {batchProgress.total}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-1.5">
+                <div
+                  className="bg-[#06038D] h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${(batchProgress.done / batchProgress.total) * 100}%` }}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -635,9 +738,15 @@ function CheckoutDialog({
           <Button
             className="bg-[#06038D] text-white hover:bg-[#06038D]/90"
             onClick={handleCheckout}
-            disabled={!canSubmit || isProcessing}
+            disabled={!canSubmit || isProcessing || !!batchProgress}
           >
-            {isProcessing ? "處理中..." : "確認結帳"}
+            {batchProgress
+              ? `建立中 ${batchProgress.done}/${batchProgress.total}...`
+              : isProcessing
+              ? "處理中..."
+              : activeItems.length > 1
+              ? `確認結帳（${activeItems.length} 件）`
+              : "確認結帳"}
           </Button>
         </DialogFooter>
       </DialogContent>

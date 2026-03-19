@@ -3178,8 +3178,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
       if (!listing) throw new TRPCError({ code: 'NOT_FOUND', message: '商品不存在或已下架' });
       // Cannot add own listing to cart
       if (listing.sellerId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: '不能將自己的商品加入購物車' });
-      // Upsert (ignore if already in cart)
-      await db.insert(cartItems).values({ userId: ctx.user.id, listingId: input.listingId }).onDuplicateKeyUpdate({ set: { addedAt: sql`NOW()` } });
+      // Upsert (ignore if already in cart) — expiresAt = 14 days from now
+      const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+      await db.insert(cartItems).values({ userId: ctx.user.id, listingId: input.listingId, expiresAt }).onDuplicateKeyUpdate({ set: { addedAt: sql`NOW()`, expiresAt: sql`DATE_ADD(NOW(), INTERVAL 14 DAY)` } });
       return { success: true };
     }),
 
@@ -3200,6 +3201,25 @@ All three checks must pass for verified to be true. Respond with JSON only match
       return { success: true };
     }),
 
+  clearUnavailableCartItems: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      // Find all cart items where listing is not active
+      const myCartItems = await db.select({ id: cartItems.id, listingId: cartItems.listingId })
+        .from(cartItems).where(eq(cartItems.userId, ctx.user.id));
+      if (myCartItems.length === 0) return { removed: 0 };
+      const listingIds = myCartItems.map(c => c.listingId);
+      const activeListings = await db.select({ id: marketplaceListings.id })
+        .from(marketplaceListings)
+        .where(and(inArray(marketplaceListings.id, listingIds), eq(marketplaceListings.status, 'active')));
+      const activeIds = new Set(activeListings.map(l => l.id));
+      const toRemove = myCartItems.filter(c => !activeIds.has(c.listingId)).map(c => c.id);
+      if (toRemove.length === 0) return { removed: 0 };
+      await db.delete(cartItems).where(and(eq(cartItems.userId, ctx.user.id), inArray(cartItems.id, toRemove)));
+      return { removed: toRemove.length };
+    }),
+
   getMyCart: protectedProcedure
     .query(async ({ ctx }) => {
       const db = await getDb();
@@ -3216,6 +3236,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
           sellerId: marketplaceListings.sellerId,
           sellerType: marketplaceListings.sellerType,
           addedAt: cartItems.addedAt,
+          expiresAt: cartItems.expiresAt,
         })
         .from(cartItems)
         .innerJoin(marketplaceListings, eq(cartItems.listingId, marketplaceListings.id))

@@ -1102,6 +1102,7 @@ export const cartItems = mysqlTable("cartItems", {
   userId: int("userId").notNull(), // FK to users
   listingId: int("listingId").notNull(), // FK to marketplaceListings
   addedAt: timestamp("addedAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt").notNull(), // 14 days after addedAt
 }, (table) => ({
   userIdIdx: index("cart_userId_idx").on(table.userId),
   listingIdIdx: index("cart_listingId_idx").on(table.listingId),

@@ -1172,3 +1172,49 @@ export function getHotCardPollStatus() {
     lastResult: hotCardPollLastResult,
   };
 }
+
+// ─── Cart Expiry Cleanup Scheduler ──────────────────────────────────────────
+let cartExpiryCleanupCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+/**
+ * Clear expired cart items (older than 14 days).
+ * Runs daily at 03:00 HKT.
+ */
+async function runCartExpiryCleanup() {
+  try {
+    const { getDb } = await import('./db');
+    const { cartItems } = await import('../drizzle/schema_new');
+    const { lt } = await import('drizzle-orm');
+    const database = await getDb();
+    if (!database) return;
+    const now = new Date();
+    const result = await database.delete(cartItems).where(lt(cartItems.expiresAt, now));
+    const deleted = (result as any).rowsAffected ?? 0;
+    if (deleted > 0) {
+      console.log(`[CartExpiry] Cleaned up ${deleted} expired cart items`);
+    }
+  } catch (err) {
+    console.error('[CartExpiry] Cleanup error:', err);
+  }
+}
+
+/**
+ * Start the cart expiry cleanup scheduler (daily at 03:00 HKT).
+ */
+export function startCartExpiryCleanupScheduler() {
+  if (cartExpiryCleanupCronJob) return;
+  cartExpiryCleanupCronJob = cron.schedule(
+    '0 3 * * *', // Daily at 03:00 HKT
+    async () => {
+      try {
+        await runCartExpiryCleanup();
+      } catch (err) {
+        console.error('[CartExpiry] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[CartExpiry] Cart expiry cleanup scheduler started (daily at 03:00 HKT)');
+  // Run once on startup to clear any already-expired items
+  runCartExpiryCleanup().catch(err => console.error('[CartExpiry] Initial cleanup error:', err));
+}
