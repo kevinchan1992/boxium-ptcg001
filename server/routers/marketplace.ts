@@ -1894,6 +1894,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
         address: z.string().min(1),
         district: z.string().optional(),
         region: z.string().default("香港"),
+        sfStationCode: z.string().optional(),
+        sfStationName: z.string().optional(),
       }).optional(),
     }))
     .mutation(async ({ ctx, input }) => {

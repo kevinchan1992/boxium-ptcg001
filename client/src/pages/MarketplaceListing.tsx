@@ -1135,6 +1135,45 @@ export default function MarketplaceListing() {
                 <p className="font-medium">請填寫收貨地址</p>
                 <p className="text-xs mt-1 text-gray-500">收貨地址將提供給賣家安排寄送</p>
               </div>
+              {/* 已儲存地址快速選擇 */}
+              {savedAddresses && savedAddresses.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-gray-500">已儲存地址</p>
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                    {savedAddresses.map((addr: any) => (
+                      <button
+                        key={addr.id}
+                        type="button"
+                        className={`w-full text-left px-3 py-2 rounded-xl border text-sm transition-colors ${
+                          alipayShippingForm.name === addr.recipientName && alipayShippingForm.phone === addr.phone
+                            ? "border-[#06038D] bg-[#06038D]/5"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                        onClick={() => setAlipayShippingForm({
+                          name: addr.recipientName,
+                          phone: addr.phone,
+                          address: addr.addressType === "sf_station" ? `順豐自提站 ${addr.sfStationCode}` : (addr.address || ""),
+                          district: addr.addressType === "sf_station" ? (addr.sfStationName || "") : (addr.district || ""),
+                          region: addr.region || "香港",
+                          addressType: addr.addressType || "normal",
+                          sfStationCode: addr.sfStationCode || "",
+                          sfStationName: addr.sfStationName || "",
+                        })}
+                      >
+                        <span className="font-semibold">{addr.label}</span>
+                        <span className="text-gray-500 ml-2">{addr.recipientName} · {addr.phone}</span>
+                        <br />
+                        <span className="text-gray-400 text-xs">
+                          {addr.addressType === "sf_station"
+                            ? <>📦 順豐自提站 {addr.sfStationName ? `${addr.sfStationName} ` : ""}<span className="font-mono">{addr.sfStationCode}</span></>
+                            : <>{addr.district ? `${addr.district}，` : ""}{addr.address}</>}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400">或手動填寫以下欄位</p>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>收件人姓名 *</Label>
@@ -1145,31 +1184,44 @@ export default function MarketplaceListing() {
                   <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：9123 4567" value={alipayShippingForm.phone} onChange={e => setAlipayShippingForm(f => ({ ...f, phone: e.target.value }))} />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <Label>詳細地址 *</Label>
-                <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={alipayShippingForm.address} onChange={e => setAlipayShippingForm(f => ({ ...f, address: e.target.value }))} />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>地區</Label>
-                  <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角" value={alipayShippingForm.district} onChange={e => setAlipayShippingForm(f => ({ ...f, district: e.target.value }))} />
+              {alipayShippingForm.addressType === "sf_station" ? (
+                <div className="flex items-start gap-2 p-3 bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl">
+                  <span className="text-[#06038D] text-lg">📦</span>
+                  <div>
+                    <p className="text-sm font-semibold text-[#06038D]">{alipayShippingForm.sfStationName || "順豐自提站"}</p>
+                    <p className="text-xs text-gray-500 font-mono">{alipayShippingForm.sfStationCode}</p>
+                    <p className="text-xs text-gray-400 mt-1">如需更改，請選擇其他地址或到個人資料頁面編輯</p>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label>區域</Label>
-                  <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={alipayShippingForm.region} onChange={e => setAlipayShippingForm(f => ({ ...f, region: e.target.value }))}>
-                    <option value="香港島">香港島</option>
-                    <option value="九龍">九龍</option>
-                    <option value="新界">新界</option>
-                    <option value="香港">香港（不指定）</option>
-                  </select>
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="space-y-1.5">
+                    <Label>詳細地址 *</Label>
+                    <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={alipayShippingForm.address} onChange={e => setAlipayShippingForm(f => ({ ...f, address: e.target.value }))} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>地區</Label>
+                      <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角" value={alipayShippingForm.district} onChange={e => setAlipayShippingForm(f => ({ ...f, district: e.target.value }))} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>區域</Label>
+                      <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={alipayShippingForm.region} onChange={e => setAlipayShippingForm(f => ({ ...f, region: e.target.value }))}>
+                        <option value="香港島">香港島</option>
+                        <option value="九龍">九龍</option>
+                        <option value="新界">新界</option>
+                        <option value="香港">香港（不指定）</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
               <p className="text-xs text-gray-400">* 必填欄位。如不需要寄送可跳過。</p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("qr")}>返回</Button>
                 <Button
                   className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white"
-                  disabled={!alipayShippingForm.name.trim() || !alipayShippingForm.phone.trim() || !alipayShippingForm.address.trim()}
+                  disabled={!alipayShippingForm.name.trim() || !alipayShippingForm.phone.trim() || (alipayShippingForm.addressType !== "sf_station" && !alipayShippingForm.address.trim())}
                   onClick={() => setAlipayStep("upload")}
                 >
                   下一步：上傳截圖
@@ -1256,13 +1308,23 @@ export default function MarketplaceListing() {
                   onClick={() => createAlipayOrderMutation.mutate({
                     listingId: listing.id,
                     proofImageUrl: proofUrl,
-                    shippingAddress: alipayShippingForm.name.trim() ? {
-                      name: alipayShippingForm.name.trim(),
-                      phone: alipayShippingForm.phone.trim(),
-                      address: alipayShippingForm.address.trim(),
-                      district: alipayShippingForm.district.trim() || undefined,
-                      region: alipayShippingForm.region,
-                    } : undefined,
+                    shippingAddress: alipayShippingForm.name.trim() ? (
+                      alipayShippingForm.addressType === "sf_station" ? {
+                        name: alipayShippingForm.name.trim(),
+                        phone: alipayShippingForm.phone.trim(),
+                        address: `順豐自提站 ${alipayShippingForm.sfStationCode}`,
+                        district: alipayShippingForm.sfStationName || undefined,
+                        region: "香港",
+                        sfStationCode: alipayShippingForm.sfStationCode,
+                        sfStationName: alipayShippingForm.sfStationName || undefined,
+                      } : {
+                        name: alipayShippingForm.name.trim(),
+                        phone: alipayShippingForm.phone.trim(),
+                        address: alipayShippingForm.address.trim(),
+                        district: alipayShippingForm.district.trim() || undefined,
+                        region: alipayShippingForm.region,
+                      }
+                    ) : undefined,
                   })}
                 >
                   {createAlipayOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : canSubmitAlipay ? "✅ 提交訂單" : "提交訂單（待核對）"}
