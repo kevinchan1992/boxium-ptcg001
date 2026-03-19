@@ -4938,3 +4938,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] Marketplace.tsx 商品卡片中的 listing id 顯示改為 #BOXIUM-{id}
 - [ ] 支付寶 HK 付款備注提示改為顯示 #BOXIUM-{id} 格式
 - [ ] 保存 checkpoint
+
+---
+
+## 🔧 市場參考價區塊修復
+
+- [ ] 標題「SNKRDUNK 市場參考價」改為「BOXIUM 市場參考價」
+- [ ] 修復趨勢圖 X 軸日期排序（統一由左舊到右新）
+- [ ] 底部說明文字「數據來源：SNKRDUNK」改為「數據來源：BOXIUM」
+- [ ] 保存 checkpoint

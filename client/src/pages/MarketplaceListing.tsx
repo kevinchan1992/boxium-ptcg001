@@ -160,20 +160,24 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
     const filtered = history.filter(h => h.soldAt && new Date(h.soldAt) >= cutoff);
-    const byDate: Record<string, number[]> = {};
+    // Group by date, keyed by ISO date string (YYYY-MM-DD) for correct sorting
+    const byDateKey: Record<string, { label: string; prices: number[] }> = {};
     for (const h of filtered) {
       if (!h.soldAt) continue;
-      const d = new Date(h.soldAt).toLocaleDateString("zh-HK", { month: "2-digit", day: "2-digit" });
-      if (!byDate[d]) byDate[d] = [];
-      byDate[d].push(parseFloat(h.price as string));
+      const dt = new Date(h.soldAt);
+      // Use ISO date as sort key, display label as MM/DD
+      const isoKey = dt.toISOString().slice(0, 10); // "YYYY-MM-DD"
+      const label = dt.toLocaleDateString("zh-HK", { month: "2-digit", day: "2-digit" });
+      if (!byDateKey[isoKey]) byDateKey[isoKey] = { label, prices: [] };
+      byDateKey[isoKey].prices.push(parseFloat(h.price as string));
     }
-    return Object.entries(byDate)
-      .map(([date, prices]) => ({
-        date,
+    return Object.entries(byDateKey)
+      .sort(([a], [b]) => a.localeCompare(b)) // sort by ISO key = chronological order
+      .map(([, { label, prices }]) => ({
+        date: label,
         avg: Math.round(prices.reduce((s, p) => s + p, 0) / prices.length),
         count: prices.length,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+      }));
   }, [history, days]);
 
   const stats = useMemo(() => {
@@ -208,7 +212,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
       <div className="rounded-xl border border-gray-200 bg-white p-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-2 h-5 rounded-full bg-[#06038D]" />
-          <h3 className="font-semibold text-sm text-[#06038D]">SNKRDUNK 市場參考價</h3>
+          <h3 className="font-semibold text-sm text-[#06038D]">BOXIUM 市場參考價</h3>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-400">
           <Loader2 className="w-4 h-4 animate-spin" />
@@ -223,9 +227,9 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
       <div className="rounded-xl border border-gray-200 bg-white p-4">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-2 h-5 rounded-full bg-[#06038D]" />
-          <h3 className="font-semibold text-sm text-[#06038D]">SNKRDUNK 市場參考價</h3>
+          <h3 className="font-semibold text-sm text-[#06038D]">BOXIUM 市場參考價</h3>
         </div>
-        <p className="text-sm text-gray-400">暫無 SNKRDUNK 近期交易數據</p>
+        <p className="text-sm text-gray-400">暫無近期交易數據</p>
       </div>
     );
   }
@@ -240,7 +244,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
         <div className="flex items-center gap-2">
           <TrendIcon className="w-4 h-4 text-white" />
           <div>
-            <span className="text-white font-semibold text-sm">SNKRDUNK 市場參考價</span>
+            <span className="text-white font-semibold text-sm">BOXIUM 市場參考價</span>
             {condition && <span className="ml-2 text-white/60 text-xs">({condition})</span>}
           </div>
         </div>
@@ -318,7 +322,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
           )}
         </div>
 
-        <p className="text-xs text-gray-400">數據來源：SNKRDUNK{condition ? ` · ${condition}` : ''} · 近 {days} 天 {chartData.reduce((s, d) => s + d.count, 0)} 筆成交記錄</p>
+        <p className="text-xs text-gray-400">數據來源：BOXIUM{condition ? ` · ${condition}` : ''} · 近 {days} 天 {chartData.reduce((s, d) => s + d.count, 0)} 筆成交記錄</p>
       </div>
     </div>
   );
