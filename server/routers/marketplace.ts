@@ -481,6 +481,8 @@ export const marketplaceRouter = router({
       const buffer = Buffer.from(input.proofImageBase64, "base64");
       const key = `alipay-proofs/${order.orderNo}-${Date.now()}.jpg`;
       const { url } = await storagePut(key, buffer, input.mimeType);
+      // Save proof URL to database so it can be displayed in order detail page
+      await updateMarketplaceOrder(input.orderId, { alipayProofImageUrl: url });
       return { success: true, proofUrl: url };
     }),
 

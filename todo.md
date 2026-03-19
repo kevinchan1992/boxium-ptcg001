@@ -4937,7 +4937,7 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] MarketplaceListing.tsx 商品詳情頁的 listing id 顯示改為 #BOXIUM-{id}
 - [ ] Marketplace.tsx 商品卡片中的 listing id 顯示改為 #BOXIUM-{id}
 - [ ] 支付寶 HK 付款備注提示改為顯示 #BOXIUM-{id} 格式
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint (version: fc04706f)
 
 ---
 
@@ -4946,7 +4946,7 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 標題「SNKRDUNK 市場參考價」改為「BOXIUM 市場參考價」
 - [ ] 修復趨勢圖 X 軸日期排序（統一由左舊到右新）
 - [ ] 底部說明文字「數據來源：SNKRDUNK」改為「數據來源：BOXIUM」
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint (version: fc04706f)
 
 ---
 
@@ -4956,7 +4956,7 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 趨勢圖跨年份時加入年份標示（如 01/01 '26）
 - [x] 支付寶核對頁面加入按 #BOXIUM-XXXXX 搜尋功能
 - [x] 訂單確認郵件加入 #BOXIUM-XXXXX 商品編號
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint (version: fc04706f)
 
 ---
 
@@ -4998,4 +4998,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 - [x] 修改 OrderDetail.tsx 支付寶 HK 流程：點擊「我已了解」後顯示上傳付款截圖步驟（對齊 MarketplaceListing.tsx）
 - [x] 確認後端 submitAlipayProof API 資料正確對接（base64 上傳 + verifyPaymentProof AI 驗證）
+- [x] 保存 checkpoint (version: fc04706f)
+
+---
+
+## 🔧 截圖上傳 AI 驗證強化
+
+- [x] PayOrderButton upload 步驟：AI 驗證失敗時強制重新上傳（移除「可繼續提交」黃色提示，改為錯誤提示 + 重新上傳）
+- [x] 訂單詳情頁加入重新上傳截圖入口（已提交截圖但 AI 驗證失敗的訂單）
+- [x] 修復 submitAlipayProof 後端未儲存 alipayProofImageUrl 到資料庫的問題
 - [ ] 保存 checkpoint

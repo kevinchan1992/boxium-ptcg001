@@ -259,20 +259,14 @@ function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listi
                   )}
                 </div>
               </div>
-              {verifyResult && !verifyResult.verified && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-                  <p className="font-medium">⚠️ 如確認已付款，可繼續提交</p>
-                  <p className="mt-1">訂單將標記為「待人工核對」，管理員將在 1-2 個工作天內確認。</p>
-                </div>
-              )}
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("alipay_pending")}>返回</Button>
                 <Button
                   className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
-                  disabled={!proofUrl || isVerifying || isUploading || submitProofMutation.isPending}
-                  onClick={() => { if (proofUrl) { setAlipayStep("done"); utils.marketplace.getOrderByNo.invalidate(); utils.marketplace.getMyOrders.invalidate(); } }}
+                  disabled={!canSubmitProof || isVerifying || isUploading || submitProofMutation.isPending}
+                  onClick={() => { if (canSubmitProof) { setAlipayStep("done"); utils.marketplace.getOrderByNo.invalidate(); utils.marketplace.getMyOrders.invalidate(); } }}
                 >
-                  {submitProofMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : canSubmitProof ? "✅ 提交訂單" : "提交訂單（待核對）"}
+                  {submitProofMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : "✅ 提交訂單"}
                 </Button>
               </div>
             </div>
@@ -582,6 +576,12 @@ export default function OrderDetail() {
   const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  // Re-upload alipay proof state
+  const [showReuploadDialog, setShowReuploadDialog] = useState(false);
+  const [reuploadProofUrl, setReuploadProofUrl] = useState("");
+  const [isReuploadUploading, setIsReuploadUploading] = useState(false);
+  const [isReuploadVerifying, setIsReuploadVerifying] = useState(false);
+  const [reuploadVerifyResult, setReuploadVerifyResult] = useState<VerifyResult | null>(null);
 
   const utils = trpc.useUtils();
 
@@ -612,6 +612,41 @@ export default function OrderDetail() {
   });
 
   const uploadDisputeEvidenceMutation = trpc.marketplace.uploadDisputeEvidence.useMutation();
+
+  const reuploadProofMutation = trpc.marketplace.submitAlipayProof.useMutation({
+    onError: (e: any) => toast.error(e.message || "上傳失敗，請重試"),
+  });
+
+  const reuploadVerifyMutation = trpc.marketplace.verifyPaymentProof.useMutation({
+    onSuccess: (data) => {
+      setReuploadVerifyResult(data as VerifyResult);
+      setIsReuploadVerifying(false);
+      if (data.verified) toast.success("✅ 付款金額驗證成功！");
+      else toast.error("⚠️ 驗證未通過，請重新上傳截圖");
+    },
+    onError: (e: any) => { setIsReuploadVerifying(false); toast.error("驗證失敗：" + e.message); },
+  });
+
+  const handleReuploadProof = async (e: React.ChangeEvent<HTMLInputElement>, orderId: number, amount: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("截圖不能超過 5MB"); return; }
+    setIsReuploadUploading(true); setReuploadVerifyResult(null);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const result = await reuploadProofMutation.mutateAsync({ orderId, proofImageBase64: base64, mimeType: file.type });
+      setReuploadProofUrl(result.proofUrl);
+      toast.success("截圖已上傳，正在 AI 驗證金額...");
+      setIsReuploadVerifying(true);
+      reuploadVerifyMutation.mutate({ proofImageUrl: result.proofUrl, expectedAmountHkd: parseFloat(amount) });
+    } catch { toast.error("截圖上傳失敗，請重試"); }
+    finally { setIsReuploadUploading(false); e.target.value = ""; }
+  };
 
   const openDisputeMutation = trpc.marketplace.openDispute.useMutation({
     onSuccess: () => {
@@ -1007,6 +1042,40 @@ export default function OrderDetail() {
               <span>總計</span>
               <span className="text-[#06038d]">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</span>
             </div>
+            {/* Alipay proof screenshot display + re-upload */}
+            {order.paymentMethod === "alipay_hk" && isBuyer && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                {order.alipayProofImageUrl ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-500 font-medium">支付寶 HK 付款截圖</p>
+                    <img
+                      src={order.alipayProofImageUrl}
+                      alt="付款截圖"
+                      className="w-full max-h-40 object-contain rounded-lg border border-gray-200 cursor-pointer"
+                      onClick={() => window.open(order.alipayProofImageUrl!, "_blank")}
+                    />
+                    {order.orderStatus === "pending_payment" && (
+                      <button
+                        className="w-full text-xs text-[#06038D] border border-[#06038D]/30 rounded-lg py-2 hover:bg-[#06038D]/5 transition-colors"
+                        onClick={() => { setReuploadProofUrl(""); setReuploadVerifyResult(null); setShowReuploadDialog(true); }}
+                      >
+                        🔄 重新上傳截圖
+                      </button>
+                    )}
+                  </div>
+                ) : order.orderStatus === "pending_payment" ? (
+                  <div className="space-y-1">
+                    <p className="text-xs text-amber-600">⚠️ 尚未上傳支付寶 HK 付款截圖</p>
+                    <button
+                      className="w-full text-xs text-[#06038D] border border-[#06038D]/30 rounded-lg py-2 hover:bg-[#06038D]/5 transition-colors"
+                      onClick={() => { setReuploadProofUrl(""); setReuploadVerifyResult(null); setShowReuploadDialog(true); }}
+                    >
+                      📷 上傳付款截圖
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
         </div>
 
@@ -1016,6 +1085,85 @@ export default function OrderDetail() {
           <p>最後更新：{new Date(order.updatedAt).toLocaleString("zh-HK")}</p>
         </div>
       </div>
+
+      {/* Reupload Alipay Proof Dialog */}
+      <Dialog open={showReuploadDialog} onOpenChange={(v) => { if (!v) { setShowReuploadDialog(false); setReuploadProofUrl(""); setReuploadVerifyResult(null); } }}>
+        <DialogContent className="max-w-sm bg-white text-gray-900">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>
+              {reuploadVerifyResult?.verified ? "截圖驗證成功" : "上傳支付寶 HK 截圖"}
+            </DialogTitle>
+          </DialogHeader>
+          {reuploadVerifyResult?.verified ? (
+            <div className="text-center space-y-4 py-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
+              <p className="font-bold text-lg text-[#06038D]">截圖已提交！</p>
+              <p className="text-sm text-gray-500">我們將在核對收款後確認你的訂單。</p>
+              <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => { setShowReuploadDialog(false); setReuploadProofUrl(""); setReuploadVerifyResult(null); utils.marketplace.getOrderByNo.invalidate({ orderNo }); }}>關閉</Button>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm">
+                <p className="font-bold text-[#06038D]">付款金額：HKD {parseFloat(order?.subtotalHkd as string ?? "0").toFixed(2)}</p>
+                <p className="text-gray-500 mt-1">請上傳支付寶 HK 的付款成功截圖，系統將自動驗證金額是否一致。</p>
+              </div>
+              <div>
+                <Label>付款截圖 *</Label>
+                <div className="mt-2 border-2 border-dashed border-[#06038D]/30 rounded-xl p-6 text-center">
+                  {isReuploadUploading ? (
+                    <div className="flex flex-col items-center gap-2 text-gray-400">
+                      <Loader2 className="w-8 h-8 animate-spin" />
+                      <p className="text-sm">上傳中...</p>
+                    </div>
+                  ) : reuploadProofUrl ? (
+                    <div className="space-y-3">
+                      <img src={reuploadProofUrl} alt="付款截圖" className="max-h-40 mx-auto rounded object-contain" />
+                      {isReuploadVerifying ? (
+                        <div className="flex items-center justify-center gap-2 text-[#06038D] text-sm">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>AI 正在驗證付款金額...</span>
+                        </div>
+                      ) : reuploadVerifyResult ? (
+                        <div className="rounded-xl p-3 text-sm space-y-2 bg-red-50 border border-red-200">
+                          <div className="flex items-center gap-2 font-medium">
+                            <XCircle className="w-4 h-4 text-red-600" />
+                            <span className="text-red-800">驗證未通過，請重新上傳</span>
+                          </div>
+                          <div className="space-y-1.5">
+                            {[
+                              { ok: reuploadVerifyResult.payeeVerified, label: `收款方：${reuploadVerifyResult.detectedPayee ?? "未識別"}${!reuploadVerifyResult.payeeVerified ? " （需為「零度有限公司」）" : ""}` },
+                              { ok: reuploadVerifyResult.amountVerified, label: `金額：${reuploadVerifyResult.currency ?? "HKD"} ${reuploadVerifyResult.detectedAmount ?? "未識別"}${!reuploadVerifyResult.amountVerified ? ` （需為 HKD ${parseFloat(order?.subtotalHkd as string ?? "0").toFixed(2)}）` : ""}` },
+                              { ok: reuploadVerifyResult.statusVerified, label: `狀態：${reuploadVerifyResult.detectedStatus ?? "未識別"}${!reuploadVerifyResult.statusVerified ? " （需為「成功」）" : ""}` },
+                            ].map((item, i) => (
+                              <div key={i} className="flex items-center gap-2 text-xs">
+                                {item.ok ? <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" /> : <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
+                                <span className={item.ok ? "text-green-700" : "text-red-700"}>{item.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <button className="mt-1 text-xs text-[#06038D] underline" onClick={() => { setReuploadProofUrl(""); setReuploadVerifyResult(null); }}>重新上傳截圖</button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div>
+                      <input type="file" accept="image/*" onChange={(e) => handleReuploadProof(e, order!.id, order?.subtotalHkd as string ?? "0")} className="hidden" id="reupload-proof-input" />
+                      <label htmlFor="reupload-proof-input" className="cursor-pointer">
+                        <div className="text-3xl mb-2">📷</div>
+                        <p className="text-sm text-gray-500">點擊上傳截圖</p>
+                        <p className="text-xs text-gray-400 mt-1">支援 JPG、PNG，最大 5MB</p>
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Button variant="outline" className="w-full text-[#06038D] border-gray-200" onClick={() => setShowReuploadDialog(false)}>關閉</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Cancel Order Dialog */}
       <Dialog open={showCancelDialog} onOpenChange={(open) => { setShowCancelDialog(open); if (!open) setCancelReason(""); }}>
