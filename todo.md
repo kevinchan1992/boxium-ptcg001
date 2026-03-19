@@ -5037,4 +5037,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 訂單詳情頁加入「付款被拒絕」提示橫幅（顯示 paymentRejectionReason）
 - [x] 訂單詳情頁付款摘要加入「截圖審核中」狀態標籤
 - [x] AdminMarketplace 支付寶待核對列表加入批量拒絕功能
+- [x] 保存 checkpoint (version: 5b0051cd)
+
+---
+
+## 🔧 截圖通知 + 縮圖顯示 + 拒絕清空截圖
+
+- [x] 後端 submitAlipayProof：截圖提交後 notifyOwner 通知管理員
+- [x] 後端 adminRejectAlipayPayment：拒絕後清空 alipayProofImageUrl 欄位（已存在）
+- [x] 前端 OrderDetail.tsx：截圖縮圖已顯示（點擊可放大）
 - [ ] 保存 checkpoint

@@ -483,6 +483,11 @@ export const marketplaceRouter = router({
       const { url } = await storagePut(key, buffer, input.mimeType);
       // Save proof URL to database so it can be displayed in order detail page
       await updateMarketplaceOrder(input.orderId, { alipayProofImageUrl: url });
+      // Notify owner that a new Alipay HK payment proof has been submitted
+      notifyOwner({
+        title: "📸 新支付寶 HK 付款截圖待核對",
+        content: `訂單 ${order.orderNo} 的買家已上傳支付寶 HK 付款截圖，請前往管理後台核對收款。\n金額：HKD ${order.subtotalHkd}\n前往核對：/admin/marketplace`,
+      }).catch(() => {});
       return { success: true, proofUrl: url };
     }),
 
