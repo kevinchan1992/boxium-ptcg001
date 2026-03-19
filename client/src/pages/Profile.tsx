@@ -25,7 +25,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useState } from "react";
-import { User, Heart, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X, Lock } from "lucide-react";
+import { User, Heart, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X, Lock, Search } from "lucide-react";
+import { searchSFStations, type SFStation } from "@/lib/sfStations";
 import { useTranslation } from "react-i18next";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 
@@ -512,6 +513,10 @@ function ShippingAddressSection() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ label: "預設地址", addressType: "normal" as "normal" | "sf_station", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", isDefault: false });
+  const [sfSearchQuery, setSfSearchQuery] = useState("");
+  const [sfSearchRegion, setSfSearchRegion] = useState("");
+  const [showSfDropdown, setShowSfDropdown] = useState(false);
+  const sfResults = form.addressType === "sf_station" && (sfSearchQuery || sfSearchRegion) ? searchSFStations(sfSearchQuery, sfSearchRegion || undefined) : [];
 
   const addMutation = trpc.marketplace.addShippingAddress.useMutation({
     onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); setShowForm(false); resetForm(); toast.success("地址已新增"); },
@@ -530,7 +535,7 @@ function ShippingAddressSection() {
     onError: (e) => toast.error(e.message),
   });
 
-  const resetForm = () => setForm({ label: "預設地址", addressType: "normal", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", isDefault: false });
+  const resetForm = () => { setForm({ label: "預設地址", addressType: "normal", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", isDefault: false }); setSfSearchQuery(""); setSfSearchRegion(""); setShowSfDropdown(false); };
 
   const handleEdit = (addr: any) => {
     setEditingId(addr.id);
@@ -648,34 +653,96 @@ function ShippingAddressSection() {
 
               {/* SF Station fields */}
               {form.addressType === "sf_station" && (
-                <>
+                <div className="md:col-span-2 space-y-3">
+                  {/* Search bar */}
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-500 uppercase">順豐自提站編號 *</Label>
-                    <Input
-                      value={form.sfStationCode}
-                      onChange={e => setForm(f => ({ ...f, sfStationCode: e.target.value }))}
-                      placeholder="例：HK-0001"
-                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-500 uppercase">自提站名稱（可選）</Label>
-                    <Input
-                      value={form.sfStationName}
-                      onChange={e => setForm(f => ({ ...f, sfStationName: e.target.value }))}
-                      placeholder="例：順豐自提站 旺角店"
-                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="space-y-1.5 md:col-span-2">
-                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <span className="text-amber-600 text-sm mt-0.5">ℹ️</span>
-                      <p className="text-xs text-amber-700">
-                        順豐自提站編號可在《順豐速過》 App 或網站查詢。請確保填寫正確的站點編號，以便賣家正確安排送貨至自提站。
-                      </p>
+                    <Label className="text-xs font-semibold text-gray-500 uppercase">搜尋順豐自提站</Label>
+                    <div className="flex gap-2">
+                      <select
+                        value={sfSearchRegion}
+                        onChange={e => { setSfSearchRegion(e.target.value); setShowSfDropdown(true); }}
+                        className="border border-gray-300 rounded-lg px-2 py-2 text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#06038D] w-28 shrink-0"
+                      >
+                        <option value="">全港</option>
+                        <option value="香港島">香港島</option>
+                        <option value="九龍">九龍</option>
+                        <option value="新界">新界</option>
+                      </select>
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          value={sfSearchQuery}
+                          onChange={e => { setSfSearchQuery(e.target.value); setShowSfDropdown(true); }}
+                          onFocus={() => setShowSfDropdown(true)}
+                          placeholder="搜尋地區、站點編號或地址..."
+                          className="pl-9 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                        />
+                      </div>
                     </div>
+                    {/* Dropdown results */}
+                    {showSfDropdown && sfResults.length > 0 && (
+                      <div className="border border-gray-200 rounded-xl shadow-lg bg-white max-h-52 overflow-y-auto z-50">
+                        {sfResults.map((station: SFStation) => (
+                          <button
+                            key={station.code}
+                            type="button"
+                            className="w-full text-left px-3 py-2.5 hover:bg-[#06038D]/5 border-b border-gray-100 last:border-0 transition-colors"
+                            onClick={() => {
+                              setForm(f => ({ ...f, sfStationCode: station.code, sfStationName: station.name }));
+                              setSfSearchQuery(station.district + " " + station.code);
+                              setShowSfDropdown(false);
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-xs font-semibold text-[#06038D]">{station.code}</span>
+                              <span className="text-xs text-gray-400">{station.region} · {station.district}</span>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-0.5 truncate">{station.address}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {showSfDropdown && sfSearchQuery && sfResults.length === 0 && (
+                      <div className="border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-500 text-center bg-white">
+                        未找到相關站點，請嘗試其他關鍵字
+                      </div>
+                    )}
                   </div>
-                </>
+
+                  {/* Selected station display */}
+                  {form.sfStationCode && (
+                    <div className="flex items-start gap-2 p-3 bg-[#06038D]/5 border border-[#06038D]/20 rounded-lg">
+                      <span className="text-[#06038D] text-sm mt-0.5">📦</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#06038D]">{form.sfStationName || "順豐自提站"}</p>
+                        <p className="text-xs text-gray-500 font-mono">{form.sfStationCode}</p>
+                      </div>
+                      <button type="button" onClick={() => setForm(f => ({ ...f, sfStationCode: "", sfStationName: "" }))} className="text-gray-400 hover:text-gray-600">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Manual input fallback */}
+                  {!form.sfStationCode && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-gray-500 uppercase">或手動輸入站點編號</Label>
+                      <Input
+                        value={form.sfStationCode}
+                        onChange={e => setForm(f => ({ ...f, sfStationCode: e.target.value }))}
+                        placeholder="例：852FTL"
+                        className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <span className="text-amber-600 text-sm mt-0.5">ℹ️</span>
+                    <p className="text-xs text-amber-700">
+                      順豐自提站資料來自順豐香港官方資料（2026-03）。如需查詢最新站點，請訪問順豐香港官網。
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
             <div className="flex items-center gap-2">

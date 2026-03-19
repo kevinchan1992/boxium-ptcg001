@@ -5069,3 +5069,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 後端 addShippingAddress/updateShippingAddress 加入新欄位支援
 - [x] 前端表單加入地址類型切換（普通地址 / 順豐自提站）
 - [x] 前端地址列表顯示順豐自提站標籤與站點編號
+
+## 順豐自提站完整功能 (2026-03-19)
+- [ ] 建立香港順豐自提站資料（JSON 靜態資料）
+- [ ] 前端收貨地址表單加入站點搜尋功能
+- [ ] 結帳時帶入 sfStationCode/sfStationName 到訂單
+- [ ] 訂單資料庫加入 sfStationCode/sfStationName 欄位
+- [ ] 管理員訂單詳情顯示順豐自提站格式

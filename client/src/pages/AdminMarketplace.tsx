@@ -1929,7 +1929,21 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                   <span className="text-gray-800">{selectedOrder.shippingAddress ? (() => {
                     try {
                       const addr = JSON.parse(selectedOrder.shippingAddress);
-                      if (addr && typeof addr === 'object') return [addr.address, addr.district, addr.region].filter(Boolean).join(', ');
+                      if (addr && typeof addr === 'object') {
+                        if (addr.sfStationCode) {
+                          return (
+                            <span className="inline-flex flex-col gap-0.5">
+                              <span className="inline-flex items-center gap-1">
+                                <span>📦</span>
+                                <span className="font-semibold text-[#06038D]">順豐自提站</span>
+                              </span>
+                              {addr.sfStationName && <span className="text-xs text-gray-600">{addr.sfStationName}</span>}
+                              <span className="font-mono text-xs font-bold text-[#06038D]">{addr.sfStationCode}</span>
+                            </span>
+                          );
+                        }
+                        return [addr.address, addr.district, addr.region].filter(Boolean).join(', ');
+                      }
                       return selectedOrder.shippingAddress;
                     } catch { return selectedOrder.shippingAddress; }
                   })() : '—'}</span>

@@ -466,12 +466,12 @@ export default function MarketplaceListing() {
   const [completedOrderNo, setCompletedOrderNo] = useState("");
   const [proofUrl, setProofUrl] = useState("");
   const [alipayStep, setAlipayStep] = useState<"qr" | "shipping" | "upload" | "done">("qr");
-  const [alipayShippingForm, setAlipayShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港" });
+  const [alipayShippingForm, setAlipayShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "" });
   const [isUploading, setIsUploading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [showShippingDialog, setShowShippingDialog] = useState(false);
-  const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港" });
+  const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "" });
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<number | null>(null);
   const [showOfferDialog, setShowOfferDialog] = useState(false);
   const [offerAmount, setOfferAmount] = useState("");
@@ -496,7 +496,7 @@ export default function MarketplaceListing() {
     if (showShippingDialog && savedAddresses && savedAddresses.length > 0) {
       const defaultAddr = savedAddresses.find((a: any) => a.isDefault) || savedAddresses[0];
       if (defaultAddr && !shippingForm.name) {
-        setShippingForm({ name: defaultAddr.recipientName, phone: defaultAddr.phone, address: defaultAddr.address, district: defaultAddr.district || "", region: defaultAddr.region });
+        setShippingForm({ name: defaultAddr.recipientName, phone: defaultAddr.phone, address: defaultAddr.address || "", district: defaultAddr.district || "", region: defaultAddr.region, addressType: (defaultAddr.addressType as any) || "normal", sfStationCode: defaultAddr.sfStationCode || "", sfStationName: defaultAddr.sfStationName || "" });
         setSelectedSavedAddressId(defaultAddr.id);
       }
     }
@@ -1286,7 +1286,7 @@ export default function MarketplaceListing() {
       </Dialog>
 
       {/* ── Shipping Dialog ── */}
-      <Dialog open={showShippingDialog} onOpenChange={(open) => { setShowShippingDialog(open); if (!open) { setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港" }); setSelectedSavedAddressId(null); } }}>
+      <Dialog open={showShippingDialog} onOpenChange={(open) => { setShowShippingDialog(open); if (!open) { setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "" }); setSelectedSavedAddressId(null); } }}>
         <DialogContent bottomSheet showCloseButton={false} className="sm:max-w-md p-0 overflow-hidden border-2 border-[#FEDD00] gap-0">
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
@@ -1307,14 +1307,18 @@ export default function MarketplaceListing() {
                 <div className="space-y-1.5 max-h-36 overflow-y-auto">
                   {savedAddresses.map((addr: any) => (
                     <button key={addr.id} type="button"
-                      onClick={() => { setSelectedSavedAddressId(addr.id); setShippingForm({ name: addr.recipientName, phone: addr.phone, address: addr.address, district: addr.district || "", region: addr.region }); }}
+                      onClick={() => { setSelectedSavedAddressId(addr.id); setShippingForm({ name: addr.recipientName, phone: addr.phone, address: addr.address || "", district: addr.district || "", region: addr.region, addressType: (addr.addressType as any) || "normal", sfStationCode: addr.sfStationCode || "", sfStationName: addr.sfStationName || "" }); }}
                       className={`w-full text-left rounded-xl border-2 px-3 py-2 text-sm transition-all ${
                         selectedSavedAddressId === addr.id ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-gray-300"
                       }`}>
                       <span className="font-semibold">{addr.label}</span>
                       <span className="text-gray-500 ml-2">{addr.recipientName} · {addr.phone}</span>
                       <br />
-                      <span className="text-gray-400 text-xs">{addr.district ? `${addr.district}，` : ""}{addr.address}</span>
+                      <span className="text-gray-400 text-xs">
+                        {addr.addressType === "sf_station"
+                          ? <>📦 順豐自提站 {addr.sfStationName ? `${addr.sfStationName} ` : ""}<span className="font-mono">{addr.sfStationCode}</span></>
+                          : <>{addr.district ? `${addr.district}，` : ""}{addr.address}</>}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -1331,37 +1335,59 @@ export default function MarketplaceListing() {
                 <input id="ship-phone" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：9123 4567" value={shippingForm.phone} onChange={e => setShippingForm(f => ({ ...f, phone: e.target.value }))} />
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ship-address">詳細地址 *</Label>
-              <input id="ship-address" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={shippingForm.address} onChange={e => setShippingForm(f => ({ ...f, address: e.target.value }))} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="ship-district">地區</Label>
-                <input id="ship-district" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角" value={shippingForm.district} onChange={e => setShippingForm(f => ({ ...f, district: e.target.value }))} />
+            {shippingForm.addressType === "normal" && (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ship-address">詳細地址 *</Label>
+                  <input id="ship-address" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={shippingForm.address} onChange={e => setShippingForm(f => ({ ...f, address: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ship-district">地區</Label>
+                    <input id="ship-district" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角" value={shippingForm.district} onChange={e => setShippingForm(f => ({ ...f, district: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ship-region">區域</Label>
+                    <select id="ship-region" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={shippingForm.region} onChange={e => setShippingForm(f => ({ ...f, region: e.target.value }))}>
+                      <option value="香港島">香港島</option>
+                      <option value="九龍">九龍</option>
+                      <option value="新界">新界</option>
+                      <option value="香港">香港（不指定）</option>
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+            {shippingForm.addressType === "sf_station" && (
+              <div className="flex items-start gap-2 p-3 bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl">
+                <span className="text-[#06038D] text-lg">📦</span>
+                <div>
+                  <p className="text-sm font-semibold text-[#06038D]">{shippingForm.sfStationName || "順豐自提站"}</p>
+                  <p className="text-xs text-gray-500 font-mono">{shippingForm.sfStationCode}</p>
+                  <p className="text-xs text-gray-400 mt-1">如需更改，請到個人資料頁面編輯收貨地址</p>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="ship-region">區域</Label>
-                <select id="ship-region" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={shippingForm.region} onChange={e => setShippingForm(f => ({ ...f, region: e.target.value }))}>
-                  <option value="香港島">香港島</option>
-                  <option value="九龍">九龍</option>
-                  <option value="新界">新界</option>
-                  <option value="香港">香港（不指定）</option>
-                </select>
-              </div>
-            </div>
+            )}
             <p className="text-xs text-gray-400">* 必填欄位。收貨地址將提供給賣家安排寄送。</p>
           </div>
           <div className="px-6 pb-6 flex gap-3 bg-white">
             <Button variant="outline" className="flex-1 border-gray-200 text-[#06038D]" onClick={() => setShowShippingDialog(false)}>取消</Button>
             <Button
               className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
-              disabled={!shippingForm.name.trim() || !shippingForm.phone.trim() || !shippingForm.address.trim() || createStripeOrderMutation.isPending}
+              disabled={!shippingForm.name.trim() || !shippingForm.phone.trim() || (shippingForm.addressType === "normal" && !shippingForm.address.trim()) || (shippingForm.addressType === "sf_station" && !shippingForm.sfStationCode.trim()) || createStripeOrderMutation.isPending}
               onClick={() => {
                 setShowShippingDialog(false);
                 createStripeOrderMutation.mutate({
                   listingId: listing.id,
-                  shippingAddress: {
+                  shippingAddress: shippingForm.addressType === "sf_station" ? {
+                    name: shippingForm.name.trim(),
+                    phone: shippingForm.phone.trim(),
+                    address: `順豐自提站 ${shippingForm.sfStationCode}`,
+                    district: shippingForm.sfStationName || undefined,
+                    region: "香港",
+                    sfStationCode: shippingForm.sfStationCode,
+                    sfStationName: shippingForm.sfStationName || undefined,
+                  } : {
                     name: shippingForm.name.trim(),
                     phone: shippingForm.phone.trim(),
                     address: shippingForm.address.trim(),

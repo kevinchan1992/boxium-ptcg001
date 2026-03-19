@@ -139,7 +139,10 @@ export const marketplaceRouter = router({
         name: z.string(),
         phone: z.string(),
         address: z.string(),
-        district: z.string(),
+        district: z.string().optional(),
+        region: z.string().optional(),
+        sfStationCode: z.string().optional(),
+        sfStationName: z.string().optional(),
       }),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -1701,6 +1704,8 @@ export const marketplaceRouter = router({
         address: z.string().min(1),
         district: z.string().optional(),
         region: z.string().optional(),
+        sfStationCode: z.string().optional(),
+        sfStationName: z.string().optional(),
       }).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
