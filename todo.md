@@ -4974,3 +4974,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 修復 /marketplace/:id 爬蟲路由使用 composeAndCacheMarketplaceOgImage 生成帶 BOXIUM logo 的合成圖片
 - [x] 統一 og:url 為 boxium.asia 域名
 - [x] 保存 checkpoint
+
+---
+
+## 🔧 分享按鈕優化
+
+- [x] 整理分享按鈕位置（移出價格欄，設為獨立區域）
+- [x] 加入 WhatsApp 直接分享按鈕（wa.me/?text=...）
+- [x] 保存 checkpoint
