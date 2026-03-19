@@ -806,13 +806,15 @@ export default function Marketplace() {
                 }`}
               >
                 {s.logo ? (
-                  <img
-                    src={s.logo}
-                    alt={s.label}
-                    className={`h-6 sm:h-8 w-auto object-contain transition-all ${
-                      isActive ? 'brightness-0 invert' : ''
-                    }`}
-                  />
+                  <div className={`flex items-center justify-center rounded-xl px-3 py-1.5 transition-all ${
+                    isActive ? 'bg-white shadow-sm' : ''
+                  }`}>
+                    <img
+                      src={s.logo}
+                      alt={s.label}
+                      className="h-6 sm:h-7 w-auto object-contain"
+                    />
+                  </div>
                 ) : (
                   <span className={`text-sm font-bold ${
                     isActive ? 'text-white' : 'text-[#06038D]'

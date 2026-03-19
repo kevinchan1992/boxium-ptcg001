@@ -4902,3 +4902,4 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 商品詳情頁加入 WhatsApp/Facebook 分享按鈕
 - [ ] 熱門搜尋標籤改為後端動態統計資料
 - [ ] 商品卡片加入已售出遮罩
+- [x] 修復 TCG 系列篩選卡片選中狀態下 Logo 消失問題
