@@ -436,6 +436,7 @@ export default function SellerDashboard() {
   const [showApply, setShowApply] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectingOfferId, setRejectingOfferId] = useState<number | null>(null);
+  const [offerFilter, setOfferFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('pending');
   const [rejectionReason, setRejectionReason] = useState("");
   const [showNewListing, setShowNewListing] = useState(false);
   const [listingStep, setListingStep] = useState<1 | 2 | 3>(1);
@@ -1474,14 +1475,39 @@ export default function SellerDashboard() {
               </BrandTabsContent>
 
               <BrandTabsContent value="offers" className="mt-4">
+                {/* Offer Filter Tabs */}
+                {sellerOffers && sellerOffers.length > 0 && (
+                  <div className="flex gap-2 flex-wrap mb-3">
+                    {(['all', 'pending', 'accepted', 'rejected'] as const).map((f) => {
+                      const labels = { all: '全部', pending: '待回覆', accepted: '已接受', rejected: '已拒絕' };
+                      const counts = { all: sellerOffers.length, pending: sellerOffers.filter((o: any) => o.status === 'pending').length, accepted: sellerOffers.filter((o: any) => o.status === 'accepted').length, rejected: sellerOffers.filter((o: any) => o.status === 'rejected').length };
+                      return (
+                        <button key={f} onClick={() => setOfferFilter(f)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                            offerFilter === f ? 'bg-[#06038d] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}>
+                          {labels[f]} ({counts[f]})
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 {!sellerOffers?.length ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>尚無買家出價</p>
                   </div>
-                ) : (
+                ) : (() => {
+                  const filtered = offerFilter === 'all' ? sellerOffers : (sellerOffers as any[]).filter((o: any) => o.status === offerFilter);
+                  if (filtered.length === 0) return (
+                    <div className="text-center py-10 text-muted-foreground">
+                      <Tag className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">沒有符合條件的出價</p>
+                    </div>
+                  );
+                  return (
                   <div className="space-y-3">
-                    {(sellerOffers as any[]).map((offer) => (
+                    {filtered.map((offer: any) => (
                       <div key={offer.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
                         {/* Brand Header Bar */}
                         <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
@@ -1524,7 +1550,17 @@ export default function SellerDashboard() {
                                 );
                               })()}
                               <div className="flex-1 min-w-0">
-                                <p className="font-semibold truncate text-gray-900">{offer.listingTitle || '商品'}</p>
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="font-semibold truncate text-gray-900 flex-1">{offer.listingTitle || '商品'}</p>
+                                  {offer.listingId && (
+                                    <Link href={`/listing/${offer.listingId}`} className="text-xs text-[#06038d] hover:underline flex-shrink-0">
+                                      前往商品
+                                    </Link>
+                                  )}
+                                </div>
+                                {offer.listingId && (
+                                  <p className="text-xs font-mono text-gray-400 mt-0.5">#BOXIUM-{offer.listingId}</p>
+                                )}
                                 <p className="text-lg font-bold text-[#06038d] mt-0.5">HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</p>
                                 {offer.message && (
                                   <p className="text-xs text-gray-600 mt-1 bg-gray-50 border border-gray-100 rounded px-2 py-1">{offer.message}</p>
@@ -1581,7 +1617,8 @@ export default function SellerDashboard() {
                       </div>
                     ))}
                   </div>
-                )}
+                  );
+                })()}
               </BrandTabsContent>
 
               <BrandTabsContent value="earnings" className="mt-4">

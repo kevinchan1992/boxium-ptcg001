@@ -1134,8 +1134,20 @@ export default function MarketplaceListing() {
               </div>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
                 <p className="font-medium">付款備注填寫欄位請填寫商品編號：</p>
-                <p className="font-mono mt-1 text-sm font-bold tracking-wide">#BOXIUM-{listing.id}</p>
-                <p className="text-amber-600 mt-1">請務必填寫以上編號，方便核對付款</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="font-mono text-sm font-bold tracking-wide flex-1">#BOXIUM-{listing.id}</p>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`#BOXIUM-${listing.id}`);
+                      toast.success("商品編號已複製！請貼上到支付寶備注欄位");
+                    }}
+                    className="flex items-center gap-1 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg px-2 py-1 text-xs font-medium transition-colors"
+                  >
+                    <Copy className="w-3 h-3" />
+                    複製編號
+                  </button>
+                </div>
+                <p className="text-amber-600 mt-1">⚠️ 請務必在支付寶備注欄填寫以上編號，方便核對付款</p>
               </div>
               <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white"
                 onClick={() => setAlipayStep("shipping")}>

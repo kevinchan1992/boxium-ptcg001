@@ -4957,3 +4957,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 支付寶核對頁面加入按 #BOXIUM-XXXXX 搜尋功能
 - [x] 訂單確認郵件加入 #BOXIUM-XXXXX 商品編號
 - [ ] 保存 checkpoint
+
+---
+
+## 🆕 三項新功能（出價管理、AI核對、支付寶優化）
+
+- [x] 支付寶付款 Dialog 優化：加入複製商品編號按鈕和提示文字
+- [x] 支付寶核對頁面：在列表中顯示 AI 驗證結果（aiVerificationResult）
+- [x] 賣家儀表板：出價管理標籤頁優化（築選器/商品編號/前往商品連結）
+- [x] 保存 checkpoint

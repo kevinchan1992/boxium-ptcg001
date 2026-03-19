@@ -2639,6 +2639,24 @@ function AlipayPendingTab() {
                       <Eye className="w-3 h-3" />查看付款截圖
                     </a>
                   )}
+                  {order.aiVerificationResult && (() => {
+                    try {
+                      const ai = JSON.parse(order.aiVerificationResult);
+                      return (
+                        <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                          ai.verified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {ai.verified ? '✅ AI 驗證通過' : '⚠️ AI 驗證失敗'}
+                          {ai.confidence !== undefined && (
+                            <span className="opacity-70">({Math.round(ai.confidence * 100)}%)</span>
+                          )}
+                          {ai.detectedAmount && (
+                            <span className="opacity-70">· HKD {ai.detectedAmount}</span>
+                          )}
+                        </div>
+                      );
+                    } catch { return null; }
+                  })()}
                 </div>
                 <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0"
                   onClick={() => { setSelectedOrder(order); setNote(""); }}>
