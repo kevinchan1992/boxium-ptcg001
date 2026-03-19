@@ -12,12 +12,30 @@ import {
   CreditCard, MapPin, Phone, User, Flag, Star, MessageSquare, Loader2,
   Copy, ExternalLink, ShieldCheck, CircleDot, Smartphone
 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+
+type VerifyResult = {
+  verified: boolean;
+  payeeVerified: boolean;
+  detectedPayee: string | null;
+  amountVerified: boolean;
+  detectedAmount: number | null;
+  currency: string | null;
+  statusVerified: boolean;
+  detectedStatus: string | null;
+  confidence: "high" | "medium" | "low";
+  reason: string;
+};
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
 function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listingId?: number | null; amount: string }) {
   const [open, setOpen] = useState(false);
-  const [alipayStep, setAlipayStep] = useState<"select" | "alipay_pending">("select");
+  const [alipayStep, setAlipayStep] = useState<"select" | "alipay_pending" | "upload" | "done">("select");
+  const [proofUrl, setProofUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const utils = trpc.useUtils();
 
   const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
@@ -31,12 +49,52 @@ function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listi
   const switchToAlipayMutation = trpc.marketplace.switchOrderPaymentToAlipay.useMutation({
     onSuccess: () => {
       setAlipayStep("alipay_pending");
-      utils.marketplace.getOrderByNo.invalidate();
-      utils.marketplace.getMyOrders.invalidate();
     },
     onError: (e: any) => toast.error(e.message || "無法切換付款方式"),
   });
 
+  const submitProofMutation = trpc.marketplace.submitAlipayProof.useMutation({
+    onSuccess: () => {
+      setAlipayStep("done");
+      utils.marketplace.getOrderByNo.invalidate();
+      utils.marketplace.getMyOrders.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message || "提交失敗，請重試"),
+  });
+
+  const verifyProofMutation = trpc.marketplace.verifyPaymentProof.useMutation({
+    onSuccess: (data) => {
+      setVerifyResult(data as VerifyResult);
+      setIsVerifying(false);
+      if (data.verified) toast.success("✅ 付款金額驗證成功！");
+      else toast.error("⚠️ 付款金額不符，請重新確認");
+    },
+    onError: (e: any) => { setIsVerifying(false); toast.error("驗證失敗：" + e.message); },
+  });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("截圖不能超過 5MB"); return; }
+    setIsUploading(true); setVerifyResult(null);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const result = await submitProofMutation.mutateAsync({ orderId, proofImageBase64: base64, mimeType: file.type });
+      setProofUrl(result.proofUrl);
+      toast.success("截圖已上傳，正在 AI 驗證金額...");
+      setIsVerifying(true);
+      const price = parseFloat(amount);
+      verifyProofMutation.mutate({ proofImageUrl: result.proofUrl, expectedAmountHkd: price });
+    } catch { toast.error("截圖上傳失敗，請重試"); }
+    finally { setIsUploading(false); e.target.value = ""; }
+  };
+
+  const canSubmitProof = proofUrl && verifyResult?.verified === true;
   const isPending = getCheckoutMutation.isPending || switchToAlipayMutation.isPending;
 
   return (
@@ -49,11 +107,11 @@ function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listi
         <CreditCard className="w-4 h-4 mr-2" />前往付款
       </Button>
 
-      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setAlipayStep("select"); }}>
+      <Dialog open={open} onOpenChange={(v) => { if (!v) { setOpen(false); setAlipayStep("select"); setProofUrl(""); setVerifyResult(null); } }}>
         <DialogContent className="max-w-sm bg-white text-gray-900">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>
-              {alipayStep === "select" ? "選擇付款方式" : "支付寶 HK 付款"}
+              {alipayStep === "select" ? "選擇付款方式" : alipayStep === "done" ? "訂單已提交" : "支付寶 HK 付款"}
             </DialogTitle>
           </DialogHeader>
 
@@ -103,7 +161,7 @@ function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listi
                 <p className="font-bold text-[#06038D]">付款金額：<span className="text-lg">HKD {parseFloat(amount).toFixed(2)}</span></p>
               </div>
               <div className="text-center space-y-3">
-                <p className="text-sm text-gray-500">請掃描 QR Code 或點擊連結付款</p>
+                <p className="text-sm text-gray-500">請揃描 QR Code 或點擊連結付款</p>
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(ALIPAY_QR_URL)}`}
                   alt="支付寶 HK QR Code"
@@ -132,10 +190,102 @@ function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listi
                 </div>
                 <p className="text-amber-600 mt-1">⚠️ 請務必在支付寶備注欄填寫以上編號，方便核對付款</p>
               </div>
-              <p className="text-xs text-gray-500 text-center">付款完成後，請前往訂單詳情頁上傳支付寶 HK 付款截圖</p>
-              <Button className="w-full text-white font-bold" style={{ backgroundColor: "#06038d" }} onClick={() => setOpen(false)}>
-                我已了解，前往訂單詳情頁
+              <Button className="w-full text-white font-bold" style={{ backgroundColor: "#06038d" }} onClick={() => setAlipayStep("upload")}>
+                我已了解，上傳付款截圖
               </Button>
+            </div>
+          )}
+
+          {alipayStep === "upload" && (
+            <div className="space-y-4 py-2">
+              <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm">
+                <p className="font-bold text-[#06038D]">付款金額：HKD {parseFloat(amount).toFixed(2)}</p>
+                <p className="text-gray-500 mt-1">請上傳支付寶 HK 的付款成功截圖，系統將自動驗證金額是否一致。</p>
+              </div>
+              <div>
+                <Label>付款截圖 *</Label>
+                <div className="mt-2 border-2 border-dashed border-[#06038D]/30 rounded-xl p-6 text-center">
+                  {isUploading ? (
+                    <div className="flex flex-col items-center gap-2 text-gray-400">
+                      <Loader2 className="w-8 h-8 animate-spin" />
+                      <p className="text-sm">上傳中...</p>
+                    </div>
+                  ) : proofUrl ? (
+                    <div className="space-y-3">
+                      <img src={proofUrl} alt="付款截圖" className="max-h-40 mx-auto rounded object-contain" />
+                      {isVerifying ? (
+                        <div className="flex items-center justify-center gap-2 text-[#06038D] text-sm">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>AI 正在驗證付款金額...</span>
+                        </div>
+                      ) : verifyResult ? (
+                        <div className={`rounded-xl p-3 text-sm space-y-2 ${verifyResult.verified ? "bg-green-50 border border-green-200" : "bg-orange-50 border border-orange-200"}`}>
+                          <div className="flex items-center gap-2 font-medium mb-2">
+                            {verifyResult.verified
+                              ? <><CheckCircle className="w-4 h-4 text-green-600" /><span className="text-green-800">三項驗證全部通過</span></>
+                              : <><XCircle className="w-4 h-4 text-orange-600" /><span className="text-orange-800">驗證未完全通過</span></>
+                            }
+                          </div>
+                          <div className="space-y-1.5">
+                            {[
+                              { ok: verifyResult.payeeVerified, label: `收款方：${verifyResult.detectedPayee ?? "未識別"}${!verifyResult.payeeVerified ? " （需為「零度有限公司」）" : ""}` },
+                              { ok: verifyResult.amountVerified, label: `金額：${verifyResult.currency ?? "HKD"} ${verifyResult.detectedAmount ?? "未識別"}${!verifyResult.amountVerified ? ` （需為 HKD ${parseFloat(amount).toFixed(2)}）` : ""}` },
+                              { ok: verifyResult.statusVerified, label: `狀態：${verifyResult.detectedStatus ?? "未識別"}${!verifyResult.statusVerified ? " （需為「成功」）" : ""}` },
+                            ].map((item, i) => (
+                              <div key={i} className="flex items-center gap-2 text-xs">
+                                {item.ok ? <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" /> : <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
+                                <span className={item.ok ? "text-green-700" : "text-red-700"}>{item.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <p className={`text-xs mt-1 ${verifyResult.verified ? "text-green-700" : "text-orange-700"}`}>{verifyResult.reason}</p>
+                          {!verifyResult.verified && (
+                            <button className="mt-1 text-xs text-[#06038D] underline" onClick={() => { setProofUrl(""); setVerifyResult(null); }}>
+                              重新上傳截圖
+                            </button>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div>
+                      <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" id="order-proof-upload" />
+                      <label htmlFor="order-proof-upload" className="cursor-pointer">
+                        <div className="text-3xl mb-2">📷</div>
+                        <p className="text-sm text-gray-500">點擊上傳截圖</p>
+                        <p className="text-xs text-gray-400 mt-1">支援 JPG、PNG，最大 5MB</p>
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {verifyResult && !verifyResult.verified && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+                  <p className="font-medium">⚠️ 如確認已付款，可繼續提交</p>
+                  <p className="mt-1">訂單將標記為「待人工核對」，管理員將在 1-2 個工作天內確認。</p>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("alipay_pending")}>返回</Button>
+                <Button
+                  className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
+                  disabled={!proofUrl || isVerifying || isUploading || submitProofMutation.isPending}
+                  onClick={() => { if (proofUrl) { setAlipayStep("done"); utils.marketplace.getOrderByNo.invalidate(); utils.marketplace.getMyOrders.invalidate(); } }}
+                >
+                  {submitProofMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : canSubmitProof ? "✅ 提交訂單" : "提交訂單（待核對）"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {alipayStep === "done" && (
+            <div className="text-center space-y-4 py-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
+              <p className="font-bold text-lg text-[#06038D]">截圖已提交！</p>
+              <p className="text-sm text-gray-500">我們將在核對收款後確認你的訂單，通常需要 1-2 個工作天。</p>
+              <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => { setOpen(false); setAlipayStep("select"); setProofUrl(""); setVerifyResult(null); }}>關閉</Button>
             </div>
           )}
         </DialogContent>

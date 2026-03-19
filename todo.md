@@ -4990,4 +4990,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 修復 Stripe window.open 在手機被封鎖（改為 window.location.href）
 - [x] 訂單詳情頁「前往付款」加入付款方式選擇 Dialog（信用卡/Apple Pay 或支付寶 HK）
 - [x] 修復 Orders.tsx 「前往付款」和「取消訂單」按鈕對齊問題
+- [x] 保存 checkpoint (version: 38a3b9c1)
+
+---
+
+## 🔧 OrderDetail 支付寶 HK 流程修復
+
+- [x] 修改 OrderDetail.tsx 支付寶 HK 流程：點擊「我已了解」後顯示上傳付款截圖步驟（對齊 MarketplaceListing.tsx）
+- [x] 確認後端 submitAlipayProof API 資料正確對接（base64 上傳 + verifyPaymentProof AI 驗證）
 - [ ] 保存 checkpoint
