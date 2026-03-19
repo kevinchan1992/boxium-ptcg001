@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useState } from "react";
-import { User, Heart, History, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X, Lock } from "lucide-react";
+import { User, Heart, Trash2, Package, ShoppingBag, Crown, Calendar, Mail, Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 
@@ -141,9 +141,6 @@ export default function Profile() {
                 <BrandTabsTrigger value="watchlist" icon={<Heart className="w-4 h-4" />} label={t("profile.tabs.watchlist")}>
                   {t("profile.tabs.watchlist")}
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="history" icon={<History className="w-4 h-4" />} label={t("profile.tabs.history")}>
-                  {t("profile.tabs.history")}
-                </BrandTabsTrigger>
                 <BrandTabsTrigger value="addresses" icon={<MapPin className="w-4 h-4" />} label="收貨地址">
                   收貨地址
                 </BrandTabsTrigger>
@@ -158,9 +155,6 @@ export default function Profile() {
               </BrandTabsContent>
               <BrandTabsContent value="watchlist">
                 <WatchlistSection />
-              </BrandTabsContent>
-              <BrandTabsContent value="history">
-                <HistorySection />
               </BrandTabsContent>
               <BrandTabsContent value="addresses">
                 <ShippingAddressSection />
@@ -670,120 +664,6 @@ function ShippingAddressSection() {
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── History Section ───────────────────────────────────────────
-function HistorySection() {
-  const { t } = useTranslation();
-  const { data: history, isLoading, refetch } = trpc.profile.getViewHistory.useQuery({});
-
-  const clearHistory = trpc.profile.clearViewHistory.useMutation({
-    onSuccess: () => {
-      toast.success(t("profile.historySection.clearSuccess"));
-      refetch();
-    },
-    onError: (error) => {
-      toast.error(t("profile.historySection.clearFailed", { error: error.message }));
-    },
-  });
-
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-14 w-full rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-
-  if (!history || history.length === 0) {
-    return (
-      <div className="py-16 text-center">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-          style={{ background: `${BRAND_BLUE}10` }}
-        >
-          <History className="w-8 h-8" style={{ color: BRAND_BLUE }} />
-        </div>
-        <p className="text-gray-500 text-base">{t("profile.historySection.empty")}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900">{t("profile.historySection.title")}</h2>
-          <p className="text-sm text-gray-500">{t("profile.historySection.count", { count: history.length })}</p>
-        </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-red-300 text-red-500 hover:bg-red-50 hover:border-red-400 font-semibold"
-            >
-              <Trash2 className="w-4 h-4 mr-1.5" />
-              {t("profile.historySection.clearHistory")}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-white border border-gray-200">
-            <DialogHeader>
-              <DialogTitle className="text-gray-900">{t("profile.historySection.confirmClear")}</DialogTitle>
-              <DialogDescription className="text-gray-500">
-                {t("profile.historySection.confirmDescription")}
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" className="border-gray-200 text-gray-700">
-                {t("profile.historySection.cancel")}
-              </Button>
-              <Button
-                onClick={() => clearHistory.mutate(undefined)}
-                disabled={clearHistory.isPending}
-                className="bg-red-500 hover:bg-red-600 text-white"
-              >
-                {t("profile.historySection.confirm")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="overflow-x-auto rounded-xl border border-gray-100">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-gray-100" style={{ background: `${BRAND_BLUE}08` }}>
-              <TableHead className="font-semibold text-gray-700">{t("profile.historySection.table.card")}</TableHead>
-              <TableHead className="font-semibold text-gray-700">{t("profile.historySection.table.series")}</TableHead>
-              <TableHead className="font-semibold text-gray-700">{t("profile.historySection.table.viewedAt")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {history.map((item: any) => (
-              <TableRow key={item.id} className="border-gray-100 hover:bg-gray-50 transition-colors">
-                <TableCell className="font-medium">
-                  <a
-                    href={`/card/${item.card.id}`}
-                    className="font-semibold transition-colors hover:underline"
-                    style={{ color: BRAND_BLUE }}
-                  >
-                    {item.card.name}
-                  </a>
-                </TableCell>
-                <TableCell className="text-gray-500 text-sm">{item.card.series || "—"}</TableCell>
-                <TableCell className="text-gray-500 text-sm">
-                  {new Date(item.viewedAt).toLocaleString()}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
     </div>
   );
 }

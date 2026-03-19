@@ -5056,4 +5056,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 修復 adminUpdateOrderStatus cancelled：同步更新 paymentStatus = 'cancelled' 並清空截圖
 - [x] 修復 submitAlipayProof：加入訂單狀態驗證（已取消/已付款不允許上傳截圖）
 - [x] 修復資料庫中 BOXIUM-20260319-5893 訂單狀態（orderStatus/paymentStatus 更新為 cancelled）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint (version: d95d0175)
+
+## 移除瀏覽歷史功能 (2026-03-19)
+- [x] 移除 Profile.tsx 瀏覽歷史標籤頁觸發器
+- [x] 移除 Profile.tsx HistorySection 組件及相關代碼
+- [x] 移除 History 圖標 import
