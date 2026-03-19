@@ -4982,3 +4982,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 整理分享按鈕位置（移出價格欄，設為獨立區域）
 - [x] 加入 WhatsApp 直接分享按鈕（wa.me/?text=...）
 - [x] 保存 checkpoint
+
+---
+
+## ✅ 付款流程修復
+
+- [x] 修復 Stripe window.open 在手機被封鎖（改為 window.location.href）
+- [x] 訂單詳情頁「前往付款」加入付款方式選擇 Dialog（信用卡/Apple Pay 或支付寶 HK）
+- [x] 修復 Orders.tsx 「前往付款」和「取消訂單」按鈕對齊問題
+- [ ] 保存 checkpoint

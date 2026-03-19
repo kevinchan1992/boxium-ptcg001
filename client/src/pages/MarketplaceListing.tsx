@@ -442,7 +442,7 @@ function OfferPayButton({ orderId }: { orderId: number }) {
   const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
     onSuccess: (data) => {
       toast.success("正在轉向付款頁面...");
-      window.open(data.checkoutUrl, "_blank");
+      window.location.href = data.checkoutUrl;
     },
     onError: (e: any) => toast.error(e.message || "無法獲取付款連結"),
   });
@@ -567,7 +567,7 @@ export default function MarketplaceListing() {
 
   const createStripeOrderMutation = trpc.marketplace.createStripeOrder.useMutation({
     onSuccess: (data) => {
-      if (data.checkoutUrl) { window.open(data.checkoutUrl, "_blank"); toast.success("正在跳轉到 Stripe 付款頁面..."); }
+      if (data.checkoutUrl) { window.location.href = data.checkoutUrl; }
     },
     onError: (e) => toast.error(e.message),
   });

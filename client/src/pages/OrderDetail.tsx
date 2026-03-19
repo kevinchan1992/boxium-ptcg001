@@ -10,27 +10,137 @@ import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, Package, CheckCircle, Truck, Clock, XCircle, AlertCircle,
   CreditCard, MapPin, Phone, User, Flag, Star, MessageSquare, Loader2,
-  Copy, ExternalLink, ShieldCheck, CircleDot
+  Copy, ExternalLink, ShieldCheck, CircleDot, Smartphone
 } from "lucide-react";
 
-function PayOrderButton({ orderId }: { orderId: number }) {
+const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
+
+function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listingId?: number | null; amount: string }) {
+  const [open, setOpen] = useState(false);
+  const [alipayStep, setAlipayStep] = useState<"select" | "alipay_pending">("select");
+  const utils = trpc.useUtils();
+
   const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
     onSuccess: (data) => {
-      toast.success("正在轉向付款頁面...");
-      window.open(data.checkoutUrl, "_blank");
+      setOpen(false);
+      window.location.href = data.checkoutUrl;
     },
     onError: (e: any) => toast.error(e.message || "無法獲取付款連結"),
   });
+
+  const switchToAlipayMutation = trpc.marketplace.switchOrderPaymentToAlipay.useMutation({
+    onSuccess: () => {
+      setAlipayStep("alipay_pending");
+      utils.marketplace.getOrderByNo.invalidate();
+      utils.marketplace.getMyOrders.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message || "無法切換付款方式"),
+  });
+
+  const isPending = getCheckoutMutation.isPending || switchToAlipayMutation.isPending;
+
   return (
-    <Button
-      className="text-white font-bold"
-      style={{ backgroundColor: "#06038d" }}
-      disabled={getCheckoutMutation.isPending}
-      onClick={() => getCheckoutMutation.mutate({ orderId })}
-    >
-      {getCheckoutMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CreditCard className="w-4 h-4 mr-2" />}
-      前往付款
-    </Button>
+    <>
+      <Button
+        className="text-white font-bold"
+        style={{ backgroundColor: "#06038d" }}
+        onClick={() => { setAlipayStep("select"); setOpen(true); }}
+      >
+        <CreditCard className="w-4 h-4 mr-2" />前往付款
+      </Button>
+
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setAlipayStep("select"); }}>
+        <DialogContent className="max-w-sm bg-white text-gray-900">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>
+              {alipayStep === "select" ? "選擇付款方式" : "支付寶 HK 付款"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {alipayStep === "select" && (
+            <div className="space-y-3 py-2">
+              <p className="text-sm text-gray-500">付款金額：<span className="font-bold text-gray-900">HKD {parseFloat(amount).toFixed(2)}</span></p>
+
+              {/* Stripe */}
+              <button
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-[#06038d] hover:bg-[#f0f4ff] transition-all text-left group"
+                disabled={isPending}
+                onClick={() => getCheckoutMutation.mutate({ orderId })}
+              >
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#635bff" }}>
+                  <CreditCard className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 group-hover:text-[#06038d]">Stripe 信用卡 / Apple Pay</p>
+                  <p className="text-xs text-gray-500">Visa / Mastercard / Apple Pay</p>
+                </div>
+                {getCheckoutMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-gray-300 group-hover:text-[#06038d] text-lg">›</span>}
+              </button>
+
+              {/* Alipay HK */}
+              <button
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-[#1677ff] hover:bg-[#f0f7ff] transition-all text-left group"
+                disabled={isPending}
+                onClick={() => switchToAlipayMutation.mutate({ orderId })}
+              >
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#1677ff" }}>
+                  <span className="text-white font-bold text-lg">支</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 group-hover:text-[#1677ff]">支付寶 HK</p>
+                  <p className="text-xs text-gray-500">AlipayHK 電子錢包付款</p>
+                </div>
+                {switchToAlipayMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-gray-300 group-hover:text-[#1677ff] text-lg">›</span>}
+              </button>
+
+              <p className="text-xs text-gray-400 text-center pt-1">所有付款均通過加密傳輸保護</p>
+            </div>
+          )}
+
+          {alipayStep === "alipay_pending" && (
+            <div className="space-y-4 py-2">
+              <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4 text-sm">
+                <p className="font-bold text-[#06038D]">付款金額：<span className="text-lg">HKD {parseFloat(amount).toFixed(2)}</span></p>
+              </div>
+              <div className="text-center space-y-3">
+                <p className="text-sm text-gray-500">請掃描 QR Code 或點擊連結付款</p>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(ALIPAY_QR_URL)}`}
+                  alt="支付寶 HK QR Code"
+                  className="w-44 h-44 mx-auto rounded-xl border-4 border-white shadow-lg"
+                />
+                <a href={ALIPAY_QR_URL} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-[#06038D] hover:underline text-sm">
+                  <Smartphone className="w-4 h-4" />在手機上開啟支付寶 HK
+                </a>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+                <p className="font-medium">付款備注填寫欄位請填寫商品編號：</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="font-mono text-sm font-bold tracking-wide flex-1">{listingId ? `#BOXIUM-${listingId}` : "請查看訂單詳情"}</p>
+                  {listingId && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`#BOXIUM-${listingId}`);
+                        toast.success("商品編號已複製！請貼上到支付寶備注欄位");
+                      }}
+                      className="flex items-center gap-1 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg px-2 py-1 text-xs font-medium transition-colors"
+                    >
+                      <Copy className="w-3 h-3" />複製編號
+                    </button>
+                  )}
+                </div>
+                <p className="text-amber-600 mt-1">⚠️ 請務必在支付寶備注欄填寫以上編號，方便核對付款</p>
+              </div>
+              <p className="text-xs text-gray-500 text-center">付款完成後，請前往訂單詳情頁上傳支付寶 HK 付款截圖</p>
+              <Button className="w-full text-white font-bold" style={{ backgroundColor: "#06038d" }} onClick={() => setOpen(false)}>
+                我已了解，前往訂單詳情頁
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -523,24 +633,13 @@ export default function OrderDetail() {
           </div>
 
           {/* Action Buttons - pending_payment: show pay button + cancel button */}
-          {isBuyer && order.orderStatus === "pending_payment" && order.paymentMethod === "stripe" && (
-            <div className="px-4 pb-4 flex flex-wrap gap-2 border-t pt-3">
-              <PayOrderButton orderId={order.id} />
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50"
-                onClick={() => setShowCancelDialog(true)}
-              >
-                <XCircle className="w-4 h-4 mr-1.5" />取消訂單
-              </Button>
-            </div>
-          )}
-          {isBuyer && order.orderStatus === "pending_payment" && order.paymentMethod === "alipay_hk" && (
-            <div className="px-4 pb-4 border-t pt-3 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />等待支付寶 HK 付款確認
-              </span>
+          {isBuyer && order.orderStatus === "pending_payment" && (
+            <div className="px-4 pb-4 flex items-center gap-2 border-t pt-3">
+              <PayOrderButton
+                orderId={order.id}
+                listingId={order.listingId}
+                amount={order.subtotalHkd as string ?? "0"}
+              />
               <Button
                 size="sm"
                 variant="outline"

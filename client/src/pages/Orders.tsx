@@ -67,13 +67,11 @@ function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: stri
   const createOfferCheckout = trpc.marketplace.createOfferCheckout.useMutation({
     onSuccess: (data) => {
       if (data.paymentMethod === "stripe") {
-        toast.success("正在轉向 Stripe 付款頁面...");
-        window.open((data as any).checkoutUrl, "_blank");
         setOpen(false);
+        window.location.href = (data as any).checkoutUrl;
       } else {
         // Alipay HK: show QR code step
         setAlipayStep(true);
-        window.open((data as any).alipayLink, "_blank");
       }
     },
     onError: (e: any) => toast.error(e.message || "無法建立付款"),
@@ -375,7 +373,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
 
       {/* Action buttons */}
       {(canConfirm || canDispute || isPending || canReview || isDisputed) && (
-        <div className="px-4 pb-3 flex flex-wrap gap-2">
+        <div className="px-4 pb-3 flex flex-wrap items-center gap-2">
           {canConfirm && (
             <Button
               size="sm"
@@ -412,14 +410,14 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
             </span>
           )}
           {isPending && (
-            <>
+            <div className="flex items-center gap-2">
               <Link href={`/orders/${order.orderNo}`}>
                 <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: "#06038d" }}>
                   <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
                 </Button>
               </Link>
               <BuyerCancelButton orderId={order.id} onSuccess={() => utils.marketplace.getMyOrders.invalidate()} />
-            </>
+            </div>
           )}
           {isWaitingShipment && (
             <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1">

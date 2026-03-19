@@ -347,6 +347,25 @@ export const marketplaceRouter = router({
       return { checkoutUrl: session.url! };
     }),
 
+  // Switch a pending_payment order to Alipay HK and return payment link
+  switchOrderPaymentToAlipay: protectedProcedure
+    .input(z.object({ orderId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
+      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "無權限" });
+      if (order.orderStatus !== "pending_payment") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不需要付款" });
+      await updateMarketplaceOrder(order.id, { paymentMethod: "alipay_hk" });
+      const totalHkd = parseFloat(order.subtotalHkd as string);
+      return {
+        paymentMethod: "alipay_hk" as const,
+        alipayLink: ALIPAY_HK_STATIC_LINK,
+        amount: totalHkd.toFixed(2),
+        orderNo: order.orderNo,
+        orderId: order.id,
+      };
+    }),
+
   // Create checkout for accepted offer - supports Stripe or Alipay HK
   createOfferCheckout: protectedProcedure
     .input(z.object({
