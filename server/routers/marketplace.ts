@@ -28,7 +28,7 @@ import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
 import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail } from "../emailService";
-import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs } from "../../drizzle/schema_new";
+import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs, cartItems } from "../../drizzle/schema_new";
 import { eq, and, isNotNull, isNull, or, desc, sql, inArray, like } from 'drizzle-orm';
 
 // Platform fee rate (5% for C2C listings only)
@@ -3165,6 +3165,84 @@ All three checks must pass for verified to be true. Respond with JSON only match
         subject: r.note?.replace(/^\[發送訊息給買家\] 主旨: /, '') ?? '',
       }));
     }),
+  // ============================================================
+  // Cart APIs
+  addToCart: protectedProcedure
+    .input(z.object({ listingId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      // Check listing exists and is available
+      const [listing] = await db.select().from(marketplaceListings)
+        .where(and(eq(marketplaceListings.id, input.listingId), eq(marketplaceListings.status, 'active')));
+      if (!listing) throw new TRPCError({ code: 'NOT_FOUND', message: '商品不存在或已下架' });
+      // Cannot add own listing to cart
+      if (listing.sellerId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: '不能將自己的商品加入購物車' });
+      // Upsert (ignore if already in cart)
+      await db.insert(cartItems).values({ userId: ctx.user.id, listingId: input.listingId }).onDuplicateKeyUpdate({ set: { addedAt: sql`NOW()` } });
+      return { success: true };
+    }),
+
+  removeFromCart: protectedProcedure
+    .input(z.object({ listingId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      await db.delete(cartItems).where(and(eq(cartItems.userId, ctx.user.id), eq(cartItems.listingId, input.listingId)));
+      return { success: true };
+    }),
+
+  clearCart: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      await db.delete(cartItems).where(eq(cartItems.userId, ctx.user.id));
+      return { success: true };
+    }),
+
+  getMyCart: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const rows = await db
+        .select({
+          cartItemId: cartItems.id,
+          listingId: marketplaceListings.id,
+          title: marketplaceListings.title,
+          priceHkd: marketplaceListings.priceHkd,
+          condition: marketplaceListings.condition,
+          images: marketplaceListings.images,
+          status: marketplaceListings.status,
+          sellerId: marketplaceListings.sellerId,
+          sellerType: marketplaceListings.sellerType,
+          addedAt: cartItems.addedAt,
+        })
+        .from(cartItems)
+        .innerJoin(marketplaceListings, eq(cartItems.listingId, marketplaceListings.id))
+        .where(eq(cartItems.userId, ctx.user.id))
+        .orderBy(desc(cartItems.addedAt));
+      return rows;
+    }),
+
+  getCartCount: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return { count: 0 };
+      const [row] = await db.select({ count: sql<number>`count(*)` }).from(cartItems).where(eq(cartItems.userId, ctx.user.id));
+      return { count: Number(row?.count ?? 0) };
+    }),
+
+  isInCart: protectedProcedure
+    .input(z.object({ listingId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return false;
+      const [row] = await db.select({ id: cartItems.id }).from(cartItems).where(
+        and(eq(cartItems.userId, ctx.user.id), eq(cartItems.listingId, input.listingId))
+      );
+      return !!row;
+    }),
+
   // ============================================================
   adminGetPendingPayoutCount: adminProcedure
     .query(async () => {

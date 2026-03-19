@@ -1092,3 +1092,20 @@ export const marketplaceSearchLogs = mysqlTable("marketplaceSearchLogs", {
 }));
 export type MarketplaceSearchLog = typeof marketplaceSearchLogs.$inferSelect;
 export type InsertMarketplaceSearchLog = typeof marketplaceSearchLogs.$inferInsert;
+
+/**
+ * Cart Items - stores items added to user's shopping cart
+ * Each row represents one listing in a user's cart (qty always 1 for single cards)
+ */
+export const cartItems = mysqlTable("cartItems", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // FK to users
+  listingId: int("listingId").notNull(), // FK to marketplaceListings
+  addedAt: timestamp("addedAt").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("cart_userId_idx").on(table.userId),
+  listingIdIdx: index("cart_listingId_idx").on(table.listingId),
+  uniqueUserListing: uniqueIndex("cart_user_listing_unique").on(table.userId, table.listingId),
+}));
+export type CartItem = typeof cartItems.$inferSelect;
+export type InsertCartItem = typeof cartItems.$inferInsert;

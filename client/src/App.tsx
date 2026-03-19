@@ -33,6 +33,7 @@ import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
 import Notifications from "./pages/Notifications";
 import SellerPublicProfile from "./pages/SellerPublicProfile";
+import Cart from "./pages/Cart";
 import { TopNav } from "./components/TopNav";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 
@@ -94,6 +95,7 @@ function Router() {
       <Route path="/seller" component={SellerDashboard} />
       <Route path="/orders" component={Orders} />
       <Route path="/orders/:orderNo" component={OrderDetail} />
+      <Route path="/cart" component={Cart} />
       <Route path="/notifications" component={Notifications} />
       <Route path="/seller/:id" component={SellerPublicProfile} />
       <Route path="/terms" component={Terms} />

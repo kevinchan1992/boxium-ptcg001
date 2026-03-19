@@ -5076,3 +5076,25 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 結帳時帶入 sfStationCode/sfStationName 到訂單
 - [ ] 訂單資料庫加入 sfStationCode/sfStationName 欄位
 - [ ] 管理員訂單詳情顯示順豐自提站格式
+
+## 購物車功能 (2026-03-19)
+- [ ] schema_new.ts 加入 cartItems 表
+- [ ] 資料庫遷移：CREATE TABLE cartItems
+- [ ] 後端 API：addToCart, removeFromCart, getMyCart, clearCart
+- [ ] 購物車頁面 /cart（商品列表、小計、結帳按鈕）
+- [ ] 導航欄購物車圖標 + 數量 badge
+- [ ] 商品詳情頁「加入購物車」按鈕
+- [ ] 結帳流程：送貨方式選擇（順豐速運到付 / 面交/其他）
+- [ ] 結帳流程：付款方式選擇（Stripe / 支付寶 HK）
+- [ ] 順豐條款說明文字
+- [ ] 儲存 Checkpoint
+
+## 購物車功能 (2026-03-19)
+- [x] 建立 cartItems 資料庫表
+- [x] 後端 API：addToCart、removeFromCart、getMyCart、getCartCount、isInCart
+- [x] 購物車頁面 /cart（商品列表、結帳流程）
+- [x] 商品詳情頁加入「加入購物車」按鈕
+- [x] TopNav 購物車圖標帶數量 badge
+- [x] 結帳流程：順豐速運（運費到付）/ 面交/其他 送貨方式選擇
+- [x] 結帳流程：Stripe / 支付寶 HK 付款方式選擇
+- [x] 順豐自提站搜尋（125 個香港站點）

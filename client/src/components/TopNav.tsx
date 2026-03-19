@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, LogOut, User, Bell, Tag, ShoppingBag, LogIn, Package, MessageSquare, CheckCheck, ExternalLink } from "lucide-react";
+import { Menu, X, LogOut, User, Bell, Tag, ShoppingBag, LogIn, Package, MessageSquare, CheckCheck, ExternalLink, ShoppingCart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -19,6 +19,22 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { zhTW } from "date-fns/locale";
+
+/** Small badge showing cart item count */
+function CartBadge() {
+  const { data: user } = trpc.auth.me.useQuery();
+  const { data } = trpc.marketplace.getCartCount.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: 60000,
+  });
+  const count = data?.count ?? 0;
+  if (count === 0) return null;
+  return (
+    <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
 
 export function TopNav() {
   const { t } = useTranslation();
@@ -209,6 +225,18 @@ export function TopNav() {
               <Tag className="w-3.5 h-3.5 flex-shrink-0" />
               <span>出售商品</span>
             </motion.button>
+
+            {/* Shopping Cart — logged-in only */}
+            {user && (
+              <Link href="/cart">
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <Button variant="ghost" size="sm" className="relative text-white hover:text-[#FEDD00] p-2">
+                    <ShoppingCart className="w-5 h-5" />
+                    <CartBadge />
+                  </Button>
+                </motion.div>
+              </Link>
+            )}
 
             {/* Notification Bell — logged-in only */}
             {user && (

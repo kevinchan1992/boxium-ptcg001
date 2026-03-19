@@ -873,6 +873,8 @@ export default function MarketplaceListing() {
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   {createStripeOrderMutation.isPending ? "處理中..." : "立即購買"}
                 </Button>
+                {/* Add to Cart button */}
+                <AddToCartButton listingId={listing.id} isLoggedIn={!!me} />
                 {/* Credit card */}
                 <Button
                   className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white h-11 text-sm rounded-xl disabled:opacity-40"
@@ -1621,5 +1623,57 @@ export default function MarketplaceListing() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// ─── Add to Cart Button ───────────────────────────────────────────────────────
+function AddToCartButton({ listingId, isLoggedIn }: { listingId: number; isLoggedIn: boolean }) {
+  const utils = trpc.useUtils();
+  const [, setLocation] = useLocation();
+
+  const { data: inCart } = trpc.marketplace.isInCart.useQuery(
+    { listingId },
+    { enabled: isLoggedIn }
+  );
+
+  const addToCartMutation = trpc.marketplace.addToCart.useMutation({
+    onSuccess: () => {
+      utils.marketplace.isInCart.invalidate({ listingId });
+      utils.marketplace.getCartCount.invalidate();
+      toast.success("已加入購物車", {
+        action: {
+          label: "查看購物車",
+          onClick: () => setLocation("/cart"),
+        },
+      });
+    },
+    onError: (err) => toast.error(err.message || "加入購物車失敗"),
+  });
+
+  if (!isLoggedIn) return null;
+
+  if (inCart) {
+    return (
+      <Button
+        variant="outline"
+        className="w-full h-11 text-sm border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/5 rounded-xl"
+        onClick={() => setLocation("/cart")}
+      >
+        <ShoppingCart className="w-4 h-4 mr-2" />
+        已在購物車 - 查看購物車
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      variant="outline"
+      className="w-full h-11 text-sm border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/5 rounded-xl"
+      disabled={addToCartMutation.isPending}
+      onClick={() => addToCartMutation.mutate({ listingId })}
+    >
+      <ShoppingCart className="w-4 h-4 mr-2" />
+      {addToCartMutation.isPending ? "加入中..." : "加入購物車"}
+    </Button>
   );
 }
