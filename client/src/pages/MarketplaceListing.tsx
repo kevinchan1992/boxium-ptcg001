@@ -147,7 +147,7 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
 
 // ─── SNKRDUNK Price Block ──────────────────────────────────────────────────────
 
-function SnkrdunkPriceBlock({ cardId, listingPriceHkd }: { cardId: number; listingPriceHkd: number }) {
+function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: number; listingPriceHkd: number; condition?: string }) {
   const [days, setDays] = useState(7);
 
   const { data: history, isLoading } = trpc.prices.getHistory.useQuery(
@@ -239,16 +239,17 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd }: { cardId: number; listi
       <div className="bg-gradient-to-r from-[#06038D] to-[#1a18c4] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <TrendIcon className="w-4 h-4 text-white" />
-          <span className="text-white font-semibold text-sm">SNKRDUNK 市場參考價</span>
+          <div>
+            <span className="text-white font-semibold text-sm">SNKRDUNK 市場參考價</span>
+            {condition && <span className="ml-2 text-white/60 text-xs">({condition})</span>}
+          </div>
         </div>
         <a
-          href={`https://snkrdunk.com/en/trading-cards/search?q=`}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`/card/${cardId}`}
           className="flex items-center gap-1 text-white/70 hover:text-white text-xs transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
-          <span>SNKRDUNK</span>
+          <span>查看詳細行情</span>
         </a>
       </div>
       <div className="p-4 space-y-4">
@@ -317,7 +318,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd }: { cardId: number; listi
           )}
         </div>
 
-        <p className="text-xs text-gray-400">數據來源：SNKRDUNK · 近 {days} 天 {chartData.reduce((s, d) => s + d.count, 0)} 筆成交記錄</p>
+        <p className="text-xs text-gray-400">數據來源：SNKRDUNK{condition ? ` · ${condition}` : ''} · 近 {days} 天 {chartData.reduce((s, d) => s + d.count, 0)} 筆成交記錄</p>
       </div>
     </div>
   );
@@ -763,8 +764,7 @@ export default function MarketplaceListing() {
                 const series = tcgLogos[(listing as any).tcgSeries as string];
                 return series ? (
                   <div className="mb-2">
-                    <img src={series.logo} alt={series.label} className="h-6 w-auto object-contain" />
-                  </div>
+                    <img src={series.logo} alt={series.label} className="h-16 w-auto object-contain" />                  </div>
                 ) : null;
               })()}
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{listing.title}</h1>

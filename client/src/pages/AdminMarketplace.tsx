@@ -302,7 +302,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
                             : "border-gray-200 bg-white hover:border-[#06038D]/40"
                         }`}
                       >
-                        <img src={series.logo} alt={series.label} className="h-6 w-auto object-contain" />
+                        <img src={series.logo} alt={series.label} className="h-9 w-auto object-contain" />
                         <span className={`text-[10px] font-semibold ${
                           form.tcgSeries === series.value ? "text-[#06038D]" : "text-gray-500"
                         }`}>{series.label}</span>
@@ -1102,7 +1102,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
                 : 'bg-white text-gray-700 border-gray-200 hover:border-[#06038d]/40'
             }`}
           >
-            {logo && <img src={logo} alt={label} className="h-4 object-contain" />}
+            {logo && <img src={logo} alt={label} className="h-6 object-contain" />}
             {label}
           </button>
         ))}

@@ -181,7 +181,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
               <img
                 src={TCG_SERIES_LOGO[listing.tcgSeries]}
                 alt={TCG_SERIES_LABEL[listing.tcgSeries] ?? listing.tcgSeries}
-                className="h-4 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity"
+                className="h-6 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity"
               />
             )}
             <button
@@ -282,7 +282,7 @@ function SidebarFilter({
                   <img
                     src={s.logo}
                     alt={s.label}
-                    className="w-8 h-5 object-contain flex-shrink-0"
+                    className="w-12 h-7 object-contain flex-shrink-0"
                   />
                 ) : (
                   <span className="text-base">{s.emoji}</span>
@@ -812,7 +812,7 @@ export default function Marketplace() {
                     <img
                       src={s.logo}
                       alt={s.label}
-                      className="h-6 sm:h-7 w-auto object-contain"
+                      className="h-9 sm:h-10 w-auto object-contain"
                     />
                   </div>
                 ) : (

@@ -1182,7 +1182,7 @@ export default function SellerDashboard() {
                                   };
                                   const series = tcgLogos[listing.tcgSeries as string];
                                   return series ? (
-                                    <img src={series.logo} alt={series.label} title={series.label} className="h-4 w-auto object-contain opacity-80" />
+                                    <img src={series.logo} alt={series.label} title={series.label} className="h-6 w-auto object-contain opacity-80" />
                                   ) : null;
                                 })()}
                                 <p className="text-sm font-bold" style={{ color: '#06038D' }}>
@@ -2114,7 +2114,7 @@ export default function SellerDashboard() {
                             : "border-gray-200 bg-white hover:border-[#06038D]/40"
                         }`}
                       >
-                        <img src={series.logo} alt={series.label} className="h-6 w-auto object-contain" />
+                        <img src={series.logo} alt={series.label} className="h-9 w-auto object-contain" />
                         <span className={`text-[10px] font-semibold ${
                           listingForm.tcgSeries === series.value ? "text-[#06038D]" : "text-gray-500"
                         }`}>{series.label}</span>
@@ -2369,7 +2369,7 @@ export default function SellerDashboard() {
                       minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined,
                     });
                   } else {
-                    createListingMutation.mutate({ ...payload, minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined });
+                    createListingMutation.mutate({ ...payload, allowOffers: listingForm.acceptOffers, minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined });
                   }
                 }}
               >

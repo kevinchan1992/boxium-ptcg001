@@ -4905,3 +4905,24 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 修復 TCG 系列篩選卡片選中狀態下 Logo 消失問題
 - [ ] 修復 Admin 審核商品後紅點和待審核提示未即時更新問題
 - [x] 修復 Admin 審核商品後紅點和待審核提示未即時更新問題（全平台 mutation invalidate 修復）
+
+---
+
+## ✅ 修復 allowOffers Bug + Pokémon Logo 加大 + 市場參考價優化
+
+- [x] 修復後端 createListing input schema 缺少 allowOffers 欄位（server/routers/marketplace.ts）
+- [x] 修復後端 createListing mutation 未寫入 allowOffers 到資料庫
+- [x] 修復前端 SellerDashboard.tsx 普通賣家上架時 createListingMutation.mutate() 未傳 allowOffers
+- [x] 加大 Marketplace.tsx 商品卡片底部 TCG logo 尺寸（h-4 → h-6）
+- [x] 加大 Marketplace.tsx 左側篩選欄 TCG logo 尺寸（w-8 h-5 → w-12 h-7）
+- [x] 加大 Marketplace.tsx 快速篩選卡片 TCG logo 尺寸（h-6 sm:h-7 → h-9 sm:h-10）
+- [x] 加大 SellerDashboard.tsx 商品列表中 TCG logo 尺寸（h-4 → h-6）
+- [x] 加大 SellerDashboard.tsx 上架表單 TCG 系列選擇器 logo 尺寸（h-6 → h-9）
+- [x] 加大 AdminMarketplace.tsx 上架表單 TCG 系列選擇器 logo 尺寸（h-6 → h-9）
+- [x] 加大 AdminMarketplace.tsx TCG 系列篩選按鈕 logo 尺寸（h-4 → h-6）
+- [x] 加大 MarketplaceListing.tsx 商品詳情頁標題上方 TCG logo 尺寸（h-12 → h-16）
+- [x] 修復 SnkrdunkPriceBlock 函數簽名加入 condition 參數
+- [x] 市場參考價標題加入品相標籤（如「SNKRDUNK 市場參考價 (PSA 10)」）
+- [x] 市場參考價「查看詳細行情」連結改為內部 /card/:id 頁面
+- [x] 市場參考價底部說明文字加入品相標籤
+- [x] 保存 checkpoint

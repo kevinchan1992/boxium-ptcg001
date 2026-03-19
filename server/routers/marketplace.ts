@@ -614,6 +614,7 @@ export const marketplaceRouter = router({
       cardId: z.number().int().optional(),
       images: z.array(z.string()).max(5).optional(),
       minOfferHkd: z.number().min(4.00).optional(),
+      allowOffers: z.boolean().default(false),
       tcgSeries: z.enum(["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).default("pokemon"),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -634,6 +635,7 @@ export const marketplaceRouter = router({
         images: input.images ? JSON.stringify(input.images) : null,
         status: "pending_review",
         viewCount: 0,
+        allowOffers: input.allowOffers,
         minOfferHkd: input.minOfferHkd ? input.minOfferHkd.toFixed(2) as any : null,
         tcgSeries: input.tcgSeries,
       });
