@@ -2516,14 +2516,24 @@ All three checks must pass for verified to be true. Respond with JSON only match
   addShippingAddress: protectedProcedure
     .input(z.object({
       label: z.string().max(50).default("預設地址"),
+      addressType: z.enum(["normal", "sf_station"]).default("normal"),
       recipientName: z.string().min(1).max(100),
       phone: z.string().min(1).max(30),
-      address: z.string().min(1).max(255),
+      address: z.string().max(255).default(""),
       district: z.string().max(50).optional(),
       region: z.string().max(50).default("香港"),
+      sfStationCode: z.string().max(20).optional(),
+      sfStationName: z.string().max(100).optional(),
       isDefault: z.boolean().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
+      // Validate based on address type
+      if (input.addressType === "normal" && !input.address.trim()) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "請填寫詳細地址" });
+      }
+      if (input.addressType === "sf_station" && !input.sfStationCode?.trim()) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "請填寫順豐自提站編號" });
+      }
       await createUserShippingAddress({ ...input, userId: ctx.user.id });
       return { success: true };
     }),
@@ -2532,11 +2542,14 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .input(z.object({
       id: z.number().int(),
       label: z.string().max(50).optional(),
+      addressType: z.enum(["normal", "sf_station"]).optional(),
       recipientName: z.string().min(1).max(100).optional(),
       phone: z.string().min(1).max(30).optional(),
-      address: z.string().min(1).max(255).optional(),
+      address: z.string().max(255).optional(),
       district: z.string().max(50).optional(),
       region: z.string().max(50).optional(),
+      sfStationCode: z.string().max(20).optional(),
+      sfStationName: z.string().max(100).optional(),
       isDefault: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {

@@ -511,7 +511,7 @@ function ShippingAddressSection() {
   const { data: addresses, isLoading } = trpc.marketplace.getMyShippingAddresses.useQuery();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState({ label: "預設地址", recipientName: "", phone: "", address: "", district: "", region: "香港", isDefault: false });
+  const [form, setForm] = useState({ label: "預設地址", addressType: "normal" as "normal" | "sf_station", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", isDefault: false });
 
   const addMutation = trpc.marketplace.addShippingAddress.useMutation({
     onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); setShowForm(false); resetForm(); toast.success("地址已新增"); },
@@ -530,17 +530,23 @@ function ShippingAddressSection() {
     onError: (e) => toast.error(e.message),
   });
 
-  const resetForm = () => setForm({ label: "預設地址", recipientName: "", phone: "", address: "", district: "", region: "香港", isDefault: false });
+  const resetForm = () => setForm({ label: "預設地址", addressType: "normal", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", isDefault: false });
 
   const handleEdit = (addr: any) => {
     setEditingId(addr.id);
-    setForm({ label: addr.label, recipientName: addr.recipientName, phone: addr.phone, address: addr.address, district: addr.district || "", region: addr.region, isDefault: addr.isDefault });
+    setForm({ label: addr.label, addressType: addr.addressType || "normal", recipientName: addr.recipientName, phone: addr.phone, address: addr.address || "", district: addr.district || "", region: addr.region, sfStationCode: addr.sfStationCode || "", sfStationName: addr.sfStationName || "", isDefault: addr.isDefault });
     setShowForm(true);
   };
 
   const handleSubmit = () => {
-    if (!form.recipientName.trim() || !form.phone.trim() || !form.address.trim()) {
-      toast.error("請填寫收件人、電話及地址"); return;
+    if (!form.recipientName.trim() || !form.phone.trim()) {
+      toast.error("請填寫收件人及電話"); return;
+    }
+    if (form.addressType === "normal" && !form.address.trim()) {
+      toast.error("請填寫詳細地址"); return;
+    }
+    if (form.addressType === "sf_station" && !form.sfStationCode.trim()) {
+      toast.error("請填寫順豐自提站編號"); return;
     }
     if (editingId) {
       updateMutation.mutate({ id: editingId, ...form });
@@ -574,6 +580,36 @@ function ShippingAddressSection() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4" style={{ background: "#ffffff" }}>
+            {/* Address Type Toggle */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-500 uppercase">收貨方式 *</Label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, addressType: "normal" }))}
+                  className={`flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                    form.addressType === "normal"
+                      ? "border-blue-600 bg-blue-50 text-blue-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                  }`}
+                  style={form.addressType === "normal" ? { borderColor: BRAND_BLUE, background: `${BRAND_BLUE}10`, color: BRAND_BLUE } : {}}
+                >
+                  🏠 普通地址
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, addressType: "sf_station" }))}
+                  className={`flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                    form.addressType === "sf_station"
+                      ? "border-red-500 bg-red-50 text-red-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  📦 順豐自提站
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-gray-500 uppercase">地址標籤</Label>
@@ -583,22 +619,64 @@ function ShippingAddressSection() {
                 <Label className="text-xs font-semibold text-gray-500 uppercase">收件人姓名 *</Label>
                 <Input value={form.recipientName} onChange={e => setForm(f => ({ ...f, recipientName: e.target.value }))} placeholder="收件人全名" className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400" />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 md:col-span-2">
                 <Label className="text-xs font-semibold text-gray-500 uppercase">聯絡電話 *</Label>
                 <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+852 XXXX XXXX" className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400" />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-500 uppercase">地區</Label>
-                <select value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
-                  className="w-full h-9 rounded-md border border-gray-200 bg-white text-gray-900 px-3 py-1 text-sm shadow-sm">
-                  <option value="">選擇地區（可選）</option>
-                  {HK_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1.5 md:col-span-2">
-                <Label className="text-xs font-semibold text-gray-500 uppercase">詳細地址 *</Label>
-                <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="街道、樓層、單位" className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400" />
-              </div>
+
+              {/* Normal address fields */}
+              {form.addressType === "normal" && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-gray-500 uppercase">地區</Label>
+                    <select value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
+                      className="w-full h-9 rounded-md border border-gray-200 bg-white text-gray-900 px-3 py-1 text-sm shadow-sm">
+                      <option value="">選擇地區（可選）</option>
+                      {HK_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-gray-500 uppercase">&nbsp;</Label>
+                    <div />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label className="text-xs font-semibold text-gray-500 uppercase">詳細地址 *</Label>
+                    <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="街道、樓層、單位" className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400" />
+                  </div>
+                </>
+              )}
+
+              {/* SF Station fields */}
+              {form.addressType === "sf_station" && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-gray-500 uppercase">順豐自提站編號 *</Label>
+                    <Input
+                      value={form.sfStationCode}
+                      onChange={e => setForm(f => ({ ...f, sfStationCode: e.target.value }))}
+                      placeholder="例：HK-0001"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-gray-500 uppercase">自提站名稱（可選）</Label>
+                    <Input
+                      value={form.sfStationName}
+                      onChange={e => setForm(f => ({ ...f, sfStationName: e.target.value }))}
+                      placeholder="例：順豐自提站 旺角店"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <span className="text-amber-600 text-sm mt-0.5">ℹ️</span>
+                      <p className="text-xs text-amber-700">
+                        順豐自提站編號可在《順豐速過》 App 或網站查詢。請確保填寫正確的站點編號，以便賣家正確安排送貨至自提站。
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" id="isDefault" checked={form.isDefault} onChange={e => setForm(f => ({ ...f, isDefault: e.target.checked }))} className="rounded" />
@@ -642,7 +720,15 @@ function ShippingAddressSection() {
                     )}
                   </div>
                   <p className="text-sm text-gray-700">{addr.recipientName} · {addr.phone}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">{addr.district ? `${addr.district}，` : ""}{addr.address}，{addr.region}</p>
+                  {addr.addressType === "sf_station" ? (
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-red-50 text-red-600 border border-red-200 mr-1">📦 順豐自提站</span>
+                      {addr.sfStationName ? `${addr.sfStationName} ` : ""}
+                      <span className="font-mono text-xs text-gray-600">{addr.sfStationCode}</span>
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-0.5">{addr.district ? `${addr.district}，` : ""}{addr.address}，{addr.region}</p>
+                  )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {!addr.isDefault && (

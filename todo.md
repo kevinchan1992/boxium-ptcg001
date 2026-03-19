@@ -5062,3 +5062,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 移除 Profile.tsx 瀏覽歷史標籤頁觸發器
 - [x] 移除 Profile.tsx HistorySection 組件及相關代碼
 - [x] 移除 History 圖標 import
+
+## 收貨地址支援順豐自提站 (2026-03-19)
+- [x] schema_new.ts 加入 addressType、sfStationCode、sfStationName 欄位
+- [x] 資料庫遷移：ALTER TABLE 加入三個新欄位
+- [x] 後端 addShippingAddress/updateShippingAddress 加入新欄位支援
+- [x] 前端表單加入地址類型切換（普通地址 / 順豐自提站）
+- [x] 前端地址列表顯示順豐自提站標籤與站點編號
