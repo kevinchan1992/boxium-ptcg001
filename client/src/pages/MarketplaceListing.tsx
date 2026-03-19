@@ -171,13 +171,16 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
       if (!byDateKey[isoKey]) byDateKey[isoKey] = { label, prices: [] };
       byDateKey[isoKey].prices.push(parseFloat(h.price as string));
     }
-    return Object.entries(byDateKey)
-      .sort(([a], [b]) => a.localeCompare(b)) // sort by ISO key = chronological order
-      .map(([, { label, prices }]) => ({
-        date: label,
-        avg: Math.round(prices.reduce((s, p) => s + p, 0) / prices.length),
-        count: prices.length,
-      }));
+    const sorted = Object.entries(byDateKey)
+      .sort(([a], [b]) => a.localeCompare(b)); // sort by ISO key = chronological order
+    // Detect if data spans multiple years
+    const years = new Set(sorted.map(([isoKey]) => isoKey.slice(0, 4)));
+    const multiYear = years.size > 1;
+    return sorted.map(([isoKey, { label, prices }]) => ({
+      date: multiYear ? `${label}'${isoKey.slice(2, 4)}` : label,
+      avg: Math.round(prices.reduce((s, p) => s + p, 0) / prices.length),
+      count: prices.length,
+    }));
   }, [history, days]);
 
   const stats = useMemo(() => {
@@ -772,6 +775,19 @@ export default function MarketplaceListing() {
                 ) : null;
               })()}
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{listing.title}</h1>
+              <div className="flex items-center gap-2 mt-1.5">
+                <button
+                  className="inline-flex items-center gap-1 text-xs font-mono text-[#06038D]/60 hover:text-[#06038D] bg-[#06038D]/5 hover:bg-[#06038D]/10 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                  title="點擊複製商品編號"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`#BOXIUM-${listing.id}`);
+                    toast.success('商品編號已複製');
+                  }}
+                >
+                  #BOXIUM-{listing.id}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
               {listing.description && (
                 <p className="text-gray-500 mt-1.5 text-sm leading-relaxed line-clamp-2">{listing.description}</p>
               )}

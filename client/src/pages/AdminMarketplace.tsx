@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -2465,12 +2465,28 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
 
 function AlipayPendingTab() {
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: orders, isLoading, refetch } = trpc.marketplace.adminGetAlipayPending.useQuery({ dateFilter });
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [note, setNote] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batchNote, setBatchNote] = useState("");
   const [showBatchDialog, setShowBatchDialog] = useState(false);
+
+  // Filter orders by search query (#BOXIUM-ID, orderNo, buyer name, listing title)
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return orders;
+    return orders.filter((o: any) => {
+      const boxiumId = `#boxium-${o.listingId}`.toLowerCase();
+      const boxiumIdNoHash = `boxium-${o.listingId}`.toLowerCase();
+      const orderNo = (o.orderNo ?? '').toLowerCase();
+      const buyerName = (o.shippingName ?? '').toLowerCase();
+      const listingTitle = (o.listingTitle ?? '').toLowerCase();
+      return boxiumId.includes(q) || boxiumIdNoHash.includes(q) || orderNo.includes(q) || buyerName.includes(q) || listingTitle.includes(q) || String(o.listingId).includes(q);
+    });
+  }, [orders, searchQuery]);
   const utils = trpc.useUtils();
   const invalidateStats = () => {
     utils.marketplace.adminGetStats.invalidate();
@@ -2520,7 +2536,7 @@ function AlipayPendingTab() {
         </div>
       </div>
 
-      {/* Date filter */}
+      {/* Date filter + Search */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-gray-600 font-medium">日期篩選：</span>
         {(["all", "today", "week", "month"] as const).map(f => (
@@ -2534,7 +2550,23 @@ function AlipayPendingTab() {
             {f === "all" ? "全部" : f === "today" ? "今日" : f === "week" ? "本週" : "本月"}
           </button>
         ))}
-        <span className="ml-auto text-xs text-gray-400">共 {orders?.length ?? 0} 筆待核對</span>
+        <span className="ml-auto text-xs text-gray-400">共 {filteredOrders.length} / {orders?.length ?? 0} 筆</span>
+      </div>
+      {/* Search box */}
+      <div className="relative">
+        <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="搜尋 #BOXIUM-編號、訂單號、買家姓名、商品名稱..."
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#06038d]/30 focus:border-[#06038d]"
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        )}
       </div>
 
       {/* Batch actions toolbar */}
@@ -2569,9 +2601,14 @@ function AlipayPendingTab() {
           <CheckCircle className="w-12 h-12 mx-auto mb-3 opacity-30 text-green-500" />
           <p>暫無待核對的支付寶 HK 訂單</p>
         </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mx-auto mb-3 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <p>找不到符合「{searchQuery}」的訂單</p>
+        </div>
       ) : (
         <div className="space-y-3">
-          {orders.map((order: any) => (
+          {filteredOrders.map((order: any) => (
             <div key={order.id} className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               {/* Header bar */}
               <div className={`flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0] ${selectedIds.has(order.id) ? 'ring-2 ring-green-400 ring-inset' : ''}`}>
@@ -2595,6 +2632,7 @@ function AlipayPendingTab() {
               <div className="px-4 py-3 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex-1 space-y-0.5 text-xs text-gray-600">
                   {order.shippingName && <p>買家：<span className="font-medium text-gray-900">{order.shippingName}</span></p>}
+                  {order.listingId && <p>商品編號：<span className="font-mono font-semibold text-[#06038d]">#BOXIUM-{order.listingId}</span></p>}
                   {order.listingTitle && <p>商品：{order.listingTitle}</p>}
                   {order.alipayProofImageUrl && (
                     <a href={order.alipayProofImageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 mt-1">

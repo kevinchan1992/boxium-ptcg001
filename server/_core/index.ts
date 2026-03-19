@@ -120,7 +120,7 @@ async function startServer() {
           try {
             const { sendOrderEmail, buildOrderConfirmedEmail, getOrderEmailData } = await import('../emailService');
             const emailData = await getOrderEmailData(order);
-            const { subject, html } = buildOrderConfirmedEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
+            const { subject, html } = buildOrderConfirmedEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, listingId: emailData.listingId });
             await sendOrderEmail({ userId: order.buyerId, subject, html });
           } catch (emailErr: any) {
             console.warn('[Webhook] Order confirmed email failed:', emailErr.message);

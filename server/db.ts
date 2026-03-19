@@ -3327,7 +3327,29 @@ export async function getAlipayPendingOrders(dateFilter?: 'all' | 'today' | 'wee
   if (fromDate) {
     conditions.push(gte(marketplaceOrders.createdAt, fromDate) as any);
   }
-  return db.select().from(marketplaceOrders)
+  return db.select({
+    id: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    buyerId: marketplaceOrders.buyerId,
+    listingId: marketplaceOrders.listingId,
+    listingTitle: marketplaceListings.title,
+    sellerId: marketplaceOrders.sellerId,
+    sellerType: marketplaceOrders.sellerType,
+    unitPriceHkd: marketplaceOrders.unitPriceHkd,
+    quantity: marketplaceOrders.quantity,
+    subtotalHkd: marketplaceOrders.subtotalHkd,
+    paymentMethod: marketplaceOrders.paymentMethod,
+    paymentStatus: marketplaceOrders.paymentStatus,
+    orderStatus: marketplaceOrders.orderStatus,
+    shippingName: marketplaceOrders.shippingName,
+    shippingPhone: marketplaceOrders.shippingPhone,
+    shippingAddress: marketplaceOrders.shippingAddress,
+    alipayProofImageUrl: marketplaceOrders.alipayProofImageUrl,
+    aiVerificationResult: marketplaceOrders.aiVerificationResult,
+    createdAt: marketplaceOrders.createdAt,
+    updatedAt: marketplaceOrders.updatedAt,
+  }).from(marketplaceOrders)
+    .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
     .where(and(...conditions))
     .orderBy(desc(marketplaceOrders.createdAt));
 }

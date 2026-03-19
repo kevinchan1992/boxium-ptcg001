@@ -4947,3 +4947,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 修復趨勢圖 X 軸日期排序（統一由左舊到右新）
 - [ ] 底部說明文字「數據來源：SNKRDUNK」改為「數據來源：BOXIUM」
 - [ ] 保存 checkpoint
+
+---
+
+## 🆕 四項新功能
+
+- [x] 商品詳情頁標題區域顯示 #BOXIUM-XXXXX 編號（方便複製）
+- [x] 趨勢圖跨年份時加入年份標示（如 01/01 '26）
+- [x] 支付寶核對頁面加入按 #BOXIUM-XXXXX 搜尋功能
+- [x] 訂單確認郵件加入 #BOXIUM-XXXXX 商品編號
+- [ ] 保存 checkpoint

@@ -82,7 +82,14 @@ function wrapHtml(title: string, body: string): string {
 </html>`;
 }
 
-function orderInfoBlock(orderNo: string, itemName: string, priceHkd: string): string {
+function orderInfoBlock(orderNo: string, itemName: string, priceHkd: string, listingId?: number): string {
+  const listingIdRow = listingId ? `
+    <tr>
+      <td style="padding:8px 16px;border-top:1px solid #e0e4ff;">
+        <p style="margin:0;font-size:13px;color:#666;">商品編號（支付寶備注用）</p>
+        <p style="margin:4px 0 0;font-size:16px;font-weight:bold;color:#1a0dab;font-family:monospace;">#BOXIUM-${listingId}</p>
+      </td>
+    </tr>` : '';
   return `
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #e0e4ff;border-radius:8px;margin:20px 0;padding:16px;">
     <tr>
@@ -91,6 +98,7 @@ function orderInfoBlock(orderNo: string, itemName: string, priceHkd: string): st
         <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#1a0dab;">${orderNo}</p>
       </td>
     </tr>
+    ${listingIdRow}
     <tr>
       <td style="padding:8px 16px;border-top:1px solid #e0e4ff;">
         <p style="margin:0;font-size:13px;color:#666;">商品</p>
@@ -119,6 +127,7 @@ export interface OrderEmailData {
   orderNo: string;
   itemName: string;
   priceHkd: string;
+  listingId?: number;
   trackingNo?: string;
   note?: string;
   siteUrl?: string;
@@ -131,7 +140,7 @@ export function buildOrderConfirmedEmail(data: OrderEmailData): { subject: strin
   const html = wrapHtml(subject, `
     <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">訂單已確認 ✅</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">感謝您的購買！您的付款已成功，賣家將盡快為您處理訂單。</p>
-    ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
+    ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd, data.listingId)}
     <p style="color:#555;font-size:14px;">我們會在訂單出貨後再次通知您。如有任何問題，請透過平台聯絡賣家。</p>
     ${ctaButton("查看訂單", `${siteUrl}/orders`)}
   `);
@@ -362,9 +371,10 @@ export async function sendEmail({
 export async function getOrderEmailData(order: {
   id: number;
   orderNo: string;
+  listingId?: number | null;
   subtotalHkd: string | number | null;
   sellerReceivableHkd: string | number | null;
-}): Promise<{ itemName: string; priceHkd: string; receivableHkd: string }> {
+}): Promise<{ itemName: string; priceHkd: string; receivableHkd: string; listingId?: number }> {
   try {
     const { getOrderItems } = await import("./db");
     const items = await getOrderItems(order.id);
@@ -373,7 +383,8 @@ export async function getOrderEmailData(order: {
       : order.orderNo;
     const priceHkd = order.subtotalHkd ? String(order.subtotalHkd) : "—";
     const receivableHkd = order.sellerReceivableHkd ? String(order.sellerReceivableHkd) : "—";
-    return { itemName, priceHkd, receivableHkd };
+    const listingId = order.listingId ?? undefined;
+    return { itemName, priceHkd, receivableHkd, listingId };
   } catch {
     return { itemName: order.orderNo, priceHkd: "—", receivableHkd: "—" };
   }
