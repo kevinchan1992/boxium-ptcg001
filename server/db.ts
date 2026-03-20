@@ -2999,13 +2999,15 @@ export async function getPublicListings(options: {
   condition?: string; conditions?: string[]; sellerType?: string; minPrice?: number; maxPrice?: number;
   sortBy?: 'newest' | 'price_asc' | 'price_desc';
   tcgSeries?: string;
+  cardIds?: number[];
 }) {
   const db = await getDb();
-  const { page = 1, pageSize = 20, search, condition, conditions: conditionList, sellerType, minPrice, maxPrice, sortBy = 'newest', tcgSeries } = options;
+  const { page = 1, pageSize = 20, search, condition, conditions: conditionList, sellerType, minPrice, maxPrice, sortBy = 'newest', tcgSeries, cardIds } = options;
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
   const conditions = [eq(marketplaceListings.status, 'active')];
   if (search) conditions.push(like(marketplaceListings.title, `%${search}%`));
+  if (cardIds && cardIds.length > 0) conditions.push(inArray(marketplaceListings.cardId, cardIds));
   // Support multi-condition array (OR) or single condition
   if (conditionList && conditionList.length > 0) {
     conditions.push(inArray(marketplaceListings.condition, conditionList as any[]));

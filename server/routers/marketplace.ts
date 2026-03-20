@@ -107,6 +107,7 @@ export const marketplaceRouter = router({
       maxPrice: z.number().optional(),
       sortBy: z.enum(["newest", "price_asc", "price_desc"]).optional(),
       tcgSeries: z.enum(["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).optional(),
+      cardIds: z.array(z.number().int()).optional(),
     }))
     .query(async ({ input }) => {
       return getPublicListings(input);

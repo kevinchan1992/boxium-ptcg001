@@ -154,12 +154,47 @@ export default function Cart() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">請先登入</h2>
-          <p className="text-gray-500 mb-4">登入後即可查看購物車</p>
-          <Button className="bg-[#06038D] text-white hover:bg-[#06038D]/90" onClick={() => window.location.href = '/login'}>立即登入</Button>
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Banner */}
+        <div className="relative" style={{ background: "linear-gradient(135deg, #06038D 0%, #0a06b5 100%)" }}>
+          <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FEDD00" }} />
+          <div className="max-w-5xl mx-auto px-4 pt-5 pb-6">
+            <div className="flex items-center justify-between mb-4">
+              <Link href="/">
+                <img src="/boxium-logo.png" alt="BOXIUM" className="h-16 cursor-pointer p-1" />
+              </Link>
+              <button onClick={() => window.history.back()} className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm">
+                <ArrowLeft className="w-4 h-4" />
+                返回
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <ShoppingCart className="w-7 h-7 text-white" />
+              <h1 className="text-2xl font-bold text-white">購物車</h1>
+            </div>
+          </div>
+        </div>
+        {/* Login prompt card */}
+        <div className="max-w-md mx-auto px-4 py-16">
+          <div className="rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-8 text-center" style={{ background: "linear-gradient(135deg, #06038D 0%, #0a06b5 100%)" }}>
+              <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: "#FEDD00" }}>
+                <ShoppingCart className="w-10 h-10" style={{ color: "#06038D" }} />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">請先登入</h2>
+              <p className="text-white/70 mb-6">登入後即可查看購物車</p>
+              <Button
+                className="w-full h-12 font-bold text-base rounded-xl"
+                style={{ background: "#FEDD00", color: "#06038D" }}
+                onClick={() => window.location.href = '/login'}
+              >
+                立即登入
+              </Button>
+              <Link href="/marketplace">
+                <p className="text-white/50 text-sm mt-4 hover:text-white/80 cursor-pointer transition-colors">先去市集看看 →</p>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -175,11 +210,32 @@ export default function Cart() {
 
   const isEmpty = !cartItems || cartItems.length === 0;
 
-  // Fetch recent listings for empty cart state
+  // Fetch watchlist for personalized recommendations
+  const { data: watchlist } = trpc.profile.getWatchlist.useQuery(undefined, {
+    enabled: !!user && isEmpty,
+    staleTime: 60000,
+  });
+  const watchlistCardIds = useMemo(
+    () => (watchlist ?? []).map((w: { card: { id: number } }) => w.card.id).slice(0, 20),
+    [watchlist]
+  );
+  const hasWatchlist = watchlistCardIds.length > 0;
+
+  // Fetch personalized listings (from watchlist) or recent listings as fallback
+  const { data: personalizedListings } = trpc.marketplace.getListings.useQuery(
+    { page: 1, pageSize: 6, sortBy: "newest", cardIds: watchlistCardIds },
+    { enabled: !!user && isEmpty && hasWatchlist, staleTime: 60000 }
+  );
   const { data: recentListings } = trpc.marketplace.getListings.useQuery(
     { page: 1, pageSize: 6, sortBy: "newest" },
-    { enabled: isEmpty, staleTime: 60000 }
+    { enabled: isEmpty && (!user || !hasWatchlist || (personalizedListings?.listings.length === 0)), staleTime: 60000 }
   );
+  // Use personalized if available, else fall back to recent
+  const recommendedListings = useMemo(() => {
+    if (personalizedListings && personalizedListings.listings.length > 0) return { data: personalizedListings, label: "為你推薦（來自關注清單）" };
+    if (recentListings && recentListings.listings.length > 0) return { data: recentListings, label: "最新上架" };
+    return null;
+  }, [personalizedListings, recentListings]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -220,16 +276,16 @@ export default function Cart() {
               </Button>
             </Link>
             {/* Recommended listings */}
-            {recentListings && recentListings.listings.length > 0 && (
+            {recommendedListings && (
               <div className="w-full mt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-bold text-gray-700">最新上架</h3>
+                  <h3 className="text-base font-bold text-gray-700">{recommendedListings.label}</h3>
                   <Link href="/marketplace">
                     <span className="text-sm text-[#06038D] hover:underline cursor-pointer">查看全部 →</span>
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  {recentListings.listings.map((item) => {
+                  {recommendedListings.data.listings.map((item) => {
                     const imgs: string[] | null = (() => { try { return item.images ? JSON.parse(item.images) : null; } catch { return null; } })();
                     return (
                     <Link key={item.id} href={`/marketplace/${item.id}`}>

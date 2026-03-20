@@ -1835,6 +1835,8 @@ export default function MarketplaceListing() {
 function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId: number; isLoggedIn: boolean; isAcceptedOffer?: boolean }) {
   const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [flyAnim, setFlyAnim] = useState(false);
 
   const { data: inCart } = trpc.marketplace.isInCart.useQuery(
     { listingId },
@@ -1845,8 +1847,14 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
     onSuccess: () => {
       utils.marketplace.isInCart.invalidate({ listingId });
       utils.marketplace.getCartCount.invalidate();
-      // After adding to cart, navigate directly to cart
-      setLocation("/cart");
+      // Trigger fly animation then navigate
+      setFlyAnim(true);
+      setShowSuccess(true);
+      setTimeout(() => {
+        setFlyAnim(false);
+        setShowSuccess(false);
+        setLocation("/cart");
+      }, 900);
     },
     onError: (err) => toast.error(err.message || "加入購物車失敗"),
   });
@@ -1876,15 +1884,42 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
     );
   }
 
-  // Not in cart - primary yellow button
+  // Not in cart - primary yellow button with fly animation
   return (
-    <Button
-      className="w-full bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold h-12 text-base rounded-xl shadow-sm disabled:opacity-40"
-      disabled={addToCartMutation.isPending}
-      onClick={() => addToCartMutation.mutate({ listingId })}
-    >
-      <ShoppingCart className="w-5 h-5 mr-2" />
-      {addToCartMutation.isPending ? "加入中..." : isAcceptedOffer ? "加入購物車付款" : "加入購物車"}
-    </Button>
+    <div className="relative">
+      {/* Flying cart icon animation */}
+      {flyAnim && (
+        <div
+          className="absolute left-1/2 top-0 z-50 pointer-events-none"
+          style={{
+            animation: "flyToCart 0.8s ease-in forwards",
+            transform: "translateX(-50%)",
+          }}
+        >
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg" style={{ background: "#FEDD00" }}>
+            <ShoppingCart className="w-5 h-5" style={{ color: "#06038D" }} />
+          </div>
+        </div>
+      )}
+      <style>{`
+        @keyframes flyToCart {
+          0% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+          60% { transform: translateX(calc(-50% + 80px)) translateY(-60px) scale(0.8); opacity: 0.9; }
+          100% { transform: translateX(calc(-50% + 160px)) translateY(-120px) scale(0.3); opacity: 0; }
+        }
+      `}</style>
+      <Button
+        className="w-full font-bold h-12 text-base rounded-xl shadow-sm disabled:opacity-40 transition-all duration-200"
+        style={{
+          background: showSuccess ? "#22c55e" : "#FEDD00",
+          color: showSuccess ? "#fff" : "#06038D",
+        }}
+        disabled={addToCartMutation.isPending || showSuccess}
+        onClick={() => addToCartMutation.mutate({ listingId })}
+      >
+        <ShoppingCart className="w-5 h-5 mr-2" />
+        {addToCartMutation.isPending ? "加入中..." : showSuccess ? "已加入✓" : isAcceptedOffer ? "加入購物車付款" : "加入購物車"}
+      </Button>
+    </div>
   );
 }
