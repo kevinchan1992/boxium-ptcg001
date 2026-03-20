@@ -32,9 +32,9 @@ import {
   Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X, Lock,
   Search, Tag, CreditCard, Loader2, CheckCircle, Truck, Clock,
   XCircle, AlertCircle, ChevronDown, ChevronUp, Flag, MessageSquare,
-  ChevronRight
+  ChevronRight, Bell, CheckCheck, DollarSign, Info, AlertTriangle, Filter
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { searchSFStations, type SFStation } from "@/lib/sfStations";
 import { useTranslation } from "react-i18next";
 
@@ -77,11 +77,26 @@ export default function Profile() {
   const { t, i18n } = useTranslation();
   const { data: user, isLoading: userLoading } = trpc.auth.me.useQuery();
   const { data: orders } = trpc.marketplace.getMyOrders.useQuery();
-  const [activeSection, setActiveSection] = useState("info");
+  const [location] = useLocation();
+  // 讀取 URL ?tab= 參數以支援從 /orders 重定向過來
+  const urlTab = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("tab") ?? "info"
+    : "info";
+  const [activeSection, setActiveSection] = useState(urlTab);
+
+  // 當 URL ?tab 參數變化時同步更新 activeSection
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab") ?? "info";
+    setActiveSection(tab);
+  }, [location]);
 
   const locale = i18n.language === "ja" ? "ja-JP" : i18n.language === "en" ? "en-US" : "zh-TW";
 
   const activeOrdersCount = (orders ?? []).filter(o => !["completed", "cancelled"].includes((o as any).orderStatus)).length;
+
+  // 未讀通知數量
+  const { data: unreadCountData } = trpc.notifications.getUnreadCount.useQuery(undefined, { enabled: !!user });
+  const unreadNotifCount = (unreadCountData as any)?.count ?? 0;
 
   const navItems: NavItem[] = [
     { id: "info", icon: <User className="w-4 h-4" />, label: t("profile.tabs.info") },
@@ -89,6 +104,7 @@ export default function Profile() {
     { id: "addresses", icon: <MapPin className="w-4 h-4" />, label: "收貨地址" },
     { id: "orders", icon: <ShoppingBag className="w-4 h-4" />, label: "我的訂單", badge: activeOrdersCount > 0 ? activeOrdersCount : undefined },
     { id: "offers", icon: <Tag className="w-4 h-4" />, label: "我的出價" },
+    { id: "notifications", icon: <Bell className="w-4 h-4" />, label: "通知中心", badge: unreadNotifCount > 0 ? unreadNotifCount : undefined },
   ];
 
   if (userLoading) {
@@ -243,6 +259,7 @@ export default function Profile() {
                 {activeSection === "addresses" && <ShippingAddressSection />}
                 {activeSection === "orders" && <EmbeddedOrdersSection />}
                 {activeSection === "offers" && <EmbeddedOffersSection userId={user.id} />}
+                {activeSection === "notifications" && <EmbeddedNotificationsSection />}
               </div>
             </div>
           </div>
@@ -731,6 +748,9 @@ function ShippingAddressSection() {
 // ─── Embedded Orders Section ───────────────────────────────────
 function EmbeddedOrdersSection() {
   const { data: orders, isLoading } = trpc.marketplace.getMyOrders.useQuery();
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
   if (isLoading) {
     return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}</div>;
   }
@@ -747,29 +767,274 @@ function EmbeddedOrdersSection() {
       </div>
     );
   }
-  const activeOrders = (orders as any[]).filter(o => !["completed", "cancelled"].includes(o.orderStatus));
-  const pastOrders = (orders as any[]).filter(o => ["completed", "cancelled"].includes(o.orderStatus));
+
+  // 狀態篩選映射
+  const STATUS_GROUPS: Record<string, string[]> = {
+    all: [],
+    pending: ["pending_payment", "alipay_pending"],
+    active: ["payment_submitted", "payment_confirmed", "processing", "shipped"],
+    done: ["completed", "cancelled"],
+  };
+
+  const allOrders = orders as any[];
+
+  // 先篩選狀態
+  const statusFiltered = statusFilter === "all"
+    ? allOrders
+    : allOrders.filter(o => STATUS_GROUPS[statusFilter]?.includes(o.orderStatus));
+
+  // 再搜尋訂單號
+  const filtered = searchQuery.trim()
+    ? statusFiltered.filter(o =>
+        o.orderNo?.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+        o.listingTitle?.toLowerCase().includes(searchQuery.trim().toLowerCase())
+      )
+    : statusFiltered;
+
+  const filterTabs = [
+    { id: "all", label: "全部", count: allOrders.length },
+    { id: "pending", label: "待付款", count: allOrders.filter(o => STATUS_GROUPS.pending.includes(o.orderStatus)).length },
+    { id: "active", label: "進行中", count: allOrders.filter(o => STATUS_GROUPS.active.includes(o.orderStatus)).length },
+    { id: "done", label: "已完成", count: allOrders.filter(o => STATUS_GROUPS.done.includes(o.orderStatus)).length },
+  ];
+
   return (
-    <div className="space-y-8">
-      {activeOrders.length > 0 && (
-        <section>
-          <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: BRAND_BLUE, borderColor: BRAND_YELLOW }}>
-            <CreditCard className="w-4 h-4" />進行中的訂單（{activeOrders.length}）
-          </h3>
-          <div className="space-y-3">
-            {activeOrders.map((order: any) => <EmbeddedOrderCard key={order.id} order={order} />)}
-          </div>
-        </section>
+    <div className="space-y-4">
+      {/* 搜尋欄 */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="搜尋訂單號或商品名稱..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#06038d]/30 bg-gray-50"
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* 狀態篩選 */}
+      <div className="flex gap-2 flex-wrap">
+        {filterTabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setStatusFilter(tab.id)}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+              statusFilter === tab.id
+                ? "text-white border-transparent"
+                : "bg-white text-gray-600 border-gray-200 hover:border-[#06038d] hover:text-[#06038d]"
+            }`}
+            style={statusFilter === tab.id ? { backgroundColor: BRAND_BLUE } : {}}
+          >
+            {tab.label}
+            {tab.count > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                statusFilter === tab.id ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
+              }`}>{tab.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* 訂單列表 */}
+      {filtered.length === 0 ? (
+        <div className="py-12 text-center">
+          <Filter className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+          <p className="text-sm text-gray-400">
+            {searchQuery ? `找不到「${searchQuery}」的訂單` : "此狀態暫無訂單"}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((order: any) => <EmbeddedOrderCard key={order.id} order={order} />)}
+          <p className="text-xs text-gray-400 text-center pt-1">共 {filtered.length} 筆訂單</p>
+        </div>
       )}
-      {pastOrders.length > 0 && (
-        <section>
-          <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 mb-3 pb-2 border-b-2" style={{ color: BRAND_BLUE, borderColor: BRAND_YELLOW }}>
-            <CheckCircle className="w-4 h-4" />歷史訂單（{pastOrders.length}）
-          </h3>
-          <div className="space-y-3">
-            {pastOrders.map((order: any) => <EmbeddedOrderCard key={order.id} order={order} />)}
+    </div>
+  );
+}
+
+// ─── Embedded Notifications Section ───────────────────────────
+const notifTypeIcon = (type: string) => {
+  switch (type) {
+    case "trade": return <Package className="w-4 h-4" style={{ color: BRAND_BLUE }} />;
+    case "payment": return <DollarSign className="w-4 h-4 text-green-600" />;
+    case "system": return <Info className="w-4 h-4 text-gray-500" />;
+    case "alert": return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+    default: return <Bell className="w-4 h-4 text-gray-500" />;
+  }
+};
+
+function EmbeddedNotificationsSection() {
+  const utils = trpc.useUtils();
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined);
+
+  const { data, isLoading } = trpc.notifications.getMyNotifications.useQuery(
+    { limit: 50, offset: 0, unreadOnly, type: typeFilter }
+  );
+  const markAsReadMutation = trpc.notifications.markAsRead.useMutation({
+    onSuccess: () => {
+      utils.notifications.getMyNotifications.invalidate();
+      utils.notifications.getUnreadCount.invalidate();
+    },
+  });
+  const markAllAsReadMutation = trpc.notifications.markAllAsRead.useMutation({
+    onSuccess: () => {
+      toast.success("已標記所有通知為已讀");
+      utils.notifications.getMyNotifications.invalidate();
+      utils.notifications.getUnreadCount.invalidate();
+    },
+  });
+  const deleteMutation = trpc.notifications.deleteNotification.useMutation({
+    onSuccess: () => {
+      utils.notifications.getMyNotifications.invalidate();
+      utils.notifications.getUnreadCount.invalidate();
+    },
+  });
+
+  const notifications = (data ?? []) as any[];
+  const unreadCount = notifications.filter((n: any) => !n.isRead).length;
+
+  return (
+    <div className="space-y-4">
+      {/* 標題列 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-500 text-white">{unreadCount} 則未讀</span>
+          )}
+        </div>
+        {unreadCount > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs h-7 font-semibold"
+            style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
+            onClick={() => markAllAsReadMutation.mutate()}
+            disabled={markAllAsReadMutation.isPending}
+          >
+            <CheckCheck className="w-3.5 h-3.5 mr-1" />全部已讀
+          </Button>
+        )}
+      </div>
+
+      {/* 已讀/未讀切換 */}
+      <div className="flex gap-2">
+        {[
+          { value: false, label: "全部" },
+          { value: true, label: "未讀" },
+        ].map(opt => (
+          <button
+            key={String(opt.value)}
+            onClick={() => setUnreadOnly(opt.value)}
+            className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+              unreadOnly === opt.value
+                ? "text-white border-transparent"
+                : "bg-white text-gray-600 border-gray-200 hover:border-[#06038d] hover:text-[#06038d]"
+            }`}
+            style={unreadOnly === opt.value ? { backgroundColor: BRAND_BLUE } : {}}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 類型篩選 */}
+      <div className="flex gap-2 flex-wrap">
+        {[
+          { value: undefined, label: "所有類型" },
+          { value: "trade", label: "交易" },
+          { value: "payment", label: "付款" },
+          { value: "offer", label: "出價" },
+          { value: "shipping", label: "物流" },
+          { value: "dispute", label: "爭議" },
+          { value: "system", label: "系統" },
+        ].map(({ value, label }) => (
+          <button
+            key={label}
+            onClick={() => setTypeFilter(value)}
+            className={`text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
+              typeFilter === value
+                ? "text-white border-transparent"
+                : "bg-white text-gray-600 border-gray-200 hover:border-[#06038d] hover:text-[#06038d]"
+            }`}
+            style={typeFilter === value ? { backgroundColor: BRAND_BLUE } : {}}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* 通知列表 */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1,2,3].map(i => <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: "#f0f4ff" }} />)}
+        </div>
+      ) : notifications.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "#f0f4ff" }}>
+            <Bell className="w-7 h-7" style={{ color: BRAND_BLUE, opacity: 0.3 }} />
           </div>
-        </section>
+          <p className="text-gray-400">{unreadOnly ? "沒有未讀通知" : "暫無通知"}</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {notifications.map((notif: any) => (
+            <div
+              key={notif.id}
+              className="rounded-xl border overflow-hidden transition-all"
+              style={{
+                borderLeft: !notif.isRead ? `4px solid ${BRAND_BLUE}` : "1px solid #e5e7eb",
+                background: !notif.isRead ? "#f8faff" : "white",
+              }}
+            >
+              <div className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#e8edff" }}>
+                    {notifTypeIcon(notif.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className={`text-sm font-semibold ${notif.isRead ? "text-gray-600" : "text-gray-900"}`}>
+                          {notif.title}
+                          {!notif.isRead && <span className="ml-2 inline-block w-2 h-2 rounded-full" style={{ backgroundColor: BRAND_BLUE }} />}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{notif.body}</p>
+                        <p className="text-xs text-gray-400 mt-1">{new Date(notif.createdAt).toLocaleString("zh-HK")}</p>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {!notif.isRead && (
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-green-600"
+                            onClick={() => markAsReadMutation.mutate({ notificationId: notif.id })}>
+                            <Check className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-red-500"
+                          onClick={() => deleteMutation.mutate({ notificationId: notif.id })}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                    {notif.linkUrl && (
+                      <Link href={notif.linkUrl}>
+                        <Button variant="ghost" size="sm" className="mt-2 h-7 text-xs p-0 font-semibold hover:underline" style={{ color: BRAND_BLUE }}
+                          onClick={() => !notif.isRead && markAsReadMutation.mutate({ notificationId: notif.id })}>
+                          查看詳情 →
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -5151,3 +5151,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 信用卡/Apple Pay、支付寶 HK 兩個付款流程均適用
 - [x] 順豐自提站選擇也適用同樣邏輯
 - [x] 17 項單元測試全部通過
+
+## Profile 三項功能改嚄 (2026-03-20)
+- [x] /orders 路由重定向至 /profile?tab=orders（保留舊連結相容性）
+- [x] Profile 我的訂單加入狀態篩選（全部/待付款/進行中/已完成）
+- [x] Profile 我的訂單加入訂單號搜尋
+- [x] Profile 左側導航加入「通知中心」項目（顯示未讀通知數量 badge）
+- [x] 16 項單元測試全部通過
+- [ ] 通知中心頁面顯示系統通知列表（已讀/未讀狀態）

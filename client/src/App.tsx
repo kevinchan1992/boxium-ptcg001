@@ -93,7 +93,9 @@ function Router() {
       <Route path="/marketplace/:id" component={MarketplaceListing} />
       <Route path="/wishlist" component={Wishlist} />
       <Route path="/seller" component={SellerDashboard} />
-      <Route path="/orders" component={Orders} />
+      <Route path="/orders">
+        <Redirect to="/profile?tab=orders" />
+      </Route>
       <Route path="/orders/:orderNo" component={OrderDetail} />
       <Route path="/cart" component={Cart} />
       <Route path="/notifications" component={Notifications} />
