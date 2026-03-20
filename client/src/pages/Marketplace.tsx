@@ -659,20 +659,20 @@ export default function Marketplace() {
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="搜尋卡牌名稱、編號..."
-                  className="pl-12 pr-24 bg-white border-0 text-gray-900 placeholder:text-gray-400 h-12 rounded-full shadow-lg focus-visible:ring-2 focus-visible:ring-[#FEDD00] text-base"
+                  className="pl-12 pr-[5.5rem] bg-white border-0 text-gray-900 placeholder:text-gray-400 h-12 rounded-full shadow-lg focus-visible:ring-2 focus-visible:ring-[#FEDD00] text-base"
                 />
                 {searchInput && (
                   <button
                     type="button"
                     onClick={clearSearch}
-                    className="absolute right-20 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-[5.5rem] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 )}
                 <Button
                   type="submit"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold h-9 px-5 rounded-full"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold h-9 px-4 rounded-full text-sm"
                 >
                   搜尋
                 </Button>
@@ -728,7 +728,7 @@ export default function Marketplace() {
               key={banner.id}
               className={`bg-gradient-to-r ${banner.gradient} transition-all duration-700 ${i === bannerIdx ? "block" : "hidden"}`}
             >
-              <div className="px-6 py-5 sm:py-7 flex items-center justify-between gap-4">
+              <div className="px-6 pt-5 pb-10 sm:pt-7 sm:pb-12 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <span className="text-4xl hidden sm:block">{banner.emoji}</span>
                   <div>
@@ -757,7 +757,7 @@ export default function Marketplace() {
             </div>
           ))}
           {activeBanners.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
               {activeBanners.map((_: any, i: number) => (
                 <button
                   key={i}

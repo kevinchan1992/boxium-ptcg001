@@ -5360,3 +5360,8 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 ## 🔗 Footer 清理
 
 - [x] Footer 快速連結「熱門排行榜」改為「市集」（/marketplace），三種語言翻譯均已更新
+
+## 📱 手機版市集頁面 UI 修復
+
+- [x] 修復手機版市集頁搜尋按鈕走位問題
+- [x] 修復廣告輪播導航點（dots）與文字重疊問題
