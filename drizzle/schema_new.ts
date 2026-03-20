@@ -1112,3 +1112,47 @@ export const cartItems = mysqlTable("cartItems", {
 }));
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = typeof cartItems.$inferInsert;
+
+
+/**
+ * Email Unsubscribe - stores user email notification preferences
+ * Users can unsubscribe from specific email types or all emails.
+ */
+export const emailUnsubscribes = mysqlTable("emailUnsubscribes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  // null = unsubscribe from all; specific type = unsubscribe from that type only
+  emailType: varchar("emailType", { length: 64 }), // e.g. "offer", "order", "review", "system", null = all
+  token: varchar("token", { length: 64 }).notNull().unique(), // used in unsubscribe link
+  unsubscribedAt: timestamp("unsubscribedAt").defaultNow().notNull(),
+  resubscribedAt: timestamp("resubscribedAt"), // null = still unsubscribed
+}, (table) => ({
+  userIdIdx: index("eu_userId_idx").on(table.userId),
+  emailIdx: index("eu_email_idx").on(table.email),
+  tokenIdx: uniqueIndex("eu_token_idx").on(table.token),
+}));
+export type EmailUnsubscribe = typeof emailUnsubscribes.$inferSelect;
+export type InsertEmailUnsubscribe = typeof emailUnsubscribes.$inferInsert;
+
+/**
+ * Email Log - records every email sent by the platform
+ */
+export const emailLogs = mysqlTable("emailLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  toEmail: varchar("toEmail", { length: 255 }).notNull(),
+  toUserId: int("toUserId"), // nullable (e.g. system emails)
+  subject: varchar("subject", { length: 500 }).notNull(),
+  emailType: varchar("emailType", { length: 64 }).notNull(), // "offer", "order", "welcome", "review", etc.
+  status: mysqlEnum("status", ["sent", "failed", "skipped"]).notNull().default("sent"),
+  errorMessage: text("errorMessage"), // populated on failure
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+}, (table) => ({
+  toEmailIdx: index("el_toEmail_idx").on(table.toEmail),
+  toUserIdIdx: index("el_toUserId_idx").on(table.toUserId),
+  emailTypeIdx: index("el_emailType_idx").on(table.emailType),
+  statusIdx: index("el_status_idx").on(table.status),
+  sentAtIdx: index("el_sentAt_idx").on(table.sentAt),
+}));
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type InsertEmailLog = typeof emailLogs.$inferInsert;

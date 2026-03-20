@@ -1,0 +1,9 @@
+{
+  "query": "\nCREATE TABLE IF NOT EXISTS `emailLogs` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `toEmail` varchar(255) NOT NULL,\n  `toUserId` int DEFAULT NULL,\n  `subject` varchar(500) NOT NULL,\n  `emailType` varchar(64) NOT NULL,\n  `status` enum('sent','failed','skipped') NOT NULL DEFAULT 'sent',\n  `errorMessage` text DEFAULT NULL,\n  `sentAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `el_toEmail_idx` (`toEmail`),\n  KEY `el_toUserId_idx` (`toUserId`),\n  KEY `el_emailType_idx` (`emailType`),\n  KEY `el_status_idx` (`status`),\n  KEY `el_sentAt_idx` (`sentAt`)\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nCREATE TABLE IF NOT EXISTS `emailLogs` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `toEmail` varchar(255) NOT NULL,\n  `toUserId` int DEFAULT NULL,\n  `subject` varchar(500) NOT NULL,\n  `emailType` varchar(64) NOT NULL,\n  `status` enum('sent','failed','skipped') NOT NULL DEFAULT 'sent',\n  `errorMessage` text DEFAULT NULL,\n  `sentAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `el_toEmail_idx` (`toEmail`),\n  KEY `el_toUserId_idx` (`toUserId`),\n  KEY `el_emailType_idx` (`emailType`),\n  KEY `el_status_idx` (`status`),\n  KEY `el_sentAt_idx` (`sentAt`)\n);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1633
+}

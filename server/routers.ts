@@ -20,6 +20,7 @@ import { pricingRouter } from "./routers/pricing";
 import { ensureOgImageExists } from "./ogImageComposer";
 import { templatesRouter } from "./routers/templates";
 import { diagnosticsRouter } from "./routers/diagnostics";
+import { emailRouter } from "./routers/email";
 
 export const appRouter = router({
   system: systemRouter,
@@ -27,6 +28,8 @@ export const appRouter = router({
   pricing: pricingRouter,
 
   diagnostics: diagnosticsRouter,
+
+  email: emailRouter,
 
   products: router({
     getById: publicProcedure

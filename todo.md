@@ -5401,3 +5401,39 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 電郵模板 header 改用 BOXIUM 白色 logo 圖片（CDN）
 - [x] 所有現有電郵觸發點（出價、訂單、賣家審核）自動生效
 - [x] 5 項 vitest 測試全部通過
+
+## 📧 電郵系統三項新功能
+
+- [ ] 資料庫：新增 emailUnsubscribe 表（用戶退訂偏好）
+- [ ] 資料庫：新增 emailLog 表（電郵發送記錄）
+- [ ] 電郵退訂：電郵 footer 加入「取消訂閱」連結（含 token）
+- [ ] 電郵退訂：/unsubscribe 退訂頁面（確認退訂、管理偏好）
+- [ ] 電郵退訂：sendEmail 發送前檢查退訂狀態
+- [ ] 歡迎電郵：首次登入時觸發發送歡迎電郵
+- [ ] 歡迎電郵：HTML 模板（介紹平台功能、開始交易 CTA）
+- [ ] 電郵日誌：sendEmail 記錄每封電郵到 emailLog 表
+- [ ] 電郵日誌：後台管理頁面加入電郵發送記錄頁籤
+- [ ] vitest 測試：退訂、歡迎電郵、日誌三項功能
+
+## 🎨 電郵模板與賣家頁面修復
+
+- [ ] 電郵 header 背景改為公司藍色（#1a0dab），移除粉色
+- [ ] 電郵 header logo 改用藍底白字版本（boxium-logo-white.png）
+- [ ] 電郵 footer 客服聯絡改為 boxium.asia@gmail.com
+- [ ] 移除所有 Manus notifyOwner 電郵通知相關代碼
+- [ ] 修復賣家頁面手機版：篩選標籤列高度、空狀態文字、內容溢出
+
+---
+## ✅ 電郵日誌系統 + 退訂功能完成
+- [x] 資料庫：建立 emailLogs 表（toEmail, toUserId, subject, emailType, status, errorMessage, sentAt）
+- [x] 資料庫：建立 emailUnsubscribes 表（userId, email, emailType, token, unsubscribedAt, resubscribedAt）
+- [x] emailService.ts：sendEmail 加入 emailType、toUserId、skipUnsubscribeCheck 參數
+- [x] emailService.ts：sendEmail 發送前檢查退訂狀態（emailUnsubscribes 表）
+- [x] emailService.ts：sendEmail 記錄每封電郵到 emailLogs 表（sent/failed/skipped）
+- [x] emailService.ts：wrapHtml 加入退訂連結（footer 顯示「退訂此類通知」連結）
+- [x] tRPC router：建立 email router（listLogs, getStats, unsubscribeByToken, resubscribeByToken, getMyPreferences, unsubscribeType, resubscribeType）
+- [x] 後台管理頁面：Admin.tsx 加入「電郵日誌」Tab（AdminEmailLogs 組件）
+- [x] 電郵日誌頁面：統計卡片（總計/已發送/失敗/退訂/24小時）、篩選（狀態/類型/日期/搜尋）、分頁表格
+- [x] 退訂頁面：/unsubscribe?token=xxx&action=unsubscribe|resubscribe
+- [x] App.tsx：加入 /unsubscribe 路由
+- [x] vitest 測試：8 項測試全部通過（含 emailType 參數、skipUnsubscribeCheck、footer 退訂連結）

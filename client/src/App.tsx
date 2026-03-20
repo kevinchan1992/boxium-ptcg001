@@ -33,6 +33,7 @@ import OrderDetail from "./pages/OrderDetail";
 import Notifications from "./pages/Notifications";
 import SellerPublicProfile from "./pages/SellerPublicProfile";
 import Cart from "./pages/Cart";
+import Unsubscribe from "./pages/Unsubscribe";
 import { TopNav } from "./components/TopNav";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 
@@ -105,6 +106,7 @@ function Router() {
       <Route path="/privacy" component={Privacy} />
       <Route path="/disclaimer" component={Disclaimer} />
       <Route path="/about" component={About} />
+      <Route path="/unsubscribe" component={Unsubscribe} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

@@ -603,8 +603,8 @@ export function startShippingReminderScheduler() {
             }
 
             // Notify admin
-            await import('./_core/notification').then(({ notifyOwner }) =>
-              notifyOwner({
+            await import('./emailService').then(({ notifyAdmin }) =>
+              notifyAdmin({
                 title: '賣家出貨超時提醒 ⏰',
                 content: `訂單 ${order.orderNo} 已付款超過 3 天，賣家尚未出貨。`,
               }).catch(() => {})
@@ -1286,7 +1286,7 @@ async function runAlipayReviewTimeoutCheck() {
     const { getDb } = await import('./db');
     const { marketplaceOrders } = await import('../drizzle/schema_new');
     const { and, eq, isNotNull, isNull, lte } = await import('drizzle-orm');
-    const { notifyOwner } = await import('./_core/notification');
+    const { notifyAdmin } = await import('./emailService');
     const database = await getDb();
     if (!database) return;
 
@@ -1314,7 +1314,7 @@ async function runAlipayReviewTimeoutCheck() {
     for (const order of overdueOrders) {
       try {
         const submittedAt = order.alipayProofSubmittedAt ? new Date(order.alipayProofSubmittedAt).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' }) : '未知';
-        await notifyOwner({
+        await notifyAdmin({
           title: `⏰ 支付寶截圖待核對超過 24 小時`,
           content: `訂單 ${order.orderNo} 的買家於 ${submittedAt} 提交截圖，已超過 24 小時尚未核對。\n金額：HKD ${order.subtotalHkd}\n請盡快前往管理後台核對：/admin/marketplace`,
         });

@@ -1032,8 +1032,27 @@ export default function SellerDashboard() {
                     ? (myListings ?? [])
                     : (myListings ?? []).filter((l: any) => l.status === listingFilter);
                   return (
-                    <div className="flex gap-4">
-                      {/* Left Sidebar */}
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                      {/* Mobile: horizontal scroll tabs (shown on mobile only) */}
+                      <div className="flex sm:hidden gap-2 overflow-x-auto pb-1 w-full flex-shrink-0">
+                        {filterCategories.map(cat => (
+                          <button
+                            key={cat.key}
+                            onClick={() => { setListingFilter(cat.key); setSelectedIds(new Set()); setBatchMode(false); }}
+                            className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              listingFilter === cat.key
+                                ? 'bg-[#06038d] text-white'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}
+                          >
+                            {cat.label}
+                            <span className={`text-[10px] px-1 py-0.5 rounded-full ${
+                              listingFilter === cat.key ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'
+                            }`}>{cat.count}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {/* Desktop: Left Sidebar (hidden on mobile) */}
                       <div className="hidden sm:flex flex-col gap-1 w-32 flex-shrink-0">
                         {filterCategories.map(cat => (
                           <button
@@ -1048,25 +1067,6 @@ export default function SellerDashboard() {
                             <span>{cat.label}</span>
                             <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                               listingFilter === cat.key ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
-                            }`}>{cat.count}</span>
-                          </button>
-                        ))}
-                      </div>
-                      {/* Mobile: horizontal scroll tabs */}
-                      <div className="flex sm:hidden gap-2 overflow-x-auto pb-1 mb-2 w-full">
-                        {filterCategories.map(cat => (
-                          <button
-                            key={cat.key}
-                            onClick={() => { setListingFilter(cat.key); setSelectedIds(new Set()); setBatchMode(false); }}
-                            className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                              listingFilter === cat.key
-                                ? 'bg-[#06038d] text-white'
-                                : 'bg-gray-100 text-gray-600'
-                            }`}
-                          >
-                            {cat.label}
-                            <span className={`text-[10px] px-1 py-0.5 rounded-full ${
-                              listingFilter === cat.key ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'
                             }`}>{cat.count}</span>
                           </button>
                         ))}

@@ -1,0 +1,9 @@
+{
+  "query": "\nCREATE TABLE IF NOT EXISTS `emailUnsubscribes` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `email` varchar(255) NOT NULL,\n  `emailType` varchar(64) DEFAULT NULL,\n  `token` varchar(64) NOT NULL,\n  `unsubscribedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `resubscribedAt` timestamp DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `eu_token_idx` (`token`),\n  KEY `eu_userId_idx` (`userId`),\n  KEY `eu_email_idx` (`email`)\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nCREATE TABLE IF NOT EXISTS `emailUnsubscribes` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `email` varchar(255) NOT NULL,\n  `emailType` varchar(64) DEFAULT NULL,\n  `token` varchar(64) NOT NULL,\n  `unsubscribedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `resubscribedAt` timestamp DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `eu_token_idx` (`token`),\n  KEY `eu_userId_idx` (`userId`),\n  KEY `eu_email_idx` (`email`)\n);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1532
+}

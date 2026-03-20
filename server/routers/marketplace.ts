@@ -26,9 +26,8 @@ import {
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
-import { notifyOwner } from "../_core/notification";
 import { createNotification } from "../db/notifications";
-import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail } from "../emailService";
+import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail, notifyAdmin } from "../emailService";
 import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs, cartItems } from "../../drizzle/schema_new";
 import { eq, and, isNotNull, isNull, or, desc, sql, inArray, like } from 'drizzle-orm';
 
@@ -501,7 +500,7 @@ export const marketplaceRouter = router({
       // Save proof URL to database so it can be displayed in order detail page
       await updateMarketplaceOrder(input.orderId, { alipayProofImageUrl: url, alipayProofSubmittedAt: new Date(), alipayReviewReminderSentAt: null });
       // Notify owner that a new Alipay HK payment proof has been submitted
-      notifyOwner({
+      notifyAdmin({
         title: "📸 新支付寶 HK 付款截圖待核對",
         content: `訂單 ${order.orderNo} 的買家已上傳支付寶 HK 付款截圖，請前往管理後台核對收款。\n金額：HKD ${order.subtotalHkd}\n前往核對：/admin/marketplace`,
       }).catch(() => {});
@@ -2044,7 +2043,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
           updatedAt: new Date(),
         });
         console.log(`[createAlipayOrder] Reusing existing Alipay order ${existingOrderNo} with updated proof`);
-        await notifyOwner({
+        await notifyAdmin({
           title: "支付寶 HK 訂單更新截圖 📸",
           content: `訂單 ${existingOrderNo} 買家重新提交支付寶 HK 付款截圖，請前往管理後台審核。商品：${listing.title}，金額：HKD ${effectivePrice.toFixed(2)}`,
         }).catch(() => {});
@@ -2074,7 +2073,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
       });
       // Notify admin of new Alipay order pending review
-      await notifyOwner({
+      await notifyAdmin({
         title: "支付寶 HK 訂單待審核 💰",
         content: `訂單 ${orderNo} 買家已提交支付寶 HK 付款截圖，請前往管理後台審核。商品：${listing.title}，金額：HKD ${effectivePrice.toFixed(2)}`,
       }).catch(() => {});
@@ -2277,7 +2276,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         disputeEvidenceUrls: input.evidenceUrls ? JSON.stringify(input.evidenceUrls) : null,
       });
       // Notify admin
-      await notifyOwner({
+      await notifyAdmin({
         title: "新爭議申請 ⚠️",
         content: `訂單 ${order.orderNo} 買家申請爭議。原因：${input.reason}`,
       }).catch(() => {});
@@ -2342,7 +2341,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         }
       }
       // Notify owner
-      await notifyOwner({
+      await notifyAdmin({
         title: "買家取消訂單",
         content: `訂單 ${order.orderNo} 已由買家取消。${input.reason ? `原因：${input.reason}` : ""}`,
       }).catch(() => {});
@@ -2797,7 +2796,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         relatedId: offer.id,
       }).catch(() => {});
       // Notify platform owner via Manus notification
-      notifyOwner({
+      notifyAdmin({
         title: `新出價通知：${listing.title}`,
         content: `買家對商品「${listing.title}」出價 HKD ${input.offerPriceHkd}。${input.message ? `買家留言：${input.message}` : ""}
 請前往賣家中心回應。`,
@@ -2981,7 +2980,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         details: input.details,
         status: "pending",
       });
-      notifyOwner({
+      notifyAdmin({
         title: "新商品舉報",
         content: `商品「${listing.title}」被舉報，原因：${input.reason}。請前往管理後台處理。`,
       }).catch(() => {});

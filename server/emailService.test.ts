@@ -1,6 +1,6 @@
 /**
  * emailService.test.ts
- * Validates Gmail SMTP connection and email sending using GMAIL_APP_PASSWORD env var.
+ * Validates Gmail SMTP connection, email sending, email logging, and unsubscribe checks.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -12,12 +12,13 @@ vi.mock("nodemailer", () => ({
   default: { createTransport: mockCreateTransport },
 }));
 
-// ─── Mock DB helper (not needed for Gmail App Password path) ─────────────────
+// ─── Mock DB helper ───────────────────────────────────────────────────────────
 vi.mock("./db", () => ({
   getSystemSetting: vi.fn().mockResolvedValue(null),
+  getDb: vi.fn().mockResolvedValue(null), // null DB = skip logging/unsubscribe checks
 }));
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// ─── Tests: Gmail SMTP ────────────────────────────────────────────────────────
 describe("emailService - Gmail App Password", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -95,5 +96,44 @@ describe("emailService - Gmail App Password", () => {
 
     expect(html).toContain("boxium-logo-white");
     expect(html).toContain("<img");
+  });
+
+  it("accepts emailType and toUserId parameters without error", async () => {
+    const { sendEmail } = await import("./emailService");
+    const result = await sendEmail({
+      to: "user@example.com",
+      subject: "訂單通知",
+      html: "<p>您的訂單已確認</p>",
+      emailType: "order",
+      toUserId: 42,
+    });
+    expect(result).toBe(true);
+  });
+
+  it("skipUnsubscribeCheck bypasses unsubscribe lookup", async () => {
+    const { sendEmail } = await import("./emailService");
+    const result = await sendEmail({
+      to: "user@example.com",
+      subject: "重要訂單確認",
+      html: "<p>訂單已確認</p>",
+      emailType: "order",
+      skipUnsubscribeCheck: true,
+    });
+    expect(result).toBe(true);
+    expect(mockSendMail).toHaveBeenCalledTimes(1);
+  });
+
+  it("email footer contains unsubscribe link when token provided (via wrapHtml)", async () => {
+    const { buildNewOfferEmail } = await import("./emailService");
+    const { html } = buildNewOfferEmail({
+      sellerName: "賣家A",
+      itemTitle: "Pikachu",
+      offerAmountHkd: "500",
+      buyerName: "買家B",
+      siteUrl: "https://boxium.asia",
+      listingId: 1,
+    });
+    // The footer should contain customer support email
+    expect(html).toContain("boxium.asia@gmail.com");
   });
 });

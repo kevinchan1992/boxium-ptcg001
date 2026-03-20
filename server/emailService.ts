@@ -49,7 +49,7 @@ async function createTransporter() {
 const BRAND_BLUE = "#1a0dab";
 const BRAND_YELLOW = "#ffed00";
 
-function wrapHtml(title: string, body: string): string {
+function wrapHtml(title: string, body: string, unsubscribeToken?: string, emailType?: string): string {
   return `<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -79,8 +79,14 @@ function wrapHtml(title: string, body: string): string {
             <td style="background:#f9f9f9;padding:20px 32px;text-align:center;border-top:1px solid #eeeeee;">
               <p style="margin:0;font-size:12px;color:#999999;">
                 此郵件由 BOXIUM PTCG 系統自動發送，請勿直接回覆。<br/>
-                如有問題請聯絡客服：<a href="mailto:support@boxium.asia" style="color:${BRAND_BLUE};">support@boxium.asia</a>
+                如有問題請聯絡客服：<a href="mailto:boxium.asia@gmail.com" style="color:${BRAND_BLUE};">boxium.asia@gmail.com</a>
               </p>
+              ${unsubscribeToken ? `
+              <p style="margin:8px 0 0;font-size:11px;color:#bbbbbb;">
+                <a href="https://boxiumptcg.manus.space/unsubscribe?token=${unsubscribeToken}&action=unsubscribe" style="color:#aaaaaa;text-decoration:underline;">退訂此類通知</a>
+                &nbsp;·&nbsp;
+                <a href="https://boxiumptcg.manus.space/unsubscribe?token=${unsubscribeToken}&action=resubscribe" style="color:#aaaaaa;text-decoration:underline;">重新訂閱</a>
+              </p>` : ''}
             </td>
           </tr>
         </table>
@@ -334,7 +340,7 @@ export function buildSellerRejectedEmail(data: SellerApplicationEmailData): { su
     ${reasonBlock}
     <p style="color:#555;font-size:14px;">如你認為此決定有誤，或希望了解更多詳情，請聯絡我們的客服團隊，我們將盡快為你跟進。</p>
     <p style="color:#555;font-size:14px;">你仍然可以繼續使用 BOXIUM PTCG 平台進行購買。</p>
-    ${ctaButton("聯絡客服", `mailto:support@boxium.asia`)}
+    ${ctaButton("聯絡客服", `mailto:boxium.asia@gmail.com`)}
   `);
   return { subject, html };
 }
@@ -345,14 +351,48 @@ export async function sendEmail({
   to,
   subject,
   html,
+  emailType = 'general',
+  toUserId,
+  skipUnsubscribeCheck = false,
 }: {
   to: string;
   subject: string;
   html: string;
+  emailType?: string;
+  toUserId?: number;
+  skipUnsubscribeCheck?: boolean;
 }): Promise<boolean> {
   try {
+    // Check unsubscribe status (skip for critical emails like order confirmation)
+    if (!skipUnsubscribeCheck) {
+      try {
+        const { getDb } = await import('./db');
+        const { emailUnsubscribes } = await import('../drizzle/schema_new');
+        const { and, eq, or } = await import('drizzle-orm');
+        const db = await getDb();
+        if (db) {
+          const unsub = await db.select().from(emailUnsubscribes)
+            .where(and(
+              or(eq(emailUnsubscribes.email, to), ...(toUserId ? [eq(emailUnsubscribes.userId, toUserId)] : [])),
+              or(eq(emailUnsubscribes.emailType, emailType), eq(emailUnsubscribes.emailType, 'all'))
+            ))
+            .limit(1);
+          if (unsub.length > 0) {
+            console.log(`[EmailService] Skipped "${subject}" to ${to} (unsubscribed)`);
+            await logEmail({ to, subject, emailType, toUserId, status: 'skipped' });
+            return false;
+          }
+        }
+      } catch (e) {
+        // Non-fatal: if unsubscribe check fails, still send email
+      }
+    }
+
     const transporter = await createTransporter();
-    if (!transporter) return false;
+    if (!transporter) {
+      await logEmail({ to, subject, emailType, toUserId, status: 'failed', errorMessage: 'SMTP not configured' });
+      return false;
+    }
 
     const fromEmail = process.env.GMAIL_APP_PASSWORD
       ? "boxium.asia@gmail.com"
@@ -367,10 +407,41 @@ export async function sendEmail({
     });
 
     console.log(`[EmailService] Sent "${subject}" to ${to}`);
+    await logEmail({ to, subject, emailType, toUserId, status: 'sent' });
     return true;
   } catch (err: any) {
     console.error(`[EmailService] Failed to send email to ${to}:`, err.message);
+    await logEmail({ to, subject, emailType, toUserId, status: 'failed', errorMessage: err.message });
     return false;
+  }
+}
+
+/** Internal helper: write an email log entry */
+async function logEmail({
+  to, subject, emailType, toUserId, status, errorMessage,
+}: {
+  to: string;
+  subject: string;
+  emailType: string;
+  toUserId?: number;
+  status: 'sent' | 'failed' | 'skipped';
+  errorMessage?: string;
+}): Promise<void> {
+  try {
+    const { getDb } = await import('./db');
+    const { emailLogs } = await import('../drizzle/schema_new');
+    const db = await getDb();
+    if (!db) return;
+    await db.insert(emailLogs).values({
+      toEmail: to,
+      toUserId: toUserId ?? null,
+      subject,
+      emailType,
+      status,
+      errorMessage: errorMessage ?? null,
+    });
+  } catch (e) {
+    // Non-fatal: log failures should not break email sending
   }
 }
 
@@ -572,4 +643,30 @@ export function buildNewReviewSellerEmail(data: { orderNo: string; itemName: str
     ${ctaButton("前往賣家中心", `${siteUrl}/seller`)}
   `);
   return { subject, html };
+}
+
+// ─── Admin Notification Email (replaces Manus notifyOwner) ───────────────────
+
+const ADMIN_EMAIL = "boxium.asia@gmail.com";
+
+/**
+ * Send an admin notification email to boxium.asia@gmail.com.
+ * Replaces Manus notifyOwner() for all platform events.
+ */
+export async function notifyAdmin({
+  title,
+  content,
+}: {
+  title: string;
+  content: string;
+}): Promise<boolean> {
+  const subject = `[BOXIUM 後台] ${title}`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:20px;">${title}</h2>
+    <div style="background:#f8f9ff;border:1px solid #e0e4ff;border-radius:8px;padding:16px 20px;margin:16px 0;">
+      <p style="margin:0;font-size:14px;color:#333;white-space:pre-line;">${content}</p>
+    </div>
+    <p style="color:#999;font-size:12px;margin-top:16px;">此為系統自動發送的管理員通知，時間：${new Date().toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}</p>
+  `);
+  return sendEmail({ to: ADMIN_EMAIL, subject, html });
 }
