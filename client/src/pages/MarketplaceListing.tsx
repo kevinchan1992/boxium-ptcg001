@@ -946,8 +946,8 @@ export default function MarketplaceListing() {
                     {createStripeOrderMutation.isPending ? "處理中..." : "立即購買"}
                   </Button>
                 )}
-                {/* Add to Cart button - hide when offer accepted */}
-                {!acceptedOffer && <AddToCartButton listingId={listing.id} isLoggedIn={!!me} />}
+                {/* Add to Cart button - always show */}
+                <AddToCartButton listingId={listing.id} isLoggedIn={!!me} />
                 {/* Credit card - shows effective price (offer price if accepted) */}
                 <Button
                   className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white h-11 text-sm rounded-xl disabled:opacity-40"

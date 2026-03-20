@@ -2861,13 +2861,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
         allow_promotion_codes: true,
       });
       await updateMarketplaceOrder(order.id, { stripeSessionId: session.id });
-      // Notify buyer
+      // Notify buyer - link directly to listing page so they can use payment buttons
       await createNotification({
         userId: offer.buyerId,
         type: "trade",
         title: "出價被接受 ✅",
-        body: `賣家接受了你的出價 HKD ${offer.offerPriceHkd}！請尽快完成付款。`,
-        linkUrl: `/orders`,
+        body: `賣家接受了你的出價 HKD ${offer.offerPriceHkd}！請在 24 小時內完成付款，點擊前往商品頁。`,
+        linkUrl: `/shop/${offer.listingId}`,
       }).catch(() => {});
       return { success: true, action: "accepted", checkoutUrl: session.url, orderNo };
     }),

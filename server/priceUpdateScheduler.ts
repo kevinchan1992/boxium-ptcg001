@@ -794,28 +794,30 @@ export function stopOfferExpiryCleanupScheduler() {
 }
 
 // ─── Payment Timeout Auto-Cancel Scheduler ───────────────────────────────────
-// Runs every hour at :30 to cancel pending_payment orders older than 24 hours
+// Runs every 10 minutes to cancel pending_payment orders older than 30 minutes
+// Also marks accepted offers as expired when their linked order is cancelled
 let paymentTimeoutCancelCronJob: ReturnType<typeof cron.schedule> | null = null;
 export function startPaymentTimeoutCancelScheduler() {
   if (paymentTimeoutCancelCronJob) return;
   paymentTimeoutCancelCronJob = cron.schedule(
-    '30 * * * *', // Every hour at :30
+    '*/10 * * * *', // Every 10 minutes
     async () => {
       try {
         const { getDb, getSellerProfileById } = await import('./db');
-        const { marketplaceOrders, marketplaceOrderItems, marketplaceListings } = await import('../drizzle/schema_new');
-        const { and, eq, lt } = await import('drizzle-orm');
+        const { marketplaceOrders, marketplaceOrderItems, marketplaceListings, offers: offersTable } = await import('../drizzle/schema_new');
+        const { and, eq, lt, inArray } = await import('drizzle-orm');
         const { createNotification } = await import('./db/notifications');
         const db = await getDb();
         if (!db) return;
         const now = new Date();
-        const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
-        // Find pending_payment orders older than 24 hours
+        const cutoff = new Date(now.getTime() - 30 * 60 * 1000); // 30 minutes ago
+        // Find pending_payment orders older than 30 minutes
         const timedOutOrders = await db.select({
           id: marketplaceOrders.id,
           orderNo: marketplaceOrders.orderNo,
           buyerId: marketplaceOrders.buyerId,
           sellerId: marketplaceOrders.sellerId,
+          listingId: marketplaceOrders.listingId,
           createdAt: marketplaceOrders.createdAt,
         })
           .from(marketplaceOrders)
@@ -848,12 +850,23 @@ export function startPaymentTimeoutCancelScheduler() {
                   )
                 );
             }
+            // Mark any accepted offers linked to this order as expired
+            // so the listing can accept new offers
+            await db.update(offersTable)
+              .set({ status: 'expired', updatedAt: now })
+              .where(
+                and(
+                  eq(offersTable.orderId, order.id),
+                  eq(offersTable.status, 'accepted')
+                )
+              );
+            console.log(`[PaymentTimeout] Expired accepted offers for cancelled order ${order.id}`);
             // Notify buyer
             await createNotification({
               userId: order.buyerId,
               type: 'order',
               title: '訂單已自動取消',
-              body: `訂單 #${order.orderNo} 因超過 24 小時未完成付款，已自動取消。`,
+              body: `訂單 #${order.orderNo} 因超過 30 分鐘未完成付款，已自動取消，商品已重新上架。`,
               linkUrl: '/orders',
               relatedId: order.id,
             }).catch(() => {});
@@ -866,7 +879,7 @@ export function startPaymentTimeoutCancelScheduler() {
                   userId: sellerProf.userId,
                   type: 'order',
                   title: '買家未付款，訂單已取消',
-                  body: `訂單 #${order.orderNo} 因買家超過 24 小時未完成付款，已自動取消，商品已重新上架。`,
+                  body: `訂單 #${order.orderNo} 因買家超過 30 分鐘未完成付款，已自動取消，商品已重新上架。`,
                   linkUrl: '/seller',
                   relatedId: order.id,
                 }).catch(() => {});
@@ -877,13 +890,54 @@ export function startPaymentTimeoutCancelScheduler() {
             console.error(`[PaymentTimeout] Failed to cancel order ${order.id}:`, err);
           }
         }
+
+        // ── Also handle accepted offers where buyer hasn't paid for 24 hours ──
+        // These are offers that were accepted but the buyer never started checkout
+        // or the Stripe session expired without creating an order
+        const offerCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+        const expiredAcceptedOffers = await db.select({
+          id: offersTable.id,
+          buyerId: offersTable.buyerId,
+          listingId: offersTable.listingId,
+          offerPriceHkd: offersTable.offerPriceHkd,
+          respondedAt: offersTable.respondedAt,
+        })
+          .from(offersTable)
+          .where(
+            and(
+              eq(offersTable.status, 'accepted'),
+              lt(offersTable.respondedAt, offerCutoff)
+            )
+          );
+        if (expiredAcceptedOffers.length > 0) {
+          console.log(`[PaymentTimeout] Found ${expiredAcceptedOffers.length} accepted offers with no payment after 24h`);
+          for (const offer of expiredAcceptedOffers) {
+            try {
+              // Mark offer as expired
+              await db.update(offersTable)
+                .set({ status: 'expired', updatedAt: now })
+                .where(eq(offersTable.id, offer.id));
+              // Notify buyer
+              await createNotification({
+                userId: offer.buyerId,
+                type: 'trade',
+                title: '出價已過期',
+                body: `你對商品的已接受出價 HKD ${offer.offerPriceHkd} 因超過 24 小時未完成付款，已自動過期。`,
+                linkUrl: `/shop/${offer.listingId}`,
+              }).catch(() => {});
+              console.log(`[PaymentTimeout] Expired accepted offer ${offer.id} (no payment after 24h)`);
+            } catch (err) {
+              console.error(`[PaymentTimeout] Failed to expire offer ${offer.id}:`, err);
+            }
+          }
+        }
       } catch (err) {
         console.error('[PaymentTimeout] Scheduler error:', err);
       }
     },
     { timezone: 'Asia/Hong_Kong' }
   );
-  console.log('[PaymentTimeout] Payment timeout cancel scheduler started (every hour at :30)');
+  console.log('[PaymentTimeout] Payment timeout cancel scheduler started (every 10 minutes, 30-min cutoff)');
 }
 export function stopPaymentTimeoutCancelScheduler() {
   if (paymentTimeoutCancelCronJob) {

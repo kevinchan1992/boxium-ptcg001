@@ -4280,7 +4280,7 @@ Task 330012 在處理 1327/34198 張卡牌時因服務器重啟而停滯。數�
 - [ ] 支付寶 HK 付款視窗：修復 Dialog 內容無法向下滾動的問題（加入 overflow-y-auto + max-h 限制）
 - [ ] 爭議處理：加入「儲存處理備註」功能，儲存後顯示歷史爭議處理記錄（時間、處理人、備註）
 - [ ] 後端：新增 disputeResolutionLogs 表或在現有爭議表加入 resolutionHistory JSON 欄位
-- [ ] 撰寫相關測試
+- [x] 撰寫相關測試
 - [ ] TypeScript 0 錯誤
 - [x] 儲存 checkpoint
 
@@ -5236,3 +5236,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] createStripeOrder/createAlipayOrder 加入 offerId 支援
 - [x] getListing 加入 isLocked 欄位
 - [x] 撰寫測試（offer-payment-lock.test.ts，17 項全部通過）
+
+## 自動化功能：出價到期/訂單超時/接受通知 (2026-03-20)
+- [x] 賣家接受出價時向買家發送站內通知
+- [x] 出價接受後 24 小時未付款自動改為 expired 並解鎖商品
+- [x] pending_payment 訂單超過 30 分鐘自動取消並解鎖商品
+- [x] 撰寫相關測試
