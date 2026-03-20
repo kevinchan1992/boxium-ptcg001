@@ -5,7 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, CheckCircle, XCircle, MinusCircle, RefreshCw, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Mail, CheckCircle, XCircle, MinusCircle, RefreshCw, Search, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   sent: { label: "已發送", color: "bg-green-100 text-green-800", icon: <CheckCircle className="w-3 h-3" /> },
@@ -25,6 +35,23 @@ const EMAIL_TYPES = [
   { value: "admin", label: "管理員" },
 ];
 
+// Custom tooltip for recharts
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs">
+      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+      {payload.map((entry: any) => (
+        <div key={entry.dataKey} className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full inline-block" style={{ background: entry.color }} />
+          <span className="text-gray-600">{entry.name}：</span>
+          <span className="font-bold" style={{ color: entry.color }}>{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminEmailLogs() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<"all" | "sent" | "failed" | "skipped">("all");
@@ -36,6 +63,7 @@ export default function AdminEmailLogs() {
   const PAGE_SIZE = 50;
 
   const { data: stats, refetch: refetchStats } = trpc.email.getStats.useQuery();
+  const { data: chartData, refetch: refetchChart } = trpc.email.getChartData.useQuery();
   const { data, isLoading, refetch } = trpc.email.listLogs.useQuery({
     page,
     pageSize: PAGE_SIZE,
@@ -54,9 +82,13 @@ export default function AdminEmailLogs() {
   const handleRefresh = () => {
     refetch();
     refetchStats();
+    refetchChart();
   };
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 1;
+
+  // Check if there's any data in the chart
+  const hasChartData = chartData?.days?.some(d => d.sent > 0 || d.failed > 0 || d.skipped > 0);
 
   return (
     <div className="space-y-4">
@@ -96,7 +128,84 @@ export default function AdminEmailLogs() {
         </div>
       )}
 
-      {/* Filters */}
+      {/* 7-Day Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-[#1a0dab]" />
+            過去 7 天電郵發送趨勢
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!chartData ? (
+            <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
+              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              載入圖表中...
+            </div>
+          ) : !hasChartData ? (
+            <div className="h-48 flex flex-col items-center justify-center text-gray-400 text-sm gap-2">
+              <TrendingUp className="w-8 h-8 opacity-30" />
+              <span>尚無電郵發送記錄</span>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart
+                data={chartData.days}
+                margin={{ top: 5, right: 16, left: -20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11, fill: "#6b7280" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "#6b7280" }}
+                  axisLine={false}
+                  tickLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip content={<ChartTooltip />} />
+                <Legend
+                  wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+                  formatter={(value) => {
+                    const map: Record<string, string> = { sent: "已發送", failed: "發送失敗", skipped: "退訂跳過" };
+                    return map[value] ?? value;
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="sent"
+                  stroke="#16a34a"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: "#16a34a" }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="failed"
+                  stroke="#dc2626"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: "#dc2626" }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="skipped"
+                  stroke="#9ca3af"
+                  strokeWidth={2}
+                  strokeDasharray="4 2"
+                  dot={{ r: 3, fill: "#9ca3af" }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Filters + Table */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">

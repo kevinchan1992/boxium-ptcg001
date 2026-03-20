@@ -5437,3 +5437,23 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 退訂頁面：/unsubscribe?token=xxx&action=unsubscribe|resubscribe
 - [x] App.tsx：加入 /unsubscribe 路由
 - [x] vitest 測試：8 項測試全部通過（含 emailType 參數、skipUnsubscribeCheck、footer 退訂連結）
+
+---
+## 📧 電郵系統三項增強功能
+- [ ] 歡迎電郵：buildWelcomeEmail 模板（平台介紹、交易指引、CTA 按鈕）
+- [ ] 歡迎電郵：首次登入時觸發（auth router 中偵測 isNewUser）
+- [ ] 退訂 token 整合：sendEmail 自動查詢/建立用戶退訂 token
+- [ ] 退訂 token 整合：wrapHtml footer 自動顯示個人化退訂連結
+- [ ] 電郵統計圖表：tRPC getChartData 端點（過去 7 天每日發送量）
+- [ ] 電郵統計圖表：AdminEmailLogs 頁面加入折線圖（recharts）
+- [ ] vitest 測試：歡迎電郵模板、退訂 token 整合
+
+---
+## ✅ 電郵系統三項增強功能完成
+- [x] 歡迎電郵：buildWelcomeEmail 模板（平台介紹、交易指引、CTA 按鈕）
+- [x] 歡迎電郵：首次登入時觸發（registerUser + findOrCreateGoogleUser 偵測新用戶）
+- [x] 退訂 token 整合：getOrCreateUnsubscribeToken 輔助函數（自動查詢或建立 token）
+- [x] 退訂 token 整合：sendEmail 自動注入退訂連結到 HTML footer（非 system 類型）
+- [x] 電郵統計圖表：tRPC getChartData 端點（過去 7 天每日 sent/failed/skipped）
+- [x] 電郵統計圖表：AdminEmailLogs 頁面加入折線圖（recharts LineChart）
+- [x] vitest 測試：15 項測試全部通過（歡迎電郵模板、退訂 token 注入、system 類型跳過）

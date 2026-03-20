@@ -135,6 +135,19 @@ export async function registerUser(
   // Generate token for automatic login after registration
   const token = generateToken(createdUser[0]);
 
+  // Send welcome email asynchronously (don't block registration)
+  const newUserRecord = createdUser[0];
+  if (newUserRecord.email) {
+    import('./emailService').then(({ sendWelcomeEmail }) => {
+      sendWelcomeEmail({
+        userId: newUserRecord.id,
+        userName: newUserRecord.name || newUserRecord.email!.split('@')[0],
+        email: newUserRecord.email!,
+        siteUrl: 'https://boxium.asia',
+      }).catch((err: Error) => console.error('[Auth] Failed to send welcome email:', err));
+    });
+  }
+
   return { success: true, user: createdUser[0], token };
 }
 
@@ -248,5 +261,19 @@ export async function findOrCreateGoogleUser(
   }
 
   const token = generateToken(createdUser[0]);
+
+  // Send welcome email asynchronously for new Google users
+  const googleNewUser = createdUser[0];
+  if (googleNewUser.email) {
+    import('./emailService').then(({ sendWelcomeEmail }) => {
+      sendWelcomeEmail({
+        userId: googleNewUser.id,
+        userName: googleNewUser.name || googleNewUser.email!.split('@')[0],
+        email: googleNewUser.email!,
+        siteUrl: 'https://boxium.asia',
+      }).catch((err: Error) => console.error('[Auth] Failed to send welcome email (Google):', err));
+    });
+  }
+
   return { success: true, user: createdUser[0], token };
 }

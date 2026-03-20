@@ -388,6 +388,36 @@ export async function sendEmail({
       }
     }
 
+    // Auto-inject unsubscribe token into HTML footer if toUserId is provided
+    let finalHtml = html;
+    if (toUserId && emailType !== 'system' && !skipUnsubscribeCheck) {
+      try {
+        const unsubToken = await getOrCreateUnsubscribeToken(toUserId, to, emailType);
+        if (unsubToken) {
+          // Replace the closing </body> with unsubscribe footer injection
+          // We need to re-wrap with token — detect if already wrapped by checking for our footer marker
+          if (!finalHtml.includes('unsubscribe?token=')) {
+            // Inject unsubscribe links before </body>
+            const unsubBlock = `
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border-top:1px solid #eeeeee;">
+                <tr>
+                  <td style="padding:12px 32px;text-align:center;">
+                    <p style="margin:0;font-size:11px;color:#bbbbbb;">
+                      <a href="https://boxiumptcg.manus.space/unsubscribe?token=${unsubToken}&action=unsubscribe" style="color:#aaaaaa;text-decoration:underline;">退訂此類通知</a>
+                      &nbsp;·&nbsp;
+                      <a href="https://boxiumptcg.manus.space/unsubscribe?token=${unsubToken}&action=resubscribe" style="color:#aaaaaa;text-decoration:underline;">重新訂閱</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>`;
+            finalHtml = finalHtml.replace('</body>', `${unsubBlock}</body>`);
+          }
+        }
+      } catch (e) {
+        // Non-fatal: if token injection fails, still send email without it
+      }
+    }
+
     const transporter = await createTransporter();
     if (!transporter) {
       await logEmail({ to, subject, emailType, toUserId, status: 'failed', errorMessage: 'SMTP not configured' });
@@ -403,7 +433,7 @@ export async function sendEmail({
       from: `"${fromName}" <${fromEmail}>`,
       to,
       subject,
-      html,
+      html: finalHtml,
     });
 
     console.log(`[EmailService] Sent "${subject}" to ${to}`);
@@ -413,6 +443,51 @@ export async function sendEmail({
     console.error(`[EmailService] Failed to send email to ${to}:`, err.message);
     await logEmail({ to, subject, emailType, toUserId, status: 'failed', errorMessage: err.message });
     return false;
+  }
+}
+
+/**
+ * Get or create an unsubscribe token for a user+emailType combination.
+ * Returns the token string, or null if DB is unavailable.
+ */
+async function getOrCreateUnsubscribeToken(
+  userId: number,
+  email: string,
+  emailType: string,
+): Promise<string | null> {
+  try {
+    const { getDb } = await import('./db');
+    const { emailUnsubscribes } = await import('../drizzle/schema_new');
+    const { eq, and } = await import('drizzle-orm');
+    const db = await getDb();
+    if (!db) return null;
+
+    // Look for existing token for this user+emailType
+    const existing = await db.select().from(emailUnsubscribes)
+      .where(and(
+        eq(emailUnsubscribes.userId, userId),
+        eq(emailUnsubscribes.emailType, emailType),
+      ))
+      .limit(1);
+
+    if (existing.length > 0) {
+      return existing[0].token;
+    }
+
+    // Create a new token record
+    const { randomBytes } = await import('crypto');
+    const token = randomBytes(32).toString('hex');
+    await db.insert(emailUnsubscribes).values({
+      userId,
+      email,
+      emailType,
+      token,
+      // resubscribedAt = now means "active" (not unsubscribed) — we just store the token
+      resubscribedAt: new Date(),
+    });
+    return token;
+  } catch (e) {
+    return null;
   }
 }
 
@@ -643,6 +718,88 @@ export function buildNewReviewSellerEmail(data: { orderNo: string; itemName: str
     ${ctaButton("前往賣家中心", `${siteUrl}/seller`)}
   `);
   return { subject, html };
+}
+
+// ─── Welcome Email ───────────────────────────────────────────────────────────
+
+/**
+ * Build welcome email HTML for new users.
+ */
+export function buildWelcomeEmail(data: {
+  userName: string;
+  siteUrl?: string;
+}): { subject: string; html: string } {
+  const siteUrl = data.siteUrl || "https://boxium.asia";
+  const subject = `🎉 歡迎加入 BOXIUM PTCG！`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:24px;">歡迎加入 BOXIUM PTCG！🎉</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.userName}</strong>，<br/>
+      感謝您加入 BOXIUM PTCG — 香港及台灣最專業的寶可夢集換式卡牌交易平台！
+    </p>
+
+    <!-- Feature highlights -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #e0e4ff;border-radius:8px;margin:20px 0;">
+      <tr>
+        <td style="padding:16px 20px;border-bottom:1px solid #e0e4ff;">
+          <p style="margin:0;font-size:15px;font-weight:bold;color:#1a0dab;">📊 即時價格追蹤</p>
+          <p style="margin:6px 0 0;font-size:13px;color:#555;">整合 Snkrdunk、eBay 等多個國際市場數據，掌握卡牌最新成交價。</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 20px;border-bottom:1px solid #e0e4ff;">
+          <p style="margin:0;font-size:15px;font-weight:bold;color:#1a0dab;">🛒 安全交易市集</p>
+          <p style="margin:6px 0 0;font-size:13px;color:#555;">在 BOXIUM 市集買賣卡牌，支援出價洽議，安全有保障。</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 20px;border-bottom:1px solid #e0e4ff;">
+          <p style="margin:0;font-size:15px;font-weight:bold;color:#1a0dab;">⭐ 關注清單</p>
+          <p style="margin:6px 0 0;font-size:13px;color:#555;">追蹤心儀卡牌的價格走勢，第一時間掌握入手時機。</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 20px;">
+          <p style="margin:0;font-size:15px;font-weight:bold;color:#1a0dab;">🏪 成為賣家</p>
+          <p style="margin:6px 0 0;font-size:13px;color:#555;">申請成為認證賣家，輕鬆在平台上架您的卡牌，觸及更多買家。</p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="color:#555;font-size:14px;margin:16px 0;">立即前往市集，探索最新上架的優質卡牌！</p>
+    ${ctaButton("前往 BOXIUM 市集", `${siteUrl}/marketplace`)}
+
+    <p style="color:#999;font-size:12px;margin-top:24px;text-align:center;">
+      如有任何問題，歡迎聯絡我們：<a href="mailto:boxium.asia@gmail.com" style="color:#1a0dab;">boxium.asia@gmail.com</a>
+    </p>
+  `);
+  return { subject, html };
+}
+
+/**
+ * Send welcome email to a new user.
+ * Should be called once when the user first signs up / logs in for the first time.
+ */
+export async function sendWelcomeEmail({
+  userId,
+  userName,
+  email,
+  siteUrl,
+}: {
+  userId: number;
+  userName: string;
+  email: string;
+  siteUrl?: string;
+}): Promise<boolean> {
+  const { subject, html } = buildWelcomeEmail({ userName, siteUrl });
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    emailType: 'welcome',
+    toUserId: userId,
+    skipUnsubscribeCheck: false,
+  });
 }
 
 // ─── Admin Notification Email (replaces Manus notifyOwner) ───────────────────

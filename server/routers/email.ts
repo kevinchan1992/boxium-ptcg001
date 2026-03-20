@@ -99,6 +99,49 @@ export const emailRouter = router({
       };
     }),
 
+  // Admin: get 7-day daily email send chart data
+  getChartData: adminProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Build last 7 days date range (HKT-aware: use UTC offset +8)
+      const days: { date: string; sent: number; failed: number; skipped: number }[] = [];
+      const now = new Date();
+
+      for (let i = 6; i >= 0; i--) {
+        const dayStart = new Date(now);
+        dayStart.setDate(dayStart.getDate() - i);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const label = dayStart.toLocaleDateString('zh-HK', {
+          month: 'numeric',
+          day: 'numeric',
+          timeZone: 'Asia/Hong_Kong',
+        });
+
+        const [sentRes, failedRes, skippedRes] = await Promise.all([
+          db.select({ count: sql<number>`count(*)` }).from(emailLogs)
+            .where(and(eq(emailLogs.status, 'sent'), gte(emailLogs.sentAt, dayStart), lte(emailLogs.sentAt, dayEnd))),
+          db.select({ count: sql<number>`count(*)` }).from(emailLogs)
+            .where(and(eq(emailLogs.status, 'failed'), gte(emailLogs.sentAt, dayStart), lte(emailLogs.sentAt, dayEnd))),
+          db.select({ count: sql<number>`count(*)` }).from(emailLogs)
+            .where(and(eq(emailLogs.status, 'skipped'), gte(emailLogs.sentAt, dayStart), lte(emailLogs.sentAt, dayEnd))),
+        ]);
+
+        days.push({
+          date: label,
+          sent: Number(sentRes[0]?.count ?? 0),
+          failed: Number(failedRes[0]?.count ?? 0),
+          skipped: Number(skippedRes[0]?.count ?? 0),
+        });
+      }
+
+      return { days };
+    }),
+
   // ─── Unsubscribe ────────────────────────────────────────────────────────────
 
   // Public: unsubscribe via token (from email link)

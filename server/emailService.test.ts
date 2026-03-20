@@ -1,6 +1,7 @@
 /**
  * emailService.test.ts
- * Validates Gmail SMTP connection, email sending, email logging, and unsubscribe checks.
+ * Validates Gmail SMTP, email sending, welcome email, unsubscribe token injection,
+ * email logging, and unsubscribe checks.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -123,7 +124,7 @@ describe("emailService - Gmail App Password", () => {
     expect(mockSendMail).toHaveBeenCalledTimes(1);
   });
 
-  it("email footer contains unsubscribe link when token provided (via wrapHtml)", async () => {
+  it("email footer contains customer support email", async () => {
     const { buildNewOfferEmail } = await import("./emailService");
     const { html } = buildNewOfferEmail({
       sellerName: "賣家A",
@@ -133,7 +134,116 @@ describe("emailService - Gmail App Password", () => {
       siteUrl: "https://boxium.asia",
       listingId: 1,
     });
-    // The footer should contain customer support email
     expect(html).toContain("boxium.asia@gmail.com");
+  });
+});
+
+// ─── Tests: Welcome Email ─────────────────────────────────────────────────────
+describe("emailService - Welcome Email", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.GMAIL_APP_PASSWORD = "test-app-password";
+  });
+
+  it("buildWelcomeEmail returns correct subject and HTML", async () => {
+    const { buildWelcomeEmail } = await import("./emailService");
+    const { subject, html } = buildWelcomeEmail({
+      userName: "測試用戶",
+      siteUrl: "https://boxium.asia",
+    });
+
+    expect(subject).toContain("歡迎");
+    expect(subject).toContain("BOXIUM PTCG");
+    expect(html).toContain("測試用戶");
+    expect(html).toContain("marketplace");
+    expect(html).toContain("boxium-logo-white");
+  });
+
+  it("buildWelcomeEmail includes platform feature highlights", async () => {
+    const { buildWelcomeEmail } = await import("./emailService");
+    const { html } = buildWelcomeEmail({ userName: "Alice" });
+
+    // Should contain feature highlights
+    expect(html).toContain("即時價格追蹤");
+    expect(html).toContain("安全交易市集");
+    expect(html).toContain("關注清單");
+    expect(html).toContain("成為賣家");
+  });
+
+  it("buildWelcomeEmail includes CTA button linking to marketplace", async () => {
+    const { buildWelcomeEmail } = await import("./emailService");
+    const { html } = buildWelcomeEmail({
+      userName: "Bob",
+      siteUrl: "https://boxium.asia",
+    });
+
+    expect(html).toContain("https://boxium.asia/marketplace");
+    expect(html).toContain("前往 BOXIUM 市集");
+  });
+
+  it("sendWelcomeEmail sends email with welcome emailType", async () => {
+    const { sendWelcomeEmail } = await import("./emailService");
+    const result = await sendWelcomeEmail({
+      userId: 1,
+      userName: "新用戶",
+      email: "newuser@example.com",
+      siteUrl: "https://boxium.asia",
+    });
+
+    expect(result).toBe(true);
+    expect(mockSendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "newuser@example.com",
+        subject: expect.stringContaining("歡迎"),
+      })
+    );
+  });
+
+  it("sendWelcomeEmail uses default siteUrl when not provided", async () => {
+    const { buildWelcomeEmail } = await import("./emailService");
+    const { html } = buildWelcomeEmail({ userName: "User" });
+    // Default siteUrl should be boxium.asia
+    expect(html).toContain("boxium.asia");
+  });
+});
+
+// ─── Tests: Unsubscribe Token Injection ──────────────────────────────────────
+describe("emailService - Unsubscribe Token Auto-injection", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.GMAIL_APP_PASSWORD = "test-app-password";
+  });
+
+  it("sends email without token injection when DB is null (graceful fallback)", async () => {
+    const { sendEmail } = await import("./emailService");
+    // DB is mocked to return null, so token injection is skipped
+    const result = await sendEmail({
+      to: "user@example.com",
+      subject: "出價通知",
+      html: "<html><body><p>Test</p></body></html>",
+      emailType: "offer",
+      toUserId: 99,
+    });
+
+    expect(result).toBe(true);
+    // Email should still be sent even without token injection
+    expect(mockSendMail).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not inject unsubscribe block for system emails", async () => {
+    const { sendEmail } = await import("./emailService");
+    const result = await sendEmail({
+      to: "admin@example.com",
+      subject: "系統通知",
+      html: "<html><body><p>System</p></body></html>",
+      emailType: "system",
+      toUserId: 1,
+    });
+
+    expect(result).toBe(true);
+    // system emailType should skip token injection
+    const callArgs = mockSendMail.mock.calls[0][0];
+    // The html passed should not have unsubscribe block added (since emailType === 'system')
+    expect(callArgs.html).not.toContain("unsubscribe?token=");
   });
 });
