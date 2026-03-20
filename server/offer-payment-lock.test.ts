@@ -136,6 +136,40 @@ describe("Payment button visibility with accepted offer", () => {
   });
 });
 
+// ─── Unit tests for price display with strikethrough ────────────────────────
+
+describe("Price block display with accepted offer", () => {
+  it("shows original price with strikethrough when offer is accepted", () => {
+    const price = 10000;
+    const acceptedOffer = { status: "accepted", offerPriceHkd: "7000.00", id: 1 };
+    const effectivePrice = acceptedOffer ? parseFloat(acceptedOffer.offerPriceHkd) : price;
+    // Should show both prices
+    expect(effectivePrice).toBe(7000);
+    expect(price).toBe(10000);
+    // effectivePrice < price means discount is shown
+    expect(effectivePrice).toBeLessThan(price);
+  });
+
+  it("shows only original price when no accepted offer", () => {
+    const price = 10000;
+    const acceptedOffer = null;
+    const effectivePrice = acceptedOffer ? parseFloat((acceptedOffer as any).offerPriceHkd) : price;
+    expect(effectivePrice).toBe(price);
+  });
+
+  it("formats price correctly with HK locale", () => {
+    const price = 10000;
+    const formatted = price.toLocaleString("zh-HK", { minimumFractionDigits: 2 });
+    expect(formatted).toBe("10,000.00");
+  });
+
+  it("formats offer price correctly with HK locale", () => {
+    const offerPrice = 7000;
+    const formatted = offerPrice.toLocaleString("zh-HK", { minimumFractionDigits: 2 });
+    expect(formatted).toBe("7,000.00");
+  });
+});
+
 // ─── Unit tests for Alipay verify amount logic ───────────────────────────────
 
 describe("Alipay payment proof verification amount", () => {

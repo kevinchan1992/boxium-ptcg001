@@ -812,9 +812,20 @@ export default function MarketplaceListing() {
             <div className="bg-[#06038D] rounded-2xl p-4 flex items-center justify-between">
               <div>
                 <p className="text-white/60 text-xs mb-0.5">售價</p>
-                <span className="text-3xl font-bold text-[#FEDD00]">
-                  HKD {price.toLocaleString("zh-HK", { minimumFractionDigits: 2 })}
-                </span>
+                {acceptedOffer ? (
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-xl font-bold text-white/40 line-through">
+                      HKD {price.toLocaleString("zh-HK", { minimumFractionDigits: 2 })}
+                    </span>
+                    <span className="text-3xl font-bold text-[#FEDD00]">
+                      HKD {effectivePrice.toLocaleString("zh-HK", { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-3xl font-bold text-[#FEDD00]">
+                    HKD {price.toLocaleString("zh-HK", { minimumFractionDigits: 2 })}
+                  </span>
+                )}
                 <p className="text-white/60 text-xs mt-1">庫存：{listing.quantity} 件</p>
               </div>
 
@@ -944,7 +955,7 @@ export default function MarketplaceListing() {
                   onClick={() => { if (!me) return; setShowShippingDialog(true); }}
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  信用卡 / Apple Pay 付款{acceptedOffer ? ` (HKD ${effectivePrice.toFixed(2)})` : ""}
+                  信用卡 / Apple Pay 付款
                 </Button>
                 {/* Alipay - shows effective price (offer price if accepted) */}
                 <Button
@@ -953,7 +964,7 @@ export default function MarketplaceListing() {
                   disabled={!me || (isLocked && !acceptedOffer)}
                   onClick={() => { setAlipayStep("qr"); setProofUrl(""); setVerifyResult(null); setShowAlipay(true); }}
                 >
-                  <Smartphone className="w-4 h-4 mr-2" />支付寶 HK 付款{acceptedOffer ? ` (HKD ${effectivePrice.toFixed(2)})` : ""}
+                  <Smartphone className="w-4 h-4 mr-2" />支付寶 HK 付款
                 </Button>
                 {/* Offer - show pending offer status or offer button (only if allowOffers is true) */}
                 {listing?.allowOffers && (
@@ -1662,7 +1673,7 @@ export default function MarketplaceListing() {
                 });
               }}
             >
-              {createStripeOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</> : <><CreditCard className="w-4 h-4 mr-2" />信用卡付款 HKD {effectivePrice.toFixed(2)}</>}
+              {createStripeOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</> : <><CreditCard className="w-4 h-4 mr-2" />信用卡付款</>}
             </Button>
           </div>
         </DialogContent>
