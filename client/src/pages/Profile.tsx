@@ -496,9 +496,21 @@ function WatchlistSection() {
     onError: (err) => toast.error(err.message || "加入失敗"),
   });
 
+  // Sort state for listings
+  const [sortBy, setSortBy] = useState<"time_desc" | "time_asc" | "price_asc" | "price_desc">("time_desc");
+
   const isLoading = watchlistLoading || wishlistLoading;
   const cardCount = watchlist?.length ?? 0;
   const listingCount = wishlist?.length ?? 0;
+
+  // Sorted wishlist
+  const sortedWishlist = wishlist ? [...(wishlist as any[])].sort((a, b) => {
+    if (sortBy === "time_desc") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortBy === "time_asc") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortBy === "price_asc") return Number(a.listing.priceHkd) - Number(b.listing.priceHkd);
+    if (sortBy === "price_desc") return Number(b.listing.priceHkd) - Number(a.listing.priceHkd);
+    return 0;
+  }) : [];
 
   return (
     <div className="space-y-4">
@@ -607,7 +619,31 @@ function WatchlistSection() {
           </div>
         ) : (
           <div className="space-y-3">
-            {(wishlist as any[]).map((item) => {
+            {/* Sort controls */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-500 font-medium">排序：</span>
+              <div className="flex gap-1 flex-wrap">
+                {([
+                  { value: "time_desc" as const, label: "最新收藏" },
+                  { value: "time_asc" as const, label: "最早收藏" },
+                  { value: "price_asc" as const, label: "價格↑" },
+                  { value: "price_desc" as const, label: "價格↓" },
+                ]).map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setSortBy(opt.value)}
+                    className="text-xs px-2.5 py-1 rounded-full font-semibold transition-all"
+                    style={sortBy === opt.value
+                      ? { background: BRAND_BLUE, color: "white" }
+                      : { background: `${BRAND_BLUE}10`, color: BRAND_BLUE }
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {sortedWishlist.map((item: any) => {
               const listing = item.listing;
               const imgs: string[] | null = (() => { try { return listing.images ? JSON.parse(listing.images) : null; } catch { return null; } })();
               const imgUrl = imgs && imgs.length > 0 ? imgs[0] : null;

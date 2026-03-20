@@ -526,6 +526,7 @@ export default function MarketplaceListing() {
       setIsWishlisted(res.wishlisted);
       toast.success(res.wishlisted ? "已加入收藏" : "已移除收藏");
       utils.marketplace.getWishlistIds.invalidate();
+      utils.marketplace.getMyWishlist.invalidate(); // sync Profile wishlist tab
     },
     onError: () => toast.error("請先登入才能收藏"),
   });
