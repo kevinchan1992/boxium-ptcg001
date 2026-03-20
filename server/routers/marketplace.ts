@@ -1767,6 +1767,69 @@ export const marketplaceRouter = router({
         });
       }
 
+      // ── If buyer has an existing Alipay pending order, cancel it first (payment method switch) ──
+      if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'alipay_hk') {
+        await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', updatedAt: new Date() });
+        console.log(`[createStripeOrder] Cancelled existing Alipay order ${activeOrder.orderNo} for payment method switch`);
+      }
+
+      // ── Idempotency: reuse existing pending_payment Stripe order for same buyer+listing ──
+      // This prevents duplicate orders when user closes checkout and clicks pay again
+      if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'stripe') {
+        const existingOrderNo = activeOrder.orderNo;
+        // Try to reuse existing Stripe session if still valid
+        if (activeOrder.stripeSessionId) {
+          try {
+            const existingSession = await stripe.checkout.sessions.retrieve(activeOrder.stripeSessionId);
+            if (existingSession.status === 'open') {
+              console.log(`[createStripeOrder] Reusing existing Stripe session for order ${existingOrderNo}`);
+              return { checkoutUrl: existingSession.url, orderNo: existingOrderNo };
+            }
+          } catch (e) {
+            // Session expired or invalid, create a new one below
+            console.log(`[createStripeOrder] Existing session invalid, creating new session for order ${existingOrderNo}`);
+          }
+        }
+        // Session expired: create a new Stripe session and update the existing order
+        const newSession = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          line_items: [{
+            price_data: {
+              currency: "hkd",
+              product_data: { name: listing.title, description: listing.description ?? undefined },
+              unit_amount: Math.round(effectivePrice * 100),
+            },
+            quantity: 1,
+          }],
+          mode: "payment",
+          success_url: `${ctx.req.headers.origin}/marketplace?payment=success&order=${existingOrderNo}`,
+          cancel_url: `${ctx.req.headers.origin}/marketplace/listing/${listing.id}?payment=cancelled`,
+          client_reference_id: ctx.user.id.toString(),
+          metadata: {
+            user_id: ctx.user.id.toString(),
+            listing_id: listing.id.toString(),
+            order_no: existingOrderNo,
+            ...(input.offerId ? { offer_id: input.offerId.toString() } : {}),
+          },
+          payment_intent_data: {
+            metadata: {
+              orderId: activeOrder.id.toString(),
+              orderNo: existingOrderNo,
+              buyerId: ctx.user.id.toString(),
+              listingId: listing.id.toString(),
+            },
+          },
+        });
+        // Update existing order with new session
+        await updateMarketplaceOrder(activeOrder.id, {
+          stripeSessionId: newSession.id,
+          stripePaymentIntentId: newSession.payment_intent as string ?? null,
+          updatedAt: new Date(),
+        });
+        console.log(`[createStripeOrder] Updated order ${existingOrderNo} with new Stripe session`);
+        return { checkoutUrl: newSession.url, orderNo: existingOrderNo };
+      }
+
       const orderNo = await generateOrderNo();
       const paymentIntentData2: any = {
         metadata: {
@@ -1961,6 +2024,32 @@ All three checks must pass for verified to be true. Respond with JSON only match
         }
         effectivePrice = parseFloat(offerRecord.offerPriceHkd as string);
       }
+      // ── If buyer has an existing Stripe pending order, cancel it first (payment method switch) ──
+      if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'stripe') {
+        await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', updatedAt: new Date() });
+        console.log(`[createAlipayOrder] Cancelled existing Stripe order ${activeOrder.orderNo} for payment method switch`);
+      }
+
+      // ── Idempotency: reuse existing pending_payment Alipay order for same buyer+listing ──
+      // This prevents duplicate orders when user submits proof multiple times
+      if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'alipay_hk') {
+        const existingOrderNo = activeOrder.orderNo;
+        // Update the existing order with new proof image and shipping address
+        await updateMarketplaceOrder(activeOrder.id, {
+          alipayProofImageUrl: input.proofImageUrl,
+          shippingName: input.shippingAddress?.name ?? null,
+          shippingPhone: input.shippingAddress?.phone ?? null,
+          shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
+          updatedAt: new Date(),
+        });
+        console.log(`[createAlipayOrder] Reusing existing Alipay order ${existingOrderNo} with updated proof`);
+        await notifyOwner({
+          title: "支付寶 HK 訂單更新截圖 📸",
+          content: `訂單 ${existingOrderNo} 買家重新提交支付寶 HK 付款截圖，請前往管理後台審核。商品：${listing.title}，金額：HKD ${effectivePrice.toFixed(2)}`,
+        }).catch(() => {});
+        return { orderNo: existingOrderNo };
+      }
+
       const orderNo = await generateOrderNo();
       const newOrder = await createMarketplaceOrder({
         orderNo,

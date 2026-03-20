@@ -935,37 +935,29 @@ export default function MarketplaceListing() {
                     <span>此商品金額低於 Stripe 最低付款限額（HKD 4.00），請使用支付寶 HK 付款。</span>
                   </div>
                 )}
-                {/* Primary buy button - hide when offer accepted */}
+                {/* Primary buy button - only show when no accepted offer */}
                 {!acceptedOffer && (
                   <Button
                     className="w-full bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold h-12 text-base rounded-xl shadow-sm disabled:opacity-40"
-                    disabled={!me || createStripeOrderMutation.isPending || price < 4.00 || isLocked}
-                    onClick={() => { if (!me) return; setShowShippingDialog(true); }}
+                    disabled={!me || isLocked}
+                    onClick={() => { if (!me) return; window.location.href = '/cart'; }}
                   >
                     <ShoppingCart className="w-5 h-5 mr-2" />
-                    {createStripeOrderMutation.isPending ? "處理中..." : "立即購買"}
+                    立即購買
                   </Button>
                 )}
                 {/* Add to Cart button - always show */}
                 <AddToCartButton listingId={listing.id} isLoggedIn={!!me} />
-                {/* Credit card - shows effective price (offer price if accepted) */}
-                <Button
-                  className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white h-11 text-sm rounded-xl disabled:opacity-40"
-                  disabled={!me || createStripeOrderMutation.isPending || effectivePrice < 4.00 || (isLocked && !acceptedOffer)}
-                  onClick={() => { if (!me) return; setShowShippingDialog(true); }}
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  信用卡 / Apple Pay 付款
-                </Button>
-                {/* Alipay - shows effective price (offer price if accepted) */}
-                <Button
-                  variant="outline"
-                  className="w-full h-11 text-sm border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/5 rounded-xl"
-                  disabled={!me || (isLocked && !acceptedOffer)}
-                  onClick={() => { setAlipayStep("qr"); setProofUrl(""); setVerifyResult(null); setShowAlipay(true); }}
-                >
-                  <Smartphone className="w-4 h-4 mr-2" />支付寶 HK 付款
-                </Button>
+                {/* When offer accepted, show go-to-cart button */}
+                {acceptedOffer && (
+                  <Button
+                    className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white h-11 text-sm rounded-xl"
+                    onClick={() => { window.location.href = '/cart'; }}
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    前往購物車付款
+                  </Button>
+                )}
                 {/* Offer - show pending offer status or offer button (only if allowOffers is true) */}
                 {listing?.allowOffers && (
                   myPendingOffer ? (

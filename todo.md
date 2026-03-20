@@ -5242,3 +5242,17 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 出價接受後 24 小時未付款自動改為 expired 並解鎖商品
 - [x] pending_payment 訂單超過 30 分鐘自動取消並解鎖商品
 - [x] 撰寫相關測試
+
+## 商品頁付款按鈕整合 + 重複訂單修復 (2026-03-20)
+- [ ] 商品詳情頁移除信用卡/Apple Pay 和支付寶 HK 付款按鈕
+- [ ] 確保商品詳情頁保留「加入購物車」按鈕（包括出價接受後）
+- [ ] createStripeOrder 先查詢同一買家同一商品的 pending_payment 訂單，若存在則重用
+- [ ] createAlipayOrder 先查詢同一買家同一商品的 pending_payment 訂單，若存在則重用
+- [ ] 撰寫重複訂單防護測試
+
+## 商品頁付款按鈕整合 + 重複訂單修復 (2026-03-20)
+- [ ] 商品詳情頁移除信用卡/Apple Pay 和支付寶 HK 付款按鈕
+- [ ] 確保商品詳情頁保留「加入購物車」按鈕（包括出價接受後）
+- [ ] createStripeOrder 先查詢同一買家同一商品的 pending_payment 訂單，若存在則重用
+- [ ] createAlipayOrder 先查詢同一買家同一商品的 pending_payment 訂單，若存在則重用
+- [ ] 撰寫重複訂單防護測試

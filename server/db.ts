@@ -4056,6 +4056,10 @@ export async function getActiveOrderByListingId(listingId: number) {
     orderNo: marketplaceOrders.orderNo,
     orderStatus: marketplaceOrders.orderStatus,
     buyerId: marketplaceOrders.buyerId,
+    paymentMethod: marketplaceOrders.paymentMethod,
+    stripeSessionId: marketplaceOrders.stripeSessionId,
+    stripePaymentIntentId: marketplaceOrders.stripePaymentIntentId,
+    subtotalHkd: marketplaceOrders.subtotalHkd,
     createdAt: marketplaceOrders.createdAt,
   }).from(marketplaceOrders)
     .where(and(
