@@ -5346,3 +5346,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 卡牧追蹤 Tab 加入排序（最新追蹤、最早追蹤、價格↑↓）
 - [x] 主頁 Footer LOGO 放大一倍（h-8 → h-16）
 - [x] 手機版/平板「開始搜尋卡牧」和「查看市場趨勢」按鈕改為永遠並排一行（flex-row）
+
+---
+
+## 🗑️ 導覽列清理
+
+- [x] 從導覽列移除「熱門排行榜」
+- [x] 從導覽列移除「關於我們」
+- [x] 移除 trending 頁面路由（/trending 重導向首頁）

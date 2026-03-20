@@ -10,7 +10,6 @@ import Home from "./pages/Home";
 import CardDetail from "./pages/CardDetail";
 import SearchResults from "./pages/SearchResults";
 import Research from "./pages/Research";
-import Trending from "./pages/Trending";
 import Pricing from "./pages/Pricing";
 import PricingSearch from "./pages/PricingSearch";
 import PricingDetail from "./pages/PricingDetail";
@@ -68,7 +67,9 @@ function Router() {
         }}
       </Route>
       <Route path="/research" component={Research} />
-      <Route path="/trending" component={Trending} />
+      <Route path="/trending">
+        <Redirect to="/" />
+      </Route>
 
       <Route path="/pricing" component={Pricing} />
       <Route path="/pricing/search" component={PricingSearch} />

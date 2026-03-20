@@ -104,9 +104,7 @@ export function TopNav() {
     { href: "/", label: t("common.home") },
     { href: "/research", label: t("common.research") },
     { href: "/pricing", label: t("common.priceComparison") },
-    { href: "/trending", label: t("common.trending") },
     { href: "/blog", label: t("common.blog") },
-    { href: "/about", label: t("common.about") },
     // { href: "/marketplace", label: "商城" }, // Hidden: marketplace under testing, access via direct URL /marketplace
   ];
 
