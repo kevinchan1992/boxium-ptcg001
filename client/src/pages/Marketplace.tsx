@@ -433,8 +433,21 @@ export default function Marketplace() {
   const [allListings, setAllListings] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [bannerIdx, setBannerIdx] = useState(0);
+  const [bannerDir, setBannerDir] = useState<'left' | 'right'>('left');
+  const [bannerAnimating, setBannerAnimating] = useState(false);
   const [bannerPaused, setBannerPaused] = useState(false);
   const bannerTouchStartX = useRef<number | null>(null);
+  const bannerResumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const goToBanner = useCallback((nextIdx: number, dir: 'left' | 'right') => {
+    if (bannerAnimating) return;
+    setBannerDir(dir);
+    setBannerAnimating(true);
+    setTimeout(() => {
+      setBannerIdx(nextIdx);
+      setBannerAnimating(false);
+    }, 350);
+  }, [bannerAnimating]);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -487,9 +500,9 @@ export default function Marketplace() {
 
   useEffect(() => {
     if (bannerPaused || activeBanners.length <= 1) return;
-    const t = setInterval(() => setBannerIdx(i => (i + 1) % activeBanners.length), 5000);
+    const t = setInterval(() => goToBanner((bannerIdx + 1) % activeBanners.length, 'left'), 5000);
     return () => clearInterval(t);
-  }, [bannerPaused, activeBanners.length]);
+  }, [bannerPaused, activeBanners.length, bannerIdx, goToBanner]);
 
   // Hot keywords (dynamic)
   const { data: hotKeywordsData } = trpc.marketplace.getHotKeywords.useQuery({ limit: 6, days: 7 });
@@ -701,6 +714,7 @@ export default function Marketplace() {
                         key={tag.label}
                         type="button"
                         onClick={() => {
+                          (document.activeElement as HTMLElement)?.blur();
                           setSearchInput(tag.search);
                           setSearch(tag.search);
                           if (tag.series && tag.series !== 'all') setTcgSeries(tag.series);
@@ -728,25 +742,33 @@ export default function Marketplace() {
           onTouchStart={(e) => {
             bannerTouchStartX.current = e.touches[0].clientX;
             setBannerPaused(true);
+            if (bannerResumeTimer.current) clearTimeout(bannerResumeTimer.current);
           }}
           onTouchEnd={(e) => {
             if (bannerTouchStartX.current === null) return;
             const diff = e.changedTouches[0].clientX - bannerTouchStartX.current;
             if (Math.abs(diff) > 40) {
               if (diff < 0) {
-                setBannerIdx(i => (i + 1) % activeBanners.length);
+                goToBanner((bannerIdx + 1) % activeBanners.length, 'left');
               } else {
-                setBannerIdx(i => (i - 1 + activeBanners.length) % activeBanners.length);
+                goToBanner((bannerIdx - 1 + activeBanners.length) % activeBanners.length, 'right');
               }
             }
             bannerTouchStartX.current = null;
-            setBannerPaused(false);
+            if (bannerResumeTimer.current) clearTimeout(bannerResumeTimer.current);
+            bannerResumeTimer.current = setTimeout(() => setBannerPaused(false), 2000);
           }}
         >
           {activeBanners.map((banner: any, i: number) => (
             <div
               key={banner.id}
-              className={`bg-gradient-to-r ${banner.gradient} transition-all duration-700 ${i === bannerIdx ? "block" : "hidden"}`}
+              className={`bg-gradient-to-r ${banner.gradient} ${
+                i === bannerIdx
+                  ? bannerAnimating
+                    ? `block ${bannerDir === 'left' ? 'animate-slide-in-from-right' : 'animate-slide-in-from-left'}`
+                    : 'block'
+                  : 'hidden'
+              }`}
             >
               <div className="px-6 pt-5 pb-10 sm:pt-7 sm:pb-12 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -790,13 +812,13 @@ export default function Marketplace() {
           {activeBanners.length > 1 && (
             <>
               <button
-                onClick={() => setBannerIdx(i => (i - 1 + activeBanners.length) % activeBanners.length)}
+                onClick={() => goToBanner((bannerIdx - 1 + activeBanners.length) % activeBanners.length, 'right')}
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 hidden sm:flex items-center justify-center text-white transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setBannerIdx(i => (i + 1) % activeBanners.length)}
+                onClick={() => goToBanner((bannerIdx + 1) % activeBanners.length, 'left')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 hidden sm:flex items-center justify-center text-white transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
