@@ -2184,6 +2184,17 @@ All three checks must pass for verified to be true. Respond with JSON only match
         alipayProofImageUrl: null,
         aiVerificationResult: null,
       });
+      // Cancel the associated accepted offer so it no longer shows as "accepted" on the listing page
+      try {
+        const db = await getDb();
+        if (db) {
+          await db.update(offers)
+            .set({ status: "cancelled", respondedAt: new Date() })
+            .where(and(eq(offers.orderId, input.orderId), eq(offers.status, "accepted")));
+        }
+      } catch (offerErr: any) {
+        console.warn("[BuyerCancel] Failed to cancel offer:", offerErr.message);
+      }
       // If listing was marked sold, restore it to active
       if (order.listingId) {
         const listing = await getListingById(order.listingId);
@@ -2915,31 +2926,33 @@ All three checks must pass for verified to be true. Respond with JSON only match
         status: ordersTable.orderStatus,
         amount: ordersTable.sellerReceivableHkd,
         createdAt: ordersTable.createdAt,
+        buyerConfirmedAt: ordersTable.buyerConfirmedAt,
       }).from(ordersTable).where(eq(ordersTable.sellerId, seller.id));
       const completedOrders = allOrders.filter((o: any) => o.status === "completed");
       const pendingOrders = allOrders.filter((o: any) => ["pending_payment", "paid", "processing", "shipped"].includes(o.status));
       const totalRevenue = completedOrders.reduce((sum: number, o: any) => sum + parseFloat(o.amount ?? "0"), 0);
-      const thisMonthOrders = allOrders.filter((o: any) => new Date(o.createdAt) >= startOfMonth);
-      const thisMonthRevenue = thisMonthOrders
-        .filter((o: any) => o.status === "completed")
+      // Use buyerConfirmedAt for completed orders (when revenue was actually earned)
+      const thisMonthRevenue = allOrders
+        .filter((o: any) => o.status === "completed" && o.buyerConfirmedAt && new Date(o.buyerConfirmedAt) >= startOfMonth)
         .reduce((sum: number, o: any) => sum + parseFloat(o.amount ?? "0"), 0);
-      const lastMonthOrders = allOrders.filter((o: any) => {
-        const d = new Date(o.createdAt);
-        return d >= startOfLastMonth && d <= endOfLastMonth;
-      });
-      const lastMonthRevenue = lastMonthOrders
-        .filter((o: any) => o.status === "completed")
+      const lastMonthRevenue = allOrders
+        .filter((o: any) => {
+          if (o.status !== "completed" || !o.buyerConfirmedAt) return false;
+          const d = new Date(o.buyerConfirmedAt);
+          return d >= startOfLastMonth && d <= endOfLastMonth;
+        })
         .reduce((sum: number, o: any) => sum + parseFloat(o.amount ?? "0"), 0);
-       // Build last 6 months data
+      // Build last 6 months data (use buyerConfirmedAt for completed orders)
       const monthlyData: { month: string; revenue: number; orders: number }[] = [];
       for (let i = 5; i >= 0; i--) {
         const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
-        const mOrders = allOrders.filter((o: any) => {
-          const d = new Date(o.createdAt);
+        const mCompleted = allOrders.filter((o: any) => {
+          if (o.status !== "completed") return false;
+          // Use buyerConfirmedAt if available, fallback to createdAt
+          const d = o.buyerConfirmedAt ? new Date(o.buyerConfirmedAt) : new Date(o.createdAt);
           return d >= mStart && d <= mEnd;
         });
-        const mCompleted = mOrders.filter((o: any) => o.status === "completed");
         const mRevenue = mCompleted.reduce((sum: number, o: any) => sum + parseFloat(o.amount ?? "0"), 0);
         const monthLabel = `${mStart.getMonth() + 1}月`;
         monthlyData.push({ month: monthLabel, revenue: Math.round(mRevenue * 100) / 100, orders: mCompleted.length });

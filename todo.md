@@ -5191,3 +5191,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 賣家收益儀表板：加入近 6 個月收益長條圖趨勢圖，以及待收款金額（進行中訂單）卡片
 - [x] 商品評價系統：買家提交評價後，賣家收到 in-app 通知和電郵通知（含星級和買家留言）
 - [x] 17 項新功能單元測試全部通過（電郵模板、月度數據計算、評分驗證）
+
+## 5 項 Bug 修復 (2026-03-20)
+- [x] 收貨地址表單模塊改為白色底色（Card bg-white，所有 Input/Label/Select 改為深色文字確保可讀性）
+- [x] 新增預設地址問題：修復 validateSFCode 正則，支援字母數字混合的智能櫃編號（H852G006P、H852FE95P 等）
+- [x] 順豐站/智能櫃選擇後顯示完整地址（Profile.tsx 和 MarketplaceListing.tsx 均加入 sfStationAddress 顯示）
+- [x] 取消訂單後出價仍顯示有效：在 buyerCancelOrder 中同步將關聯的 accepted offer 狀態改為 cancelled
+- [x] 圖表月份數據不顯示：改用 buyerConfirmedAt 來分組月度收益，確保完成訂單的收益顯示在正確月份
+- [x] 23 項 bug 修復單元測試全部通過

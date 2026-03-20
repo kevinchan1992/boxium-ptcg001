@@ -552,7 +552,7 @@ function ShippingAddressSection() {
   const { data: addresses, isLoading } = trpc.marketplace.getMyShippingAddresses.useQuery();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState({ label: "預設地址", addressType: "normal" as "normal" | "sf_station", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", isDefault: false });
+  const [form, setForm] = useState({ label: "預設地址", addressType: "normal" as "normal" | "sf_station", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", sfStationAddress: "", isDefault: false });
   const [sfSearchQuery, setSfSearchQuery] = useState("");
   const [sfSearchRegion, setSfSearchRegion] = useState("");
   const [sfPointType, setSfPointType] = useState<'all' | 'station' | 'locker'>('all');
@@ -578,10 +578,10 @@ function ShippingAddressSection() {
     onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); toast.success("預設地址已更新"); },
     onError: (e) => toast.error(e.message),
   });
-  const resetForm = () => { setForm({ label: "預設地址", addressType: "normal", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", isDefault: false }); setSfSearchQuery(""); setSfSearchRegion(""); setSfPointType('all'); setShowSfDropdown(false); setSfResults([]); };
+  const resetForm = () => { setForm({ label: "預設地址", addressType: "normal", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", sfStationAddress: "", isDefault: false }); setSfSearchQuery(""); setSfSearchRegion(""); setSfPointType('all'); setShowSfDropdown(false); setSfResults([]); };
   const handleEdit = (addr: any) => {
     setEditingId(addr.id);
-    setForm({ label: addr.label, addressType: addr.addressType || "normal", recipientName: addr.recipientName, phone: addr.phone, address: addr.address || "", district: addr.district || "", region: addr.region || "香港", sfStationCode: addr.sfStationCode || "", sfStationName: addr.sfStationName || "", isDefault: addr.isDefault });
+    setForm({ label: addr.label, addressType: addr.addressType || "normal", recipientName: addr.recipientName, phone: addr.phone, address: addr.address || "", district: addr.district || "", region: addr.region || "香港", sfStationCode: addr.sfStationCode || "", sfStationName: addr.sfStationName || "", sfStationAddress: "", isDefault: addr.isDefault });
     setShowForm(true);
   };
   const handleSubmit = () => {
@@ -609,19 +609,19 @@ function ShippingAddressSection() {
         )}
       </div>
       {showForm && (
-        <Card className="border-2 shadow-sm" style={{ borderColor: `${BRAND_BLUE}30` }}>
+        <Card className="border-2 shadow-sm bg-white text-gray-900" style={{ borderColor: `${BRAND_BLUE}30` }}>
           <CardContent className="pt-5 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-500">地址標籤</Label>
-                <Input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} placeholder="如：家、公司" className="text-sm" />
+                <Label className="text-xs font-semibold text-gray-700">地址標籤</Label>
+                <Input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} placeholder="如：家、公司" className="text-sm bg-white text-gray-900 border-gray-300" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-500">地址類型</Label>
+                <Label className="text-xs font-semibold text-gray-700">地址類型</Label>
                 <div className="flex gap-2">
                   {(["normal", "sf_station"] as const).map(type => (
                     <button key={type} onClick={() => setForm(f => ({ ...f, addressType: type }))}
-                      className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-all ${form.addressType === type ? "text-white border-transparent" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+                      className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-all ${form.addressType === type ? "text-white border-transparent" : "border-gray-300 text-gray-700 bg-gray-50 hover:border-gray-400"}`}
                       style={form.addressType === type ? { background: BRAND_BLUE } : {}}>
                       {type === "normal" ? "普通地址" : "順豐自提"}
                     </button>
@@ -631,12 +631,12 @@ function ShippingAddressSection() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-500">收件人姓名</Label>
-                <Input value={form.recipientName} onChange={e => setForm(f => ({ ...f, recipientName: e.target.value }))} placeholder="收件人全名" className="text-sm" />
+                <Label className="text-xs font-semibold text-gray-700">收件人姓名</Label>
+                <Input value={form.recipientName} onChange={e => setForm(f => ({ ...f, recipientName: e.target.value }))} placeholder="收件人全名" className="text-sm bg-white text-gray-900 border-gray-300" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-500">聯繫電話</Label>
-                <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+852 XXXX XXXX" className="text-sm" />
+                <Label className="text-xs font-semibold text-gray-700">聯繫電話</Label>
+                <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+852 XXXX XXXX" className="text-sm bg-white text-gray-900 border-gray-300" />
               </div>
             </div>
             {form.addressType === "sf_station" ? (
@@ -651,15 +651,15 @@ function ShippingAddressSection() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-500">搜尋站點 / 智能櫃</Label>
+                    <Label className="text-xs font-semibold text-gray-700">搜尋站點 / 智能櫃</Label>
                     <div className="relative">
                       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                      <Input value={sfSearchQuery} onChange={e => { setSfSearchQuery(e.target.value); setShowSfDropdown(true); }} placeholder="輸入名稱、地址或編號" className="pl-8 text-sm" onFocus={() => setShowSfDropdown(true)} />
+                      <Input value={sfSearchQuery} onChange={e => { setSfSearchQuery(e.target.value); setShowSfDropdown(true); }} placeholder="輸入名稱、地址或編號" className="pl-8 text-sm bg-white text-gray-900 border-gray-300" onFocus={() => setShowSfDropdown(true)} />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-500">地區篩選</Label>
-                    <select value={sfSearchRegion} onChange={e => { setSfSearchRegion(e.target.value); setShowSfDropdown(true); }} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm">
+                    <Label className="text-xs font-semibold text-gray-700">地區篩選</Label>
+                    <select value={sfSearchRegion} onChange={e => { setSfSearchRegion(e.target.value); setShowSfDropdown(true); }} className="w-full h-9 rounded-md border border-gray-300 bg-white text-gray-900 px-3 text-sm">
                       <option value="">全部地區</option>
                       {["香港島", "九龍", "新界"].map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
@@ -669,7 +669,7 @@ function ShippingAddressSection() {
                   <div className="border rounded-lg overflow-hidden shadow-sm max-h-48 overflow-y-auto">
                     {sfResults.map((point: SFPoint) => (
                       <button key={point.code} className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 transition-colors"
-                        onClick={() => { setForm(f => ({ ...f, sfStationCode: point.code, sfStationName: point.name })); setShowSfDropdown(false); setSfSearchQuery(""); }}>
+                        onClick={() => { setForm(f => ({ ...f, sfStationCode: point.code, sfStationName: point.name, sfStationAddress: point.address })); setShowSfDropdown(false); setSfSearchQuery(""); }}>
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{ background: point.type === 'locker' ? '#f59e0b22' : '#06038D22', color: point.type === 'locker' ? '#b45309' : '#06038D' }}>{point.type === 'locker' ? '智能櫃' : '順豐站'}</span>
                           <p className="text-sm font-medium text-gray-900">{point.name}</p>
@@ -685,13 +685,14 @@ function ShippingAddressSection() {
                       <p className="text-xs font-semibold text-blue-800">{form.sfStationCode.startsWith('H') ? '已選擇智能櫃' : '已選擇順豐站'}</p>
                       <p className="text-sm font-medium text-blue-900 mt-0.5">{form.sfStationName}</p>
                       <p className="text-xs text-blue-600 font-mono">{form.sfStationCode}</p>
+                      {form.sfStationAddress && <p className="text-xs text-blue-500 mt-0.5">{form.sfStationAddress}</p>}
                     </div>
-                    <button onClick={() => setForm(f => ({ ...f, sfStationCode: '', sfStationName: '' }))} className="text-xs text-red-500 hover:text-red-700 font-medium shrink-0">✕ 清除</button>
+                    <button onClick={() => setForm(f => ({ ...f, sfStationCode: '', sfStationName: '', sfStationAddress: '' }))} className="text-xs text-red-500 hover:text-red-700 font-medium shrink-0">✕ 清除</button>
                   </div>
                 )}
                 {!form.sfStationCode && (
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-500">或直接輸入站點編號</Label>
+                    <Label className="text-xs font-semibold text-gray-700">或直接輸入站點編號</Label>
                     <Input
                       placeholder="例：852Z351 或 H852001P"
                       className={`text-sm font-mono ${form.sfStationCode && !validateSFCode(form.sfStationCode).valid ? "border-red-400 bg-red-50" : ""}`}
@@ -699,31 +700,31 @@ function ShippingAddressSection() {
                     />
                   </div>
                 )}
-                <p className="text-xs text-gray-400">資料來自順豐香港官方（2026-03），共 125 個順豐站、729 個智能櫃。如需查詢最新站點，請訪問順豐香港官網。</p>
+                <p className="text-xs text-gray-500">資料來自順豐香港官方（2026-03），共 125 個順豐站、729 個智能櫃。如需查詢最新站點，請訪問順豐香港官網。</p>
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-500">地區</Label>
-                    <select value={form.region} onChange={e => setForm(f => ({ ...f, region: e.target.value }))} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm">
+                    <Label className="text-xs font-semibold text-gray-700">地區</Label>
+                    <select value={form.region} onChange={e => setForm(f => ({ ...f, region: e.target.value }))} className="w-full h-9 rounded-md border border-gray-300 bg-white text-gray-900 px-3 text-sm">
                       {["香港", "九龍", "新界"].map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-500">區域（選填）</Label>
-                    <Input value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))} placeholder="如：旺角、銅鑼灣" className="text-sm" />
+                    <Label className="text-xs font-semibold text-gray-700">區域（選填）</Label>
+                    <Input value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))} placeholder="如：旺角、銅鸾灣" className="text-sm bg-white text-gray-900 border-gray-300" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-gray-500">詳細地址</Label>
-                  <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="街道、大廈、樓層、單位" className="text-sm" />
+                  <Label className="text-xs font-semibold text-gray-700">詳細地址</Label>
+                  <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="街道、大婦、樓層、單位" className="text-sm bg-white text-gray-900 border-gray-300" />
                 </div>
               </div>
             )}
             <div className="flex items-center gap-2">
               <input type="checkbox" id="isDefault" checked={form.isDefault} onChange={e => setForm(f => ({ ...f, isDefault: e.target.checked }))} className="rounded" />
-              <Label htmlFor="isDefault" className="text-sm cursor-pointer">設為預設地址</Label>
+              <Label htmlFor="isDefault" className="text-sm cursor-pointer text-gray-800 font-medium">設為預設地址</Label>
             </div>
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSubmit} disabled={addMutation.isPending || updateMutation.isPending}

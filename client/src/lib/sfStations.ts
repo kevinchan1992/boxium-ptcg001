@@ -209,11 +209,11 @@ export function validateSFCode(code: string): { valid: boolean; type: 'station' 
   if (!trimmed) return { valid: false, type: null, message: "請輸入順豐站/智能櫃編號" };
   // Locker: starts with H, contains 852, ends with P
   if (trimmed.startsWith('H')) {
-    // H852XXXXP format: H + 852 + 3-6 digits + P
-    if (/^H852\d{3,6}P$/.test(trimmed)) {
+    // H852XXXXP format: H + 852 + 3-8 alphanumeric chars + P (e.g. H852G006P, H852FE95P)
+    if (/^H852[A-Z0-9]{3,8}P$/.test(trimmed)) {
       return { valid: true, type: 'locker' };
     }
-    return { valid: false, type: 'locker', message: `智能櫃編號格式不正確（應為 H852XXXXP，例：H852001P）` };
+    return { valid: false, type: 'locker', message: `智能櫃編號格式不正確（應為 H852XXXXP，例：H852G006P）` };
   }
   // Station: starts with 852, followed by 2-5 alphanumeric characters
   if (trimmed.startsWith('852')) {

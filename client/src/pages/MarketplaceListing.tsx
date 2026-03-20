@@ -467,7 +467,7 @@ export default function MarketplaceListing() {
   const [completedOrderNo, setCompletedOrderNo] = useState("");
   const [proofUrl, setProofUrl] = useState("");
   const [alipayStep, setAlipayStep] = useState<"qr" | "shipping" | "upload" | "done">("qr");
-  const [alipayShippingForm, setAlipayShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "" });
+  const [alipayShippingForm, setAlipayShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "", sfStationAddress: "" });
   const [alipaySfSearch, setAlipaySfSearch] = useState("");
   const [alipaySfRegion, setAlipaySfRegion] = useState("");
   const [alipaySfType, setAlipaySfType] = useState<'all' | 'station' | 'locker'>('all');
@@ -477,7 +477,7 @@ export default function MarketplaceListing() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [showShippingDialog, setShowShippingDialog] = useState(false);
-  const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "" });
+  const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "", sfStationAddress: "" });
   const [stripeSfSearch, setStripeSfSearch] = useState("");
   const [stripeSfRegion, setStripeSfRegion] = useState("");
   const [stripeSfType, setStripeSfType] = useState<'all' | 'station' | 'locker'>('all');
@@ -1159,7 +1159,7 @@ export default function MarketplaceListing() {
                       <button
                         type="button"
                         className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
-                        onClick={() => { setAlipayShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "" }); setAlipaySfSearch(""); setAlipaySfRegion(""); setAlipaySfType('all'); setAlipaySfResults([]); setAlipaySfDropdown(false); }}
+                        onClick={() => { setAlipayShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "", sfStationAddress: "" }); setAlipaySfSearch(""); setAlipaySfRegion(""); setAlipaySfType('all'); setAlipaySfResults([]); setAlipaySfDropdown(false); }}
                       >
                         <X className="w-3 h-3" /> 清除已選地址
                       </button>
@@ -1180,6 +1180,7 @@ export default function MarketplaceListing() {
                           phone: addr.phone,
                           address: addr.addressType === "sf_station" ? `順豐自提站 ${addr.sfStationCode}` : (addr.address || ""),
                           district: addr.addressType === "sf_station" ? (addr.sfStationName || "") : (addr.district || ""),
+                          sfStationAddress: addr.sfStationCode ? (addr.sfStationName || "") : "",
                           region: addr.region || "香港",
                           addressType: addr.addressType || "normal",
                           sfStationCode: addr.sfStationCode || "",
@@ -1233,7 +1234,7 @@ export default function MarketplaceListing() {
                     <div className="border rounded-xl overflow-hidden shadow-sm max-h-40 overflow-y-auto">
                       {alipaySfResults.map((pt: SFPoint) => (
                         <button key={pt.code} className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b last:border-0 transition-colors"
-                          onClick={() => { setAlipayShippingForm(f => ({ ...f, sfStationCode: pt.code, sfStationName: pt.name })); setAlipaySfDropdown(false); setAlipaySfSearch(""); }}>
+                          onClick={() => { setAlipayShippingForm(f => ({ ...f, sfStationCode: pt.code, sfStationName: pt.name, sfStationAddress: pt.address || "" })); setAlipaySfDropdown(false); setAlipaySfSearch(""); }}>
                           <div className="flex items-center gap-1">
                             <span className="text-xs px-1 py-0.5 rounded" style={{ background: pt.type === 'locker' ? '#fef3c722' : '#06038D22', color: pt.type === 'locker' ? '#b45309' : '#06038D' }}>{pt.type === 'locker' ? '智能櫃' : '順豐站'}</span>
                             <span className="text-xs font-medium text-gray-900">{pt.name}</span>
@@ -1249,8 +1250,9 @@ export default function MarketplaceListing() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-[#06038D]">{alipayShippingForm.sfStationName || "順豐自提站"}</p>
                         <p className="text-xs text-gray-500 font-mono">{alipayShippingForm.sfStationCode}</p>
+                        {alipayShippingForm.sfStationAddress && <p className="text-xs text-gray-400 mt-0.5">{alipayShippingForm.sfStationAddress}</p>}
                       </div>
-                      <button onClick={() => setAlipayShippingForm(f => ({ ...f, sfStationCode: '', sfStationName: '' }))} className="text-xs text-red-500 hover:text-red-700 font-medium">✕ 清除</button>
+                      <button onClick={() => setAlipayShippingForm(f => ({ ...f, sfStationCode: '', sfStationName: '', sfStationAddress: '' }))} className="text-xs text-red-500 hover:text-red-700 font-medium">✕ 清除</button>
                     </div>
                   )}
                   {!alipayShippingForm.sfStationCode && (
@@ -1436,7 +1438,7 @@ export default function MarketplaceListing() {
       </Dialog>
 
       {/* ── Shipping Dialog ── */}
-      <Dialog open={showShippingDialog} onOpenChange={(open) => { setShowShippingDialog(open); if (!open) { setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "" }); setSelectedSavedAddressId(null); } }}>
+      <Dialog open={showShippingDialog} onOpenChange={(open) => { setShowShippingDialog(open); if (!open) { setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "", sfStationAddress: "" }); setSelectedSavedAddressId(null); } }}>
         <DialogContent bottomSheet showCloseButton={false} className="sm:max-w-md p-0 overflow-hidden border-2 border-[#FEDD00] gap-0">
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
@@ -1459,7 +1461,7 @@ export default function MarketplaceListing() {
                     <button
                       type="button"
                       className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
-                      onClick={() => { setSelectedSavedAddressId(null); setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "" }); setStripeSfSearch(""); setStripeSfRegion(""); setStripeSfType('all'); setStripeSfResults([]); setStripeSfDropdown(false); }}
+                      onClick={() => { setSelectedSavedAddressId(null); setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "", sfStationAddress: "" }); setStripeSfSearch(""); setStripeSfRegion(""); setStripeSfType('all'); setStripeSfResults([]); setStripeSfDropdown(false); }}
                     >
                       <X className="w-3 h-3" /> 清除已選地址
                     </button>
@@ -1468,7 +1470,7 @@ export default function MarketplaceListing() {
                 <div className="space-y-1.5 max-h-36 overflow-y-auto">
                   {savedAddresses.map((addr: any) => (
                     <button key={addr.id} type="button"
-                      onClick={() => { setSelectedSavedAddressId(addr.id); setShippingForm({ name: addr.recipientName, phone: addr.phone, address: addr.address || "", district: addr.district || "", region: addr.region, addressType: (addr.addressType as any) || "normal", sfStationCode: addr.sfStationCode || "", sfStationName: addr.sfStationName || "" }); }}
+                      onClick={() => { setSelectedSavedAddressId(addr.id); setShippingForm({ name: addr.recipientName, phone: addr.phone, address: addr.address || "", district: addr.district || "", region: addr.region, addressType: (addr.addressType as any) || "normal", sfStationCode: addr.sfStationCode || "", sfStationName: addr.sfStationName || "", sfStationAddress: "" }); }}
                       className={`w-full text-left rounded-xl border-2 px-3 py-2 text-sm transition-all ${
                         selectedSavedAddressId === addr.id ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-gray-300"
                       }`}>
@@ -1542,7 +1544,7 @@ export default function MarketplaceListing() {
                   <div className="border rounded-xl overflow-hidden shadow-sm max-h-40 overflow-y-auto">
                     {stripeSfResults.map((pt: SFPoint) => (
                       <button key={pt.code} className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b last:border-0 transition-colors"
-                        onClick={() => { setShippingForm(f => ({ ...f, sfStationCode: pt.code, sfStationName: pt.name })); setStripeSfDropdown(false); setStripeSfSearch(""); }}>
+                        onClick={() => { setShippingForm(f => ({ ...f, sfStationCode: pt.code, sfStationName: pt.name, sfStationAddress: pt.address || "" })); setStripeSfDropdown(false); setStripeSfSearch(""); }}>
                         <div className="flex items-center gap-1">
                           <span className="text-xs px-1 py-0.5 rounded" style={{ background: pt.type === 'locker' ? '#fef3c722' : '#06038D22', color: pt.type === 'locker' ? '#b45309' : '#06038D' }}>{pt.type === 'locker' ? '智能櫃' : '順豐站'}</span>
                           <span className="text-xs font-medium text-gray-900">{pt.name}</span>
@@ -1558,8 +1560,9 @@ export default function MarketplaceListing() {
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-[#06038D]">{shippingForm.sfStationName || "順豐自提站"}</p>
                       <p className="text-xs text-gray-500 font-mono">{shippingForm.sfStationCode}</p>
+                      {shippingForm.sfStationAddress && <p className="text-xs text-gray-400 mt-0.5">{shippingForm.sfStationAddress}</p>}
                     </div>
-                    <button onClick={() => setShippingForm(f => ({ ...f, sfStationCode: '', sfStationName: '' }))} className="text-xs text-red-500 hover:text-red-700 font-medium">✕ 清除</button>
+                    <button onClick={() => setShippingForm(f => ({ ...f, sfStationCode: '', sfStationName: '', sfStationAddress: '' }))} className="text-xs text-red-500 hover:text-red-700 font-medium">✕ 清除</button>
                   </div>
                 )}
                 {!shippingForm.sfStationCode && (
