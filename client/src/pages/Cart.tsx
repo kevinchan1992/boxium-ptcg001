@@ -177,17 +177,31 @@ export default function Cart() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => setLocation("/marketplace")} className="text-gray-500 hover:text-[#06038D]">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-2xl font-bold text-[#06038D]">購物車</h1>
-          {!isEmpty && (
-            <span className="text-sm text-gray-500">（{cartItems.length} 件商品）</span>
-          )}
+      {/* ── Hero Banner ── */}
+      <div className="relative" style={{ background: "linear-gradient(135deg, #06038D 0%, #0a06b5 100%)" }}>
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FEDD00" }} />
+        <div className="max-w-5xl mx-auto px-4 pt-5 pb-6">
+          {/* Top row: LOGO + back button */}
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/">
+              <img src="/boxium-logo-white.png" alt="BOXIUM" className="h-8 cursor-pointer" />
+            </Link>
+            <button onClick={() => setLocation("/marketplace")} className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm">
+              <ArrowLeft className="w-4 h-4" />
+              返回市集
+            </button>
+          </div>
+          {/* Title row */}
+          <div className="flex items-center gap-3">
+            <ShoppingCart className="w-7 h-7 text-white" />
+            <h1 className="text-2xl font-bold text-white">購物車</h1>
+            {!isEmpty && (
+              <span className="text-sm text-white/60">（{cartItems.length} 件商品）</span>
+            )}
+          </div>
         </div>
+      </div>
+      <div className="max-w-5xl mx-auto px-4 py-6">
 
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">

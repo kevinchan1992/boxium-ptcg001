@@ -5272,3 +5272,18 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 ## 商品頁按鈕整合：移除立即購買，加入購物車改為主要按鈕 (2026-03-20)
 - [x] 移除「立即購買」按鈕
 - [x] 「加入購物車」按鈕改為黃色主要樣式（與原立即購買相同），點擊後加入購物車並跳轉到 /cart
+
+---
+
+## ✅ UI 改善：PSA 10 badge 文字顏色、Cart 藍色橫幅、LOGO 連結
+
+- [x] PSA 10 badge 文字顏色改為黑色（`text-black`）以提升可讀性
+- [x] PSA group badge 文字顏色同步改為黑色
+- [x] Cart 頁面加入藍色橫幅標題（仿照 Profile 頁面 Hero Banner 風格）
+- [x] Cart 頁面橫幅左上角加入白色 LOGO，點擊跳轉首頁
+- [x] Cart 頁面橫幅右側加入「返回市集」按鈕
+- [x] Profile 頁面 Hero Banner 左上角加入白色 LOGO，點擊跳轉首頁
+- [x] 36 項 SF 代碼驗證測試全部通過
+- [x] 16 項購物車出價付款測試全部通過
+- [x] 42 項其他相關測試全部通過
+- [x] 保存 checkpoint

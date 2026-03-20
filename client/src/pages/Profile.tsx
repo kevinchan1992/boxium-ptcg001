@@ -159,7 +159,13 @@ export default function Profile() {
       {/* ── Hero Banner ── */}
       <div className="relative" style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #0a06b5 100%)` }}>
         <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: BRAND_YELLOW }} />
-        <div className="max-w-6xl mx-auto px-4 pt-10 pb-8">
+        <div className="max-w-6xl mx-auto px-4 pt-5 pb-8">
+          {/* LOGO row */}
+          <div className="mb-5">
+            <Link href="/">
+              <img src="/boxium-logo-white.png" alt="BOXIUM" className="h-8 cursor-pointer" />
+            </Link>
+          </div>
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
             <div
               className="w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"

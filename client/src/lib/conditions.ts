@@ -104,7 +104,7 @@ export const CONDITION_TOOLTIP: Record<ConditionValue, string> = {
 };
 
 export const CONDITION_BADGE: Record<ConditionValue, string> = {
-  psa10: "bg-yellow-100 text-yellow-800 border border-yellow-300",
+  psa10: "bg-yellow-100 text-black border border-yellow-300",
   psa9: "bg-yellow-50 text-yellow-700 border border-yellow-200",
   psa8_below: "bg-amber-50 text-amber-700 border border-amber-200",
   bgs10: "bg-blue-100 text-blue-800 border border-blue-300",
@@ -120,7 +120,7 @@ export const CONDITION_BADGE: Record<ConditionValue, string> = {
 
 // Group colour for the group header badge
 export const CONDITION_GROUP_COLOR: Record<string, string> = {
-  PSA: "bg-yellow-100 text-yellow-800 border border-yellow-300",
+  PSA: "bg-yellow-100 text-black border border-yellow-300",
   BGS: "bg-blue-100 text-blue-800 border border-blue-300",
   TAG: "bg-purple-100 text-purple-800 border border-purple-300",
   "Raw 卡": "bg-emerald-100 text-emerald-700 border border-emerald-300",
