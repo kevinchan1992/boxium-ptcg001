@@ -3555,6 +3555,12 @@ export async function getMarketplaceStats() {
     .where(and(eq(marketplaceOrders.paymentMethod, 'stripe'), inArray(marketplaceOrders.orderStatus, paidStatuses as any[])));
   const [alipayCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
     .where(and(eq(marketplaceOrders.paymentMethod, 'alipay_hk'), inArray(marketplaceOrders.orderStatus, paidStatuses as any[])));
+  // This month auto-cancelled orders (pending_payment orders cancelled by timeout)
+  const [thisMonthCancelledOrders] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
+    .where(and(
+      eq(marketplaceOrders.orderStatus, 'cancelled'),
+      sql`createdAt >= ${firstDayOfMonth}`
+    ));
   return {
     activeListings: Number(listingCount?.count ?? 0),
     totalOrders: Number(orderCount?.count ?? 0),
@@ -3570,6 +3576,7 @@ export async function getMarketplaceStats() {
     lastMonthSalesHkd: parseFloat(lastMonthRevenue?.total ?? '0'),
     stripePaidCount: Number(stripeCount?.count ?? 0),
     alipayPaidCount: Number(alipayCount?.count ?? 0),
+    thisMonthCancelledOrders: Number(thisMonthCancelledOrders?.count ?? 0),
   };
 }
 

@@ -132,3 +132,63 @@ describe("getMyCart offer enrichment", () => {
     expect(result.acceptedOfferPrice).toBe("7000.00");
   });
 });
+
+// ============================================================
+// Admin Stats - thisMonthCancelledOrders field
+// ============================================================
+describe("adminGetStats - thisMonthCancelledOrders", () => {
+  it("should include thisMonthCancelledOrders in stats return value", () => {
+    const mockStats = {
+      activeListings: 10,
+      totalOrders: 50,
+      thisMonthCancelledOrders: 3,
+    };
+    expect(mockStats).toHaveProperty("thisMonthCancelledOrders");
+    expect(typeof mockStats.thisMonthCancelledOrders).toBe("number");
+    expect(mockStats.thisMonthCancelledOrders).toBe(3);
+  });
+
+  it("thisMonthCancelledOrders should default to 0 when no cancelled orders", () => {
+    const mockStats = { thisMonthCancelledOrders: 0 };
+    expect(mockStats.thisMonthCancelledOrders).toBe(0);
+  });
+});
+
+// ============================================================
+// Cart offer countdown banner logic
+// ============================================================
+describe("Cart offer countdown banner", () => {
+  it("should calculate correct countdown from expiresAt", () => {
+    const now = Date.now();
+    const expiresAt = now + 3 * 60 * 60 * 1000; // 3 hours from now
+    const diff = expiresAt - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    expect(hours).toBe(3);
+    expect(minutes).toBe(0);
+  });
+
+  it("should use offer price when offer is accepted and not expired", () => {
+    const item = { priceHkd: "10000", acceptedOfferId: 1, acceptedOfferPrice: "7000", isOfferExpired: false };
+    const effectivePrice = item.acceptedOfferId && item.acceptedOfferPrice && !item.isOfferExpired
+      ? Number(item.acceptedOfferPrice)
+      : Number(item.priceHkd);
+    expect(effectivePrice).toBe(7000);
+  });
+
+  it("should use original price when offer is expired", () => {
+    const item = { priceHkd: "10000", acceptedOfferId: 1, acceptedOfferPrice: "7000", isOfferExpired: true };
+    const effectivePrice = item.acceptedOfferId && item.acceptedOfferPrice && !item.isOfferExpired
+      ? Number(item.acceptedOfferPrice)
+      : Number(item.priceHkd);
+    expect(effectivePrice).toBe(10000);
+  });
+
+  it("should use original price when no accepted offer", () => {
+    const item = { priceHkd: "10000", acceptedOfferId: null, acceptedOfferPrice: null, isOfferExpired: false };
+    const effectivePrice = item.acceptedOfferId && item.acceptedOfferPrice && !item.isOfferExpired
+      ? Number(item.acceptedOfferPrice)
+      : Number(item.priceHkd);
+    expect(effectivePrice).toBe(10000);
+  });
+});

@@ -3438,7 +3438,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       // For each cart item, check if buyer has an accepted offer
       const rowsWithOffers = await Promise.all(rows.map(async (row) => {
         const acceptedOffer = await db
-          .select({ id: offers.id, offerPriceHkd: offers.offerPriceHkd })
+          .select({ id: offers.id, offerPriceHkd: offers.offerPriceHkd, expiresAt: offers.expiresAt })
           .from(offers)
           .where(and(
             eq(offers.listingId, row.listingId),
@@ -3446,10 +3446,15 @@ All three checks must pass for verified to be true. Respond with JSON only match
             eq(offers.status, 'accepted')
           ))
           .limit(1);
+        const offerData = acceptedOffer[0];
+        // Check if accepted offer is still valid (not expired)
+        const isOfferValid = offerData && offerData.expiresAt && new Date() < new Date(offerData.expiresAt);
         return {
           ...row,
-          acceptedOfferId: acceptedOffer[0]?.id ?? null,
-          acceptedOfferPrice: acceptedOffer[0]?.offerPriceHkd ?? null,
+          acceptedOfferId: isOfferValid ? (offerData?.id ?? null) : null,
+          acceptedOfferPrice: isOfferValid ? (offerData?.offerPriceHkd ?? null) : null,
+          acceptedOfferExpiresAt: offerData?.expiresAt ?? null,
+          isOfferExpired: offerData && !isOfferValid ? true : false,
         };
       }));
       return rowsWithOffers;

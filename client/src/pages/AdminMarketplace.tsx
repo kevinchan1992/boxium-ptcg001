@@ -4764,6 +4764,10 @@ export default function AdminMarketplace() {
                 <p className="text-lg font-bold">{stats?.activeSellerCount ?? 0}</p>
                 <p className="text-[10px] text-white/60">活躍賣家</p>
               </div>
+              <div className="bg-white/10 rounded-lg p-2 text-center col-span-2">
+                <p className="text-lg font-bold text-red-300">{stats?.thisMonthCancelledOrders ?? 0}</p>
+                <p className="text-[10px] text-white/60">本月取消訂單</p>
+              </div>
             </div>
             {pendingPayoutCount > 0 && (
               <button
@@ -4824,6 +4828,10 @@ export default function AdminMarketplace() {
               <div className="bg-white/10 rounded-lg p-2 text-center">
                 <p className="text-lg font-bold">{stats?.activeSellerCount ?? 0}</p>
                 <p className="text-[10px] text-white/60">活躍賣家</p>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2 text-center col-span-2">
+                <p className="text-lg font-bold text-red-300">{stats?.thisMonthCancelledOrders ?? 0}</p>
+                <p className="text-[10px] text-white/60">本月取消訂單</p>
               </div>
             </div>
             {(stats?.pendingReviewListings ?? 0) > 0 && (

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 
@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft } from "lucide-react";
+import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -344,6 +344,10 @@ interface CartItemRowProps {
     images: string | null;
     status: string | null;
     sellerType: string | null;
+    acceptedOfferId?: number | null;
+    acceptedOfferPrice?: string | number | null;
+    acceptedOfferExpiresAt?: Date | string | null;
+    isOfferExpired?: boolean;
   };
   onRemove: () => void;
   removing: boolean;
@@ -351,52 +355,106 @@ interface CartItemRowProps {
 }
 
 function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps) {
+  const [timeLeft, setTimeLeft] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!item.acceptedOfferExpiresAt || item.isOfferExpired || !item.acceptedOfferId) {
+      setTimeLeft(null);
+      return;
+    }
+    const expiresAt = new Date(item.acceptedOfferExpiresAt).getTime();
+    const update = () => {
+      const diff = expiresAt - Date.now();
+      if (diff <= 0) { setTimeLeft(null); return; }
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      setTimeLeft(`${hours} 小時 ${minutes} 分鐘`);
+    };
+    update();
+    const timer = setInterval(update, 60000);
+    return () => clearInterval(timer);
+  }, [item.acceptedOfferExpiresAt, item.isOfferExpired, item.acceptedOfferId]);
+
+  const effectivePrice = item.acceptedOfferId && item.acceptedOfferPrice && !item.isOfferExpired
+    ? Number(item.acceptedOfferPrice)
+    : Number(item.priceHkd);
+
   return (
-    <div className={`flex items-center gap-4 px-5 py-4 ${unavailable ? "opacity-50" : ""}`}>
-      {/* Image */}
-      <Link href={`/marketplace/${item.listingId}`}>
-        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
-          {item.images ? (
-            <img src={JSON.parse(item.images)[0] ?? ''} alt={item.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Package className="w-6 h-6 text-gray-300" />
-            </div>
-          )}
+    <div className={`flex flex-col ${unavailable ? "opacity-50" : ""}`}>
+      {/* Offer accepted countdown banner */}
+      {item.acceptedOfferId && !item.isOfferExpired && timeLeft && (
+        <div className="mx-4 mt-3 px-3 py-2 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+          <Clock className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+          <span className="text-xs text-green-700">
+            賣家已接受你的出價！請在 <span className="font-bold">{timeLeft}</span> 內完成付款
+          </span>
         </div>
-      </Link>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
+      )}
+      {/* Offer expired banner */}
+      {item.isOfferExpired && (
+        <div className="mx-4 mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+          <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+          <span className="text-xs text-amber-700">
+            出價已過期，將以原價 <span className="font-bold">HK${Number(item.priceHkd).toFixed(0)}</span> 購買
+          </span>
+        </div>
+      )}
+      <div className="flex items-center gap-4 px-5 py-4">
+        {/* Image */}
         <Link href={`/marketplace/${item.listingId}`}>
-          <p className="text-sm font-medium text-gray-800 line-clamp-2 hover:text-[#06038D] transition-colors">
-            {item.title}
-          </p>
+          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+            {item.images ? (
+              <img src={JSON.parse(item.images)[0] ?? ''} alt={item.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Package className="w-6 h-6 text-gray-300" />
+              </div>
+            )}
+          </div>
         </Link>
-        <div className="flex items-center gap-2 mt-1">
-          {item.condition && (
-            <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
-              {CONDITION_LABELS[item.condition] ?? item.condition}
-            </Badge>
-          )}
-          {unavailable && (
-            <Badge variant="destructive" className="text-xs px-1.5 py-0 h-5">已下架</Badge>
-          )}
-        </div>
-      </div>
 
-      {/* Price + Remove */}
-      <div className="flex flex-col items-end gap-2 flex-shrink-0">
-        <span className="font-bold text-[#06038D] text-sm">
-          HK${Number(item.priceHkd).toFixed(0)}
-        </span>
-        <button
-          onClick={onRemove}
-          disabled={removing}
-          className="text-gray-300 hover:text-red-400 transition-colors"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <Link href={`/marketplace/${item.listingId}`}>
+            <p className="text-sm font-medium text-gray-800 line-clamp-2 hover:text-[#06038D] transition-colors">
+              {item.title}
+            </p>
+          </Link>
+          <div className="flex items-center gap-2 mt-1">
+            {item.condition && (
+              <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
+                {CONDITION_LABELS[item.condition] ?? item.condition}
+              </Badge>
+            )}
+            {item.acceptedOfferId && !item.isOfferExpired && (
+              <Badge className="text-xs px-1.5 py-0 h-5 bg-green-100 text-green-700 border-green-200">已接受出價</Badge>
+            )}
+            {unavailable && (
+              <Badge variant="destructive" className="text-xs px-1.5 py-0 h-5">已下架</Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Price + Remove */}
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          {item.acceptedOfferId && !item.isOfferExpired && item.acceptedOfferPrice ? (
+            <div className="flex flex-col items-end">
+              <span className="text-xs text-gray-400 line-through">HK${Number(item.priceHkd).toFixed(0)}</span>
+              <span className="font-bold text-green-600 text-sm">HK${effectivePrice.toFixed(0)}</span>
+            </div>
+          ) : (
+            <span className="font-bold text-[#06038D] text-sm">
+              HK${effectivePrice.toFixed(0)}
+            </span>
+          )}
+          <button
+            onClick={onRemove}
+            disabled={removing}
+            className="text-gray-300 hover:text-red-400 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
