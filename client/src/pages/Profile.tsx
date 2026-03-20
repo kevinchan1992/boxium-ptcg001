@@ -90,6 +90,16 @@ export default function Profile() {
     setActiveSection(tab);
   }, [location]);
 
+  // 監聽瀏覽器返回鍵（popstate），同步標籤狀態
+  useEffect(() => {
+    const handlePopState = () => {
+      const tab = new URLSearchParams(window.location.search).get("tab") ?? "info";
+      setActiveSection(tab);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const locale = i18n.language === "ja" ? "ja-JP" : i18n.language === "en" ? "en-US" : "zh-TW";
 
   const activeOrdersCount = (orders ?? []).filter(o => !["completed", "cancelled"].includes((o as any).orderStatus)).length;
@@ -183,7 +193,11 @@ export default function Profile() {
             {navItems.map(item => (
               <button
                 key={item.id}
-                onClick={() => setActiveSection(item.id)}
+                onClick={() => {
+                  setActiveSection(item.id);
+                  const url = item.id === 'info' ? '/profile' : `/profile?tab=${item.id}`;
+                  window.history.pushState({ tab: item.id }, '', url);
+                }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   activeSection === item.id
                     ? "text-white shadow-sm"
@@ -210,7 +224,11 @@ export default function Profile() {
               {navItems.map((item, idx) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveSection(item.id)}
+                  onClick={() => {
+                    setActiveSection(item.id);
+                    const url = item.id === 'info' ? '/profile' : `/profile?tab=${item.id}`;
+                    window.history.pushState({ tab: item.id }, '', url);
+                  }}
                   className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium transition-all text-left group relative ${
                     idx !== 0 ? "border-t border-gray-50" : ""
                   } ${
