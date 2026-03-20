@@ -434,6 +434,7 @@ export default function Marketplace() {
   const [hasMore, setHasMore] = useState(true);
   const [bannerIdx, setBannerIdx] = useState(0);
   const [bannerPaused, setBannerPaused] = useState(false);
+  const bannerTouchStartX = useRef<number | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -658,7 +659,7 @@ export default function Marketplace() {
                 <Input
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="搜尋卡牌名稱、編號..."
+                  placeholder="搜尋卡牌..."
                   className="pl-12 pr-[5.5rem] bg-white border-0 text-gray-900 placeholder:text-gray-400 h-12 rounded-full shadow-lg focus-visible:ring-2 focus-visible:ring-[#FEDD00] text-base"
                 />
                 {searchInput && (
@@ -722,6 +723,23 @@ export default function Marketplace() {
           className="relative rounded-2xl overflow-hidden shadow-md"
           onMouseEnter={() => setBannerPaused(true)}
           onMouseLeave={() => setBannerPaused(false)}
+          onTouchStart={(e) => {
+            bannerTouchStartX.current = e.touches[0].clientX;
+            setBannerPaused(true);
+          }}
+          onTouchEnd={(e) => {
+            if (bannerTouchStartX.current === null) return;
+            const diff = e.changedTouches[0].clientX - bannerTouchStartX.current;
+            if (Math.abs(diff) > 40) {
+              if (diff < 0) {
+                setBannerIdx(i => (i + 1) % activeBanners.length);
+              } else {
+                setBannerIdx(i => (i - 1 + activeBanners.length) % activeBanners.length);
+              }
+            }
+            bannerTouchStartX.current = null;
+            setBannerPaused(false);
+          }}
         >
           {activeBanners.map((banner: any, i: number) => (
             <div
@@ -771,13 +789,13 @@ export default function Marketplace() {
             <>
               <button
                 onClick={() => setBannerIdx(i => (i - 1 + activeBanners.length) % activeBanners.length)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-colors"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 hidden sm:flex items-center justify-center text-white transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setBannerIdx(i => (i + 1) % activeBanners.length)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 hidden sm:flex items-center justify-center text-white transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
