@@ -133,16 +133,16 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border border-gray-200 shadow-lg">
+        <Card className="max-w-md w-full shadow-xl border-0" style={{ background: BRAND_BLUE }}>
           <CardHeader className="text-center pb-4">
-            <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: BRAND_BLUE }}>
+            <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: `${BRAND_YELLOW}20`, border: `2px solid ${BRAND_YELLOW}` }}>
               <Package className="w-10 h-10" style={{ color: BRAND_YELLOW }} />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">{t("profile.pleaseLogin")}</CardTitle>
-            <CardDescription className="text-gray-500">{t("profile.loginRequired")}</CardDescription>
+            <CardTitle className="text-2xl font-bold text-white">{t("profile.pleaseLogin")}</CardTitle>
+            <CardDescription className="text-white/70">{t("profile.loginRequired")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full font-bold text-base" style={{ background: BRAND_BLUE, color: "white" }}>
+            <Button asChild className="w-full font-bold text-base" style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
               <a href="/login">{t("profile.goToLogin")}</a>
             </Button>
           </CardContent>
