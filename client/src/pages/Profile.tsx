@@ -35,7 +35,7 @@ import {
   ChevronRight, Bell, CheckCheck, DollarSign, Info, AlertTriangle, Filter
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { searchSFPointsAsync, validateSFCode, type SFPoint } from "@/lib/sfStations";
+import { searchSFPointsAsync, validateSFCode, findSFPointByCodeAsync, type SFPoint } from "@/lib/sfStations";
 import { useTranslation } from "react-i18next";
 
 // ─── Brand tokens ──────────────────────────────────────────────
@@ -552,6 +552,24 @@ function ShippingAddressSection() {
   const { data: addresses, isLoading } = trpc.marketplace.getMyShippingAddresses.useQuery();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  // Cache for SF station/locker full addresses (code -> address string)
+  const [sfAddressCache, setSfAddressCache] = useState<Record<string, string>>({});
+  const fetchedCodesRef = useRef<Set<string>>(new Set());
+
+  // Preload SF addresses for all saved sf_station type addresses
+  useEffect(() => {
+    if (!addresses) return;
+    const sfAddrs = (addresses as any[]).filter(a => a.addressType === 'sf_station' && a.sfStationCode);
+    sfAddrs.forEach(async (addr) => {
+      const code = addr.sfStationCode as string;
+      if (fetchedCodesRef.current.has(code)) return;
+      fetchedCodesRef.current.add(code);
+      const point = await findSFPointByCodeAsync(code);
+      if (point) {
+        setSfAddressCache(prev => ({ ...prev, [code]: point.address }));
+      }
+    });
+  }, [addresses]);
   const [form, setForm] = useState({ label: "預設地址", addressType: "normal" as "normal" | "sf_station", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", sfStationAddress: "", isDefault: false });
   const [sfSearchQuery, setSfSearchQuery] = useState("");
   const [sfSearchRegion, setSfSearchRegion] = useState("");
@@ -762,11 +780,18 @@ function ShippingAddressSection() {
                   </div>
                   <p className="text-sm text-gray-700">{addr.recipientName} · {addr.phone}</p>
                   {addr.addressType === "sf_station" ? (
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-red-50 text-red-600 border border-red-200 mr-1">📦 順豐自提站</span>
-                      {addr.sfStationName ? `${addr.sfStationName} ` : ""}
-                      <span className="font-mono text-xs text-gray-600">{addr.sfStationCode}</span>
-                    </p>
+                    <div className="mt-0.5">
+                      <p className="text-sm text-gray-500">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-red-50 text-red-600 border border-red-200 mr-1">
+                          {addr.sfStationCode?.startsWith('H') ? '🔒 智能櫃' : '📦 順豐自提站'}
+                        </span>
+                        {addr.sfStationName ? `${addr.sfStationName} ` : ""}
+                        <span className="font-mono text-xs text-gray-600">{addr.sfStationCode}</span>
+                      </p>
+                      {sfAddressCache[addr.sfStationCode] && (
+                        <p className="text-xs text-gray-400 mt-0.5 pl-1">{sfAddressCache[addr.sfStationCode]}</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-sm text-gray-500 mt-0.5">{addr.district ? `${addr.district}，` : ""}{addr.address}，{addr.region}</p>
                   )}

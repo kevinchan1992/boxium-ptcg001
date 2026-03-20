@@ -224,3 +224,23 @@ export function validateSFCode(code: string): { valid: boolean; type: 'station' 
   }
   return { valid: false, type: null, message: `無效的順豐站點編號（應以 852 或 H852 開頭）` };
 }
+
+// Find SF station or locker by code (async, supports both stations and lockers)
+export async function findSFPointByCodeAsync(code: string): Promise<SFPoint | null> {
+  if (!code) return null;
+  const upper = code.trim().toUpperCase();
+  // Check stations first (synchronous)
+  const station = SF_STATIONS.find(s => s.code.toUpperCase() === upper);
+  if (station) return { ...station, type: 'station' as const };
+  // Check lockers (async)
+  const lockers = await getLockers();
+  const locker = lockers.find(l => l.code.toUpperCase() === upper);
+  return locker || null;
+}
+
+// Find SF station by code (synchronous, stations only)
+export function findSFStationByCode(code: string): SFStation | null {
+  if (!code) return null;
+  const upper = code.trim().toUpperCase();
+  return SF_STATIONS.find(s => s.code.toUpperCase() === upper) || null;
+}

@@ -123,9 +123,17 @@ describe("validateSFCode", () => {
       expect(result.type).toBe("locker");
     });
 
-    it("should reject locker code with letters in number part", async () => {
+    it("should accept locker code with alphanumeric chars (H852ABCP is valid - regex supports letters)", async () => {
       const { validateSFCode } = await import("../client/src/lib/sfStations");
+      // H852ABCP matches H852[A-Z0-9]{3,8}P format (alphanumeric middle part is allowed)
       const result = validateSFCode("H852ABCP");
+      expect(result.valid).toBe(true);
+      expect(result.type).toBe("locker");
+    });
+
+    it("should reject locker code with special characters in middle part", async () => {
+      const { validateSFCode } = await import("../client/src/lib/sfStations");
+      const result = validateSFCode("H852@#$P");
       expect(result.valid).toBe(false);
       expect(result.type).toBe("locker");
     });
@@ -206,5 +214,72 @@ describe("AdminSFStationUpdate CSV parsing logic", () => {
                       dataLine.toLowerCase().includes("name") || 
                       dataLine.toLowerCase().includes("district");
     expect(hasHeader).toBe(false);
+  });
+});
+
+describe("findSFPointByCodeAsync", () => {
+  it("should find a known station by code (852FTL)", async () => {
+    const { findSFPointByCodeAsync } = await import("../client/src/lib/sfStations");
+    const result = await findSFPointByCodeAsync("852FTL");
+    expect(result).not.toBeNull();
+    expect(result?.code).toBe("852FTL");
+    expect(result?.type).toBe("station");
+    expect(result?.address).toBeTruthy();
+    expect(result?.address.length).toBeGreaterThan(5);
+  });
+
+  it("should find a station by lowercase code (case insensitive)", async () => {
+    const { findSFPointByCodeAsync } = await import("../client/src/lib/sfStations");
+    const result = await findSFPointByCodeAsync("852ftl");
+    expect(result).not.toBeNull();
+    expect(result?.code).toBe("852FTL");
+  });
+
+  it("should find離島 station 852Z351", async () => {
+    const { findSFPointByCodeAsync } = await import("../client/src/lib/sfStations");
+    const result = await findSFPointByCodeAsync("852Z351");
+    expect(result).not.toBeNull();
+    expect(result?.type).toBe("station");
+    expect(result?.address).toContain("東涌");
+  });
+
+  it("should return null for unknown code", async () => {
+    const { findSFPointByCodeAsync } = await import("../client/src/lib/sfStations");
+    const result = await findSFPointByCodeAsync("852UNKNOWN");
+    expect(result).toBeNull();
+  });
+
+  it("should return null for empty code", async () => {
+    const { findSFPointByCodeAsync } = await import("../client/src/lib/sfStations");
+    const result = await findSFPointByCodeAsync("");
+    expect(result).toBeNull();
+  });
+
+  it("should return null for null/undefined-like empty string", async () => {
+    const { findSFPointByCodeAsync } = await import("../client/src/lib/sfStations");
+    const result = await findSFPointByCodeAsync("  ");
+    expect(result).toBeNull();
+  });
+});
+
+describe("findSFStationByCode", () => {
+  it("should find a known station synchronously", async () => {
+    const { findSFStationByCode } = await import("../client/src/lib/sfStations");
+    const result = findSFStationByCode("852FTL");
+    expect(result).not.toBeNull();
+    expect(result?.code).toBe("852FTL");
+    expect(result?.address).toBeTruthy();
+  });
+
+  it("should return null for locker code (stations only)", async () => {
+    const { findSFStationByCode } = await import("../client/src/lib/sfStations");
+    const result = findSFStationByCode("H852001P");
+    expect(result).toBeNull();
+  });
+
+  it("should return null for empty code", async () => {
+    const { findSFStationByCode } = await import("../client/src/lib/sfStations");
+    const result = findSFStationByCode("");
+    expect(result).toBeNull();
   });
 });

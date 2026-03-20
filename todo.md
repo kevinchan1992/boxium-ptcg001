@@ -5205,3 +5205,17 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 後端 getListing procedure 加入 avgRating、avatarUrl、id 到 sellerProfile 回傳
 - [x] 前端 MarketplaceListing.tsx 賣家區塊加入琥珀色評分徽章、星級圖示、頭像圖片支援、「查看主頁」連結
 - [x] 15 項賣家評分顯示單元測試全部通過
+
+## 順豐站完整地址顯示修復 (2026-03-20)
+- [ ] 確認 userShippingAddresses 表是否有 sfStationAddress 欄位（若無需 DB migration）
+- [ ] 確保 addShippingAddress procedure 正確儲存 sfStationAddress 到 DB
+- [ ] 修復 MarketplaceListing.tsx 中已儲存地址卡片的順豐站地址顯示
+- [ ] 修復 MarketplaceListing.tsx 中手動選擇站點後的完整地址顯示
+
+## 順豐站完整地址顯示修復（前端查找方案）(2026-03-20)
+- [x] 確認 userShippingAddresses 表無 sfStationAddress 欄位（採用前端查找方案，無需 DB migration）
+- [x] 在 sfStations.ts 加入 findSFPointByCodeAsync 和 findSFStationByCode 輔助函數
+- [x] Profile.tsx 收貨地址卡片：加入 sfAddressCache state + useEffect 非同步查找完整地址，顯示在站點名稱下方
+- [x] 使用 useRef 追蹤已查找的 codes，防止無限循環
+- [x] 智能櫃（H852 開頭）顯示「🔒 智能櫃」標籤，順豐站顯示「📦 順豐自提站」標籤
+- [x] 36 項 SF 代碼驗證單元測試全部通過（含 findSFPointByCodeAsync 和 findSFStationByCode 測試）
