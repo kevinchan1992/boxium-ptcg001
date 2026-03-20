@@ -472,82 +472,216 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
 // ─── Watchlist Section ─────────────────────────────────────────
 function WatchlistSection() {
   const { t } = useTranslation();
-  const { data: watchlist, isLoading, refetch } = trpc.profile.getWatchlist.useQuery();
+  const [activeTab, setActiveTab] = useState<"cards" | "listings">("cards");
+
+  // Card watchlist
+  const { data: watchlist, isLoading: watchlistLoading, refetch: refetchWatchlist } = trpc.profile.getWatchlist.useQuery();
   const removeFromWatchlist = trpc.profile.removeFromWatchlist.useMutation({
-    onSuccess: () => {
-      toast.success(t("profile.watchlistSection.removeSuccess"));
-      refetch();
-    },
-    onError: (error) => {
-      toast.error(t("profile.watchlistSection.removeFailed", { error: error.message }));
+    onSuccess: () => { toast.success(t("profile.watchlistSection.removeSuccess")); refetchWatchlist(); },
+    onError: (error) => { toast.error(t("profile.watchlistSection.removeFailed", { error: error.message })); },
+  });
+
+  // Listing wishlist
+  const utils = trpc.useUtils();
+  const { data: wishlist, isLoading: wishlistLoading } = trpc.marketplace.getMyWishlist.useQuery();
+  const toggleWishlist = trpc.marketplace.toggleWishlist.useMutation({
+    onSuccess: (res) => {
+      utils.marketplace.getMyWishlist.invalidate();
+      utils.marketplace.getWishlistIds.invalidate();
+      toast.success(res.wishlisted ? "已加入收藏" : "已移除收藏");
     },
   });
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
-      </div>
-    );
-  }
-  if (!watchlist || watchlist.length === 0) {
-    return (
-      <div className="py-16 text-center">
-        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: `${BRAND_BLUE}10` }}>
-          <Heart className="w-8 h-8" style={{ color: BRAND_BLUE }} />
-        </div>
-        <p className="text-gray-500 mb-5 text-base">{t("profile.watchlistSection.empty")}</p>
-        <Button asChild className="font-bold" style={{ background: BRAND_BLUE, color: "white" }}>
-          <a href="/research">{t("profile.watchlistSection.goToResearch")}</a>
-        </Button>
-      </div>
-    );
-  }
+  const addToCart = trpc.marketplace.addToCart.useMutation({
+    onSuccess: () => { utils.marketplace.getCartCount.invalidate(); toast.success("已加入購物車"); },
+    onError: (err) => toast.error(err.message || "加入失敗"),
+  });
+
+  const isLoading = watchlistLoading || wishlistLoading;
+  const cardCount = watchlist?.length ?? 0;
+  const listingCount = wishlist?.length ?? 0;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-900">{t("profile.watchlistSection.title")}</h2>
-        <Badge className="text-xs font-semibold" style={{ background: `${BRAND_BLUE}15`, color: BRAND_BLUE, border: "none" }}>
-          {watchlist.length} {t("profile.statsSection.cardsCount")}
-        </Badge>
+      {/* Tab switcher */}
+      <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: `${BRAND_BLUE}08` }}>
+        <button
+          onClick={() => setActiveTab("cards")}
+          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all"
+          style={activeTab === "cards" ? { background: BRAND_BLUE, color: "white" } : { color: BRAND_BLUE }}
+        >
+          <Heart className="w-4 h-4" />
+          卡牧追蹤
+          {cardCount > 0 && (
+            <span className="text-xs rounded-full px-1.5 py-0.5" style={activeTab === "cards" ? { background: "rgba(255,255,255,0.25)" } : { background: `${BRAND_BLUE}20` }}>
+              {cardCount}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("listings")}
+          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all"
+          style={activeTab === "listings" ? { background: BRAND_BLUE, color: "white" } : { color: BRAND_BLUE }}
+        >
+          <ShoppingBag className="w-4 h-4" />
+          收藏商品
+          {listingCount > 0 && (
+            <span className="text-xs rounded-full px-1.5 py-0.5" style={activeTab === "listings" ? { background: "rgba(255,255,255,0.25)" } : { background: `${BRAND_BLUE}20` }}>
+              {listingCount}
+            </span>
+          )}
+        </button>
       </div>
-      <div className="overflow-x-auto rounded-xl border border-gray-100">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-gray-100" style={{ background: `${BRAND_BLUE}08` }}>
-              <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.card")}</TableHead>
-              <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.series")}</TableHead>
-              <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.latestPrice")}</TableHead>
-              <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.addedAt")}</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">{t("profile.watchlistSection.table.actions")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {watchlist.map((item: any) => (
-              <TableRow key={item.id} className="border-gray-100 hover:bg-gray-50 transition-colors">
-                <TableCell className="font-medium">
-                  <a href={`/card/${item.card.id}`} className="font-semibold transition-colors hover:underline" style={{ color: BRAND_BLUE }}>
-                    {item.card.name}
-                  </a>
-                </TableCell>
-                <TableCell className="text-gray-500 text-sm">{item.card.series || "—"}</TableCell>
-                <TableCell>
-                  {item.latestPrice ? (
-                    <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>{item.currency} {item.latestPrice.toLocaleString()}</span>
-                  ) : (
-                    <span className="text-gray-400 text-sm">—</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-gray-500 text-sm">{new Date(item.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" onClick={() => removeFromWatchlist.mutate({ watchlistId: item.id })} className="text-red-400 hover:text-red-600 hover:bg-red-50">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+
+      {/* Loading */}
+      {isLoading && (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+        </div>
+      )}
+
+      {/* Card watchlist tab */}
+      {!isLoading && activeTab === "cards" && (
+        cardCount === 0 ? (
+          <div className="py-16 text-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: `${BRAND_BLUE}10` }}>
+              <Heart className="w-8 h-8" style={{ color: BRAND_BLUE }} />
+            </div>
+            <p className="text-gray-500 mb-5 text-base">{t("profile.watchlistSection.empty")}</p>
+            <Button asChild className="font-bold" style={{ background: BRAND_BLUE, color: "white" }}>
+              <a href="/research">{t("profile.watchlistSection.goToResearch")}</a>
+            </Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-gray-100">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-100" style={{ background: `${BRAND_BLUE}08` }}>
+                  <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.card")}</TableHead>
+                  <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.series")}</TableHead>
+                  <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.latestPrice")}</TableHead>
+                  <TableHead className="font-semibold text-gray-700">{t("profile.watchlistSection.table.addedAt")}</TableHead>
+                  <TableHead className="text-right font-semibold text-gray-700">{t("profile.watchlistSection.table.actions")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {watchlist!.map((item: any) => (
+                  <TableRow key={item.id} className="border-gray-100 hover:bg-gray-50 transition-colors">
+                    <TableCell className="font-medium">
+                      <a href={`/card/${item.card.id}`} className="font-semibold transition-colors hover:underline" style={{ color: BRAND_BLUE }}>
+                        {item.card.name}
+                      </a>
+                    </TableCell>
+                    <TableCell className="text-gray-500 text-sm">{item.card.series || "—"}</TableCell>
+                    <TableCell>
+                      {item.latestPrice ? (
+                        <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>{item.currency} {item.latestPrice.toLocaleString()}</span>
+                      ) : (
+                        <span className="text-gray-400 text-sm">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-gray-500 text-sm">{new Date(item.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => removeFromWatchlist.mutate({ watchlistId: item.id })} className="text-red-400 hover:text-red-600 hover:bg-red-50">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )
+      )}
+
+      {/* Listing wishlist tab */}
+      {!isLoading && activeTab === "listings" && (
+        listingCount === 0 ? (
+          <div className="py-16 text-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: `${BRAND_BLUE}10` }}>
+              <ShoppingBag className="w-8 h-8" style={{ color: BRAND_BLUE }} />
+            </div>
+            <p className="text-gray-500 mb-5 text-base">尚未收藏任何商品</p>
+            <Button asChild className="font-bold" style={{ background: BRAND_BLUE, color: "white" }}>
+              <a href="/marketplace">前往市集瀏覽</a>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {(wishlist as any[]).map((item) => {
+              const listing = item.listing;
+              const imgs: string[] | null = (() => { try { return listing.images ? JSON.parse(listing.images) : null; } catch { return null; } })();
+              const imgUrl = imgs && imgs.length > 0 ? imgs[0] : null;
+              const isActive = listing.status === "active";
+              const isSold = listing.status === "sold";
+              const isRemoved = listing.status === "removed" || listing.status === "draft";
+              return (
+                <div key={item.wishlistId} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
+                  {/* Thumbnail */}
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={listing.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-6 h-6 text-gray-300" />
+                      </div>
+                    )}
+                  </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      {isActive && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">在售</span>}
+                      {isSold && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">已售出</span>}
+                      {isRemoved && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-500">已下架</span>}
+                    </div>
+                    <a href={`/marketplace/${listing.id}`} className="font-semibold text-sm line-clamp-1 hover:underline" style={{ color: BRAND_BLUE }}>
+                      {listing.title}
+                    </a>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>HKD {Number(listing.priceHkd).toLocaleString()}</span>
+                      <span className="text-xs text-gray-400">收藏於 {new Date(item.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                  {/* Actions */}
+                  <div className="flex flex-col gap-1.5 flex-shrink-0">
+                    {isActive && (
+                      <Button
+                        size="sm"
+                        className="text-xs h-8 px-2.5 font-bold"
+                        style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}
+                        disabled={addToCart.isPending}
+                        onClick={() => addToCart.mutate({ listingId: listing.id })}
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5 mr-1" />
+                        加入購物車
+                      </Button>
+                    )}
+                    {(isSold || isRemoved) && listing.cardId && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-8 px-2.5"
+                        style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
+                        onClick={() => window.location.href = `/marketplace?cardId=${listing.cardId}`}
+                      >
+                        <Search className="w-3.5 h-3.5 mr-1" />
+                        尋找同款
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs h-8 px-2.5 text-red-400 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => toggleWishlist.mutate({ listingId: listing.id })}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      )}
     </div>
   );
 }
