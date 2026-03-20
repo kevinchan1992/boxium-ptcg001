@@ -492,15 +492,7 @@ export default function MarketplaceListing() {
     { enabled: !!me }
   );
 
-  useEffect(() => {
-    if (showShippingDialog && savedAddresses && savedAddresses.length > 0) {
-      const defaultAddr = savedAddresses.find((a: any) => a.isDefault) || savedAddresses[0];
-      if (defaultAddr && !shippingForm.name) {
-        setShippingForm({ name: defaultAddr.recipientName, phone: defaultAddr.phone, address: defaultAddr.address || "", district: defaultAddr.district || "", region: defaultAddr.region, addressType: (defaultAddr.addressType as any) || "normal", sfStationCode: defaultAddr.sfStationCode || "", sfStationName: defaultAddr.sfStationName || "" });
-        setSelectedSavedAddressId(defaultAddr.id);
-      }
-    }
-  }, [showShippingDialog, savedAddresses]);
+  // 地址表單初始狀態為空白，由用戶自行選擇已儲存地址或手動填寫
 
   const { data: listing, isLoading } = trpc.marketplace.getListing.useQuery(
     { id },
@@ -1140,7 +1132,18 @@ export default function MarketplaceListing() {
               {/* 已儲存地址快速選擇 */}
               {savedAddresses && savedAddresses.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-500">已儲存地址</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-gray-500">已儲存地址</p>
+                    {(alipayShippingForm.name || alipayShippingForm.phone) && (
+                      <button
+                        type="button"
+                        className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
+                        onClick={() => setAlipayShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "" })}
+                      >
+                        <X className="w-3 h-3" /> 清除已選地址
+                      </button>
+                    )}
+                  </div>
                   <div className="space-y-1.5 max-h-36 overflow-y-auto">
                     {savedAddresses.map((addr: any) => (
                       <button
@@ -1173,7 +1176,7 @@ export default function MarketplaceListing() {
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-400">或手動填寫以下欄位</p>
+                  <p className="text-xs text-gray-400">點擊已儲存地址快速填入，或手動填寫以下欄位</p>
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1367,7 +1370,18 @@ export default function MarketplaceListing() {
           <div className="p-6 space-y-4 bg-white text-[#06038D]">
             {savedAddresses && savedAddresses.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">已儲存地址</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">已儲存地址</p>
+                  {selectedSavedAddressId !== null && (
+                    <button
+                      type="button"
+                      className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
+                      onClick={() => { setSelectedSavedAddressId(null); setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "" }); }}
+                    >
+                      <X className="w-3 h-3" /> 清除已選地址
+                    </button>
+                  )}
+                </div>
                 <div className="space-y-1.5 max-h-36 overflow-y-auto">
                   {savedAddresses.map((addr: any) => (
                     <button key={addr.id} type="button"
@@ -1386,7 +1400,7 @@ export default function MarketplaceListing() {
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400">或手動填寫以下欄位</p>
+                <p className="text-xs text-gray-400">點擊已儲存地址快速填入，或手動填寫以下欄位</p>
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
