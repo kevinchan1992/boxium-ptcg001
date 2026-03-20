@@ -5117,3 +5117,30 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] submitAlipayProof 更新：儲存 alipayProofSubmittedAt 時間戳，重置 alipayReviewReminderSentAt
 - [x] 撰寫並通過 24 項單元測試（new-features-5.test.ts）
 - [ ] 保存 checkpoint
+
+## 整合訂單頁面 UX (2026-03-20)
+- [ ] 移除 Profile.tsx 的「我的訂單」標籤頁（TabsTrigger + TabsContent + OrdersSection 組件）
+- [ ] Profile.tsx 個人資訊標籤頁加入「查看我的訂單」快速入口卡片
+- [ ] /orders 頁面 Hero Banner 加入「返回個人中心」按鈕（與「返回商城」並列）
+- [ ] /orders 頁面加入用戶名稱顯示（讓用戶確認是自己的訂單）
+- [ ] 撰寫測試並保存 checkpoint
+
+## Profile 頁面重新設計 - 左側導航 + 右側內容 (2026-03-20)
+- [ ] 重寫 Profile.tsx 為雙欄佈局（左側固定導航列，右側對應內容）
+- [ ] 左側導航項目：個人資訊、關注清單、收貨地址、我的訂單、我的出價
+- [ ] 「我的訂單」直接內嵌 /orders 的訂單列表（進行中 + 歷史訂單分組）
+- [ ] 「我的出價」直接內嵌 /orders 的出價列表
+- [ ] 訂單卡片可展開查看詳情（內嵌 OrderDetail 組件）
+- [ ] 手機版改為頂部橫向選單（保持響應式）
+- [ ] 保存 checkpoint
+
+## ✅ Profile 頁面重新設計 - 左側導航 + 右側內容雙欄佈局 (2026-03-20)
+
+- [x] 移除舊版水平標籤頁（個人資訊 / 關注清單 / 收貨地址 / 我的訂單）
+- [x] 改為左側垂直導航列（桌面版）+ 頂部水平滾動導航（手機版）
+- [x] 導航項目：個人資訊、關注清單、收貨地址、我的訂單、我的出價
+- [x] 「我的訂單」直接內嵌顯示訂單列表（進行中 + 歷史訂單分區）
+- [x] 訂單卡片支援展開詳情、確認收貨、申請爭議、評價賣家
+- [x] 「我的出價」內嵌顯示出價記錄（含取消出價功能）
+- [x] 進行中訂單數量顯示在導航項目旁的 badge
+- [x] 保存 checkpoint
