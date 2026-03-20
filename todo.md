@@ -5371,3 +5371,8 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 廣告輪播左右箭頭在手機版隱藏（hidden sm:flex）
 - [x] 搜尋列 placeholder 縮短為「搜尋卡牌...」（手機版更簡潔）
 - [x] 廣告輪播加入觸控滑動（touch swipe）支援
+
+## 🔧 手機版市集深入修復
+
+- [x] 搜尋按鈕走位根本原因分析與修復（重新設計搜尋列結構）
+- [x] 廣告輪播導航點縮細（目前太大，需縮小尺寸）

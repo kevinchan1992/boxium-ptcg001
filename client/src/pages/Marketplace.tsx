@@ -654,26 +654,28 @@ export default function Marketplace() {
 
             {/* Right: Search */}
             <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="搜尋卡牌..."
-                  className="pl-12 pr-[5.5rem] bg-white border-0 text-gray-900 placeholder:text-gray-400 h-12 rounded-full shadow-lg focus-visible:ring-2 focus-visible:ring-[#FEDD00] text-base"
-                />
-                {searchInput && (
-                  <button
-                    type="button"
-                    onClick={clearSearch}
-                    className="absolute right-[5.5rem] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  <Input
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="搜尋卡牌..."
+                    className="pl-12 pr-10 bg-white border-0 text-gray-900 placeholder:text-gray-400 h-12 rounded-full shadow-lg focus-visible:ring-2 focus-visible:ring-[#FEDD00] text-base w-full"
+                  />
+                  {searchInput && (
+                    <button
+                      type="button"
+                      onClick={clearSearch}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
                 <Button
                   type="submit"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold h-9 px-4 rounded-full text-sm"
+                  className="shrink-0 bg-[#FEDD00] hover:bg-[#f0cc00] text-[#06038D] font-bold h-12 px-5 rounded-full text-sm shadow-lg"
                 >
                   搜尋
                 </Button>
@@ -775,12 +777,12 @@ export default function Marketplace() {
             </div>
           ))}
           {activeBanners.length > 1 && (
-            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
               {activeBanners.map((_: any, i: number) => (
                 <button
                   key={i}
                   onClick={() => setBannerIdx(i)}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${i === bannerIdx ? "bg-white w-5" : "bg-white/40 w-1.5"}`}
+                  className={`h-1 rounded-full transition-all duration-300 ${i === bannerIdx ? "bg-white w-3" : "bg-white/40 w-1"}`}
                 />
               ))}
             </div>
