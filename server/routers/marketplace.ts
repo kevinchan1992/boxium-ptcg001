@@ -119,10 +119,17 @@ export const marketplaceRouter = router({
       // Increment view count
       await updateListing(input.id, { viewCount: (listing.viewCount ?? 0) + 1 });
       // Fetch seller profile if C2C listing
-      let sellerProfile: { displayName: string; totalSales: number; ratingCount: number } | null = null;
+      let sellerProfile: { id: number; displayName: string; totalSales: number; ratingCount: number; avgRating: string | null; avatarUrl: string | null } | null = null;
       if (listing.sellerType === "seller" && listing.sellerId) {
         const sp = await getSellerProfileById(listing.sellerId);
-        if (sp) sellerProfile = { displayName: sp.displayName, totalSales: sp.totalSales ?? 0, ratingCount: sp.ratingCount ?? 0 };
+        if (sp) sellerProfile = {
+          id: sp.id,
+          displayName: sp.displayName,
+          totalSales: sp.totalSales ?? 0,
+          ratingCount: sp.ratingCount ?? 0,
+          avgRating: sp.avgRating ?? null,
+          avatarUrl: sp.avatarUrl ?? null,
+        };
       }
       return { ...listing, sellerProfile };
     }),

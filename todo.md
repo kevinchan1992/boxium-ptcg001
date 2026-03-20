@@ -5199,3 +5199,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 取消訂單後出價仍顯示有效：在 buyerCancelOrder 中同步將關聯的 accepted offer 狀態改為 cancelled
 - [x] 圖表月份數據不顯示：改用 buyerConfirmedAt 來分組月度收益，確保完成訂單的收益顯示在正確月份
 - [x] 23 項 bug 修復單元測試全部通過
+
+## 商品詳情頁賣家評分顯示 (2026-03-20)
+- [x] 在商品詳情頁賣家資訊區塊旁顯示平均評分（琥珀色徽章 ⭐ 4.8 (12) + 星級圖示）
+- [x] 後端 getListing procedure 加入 avgRating、avatarUrl、id 到 sellerProfile 回傳
+- [x] 前端 MarketplaceListing.tsx 賣家區塊加入琥珀色評分徽章、星級圖示、頭像圖片支援、「查看主頁」連結
+- [x] 15 項賣家評分顯示單元測試全部通過

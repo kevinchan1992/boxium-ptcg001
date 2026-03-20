@@ -829,29 +829,51 @@ export default function MarketplaceListing() {
 
             {/* Seller Info Card */}
             {listing.sellerType === "seller" && sellerProfile && (
-              <div className="bg-white border border-gray-200 rounded-xl p-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#06038D]/10 flex items-center justify-center shrink-0">
-                  <span className="text-[#06038D] font-bold text-sm">
-                    {(sellerProfile.displayName || "?")[0].toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{sellerProfile.displayName || "個人賣家"}</p>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
-                    {sellerProfile.ratingCount > 0 ? (
-                      <>
+              <div className="bg-white border border-gray-200 rounded-xl p-3">
+                <div className="flex items-center gap-3">
+                  {/* Avatar */}
+                  <div className="w-10 h-10 rounded-full bg-[#06038D]/10 flex items-center justify-center shrink-0 overflow-hidden">
+                    {(sellerProfile as any).avatarUrl ? (
+                      <img src={(sellerProfile as any).avatarUrl} alt={sellerProfile.displayName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[#06038D] font-bold text-sm">
+                        {(sellerProfile.displayName || "?")[0].toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-gray-900 text-sm">{sellerProfile.displayName || "個人賣家"}</p>
+                      {sellerProfile.ratingCount > 0 && (
+                        <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          <span className="text-xs font-bold text-amber-700">{parseFloat(sellerProfile.avgRating ?? "0").toFixed(1)}</span>
+                          <span className="text-xs text-amber-600">({sellerProfile.ratingCount})</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                      {sellerProfile.ratingCount > 0 ? (
                         <div className="flex items-center gap-0.5">
                           {[1,2,3,4,5].map(s => (
                             <Star key={s} className={`w-3 h-3 ${s <= Math.round(parseFloat(sellerProfile.avgRating ?? "0")) ? "fill-[#FEDD00] text-[#FEDD00]" : "text-gray-200"}`} />
                           ))}
                         </div>
-                        <span className="font-medium text-gray-700">{parseFloat(sellerProfile.avgRating ?? "0").toFixed(1)}</span>
-                        <span>({sellerProfile.ratingCount} 個評價)</span>
-                      </>
-                    ) : <span>新賣家</span>}
-                    <span>·</span>
-                    <span>已售 {sellerProfile.totalSales} 件</span>
+                      ) : <span className="text-gray-400">新賣家</span>}
+                      <span>·</span>
+                      <span>已售 {sellerProfile.totalSales} 件</span>
+                    </div>
                   </div>
+                  {/* Link to seller profile */}
+                  {(sellerProfile as any).id && (
+                    <Link
+                      href={`/seller/${(sellerProfile as any).id}`}
+                      className="text-xs text-[#06038D] hover:underline shrink-0 font-medium"
+                    >
+                      查看主頁
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
