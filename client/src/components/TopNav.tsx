@@ -269,7 +269,7 @@ export function TopNav() {
                           全部已讀
                         </Button>
                       )}
-                      <Link href="/notifications" onClick={() => setNotifOpen(false)}>
+                      <Link href="/profile?tab=notifications" onClick={() => setNotifOpen(false)}>
                         <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-white/60 hover:text-white">
                           <ExternalLink className="w-3.5 h-3.5" />
                         </Button>
@@ -327,7 +327,7 @@ export function TopNav() {
                   </ScrollArea>
                   {/* Footer */}
                   <div className="border-t border-white/10 px-4 py-2">
-                    <Link href="/notifications" onClick={() => setNotifOpen(false)}>
+                    <Link href="/profile?tab=notifications" onClick={() => setNotifOpen(false)}>
                       <Button variant="ghost" size="sm" className="w-full text-xs text-white/50 hover:text-white h-7">
                         查看全部通知
                       </Button>

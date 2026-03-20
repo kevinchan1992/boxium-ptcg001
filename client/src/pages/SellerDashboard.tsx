@@ -490,8 +490,11 @@ export default function SellerDashboard() {
     onError: (e) => toast.error(e.message),
   });
 
-  // ─── Listing filter state ─────────────────────────────────────────────────
+   // ─── Listing filter state ─────────────────────────────────────────
   const [listingFilter, setListingFilter] = useState<'all' | 'active' | 'sold' | 'removed' | 'pending_review'>('all');
+  // ─── Order filter state ─────────────────────────────────────────
+  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'pending' | 'active' | 'done'>('all');
+  const [orderSearchQuery, setOrderSearchQuery] = useState('');
 
   // ─── Edit / Deactivate / Batch state ─────────────────────────────────────
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -1292,14 +1295,78 @@ export default function SellerDashboard() {
               </BrandTabsContent>
 
               <BrandTabsContent value="orders" className="mt-4">
-                {!myOrders?.length ? (
-                  <div className="text-center py-12 text-gray-400">
-                    <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>尚無訂單</p>
+                {/* Order filter & search bar */}
+                {(myOrders?.length ?? 0) > 0 && (
+                  <div className="mb-4 space-y-2">
+                    <div className="flex gap-1.5 flex-wrap">
+                      {([
+                        { key: 'all', label: '全部' },
+                        { key: 'pending', label: '待確認' },
+                        { key: 'active', label: '進行中' },
+                        { key: 'done', label: '已完成' },
+                      ] as const).map(f => (
+                        <button
+                          key={f.key}
+                          onClick={() => setOrderStatusFilter(f.key)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                            orderStatusFilter === f.key
+                              ? 'bg-[#06038d] text-white border-[#06038d]'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-[#06038d] hover:text-[#06038d]'
+                          }`}
+                        >
+                          {f.label}
+                          {f.key === 'all' && (
+                            <span className="ml-1 opacity-60">({myOrders?.length ?? 0})</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="搜尋訂單號或商品名稱..."
+                        value={orderSearchQuery}
+                        onChange={e => setOrderSearchQuery(e.target.value)}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] pr-8"
+                      />
+                      {orderSearchQuery && (
+                        <button
+                          onClick={() => setOrderSearchQuery('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
                   </div>
-                ) : (
+                )}
+                {(() => {
+                  const SELLER_ORDER_STATUS_GROUPS: Record<string, string[]> = {
+                    all: [],
+                    pending: ['payment_submitted', 'alipay_pending', 'pending_payment'],
+                    active: ['payment_confirmed', 'payment_received', 'paid_held', 'processing', 'shipped', 'delivered'],
+                    done: ['completed', 'cancelled', 'disputed'],
+                  };
+                  let filtered = (myOrders as any[]) ?? [];
+                  if (orderStatusFilter !== 'all') {
+                    filtered = filtered.filter(o => SELLER_ORDER_STATUS_GROUPS[orderStatusFilter]?.includes(o.orderStatus));
+                  }
+                  if (orderSearchQuery.trim()) {
+                    const q = orderSearchQuery.trim().toLowerCase();
+                    filtered = filtered.filter(o =>
+                      (o.orderNo ?? '').toLowerCase().includes(q) ||
+                      (o.listingTitle ?? '').toLowerCase().includes(q)
+                    );
+                  }
+                  if (!filtered.length) return (
+                    <div className="text-center py-12 text-gray-400">
+                      <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p>{(myOrders?.length ?? 0) > 0 ? '沒有符合條件的訂單' : '尚無訂單'}</p>
+                    </div>
+                  );
+                  return (
                   <div className="space-y-3">
-                    {(myOrders as any[]).map((item) => (
+                    {filtered.map((item) => (
                       <div key={item.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
                         {/* Brand Header Bar */}
                         <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
@@ -1409,7 +1476,8 @@ export default function SellerDashboard() {
                       </div>
                     ))}
                   </div>
-                )}
+                  );
+                })()}
               </BrandTabsContent>
 
               <BrandTabsContent value="payouts" className="mt-4">

@@ -757,7 +757,7 @@ export default function OrderDetail() {
             <Package className="w-10 h-10" style={{ color: "#06038d", opacity: 0.4 }} />
           </div>
           <p className="font-medium text-gray-700">訂單不存在或無權查看</p>
-          <Link href="/orders"><Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">返回訂單列表</Button></Link>
+          <Link href="/profile?tab=orders"><Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">返回訂單列表</Button></Link>
         </div>
       </div>
     );
@@ -811,7 +811,7 @@ export default function OrderDetail() {
                 <Copy className="w-3.5 h-3.5" />
               </button>
             </div>
-            <Link href="/orders">
+            <Link href="/profile?tab=orders">
               <Button size="sm" className="font-bold" style={{ background: "#FEDD00", color: "#06038d" }}>
                 <ArrowLeft className="w-4 h-4 mr-1" />返回訂單
               </Button>
