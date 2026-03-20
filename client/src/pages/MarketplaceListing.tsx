@@ -697,7 +697,11 @@ export default function MarketplaceListing() {
       {/* ── Top Bar ── */}
       <div className="bg-[#06038D] border-b border-[#0a07b5]">
         <div className="max-w-6xl mx-auto px-4 py-3">
-          <nav className="flex items-center gap-1.5 text-xs text-white/60">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <img src="/boxium-logo.png" alt="BOXIUM" className="h-7 cursor-pointer flex-shrink-0" />
+            </Link>
+          <nav className="flex items-center gap-1.5 text-xs text-white/60 flex-1">
             <Link href="/marketplace">
               <span className="text-[#FEDD00] hover:text-white font-medium cursor-pointer transition-colors">商城</span>
             </Link>
@@ -710,6 +714,7 @@ export default function MarketplaceListing() {
             )}
             <span className="text-white/80 truncate max-w-[200px]">{listing.title}</span>
           </nav>
+          </div>
         </div>
       </div>
 
@@ -965,10 +970,9 @@ export default function MarketplaceListing() {
                   ) : (
                     <Button
                       variant="outline"
-                      className="w-full h-11 text-sm border-[#FEDD00] text-[#06038D] hover:bg-[#FEDD00]/10 rounded-xl font-semibold"
-                      disabled={!me}
+                      className="w-full h-11 text-sm border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5 rounded-xl font-semibold bg-white"
                       onClick={() => {
-                        if (!me) { toast.error("請先登入才能出價"); return; }
+                        if (!me) { window.location.href = "/login"; return; }
                         setShowOfferDialog(true);
                       }}
                     >
@@ -1829,7 +1833,17 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
     onError: (err) => toast.error(err.message || "加入購物車失敗"),
   });
 
-  if (!isLoggedIn) return null;
+  if (!isLoggedIn) {
+    return (
+      <Button
+        className="w-full bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold h-12 text-base rounded-xl shadow-sm"
+        onClick={() => { window.location.href = "/login"; }}
+      >
+        <ShoppingCart className="w-5 h-5 mr-2" />
+        登入後加入購物車
+      </Button>
+    );
+  }
 
   // Already in cart - show go to cart button
   if (inCart) {

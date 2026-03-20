@@ -400,11 +400,18 @@ export const appRouter = router({
         console.log('[Logout API] Clearing session cookie...');
         
         if (ctx.res) {
-          // Clear session cookie
-          ctx.res.clearCookie('session', {
+          // Clear session cookie using COOKIE_NAME (strategy 1: Max-Age=0)
+          ctx.res.clearCookie(COOKIE_NAME, {
             httpOnly: true,
             sameSite: 'lax',
             path: '/',
+          });
+          // Clear session cookie (strategy 2: Expires in the past)
+          ctx.res.clearCookie(COOKIE_NAME, {
+            httpOnly: true,
+            sameSite: 'lax',
+            path: '/',
+            expires: new Date(0),
           });
           console.log('[Logout API] Session cookie cleared');
         } else {

@@ -184,7 +184,7 @@ export default function Cart() {
           {/* Top row: LOGO + back button */}
           <div className="flex items-center justify-between mb-4">
             <Link href="/">
-              <img src="/boxium-logo-white.png" alt="BOXIUM" className="h-8 cursor-pointer" />
+              <img src="/boxium-logo.png" alt="BOXIUM" className="h-8 cursor-pointer" />
             </Link>
             <button onClick={() => setLocation("/marketplace")} className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm">
               <ArrowLeft className="w-4 h-4" />
@@ -318,6 +318,14 @@ export default function Cart() {
                 >
                   前往結帳
                   <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full mt-2 border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5 font-semibold bg-white"
+                  onClick={() => setLocation("/marketplace")}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1.5" />
+                  繼續購物
                 </Button>
 
                 {unavailableItems.length > 0 && (

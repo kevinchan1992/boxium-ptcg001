@@ -777,7 +777,13 @@ export default function SellerDashboard() {
         style={{ background: `linear-gradient(135deg, #06038d 0%, #0a06b5 100%)` }}
       >
         <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FEDD00" }} />
-        <div className="max-w-5xl mx-auto px-4 pt-10 pb-8">
+        <div className="max-w-5xl mx-auto px-4 pt-5 pb-8">
+          {/* LOGO row */}
+          <div className="mb-5">
+            <Link href="/">
+              <img src="/boxium-logo.png" alt="BOXIUM" className="h-8 cursor-pointer" />
+            </Link>
+          </div>
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
             <div
               className="w-20 h-20 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
