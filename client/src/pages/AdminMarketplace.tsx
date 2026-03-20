@@ -2685,20 +2685,23 @@ function AlipayPendingTab() {
                       <Eye className="w-3 h-3" />查看付款截圖
                     </a>
                   )}
+                  {order.alipayProofImageUrl && !order.aiVerificationResult && (
+                    <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      <span className="animate-spin inline-block w-3 h-3 border border-gray-400 border-t-transparent rounded-full"></span>
+                      AI 驗證中...
+                    </div>
+                  )}
                   {order.aiVerificationResult && (() => {
                     try {
                       const ai = JSON.parse(order.aiVerificationResult);
+                      const confidenceLabel = ai.confidence === 'high' ? '高可信度' : ai.confidence === 'medium' ? '中可信度' : ai.confidence === 'low' ? '低可信度' : '';
                       return (
-                        <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                        <div className={`mt-1.5 flex flex-wrap items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
                           ai.verified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
                           {ai.verified ? '✅ AI 驗證通過' : '⚠️ AI 驗證失敗'}
-                          {ai.confidence !== undefined && (
-                            <span className="opacity-70">({Math.round(ai.confidence * 100)}%)</span>
-                          )}
-                          {ai.detectedAmount && (
-                            <span className="opacity-70">· HKD {ai.detectedAmount}</span>
-                          )}
+                          {confidenceLabel && <span className="opacity-70">({confidenceLabel})</span>}
+                          {ai.detectedAmount && <span className="opacity-70">· HKD {ai.detectedAmount}</span>}
                         </div>
                       );
                     } catch { return null; }
@@ -2734,9 +2737,16 @@ function AlipayPendingTab() {
               {selectedOrder.alipayProofImageUrl && (
                 <img src={selectedOrder.alipayProofImageUrl} alt="付款截圖" className="rounded-lg border max-h-48 object-contain w-full" />
               )}
+                  {selectedOrder.alipayProofImageUrl && !selectedOrder.aiVerificationResult && (
+                <div className="rounded-lg p-3 text-sm border bg-gray-50 border-gray-200 flex items-center gap-2 text-gray-600">
+                  <span className="animate-spin inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full"></span>
+                  AI 驗證中，請稍候...
+                </div>
+              )}
               {selectedOrder.aiVerificationResult && (() => {
                 try {
                   const ai = JSON.parse(selectedOrder.aiVerificationResult);
+                  const confidenceLabel = ai.confidence === 'high' ? '高可信度' : ai.confidence === 'medium' ? '中可信度' : ai.confidence === 'low' ? '低可信度（建議人工核對）' : '';
                   return (
                     <div className={`rounded-lg p-3 text-sm border ${
                       ai.verified ? "bg-green-50 border-green-300" : "bg-red-50 border-red-300"
@@ -2746,12 +2756,14 @@ function AlipayPendingTab() {
                           ? <span className="text-green-700">✅ AI 驗證：付款截圖有效</span>
                           : <span className="text-red-700">⚠️ AI 驗證：對比失敗</span>
                         }
-                        {ai.confidence !== undefined && (
-                          <span className="text-xs text-gray-500 ml-auto">可信度: {Math.round(ai.confidence * 100)}%</span>
+                        {confidenceLabel && (
+                          <span className="text-xs text-gray-500 ml-auto">{confidenceLabel}</span>
                         )}
                       </div>
                       {ai.detectedAmount && <p className="text-xs text-gray-600">偵測金額: HKD {ai.detectedAmount}</p>}
-                      {ai.reason && <p className="text-xs text-gray-600 mt-1">{ai.reason}</p>}
+                      {ai.detectedPayee && <p className="text-xs text-gray-600">偵測收款方: {ai.detectedPayee}</p>}
+                      {ai.detectedStatus && <p className="text-xs text-gray-600">偵測狀態: {ai.detectedStatus}</p>}
+                      {ai.reason && <p className="text-xs text-gray-600 mt-1 border-t border-gray-200 pt-1">{ai.reason}</p>}
                     </div>
                   );
                 } catch { return null; }

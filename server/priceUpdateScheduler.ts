@@ -1218,3 +1218,171 @@ export function startCartExpiryCleanupScheduler() {
   // Run once on startup to clear any already-expired items
   runCartExpiryCleanup().catch(err => console.error('[CartExpiry] Initial cleanup error:', err));
 }
+
+// ─── Alipay Review Timeout Reminder Scheduler ───────────────────────────────
+let alipayReviewReminderCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+/**
+ * Check for Alipay payment proofs that have been pending review for >24 hours.
+ * Sends a reminder notification to admin and marks the order so we don't spam.
+ * Runs every hour.
+ */
+async function runAlipayReviewTimeoutCheck() {
+  try {
+    const { getDb } = await import('./db');
+    const { marketplaceOrders } = await import('../drizzle/schema_new');
+    const { and, eq, isNotNull, isNull, lte } = await import('drizzle-orm');
+    const { notifyOwner } = await import('./_core/notification');
+    const database = await getDb();
+    if (!database) return;
+
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+
+    // Find orders with proof submitted >24hrs ago, not yet confirmed/rejected, and reminder not yet sent
+    const overdueOrders = await database
+      .select()
+      .from(marketplaceOrders)
+      .where(
+        and(
+          eq(marketplaceOrders.orderStatus, 'pending_payment'),
+          eq(marketplaceOrders.paymentMethod, 'alipay_hk'),
+          isNotNull(marketplaceOrders.alipayProofImageUrl),
+          isNull(marketplaceOrders.alipayReviewReminderSentAt),
+          lte(marketplaceOrders.alipayProofSubmittedAt, cutoff)
+        )
+      )
+      .limit(20);
+
+    if (overdueOrders.length === 0) return;
+
+    console.log(`[AlipayReview] Found ${overdueOrders.length} overdue Alipay proof(s) pending review`);
+
+    for (const order of overdueOrders) {
+      try {
+        const submittedAt = order.alipayProofSubmittedAt ? new Date(order.alipayProofSubmittedAt).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' }) : '未知';
+        await notifyOwner({
+          title: `⏰ 支付寶截圖待核對超過 24 小時`,
+          content: `訂單 ${order.orderNo} 的買家於 ${submittedAt} 提交截圖，已超過 24 小時尚未核對。\n金額：HKD ${order.subtotalHkd}\n請盡快前往管理後台核對：/admin/marketplace`,
+        });
+        // Mark reminder as sent
+        await database
+          .update(marketplaceOrders)
+          .set({ alipayReviewReminderSentAt: new Date() })
+          .where(eq(marketplaceOrders.id, order.id));
+        console.log(`[AlipayReview] Sent 24hr reminder for order ${order.orderNo}`);
+      } catch (err) {
+        console.error(`[AlipayReview] Failed to send reminder for order ${order.orderNo}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error('[AlipayReview] Timeout check error:', err);
+  }
+}
+
+/**
+ * Start the Alipay review timeout reminder scheduler (every hour).
+ */
+export function startAlipayReviewReminderScheduler() {
+  if (alipayReviewReminderCronJob) return;
+  alipayReviewReminderCronJob = cron.schedule(
+    '0 * * * *', // Every hour at :00
+    async () => {
+      try {
+        await runAlipayReviewTimeoutCheck();
+      } catch (err) {
+        console.error('[AlipayReview] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[AlipayReview] Alipay review timeout reminder scheduler started (every hour)');
+}
+
+// ─── Cart Expiry Notification Scheduler ─────────────────────────────────────
+let cartExpiryNotificationCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+/**
+ * Notify users about cart items expiring within 3 days.
+ * Runs daily at 10:00 HKT.
+ */
+async function runCartExpiryNotification() {
+  try {
+    const { getDb } = await import('./db');
+    const { cartItems, marketplaceListings } = await import('../drizzle/schema_new');
+    const { createNotification } = await import('./db/notifications');
+    const { and, lte, gte, eq } = await import('drizzle-orm');
+    const database = await getDb();
+    if (!database) return;
+
+    const now = new Date();
+    const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+    // Find cart items expiring within 3 days (but not yet expired)
+    const expiringItems = await database
+      .select({
+        id: cartItems.id,
+        userId: cartItems.userId,
+        listingId: cartItems.listingId,
+        expiresAt: cartItems.expiresAt,
+      })
+      .from(cartItems)
+      .where(
+        and(
+          gte(cartItems.expiresAt, now),
+          lte(cartItems.expiresAt, threeDaysLater)
+        )
+      )
+      .limit(500);
+
+    if (expiringItems.length === 0) return;
+
+    // Group by userId
+    const byUser = new Map<number, typeof expiringItems>();
+    for (const item of expiringItems) {
+      if (!byUser.has(item.userId)) byUser.set(item.userId, []);
+      byUser.get(item.userId)!.push(item);
+    }
+
+    console.log(`[CartExpiry] Sending expiry notifications to ${byUser.size} user(s) for ${expiringItems.length} item(s)`);
+
+    for (const [userId, items] of Array.from(byUser.entries())) {
+      try {
+        const count = items.length;
+        const earliest = items.reduce((a: typeof items[0], b: typeof items[0]) => a.expiresAt < b.expiresAt ? a : b);
+        const expiresInHours = Math.round((new Date(earliest.expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60));
+        const expiresInDays = Math.ceil(expiresInHours / 24);
+
+        await createNotification({
+          userId,
+          type: 'trade',
+          title: `🛒 購物車商品即將到期`,
+          body: `你有 ${count} 件購物車商品將在 ${expiresInDays} 天內到期，請盡快結帳或移除，以免失效。`,
+          linkUrl: '/cart',
+        });
+      } catch (err) {
+        console.error(`[CartExpiry] Failed to notify user ${userId}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error('[CartExpiry] Notification error:', err);
+  }
+}
+
+/**
+ * Start the cart expiry notification scheduler (daily at 10:00 HKT).
+ */
+export function startCartExpiryNotificationScheduler() {
+  if (cartExpiryNotificationCronJob) return;
+  cartExpiryNotificationCronJob = cron.schedule(
+    '0 10 * * *', // Daily at 10:00 HKT
+    async () => {
+      try {
+        await runCartExpiryNotification();
+      } catch (err) {
+        console.error('[CartExpiry] Notification scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[CartExpiry] Cart expiry notification scheduler started (daily at 10:00 HKT)');
+}

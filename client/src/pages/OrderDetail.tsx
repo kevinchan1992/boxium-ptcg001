@@ -1098,6 +1098,11 @@ export default function OrderDetail() {
                         </span>
                       )}
                     </div>
+                    {order.orderStatus === "pending_payment" && !((order as any).paymentRejectionReason) && (
+                      <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+                        ⏱ 通常 <strong>1-2 個工作天</strong>內確認，請耐心等候。如有疑問請聯絡客服。
+                      </p>
+                    )}
                     <img
                       src={order.alipayProofImageUrl}
                       alt="付款截圖"

@@ -17,7 +17,7 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import { getListingById, getCardById, getSealedProductById } from "../db";
@@ -869,6 +869,10 @@ async function startServer() {
     startHotCardPollScheduler();
     // Start the cart expiry cleanup scheduler (daily at 03:00 HKT, removes 14-day-old cart items)
     startCartExpiryCleanupScheduler();
+    // Start the Alipay review timeout reminder scheduler (every hour, notifies admin if proof pending >24hrs)
+    startAlipayReviewReminderScheduler();
+    // Start the cart expiry notification scheduler (daily at 10:00 HKT, notifies users 3 days before expiry)
+    startCartExpiryNotificationScheduler();
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();

@@ -5098,3 +5098,22 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 結帳流程：順豐速運（運費到付）/ 面交/其他 送貨方式選擇
 - [x] 結帳流程：Stripe / 支付寶 HK 付款方式選擇
 - [x] 順豐自提站搜尋（125 個香港站點）
+
+## 五項進階功能 (2026-03-19)
+- [ ] 管理員後台支付寶待核對列表顯示 AI 驗證結果
+- [ ] 買家截圖提交後顯示「通常 1-2 個工作天內確認」說明
+- [ ] 截圖審核超時 24 小時自動提醒管理員
+- [ ] 購物車商品到期前 3 天發送站內通知
+- [ ] 加入購物車時即時庫存檢查（防止加入已售出商品）
+
+## ✅ 五項進階功能完成 (2026-03-20)
+- [x] 管理員後台支付寶待核對列表顯示 AI 驗證結果（修正 confidence 為字串格式，加入高/中/低可信度標籤；截圖已上傳但 AI 未驗證時顯示「AI 驗證中...」）
+- [x] 買家截圖提交後顯示「通常 1-2 個工作天內確認」說明（OrderDetail.tsx 截圖審核中狀態下加入預計審核時間提示）
+- [x] 截圖審核超時 24 小時自動提醒管理員（priceUpdateScheduler.ts 加入 startAlipayReviewReminderScheduler，每小時檢查，超時後 notifyOwner）
+- [x] 購物車商品到期前 3 天發送站內通知（priceUpdateScheduler.ts 加入 startCartExpiryNotificationScheduler，每日 10:00 HKT 執行）
+- [x] 加入購物車時即時庫存檢查（addToCart API 已有 status='active' 檢查，確認功能正常）
+- [x] schema_new.ts 加入 alipayProofSubmittedAt、alipayReviewReminderSentAt 欄位
+- [x] 資料庫遷移：ALTER TABLE marketplaceOrders 加入兩個新欄位
+- [x] submitAlipayProof 更新：儲存 alipayProofSubmittedAt 時間戳，重置 alipayReviewReminderSentAt
+- [x] 撰寫並通過 24 項單元測試（new-features-5.test.ts）
+- [ ] 保存 checkpoint

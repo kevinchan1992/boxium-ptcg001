@@ -487,7 +487,7 @@ export const marketplaceRouter = router({
       const key = `alipay-proofs/${order.orderNo}-${Date.now()}.jpg`;
       const { url } = await storagePut(key, buffer, input.mimeType);
       // Save proof URL to database so it can be displayed in order detail page
-      await updateMarketplaceOrder(input.orderId, { alipayProofImageUrl: url });
+      await updateMarketplaceOrder(input.orderId, { alipayProofImageUrl: url, alipayProofSubmittedAt: new Date(), alipayReviewReminderSentAt: null });
       // Notify owner that a new Alipay HK payment proof has been submitted
       notifyOwner({
         title: "📸 新支付寶 HK 付款截圖待核對",
