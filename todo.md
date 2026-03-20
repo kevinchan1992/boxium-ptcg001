@@ -5332,3 +5332,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 - [x] 收藏商品 Tab 加入排序選項（按收藏時間、按價格高低）
 - [x] 驗證並確保商品頁收藏按鈕移除後 Profile 收藏清單即時同步（加入 getMyWishlist.invalidate）
+
+---
+
+## 🐛 Bug 修復
+
+- [x] 修復 Cart 頁面 React Hooks 順序錯誤（將條件式 hook 移到 early return 之前）

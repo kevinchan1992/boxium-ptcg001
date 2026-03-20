@@ -152,6 +152,36 @@ export default function Cart() {
     return Object.entries(groups).map(([sellerId, items]) => ({ sellerId: Number(sellerId), items }));
   }, [activeItems]);
 
+  // isEmpty must be computed before hooks that depend on it
+  const isEmpty = !cartItems || cartItems.length === 0;
+
+  // Fetch watchlist for personalized recommendations (always call hooks, use enabled to control)
+  const { data: watchlist } = trpc.profile.getWatchlist.useQuery(undefined, {
+    enabled: !!user && isEmpty,
+    staleTime: 60000,
+  });
+  const watchlistCardIds = useMemo(
+    () => (watchlist ?? []).map((w: { card: { id: number } }) => w.card.id).slice(0, 20),
+    [watchlist]
+  );
+  const hasWatchlist = watchlistCardIds.length > 0;
+
+  // Fetch personalized listings (from watchlist) or recent listings as fallback
+  const { data: personalizedListings } = trpc.marketplace.getListings.useQuery(
+    { page: 1, pageSize: 6, sortBy: "newest", cardIds: watchlistCardIds },
+    { enabled: !!user && isEmpty && hasWatchlist, staleTime: 60000 }
+  );
+  const { data: recentListings } = trpc.marketplace.getListings.useQuery(
+    { page: 1, pageSize: 6, sortBy: "newest" },
+    { enabled: isEmpty && (!user || !hasWatchlist || (personalizedListings?.listings.length === 0)), staleTime: 60000 }
+  );
+  // Use personalized if available, else fall back to recent
+  const recommendedListings = useMemo(() => {
+    if (personalizedListings && personalizedListings.listings.length > 0) return { data: personalizedListings, label: "為你推薦（來自關注清單）" };
+    if (recentListings && recentListings.listings.length > 0) return { data: recentListings, label: "最新上架" };
+    return null;
+  }, [personalizedListings, recentListings]);
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -207,35 +237,6 @@ export default function Cart() {
       </div>
     );
   }
-
-  const isEmpty = !cartItems || cartItems.length === 0;
-
-  // Fetch watchlist for personalized recommendations
-  const { data: watchlist } = trpc.profile.getWatchlist.useQuery(undefined, {
-    enabled: !!user && isEmpty,
-    staleTime: 60000,
-  });
-  const watchlistCardIds = useMemo(
-    () => (watchlist ?? []).map((w: { card: { id: number } }) => w.card.id).slice(0, 20),
-    [watchlist]
-  );
-  const hasWatchlist = watchlistCardIds.length > 0;
-
-  // Fetch personalized listings (from watchlist) or recent listings as fallback
-  const { data: personalizedListings } = trpc.marketplace.getListings.useQuery(
-    { page: 1, pageSize: 6, sortBy: "newest", cardIds: watchlistCardIds },
-    { enabled: !!user && isEmpty && hasWatchlist, staleTime: 60000 }
-  );
-  const { data: recentListings } = trpc.marketplace.getListings.useQuery(
-    { page: 1, pageSize: 6, sortBy: "newest" },
-    { enabled: isEmpty && (!user || !hasWatchlist || (personalizedListings?.listings.length === 0)), staleTime: 60000 }
-  );
-  // Use personalized if available, else fall back to recent
-  const recommendedListings = useMemo(() => {
-    if (personalizedListings && personalizedListings.listings.length > 0) return { data: personalizedListings, label: "為你推薦（來自關注清單）" };
-    if (recentListings && recentListings.listings.length > 0) return { data: recentListings, label: "最新上架" };
-    return null;
-  }, [personalizedListings, recentListings]);
 
   return (
     <div className="min-h-screen bg-gray-50">
