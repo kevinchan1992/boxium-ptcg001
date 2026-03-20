@@ -5287,3 +5287,16 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 16 項購物車出價付款測試全部通過
 - [x] 42 項其他相關測試全部通過
 - [x] 保存 checkpoint
+
+---
+
+## 🎨 六項 UI 改善
+
+- [ ] Cart 頁面加入「繼續購物」按鈕（返回市集）
+- [ ] 商品詳情頁出價按鈕改為次要樣式（白底藍框）
+- [ ] 未登入用戶點擊「加入購物車」時跳轉至登入頁
+- [ ] 訂單詳情頁（/orders/:orderNo）加入藍色 LOGO 橫幅
+- [ ] 賣家儀表板頁面加入藍色 LOGO 橫幅
+- [ ] 商品詳情頁（/marketplace/:id）LOGO 改為藍色圖片並置於最左上角
+- [ ] Profile 頁面 LOGO 改為藍色圖片（非白色）
+- [ ] 保存 checkpoint
