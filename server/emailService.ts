@@ -9,23 +9,33 @@ import { getSystemSetting } from "./db";
 // ─── Transporter factory (reads SMTP config from DB each time) ───────────────
 
 async function createTransporter() {
+  // Priority 1: Gmail App Password from environment variable
+  const gmailAppPass = process.env.GMAIL_APP_PASSWORD;
+  if (gmailAppPass) {
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "boxium.asia@gmail.com",
+        pass: gmailAppPass,
+      },
+    });
+  }
+
+  // Priority 2: DB SMTP settings (fallback)
   const [hostRow, portRow, userRow, passRow] = await Promise.all([
     getSystemSetting("smtp_host"),
     getSystemSetting("smtp_port"),
     getSystemSetting("smtp_user"),
     getSystemSetting("smtp_pass"),
   ]);
-
   const host = hostRow?.settingValue;
   const port = parseInt(portRow?.settingValue || "587", 10);
   const user = userRow?.settingValue;
   const pass = passRow?.settingValue;
-
   if (!host || !user || !pass) {
     console.warn("[EmailService] SMTP not configured — skipping email send");
     return null;
   }
-
   return nodemailer.createTransport({
     host,
     port,
@@ -54,9 +64,8 @@ function wrapHtml(title: string, body: string): string {
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
           <!-- Header -->
           <tr>
-            <td style="background:${BRAND_BLUE};padding:24px 32px;text-align:center;">
-              <span style="font-size:24px;font-weight:900;color:${BRAND_YELLOW};letter-spacing:2px;">BOXIUM PTCG</span>
-              <p style="margin:4px 0 0;color:rgba(255,255,255,0.7);font-size:12px;">LUCK IN EVERY BOX</p>
+            <td style="background:${BRAND_BLUE};padding:20px 32px;text-align:center;">
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/boxium-logo-white_52b4d8da.png" alt="BOXIUM PTCG" width="140" style="display:block;margin:0 auto;max-width:140px;height:auto;" />
             </td>
           </tr>
           <!-- Body -->
@@ -345,8 +354,9 @@ export async function sendEmail({
     const transporter = await createTransporter();
     if (!transporter) return false;
 
-    const userRow = await getSystemSetting("smtp_user");
-    const fromEmail = userRow?.settingValue || "noreply@boxium.asia";
+    const fromEmail = process.env.GMAIL_APP_PASSWORD
+      ? "boxium.asia@gmail.com"
+      : (await getSystemSetting("smtp_user"))?.settingValue || "noreply@boxium.asia";
     const fromName = "BOXIUM PTCG";
 
     await transporter.sendMail({

@@ -5392,3 +5392,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 ## 🔵 廣告導航點樣式修改
 
 - [x] 廣告輪播導航點改為小圓點（參考圖二 tcgbid.hk 樣式）
+
+## 📧 Gmail 電郵通知系統（boxium.asia@gmail.com）
+
+- [x] 安裝 nodemailer 並設定 Gmail App Password
+- [x] createTransporter 優先使用 GMAIL_APP_PASSWORD 環境變數
+- [x] sendEmail 使用 boxium.asia@gmail.com 作為寄件人
+- [x] 電郵模板 header 改用 BOXIUM 白色 logo 圖片（CDN）
+- [x] 所有現有電郵觸發點（出價、訂單、賣家審核）自動生效
+- [x] 5 項 vitest 測試全部通過
