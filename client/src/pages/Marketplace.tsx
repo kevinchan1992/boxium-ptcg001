@@ -601,6 +601,7 @@ export default function Marketplace() {
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
+    (document.activeElement as HTMLElement)?.blur();
     setSearch(searchInput);
     resetAndSearch();
   }, [searchInput, resetAndSearch]);
@@ -790,7 +791,7 @@ export default function Marketplace() {
                     setSellerType(banner.ctaSellerType ?? "all");
                     resetAndSearch();
                   }}
-                  className="shrink-0 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
+                  className="shrink-0 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
                   style={{ backgroundColor: banner.accentColor || "#FEDD00", color: "#06038D" }}
                 >
                   {banner.cta}
@@ -799,14 +800,17 @@ export default function Marketplace() {
             </div>
           ))}
           {activeBanners.length > 1 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-              {activeBanners.map((_: any, i: number) => (
-                <button
-                  key={i}
-                  onClick={() => setBannerIdx(i)}
-                  className={`h-1 rounded-full transition-all duration-300 ${i === bannerIdx ? "bg-white w-3" : "bg-white/40 w-1"}`}
-                />
-              ))}
+            <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-10">
+              <div className="flex gap-1">
+                {activeBanners.map((_: any, i: number) => (
+                  <button
+                    key={i}
+                    onClick={() => setBannerIdx(i)}
+                    className={`h-1 rounded-full transition-all duration-300 ${i === bannerIdx ? "bg-white w-3" : "bg-white/40 w-1"}`}
+                  />
+                ))}
+              </div>
+              <span className="text-white/30 text-[8px] sm:hidden leading-none tracking-widest select-none">← 滑動 →</span>
             </div>
           )}
           {activeBanners.length > 1 && (

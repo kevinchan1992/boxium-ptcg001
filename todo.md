@@ -5382,3 +5382,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 廣告輪播改為 CSS translate 滑入滑出動畫
 - [x] 搜尋熱門標籤點擊時收起手機虛擬鍵盤
 - [x] 廣告輪播觸控結束後延遲 2 秒再恢復自動播放
+
+## 🎨 廣告輪播與搜尋列第二輪優化
+
+- [x] 廣告 CTA 按鈕手機版縮小（px-3 py-1.5 text-xs）
+- [x] handleSearch 提交後加入 blur() 收起鍵盤
+- [x] 廣告輪播手機版加入 swipe 指示器文字提示
