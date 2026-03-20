@@ -1229,7 +1229,7 @@ export const marketplaceRouter = router({
         body: `訂單 ${order.orderNo} 的支付寶 HK 付款已由管理員確認，訂單現在進入處理中。${input.note ? `備註：${input.note}` : ""}`,
         linkUrl: `/orders/${order.orderNo}`,
       }).catch(() => {});
-      // Notify seller of new order (use sellerProfile.userId, NOT order.sellerId)
+       // Notify seller of new order (use sellerProfile.userId, NOT order.sellerId)
       if (order.sellerId) {
         const sellerProf = await getSellerProfileById(order.sellerId);
         if (sellerProf?.userId) {
@@ -1240,11 +1240,24 @@ export const marketplaceRouter = router({
             body: `訂單 ${order.orderNo} 買家已完成付款，請盡快安排出貨。`,
             linkUrl: "/seller",
           }).catch(() => {});
+          // Email seller: new order paid (Alipay)
+          try {
+            const { sendOrderEmail, buildOrderPaymentReceivedSellerEmail, getOrderEmailData } = await import("../emailService");
+            const emailData = await getOrderEmailData(order);
+            const { subject: ss, html: sh } = buildOrderPaymentReceivedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, listingId: order.listingId ?? undefined });
+            await sendOrderEmail({ userId: sellerProf.userId, subject: ss, html: sh });
+          } catch (e: any) { console.warn("[adminConfirmAlipay] seller email failed:", e.message); }
         }
       }
+      // Email buyer: payment confirmed (Alipay)
+      try {
+        const { sendOrderEmail, buildOrderPaymentReceivedBuyerEmail, getOrderEmailData } = await import("../emailService");
+        const emailData = await getOrderEmailData(order);
+        const { subject: bs, html: bh } = buildOrderPaymentReceivedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, listingId: order.listingId ?? undefined });
+        await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh });
+      } catch (e: any) { console.warn("[adminConfirmAlipay] buyer email failed:", e.message); }
       return { success: true };
     }),
-
   adminBatchConfirmAlipayPayment: adminProcedure
     .input(z.object({
       orderIds: z.array(z.number().int()).min(1).max(50),
@@ -2477,7 +2490,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       // Check if already reviewed
       const existing = await getReviewByOrderId(input.orderId);
       if (existing) throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已評價過" });
-      await createReview({
+       await createReview({
         orderId: input.orderId,
         listingId: order.listingId!,
         buyerId: ctx.user.id,
@@ -2485,9 +2498,25 @@ All three checks must pass for verified to be true. Respond with JSON only match
         rating: input.rating,
         comment: input.comment ?? null,
       });
+      // Notify seller of new review
+      const reviewSellerProf = await getSellerProfileById(order.sellerId);
+      if (reviewSellerProf?.userId) {
+        await createNotification({
+          userId: reviewSellerProf.userId,
+          type: "trade",
+          title: `您收到一則新評價 ${'⭐'.repeat(input.rating)}`,
+          body: `買家對訂單 ${order.orderNo} 給了 ${input.rating} 星評價${input.comment ? `：${input.comment.slice(0, 50)}` : ''}`,
+          linkUrl: "/seller",
+        }).catch(() => {});
+        try {
+          const { sendOrderEmail, buildNewReviewSellerEmail, getOrderEmailData } = await import("../emailService");
+          const emailData = await getOrderEmailData(order);
+          const { subject, html } = buildNewReviewSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, rating: input.rating, comment: input.comment });
+          await sendOrderEmail({ userId: reviewSellerProf.userId, subject, html });
+        } catch (emailErr: any) { console.warn("[submitReview] seller email failed:", emailErr.message); }
+      }
       return { success: true };
     }),
-
   getSellerReviews: publicProcedure
     .input(z.object({
       sellerId: z.number().int(),
@@ -2901,6 +2930,23 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const lastMonthRevenue = lastMonthOrders
         .filter((o: any) => o.status === "completed")
         .reduce((sum: number, o: any) => sum + parseFloat(o.amount ?? "0"), 0);
+       // Build last 6 months data
+      const monthlyData: { month: string; revenue: number; orders: number }[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
+        const mOrders = allOrders.filter((o: any) => {
+          const d = new Date(o.createdAt);
+          return d >= mStart && d <= mEnd;
+        });
+        const mCompleted = mOrders.filter((o: any) => o.status === "completed");
+        const mRevenue = mCompleted.reduce((sum: number, o: any) => sum + parseFloat(o.amount ?? "0"), 0);
+        const monthLabel = `${mStart.getMonth() + 1}月`;
+        monthlyData.push({ month: monthLabel, revenue: Math.round(mRevenue * 100) / 100, orders: mCompleted.length });
+      }
+      // Pending payout = sum of sellerReceivableHkd for orders in payment_received/processing/shipped
+      const pendingPayoutOrders = allOrders.filter((o: any) => ["payment_received", "processing", "shipped"].includes(o.status));
+      const pendingPayoutAmount = pendingPayoutOrders.reduce((sum: number, o: any) => sum + parseFloat(o.amount ?? "0"), 0);
       return {
         totalOrders: allOrders.length,
         completedOrders: completedOrders.length,
@@ -2908,11 +2954,12 @@ All three checks must pass for verified to be true. Respond with JSON only match
         totalRevenue,
         thisMonthRevenue,
         lastMonthRevenue,
+        monthlyData,
+        pendingPayoutAmount: Math.round(pendingPayoutAmount * 100) / 100,
         avgRating: seller.avgRating,
         ratingCount: seller.ratingCount,
       };
     }),
-
   // ============================================================
   // ADMIN - Batch update shipping status
   // ============================================================

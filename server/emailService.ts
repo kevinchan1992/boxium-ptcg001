@@ -501,3 +501,65 @@ export function buildOfferExpiringSoonEmail(data: OfferEmailData): { subject: st
   `);
   return { subject, html };
 }
+
+/** Payment received — new order notification to seller */
+export function buildOrderPaymentReceivedSellerEmail(data: OrderEmailData): { subject: string; html: string } {
+  const siteUrl = data.siteUrl || "https://boxium.asia";
+  const subject = `🎉 新訂單已付款，請安排出貨 — ${data.orderNo}`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">新訂單已付款 🎉</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">您有一筆新訂單的付款已確認，請盡快安排出貨。</p>
+    ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd, data.listingId)}
+    <p style="color:#555;font-size:14px;">請在賣家中心查看買家的收貨地址，並盡快安排寄送。出貨後請在平台更新物流追蹤號。</p>
+    ${ctaButton("前往賣家中心出貨", `${siteUrl}/seller`)}
+  `);
+  return { subject, html };
+}
+
+/** Payment received — order confirmed notification to buyer */
+export function buildOrderPaymentReceivedBuyerEmail(data: OrderEmailData): { subject: string; html: string } {
+  const siteUrl = data.siteUrl || "https://boxium.asia";
+  const subject = `✅ 付款確認 — 訂單 ${data.orderNo} 已進入處理中`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">付款已確認 ✅</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">您的付款已成功確認！賣家將盡快為您安排出貨。</p>
+    ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd, data.listingId)}
+    <p style="color:#555;font-size:14px;">我們會在訂單出貨後再次通知您，請留意追蹤號碼。如有任何問題，請透過平台聯絡賣家。</p>
+    ${ctaButton("查看訂單詳情", `${siteUrl}/orders/${data.orderNo}`)}
+  `);
+  return { subject, html };
+}
+
+/** New review received — notification to seller */
+export function buildNewReviewSellerEmail(data: { orderNo: string; itemName: string; rating: number; comment?: string; siteUrl?: string }): { subject: string; html: string } {
+  const siteUrl = data.siteUrl || "https://boxium.asia";
+  const stars = "⭐".repeat(data.rating) + "☆".repeat(5 - data.rating);
+  const subject = `⭐ 您收到一則新評價 — ${data.rating}/5 星`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">您收到一則新評價 ⭐</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">買家已對訂單 <strong>${data.orderNo}</strong> 提交評價。</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin:20px 0;">
+      <tr>
+        <td style="padding:12px 16px;">
+          <p style="margin:0;font-size:13px;color:#666;">商品名稱</p>
+          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#1a0dab;">${data.itemName}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;border-top:1px solid #fde68a;">
+          <p style="margin:0;font-size:13px;color:#666;">評分</p>
+          <p style="margin:4px 0 0;font-size:22px;">${stars} <span style="font-weight:bold;color:#d97706;">${data.rating}/5</span></p>
+        </td>
+      </tr>
+      ${data.comment ? `<tr>
+        <td style="padding:12px 16px;border-top:1px solid #fde68a;">
+          <p style="margin:0;font-size:13px;color:#666;">買家留言</p>
+          <p style="margin:4px 0 0;font-size:14px;color:#374151;font-style:italic;">"${data.comment}"</p>
+        </td>
+      </tr>` : ""}
+    </table>
+    <p style="color:#555;font-size:14px;">您的評分已更新。持續提供優質服務有助提升賣家評分，吸引更多買家！</p>
+    ${ctaButton("前往賣家中心", `${siteUrl}/seller`)}
+  `);
+  return { subject, html };
+}

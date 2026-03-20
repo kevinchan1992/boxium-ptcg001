@@ -15,7 +15,7 @@ import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDial
 import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
-
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 // ─── PayoutProofThumbnail ────────────────────────────────────────────────────
 function PayoutProofThumbnail({ url }: { url: string }) {
   const [open, setOpen] = useState(false);
@@ -326,10 +326,12 @@ function EarningsTab() {
     undefined, { enabled: !!me }
   );
   const isAdmin = me?.role === 'admin';
-  const { data: earningsData, isLoading } = trpc.marketplace.getSellerEarnings.useQuery(
+   const { data: earningsData, isLoading } = trpc.marketplace.getSellerEarnings.useQuery(
     undefined, { enabled: !!sellerProfile || isAdmin }
   );
-
+  const { data: salesStats } = trpc.marketplace.getSellerSalesStats.useQuery(
+    undefined, { enabled: !!sellerProfile || isAdmin }
+  );
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -338,9 +340,10 @@ function EarningsTab() {
     );
   }
 
-  const summary = earningsData?.summary ?? { totalRevenue: 0, totalFees: 0, totalEarnings: 0, completedCount: 0, pendingCount: 0 };
+   const summary = earningsData?.summary ?? { totalRevenue: 0, totalFees: 0, totalEarnings: 0, completedCount: 0, pendingCount: 0 };
   const orders = earningsData?.orders ?? [];
-
+  const monthlyData = (salesStats as any)?.monthlyData ?? [];
+  const pendingPayoutAmount = (salesStats as any)?.pendingPayoutAmount ?? 0;
   return (
     <div className="space-y-4">
       {/* Summary Cards */}
@@ -351,17 +354,48 @@ function EarningsTab() {
           <p className="text-xs text-gray-400 mt-1">待出貨/運送中 {summary.pendingCount} 筆</p>
         </div>
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
-          <p className="text-xs text-gray-500 mb-1">累計銷售額</p>
+          <p className="text-xs text-gray-500 mb-1">累計销售額</p>
           <p className="text-2xl font-bold" style={{ color: "#06038d" }}>HKD {summary.totalRevenue.toFixed(0)}</p>
           <p className="text-xs text-gray-400 mt-1">平台手續費 HKD {summary.totalFees.toFixed(0)}</p>
         </div>
-        <div className="col-span-2 bg-gradient-to-r from-[#06038d] to-[#0a06b5] rounded-2xl shadow-md p-4">
+         <div className="col-span-2 bg-gradient-to-r from-[#06038d] to-[#0a06b5] rounded-2xl shadow-md p-4">
           <p className="text-xs text-white/70 mb-1">累計淨收入</p>
           <p className="text-3xl font-bold text-white">HKD {summary.totalEarnings.toFixed(2)}</p>
           <p className="text-xs text-white/60 mt-1">扣除平台手續費後實際收款金額</p>
         </div>
+        {pendingPayoutAmount > 0 && (
+          <div className="col-span-2 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Wallet className="w-4 h-4 text-amber-600" />
+              <p className="text-xs text-amber-700 font-medium">待收款金額（進行中訂單）</p>
+            </div>
+            <p className="text-2xl font-bold text-amber-700">HKD {pendingPayoutAmount.toFixed(2)}</p>
+            <p className="text-xs text-amber-600 mt-1">訂單完成後轉入累計淨收入</p>
+          </div>
+        )}
       </div>
-
+      {/* Monthly Revenue Chart */}
+      {monthlyData.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
+          <p className="text-sm font-semibold text-gray-700 mb-3">近 6 個月收益趨勢</p>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={monthlyData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#6b7280' }} />
+              <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={(v: number) => `$${v}`} width={48} />
+              <Tooltip
+                formatter={(value: number) => [`HKD ${value.toFixed(0)}`, '淨收入']}
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
+              />
+              <Bar dataKey="revenue" fill="#06038d" radius={[4, 4, 0, 0]} name="淨收入" />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
+            <span>已完成訂單數：{monthlyData.reduce((s: number, m: any) => s + m.orders, 0)} 筆</span>
+            <span>本月：{monthlyData[monthlyData.length - 1]?.orders ?? 0} 筆</span>
+          </div>
+        </div>
+      )}
       {/* Orders List */}
       {!orders.length ? (
         <div className="text-center py-12 text-muted-foreground">

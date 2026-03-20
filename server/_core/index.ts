@@ -137,6 +137,13 @@ async function startServer() {
                 body: `訂單 ${order.orderNo} 買家已完成 Stripe 付款，請盡快安排出貨。`,
                 linkUrl: "/seller",
               }).catch(() => {});
+              // Send email to seller: new order paid via Stripe
+              try {
+                const { sendOrderEmail, buildOrderPaymentReceivedSellerEmail, getOrderEmailData } = await import('../emailService');
+                const sellerEmailData = await getOrderEmailData(order);
+                const { subject: ss, html: sh } = buildOrderPaymentReceivedSellerEmail({ orderNo: order.orderNo, itemName: sellerEmailData.itemName, priceHkd: sellerEmailData.priceHkd, listingId: order.listingId ?? undefined });
+                await sendOrderEmail({ userId: webhookSellerProf.userId, subject: ss, html: sh });
+              } catch (sellerEmailErr: any) { console.warn('[Webhook] Seller email failed:', sellerEmailErr.message); }
             }
           }
         }
