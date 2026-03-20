@@ -35,7 +35,7 @@ import {
   ChevronRight, Bell, CheckCheck, DollarSign, Info, AlertTriangle, Filter
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { searchSFStations, type SFStation } from "@/lib/sfStations";
+import { searchSFPointsAsync, type SFPoint } from "@/lib/sfStations";
 import { useTranslation } from "react-i18next";
 
 // ─── Brand tokens ──────────────────────────────────────────────
@@ -555,8 +555,13 @@ function ShippingAddressSection() {
   const [form, setForm] = useState({ label: "預設地址", addressType: "normal" as "normal" | "sf_station", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", isDefault: false });
   const [sfSearchQuery, setSfSearchQuery] = useState("");
   const [sfSearchRegion, setSfSearchRegion] = useState("");
+  const [sfPointType, setSfPointType] = useState<'all' | 'station' | 'locker'>('all');
   const [showSfDropdown, setShowSfDropdown] = useState(false);
-  const sfResults = form.addressType === "sf_station" && (sfSearchQuery || sfSearchRegion) ? searchSFStations(sfSearchQuery, sfSearchRegion || undefined) : [];
+  const [sfResults, setSfResults] = useState<SFPoint[]>([]);
+  useEffect(() => {
+    if (form.addressType !== 'sf_station') return;
+    searchSFPointsAsync(sfSearchQuery, sfSearchRegion || undefined, sfPointType === 'all' ? 'all' : sfPointType).then(setSfResults);
+  }, [sfSearchQuery, sfSearchRegion, sfPointType, form.addressType]);
   const addMutation = trpc.marketplace.addShippingAddress.useMutation({
     onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); setShowForm(false); resetForm(); toast.success("地址已新增"); },
     onError: (e) => toast.error(e.message),
@@ -573,7 +578,7 @@ function ShippingAddressSection() {
     onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); toast.success("預設地址已更新"); },
     onError: (e) => toast.error(e.message),
   });
-  const resetForm = () => { setForm({ label: "預設地址", addressType: "normal", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", isDefault: false }); setSfSearchQuery(""); setSfSearchRegion(""); setShowSfDropdown(false); };
+  const resetForm = () => { setForm({ label: "預設地址", addressType: "normal", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", isDefault: false }); setSfSearchQuery(""); setSfSearchRegion(""); setSfPointType('all'); setShowSfDropdown(false); setSfResults([]); };
   const handleEdit = (addr: any) => {
     setEditingId(addr.id);
     setForm({ label: addr.label, addressType: addr.addressType || "normal", recipientName: addr.recipientName, phone: addr.phone, address: addr.address || "", district: addr.district || "", region: addr.region || "香港", sfStationCode: addr.sfStationCode || "", sfStationName: addr.sfStationName || "", isDefault: addr.isDefault });
@@ -634,12 +639,20 @@ function ShippingAddressSection() {
             </div>
             {form.addressType === "sf_station" ? (
               <div className="space-y-3">
+                {/* Type filter */}
+                <div className="flex gap-1.5">
+                  {([['all', '全部'], ['station', '順豐站'], ['locker', '智能櫃']] as const).map(([val, label]) => (
+                    <button key={val} onClick={() => { setSfPointType(val); setShowSfDropdown(true); }}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${sfPointType === val ? 'text-white border-transparent' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
+                      style={sfPointType === val ? { background: BRAND_BLUE } : {}}>{label}</button>
+                  ))}
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-500">搜尋自提站</Label>
+                    <Label className="text-xs font-semibold text-gray-500">搜尋站點 / 智能櫃</Label>
                     <div className="relative">
                       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                      <Input value={sfSearchQuery} onChange={e => { setSfSearchQuery(e.target.value); setShowSfDropdown(true); }} placeholder="輸入站點名稱或地址" className="pl-8 text-sm" onFocus={() => setShowSfDropdown(true)} />
+                      <Input value={sfSearchQuery} onChange={e => { setSfSearchQuery(e.target.value); setShowSfDropdown(true); }} placeholder="輸入名稱、地址或編號" className="pl-8 text-sm" onFocus={() => setShowSfDropdown(true)} />
                     </div>
                   </div>
                   <div className="space-y-1.5">
@@ -652,23 +665,29 @@ function ShippingAddressSection() {
                 </div>
                 {showSfDropdown && sfResults.length > 0 && (
                   <div className="border rounded-lg overflow-hidden shadow-sm max-h-48 overflow-y-auto">
-                    {sfResults.slice(0, 10).map((station: SFStation) => (
-                      <button key={station.code} className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 transition-colors"
-                        onClick={() => { setForm(f => ({ ...f, sfStationCode: station.code, sfStationName: station.name })); setShowSfDropdown(false); setSfSearchQuery(""); }}>
-                        <p className="text-sm font-medium text-gray-900">{station.name}</p>
-                        <p className="text-xs text-gray-500">{station.address} · {station.region}</p>
+                    {sfResults.map((point: SFPoint) => (
+                      <button key={point.code} className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 transition-colors"
+                        onClick={() => { setForm(f => ({ ...f, sfStationCode: point.code, sfStationName: point.name })); setShowSfDropdown(false); setSfSearchQuery(""); }}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{ background: point.type === 'locker' ? '#f59e0b22' : '#06038D22', color: point.type === 'locker' ? '#b45309' : '#06038D' }}>{point.type === 'locker' ? '智能櫃' : '順豐站'}</span>
+                          <p className="text-sm font-medium text-gray-900">{point.name}</p>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{point.address} · <span className="font-mono">{point.code}</span></p>
                       </button>
                     ))}
                   </div>
                 )}
                 {form.sfStationCode && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-blue-800">已選擇自提站</p>
-                    <p className="text-sm font-medium text-blue-900 mt-0.5">{form.sfStationName}</p>
-                    <p className="text-xs text-blue-600 font-mono">{form.sfStationCode}</p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold text-blue-800">{form.sfStationCode.startsWith('H') ? '已選擇智能櫃' : '已選擇順豐站'}</p>
+                      <p className="text-sm font-medium text-blue-900 mt-0.5">{form.sfStationName}</p>
+                      <p className="text-xs text-blue-600 font-mono">{form.sfStationCode}</p>
+                    </div>
+                    <button onClick={() => setForm(f => ({ ...f, sfStationCode: '', sfStationName: '' }))} className="text-xs text-red-500 hover:text-red-700 font-medium shrink-0">✕ 清除</button>
                   </div>
                 )}
-                <p className="text-xs text-gray-400">順豐自提站資料來自順豐香港官方資料（2026-03）。如需查詢最新站點，請訪問順豐香港官網。</p>
+                <p className="text-xs text-gray-400">資料來自順豐香港官方（2026-03），共 125 個順豐站、729 個智能櫃。如需查詢最新站點，請訪問順豐香港官網。</p>
               </div>
             ) : (
               <div className="space-y-3">

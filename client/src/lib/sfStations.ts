@@ -150,3 +150,53 @@ export function searchSFStations(query: string, region?: string): SFStation[] {
     return matchRegion && matchQuery;
   }).slice(0, 30);
 }
+// Unified SF point type (station or locker)
+export interface SFPoint {
+  code: string;
+  name: string;
+  district: string;
+  address: string;
+  region: string;
+  type: 'station' | 'locker';
+}
+
+// Lazy-load lockers to avoid bundling all data upfront
+let _lockers: SFPoint[] | null = null;
+async function getLockers(): Promise<SFPoint[]> {
+  if (_lockers) return _lockers;
+  const mod = await import('./sfLockers');
+  _lockers = mod.SF_LOCKERS.map(l => ({ ...l, type: 'locker' as const }));
+  return _lockers;
+}
+
+// Synchronous search for stations only (used in existing code)
+export function searchSFPoints(query: string, region?: string, type?: 'station' | 'locker' | 'all'): SFPoint[] {
+  const q = query.toLowerCase().trim();
+  const stations: SFPoint[] = SF_STATIONS.map(s => ({ ...s, type: 'station' as const }));
+  if (type === 'locker') return [];
+  if (!q && !region) return stations.slice(0, 20);
+  return stations.filter(s => {
+    const matchRegion = !region || s.region === region;
+    const matchQuery = !q || s.code.toLowerCase().includes(q) || s.district.includes(q) || s.address.includes(q) || s.name.includes(q);
+    return matchRegion && matchQuery;
+  }).slice(0, 30);
+}
+
+// Async search for both stations and lockers
+export async function searchSFPointsAsync(query: string, region?: string, type?: 'station' | 'locker' | 'all'): Promise<SFPoint[]> {
+  const q = query.toLowerCase().trim();
+  const stations: SFPoint[] = SF_STATIONS.map(s => ({ ...s, type: 'station' as const }));
+  const lockers = await getLockers();
+
+  let pool: SFPoint[] = [];
+  if (!type || type === 'all') pool = [...stations, ...lockers];
+  else if (type === 'station') pool = stations;
+  else pool = lockers;
+
+  if (!q && !region) return pool.slice(0, 20);
+  return pool.filter(s => {
+    const matchRegion = !region || s.region === region;
+    const matchQuery = !q || s.code.toLowerCase().includes(q) || s.district.includes(q) || s.address.includes(q) || s.name.includes(q);
+    return matchRegion && matchQuery;
+  }).slice(0, 40);
+}

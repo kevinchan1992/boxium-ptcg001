@@ -5172,3 +5172,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] Profile 頁面加入 history.pushState 瀏覽器返回鍵支援
 - [x] 賣家儀表板「訂單管理」標籤頁加入待確認訂單數量 badge
 - [x] 17 項單元測試全部通過
+
+## 順豐站/智能櫃更新 (2026-03-20)
+- [x] 清除已選地址時同步清除順豐站資料（讓用戶重新輸入）
+- [x] 加入 729 個順豐智能櫃資料庫（sfLockers.ts）
+- [x] 付款 Dialog 和 Profile 收貨地址的順豐站/智能櫃搜尋選擇 UI 更新
+- [x] 支援同時搜尋順豐站（852xxx）和智能櫃（H852xxxP）
+- [x] 15 項單元測試全部通過

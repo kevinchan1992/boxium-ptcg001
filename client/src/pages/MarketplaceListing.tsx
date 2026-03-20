@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CONDITION_BADGE, CONDITION_FULL, CONDITION_TOOLTIP, CONDITION_GROUP_COLOR, CONDITION_GROUPS, type ConditionValue } from "@/lib/conditions";
+import { searchSFPointsAsync, type SFPoint } from "@/lib/sfStations";
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
@@ -467,11 +468,21 @@ export default function MarketplaceListing() {
   const [proofUrl, setProofUrl] = useState("");
   const [alipayStep, setAlipayStep] = useState<"qr" | "shipping" | "upload" | "done">("qr");
   const [alipayShippingForm, setAlipayShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "" });
+  const [alipaySfSearch, setAlipaySfSearch] = useState("");
+  const [alipaySfRegion, setAlipaySfRegion] = useState("");
+  const [alipaySfType, setAlipaySfType] = useState<'all' | 'station' | 'locker'>('all');
+  const [alipaySfResults, setAlipaySfResults] = useState<SFPoint[]>([]);
+  const [alipaySfDropdown, setAlipaySfDropdown] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [showShippingDialog, setShowShippingDialog] = useState(false);
   const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "" });
+  const [stripeSfSearch, setStripeSfSearch] = useState("");
+  const [stripeSfRegion, setStripeSfRegion] = useState("");
+  const [stripeSfType, setStripeSfType] = useState<'all' | 'station' | 'locker'>('all');
+  const [stripeSfResults, setStripeSfResults] = useState<SFPoint[]>([]);
+  const [stripeSfDropdown, setStripeSfDropdown] = useState(false);
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<number | null>(null);
   const [showOfferDialog, setShowOfferDialog] = useState(false);
   const [offerAmount, setOfferAmount] = useState("");
@@ -493,6 +504,16 @@ export default function MarketplaceListing() {
   );
 
   // 地址表單初始狀態為空白，由用戶自行選擇已儲存地址或手動填寫
+
+  // SF 站點搜尋
+  useEffect(() => {
+    if (alipayShippingForm.addressType !== 'sf_station') return;
+    searchSFPointsAsync(alipaySfSearch, alipaySfRegion || undefined, alipaySfType === 'all' ? 'all' : alipaySfType).then(setAlipaySfResults);
+  }, [alipaySfSearch, alipaySfRegion, alipaySfType, alipayShippingForm.addressType]);
+  useEffect(() => {
+    if (shippingForm.addressType !== 'sf_station') return;
+    searchSFPointsAsync(stripeSfSearch, stripeSfRegion || undefined, stripeSfType === 'all' ? 'all' : stripeSfType).then(setStripeSfResults);
+  }, [stripeSfSearch, stripeSfRegion, stripeSfType, shippingForm.addressType]);
 
   const { data: listing, isLoading } = trpc.marketplace.getListing.useQuery(
     { id },
@@ -1138,7 +1159,7 @@ export default function MarketplaceListing() {
                       <button
                         type="button"
                         className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
-                        onClick={() => setAlipayShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "" })}
+                        onClick={() => { setAlipayShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "" }); setAlipaySfSearch(""); setAlipaySfRegion(""); setAlipaySfType('all'); setAlipaySfResults([]); setAlipaySfDropdown(false); }}
                       >
                         <X className="w-3 h-3" /> 清除已選地址
                       </button>
@@ -1190,13 +1211,54 @@ export default function MarketplaceListing() {
                 </div>
               </div>
               {alipayShippingForm.addressType === "sf_station" ? (
-                <div className="flex items-start gap-2 p-3 bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl">
-                  <span className="text-[#06038D] text-lg">📦</span>
-                  <div>
-                    <p className="text-sm font-semibold text-[#06038D]">{alipayShippingForm.sfStationName || "順豐自提站"}</p>
-                    <p className="text-xs text-gray-500 font-mono">{alipayShippingForm.sfStationCode}</p>
-                    <p className="text-xs text-gray-400 mt-1">如需更改，請選擇其他地址或到個人資料頁面編輯</p>
+                <div className="space-y-2">
+                  {/* SF search */}
+                  <div className="flex gap-1.5 flex-wrap">
+                    {([['all', '全部'], ['station', '順豐站'], ['locker', '智能櫃']] as const).map(([val, label]) => (
+                      <button key={val} onClick={() => { setAlipaySfType(val); setAlipaySfDropdown(true); }}
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-medium border transition-all ${alipaySfType === val ? 'bg-[#06038D] text-white border-transparent' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>{label}</button>
+                    ))}
                   </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="relative">
+                      <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] pl-7" placeholder="搜尋名稱/地址/編號" value={alipaySfSearch} onChange={e => { setAlipaySfSearch(e.target.value); setAlipaySfDropdown(true); }} onFocus={() => setAlipaySfDropdown(true)} />
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+                    </div>
+                    <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={alipaySfRegion} onChange={e => { setAlipaySfRegion(e.target.value); setAlipaySfDropdown(true); }}>
+                      <option value="">全部地區</option>
+                      {["香港島", "九龍", "新界"].map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  {alipaySfDropdown && alipaySfResults.length > 0 && (
+                    <div className="border rounded-xl overflow-hidden shadow-sm max-h-40 overflow-y-auto">
+                      {alipaySfResults.map((pt: SFPoint) => (
+                        <button key={pt.code} className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b last:border-0 transition-colors"
+                          onClick={() => { setAlipayShippingForm(f => ({ ...f, sfStationCode: pt.code, sfStationName: pt.name })); setAlipaySfDropdown(false); setAlipaySfSearch(""); }}>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs px-1 py-0.5 rounded" style={{ background: pt.type === 'locker' ? '#fef3c722' : '#06038D22', color: pt.type === 'locker' ? '#b45309' : '#06038D' }}>{pt.type === 'locker' ? '智能櫃' : '順豐站'}</span>
+                            <span className="text-xs font-medium text-gray-900">{pt.name}</span>
+                          </div>
+                          <p className="text-xs text-gray-400 font-mono">{pt.code} · {pt.address}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {alipayShippingForm.sfStationCode && (
+                    <div className="flex items-start gap-2 p-3 bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl">
+                      <span className="text-[#06038D] text-lg">📦</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-[#06038D]">{alipayShippingForm.sfStationName || "順豐自提站"}</p>
+                        <p className="text-xs text-gray-500 font-mono">{alipayShippingForm.sfStationCode}</p>
+                      </div>
+                      <button onClick={() => setAlipayShippingForm(f => ({ ...f, sfStationCode: '', sfStationName: '' }))} className="text-xs text-red-500 hover:text-red-700 font-medium">✕ 清除</button>
+                    </div>
+                  )}
+                  {!alipayShippingForm.sfStationCode && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-gray-500">或手動輸入順豐站/智能櫃編號</Label>
+                      <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：852Z351 或 H852001P" value={alipayShippingForm.sfStationCode} onChange={e => setAlipayShippingForm(f => ({ ...f, sfStationCode: e.target.value }))} />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
@@ -1376,7 +1438,7 @@ export default function MarketplaceListing() {
                     <button
                       type="button"
                       className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
-                      onClick={() => { setSelectedSavedAddressId(null); setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "" }); }}
+                      onClick={() => { setSelectedSavedAddressId(null); setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "" }); setStripeSfSearch(""); setStripeSfRegion(""); setStripeSfType('all'); setStripeSfResults([]); setStripeSfDropdown(false); }}
                     >
                       <X className="w-3 h-3" /> 清除已選地址
                     </button>
@@ -1437,13 +1499,54 @@ export default function MarketplaceListing() {
               </>
             )}
             {shippingForm.addressType === "sf_station" && (
-              <div className="flex items-start gap-2 p-3 bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl">
-                <span className="text-[#06038D] text-lg">📦</span>
-                <div>
-                  <p className="text-sm font-semibold text-[#06038D]">{shippingForm.sfStationName || "順豐自提站"}</p>
-                  <p className="text-xs text-gray-500 font-mono">{shippingForm.sfStationCode}</p>
-                  <p className="text-xs text-gray-400 mt-1">如需更改，請到個人資料頁面編輯收貨地址</p>
+              <div className="space-y-2">
+                {/* SF search */}
+                <div className="flex gap-1.5 flex-wrap">
+                  {([['all', '全部'], ['station', '順豐站'], ['locker', '智能櫃']] as const).map(([val, label]) => (
+                    <button key={val} onClick={() => { setStripeSfType(val); setStripeSfDropdown(true); }}
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium border transition-all ${stripeSfType === val ? 'bg-[#06038D] text-white border-transparent' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>{label}</button>
+                  ))}
                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative">
+                    <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] pl-7" placeholder="搜尋名稱/地址/編號" value={stripeSfSearch} onChange={e => { setStripeSfSearch(e.target.value); setStripeSfDropdown(true); }} onFocus={() => setStripeSfDropdown(true)} />
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+                  </div>
+                  <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={stripeSfRegion} onChange={e => { setStripeSfRegion(e.target.value); setStripeSfDropdown(true); }}>
+                    <option value="">全部地區</option>
+                    {["香港島", "九龍", "新界"].map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                {stripeSfDropdown && stripeSfResults.length > 0 && (
+                  <div className="border rounded-xl overflow-hidden shadow-sm max-h-40 overflow-y-auto">
+                    {stripeSfResults.map((pt: SFPoint) => (
+                      <button key={pt.code} className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b last:border-0 transition-colors"
+                        onClick={() => { setShippingForm(f => ({ ...f, sfStationCode: pt.code, sfStationName: pt.name })); setStripeSfDropdown(false); setStripeSfSearch(""); }}>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs px-1 py-0.5 rounded" style={{ background: pt.type === 'locker' ? '#fef3c722' : '#06038D22', color: pt.type === 'locker' ? '#b45309' : '#06038D' }}>{pt.type === 'locker' ? '智能櫃' : '順豐站'}</span>
+                          <span className="text-xs font-medium text-gray-900">{pt.name}</span>
+                        </div>
+                        <p className="text-xs text-gray-400 font-mono">{pt.code} · {pt.address}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {shippingForm.sfStationCode && (
+                  <div className="flex items-start gap-2 p-3 bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl">
+                    <span className="text-[#06038D] text-lg">📦</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-[#06038D]">{shippingForm.sfStationName || "順豐自提站"}</p>
+                      <p className="text-xs text-gray-500 font-mono">{shippingForm.sfStationCode}</p>
+                    </div>
+                    <button onClick={() => setShippingForm(f => ({ ...f, sfStationCode: '', sfStationName: '' }))} className="text-xs text-red-500 hover:text-red-700 font-medium">✕ 清除</button>
+                  </div>
+                )}
+                {!shippingForm.sfStationCode && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-gray-500">或手動輸入順豐站/智能櫃編號</Label>
+                    <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：852Z351 或 H852001P" value={shippingForm.sfStationCode} onChange={e => setShippingForm(f => ({ ...f, sfStationCode: e.target.value }))} />
+                  </div>
+                )}
               </div>
             )}
             <p className="text-xs text-gray-400">* 必填欄位。收貨地址將提供給賣家安排寄送。</p>
