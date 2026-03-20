@@ -245,10 +245,10 @@ export default function Home() {
             {t("home.readyToStartDesc")}
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center px-2">
+          <div className="flex flex-row gap-3 justify-center px-2">
             <Link href="/research">
               <Button
-                className="px-6 md:px-8 py-2 md:py-3 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
+                className="px-4 sm:px-6 md:px-8 py-2 md:py-3 text-sm sm:text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
                 style={{ backgroundColor: "#06038d", color: "white" }}
               >
                 {t("home.startSearching")}
@@ -257,7 +257,7 @@ export default function Home() {
             <Link href="/trending">
               <Button
                 variant="outline"
-                className="px-6 md:px-8 py-2 md:py-3 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
+                className="px-4 sm:px-6 md:px-8 py-2 md:py-3 text-sm sm:text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
                 style={{ borderColor: "#06038d", color: "#06038d" }}
               >
                 {t("home.viewMarketTrends")}

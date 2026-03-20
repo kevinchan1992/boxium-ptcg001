@@ -5338,3 +5338,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 ## 🐛 Bug 修復
 
 - [x] 修復 Cart 頁面 React Hooks 順序錯誤（將條件式 hook 移到 early return 之前）
+
+---
+
+## 🔧 UI 修改
+
+- [x] 卡牧追蹤 Tab 加入排序（最新追蹤、最早追蹤、價格↑↓）
+- [x] 主頁 Footer LOGO 放大一倍（h-8 → h-16）
+- [x] 手機版/平板「開始搜尋卡牧」和「查看市場趨勢」按鈕改為永遠並排一行（flex-row）

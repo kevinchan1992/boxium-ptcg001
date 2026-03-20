@@ -24,7 +24,7 @@ export default function Footer() {
               <img
                 src="/boxium-logo.png"
                 alt="BOXIUM Logo"
-                className="h-8 mb-3 cursor-pointer hover:opacity-90 transition-opacity"
+                className="h-16 mb-3 cursor-pointer hover:opacity-90 transition-opacity"
               />
             </Link>
             <p className="text-white/70 text-xs leading-relaxed">

@@ -498,10 +498,21 @@ function WatchlistSection() {
 
   // Sort state for listings
   const [sortBy, setSortBy] = useState<"time_desc" | "time_asc" | "price_asc" | "price_desc">("time_desc");
+  // Sort state for card watchlist
+  const [cardSortBy, setCardSortBy] = useState<"time_desc" | "time_asc" | "price_asc" | "price_desc">("time_desc");
 
   const isLoading = watchlistLoading || wishlistLoading;
   const cardCount = watchlist?.length ?? 0;
   const listingCount = wishlist?.length ?? 0;
+
+  // Sorted card watchlist
+  const sortedWatchlist = watchlist ? [...(watchlist as any[])].sort((a, b) => {
+    if (cardSortBy === "time_desc") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (cardSortBy === "time_asc") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (cardSortBy === "price_asc") return (a.latestPrice ?? 0) - (b.latestPrice ?? 0);
+    if (cardSortBy === "price_desc") return (b.latestPrice ?? 0) - (a.latestPrice ?? 0);
+    return 0;
+  }) : [];
 
   // Sorted wishlist
   const sortedWishlist = wishlist ? [...(wishlist as any[])].sort((a, b) => {
@@ -564,7 +575,32 @@ function WatchlistSection() {
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-gray-100">
+          <div className="space-y-3">
+            {/* Card sort controls */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-500 font-medium">排序：</span>
+              <div className="flex gap-1 flex-wrap">
+                {([
+                  { value: "time_desc" as const, label: "最新追蹤" },
+                  { value: "time_asc" as const, label: "最早追蹤" },
+                  { value: "price_asc" as const, label: "價格↑" },
+                  { value: "price_desc" as const, label: "價格↓" },
+                ]).map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setCardSortBy(opt.value)}
+                    className="text-xs px-2.5 py-1 rounded-full font-semibold transition-all"
+                    style={cardSortBy === opt.value
+                      ? { background: BRAND_BLUE, color: "white" }
+                      : { background: `${BRAND_BLUE}10`, color: BRAND_BLUE }
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="overflow-x-auto rounded-xl border border-gray-100">
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-100" style={{ background: `${BRAND_BLUE}08` }}>
@@ -576,7 +612,7 @@ function WatchlistSection() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {watchlist!.map((item: any) => (
+                {sortedWatchlist.map((item: any) => (
                   <TableRow key={item.id} className="border-gray-100 hover:bg-gray-50 transition-colors">
                     <TableCell className="font-medium">
                       <a href={`/card/${item.card.id}`} className="font-semibold transition-colors hover:underline" style={{ color: BRAND_BLUE }}>
@@ -601,6 +637,7 @@ function WatchlistSection() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </div>
         )
       )}
