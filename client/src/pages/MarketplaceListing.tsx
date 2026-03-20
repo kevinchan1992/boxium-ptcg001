@@ -699,7 +699,7 @@ export default function MarketplaceListing() {
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center gap-4">
             <Link href="/">
-              <img src="/boxium-logo.png" alt="BOXIUM" className="h-7 cursor-pointer flex-shrink-0" />
+              <img src="/boxium-logo.png" alt="BOXIUM" className="h-14 cursor-pointer flex-shrink-0 p-1" />
             </Link>
           <nav className="flex items-center gap-1.5 text-xs text-white/60 flex-1">
             <Link href="/marketplace">
@@ -968,16 +968,34 @@ export default function MarketplaceListing() {
                     </div>
                     )
                   ) : (
+                    !me ? (
+                      <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="w-full">
+                              <Button
+                                variant="outline"
+                                className="w-full h-11 text-sm border-[#06038D]/40 text-[#06038D]/50 rounded-xl font-semibold bg-white cursor-not-allowed"
+                                disabled
+                              >
+                                <Tag className="w-4 h-4 mr-2" />出價洽議
+                              </Button>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="bg-[#06038D] text-white text-xs px-3 py-2 rounded-lg">
+                            請先登入才能出價
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
                     <Button
                       variant="outline"
                       className="w-full h-11 text-sm border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5 rounded-xl font-semibold bg-white"
-                      onClick={() => {
-                        if (!me) { window.location.href = "/login"; return; }
-                        setShowOfferDialog(true);
-                      }}
+                      onClick={() => setShowOfferDialog(true)}
                     >
                       <Tag className="w-4 h-4 mr-2" />出價洽議
                     </Button>
+                    )
                   )
                 )}
               </div>

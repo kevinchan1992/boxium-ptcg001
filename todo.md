@@ -5300,3 +5300,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 商品詳情頁（/marketplace/:id）LOGO 改為藍色圖片並置於最左上角
 - [x] Profile 頁面 LOGO 改為藍色圖片（非白色）
 - [ ] 保存 checkpoint
+
+---
+
+## 🚀 三項 UX 優化
+
+- [x] 出價洽議按鈕未登入時加入 tooltip 提示「請先登入才能出價」
+- [x] 購物車空狀態加入推薦商品列表（最新上架商品）
+- [x] 各頁面 LOGO 放大一倍（h-8 → h-16）並加入 p-1 padding

@@ -797,7 +797,7 @@ export default function OrderDetail() {
           {/* LOGO row */}
           <div className="mb-5">
             <Link href="/">
-              <img src="/boxium-logo.png" alt="BOXIUM" className="h-8 cursor-pointer" />
+              <img src="/boxium-logo.png" alt="BOXIUM" className="h-16 cursor-pointer p-1" />
             </Link>
           </div>
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6">

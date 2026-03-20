@@ -175,6 +175,12 @@ export default function Cart() {
 
   const isEmpty = !cartItems || cartItems.length === 0;
 
+  // Fetch recent listings for empty cart state
+  const { data: recentListings } = trpc.marketplace.getListings.useQuery(
+    { page: 1, pageSize: 6, sortBy: "newest" },
+    { enabled: isEmpty, staleTime: 60000 }
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ── Hero Banner ── */}
@@ -184,7 +190,7 @@ export default function Cart() {
           {/* Top row: LOGO + back button */}
           <div className="flex items-center justify-between mb-4">
             <Link href="/">
-              <img src="/boxium-logo.png" alt="BOXIUM" className="h-8 cursor-pointer" />
+              <img src="/boxium-logo.png" alt="BOXIUM" className="h-16 cursor-pointer p-1" />
             </Link>
             <button onClick={() => setLocation("/marketplace")} className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm">
               <ArrowLeft className="w-4 h-4" />
@@ -204,15 +210,48 @@ export default function Cart() {
       <div className="max-w-5xl mx-auto px-4 py-6">
 
         {isEmpty ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <ShoppingCart className="w-20 h-20 text-gray-200" />
+          <div className="flex flex-col items-center py-10 gap-4">
+            <ShoppingCart className="w-16 h-16 text-gray-200" />
             <h2 className="text-xl font-semibold text-gray-500">購物車是空的</h2>
             <p className="text-gray-400 text-sm">去市集逛逛，找到喜歡的卡牌加入購物車吧！</p>
             <Link href="/marketplace">
-              <Button className="bg-[#06038D] text-white hover:bg-[#06038D]/90 mt-2">
+              <Button className="bg-[#06038D] text-white hover:bg-[#06038D]/90">
                 前往市集
               </Button>
             </Link>
+            {/* Recommended listings */}
+            {recentListings && recentListings.listings.length > 0 && (
+              <div className="w-full mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-bold text-gray-700">最新上架</h3>
+                  <Link href="/marketplace">
+                    <span className="text-sm text-[#06038D] hover:underline cursor-pointer">查看全部 →</span>
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {recentListings.listings.map((item) => {
+                    const imgs: string[] | null = (() => { try { return item.images ? JSON.parse(item.images) : null; } catch { return null; } })();
+                    return (
+                    <Link key={item.id} href={`/marketplace/${item.id}`}>
+                      <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
+                        <div className="aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
+                          {imgs?.[0] ? (
+                            <img src={imgs[0]} alt={item.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <Package className="w-8 h-8 text-gray-300" />
+                          )}
+                        </div>
+                        <div className="p-2">
+                          <p className="text-xs text-gray-600 line-clamp-2 leading-tight mb-1">{item.title}</p>
+                          <p className="text-sm font-bold text-[#06038D]">HKD {parseFloat(item.priceHkd as string).toFixed(0)}</p>
+                        </div>
+                      </div>
+                    </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
