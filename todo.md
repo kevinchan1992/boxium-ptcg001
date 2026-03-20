@@ -5388,3 +5388,7 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 廣告 CTA 按鈕手機版縮小（px-3 py-1.5 text-xs）
 - [x] handleSearch 提交後加入 blur() 收起鍵盤
 - [x] 廣告輪播手機版加入 swipe 指示器文字提示
+
+## 🔵 廣告導航點樣式修改
+
+- [x] 廣告輪播導航點改為小圓點（參考圖二 tcgbid.hk 樣式）

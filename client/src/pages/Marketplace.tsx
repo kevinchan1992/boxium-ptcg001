@@ -806,7 +806,7 @@ export default function Marketplace() {
                   <button
                     key={i}
                     onClick={() => setBannerIdx(i)}
-                    className={`h-1 rounded-full transition-all duration-300 ${i === bannerIdx ? "bg-white w-3" : "bg-white/40 w-1"}`}
+                    className={`rounded-full transition-all duration-300 ${i === bannerIdx ? "bg-white w-2 h-2" : "bg-white/40 w-1.5 h-1.5"}`}
                   />
                 ))}
               </div>
