@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CONDITION_BADGE, CONDITION_FULL, CONDITION_TOOLTIP, CONDITION_GROUP_COLOR, CONDITION_GROUPS, type ConditionValue } from "@/lib/conditions";
-import { searchSFPointsAsync, type SFPoint } from "@/lib/sfStations";
+import { searchSFPointsAsync, validateSFCode, type SFPoint } from "@/lib/sfStations";
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
@@ -1256,7 +1256,28 @@ export default function MarketplaceListing() {
                   {!alipayShippingForm.sfStationCode && (
                     <div className="space-y-1.5">
                       <Label className="text-xs text-gray-500">或手動輸入順豐站/智能櫃編號</Label>
-                      <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：852Z351 或 H852001P" value={alipayShippingForm.sfStationCode} onChange={e => setAlipayShippingForm(f => ({ ...f, sfStationCode: e.target.value }))} />
+                      <input
+                        className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] ${
+                          alipayShippingForm.sfStationCode && !validateSFCode(alipayShippingForm.sfStationCode).valid
+                            ? "border-red-400 bg-red-50"
+                            : "border-gray-200"
+                        }`}
+                        placeholder="例：852Z351 或 H852001P"
+                        value={alipayShippingForm.sfStationCode}
+                        onChange={e => setAlipayShippingForm(f => ({ ...f, sfStationCode: e.target.value }))}
+                      />
+                      {alipayShippingForm.sfStationCode && !validateSFCode(alipayShippingForm.sfStationCode).valid && (
+                        <p className="text-xs text-red-500 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {validateSFCode(alipayShippingForm.sfStationCode).message}
+                        </p>
+                      )}
+                      {alipayShippingForm.sfStationCode && validateSFCode(alipayShippingForm.sfStationCode).valid && (
+                        <p className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          {validateSFCode(alipayShippingForm.sfStationCode).type === 'locker' ? '✓ 有效智能櫃編號' : '✓ 有效順豐站編號'}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1288,7 +1309,7 @@ export default function MarketplaceListing() {
                 <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("qr")}>返回</Button>
                 <Button
                   className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white"
-                  disabled={!alipayShippingForm.name.trim() || !alipayShippingForm.phone.trim() || (alipayShippingForm.addressType !== "sf_station" && !alipayShippingForm.address.trim())}
+                  disabled={!alipayShippingForm.name.trim() || !alipayShippingForm.phone.trim() || (alipayShippingForm.addressType !== "sf_station" && !alipayShippingForm.address.trim()) || (alipayShippingForm.addressType === "sf_station" && alipayShippingForm.sfStationCode.trim() !== "" && !validateSFCode(alipayShippingForm.sfStationCode).valid)}
                   onClick={() => setAlipayStep("upload")}
                 >
                   下一步：上傳截圖
@@ -1544,7 +1565,28 @@ export default function MarketplaceListing() {
                 {!shippingForm.sfStationCode && (
                   <div className="space-y-1.5">
                     <Label className="text-xs text-gray-500">或手動輸入順豐站/智能櫃編號</Label>
-                    <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：852Z351 或 H852001P" value={shippingForm.sfStationCode} onChange={e => setShippingForm(f => ({ ...f, sfStationCode: e.target.value }))} />
+                    <input
+                      className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] ${
+                        shippingForm.sfStationCode && !validateSFCode(shippingForm.sfStationCode).valid
+                          ? "border-red-400 bg-red-50"
+                          : "border-gray-200"
+                      }`}
+                      placeholder="例：852Z351 或 H852001P"
+                      value={shippingForm.sfStationCode}
+                      onChange={e => setShippingForm(f => ({ ...f, sfStationCode: e.target.value }))}
+                    />
+                    {shippingForm.sfStationCode && !validateSFCode(shippingForm.sfStationCode).valid && (
+                      <p className="text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validateSFCode(shippingForm.sfStationCode).message}
+                      </p>
+                    )}
+                    {shippingForm.sfStationCode && validateSFCode(shippingForm.sfStationCode).valid && (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        {validateSFCode(shippingForm.sfStationCode).type === 'locker' ? '✓ 有效智能櫃編號' : '✓ 有效順豐站編號'}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -1555,7 +1597,7 @@ export default function MarketplaceListing() {
             <Button variant="outline" className="flex-1 border-gray-200 text-[#06038D]" onClick={() => setShowShippingDialog(false)}>取消</Button>
             <Button
               className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
-              disabled={!shippingForm.name.trim() || !shippingForm.phone.trim() || (shippingForm.addressType === "normal" && !shippingForm.address.trim()) || (shippingForm.addressType === "sf_station" && !shippingForm.sfStationCode.trim()) || createStripeOrderMutation.isPending}
+              disabled={!shippingForm.name.trim() || !shippingForm.phone.trim() || (shippingForm.addressType === "normal" && !shippingForm.address.trim()) || (shippingForm.addressType === "sf_station" && (!shippingForm.sfStationCode.trim() || !validateSFCode(shippingForm.sfStationCode).valid)) || createStripeOrderMutation.isPending}
               onClick={() => {
                 setShowShippingDialog(false);
                 createStripeOrderMutation.mutate({

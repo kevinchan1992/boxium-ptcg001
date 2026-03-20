@@ -1053,6 +1053,24 @@ export default function OrderDetail() {
                   {shippingAddr.region ? `，${shippingAddr.region}` : ""}
                 </span>
               </div>
+              {shippingAddr.sfStationCode && (
+                <div className="flex items-center gap-2.5">
+                  <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      shippingAddr.sfStationCode.startsWith('H')
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {shippingAddr.sfStationCode.startsWith('H') ? '順豐智能櫃' : '順豐站'}
+                    </span>
+                    <span className="font-mono text-gray-700">{shippingAddr.sfStationCode}</span>
+                    {shippingAddr.sfStationName && (
+                      <span className="text-gray-500 text-xs">· {shippingAddr.sfStationName}</span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

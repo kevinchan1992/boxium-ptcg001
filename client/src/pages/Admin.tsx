@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock, Activity, History } from "lucide-react";
+import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock, Activity, History, MapPin } from "lucide-react";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -9,6 +9,7 @@ import { AdminCacheManagement } from "@/components/AdminCacheManagement";
 import { AdminScheduleManagement } from "@/components/AdminScheduleManagement";
 import { AdminScraperPerformance } from "@/components/AdminScraperPerformance";
 import { AdminTaskHistory } from "@/components/AdminTaskHistory";
+import { AdminSFStationUpdate } from "@/components/AdminSFStationUpdate";
 
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -39,6 +40,7 @@ export default function Admin() {
             <BrandTabsTrigger value="schedule" icon={<Clock className="w-4 h-4" />} label="排程管理">排程管理</BrandTabsTrigger>
             <BrandTabsTrigger value="performance" icon={<Activity className="w-4 h-4" />} label="性能監控">性能監控</BrandTabsTrigger>
             <BrandTabsTrigger value="taskhistory" icon={<History className="w-4 h-4" />} label="任務歷史">任務歷史</BrandTabsTrigger>
+            <BrandTabsTrigger value="sfstations" icon={<MapPin className="w-4 h-4" />} label="順豐站管理">順豐站管理</BrandTabsTrigger>
           </BrandTabsList>
 
           <BrandTabsContent value="dashboard"><AdminDashboard /></BrandTabsContent>
@@ -50,6 +52,7 @@ export default function Admin() {
           <BrandTabsContent value="schedule"><AdminScheduleManagement /></BrandTabsContent>
           <BrandTabsContent value="performance"><AdminScraperPerformance /></BrandTabsContent>
           <BrandTabsContent value="taskhistory"><AdminTaskHistory /></BrandTabsContent>
+          <BrandTabsContent value="sfstations"><AdminSFStationUpdate /></BrandTabsContent>
         </BrandTabs>
 
         {/* Marketplace shortcut */}

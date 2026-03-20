@@ -35,7 +35,7 @@ import {
   ChevronRight, Bell, CheckCheck, DollarSign, Info, AlertTriangle, Filter
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { searchSFPointsAsync, type SFPoint } from "@/lib/sfStations";
+import { searchSFPointsAsync, validateSFCode, type SFPoint } from "@/lib/sfStations";
 import { useTranslation } from "react-i18next";
 
 // ─── Brand tokens ──────────────────────────────────────────────
@@ -589,6 +589,8 @@ function ShippingAddressSection() {
     if (!form.phone.trim()) { toast.error("請輸入聯繫電話"); return; }
     if (form.addressType === "sf_station") {
       if (!form.sfStationCode.trim()) { toast.error("請選擇順豐自提站"); return; }
+      const sfValidation = validateSFCode(form.sfStationCode);
+      if (!sfValidation.valid) { toast.error(sfValidation.message || "順豐站點編號格式不正確"); return; }
     } else {
       if (!form.address.trim()) { toast.error("請輸入地址"); return; }
     }
@@ -685,6 +687,16 @@ function ShippingAddressSection() {
                       <p className="text-xs text-blue-600 font-mono">{form.sfStationCode}</p>
                     </div>
                     <button onClick={() => setForm(f => ({ ...f, sfStationCode: '', sfStationName: '' }))} className="text-xs text-red-500 hover:text-red-700 font-medium shrink-0">✕ 清除</button>
+                  </div>
+                )}
+                {!form.sfStationCode && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-gray-500">或直接輸入站點編號</Label>
+                    <Input
+                      placeholder="例：852Z351 或 H852001P"
+                      className={`text-sm font-mono ${form.sfStationCode && !validateSFCode(form.sfStationCode).valid ? "border-red-400 bg-red-50" : ""}`}
+                      onChange={e => setForm(f => ({ ...f, sfStationCode: e.target.value, sfStationName: "" }))}
+                    />
                   </div>
                 )}
                 <p className="text-xs text-gray-400">資料來自順豐香港官方（2026-03），共 125 個順豐站、729 個智能櫃。如需查詢最新站點，請訪問順豐香港官網。</p>

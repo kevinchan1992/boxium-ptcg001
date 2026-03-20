@@ -200,3 +200,27 @@ export async function searchSFPointsAsync(query: string, region?: string, type?:
     return matchRegion && matchQuery;
   }).slice(0, 40);
 }
+
+// SF Express station/locker code format validation
+// Station format: 852XXX (e.g., 852FTL, 852Z351)
+// Locker format: H852XXXXP (e.g., H852001P, H852123P)
+export function validateSFCode(code: string): { valid: boolean; type: 'station' | 'locker' | null; message?: string } {
+  const trimmed = code.trim().toUpperCase();
+  if (!trimmed) return { valid: false, type: null, message: "請輸入順豐站/智能櫃編號" };
+  // Locker: starts with H, contains 852, ends with P
+  if (trimmed.startsWith('H')) {
+    // H852XXXXP format: H + 852 + 3-6 digits + P
+    if (/^H852\d{3,6}P$/.test(trimmed)) {
+      return { valid: true, type: 'locker' };
+    }
+    return { valid: false, type: 'locker', message: `智能櫃編號格式不正確（應為 H852XXXXP，例：H852001P）` };
+  }
+  // Station: starts with 852, followed by 2-5 alphanumeric characters
+  if (trimmed.startsWith('852')) {
+    if (/^852[A-Z0-9]{2,5}$/.test(trimmed)) {
+      return { valid: true, type: 'station' };
+    }
+    return { valid: false, type: 'station', message: `順豐站編號格式不正確（應為 852XXX，例：852FTL）` };
+  }
+  return { valid: false, type: null, message: `無效的順豐站點編號（應以 852 或 H852 開頭）` };
+}
