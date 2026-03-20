@@ -3435,7 +3435,24 @@ All three checks must pass for verified to be true. Respond with JSON only match
         .innerJoin(marketplaceListings, eq(cartItems.listingId, marketplaceListings.id))
         .where(eq(cartItems.userId, ctx.user.id))
         .orderBy(desc(cartItems.addedAt));
-      return rows;
+      // For each cart item, check if buyer has an accepted offer
+      const rowsWithOffers = await Promise.all(rows.map(async (row) => {
+        const acceptedOffer = await db
+          .select({ id: offers.id, offerPriceHkd: offers.offerPriceHkd })
+          .from(offers)
+          .where(and(
+            eq(offers.listingId, row.listingId),
+            eq(offers.buyerId, ctx.user.id),
+            eq(offers.status, 'accepted')
+          ))
+          .limit(1);
+        return {
+          ...row,
+          acceptedOfferId: acceptedOffer[0]?.id ?? null,
+          acceptedOfferPrice: acceptedOffer[0]?.offerPriceHkd ?? null,
+        };
+      }));
+      return rowsWithOffers;
     }),
 
   getCartCount: protectedProcedure

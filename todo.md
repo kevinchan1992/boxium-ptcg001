@@ -5256,3 +5256,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] createStripeOrder 先查詢同一買家同一商品的 pending_payment 訂單，若存在則重用
 - [ ] createAlipayOrder 先查詢同一買家同一商品的 pending_payment 訂單，若存在則重用
 - [ ] 撰寫重複訂單防護測試
+
+## 購物車出價付款 + 訂單頁重用 Session + 管理後台取消篩選器 (2026-03-20)
+- [x] 購物車頁面識別已接受出價商品並以出價金額結算
+- [x] 訂單頁「前往付款」按鈕重用現有 Stripe session（不建立新訂單）
+- [x] 管理後台 /admin/marketplace 加入「已取消」訂單篩選器
+- [x] 撰寫相關測試

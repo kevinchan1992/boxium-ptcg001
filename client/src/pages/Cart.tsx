@@ -127,7 +127,11 @@ export default function Cart() {
   );
 
   const activeSubtotal = useMemo(
-    () => activeItems.reduce((sum, item) => sum + Number(item.priceHkd), 0),
+    () => activeItems.reduce((sum, item) => {
+      // Use accepted offer price if available, otherwise use listing price
+      const effectivePrice = item.acceptedOfferPrice ? Number(item.acceptedOfferPrice) : Number(item.priceHkd);
+      return sum + effectivePrice;
+    }, 0),
     [activeItems]
   );
 
@@ -411,6 +415,8 @@ interface CheckoutDialogProps {
     title: string;
     priceHkd: string | number;
     sellerType: string | null;
+    acceptedOfferId?: number | null;
+    acceptedOfferPrice?: string | number | null;
   }>;
   activeSubtotal: number;
   sfDistricts: string[];
@@ -497,7 +503,11 @@ function CheckoutDialog({
           // For Stripe: open first item's checkout URL, create orders for rest
           if (done === 0) {
             await new Promise<void>((resolve, reject) => {
-              createStripeOrderMutation.mutate({ listingId: item.listingId, shippingAddress }, {
+              createStripeOrderMutation.mutate({
+                listingId: item.listingId,
+                shippingAddress,
+                ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
+              }, {
                 onSuccess: () => resolve(),
                 onError: (e) => reject(e),
               });
@@ -505,7 +515,12 @@ function CheckoutDialog({
           } else {
             // For remaining items, create alipay orders (seller will contact for payment)
             await new Promise<void>((resolve, reject) => {
-              createAlipayOrderMutation.mutate({ listingId: item.listingId, proofImageUrl: "", shippingAddress }, {
+              createAlipayOrderMutation.mutate({
+                listingId: item.listingId,
+                proofImageUrl: "",
+                shippingAddress,
+                ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
+              }, {
                 onSuccess: () => resolve(),
                 onError: (e) => reject(e),
               });
@@ -513,7 +528,12 @@ function CheckoutDialog({
           }
         } else {
           await new Promise<void>((resolve, reject) => {
-            createAlipayOrderMutation.mutate({ listingId: item.listingId, proofImageUrl: "", shippingAddress }, {
+            createAlipayOrderMutation.mutate({
+              listingId: item.listingId,
+              proofImageUrl: "",
+              shippingAddress,
+              ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
+            }, {
               onSuccess: () => resolve(),
               onError: (e) => reject(e),
             });
@@ -697,8 +717,22 @@ function CheckoutDialog({
             <div className="font-semibold text-gray-700 mb-2">訂單摘要</div>
             {activeItems.map((item) => (
               <div key={item.listingId} className="flex justify-between text-gray-600">
-                <span className="truncate flex-1 mr-2">{item.title}</span>
-                <span className="flex-shrink-0">HK${Number(item.priceHkd).toFixed(0)}</span>
+                <span className="truncate flex-1 mr-2">
+                  {item.title}
+                  {item.acceptedOfferId && (
+                    <span className="ml-1 text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded font-medium">出價價</span>
+                  )}
+                </span>
+                <span className="flex-shrink-0">
+                  {item.acceptedOfferPrice ? (
+                    <span className="flex items-center gap-1">
+                      <span className="line-through text-gray-400 text-xs">HK${Number(item.priceHkd).toFixed(0)}</span>
+                      <span className="text-green-700 font-semibold">HK${Number(item.acceptedOfferPrice).toFixed(0)}</span>
+                    </span>
+                  ) : (
+                    `HK$${Number(item.priceHkd).toFixed(0)}`
+                  )}
+                </span>
               </div>
             ))}
             <Separator className="my-1" />

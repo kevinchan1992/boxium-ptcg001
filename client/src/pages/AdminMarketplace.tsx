@@ -1551,7 +1551,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       )}
       {/* Row 1: Status filters + seller type filter */}
       <div className="flex items-center gap-2 flex-wrap">
-        {["all", "pending_payment", "payment_received", "processing", "shipped", "completed", "disputed"].map(s => (
+        {["all", "pending_payment", "payment_received", "processing", "shipped", "completed", "cancelled", "disputed"].map(s => (
           <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
             onClick={() => { setStatusFilter(s); setPage(1); }}
             className={statusFilter === s ? "bg-[#06038d] text-white" : "text-gray-700 bg-white"}>
