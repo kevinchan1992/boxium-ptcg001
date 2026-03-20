@@ -635,8 +635,8 @@ export default function MarketplaceListing() {
       setProofUrl(url);
       toast.success("截圖已上傳，正在 AI 驗證金額...");
       setIsVerifying(true);
-      const price = parseFloat((listing as any)?.priceHkd ?? "0");
-      verifyPaymentProofMutation.mutate({ proofImageUrl: url, expectedAmountHkd: price });
+      const verifyPrice = acceptedOffer ? parseFloat(acceptedOffer.offerPriceHkd as string) : parseFloat((listing as any)?.priceHkd ?? "0");
+      verifyPaymentProofMutation.mutate({ proofImageUrl: url, expectedAmountHkd: verifyPrice });
     } catch { toast.error("截圖上傳失敗，請重試"); }
     finally { setIsUploading(false); }
   };
@@ -673,6 +673,10 @@ export default function MarketplaceListing() {
 
   const price = parseFloat(listing.priceHkd as string);
   const isAvailable = listing.status === "active" && listing.quantity > 0;
+  // If buyer has an accepted offer, use offer price for payment buttons
+  const acceptedOffer = myPendingOffer?.status === "accepted" ? myPendingOffer : null;
+  const effectivePrice = acceptedOffer ? parseFloat(acceptedOffer.offerPriceHkd as string) : price;
+  const isLocked = !!(listing as any).isLocked;
   const rawImages = listing.images;
   const images: string[] | null = (() => {
     if (!rawImages) return null;
@@ -893,60 +897,70 @@ export default function MarketplaceListing() {
                     <span>請先<Link href="/login" className="font-semibold underline mx-1">登入</Link>才能購買</span>
                   </div>
                 )}
-                {price < 4.00 && (
+                {/* Listing locked notice - another user is paying */}
+                {isLocked && !acceptedOffer && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-sm text-orange-800 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>此商品目前有買家正在付款，請稍後再試。</span>
+                  </div>
+                )}
+                {/* Accepted offer banner */}
+                {acceptedOffer && (
+                  <div className="w-full rounded-xl border-2 border-green-400 bg-green-50 p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-green-700 font-semibold leading-none">賣家已接受出價！請使用下方按鈕付款</p>
+                        <p className="font-bold text-green-800 text-base leading-tight">出價金額：HKD {effectivePrice.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {effectivePrice < 4.00 && !acceptedOffer && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>此商品金額低於 Stripe 最低付款限額（HKD 4.00），請使用支付寶 HK 付款。</span>
                   </div>
                 )}
-                {/* Primary buy button */}
-                <Button
-                  className="w-full bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold h-12 text-base rounded-xl shadow-sm disabled:opacity-40"
-                  disabled={!me || createStripeOrderMutation.isPending || price < 4.00}
-                  onClick={() => { if (!me) return; setShowShippingDialog(true); }}
-                >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  {createStripeOrderMutation.isPending ? "處理中..." : "立即購買"}
-                </Button>
-                {/* Add to Cart button */}
-                <AddToCartButton listingId={listing.id} isLoggedIn={!!me} />
-                {/* Credit card */}
+                {/* Primary buy button - hide when offer accepted */}
+                {!acceptedOffer && (
+                  <Button
+                    className="w-full bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold h-12 text-base rounded-xl shadow-sm disabled:opacity-40"
+                    disabled={!me || createStripeOrderMutation.isPending || price < 4.00 || isLocked}
+                    onClick={() => { if (!me) return; setShowShippingDialog(true); }}
+                  >
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    {createStripeOrderMutation.isPending ? "處理中..." : "立即購買"}
+                  </Button>
+                )}
+                {/* Add to Cart button - hide when offer accepted */}
+                {!acceptedOffer && <AddToCartButton listingId={listing.id} isLoggedIn={!!me} />}
+                {/* Credit card - shows effective price (offer price if accepted) */}
                 <Button
                   className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white h-11 text-sm rounded-xl disabled:opacity-40"
-                  disabled={!me || createStripeOrderMutation.isPending || price < 4.00}
+                  disabled={!me || createStripeOrderMutation.isPending || effectivePrice < 4.00 || (isLocked && !acceptedOffer)}
                   onClick={() => { if (!me) return; setShowShippingDialog(true); }}
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  信用卡 / Apple Pay 付款
+                  信用卡 / Apple Pay 付款{acceptedOffer ? ` (HKD ${effectivePrice.toFixed(2)})` : ""}
                 </Button>
-                {/* Alipay */}
+                {/* Alipay - shows effective price (offer price if accepted) */}
                 <Button
                   variant="outline"
                   className="w-full h-11 text-sm border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/5 rounded-xl"
-                  disabled={!me}
+                  disabled={!me || (isLocked && !acceptedOffer)}
                   onClick={() => { setAlipayStep("qr"); setProofUrl(""); setVerifyResult(null); setShowAlipay(true); }}
                 >
-                  <Smartphone className="w-4 h-4 mr-2" />支付寶 HK 付款
+                  <Smartphone className="w-4 h-4 mr-2" />支付寶 HK 付款{acceptedOffer ? ` (HKD ${effectivePrice.toFixed(2)})` : ""}
                 </Button>
                 {/* Offer - show pending offer status or offer button (only if allowOffers is true) */}
                 {listing?.allowOffers && (
                   myPendingOffer ? (
-                    myPendingOffer.status === "accepted" && myPendingOffer.orderId ? (
-                      // Offer accepted - show pay button
-                      <div className="w-full rounded-xl border-2 border-green-400 bg-green-50 p-3 space-y-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center">
-                            <CheckCircle className="w-4 h-4 text-green-600" />
-                          </div>
-                          <div>
-                            <p className="text-xs text-green-700 font-semibold leading-none">賣家已接受出價！</p>
-                            <p className="font-bold text-[#06038D] text-base leading-tight">
-                              HKD {parseFloat(myPendingOffer.offerPriceHkd as string).toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                        <OfferPayButton orderId={myPendingOffer.orderId} />
-                      </div>
+                    myPendingOffer.status === "accepted" ? (
+                      // Offer accepted - no extra button needed, user uses payment buttons above
+                      null
                     ) : (
                     <div className="w-full rounded-xl border-2 border-[#FEDD00] bg-[#FEDD00]/10 p-3 space-y-2">
                       <div className="flex items-center justify-between">
@@ -1126,7 +1140,8 @@ export default function MarketplaceListing() {
             <div className="space-y-4">
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4 text-sm">
                 <p className="font-bold text-[#06038D]">
-                  付款金額：<span className="text-lg">HKD {price.toFixed(2)}</span>
+                  付款金額：<span className="text-lg">HKD {effectivePrice.toFixed(2)}</span>
+                  {acceptedOffer && <span className="text-xs text-green-600 ml-2">(出價價格)</span>}
                 </p>
                 <p className="text-gray-600 mt-1">{listing.title}</p>
               </div>
@@ -1419,6 +1434,7 @@ export default function MarketplaceListing() {
                   disabled={!proofUrl || isVerifying || isUploading || createAlipayOrderMutation.isPending}
                   onClick={() => createAlipayOrderMutation.mutate({
                     listingId: listing.id,
+                    offerId: acceptedOffer?.id ?? undefined,
                     proofImageUrl: proofUrl,
                     shippingAddress: alipayShippingForm.name.trim() ? (
                       alipayShippingForm.addressType === "sf_station" ? {
@@ -1627,6 +1643,7 @@ export default function MarketplaceListing() {
                 setShowShippingDialog(false);
                 createStripeOrderMutation.mutate({
                   listingId: listing.id,
+                  offerId: acceptedOffer?.id ?? undefined,
                   shippingAddress: shippingForm.addressType === "sf_station" ? {
                     name: shippingForm.name.trim(),
                     phone: shippingForm.phone.trim(),
@@ -1645,7 +1662,7 @@ export default function MarketplaceListing() {
                 });
               }}
             >
-              {createStripeOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</> : <><CreditCard className="w-4 h-4 mr-2" />前往付款</>}
+              {createStripeOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</> : <><CreditCard className="w-4 h-4 mr-2" />信用卡付款 HKD {effectivePrice.toFixed(2)}</>}
             </Button>
           </div>
         </DialogContent>

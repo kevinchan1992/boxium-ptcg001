@@ -22,6 +22,7 @@ import {
   getDb,
   createOffer, getOfferById, getBuyerOffers, getSellerOffers, getListingOffers, updateOffer,
   createListingReport, getAdminListingReports, updateListingReport,
+  getActiveOrderByListingId,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
@@ -131,7 +132,10 @@ export const marketplaceRouter = router({
           avatarUrl: sp.avatarUrl ?? null,
         };
       }
-      return { ...listing, sellerProfile };
+      // Check if listing is locked (has a pending_payment order)
+      const activeOrder = listing.status === "active" ? await getActiveOrderByListingId(input.id) : null;
+      const isLocked = !!activeOrder;
+      return { ...listing, sellerProfile, isLocked };
     }),
 
   // ============================================================
@@ -1718,6 +1722,7 @@ export const marketplaceRouter = router({
   createStripeOrder: protectedProcedure
     .input(z.object({
       listingId: z.number().int(),
+      offerId: z.number().int().optional(), // If provided, use offer price instead of listing price
       shippingAddress: z.object({
         name: z.string().min(1),
         phone: z.string().min(1),
@@ -1733,29 +1738,43 @@ export const marketplaceRouter = router({
       if (!listing || listing.status !== "active" || listing.quantity < 1) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "商品不存在或已售出" });
       }
+      // Check if listing is locked by another user's pending order
+      const activeOrder = await getActiveOrderByListingId(input.listingId);
+      if (activeOrder && activeOrder.buyerId !== ctx.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "此商品目前有其他買家正在進行付款，請稍後再試。" });
+      }
+      // Determine effective price: use offer price if offerId provided
+      let effectivePrice = parseFloat(listing.priceHkd as string);
+      let offerRecord: any = null;
+      if (input.offerId) {
+        offerRecord = await getOfferById(input.offerId);
+        if (!offerRecord || offerRecord.buyerId !== ctx.user.id || offerRecord.listingId !== input.listingId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "出價不存在或不屬於您" });
+        }
+        if (offerRecord.status !== "accepted") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "此出價尚未被接受" });
+        }
+        effectivePrice = parseFloat(offerRecord.offerPriceHkd as string);
+      }
       const Stripe = (await import("stripe")).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-      const price = parseFloat(listing.priceHkd as string);
-      const amountHKD = Math.round(price * 100); // cents
 
       // Stripe requires minimum HKD 4.00 for card payments
-      if (price < 4.00) {
+      if (effectivePrice < 4.00) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: `此商品金額 HKD ${price.toFixed(2)} 低於 Stripe 最低付款金額 HKD 4.00，請改用支付寶 HK 付款。`,
+          message: `此商品金額 HKD ${effectivePrice.toFixed(2)} 低於 Stripe 最低付款金額 HKD 4.00，請改用支付寶 HK 付款。`,
         });
       }
 
       const orderNo = await generateOrderNo();
-      // Build payment_intent_data - use Destination Charge for C2C listings with active Stripe Connect
-      const platformFee2 = listing.sellerType === "seller" ? price * PLATFORM_FEE_RATE : 0;
-      const total2 = price; // Buyer pays listing price only, platform fee deducted from seller payout
       const paymentIntentData2: any = {
         metadata: {
-          orderId: "pending", // will be updated after order creation
+          orderId: "pending",
           orderNo,
           buyerId: ctx.user.id.toString(),
           listingId: listing.id.toString(),
+          ...(input.offerId ? { offerId: input.offerId.toString() } : {}),
         },
       };
       // NOTE: Separate Charges and Transfers mode - funds held in platform until buyer confirms receipt
@@ -1772,7 +1791,7 @@ export const marketplaceRouter = router({
           price_data: {
             currency: "hkd",
             product_data: { name: listing.title, description: listing.description ?? undefined },
-            unit_amount: Math.round(total2 * 100), // Listing price only
+            unit_amount: Math.round(effectivePrice * 100),
           },
           quantity: 1,
         }],
@@ -1784,6 +1803,7 @@ export const marketplaceRouter = router({
           user_id: ctx.user.id.toString(),
           listing_id: listing.id.toString(),
           order_no: orderNo,
+          ...(input.offerId ? { offer_id: input.offerId.toString() } : {}),
         },
         payment_intent_data: paymentIntentData2,
       });
@@ -1796,13 +1816,13 @@ export const marketplaceRouter = router({
         paymentMethod: "stripe",
         paymentStatus: "pending",
         orderStatus: "pending_payment",
-        subtotalHkd: listing.priceHkd as string,
+        subtotalHkd: effectivePrice.toFixed(2),
         listingId: listing.id,
-        unitPriceHkd: price.toFixed(2),
+        unitPriceHkd: effectivePrice.toFixed(2),
         quantity: 1,
         platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
-        platformFeeHkd: calcPlatformFee(listing.sellerType, price).toFixed(2),
-        sellerReceivableHkd: calcSellerReceivable(listing.sellerType, price).toFixed(2),
+        platformFeeHkd: calcPlatformFee(listing.sellerType, effectivePrice).toFixed(2),
+        sellerReceivableHkd: calcSellerReceivable(listing.sellerType, effectivePrice).toFixed(2),
         stripePaymentIntentId: session.payment_intent as string ?? null,
         stripeSessionId: session.id,
         shippingName: input.shippingAddress?.name ?? null,
@@ -1907,6 +1927,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
   createAlipayOrder: protectedProcedure
     .input(z.object({
       listingId: z.number().int(),
+      offerId: z.number().int().optional(), // If provided, use offer price instead of listing price
       proofImageUrl: z.string().url(),
       shippingAddress: z.object({
         name: z.string().min(1),
@@ -1923,7 +1944,23 @@ All three checks must pass for verified to be true. Respond with JSON only match
       if (!listing || listing.status !== "active" || listing.quantity < 1) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "商品不存在或已售出" });
       }
-      const price = parseFloat(listing.priceHkd as string);
+      // Check if listing is locked by another user's pending order
+      const activeOrder = await getActiveOrderByListingId(input.listingId);
+      if (activeOrder && activeOrder.buyerId !== ctx.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "此商品目前有其他買家正在進行付款，請稍後再試。" });
+      }
+      // Determine effective price: use offer price if offerId provided
+      let effectivePrice = parseFloat(listing.priceHkd as string);
+      if (input.offerId) {
+        const offerRecord = await getOfferById(input.offerId);
+        if (!offerRecord || offerRecord.buyerId !== ctx.user.id || offerRecord.listingId !== input.listingId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "出價不存在或不屬於您" });
+        }
+        if (offerRecord.status !== "accepted") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "此出價尚未被接受" });
+        }
+        effectivePrice = parseFloat(offerRecord.offerPriceHkd as string);
+      }
       const orderNo = await generateOrderNo();
       const newOrder = await createMarketplaceOrder({
         orderNo,
@@ -1933,13 +1970,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
         paymentMethod: "alipay_hk",
         paymentStatus: "pending",
         orderStatus: "pending_payment",
-        subtotalHkd: listing.priceHkd as string,
+        subtotalHkd: effectivePrice.toFixed(2),
         listingId: listing.id,
-        unitPriceHkd: price.toFixed(2),
+        unitPriceHkd: effectivePrice.toFixed(2),
         quantity: 1,
         platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
-        platformFeeHkd: calcPlatformFee(listing.sellerType, price).toFixed(2),
-        sellerReceivableHkd: calcSellerReceivable(listing.sellerType, price).toFixed(2),
+        platformFeeHkd: calcPlatformFee(listing.sellerType, effectivePrice).toFixed(2),
+        sellerReceivableHkd: calcSellerReceivable(listing.sellerType, effectivePrice).toFixed(2),
         alipayMerchantTransId: null,
         alipayProofImageUrl: input.proofImageUrl,
         shippingName: input.shippingAddress?.name ?? null,
@@ -1949,7 +1986,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       // Notify admin of new Alipay order pending review
       await notifyOwner({
         title: "支付寶 HK 訂單待審核 💰",
-        content: `訂單 ${orderNo} 買家已提交支付寶 HK 付款截圖，請前往管理後台審核。商品：${listing.title}，金額：HKD ${price.toFixed(2)}`,
+        content: `訂單 ${orderNo} 買家已提交支付寶 HK 付款截圖，請前往管理後台審核。商品：${listing.title}，金額：HKD ${effectivePrice.toFixed(2)}`,
       }).catch(() => {});
       return { orderNo };
     }),

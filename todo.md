@@ -5219,3 +5219,20 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 使用 useRef 追蹤已查找的 codes，防止無限循環
 - [x] 智能櫃（H852 開頭）顯示「🔒 智能櫃」標籤，順豐站顯示「📦 順豐自提站」標籤
 - [x] 36 項 SF 代碼驗證單元測試全部通過（含 findSFPointByCodeAsync 和 findSFStationByCode 測試）
+
+## 出價付款邏輯修復 + 商品鎖定機制 (2026-03-20)
+- [ ] 移除商品詳情頁「賣家已接受出價」區塊中的「前往付款」按鈕
+- [ ] 賣家接受出價後，上方「信用卡/Apple Pay」和「支付寶 HK」按鈕顯示出價金額（非原售價）
+- [ ] 付款時使用出價金額而非原售價建立訂單
+- [ ] 實作商品鎖定機制：訂單 pending_payment 狀態時鎖定商品，阻擋其他用戶點擊付款
+- [ ] 後端 getListing 加入 isLocked / lockReason 欄位（檢查是否有進行中訂單）
+- [ ] 前端付款按鈕在商品被鎖定時顯示「交易進行中，暫不可購買」提示
+- [ ] 撰寫相關單元測試
+
+## 出價付款邏輯修復 + 商品鎖定機制 (2026-03-20)
+- [x] 移除「前往付款」按鈕（賣家接受出價後）
+- [x] 更新上方付款按鈕金額為出價金額（信用卡/支付寶 HK 按鈕顯示出價金額）
+- [x] 商品鎖定機制（pending_payment 訂單存在時阻擋其他用戶付款）
+- [x] createStripeOrder/createAlipayOrder 加入 offerId 支援
+- [x] getListing 加入 isLocked 欄位
+- [x] 撰寫測試（offer-payment-lock.test.ts，17 項全部通過）

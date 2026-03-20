@@ -4046,3 +4046,23 @@ export async function getAdminListingDetail(id: number) {
   const orderCount = Number(orderCountRows[0]?.count ?? 0);
   return { listing, sellerProfile, sellerUser, orderCount };
 }
+
+// Check if a listing has any active (pending_payment) orders - used for listing lock mechanism
+export async function getActiveOrderByListingId(listingId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select({
+    id: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    orderStatus: marketplaceOrders.orderStatus,
+    buyerId: marketplaceOrders.buyerId,
+    createdAt: marketplaceOrders.createdAt,
+  }).from(marketplaceOrders)
+    .where(and(
+      eq(marketplaceOrders.listingId, listingId),
+      inArray(marketplaceOrders.orderStatus, ["pending_payment"])
+    ))
+    .orderBy(desc(marketplaceOrders.createdAt))
+    .limit(1);
+  return rows[0] ?? null;
+}
