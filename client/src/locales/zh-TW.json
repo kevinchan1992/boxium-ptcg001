@@ -156,8 +156,9 @@
   "footer": {
     "description": "專注於 Pokémon TCG 價格查詢與市場分析的綜合平台",
     "quickLinks": "快速連結",
-    "cardSearch": "卡牌搜尋",
+    "cardSearch": "卡牧搜尋",
     "trending": "熱門排行榜",
+    "marketplace": "市集",
     "blog": "最新消息",
     "pricing": "價格查詢",
     "aboutUs": "關於我們",

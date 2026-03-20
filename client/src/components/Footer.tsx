@@ -44,8 +44,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/trending" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
-                  {t("footer.trending")}
+                <Link href="/marketplace" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  {t("footer.marketplace")}
                 </Link>
               </li>
               <li>

@@ -5354,3 +5354,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 從導覽列移除「熱門排行榜」
 - [x] 從導覽列移除「關於我們」
 - [x] 移除 trending 頁面路由（/trending 重導向首頁）
+
+---
+
+## 🔗 Footer 清理
+
+- [x] Footer 快速連結「熱門排行榜」改為「市集」（/marketplace），三種語言翻譯均已更新
