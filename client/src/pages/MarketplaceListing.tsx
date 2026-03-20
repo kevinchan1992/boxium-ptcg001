@@ -935,29 +935,8 @@ export default function MarketplaceListing() {
                     <span>此商品金額低於 Stripe 最低付款限額（HKD 4.00），請使用支付寶 HK 付款。</span>
                   </div>
                 )}
-                {/* Primary buy button - only show when no accepted offer */}
-                {!acceptedOffer && (
-                  <Button
-                    className="w-full bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold h-12 text-base rounded-xl shadow-sm disabled:opacity-40"
-                    disabled={!me || isLocked}
-                    onClick={() => { if (!me) return; window.location.href = '/cart'; }}
-                  >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    立即購買
-                  </Button>
-                )}
-                {/* Add to Cart button - always show */}
-                <AddToCartButton listingId={listing.id} isLoggedIn={!!me} />
-                {/* When offer accepted, show go-to-cart button */}
-                {acceptedOffer && (
-                  <Button
-                    className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white h-11 text-sm rounded-xl"
-                    onClick={() => { window.location.href = '/cart'; }}
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    前往購物車付款
-                  </Button>
-                )}
+                {/* Add to Cart button (primary) - always show */}
+                <AddToCartButton listingId={listing.id} isLoggedIn={!!me} isAcceptedOffer={!!acceptedOffer} />
                 {/* Offer - show pending offer status or offer button (only if allowOffers is true) */}
                 {listing?.allowOffers && (
                   myPendingOffer ? (
@@ -1830,8 +1809,8 @@ export default function MarketplaceListing() {
   );
 }
 
-// ─── Add to Cart Button ───────────────────────────────────────────────────────
-function AddToCartButton({ listingId, isLoggedIn }: { listingId: number; isLoggedIn: boolean }) {
+// ─── Add to Cart Button ────────────────────────────────────────────────────────────────────────────────────
+function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId: number; isLoggedIn: boolean; isAcceptedOffer?: boolean }) {
   const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
 
@@ -1844,40 +1823,36 @@ function AddToCartButton({ listingId, isLoggedIn }: { listingId: number; isLogge
     onSuccess: () => {
       utils.marketplace.isInCart.invalidate({ listingId });
       utils.marketplace.getCartCount.invalidate();
-      toast.success("已加入購物車", {
-        action: {
-          label: "查看購物車",
-          onClick: () => setLocation("/cart"),
-        },
-      });
+      // After adding to cart, navigate directly to cart
+      setLocation("/cart");
     },
     onError: (err) => toast.error(err.message || "加入購物車失敗"),
   });
 
   if (!isLoggedIn) return null;
 
+  // Already in cart - show go to cart button
   if (inCart) {
     return (
       <Button
-        variant="outline"
-        className="w-full h-11 text-sm border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/5 rounded-xl"
+        className="w-full bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold h-12 text-base rounded-xl shadow-sm"
         onClick={() => setLocation("/cart")}
       >
-        <ShoppingCart className="w-4 h-4 mr-2" />
-        已在購物車 - 查看購物車
+        <ShoppingCart className="w-5 h-5 mr-2" />
+        {isAcceptedOffer ? "前往購物車付款" : "查看購物車"}
       </Button>
     );
   }
 
+  // Not in cart - primary yellow button
   return (
     <Button
-      variant="outline"
-      className="w-full h-11 text-sm border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/5 rounded-xl"
+      className="w-full bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold h-12 text-base rounded-xl shadow-sm disabled:opacity-40"
       disabled={addToCartMutation.isPending}
       onClick={() => addToCartMutation.mutate({ listingId })}
     >
-      <ShoppingCart className="w-4 h-4 mr-2" />
-      {addToCartMutation.isPending ? "加入中..." : "加入購物車"}
+      <ShoppingCart className="w-5 h-5 mr-2" />
+      {addToCartMutation.isPending ? "加入中..." : isAcceptedOffer ? "加入購物車付款" : "加入購物車"}
     </Button>
   );
 }
