@@ -402,23 +402,18 @@ export const appRouter = router({
       .mutation(async ({ ctx }) => {
         console.log('[Logout API] Clearing session cookie...');
         
-        if (ctx.res) {
-          // Clear session cookie using COOKIE_NAME (strategy 1: Max-Age=0)
-          ctx.res.clearCookie(COOKIE_NAME, {
-            httpOnly: true,
-            sameSite: 'lax',
-            path: '/',
-          });
-          // Clear session cookie (strategy 2: Expires in the past)
-          ctx.res.clearCookie(COOKIE_NAME, {
-            httpOnly: true,
-            sameSite: 'lax',
-            path: '/',
-            expires: new Date(0),
-          });
-          console.log('[Logout API] Session cookie cleared');
+        if (ctx.res && ctx.req) {
+          // Use the same options as when the cookie was set, to ensure it can be cleared
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          // Clear the 'session' cookie (the actual cookie name used when setting)
+          ctx.res.clearCookie('session', cookieOptions);
+          // Also clear legacy COOKIE_NAME just in case
+          ctx.res.clearCookie(COOKIE_NAME, cookieOptions);
+          // Extra: set expired cookie with same options to force browser removal
+          ctx.res.cookie('session', '', { ...cookieOptions, maxAge: 0, expires: new Date(0) });
+          console.log('[Logout API] Session cookie cleared with options:', JSON.stringify(cookieOptions));
         } else {
-          console.warn('[Logout API] Cannot clear cookie - ctx.res is missing');
+          console.warn('[Logout API] Cannot clear cookie - ctx.res or ctx.req is missing');
         }
         
         return { success: true };

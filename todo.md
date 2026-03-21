@@ -5476,3 +5476,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 修復 Stripe webhook 訂單確認電郵
 - [x] 更新 sendOrderEmail 函數加入 emailType 參數（預設 'order'）
 - [x] 新增出價被接受/拒絕的買家通知電郵（含 CTA 按鈕）
+
+---
+## 🐛 修復登出問題
+- [x] 調查登出按鈕點擊後無法正常登出的根本原因（cookie 名稱和選項不一致）
+- [x] 修復後端 logout API（使用 getSessionCookieOptions 確保選項一致）
+- [x] 修復前端登出邏輯（清除 tRPC 快取、使用 replace 避免年年實實）
+- [ ] 測試登出流程（待用戶在生產環境測試）

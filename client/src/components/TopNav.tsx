@@ -46,14 +46,21 @@ export function TopNav() {
   const [notifOpen, setNotifOpen] = useState(false);
 
   const { data: user } = trpc.auth.me.useQuery();
+  const utils = trpc.useUtils();
   const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("登出成功");
-      window.location.href = "/";
+      // Clear all tRPC cache to reset auth state
+      await utils.invalidate();
+      // Hard reload to ensure all state is cleared (including cookies)
+      window.location.replace("/");
+    },
+    onError: (err) => {
+      console.error('[Logout] Error:', err);
+      // Even if API fails, force reload to clear client state
+      window.location.replace("/");
     },
   });
-
-  const utils = trpc.useUtils();
 
   const { data: unreadData, refetch: refetchUnread } = trpc.notifications.getUnreadCount.useQuery(
     undefined,
