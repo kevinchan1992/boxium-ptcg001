@@ -5489,3 +5489,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 修復 Logo 圖片顯示問題（上傳到 CDN，使用公開 URL）
 - [x] 重新設計電郵模板（藍色主題 #06038d、黃色點綴 #FFD700）
 - [x] 更新所有電郵模板（wrapHtml、出價、訂單、賣家審核、歡迎）
+
+---
+## 🐛 電郵問題修復（第二輪）
+- [x] 修復新出價通知發給 admin 而非賣家的問題（移除 makeOffer 中的 notifyAdmin 呼叫）
+- [x] 審查所有 notifyAdmin 呼叫，確認其餘都是合理的管理員通知
+- [x] 修復電郵背景粉紅色問題（加入 color-scheme: light only 防止 Gmail dark mode 干擾）

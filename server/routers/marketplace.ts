@@ -2795,13 +2795,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         linkUrl: "/seller",
         relatedId: offer.id,
       }).catch(() => {});
-      // Notify platform owner via Manus notification
-      notifyAdmin({
-        title: `新出價通知：${listing.title}`,
-        content: `買家對商品「${listing.title}」出價 HKD ${input.offerPriceHkd}。${input.message ? `買家留言：${input.message}` : ""}
-請前往賣家中心回應。`,
-      }).catch(() => {});
-      // Send email notification to seller
+      // Send email notification to seller (admin does not need to be notified for individual offers)
       ;(async () => {
         try {
           const { getDb: _getDb } = await import("../db");

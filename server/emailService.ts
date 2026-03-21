@@ -57,10 +57,16 @@ function wrapHtml(title: string, body: string, unsubscribeToken?: string, emailT
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
   <title>${title}</title>
+  <style>
+    :root { color-scheme: light only; }
+    body { background-color: #f4f5f7 !important; }
+  </style>
 </head>
-<body style="margin:0;padding:0;background:#eef0f8;font-family:Arial,'Helvetica Neue',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#eef0f8;padding:32px 16px;">
+<body style="margin:0;padding:0;background-color:#f4f5f7 !important;font-family:Arial,'Helvetica Neue',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:32px 16px;">
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(6,3,141,0.12);">
