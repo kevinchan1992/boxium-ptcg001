@@ -859,3 +859,12 @@ export async function notifyAdmin({
   `);
   return sendEmail({ to: ADMIN_EMAIL, subject, html });
 }
+
+/**
+ * Public wrapper for wrapHtml — used by the admin test-email endpoint.
+ * Renders the given body inside the standard BOXIUM email shell without
+ * an unsubscribe link (test emails are never stored in the log).
+ */
+export function wrapHtmlTest(title: string, body: string): string {
+  return wrapHtml(title, body);
+}

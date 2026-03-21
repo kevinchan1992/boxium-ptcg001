@@ -548,22 +548,24 @@ let shippingReminderCronJob: ReturnType<typeof cron.schedule> | null = null;
 export function startShippingReminderScheduler() {
   if (shippingReminderCronJob) return;
   shippingReminderCronJob = cron.schedule(
-    '30 * * * *', // Every hour at :30
+    '*/30 * * * *', // Every 30 minutes
     async () => {
       try {
         const { getDb, getSellerProfileById } = await import('./db');
         const { marketplaceOrders } = await import('../drizzle/schema_new');
-        const { and, eq, lte, isNull, or } = await import('drizzle-orm');
+        const { and, eq, lt, gte, isNull, or } = await import('drizzle-orm');
         const { createNotification } = await import('./db/notifications');
+        const { getUserById } = await import('./userManagement');
         const db = await getDb();
         if (!db) return;
 
         const now = new Date();
-        // 3 days ago
-        const threeDaysAgo = new Date(now);
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        // Window: orders paid between 12 hours and 12.5 hours ago
+        // (30-minute window matches the cron frequency to avoid duplicates)
+        const windowStart = new Date(now.getTime() - (12 * 60 + 30) * 60 * 1000); // 12h30m ago
+        const windowEnd   = new Date(now.getTime() - 12 * 60 * 60 * 1000);          // 12h ago
 
-        // Find orders that: paid but not shipped, payment received > 3 days ago, reminder not yet sent
+        // Find orders that: paid but not shipped, payment received 12-12.5 hours ago, reminder not yet sent
         const overdueOrders = await db.select()
           .from(marketplaceOrders)
           .where(
@@ -572,14 +574,15 @@ export function startShippingReminderScheduler() {
                 eq(marketplaceOrders.orderStatus, 'payment_received'),
                 eq(marketplaceOrders.orderStatus, 'processing')
               ),
-              lte(marketplaceOrders.createdAt, threeDaysAgo),
+              gte(marketplaceOrders.updatedAt, windowStart),
+              lt(marketplaceOrders.updatedAt, windowEnd),
               isNull(marketplaceOrders.shippingReminderSentAt)
             )
           )
           .limit(50);
 
         if (overdueOrders.length === 0) return;
-        console.log(`[ShippingReminder] Found ${overdueOrders.length} overdue orders`);
+        console.log(`[ShippingReminder] Found ${overdueOrders.length} overdue orders (12h window)`);
 
         for (const order of overdueOrders) {
           try {
@@ -588,7 +591,7 @@ export function startShippingReminderScheduler() {
               .set({ shippingReminderSentAt: now })
               .where(eq(marketplaceOrders.id, order.id));
 
-            // Notify seller (order.sellerId = sellerProfiles.id, must resolve to users.id)
+            // Notify seller via in-app notification
             if (order.sellerId) {
               const sellerProf = await getSellerProfileById(order.sellerId);
               if (sellerProf?.userId) {
@@ -596,21 +599,40 @@ export function startShippingReminderScheduler() {
                   userId: sellerProf.userId,
                   type: 'trade',
                   title: '⏰ 請盡快安排出貨',
-                  body: `訂單 ${order.orderNo} 已付款超過 3 天，請盡快安排出貨並填寫追蹤號碼，以維護良好的賣家評分。`,
+                  body: `訂單 ${order.orderNo} 已付款超過 12 小時，請盡快安排出貨並填寫追蹤號碼。`,
                   linkUrl: '/seller',
                 }).catch(() => {});
+
+                // Send email to seller
+                ;(async () => {
+                  try {
+                    const sellerUser = await getUserById(sellerProf.userId);
+                    if (!sellerUser?.email) return;
+                    const { sendEmail } = await import('./emailService');
+                    const { wrapHtmlTest } = await import('./emailService');
+                    const subject = `⏰ 出貨提醒 — 訂單 #${order.orderNo}`;
+                    const html = wrapHtmlTest(
+                      subject,
+                      `<h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">出貨提醒 ⏰</h2>
+                      <p style="margin:0 0 16px;color:#555;font-size:15px;">
+                        親愛的 <strong>${sellerUser.name || '賣家'}</strong>，<br/>
+                        訂單 <strong>#${order.orderNo}</strong> 已付款超過 12 小時，買家正在等候收貨。<br/>
+                        請盡快安排出貨並在賣家中心填寫物流追蹤號碼。
+                      </p>
+                      <div style="text-align:center;margin:24px 0;">
+                        <a href="https://boxium.asia/seller" style="display:inline-block;background:#FFD700;color:#06038d;font-size:15px;font-weight:bold;padding:14px 36px;border-radius:50px;text-decoration:none;">前往賣家中心安排出貨</a>
+                      </div>
+                      <p style="color:#555;font-size:13px;text-align:center;">請在 48 小時內完成出貨，以維護良好的賣家評分。</p>`
+                    );
+                    await sendEmail({ to: sellerUser.email, subject, html, emailType: 'order', toUserId: sellerProf.userId });
+                  } catch (e) {
+                    console.warn(`[ShippingReminder] Email failed for order ${order.orderNo}:`, e);
+                  }
+                })();
               }
             }
 
-            // Notify admin
-            await import('./emailService').then(({ notifyAdmin }) =>
-              notifyAdmin({
-                title: '賣家出貨超時提醒 ⏰',
-                content: `訂單 ${order.orderNo} 已付款超過 3 天，賣家尚未出貨。`,
-              }).catch(() => {})
-            );
-
-            console.log(`[ShippingReminder] Reminder sent for order ${order.orderNo}`);
+            console.log(`[ShippingReminder] 12h reminder sent for order ${order.orderNo}`);
           } catch (err) {
             console.error(`[ShippingReminder] Failed to send reminder for order ${order.orderNo}:`, err);
           }
@@ -621,7 +643,7 @@ export function startShippingReminderScheduler() {
     },
     { timezone: 'Asia/Hong_Kong' }
   );
-  console.log('[ShippingReminder] Shipping reminder scheduler started');
+  console.log('[ShippingReminder] Shipping reminder scheduler started (every 30 min, 12h window)');
 }
 
 export function stopShippingReminderScheduler() {
@@ -955,25 +977,28 @@ let paymentReminderCronJob: ReturnType<typeof cron.schedule> | null = null;
 export function startPaymentReminderScheduler() {
   if (paymentReminderCronJob) return;
   paymentReminderCronJob = cron.schedule(
-    '45 * * * *', // Every hour at :45
+    '*/10 * * * *', // Every 10 minutes
     async () => {
       try {
-        const { getDb } = await import('./db');
+        const { getDb, getListingById } = await import('./db');
         const { marketplaceOrders } = await import('../drizzle/schema_new');
         const { and, eq, lt, gte, isNull } = await import('drizzle-orm');
         const { createNotification } = await import('./db/notifications');
+        const { getUserById } = await import('./userManagement');
         const db = await getDb();
         if (!db) return;
 
         const now = new Date();
-        // Window: orders created between 12 and 13 hours ago
-        const windowStart = new Date(now.getTime() - 13 * 60 * 60 * 1000); // 13h ago
-        const windowEnd   = new Date(now.getTime() - 12 * 60 * 60 * 1000); // 12h ago
+        // Window: orders created between 1 hour and 1 hour 10 minutes ago
+        // (10-minute window matches the cron frequency to avoid duplicates)
+        const windowStart = new Date(now.getTime() - (1 * 60 + 10) * 60 * 1000); // 1h10m ago
+        const windowEnd   = new Date(now.getTime() - 1 * 60 * 60 * 1000);         // 1h ago
 
         const ordersToRemind = await db.select({
           id: marketplaceOrders.id,
           orderNo: marketplaceOrders.orderNo,
           buyerId: marketplaceOrders.buyerId,
+          listingId: marketplaceOrders.listingId,
           createdAt: marketplaceOrders.createdAt,
         })
           .from(marketplaceOrders)
@@ -988,7 +1013,7 @@ export function startPaymentReminderScheduler() {
           .limit(100);
 
         if (ordersToRemind.length === 0) return;
-        console.log(`[PaymentReminder] Found ${ordersToRemind.length} orders to remind`);
+        console.log(`[PaymentReminder] Found ${ordersToRemind.length} orders to remind (1h window)`);
 
         for (const order of ordersToRemind) {
           try {
@@ -1001,13 +1026,42 @@ export function startPaymentReminderScheduler() {
             await createNotification({
               userId: order.buyerId,
               type: 'order',
-              title: '⏰ 訂單即將自動取消',
-              body: `訂單 #${order.orderNo} 尚未完成付款，將在約 12 小時後自動取消，請盡快完成付款。`,
-              linkUrl: `/orders/${order.orderNo}`,
+              title: '⏰ 付款提醒 — 訂單即將取消',
+              body: `訂單 #${order.orderNo} 已超過 1 小時未付款，請盡快完成付款，否則訂單將自動取消。`,
+              linkUrl: `/orders`,
               relatedId: order.id,
             }).catch(() => {});
 
-            console.log(`[PaymentReminder] Sent reminder for order ${order.orderNo} (id: ${order.id})`);
+            // Send email reminder to buyer
+            ;(async () => {
+              try {
+                const buyerUser = await getUserById(order.buyerId);
+                if (!buyerUser?.email) return;
+                const listing = order.listingId ? await getListingById(order.listingId) : null;
+                const itemName = listing?.title || `訂單 #${order.orderNo}`;
+                const { sendEmail } = await import('./emailService');
+                const subject = `⏰ 付款提醒 — ${itemName}`;
+                const { wrapHtmlTest } = await import('./emailService');
+                const html = wrapHtmlTest(
+                  subject,
+                  `<h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">付款提醒 ⏰</h2>
+                  <p style="margin:0 0 16px;color:#555;font-size:15px;">
+                    親愛的 <strong>${buyerUser.name || '買家'}</strong>，<br/>
+                    您的訂單 <strong>#${order.orderNo}</strong>（商品：<strong>${itemName}</strong>）已超過 1 小時未完成付款。<br/>
+                    請盡快完成付款，否則訂單將在 24 小時後自動取消。
+                  </p>
+                  <div style="text-align:center;margin:24px 0;">
+                    <a href="https://boxium.asia/orders" style="display:inline-block;background:#FFD700;color:#06038d;font-size:15px;font-weight:bold;padding:14px 36px;border-radius:50px;text-decoration:none;">前往訂單頁付款</a>
+                  </div>
+                  <p style="color:#ef4444;font-size:13px;text-align:center;">⚠️ 逾期未付款，訂單將自動取消，商品將重新上架。</p>`
+                );
+                await sendEmail({ to: buyerUser.email, subject, html, emailType: 'order', toUserId: order.buyerId });
+              } catch (e) {
+                console.warn(`[PaymentReminder] Email failed for order ${order.orderNo}:`, e);
+              }
+            })();
+
+            console.log(`[PaymentReminder] Sent 1h reminder for order ${order.orderNo} (id: ${order.id})`);
           } catch (err) {
             console.error(`[PaymentReminder] Failed to send reminder for order ${order.id}:`, err);
           }
@@ -1018,7 +1072,7 @@ export function startPaymentReminderScheduler() {
     },
     { timezone: 'Asia/Hong_Kong' }
   );
-  console.log('[PaymentReminder] Payment reminder scheduler started (every hour at :45)');
+  console.log('[PaymentReminder] Payment reminder scheduler started (every 10 min, 1h window)');
 }
 
 export function stopPaymentReminderScheduler() {

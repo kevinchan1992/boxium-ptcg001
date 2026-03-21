@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock, Activity, History, MapPin, Mail } from "lucide-react";
+import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock, Activity, History, MapPin, Mail, FlaskConical } from "lucide-react";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -11,6 +11,7 @@ import { AdminScraperPerformance } from "@/components/AdminScraperPerformance";
 import { AdminTaskHistory } from "@/components/AdminTaskHistory";
 import { AdminSFStationUpdate } from "@/components/AdminSFStationUpdate";
 import AdminEmailLogs from "@/components/AdminEmailLogs";
+import AdminEmailTest from "@/components/AdminEmailTest";
 
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -43,6 +44,7 @@ export default function Admin() {
             <BrandTabsTrigger value="taskhistory" icon={<History className="w-4 h-4" />} label="任務歷史">任務歷史</BrandTabsTrigger>
             <BrandTabsTrigger value="sfstations" icon={<MapPin className="w-4 h-4" />} label="順豐站管理">順豐站管理</BrandTabsTrigger>
             <BrandTabsTrigger value="emaillogs" icon={<Mail className="w-4 h-4" />} label="電郵日誌">電郵日誌</BrandTabsTrigger>
+            <BrandTabsTrigger value="emailtest" icon={<FlaskConical className="w-4 h-4" />} label="電郵測試">電郵測試</BrandTabsTrigger>
           </BrandTabsList>
 
           <BrandTabsContent value="dashboard"><AdminDashboard /></BrandTabsContent>
@@ -56,6 +58,7 @@ export default function Admin() {
           <BrandTabsContent value="taskhistory"><AdminTaskHistory /></BrandTabsContent>
           <BrandTabsContent value="sfstations"><AdminSFStationUpdate /></BrandTabsContent>
           <BrandTabsContent value="emaillogs"><AdminEmailLogs /></BrandTabsContent>
+          <BrandTabsContent value="emailtest"><AdminEmailTest /></BrandTabsContent>
         </BrandTabs>
 
         {/* Marketplace shortcut */}

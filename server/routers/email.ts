@@ -274,6 +274,108 @@ export const emailRouter = router({
       return { success: true, token, alreadyUnsubscribed: false };
     }),
 
+  // Admin: send test email
+  sendTestEmail: adminProcedure
+    .input(z.object({
+      to: z.string().email(),
+      emailType: z.enum(["welcome", "offer_received", "offer_accepted", "offer_rejected", "order_confirmed", "order_shipped", "order_completed", "order_cancelled", "seller_approved", "seller_rejected", "payment_reminder"]),
+    }))
+    .mutation(async ({ input }) => {
+      const {
+        sendEmail,
+        buildNewOfferEmail,
+        buildSellerApprovedEmail,
+        buildSellerRejectedEmail,
+        buildWelcomeEmail,
+      } = await import("../emailService");
+      const { buildOrderConfirmedEmail, buildOrderShippedEmail, buildOrderCompletedBuyerEmail, buildOrderCancelledEmail } = await import("../emailService");
+
+      const DEMO_ORDER_NO = "BOXIUM-TEST-001";
+      const DEMO_ITEM = "Charizard ex SAR PSA 10";
+      const DEMO_PRICE = "8000.00";
+      const DEMO_LISTING_ID = 999;
+
+      let subject = "";
+      let html = "";
+
+      switch (input.emailType) {
+        case "welcome": {
+          const r = buildWelcomeEmail({ userName: "測試用戶", siteUrl: "https://boxium.asia" });
+          subject = r.subject; html = r.html; break;
+        }
+        case "offer_received": {
+          const r = buildNewOfferEmail({ sellerName: "測試賣家", buyerName: "測試買家", cardName: DEMO_ITEM, offerAmountHkd: DEMO_PRICE, listingPriceHkd: "9000.00", expiresAt: "2026-04-01 08:00 (HKT)", sellerDashboardUrl: "https://boxium.asia/seller" });
+          subject = r.subject; html = r.html; break;
+        }
+        case "offer_accepted": {
+          subject = `✅ 出價已被接受 — ${DEMO_ITEM}`;
+          html = (await import("../emailService")).wrapHtmlTest(
+            subject,
+            `<h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">出價已被接受 ✅</h2>
+            <p>親愛的 <strong>測試買家</strong>，</p>
+            <p>賣家已接受您對商品 <strong>${DEMO_ITEM}</strong> 的出價 <strong>HKD ${DEMO_PRICE}</strong>！</p>
+            <p>請盡快完成付款以確保訂單。</p>
+            <div style="text-align:center;margin:28px 0;"><a href="https://boxium.asia" style="display:inline-block;background:#FFD700;color:#06038d;font-size:15px;font-weight:bold;padding:14px 36px;border-radius:50px;text-decoration:none;">前往商品頁付款</a></div>
+            <p style="color:#e67e22;font-size:13px;">⚠️ 請在 24 小時內完成付款，逾期訂單將自動取消。</p>`
+          );
+          break;
+        }
+        case "offer_rejected": {
+          subject = `❌ 出價未獲接受 — ${DEMO_ITEM}`;
+          html = (await import("../emailService")).wrapHtmlTest(
+            subject,
+            `<h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">出價未獲接受 ❌</h2>
+            <p>親愛的 <strong>測試買家</strong>，</p>
+            <p>很遺憾，賣家未接受您對商品 <strong>${DEMO_ITEM}</strong> 的出價 <strong>HKD ${DEMO_PRICE}</strong>。</p>
+            <p>您可以繼續瀏覽其他商品或調整出價再試。</p>
+            <div style="text-align:center;margin:28px 0;"><a href="https://boxium.asia/marketplace" style="display:inline-block;background:#FFD700;color:#06038d;font-size:15px;font-weight:bold;padding:14px 36px;border-radius:50px;text-decoration:none;">繼續瀏覽市集</a></div>`
+          );
+          break;
+        }
+        case "order_confirmed": {
+          const r = buildOrderConfirmedEmail({ orderNo: DEMO_ORDER_NO, itemName: DEMO_ITEM, priceHkd: DEMO_PRICE, listingId: DEMO_LISTING_ID });
+          subject = r.subject; html = r.html; break;
+        }
+        case "order_shipped": {
+          const r = buildOrderShippedEmail({ orderNo: DEMO_ORDER_NO, itemName: DEMO_ITEM, priceHkd: DEMO_PRICE, trackingNo: "SF1234567890" });
+          subject = r.subject; html = r.html; break;
+        }
+        case "order_completed": {
+          const r = buildOrderCompletedBuyerEmail({ orderNo: DEMO_ORDER_NO, itemName: DEMO_ITEM, priceHkd: DEMO_PRICE });
+          subject = r.subject; html = r.html; break;
+        }
+        case "order_cancelled": {
+          const r = buildOrderCancelledEmail({ orderNo: DEMO_ORDER_NO, itemName: DEMO_ITEM, priceHkd: DEMO_PRICE, note: "測試取消原因" });
+          subject = r.subject; html = r.html; break;
+        }
+        case "seller_approved": {
+          const r = buildSellerApprovedEmail({ displayName: "測試賣家", siteUrl: "https://boxium.asia" });
+          subject = r.subject; html = r.html; break;
+        }
+        case "seller_rejected": {
+          const r = buildSellerRejectedEmail({ displayName: "測試賣家", rejectReason: "資料不完整，請重新提交申請。" });
+          subject = r.subject; html = r.html; break;
+        }
+        case "payment_reminder": {
+          subject = `⏰ 付款提醒 — ${DEMO_ITEM}`;
+          html = (await import("../emailService")).wrapHtmlTest(
+            subject,
+            `<h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">付款提醒 ⏰</h2>
+            <p>親愛的 <strong>測試買家</strong>，</p>
+            <p>您對商品 <strong>${DEMO_ITEM}</strong> 的出價已被接受，但尚未完成付款。</p>
+            <p>請盡快完成付款，否則訂單將在 <strong>24 小時</strong>後自動取消。</p>
+            <div style="text-align:center;margin:28px 0;"><a href="https://boxium.asia" style="display:inline-block;background:#FFD700;color:#06038d;font-size:15px;font-weight:bold;padding:14px 36px;border-radius:50px;text-decoration:none;">立即付款</a></div>`
+          );
+          break;
+        }
+        default:
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown email type" });
+      }
+
+      await sendEmail({ to: input.to, subject, html, emailType: "system", skipUnsubscribeCheck: true });
+      return { success: true, subject };
+    }),
+
   // Protected: resubscribe from a specific email type
   resubscribeType: protectedProcedure
     .input(z.object({

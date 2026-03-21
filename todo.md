@@ -5495,3 +5495,15 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 修復新出價通知發給 admin 而非賣家的問題（移除 makeOffer 中的 notifyAdmin 呼叫）
 - [x] 審查所有 notifyAdmin 呼叫，確認其餘都是合理的管理員通知
 - [x] 修復電郵背景粉紅色問題（加入 color-scheme: light only 防止 Gmail dark mode 干擾）
+
+---
+## 📧 電郵系統三項新功能
+- [ ] 後台電郵測試工具（發送各類測試電郵到指定地址）
+- [ ] 出價接受後 1 小時付款提醒排程（統一邏輯）
+- [ ] 訂單付款後 12 小時出貨提醒排程
+
+---
+## ✅ 電郵系統三項新功能完成
+- [x] 後台電郵測試工具（email.sendTestEmail tRPC 端點 + AdminEmailTest 組件，支援 7 種電郵類型）
+- [x] 出價接受後 1 小時付款提醒排程（每 10 分鐘掃描，1 小時視窗，發送站內通知 + 電郵，paymentReminderSentAt 防重複）
+- [x] 訂單付款後 12 小時出貨提醒排程（每 30 分鐘掃描，12 小時視窗，發送站內通知 + 電郵，shippingReminderSentAt 防重複，移除不必要的 notifyAdmin）
