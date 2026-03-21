@@ -5483,3 +5483,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 修復後端 logout API（使用 getSessionCookieOptions 確保選項一致）
 - [x] 修復前端登出邏輯（清除 tRPC 快取、使用 replace 避免年年實實）
 - [ ] 測試登出流程（待用戶在生產環境測試）
+
+---
+## 🎨 電郵模板重新設計
+- [x] 修復 Logo 圖片顯示問題（上傳到 CDN，使用公開 URL）
+- [x] 重新設計電郵模板（藍色主題 #06038d、黃色點綴 #FFD700）
+- [x] 更新所有電郵模板（wrapHtml、出價、訂單、賣家審核、歡迎）

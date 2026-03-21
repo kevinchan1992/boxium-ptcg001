@@ -46,8 +46,10 @@ async function createTransporter() {
 
 // ─── Shared HTML wrapper ─────────────────────────────────────────────────────
 
-const BRAND_BLUE = "#1a0dab";
-const BRAND_YELLOW = "#ffed00";
+// BOXIUM brand colours
+const BRAND_BLUE = "#06038d";   // deep brand blue (matches website nav)
+const BRAND_YELLOW = "#FFD700"; // gold yellow accent
+const BRAND_LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/boxium-logo_004f9905.png";
 
 function wrapHtml(title: string, body: string, unsubscribeToken?: string, emailType?: string): string {
   return `<!DOCTYPE html>
@@ -57,39 +59,59 @@ function wrapHtml(title: string, body: string, unsubscribeToken?: string, emailT
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title}</title>
 </head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,'Helvetica Neue',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 0;">
+<body style="margin:0;padding:0;background:#eef0f8;font-family:Arial,'Helvetica Neue',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#eef0f8;padding:32px 16px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-          <!-- Header -->
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(6,3,141,0.12);">
+
+          <!-- Header: brand blue with yellow logo badge -->
           <tr>
-            <td style="background:${BRAND_BLUE};padding:20px 32px;text-align:center;">
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/boxium-logo-white_52b4d8da.png" alt="BOXIUM PTCG" width="140" style="display:block;margin:0 auto;max-width:140px;height:auto;" />
+            <td style="background:${BRAND_BLUE};padding:28px 32px 24px;text-align:center;">
+              <!-- Logo on yellow pill background for visibility -->
+              <div style="display:inline-block;background:${BRAND_YELLOW};border-radius:12px;padding:10px 20px;">
+                <img src="${BRAND_LOGO_URL}" alt="BOXIUM PTCG" width="160" height="auto"
+                  style="display:block;max-width:160px;height:auto;" />
+              </div>
+              <!-- Tagline -->
+              <p style="margin:12px 0 0;font-size:12px;color:rgba(255,255,255,0.7);letter-spacing:2px;text-transform:uppercase;">LUCK IN EVERY BOX</p>
             </td>
           </tr>
+
+          <!-- Yellow accent divider -->
+          <tr>
+            <td style="background:${BRAND_YELLOW};height:4px;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+
           <!-- Body -->
           <tr>
-            <td style="padding:32px;">
+            <td style="padding:32px 36px;background:#ffffff;">
               ${body}
             </td>
           </tr>
+
           <!-- Footer -->
           <tr>
-            <td style="background:#f9f9f9;padding:20px 32px;text-align:center;border-top:1px solid #eeeeee;">
-              <p style="margin:0;font-size:12px;color:#999999;">
+            <td style="background:#06038d;padding:20px 32px;text-align:center;">
+              <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.7);">
                 此郵件由 BOXIUM PTCG 系統自動發送，請勿直接回覆。<br/>
-                如有問題請聯絡客服：<a href="mailto:boxium.asia@gmail.com" style="color:${BRAND_BLUE};">boxium.asia@gmail.com</a>
+                如有問題請聯絡客服：<a href="mailto:boxium.asia@gmail.com" style="color:${BRAND_YELLOW};text-decoration:none;">boxium.asia@gmail.com</a>
               </p>
               ${unsubscribeToken ? `
-              <p style="margin:8px 0 0;font-size:11px;color:#bbbbbb;">
-                <a href="https://boxiumptcg.manus.space/unsubscribe?token=${unsubscribeToken}&action=unsubscribe" style="color:#aaaaaa;text-decoration:underline;">退訂此類通知</a>
+              <p style="margin:10px 0 0;font-size:11px;color:rgba(255,255,255,0.45);">
+                <a href="https://boxium.asia/unsubscribe?token=${unsubscribeToken}&action=unsubscribe" style="color:rgba(255,255,255,0.45);text-decoration:underline;">退訂此類通知</a>
                 &nbsp;·&nbsp;
-                <a href="https://boxiumptcg.manus.space/unsubscribe?token=${unsubscribeToken}&action=resubscribe" style="color:#aaaaaa;text-decoration:underline;">重新訂閱</a>
+                <a href="https://boxium.asia/unsubscribe?token=${unsubscribeToken}&action=resubscribe" style="color:rgba(255,255,255,0.45);text-decoration:underline;">重新訂閱</a>
               </p>` : ''}
             </td>
           </tr>
+
         </table>
+
+        <!-- Below-card copyright -->
+        <p style="margin:16px 0 0;font-size:11px;color:#9ca3af;text-align:center;">
+          &copy; 2025 BOXIUM PTCG. All rights reserved.
+        </p>
       </td>
     </tr>
   </table>
@@ -100,30 +122,31 @@ function wrapHtml(title: string, body: string, unsubscribeToken?: string, emailT
 function orderInfoBlock(orderNo: string, itemName: string, priceHkd: string, listingId?: number): string {
   const listingIdRow = listingId ? `
     <tr>
-      <td style="padding:8px 16px;border-top:1px solid #e0e4ff;">
-        <p style="margin:0;font-size:13px;color:#666;">商品編號（支付寶備注用）</p>
-        <p style="margin:4px 0 0;font-size:16px;font-weight:bold;color:#1a0dab;font-family:monospace;">#BOXIUM-${listingId}</p>
+      <td style="padding:10px 16px;border-top:1px solid #dde0f5;">
+        <p style="margin:0;font-size:12px;color:#888;">商品編號（支付寶備注用）</p>
+        <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:${BRAND_BLUE};font-family:monospace;">#BOXIUM-${listingId}</p>
       </td>
     </tr>` : '';
   return `
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #e0e4ff;border-radius:8px;margin:20px 0;padding:16px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6ff;border:2px solid #dde0f5;border-radius:10px;margin:20px 0;overflow:hidden;">
+    <!-- Order No header row -->
     <tr>
-      <td style="padding:8px 16px;">
-        <p style="margin:0;font-size:13px;color:#666;">訂單編號</p>
-        <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#1a0dab;">${orderNo}</p>
+      <td style="background:${BRAND_BLUE};padding:10px 16px;">
+        <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.7);">訂單編號</p>
+        <p style="margin:2px 0 0;font-size:14px;font-weight:bold;color:#ffffff;font-family:monospace;">${orderNo}</p>
       </td>
     </tr>
     ${listingIdRow}
     <tr>
-      <td style="padding:8px 16px;border-top:1px solid #e0e4ff;">
-        <p style="margin:0;font-size:13px;color:#666;">商品</p>
-        <p style="margin:4px 0 0;font-size:15px;color:#333;">${itemName}</p>
+      <td style="padding:10px 16px;border-top:1px solid #dde0f5;">
+        <p style="margin:0;font-size:12px;color:#888;">商品</p>
+        <p style="margin:4px 0 0;font-size:15px;color:#1a1a2e;font-weight:500;">${itemName}</p>
       </td>
     </tr>
     <tr>
-      <td style="padding:8px 16px;border-top:1px solid #e0e4ff;">
-        <p style="margin:0;font-size:13px;color:#666;">金額</p>
-        <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#333;">HKD ${priceHkd}</p>
+      <td style="padding:10px 16px;border-top:1px solid #dde0f5;background:#ffffff;">
+        <p style="margin:0;font-size:12px;color:#888;">金額</p>
+        <p style="margin:4px 0 0;font-size:18px;font-weight:bold;color:${BRAND_BLUE};">HKD ${priceHkd}</p>
       </td>
     </tr>
   </table>`;
@@ -131,8 +154,8 @@ function orderInfoBlock(orderNo: string, itemName: string, priceHkd: string, lis
 
 function ctaButton(text: string, url: string): string {
   return `
-  <div style="text-align:center;margin:24px 0;">
-    <a href="${url}" style="display:inline-block;background:${BRAND_BLUE};color:#ffffff;font-size:15px;font-weight:bold;padding:12px 32px;border-radius:8px;text-decoration:none;">${text}</a>
+  <div style="text-align:center;margin:28px 0;">
+    <a href="${url}" style="display:inline-block;background:${BRAND_YELLOW};color:${BRAND_BLUE};font-size:15px;font-weight:bold;padding:14px 36px;border-radius:50px;text-decoration:none;letter-spacing:0.5px;box-shadow:0 4px 12px rgba(6,3,141,0.2);">${text}</a>
   </div>`;
 }
 
@@ -153,7 +176,7 @@ export function buildOrderConfirmedEmail(data: OrderEmailData): { subject: strin
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `✅ 訂單確認 — ${data.orderNo}`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">訂單已確認 ✅</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單已確認 ✅</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">感謝您的購買！您的付款已成功，賣家將盡快為您處理訂單。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd, data.listingId)}
     <p style="color:#555;font-size:14px;">我們會在訂單出貨後再次通知您。如有任何問題，請透過平台聯絡賣家。</p>
@@ -172,7 +195,7 @@ export function buildOrderShippedEmail(data: OrderEmailData): { subject: string;
        </p>`
     : "";
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">訂單已出貨 📦</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單已出貨 📦</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">您的商品已由賣家寄出，請留意查收。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
     ${trackingBlock}
@@ -187,7 +210,7 @@ export function buildOrderCompletedBuyerEmail(data: OrderEmailData): { subject: 
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `🎉 訂單已完成 — ${data.orderNo}`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">訂單已完成 🎉</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單已完成 🎉</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">感謝您的購買！您已確認收貨，訂單已成功完成。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
     <p style="color:#555;font-size:14px;">希望您對這次購物感到滿意！如有任何問題，請聯絡客服。</p>
@@ -201,10 +224,10 @@ export function buildOrderCompletedSellerEmail(data: OrderEmailData & { receivab
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `💰 訂單已完成，款項即將到帳 — ${data.orderNo}`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">訂單已完成 💰</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單已完成 💰</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">買家已確認收貨，您的款項將按照平台規定時間轉帳。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fff4;border:1px solid #b2f5c8;border-radius:8px;margin:16px 0;padding:16px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f1ff;border:1px solid #c8cbf0;border-radius:8px;margin:16px 0;padding:16px;">
       <tr>
         <td style="padding:8px 16px;">
           <p style="margin:0;font-size:13px;color:#666;">您將收到（扣除平台手續費後）</p>
@@ -222,7 +245,7 @@ export function buildOrderAutoCompletedBuyerEmail(data: OrderEmailData): { subje
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `⏰ 訂單已自動完成 — ${data.orderNo}`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">訂單已自動完成 ⏰</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單已自動完成 ⏰</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">由於您的訂單在出貨後 <strong>14 天</strong>內未確認收貨，系統已自動完成此訂單。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
     <p style="color:#555;font-size:14px;">如您尚未收到商品，或對訂單有任何疑問，請盡快聯絡客服處理。</p>
@@ -236,10 +259,10 @@ export function buildOrderAutoCompletedSellerEmail(data: OrderEmailData & { rece
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `⏰ 訂單已自動完成，款項即將到帳 — ${data.orderNo}`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">訂單已自動完成 ⏰</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單已自動完成 ⏰</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">由於買家在出貨後 <strong>14 天</strong>內未確認收貨，系統已自動完成此訂單。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fff4;border:1px solid #b2f5c8;border-radius:8px;margin:16px 0;padding:16px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f1ff;border:1px solid #c8cbf0;border-radius:8px;margin:16px 0;padding:16px;">
       <tr>
         <td style="padding:8px 16px;">
           <p style="margin:0;font-size:13px;color:#666;">您將收到（扣除平台手續費後）</p>
@@ -260,7 +283,7 @@ export function buildOrderRefundedEmail(data: OrderEmailData): { subject: string
     ? `<p style="background:#fff3f3;border-left:4px solid #ef4444;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;"><strong>退款原因：</strong>${data.note}</p>`
     : "";
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">訂單退款通知 💸</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單退款通知 💸</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">您的訂單已申請退款，款項將退回至原付款方式，通常需要 5-10 個工作天。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
     ${noteBlock}
@@ -278,7 +301,7 @@ export function buildOrderCancelledEmail(data: OrderEmailData): { subject: strin
     ? `<p style="background:#fff3f3;border-left:4px solid #ef4444;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;"><strong>取消原因：</strong>${data.note}</p>`
     : "";
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">訂單已取消 ❌</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單已取消 ❌</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">您的訂單已被取消。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
     ${noteBlock}
@@ -301,12 +324,12 @@ export function buildSellerApprovedEmail(data: SellerApplicationEmailData): { su
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `✅ 賣家申請已批准 — BOXIUM PTCG`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">賣家申請已批准 ✅</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">賣家申請已批准 ✅</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${data.displayName}</strong>，<br/>
       恭喜！你的 BOXIUM PTCG 賣家申請已獲批准，現在可以開始在平台上架商品了。
     </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fff4;border:1px solid #b2f5c8;border-radius:8px;margin:20px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f1ff;border:1px solid #c8cbf0;border-radius:8px;margin:20px 0;">
       <tr>
         <td style="padding:20px 24px;">
           <p style="margin:0 0 8px;font-size:14px;color:#16a34a;font-weight:bold;">🎉 接下來的步驟：</p>
@@ -332,7 +355,7 @@ export function buildSellerRejectedEmail(data: SellerApplicationEmailData): { su
     ? `<p style="background:#fff3f3;border-left:4px solid #ef4444;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;"><strong>未批准原因：</strong>${data.rejectReason}</p>`
     : "";
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">賣家申請未獲批准 ❌</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">賣家申請未獲批准 ❌</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${data.displayName}</strong>，<br/>
       很遺憾，你的 BOXIUM PTCG 賣家申請目前未獲批准。
@@ -589,32 +612,32 @@ export interface OfferEmailData {
 export function buildNewOfferEmail(data: OfferEmailData): { subject: string; html: string } {
   const subject = `💬 您收到一個新出價 — ${data.cardName}`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">您收到一個新出價 💬</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">您收到一個新出價 💬</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${data.sellerName}</strong>，<br/>
       買家 <strong>${data.buyerName}</strong> 對您的商品提出了出價，請盡快回應。
     </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #e0e4ff;border-radius:8px;margin:20px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f1ff;border:1px solid #c8cbf0;border-radius:8px;margin:20px 0;">
       <tr>
         <td style="padding:12px 16px;">
           <p style="margin:0;font-size:13px;color:#666;">商品名稱</p>
-          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#1a0dab;">${data.cardName}</p>
+          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#06038d;">${data.cardName}</p>
         </td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;border-top:1px solid #e0e4ff;">
+        <td style="padding:12px 16px;border-top:1px solid #c8cbf0;">
           <p style="margin:0;font-size:13px;color:#666;">您的定價</p>
           <p style="margin:4px 0 0;font-size:15px;color:#333;">HKD ${data.listingPriceHkd}</p>
         </td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;border-top:1px solid #e0e4ff;">
+        <td style="padding:12px 16px;border-top:1px solid #c8cbf0;">
           <p style="margin:0;font-size:13px;color:#666;">買家出價</p>
           <p style="margin:4px 0 0;font-size:20px;font-weight:bold;color:#16a34a;">HKD ${data.offerAmountHkd}</p>
         </td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;border-top:1px solid #e0e4ff;">
+        <td style="padding:12px 16px;border-top:1px solid #c8cbf0;">
           <p style="margin:0;font-size:13px;color:#666;">出價有效期至</p>
           <p style="margin:4px 0 0;font-size:14px;color:#ef4444;font-weight:bold;">${data.expiresAt}</p>
         </td>
@@ -639,7 +662,7 @@ export function buildOfferExpiringSoonEmail(data: OfferEmailData): { subject: st
       <tr>
         <td style="padding:12px 16px;">
           <p style="margin:0;font-size:13px;color:#666;">商品名稱</p>
-          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#1a0dab;">${data.cardName}</p>
+          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#06038d;">${data.cardName}</p>
         </td>
       </tr>
       <tr>
@@ -666,7 +689,7 @@ export function buildOrderPaymentReceivedSellerEmail(data: OrderEmailData): { su
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `🎉 新訂單已付款，請安排出貨 — ${data.orderNo}`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">新訂單已付款 🎉</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">新訂單已付款 🎉</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">您有一筆新訂單的付款已確認，請盡快安排出貨。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd, data.listingId)}
     <p style="color:#555;font-size:14px;">請在賣家中心查看買家的收貨地址，並盡快安排寄送。出貨後請在平台更新物流追蹤號。</p>
@@ -680,7 +703,7 @@ export function buildOrderPaymentReceivedBuyerEmail(data: OrderEmailData): { sub
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `✅ 付款確認 — 訂單 ${data.orderNo} 已進入處理中`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">付款已確認 ✅</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">付款已確認 ✅</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">您的付款已成功確認！賣家將盡快為您安排出貨。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd, data.listingId)}
     <p style="color:#555;font-size:14px;">我們會在訂單出貨後再次通知您，請留意追蹤號碼。如有任何問題，請透過平台聯絡賣家。</p>
@@ -695,13 +718,13 @@ export function buildNewReviewSellerEmail(data: { orderNo: string; itemName: str
   const stars = "⭐".repeat(data.rating) + "☆".repeat(5 - data.rating);
   const subject = `⭐ 您收到一則新評價 — ${data.rating}/5 星`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">您收到一則新評價 ⭐</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">您收到一則新評價 ⭐</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">買家已對訂單 <strong>${data.orderNo}</strong> 提交評價。</p>
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin:20px 0;">
       <tr>
         <td style="padding:12px 16px;">
           <p style="margin:0;font-size:13px;color:#666;">商品名稱</p>
-          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#1a0dab;">${data.itemName}</p>
+          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#06038d;">${data.itemName}</p>
         </td>
       </tr>
       <tr>
@@ -735,35 +758,35 @@ export function buildWelcomeEmail(data: {
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `🎉 歡迎加入 BOXIUM PTCG！`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:24px;">歡迎加入 BOXIUM PTCG！🎉</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:24px;">歡迎加入 BOXIUM PTCG！🎉</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${data.userName}</strong>，<br/>
       感謝您加入 BOXIUM PTCG — 香港及台灣最專業的寶可夢集換式卡牌交易平台！
     </p>
 
     <!-- Feature highlights -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #e0e4ff;border-radius:8px;margin:20px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f1ff;border:1px solid #c8cbf0;border-radius:8px;margin:20px 0;">
       <tr>
         <td style="padding:16px 20px;border-bottom:1px solid #e0e4ff;">
-          <p style="margin:0;font-size:15px;font-weight:bold;color:#1a0dab;">📊 即時價格追蹤</p>
+          <p style="margin:0;font-size:15px;font-weight:bold;color:#06038d;">📊 即時價格追蹤</p>
           <p style="margin:6px 0 0;font-size:13px;color:#555;">整合 Snkrdunk、eBay 等多個國際市場數據，掌握卡牌最新成交價。</p>
         </td>
       </tr>
       <tr>
         <td style="padding:16px 20px;border-bottom:1px solid #e0e4ff;">
-          <p style="margin:0;font-size:15px;font-weight:bold;color:#1a0dab;">🛒 安全交易市集</p>
+          <p style="margin:0;font-size:15px;font-weight:bold;color:#06038d;">🛒 安全交易市集</p>
           <p style="margin:6px 0 0;font-size:13px;color:#555;">在 BOXIUM 市集買賣卡牌，支援出價洽議，安全有保障。</p>
         </td>
       </tr>
       <tr>
         <td style="padding:16px 20px;border-bottom:1px solid #e0e4ff;">
-          <p style="margin:0;font-size:15px;font-weight:bold;color:#1a0dab;">⭐ 關注清單</p>
+          <p style="margin:0;font-size:15px;font-weight:bold;color:#06038d;">⭐ 關注清單</p>
           <p style="margin:6px 0 0;font-size:13px;color:#555;">追蹤心儀卡牌的價格走勢，第一時間掌握入手時機。</p>
         </td>
       </tr>
       <tr>
         <td style="padding:16px 20px;">
-          <p style="margin:0;font-size:15px;font-weight:bold;color:#1a0dab;">🏪 成為賣家</p>
+          <p style="margin:0;font-size:15px;font-weight:bold;color:#06038d;">🏪 成為賣家</p>
           <p style="margin:6px 0 0;font-size:13px;color:#555;">申請成為認證賣家，輕鬆在平台上架您的卡牌，觸及更多買家。</p>
         </td>
       </tr>
@@ -773,7 +796,7 @@ export function buildWelcomeEmail(data: {
     ${ctaButton("前往 BOXIUM 市集", `${siteUrl}/marketplace`)}
 
     <p style="color:#999;font-size:12px;margin-top:24px;text-align:center;">
-      如有任何問題，歡迎聯絡我們：<a href="mailto:boxium.asia@gmail.com" style="color:#1a0dab;">boxium.asia@gmail.com</a>
+      如有任何問題，歡迎聯絡我們：<a href="mailto:boxium.asia@gmail.com" style="color:#06038d;">boxium.asia@gmail.com</a>
     </p>
   `);
   return { subject, html };
@@ -822,8 +845,8 @@ export async function notifyAdmin({
 }): Promise<boolean> {
   const subject = `[BOXIUM 後台] ${title}`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#1a0dab;font-size:20px;">${title}</h2>
-    <div style="background:#f8f9ff;border:1px solid #e0e4ff;border-radius:8px;padding:16px 20px;margin:16px 0;">
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:20px;">${title}</h2>
+    <div style="background:#f0f1ff;border:1px solid #c8cbf0;border-radius:8px;padding:16px 20px;margin:16px 0;">
       <p style="margin:0;font-size:14px;color:#333;white-space:pre-line;">${content}</p>
     </div>
     <p style="color:#999;font-size:12px;margin-top:16px;">此為系統自動發送的管理員通知，時間：${new Date().toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}</p>
