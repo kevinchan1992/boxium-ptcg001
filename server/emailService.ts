@@ -549,21 +549,24 @@ export async function getOrderEmailData(order: {
 /**
  * Convenience: send order email to a user by ID.
  * Silently skips if user has no email or SMTP is not configured.
+ * Pass emailType to enable unsubscribe token injection and logging.
  */
 export async function sendOrderEmail({
   userId,
   subject,
   html,
+  emailType = 'order',
 }: {
   userId: number;
   subject: string;
   html: string;
+  emailType?: string;
 }): Promise<boolean> {
   try {
     const { getUserById } = await import("./userManagement");
     const user = await getUserById(userId);
     if (!user?.email) return false;
-    return sendEmail({ to: user.email, subject, html });
+    return sendEmail({ to: user.email, subject, html, emailType, toUserId: userId });
   } catch (err: any) {
     console.error(`[EmailService] sendOrderEmail error for userId=${userId}:`, err.message);
     return false;

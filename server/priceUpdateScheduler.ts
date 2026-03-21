@@ -718,7 +718,7 @@ export function startOfferExpiryReminderScheduler() {
                 expiresAt: expiresAtStr,
                 sellerDashboardUrl: 'https://boxium.asia/seller',
               });
-              await sendEmail({ to: sellerUser.email, subject, html });
+              await sendEmail({ to: sellerUser.email, subject, html, emailType: 'offer', toUserId: offer.sellerId });
             }
 
             console.log(`[OfferExpiryReminder] Reminder sent for offer ${offer.id}`);

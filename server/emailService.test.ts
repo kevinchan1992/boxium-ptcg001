@@ -247,3 +247,118 @@ describe("emailService - Unsubscribe Token Auto-injection", () => {
     expect(callArgs.html).not.toContain("unsubscribe?token=");
   });
 });
+
+// ─── Tests: sendOrderEmail Integration ───────────────────────────────────────
+describe("emailService - sendOrderEmail Integration", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.GMAIL_APP_PASSWORD = "test-app-password";
+  });
+
+  it("sendOrderEmail passes emailType and toUserId to sendEmail", async () => {
+    // Mock userManagement to return a user with email
+    vi.doMock("./userManagement", () => ({
+      getUserById: vi.fn().mockResolvedValue({
+        id: 42,
+        email: "buyer@example.com",
+        name: "Test Buyer",
+      }),
+    }));
+
+    const { sendOrderEmail } = await import("./emailService");
+    const result = await sendOrderEmail({
+      userId: 42,
+      subject: "訂單確認",
+      html: "<html><body><p>Order confirmed</p></body></html>",
+      emailType: "order",
+    });
+
+    expect(result).toBe(true);
+    expect(mockSendMail).toHaveBeenCalledTimes(1);
+    const callArgs = mockSendMail.mock.calls[0][0];
+    expect(callArgs.to).toBe("buyer@example.com");
+    expect(callArgs.subject).toBe("訂單確認");
+  });
+
+  it("sendOrderEmail defaults to order emailType when not specified", async () => {
+    vi.doMock("./userManagement", () => ({
+      getUserById: vi.fn().mockResolvedValue({
+        id: 10,
+        email: "seller@example.com",
+        name: "Test Seller",
+      }),
+    }));
+
+    const { sendOrderEmail } = await import("./emailService");
+    const result = await sendOrderEmail({
+      userId: 10,
+      subject: "出貨通知",
+      html: "<html><body><p>Shipped</p></body></html>",
+    });
+
+    expect(result).toBe(true);
+    expect(mockSendMail).toHaveBeenCalledTimes(1);
+  });
+
+  it("sendOrderEmail returns false when user has no email", async () => {
+    vi.doMock("./userManagement", () => ({
+      getUserById: vi.fn().mockResolvedValue({
+        id: 99,
+        email: null,
+        name: "No Email User",
+      }),
+    }));
+
+    const { sendOrderEmail } = await import("./emailService");
+    const result = await sendOrderEmail({
+      userId: 99,
+      subject: "訂單通知",
+      html: "<html><body><p>Test</p></body></html>",
+    });
+
+    expect(result).toBe(false);
+    expect(mockSendMail).not.toHaveBeenCalled();
+  });
+});
+
+// ─── Tests: Email Template emailType Mapping ─────────────────────────────────
+describe("emailService - Email Template Types", () => {
+  it("buildNewOfferEmail returns correct subject and HTML structure", async () => {
+    const { buildNewOfferEmail } = await import("./emailService");
+    const { subject, html } = buildNewOfferEmail({
+      sellerName: "賣家A",
+      buyerName: "買家B",
+      cardName: "皮卡丘 VMAX",
+      offerAmountHkd: "500.00",
+      listingPriceHkd: "600.00",
+      expiresAt: "2026-04-01 18:00 (HKT)",
+      sellerDashboardUrl: "https://boxium.asia/seller",
+    });
+    expect(subject).toContain("新出價");
+    expect(html).toContain("皮卡丘 VMAX");
+    expect(html).toContain("HKD 500.00");
+    expect(html).toContain("賣家A");
+    expect(html).toContain("買家B");
+  });
+
+  it("buildSellerApprovedEmail returns correct subject and HTML", async () => {
+    const { buildSellerApprovedEmail } = await import("./emailService");
+    const { subject, html } = buildSellerApprovedEmail({
+      displayName: "TestSeller",
+      siteUrl: "https://boxium.asia",
+    });
+    expect(subject).toContain("批准");
+    expect(html).toContain("TestSeller");
+    expect(html).toContain("Stripe");
+  });
+
+  it("buildSellerRejectedEmail includes rejection reason when provided", async () => {
+    const { buildSellerRejectedEmail } = await import("./emailService");
+    const { subject, html } = buildSellerRejectedEmail({
+      displayName: "TestSeller",
+      rejectReason: "文件不齊全",
+    });
+    expect(subject).toContain("未獲批准");
+    expect(html).toContain("文件不齊全");
+  });
+});

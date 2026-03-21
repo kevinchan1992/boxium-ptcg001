@@ -5457,3 +5457,22 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 電郵統計圖表：tRPC getChartData 端點（過去 7 天每日 sent/failed/skipped）
 - [x] 電郵統計圖表：AdminEmailLogs 頁面加入折線圖（recharts LineChart）
 - [x] vitest 測試：15 項測試全部通過（歡迎電郵模板、退訂 token 注入、system 類型跳過）
+
+---
+## 🔍 交易電郵退訂連結整合審查
+- [ ] 審查所有 sendEmail 呼叫點，確認 toUserId 和 emailType 是否完整
+- [ ] 修復出價相關電郵（新出價通知、出價被接受/拒絕）
+- [ ] 修復訂單相關電郵（訂單確認、出貨通知、收貨確認）
+- [ ] 修復賣家審核電郵（商品審核通過/拒絕）
+- [ ] 撰寫整合測試確認所有電郵觸發點正確
+
+---
+## ✅ 交易電郵退訂連結整合審查完成
+- [x] 審查所有 sendEmail 呼叫點，確認 toUserId 和 emailType 是否完整
+- [x] 修復出價相關電郵（新出價通知、出價被接受/拒絕）
+- [x] 修復訂單相關電郵（訂單確認、出貨通知、收貨確認、取消、退款）
+- [x] 修復賣家審核電郵（賣家申請批准/拒絕）
+- [x] 修復 priceUpdateScheduler 出價到期提醒電郵
+- [x] 修復 Stripe webhook 訂單確認電郵
+- [x] 更新 sendOrderEmail 函數加入 emailType 參數（預設 'order'）
+- [x] 新增出價被接受/拒絕的買家通知電郵（含 CTA 按鈕）

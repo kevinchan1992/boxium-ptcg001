@@ -121,7 +121,7 @@ async function startServer() {
             const { sendOrderEmail, buildOrderConfirmedEmail, getOrderEmailData } = await import('../emailService');
             const emailData = await getOrderEmailData(order);
             const { subject, html } = buildOrderConfirmedEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, listingId: emailData.listingId });
-            await sendOrderEmail({ userId: order.buyerId, subject, html });
+            await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order' });
           } catch (emailErr: any) {
             console.warn('[Webhook] Order confirmed email failed:', emailErr.message);
           }
@@ -142,7 +142,7 @@ async function startServer() {
                 const { sendOrderEmail, buildOrderPaymentReceivedSellerEmail, getOrderEmailData } = await import('../emailService');
                 const sellerEmailData = await getOrderEmailData(order);
                 const { subject: ss, html: sh } = buildOrderPaymentReceivedSellerEmail({ orderNo: order.orderNo, itemName: sellerEmailData.itemName, priceHkd: sellerEmailData.priceHkd, listingId: order.listingId ?? undefined });
-                await sendOrderEmail({ userId: webhookSellerProf.userId, subject: ss, html: sh });
+                await sendOrderEmail({ userId: webhookSellerProf.userId, subject: ss, html: sh, emailType: 'order' });
               } catch (sellerEmailErr: any) { console.warn('[Webhook] Seller email failed:', sellerEmailErr.message); }
             }
           }
