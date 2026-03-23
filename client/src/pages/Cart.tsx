@@ -930,6 +930,24 @@ function CheckoutDialog({
                 </div>
               )}
 
+              {/* No saved addresses - quick link to profile */}
+              {(!savedAddresses || savedAddresses.length === 0) && (
+                <div className="flex items-center justify-between p-3 rounded-xl border border-dashed border-[#06038D]/30 bg-[#06038D]/5">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-[#06038D]" />
+                    <span className="text-xs text-gray-600">尚未儲存任何收貨地址</span>
+                  </div>
+                  <a
+                    href="/profile?tab=addresses"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-[#06038D] underline whitespace-nowrap"
+                  >
+                    前往個人中心新增地址
+                  </a>
+                </div>
+              )}
+
               {/* Manual Address / Shipping Method */}
               {(!savedAddresses || savedAddresses.length === 0 || selectedAddressId === null) && (<>
                 <div>
@@ -1063,7 +1081,10 @@ function CheckoutDialog({
                             <SelectContent>
                               {filteredStations.map((s: SFStation) => (
                                 <SelectItem key={s.code} value={s.code}>
-                                  {s.name}（{s.code}）
+                                  <div className="flex flex-col py-0.5">
+                                    <span className="font-medium">{s.name}</span>
+                                    <span className="text-xs text-gray-400 mt-0.5">{s.address}</span>
+                                  </div>
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -1114,13 +1135,14 @@ function CheckoutDialog({
                   </div>
 
                   <div>
-                    <Label className="text-xs text-gray-600 mb-1 block">備註（可選）</Label>
+                    <Label className="text-xs text-gray-600 mb-1 block">偏好交收地點（可選）</Label>
                     <Input
-                      placeholder="如有特定交收地點或時間要求，請填寫"
+                      placeholder="例：旺角地鐵站 B 出口、荃灣廣場門口..."
                       value={form.meetupNote}
                       onChange={(e) => setForm((f) => ({ ...f, meetupNote: e.target.value }))}
-                      className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D]"
+                      className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
                     />
+                    <p className="text-xs text-gray-400 mt-1">此備註將顯示在訂單詳情中，供賣家安排交收</p>
                   </div>
                 </div>
               )}
@@ -1161,29 +1183,65 @@ function CheckoutDialog({
 
               {/* Shipping Summary */}
               <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50">
-                {form.shippingMethod === "sf_cod" ? (
+                {selectedAddressId !== null ? (
+                  (() => {
+                    const selAddr = savedAddresses?.find((a: any) => a.id === selectedAddressId);
+                    const isSfStation = selAddr?.addressType === "sf_station";
+                    return isSfStation ? (
+                      <Truck className="w-4 h-4 text-[#06038D] mt-0.5 flex-shrink-0" />
+                    ) : (
+                      <MapPin className="w-4 h-4 text-[#06038D] mt-0.5 flex-shrink-0" />
+                    );
+                  })()
+                ) : form.shippingMethod === "sf_cod" ? (
                   <Truck className="w-4 h-4 text-[#06038D] mt-0.5 flex-shrink-0" />
                 ) : (
                   <Users className="w-4 h-4 text-[#06038D] mt-0.5 flex-shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
+                  {selectedAddressId !== null ? (
+                    (() => {
+                      const selAddr = savedAddresses?.find((a: any) => a.id === selectedAddressId);
+                      const isSfStation = selAddr?.addressType === "sf_station";
+                      return (
+                        <>
+                          <p className="text-xs font-semibold text-gray-700">
+                            {isSfStation ? "順豐速運（運費到付）" : "面交 / 其他"}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {selAddr?.recipientName} · {selAddr?.phone}
+                            {isSfStation
+                              ? ` · 順豐點：${selAddr?.sfStationName || selAddr?.sfStationCode}`
+                              : selAddr?.address ? ` · ${selAddr.address}` : ""}
+                          </p>
+                        </>
+                      );
+                    })()
+                  ) : (
+                  <>
                   <p className="text-xs font-semibold text-gray-700">
                     {form.shippingMethod === "sf_cod" ? "順豐速運（運費到付）" : "面交 / 其他"}
                   </p>
                   {form.shippingMethod === "sf_cod" && selectedStation && (
                     <p className="text-xs text-gray-500 mt-0.5">{form.recipientName} · {form.recipientPhone} · {selectedStation.name}</p>
                   )}
+                  {form.shippingMethod === "sf_cod" && sfAddressMode === "manual" && form.meetupNote && (
+                    <p className="text-xs text-gray-500 mt-0.5">{form.recipientName} · {form.recipientPhone} · {form.meetupNote}</p>
+                  )}
                   {form.shippingMethod === "meetup" && (
                     <div className="mt-1 space-y-1">
                       <p className="text-xs text-gray-500">
                         {buyerPhone ? `你的電話：${buyerPhone}` : "⚠️ 未設定電話（請先在個人中心設定）"}
-                        {form.meetupNote ? ` · ${form.meetupNote}` : ""}
+                        {form.meetupNote ? ` · 交收地點：${form.meetupNote}` : ""}
                       </p>
                       <p className="text-xs text-gray-400">付款完成後，訂單詳情頁面將顯示賣家聯絡電話</p>
                     </div>
                   )}
+                  </>
+                  )}
                 </div>
               </div>
+
 
               {/* Payment Method */}
               <div>
