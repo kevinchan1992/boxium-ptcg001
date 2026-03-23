@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock, Activity, History, MapPin, Mail, FlaskConical } from "lucide-react";
+import { LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive, Clock, Activity, History, MapPin, Mail, FlaskConical, Settings } from "lucide-react";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -12,6 +12,7 @@ import { AdminTaskHistory } from "@/components/AdminTaskHistory";
 import { AdminSFStationUpdate } from "@/components/AdminSFStationUpdate";
 import AdminEmailLogs from "@/components/AdminEmailLogs";
 import AdminEmailTest from "@/components/AdminEmailTest";
+import AdminPlatformSettings from "@/components/AdminPlatformSettings";
 
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -45,6 +46,7 @@ export default function Admin() {
             <BrandTabsTrigger value="sfstations" icon={<MapPin className="w-4 h-4" />} label="順豐站管理">順豐站管理</BrandTabsTrigger>
             <BrandTabsTrigger value="emaillogs" icon={<Mail className="w-4 h-4" />} label="電郵日誌">電郵日誌</BrandTabsTrigger>
             <BrandTabsTrigger value="emailtest" icon={<FlaskConical className="w-4 h-4" />} label="電郵測試">電郵測試</BrandTabsTrigger>
+            <BrandTabsTrigger value="platformsettings" icon={<Settings className="w-4 h-4" />} label="平台設定">平台設定</BrandTabsTrigger>
           </BrandTabsList>
 
           <BrandTabsContent value="dashboard"><AdminDashboard /></BrandTabsContent>
@@ -59,6 +61,7 @@ export default function Admin() {
           <BrandTabsContent value="sfstations"><AdminSFStationUpdate /></BrandTabsContent>
           <BrandTabsContent value="emaillogs"><AdminEmailLogs /></BrandTabsContent>
           <BrandTabsContent value="emailtest"><AdminEmailTest /></BrandTabsContent>
+          <BrandTabsContent value="platformsettings"><AdminPlatformSettings /></BrandTabsContent>
         </BrandTabs>
 
         {/* Marketplace shortcut */}

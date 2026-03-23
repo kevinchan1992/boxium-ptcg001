@@ -5658,3 +5658,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] respondToOffer 接受後自動 expire 其他 pending 出價並通知買家
 - [x] 賣家有 accepted/pending_payment 訂單時顯示警告 banner
 - [x] 購物車結帳失敗後自動移除無效商品
+
+---
+
+## 🎨 4 項 UI 優化（2026-03-23）
+
+- [x] 主頁 CTA 加入「前往市集」第三個按鈕
+- [x] 市集頁面 SEO 標題和 meta description 更新
+- [x] 漢堡選單下拉面板改為從左側展開（配合漢堡按鈕在左邊）
+- [x] 後台平台費率設定 UI（Admin 設定頁加入費率輸入框）

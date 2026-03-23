@@ -167,6 +167,13 @@ export default function Home() {
                   {t("home.startExploring")}
                 </Button>
               </Link>
+              <Link href="/marketplace">
+                <Button
+                  className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2 border-[#FEDD00] bg-transparent text-[#FEDD00] hover:bg-[#FEDD00]/10"
+                >
+                  {t("home.goToMarketplace")}
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -245,7 +252,7 @@ export default function Home() {
             {t("home.readyToStartDesc")}
           </p>
 
-          <div className="flex flex-row gap-3 justify-center px-2">
+          <div className="flex flex-row flex-wrap gap-3 justify-center px-2">
             <Link href="/research">
               <Button
                 className="px-4 sm:px-6 md:px-8 py-2 md:py-3 text-sm sm:text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
@@ -261,6 +268,14 @@ export default function Home() {
                 style={{ borderColor: "#06038d", color: "#06038d" }}
               >
                 {t("home.viewMarketTrends")}
+              </Button>
+            </Link>
+            <Link href="/marketplace">
+              <Button
+                className="px-4 sm:px-6 md:px-8 py-2 md:py-3 text-sm sm:text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
+                style={{ backgroundColor: "#FEDD00", color: "#06038d" }}
+              >
+                {t("home.goToMarketplace")}
               </Button>
             </Link>
           </div>

@@ -407,7 +407,7 @@ export function TopNav() {
         </div>
       </nav>
 
-      {/* Compact dropdown panel — right-aligned, all devices */}
+      {/* Compact dropdown panel — left-aligned to match hamburger button */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -415,7 +415,7 @@ export function TopNav() {
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -8, opacity: 0, scale: 0.97 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed top-14 right-4 w-56 bg-black/97 backdrop-blur-md border border-white/15 rounded-xl shadow-2xl z-40"
+            className="fixed top-14 left-4 w-56 bg-black/97 backdrop-blur-md border border-white/15 rounded-xl shadow-2xl z-40"
           >
             <div className="px-2 py-3 space-y-0.5">
               {navItems.map((item, index) => (
