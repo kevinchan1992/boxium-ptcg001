@@ -74,10 +74,10 @@ function wrapHtml(title: string, body: string, unsubscribeToken?: string, emailT
           <!-- Header: brand blue with yellow logo badge -->
           <tr>
             <td style="background:${BRAND_BLUE};padding:28px 32px 24px;text-align:center;">
-              <!-- Logo on yellow pill background for visibility -->
-              <div style="display:inline-block;background:${BRAND_YELLOW};border-radius:12px;padding:10px 20px;">
-                <img src="${BRAND_LOGO_URL}" alt="BOXIUM PTCG" width="160" height="auto"
-                  style="display:block;max-width:160px;height:auto;" />
+              <!-- Logo directly on brand blue background -->
+              <div style="display:inline-block;padding:8px 0;">
+                <img src="${BRAND_LOGO_URL}" alt="BOXIUM PTCG" width="180" height="auto"
+                  style="display:block;max-width:180px;height:auto;" />
               </div>
               <!-- Tagline -->
               <p style="margin:12px 0 0;font-size:12px;color:rgba(255,255,255,0.7);letter-spacing:2px;text-transform:uppercase;">LUCK IN EVERY BOX</p>

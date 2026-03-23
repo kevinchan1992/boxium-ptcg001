@@ -5559,4 +5559,4 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 新增 buildDisputeResolvedSellerEmail 電郵模板（勝訴/敗訴/部分）
 - [x] adminResolveDispute 加入賣家電郵觸發（三種 outcome 均通知賣家）
 - [x] 後台電郵測試工具加入四種新模板（dispute_opened_buyer/seller、dispute_resolved_seller_won/lost）
-- [ ] 電郵 LOGO 背景從黃色改為品牌藍色（#06038d），移除黃色色框
+- [x] 電郵 LOGO 背景從黃色改為品牌藍色（#06038d），移除黃色色框
