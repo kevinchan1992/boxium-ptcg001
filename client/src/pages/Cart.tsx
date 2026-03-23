@@ -603,6 +603,7 @@ function CheckoutDialog({
 }: CheckoutDialogProps) {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const [isValidatingStock, setIsValidatingStock] = React.useState(false);
 
   // For cart checkout we create individual orders per listing (one order per item)
   // since each listing is from potentially different sellers
@@ -666,6 +667,40 @@ function CheckoutDialog({
 
   const handleCheckout = async () => {
     if (!canSubmit || batchProgress) return;
+
+    // Pre-checkout inventory validation: check all active items are still available
+    setIsValidatingStock(true);
+    try {
+      const invalidItems: string[] = [];
+      await Promise.all(activeItems.map(async (item) => {
+        try {
+          // Use clearUnavailableCartItems logic: check listing status via getMyCart data
+          // We rely on the server-side check in createOrder, but also do a quick client-side check
+          // by re-fetching cart to see if any items became unavailable
+        } catch {
+          invalidItems.push(item.title);
+        }
+      }));
+
+      // Re-fetch cart to detect newly unavailable items
+      const freshCart = await utils.marketplace.getMyCart.fetch();
+      const freshActiveIds = new Set(
+        (freshCart ?? []).filter((i) => i.status === "active").map((i) => i.listingId)
+      );
+      const nowUnavailable = activeItems.filter((i) => !freshActiveIds.has(i.listingId));
+
+      if (nowUnavailable.length > 0) {
+        const names = nowUnavailable.map((i) => i.title).join("、");
+        toast.error(`以下商品已下架或售出，已自動從購物車移除：${names}`);
+        utils.marketplace.getMyCart.invalidate();
+        utils.marketplace.getCartCount.invalidate();
+        setIsValidatingStock(false);
+        return;
+      }
+    } catch {
+      // Non-fatal: if validation fails, proceed to checkout
+    }
+    setIsValidatingStock(false);
     const shippingAddress = buildShippingAddress();
     const items = [...activeItems];
     setBatchProgress({ total: items.length, done: 0, errors: 0 });
@@ -948,9 +983,11 @@ function CheckoutDialog({
           <Button
             className="bg-[#06038D] text-white hover:bg-[#06038D]/90"
             onClick={handleCheckout}
-            disabled={!canSubmit || isProcessing || !!batchProgress}
+            disabled={!canSubmit || isProcessing || !!batchProgress || isValidatingStock}
           >
-            {batchProgress
+            {isValidatingStock
+              ? "驗證庫存中..."
+              : batchProgress
               ? `建立中 ${batchProgress.done}/${batchProgress.total}...`
               : isProcessing
               ? "處理中..."

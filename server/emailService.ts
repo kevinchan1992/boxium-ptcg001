@@ -416,22 +416,25 @@ export async function sendEmail({
       }
     }
     // Check unsubscribe status (skip for critical emails like order confirmation)
+    // A user is considered unsubscribed only when resubscribedAt IS NULL.
+    // Records with resubscribedAt set are "active" token records created by getOrCreateUnsubscribeToken().
     if (!skipUnsubscribeCheck) {
       try {
         const { getDb } = await import('./db');
         const { emailUnsubscribes } = await import('../drizzle/schema_new');
-        const { and, eq, or } = await import('drizzle-orm');
+        const { and, eq, or, isNull } = await import('drizzle-orm');
         const db = await getDb();
         if (db) {
           const unsub = await db.select().from(emailUnsubscribes)
             .where(and(
               or(eq(emailUnsubscribes.email, to), ...(toUserId ? [eq(emailUnsubscribes.userId, toUserId)] : [])),
-              or(eq(emailUnsubscribes.emailType, emailType), eq(emailUnsubscribes.emailType, 'all'))
+              or(eq(emailUnsubscribes.emailType, emailType), eq(emailUnsubscribes.emailType, 'all')),
+              isNull(emailUnsubscribes.resubscribedAt) // Only truly unsubscribed records (resubscribedAt IS NULL)
             ))
             .limit(1);
           if (unsub.length > 0) {
             console.log(`[EmailService] Skipped "${subject}" to ${to} (unsubscribed)`);
-            await logEmail({ to, subject, emailType, toUserId, status: 'skipped' });
+            await logEmail({ to, subject, emailType, toUserId, status: 'skipped', dedupeKey });
             return false;
           }
         }

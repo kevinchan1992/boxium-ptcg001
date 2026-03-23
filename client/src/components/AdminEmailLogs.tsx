@@ -283,17 +283,18 @@ export default function AdminEmailLogs() {
                   <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium">收件人</th>
                   <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium">主旨</th>
                   <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium">類型</th>
+                  <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium hidden xl:table-cell">DedupeKey</th>
                   <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium">狀態</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-8 text-gray-400">載入中...</td>
+                    <td colSpan={6} className="text-center py-8 text-gray-400">載入中...</td>
                   </tr>
                 ) : !data?.logs.length ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-8 text-gray-400">
+                    <td colSpan={6} className="text-center py-8 text-gray-400">
                       <Mail className="w-8 h-8 mx-auto mb-2 opacity-30" />
                       <div>沒有符合條件的電郵記錄</div>
                     </td>
@@ -332,6 +333,15 @@ export default function AdminEmailLogs() {
                           <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">
                             {log.emailType}
                           </span>
+                        </td>
+                        <td className="px-3 py-2 hidden xl:table-cell">
+                          {log.dedupeKey ? (
+                            <div className="max-w-[200px] truncate font-mono text-xs text-gray-400" title={log.dedupeKey}>
+                              {log.dedupeKey}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-300">—</span>
+                          )}
                         </td>
                         <td className="px-3 py-2">
                           <span className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ${statusInfo.color}`}>

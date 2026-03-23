@@ -1,0 +1,100 @@
+{
+  "query": "SELECT * FROM emailUnsubscribes LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT * FROM emailUnsubscribes LIMIT 20;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "600004",
+      "email": "test-1774051887273@gmail.com",
+      "emailType": "welcome",
+      "token": "f8521d12fd08fa9c52af335d1665aa0d0526df9cee23319d5c85ccfc20f7dfef",
+      "unsubscribedAt": "2026-03-21 00:11:31",
+      "resubscribedAt": "2026-03-21 00:11:31"
+    },
+    {
+      "id": "2",
+      "userId": "600005",
+      "email": "test-existing-1774051889703@gmail.com",
+      "emailType": "welcome",
+      "token": "5afef8322ec9d35c418f38ea334aabdbda642887f5be95c909ee84e2adc9a06f",
+      "unsubscribedAt": "2026-03-21 00:11:32",
+      "resubscribedAt": "2026-03-21 00:11:32"
+    },
+    {
+      "id": "3",
+      "userId": "1",
+      "email": "xyz.asia.co@gmail.com",
+      "emailType": "offer",
+      "token": "a106a60d4542839fb551fa2004ddd1d530be479f8b1fffa86301b58129acfaa9",
+      "unsubscribedAt": "2026-03-21 00:33:33",
+      "resubscribedAt": "2026-03-21 00:33:34"
+    },
+    {
+      "id": "4",
+      "userId": "330001",
+      "email": "himlove1111@gmail.com",
+      "emailType": "offer",
+      "token": "cea35e9f32bf7993f87607fde8431909ab2b6be02f5c194a1d1a0e2c214579d7",
+      "unsubscribedAt": "2026-03-21 00:33:35",
+      "resubscribedAt": "2026-03-21 00:33:36"
+    },
+    {
+      "id": "5",
+      "userId": "8",
+      "email": "tearshim1004@gmail.com",
+      "emailType": "offer",
+      "token": "27e98d429b5120c2081b2d5234b15789ce6351a67347d4546ca5f7baa8241f2e",
+      "unsubscribedAt": "2026-03-21 00:33:39",
+      "resubscribedAt": "2026-03-21 00:33:39"
+    },
+    {
+      "id": "6",
+      "userId": "600007",
+      "email": "chantzehim@gmail.com",
+      "emailType": "welcome",
+      "token": "8b33ebf20e89cc335f8ddb2bcb49eb20dee93f499e68743c9fe92a0dd7a9c952",
+      "unsubscribedAt": "2026-03-21 01:18:41",
+      "resubscribedAt": "2026-03-21 01:18:42"
+    },
+    {
+      "id": "30001",
+      "userId": "630004",
+      "email": "test-1774234203934@gmail.com",
+      "emailType": "welcome",
+      "token": "4bba25fb3d1d0a6566927da25ce98975ff61169b94fba5b57b27560f32ea960c",
+      "unsubscribedAt": "2026-03-23 02:50:07",
+      "resubscribedAt": "2026-03-23 02:50:08"
+    },
+    {
+      "id": "30002",
+      "userId": "630005",
+      "email": "test-existing-1774234206201@gmail.com",
+      "emailType": "welcome",
+      "token": "32a56ba8cb44d7f7b7c6642c79bd540608a2e08583bedc2103cb6881efdd645d",
+      "unsubscribedAt": "2026-03-23 02:50:08",
+      "resubscribedAt": "2026-03-23 02:50:09"
+    },
+    {
+      "id": "30003",
+      "userId": "630015",
+      "email": "test-1774240845588@gmail.com",
+      "emailType": "welcome",
+      "token": "af8eedf938fe77bc5ab9251d756bf40571da56d45f683ba331d6e0034975a2f0",
+      "unsubscribedAt": "2026-03-23 04:40:49",
+      "resubscribedAt": "2026-03-23 04:40:49"
+    },
+    {
+      "id": "30004",
+      "userId": "630016",
+      "email": "test-existing-1774240847967@gmail.com",
+      "emailType": "welcome",
+      "token": "01571dd69286a59600962c0bbed0385881622e5d63c3029ad6d1923582f6fa6b",
+      "unsubscribedAt": "2026-03-23 04:40:50",
+      "resubscribedAt": "2026-03-23 04:40:51"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\temail\temailType\ttoken\tunsubscribedAt\tresubscribedAt\n1\t600004\ttest-1774051887273@gmail.com\twelcome\tf8521d12fd08fa9c52af335d1665aa0d0526df9cee23319d5c85ccfc20f7dfef\t2026-03-21 00:11:31\t2026-03-21 00:11:31\n2\t600005\ttest-existing-1774051889703@gmail.com\twelcome\t5afef8322ec9d35c418f38ea334aabdbda642887f5be95c909ee84e2adc9a06f\t2026-03-21 00:11:32\t2026-03-21 00:11:32\n3\t1\txyz.asia.co@gmail.com\toffer\ta106a60d4542839fb551fa2004ddd1d530be479f8b1fffa86301b58129acfaa9\t2026-03-21 00:33:33\t2026-03-21 00:33:34\n4\t330001\thimlove1111@gmail.com\toffer\tcea35e9f32bf7993f87607fde8431909ab2b6be02f5c194a1d1a0e2c214579d7\t2026-03-21 00:33:35\t2026-03-21 00:33:36\n5\t8\ttearshim1004@gmail.com\toffer\t27e98d429b5120c2081b2d5234b15789ce6351a67347d4546ca5f7baa8241f2e\t2026-03-21 00:33:39\t2026-03-21 00:33:39\n6\t600007\tchantzehim@gmail.com\twelcome\t8b33ebf20e89cc335f8ddb2bcb49eb20dee93f499e68743c9fe92a0dd7a9c952\t2026-03-21 01:18:41\t2026-03-21 01:18:42\n30001\t630004\ttest-1774234203934@gmail.com\twelcome\t4bba25fb3d1d0a6566927da25ce98975ff61169b94fba5b57b27560f32ea960c\t2026-03-23 02:50:07\t2026-03-23 02:50:08\n30002\t630005\ttest-existing-1774234206201@gmail.com\twelcome\t32a56ba8cb44d7f7b7c6642c79bd540608a2e08583bedc2103cb6881efdd645d\t2026-03-23 02:50:08\t2026-03-23 02:50:09\n30003\t630015\ttest-1774240845588@gmail.com\twelcome\taf8eedf938fe77bc5ab9251d756bf40571da56d45f683ba331d6e0034975a2f0\t2026-03-23 04:40:49\t2026-03-23 04:40:49\n30004\t630016\ttest-existing-1774240847967@gmail.com\twelcome\t01571dd69286a59600962c0bbed0385881622e5d63c3029ad6d1923582f6fa6b\t2026-03-23 04:40:50\t2026-03-23 04:40:51\n",
+  "stderr": "",
+  "execution_time_ms": 1568
+}

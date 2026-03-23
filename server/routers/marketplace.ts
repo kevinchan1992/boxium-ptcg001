@@ -5,8 +5,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure, adminProcedure } from "../_core/trpc";
-import {
-  getPublicListings, getListingById, createListing, updateListing,
+import { getPublicListings, getListingById, createListing, updateListing,
   getAdminListings, getSellerListings, getAdminListingDetail,
   getSellerProfileByUserId, getSellerProfileById, createSellerProfile, updateSellerProfile, getAllSellerProfiles, getAdminSellerDetail,
   createMarketplaceOrder, getMarketplaceOrderById, getMarketplaceOrderByNo, updateMarketplaceOrder, getBuyerOrders, getAdminOrders, getAlipayPendingOrders, generateOrderNo,
@@ -25,6 +24,7 @@ import {
   getActiveOrderByListingId,
   reserveListingStock,
   restoreListingStock,
+  getSystemSetting,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
@@ -33,21 +33,38 @@ import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNew
 import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs, cartItems } from "../../drizzle/schema_new";
 import { eq, and, isNotNull, isNull, or, desc, sql, inArray, like } from 'drizzle-orm';
 
-// Platform fee rate (5% for C2C listings only)
-const PLATFORM_FEE_RATE = 0.05;
+// Platform fee rate default (5% for C2C listings only) — overridden by systemSettings.platform_fee_rate
+const DEFAULT_PLATFORM_FEE_RATE = 0.05;
 // Alipay HK static payment link
 const ALIPAY_HK_STATIC_LINK = "https://w.alipay.hk/s12/3RYKWzGXrQ";
+
+/**
+ * Get the current platform fee rate from systemSettings.
+ * Falls back to DEFAULT_PLATFORM_FEE_RATE (0.05) if not configured.
+ */
+async function getPlatformFeeRate(): Promise<number> {
+  try {
+    const setting = await getSystemSetting('platform_fee_rate');
+    if (setting) {
+      const rate = parseFloat(setting.settingValue);
+      if (!isNaN(rate) && rate >= 0 && rate <= 1) return rate;
+    }
+  } catch {
+    // Non-fatal: fall back to default
+  }
+  return DEFAULT_PLATFORM_FEE_RATE;
+}
 
 /**
  * Calculate platform fee for an order.
  * Platform-owned listings (sellerType='platform') are exempt from platform fees.
  * Only C2C listings (sellerType='seller') are charged the platform fee.
  */
-function calcPlatformFee(sellerType: string | null | undefined, amount: number): number {
-  return sellerType === 'seller' ? amount * PLATFORM_FEE_RATE : 0;
+function calcPlatformFeeWithRate(sellerType: string | null | undefined, amount: number, rate: number): number {
+  return sellerType === 'seller' ? amount * rate : 0;
 }
-function calcSellerReceivable(sellerType: string | null | undefined, amount: number): number {
-  return amount - calcPlatformFee(sellerType, amount);
+function calcSellerReceivableWithRate(sellerType: string | null | undefined, amount: number, rate: number): number {
+  return amount - calcPlatformFeeWithRate(sellerType, amount, rate);
 }
 
 export const marketplaceRouter = router({
@@ -169,7 +186,8 @@ export const marketplaceRouter = router({
       const price = parseFloat(listing.priceHkd as string);
       const subtotal = price * input.quantity;
       // Platform fee is deducted from seller's payout (buyer pays listing price only)
-      const platformFee = listing.sellerType === "seller" ? subtotal * PLATFORM_FEE_RATE : 0;
+      const feeRate = await getPlatformFeeRate();
+      const platformFee = calcPlatformFeeWithRate(listing.sellerType, subtotal, feeRate);
       const total = subtotal; // Buyer pays listing price only, no extra fees
 
       // Stripe requires minimum HKD 4.00 for card payments
@@ -193,9 +211,9 @@ export const marketplaceRouter = router({
         unitPriceHkd: price.toFixed(2),
         quantity: input.quantity ?? 1,
         subtotalHkd: subtotal.toFixed(2),
-        platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
+        platformFeeRate: feeRate.toFixed(4),
         platformFeeHkd: platformFee.toFixed(2),
-        sellerReceivableHkd: (subtotal - platformFee).toFixed(2),
+        sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, subtotal, feeRate).toFixed(2),
         shippingName: input.shippingAddress.name,
         shippingPhone: input.shippingAddress.phone,
         shippingAddress: JSON.stringify(input.shippingAddress),
@@ -1775,6 +1793,7 @@ export const marketplaceRouter = router({
       }
       const Stripe = (await import("stripe")).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const feeRateStripe = await getPlatformFeeRate();
 
       // Stripe requires minimum HKD 4.00 for card payments
       if (effectivePrice < 4.00) {
@@ -1900,9 +1919,9 @@ export const marketplaceRouter = router({
         listingId: listing.id,
         unitPriceHkd: effectivePrice.toFixed(2),
         quantity: 1,
-        platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
-        platformFeeHkd: calcPlatformFee(listing.sellerType, effectivePrice).toFixed(2),
-        sellerReceivableHkd: calcSellerReceivable(listing.sellerType, effectivePrice).toFixed(2),
+        platformFeeRate: feeRateStripe.toFixed(4),
+        platformFeeHkd: calcPlatformFeeWithRate(listing.sellerType, effectivePrice, feeRateStripe).toFixed(2),
+        sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, effectivePrice, feeRateStripe).toFixed(2),
         stripePaymentIntentId: session.payment_intent as string ?? null,
         stripeSessionId: session.id,
         shippingName: input.shippingAddress?.name ?? null,
@@ -2068,6 +2087,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
 
       const orderNo = await generateOrderNo();
+      const feeRateAlipay = await getPlatformFeeRate();
       const newOrder = await createMarketplaceOrder({
         orderNo,
         buyerId: ctx.user.id,
@@ -2080,9 +2100,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
         listingId: listing.id,
         unitPriceHkd: effectivePrice.toFixed(2),
         quantity: 1,
-        platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
-        platformFeeHkd: calcPlatformFee(listing.sellerType, effectivePrice).toFixed(2),
-        sellerReceivableHkd: calcSellerReceivable(listing.sellerType, effectivePrice).toFixed(2),
+        platformFeeRate: feeRateAlipay.toFixed(4),
+        platformFeeHkd: calcPlatformFeeWithRate(listing.sellerType, effectivePrice, feeRateAlipay).toFixed(2),
+        sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, effectivePrice, feeRateAlipay).toFixed(2),
         alipayMerchantTransId: null,
         alipayProofImageUrl: input.proofImageUrl,
         shippingName: input.shippingAddress?.name ?? null,
@@ -2997,7 +3017,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const offerPrice = parseFloat(offer.offerPriceHkd as string);
       // Platform fee is deducted from seller's payout (buyer pays offer price only)
       // Platform-owned listings are exempt from platform fees
-      const platformFee = calcPlatformFee(listing.sellerType, offerPrice);
+      const feeRateOffer = await getPlatformFeeRate();
+      const platformFee = calcPlatformFeeWithRate(listing.sellerType, offerPrice, feeRateOffer);
       const orderNo = await generateOrderNo();
       const order = await createMarketplaceOrder({
         orderNo,
@@ -3010,9 +3031,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
         unitPriceHkd: offerPrice.toFixed(2),
         quantity: 1,
         subtotalHkd: offerPrice.toFixed(2),
-        platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
+        platformFeeRate: feeRateOffer.toFixed(4),
         platformFeeHkd: platformFee.toFixed(2),
-        sellerReceivableHkd: calcSellerReceivable(listing.sellerType, offerPrice).toFixed(2),
+        sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, offerPrice, feeRateOffer).toFixed(2),
         orderStatus: "pending_payment",
         autoCompleteAt: null as any,
       });
