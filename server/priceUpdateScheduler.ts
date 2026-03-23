@@ -998,11 +998,9 @@ export function startPaymentTimeoutCancelScheduler() {
               }
             } else if (order.listingId) {
               // Fallback: no order items found, restore listing directly
-              const listing = await getListingById(order.listingId);
-              if (listing && listing.status === 'sold') {
-                await updateListing(order.listingId, { status: 'active' });
-                console.log(`[PaymentTimeout] Fallback: restored listing ${order.listingId} to active for order ${order.id}`);
-              }
+              // Use restoreListingStock to also restore quantity and remainingQuantity
+              await restoreListingStock(order.listingId, 1);
+              console.log(`[PaymentTimeout] Fallback: restored listing ${order.listingId} stock+status to active for order ${order.id}`);
             }
             // Mark any accepted offers linked to this order as expired
             // so the listing can accept new offers
