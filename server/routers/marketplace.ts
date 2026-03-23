@@ -1772,7 +1772,7 @@ export const marketplaceRouter = router({
       offerId: z.number().int().optional(), // If provided, use offer price instead of listing price
       shippingAddress: z.object({
         name: z.string().min(1),
-        phone: z.string().min(1),
+        phone: z.string().optional().default(""), // Optional: phone not required for meetup orders
         address: z.string().min(1),
         district: z.string().optional(),
         region: z.string().optional(),
@@ -2039,13 +2039,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .input(z.object({
       listingId: z.number().int(),
       offerId: z.number().int().optional(), // If provided, use offer price instead of listing price
-      proofImageUrl: z.string().url(),
+      proofImageUrl: z.string().optional().default(""), // Optional: empty string allowed for orders without proof
       shippingAddress: z.object({
         name: z.string().min(1),
-        phone: z.string().min(1),
+        phone: z.string().optional().default(""), // Optional: phone not required for meetup orders
         address: z.string().min(1),
         district: z.string().optional(),
-        region: z.string().default("香港"),
+        region: z.string().optional().default("香港"),
         sfStationCode: z.string().optional(),
         sfStationName: z.string().optional(),
       }).optional(),
