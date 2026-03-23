@@ -674,7 +674,9 @@ export default function MarketplaceListing() {
 
   const price = parseFloat(listing.priceHkd as string);
   const remainingQty = listing.remainingQuantity ?? listing.quantity;
-  const isAvailable = listing.status === "active" && remainingQty > 0;
+  // isAvailable: true if listing is active with stock, OR if buyer has an accepted offer (even if stock shows 0 due to order lock)
+  const acceptedOfferForAvailability = myPendingOffer?.status === "accepted" ? myPendingOffer : null;
+  const isAvailable = (listing.status === "active" && remainingQty > 0) || !!acceptedOfferForAvailability;
   // If buyer has an accepted offer, use offer price for payment buttons
   const acceptedOffer = myPendingOffer?.status === "accepted" ? myPendingOffer : null;
   const effectivePrice = acceptedOffer ? parseFloat(acceptedOffer.offerPriceHkd as string) : price;

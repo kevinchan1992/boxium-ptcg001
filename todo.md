@@ -5727,3 +5727,8 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 手動修復現有已取消訂單的商品狀態（重新上架）
 - [ ] 前端：訂單詳情頁加入待付款倒計時橫幅
 - [ ] 保存 checkpoint
+
+## 商品頁面出價買家付款按鈕修復
+
+- [x] 修復 isAvailable 邏輯：當買家有已接受出價時即使庫存為 0 也顯示付款按鈕
+- [x] 手動修復商品 #180001 生產資料庫：status=active, quantity=1, remainingQuantity=1
