@@ -5667,3 +5667,18 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 市集頁面 SEO 標題和 meta description 更新
 - [x] 漢堡選單下拉面板改為從左側展開（配合漢堡按鈕在左邊）
 - [x] 後台平台費率設定 UI（Admin 設定頁加入費率輸入框）
+
+---
+
+## 🐛 修復電郵手機版 dark mode 顯示問題（2026-03-23）
+
+### 問題描述
+- 電腦版 Gmail 顯示正常（深藍色 header）
+- 手機版 Gmail dark mode 下 header 背景變成粉紫色
+- 部分電郵的 Logo 圖片在手機版無法顯示（出現問號圖示）
+
+### 任務清單
+- [x] 分析現有 dark mode 防護代碼（wrapHtml 函數）
+- [x] 強化 HTML 電郵的 dark mode 防護（inline styles + !important + data-ogsc）
+- [x] 修復 Logo 圖片在手機版無法顯示的問題
+- [ ] 保存 checkpoint

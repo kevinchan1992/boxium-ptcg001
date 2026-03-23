@@ -53,55 +53,84 @@ const BRAND_LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517
 
 function wrapHtml(title: string, body: string, unsubscribeToken?: string, emailType?: string): string {
   return `<!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="light" />
+  <meta name="color-scheme" content="light only" />
   <meta name="supported-color-schemes" content="light" />
+  <meta name="x-apple-disable-message-reformatting" />
   <title>${title}</title>
   <style>
-    :root { color-scheme: light only; }
-    body { background-color: #f4f5f7 !important; }
+    :root { color-scheme: light only; supported-color-schemes: light; }
+    html, body {
+      background-color: #f4f5f7 !important;
+      color: #1a1a2e !important;
+    }
+    /* Force light mode - prevent Gmail dark mode override */
+    [data-ogsc] .email-header-bg { background-color: #06038d !important; }
+    [data-ogsc] .email-footer-bg { background-color: #06038d !important; }
+    [data-ogsc] .email-body-bg { background-color: #ffffff !important; }
+    [data-ogsc] .email-outer-bg { background-color: #f4f5f7 !important; }
+    /* Gmail dark mode override prevention */
+    u + .body .email-header-bg { background-color: #06038d !important; }
+    u + .body .email-footer-bg { background-color: #06038d !important; }
+    u + .body .email-body-bg { background-color: #ffffff !important; }
+    /* Outlook dark mode */
+    @media (prefers-color-scheme: dark) {
+      .email-header-bg { background-color: #06038d !important; }
+      .email-footer-bg { background-color: #06038d !important; }
+      .email-body-bg { background-color: #ffffff !important; }
+      .email-outer-bg { background-color: #f4f5f7 !important; }
+    }
   </style>
 </head>
-<body style="margin:0;padding:0;background-color:#f4f5f7 !important;font-family:Arial,'Helvetica Neue',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:32px 16px;">
+<body class="body" style="margin:0;padding:0;background-color:#f4f5f7;font-family:Arial,'Helvetica Neue',sans-serif;" bgcolor="#f4f5f7">
+  <table class="email-outer-bg" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f5f7" style="background-color:#f4f5f7;padding:32px 16px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(6,3,141,0.12);">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(6,3,141,0.12);">
 
-          <!-- Header: brand blue with yellow logo badge -->
+          <!-- Header: brand blue background -->
           <tr>
-            <td style="background:${BRAND_BLUE};padding:28px 32px 24px;text-align:center;">
-              <!-- Logo directly on brand blue background -->
-              <div style="display:inline-block;padding:8px 0;">
-                <img src="${BRAND_LOGO_URL}" alt="BOXIUM PTCG" width="180" height="auto"
-                  style="display:block;max-width:180px;height:auto;" />
-              </div>
-              <!-- Tagline -->
-              <p style="margin:12px 0 0;font-size:12px;color:rgba(255,255,255,0.7);letter-spacing:2px;text-transform:uppercase;">LUCK IN EVERY BOX</p>
+            <td class="email-header-bg" bgcolor="#06038d" style="background-color:#06038d !important;padding:28px 32px 24px;text-align:center;">
+              <!-- Logo -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="padding:8px 0;">
+                    <img src="${BRAND_LOGO_URL}" alt="BOXIUM PTCG" width="180"
+                      style="display:block;max-width:180px;height:auto;border:0;outline:none;text-decoration:none;"
+                      border="0" />
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <!-- Tagline -->
+                    <p style="margin:12px 0 0;font-size:12px;color:#b3b0ff;letter-spacing:2px;text-transform:uppercase;">LUCK IN EVERY BOX</p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
           <!-- Yellow accent divider -->
           <tr>
-            <td style="background:${BRAND_YELLOW};height:4px;font-size:0;line-height:0;">&nbsp;</td>
+            <td bgcolor="#FFD700" style="background-color:#FFD700 !important;height:4px;font-size:0;line-height:0;">&nbsp;</td>
           </tr>
 
           <!-- Body -->
           <tr>
-            <td style="padding:32px 36px;background:#ffffff;">
+            <td class="email-body-bg" bgcolor="#ffffff" style="background-color:#ffffff !important;padding:32px 36px;">
               ${body}
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="background:#06038d;padding:20px 32px;text-align:center;">
-              <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.7);">
+            <td class="email-footer-bg" bgcolor="#06038d" style="background-color:#06038d !important;padding:20px 32px;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#b3b0ff;">
                 此郵件由 BOXIUM PTCG 系統自動發送，請勿直接回覆。<br/>
-                如有問題請聯絡客服：<a href="mailto:boxium.asia@gmail.com" style="color:${BRAND_YELLOW};text-decoration:none;">boxium.asia@gmail.com</a>
+                如有問題請聯絡客服：<a href="mailto:boxium.asia@gmail.com" style="color:#FFD700;text-decoration:none;">boxium.asia@gmail.com</a>
               </p>
               ${unsubscribeToken ? `
               <p style="margin:10px 0 0;font-size:11px;color:rgba(255,255,255,0.45);">
