@@ -764,7 +764,22 @@ function CheckoutDialog({
       toast.success(`已成功建立 ${done} 個訂單！`);
       if (form.paymentMethod === "alipay_hk") setLocation("/orders");
     } else {
-      toast.warning(`建立了 ${done} 個訂單，${errors} 個失敗，請檢查訂單頁面`);
+      // Auto-remove unavailable items from cart after partial failure
+      try {
+        const freshCart2 = await utils.marketplace.getMyCart.fetch();
+        const freshActiveIds2 = new Set(
+          (freshCart2 ?? []).filter((i) => i.status === "active").map((i) => i.listingId)
+        );
+        const failedItems = activeItems.filter((i) => !freshActiveIds2.has(i.listingId));
+        if (failedItems.length > 0) {
+          const names = failedItems.map((i) => i.title).join("、");
+          toast.warning(`建立了 ${done} 個訂單，${errors} 個因商品已下架或售出而失敗，已自動移除：${names}`);
+        } else {
+          toast.warning(`建立了 ${done} 個訂單，${errors} 個失敗，請檢查訂單頁面`);
+        }
+      } catch {
+        toast.warning(`建立了 ${done} 個訂單，${errors} 個失敗，請檢查訂單頁面`);
+      }
       setLocation("/orders");
     }
     setBatchProgress(null);

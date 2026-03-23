@@ -2091,6 +2091,16 @@ export default function SellerDashboard() {
               </div>
             )}
 
+            {/* Warning: listing has active orders (remainingQuantity < quantity means stock was reserved) */}
+            {editingListing && editingListing.remainingQuantity !== undefined && editingListing.remainingQuantity < editingListing.quantity && (
+              <div className="flex items-start gap-2 p-3 rounded-xl border border-amber-200 bg-amber-50">
+                <span className="text-amber-500 mt-0.5 flex-shrink-0">⚠️</span>
+                <div>
+                  <p className="text-xs font-semibold text-amber-800">此商品有進行中的訂單</p>
+                  <p className="text-xs text-amber-700 mt-0.5">已售出 {editingListing.quantity - editingListing.remainingQuantity} 件，修改售價不影響已建立的訂單金額。</p>
+                </div>
+              </div>
+            )}
             <div>
               <Label className="text-[#06038D] font-semibold">商品名稱</Label>
               <Input

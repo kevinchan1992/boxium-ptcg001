@@ -3963,6 +3963,32 @@ export async function updateOffer(id: number, data: Partial<typeof offers.$infer
   await db.update(offers).set(data).where(eq(offers.id, id));
 }
 
+/**
+ * Expire all other pending offers for a listing after one offer is accepted.
+ * Returns the list of expired offer records (id + buyerId) so callers can notify buyers.
+ */
+export async function expireOtherPendingOffers(listingId: number, acceptedOfferId: number): Promise<{ id: number; buyerId: number }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const pendingOffers = await db
+    .select({ id: offers.id, buyerId: offers.buyerId })
+    .from(offers)
+    .where(and(
+      eq(offers.listingId, listingId),
+      eq(offers.status, "pending"),
+      sql`${offers.id} != ${acceptedOfferId}`
+    ));
+  if (pendingOffers.length === 0) return [];
+  await db.update(offers)
+    .set({ status: "expired" })
+    .where(and(
+      eq(offers.listingId, listingId),
+      eq(offers.status, "pending"),
+      sql`${offers.id} != ${acceptedOfferId}`
+    ));
+  return pendingOffers;
+}
+
 // --- Listing Reports ---
 export async function createListingReport(data: InsertListingReport) {
   const db = await getDb();

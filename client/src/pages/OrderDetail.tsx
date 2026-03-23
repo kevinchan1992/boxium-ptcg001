@@ -613,7 +613,15 @@ export default function OrderDetail() {
 
   const { data, isLoading, error } = trpc.marketplace.getOrderByNo.useQuery(
     { orderNo },
-    { enabled: !!orderNo }
+    {
+      enabled: !!orderNo,
+      // Poll every 30s when order is in pending_payment or alipay_proof_submitted state
+      // so the page auto-updates if the order is cancelled by timeout or payment is confirmed
+      refetchInterval: (query) => {
+        const status = (query.state.data as any)?.order?.orderStatus;
+        return (status === "pending_payment" || status === "alipay_proof_submitted") ? 30000 : false;
+      },
+    }
   );
 
   const buyerCancelMutation = trpc.marketplace.buyerCancelOrder.useMutation({

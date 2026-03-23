@@ -3089,6 +3089,40 @@ All three checks must pass for verified to be true. Respond with JSON only match
           console.warn("[respondToOffer] Acceptance email failed:", e);
         }
       })();
+      // Expire all other pending offers for this listing and notify those buyers
+      ;(async () => {
+        try {
+          const { expireOtherPendingOffers: _expireOthers } = await import("../db");
+          const expiredOffers = await _expireOthers(offer.listingId, offer.id);
+          if (expiredOffers.length > 0) {
+            const { sendEmail: _sendEmail2 } = await import("../emailService");
+            const { getUserById: _getUser2 } = await import("../userManagement");
+            for (const expiredOffer of expiredOffers) {
+              // In-app notification
+              await createNotification({
+                userId: expiredOffer.buyerId,
+                type: "trade",
+                title: "出價已失效 ⚠️",
+                body: `商品「${listing.title}」已被其他買家以出價方式購得，您的出價已自動失效。`,
+                linkUrl: `/marketplace`,
+              }).catch(() => {});
+              // Email notification
+              try {
+                const expiredBuyer = await _getUser2(expiredOffer.buyerId);
+                if (!expiredBuyer?.email) continue;
+                const reqOrigin2 = (ctx.req.headers.origin as string) || "https://boxium.asia";
+                const subject2 = `⚠️ 出價已失效 — ${listing.title}`;
+                const html2 = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:24px 0;"><table width="600" cellpadding="0" cellspacing="0" align="center" style="background:#fff;border-radius:8px;overflow:hidden;"><tr><td style="background:#1a0dab;padding:24px 32px;text-align:center;"><img src="https://static.manus.space/webdev/boxiumptcg-mua4eq38/boxium-logo-white.png" alt="BOXIUM PTCG" height="40" style="display:block;margin:0 auto;"></td></tr><tr><td style="padding:32px;"><h2 style="margin:0 0 8px;color:#d97706;font-size:22px;">出價已失效 ⚠️</h2><p style="color:#555;font-size:15px;">親愛的 <strong>${expiredBuyer.name || "買家"}</strong>，<br/>很遺憾，商品 <strong>${listing.title}</strong> 已被其他買家以出價方式購得，您的出價已自動失效。<br/>您可以繼續在市集尋找其他心儀的商品。</p><div style="text-align:center;margin:24px 0;"><a href="${reqOrigin2}/marketplace" style="background:#1a0dab;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">前往市集</a></div></td></tr><tr><td style="background:#f9f9f9;border-top:1px solid #eee;padding:16px 32px;text-align:center;"><p style="margin:0;font-size:12px;color:#999;">如有疑問，請聯絡 <a href="mailto:boxium.asia@gmail.com" style="color:#1a0dab;">boxium.asia@gmail.com</a></p></td></tr></table></td></tr></table></body></html>`;
+                await _sendEmail2({ to: expiredBuyer.email, subject: subject2, html: html2, emailType: 'offer', toUserId: expiredOffer.buyerId, dedupeKey: `offer_expired_other_buyer_${expiredOffer.id}` });
+              } catch (emailErr) {
+                console.warn("[respondToOffer] Other buyer expiry email failed:", emailErr);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("[respondToOffer] expireOtherPendingOffers failed:", e);
+        }
+      })();
       return { success: true, action: "accepted", checkoutUrl: session.url, orderNo };
     }),
 

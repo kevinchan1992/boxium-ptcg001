@@ -5648,3 +5648,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 漢堡按鈕移到最左上角，其他按鈕（出售商品、購物車、通知、用戶）非右排列
 - [x] 漢堡選單加入市集入口，排序：主頁、卡牌搜尋、市場格價、市集、最新消息、出售商品（無圖示）、管理後台
 - [x] 頁腳快速連結改名和排序：卡牌搜尋、市場格價、市集、最新消息
+
+---
+
+## 🔧 Marketplace 5 項修復（2026-03-23）
+
+- [x] 修復前端 isAvailable 條件：加入 remainingQuantity > 0 檢查
+- [x] OrderDetail.tsx 加入 pending_payment 狀態的 30 秒輪詢
+- [x] respondToOffer 接受後自動 expire 其他 pending 出價並通知買家
+- [x] 賣家有 accepted/pending_payment 訂單時顯示警告 banner
+- [x] 購物車結帳失敗後自動移除無效商品
