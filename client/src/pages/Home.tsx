@@ -261,7 +261,8 @@ export default function Home() {
                 {t("home.startSearching")}
               </Button>
             </Link>
-            <Link href="/trending">
+            {/* 比較市場格價 - 連結去/pricing */}
+            <Link href="/pricing">
               <Button
                 variant="outline"
                 className="px-4 sm:px-6 md:px-8 py-2 md:py-3 text-sm sm:text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
