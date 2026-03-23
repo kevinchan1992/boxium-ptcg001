@@ -1560,6 +1560,18 @@ export const marketplaceRouter = router({
         updates.aiVerificationResult = null;
       }
       await updateMarketplaceOrder(input.orderId, updates);
+      // When cancelling, restore listing to active if it was marked sold
+      if (input.orderStatus === "cancelled" && order.listingId) {
+        try {
+          const listing = await getListingById(order.listingId);
+          if (listing && listing.status === "sold") {
+            await updateListing(order.listingId, { status: "active" });
+            console.log(`[AdminCancel] Restored listing ${order.listingId} to active for cancelled order ${order.orderNo}`);
+          }
+        } catch (relistErr: any) {
+          console.warn("[AdminCancel] Failed to restore listing:", relistErr.message);
+        }
+      }
       // Notify buyer of status change
       const statusMessages: Record<string, { title: string; content: string }> = {
         processing: { title: "訂單處理中 ⏳", content: `訂單 ${order.orderNo} 已進入處理中，賣家正在準備發貨。` },

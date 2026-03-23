@@ -1,0 +1,8 @@
+{
+  "query": "SELECT mo.id, mo.order_no, mo.order_status, mo.listing_id, ml.status as listing_status, ml.title, ml.price_hkd FROM marketplace_orders mo LEFT JOIN marketplace_listings ml ON mo.listing_id = ml.id WHERE mo.order_no = 'BOXIUM-20260323-5492';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT mo.id, mo.order_no, mo.order_status, mo.listing_id, ml.status as listing_status, ml.title, ml.price_hkd FROM marketplace_orders mo LEFT JOIN marketplace_listings ml ON mo.listing_id = ml.id WHERE mo.order_no = 'BOXIUM-20260323-5492';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'mua4eq38uvnrovhujbrepi.marketplace_orders' doesn't exist"
+  ]
+}

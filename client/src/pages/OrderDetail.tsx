@@ -315,6 +315,25 @@ function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listi
 }
 
 // Auto-complete countdown hook
+function usePaymentCountdown(createdAt: Date | string | null | undefined, timeoutMinutes: number) {
+  const [timeLeft, setTimeLeft] = useState<{ minutes: number; seconds: number; expired: boolean } | null>(null);
+  useEffect(() => {
+    if (!createdAt || !timeoutMinutes) return;
+    const deadline = new Date(createdAt).getTime() + timeoutMinutes * 60 * 1000;
+    const calc = () => {
+      const diff = deadline - Date.now();
+      if (diff <= 0) { setTimeLeft({ minutes: 0, seconds: 0, expired: true }); return; }
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setTimeLeft({ minutes, seconds, expired: false });
+    };
+    calc();
+    const t = setInterval(calc, 1000);
+    return () => clearInterval(t);
+  }, [createdAt, timeoutMinutes]);
+  return timeLeft;
+}
+
 function useAutoCompleteCountdown(autoCompleteAt: Date | string | null | undefined) {
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; pct: number } | null>(null);
   useEffect(() => {
@@ -740,6 +759,15 @@ export default function OrderDetail() {
     onError: (e) => toast.error(e.message),
   });
 
+  // Payment timeout countdown - fetch timeout setting
+  const { data: timeoutSettings } = trpc.system.getTimeoutSettings.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000,
+  });
+  const paymentCountdown = usePaymentCountdown(
+    data?.order?.orderStatus === "pending_payment" ? data?.order?.createdAt : null,
+    timeoutSettings?.paymentTimeoutMinutes ?? 30
+  );
+
   // Auto-complete countdown - MUST be called unconditionally before any conditional returns
   const autoCompleteCountdown = useAutoCompleteCountdown(
     data?.order?.orderStatus === "shipped" ? data?.order?.autoCompleteAt : null
@@ -856,6 +884,31 @@ export default function OrderDetail() {
               <p className="text-xs text-gray-500 capitalize">{order.paymentMethod?.replace("_", " ")}</p>
             </div>
           </div>
+
+          {/* Payment countdown banner */}
+          {order.orderStatus === "pending_payment" && paymentCountdown && !paymentCountdown.expired && (
+            <div className="mx-4 mb-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+              <div className="bg-amber-100 rounded-full p-1.5 flex-shrink-0">
+                <Clock className="w-4 h-4 text-amber-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-amber-800">請盡快完成付款</p>
+                <p className="text-xs text-amber-600 mt-0.5">超時後訂單將自動取消，商品重新上架</p>
+              </div>
+              <div className="flex-shrink-0 text-right">
+                <p className="text-lg font-bold text-amber-700 tabular-nums">
+                  {String(paymentCountdown.minutes).padStart(2, '0')}:{String(paymentCountdown.seconds).padStart(2, '0')}
+                </p>
+                <p className="text-[10px] text-amber-500">剩餘時間</p>
+              </div>
+            </div>
+          )}
+          {order.orderStatus === "pending_payment" && paymentCountdown?.expired && (
+            <div className="mx-4 mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-3">
+              <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <p className="text-xs text-red-700 font-medium">付款時限已到，訂單即將自動取消</p>
+            </div>
+          )}
 
           {/* Action Buttons - pending_payment: show pay button + cancel button */}
           {isBuyer && order.orderStatus === "pending_payment" && (

@@ -988,12 +988,21 @@ export function startPaymentTimeoutCancelScheduler() {
               .set({ orderStatus: 'cancelled', updatedAt: now })
               .where(eq(marketplaceOrders.id, order.id));
             // Restore listing stock using atomic operation
-            const { restoreListingStock } = await import('./db');
+            const { restoreListingStock, getListingById, updateListing } = await import('./db');
             const items = await db.select()
               .from(marketplaceOrderItems)
               .where(eq(marketplaceOrderItems.orderId, order.id));
-            for (const item of items) {
-              await restoreListingStock(item.listingId, item.quantity ?? 1);
+            if (items.length > 0) {
+              for (const item of items) {
+                await restoreListingStock(item.listingId, item.quantity ?? 1);
+              }
+            } else if (order.listingId) {
+              // Fallback: no order items found, restore listing directly
+              const listing = await getListingById(order.listingId);
+              if (listing && listing.status === 'sold') {
+                await updateListing(order.listingId, { status: 'active' });
+                console.log(`[PaymentTimeout] Fallback: restored listing ${order.listingId} to active for order ${order.id}`);
+              }
             }
             // Mark any accepted offers linked to this order as expired
             // so the listing can accept new offers

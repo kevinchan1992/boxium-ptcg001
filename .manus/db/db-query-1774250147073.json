@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, title, status, priceHkd FROM marketplaceListings WHERE id = 180001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, status, priceHkd FROM marketplaceListings WHERE id = 180001;",
+  "rows": [
+    {
+      "id": "180001",
+      "title": "吶喊比卡超",
+      "status": "active",
+      "priceHkd": "10000.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tstatus\tpriceHkd\n180001\t吶喊比卡超\tactive\t10000.00\n",
+  "stderr": "",
+  "execution_time_ms": 1615
+}

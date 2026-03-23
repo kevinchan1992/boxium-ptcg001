@@ -1,0 +1,19 @@
+{
+  "query": "SELECT mo.id, mo.orderNo, mo.orderStatus, mo.listingId, ml.status as listingStatus, ml.title, ml.priceHkd FROM marketplaceOrders mo LEFT JOIN marketplaceListings ml ON mo.listingId = ml.id WHERE mo.orderNo = 'BOXIUM-20260323-5492';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT mo.id, mo.orderNo, mo.orderStatus, mo.listingId, ml.status as listingStatus, ml.title, ml.priceHkd FROM marketplaceOrders mo LEFT JOIN marketplaceListings ml ON mo.listingId = ml.id WHERE mo.orderNo = 'BOXIUM-20260323-5492';",
+  "rows": [
+    {
+      "id": "270001",
+      "orderNo": "BOXIUM-20260323-5492",
+      "orderStatus": "cancelled",
+      "listingId": "180001",
+      "listingStatus": "sold",
+      "title": "吶喊比卡超",
+      "priceHkd": "10000.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torderNo\torderStatus\tlistingId\tlistingStatus\ttitle\tpriceHkd\n270001\tBOXIUM-20260323-5492\tcancelled\t180001\tsold\t吶喊比卡超\t10000.00\n",
+  "stderr": "",
+  "execution_time_ms": 1537
+}

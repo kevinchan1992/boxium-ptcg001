@@ -5719,3 +5719,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 後端：priceUpdateScheduler 改為從 systemSettings 動態讀取超時分鐘數
 - [x] 前端：AdminMarketplace 新增「超時時限管理」卡片 UI
 - [x] 前端：訂單管理「待付款」篩選按鈕加入計數 badge
+
+## 訂單取消後商品重新上架修復 + 倒計時橫幅
+
+- [ ] 查詢資料庫確認訂單 BOXIUM-20260323-5492 取消後商品狀態
+- [ ] 修復取消訂單後商品重新上架邏輯（確保 cancelOrder 函數正確執行 relisting）
+- [ ] 手動修復現有已取消訂單的商品狀態（重新上架）
+- [ ] 前端：訂單詳情頁加入待付款倒計時橫幅
+- [ ] 保存 checkpoint
