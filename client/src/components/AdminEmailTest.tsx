@@ -21,6 +21,10 @@ const EMAIL_TYPES = [
   { value: "order_cancelled", label: "🚫 訂單取消", desc: "訂單被取消時的通知" },
   { value: "seller_approved", label: "✅ 賣家申請批准", desc: "賣家申請獲批准時的通知" },
   { value: "seller_rejected", label: "❌ 賣家申請拒絕", desc: "賣家申請被拒絕時的通知" },
+  { value: "dispute_opened_buyer", label: "⚙️ 爭議申請確認（買家）", desc: "買家提交爭議後收到的確認電郵" },
+  { value: "dispute_opened_seller", label: "⚠️ 爭議開啟通知（賣家）", desc: "買家提交爭議後賣家收到的通知" },
+  { value: "dispute_resolved_seller_won", label: "✅ 爭議解決 — 賣家勝訴", desc: "爭議裁定訂單完成，賣家收到的通知" },
+  { value: "dispute_resolved_seller_lost", label: "📋 爭議解決 — 退款買家", desc: "爭議裁定退款給買家，賣家收到的通知" },
 ] as const;
 
 type EmailType = typeof EMAIL_TYPES[number]["value"];

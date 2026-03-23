@@ -5547,3 +5547,16 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
   - autoComplete seller → order_autocomplete_seller_{id}
   - expiryReminder → offer_expiry_reminder_{offer.id}
 - [x] TypeScript 編譯確認無錯誤（0 errors）
+
+---
+
+## 🔔 補全爭議解決賣家電郵通知
+
+- [ ] 新增 buildDisputeResolvedSellerEmail 電郵模板（勝訴：訂單完成收款 / 敗訴：退款給買家）
+- [ ] adminResolveDispute 加入賣家電郵觸發（refund → 賣家敗訴通知；complete → 賣家勝訴通知）
+- [ ] 後台電郵測試工具加入爭議開啟（買家/賣家）及爭議解決（賣家）三種新模板
+- [ ] 保存 checkpoint
+- [x] 新增 buildDisputeResolvedSellerEmail 電郵模板（勝訴/敗訴/部分）
+- [x] adminResolveDispute 加入賣家電郵觸發（三種 outcome 均通知賣家）
+- [x] 後台電郵測試工具加入四種新模板（dispute_opened_buyer/seller、dispute_resolved_seller_won/lost）
+- [ ] 電郵 LOGO 背景從黃色改為品牌藍色（#06038d），移除黃色色框

@@ -278,7 +278,7 @@ export const emailRouter = router({
   sendTestEmail: adminProcedure
     .input(z.object({
       to: z.string().email(),
-      emailType: z.enum(["welcome", "offer_received", "offer_accepted", "offer_rejected", "order_confirmed", "order_shipped", "order_completed", "order_cancelled", "seller_approved", "seller_rejected", "payment_reminder"]),
+      emailType: z.enum(["welcome", "offer_received", "offer_accepted", "offer_rejected", "order_confirmed", "order_shipped", "order_completed", "order_cancelled", "seller_approved", "seller_rejected", "payment_reminder", "dispute_opened_buyer", "dispute_opened_seller", "dispute_resolved_seller_won", "dispute_resolved_seller_lost"]),
     }))
     .mutation(async ({ input }) => {
       const {
@@ -367,6 +367,26 @@ export const emailRouter = router({
             <div style="text-align:center;margin:28px 0;"><a href="https://boxium.asia" style="display:inline-block;background:#FFD700;color:#06038d;font-size:15px;font-weight:bold;padding:14px 36px;border-radius:50px;text-decoration:none;">立即付款</a></div>`
           );
           break;
+        }
+        case "dispute_opened_buyer": {
+          const { buildDisputeOpenedBuyerEmail } = await import("../emailService");
+          const r = buildDisputeOpenedBuyerEmail({ orderNo: DEMO_ORDER_NO, itemName: DEMO_ITEM, priceHkd: DEMO_PRICE, reason: "商品與描述不符，收到的卡牌有明顯刮痕。" });
+          subject = r.subject; html = r.html; break;
+        }
+        case "dispute_opened_seller": {
+          const { buildDisputeOpenedSellerEmail } = await import("../emailService");
+          const r = buildDisputeOpenedSellerEmail({ orderNo: DEMO_ORDER_NO, itemName: DEMO_ITEM, priceHkd: DEMO_PRICE, reason: "商品與描述不符，收到的卡牌有明顯刮痕。" });
+          subject = r.subject; html = r.html; break;
+        }
+        case "dispute_resolved_seller_won": {
+          const { buildDisputeResolvedSellerEmail } = await import("../emailService");
+          const r = buildDisputeResolvedSellerEmail({ orderNo: DEMO_ORDER_NO, itemName: DEMO_ITEM, priceHkd: DEMO_PRICE, resolution: "管理員審查後，確認商品描述與實物相符，裁定訂單正常完成。", outcome: "release_seller", receivableHkd: "7600.00" });
+          subject = r.subject; html = r.html; break;
+        }
+        case "dispute_resolved_seller_lost": {
+          const { buildDisputeResolvedSellerEmail } = await import("../emailService");
+          const r = buildDisputeResolvedSellerEmail({ orderNo: DEMO_ORDER_NO, itemName: DEMO_ITEM, priceHkd: DEMO_PRICE, resolution: "管理員審查後，確認商品存在瑕疵，裁定退款給買家，商品已重新上架。", outcome: "refund_buyer" });
+          subject = r.subject; html = r.html; break;
         }
         default:
           throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown email type" });

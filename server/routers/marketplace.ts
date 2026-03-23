@@ -2494,7 +2494,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
       // Send email based on dispute outcome
       try {
-        const { sendOrderEmail, buildOrderRefundedEmail, buildOrderCompletedBuyerEmail, buildOrderCompletedSellerEmail, getOrderEmailData } = await import("../emailService");
+        const { sendOrderEmail, buildOrderRefundedEmail, buildOrderCompletedBuyerEmail, buildOrderCompletedSellerEmail, buildDisputeResolvedSellerEmail, getOrderEmailData } = await import("../emailService");
         const emailData = await getOrderEmailData(order);
         if (input.outcome === "refund_buyer") {
           // Refund email to buyer
@@ -2505,13 +2505,46 @@ All three checks must pass for verified to be true. Respond with JSON only match
             note: input.resolution,
           });
           await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `dispute_resolved_refund_${order.id}` });
+          // Notify seller: dispute lost (refund to buyer)
+          if (disputeSellerUserId) {
+            const { subject: ss, html: sh } = buildDisputeResolvedSellerEmail({
+              orderNo: order.orderNo,
+              itemName: emailData.itemName,
+              priceHkd: emailData.priceHkd,
+              resolution: input.resolution,
+              outcome: "refund_buyer",
+            });
+            await sendOrderEmail({ userId: disputeSellerUserId, subject: ss, html: sh, emailType: 'order', dedupeKey: `dispute_resolved_seller_refund_${order.id}` });
+          }
         } else if (input.outcome === "release_seller") {
-          // Completed email to buyer and seller (use sellerProfile.userId, NOT order.sellerId)
+          // Completed email to buyer
           const { subject: bs, html: bh } = buildOrderCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
           await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `order_completed_buyer_${order.id}` });
+          // Notify seller: dispute won (order completed, payout processing)
           if (disputeSellerUserId) {
-            const { subject: ss, html: sh } = buildOrderCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
-            await sendOrderEmail({ userId: disputeSellerUserId, subject: ss, html: sh, emailType: 'order', dedupeKey: `order_completed_seller_${order.id}` });
+            const { subject: ss, html: sh } = buildDisputeResolvedSellerEmail({
+              orderNo: order.orderNo,
+              itemName: emailData.itemName,
+              priceHkd: emailData.priceHkd,
+              resolution: input.resolution,
+              outcome: "release_seller",
+              receivableHkd: emailData.receivableHkd,
+            });
+            await sendOrderEmail({ userId: disputeSellerUserId, subject: ss, html: sh, emailType: 'order', dedupeKey: `dispute_resolved_seller_release_${order.id}` });
+          }
+        } else if (input.outcome === "partial") {
+          // Partial: notify both parties
+          const { subject: bs, html: bh } = buildOrderRefundedEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, note: input.resolution });
+          await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `dispute_resolved_partial_buyer_${order.id}` });
+          if (disputeSellerUserId) {
+            const { subject: ss, html: sh } = buildDisputeResolvedSellerEmail({
+              orderNo: order.orderNo,
+              itemName: emailData.itemName,
+              priceHkd: emailData.priceHkd,
+              resolution: input.resolution,
+              outcome: "partial",
+            });
+            await sendOrderEmail({ userId: disputeSellerUserId, subject: ss, html: sh, emailType: 'order', dedupeKey: `dispute_resolved_seller_partial_${order.id}` });
           }
         }
       } catch (emailErr: any) {

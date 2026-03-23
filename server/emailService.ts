@@ -941,3 +941,64 @@ export function buildDisputeOpenedSellerEmail(data: DisputeEmailData): { subject
   `);
   return { subject, html };
 }
+
+// ─── Dispute Resolved — Seller Notification Email Templates ──────────────────
+export interface DisputeResolvedSellerEmailData {
+  orderNo: string;
+  itemName: string;
+  priceHkd: string;
+  resolution: string;
+  outcome: "refund_buyer" | "release_seller" | "partial";
+  receivableHkd?: string;
+  siteUrl?: string;
+}
+
+/**
+ * Dispute resolved — seller notification (covers all outcomes).
+ *   refund_buyer   → seller "lost"; listing restored to active
+ *   release_seller → seller "won"; payout processing
+ *   partial        → partial resolution
+ */
+export function buildDisputeResolvedSellerEmail(
+  data: DisputeResolvedSellerEmailData
+): { subject: string; html: string } {
+  const siteUrl = data.siteUrl || "https://boxium.asia";
+  const isWon     = data.outcome === "release_seller";
+  const isPartial = data.outcome === "partial";
+
+  const subject = isWon
+    ? `✅ 爭議已解決（訂單完成）— ${data.orderNo}`
+    : isPartial
+    ? `⚖️ 爭議已解決（部分退款）— ${data.orderNo}`
+    : `📋  爭議已解決（買家獲退款）— ${data.orderNo}`;
+
+  const headingColor = isWon ? "#2e7d32" : "#555";
+  const headingText  = isWon
+    ? "爭議已解決 — 訂單完成 ✅"
+    : isPartial
+    ? "爭議已解決 — 部分退款 ⚖️"
+    : "爭議已解決 — 買家獲退款 📋";
+
+  const outcomeMessage = isWon
+    ? `管理員審查後，裁定訂單正常完成。您的款項（<strong>HKD ${data.receivableHkd ?? data.priceHkd}</strong>）將按正常流程處理。`
+    : isPartial
+    ? `管理員審查後，裁定部分退款給買家。請查看訂單詳情了解具體安排。`
+    : `管理員審查後，裁定退款給買家，訂單已取消。您的商品已重新上架，可繼續出售。`;
+
+  const resolutionBlock = `
+    <div style="background:#f5f5f5;border-left:4px solid #06038d;padding:12px 16px;border-radius:4px;margin:16px 0;">
+      <p style="margin:0;font-size:13px;color:#555;"><strong>管理員裁決說明：</strong></p>
+      <p style="margin:6px 0 0;font-size:14px;color:#333;">${data.resolution}</p>
+    </div>`;
+
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:${headingColor};font-size:22px;">${headingText}</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">${outcomeMessage}</p>
+    ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
+    ${resolutionBlock}
+    <p style="color:#555;font-size:14px;">如對裁決有任何疑問，請聯絡平台客服：<a href="mailto:boxium.asia@gmail.com" style="color:#06038d;">boxium.asia@gmail.com</a></p>
+    ${ctaButton("查看賣家中心", `${siteUrl}/seller`)}
+  `);
+
+  return { subject, html };
+}
