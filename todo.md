@@ -5732,3 +5732,9 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 - [x] 修復 isAvailable 邏輯：當買家有已接受出價時即使庫存為 0 也顯示付款按鈕
 - [x] 手動修復商品 #180001 生產資料庫：status=active, quantity=1, remainingQuantity=1
+
+## 購物車 badge 和倒計時修復
+
+- [x] 修復 Cart.tsx PSA badge 文字顏色：從白色改為 text-gray-700
+- [x] 修復接受出價時 expiresAt 更新為後台設定的付款時限（offer_payment_timeout_hours）
+- [x] 手動更新現有已接受出價的到期時間為現在 + 2 小時

@@ -3049,7 +3049,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
         orderStatus: "pending_payment",
         autoCompleteAt: null as any,
       });
-      await updateOffer(offer.id, { status: "accepted", respondedAt: new Date(), orderId: order.id });
+      // Update offer expiresAt to payment deadline (from system settings)
+      const offerPaymentHoursSetting = await getSystemSetting('offer_payment_timeout_hours');
+      const offerPaymentHours = offerPaymentHoursSetting?.settingValue ? parseFloat(offerPaymentHoursSetting.settingValue) : 24;
+      const offerPaymentDeadline = new Date(Date.now() + offerPaymentHours * 60 * 60 * 1000);
+      await updateOffer(offer.id, { status: "accepted", respondedAt: new Date(), orderId: order.id, expiresAt: offerPaymentDeadline });
       // Create Stripe checkout for buyer
       const Stripe = (await import("stripe")).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });

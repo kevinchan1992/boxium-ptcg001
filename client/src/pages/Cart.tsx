@@ -540,7 +540,7 @@ function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps
           </Link>
           <div className="flex items-center gap-2 mt-1">
             {item.condition && (
-              <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
+              <Badge variant="outline" className="text-xs px-1.5 py-0 h-5 text-gray-700 border-gray-300">
                 {CONDITION_LABELS[item.condition] ?? item.condition}
               </Badge>
             )}
