@@ -3251,10 +3251,10 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
-  // If no status filter, exclude pending_payment (buyer hasn't paid, not a real order yet)
+  // If no status filter, show all orders including pending_payment so admin can see all orders
   const conditions: any[] = status
     ? [eq(marketplaceOrders.orderStatus, status as any)]
-    : [sql`${marketplaceOrders.orderStatus} != 'pending_payment'`];
+    : [];
   // Optional sellerType filter
   if (sellerType) {
     conditions.push(eq(marketplaceOrders.sellerType, sellerType as any));
@@ -3344,10 +3344,10 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
     .leftJoin(buyerAlias, eq(marketplaceOrders.buyerId, buyerAlias.id))
     .leftJoin(sellerProfiles, eq(marketplaceOrders.sellerId, sellerProfiles.id))
     .leftJoin(sellerAlias, eq(sellerProfiles.userId, sellerAlias.id))
-    .where(and(...conditions))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(marketplaceOrders.createdAt)).limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
-    .where(and(...conditions));
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
   return { orders: rows, total: Number(countRows[0]?.count ?? 0) };
 }
 export async function getAlipayPendingOrders(dateFilter?: 'all' | 'today' | 'week' | 'month') {
@@ -3562,7 +3562,12 @@ export async function getMarketplaceStats() {
   const [listingCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.status, 'active'));
   const [orderCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders);
   const [pendingAlipay] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
-    .where(and(eq(marketplaceOrders.paymentMethod, 'alipay_hk'), eq(marketplaceOrders.paymentStatus, 'pending')));
+    .where(and(
+      eq(marketplaceOrders.paymentMethod, 'alipay_hk'),
+      eq(marketplaceOrders.paymentStatus, 'pending'),
+      sql`${marketplaceOrders.orderStatus} != 'cancelled'`,
+      sql`${marketplaceOrders.alipayProofImageUrl} IS NOT NULL`
+    ));
   const [sellerCount] = await db.select({ count: sql<number>`count(*)` }).from(sellerProfiles).where(eq(sellerProfiles.isActive, true));
   const [pendingReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.status, 'pending_review'));
   // Unresolved disputes count

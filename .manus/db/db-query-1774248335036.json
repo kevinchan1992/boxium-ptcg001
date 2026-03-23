@@ -1,0 +1,16 @@
+{
+  "query": "SELECT orderNo, orderStatus, paymentMethod, createdAt FROM marketplaceOrders WHERE orderNo = 'BOXIUM-20260323-5492' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT orderNo, orderStatus, paymentMethod, createdAt FROM marketplaceOrders WHERE orderNo = 'BOXIUM-20260323-5492' LIMIT 1;",
+  "rows": [
+    {
+      "orderNo": "BOXIUM-20260323-5492",
+      "orderStatus": "pending_payment",
+      "paymentMethod": "stripe",
+      "createdAt": "2026-03-23 06:15:38"
+    }
+  ],
+  "messages": [],
+  "stdout": "orderNo\torderStatus\tpaymentMethod\tcreatedAt\nBOXIUM-20260323-5492\tpending_payment\tstripe\t2026-03-23 06:15:38\n",
+  "stderr": "",
+  "execution_time_ms": 1614
+}

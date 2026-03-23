@@ -5695,3 +5695,19 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 在 App.tsx 加入 /shop/:id → /marketplace/:id 重定向
 - [x] 測試 /shop/180001 是否正確重定向
 - [ ] 保存 checkpoint
+
+---
+
+## 🐛 修復後台訂單管理和支付寶核對問題（2026-03-23）
+
+### 問題描述
+1. 訂單 BOXIUM-20260323-5492 在前台顯示「待付款」，但後台訂單管理看不到
+2. 支付寶核對有紅點（顯示 2），但沒有需要核對的交易
+
+### 任務清單
+- [x] 查詢資料庫確認訂單 BOXIUM-20260323-5492 存在
+- [x] 分析後台 getAdminOrders 查詢邏輯（是否排除 pending_payment）
+- [x] 分析支付寶核對計數邏輯（是否包含已處理的記錄）
+- [x] 修復後台訂單查詢包含 pending_payment 狀態
+- [x] 修復支付寶核對計數邏輯
+- [ ] 保存 checkpoint
