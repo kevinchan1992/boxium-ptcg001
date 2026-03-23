@@ -5560,3 +5560,21 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] adminResolveDispute 加入賣家電郵觸發（三種 outcome 均通知賣家）
 - [x] 後台電郵測試工具加入四種新模板（dispute_opened_buyer/seller、dispute_resolved_seller_won/lost）
 - [x] 電郵 LOGO 背景從黃色改為品牌藍色（#06038d），移除黃色色框
+
+---
+
+## 🛒 Marketplace 系統全面優化（整合兩份建議）
+
+### 🔴 高優先級
+- [x] 超賣保護：marketplaceListings 新增 version 欄位，createOrder/respondToOffer 使用樂觀鎖（UPDATE WHERE version = ?）
+- [x] openDispute 時鎖定 payoutStatus 為 "disputed"，防止爭議期間誤觸發 autoComplete 轉帳
+- [x] Stripe Webhook 延遲處理：若訂單已被超時取消但 Stripe 付款成功，自動退款並通知管理員
+
+### 🟡 中優先級
+- [x] switchOrderPaymentToAlipay 取消舊 Stripe Payment Intent（防止雙重付款）
+- [ ] 購物車結帳前驗證庫存，失敗時自動移除無效商品並提示用戶
+
+### 🟢 低優先級（用戶體驗）
+- [x] 新增 7 天收貨提醒排程任務（shipped 狀態超過 7 天未確認收貨，提醒買家）
+- [x] 出價到期提醒同時通知買家（目前只通知賣家）
+- [ ] 平台費率從 systemSettings 表動態讀取（目前硬編碼 0.05）

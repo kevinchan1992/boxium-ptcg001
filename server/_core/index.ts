@@ -17,7 +17,7 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import { getListingById, getCardById, getSealedProductById } from "../db";
@@ -93,6 +93,48 @@ async function startServer() {
         } else if (orderNo) {
           const { getMarketplaceOrderByNo } = await import("../db");
           order = await getMarketplaceOrderByNo(orderNo);
+        }
+        if (order && order.orderStatus === "cancelled") {
+          // Order was already cancelled (e.g., by payment timeout) but Stripe payment arrived late
+          // Auto-refund to prevent charging the buyer for a cancelled order
+          console.log(`[Webhook] Order ${order.orderNo} already cancelled but payment received — initiating auto-refund`);
+          const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : order.stripePaymentIntentId;
+          if (paymentIntentId) {
+            try {
+              const Stripe = (await import("stripe")).default;
+              const stripeRefund = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+              await stripeRefund.refunds.create({ payment_intent: paymentIntentId, reason: "requested_by_customer" });
+              await updateMarketplaceOrder(order.id, {
+                paymentStatus: "refunded",
+                orderStatus: "refunded",
+                stripePaymentIntentId: paymentIntentId,
+              });
+              console.log(`[Webhook] Auto-refund completed for cancelled order ${order.orderNo}`);
+              // Notify buyer
+              await createNotification({
+                userId: order.buyerId,
+                type: 'trade',
+                title: '付款已自動退款 💰',
+                body: `訂單 ${order.orderNo} 已取消，但 Stripe 付款已成功。系統已自動為您處理全額退款。`,
+                linkUrl: `/orders/${order.orderNo}`,
+              }).catch(() => {});
+              // Notify admin
+              const { notifyAdmin: _notifyAdmin } = await import("../emailService");
+              await _notifyAdmin({
+                title: "自動退款通知 💰",
+                content: `訂單 ${order.orderNo} 已取消但 Stripe 付款延遲到達，系統已自動退款。PaymentIntent: ${paymentIntentId}`,
+              }).catch(() => {});
+            } catch (refundErr: any) {
+              console.error(`[Webhook] Auto-refund failed for order ${order.orderNo}:`, refundErr.message);
+              // Notify admin of failed refund for manual intervention
+              const { notifyAdmin: _notifyAdmin2 } = await import("../emailService");
+              await _notifyAdmin2({
+                title: "❗ 自動退款失敗，需人工處理",
+                content: `訂單 ${order.orderNo} 已取消但付款已收取，自動退款失敗：${refundErr.message}。請在 Stripe Dashboard 手動退款。PaymentIntent: ${paymentIntentId}`,
+              }).catch(() => {});
+            }
+          }
+          return res.json({ received: true });
         }
         if (order && order.orderStatus === "pending_payment") {
           await updateMarketplaceOrder(order.id, {
@@ -880,6 +922,8 @@ async function startServer() {
     startAlipayReviewReminderScheduler();
     // Start the cart expiry notification scheduler (daily at 10:00 HKT, notifies users 3 days before expiry)
     startCartExpiryNotificationScheduler();
+    // Start the 7-day confirm receipt reminder scheduler (daily at 09:00 HKT)
+    startConfirmReceiptReminderScheduler();
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();

@@ -3104,6 +3104,48 @@ export async function updateListing(id: number, data: Partial<InsertMarketplaceL
   if (!db) throw new Error("Database not available");
   await db.update(marketplaceListings).set({ ...data, updatedAt: new Date() }).where(eq(marketplaceListings.id, id));
 }
+
+/**
+ * Atomic stock reservation — prevents overselling via SQL-level WHERE guard.
+ * Returns true if stock was successfully reserved, false if insufficient stock.
+ * For quantity=1 listings, also marks status as 'sold'.
+ */
+export async function reserveListingStock(listingId: number, quantity: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Atomic UPDATE: only succeeds if listing is active AND has enough quantity
+  const result = await db.execute(
+    sql`UPDATE marketplaceListings
+        SET quantity = quantity - ${quantity},
+            remainingQuantity = remainingQuantity - ${quantity},
+            status = CASE WHEN (quantity - ${quantity}) <= 0 THEN 'sold' ELSE status END,
+            updatedAt = NOW()
+        WHERE id = ${listingId}
+          AND status = 'active'
+          AND quantity >= ${quantity}`
+  );
+  // MySQL returns affectedRows; if 0, the WHERE guard failed (sold out or inactive)
+  const affectedRows = (result as any)?.[0]?.affectedRows ?? (result as any)?.affectedRows ?? 0;
+  return affectedRows > 0;
+}
+
+/**
+ * Restore listing stock after order cancellation / payment timeout.
+ * Re-activates the listing if it was marked as sold.
+ */
+export async function restoreListingStock(listingId: number, quantity: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.execute(
+    sql`UPDATE marketplaceListings
+        SET quantity = quantity + ${quantity},
+            remainingQuantity = remainingQuantity + ${quantity},
+            status = 'active',
+            updatedAt = NOW()
+        WHERE id = ${listingId}`
+  );
+}
+
 export async function getAdminListings(page = 1, pageSize = 20, status?: string, tcgSeries?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

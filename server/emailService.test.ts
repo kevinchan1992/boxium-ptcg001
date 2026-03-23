@@ -95,7 +95,7 @@ describe("emailService - Gmail App Password", () => {
       listingId: 123,
     });
 
-    expect(html).toContain("boxium-logo-white");
+    expect(html).toContain("boxium-logo");
     expect(html).toContain("<img");
   });
 
@@ -156,7 +156,7 @@ describe("emailService - Welcome Email", () => {
     expect(subject).toContain("BOXIUM PTCG");
     expect(html).toContain("測試用戶");
     expect(html).toContain("marketplace");
-    expect(html).toContain("boxium-logo-white");
+    expect(html).toContain("boxium-logo");
   });
 
   it("buildWelcomeEmail includes platform feature highlights", async () => {

@@ -653,6 +653,104 @@ export function stopShippingReminderScheduler() {
   }
 }
 
+// ─── 7-Day Confirm Receipt Reminder Scheduler ──────────────────────────────────
+// Runs daily at 09:00 HKT to remind buyers who haven't confirmed receipt after 7 days
+let confirmReceiptReminderCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startConfirmReceiptReminderScheduler() {
+  if (confirmReceiptReminderCronJob) return;
+  confirmReceiptReminderCronJob = cron.schedule(
+    '0 9 * * *', // Daily at 09:00 HKT
+    async () => {
+      try {
+        const { getDb } = await import('./db');
+        const { marketplaceOrders } = await import('../drizzle/schema_new');
+        const { and, eq, lt, isNull } = await import('drizzle-orm');
+        const { createNotification } = await import('./db/notifications');
+        const { getUserById } = await import('./userManagement');
+        const db = await getDb();
+        if (!db) return;
+
+        const now = new Date();
+        // Orders shipped more than 7 days ago but not yet confirmed
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        const overdueOrders = await db.select()
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.orderStatus, 'shipped'),
+              lt(marketplaceOrders.shippedAt, sevenDaysAgo),
+              isNull(marketplaceOrders.confirmReceiptReminderSentAt)
+            )
+          )
+          .limit(100);
+
+        if (overdueOrders.length === 0) return;
+        console.log(`[ConfirmReceiptReminder] Found ${overdueOrders.length} orders shipped >7 days without confirmation`);
+
+        for (const order of overdueOrders) {
+          try {
+            // Mark reminder as sent first
+            await db.update(marketplaceOrders)
+              .set({ confirmReceiptReminderSentAt: now })
+              .where(eq(marketplaceOrders.id, order.id));
+
+            // Get listing info for email
+            const { getListingById } = await import('./db');
+            const listing = order.listingId ? await getListingById(order.listingId) : null;
+            const itemName = listing?.title || '商品';
+            const shippedDaysAgo = Math.floor((now.getTime() - new Date(order.shippedAt!).getTime()) / (1000 * 60 * 60 * 24));
+
+            // In-app notification to buyer
+            await createNotification({
+              userId: order.buyerId,
+              type: 'trade',
+              title: '📦 請確認收貨',
+              body: `訂單 ${order.orderNo} 已出貨超過 ${shippedDaysAgo} 天，請確認收貨或提出爭議。未確認的訂單將在出貨 14 天後自動完成。`,
+              linkUrl: `/orders/${order.orderNo}`,
+            }).catch(() => {});
+
+            // Email notification to buyer
+            ;(async () => {
+              try {
+                const buyerUser = await getUserById(order.buyerId);
+                if (!buyerUser?.email) return;
+                const { sendEmail, buildConfirmReceiptReminderEmail } = await import('./emailService');
+                const { subject, html } = buildConfirmReceiptReminderEmail({
+                  buyerName: buyerUser.name || '買家',
+                  orderNo: order.orderNo,
+                  itemName,
+                  shippedDaysAgo,
+                  ordersUrl: `https://boxium.asia/orders/${order.orderNo}`,
+                });
+                await sendEmail({ to: buyerUser.email, subject, html, emailType: 'order', toUserId: order.buyerId, dedupeKey: `confirm_receipt_7d_${order.id}` });
+              } catch (e) {
+                console.warn(`[ConfirmReceiptReminder] Email failed for order ${order.orderNo}:`, e);
+              }
+            })();
+
+            console.log(`[ConfirmReceiptReminder] Reminder sent for order ${order.orderNo}`);
+          } catch (err) {
+            console.error(`[ConfirmReceiptReminder] Failed for order ${order.orderNo}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[ConfirmReceiptReminder] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[ConfirmReceiptReminder] 7-day confirm receipt reminder scheduler started (daily at 09:00 HKT)');
+}
+
+export function stopConfirmReceiptReminderScheduler() {
+  if (confirmReceiptReminderCronJob) {
+    confirmReceiptReminderCronJob.stop();
+    confirmReceiptReminderCronJob = null;
+  }
+}
+
 // ─── Offer Expiry Reminder Scheduler ─────────────────────────────────────────
 // Runs every hour at :15 to check for offers expiring within 6 hours
 let offerExpiryReminderCronJob: ReturnType<typeof cron.schedule> | null = null;
@@ -714,25 +812,28 @@ export function startOfferExpiryReminderScheduler() {
               relatedId: offer.id,
             }).catch(() => {});
 
-            // Email notification to seller
+            // Get users for notifications
             const { users: usersTable } = await import('../drizzle/schema_new');
             const sellerUsers = await db.select().from(usersTable)
               .where(eq(usersTable.id, offer.sellerId))
               .limit(1);
             const sellerUser = sellerUsers[0];
+            const buyerUsers = await db.select().from(usersTable)
+              .where(eq(usersTable.id, offer.buyerId))
+              .limit(1);
+            const buyerUser = buyerUsers[0];
+            const buyerName = buyerUser?.name || '買家';
+            const sellerName = sellerUser?.name || '賣家';
+            const expiresAtStr = offer.expiresAt.toLocaleString('zh-TW', {
+              timeZone: 'Asia/Hong_Kong',
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit',
+            }) + ' (HKT)';
+
+            // Email notification to seller
             if (sellerUser?.email) {
-              const expiresAtStr = offer.expiresAt.toLocaleString('zh-TW', {
-                timeZone: 'Asia/Hong_Kong',
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit',
-              }) + ' (HKT)';
-              // Get buyer name
-              const buyerUsers = await db.select().from(usersTable)
-                .where(eq(usersTable.id, offer.buyerId))
-                .limit(1);
-              const buyerName = buyerUsers[0]?.name || '買家';
               const { subject, html } = buildOfferExpiringSoonEmail({
-                sellerName: sellerUser.name || '賣家',
+                sellerName,
                 buyerName,
                 cardName: listing.title,
                 offerAmountHkd: String(offer.offerPriceHkd),
@@ -740,10 +841,35 @@ export function startOfferExpiryReminderScheduler() {
                 expiresAt: expiresAtStr,
                 sellerDashboardUrl: 'https://boxium.asia/seller',
               });
-              await sendEmail({ to: sellerUser.email, subject, html, emailType: 'offer', toUserId: offer.sellerId, dedupeKey: `offer_expiry_reminder_${offer.id}` });
+              await sendEmail({ to: sellerUser.email, subject, html, emailType: 'offer', toUserId: offer.sellerId, dedupeKey: `offer_expiry_reminder_seller_${offer.id}` });
             }
 
-            console.log(`[OfferExpiryReminder] Reminder sent for offer ${offer.id}`);
+            // ── Buyer notification (new) ──
+            // In-app notification to buyer
+            await createNotification({
+              userId: offer.buyerId,
+              type: 'offer',
+              title: '⏰ 您的出價即將過期',
+              body: `您對「${listing.title}」的出價 HKD ${offer.offerPriceHkd} 將在 6 小時內過期。如果賣家未回應，此出價將自動失效。`,
+              linkUrl: '/orders?tab=offers',
+              relatedId: offer.id,
+            }).catch(() => {});
+
+            // Email notification to buyer
+            if (buyerUser?.email) {
+              const { buildOfferExpiringSoonBuyerEmail } = await import('./emailService');
+              const { subject: buyerSubject, html: buyerHtml } = buildOfferExpiringSoonBuyerEmail({
+                buyerName,
+                sellerName,
+                cardName: listing.title,
+                offerAmountHkd: String(offer.offerPriceHkd),
+                expiresAt: expiresAtStr,
+                ordersUrl: 'https://boxium.asia/orders?tab=offers',
+              });
+              await sendEmail({ to: buyerUser.email, subject: buyerSubject, html: buyerHtml, emailType: 'offer', toUserId: offer.buyerId, dedupeKey: `offer_expiry_reminder_buyer_${offer.id}` });
+            }
+
+            console.log(`[OfferExpiryReminder] Reminder sent for offer ${offer.id} (seller + buyer)`);
           } catch (err) {
             console.error(`[OfferExpiryReminder] Failed to process offer ${offer.id}:`, err);
           }
@@ -857,20 +983,13 @@ export function startPaymentTimeoutCancelScheduler() {
             await db.update(marketplaceOrders)
               .set({ orderStatus: 'cancelled', updatedAt: now })
               .where(eq(marketplaceOrders.id, order.id));
-            // Get order items to restore listing stock
+            // Restore listing stock using atomic operation
+            const { restoreListingStock } = await import('./db');
             const items = await db.select()
               .from(marketplaceOrderItems)
               .where(eq(marketplaceOrderItems.orderId, order.id));
-            // Restore listing status back to 'active' if it was marked as sold
             for (const item of items) {
-              await db.update(marketplaceListings)
-                .set({ status: 'active' })
-                .where(
-                  and(
-                    eq(marketplaceListings.id, item.listingId),
-                    eq(marketplaceListings.status, 'sold')
-                  )
-                );
+              await restoreListingStock(item.listingId, item.quantity ?? 1);
             }
             // Mark any accepted offers linked to this order as expired
             // so the listing can accept new offers

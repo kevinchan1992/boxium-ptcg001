@@ -854,7 +854,8 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   disputePriority: mysqlEnum("disputePriority", ["high", "medium", "low"]).default("medium"),
   shippingReminderSentAt: timestamp("shippingReminderSentAt"), // tracks when overdue reminder was sent
   paymentReminderSentAt: timestamp("paymentReminderSentAt"), // tracks when 12-hour payment reminder was sent
-  payoutStatus: mysqlEnum("payoutStatus", ["not_applicable", "pending", "processing", "completed", "paid", "failed"]).default("pending").notNull(),
+  confirmReceiptReminderSentAt: timestamp("confirmReceiptReminderSentAt"), // tracks when 7-day confirm receipt reminder was sent
+  payoutStatus: mysqlEnum("payoutStatus", ["not_applicable", "pending", "processing", "completed", "paid", "failed", "hold"]).default("pending").notNull(),
   stripeTransferError: text("stripeTransferError"),
   manualPayoutAt: timestamp("manualPayoutAt"), // For alipay_hk orders: when admin manually paid out
   manualPayoutNote: varchar("manualPayoutNote", { length: 500 }), // Admin note for manual payout

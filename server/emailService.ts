@@ -1002,3 +1002,58 @@ export function buildDisputeResolvedSellerEmail(
 
   return { subject, html };
 }
+
+
+/** 7-day confirm receipt reminder — sent to buyer when shipped but not confirmed after 7 days */
+export function buildConfirmReceiptReminderEmail(data: { buyerName: string; orderNo: string; itemName: string; shippedDaysAgo: number; ordersUrl: string }): { subject: string; html: string } {
+  const subject = `📦 請確認收貨 — 訂單 ${data.orderNo}`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">請確認收貨 📦</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.buyerName}</strong>，<br/>
+      您的訂單 <strong>#${data.orderNo}</strong>（${data.itemName}）已出貨超過 <strong>${data.shippedDaysAgo} 天</strong>。<br/>
+      如果您已收到商品，請盡快確認收貨，以便賣家收到款項。
+    </p>
+    <p style="color:#555;font-size:14px;">
+      若您尚未收到商品或商品有問題，請在訂單頁面提出爭議，我們會協助處理。<br/>
+      <strong>提醒：</strong>出貨超過 14 天未確認收貨的訂單將自動完成。
+    </p>
+    ${ctaButton("前往確認收貨", data.ordersUrl)}
+  `);
+  return { subject, html };
+}
+
+/** Offer expiring soon — notification to buyer (their offer is about to expire) */
+export function buildOfferExpiringSoonBuyerEmail(data: { buyerName: string; sellerName: string; cardName: string; offerAmountHkd: string; expiresAt: string; ordersUrl: string }): { subject: string; html: string } {
+  const subject = `⏰ 您的出價即將過期 — ${data.cardName}`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#e97316;font-size:22px;">您的出價即將過期 ⏰</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.buyerName}</strong>，<br/>
+      您對「${data.cardName}」的出價將在 <strong>6 小時內</strong>過期。如果賣家未在期限內回應，此出價將自動失效。
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff8f0;border:1px solid #fed7aa;border-radius:8px;margin:20px 0;">
+      <tr>
+        <td style="padding:12px 16px;">
+          <p style="margin:0;font-size:13px;color:#666;">商品名稱</p>
+          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#06038d;">${data.cardName}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;border-top:1px solid #fed7aa;">
+          <p style="margin:0;font-size:13px;color:#666;">您的出價</p>
+          <p style="margin:4px 0 0;font-size:20px;font-weight:bold;color:#16a34a;">HKD ${data.offerAmountHkd}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;border-top:1px solid #fed7aa;">
+          <p style="margin:0;font-size:13px;color:#666;">過期時間</p>
+          <p style="margin:4px 0 0;font-size:14px;color:#ef4444;font-weight:bold;">${data.expiresAt}</p>
+        </td>
+      </tr>
+    </table>
+    <p style="color:#555;font-size:14px;">若出價過期後仍有興趣，您可以重新出價。</p>
+    ${ctaButton("查看我的出價", data.ordersUrl)}
+  `);
+  return { subject, html };
+}

@@ -23,6 +23,8 @@ import {
   createOffer, getOfferById, getBuyerOffers, getSellerOffers, getListingOffers, updateOffer,
   createListingReport, getAdminListingReports, updateListingReport,
   getActiveOrderByListingId,
+  reserveListingStock,
+  restoreListingStock,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
@@ -160,7 +162,9 @@ export const marketplaceRouter = router({
       const listing = await getListingById(input.listingId);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
       if (listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架或售出" });
-      if ((listing.quantity ?? 0) < input.quantity) throw new TRPCError({ code: "BAD_REQUEST", message: "庫存不足" });
+      // Atomic stock reservation — prevents overselling under concurrent requests
+      const reserved = await reserveListingStock(listing.id, input.quantity ?? 1);
+      if (!reserved) throw new TRPCError({ code: "BAD_REQUEST", message: "庫存不足，商品可能已被其他買家搶購" });
 
       const price = parseFloat(listing.priceHkd as string);
       const subtotal = price * input.quantity;
@@ -369,6 +373,18 @@ export const marketplaceRouter = router({
       if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "無權限" });
       if (order.orderStatus !== "pending_payment") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不需要付款" });
+      // Cancel existing Stripe Checkout Session to prevent late payment on abandoned session
+      if (order.stripeSessionId) {
+        try {
+          const Stripe = (await import("stripe")).default;
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+          await stripe.checkout.sessions.expire(order.stripeSessionId);
+          console.log(`[SwitchToAlipay] Expired Stripe session ${order.stripeSessionId} for order ${order.orderNo}`);
+        } catch (expireErr: any) {
+          // Session may already be expired or completed — safe to ignore
+          console.warn(`[SwitchToAlipay] Failed to expire Stripe session: ${expireErr.message}`);
+        }
+      }
       await updateMarketplaceOrder(order.id, { paymentMethod: "alipay_hk" });
       const totalHkd = parseFloat(order.subtotalHkd as string);
       return {
@@ -2272,6 +2288,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
       await updateMarketplaceOrder(input.orderId, {
         orderStatus: "disputed",
+        payoutStatus: "hold",  // Lock payout during dispute — prevents auto-complete from transferring funds
         disputeOpenedAt: new Date(),
         disputeReason: input.reason,
         disputeEvidenceUrls: input.evidenceUrls ? JSON.stringify(input.evidenceUrls) : null,
@@ -2974,6 +2991,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
       // Accept: create order at offer price
       const listing = await getListingById(offer.listingId);
       if (!listing || listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架" });
+      // Atomic stock reservation — prevents overselling under concurrent requests
+      const reserved = await reserveListingStock(listing.id, 1);
+      if (!reserved) throw new TRPCError({ code: "BAD_REQUEST", message: "庫存不足，商品可能已被其他買家搶購" });
       const offerPrice = parseFloat(offer.offerPriceHkd as string);
       // Platform fee is deducted from seller's payout (buyer pays offer price only)
       // Platform-owned listings are exempt from platform fees
