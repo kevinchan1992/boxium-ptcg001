@@ -613,6 +613,7 @@ function CheckoutDialog({
   });
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+  const [sfAddressMode, setSfAddressMode] = useState<"sf_station" | "manual">("sf_station");
 
   // Auto-fill from saved address when dialog opens
   useEffect(() => {
@@ -668,23 +669,38 @@ function CheckoutDialog({
 
   const canProceedStep1 = useMemo(() => {
     if (activeItems.length === 0) return false;
+    if (selectedAddressId !== null) return true;
     if (form.shippingMethod === "sf_cod") {
-      return !!(form.sfStationCode && form.recipientName.trim() && form.recipientPhone.trim());
+      if (!form.recipientName.trim() || !form.recipientPhone.trim()) return false;
+      if (sfAddressMode === "sf_station") return !!(form.sfStationCode);
+      if (sfAddressMode === "manual") return !!(form.meetupNote.trim());
+      return false;
     }
     return true;
-  }, [form, activeItems]);
+  }, [form, activeItems, selectedAddressId, sfAddressMode]);
 
   const buildShippingAddress = () => {
-    if (form.shippingMethod === "sf_cod" && selectedStation) {
-      return {
-        name: form.recipientName,
-        phone: form.recipientPhone,
-        district: selectedStation.district,
-        address: selectedStation.address,
-        addressType: "sf_station" as const,
-        sfStationCode: selectedStation.code,
-        sfStationName: selectedStation.name,
-      };
+    if (form.shippingMethod === "sf_cod") {
+      if (sfAddressMode === "sf_station" && selectedStation) {
+        return {
+          name: form.recipientName,
+          phone: form.recipientPhone,
+          district: selectedStation.district,
+          address: selectedStation.address,
+          addressType: "sf_station" as const,
+          sfStationCode: selectedStation.code,
+          sfStationName: selectedStation.name,
+        };
+      }
+      if (sfAddressMode === "manual") {
+        return {
+          name: form.recipientName,
+          phone: form.recipientPhone,
+          district: "",
+          address: form.meetupNote,
+          addressType: "normal" as const,
+        };
+      }
     }
     return {
       name: form.recipientName || user?.name || "面交",
@@ -915,7 +931,7 @@ function CheckoutDialog({
               )}
 
               {/* Manual Address / Shipping Method */}
-              {(!savedAddresses || savedAddresses.length === 0 || selectedAddressId === null) && (
+              {(!savedAddresses || savedAddresses.length === 0 || selectedAddressId === null) && (<>
                 <div>
                   <Label className="text-xs font-semibold text-[#06038D] mb-2 block">送貨方式</Label>
                   <RadioGroup
@@ -926,11 +942,11 @@ function CheckoutDialog({
                     <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
                       form.shippingMethod === "sf_cod" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
                     }`}>
-                      <RadioGroupItem value="sf_cod" id="sf_cod2" className="mt-0.5" />
-                      <Label htmlFor="sf_cod2" className="cursor-pointer flex-1">
+                      <RadioGroupItem value="sf_cod" id="sf_cod2" className="mt-0.5 flex-shrink-0" />
+                      <Label htmlFor="sf_cod2" className="cursor-pointer flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <Truck className="w-4 h-4 text-[#06038D]" />
-                          <span className="font-semibold text-sm text-gray-800">順豐速運（運費到付）</span>
+                          <Truck className="w-4 h-4 text-[#06038D] flex-shrink-0" />
+                          <span className="font-semibold text-sm text-gray-800 whitespace-nowrap">順豐速運（運費到付）</span>
                         </div>
                         <p className="text-xs text-gray-500 mt-0.5 ml-6">運費由順豐速運收取，於取件時支付</p>
                       </Label>
@@ -949,10 +965,11 @@ function CheckoutDialog({
                     </div>
                   </RadioGroup>
                 </div>
+              </>
               )}
 
               {/* SF COD Details */}
-              {form.shippingMethod === "sf_cod" && (
+              {form.shippingMethod === "sf_cod" && selectedAddressId === null && (
                 <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
                   {/* SF Notice */}
                   <div className="text-xs text-gray-600 bg-white rounded-lg p-3 border border-[#06038D]/10">
@@ -969,7 +986,7 @@ function CheckoutDialog({
                         placeholder="收件人全名"
                         value={form.recipientName}
                         onChange={(e) => setForm((f) => ({ ...f, recipientName: e.target.value }))}
-                        className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D]"
+                        className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
                       />
                     </div>
                     <div>
@@ -978,60 +995,107 @@ function CheckoutDialog({
                         placeholder="+852 XXXX XXXX"
                         value={form.recipientPhone}
                         onChange={(e) => setForm((f) => ({ ...f, recipientPhone: e.target.value }))}
-                        className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D]"
+                        className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
                       />
                     </div>
                   </div>
 
-                  {/* SF District */}
+                  {/* SF Address Mode Toggle */}
                   <div>
-                    <Label className="text-xs text-gray-600 mb-1 block">順豐地區 *</Label>
-                    <Select
-                      value={form.sfDistrict}
-                      onValueChange={(v) => setForm((f) => ({ ...f, sfDistrict: v, sfStationCode: null }))}
-                    >
-                      <SelectTrigger className="text-sm h-9 border-[#06038D]/30">
-                        <SelectValue placeholder="選擇地區" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sfDistricts.map((d) => (
-                          <SelectItem key={d} value={d}>{d}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label className="text-xs text-gray-600 mb-2 block">收件地址方式</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { setSfAddressMode("sf_station"); setForm((f) => ({ ...f, sfDistrict: "", sfStationCode: null })); }}
+                        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-xs font-medium transition-all ${
+                          sfAddressMode === "sf_station"
+                            ? "border-[#06038D] bg-[#06038D]/5 text-[#06038D]"
+                            : "border-gray-200 text-gray-600 hover:border-[#06038D]/40"
+                        }`}
+                      >
+                        <Truck className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>順豐點 / 智能櫃</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setSfAddressMode("manual"); setForm((f) => ({ ...f, sfDistrict: "", sfStationCode: null })); }}
+                        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-xs font-medium transition-all ${
+                          sfAddressMode === "manual"
+                            ? "border-[#06038D] bg-[#06038D]/5 text-[#06038D]"
+                            : "border-gray-200 text-gray-600 hover:border-[#06038D]/40"
+                        }`}
+                      >
+                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>手動輸入地址</span>
+                      </button>
+                    </div>
                   </div>
 
-                  {/* SF Station */}
-                  {form.sfDistrict && (
-                    <div>
-                      <Label className="text-xs text-gray-600 mb-1 block">順豐網點 *</Label>
-                      <Select
-                        value={form.sfStationCode ?? ""}
-                        onValueChange={(v) => setForm((f) => ({ ...f, sfStationCode: v }))}
-                      >
-                        <SelectTrigger className="text-sm h-9 border-[#06038D]/30">
-                          <SelectValue placeholder="選擇網點" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filteredStations.map((s: SFStation) => (
-                            <SelectItem key={s.code} value={s.code}>
-                              {s.name}（{s.code}）
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {selectedStation && (
-                        <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />{selectedStation.address}
-                        </p>
+                  {/* SF Station Selection */}
+                  {sfAddressMode === "sf_station" && (
+                    <>
+                      <div>
+                        <Label className="text-xs text-gray-600 mb-1 block">順豐地區 *</Label>
+                        <Select
+                          value={form.sfDistrict}
+                          onValueChange={(v) => setForm((f) => ({ ...f, sfDistrict: v, sfStationCode: null }))}
+                        >
+                          <SelectTrigger className="text-sm h-9 border-[#06038D]/30 text-gray-900">
+                            <SelectValue placeholder="選擇地區" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sfDistricts.map((d) => (
+                              <SelectItem key={d} value={d}>{d}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {form.sfDistrict && (
+                        <div>
+                          <Label className="text-xs text-gray-600 mb-1 block">順豐網點 *</Label>
+                          <Select
+                            value={form.sfStationCode ?? ""}
+                            onValueChange={(v) => setForm((f) => ({ ...f, sfStationCode: v }))}
+                          >
+                            <SelectTrigger className="text-sm h-9 border-[#06038D]/30 text-gray-900">
+                              <SelectValue placeholder="選擇網點" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {filteredStations.map((s: SFStation) => (
+                                <SelectItem key={s.code} value={s.code}>
+                                  {s.name}（{s.code}）
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {selectedStation && (
+                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />{selectedStation.address}
+                            </p>
+                          )}
+                        </div>
                       )}
+                    </>
+                  )}
+
+                  {/* Manual Address Input */}
+                  {sfAddressMode === "manual" && (
+                    <div>
+                      <Label className="text-xs text-gray-600 mb-1 block">詳細地址 *</Label>
+                      <Input
+                        placeholder="例：新界東涌達東路1號東薈城2樓201室"
+                        value={form.meetupNote}
+                        onChange={(e) => setForm((f) => ({ ...f, meetupNote: e.target.value }))}
+                        className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">順豐上門派送，請填寫完整地址（包括大廈名稱、樓層及室號）</p>
                     </div>
                   )}
                 </div>
               )}
 
               {/* Meetup Details */}
-              {form.shippingMethod === "meetup" && (
+              {form.shippingMethod === "meetup" && selectedAddressId === null && (
                 <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
                   {/* Buyer phone info */}
                   <div className="flex items-start gap-3 p-3 rounded-lg bg-white border border-[#06038D]/10">
