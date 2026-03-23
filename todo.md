@@ -5682,3 +5682,16 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 強化 HTML 電郵的 dark mode 防護（inline styles + !important + data-ogsc）
 - [x] 修復 Logo 圖片在手機版無法顯示的問題
 - [ ] 保存 checkpoint
+
+---
+
+## 🐛 修復 /shop/:id 路由 404 問題（2026-03-23）
+
+### 問題描述
+訪問 /shop/180001 返回 404 錯誤，因為路由未定義。
+商品詳情頁面的正確路由是 /marketplace/:id。
+
+### 任務清單
+- [x] 在 App.tsx 加入 /shop/:id → /marketplace/:id 重定向
+- [x] 測試 /shop/180001 是否正確重定向
+- [ ] 保存 checkpoint

@@ -93,6 +93,14 @@ function Router() {
       </Route>
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/marketplace/:id" component={MarketplaceListing} />
+      {/* /shop/:id is an alias for /marketplace/:id */}
+      <Route path="/shop/:id">
+        {(params: { id?: string }) => {
+          const id = params?.id;
+          if (!id) return <NotFound />;
+          return <Redirect to={`/marketplace/${id}`} />;
+        }}
+      </Route>
       <Route path="/wishlist" component={Wishlist} />
       <Route path="/seller" component={SellerDashboard} />
       <Route path="/orders">
