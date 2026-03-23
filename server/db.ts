@@ -3202,6 +3202,7 @@ export async function updateMarketplaceOrder(id: number, data: Partial<InsertMar
 export async function getBuyerOrders(buyerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const sellerUsersAlias = alias(users, 'seller_user');
   const rows = await db.select({
     id: marketplaceOrders.id,
     orderNo: marketplaceOrders.orderNo,
@@ -3234,15 +3235,21 @@ export async function getBuyerOrders(buyerId: number) {
     disputeResolvedAt: marketplaceOrders.disputeResolvedAt,
     buyerConfirmedAt: marketplaceOrders.buyerConfirmedAt,
     alipayProofImageUrl: marketplaceOrders.alipayProofImageUrl,
+    buyerPhone: marketplaceOrders.buyerPhone,
     createdAt: marketplaceOrders.createdAt,
     updatedAt: marketplaceOrders.updatedAt,
     // Listing info for display
     listingTitle: marketplaceListings.title,
     listingImages: marketplaceListings.images,
     listingCondition: marketplaceListings.condition,
+    // Seller contact info (for meetup orders)
+    sellerUserPhone: sellerUsersAlias.phone,
+    sellerDisplayName: sellerProfiles.displayName,
   })
     .from(marketplaceOrders)
     .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
+    .leftJoin(sellerProfiles, eq(marketplaceOrders.sellerId, sellerProfiles.id))
+    .leftJoin(sellerUsersAlias, eq(sellerProfiles.userId, sellerUsersAlias.id))
     .where(eq(marketplaceOrders.buyerId, buyerId))
     .orderBy(desc(marketplaceOrders.createdAt));
   return rows;
@@ -3444,6 +3451,7 @@ export async function getSellerOrderItems(sellerId: number) {
     disputeEvidenceUrls: marketplaceOrders.disputeEvidenceUrls,
     disputeResolution: marketplaceOrders.disputeResolution,
     disputeResolvedAt: marketplaceOrders.disputeResolvedAt,
+    buyerPhone: marketplaceOrders.buyerPhone,
     createdAt: marketplaceOrders.createdAt,
     updatedAt: marketplaceOrders.updatedAt,
     title: marketplaceListings.title,
@@ -3488,6 +3496,7 @@ export async function getPlatformOrders() {
     shippedAt: marketplaceOrders.shippedAt,
     autoCompleteAt: marketplaceOrders.autoCompleteAt,
     payoutStatus: marketplaceOrders.payoutStatus,
+    buyerPhone: marketplaceOrders.buyerPhone,
     createdAt: marketplaceOrders.createdAt,
     updatedAt: marketplaceOrders.updatedAt,
     title: marketplaceListings.title,

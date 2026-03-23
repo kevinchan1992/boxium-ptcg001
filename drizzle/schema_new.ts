@@ -839,6 +839,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   // Shipping
   shippingName: varchar("shippingName", { length: 100 }),
   shippingPhone: varchar("shippingPhone", { length: 30 }),
+  buyerPhone: varchar("buyerPhone", { length: 30 }), // Buyer's contact phone (for meetup orders)
   shippingAddress: text("shippingAddress"), // JSON
   shippingMethod: varchar("shippingMethod", { length: 50 }),
   trackingNumber: varchar("trackingNumber", { length: 100 }),

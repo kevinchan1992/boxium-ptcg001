@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 
@@ -7,13 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock } from "lucide-react";
+import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock, Check, X, Phone, MapPin, CreditCard, Truck, Users, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -446,6 +443,7 @@ export default function Cart() {
         activeItems={activeItems}
         activeSubtotal={activeSubtotal}
         sfDistricts={SF_DISTRICTS}
+        user={user}
       />
     </div>
   );
@@ -593,17 +591,52 @@ interface CheckoutDialogProps {
     sellerType: string | null;
     acceptedOfferId?: number | null;
     acceptedOfferPrice?: string | number | null;
+    sellerUserPhone?: string | null;
+    sellerDisplayName?: string | null;
   }>;
   activeSubtotal: number;
   sfDistricts: string[];
+  user?: { id: number; name?: string | null; phone?: string | null; email?: string | null } | null;
 }
 
 function CheckoutDialog({
-  open, onClose, form, setForm, filteredStations, selectedStation, activeItems, activeSubtotal, sfDistricts,
+  open, onClose, form, setForm, filteredStations, selectedStation, activeItems, activeSubtotal, sfDistricts, user,
 }: CheckoutDialogProps) {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const [isValidatingStock, setIsValidatingStock] = React.useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<1 | 2>(1);
+
+  // Fetch saved addresses
+  const { data: savedAddresses } = trpc.marketplace.getMyShippingAddresses.useQuery(undefined, {
+    enabled: open,
+  });
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+
+  // Auto-fill from saved address when dialog opens
+  useEffect(() => {
+    if (!open) { setCheckoutStep(1); setSelectedAddressId(null); return; }
+    if (savedAddresses && savedAddresses.length > 0) {
+      const defaultAddr = savedAddresses.find((a: any) => a.isDefault) ?? savedAddresses[0];
+      if (defaultAddr) {
+        applyAddress(defaultAddr);
+        setSelectedAddressId(defaultAddr.id);
+      }
+    }
+  }, [open, savedAddresses]);
+
+  const applyAddress = (addr: any) => {
+    setForm((f) => ({
+      ...f,
+      shippingMethod: addr.addressType === "sf_station" ? "sf_cod" : "meetup",
+      recipientName: addr.recipientName || "",
+      recipientPhone: addr.phone || "",
+      sfDistrict: addr.district || "",
+      sfStationCode: addr.sfStationCode || null,
+      meetupNote: addr.addressType === "normal" ? (addr.address || "") : "",
+    }));
+  };
 
   // For cart checkout we create individual orders per listing (one order per item)
   // since each listing is from potentially different sellers
@@ -633,7 +666,7 @@ function CheckoutDialog({
 
   const isProcessing = createStripeOrderMutation.isPending || createAlipayOrderMutation.isPending;
 
-  const canSubmit = useMemo(() => {
+  const canProceedStep1 = useMemo(() => {
     if (activeItems.length === 0) return false;
     if (form.shippingMethod === "sf_cod") {
       return !!(form.sfStationCode && form.recipientName.trim() && form.recipientPhone.trim());
@@ -654,8 +687,8 @@ function CheckoutDialog({
       };
     }
     return {
-      name: form.recipientName || "面交",
-      phone: form.recipientPhone || "",
+      name: form.recipientName || user?.name || "面交",
+      phone: form.recipientPhone || user?.phone || "",
       district: "",
       address: form.meetupNote || "面交/其他",
       addressType: "normal" as const,
@@ -666,23 +699,11 @@ function CheckoutDialog({
   const [batchProgress, setBatchProgress] = useState<{ total: number; done: number; errors: number } | null>(null);
 
   const handleCheckout = async () => {
-    if (!canSubmit || batchProgress) return;
+    if (!canProceedStep1 || batchProgress) return;
 
     // Pre-checkout inventory validation: check all active items are still available
     setIsValidatingStock(true);
     try {
-      const invalidItems: string[] = [];
-      await Promise.all(activeItems.map(async (item) => {
-        try {
-          // Use clearUnavailableCartItems logic: check listing status via getMyCart data
-          // We rely on the server-side check in createOrder, but also do a quick client-side check
-          // by re-fetching cart to see if any items became unavailable
-        } catch {
-          invalidItems.push(item.title);
-        }
-      }));
-
-      // Re-fetch cart to detect newly unavailable items
       const freshCart = await utils.marketplace.getMyCart.fetch();
       const freshActiveIds = new Set(
         (freshCart ?? []).filter((i) => i.status === "active").map((i) => i.listingId)
@@ -711,12 +732,12 @@ function CheckoutDialog({
     for (const item of items) {
       try {
         if (form.paymentMethod === "stripe") {
-          // For Stripe: open first item's checkout URL, create orders for rest
           if (done === 0) {
             await new Promise<void>((resolve, reject) => {
               createStripeOrderMutation.mutate({
                 listingId: item.listingId,
                 shippingAddress,
+                buyerPhone: buyerPhone || undefined,
                 ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
               }, {
                 onSuccess: () => resolve(),
@@ -724,12 +745,12 @@ function CheckoutDialog({
               });
             });
           } else {
-            // For remaining items, create alipay orders (seller will contact for payment)
             await new Promise<void>((resolve, reject) => {
               createAlipayOrderMutation.mutate({
                 listingId: item.listingId,
                 proofImageUrl: "",
                 shippingAddress,
+                buyerPhone: buyerPhone || undefined,
                 ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
               }, {
                 onSuccess: () => resolve(),
@@ -743,6 +764,7 @@ function CheckoutDialog({
               listingId: item.listingId,
               proofImageUrl: "",
               shippingAddress,
+              buyerPhone: buyerPhone || undefined,
               ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
             }, {
               onSuccess: () => resolve(),
@@ -764,7 +786,6 @@ function CheckoutDialog({
       toast.success(`已成功建立 ${done} 個訂單！`);
       if (form.paymentMethod === "alipay_hk") setLocation("/orders");
     } else {
-      // Auto-remove unavailable items from cart after partial failure
       try {
         const freshCart2 = await utils.marketplace.getMyCart.fetch();
         const freshActiveIds2 = new Set(
@@ -786,231 +807,426 @@ function CheckoutDialog({
     onClose();
   };
 
+  const buyerPhone = user?.phone || "";
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-[#06038D]">選擇送貨及付款方式</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-5 py-2">
-          {/* Shipping Method */}
-          <div>
-            <Label className="text-sm font-semibold text-gray-700 mb-2 block">送貨方式</Label>
-            <RadioGroup
-              value={form.shippingMethod}
-              onValueChange={(v) => setForm((f) => ({ ...f, shippingMethod: v as ShippingMethod, sfDistrict: "", sfStationCode: null }))}
-              className="space-y-2"
+      <DialogContent showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg max-h-[92vh]">
+        {/* Header - /seller style */}
+        <div className="px-5 pt-5 pb-4 flex-shrink-0" style={{ backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00' }}>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-white">結帳</h2>
+            <button
+              onClick={onClose}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             >
-              <div className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${form.shippingMethod === "sf_cod" ? "border-[#06038D] bg-blue-50/50" : "border-gray-200 hover:border-gray-300"}`}>
-                <RadioGroupItem value="sf_cod" id="sf_cod" className="mt-0.5" />
-                <Label htmlFor="sf_cod" className="cursor-pointer flex-1">
-                  <span className="font-medium text-sm">順豐速運（運費到付）</span>
-                  <p className="text-xs text-gray-500 mt-0.5">運費由順豐速運收取，於取件時支付</p>
-                </Label>
-              </div>
-              <div className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${form.shippingMethod === "meetup" ? "border-[#06038D] bg-blue-50/50" : "border-gray-200 hover:border-gray-300"}`}>
-                <RadioGroupItem value="meetup" id="meetup" className="mt-0.5" />
-                <Label htmlFor="meetup" className="cursor-pointer flex-1">
-                  <span className="font-medium text-sm">面交 / 其他</span>
-                  <p className="text-xs text-gray-500 mt-0.5">請與賣家協商交收地點</p>
-                </Label>
-              </div>
-            </RadioGroup>
+              <X className="w-4 h-4" />
+            </button>
           </div>
-
-          {/* SF COD Details */}
-          {form.shippingMethod === "sf_cod" && (
-            <div className="space-y-3 p-4 bg-blue-50/40 rounded-lg border border-blue-100">
-              {/* SF Notice */}
-              <div className="text-xs text-gray-600 space-y-1.5 bg-white rounded-md p-3 border border-blue-100">
-                <p className="font-semibold text-[#06038D]">📦 順豐速運條款</p>
-                <p>【如寄順豐自提網點可享運費優惠】請於下單時提供收件人名、電話，並選擇你的順豐網點。運費金額將自動根據貨件重量、材積、收件地址計算。運費由順豐速運收取，於取件時支付。運費詳情可參考<a href="https://htm.sf-express.com/hk/tc/" target="_blank" rel="noopener noreferrer" className="text-[#06038D] underline">順豐速運香港官方網站</a>。</p>
-                <p>【客戶須知】由於順豐已暫停經SMS短訊方式發送取件訊息，所有取件訊息已改為透過順豐香港官方手機應用程式「SFHK APP」推送，客戶請提前下載「SFHK APP」，並開啟手機推送通知，以免錯過貨件運送提醒，同時客戶可透過「SFHK APP」隨時查看快件的最新狀態。</p>
-              </div>
-
-              {/* Recipient Info */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs text-gray-600 mb-1 block">收件人姓名 *</Label>
-                  <Input
-                    placeholder="收件人全名"
-                    value={form.recipientName}
-                    onChange={(e) => setForm((f) => ({ ...f, recipientName: e.target.value }))}
-                    className="text-sm h-9"
-                  />
+          {/* Step Indicator */}
+          <div className="flex items-center gap-0">
+            {[{ n: 1 as const, label: "送貨方式" }, { n: 2 as const, label: "付款確認" }].map(({ n, label }, idx) => (
+              <React.Fragment key={n}>
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                    checkoutStep > n ? "bg-[#FEDD00] text-[#06038D]" :
+                    checkoutStep === n ? "bg-[#FEDD00] text-[#06038D] ring-4 ring-[#FEDD00]/30" :
+                    "bg-white/20 text-white/50"
+                  }`}>
+                    {checkoutStep > n ? <Check className="w-3.5 h-3.5" /> : n}
+                  </div>
+                  <span className={`text-[10px] font-medium whitespace-nowrap ${
+                    checkoutStep >= n ? "text-[#FEDD00]" : "text-white/40"
+                  }`}>{label}</span>
                 </div>
-                <div>
-                  <Label className="text-xs text-gray-600 mb-1 block">聯絡電話 *</Label>
-                  <Input
-                    placeholder="+852 XXXX XXXX"
-                    value={form.recipientPhone}
-                    onChange={(e) => setForm((f) => ({ ...f, recipientPhone: e.target.value }))}
-                    className="text-sm h-9"
-                  />
-                </div>
-              </div>
+                {idx < 1 && (
+                  <div className={`flex-1 h-0.5 mb-4 mx-1 transition-all ${
+                    checkoutStep > n ? "bg-[#FEDD00]" : "bg-white/20"
+                  }`} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
 
-              {/* SF District */}
-              <div>
-                <Label className="text-xs text-gray-600 mb-1 block">順豐地區 *</Label>
-                <Select
-                  value={form.sfDistrict}
-                  onValueChange={(v) => setForm((f) => ({ ...f, sfDistrict: v, sfStationCode: null }))}
-                >
-                  <SelectTrigger className="text-sm h-9">
-                    <SelectValue placeholder="選擇地區" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sfDistricts.map((d) => (
-                      <SelectItem key={d} value={d}>{d}</SelectItem>
+        {/* Step Content */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-white">
+
+          {/* ── Step 1: Shipping ── */}
+          {checkoutStep === 1 && (
+            <>
+              {/* Saved Addresses */}
+              {savedAddresses && savedAddresses.length > 0 && (
+                <div>
+                  <Label className="text-xs font-semibold text-[#06038D] mb-2 block">已儲存的地址</Label>
+                  <div className="space-y-2">
+                    {savedAddresses.map((addr: any) => (
+                      <button
+                        key={addr.id}
+                        type="button"
+                        onClick={() => { applyAddress(addr); setSelectedAddressId(addr.id); }}
+                        className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+                          selectedAddressId === addr.id
+                            ? "border-[#06038D] bg-[#06038D]/5"
+                            : "border-gray-200 hover:border-[#06038D]/40"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-sm font-semibold text-gray-800">{addr.recipientName}</span>
+                              {addr.isDefault && (
+                                <span className="text-[10px] bg-[#06038D] text-white px-1.5 py-0.5 rounded font-medium">預設</span>
+                              )}
+                              {addr.label && addr.label !== "預設地址" && (
+                                <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{addr.label}</span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 flex items-center gap-1">
+                              <Phone className="w-3 h-3" />{addr.phone}
+                            </p>
+                            {addr.addressType === "sf_station" ? (
+                              <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                <Truck className="w-3 h-3" />順豐自提：{addr.sfStationName || addr.sfStationCode}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                <MapPin className="w-3 h-3" />{addr.address || "面交/其他"}
+                              </p>
+                            )}
+                          </div>
+                          {selectedAddressId === addr.id && (
+                            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#06038D' }}>
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* SF Station */}
-              {form.sfDistrict && (
-                <div>
-                  <Label className="text-xs text-gray-600 mb-1 block">順豐網點 *</Label>
-                  <Select
-                    value={form.sfStationCode ?? ""}
-                    onValueChange={(v) => setForm((f) => ({ ...f, sfStationCode: v }))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAddressId(null)}
+                    className="mt-2 text-xs text-[#06038D] underline"
                   >
-                    <SelectTrigger className="text-sm h-9">
-                      <SelectValue placeholder="選擇網點" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredStations.map((s: SFStation) => (
-                        <SelectItem key={s.code} value={s.code}>
-                          {s.name}（{s.code}）
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedStation && (
-                    <p className="text-xs text-gray-500 mt-1">📍 {selectedStation.address}</p>
+                    手動填寫其他地址
+                  </button>
+                </div>
+              )}
+
+              {/* Manual Address / Shipping Method */}
+              {(!savedAddresses || savedAddresses.length === 0 || selectedAddressId === null) && (
+                <div>
+                  <Label className="text-xs font-semibold text-[#06038D] mb-2 block">送貨方式</Label>
+                  <RadioGroup
+                    value={form.shippingMethod}
+                    onValueChange={(v) => setForm((f) => ({ ...f, shippingMethod: v as ShippingMethod, sfDistrict: "", sfStationCode: null }))}
+                    className="space-y-2"
+                  >
+                    <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      form.shippingMethod === "sf_cod" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
+                    }`}>
+                      <RadioGroupItem value="sf_cod" id="sf_cod2" className="mt-0.5" />
+                      <Label htmlFor="sf_cod2" className="cursor-pointer flex-1">
+                        <div className="flex items-center gap-2">
+                          <Truck className="w-4 h-4 text-[#06038D]" />
+                          <span className="font-semibold text-sm text-gray-800">順豐速運（運費到付）</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 ml-6">運費由順豐速運收取，於取件時支付</p>
+                      </Label>
+                    </div>
+                    <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      form.shippingMethod === "meetup" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
+                    }`}>
+                      <RadioGroupItem value="meetup" id="meetup2" className="mt-0.5" />
+                      <Label htmlFor="meetup2" className="cursor-pointer flex-1">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-[#06038D]" />
+                          <span className="font-semibold text-sm text-gray-800">面交 / 其他</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 ml-6">請與賣家協商交收地點</p>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
+
+              {/* SF COD Details */}
+              {form.shippingMethod === "sf_cod" && (
+                <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
+                  {/* SF Notice */}
+                  <div className="text-xs text-gray-600 bg-white rounded-lg p-3 border border-[#06038D]/10">
+                    <p className="font-semibold text-[#06038D] mb-1">📦 順豐速運條款</p>
+                    <p className="leading-relaxed">【如寄順豐自提網點可享運費優惠】請於下單時提供收件人名、電話，並選擇你的順豐網點。運費金額將自動根據貨件重量、材積、收件地址計算。運費由順豐速運收取，於取件時支付。運費詳情可參考<a href="https://htm.sf-express.com/hk/tc/" target="_blank" rel="noopener noreferrer" className="text-[#06038D] underline">順豐速運香港官方網站</a>。</p>
+                    <p className="mt-1 leading-relaxed">【客戶須知】由於順豐已暫停經SMS短訊方式發送取件訊息，所有取件訊息已改為透過順豐香港官方手機應用程式「SFHK APP」推送，客戶請提前下載「SFHK APP」，並開啟手機推送通知，以免錯過貨件運送提醒，同時客戶可透過「SFHK APP」隨時查看快件的最新狀態。</p>
+                  </div>
+
+                  {/* Recipient Info */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-gray-600 mb-1 block">收件人姓名 *</Label>
+                      <Input
+                        placeholder="收件人全名"
+                        value={form.recipientName}
+                        onChange={(e) => setForm((f) => ({ ...f, recipientName: e.target.value }))}
+                        className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D]"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 mb-1 block">聯絡電話 *</Label>
+                      <Input
+                        placeholder="+852 XXXX XXXX"
+                        value={form.recipientPhone}
+                        onChange={(e) => setForm((f) => ({ ...f, recipientPhone: e.target.value }))}
+                        className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* SF District */}
+                  <div>
+                    <Label className="text-xs text-gray-600 mb-1 block">順豐地區 *</Label>
+                    <Select
+                      value={form.sfDistrict}
+                      onValueChange={(v) => setForm((f) => ({ ...f, sfDistrict: v, sfStationCode: null }))}
+                    >
+                      <SelectTrigger className="text-sm h-9 border-[#06038D]/30">
+                        <SelectValue placeholder="選擇地區" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sfDistricts.map((d) => (
+                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* SF Station */}
+                  {form.sfDistrict && (
+                    <div>
+                      <Label className="text-xs text-gray-600 mb-1 block">順豐網點 *</Label>
+                      <Select
+                        value={form.sfStationCode ?? ""}
+                        onValueChange={(v) => setForm((f) => ({ ...f, sfStationCode: v }))}
+                      >
+                        <SelectTrigger className="text-sm h-9 border-[#06038D]/30">
+                          <SelectValue placeholder="選擇網點" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filteredStations.map((s: SFStation) => (
+                            <SelectItem key={s.code} value={s.code}>
+                              {s.name}（{s.code}）
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {selectedStation && (
+                        <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />{selectedStation.address}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
-            </div>
+
+              {/* Meetup Details */}
+              {form.shippingMethod === "meetup" && (
+                <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
+                  {/* Buyer phone info */}
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-white border border-[#06038D]/10">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#06038D' }}>
+                      <Phone className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-[#06038D] mb-0.5">你的聯絡電話（賣家可見）</p>
+                      {buyerPhone ? (
+                        <p className="text-sm font-bold text-gray-800">{buyerPhone}</p>
+                      ) : (
+                        <p className="text-xs text-amber-600">⚠️ 你尚未在個人中心設定電話，賣家將無法主動聯絡你。建議前往個人中心設定電話後再結帳。</p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-0.5">面交訂單建立後，賣家可在訂單詳情中查看你的電話</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-gray-600 mb-1 block">備註（可選）</Label>
+                    <Input
+                      placeholder="如有特定交收地點或時間要求，請填寫"
+                      value={form.meetupNote}
+                      onChange={(e) => setForm((f) => ({ ...f, meetupNote: e.target.value }))}
+                      className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D]"
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
-          {/* Meetup Note */}
-          {form.shippingMethod === "meetup" && (
-            <div>
-              <Label className="text-xs text-gray-600 mb-1 block">備註（可選）</Label>
-              <Input
-                placeholder="如有特定交收地點或時間要求，請填寫"
-                value={form.meetupNote}
-                onChange={(e) => setForm((f) => ({ ...f, meetupNote: e.target.value }))}
-                className="text-sm h-9"
-              />
-            </div>
-          )}
-
-          <Separator />
-
-          {/* Payment Method */}
-          <div>
-            <Label className="text-sm font-semibold text-gray-700 mb-2 block">付款方式</Label>
-            <RadioGroup
-              value={form.paymentMethod}
-              onValueChange={(v) => setForm((f) => ({ ...f, paymentMethod: v as PaymentMethod }))}
-              className="space-y-2"
-            >
-              <div className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${form.paymentMethod === "alipay_hk" ? "border-[#06038D] bg-blue-50/50" : "border-gray-200 hover:border-gray-300"}`}>
-                <RadioGroupItem value="alipay_hk" id="alipay_hk" className="mt-0.5" />
-                <Label htmlFor="alipay_hk" className="cursor-pointer flex-1">
-                  <span className="font-medium text-sm">支付寶 HK（AlipayHK）</span>
-                  <p className="text-xs text-gray-500 mt-0.5">網頁版：確認後跳轉至付款二維碼頁面。請打開手機內的 AlipayHK App 掃描二維碼完成付款。</p>
-                </Label>
-              </div>
-              <div className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${form.paymentMethod === "stripe" ? "border-[#06038D] bg-blue-50/50" : "border-gray-200 hover:border-gray-300"}`}>
-                <RadioGroupItem value="stripe" id="stripe" className="mt-0.5" />
-                <Label htmlFor="stripe" className="cursor-pointer flex-1">
-                  <span className="font-medium text-sm">信用卡（Stripe）</span>
-                  <p className="text-xs text-gray-500 mt-0.5">支援 Visa、Mastercard 等主要信用卡</p>
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <Separator />
-
-          {/* Order Summary */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-            <div className="font-semibold text-gray-700 mb-2">訂單摘要</div>
-            {activeItems.map((item) => (
-              <div key={item.listingId} className="flex justify-between text-gray-600">
-                <span className="truncate flex-1 mr-2">
-                  {item.title}
-                  {item.acceptedOfferId && (
-                    <span className="ml-1 text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded font-medium">出價價</span>
-                  )}
-                </span>
-                <span className="flex-shrink-0">
-                  {item.acceptedOfferPrice ? (
-                    <span className="flex items-center gap-1">
-                      <span className="line-through text-gray-400 text-xs">HK${Number(item.priceHkd).toFixed(0)}</span>
-                      <span className="text-green-700 font-semibold">HK${Number(item.acceptedOfferPrice).toFixed(0)}</span>
+          {/* ── Step 2: Payment + Summary ── */}
+          {checkoutStep === 2 && (
+            <>
+              {/* Order Summary */}
+              <div className="bg-[#06038D]/5 rounded-xl border border-[#06038D]/20 p-4 space-y-2">
+                <p className="text-xs font-semibold text-[#06038D] mb-2">訂單摘要</p>
+                {activeItems.map((item) => (
+                  <div key={item.listingId} className="flex justify-between text-sm text-gray-700">
+                    <span className="truncate flex-1 mr-2">
+                      {item.title}
+                      {item.acceptedOfferId && (
+                        <span className="ml-1 text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded font-medium">出價價</span>
+                      )}
                     </span>
-                  ) : (
-                    `HK$${Number(item.priceHkd).toFixed(0)}`
+                    <span className="flex-shrink-0 font-medium">
+                      {item.acceptedOfferPrice ? (
+                        <span className="flex items-center gap-1">
+                          <span className="line-through text-gray-400 text-xs">HK${Number(item.priceHkd).toFixed(0)}</span>
+                          <span className="text-green-700 font-semibold">HK${Number(item.acceptedOfferPrice).toFixed(0)}</span>
+                        </span>
+                      ) : (
+                        `HK$${Number(item.priceHkd).toFixed(0)}`
+                      )}
+                    </span>
+                  </div>
+                ))}
+                <div className="border-t border-[#06038D]/20 pt-2 mt-2 flex justify-between font-bold text-[#06038D]">
+                  <span>合計（不含運費）</span>
+                  <span>HK${activeSubtotal.toFixed(0)}</span>
+                </div>
+              </div>
+
+              {/* Shipping Summary */}
+              <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50">
+                {form.shippingMethod === "sf_cod" ? (
+                  <Truck className="w-4 h-4 text-[#06038D] mt-0.5 flex-shrink-0" />
+                ) : (
+                  <Users className="w-4 h-4 text-[#06038D] mt-0.5 flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-gray-700">
+                    {form.shippingMethod === "sf_cod" ? "順豐速運（運費到付）" : "面交 / 其他"}
+                  </p>
+                  {form.shippingMethod === "sf_cod" && selectedStation && (
+                    <p className="text-xs text-gray-500 mt-0.5">{form.recipientName} · {form.recipientPhone} · {selectedStation.name}</p>
                   )}
-                </span>
+                  {form.shippingMethod === "meetup" && (
+                    <div className="mt-1 space-y-1">
+                      <p className="text-xs text-gray-500">
+                        {buyerPhone ? `你的電話：${buyerPhone}` : "⚠️ 未設定電話（請先在個人中心設定）"}
+                        {form.meetupNote ? ` · ${form.meetupNote}` : ""}
+                      </p>
+                      <p className="text-xs text-gray-400">付款完成後，訂單詳情頁面將顯示賣家聯絡電話</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            ))}
-            <Separator className="my-1" />
-            <div className="flex justify-between font-bold text-[#06038D]">
-              <span>合計（不含運費）</span>
-              <span>HK${activeSubtotal.toFixed(0)}</span>
-            </div>
-          </div>
 
-          {activeItems.length > 1 && (
-            <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
-              <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-blue-700">
-                將為 {activeItems.length} 件商品建立 {activeItems.length} 個訂單（每個賣家各一個）。Stripe 結帳時會開啟第一個訂單的付款頁，其餘訂單請到「我的訂單」完成支付。
-              </p>
-            </div>
-          )}
+              {/* Payment Method */}
+              <div>
+                <Label className="text-xs font-semibold text-[#06038D] mb-2 block">付款方式</Label>
+                <RadioGroup
+                  value={form.paymentMethod}
+                  onValueChange={(v) => setForm((f) => ({ ...f, paymentMethod: v as PaymentMethod }))}
+                  className="space-y-2"
+                >
+                  <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                    form.paymentMethod === "alipay_hk" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
+                  }`}>
+                    <RadioGroupItem value="alipay_hk" id="alipay_hk2" className="mt-0.5" />
+                    <Label htmlFor="alipay_hk2" className="cursor-pointer flex-1">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-[#06038D]" />
+                        <span className="font-semibold text-sm text-gray-800">支付寶 HK（AlipayHK）</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 ml-6">確認後跳轉至付款二維碼頁面，請用 AlipayHK App 掃描完成付款</p>
+                    </Label>
+                  </div>
+                  <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                    form.paymentMethod === "stripe" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
+                  }`}>
+                    <RadioGroupItem value="stripe" id="stripe2" className="mt-0.5" />
+                    <Label htmlFor="stripe2" className="cursor-pointer flex-1">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-[#06038D]" />
+                        <span className="font-semibold text-sm text-gray-800">信用卡（Stripe）</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 ml-6">支援 Visa、Mastercard 等主要信用卡</p>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
 
-          {batchProgress && (
-            <div className="bg-[#06038D]/5 rounded-lg p-3">
-              <div className="flex justify-between text-sm text-[#06038D] font-medium mb-2">
-                <span>正在建立訂單...</span>
-                <span>{batchProgress.done} / {batchProgress.total}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div
-                  className="bg-[#06038D] h-1.5 rounded-full transition-all duration-300"
-                  style={{ width: `${(batchProgress.done / batchProgress.total) * 100}%` }}
-                />
-              </div>
-            </div>
+              {activeItems.length > 1 && (
+                <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
+                  <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-700">
+                    將為 {activeItems.length} 件商品建立 {activeItems.length} 個訂單（每個賣家各一個）。Stripe 結帳時會開啟第一個訂單的付款頁，其餘訂單請到「我的訂單」完成支付。
+                  </p>
+                </div>
+              )}
+
+              {batchProgress && (
+                <div className="bg-[#06038D]/5 rounded-xl border border-[#06038D]/20 p-3">
+                  <div className="flex justify-between text-sm text-[#06038D] font-medium mb-2">
+                    <span>正在建立訂單...</span>
+                    <span>{batchProgress.done} / {batchProgress.total}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                    <div
+                      className="h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${(batchProgress.done / batchProgress.total) * 100}%`, background: '#FEDD00' }}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose} disabled={isProcessing}>取消</Button>
-          <Button
-            className="bg-[#06038D] text-white hover:bg-[#06038D]/90"
-            onClick={handleCheckout}
-            disabled={!canSubmit || isProcessing || !!batchProgress || isValidatingStock}
-          >
-            {isValidatingStock
-              ? "驗證庫存中..."
-              : batchProgress
-              ? `建立中 ${batchProgress.done}/${batchProgress.total}...`
-              : isProcessing
-              ? "處理中..."
-              : activeItems.length > 1
-              ? `確認結帳（${activeItems.length} 件）`
-              : "確認結帳"}
-          </Button>
-        </DialogFooter>
+        {/* Footer */}
+        <div className="px-5 py-4 flex gap-2 bg-white flex-shrink-0" style={{ borderTop: '1px solid rgba(6,3,141,0.15)' }}>
+          {checkoutStep === 1 && (
+            <Button
+              variant="outline"
+              className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white"
+              onClick={onClose}
+            >取消</Button>
+          )}
+          {checkoutStep === 2 && (
+            <Button
+              variant="outline"
+              className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white"
+              onClick={() => setCheckoutStep(1)}
+              disabled={isProcessing}
+            >上一步</Button>
+          )}
+          {checkoutStep === 1 && (
+            <Button
+              className="flex-1 font-bold"
+              style={{ background: '#FEDD00', color: '#06038D' }}
+              disabled={!canProceedStep1}
+              onClick={() => setCheckoutStep(2)}
+            >下一步</Button>
+          )}
+          {checkoutStep === 2 && (
+            <Button
+              className="flex-1 font-bold"
+              style={{ background: '#FEDD00', color: '#06038D' }}
+              onClick={handleCheckout}
+              disabled={isProcessing || !!batchProgress || isValidatingStock}
+            >
+              {isValidatingStock
+                ? "驗證庫存中..."
+                : batchProgress
+                ? `建立中 ${batchProgress.done}/${batchProgress.total}...`
+                : isProcessing
+                ? "處理中..."
+                : activeItems.length > 1
+                ? `確認結帳（${activeItems.length} 件）`
+                : "確認結帳"}
+            </Button>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

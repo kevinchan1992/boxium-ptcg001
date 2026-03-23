@@ -799,7 +799,7 @@ export default function OrderDetail() {
     );
   }
 
-  const { order, items, listing, review, isBuyer, isSeller } = data;
+  const { order, items, listing, review, isBuyer, isSeller, sellerPhone, buyerContactPhone, isMeetup } = data;
 
   const shippingAddr = (() => {
     if (!order.shippingAddress) return null;
@@ -1138,6 +1138,45 @@ export default function OrderDetail() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Meetup Contact Info - shown after order completed */}
+        {isMeetup && isCompleted && (isBuyer ? sellerPhone : buyerContactPhone) && (
+          <div className="bg-white rounded-xl border-2 shadow-sm p-4" style={{ borderColor: '#FEDD00' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#FEDD00' }}>
+                <Phone className="w-3.5 h-3.5" style={{ color: '#06038D' }} />
+              </div>
+              <h2 className="font-bold text-sm" style={{ color: '#06038D' }}>面交聯絡資料</h2>
+            </div>
+            <div className="space-y-2 text-sm">
+              {isBuyer && sellerPhone && (
+                <div className="flex items-center justify-between p-3 bg-[#06038D]/5 rounded-lg">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">賣家電話</p>
+                    <p className="font-bold text-[#06038D] text-base">{sellerPhone}</p>
+                  </div>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(sellerPhone!); toast.success('已複製賣家電話'); }}
+                    className="text-xs text-[#06038D] underline hover:no-underline"
+                  >複製</button>
+                </div>
+              )}
+              {isSeller && buyerContactPhone && (
+                <div className="flex items-center justify-between p-3 bg-[#06038D]/5 rounded-lg">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">買家電話</p>
+                    <p className="font-bold text-[#06038D] text-base">{buyerContactPhone}</p>
+                  </div>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(buyerContactPhone!); toast.success('已複製買家電話'); }}
+                    className="text-xs text-[#06038D] underline hover:no-underline"
+                  >複製</button>
+                </div>
+              )}
+              <p className="text-xs text-gray-400 mt-1">論電話僅於訂單完成後顯示，請自行與對方協商面交地點</p>
             </div>
           </div>
         )}

@@ -5738,3 +5738,15 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 修復 Cart.tsx PSA badge 文字顏色：從白色改為 text-gray-700
 - [x] 修復接受出價時 expiresAt 更新為後台設定的付款時限（offer_payment_timeout_hours）
 - [x] 手動更新現有已接受出價的到期時間為現在 + 2 小時
+
+---
+
+## 🛒 購物車結帳 Dialog UI 重設計
+
+- [x] 分析現有 Cart.tsx 結帳 Dialog 和用戶地址 API
+- [x] 重新設計結帳 Dialog 對齊 /seller 風格（深藍背景、黃色強調色、步驟指示器）
+- [x] 自動帶入用戶個人中心已儲存的收貨地址（姓名、電話、地址）
+- [x] 面交/其他模式：訂單建立時記錄買家電話，訂單完成後在訂單詳情頁面顯示雙方電話
+- [x] 確保後端 getMyProfile 返回電話和地址資料
+- [x] 訂單建立時記錄買家電話，賣家訂單管理可查看
+- [ ] 保存 checkpoint

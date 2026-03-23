@@ -1770,6 +1770,7 @@ export const marketplaceRouter = router({
     .input(z.object({
       listingId: z.number().int(),
       offerId: z.number().int().optional(), // If provided, use offer price instead of listing price
+      buyerPhone: z.string().optional().default(""), // Buyer's contact phone (for meetup orders)
       shippingAddress: z.object({
         name: z.string().min(1),
         phone: z.string().optional().default(""), // Optional: phone not required for meetup orders
@@ -1939,6 +1940,7 @@ export const marketplaceRouter = router({
         shippingName: input.shippingAddress?.name ?? null,
         shippingPhone: input.shippingAddress?.phone ?? null,
         shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
+        buyerPhone: input.buyerPhone || null,
       });
       return { checkoutUrl: session.url, orderNo };
     }),
@@ -2040,6 +2042,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       listingId: z.number().int(),
       offerId: z.number().int().optional(), // If provided, use offer price instead of listing price
       proofImageUrl: z.string().optional().default(""), // Optional: empty string allowed for orders without proof
+      buyerPhone: z.string().optional().default(""), // Buyer's contact phone (for meetup orders)
       shippingAddress: z.object({
         name: z.string().min(1),
         phone: z.string().optional().default(""), // Optional: phone not required for meetup orders
@@ -2120,6 +2123,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         shippingName: input.shippingAddress?.name ?? null,
         shippingPhone: input.shippingAddress?.phone ?? null,
         shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
+        buyerPhone: input.buyerPhone || null,
       });
       // Notify admin of new Alipay order pending review
       await notifyAdmin({
@@ -2143,7 +2147,24 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const items = await getOrderItems(order.id);
       const listing = order.listingId ? await getListingById(order.listingId) : null;
       const review = await getReviewByOrderId(order.id);
-      return { order, items, listing, review, isBuyer, isSeller };
+      // For meetup orders that are completed, reveal contact phones
+      let sellerPhone: string | null = null;
+      let buyerContactPhone: string | null = null;
+      const isMeetup = order.shippingMethod === 'meetup' || order.shippingAddress?.includes('面交');
+      const isCompleted = order.orderStatus === 'completed';
+      if (isMeetup && isCompleted) {
+        // Get seller's phone
+        if (sellerProfile?.userId) {
+          const db = await getDb();
+          if (db) {
+            const sellerUserRows = await db.select({ phone: users.phone }).from(users).where(eq(users.id, sellerProfile.userId)).limit(1);
+            sellerPhone = sellerUserRows[0]?.phone ?? null;
+          }
+        }
+        // Buyer phone from order record
+        buyerContactPhone = order.buyerPhone ?? null;
+      }
+      return { order, items, listing, review, isBuyer, isSeller, sellerPhone, buyerContactPhone, isMeetup, isCompleted };
     }),
 
   // ============================================================
@@ -3598,6 +3619,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { alias: aliasFunc } = await import('drizzle-orm/mysql-core');
+      const sellerUserAlias = aliasFunc(users, 'cart_seller_user');
       const rows = await db
         .select({
           cartItemId: cartItems.id,
@@ -3611,9 +3634,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
           sellerType: marketplaceListings.sellerType,
           addedAt: cartItems.addedAt,
           expiresAt: cartItems.expiresAt,
+          sellerUserPhone: sellerUserAlias.phone,
+          sellerDisplayName: sellerProfiles.displayName,
         })
         .from(cartItems)
         .innerJoin(marketplaceListings, eq(cartItems.listingId, marketplaceListings.id))
+        .leftJoin(sellerProfiles, eq(marketplaceListings.sellerId, sellerProfiles.id))
+        .leftJoin(sellerUserAlias, eq(sellerProfiles.userId, sellerUserAlias.id))
         .where(eq(cartItems.userId, ctx.user.id))
         .orderBy(desc(cartItems.addedAt));
       // For each cart item, check if buyer has an accepted offer

@@ -1477,19 +1477,32 @@ export default function SellerDashboard() {
                           </div>
                           {item.shippingName && (
                             <div className="text-xs text-gray-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 space-y-1">
-                              <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>
-                              <p>📍 地址：{(() => {
+                              {(() => {
                                 try {
                                   const addr = typeof item.shippingAddress === 'string' ? JSON.parse(item.shippingAddress) : item.shippingAddress;
-                                  if (addr && typeof addr === 'object') {
-                                    const parts = [addr.address, addr.district, addr.region].filter(Boolean);
-                                    return parts.join(', ');
+                                  const isMeetup = addr?.addressType === 'normal' || (!addr?.sfStationCode && !addr?.district);
+                                  if (isMeetup && (item as any).buyerPhone) {
+                                    return (
+                                      <>
+                                        <p>🤝 面交訂單</p>
+                                        <p className="font-semibold text-[#06038D]">📞 買家電話：{(item as any).buyerPhone}</p>
+                                        {addr?.address && addr.address !== '面交/其他' && <p>📍 備註：{addr.address}</p>}
+                                      </>
+                                    );
                                   }
-                                  return item.shippingAddress;
+                                  return (
+                                    <>
+                                      <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>
+                                      <p>📍 地址：{(() => {
+                                        const parts = [addr?.address, addr?.district, addr?.region].filter(Boolean);
+                                        return parts.length > 0 ? parts.join(', ') : String(item.shippingAddress);
+                                      })()}</p>
+                                    </>
+                                  );
                                 } catch {
-                                  return item.shippingAddress;
+                                  return <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>;
                                 }
-                              })()}</p>
+                              })()}
                               {item.trackingNumber && <p>🚚 追蹤號：{item.trackingNumber}</p>}
                               {item.shippedAt && <p>📅 出貨日期：{new Date(item.shippedAt).toLocaleDateString('zh-HK')}</p>}
                             </div>
