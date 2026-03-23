@@ -3561,6 +3561,8 @@ export async function getMarketplaceStats() {
   if (!db) throw new Error("Database not available");
   const [listingCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.status, 'active'));
   const [orderCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders);
+  const [pendingPaymentCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
+    .where(eq(marketplaceOrders.orderStatus, 'pending_payment'));
   const [pendingAlipay] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
     .where(and(
       eq(marketplaceOrders.paymentMethod, 'alipay_hk'),
@@ -3613,6 +3615,7 @@ export async function getMarketplaceStats() {
   return {
     activeListings: Number(listingCount?.count ?? 0),
     totalOrders: Number(orderCount?.count ?? 0),
+    pendingPaymentCount: Number(pendingPaymentCount?.count ?? 0),
     pendingAlipayConfirmation: Number(pendingAlipay?.count ?? 0),
     activeSellerCount: Number(sellerCount?.count ?? 0),
     pendingReviewListings: Number(pendingReview?.count ?? 0),

@@ -958,8 +958,12 @@ export function startPaymentTimeoutCancelScheduler() {
         const db = await getDb();
         if (!db) return;
         const now = new Date();
-        const cutoff = new Date(now.getTime() - 30 * 60 * 1000); // 30 minutes ago
-        // Find pending_payment orders older than 30 minutes
+        // Read timeout from systemSettings (default: 30 minutes)
+        const { getSystemSetting } = await import('./db');
+        const timeoutSetting = await getSystemSetting('payment_timeout_minutes').catch(() => null);
+        const timeoutMinutes = timeoutSetting ? parseInt(timeoutSetting.settingValue) : 30;
+        const cutoff = new Date(now.getTime() - timeoutMinutes * 60 * 1000);
+        // Find pending_payment orders older than timeout
         const timedOutOrders = await db.select({
           id: marketplaceOrders.id,
           orderNo: marketplaceOrders.orderNo,
@@ -1007,7 +1011,7 @@ export function startPaymentTimeoutCancelScheduler() {
               userId: order.buyerId,
               type: 'order',
               title: '訂單已自動取消',
-              body: `訂單 #${order.orderNo} 因超過 30 分鐘未完成付款，已自動取消，商品已重新上架。`,
+              body: `訂單 #${order.orderNo} 因超過 ${timeoutMinutes} 分鐘未完成付款，已自動取消，商品已重新上架。`,
               linkUrl: '/orders',
               relatedId: order.id,
             }).catch(() => {});
@@ -1016,11 +1020,11 @@ export function startPaymentTimeoutCancelScheduler() {
             if (order.sellerId != null) {
               const sellerProf = await getSellerProfileById(order.sellerId);
               if (sellerProf?.userId) {
-                await createNotification({
-                  userId: sellerProf.userId,
-                  type: 'order',
-                  title: '買家未付款，訂單已取消',
-                  body: `訂單 #${order.orderNo} 因買家超過 30 分鐘未完成付款，已自動取消，商品已重新上架。`,
+              await createNotification({
+                userId: sellerProf.userId,
+                type: 'order',
+                title: '買家未付款，訂單已取消',
+                body: `訂單 #${order.orderNo} 因買家超過 ${timeoutMinutes} 分鐘未完成付款，已自動取消，商品已重新上架。`,
                   linkUrl: '/seller',
                   relatedId: order.id,
                 }).catch(() => {});
@@ -1035,7 +1039,10 @@ export function startPaymentTimeoutCancelScheduler() {
         // ── Also handle accepted offers where buyer hasn't paid for 24 hours ──
         // These are offers that were accepted but the buyer never started checkout
         // or the Stripe session expired without creating an order
-        const offerCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+        // Read offer timeout from systemSettings (default: 24 hours)
+        const offerTimeoutSetting = await getSystemSetting('offer_payment_timeout_hours').catch(() => null);
+        const offerTimeoutHours = offerTimeoutSetting ? parseInt(offerTimeoutSetting.settingValue) : 24;
+        const offerCutoff = new Date(now.getTime() - offerTimeoutHours * 60 * 60 * 1000);
         const expiredAcceptedOffers = await db.select({
           id: offersTable.id,
           buyerId: offersTable.buyerId,
@@ -1078,7 +1085,7 @@ export function startPaymentTimeoutCancelScheduler() {
     },
     { timezone: 'Asia/Hong_Kong' }
   );
-  console.log('[PaymentTimeout] Payment timeout cancel scheduler started (every 10 minutes, 30-min cutoff)');
+  console.log('[PaymentTimeout] Payment timeout cancel scheduler started (every 10 minutes, dynamic cutoff from systemSettings)');
 }
 export function stopPaymentTimeoutCancelScheduler() {
   if (paymentTimeoutCancelCronJob) {
@@ -1108,10 +1115,14 @@ export function startPaymentReminderScheduler() {
         if (!db) return;
 
         const now = new Date();
-        // Window: orders created between 1 hour and 1 hour 10 minutes ago
+        // Read reminder delay from systemSettings (default: 60 minutes)
+        const { getSystemSetting } = await import('./db');
+        const reminderSetting = await getSystemSetting('payment_reminder_minutes').catch(() => null);
+        const reminderMinutes = reminderSetting ? parseInt(reminderSetting.settingValue) : 60;
+        // Window: orders created between (reminderMinutes+10) and reminderMinutes ago
         // (10-minute window matches the cron frequency to avoid duplicates)
-        const windowStart = new Date(now.getTime() - (1 * 60 + 10) * 60 * 1000); // 1h10m ago
-        const windowEnd   = new Date(now.getTime() - 1 * 60 * 60 * 1000);         // 1h ago
+        const windowStart = new Date(now.getTime() - (reminderMinutes + 10) * 60 * 1000);
+        const windowEnd   = new Date(now.getTime() - reminderMinutes * 60 * 1000);
 
         const ordersToRemind = await db.select({
           id: marketplaceOrders.id,

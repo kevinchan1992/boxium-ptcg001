@@ -55,4 +55,55 @@ export const systemRouter = router({
       );
       return { success: true, feeRate, feeRatePercent: input.feeRatePercent };
     }),
+
+  // Get marketplace timeout settings
+  getTimeoutSettings: adminProcedure
+    .query(async () => {
+      const [paymentTimeout, offerPaymentTimeout, reminderMinutes] = await Promise.all([
+        getSystemSetting('payment_timeout_minutes'),
+        getSystemSetting('offer_payment_timeout_hours'),
+        getSystemSetting('payment_reminder_minutes'),
+      ]);
+      return {
+        paymentTimeoutMinutes: paymentTimeout ? parseInt(paymentTimeout.settingValue) : 30,
+        offerPaymentTimeoutHours: offerPaymentTimeout ? parseInt(offerPaymentTimeout.settingValue) : 24,
+        paymentReminderMinutes: reminderMinutes ? parseInt(reminderMinutes.settingValue) : 60,
+      };
+    }),
+
+  // Update marketplace timeout settings
+  updateTimeoutSettings: adminProcedure
+    .input(
+      z.object({
+        paymentTimeoutMinutes: z.number().int().min(5).max(1440).optional(),
+        offerPaymentTimeoutHours: z.number().int().min(1).max(168).optional(),
+        paymentReminderMinutes: z.number().int().min(5).max(1440).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const updates: Promise<unknown>[] = [];
+      if (input.paymentTimeoutMinutes !== undefined) {
+        updates.push(setSystemSetting(
+          'payment_timeout_minutes',
+          input.paymentTimeoutMinutes.toString(),
+          `Pending payment order auto-cancel timeout in minutes (default: 30)`
+        ));
+      }
+      if (input.offerPaymentTimeoutHours !== undefined) {
+        updates.push(setSystemSetting(
+          'offer_payment_timeout_hours',
+          input.offerPaymentTimeoutHours.toString(),
+          `Accepted offer auto-expire timeout in hours (default: 24)`
+        ));
+      }
+      if (input.paymentReminderMinutes !== undefined) {
+        updates.push(setSystemSetting(
+          'payment_reminder_minutes',
+          input.paymentReminderMinutes.toString(),
+          `Payment reminder email sent after N minutes (default: 60)`
+        ));
+      }
+      await Promise.all(updates);
+      return { success: true };
+    }),
 });

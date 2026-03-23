@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer, XCircle } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer, XCircle, Settings, Timer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
@@ -1418,6 +1418,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
     { enabled: !!selectedOrder?.id }
   );
 
+  const { data: statsData } = trpc.marketplace.adminGetStats.useQuery(undefined, { refetchInterval: 30000 });
   const orders = data?.orders ?? [];
   const total = data?.total ?? 0;
   const filteredOrders = searchQuery.trim()
@@ -1551,13 +1552,19 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       )}
       {/* Row 1: Status filters + seller type filter */}
       <div className="flex items-center gap-2 flex-wrap">
-        {["all", "pending_payment", "payment_received", "processing", "shipped", "completed", "cancelled", "disputed"].map(s => (
-          <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
-            onClick={() => { setStatusFilter(s); setPage(1); }}
-            className={statusFilter === s ? "bg-[#06038d] text-white" : "text-gray-700 bg-white"}>
-            {s === "all" ? "全部" : orderStatusLabel[s] ?? s}
-          </Button>
-        ))}
+        {["all", "pending_payment", "payment_received", "processing", "shipped", "completed", "cancelled", "disputed"].map(s => {
+          const pendingCount = s === "pending_payment" ? (statsData?.pendingPaymentCount ?? 0) : 0;
+          return (
+            <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
+              onClick={() => { setStatusFilter(s); setPage(1); }}
+              className={`${statusFilter === s ? "bg-[#06038d] text-white" : "text-gray-700 bg-white"} relative`}>
+              {s === "all" ? "全部" : orderStatusLabel[s] ?? s}
+              {pendingCount > 0 && (
+                <span className="ml-1.5 bg-amber-500 text-white text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">{pendingCount}</span>
+              )}
+            </Button>
+          );
+        })}
       </div>
       {/* Row 1b: Seller type filter */}
       <div className="flex items-center gap-2">
@@ -4663,6 +4670,135 @@ function PayoutsTab() {
   );
 }
 
+// ─── Timeout Settings Tab ───────────────────────────────────────────────────
+function TimeoutSettingsTab() {
+  const { data, isLoading } = trpc.system.getTimeoutSettings.useQuery();
+  const updateMutation = trpc.system.updateTimeoutSettings.useMutation({
+    onSuccess: () => toast.success('超時設定已更新'),
+    onError: (e) => toast.error(e.message),
+  });
+
+  const [paymentTimeout, setPaymentTimeout] = useState<string>('');
+  const [offerTimeout, setOfferTimeout] = useState<string>('');
+  const [reminderMinutes, setReminderMinutes] = useState<string>('');
+
+  // Sync from server
+  useEffect(() => {
+    if (data) {
+      setPaymentTimeout(String(data.paymentTimeoutMinutes));
+      setOfferTimeout(String(data.offerPaymentTimeoutHours));
+      setReminderMinutes(String(data.paymentReminderMinutes));
+    }
+  }, [data]);
+
+  const handleSave = () => {
+    const pt = parseInt(paymentTimeout);
+    const ot = parseInt(offerTimeout);
+    const rm = parseInt(reminderMinutes);
+    if (isNaN(pt) || pt < 5 || pt > 1440) { toast.error('待付款超時需為 5–1440 分鐘'); return; }
+    if (isNaN(ot) || ot < 1 || ot > 168) { toast.error('出價付款超時需為 1–168 小時'); return; }
+    if (isNaN(rm) || rm < 5 || rm > 1440) { toast.error('提醒時間需為 5–1440 分鐘'); return; }
+    updateMutation.mutate({
+      paymentTimeoutMinutes: pt,
+      offerPaymentTimeoutHours: ot,
+      paymentReminderMinutes: rm,
+    });
+  };
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <div>
+        <h2 className="text-lg font-bold text-gray-900 mb-1">超時時限設定</h2>
+        <p className="text-sm text-gray-500">調整市集訂單的自動取消和提醒時間，設定後即時生效（下一次排程執行時套用）。</p>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#06038d]" /></div>
+      ) : (
+        <div className="space-y-4">
+          {/* Card 1: Pending Payment Timeout */}
+          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="bg-amber-100 rounded-lg p-2"><Timer className="w-5 h-5 text-amber-600" /></div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-sm">待付款訂單自動取消時限</h3>
+                <p className="text-xs text-gray-500 mt-0.5">買家下單後若超過此時間未完成付款，訂單將自動取消，商品重新上架。</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number" min={5} max={1440}
+                value={paymentTimeout}
+                onChange={e => setPaymentTimeout(e.target.value)}
+                className="w-32 text-sm"
+              />
+              <span className="text-sm text-gray-600">分鐘</span>
+              <span className="text-xs text-gray-400">(5 – 1440 分鐘，預設 30)</span>
+            </div>
+          </div>
+
+          {/* Card 2: Offer Payment Timeout */}
+          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="bg-blue-100 rounded-lg p-2"><Clock className="w-5 h-5 text-blue-600" /></div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-sm">出價接受後付款時限</h3>
+                <p className="text-xs text-gray-500 mt-0.5">賣家接受出價後，買家需在此時間內完成付款，否則出價自動失效。</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number" min={1} max={168}
+                value={offerTimeout}
+                onChange={e => setOfferTimeout(e.target.value)}
+                className="w-32 text-sm"
+              />
+              <span className="text-sm text-gray-600">小時</span>
+              <span className="text-xs text-gray-400">(1 – 168 小時，預設 24)</span>
+            </div>
+          </div>
+
+          {/* Card 3: Payment Reminder */}
+          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="bg-green-100 rounded-lg p-2"><Mail className="w-5 h-5 text-green-600" /></div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-sm">付款提醒電郵發送時間</h3>
+                <p className="text-xs text-gray-500 mt-0.5">訂單建立後若買家仍未付款，系統將在此時間後自動發送提醒電郵。</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number" min={5} max={1440}
+                value={reminderMinutes}
+                onChange={e => setReminderMinutes(e.target.value)}
+                className="w-32 text-sm"
+              />
+              <span className="text-sm text-gray-600">分鐘後發送</span>
+              <span className="text-xs text-gray-400">(5 – 1440 分鐘，預設 60)</span>
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div className="bg-[#06038d]/5 border border-[#06038d]/20 rounded-xl p-4 text-xs text-[#06038d]/80 space-y-1">
+            <p className="font-semibold text-[#06038d] mb-1">⏱ 目前設定摘要</p>
+            <p>• 待付款訂單：下單後 <strong>{paymentTimeout || data?.paymentTimeoutMinutes}</strong> 分鐘未付款自動取消</p>
+            <p>• 出價接受後：<strong>{offerTimeout || data?.offerPaymentTimeoutHours}</strong> 小時內未付款出價失效</p>
+            <p>• 付款提醒：下單後 <strong>{reminderMinutes || data?.paymentReminderMinutes}</strong> 分鐘發送提醒電郵</p>
+          </div>
+
+          <Button
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+            className="bg-[#06038d] text-white hover:bg-[#06038d]/90 w-full sm:w-auto">
+            {updateMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />儲存中...</> : '儲存設定'}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Sidebar menu items configuration
 type SidebarItem = { key: string; label: string; icon: any; badgeKey?: string };
 const sidebarMenuItems: SidebarItem[] = [
@@ -4675,6 +4811,7 @@ const sidebarMenuItems: SidebarItem[] = [
   { key: 'reports', label: '舉報管理', icon: Flag },
   { key: 'payouts', label: '放款管理', icon: DollarSign },
   { key: 'offers', label: '出價管理', icon: Tag },
+  { key: 'timeout_settings', label: '超時時限設定', icon: Timer },
 ];
 
 export default function AdminMarketplace() {
@@ -4716,6 +4853,7 @@ export default function AdminMarketplace() {
       case 'reports': return <ReportsTab />;
       case 'payouts': return <PayoutsTab />;
       case 'offers': return <OffersTab />;
+      case 'timeout_settings': return <TimeoutSettingsTab />;
       default: return <ListingsTab onViewOrders={handleViewOrders} />;
     }
   };

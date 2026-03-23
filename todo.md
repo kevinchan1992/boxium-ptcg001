@@ -5711,3 +5711,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 修復後台訂單查詢包含 pending_payment 狀態
 - [x] 修復支付寶核對計數邏輯
 - [ ] 保存 checkpoint
+
+## 超時時限管理 + 待付款功能
+
+- [x] 後端：新增 adminGetTimeoutSettings / adminUpdateTimeoutSettings procedure
+- [x] 後端：getMarketplaceStats 加入 pendingPaymentCount
+- [x] 後端：priceUpdateScheduler 改為從 systemSettings 動態讀取超時分鐘數
+- [x] 前端：AdminMarketplace 新增「超時時限管理」卡片 UI
+- [x] 前端：訂單管理「待付款」篩選按鈕加入計數 badge
