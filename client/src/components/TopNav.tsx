@@ -111,8 +111,8 @@ export function TopNav() {
     { href: "/", label: t("common.home") },
     { href: "/research", label: t("common.research") },
     { href: "/pricing", label: t("common.priceComparison") },
+    { href: "/marketplace", label: "市集" },
     { href: "/blog", label: t("common.blog") },
-    // { href: "/marketplace", label: "商城" }, // Hidden: marketplace under testing, access via direct URL /marketplace
   ];
 
   useEffect(() => {
@@ -218,8 +218,26 @@ export function TopNav() {
         }`}
       >
         <div className="px-4">
-          {/* Single row: spacer on left, icons on right */}
-          <div className="flex items-center justify-end h-14 gap-1">
+          {/* Single row: hamburger on left, icons on right */}
+          <div className="flex items-center h-14 gap-1">
+
+            {/* Hamburger — leftmost */}
+            <motion.button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-white p-2"
+              whileTap={{ scale: 0.9 }}
+            >
+              <motion.div
+                initial={false}
+                animate={{ rotate: isMenuOpen ? 90 : 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </motion.div>
+            </motion.button>
+
+            {/* Spacer */}
+            <div className="flex-1" />
 
             {/* 出售商品 button */}
             <motion.button
@@ -385,20 +403,6 @@ export function TopNav() {
               </Button>
             )}
 
-            {/* Hamburger — rightmost */}
-            <motion.button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white p-2"
-              whileTap={{ scale: 0.9 }}
-            >
-              <motion.div
-                initial={false}
-                animate={{ rotate: isMenuOpen ? 90 : 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </motion.div>
-            </motion.button>
           </div>
         </div>
       </nav>
@@ -438,7 +442,7 @@ export function TopNav() {
                 </motion.div>
               ))}
 
-              {/* Sell link in hamburger menu */}
+              {/* Sell link in hamburger menu — no icon */}
               <motion.div
                 initial={{ x: -16, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
@@ -448,7 +452,6 @@ export function TopNav() {
                   onClick={() => { handleNavClick(); handleSellClick(); }}
                   className="w-full flex items-center text-sm font-medium text-[#FEDD00] hover:text-[#FEDD00]/80 hover:bg-white/5 py-2 px-3 rounded-lg transition-colors"
                 >
-                  <Tag className="w-4 h-4 mr-2" />
                   出售商品
                 </button>
               </motion.div>

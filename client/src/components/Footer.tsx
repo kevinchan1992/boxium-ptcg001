@@ -40,22 +40,22 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link href="/research" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
-                  {t("footer.cardSearch")}
-                </Link>
-              </li>
-              <li>
-                <Link href="/marketplace" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
-                  {t("footer.marketplace")}
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
-                  {t("footer.blog")}
+                  卡牌搜尋
                 </Link>
               </li>
               <li>
                 <Link href="/pricing" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
-                  {t("footer.pricing")}
+                  市場格價
+                </Link>
+              </li>
+              <li>
+                <Link href="/marketplace" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  市集
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                  最新消息
                 </Link>
               </li>
             </ul>

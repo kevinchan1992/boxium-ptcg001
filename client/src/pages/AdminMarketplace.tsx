@@ -4678,7 +4678,7 @@ const sidebarMenuItems: SidebarItem[] = [
 ];
 
 export default function AdminMarketplace() {
-  const { data: stats } = trpc.marketplace.adminGetStats.useQuery();
+  const { data: stats } = trpc.marketplace.adminGetStats.useQuery(undefined, { refetchInterval: 30000, refetchOnWindowFocus: true });
   const { data: pendingPayoutData } = trpc.marketplace.adminGetPendingPayoutCount.useQuery();
   const pendingPayoutCount = pendingPayoutData?.count ?? 0;
   const { data: me } = trpc.auth.me.useQuery();

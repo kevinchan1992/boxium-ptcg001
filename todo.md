@@ -5593,3 +5593,58 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 購物車結帳前庫存驗證（失敗時自動移除無效商品並提示用戶）
 - [x] 平台費率從 systemSettings 表動態讀取（目前硬編碼 0.05）
 - [ ] 保存 checkpoint
+
+---
+
+## 🛒 Marketplace 系統全面優化（第二輪）
+
+### Phase 1：爭議解決賣家電郵 + 後台電郵測試工具補全
+- [ ] 新增 buildDisputeResolvedSellerEmail 電郵模板（勝訴/敗訴）
+- [ ] adminResolveDispute 加入賣家電郵觸發
+- [ ] 後台電郵測試工具加入爭議開啟（買家/賣家）及爭議解決（賣家）模板
+
+### Phase 2：商品 ID 格式統一 + 商品卡片優化
+- [ ] AdminMarketplace.tsx 商品列表/詳情 ID 改為 #BOXIUM-{id}
+- [ ] SellerDashboard.tsx 商品列表 ID 改為 #BOXIUM-{id}
+- [ ] MarketplaceListing.tsx 商品詳情頁 ID 改為 #BOXIUM-{id}
+- [ ] Marketplace.tsx 商品卡片 ID 改為 #BOXIUM-{id}
+- [ ] 支付寶 HK 付款備注提示改為顯示 #BOXIUM-{id}
+- [ ] 商品卡片加入已售出遮罩
+- [ ] 商品卡片分享按鈕加入「複製連結」功能
+
+### Phase 3：購物車 + Admin 審核優化
+- [ ] 加入購物車時即時庫存檢查（防止加入已售出商品）
+- [ ] 購物車商品到期前 3 天發送站內通知排程
+- [ ] 修復 Admin 審核商品後紅點和待審核提示未即時更新問題
+
+### Phase 4：順豐站地址 + 出價付款流程
+- [ ] 確認 userShippingAddresses 表是否有 sfStationAddress 欄位
+- [ ] 修復 MarketplaceListing.tsx 中已儲存地址卡片的順豐站地址顯示
+- [ ] 修復 MarketplaceListing.tsx 中手動選擇站點後的完整地址顯示
+- [ ] 賣家接受出價後，付款按鈕顯示出價金額（非原售價）
+
+### Phase 5：Profile 頁面重構
+- [ ] 重寫 Profile.tsx 為雙欄佈局（左側固定導航列，右側對應內容）
+- [ ] 左側導航：個人資訊、關注清單、收貨地址、我的訂單、我的出價
+- [ ] 「我的訂單」內嵌訂單列表（進行中 + 歷史訂單分組）
+- [ ] 「我的出價」內嵌出價列表
+- [ ] 手機版改為頂部橫向選單
+
+### Phase 6：排程補全 + 標題修正
+- [ ] 出價接受後 1 小時付款提醒排程（統一邏輯）
+- [ ] 訂單付款後 12 小時出貨提醒排程
+- [ ] 市場參考價標題「SNKRDUNK 市場參考價」改為「BOXIUM 市場參考價」
+- [ ] 數據來源說明「數據來源：SNKRDUNK」改為「數據來源：BOXIUM」
+
+### Phase 7：測試與部署
+- [ ] TypeScript 零錯誤確認
+- [ ] 相關 vitest 測試通過
+- [ ] 保存 checkpoint
+
+---
+
+## 🔧 導覽列與頁腳修改
+
+- [x] 漢堡按鈕移到最左上角，其他按鈕（出售商品、購物車、通知、用戶）非右排列
+- [x] 漢堡選單加入市集入口，排序：主頁、卡牌搜尋、市場格價、市集、最新消息、出售商品（無圖示）、管理後台
+- [x] 頁腳快速連結改名和排序：卡牌搜尋、市場格價、市集、最新消息
