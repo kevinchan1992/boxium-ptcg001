@@ -642,26 +642,10 @@ function CheckoutDialog({
   // For cart checkout we create individual orders per listing (one order per item)
   // since each listing is from potentially different sellers
   const createStripeOrderMutation = trpc.marketplace.createStripeOrder.useMutation({
-    onSuccess: (data) => {
-      if (data.checkoutUrl) {
-        toast.info("正在跳轉至付款頁面...");
-        window.open(data.checkoutUrl, "_blank");
-        utils.marketplace.getMyCart.invalidate();
-        utils.marketplace.getCartCount.invalidate();
-        onClose();
-      }
-    },
     onError: (err) => toast.error(err.message || "建立訂單失敗"),
   });
 
   const createAlipayOrderMutation = trpc.marketplace.createAlipayOrder.useMutation({
-    onSuccess: () => {
-      utils.marketplace.getMyCart.invalidate();
-      utils.marketplace.getCartCount.invalidate();
-      toast.success("訂單已建立，請完成支付寶付款");
-      onClose();
-      setLocation("/orders");
-    },
     onError: (err) => toast.error(err.message || "建立訂單失敗"),
   });
 
@@ -744,11 +728,14 @@ function CheckoutDialog({
 
     let done = 0;
     let errors = 0;
+    let firstOrderNo: string | null = null;
+    let firstStripeCheckoutUrl: string | null = null;
 
     for (const item of items) {
       try {
         if (form.paymentMethod === "stripe") {
           if (done === 0) {
+            // First item: use Stripe, capture checkoutUrl
             await new Promise<void>((resolve, reject) => {
               createStripeOrderMutation.mutate({
                 listingId: item.listingId,
@@ -756,11 +743,16 @@ function CheckoutDialog({
                 buyerPhone: buyerPhone || undefined,
                 ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
               }, {
-                onSuccess: () => resolve(),
+                onSuccess: (data) => {
+                  if (data.checkoutUrl) firstStripeCheckoutUrl = data.checkoutUrl;
+                  if (data.orderNo && !firstOrderNo) firstOrderNo = data.orderNo;
+                  resolve();
+                },
                 onError: (e) => reject(e),
               });
             });
           } else {
+            // Remaining items: use Alipay (fallback)
             await new Promise<void>((resolve, reject) => {
               createAlipayOrderMutation.mutate({
                 listingId: item.listingId,
@@ -775,6 +767,7 @@ function CheckoutDialog({
             });
           }
         } else {
+          // AlipayHK: capture first orderNo for redirect
           await new Promise<void>((resolve, reject) => {
             createAlipayOrderMutation.mutate({
               listingId: item.listingId,
@@ -783,7 +776,10 @@ function CheckoutDialog({
               buyerPhone: buyerPhone || undefined,
               ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
             }, {
-              onSuccess: () => resolve(),
+              onSuccess: (data) => {
+                if (data.orderNo && !firstOrderNo) firstOrderNo = data.orderNo;
+                resolve();
+              },
               onError: (e) => reject(e),
             });
           });
@@ -797,10 +793,28 @@ function CheckoutDialog({
 
     utils.marketplace.getMyCart.invalidate();
     utils.marketplace.getCartCount.invalidate();
+    setBatchProgress(null);
+    onClose();
 
     if (errors === 0) {
-      toast.success(`已成功建立 ${done} 個訂單！`);
-      if (form.paymentMethod === "alipay_hk") setLocation("/orders");
+      if (form.paymentMethod === "stripe" && firstStripeCheckoutUrl) {
+        // Stripe: open checkout in new tab (already handled by mutation onSuccess for single item)
+        // For multi-item, open the first stripe checkout
+        window.open(firstStripeCheckoutUrl, "_blank");
+        if (done > 1) {
+          toast.info(`已建立 ${done} 個訂單，其餘請到「我的訂單」完成付款`);
+        }
+      } else if (form.paymentMethod === "alipay_hk" && firstOrderNo) {
+        // AlipayHK: navigate directly to order detail page for payment
+        toast.success(done > 1 ? `已建立 ${done} 個訂單，正在跳轉至付款頁面...` : "訂單已建立，請完成支付寶付款");
+        setLocation(`/orders/${firstOrderNo}`);
+        if (done > 1) {
+          setTimeout(() => toast.info(`其餘 ${done - 1} 個訂單請到「我的訂單」完成付款`), 1500);
+        }
+      } else {
+        toast.success(`已成功建立 ${done} 個訂單！`);
+        setLocation("/orders");
+      }
     } else {
       try {
         const freshCart2 = await utils.marketplace.getMyCart.fetch();
@@ -817,10 +831,12 @@ function CheckoutDialog({
       } catch {
         toast.warning(`建立了 ${done} 個訂單，${errors} 個失敗，請檢查訂單頁面`);
       }
-      setLocation("/orders");
+      if (firstOrderNo && form.paymentMethod === "alipay_hk") {
+        setLocation(`/orders/${firstOrderNo}`);
+      } else {
+        setLocation("/orders");
+      }
     }
-    setBatchProgress(null);
-    onClose();
   };
 
   const buyerPhone = user?.phone || "";

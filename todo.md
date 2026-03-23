@@ -5770,3 +5770,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 無儲存地址時，顯示「前往個人中心新增地址」快捷按鈕
 - [ ] 保存 checkpoint
 - [ ] 順豐站下拉選單顯示完整地址（目前只顯示代碼，需顯示站名 + 完整地址）
+
+---
+
+## 🛒 確認結帳直接跳轉付款頁面
+
+- [ ] AlipayHK：建立訂單後直接跳轉至 /orders/BOXIUM-XXXXX（付款二維碼頁面）
+- [ ] Stripe：建立訂單後直接開啟 Stripe Checkout 頁面（新分頁）
+- [ ] 多件商品批次建立訂單後，跳轉至第一個訂單的付款頁面
+- [ ] 保存 checkpoint
