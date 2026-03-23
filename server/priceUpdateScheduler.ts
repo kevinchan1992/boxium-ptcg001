@@ -437,7 +437,7 @@ export function startAutoCompleteOrdersScheduler() {
               const { sendOrderEmail, buildOrderAutoCompletedBuyerEmail, getOrderEmailData } = await import('./emailService');
               const emailData = await getOrderEmailData(order);
               const { subject, html } = buildOrderAutoCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
-              await sendOrderEmail({ userId: order.buyerId, subject, html });
+              await sendOrderEmail({ userId: order.buyerId, subject, html, dedupeKey: `order_autocomplete_buyer_${order.id}` });
             } catch (emailErr: any) {
               console.warn(`[AutoComplete] Buyer email failed for order ${order.orderNo}:`, emailErr.message);
             }
@@ -484,7 +484,7 @@ export function startAutoCompleteOrdersScheduler() {
                       const { sendOrderEmail, buildOrderAutoCompletedSellerEmail, getOrderEmailData } = await import('./emailService');
                       const emailData = await getOrderEmailData(order);
                       const { subject, html } = buildOrderAutoCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
-                      await sendOrderEmail({ userId: sellerUserId, subject, html });
+                      await sendOrderEmail({ userId: sellerUserId, subject, html, dedupeKey: `order_autocomplete_seller_${order.id}` });
                     } catch (emailErr: any) {
                       console.warn(`[AutoComplete] Seller email failed for order ${order.orderNo}:`, emailErr.message);
                     }
@@ -624,7 +624,7 @@ export function startShippingReminderScheduler() {
                       </div>
                       <p style="color:#555;font-size:13px;text-align:center;">請在 48 小時內完成出貨，以維護良好的賣家評分。</p>`
                     );
-                    await sendEmail({ to: sellerUser.email, subject, html, emailType: 'order', toUserId: sellerProf.userId });
+                    await sendEmail({ to: sellerUser.email, subject, html, emailType: 'order', toUserId: sellerProf.userId, dedupeKey: `shipping_reminder_12h_${order.id}` });
                   } catch (e) {
                     console.warn(`[ShippingReminder] Email failed for order ${order.orderNo}:`, e);
                   }
@@ -740,7 +740,7 @@ export function startOfferExpiryReminderScheduler() {
                 expiresAt: expiresAtStr,
                 sellerDashboardUrl: 'https://boxium.asia/seller',
               });
-              await sendEmail({ to: sellerUser.email, subject, html, emailType: 'offer', toUserId: offer.sellerId });
+              await sendEmail({ to: sellerUser.email, subject, html, emailType: 'offer', toUserId: offer.sellerId, dedupeKey: `offer_expiry_reminder_${offer.id}` });
             }
 
             console.log(`[OfferExpiryReminder] Reminder sent for offer ${offer.id}`);
@@ -1055,7 +1055,7 @@ export function startPaymentReminderScheduler() {
                   </div>
                   <p style="color:#ef4444;font-size:13px;text-align:center;">⚠️ 逾期未付款，訂單將自動取消，商品將重新上架。</p>`
                 );
-                await sendEmail({ to: buyerUser.email, subject, html, emailType: 'order', toUserId: order.buyerId });
+                await sendEmail({ to: buyerUser.email, subject, html, emailType: 'order', toUserId: order.buyerId, dedupeKey: `payment_reminder_1h_${order.id}` });
               } catch (e) {
                 console.warn(`[PaymentReminder] Email failed for order ${order.orderNo}:`, e);
               }

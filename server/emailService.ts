@@ -383,6 +383,7 @@ export async function sendEmail({
   emailType = 'general',
   toUserId,
   skipUnsubscribeCheck = false,
+  dedupeKey,
 }: {
   to: string;
   subject: string;
@@ -390,8 +391,30 @@ export async function sendEmail({
   emailType?: string;
   toUserId?: number;
   skipUnsubscribeCheck?: boolean;
+  dedupeKey?: string; // e.g. 'order_shipped_buyer_123' — prevents duplicate sends
 }): Promise<boolean> {
   try {
+    // ── Deduplication check: skip if same dedupeKey was already sent successfully ──
+    if (dedupeKey) {
+      try {
+        const { getDb: _getDbDedup } = await import('./db');
+        const { emailLogs: _emailLogsDedup } = await import('../drizzle/schema_new');
+        const { and: _andDedup, eq: _eqDedup } = await import('drizzle-orm');
+        const dbDedup = await _getDbDedup();
+        if (dbDedup) {
+          const existing = await dbDedup.select({ id: _emailLogsDedup.id })
+            .from(_emailLogsDedup)
+            .where(_andDedup(_eqDedup(_emailLogsDedup.dedupeKey, dedupeKey), _eqDedup(_emailLogsDedup.status, 'sent')))
+            .limit(1);
+          if (existing.length > 0) {
+            console.log(`[EmailService] Dedup skip "${subject}" to ${to} (key=${dedupeKey})`);
+            return false;
+          }
+        }
+      } catch (e) {
+        // Non-fatal: if dedup check fails, proceed to send
+      }
+    }
     // Check unsubscribe status (skip for critical emails like order confirmation)
     if (!skipUnsubscribeCheck) {
       try {
@@ -466,11 +489,11 @@ export async function sendEmail({
     });
 
     console.log(`[EmailService] Sent "${subject}" to ${to}`);
-    await logEmail({ to, subject, emailType, toUserId, status: 'sent' });
+    await logEmail({ to, subject, emailType, toUserId, status: 'sent', dedupeKey });
     return true;
   } catch (err: any) {
     console.error(`[EmailService] Failed to send email to ${to}:`, err.message);
-    await logEmail({ to, subject, emailType, toUserId, status: 'failed', errorMessage: err.message });
+    await logEmail({ to, subject, emailType, toUserId, status: 'failed', errorMessage: err.message, dedupeKey });
     return false;
   }
 }
@@ -522,7 +545,7 @@ async function getOrCreateUnsubscribeToken(
 
 /** Internal helper: write an email log entry */
 async function logEmail({
-  to, subject, emailType, toUserId, status, errorMessage,
+  to, subject, emailType, toUserId, status, errorMessage, dedupeKey,
 }: {
   to: string;
   subject: string;
@@ -530,6 +553,7 @@ async function logEmail({
   toUserId?: number;
   status: 'sent' | 'failed' | 'skipped';
   errorMessage?: string;
+  dedupeKey?: string;
 }): Promise<void> {
   try {
     const { getDb } = await import('./db');
@@ -543,6 +567,7 @@ async function logEmail({
       emailType,
       status,
       errorMessage: errorMessage ?? null,
+      dedupeKey: dedupeKey ?? null,
     });
   } catch (e) {
     // Non-fatal: log failures should not break email sending
@@ -585,17 +610,19 @@ export async function sendOrderEmail({
   subject,
   html,
   emailType = 'order',
+  dedupeKey,
 }: {
   userId: number;
   subject: string;
   html: string;
   emailType?: string;
+  dedupeKey?: string; // e.g. 'order_shipped_buyer_123'
 }): Promise<boolean> {
   try {
     const { getUserById } = await import("./userManagement");
     const user = await getUserById(userId);
     if (!user?.email) return false;
-    return sendEmail({ to: user.email, subject, html, emailType, toUserId: userId });
+    return sendEmail({ to: user.email, subject, html, emailType, toUserId: userId, dedupeKey });
   } catch (err: any) {
     console.error(`[EmailService] sendOrderEmail error for userId=${userId}:`, err.message);
     return false;
@@ -867,4 +894,50 @@ export async function notifyAdmin({
  */
 export function wrapHtmlTest(title: string, body: string): string {
   return wrapHtml(title, body);
+}
+
+// ─── Dispute Opened Email Templates ──────────────────────────────────────────────────
+
+export interface DisputeEmailData {
+  orderNo: string;
+  itemName: string;
+  priceHkd: string;
+  reason?: string;
+  siteUrl?: string;
+}
+
+/** Dispute opened — confirmation to buyer */
+export function buildDisputeOpenedBuyerEmail(data: DisputeEmailData): { subject: string; html: string } {
+  const siteUrl = data.siteUrl || "https://boxium.asia";
+  const subject = `⚙️ 爭議申請已收到 — ${data.orderNo}`;
+  const reasonBlock = data.reason
+    ? `<p style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;"><strong>爭議原因：</strong>${data.reason}</p>`
+    : "";
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">爭議申請已收到 ⚙️</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">您的爭議申請已成功提交，我們將在 <strong>24 小時內</strong>進行處理，請耐心等候。</p>
+    ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
+    ${reasonBlock}
+    <p style="color:#555;font-size:14px;">如需查看爭議進度，請前往「我的訂單」頁面。</p>
+    ${ctaButton("查看訂單", `${siteUrl}/orders`)}
+  `);
+  return { subject, html };
+}
+
+/** Dispute opened — notification to seller */
+export function buildDisputeOpenedSellerEmail(data: DisputeEmailData): { subject: string; html: string } {
+  const siteUrl = data.siteUrl || "https://boxium.asia";
+  const subject = `⚠️ 買家對訂單提出爭議 — ${data.orderNo}`;
+  const reasonBlock = data.reason
+    ? `<p style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;"><strong>爭議原因：</strong>${data.reason}</p>`
+    : "";
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#e65100;font-size:22px;">買家提出爭議 ⚠️</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">買家對以下訂單提出爭議，管理員正在處理中，請保持聯絡。</p>
+    ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
+    ${reasonBlock}
+    <p style="color:#555;font-size:14px;">如有任何證明或資料需要提供，請盡快與平台客服聯絡。</p>
+    ${ctaButton("查看訂單", `${siteUrl}/orders`)}
+  `);
+  return { subject, html };
 }

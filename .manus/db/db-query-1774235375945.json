@@ -1,0 +1,18 @@
+{
+  "query": "SHOW COLUMNS FROM emailLogs LIKE 'dedupeKey';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SHOW COLUMNS FROM emailLogs LIKE 'dedupeKey';",
+  "rows": [
+    {
+      "Field": "dedupeKey",
+      "Type": "varchar(200)",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\ndedupeKey\tvarchar(200)\tYES\tMUL\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 1726
+}

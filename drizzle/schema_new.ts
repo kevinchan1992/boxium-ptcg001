@@ -1147,12 +1147,14 @@ export const emailLogs = mysqlTable("emailLogs", {
   status: mysqlEnum("status", ["sent", "failed", "skipped"]).notNull().default("sent"),
   errorMessage: text("errorMessage"), // populated on failure
   sentAt: timestamp("sentAt").defaultNow().notNull(),
+  dedupeKey: varchar("dedupeKey", { length: 200 }), // e.g. 'order_shipped_buyer_123' — prevents duplicate sends
 }, (table) => ({
   toEmailIdx: index("el_toEmail_idx").on(table.toEmail),
   toUserIdIdx: index("el_toUserId_idx").on(table.toUserId),
   emailTypeIdx: index("el_emailType_idx").on(table.emailType),
   statusIdx: index("el_status_idx").on(table.status),
   sentAtIdx: index("el_sentAt_idx").on(table.sentAt),
+  dedupeKeyIdx: index("el_dedupeKey_idx").on(table.dedupeKey),
 }));
 export type EmailLog = typeof emailLogs.$inferSelect;
 export type InsertEmailLog = typeof emailLogs.$inferInsert;

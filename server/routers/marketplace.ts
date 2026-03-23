@@ -584,7 +584,7 @@ export const marketplaceRouter = router({
           itemName: emailData.itemName,
           priceHkd: emailData.priceHkd,
         });
-        await sendOrderEmail({ userId: order.buyerId, subject: buyerSubject, html: buyerHtml, emailType: 'order' });
+        await sendOrderEmail({ userId: order.buyerId, subject: buyerSubject, html: buyerHtml, emailType: 'order', dedupeKey: `order_completed_buyer_${order.id}` });
         // Send completed email to seller (C2C only) - use sellerProfile.userId, NOT order.sellerId
         if (order.sellerType === "seller" && sellerUserIdForNotify) {
           const { subject: sellerSubject, html: sellerHtml } = buildOrderCompletedSellerEmail({
@@ -593,7 +593,7 @@ export const marketplaceRouter = router({
             priceHkd: emailData.priceHkd,
             receivableHkd: emailData.receivableHkd,
           });
-          await sendOrderEmail({ userId: sellerUserIdForNotify, subject: sellerSubject, html: sellerHtml, emailType: 'order' });
+          await sendOrderEmail({ userId: sellerUserIdForNotify, subject: sellerSubject, html: sellerHtml, emailType: 'order', dedupeKey: `order_completed_seller_${order.id}` });
         }
       } catch (emailErr: any) {
         console.warn("[Order] Completed email failed:", emailErr.message);
@@ -896,7 +896,7 @@ export const marketplaceRouter = router({
           priceHkd: emailData.priceHkd,
           trackingNo: input.trackingNo,
         });
-        await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order' });
+        await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `order_shipped_buyer_${order.id}` });
       } catch (emailErr: any) {
         console.warn("[Order] Shipped email failed:", emailErr.message);
       }
@@ -1256,7 +1256,7 @@ export const marketplaceRouter = router({
             const { sendOrderEmail, buildOrderPaymentReceivedSellerEmail, getOrderEmailData } = await import("../emailService");
             const emailData = await getOrderEmailData(order);
             const { subject: ss, html: sh } = buildOrderPaymentReceivedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, listingId: order.listingId ?? undefined });
-            await sendOrderEmail({ userId: sellerProf.userId, subject: ss, html: sh, emailType: 'order' });
+            await sendOrderEmail({ userId: sellerProf.userId, subject: ss, html: sh, emailType: 'order', dedupeKey: `order_paid_seller_${order.id}` });
           } catch (e: any) { console.warn("[adminConfirmAlipay] seller email failed:", e.message); }
         }
       }
@@ -1265,7 +1265,7 @@ export const marketplaceRouter = router({
         const { sendOrderEmail, buildOrderPaymentReceivedBuyerEmail, getOrderEmailData } = await import("../emailService");
         const emailData = await getOrderEmailData(order);
         const { subject: bs, html: bh } = buildOrderPaymentReceivedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, listingId: order.listingId ?? undefined });
-        await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order' });
+        await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `order_paid_buyer_${order.id}` });
       } catch (e: any) { console.warn("[adminConfirmAlipay] buyer email failed:", e.message); }
       return { success: true };
     }),
@@ -1573,27 +1573,28 @@ export const marketplaceRouter = router({
         }
       }
       // Send email for key status changes
-      if (["shipped", "completed", "cancelled"].includes(input.orderStatus)) {
+      // Only send email if status actually changed (idempotency: skip if already in target status)
+      if (["shipped", "completed", "cancelled"].includes(input.orderStatus) && order.orderStatus !== input.orderStatus) {
         try {
           const { sendOrderEmail, buildOrderShippedEmail, buildOrderCompletedBuyerEmail, buildOrderCompletedSellerEmail, buildOrderCancelledEmail, getOrderEmailData } = await import("../emailService");
           const emailData = await getOrderEmailData(order);
           if (input.orderStatus === "shipped") {
             const { subject, html } = buildOrderShippedEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
-            await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order' });
+            await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `order_shipped_buyer_${order.id}` });
           } else if (input.orderStatus === "completed") {
             const { subject: bs, html: bh } = buildOrderCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
-            await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order' });
+            await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `order_completed_buyer_${order.id}` });
             // Use sellerProfile.userId, NOT order.sellerId
             if (order.sellerType === "seller" && order.sellerId) {
               const adminEmailSellerProf = await getSellerProfileById(order.sellerId);
               if (adminEmailSellerProf?.userId) {
                 const { subject: ss, html: sh } = buildOrderCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
-                await sendOrderEmail({ userId: adminEmailSellerProf.userId, subject: ss, html: sh, emailType: 'order' });
+                await sendOrderEmail({ userId: adminEmailSellerProf.userId, subject: ss, html: sh, emailType: 'order', dedupeKey: `order_completed_seller_${order.id}` });
               }
             }
           } else if (input.orderStatus === "cancelled") {
             const { subject, html } = buildOrderCancelledEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, note: input.note });
-            await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order' });
+            await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `order_cancelled_buyer_${order.id}` });
           }
         } catch (emailErr: any) {
           console.warn("[Admin] Order status email failed:", emailErr.message);
@@ -2281,9 +2282,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
         content: `訂單 ${order.orderNo} 買家申請爭議。原因：${input.reason}`,
       }).catch(() => {});
       // Notify seller (use sellerProfile.userId, NOT order.sellerId)
+      let disputeSellerUserId: number | undefined;
       if (order.sellerId) {
         const disputeNotifySellerProf = await getSellerProfileById(order.sellerId);
         if (disputeNotifySellerProf?.userId) {
+          disputeSellerUserId = disputeNotifySellerProf.userId;
           await createNotification({
             userId: disputeNotifySellerProf.userId,
             type: "trade",
@@ -2293,6 +2296,33 @@ All three checks must pass for verified to be true. Respond with JSON only match
           }).catch(() => {});
         }
       }
+      // Send dispute opened emails to buyer and seller
+      ;(async () => {
+        try {
+          const { sendOrderEmail, buildDisputeOpenedBuyerEmail, buildDisputeOpenedSellerEmail, getOrderEmailData } = await import("../emailService");
+          const emailData = await getOrderEmailData(order);
+          // Email buyer: dispute received confirmation
+          const { subject: bs, html: bh } = buildDisputeOpenedBuyerEmail({
+            orderNo: order.orderNo,
+            itemName: emailData.itemName,
+            priceHkd: emailData.priceHkd,
+            reason: input.reason,
+          });
+          await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `dispute_opened_buyer_${order.id}` });
+          // Email seller: dispute notification
+          if (disputeSellerUserId) {
+            const { subject: ss, html: sh } = buildDisputeOpenedSellerEmail({
+              orderNo: order.orderNo,
+              itemName: emailData.itemName,
+              priceHkd: emailData.priceHkd,
+              reason: input.reason,
+            });
+            await sendOrderEmail({ userId: disputeSellerUserId, subject: ss, html: sh, emailType: 'order', dedupeKey: `dispute_opened_seller_${order.id}` });
+          }
+        } catch (emailErr: any) {
+          console.warn("[Dispute] Opened email failed:", emailErr.message);
+        }
+      })();
       return { success: true };
     }),
 
@@ -2355,7 +2385,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
           priceHkd: emailData.priceHkd,
           note: input.reason ?? "買家主動取消",
         });
-        await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order' });
+        await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `order_cancelled_buyer_${order.id}` });
       } catch (emailErr: any) {
         console.warn("[BuyerCancel] Email failed:", emailErr.message);
       }
@@ -2474,14 +2504,14 @@ All three checks must pass for verified to be true. Respond with JSON only match
             priceHkd: emailData.priceHkd,
             note: input.resolution,
           });
-          await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order' });
+          await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `dispute_resolved_refund_${order.id}` });
         } else if (input.outcome === "release_seller") {
           // Completed email to buyer and seller (use sellerProfile.userId, NOT order.sellerId)
           const { subject: bs, html: bh } = buildOrderCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
-          await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order' });
+          await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `order_completed_buyer_${order.id}` });
           if (disputeSellerUserId) {
             const { subject: ss, html: sh } = buildOrderCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
-            await sendOrderEmail({ userId: disputeSellerUserId, subject: ss, html: sh, emailType: 'order' });
+            await sendOrderEmail({ userId: disputeSellerUserId, subject: ss, html: sh, emailType: 'order', dedupeKey: `order_completed_seller_${order.id}` });
           }
         }
       } catch (emailErr: any) {
@@ -2815,7 +2845,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
             expiresAt: expiresAtStr,
             sellerDashboardUrl: `${ctx.req.headers.origin || "https://boxium.asia"}/seller`,
           });
-          await sendEmail({ to: sellerUser.email, subject, html, emailType: 'offer', toUserId: sellerProfile.userId });
+          await sendEmail({ to: sellerUser.email, subject, html, emailType: 'offer', toUserId: sellerProfile.userId, dedupeKey: `offer_new_seller_${offer.id}` });
         } catch (e) {
           console.error("[makeOffer] Email send failed:", e);
         }
@@ -2900,7 +2930,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
             const { wrapHtml: _wrapHtml, ctaButton: _ctaButton } = await import("../emailService") as any;
             // Build simple rejection email inline
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:24px 0;"><table width="600" cellpadding="0" cellspacing="0" align="center" style="background:#fff;border-radius:8px;overflow:hidden;"><tr><td style="background:#1a0dab;padding:24px 32px;text-align:center;"><img src="https://static.manus.space/webdev/boxiumptcg-mua4eq38/boxium-logo-white.png" alt="BOXIUM PTCG" height="40" style="display:block;margin:0 auto;"></td></tr><tr><td style="padding:32px;"><h2 style="margin:0 0 8px;color:#1a0dab;font-size:22px;">出價未獲接受 ❌</h2><p style="color:#555;font-size:15px;">親愛的 <strong>${buyerUser.name || "買家"}</strong>，<br/>很遺憾，您對商品 <strong>${listing?.title || ""}</strong> 的出價 <strong>HKD ${offer.offerPriceHkd}</strong> 未獲賣家接受。${input.rejectionReason ? `<br/><br/><strong>原因：</strong>${input.rejectionReason}` : ""}</p><p style="color:#555;font-size:14px;">您可以繼續瀏覽市集，尋找其他心儀商品。</p><div style="text-align:center;margin:24px 0;"><a href="${origin}/marketplace" style="background:#1a0dab;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">前往市集</a></div></td></tr><tr><td style="background:#f9f9f9;border-top:1px solid #eee;padding:16px 32px;text-align:center;"><p style="margin:0;font-size:12px;color:#999;">如有疑問，請聯絡 <a href="mailto:boxium.asia@gmail.com" style="color:#1a0dab;">boxium.asia@gmail.com</a></p></td></tr></table></td></tr></table></body></html>`;
-            await _sendEmail({ to: buyerUser.email, subject, html, emailType: 'offer', toUserId: offer.buyerId });
+            await _sendEmail({ to: buyerUser.email, subject, html, emailType: 'offer', toUserId: offer.buyerId, dedupeKey: `offer_rejected_buyer_${offer.id}` });
           } catch (e) {
             console.warn("[respondToOffer] Rejection email failed:", e);
           }
@@ -2980,7 +3010,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
           const reqOrigin = (ctx.req.headers.origin as string) || "https://boxium.asia";
           const subject = `✅ 出價已被接受 — ${listing.title}`;
           const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:24px 0;"><table width="600" cellpadding="0" cellspacing="0" align="center" style="background:#fff;border-radius:8px;overflow:hidden;"><tr><td style="background:#1a0dab;padding:24px 32px;text-align:center;"><img src="https://static.manus.space/webdev/boxiumptcg-mua4eq38/boxium-logo-white.png" alt="BOXIUM PTCG" height="40" style="display:block;margin:0 auto;"></td></tr><tr><td style="padding:32px;"><h2 style="margin:0 0 8px;color:#16a34a;font-size:22px;">出價已被接受 ✅</h2><p style="color:#555;font-size:15px;">親愛的 <strong>${buyerUser.name || "買家"}</strong>，<br/>賣家已接受您對商品 <strong>${listing.title}</strong> 的出價 <strong>HKD ${offer.offerPriceHkd}</strong>！<br/>請尽快完成付款以確保訂單。</p><div style="text-align:center;margin:24px 0;"><a href="${reqOrigin}/shop/${offer.listingId}" style="background:#16a34a;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">前往商品頁付款</a></div><p style="color:#ef4444;font-size:13px;text-align:center;">⚠️ 請在 24 小時內完成付款，逾期訂單將自動取消。</p></td></tr><tr><td style="background:#f9f9f9;border-top:1px solid #eee;padding:16px 32px;text-align:center;"><p style="margin:0;font-size:12px;color:#999;">如有疑問，請聯絡 <a href="mailto:boxium.asia@gmail.com" style="color:#1a0dab;">boxium.asia@gmail.com</a></p></td></tr></table></td></tr></table></body></html>`;
-          await _sendEmail({ to: buyerUser.email, subject, html, emailType: 'offer', toUserId: offer.buyerId });
+          await _sendEmail({ to: buyerUser.email, subject, html, emailType: 'offer', toUserId: offer.buyerId, dedupeKey: `offer_accepted_buyer_${offer.id}` });
         } catch (e) {
           console.warn("[respondToOffer] Acceptance email failed:", e);
         }

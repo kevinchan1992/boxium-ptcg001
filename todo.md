@@ -5511,3 +5511,39 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 ---
 ## 🐛 修復 ResizeObserver loop 警告
 - [x] 在全域靜默 ResizeObserver loop completed 警告（recharts 圖表觸發的無害瀏覽器行為）
+
+---
+
+## ✅ 電郵系統全面優化（整合兩份建議 + 平台認識）
+
+### 核心目標
+防止重複發送電郵（dedupeKey 去重）、補全缺失通知（爭議開啟）、修復管理員操作冪等性
+
+### 完成項目
+- [x] Schema 升級：emailLogs 新增 dedupeKey 欄位（varchar 200）及索引（DB 已執行 ALTER TABLE）
+- [x] sendEmail 核心函數加入 dedupeKey 去重邏輯（查詢 emailLogs 中相同 key 的 sent 記錄，存在則跳過）
+- [x] sendOrderEmail 升級支援 dedupeKey 傳遞
+- [x] logEmail 升級支援 dedupeKey 記錄
+- [x] 新增爭議開啟電郵模板：buildDisputeOpenedBuyerEmail（買家確認）+ buildDisputeOpenedSellerEmail（賣家通知）
+- [x] openDispute 加入爭議確認電郵觸發（買家 + 賣家，含 dedupeKey）
+- [x] adminUpdateOrderStatus 加入冪等性檢查（order.orderStatus !== input.orderStatus 才發送電郵）
+- [x] Stripe webhook 電郵加入 dedupeKey（防止 webhook 重試導致重複發送）
+  - order_paid_buyer_{id}、order_paid_seller_{id}
+- [x] marketplace.ts 所有電郵觸發點加入 dedupeKey
+  - confirmReceipt → order_completed_buyer_{id}
+  - markOrderShipped → order_shipped_buyer_{id}
+  - adminConfirmAlipay → order_alipay_confirmed_buyer_{id}、order_alipay_confirmed_seller_{id}
+  - adminUpdateOrderStatus → order_shipped_buyer_{id}、order_completed_buyer/seller_{id}、order_cancelled_buyer_{id}
+  - buyerCancelOrder → order_cancelled_buyer_{id}
+  - openDispute → dispute_opened_buyer/seller_{id}
+  - adminResolveDispute → dispute_resolved_refund_{id}、order_completed_buyer/seller_{id}
+  - makeOffer → offer_new_seller_{offer.id}（每次新出價獨立 key，不受舊出價影響）
+  - respondToOffer reject → offer_rejected_buyer_{offer.id}
+  - respondToOffer accept → offer_accepted_buyer_{offer.id}
+- [x] priceUpdateScheduler.ts 所有排程電郵加入 dedupeKey
+  - paymentReminder → payment_reminder_1h_{id}
+  - shippingReminder → shipping_reminder_12h_{id}
+  - autoComplete buyer → order_autocomplete_buyer_{id}
+  - autoComplete seller → order_autocomplete_seller_{id}
+  - expiryReminder → offer_expiry_reminder_{offer.id}
+- [x] TypeScript 編譯確認無錯誤（0 errors）
