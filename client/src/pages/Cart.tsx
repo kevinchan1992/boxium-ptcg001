@@ -740,6 +740,7 @@ function CheckoutDialog({
               createStripeOrderMutation.mutate({
                 listingId: item.listingId,
                 shippingAddress,
+                shippingMethod: form.shippingMethod,
                 buyerPhone: buyerPhone || undefined,
                 ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
               }, {
@@ -758,6 +759,7 @@ function CheckoutDialog({
                 listingId: item.listingId,
                 proofImageUrl: "",
                 shippingAddress,
+                shippingMethod: form.shippingMethod,
                 buyerPhone: buyerPhone || undefined,
                 ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
               }, {
@@ -773,6 +775,7 @@ function CheckoutDialog({
               listingId: item.listingId,
               proofImageUrl: "",
               shippingAddress,
+              shippingMethod: form.shippingMethod,
               buyerPhone: buyerPhone || undefined,
               ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
             }, {

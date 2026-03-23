@@ -337,7 +337,14 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
     >
       {/* Brand Header Bar */}
       <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-        <span className="text-xs text-white/80 font-mono tracking-wide">#{order.orderNo}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/80 font-mono tracking-wide">#{order.orderNo}</span>
+          {order.shippingMethod === 'meetup' && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-400 text-amber-900">
+              🤝 面交
+            </span>
+          )}
+        </div>
         <OrderStatusBadge status={order.orderStatus} />
       </div>
       {/* Header */}

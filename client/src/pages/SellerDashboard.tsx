@@ -749,6 +749,15 @@ export default function SellerDashboard() {
     { value: "black_cat", label: "黑貓宅急", trackingUrl: "https://www.t-cat.com.tw/Inquire/Trace.aspx?no=" },
     { value: "other", label: "其他", trackingUrl: null },
   ];
+  const [meetupConfirmDialog, setMeetupConfirmDialog] = useState<{ open: boolean; orderId: number; orderNo: string }>({ open: false, orderId: 0, orderNo: '' });
+  const confirmMeetupMutation = trpc.marketplace.confirmMeetupOrder.useMutation({
+    onSuccess: () => {
+      toast.success('面交已確認，訂單已完成！');
+      setMeetupConfirmDialog({ open: false, orderId: 0, orderNo: '' });
+      utils.marketplace.getMySellerOrders.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
   const markShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
     onSuccess: () => {
       toast.success("已標記為已寄出，已通知買家");
@@ -1467,20 +1476,27 @@ export default function SellerDashboard() {
                               <p className="text-xs text-gray-400 mt-0.5">{new Date(item.createdAt).toLocaleDateString('zh-HK')}</p>
                             </div>
                             {(["processing", "payment_received", "paid_held"].includes(item.orderStatus)) && (
-                              <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white flex-shrink-0"
-                                onClick={() => {
-                                  setShipDialog({
-                                    open: true,
-                                    orderId: item.orderId ?? item.id,
-                                    orderNo: item.orderNo ?? "",
-                                    shippingName: item.shippingName ?? undefined,
-                                    shippingPhone: item.shippingPhone ?? undefined,
-                                    shippingAddress: item.shippingAddress ?? undefined,
-                                  });
-                                  setShipForm({ shippingMethod: "sf_express", trackingNumber: "" });
-                                }}>
-                                填寫出貨資料
-                              </Button>
+                              item.shippingMethod === 'meetup' ? (
+                                <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
+                                  onClick={() => setMeetupConfirmDialog({ open: true, orderId: item.orderId ?? item.id, orderNo: item.orderNo ?? '' })}>
+                                  確認已面交
+                                </Button>
+                              ) : (
+                                <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white flex-shrink-0"
+                                  onClick={() => {
+                                    setShipDialog({
+                                      open: true,
+                                      orderId: item.orderId ?? item.id,
+                                      orderNo: item.orderNo ?? "",
+                                      shippingName: item.shippingName ?? undefined,
+                                      shippingPhone: item.shippingPhone ?? undefined,
+                                      shippingAddress: item.shippingAddress ?? undefined,
+                                    });
+                                    setShipForm({ shippingMethod: "sf_express", trackingNumber: "" });
+                                  }}>
+                                  填寫出貨資料
+                                </Button>
+                              )
                             )}
                           </div>
                           {item.shippingName && (
@@ -2672,6 +2688,39 @@ export default function SellerDashboard() {
               })}
             >
               {markShippedMutation.isPending ? "處理中..." : "確認出貨"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Meetup Confirm Dialog */}
+      <Dialog open={meetupConfirmDialog.open} onOpenChange={(open) => !open && setMeetupConfirmDialog({ open: false, orderId: 0, orderNo: '' })}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-amber-500" />
+              確認已面交
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3">
+            <p className="text-sm text-gray-700">
+              確認已與買家完成面交？訂單將直接標記為「已完成」。
+            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
+              訂單號：{meetupConfirmDialog.orderNo}
+            </div>
+            <p className="text-xs text-gray-500">此操作不可復原，請確認已完成面交再進行。</p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setMeetupConfirmDialog({ open: false, orderId: 0, orderNo: '' })}>
+              取消
+            </Button>
+            <Button
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+              disabled={confirmMeetupMutation.isPending}
+              onClick={() => confirmMeetupMutation.mutate({ orderId: meetupConfirmDialog.orderId })}
+            >
+              {confirmMeetupMutation.isPending ? '處理中...' : '確認已面交'}
             </Button>
           </DialogFooter>
         </DialogContent>

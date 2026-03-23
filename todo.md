@@ -5789,4 +5789,17 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 訂單詳情頁面加入付款倒計時條（待付款狀態）（已有實作）
 - [x] SellerDashboard 訂單卡片加入面交標籤
 - [x] SellerDashboard 訂單完成後顯示買家電話
+- [x] 保存 checkpoint
+
+---
+
+### 🤝 面交訂單流程優化（第五輪）
+- [x] 後端 API：confirmMeetupOrder（直接將面交訂單標記為 completed，跳過 shipped）
+- [x] createStripeOrder 和 createAlipayOrder 儲存 shippingMethod 欄位
+- [x] Cart.tsx 傳遞 shippingMethod 給後端
+- [x] SellerDashboard：面交訂單在 payment_received/paid_held/processing 狀態時顯示「確認已面交」按鈕
+- [x] 「確認已面交」按鈕點擊後彈出確認 Dialog，確認後直接完成訂單
+- [x] 買家訂單列表（/orders）加入面交標籤（黃色 badge）
+- [x] 面交訂單建立後自動通知賣家（含買家電話）
+- [x] 撰寫單元測試（4 tests passed）
 - [ ] 保存 checkpoint

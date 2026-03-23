@@ -938,6 +938,78 @@ export const marketplaceRouter = router({
     }),
 
   // ============================================================
+  // SELLER - Confirm Meetup (skip shipped, directly complete)
+  // ============================================================
+  confirmMeetupOrder: protectedProcedure
+    .input(z.object({ orderId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND' });
+      // Only the seller of this order can confirm meetup
+      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      if (!sellerProfile || order.sellerId !== sellerProfile.id) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: '只有賣家可以確認面交' });
+      }
+      // Only meetup orders in payment_received / paid_held / processing can be confirmed
+      if (!['payment_received', 'paid_held', 'processing'].includes(order.orderStatus)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '訂單狀態不允許此操作' });
+      }
+      if (order.shippingMethod !== 'meetup') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '此訂單不是面交訂單' });
+      }
+      // Complete the order directly (skip shipped)
+      await updateMarketplaceOrder(input.orderId, {
+        orderStatus: 'completed',
+        buyerConfirmedAt: new Date(),
+        payoutStatus: 'processing',
+      });
+      // Handle payout for C2C orders (same as confirmReceipt)
+      if (order.sellerType === 'seller' && order.sellerId) {
+        if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === 'active' && order.stripePaymentIntentId) {
+          try {
+            const Stripe = (await import('stripe')).default;
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
+            const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
+            const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, { expand: ['latest_charge'] });
+            const chargeId = typeof pi.latest_charge === 'string' ? pi.latest_charge : (pi.latest_charge as any)?.id;
+            const transferPayload: any = {
+              amount: receivable,
+              currency: 'hkd',
+              destination: sellerProfile.stripeConnectId,
+              metadata: { order_no: order.orderNo, order_id: order.id.toString(), trigger: 'meetup_confirmed' },
+            };
+            if (chargeId) transferPayload.source_transaction = chargeId;
+            const transfer = await stripe.transfers.create(transferPayload);
+            await updateMarketplaceOrder(input.orderId, { payoutStatus: 'paid', stripeTransferId: transfer.id });
+          } catch (err: any) {
+            console.error('[Payout] Meetup Stripe transfer failed:', err);
+            await updateMarketplaceOrder(input.orderId, { payoutStatus: 'failed', stripeTransferError: err.message });
+          }
+        }
+      }
+      // Notify buyer that order is completed
+      await createNotification({
+        userId: order.buyerId,
+        type: 'trade',
+        title: '面交訂單已完成 🎉',
+        body: `訂單 ${order.orderNo} 賣家已確認面交完成，感謝您的支持！`,
+        linkUrl: '/orders',
+      }).catch(() => {});
+      // Send completed emails
+      try {
+        const { sendOrderEmail, buildOrderCompletedBuyerEmail, buildOrderCompletedSellerEmail, getOrderEmailData } = await import('../emailService');
+        const emailData = await getOrderEmailData(order);
+        const { subject: bs, html: bh } = buildOrderCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
+        await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `order_completed_buyer_${order.id}` });
+        const { subject: ss, html: sh } = buildOrderCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
+        await sendOrderEmail({ userId: sellerProfile.userId, subject: ss, html: sh, emailType: 'order', dedupeKey: `order_completed_seller_${order.id}` });
+      } catch (emailErr: any) {
+        console.warn('[Order] Meetup completed email failed:', emailErr.message);
+      }
+      return { success: true };
+    }),
+
+  // ============================================================
   // SELLER - Stripe Connect Onboarding
   // ============================================================
   startStripeConnectOnboarding: protectedProcedure
@@ -1771,6 +1843,7 @@ export const marketplaceRouter = router({
       listingId: z.number().int(),
       offerId: z.number().int().optional(), // If provided, use offer price instead of listing price
       buyerPhone: z.string().optional().default(""), // Buyer's contact phone (for meetup orders)
+      shippingMethod: z.string().optional(), // 'meetup' or 'sf_cod'
       shippingAddress: z.object({
         name: z.string().min(1),
         phone: z.string().optional().default(""), // Optional: phone not required for meetup orders
@@ -1940,8 +2013,23 @@ export const marketplaceRouter = router({
         shippingName: input.shippingAddress?.name ?? null,
         shippingPhone: input.shippingAddress?.phone ?? null,
         shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
+        shippingMethod: input.shippingMethod ?? null,
         buyerPhone: input.buyerPhone || null,
       });
+      // Notify seller for meetup orders
+      if (input.shippingMethod === 'meetup' && listing.sellerType === 'seller' && listing.sellerId) {
+        const sellerProfileForNotify = await getSellerProfileById(listing.sellerId);
+        if (sellerProfileForNotify?.userId) {
+          const buyerPhoneDisplay = input.buyerPhone ? `買家電話：${input.buyerPhone}` : '買家未提供電話';
+          await createNotification({
+            userId: sellerProfileForNotify.userId,
+            type: 'trade',
+            title: '新面交訂單 🤝',
+            body: `訂單 ${orderNo} 買家選擇面交付款，請將商品備好。${buyerPhoneDisplay}。請將訂單狀態更新為「確認已面交」完成訂單。`,
+            linkUrl: '/seller',
+          }).catch(() => {});
+        }
+      }
       return { checkoutUrl: session.url, orderNo };
     }),
 
@@ -2043,6 +2131,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       offerId: z.number().int().optional(), // If provided, use offer price instead of listing price
       proofImageUrl: z.string().optional().default(""), // Optional: empty string allowed for orders without proof
       buyerPhone: z.string().optional().default(""), // Buyer's contact phone (for meetup orders)
+      shippingMethod: z.string().optional(), // 'meetup' or 'sf_cod'
       shippingAddress: z.object({
         name: z.string().min(1),
         phone: z.string().optional().default(""), // Optional: phone not required for meetup orders
@@ -2123,8 +2212,23 @@ All three checks must pass for verified to be true. Respond with JSON only match
         shippingName: input.shippingAddress?.name ?? null,
         shippingPhone: input.shippingAddress?.phone ?? null,
         shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
+        shippingMethod: input.shippingMethod ?? null,
         buyerPhone: input.buyerPhone || null,
       });
+      // Notify seller for meetup orders
+      if (input.shippingMethod === 'meetup' && listing.sellerType === 'seller' && listing.sellerId) {
+        const sellerProfileForNotifyAlipay = await getSellerProfileById(listing.sellerId);
+        if (sellerProfileForNotifyAlipay?.userId) {
+          const buyerPhoneDisplayAlipay = input.buyerPhone ? `買家電話：${input.buyerPhone}` : '買家未提供電話';
+          await createNotification({
+            userId: sellerProfileForNotifyAlipay.userId,
+            type: 'trade',
+            title: '新面交訂單 🤝',
+            body: `訂單 ${orderNo} 買家選擇面交付款，請將商品備好。${buyerPhoneDisplayAlipay}。請將訂單狀態更新為「確認已面交」完成訂單。`,
+            linkUrl: '/seller',
+          }).catch(() => {});
+        }
+      }
       // Notify admin of new Alipay order pending review
       await notifyAdmin({
         title: "支付寶 HK 訂單待審核 💰",
