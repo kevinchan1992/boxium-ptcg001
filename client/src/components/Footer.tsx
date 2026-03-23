@@ -93,7 +93,7 @@ export default function Footer() {
           {/* Col 4 – Social */}
           <div>
             <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">
-              {t("footer.followUs") || "Follow Us"}
+              Follow Us
             </h4>
             <div className="flex gap-3">
               <a
