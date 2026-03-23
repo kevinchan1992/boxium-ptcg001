@@ -5779,3 +5779,14 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] Stripe：建立訂單後直接開啟 Stripe Checkout 頁面（新分頁）
 - [ ] 多件商品批次建立訂單後，跳轉至第一個訂單的付款頁面
 - [ ] 保存 checkpoint
+
+---
+
+## 🛒 購物車/訂單改進（第四輪）
+
+- [x] 面交備註說明文字修改：「此備註將顯示在訂單詳情中，供雙方溝通安排交收地點」
+- [x] 面交結帳時若用戶未填電話，顯示警告提示引導至個人中心填寫（已有實作）
+- [x] 訂單詳情頁面加入付款倒計時條（待付款狀態）（已有實作）
+- [x] SellerDashboard 訂單卡片加入面交標籤
+- [x] SellerDashboard 訂單完成後顯示買家電話
+- [ ] 保存 checkpoint

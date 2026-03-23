@@ -1158,7 +1158,7 @@ function CheckoutDialog({
                       onChange={(e) => setForm((f) => ({ ...f, meetupNote: e.target.value }))}
                       className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
                     />
-                    <p className="text-xs text-gray-400 mt-1">此備註將顯示在訂單詳情中，供賣家安排交收</p>
+                    <p className="text-xs text-gray-400 mt-1">此備註將顯示在訂單詳情中，供雙方溝通安排交收地點</p>
                   </div>
                 </div>
               )}
