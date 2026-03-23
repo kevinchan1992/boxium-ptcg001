@@ -5507,3 +5507,7 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 後台電郵測試工具（email.sendTestEmail tRPC 端點 + AdminEmailTest 組件，支援 7 種電郵類型）
 - [x] 出價接受後 1 小時付款提醒排程（每 10 分鐘掃描，1 小時視窗，發送站內通知 + 電郵，paymentReminderSentAt 防重複）
 - [x] 訂單付款後 12 小時出貨提醒排程（每 30 分鐘掃描，12 小時視窗，發送站內通知 + 電郵，shippingReminderSentAt 防重複，移除不必要的 notifyAdmin）
+
+---
+## 🐛 修復 ResizeObserver loop 警告
+- [x] 在全域靜默 ResizeObserver loop completed 警告（recharts 圖表觸發的無害瀏覽器行為）

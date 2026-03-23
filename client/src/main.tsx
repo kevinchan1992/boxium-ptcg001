@@ -8,6 +8,24 @@ import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import * as Sentry from "@sentry/react";
 
 import "./index.css";
+
+// Suppress ResizeObserver loop warning - this is a known benign browser behavior
+// triggered by recharts and other responsive chart libraries during rapid resize events.
+// It does not affect functionality and is safe to ignore.
+const _origError = window.onerror;
+window.onerror = (message, source, lineno, colno, error) => {
+  if (typeof message === "string" && message.includes("ResizeObserver loop")) {
+    return true; // suppress
+  }
+  if (_origError) return _origError(message, source, lineno, colno, error);
+  return false;
+};
+window.addEventListener("error", (e) => {
+  if (e.message && e.message.includes("ResizeObserver loop")) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+  }
+}, true);
 import "./mobile-touch-optimization.css";
 import "./i18n";
 
