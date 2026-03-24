@@ -1089,3 +1089,72 @@ export function buildOfferExpiringSoonBuyerEmail(data: { buyerName: string; sell
   `);
   return { subject, html };
 }
+
+// ─── Seller Suspension / Unsuspension Email Templates ────────────────────────
+
+export interface SellerSuspensionEmailData {
+  sellerName: string;
+  reason: string;
+  appealEmail?: string;
+  siteUrl?: string;
+}
+
+/**
+ * Email sent to seller when their account is suspended by admin.
+ */
+export function buildSellerSuspendedEmail(data: SellerSuspensionEmailData): { subject: string; html: string } {
+  const subject = '【BOXIUM PTCG】您的賣家帳號已被暫停';
+  const siteUrl = data.siteUrl ?? 'https://boxium.asia';
+  const appealEmail = data.appealEmail ?? 'boxium.asia@gmail.com';
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#ef4444;font-size:22px;">賣家帳號暫停通知 🚫</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.sellerName}</strong>，<br/>
+      您的 BOXIUM PTCG 賣家帳號因違反平台規定，已被管理員暫停。在帳號恢復前，您的所有商品將被下架，且無法接受新訂單。
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff5f5;border:1px solid #fecaca;border-radius:8px;margin:20px 0;">
+      <tr>
+        <td style="padding:12px 16px;">
+          <p style="margin:0;font-size:13px;color:#666;">暫停原因</p>
+          <p style="margin:4px 0 0;font-size:15px;font-weight:bold;color:#dc2626;">${data.reason}</p>
+        </td>
+      </tr>
+    </table>
+    <p style="color:#555;font-size:14px;">
+      如您認為此決定有誤，或希望提出申訴，請透過以下電郵聯絡我們：<br/>
+      <a href="mailto:${appealEmail}" style="color:#06038d;font-weight:bold;">${appealEmail}</a>
+    </p>
+    <p style="color:#888;font-size:13px;">請在申訴郵件中提供您的帳號資料及申訴理由，我們將在 3 個工作日內回覆。</p>
+    ${ctaButton('前往 BOXIUM PTCG', siteUrl)}
+  `);
+  return { subject, html };
+}
+
+/**
+ * Email sent to seller when their account suspension is lifted by admin.
+ */
+export function buildSellerUnsuspendedEmail(data: SellerSuspensionEmailData): { subject: string; html: string } {
+  const subject = '【BOXIUM PTCG】您的賣家帳號已恢復';
+  const siteUrl = data.siteUrl ?? 'https://boxium.asia';
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#16a34a;font-size:22px;">賣家帳號已恢復 ✅</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.sellerName}</strong>，<br/>
+      您的 BOXIUM PTCG 賣家帳號已由管理員解除暫停，您現在可以重新上架商品並接受訂單。
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;margin:20px 0;">
+      <tr>
+        <td style="padding:12px 16px;">
+          <p style="margin:0;font-size:13px;color:#666;">解凍備注</p>
+          <p style="margin:4px 0 0;font-size:15px;color:#15803d;">${data.reason || '帳號已恢復正常使用'}</p>
+        </td>
+      </tr>
+    </table>
+    <p style="color:#555;font-size:14px;">
+      感謝您的耐心等待。請確保日後的交易行為符合平台規定，以維持良好的賣家信譽。
+    </p>
+    <p style="color:#888;font-size:13px;">如有任何疑問，歡迎聯絡客服支援。</p>
+    ${ctaButton('立即前往上架商品', siteUrl)}
+  `);
+  return { subject, html };
+}

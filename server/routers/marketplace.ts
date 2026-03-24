@@ -33,8 +33,8 @@ import { getPublicListings, getListingById, createListing, updateListing,
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
 import { createNotification } from "../db/notifications";
-import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail, notifyAdmin } from "../emailService";
-import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs, cartItems } from "../../drizzle/schema_new";
+import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail, notifyAdmin, buildSellerSuspendedEmail, buildSellerUnsuspendedEmail } from "../emailService";
+import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs, cartItems, adminAuditLogs } from "../../drizzle/schema_new";
 import { eq, and, isNotNull, isNull, or, desc, sql, inArray, like } from 'drizzle-orm';
 import Stripe from 'stripe';
 
@@ -564,7 +564,66 @@ export const marketplaceRouter = router({
         title: "📸 新支付寶 HK 付款截圖待核對",
         content: `訂單 ${order.orderNo} 的買家已上傳支付寶 HK 付款截圖，請前往管理後台核對收款。\n金額：HKD ${order.subtotalHkd}\n前往核對：/admin/marketplace`,
       }).catch(() => {});
-      return { success: true, proofUrl: url };
+      // Auto-trigger AI verification in background (non-blocking)
+      const autoVerifyOrder = { ...order, alipayProofImageUrl: url };
+      setImmediate(async () => {
+        try {
+          const expectedAmount = parseFloat(autoVerifyOrder.subtotalHkd || '0').toFixed(2);
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: 'system',
+                content: `You are a payment verification assistant. Analyze the payment screenshot and compare it with the expected payment details. Return a JSON object with the following fields:\n- verified: boolean\n- detectedAmount: string or null\n- detectedPayee: string or null\n- detectedStatus: string or null\n- confidence: "high" | "medium" | "low"\n- reason: string (Traditional Chinese)\nExpected payment amount: HKD ${expectedAmount}\nExpected payee: BOXIUM or Boxium Limited\nReturn ONLY the JSON object, no other text`,
+              },
+              {
+                role: 'user',
+                content: [
+                  { type: 'image_url' as const, image_url: { url, detail: 'high' as const } },
+                  { type: 'text' as const, text: `Verify AlipayHK payment. Expected: HKD ${expectedAmount}. Order: ${autoVerifyOrder.orderNo}.` },
+                ],
+              },
+            ],
+            response_format: {
+              type: 'json_schema',
+              json_schema: {
+                name: 'alipay_verification',
+                strict: true,
+                schema: {
+                  type: 'object',
+                  properties: {
+                    verified: { type: 'boolean' },
+                    detectedAmount: { type: ['string', 'null'] },
+                    detectedPayee: { type: ['string', 'null'] },
+                    detectedStatus: { type: ['string', 'null'] },
+                    confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+                    reason: { type: 'string' },
+                  },
+                  required: ['verified', 'detectedAmount', 'detectedPayee', 'detectedStatus', 'confidence', 'reason'],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+          const content = response.choices?.[0]?.message?.content;
+          let result: any;
+          try { result = JSON.parse(content || '{}'); } catch { result = { verified: false, detectedAmount: null, detectedPayee: null, detectedStatus: null, confidence: 'low', reason: 'AI 回應解析失敗' }; }
+          const db2 = await getDb();
+          if (db2) {
+            await db2.update(marketplaceOrders)
+              .set({ aiVerificationResult: JSON.stringify(result) })
+              .where(eq(marketplaceOrders.id, input.orderId));
+          }
+          // Notify admin of auto-verification result
+          notifyAdmin({
+            title: result.verified ? '✅ AI 核對通過 — 支付寶截圖' : '⚠️ AI 核對未通過 — 支付寶截圖',
+            content: `訂單 ${autoVerifyOrder.orderNo}\n金額：HKD ${expectedAmount}\nAI 核對：${result.reason}\n信心度：${result.confidence}`,
+          }).catch(() => {});
+          console.log(`[Auto AI Verify] Order ${autoVerifyOrder.orderNo}: verified=${result.verified}, confidence=${result.confidence}`);
+        } catch (err: any) {
+          console.error('[Auto AI Verify] Error:', err?.message);
+        }
+      });
+      return { success: true, proofUrl: url, aiVerificationPending: true };
     }),
 
   // ============================================================
@@ -4177,8 +4236,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
           eq(marketplaceListings.sellerId, input.sellerProfileId),
           eq(marketplaceListings.status, 'active' as any)
         ));
-      // Notify seller
-      const seller = await db.select().from(sellerProfiles).where(eq(sellerProfiles.id, input.sellerProfileId)).limit(1);
+       // Notify seller
+      const seller = await db.select({ id: sellerProfiles.id, userId: sellerProfiles.userId, displayName: sellerProfiles.displayName }).from(sellerProfiles).where(eq(sellerProfiles.id, input.sellerProfileId)).limit(1);
       if (seller[0]?.userId) {
         await createNotification({
           userId: seller[0].userId,
@@ -4187,21 +4246,29 @@ All three checks must pass for verified to be true. Respond with JSON only match
           body: `您的賣家帳號已被管理員凍結，所有商品已下架。原因：${input.reason}`,
           linkUrl: "/seller",
         }).catch(() => {});
+        // Send suspension email
+        const userRow = await db.select({ email: users.email }).from(users).where(eq(users.id, seller[0].userId)).limit(1);
+        if (userRow[0]?.email) {
+          const { subject, html } = buildSellerSuspendedEmail({
+            sellerName: seller[0].displayName ?? '賣家',
+            reason: input.reason,
+          });
+          sendEmail({ to: userRow[0].email, subject, html }).catch(err => console.error('[Suspend Email]', err));
+        }
       }
       // AT1: Audit log
       await createAuditLog({ adminId: ctx.user.id, action: 'suspend_seller', targetType: 'seller', targetId: input.sellerProfileId, details: JSON.stringify({ reason: input.reason }) });
       return { success: true };
     }),
-
   adminUnsuspendSeller: adminProcedure
     .input(z.object({ sellerProfileId: z.number().int() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       await db.update(sellerProfiles)
         .set({ isSuspended: false, suspensionReason: null, updatedAt: new Date() } as any)
         .where(eq(sellerProfiles.id, input.sellerProfileId));
-      const seller = await db.select().from(sellerProfiles).where(eq(sellerProfiles.id, input.sellerProfileId)).limit(1);
+      const seller = await db.select({ id: sellerProfiles.id, userId: sellerProfiles.userId, displayName: sellerProfiles.displayName }).from(sellerProfiles).where(eq(sellerProfiles.id, input.sellerProfileId)).limit(1);
       if (seller[0]?.userId) {
         await createNotification({
           userId: seller[0].userId,
@@ -4210,6 +4277,15 @@ All three checks must pass for verified to be true. Respond with JSON only match
           body: "您的賣家帳號已恢復正常，可以重新上架商品。",
           linkUrl: "/seller",
         }).catch(() => {});
+        // Send unsuspension email
+        const userRow = await db.select({ email: users.email }).from(users).where(eq(users.id, seller[0].userId)).limit(1);
+        if (userRow[0]?.email) {
+          const { subject, html } = buildSellerUnsuspendedEmail({
+            sellerName: seller[0].displayName ?? '賣家',
+            reason: '帳號已恢復正常使用',
+          });
+          sendEmail({ to: userRow[0].email, subject, html }).catch(err => console.error('[Unsuspend Email]', err));
+        }
       }
       // AT1: Audit log
       await createAuditLog({ adminId: ctx.user.id, action: 'unsuspend_seller', targetType: 'seller', targetId: input.sellerProfileId });
@@ -4367,5 +4443,61 @@ IMPORTANT:
         console.error('[AI Verify Alipay] Error:', err?.message);
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'AI 核對失敗，請稍後重試' });
       }
+    }),
+
+  // ============================================================
+  // AT2: Admin audit log CSV export
+  // ============================================================
+  adminExportAuditLogs: adminProcedure
+    .input(z.object({
+      action: z.string().optional(),
+      targetType: z.string().optional(),
+      startDate: z.string().optional(), // ISO date string
+      endDate: z.string().optional(),   // ISO date string
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const conditions: any[] = [];
+      if (input.action) conditions.push(eq(adminAuditLogs.action, input.action));
+      if (input.targetType) conditions.push(eq(adminAuditLogs.targetType, input.targetType));
+      if (input.startDate) conditions.push(sql`${adminAuditLogs.createdAt} >= ${new Date(input.startDate)}`);
+      if (input.endDate) conditions.push(sql`${adminAuditLogs.createdAt} <= ${new Date(input.endDate)}`);
+      const where = conditions.length > 0 ? and(...conditions) : undefined;
+      // Fetch up to 10000 rows for export
+      const rows = await db.select().from(adminAuditLogs)
+        .where(where)
+        .orderBy(desc(adminAuditLogs.createdAt))
+        .limit(10000);
+      // Build CSV
+      const actionLabels: Record<string, string> = {
+        confirm_alipay: '確認支付寶收款',
+        update_order_status: '更新訂單狀態',
+        resolve_dispute: '解決爭議',
+        suspend_seller: '凍結賣家',
+        unsuspend_seller: '解凍賣家',
+        ai_verify_alipay: 'AI 核對支付寶',
+      };
+      const header = ['ID', '時間(HKT)', '管理員ID', '操作', '目標類型', '目標ID', '詳情'];
+      const csvRows = rows.map(row => {
+        const hktTime = new Date(row.createdAt).toLocaleString('zh-HK', {
+          timeZone: 'Asia/Hong_Kong',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+        });
+        const actionLabel = actionLabels[row.action] || row.action;
+        const details = row.details ? row.details.replace(/"/g, '""') : '';
+        return [
+          row.id,
+          `"${hktTime}"`,
+          row.adminId,
+          `"${actionLabel}"`,
+          row.targetType,
+          row.targetId ?? '',
+          `"${details}"`,
+        ].join(',');
+      });
+      const csv = [header.join(','), ...csvRows].join('\n');
+      return { csv, total: rows.length };
     }),
 });

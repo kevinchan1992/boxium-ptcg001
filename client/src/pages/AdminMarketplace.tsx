@@ -4973,6 +4973,31 @@ function AuditLogsTab() {
   const [page, setPage] = useState(1);
   const [actionFilter, setActionFilter] = useState<string>('');
   const [targetTypeFilter, setTargetTypeFilter] = useState<string>('');
+  const [isExporting, setIsExporting] = useState(false);
+  const exportQuery = trpc.marketplace.adminExportAuditLogs.useQuery(
+    { action: actionFilter || undefined, targetType: targetTypeFilter || undefined },
+    { enabled: false }
+  );
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      const result = await exportQuery.refetch();
+      if (result.data?.csv) {
+        const blob = new Blob(['\uFEFF' + result.data.csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `審計日誌_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success(`已匯出 ${result.data.total} 筆審計日誌`);
+      }
+    } catch (e: any) {
+      toast.error(e.message || '匯出失敗');
+    } finally {
+      setIsExporting(false);
+    }
+  };
   const { data, isLoading, refetch } = trpc.marketplace.adminGetAuditLogs.useQuery({
     page,
     pageSize: 30,
@@ -4990,11 +5015,16 @@ function AuditLogsTab() {
           <ScrollText className="w-5 h-5" />審計日誌
           <span className="text-sm font-normal text-gray-500">(共 {total} 筆)</span>
         </h2>
-        <Button size="sm" variant="outline" onClick={() => refetch()} className="text-gray-700 bg-white">
-          <RefreshCw className="w-3.5 h-3.5 mr-1" />刷新
-        </Button>
+         <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={isExporting} className="text-gray-700 bg-white">
+            {isExporting ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Download className="w-3.5 h-3.5 mr-1" />}
+            匯出 CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => refetch()} className="text-gray-700 bg-white">
+            <RefreshCw className="w-3.5 h-3.5 mr-1" />刷新
+          </Button>
+        </div>
       </div>
-
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <Select value={actionFilter} onValueChange={v => { setActionFilter(v === 'all' ? '' : v); setPage(1); }}>

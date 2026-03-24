@@ -5967,3 +5967,40 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 前端：批量 AI 核對按鈕（批量操作欄）
 - [x] 前端：核對中 loading 狀態（Loader2 動畫）
 - [x] 前端：核對結果展示（通過/失敗 + 可信度 + 偵測金額/收款方/狀態/原因）
+
+---
+
+## 🔔 管理員後台增強功能（第二批）
+
+### 審計日誌 CSV 匯出
+- [ ] 後端：adminExportAuditLogs procedure（返回 CSV 格式字串）
+- [ ] 前端：審計日誌 Tab 加入「匯出 CSV」按鈕
+
+### 賣家凍結 Email 通知
+- [ ] 後端：adminSuspendSeller 加入 Email 通知（含凍結原因 + 申訴方式）
+- [ ] 後端：adminUnsuspendSeller 加入 Email 通知（解凍確認）
+- [ ] emailService 新增 sellerSuspended / sellerUnsuspended 模板
+
+### 支付寶截圖上傳後自動觸發 AI 核對
+- [ ] 後端：uploadAlipayProof 上傳完成後自動調用 adminAiVerifyAlipay
+- [ ] 前端：截圖上傳成功後顯示「AI 核對中...」狀態
+- [ ] 前端：管理員審核頁面自動顯示最新 AI 核對結果
+
+---
+## ✅ 管理員後台增強功能（第二批）完成
+### 審計日誌 CSV 匯出
+- [x] 後端：adminExportAuditLogs procedure（返回 CSV 格式字串，支援 action/targetType/startDate/endDate 篩選，最多 10000 筆）
+- [x] 前端：審計日誌 Tab 加入「匯出 CSV」按鈕（含 loading 狀態 + 自動下載）
+### 賣家凍結 Email 通知
+- [x] emailService 新增 buildSellerSuspendedEmail 模板（含凍結原因 + 申訴電郵）
+- [x] emailService 新增 buildSellerUnsuspendedEmail 模板（解凍確認）
+- [x] 後端：adminSuspendSeller 加入 Email 通知（查詢 users 表取得 email，非阻塞發送）
+- [x] 後端：adminUnsuspendSeller 加入 Email 通知（解凍確認）
+### 支付寶截圖上傳後自動觸發 AI 核對
+- [x] 後端：submitAlipayProof 上傳完成後使用 setImmediate 非阻塞觸發 AI 核對
+- [x] 後端：AI 核對結果存入 aiVerificationResult 欄位
+- [x] 後端：AI 核對完成後通知管理員（✅通過 / ⚠️未通過）
+- [x] 後端：回傳 aiVerificationPending: true 供前端顯示狀態
+### 測試
+- [x] 27 項新測試全部通過（admin-new-features.test.ts）
+- [x] 全部 106 項核心測試通過（P0 + 系統改造 + 管理員功能）
