@@ -3118,13 +3118,14 @@ export async function reserveListingStock(listingId: number, quantity: number): 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   // Atomic UPDATE: only succeeds if listing is active AND has enough quantity.
-  // NOTE: We do NOT change status to 'sold' here — the listing stays 'active' until
-  // payment is confirmed (Stripe webhook / admin Alipay confirm). This prevents the
-  // cart from showing "已下架" for pending-payment orders.
+  // For quantity=1 listings, set status='reserved' to indicate the item is locked
+  // by a pending order. Status changes to 'sold' only after payment confirmation.
+  // This prevents other buyers from purchasing while showing admin the item is locked.
   const result = await db.execute(
     sql`UPDATE marketplaceListings
         SET quantity = quantity - ${quantity},
             remainingQuantity = remainingQuantity - ${quantity},
+            status = CASE WHEN (quantity - ${quantity}) <= 0 THEN 'reserved' ELSE status END,
             updatedAt = NOW()
         WHERE id = ${listingId}
           AND status = 'active'
@@ -3146,7 +3147,7 @@ export async function restoreListingStock(listingId: number, quantity: number): 
     sql`UPDATE marketplaceListings
         SET quantity = quantity + ${quantity},
             remainingQuantity = remainingQuantity + ${quantity},
-            status = 'active',
+            status = CASE WHEN status IN ('reserved', 'sold') THEN 'active' ELSE status END,
             updatedAt = NOW()
         WHERE id = ${listingId}`
   );

@@ -124,12 +124,12 @@ export default function Cart() {
   const activeItems = useMemo(
     // Items are "active" if the listing is active, OR if the buyer already has a pending_payment
     // order for this listing (meaning they checked out but haven't paid yet).
-    () => (cartItems ?? []).filter((item) => item.status === "active" || (item as any).hasPendingOrder),
+    () => (cartItems ?? []).filter((item) => item.status === "active" || item.status === "reserved" || (item as any).hasPendingOrder),
     [cartItems]
   );
 
   const unavailableItems = useMemo(
-    () => (cartItems ?? []).filter((item) => item.status !== "active" && !(item as any).hasPendingOrder),
+    () => (cartItems ?? []).filter((item) => item.status !== "active" && item.status !== "reserved" && !(item as any).hasPendingOrder),
     [cartItems]
   );
 
@@ -631,7 +631,11 @@ function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps
               <Badge variant="destructive" className="text-xs px-1.5 py-0 h-5">已下架</Badge>
             )}
             {item.hasPendingOrder && !unavailable && (
-              <Badge className="text-xs px-1.5 py-0 h-5 bg-amber-100 text-amber-700 border-amber-200">待付款</Badge>
+              <Link href={item.pendingOrderNo ? `/orders?highlight=${item.pendingOrderNo}` : '/orders'}>
+                <Badge className="text-xs px-1.5 py-0 h-5 bg-amber-100 text-amber-700 border-amber-200 cursor-pointer hover:bg-amber-200 transition-colors">
+                  待付款 →
+                </Badge>
+              </Link>
             )}
           </div>
         </div>

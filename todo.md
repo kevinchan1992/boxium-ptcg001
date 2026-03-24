@@ -6029,3 +6029,50 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 ### 測試
 - [x] 17 項新測試全部通過（order-cart-bugfix.test.ts）
 - [x] 27 項 admin-new-features 測試通過（無回歸）
+
+---
+## 🔔 三項新功能（2026-03-24 第二批）
+
+### 訂單超時取消通知
+- [ ] 後端：Stripe webhook checkout.session.expired 加入買家站內通知
+- [ ] 後端：cancelExpiredOrders 定時任務加入買家站內通知（Alipay 超時取消）
+- [ ] 通知內容：訂單號 + 商品名稱 + 可重新下單連結
+
+### 購物車待付款快速跳轉
+- [ ] 前端：Cart.tsx 待付款標籤加入跳轉到訂單詳情頁的連結（/orders/{orderNo}）
+
+### Admin 商品管理加入「鎖定中」狀態
+- [ ] 後端：schema 加入 reserved 狀態（marketplaceListings.status enum）
+- [ ] 後端：db:push 遷移
+- [ ] 後端：reserveListingStock 下單時改為 reserved 狀態（而非保持 active）
+- [ ] 後端：restoreListingStock 取消訂單時從 reserved 改回 active
+- [ ] 後端：Stripe webhook / adminConfirmAlipayPayment 付款後從 reserved 改為 sold
+- [ ] 前端：Admin 商品管理加入「鎖定中」篩選 Tab + 黃色 Badge
+- [ ] 前端：商品詳情頁顯示「鎖定中」狀態
+
+---
+## ✅ 三項新功能實作完成（2026-03-24 第三批）
+### 訂單超時取消通知（Stripe webhook）
+- [x] 後端：server/_core/index.ts 加入 checkout.session.expired 事件處理
+- [x] 後端：從 session.metadata 解析 user_id/buyer_id 和 order_no/batch_order_nos
+- [x] 後端：建立站內通知（type: 'order'，含訂單號和跳轉連結 /orders?highlight={orderNo}）
+- [x] 後端：無 buyerId 時不發送通知（安全防護）
+### 購物車待付款快速跳轉
+- [x] 前端：Cart.tsx 待付款 Badge 包裝成 Link 組件
+- [x] 前端：連結到 /orders?highlight={pendingOrderNo}（有訂單號時）或 /orders（無訂單號時）
+- [x] 前端：Badge 加入 hover 效果（hover:bg-amber-200）
+- [x] 前端：activeItems 和 unavailableItems 過濾邏輯加入 reserved 狀態支援
+### Admin 商品管理加入「鎖定中」狀態
+- [x] 後端：drizzle/schema_new.ts status enum 加入 reserved
+- [x] 資料庫：ALTER TABLE 直接遷移（已執行）
+- [x] 後端：reserveListingStock 下單時若剩餘數量為 0 則改為 reserved 狀態
+- [x] 後端：restoreListingStock 取消訂單時從 reserved/sold 改回 active
+- [x] 後端：adminUpdateListing status enum 加入 reserved
+- [x] 前端：AdminMarketplace.tsx ListingsTab 加入「🔒 鎖定中」篩選 Tab（琥珀色）
+- [x] 前端：商品列表卡片 Badge 加入 reserved 狀態顯示（琥珀色）
+- [x] 前端：商品詳情 Badge 加入 reserved 狀態顯示
+- [x] 前端：狀態切換按鈕加入 reserved 選項（管理員可手動設定）
+### 測試
+- [x] 17 項新測試全部通過（new-features-phase3.test.ts）
+- [x] 17 項 order-cart-bugfix 測試通過（無回歸）
+- [x] 27 項 admin-new-features 測試通過（無回歸）

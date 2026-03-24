@@ -776,7 +776,7 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   refMarketPriceHkd: decimal("refMarketPriceHkd", { precision: 10, scale: 2 }),
   refMarketPriceDate: timestamp("refMarketPriceDate"),
   // Status
-  status: mysqlEnum("status", ["draft", "pending_review", "active", "sold", "removed"]).default("draft").notNull(),
+  status: mysqlEnum("status", ["draft", "pending_review", "active", "reserved", "sold", "removed"]).default("draft").notNull(),
   rejectedReason: text("rejectedReason"),
   // Offer settings
   allowOffers: boolean("allowOffers").default(false).notNull(),

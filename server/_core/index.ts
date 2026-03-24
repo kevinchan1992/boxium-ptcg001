@@ -301,6 +301,32 @@ async function startServer() {
             }
           }
         }
+      } else if (event.type === "checkout.session.expired") {
+        // Stripe checkout session expired without payment — notify buyer
+        const session = event.data.object;
+        const orderNo = session.metadata?.order_no;
+        const batchOrderNos = session.metadata?.batch_order_nos;
+        const buyerIdStr = session.metadata?.user_id ?? session.metadata?.buyer_id;
+        console.log(`[Webhook] checkout.session.expired: orderNo=${orderNo}, batchOrderNos=${batchOrderNos}, buyerId=${buyerIdStr}`);
+        if (buyerIdStr) {
+          const buyerId = parseInt(buyerIdStr);
+          const { createNotification } = await import("../db/notifications");
+          // Determine display order number
+          let displayOrderNo = orderNo ?? '';
+          if (batchOrderNos && batchOrderNos.includes(',')) {
+            const nos = batchOrderNos.split(',').map((s: string) => s.trim()).filter(Boolean);
+            displayOrderNo = nos[0] ?? orderNo ?? '';
+          }
+          await createNotification({
+            userId: buyerId,
+            type: 'order',
+            title: 'Stripe 結帳頁面已過期',
+            body: `訂單 ${displayOrderNo ? `#${displayOrderNo} ` : ''}的 Stripe 結帳頁面已過期，如需完成付款請前往訂單頁面重新發起付款。`,
+            linkUrl: displayOrderNo ? `/orders?highlight=${displayOrderNo}` : '/orders',
+            relatedId: null,
+          }).catch(() => {});
+          console.log(`[Webhook] Notified buyer ${buyerId} of expired Stripe session (order: ${displayOrderNo})`);
+        }
       } else if (event.type === "payment_intent.payment_failed") {
         const paymentIntent = event.data.object;
         console.log(`[Webhook] payment_intent.payment_failed: ${paymentIntent.id}`);

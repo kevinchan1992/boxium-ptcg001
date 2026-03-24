@@ -1229,7 +1229,7 @@ export const marketplaceRouter = router({
   adminUpdateListing: adminProcedure
     .input(z.object({
       id: z.number().int(),
-      status: z.enum(["draft", "pending_review", "active", "sold", "removed"]).optional(),
+      status: z.enum(["draft", "pending_review", "active", "reserved", "sold", "removed"]).optional(),
       price: z.number().positive().optional(),
       quantity: z.number().int().min(0).optional(),
       title: z.string().optional(),
