@@ -5853,3 +5853,42 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 購物車多件商品合併為同一 batchRef，訂單列表按 batchRef 分組顯示為 BatchOrderCard
 - [x] Stripe 付款成功確認頁面（/cart?success=true）顯示所有訂單編號
 - [x] 支付寶結帳後顯示 QR 碼頁面（Step 3），用戶掃碼後點擊「我已完成付款」才跳轉
+
+
+---
+
+## 🔄 交易流程改造：P0-P3（多賣家購物車 + Stripe Connect 分帳）
+
+### P0：支付方式限制邏輯（緊急合規）
+- [x] 後端：`createBatchAlipayOrder` 加入 `hasSellerItems` 檢查，含個人賣家商品時拋出錯誤
+- [x] 後端：`switchOrderPaymentToAlipay` 加入 `hasSellerItems` 檢查
+- [x] 後端：`createOrder`（直接購買）加入支付方式限制檢查
+- [x] 後端：`createOfferCheckout` 加入支付方式限制檢查
+- [x] 前端：`Cart.tsx` 計算 `hasSellerItems`，支付寶 HK 選項動態禁用
+- [x] 前端：禁用時顯示說明文字「購物車包含個人賣家商品，僅支援信用卡付款」
+- [x] 前端：若 `hasSellerItems` 且已選支付寶，自動切換到 Stripe
+- [x] 撰寫 P0 單元測試並通過（12/12）
+
+### P1：cart_orders Master 表 + DB Migration
+- [x] `drizzle/schema_new.ts` 新增 `cartOrders` 表定義
+- [x] `marketplaceOrders` 新增 `cartOrderId` 欄位（nullable，向後相容）
+- [x] 執行 DB Migration（直接 SQL 建表）
+- [x] `server/db.ts` 新增 cartOrders CRUD helpers（createCartOrder, getCartOrderById, getCartOrderByStripeSession, updateCartOrder）
+- [x] `createBatchStripeOrder` 重構：建立 `cart_orders` 記錄，子訂單加 `cartOrderId`，Stripe metadata 加入 `cart_order_id`
+- [x] Stripe Webhook `checkout.session.completed` 更新：取得 `stripeChargeId`，更新 `cart_orders`（批量和單一訂單均已處理）
+
+### P2：executeSellerPayout + Stripe Connect 分帳閉環
+- [x] 實作 `server/sellerPayout.ts` 中的 `executeSellerPayout(orderId)` 函數（Stripe Transfer 邏輯，含 source_transaction）
+- [x] 實作 `executePendingPayouts()` 批量放款函數
+- [x] `confirmReceipt` 完成後呼叫 `executeSellerPayout()`（替換舊內聯邏輯）
+- [x] `confirmMeetup` 完成後呼叫 `executeSellerPayout()`（替換舊內聯邏輯）
+- [x] 管理員 `updateOrderStatus` 設為 completed 時呼叫 `executeSellerPayout()`（替換舊內聯邏輯）
+- [x] Transfer 失敗時自動更新 payoutStatus=failed 並記錄 marketplacePayouts 審計記錄
+
+### P3：前端訂單列表重構
+- [x] `getBuyerOrders` DB helper 加入 `cartOrderId` 欄位
+- [x] `Orders.tsx` 加入 `groupOrders()` 函數，按 `cartOrderId`（或舊版 `batchRef`）分組
+- [x] 新增 `BatchOrderGroup` 組件：可展開的批量訂單卡片，顯示總金額、主要狀態
+- [x] 展開後顯示各子訂單（含子訂單編號標籤）
+- [x] Hero Banner 顯示「共 N 筆訂單（M 組）」
+- [x] 向後相容：舊版 batchRef 訂單也能正確分組顯示

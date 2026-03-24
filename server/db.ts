@@ -2913,10 +2913,12 @@ import {
   sellerProfiles, marketplaceListings, marketplaceOrders,
   marketplaceOrderItems, marketplacePayouts,
   marketplaceBanners, wishlists, marketplaceReviews, userShippingAddresses, offers, listingReports,
+  cartOrders,
   InsertSellerProfile, InsertMarketplaceListing, InsertMarketplaceOrder,
   InsertMarketplaceOrderItem, InsertMarketplacePayout,
   InsertMarketplaceBanner, InsertWishlist, InsertMarketplaceReview,
-  type InsertUserShippingAddress, type InsertOffer, type InsertListingReport
+  type InsertUserShippingAddress, type InsertOffer, type InsertListingReport,
+  type InsertCartOrder, type CartOrder
 } from "../drizzle/schema_new";
 
 // --- Seller Profiles ---
@@ -3237,6 +3239,7 @@ export async function getBuyerOrders(buyerId: number) {
     alipayProofImageUrl: marketplaceOrders.alipayProofImageUrl,
     buyerPhone: marketplaceOrders.buyerPhone,
     batchRef: sql<string | null>`${marketplaceOrders}.batch_ref`,
+    cartOrderId: sql<number | null>`${marketplaceOrders}.cart_order_id`,
     createdAt: marketplaceOrders.createdAt,
     updatedAt: marketplaceOrders.updatedAt,
     // Listing info for display
@@ -4164,4 +4167,70 @@ export async function getActiveOrderByListingId(listingId: number) {
     .orderBy(desc(marketplaceOrders.createdAt))
     .limit(1);
   return rows[0] ?? null;
+}
+
+// ============================================================
+// P1: CART ORDERS (Master order grouping) DB HELPERS
+// ============================================================
+
+/**
+ * Create a new cart order (master order for a batch checkout).
+ * Returns the created CartOrder row.
+ */
+export async function createCartOrder(data: InsertCartOrder): Promise<CartOrder | null> {
+  const db = await getDb();
+  if (!db) return null;
+  await db.insert(cartOrders).values(data);
+  const rows = await db.select().from(cartOrders)
+    .where(and(
+      eq(cartOrders.buyerId, data.buyerId),
+      eq(cartOrders.totalSubtotalHkd, data.totalSubtotalHkd)
+    ))
+    .orderBy(desc(cartOrders.createdAt))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Get a cart order by its ID.
+ */
+export async function getCartOrderById(id: number): Promise<CartOrder | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(cartOrders).where(eq(cartOrders.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Get a cart order by Stripe Checkout Session ID.
+ */
+export async function getCartOrderByStripeSession(sessionId: string): Promise<CartOrder | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(cartOrders)
+    .where(eq(cartOrders.stripeCheckoutSessionId, sessionId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Update a cart order by ID.
+ */
+export async function updateCartOrder(id: number, data: Partial<InsertCartOrder>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(cartOrders).set({ ...data, updatedAt: new Date() }).where(eq(cartOrders.id, id));
+}
+
+/**
+ * Get all cart orders for a buyer (with pagination).
+ */
+export async function getBuyerCartOrders(buyerId: number, limit = 20, offset = 0): Promise<CartOrder[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(cartOrders)
+    .where(eq(cartOrders.buyerId, buyerId))
+    .orderBy(desc(cartOrders.createdAt))
+    .limit(limit)
+    .offset(offset);
 }

@@ -730,6 +730,19 @@ function CheckoutDialog({
 
   const isProcessing = createBatchStripeOrderMutation.isPending || createBatchAlipayOrderMutation.isPending;
 
+  // P0: Detect if any item is from a C2C seller — restricts payment to Stripe only
+  const hasSellerItems = useMemo(
+    () => activeItems.some((item) => item.sellerType === "seller"),
+    [activeItems]
+  );
+
+  // P0: Auto-switch to Stripe if Alipay HK is selected but cart has seller items
+  useEffect(() => {
+    if (hasSellerItems && form.paymentMethod === "alipay_hk") {
+      setForm((f) => ({ ...f, paymentMethod: "stripe" }));
+    }
+  }, [hasSellerItems, form.paymentMethod, setForm]);
+
   const canProceedStep1 = useMemo(() => {
     if (activeItems.length === 0) return false;
     if (selectedAddressId !== null) return true;
@@ -1294,23 +1307,49 @@ function CheckoutDialog({
               {/* Payment Method */}
               <div>
                 <Label className="text-xs font-semibold text-[#06038D] mb-2 block">付款方式</Label>
+                {/* P0: Show restriction notice if cart has seller items */}
+                {hasSellerItems && (
+                  <div className="flex items-start gap-2 p-3 mb-2 bg-amber-50 rounded-xl border border-amber-200">
+                    <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700">
+                      購物車包含個人賣家商品，僅支援信用卡付款。支付寶 HK 僅適用於全部為本公司自營商品的訂單。
+                    </p>
+                  </div>
+                )}
                 <RadioGroup
                   value={form.paymentMethod}
-                  onValueChange={(v) => setForm((f) => ({ ...f, paymentMethod: v as PaymentMethod }))}
+                  onValueChange={(v) => {
+                    // P0: Block Alipay HK if cart has seller items
+                    if (v === "alipay_hk" && hasSellerItems) return;
+                    setForm((f) => ({ ...f, paymentMethod: v as PaymentMethod }));
+                  }}
                   className="space-y-2"
                 >
-                  <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                    form.paymentMethod === "alipay_hk" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
+                  {/* Alipay HK option — disabled when cart has seller items */}
+                  <div className={`flex items-start gap-3 p-3 rounded-xl border-2 transition-all ${
+                    hasSellerItems
+                      ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed"
+                      : form.paymentMethod === "alipay_hk"
+                        ? "border-[#06038D] bg-[#06038D]/5 cursor-pointer"
+                        : "border-gray-200 hover:border-[#06038D]/40 cursor-pointer"
                   }`}>
-                    <RadioGroupItem value="alipay_hk" id="alipay_hk2" className="mt-0.5" />
-                    <Label htmlFor="alipay_hk2" className="cursor-pointer flex-1">
+                    <RadioGroupItem value="alipay_hk" id="alipay_hk2" className="mt-0.5" disabled={hasSellerItems} />
+                    <Label htmlFor="alipay_hk2" className={`flex-1 ${hasSellerItems ? "cursor-not-allowed" : "cursor-pointer"}`}>
                       <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-[#06038D]" />
-                        <span className="font-semibold text-sm text-gray-800">支付寶 HK（AlipayHK）</span>
+                        <CreditCard className="w-4 h-4 text-gray-400" />
+                        <span className="font-semibold text-sm text-gray-500">支付寶 HK（AlipayHK）</span>
+                        {hasSellerItems && (
+                          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">不可用</span>
+                        )}
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5 ml-6">確認後跳轉至付款二維碼頁面，請用 AlipayHK App 掃描完成付款</p>
+                      {hasSellerItems ? (
+                        <p className="text-xs text-amber-600 mt-0.5 ml-6">包含個人賣家商品，不可使用此付款方式</p>
+                      ) : (
+                        <p className="text-xs text-gray-500 mt-0.5 ml-6">確認後跳轉至付款二維碼頁面，請用 AlipayHK App 揃描完成付款</p>
+                      )}
                     </Label>
                   </div>
+                  {/* Stripe option — always available */}
                   <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
                     form.paymentMethod === "stripe" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
                   }`}>
@@ -1319,6 +1358,9 @@ function CheckoutDialog({
                       <div className="flex items-center gap-2">
                         <CreditCard className="w-4 h-4 text-[#06038D]" />
                         <span className="font-semibold text-sm text-gray-800">信用卡（Stripe）</span>
+                        {hasSellerItems && (
+                          <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full">推薦</span>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5 ml-6">支援 Visa、Mastercard 等主要信用卡</p>
                     </Label>

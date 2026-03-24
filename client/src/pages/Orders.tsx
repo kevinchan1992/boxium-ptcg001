@@ -777,6 +777,59 @@ export default function Orders() {
   const paymentSuccess = searchParams.get("payment") === "success";
   const highlightOrderNo = searchParams.get("orderNo") ?? "";
 
+  // P3: BatchOrderGroup component - shows a collapsible group of related orders
+  function BatchOrderGroup({ group, highlightOrderNo }: { group: { key: string; isBatch: boolean; orders: any[] }; highlightOrderNo: string }) {
+    const { orders: groupOrders, isBatch } = group;
+    const [expanded, setExpanded] = useState(groupOrders.some(o => o.orderNo === highlightOrderNo));
+    if (!isBatch || groupOrders.length === 1) {
+      return <OrderCard order={groupOrders[0]} highlight={!!highlightOrderNo && groupOrders[0].orderNo === highlightOrderNo} />;
+    }
+    const totalHkd = groupOrders.reduce((sum, o) => sum + parseFloat(o.subtotalHkd ?? "0"), 0);
+    const statusCounts = groupOrders.reduce((acc: Record<string, number>, o) => {
+      acc[o.orderStatus] = (acc[o.orderStatus] ?? 0) + 1;
+      return acc;
+    }, {});
+    const dominantStatus = Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "pending_payment";
+    return (
+      <div className="rounded-2xl border-2 overflow-hidden shadow-sm" style={{ borderColor: "#06038d" }}>
+        {/* Master header */}
+        <button
+          className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors hover:bg-blue-50"
+          style={{ background: "#f0f4ff" }}
+          onClick={() => setExpanded(e => !e)}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#06038d" }}>
+              <Package className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold" style={{ color: "#06038d" }}>批量訂單 · {groupOrders.length} 件商品</p>
+              <p className="text-xs text-gray-500">總計 HKD {totalHkd.toFixed(2)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <OrderStatusBadge status={dominantStatus} />
+            {expanded ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+          </div>
+        </button>
+        {/* Sub-orders */}
+        {expanded && (
+          <div className="divide-y divide-gray-100">
+            {groupOrders.map((o, idx) => (
+              <div key={o.id} className="px-2 py-2 bg-white">
+                <div className="flex items-center gap-2 mb-1 px-2">
+                  <span className="text-xs font-bold text-gray-400">子訂單 {idx + 1}</span>
+                  <span className="text-xs text-gray-400">#{o.orderNo}</span>
+                </div>
+                <OrderCard order={o} highlight={!!highlightOrderNo && o.orderNo === highlightOrderNo} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const { data: me, isLoading: authLoading } = trpc.auth.me.useQuery();
   const { data: orders, isLoading } = trpc.marketplace.getMyOrders.useQuery(undefined, {
     enabled: !!me,
@@ -819,8 +872,31 @@ export default function Orders() {
     );
   }
 
+  // P3: Group orders by cartOrderId (or batchRef for legacy) for Master+Sub display
+  const groupOrders = (orderList: any[]) => {
+    const groups: Map<string, { key: string; isBatch: boolean; orders: any[] }> = new Map();
+    for (const o of orderList) {
+      const groupKey = o.cartOrderId
+        ? `cart-${o.cartOrderId}`
+        : o.batchRef
+        ? `batch-${o.batchRef}`
+        : `single-${o.id}`;
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
+          key: groupKey,
+          isBatch: !!(o.cartOrderId || o.batchRef),
+          orders: [],
+        });
+      }
+      groups.get(groupKey)!.orders.push(o);
+    }
+    return Array.from(groups.values());
+  };
+
   const activeOrders = (orders ?? []).filter(o => !["completed", "cancelled"].includes(o.orderStatus));
   const pastOrders = (orders ?? []).filter(o => ["completed", "cancelled"].includes(o.orderStatus));
+  const activeGroups = groupOrders(activeOrders);
+  const pastGroups = groupOrders(pastOrders);
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -840,7 +916,7 @@ export default function Orders() {
             </div>
             <div className="text-center md:text-left pb-1 flex-1">
               <h1 className="text-2xl md:text-3xl font-bold text-white">我的訂單</h1>
-              <p className="text-white/70 text-sm mt-1">共 {orders?.length ?? 0} 筆訂單</p>
+              <p className="text-white/70 text-sm mt-1">共 {orders?.length ?? 0} 筆訂單（{activeGroups.length + pastGroups.length} 組）</p>
             </div>
             <Link href="/marketplace">
               <Button size="sm" className="font-bold" style={{ background: "#FEDD00", color: "#06038d" }}>
@@ -880,7 +956,7 @@ export default function Orders() {
                       <CreditCard className="w-4 h-4" />進行中的訂單（{activeOrders.length}）
                     </h2>
                     <div className="space-y-3">
-                      {activeOrders.map(order => <OrderCard key={order.id} order={order} highlight={!!highlightOrderNo && order.orderNo === highlightOrderNo} />)}
+                      {activeGroups.map(group => <BatchOrderGroup key={group.key} group={group} highlightOrderNo={highlightOrderNo} />)}
                     </div>
                   </section>
                 )}
@@ -890,7 +966,7 @@ export default function Orders() {
                       <CheckCircle className="w-4 h-4" />歷史訂單（{pastOrders.length}）
                     </h2>
                     <div className="space-y-3">
-                      {pastOrders.map(order => <OrderCard key={order.id} order={order} highlight={!!highlightOrderNo && order.orderNo === highlightOrderNo} />)}
+                      {pastGroups.map(group => <BatchOrderGroup key={group.key} group={group} highlightOrderNo={highlightOrderNo} />)}
                     </div>
                   </section>
                 )}

@@ -869,6 +869,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   stripeSessionId: varchar("stripeSessionId", { length: 200 }),
   trackingNo: varchar("trackingNo", { length: 100 }),
   batchRef: varchar("batchRef", { length: 100 }), // Groups multiple orders from same cart checkout (e.g. BATCH-20240101-001)
+  cartOrderId: int("cartOrderId"), // P1: FK to cartOrders (null for legacy orders pre-P1)
 }, (table) => ({
   orderNoIdx: index("mo_orderNo_idx").on(table.orderNo),
   buyerIdIdx: index("mo_buyerId_idx").on(table.buyerId),
@@ -877,6 +878,36 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
 }));
 export type MarketplaceOrder = typeof marketplaceOrders.$inferSelect;
 export type InsertMarketplaceOrder = typeof marketplaceOrders.$inferInsert;
+
+/**
+ * Cart Orders - P1 Master order grouping multiple sub-orders from one checkout
+ * One cart order = one Stripe Checkout Session = one payment
+ * stripeChargeId is critical for Stripe Connect Transfers (source_transaction)
+ */
+export const cartOrders = mysqlTable("cartOrders", {
+  id: int("id").autoincrement().primaryKey(),
+  buyerId: int("buyerId").notNull(), // FK to users
+  totalSubtotalHkd: decimal("totalSubtotalHkd", { precision: 10, scale: 2 }).notNull(),
+  totalPlatformFeeHkd: decimal("totalPlatformFeeHkd", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  totalSellerReceivableHkd: decimal("totalSellerReceivableHkd", { precision: 10, scale: 2 }).notNull(),
+  hasSellerItems: boolean("hasSellerItems").default(false).notNull(), // true if any sub-order is from a C2C seller
+  availablePaymentMethods: varchar("availablePaymentMethods", { length: 50 }).notNull().default("stripe,alipay_hk"), // CSV: "stripe" or "stripe,alipay_hk"
+  paymentRestrictionReason: text("paymentRestrictionReason"), // Human-readable reason shown to buyer
+  // Stripe identifiers
+  stripeCheckoutSessionId: varchar("stripeCheckoutSessionId", { length: 200 }),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 200 }),
+  stripeChargeId: varchar("stripeChargeId", { length: 200 }), // CRITICAL: needed as source_transaction for Stripe Transfers
+  // Payment status of the master order
+  paymentStatus: mysqlEnum("paymentStatus", ["pending", "succeeded", "failed", "refunded"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+}, (table) => ({
+  buyerIdIdx: index("co_buyerId_idx").on(table.buyerId),
+  stripeSessionIdx: index("co_stripeSession_idx").on(table.stripeCheckoutSessionId),
+  paymentStatusIdx: index("co_paymentStatus_idx").on(table.paymentStatus),
+}));
+export type CartOrder = typeof cartOrders.$inferSelect;
+export type InsertCartOrder = typeof cartOrders.$inferInsert;
 
 /**
  * Marketplace Order Items - line items for each order

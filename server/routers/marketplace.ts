@@ -25,6 +25,8 @@ import { getPublicListings, getListingById, createListing, updateListing,
   reserveListingStock,
   restoreListingStock,
   getSystemSetting,
+  // P1: Cart Orders (Master order)
+  createCartOrder, getCartOrderById, getCartOrderByStripeSession, updateCartOrder,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
@@ -190,11 +192,18 @@ export const marketplaceRouter = router({
       const platformFee = calcPlatformFeeWithRate(listing.sellerType, subtotal, feeRate);
       const total = subtotal; // Buyer pays listing price only, no extra fees
 
+      // P0: Payment method restriction — C2C seller items cannot use Alipay HK
+      if (input.paymentMethod === "alipay_hk" && listing.sellerType === "seller") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "此商品為個人賣家商品，僅支援 Stripe 信用卡付款。支付寶 HK 僅適用於本公司自營商品。",
+        });
+      }
       // Stripe requires minimum HKD 4.00 for card payments
       if (input.paymentMethod === "stripe" && total < 4.00) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: `此商品金額 HKD ${total.toFixed(2)} 低於 Stripe 最低付款金額 HKD 4.00，請改用支付寶 HK 付款。`,
+          message: `此商品金額 HKD ${total.toFixed(2)} 低於 Stripe 最低付款金額 HKD 4.00。`,
         });
       }
 
@@ -391,6 +400,13 @@ export const marketplaceRouter = router({
       if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "無權限" });
       if (order.orderStatus !== "pending_payment") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不需要付款" });
+      // P0: Payment method restriction — C2C seller items cannot use Alipay HK
+      if (order.sellerType === "seller") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "此訂單包含個人賣家商品，僅支援 Stripe 信用卡付款，無法切換為支付寶 HK。",
+        });
+      }
       // Cancel existing Stripe Checkout Session to prevent late payment on abandoned session
       if (order.stripeSessionId) {
         try {
@@ -434,6 +450,14 @@ export const marketplaceRouter = router({
       if (order.orderStatus !== "pending_payment") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已付款或不需要付款" });
 
       const totalHkd = parseFloat(order.subtotalHkd as string);
+
+      // P0: Payment method restriction — C2C seller items cannot use Alipay HK
+      if (input.paymentMethod === "alipay_hk" && order.sellerType === "seller") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "此商品為個人賣家商品，僅支援 Stripe 信用卡付款。支付寶 HK 僅適用於本公司自營商品。",
+        });
+      }
 
       // Alipay HK: update order payment method and return static link
       if (input.paymentMethod === "alipay_hk") {
@@ -558,55 +582,21 @@ export const marketplaceRouter = router({
         buyerConfirmedAt: new Date(),
         payoutStatus: "processing",
       });
-      // Handle payout for C2C orders - Separate Charges and Transfers mode
-      // Funds were held in platform account; now transfer to seller after buyer confirms receipt
-      // NOTE: order.sellerId = sellerProfiles.id (NOT users.id)
+      // P2: Handle payout for C2C orders via executeSellerPayout (centralized logic)
       let sellerUserIdForNotify: number | null = null;
       if (order.sellerType === "seller" && order.sellerId) {
-        const sellerProfile = await getSellerProfileById(order.sellerId); // FIX: use getSellerProfileById, not ByUserId
+        const sellerProfile = await getSellerProfileById(order.sellerId);
         sellerUserIdForNotify = sellerProfile?.userId ?? null;
-        if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
-          if (order.stripePaymentIntentId) {
-            try {
-              const Stripe = (await import("stripe")).default;
-              const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-              // Separate Charges and Transfers: manually transfer seller's receivable amount
-              const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
-              // source_transaction requires Charge ID (ch_xxx), NOT Payment Intent ID (pi_xxx)
-              // Retrieve the latest charge from the PaymentIntent
-              const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, { expand: ["latest_charge"] });
-              const chargeId = typeof pi.latest_charge === "string" ? pi.latest_charge : (pi.latest_charge as any)?.id;
-              const transferPayload: any = {
-                amount: receivable,
-                currency: "hkd",
-                destination: sellerProfile.stripeConnectId,
-                metadata: { order_no: order.orderNo, order_id: order.id.toString(), trigger: "buyer_confirmed" },
-              };
-              if (chargeId) transferPayload.source_transaction = chargeId;
-              const transfer = await stripe.transfers.create(transferPayload);
-              await updateMarketplaceOrder(input.orderId, {
-                payoutStatus: "paid",
-                stripeTransferId: transfer.id,
-              });
-              console.log(`[Payout] Transfer ${transfer.id} (HKD ${(receivable/100).toFixed(2)}) to seller ${sellerProfile.stripeConnectId} for order ${order.orderNo}`);
-              // Notify seller of payout (use sellerProfile.userId, NOT order.sellerId)
-              if (sellerUserIdForNotify) {
-                await createNotification({
-                  userId: sellerUserIdForNotify,
-                  type: "trade",
-                  title: "款項已放出 💰",
-                  body: `訂單 ${order.orderNo} 買家已確認收貨，HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
-                  linkUrl: "/seller",
-                }).catch(() => {});
-              }
-            } catch (err: any) {
-              console.error("[Payout] Stripe transfer failed:", err);
-              await updateMarketplaceOrder(input.orderId, {
-                payoutStatus: "failed",
-                stripeTransferError: err.message,
-              });
-            }
+        try {
+          const { executeSellerPayout } = await import("../sellerPayout");
+          const payoutResult = await executeSellerPayout(input.orderId);
+          if (payoutResult.success) {
+            console.log(`[Payout] P2 Transfer ${payoutResult.transferId} (HKD ${payoutResult.amountHkd}) for order ${order.orderNo}`);
+          } else {
+            console.error(`[Payout] P2 failed for order ${order.orderNo}: ${payoutResult.error}`);
           }
+        } catch (payoutErr: any) {
+          console.error("[Payout] executeSellerPayout threw:", payoutErr.message);
         }
       }
       // Send completed email to buyer
@@ -963,28 +953,18 @@ export const marketplaceRouter = router({
         buyerConfirmedAt: new Date(),
         payoutStatus: 'processing',
       });
-      // Handle payout for C2C orders (same as confirmReceipt)
+      // P2: Handle payout for C2C meetup orders via executeSellerPayout (centralized logic)
       if (order.sellerType === 'seller' && order.sellerId) {
-        if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === 'active' && order.stripePaymentIntentId) {
-          try {
-            const Stripe = (await import('stripe')).default;
-            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
-            const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
-            const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, { expand: ['latest_charge'] });
-            const chargeId = typeof pi.latest_charge === 'string' ? pi.latest_charge : (pi.latest_charge as any)?.id;
-            const transferPayload: any = {
-              amount: receivable,
-              currency: 'hkd',
-              destination: sellerProfile.stripeConnectId,
-              metadata: { order_no: order.orderNo, order_id: order.id.toString(), trigger: 'meetup_confirmed' },
-            };
-            if (chargeId) transferPayload.source_transaction = chargeId;
-            const transfer = await stripe.transfers.create(transferPayload);
-            await updateMarketplaceOrder(input.orderId, { payoutStatus: 'paid', stripeTransferId: transfer.id });
-          } catch (err: any) {
-            console.error('[Payout] Meetup Stripe transfer failed:', err);
-            await updateMarketplaceOrder(input.orderId, { payoutStatus: 'failed', stripeTransferError: err.message });
+        try {
+          const { executeSellerPayout } = await import('../sellerPayout');
+          const payoutResult = await executeSellerPayout(input.orderId);
+          if (payoutResult.success) {
+            console.log(`[Payout] P2 Meetup Transfer ${payoutResult.transferId} (HKD ${payoutResult.amountHkd}) for order ${order.orderNo}`);
+          } else {
+            console.error(`[Payout] P2 Meetup payout failed for order ${order.orderNo}: ${payoutResult.error}`);
           }
+        } catch (payoutErr: any) {
+          console.error('[Payout] executeSellerPayout (meetup) threw:', payoutErr.message);
         }
       }
       // Notify buyer that order is completed
@@ -1663,31 +1643,18 @@ export const marketplaceRouter = router({
           linkUrl: `/orders/${order.orderNo}`,
         }).catch(err => console.warn("[Admin] Failed to notify buyer of status change:", err));
       }
-      // If admin manually completes a C2C order, trigger Stripe payout (Bug 14 fix)
+      // P2: If admin manually completes a C2C order, trigger Stripe payout via executeSellerPayout
       if (input.orderStatus === "completed" && order.sellerType === "seller" && order.sellerId) {
-        const adminCompleteSellerProf = await getSellerProfileById(order.sellerId);
-        if (adminCompleteSellerProf?.stripeConnectId && adminCompleteSellerProf.stripeConnectStatus === "active" && order.stripePaymentIntentId) {
-          try {
-            const Stripe = (await import("stripe")).default;
-            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-            const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
-            // source_transaction requires Charge ID (ch_xxx), NOT Payment Intent ID (pi_xxx)
-            const adminPi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, { expand: ["latest_charge"] });
-            const adminChargeId = typeof adminPi.latest_charge === "string" ? adminPi.latest_charge : (adminPi.latest_charge as any)?.id;
-            const adminTransferPayload: any = {
-              amount: receivable,
-              currency: "hkd",
-              destination: adminCompleteSellerProf.stripeConnectId,
-              metadata: { order_no: order.orderNo, trigger: "admin_completed" },
-            };
-            if (adminChargeId) adminTransferPayload.source_transaction = adminChargeId;
-            const transfer = await stripe.transfers.create(adminTransferPayload);
-            await updateMarketplaceOrder(input.orderId, { payoutStatus: "paid", stripeTransferId: transfer.id });
-            console.log(`[Admin] Payout transfer ${transfer.id} for order ${order.orderNo}`);
-          } catch (err: any) {
-            console.error("[Admin] Stripe transfer failed on complete:", err.message);
-            await updateMarketplaceOrder(input.orderId, { payoutStatus: "failed", stripeTransferError: err.message });
+        try {
+          const { executeSellerPayout } = await import("../sellerPayout");
+          const payoutResult = await executeSellerPayout(input.orderId);
+          if (payoutResult.success) {
+            console.log(`[Admin] P2 Payout transfer ${payoutResult.transferId} for order ${order.orderNo}, HKD ${payoutResult.amountHkd}`);
+          } else {
+            console.error(`[Admin] P2 Payout failed for order ${order.orderNo}: ${payoutResult.error} (retryable: ${payoutResult.retryable})`);
           }
+        } catch (payoutErr: any) {
+          console.error("[Admin] executeSellerPayout threw:", payoutErr.message);
         }
       }
       // Send email for key status changes
@@ -2307,7 +2274,28 @@ All three checks must pass for verified to be true. Respond with JSON only match
         orderItems.push({ listing, effectivePrice, offerId: item.offerId, offerRecord });
       }
 
-      // Step 2: Create all orders in DB with pending_payment status
+      // Step 2: Compute totals and determine payment restrictions (P1)
+      const totalAmount = orderItems.reduce((sum, o) => sum + o.effectivePrice, 0);
+      const totalPlatformFee = orderItems.reduce((sum, { listing, effectivePrice }) =>
+        sum + calcPlatformFeeWithRate(listing.sellerType, effectivePrice, feeRate), 0);
+      const totalSellerReceivable = totalAmount - totalPlatformFee;
+      const hasSellerItems = orderItems.some(({ listing }) => listing.sellerType === "seller");
+
+      // Step 3: Create cartOrders Master record (P1)
+      const cartOrder = await createCartOrder({
+        buyerId: ctx.user.id,
+        totalSubtotalHkd: totalAmount.toFixed(2),
+        totalPlatformFeeHkd: totalPlatformFee.toFixed(2),
+        totalSellerReceivableHkd: totalSellerReceivable.toFixed(2),
+        hasSellerItems,
+        availablePaymentMethods: hasSellerItems ? "stripe" : "stripe,alipay_hk",
+        paymentRestrictionReason: hasSellerItems
+          ? "購物車包含個人賣家商品，僅支援 Stripe 信用卡付款"
+          : null,
+        paymentStatus: "pending",
+      });
+
+      // Step 4: Create all sub-orders in DB with pending_payment status
       const batchRef = orderItems.length > 1 ? `BATCH-${Date.now()}-${ctx.user.id}` : undefined;
       const createdOrders: Array<{ orderNo: string; orderId: number; listingId: number; effectivePrice: number }> = [];
       for (const { listing, effectivePrice, offerId } of orderItems) {
@@ -2335,12 +2323,12 @@ All three checks must pass for verified to be true. Respond with JSON only match
           shippingMethod: (input.shippingMethod ?? null) as any,
           buyerPhone: input.buyerPhone || null,
           batchRef: batchRef ?? null,
+          cartOrderId: cartOrder?.id ?? null, // P1: Link to master cart order
         } as any);
         createdOrders.push({ orderNo, orderId: newOrder.id, listingId: listing.id, effectivePrice });
       }
 
-      // Step 3: Create a single Stripe Checkout Session for all orders
-      const totalAmount = createdOrders.reduce((sum, o) => sum + o.effectivePrice, 0);
+      // Step 5: Create a single Stripe Checkout Session for all orders
       const batchOrderNos = createdOrders.map(o => o.orderNo).join(",");
       const firstOrderNo = createdOrders[0].orderNo;
 
@@ -2365,16 +2353,24 @@ All three checks must pass for verified to be true. Respond with JSON only match
           batch_order_nos: batchOrderNos,
           order_no: firstOrderNo, // backward compat
           total_amount: totalAmount.toFixed(2),
+          cart_order_id: cartOrder?.id?.toString() ?? "", // P1: Master order reference
         },
         payment_intent_data: {
           metadata: {
             batch_order_nos: batchOrderNos,
             buyerId: ctx.user.id.toString(),
+            cart_order_id: cartOrder?.id?.toString() ?? "", // P1: for Transfer source_transaction lookup
           },
         },
       });
 
-      // Step 4: Update all orders with Stripe session ID
+      // Step 6: Update cartOrder and all sub-orders with Stripe session ID
+      if (cartOrder) {
+        await updateCartOrder(cartOrder.id, {
+          stripeCheckoutSessionId: session.id,
+          stripePaymentIntentId: session.payment_intent as string ?? null,
+        });
+      }
       for (const { orderId } of createdOrders) {
         await updateMarketplaceOrder(orderId, {
           stripeSessionId: session.id,
@@ -2383,8 +2379,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
         });
       }
 
-      console.log(`[createBatchStripeOrder] Created ${createdOrders.length} orders, session ${session.id}, total HKD ${totalAmount}`);
-      return { checkoutUrl: session.url!, orderNos: createdOrders.map(o => o.orderNo), totalAmount };
+      console.log(`[createBatchStripeOrder] Created cartOrder#${cartOrder?.id}, ${createdOrders.length} sub-orders, session ${session.id}, total HKD ${totalAmount}`);
+      return { checkoutUrl: session.url!, orderNos: createdOrders.map(o => o.orderNo), totalAmount, cartOrderId: cartOrder?.id };
     }),
 
   // ============================================================
@@ -2411,6 +2407,26 @@ All three checks must pass for verified to be true. Respond with JSON only match
     }))
     .mutation(async ({ ctx, input }) => {
       const feeRate = await getPlatformFeeRate();
+
+      // P0: Pre-flight check — validate all listings exist and check for seller items
+      // We do a pre-check pass to validate payment method before creating any orders
+      const preCheckListings: Array<{ listingId: number; sellerType: string }> = [];
+      for (const item of input.items) {
+        const listing = await getListingById(item.listingId);
+        if (!listing || listing.status !== "active" || listing.quantity < 1) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing?.title ?? item.listingId}」不存在或已售出` });
+        }
+        preCheckListings.push({ listingId: item.listingId, sellerType: listing.sellerType });
+      }
+      // P0: Reject Alipay HK if any item is from a C2C seller
+      const hasSellerItems = preCheckListings.some(l => l.sellerType === "seller");
+      if (hasSellerItems) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "購物車包含個人賣家商品，僅支援 Stripe 信用卡付款。支付寶 HK 僅適用於全部為本公司自營商品的訂單。",
+        });
+      }
+
       const createdOrders: Array<{ orderNo: string; listingTitle: string; effectivePrice: number }> = [];
       let totalAmount = 0;
       const batchRef = input.items.length > 1 ? `BATCH-${Date.now()}-${ctx.user.id}` : undefined;

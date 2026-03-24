@@ -94,6 +94,31 @@ async function startServer() {
           const orderNoList = batchOrderNos.split(",").map((s: string) => s.trim()).filter(Boolean);
           console.log(`[Webhook] Processing batch orders: ${orderNoList.join(", ")}`);
           const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null;
+
+          // P1/P2: Update cartOrders master record with stripeChargeId
+          const cartOrderId = session.metadata?.cart_order_id;
+          if (cartOrderId) {
+            try {
+              const { updateCartOrder } = await import("../db");
+              // Retrieve the charge ID from the PaymentIntent (needed for Stripe Connect Transfers)
+              let chargeId: string | null = null;
+              if (paymentIntentId) {
+                const Stripe = (await import("stripe")).default;
+                const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+                const pi = await stripeClient.paymentIntents.retrieve(paymentIntentId);
+                chargeId = typeof (pi as any).latest_charge === "string" ? (pi as any).latest_charge : null;
+              }
+              await updateCartOrder(parseInt(cartOrderId), {
+                paymentStatus: "succeeded",
+                stripePaymentIntentId: paymentIntentId ?? undefined,
+                stripeChargeId: chargeId ?? undefined,
+              });
+              console.log(`[Webhook] cartOrder#${cartOrderId} updated: paymentStatus=succeeded, chargeId=${chargeId}`);
+            } catch (cartErr: any) {
+              console.warn(`[Webhook] Failed to update cartOrder#${cartOrderId}:`, cartErr.message);
+            }
+          }
+
           for (const batchOrderNo of orderNoList) {
             try {
               const batchOrder = await getMarketplaceOrderByNo(batchOrderNo);
@@ -193,6 +218,29 @@ async function startServer() {
           return res.json({ received: true });
         }
         if (order && order.orderStatus === "pending_payment") {
+          // P1/P2: Update cartOrders master record for single-item checkout
+          const singleCartOrderId = session.metadata?.cart_order_id;
+          if (singleCartOrderId) {
+            try {
+              const { updateCartOrder } = await import("../db");
+              let chargeId: string | null = null;
+              const singlePiId = typeof session.payment_intent === "string" ? session.payment_intent : null;
+              if (singlePiId) {
+                const Stripe = (await import("stripe")).default;
+                const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+                const pi = await stripeClient.paymentIntents.retrieve(singlePiId);
+                chargeId = typeof (pi as any).latest_charge === "string" ? (pi as any).latest_charge : null;
+              }
+              await updateCartOrder(parseInt(singleCartOrderId), {
+                paymentStatus: "succeeded",
+                stripePaymentIntentId: singlePiId ?? undefined,
+                stripeChargeId: chargeId ?? undefined,
+              });
+              console.log(`[Webhook] cartOrder#${singleCartOrderId} (single) updated: chargeId=${chargeId}`);
+            } catch (cartSingleErr: any) {
+              console.warn(`[Webhook] Failed to update single cartOrder#${singleCartOrderId}:`, cartSingleErr.message);
+            }
+          }
           await updateMarketplaceOrder(order.id, {
             paymentStatus: "paid",
             orderStatus: "payment_received",
