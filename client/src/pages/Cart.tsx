@@ -406,9 +406,9 @@ export default function Cart() {
                 </div>
                 <p className="text-xs text-gray-400 mt-1">（不含運費）</p>
 
-                <div className="mt-4 flex flex-col items-center gap-2">
+                <div className="mt-4 space-y-2">
                   <Button
-                    className="w-full max-w-xs mx-auto block bg-[#06038D] text-white hover:bg-[#06038D]/90 font-bold"
+                    className="w-full bg-[#06038D] text-white hover:bg-[#06038D]/90 font-bold flex items-center justify-center"
                     disabled={activeItems.length === 0}
                     onClick={() => setShowCheckout(true)}
                   >
@@ -417,7 +417,7 @@ export default function Cart() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="w-full max-w-xs mx-auto block border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5 font-semibold bg-white"
+                    className="w-full border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5 font-semibold bg-white flex items-center justify-center"
                     onClick={() => setLocation("/marketplace")}
                   >
                     <ArrowLeft className="w-4 h-4 mr-1.5" />

@@ -5842,4 +5842,4 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 
 - [x] 購物車頁面「前往結帳」和「繼續購物」按鈕在所有設備下置中顯示
 - [x] 主頁「開始探索」和「前往市集」按鈕並排一行
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
