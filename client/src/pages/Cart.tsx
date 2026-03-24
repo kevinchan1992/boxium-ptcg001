@@ -827,7 +827,7 @@ function CheckoutDialog({
         setBatchProgress(null);
         onClose();
         toast.success(`已建立 ${result.orderNos.length} 個訂單，正在跳轉至 Stripe 付款頁面...`);
-        window.open(result.checkoutUrl, "_blank");
+        window.location.href = result.checkoutUrl;
       } catch {
         setBatchProgress(null);
         // Error already shown by mutation onError

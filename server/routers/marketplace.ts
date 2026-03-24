@@ -269,7 +269,7 @@ export const marketplaceRouter = router({
         }
       }
       const session = await stripeClient.checkout.sessions.create({
-        payment_method_types: ["card"],
+        payment_method_types: ["card", "alipay"],
         line_items: [{
           price_data: {
             currency: "hkd",
@@ -350,7 +350,7 @@ export const marketplaceRouter = router({
       const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
       const totalHkd = parseFloat(order.subtotalHkd as string);
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
+        payment_method_types: ["card", "alipay"],
         line_items: [{
           price_data: {
             currency: "hkd",
@@ -479,7 +479,7 @@ export const marketplaceRouter = router({
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
       const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
+        payment_method_types: ["card", "alipay"],
         line_items: [{
           price_data: {
             currency: "hkd",
@@ -1914,7 +1914,7 @@ export const marketplaceRouter = router({
         }
         // Session expired: create a new Stripe session and update the existing order
         const newSession = await stripe.checkout.sessions.create({
-          payment_method_types: ["card"],
+          payment_method_types: ["card", "alipay"],
           line_items: [{
             price_data: {
               currency: "hkd",
@@ -1971,7 +1971,7 @@ export const marketplaceRouter = router({
       }
       // Create Stripe Checkout Session
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
+        payment_method_types: ["card", "alipay"],
         line_items: [{
           price_data: {
             currency: "hkd",
@@ -2354,7 +2354,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }));
 
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
+        payment_method_types: ["card", "alipay"],
         line_items: lineItems,
         mode: "payment",
         success_url: `${ctx.req.headers.origin}/cart?success=true&orders=${encodeURIComponent(batchOrderNos)}`,
@@ -3453,7 +3453,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         }
       }
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
+        payment_method_types: ["card", "alipay"],
         line_items: [{ price_data: { currency: "hkd", product_data: { name: listing.title }, unit_amount: Math.round(offerPrice * 100) }, quantity: 1 }], // Buyer pays offer price only
         mode: "payment",
         customer_email: undefined,
