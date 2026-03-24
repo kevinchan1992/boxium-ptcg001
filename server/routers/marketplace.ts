@@ -1688,23 +1688,81 @@ export const marketplaceRouter = router({
         updates.alipayProofImageUrl = null;
         updates.aiVerificationResult = null;
       }
-      await updateMarketplaceOrder(input.orderId, updates);
-      // When cancelling, restore listing stock (restoreListingStock handles status + quantity atomically)
-      if (input.orderStatus === "cancelled" && order.listingId) {
-        try {
-          await restoreListingStock(order.listingId, 1);
-          console.log(`[AdminCancel] Restored listing ${order.listingId} stock for cancelled order ${order.orderNo}`);
-        } catch (relistErr: any) {
-          console.warn("[AdminCancel] Failed to restore listing stock:", relistErr.message);
+
+      // ── For cancellation: find all pending_payment orders in the same batch ────────────
+      // Admin cancelling one order in a batch should cancel all pending_payment siblings.
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+      let batchOrderIds: number[] = [input.orderId];
+      if (input.orderStatus === "cancelled" && order.batchRef) {
+        const batchOrders = await db.select({ id: marketplaceOrders.id, orderNo: marketplaceOrders.orderNo })
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.batchRef, order.batchRef),
+              eq(marketplaceOrders.orderStatus, 'pending_payment')
+            )
+          );
+        batchOrderIds = batchOrders.map(o => o.id);
+        if (batchOrderIds.length > 1) {
+          console.log(`[AdminCancel] batchRef=${order.batchRef}, cancelling ${batchOrderIds.length} orders: ${batchOrders.map(o => o.orderNo).join(', ')}`);
         }
       }
+
+      // ── Apply updates (for non-cancel, only the target order; for cancel, all batch orders) ──
+      if (input.orderStatus === "cancelled" && batchOrderIds.length > 1) {
+        // Batch cancel: update all orders in the batch
+        for (const batchOrderId of batchOrderIds) {
+          const targetOrder = batchOrderId === input.orderId ? order : await getMarketplaceOrderById(batchOrderId);
+          if (!targetOrder) continue;
+          await updateMarketplaceOrder(batchOrderId, {
+            orderStatus: "cancelled",
+            paymentStatus: "cancelled",
+            alipayProofImageUrl: null,
+            aiVerificationResult: null,
+          });
+          if (targetOrder.listingId) {
+            try {
+              await restoreListingStock(targetOrder.listingId, targetOrder.quantity ?? 1);
+              console.log(`[AdminCancel] Restored listing ${targetOrder.listingId} stock for order ${targetOrder.orderNo}`);
+            } catch (relistErr: any) {
+              console.warn(`[AdminCancel] Failed to restore listing stock for order ${targetOrder.orderNo}:`, relistErr.message);
+            }
+          }
+          // Cancel associated accepted offers
+          try {
+            await db.update(offers)
+              .set({ status: "cancelled", respondedAt: new Date() })
+              .where(and(eq(offers.orderId, batchOrderId), eq(offers.status, "accepted")));
+          } catch (offerErr: any) {
+            console.warn(`[AdminCancel] Failed to cancel offer for order ${batchOrderId}:`, offerErr.message);
+          }
+        }
+      } else {
+        // Single order update (non-cancel or no batchRef)
+        await updateMarketplaceOrder(input.orderId, updates);
+        // When cancelling, restore listing stock
+        if (input.orderStatus === "cancelled" && order.listingId) {
+          try {
+            await restoreListingStock(order.listingId, order.quantity ?? 1);
+            console.log(`[AdminCancel] Restored listing ${order.listingId} stock for cancelled order ${order.orderNo}`);
+          } catch (relistErr: any) {
+            console.warn("[AdminCancel] Failed to restore listing stock:", relistErr.message);
+          }
+        }
+      }
+
+      const cancelledCount = input.orderStatus === "cancelled" ? batchOrderIds.length : 1;
+      const batchCancelNote = cancelledCount > 1 ? `（批次取消，共 ${cancelledCount} 筆）` : '';
+
       // Notify buyer of status change
       const statusMessages: Record<string, { title: string; content: string }> = {
         processing: { title: "訂單處理中 ⏳", content: `訂單 ${order.orderNo} 已進入處理中，賣家正在準備發貨。` },
         shipped: { title: "訂單已出貨 📦", content: `訂單 ${order.orderNo} 已出貨${input.trackingNumber ? `，物流追蹤號：${input.trackingNumber}` : ""}${input.shippingMethod ? `（${input.shippingMethod}）` : ""}，請注意查收。` },
         delivered: { title: "訂單已送達 ✅", content: `訂單 ${order.orderNo} 已送達，如有問題請在 14 天內提出申請。` },
         completed: { title: "訂單已完成 🎉", content: `訂單 ${order.orderNo} 已完成，感謝您的支持！` },
-        cancelled: { title: "訂單已取消 ❌", content: `訂單 ${order.orderNo} 已取消。${input.note ? `原因：${input.note}` : ""}` },
+        cancelled: { title: "訂單已取消 ❌", content: `訂單 ${order.orderNo} 已取消${batchCancelNote}。${input.note ? `原因：${input.note}` : ""}` },
         disputed: { title: "訂單爭議中 ⚠️", content: `訂單 ${order.orderNo} 已進入爭議處理。我們將盡快處理，請耐心等候。` },
       };
       const msg = statusMessages[input.orderStatus];
@@ -2975,19 +3033,34 @@ All three checks must pass for verified to be true. Respond with JSON only match
         content: `訂單 ${order.orderNo} 已由買家取消${batchNote}。${input.reason ? `原因：${input.reason}` : ""}`,
       }).catch(() => {});
 
-      // ── Send cancellation email (for the primary order) ───────────────────────
+      // ── Send cancellation email for EACH order in the batch ────────────────────
+      // Each order gets its own email so the buyer knows exactly which items were cancelled.
       try {
         const { sendOrderEmail, buildOrderCancelledEmail, getOrderEmailData } = await import("../emailService");
-        const emailData = await getOrderEmailData(order);
-        const { subject, html } = buildOrderCancelledEmail({
-          orderNo: cancelledCount > 1 ? `${order.orderNo} 等 ${cancelledCount} 筆` : order.orderNo,
-          itemName: emailData.itemName,
-          priceHkd: emailData.priceHkd,
-          note: input.reason ?? "買家主動取消",
-        });
-        await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `order_cancelled_buyer_${order.id}` });
+        for (const orderId of batchOrderIds) {
+          const targetOrder = orderId === input.orderId ? order : await getMarketplaceOrderById(orderId);
+          if (!targetOrder) continue;
+          try {
+            const emailData = await getOrderEmailData(targetOrder);
+            const { subject, html } = buildOrderCancelledEmail({
+              orderNo: targetOrder.orderNo,
+              itemName: emailData.itemName,
+              priceHkd: emailData.priceHkd,
+              note: input.reason ?? "買家主動取消",
+            });
+            await sendOrderEmail({
+              userId: targetOrder.buyerId,
+              subject,
+              html,
+              emailType: 'order',
+              dedupeKey: `order_cancelled_buyer_${targetOrder.id}`,
+            });
+          } catch (singleEmailErr: any) {
+            console.warn(`[BuyerCancel] Email failed for order ${targetOrder.orderNo}:`, singleEmailErr.message);
+          }
+        }
       } catch (emailErr: any) {
-        console.warn("[BuyerCancel] Email failed:", emailErr.message);
+        console.warn("[BuyerCancel] Email batch failed:", emailErr.message);
       }
 
       return { success: true, cancelledCount };

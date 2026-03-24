@@ -6083,3 +6083,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 後端：批次取消時恢復所有關聯商品的庫存狀態（restoreListingStock）
 - [x] 後端：批次取消時通知管理員（含批次筆數）
 - [x] 9 項測試全部通過（batch-cancel-bugfix.test.ts）
+
+---
+## 🔔 批次訂單三項優化（2026-03-24 第四批）
+- [x] 後端：buyerCancelOrder 批次取消時為每筆子訂單分別發送取消 Email（dedupeKey 以各自 orderId 區分）
+- [x] 前端：Profile.tsx BatchOrderCard 加入 isAllCancelled 判斷，顯示「此批次已全部取消」標籤
+- [x] 後端：adminUpdateOrderStatus 取消時加入 batchRef 批次取消邏輯（恢復庫存 + 取消 offer）
+- [x] 15 項測試全部通過（batch-order-enhancements.test.ts）

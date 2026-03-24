@@ -1373,6 +1373,8 @@ function BatchOrderCard({ orders }: { orders: any[] }) {
     : firstOrder.orderStatus;
   const isPending = batchStatus === 'pending_payment';
   const isWaitingShipment = ['paid_held', 'payment_received', 'processing'].includes(batchStatus);
+  // Check if ALL orders in the batch are cancelled
+  const isAllCancelled = orders.length > 0 && orders.every(o => o.orderStatus === 'cancelled');
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
@@ -1414,7 +1416,7 @@ function BatchOrderCard({ orders }: { orders: any[] }) {
         <p className="text-xs text-gray-500">{firstOrder.paymentMethod?.replace('_', ' ')} · {new Date(firstOrder.createdAt).toLocaleDateString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
       {/* Action buttons */}
-      {(isPending || isWaitingShipment) && (
+      {(isPending || isWaitingShipment || isAllCancelled) && (
         <div className="px-4 pb-3 flex flex-wrap items-center gap-2">
           {isPending && (
             <Link href={`/orders/${firstOrder.orderNo}`}>
@@ -1426,6 +1428,11 @@ function BatchOrderCard({ orders }: { orders: any[] }) {
           {isWaitingShipment && (
             <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
               <Package className="w-3.5 h-3.5" />付款成功，等待賣家出貨
+            </span>
+          )}
+          {isAllCancelled && (
+            <span className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+              <span className="text-sm">❌</span>此批次已全部取消，如需購買請重新下單
             </span>
           )}
         </div>
