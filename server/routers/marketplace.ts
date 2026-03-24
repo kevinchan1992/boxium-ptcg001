@@ -27,6 +27,8 @@ import { getPublicListings, getListingById, createListing, updateListing,
   getSystemSetting,
   // P1: Cart Orders (Master order)
   createCartOrder, getCartOrderById, getCartOrderByStripeSession, updateCartOrder,
+  // Phase 5: Audit logs
+  createAuditLog, getAuditLogs,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
@@ -34,6 +36,12 @@ import { createNotification } from "../db/notifications";
 import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail, notifyAdmin } from "../emailService";
 import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs, cartItems } from "../../drizzle/schema_new";
 import { eq, and, isNotNull, isNull, or, desc, sql, inArray, like } from 'drizzle-orm';
+import Stripe from 'stripe';
+
+// Shared Stripe instance — avoids 14+ redundant dynamic imports
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
+}
 
 // Platform fee rate default (5% for C2C listings only) — overridden by systemSettings.platform_fee_rate
 const DEFAULT_PLATFORM_FEE_RATE = 0.05;
@@ -255,8 +263,7 @@ export const marketplaceRouter = router({
       }
 
       // For Stripe, create Checkout Session
-      const Stripe = (await import("stripe")).default;
-      const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const stripe = getStripe();
       const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
       // Build payment_intent_data - use Destination Charge for C2C listings with active Stripe Connect
       const paymentIntentData: any = {
@@ -277,7 +284,7 @@ export const marketplaceRouter = router({
           console.log(`[Checkout] Separate Charges mode for seller ${sellerProfile.stripeConnectId}. Funds held in platform until buyer confirms receipt. Buyer pays HKD ${total.toFixed(2)}, seller will receive HKD ${(subtotal - platformFee).toFixed(2)} after order completes.`);
         }
       }
-      const session = await stripeClient.checkout.sessions.create({
+      const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card", "alipay"],
         line_items: [{
           price_data: {
@@ -341,8 +348,7 @@ export const marketplaceRouter = router({
       // If existing Stripe session is still valid, retrieve it
       if (order.stripeSessionId) {
         try {
-          const Stripe = (await import("stripe")).default;
-          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+          const stripe = getStripe();
           const existingSession = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
           if (existingSession.status === "open" && existingSession.url) {
             return { checkoutUrl: existingSession.url };
@@ -354,8 +360,7 @@ export const marketplaceRouter = router({
       // Create a new Stripe checkout session
       const listing = await getListingById(order.listingId!);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const stripe = getStripe();
       const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
       const totalHkd = parseFloat(order.subtotalHkd as string);
       const session = await stripe.checkout.sessions.create({
@@ -410,8 +415,7 @@ export const marketplaceRouter = router({
       // Cancel existing Stripe Checkout Session to prevent late payment on abandoned session
       if (order.stripeSessionId) {
         try {
-          const Stripe = (await import("stripe")).default;
-          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+          const stripe = getStripe();
           await stripe.checkout.sessions.expire(order.stripeSessionId);
           console.log(`[SwitchToAlipay] Expired Stripe session ${order.stripeSessionId} for order ${order.orderNo}`);
         } catch (expireErr: any) {
@@ -485,8 +489,7 @@ export const marketplaceRouter = router({
       // Reuse existing valid session
       if (order.stripeSessionId) {
         try {
-          const Stripe = (await import("stripe")).default;
-          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+          const stripe = getStripe();
           const existingSession = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
           if (existingSession.status === "open" && existingSession.url) {
             return { paymentMethod: "stripe" as const, checkoutUrl: existingSession.url };
@@ -499,8 +502,7 @@ export const marketplaceRouter = router({
       // Create new Stripe Checkout Session
       const listing = await getListingById(order.listingId!);
       const listingTitle = listing?.title ?? offer.listingTitle ?? "出價商品";
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const stripe = getStripe();
       const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card", "alipay"],
@@ -574,6 +576,9 @@ export const marketplaceRouter = router({
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (order.orderStatus === "disputed") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "訂單正在爭議中，無法確認收貨。請等待爭議處理完畢。" });
+      }
       if (order.orderStatus !== "shipped" && order.orderStatus !== "delivered") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "訂單尚未出貨，無法確認收貨" });
       }
@@ -687,7 +692,22 @@ export const marketplaceRouter = router({
       const seller = await getSellerProfileByUserId(ctx.user.id);
       if (!seller) throw new TRPCError({ code: "FORBIDDEN", message: "請先申請成為賣家" });
       if (!seller.isActive) throw new TRPCError({ code: "FORBIDDEN", message: "賣家帳號尚未獲批准" });
+      // RC2: Seller suspension check
+      if ((seller as any).isSuspended) {
+        throw new TRPCError({ code: "FORBIDDEN", message: `您的賣家帳號已被凍結，無法上架商品。原因：${(seller as any).suspensionReason || '請聯繫客服'}` });
+      }
       if (seller.stripeConnectStatus !== "active") throw new TRPCError({ code: "FORBIDDEN", message: "請先完成 Stripe Connect 收款帳戶設定，才能上架商品" });
+
+      // RC3: Duplicate listing check — same card + same condition by same seller
+      if (input.cardId) {
+        const existingListings = await getPublicListings({ sellerId: seller.id, limit: 100, offset: 0 });
+        const duplicate = existingListings.listings.find(
+          (l: any) => l.cardId === input.cardId && l.condition === input.condition && ['active', 'pending_review'].includes(l.status)
+        );
+        if (duplicate) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `您已有同一卡片同品相的上架商品「${duplicate.title}」，請編輯現有商品而非重複上架` });
+        }
+      }
 
       const listing = await createListing({
         sellerType: "seller",
@@ -996,8 +1016,7 @@ export const marketplaceRouter = router({
     .mutation(async ({ ctx }) => {
       const profile = await getSellerProfileByUserId(ctx.user.id);
       if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "賣家資料不存在" });
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const stripe = getStripe();
       let connectId = profile.stripeConnectId;
       try {
         if (!connectId) {
@@ -1037,8 +1056,7 @@ export const marketplaceRouter = router({
     .mutation(async ({ ctx }) => {
       const profile = await getSellerProfileByUserId(ctx.user.id);
       if (!profile || !profile.stripeConnectId) return { status: profile?.stripeConnectStatus ?? "pending" };
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const stripe = getStripe();
       try {
         const account = await stripe.accounts.retrieve(profile.stripeConnectId);
         // Correctly classify disabled_reason:
@@ -1074,8 +1092,7 @@ export const marketplaceRouter = router({
       const profile = await getSellerProfileByUserId(ctx.user.id);
       if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "賣家資料不存在" });
       if (!profile.stripeConnectId) throw new TRPCError({ code: "BAD_REQUEST", message: "尚未設定 Stripe 收款帳戶" });
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const stripe = getStripe();
       try {
         const loginLink = await stripe.accounts.createLoginLink(profile.stripeConnectId);
         return { url: loginLink.url };
@@ -1353,6 +1370,8 @@ export const marketplaceRouter = router({
         const { subject: bs, html: bh } = buildOrderPaymentReceivedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, listingId: order.listingId ?? undefined });
         await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `order_paid_buyer_${order.id}` });
       } catch (e: any) { console.warn("[adminConfirmAlipay] buyer email failed:", e.message); }
+      // AT1: Audit log
+      await createAuditLog({ adminId: ctx.user.id, action: 'confirm_alipay', targetType: 'order', targetId: input.orderId, details: JSON.stringify({ orderNo: order.orderNo, note: input.note }) });
       return { success: true };
     }),
   adminBatchConfirmAlipayPayment: adminProcedure
@@ -1521,8 +1540,7 @@ export const marketplaceRouter = router({
       // If already has a transfer ID, fetch it from Stripe
       if (order.stripeTransferId) {
         try {
-          const Stripe = (await import("stripe")).default;
-          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+          const stripe = getStripe();
           const transfer = await stripe.transfers.retrieve(order.stripeTransferId);
           return {
             status: "completed" as const,
@@ -1612,16 +1630,13 @@ export const marketplaceRouter = router({
         updates.aiVerificationResult = null;
       }
       await updateMarketplaceOrder(input.orderId, updates);
-      // When cancelling, restore listing to active if it was marked sold
+      // When cancelling, restore listing stock (restoreListingStock handles status + quantity atomically)
       if (input.orderStatus === "cancelled" && order.listingId) {
         try {
-          const listing = await getListingById(order.listingId);
-          if (listing && listing.status === "sold") {
-            await updateListing(order.listingId, { status: "active" });
-            console.log(`[AdminCancel] Restored listing ${order.listingId} to active for cancelled order ${order.orderNo}`);
-          }
+          await restoreListingStock(order.listingId, 1);
+          console.log(`[AdminCancel] Restored listing ${order.listingId} stock for cancelled order ${order.orderNo}`);
         } catch (relistErr: any) {
-          console.warn("[AdminCancel] Failed to restore listing:", relistErr.message);
+          console.warn("[AdminCancel] Failed to restore listing stock:", relistErr.message);
         }
       }
       // Notify buyer of status change
@@ -1700,6 +1715,8 @@ export const marketplaceRouter = router({
       } catch (histErr: any) {
         console.warn('[Admin] Failed to record status history:', histErr.message);
       }
+      // AT1: Audit log
+      await createAuditLog({ adminId: ctx.user.id, action: `update_order_status_${input.status}`, targetType: 'order', targetId: input.orderId, details: JSON.stringify({ orderNo: order.orderNo, newStatus: input.status, note: input.note }) });
       return { success: true };
     }),
 
@@ -1844,8 +1861,7 @@ export const marketplaceRouter = router({
         }
         effectivePrice = parseFloat(offerRecord.offerPriceHkd as string);
       }
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const stripe = getStripe();
       const feeRateStripe = await getPlatformFeeRate();
 
       // Stripe requires minimum HKD 4.00 for card payments
@@ -2226,8 +2242,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const stripe = getStripe();
       const feeRate = await getPlatformFeeRate();
 
       // Step 1: Validate all listings and compute prices
@@ -2294,6 +2309,29 @@ All three checks must pass for verified to be true. Respond with JSON only match
           : null,
         paymentStatus: "pending",
       });
+
+      // Step 3.5: Atomic stock reservation for ALL items (prevents overselling)
+      const reservedListingIds: number[] = [];
+      try {
+        for (const { listing } of orderItems) {
+          const reserved = await reserveListingStock(listing.id, 1);
+          if (!reserved) {
+            // Rollback already-reserved items
+            for (const lid of reservedListingIds) {
+              await restoreListingStock(lid, 1).catch(() => {});
+            }
+            throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」庫存不足，可能已被其他買家搶購` });
+          }
+          reservedListingIds.push(listing.id);
+        }
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        // Rollback on unexpected error
+        for (const lid of reservedListingIds) {
+          await restoreListingStock(lid, 1).catch(() => {});
+        }
+        throw err;
+      }
 
       // Step 4: Create all sub-orders in DB with pending_payment status
       const batchRef = orderItems.length > 1 ? `BATCH-${Date.now()}-${ctx.user.id}` : undefined;
@@ -2431,6 +2469,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       let totalAmount = 0;
       const batchRef = input.items.length > 1 ? `BATCH-${Date.now()}-${ctx.user.id}` : undefined;
 
+      // Pre-process: validate, handle existing orders, and collect items needing new orders
+      const itemsToCreate: Array<{ listing: any; effectivePrice: number; offerId?: number }> = [];
       for (const item of input.items) {
         const listing = await getListingById(item.listingId);
         if (!listing || listing.status !== "active" || listing.quantity < 1) {
@@ -2444,7 +2484,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'stripe') {
           await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', updatedAt: new Date() });
         }
-        // Reuse existing alipay pending order
+        // Reuse existing alipay pending order (no new stock reservation needed)
         if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'alipay_hk') {
           await updateMarketplaceOrder(activeOrder.id, {
             alipayProofImageUrl: input.proofImageUrl,
@@ -2470,7 +2510,32 @@ All three checks must pass for verified to be true. Respond with JSON only match
           }
           effectivePrice = parseFloat(offerRecord.offerPriceHkd as string);
         }
+        itemsToCreate.push({ listing, effectivePrice, offerId: item.offerId });
+      }
 
+      // Atomic stock reservation for new items (prevents overselling)
+      const reservedListingIds: number[] = [];
+      try {
+        for (const { listing } of itemsToCreate) {
+          const reserved = await reserveListingStock(listing.id, 1);
+          if (!reserved) {
+            for (const lid of reservedListingIds) {
+              await restoreListingStock(lid, 1).catch(() => {});
+            }
+            throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」庫存不足，可能已被其他買家搶購` });
+          }
+          reservedListingIds.push(listing.id);
+        }
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        for (const lid of reservedListingIds) {
+          await restoreListingStock(lid, 1).catch(() => {});
+        }
+        throw err;
+      }
+
+      // Create new orders for items that need them
+      for (const { listing, effectivePrice } of itemsToCreate) {
         const orderNo = await generateOrderNo();
         await createMarketplaceOrder({
           orderNo,
@@ -2878,17 +2943,16 @@ All three checks must pass for verified to be true. Respond with JSON only match
         disputeResolutionHistory: newHistory,
         payoutStatus: input.outcome === "release_seller" ? "processing" : "failed",
       });
-      // If refunding buyer, trigger Stripe Refund and restore listing to active
+      // If refunding buyer, trigger Stripe Refund and restore listing stock
       if (input.outcome === "refund_buyer") {
-        // Restore listing to active so it can be purchased again
+        // Restore listing stock (uses restoreListingStock which also sets status=active)
         if (order.listingId) {
-          await updateListing(order.listingId, { status: "active" });
-          console.log(`[Dispute] Listing ${order.listingId} restored to active after refund`);
+          await restoreListingStock(order.listingId, 1);
+          console.log(`[Dispute] Listing ${order.listingId} stock restored after refund`);
         }
         if (order.stripePaymentIntentId) {
           try {
-            const Stripe = (await import("stripe")).default;
-            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+            const stripe = getStripe();
             await stripe.refunds.create({
               payment_intent: order.stripePaymentIntentId,
               metadata: { order_no: order.orderNo, dispute_resolved: "refund_buyer" },
@@ -2899,26 +2963,22 @@ All three checks must pass for verified to be true. Respond with JSON only match
           }
         }
       }
-      // If releasing to seller, trigger payout
-      // NOTE: order.sellerId = sellerProfiles.id (NOT users.id)
+      // If releasing to seller, trigger payout via centralized executeSellerPayout
       let disputeSellerUserId: number | null = null;
       if (order.sellerType === "seller" && order.sellerId) {
-        const sellerProfile = await getSellerProfileById(order.sellerId); // FIX: use getSellerProfileById
+        const sellerProfile = await getSellerProfileById(order.sellerId);
         disputeSellerUserId = sellerProfile?.userId ?? null;
-        if (input.outcome === "release_seller" && sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
+        if (input.outcome === "release_seller") {
           try {
-            const Stripe = (await import("stripe")).default;
-            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
-            const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
-            await stripe.transfers.create({
-              amount: receivable,
-              currency: "hkd",
-              destination: sellerProfile.stripeConnectId,
-              metadata: { order_no: order.orderNo, dispute_resolved: "true" },
-            });
-            await updateMarketplaceOrder(input.orderId, { payoutStatus: "paid" });
+            const { executeSellerPayout } = await import("../sellerPayout");
+            const payoutResult = await executeSellerPayout(input.orderId);
+            if (payoutResult.success) {
+              console.log(`[Dispute] Payout transfer ${payoutResult.transferId} for order ${order.orderNo}`);
+            } else {
+              console.error(`[Dispute] Payout failed for order ${order.orderNo}: ${payoutResult.error}`);
+            }
           } catch (err) {
-            console.error("[Dispute] Transfer failed:", err);
+            console.error("[Dispute] executeSellerPayout threw:", err);
           }
         }
       }
@@ -2995,12 +3055,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
             await sendOrderEmail({ userId: disputeSellerUserId, subject: ss, html: sh, emailType: 'order', dedupeKey: `dispute_resolved_seller_partial_${order.id}` });
           }
         }
-      } catch (emailErr: any) {
+       } catch (emailErr: any) {
         console.warn("[Dispute] Resolve email failed:", emailErr.message);
       }
+      // AT1: Audit log
+      await createAuditLog({ adminId: ctx.user.id, action: `resolve_dispute_${input.outcome}`, targetType: 'order', targetId: input.orderId, details: JSON.stringify({ orderNo: order.orderNo, outcome: input.outcome, resolution: input.resolution }) });
       return { success: true };
     }),
-
   adminGetDisputes: adminProcedure
     .input(z.object({
       page: z.number().int().min(1).default(1),
@@ -3133,6 +3194,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       orderId: z.number().int(),
       rating: z.number().int().min(1).max(5),
       comment: z.string().max(500).optional(),
+      isAnonymous: z.boolean().optional().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
@@ -3152,6 +3214,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         sellerId: order.sellerId,
         rating: input.rating,
         comment: input.comment ?? null,
+        isAnonymous: input.isAnonymous ?? false,
       });
       // Notify seller of new review
       const reviewSellerProf = await getSellerProfileById(order.sellerId);
@@ -3285,6 +3348,17 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
       const sellerProfile = await getSellerProfileById(listing.sellerId);
       if (!sellerProfile) throw new TRPCError({ code: "NOT_FOUND", message: "賣家不存在" });
+
+      // UX1: Rate limit — max 3 offers per listing per buyer per 24 hours
+      const recentOffers = await getListingOffers(input.listingId);
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const myRecentOffers = recentOffers.filter(
+        (o: any) => o.buyerId === ctx.user.id && new Date(o.createdAt) > twentyFourHoursAgo
+      );
+      if (myRecentOffers.length >= 3) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "同一商品 24 小時內最多出價 3 次，請稍後再試" });
+      }
+
       // Expire in 48 hours
       const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
       const offer = await createOffer({
@@ -3331,6 +3405,24 @@ All three checks must pass for verified to be true. Respond with JSON only match
           console.error("[makeOffer] Email send failed:", e);
         }
       })();
+      // UX1: Outbid notification — notify other pending bidders that a higher offer was placed
+      const pendingOffers = recentOffers.filter(
+        (o: any) => o.status === "pending" && o.buyerId !== ctx.user.id && parseFloat(o.offerPriceHkd) < input.offerPriceHkd
+      );
+      const notifiedBuyerIds = new Set<number>();
+      for (const prevOffer of pendingOffers) {
+        if (notifiedBuyerIds.has(prevOffer.buyerId)) continue;
+        notifiedBuyerIds.add(prevOffer.buyerId);
+        await createNotification({
+          userId: prevOffer.buyerId,
+          type: "offer",
+          title: "你的出價已被超越 📈",
+          body: `有人對「${listing.title}」出了更高價格 HKD ${input.offerPriceHkd}，你的出價 HKD ${prevOffer.offerPriceHkd} 可能不再具競爭力。`,
+          linkUrl: `/shop/${listing.id}`,
+          relatedId: offer.id,
+        }).catch(() => {});
+      }
+
       return offer;
     }),
 
@@ -3454,8 +3546,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const offerPaymentDeadline = new Date(Date.now() + offerPaymentHours * 60 * 60 * 1000);
       await updateOffer(offer.id, { status: "accepted", respondedAt: new Date(), orderId: order.id, expiresAt: offerPaymentDeadline });
       // Create Stripe checkout for buyer
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const stripe = getStripe();
       const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
       // Build payment_intent_data - use Destination Charge for C2C listings with active Stripe Connect
       const offerPaymentIntentData: any = {
@@ -4063,6 +4154,80 @@ All three checks must pass for verified to be true. Respond with JSON only match
         and(eq(cartItems.userId, ctx.user.id), eq(cartItems.listingId, input.listingId))
       );
       return !!row;
+    }),
+
+  // ============================================================
+  // RC2: Admin seller suspension management
+  // ============================================================
+  adminSuspendSeller: adminProcedure
+    .input(z.object({
+      sellerProfileId: z.number().int(),
+      reason: z.string().min(1).max(500),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      await db.update(sellerProfiles)
+        .set({ isSuspended: true, suspensionReason: input.reason, updatedAt: new Date() } as any)
+        .where(eq(sellerProfiles.id, input.sellerProfileId));
+      // Deactivate all active listings for this seller
+      await db.update(marketplaceListings)
+        .set({ status: 'removed' as any, updatedAt: new Date() })
+        .where(and(
+          eq(marketplaceListings.sellerId, input.sellerProfileId),
+          eq(marketplaceListings.status, 'active' as any)
+        ));
+      // Notify seller
+      const seller = await db.select().from(sellerProfiles).where(eq(sellerProfiles.id, input.sellerProfileId)).limit(1);
+      if (seller[0]?.userId) {
+        await createNotification({
+          userId: seller[0].userId,
+          type: "system",
+          title: "賣家帳號已被凍結 ⚠️",
+          body: `您的賣家帳號已被管理員凍結，所有商品已下架。原因：${input.reason}`,
+          linkUrl: "/seller",
+        }).catch(() => {});
+      }
+      // AT1: Audit log
+      await createAuditLog({ adminId: ctx.user.id, action: 'suspend_seller', targetType: 'seller', targetId: input.sellerProfileId, details: JSON.stringify({ reason: input.reason }) });
+      return { success: true };
+    }),
+
+  adminUnsuspendSeller: adminProcedure
+    .input(z.object({ sellerProfileId: z.number().int() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      await db.update(sellerProfiles)
+        .set({ isSuspended: false, suspensionReason: null, updatedAt: new Date() } as any)
+        .where(eq(sellerProfiles.id, input.sellerProfileId));
+      const seller = await db.select().from(sellerProfiles).where(eq(sellerProfiles.id, input.sellerProfileId)).limit(1);
+      if (seller[0]?.userId) {
+        await createNotification({
+          userId: seller[0].userId,
+          type: "system",
+          title: "賣家帳號已解凍 ✅",
+          body: "您的賣家帳號已恢復正常，可以重新上架商品。",
+          linkUrl: "/seller",
+        }).catch(() => {});
+      }
+      // AT1: Audit log
+      await createAuditLog({ adminId: ctx.user.id, action: 'unsuspend_seller', targetType: 'seller', targetId: input.sellerProfileId });
+      return { success: true };
+    }),
+
+  // ============================================================
+  // AT1: Admin audit log viewer
+  // ============================================================
+  adminGetAuditLogs: adminProcedure
+    .input(z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(50),
+      action: z.string().optional(),
+      targetType: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      return getAuditLogs(input);
     }),
 
   // ============================================================

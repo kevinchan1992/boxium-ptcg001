@@ -5892,3 +5892,50 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 展開後顯示各子訂單（含子訂單編號標籤）
 - [x] Hero Banner 顯示「共 N 筆訂單（M 組）」
 - [x] 向後相容：舊版 batchRef 訂單也能正確分組顯示
+
+
+---
+
+## 🔧 Marketplace 全面系統改造（接納兩份建議）
+
+### Phase 1：資金安全
+- [x] 庫存原子扣減：createBatchStripeOrder + createBatchAlipayOrder 加入 reserveListingStock 原子扣減 + 失敗回滾
+- [x] Stripe Webhook 冪等性：checkout.session.completed 檢查 paymentStatus 防重複處理
+- [x] respondToOffer 已有 reserveListingStock 原子扣減（確認無需修改）
+- [x] autoCompleteOrders 排除 disputed 訂單 + 同時查 shipped 和 delivered
+- [x] confirmReceipt 加入 disputed 狀態排除
+- [x] adminResolveDispute 退款時使用 restoreListingStock + 放款使用 executeSellerPayout
+- [x] 管理員取消訂單時使用 restoreListingStock 恢復庫存
+
+### Phase 2：數據一致性 + 購物車驗證
+- [x] 購物車異常商品阻擋：兩個 batch 函數已有完整 listing 驗證 + 原子庫存扣減 + 回滾機制
+- [x] 庫存恢復邏輯完善：取消/退款/爭議解決時均使用 restoreListingStock
+- [x] 商品數量校驗：reserveListingStock 原子扣減保證不會超賣
+
+### Phase 3：用戶體驗
+- [x] Outbid 通知：makeOffer 中加入通知同商品其他出價者有更高出價（排除自己）
+- [x] 出價頻率限制：24小時同商品限3次
+- [x] 出價到期提醒已有（offerExpiryReminder 已有買家+賣家雙向通知）
+- [x] 評價匿名選項：新增 isAnonymous 欄位 + DB Migration + 後端 submitReview 支援 + 前端評價 Dialog 加入勾選
+- [x] getSellerReviews 處理 isAnonymous（匿名時不返回 buyerName）
+
+### Phase 4：合規風控
+- [x] 賣家凍結功能：sellerProfiles 加 isSuspended + suspensionReason + DB Migration
+- [x] adminSuspendSeller：凍結賣家 + 下架所有商品 + 通知賣家
+- [x] adminUnsuspendSeller：解凍賣家 + 通知賣家
+- [x] createListing 加入賣家凍結檢查（isSuspended 時禁止上架）
+- [x] 商品重複上架檢查：同賣家同卡牌同品相時阻擋並提示編輯現有商品
+- [x] 出價頻率限制：24小時同商品限3次（在 Phase 3 中完成）
+
+### Phase 5：管理員工具
+- [x] 新增 adminAuditLogs 表 + DB Migration + CRUD helpers
+- [x] 5 個關鍵管理員操作加入審計日誌（confirm_alipay, update_order_status, resolve_dispute, suspend_seller, unsuspend_seller）
+- [x] adminGetAuditLogs 查詢端點（支援分頁、篩選）
+- [x] DB 索引優化：payoutStatus, cartOrderId, batchRef, cartOrders.buyerId
+
+### Phase 6：清理舊版代碼
+- [x] 合併 14 處 dynamic import("stripe") 為共用 getStripe() 函數（marketplace.ts）
+- [x] 合併 4 處 dynamic import("stripe") 為共用 getStripe() 函數（index.ts webhook）
+- [x] autoCompleteOrders 使用 executeSellerPayout 替換舊內聯 Transfer 邏輯
+- [x] 確認無殘留舊版 stripe.transfers.create 內聯代碼
+- [x] 確認無 TODO/FIXME/HACK 殘留標記

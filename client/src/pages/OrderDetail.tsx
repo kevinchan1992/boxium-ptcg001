@@ -617,6 +617,7 @@ export default function OrderDetail() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showDisputeDialog, setShowDisputeDialog] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [reviewAnonymous, setReviewAnonymous] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeEvidenceUrls, setDisputeEvidenceUrls] = useState<string[]>([]);
@@ -1521,6 +1522,16 @@ export default function OrderDetail() {
               />
               <div className="text-xs text-muted-foreground text-right">{reviewComment.length}/500</div>
             </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={reviewAnonymous}
+                onChange={e => setReviewAnonymous(e.target.checked)}
+                className="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500"
+              />
+              <span className="text-sm">匿名評價</span>
+              <span className="text-xs text-muted-foreground">（賣家將不會看到你的名字）</span>
+            </label>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowReviewDialog(false)}>取消</Button>
@@ -1531,6 +1542,7 @@ export default function OrderDetail() {
                 orderId: order.id,
                 rating: reviewRating,
                 comment: reviewComment.trim() || undefined,
+                isAnonymous: reviewAnonymous,
               })}
             >
               {submitReviewMutation.isPending

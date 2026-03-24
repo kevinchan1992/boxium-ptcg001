@@ -22,6 +22,8 @@ import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import { getListingById, getCardById, getSealedProductById } from "../db";
 import { composeOgImage, composeAndCacheOgImage, getDefaultOgImageUrl, composeAndCacheMarketplaceOgImage } from "../ogImageComposer";
+import Stripe from "stripe";
+function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" }); }
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -67,8 +69,7 @@ async function startServer() {
     }
     let event: any;
     try {
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const stripe = getStripe();
       event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
     } catch (err: any) {
       console.error("[Webhook] Signature verification failed:", err.message);
@@ -103,8 +104,7 @@ async function startServer() {
               // Retrieve the charge ID from the PaymentIntent (needed for Stripe Connect Transfers)
               let chargeId: string | null = null;
               if (paymentIntentId) {
-                const Stripe = (await import("stripe")).default;
-                const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+                const stripeClient = getStripe();
                 const pi = await stripeClient.paymentIntents.retrieve(paymentIntentId);
                 chargeId = typeof (pi as any).latest_charge === "string" ? (pi as any).latest_charge : null;
               }
@@ -123,6 +123,11 @@ async function startServer() {
             try {
               const batchOrder = await getMarketplaceOrderByNo(batchOrderNo);
               if (!batchOrder) { console.warn(`[Webhook] Batch order ${batchOrderNo} not found`); continue; }
+              // F2: Idempotency guard — skip orders already processed (prevents duplicate processing on Webhook retries)
+              if (batchOrder.paymentStatus === "paid" || ["payment_received", "processing", "shipped", "delivered", "completed"].includes(batchOrder.orderStatus)) {
+                console.log(`[Webhook] Batch order ${batchOrderNo} already processed (status: ${batchOrder.orderStatus}), skipping`);
+                continue;
+              }
               if (batchOrder.orderStatus === "cancelled") {
                 // Auto-refund for cancelled orders is complex in batch; log for manual review
                 console.warn(`[Webhook] Batch order ${batchOrderNo} already cancelled but payment received — needs manual review`);
@@ -175,6 +180,11 @@ async function startServer() {
         } else if (orderNo || batchOrderNos) {
           order = await getMarketplaceOrderByNo(orderNo ?? batchOrderNos);
         }
+        // F2: Idempotency guard for single orders — skip if already processed
+        if (order && order.paymentStatus === "paid" && ["payment_received", "processing", "shipped", "delivered", "completed"].includes(order.orderStatus)) {
+          console.log(`[Webhook] Single order ${order.orderNo} already processed (status: ${order.orderStatus}), skipping`);
+          return res.json({ received: true });
+        }
         if (order && order.orderStatus === "cancelled") {
           // Order was already cancelled (e.g., by payment timeout) but Stripe payment arrived late
           // Auto-refund to prevent charging the buyer for a cancelled order
@@ -182,8 +192,7 @@ async function startServer() {
           const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : order.stripePaymentIntentId;
           if (paymentIntentId) {
             try {
-              const Stripe = (await import("stripe")).default;
-              const stripeRefund = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+              const stripeRefund = getStripe();
               await stripeRefund.refunds.create({ payment_intent: paymentIntentId, reason: "requested_by_customer" });
               await updateMarketplaceOrder(order.id, {
                 paymentStatus: "refunded",
@@ -226,8 +235,7 @@ async function startServer() {
               let chargeId: string | null = null;
               const singlePiId = typeof session.payment_intent === "string" ? session.payment_intent : null;
               if (singlePiId) {
-                const Stripe = (await import("stripe")).default;
-                const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+                const stripeClient = getStripe();
                 const pi = await stripeClient.paymentIntents.retrieve(singlePiId);
                 chargeId = typeof (pi as any).latest_charge === "string" ? (pi as any).latest_charge : null;
               }

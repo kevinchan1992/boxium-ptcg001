@@ -3818,7 +3818,12 @@ export async function getSellerReviews(sellerId: number, page = 1, pageSize = 10
     .limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceReviews)
     .where(eq(marketplaceReviews.sellerId, sellerId));
-  return { reviews: rows, total: Number(countRows[0]?.count ?? 0) };
+  // UX2: Mask buyer name for anonymous reviews
+  const reviews = rows.map(r => ({
+    ...r,
+    buyerName: r.review.isAnonymous ? '匿名買家' : r.buyerName,
+  }));
+  return { reviews, total: Number(countRows[0]?.count ?? 0) };
 }
 
 export async function getReviewByOrderId(orderId: number) {
@@ -4233,4 +4238,35 @@ export async function getBuyerCartOrders(buyerId: number, limit = 20, offset = 0
     .orderBy(desc(cartOrders.createdAt))
     .limit(limit)
     .offset(offset);
+}
+
+
+// --- Admin Audit Logs ---
+import { adminAuditLogs, InsertAdminAuditLog } from "../drizzle/schema_new";
+
+export async function createAuditLog(data: InsertAdminAuditLog) {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.insert(adminAuditLogs).values(data);
+  } catch (e) {
+    console.error("[createAuditLog] Failed:", e);
+  }
+}
+
+export async function getAuditLogs(opts: { page?: number; pageSize?: number; action?: string; targetType?: string; adminId?: number } = {}) {
+  const db = await getDb();
+  if (!db) return { logs: [], total: 0 };
+  const { page = 1, pageSize = 50, action, targetType, adminId } = opts;
+  const conditions: any[] = [];
+  if (action) conditions.push(eq(adminAuditLogs.action, action));
+  if (targetType) conditions.push(eq(adminAuditLogs.targetType, targetType));
+  if (adminId) conditions.push(eq(adminAuditLogs.adminId, adminId));
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const rows = await db.select().from(adminAuditLogs)
+    .where(where)
+    .orderBy(desc(adminAuditLogs.createdAt))
+    .limit(pageSize).offset((page - 1) * pageSize);
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(adminAuditLogs).where(where);
+  return { logs: rows, total: Number(countRows[0]?.count ?? 0) };
 }

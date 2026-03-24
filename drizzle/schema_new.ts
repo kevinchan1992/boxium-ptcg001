@@ -740,6 +740,8 @@ export const sellerProfiles = mysqlTable("sellerProfiles", {
   avgRating: decimal("avgRating", { precision: 3, scale: 2 }).default("0.00"),
   ratingCount: int("ratingCount").default(0).notNull(),
   isActive: boolean("isActive").default(true).notNull(), // Auto-approved (all users can sell)
+  isSuspended: boolean("isSuspended").default(false).notNull(), // Admin can freeze seller
+  suspensionReason: text("suspensionReason"), // Reason for suspension
   rejectReason: text("rejectReason"), // Reason for rejection (shown to applicant)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
@@ -1008,6 +1010,7 @@ export const marketplaceReviews = mysqlTable("marketplaceReviews", {
   sellerId: int("sellerId").notNull(),
   rating: int("rating").notNull(),
   comment: text("comment"),
+  isAnonymous: boolean("isAnonymous").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   orderIdIdx: index("mr_orderId_idx").on(table.orderId),
@@ -1192,3 +1195,25 @@ export const emailLogs = mysqlTable("emailLogs", {
 }));
 export type EmailLog = typeof emailLogs.$inferSelect;
 export type InsertEmailLog = typeof emailLogs.$inferInsert;
+
+
+/**
+ * Admin Audit Logs - tracks all admin actions for accountability
+ */
+export const adminAuditLogs = mysqlTable("adminAuditLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  adminId: int("adminId").notNull(), // FK to users table
+  action: varchar("action", { length: 100 }).notNull(), // e.g. "confirm_alipay", "suspend_seller", "resolve_dispute"
+  targetType: varchar("targetType", { length: 50 }).notNull(), // e.g. "order", "seller", "listing"
+  targetId: int("targetId"), // ID of the affected record
+  details: text("details"), // JSON string with before/after or context
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  adminIdIdx: index("aal_adminId_idx").on(table.adminId),
+  actionIdx: index("aal_action_idx").on(table.action),
+  targetIdx: index("aal_target_idx").on(table.targetType, table.targetId),
+  createdAtIdx: index("aal_createdAt_idx").on(table.createdAt),
+}));
+export type AdminAuditLog = typeof adminAuditLogs.$inferSelect;
+export type InsertAdminAuditLog = typeof adminAuditLogs.$inferInsert;

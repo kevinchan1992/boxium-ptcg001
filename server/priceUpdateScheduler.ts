@@ -404,11 +404,13 @@ export function startAutoCompleteOrdersScheduler() {
         if (!db) return;
 
         const now = new Date();
+        const { inArray: inArr } = await import('drizzle-orm');
+        // F3: Query both 'shipped' and 'delivered' orders (excludes 'disputed' which should NOT auto-complete)
         const overdueOrders = await db.select()
           .from(marketplaceOrders)
           .where(
             and(
-              eq(marketplaceOrders.orderStatus, 'shipped'),
+              inArr(marketplaceOrders.orderStatus, ['shipped', 'delivered']),
               isNotNull(marketplaceOrders.autoCompleteAt),
               lte(marketplaceOrders.autoCompleteAt, now)
             )
@@ -442,80 +444,40 @@ export function startAutoCompleteOrdersScheduler() {
               console.warn(`[AutoComplete] Buyer email failed for order ${order.orderNo}:`, emailErr.message);
             }
 
-            // Trigger Stripe Transfer payout if C2C order
+            // Trigger Stripe Transfer payout if C2C order (using centralized executeSellerPayout)
             if (order.sellerType === 'seller' && order.sellerId) {
-              // IMPORTANT: order.sellerId = sellerProfiles.id, NOT users.id
-              const sellerProfile = await getSellerProfileById(order.sellerId);
-              const sellerUserId = sellerProfile?.userId;
-              if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === 'active') {
-                try {
-                  const Stripe = (await import('stripe')).default;
-                  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
-                  const receivable = Math.round(parseFloat(order.sellerReceivableHkd as string) * 100);
-                  // Get Charge ID from PaymentIntent (source_transaction requires ch_xxx, not pi_xxx)
-                  let chargeId: string | undefined;
-                  if (order.stripePaymentIntentId) {
-                    try {
-                      const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, { expand: ['latest_charge'] });
-                      chargeId = typeof pi.latest_charge === 'string' ? pi.latest_charge : (pi.latest_charge as any)?.id;
-                    } catch { /* ignore, transfer without source_transaction */ }
-                  }
-                  const transfer = await stripe.transfers.create({
-                    amount: receivable,
-                    currency: 'hkd',
-                    destination: sellerProfile.stripeConnectId,
-                    ...(chargeId ? { source_transaction: chargeId } : {}),
-                    metadata: { order_no: order.orderNo, order_id: order.id.toString(), auto_completed: 'true', trigger: 'auto_complete_14d' },
-                  });
-                  await db.update(marketplaceOrders)
-                    .set({ payoutStatus: 'paid', stripeTransferId: transfer.id })
-                    .where(eq(marketplaceOrders.id, order.id));
-                  // Notify seller: Stripe payout transferred (use sellerUserId = users.id)
-                  if (sellerUserId) {
-                    await createNotification({
-                      userId: sellerUserId,
-                      type: 'trade',
-                      title: '款項已自動轉帳 💰',
-                      body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨），HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
-                      linkUrl: '/seller',
-                    }).catch(() => {});
-                    // Send auto-completed email to seller
-                    try {
-                      const { sendOrderEmail, buildOrderAutoCompletedSellerEmail, getOrderEmailData } = await import('./emailService');
-                      const emailData = await getOrderEmailData(order);
-                      const { subject, html } = buildOrderAutoCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
-                      await sendOrderEmail({ userId: sellerUserId, subject, html, dedupeKey: `order_autocomplete_seller_${order.id}` });
-                    } catch (emailErr: any) {
-                      console.warn(`[AutoComplete] Seller email failed for order ${order.orderNo}:`, emailErr.message);
-                    }
-                  }
-                } catch (err: any) {
-                  console.error(`[AutoComplete] Stripe transfer failed for order ${order.orderNo}:`, err.message);
-                  await db.update(marketplaceOrders)
-                    .set({ payoutStatus: 'failed', stripeTransferError: err.message })
-                    .where(eq(marketplaceOrders.id, order.id));
-                  // Notify seller: payout failed (use sellerUserId = users.id)
-                  if (sellerUserId) {
-                    await createNotification({
-                      userId: sellerUserId,
-                      type: 'trade',
-                      title: '訂單自動完成，款項轉帳失敗 ⚠️',
-                      body: `訂單 ${order.orderNo} 已自動完成，但款項轉帳失敗，請聯絡客服處理。`,
-                      linkUrl: '/seller',
-                    }).catch(() => {});
-                  }
+              try {
+                const { executeSellerPayout } = await import('./sellerPayout');
+                const payoutResult = await executeSellerPayout(order.id);
+                if (payoutResult.success) {
+                  console.log(`[AutoComplete] Payout transfer ${payoutResult.transferId} for order ${order.orderNo}, HKD ${payoutResult.amountHkd}`);
+                } else {
+                  console.error(`[AutoComplete] Payout failed for order ${order.orderNo}: ${payoutResult.error}`);
                 }
-              } else {
-                // Seller has no Stripe Connect or not active - notify them to contact admin
-                if (sellerUserId) {
+                // Notify seller about auto-completion
+                const sellerProfile = await getSellerProfileById(order.sellerId);
+                if (sellerProfile?.userId) {
+                  const payoutMsg = payoutResult.success
+                    ? `HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`
+                    : `款項將由平台管理員安排轉帳。`;
                   await createNotification({
-                    userId: sellerUserId,
+                    userId: sellerProfile.userId,
                     type: 'trade',
-                    title: '訂單已自動完成 ✅',
-                    body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨）。款項將由平台管理員安排轉帳，請留意後續通知。`,
+                    title: payoutResult.success ? '款項已自動轉帳 💰' : '訂單已自動完成 ✅',
+                    body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨）。${payoutMsg}`,
                     linkUrl: '/seller',
                   }).catch(() => {});
+                  try {
+                    const { sendOrderEmail, buildOrderAutoCompletedSellerEmail, getOrderEmailData } = await import('./emailService');
+                    const emailData = await getOrderEmailData(order);
+                    const { subject, html } = buildOrderAutoCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
+                    await sendOrderEmail({ userId: sellerProfile.userId, subject, html, dedupeKey: `order_autocomplete_seller_${order.id}` });
+                  } catch (emailErr: any) {
+                    console.warn(`[AutoComplete] Seller email failed for order ${order.orderNo}:`, emailErr.message);
+                  }
                 }
+              } catch (payoutErr: any) {
+                console.error(`[AutoComplete] executeSellerPayout threw for order ${order.orderNo}:`, payoutErr.message);
               }
             }
             console.log(`[AutoComplete] Order ${order.orderNo} auto-completed`);
