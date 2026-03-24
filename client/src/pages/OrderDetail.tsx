@@ -844,7 +844,14 @@ export default function OrderDetail() {
               <ShieldCheck className="w-10 h-10" style={{ color: "#06038d" }} />
             </div>
             <div className="text-center md:text-left pb-1 flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-white">訂單詳情</h1>
+              <div className="flex items-center gap-2 justify-center md:justify-start">
+                <h1 className="text-2xl md:text-3xl font-bold text-white">訂單詳情</h1>
+                {order.shippingMethod === 'meetup' && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-400 text-amber-900 flex-shrink-0">
+                    🤝 面交
+                  </span>
+                )}
+              </div>
               <button
                 className="text-white/70 text-sm font-mono flex items-center gap-1 mt-1 hover:text-white transition-colors mx-auto md:mx-0"
                 onClick={() => { navigator.clipboard.writeText(order.orderNo); toast.success("訂單號已複製"); }}

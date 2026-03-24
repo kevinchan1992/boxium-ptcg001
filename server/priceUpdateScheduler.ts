@@ -1631,3 +1631,152 @@ export function startCartExpiryNotificationScheduler() {
   );
   console.log('[CartExpiry] Cart expiry notification scheduler started (daily at 10:00 HKT)');
 }
+
+
+// ─── Meetup Order Auto-Cancel Scheduler ──────────────────────────────────────
+// Runs daily at 02:00 HKT to cancel meetup orders that have been in a
+// payable state (payment_received / paid_held / processing) for more than 7 days
+// without the seller confirming the meetup.
+// ─────────────────────────────────────────────────────────────────────────────
+let meetupAutoCancelCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startMeetupAutoCancelScheduler() {
+  if (meetupAutoCancelCronJob) return;
+  meetupAutoCancelCronJob = cron.schedule(
+    '0 2 * * *', // Daily at 02:00 HKT
+    async () => {
+      try {
+        await runMeetupAutoCancel();
+      } catch (err) {
+        console.error('[MeetupAutoCancel] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[MeetupAutoCancel] Meetup auto-cancel scheduler started (daily at 02:00 HKT)');
+}
+
+export function stopMeetupAutoCancelScheduler() {
+  if (meetupAutoCancelCronJob) {
+    meetupAutoCancelCronJob.stop();
+    meetupAutoCancelCronJob = null;
+  }
+}
+
+/**
+ * Cancel meetup orders that have been unconfirmed for more than meetup_cancel_days days.
+ * Exported for unit-testing.
+ */
+export async function runMeetupAutoCancel(overrideDays?: number): Promise<{ cancelled: number; errors: number }> {
+  const { getDb, getSystemSetting, getSellerProfileById, restoreListingStock } = await import('./db');
+  const { marketplaceOrders, marketplaceOrderItems, offers: offersTable } = await import('../drizzle/schema_new');
+  const { and, eq, lt, inArray } = await import('drizzle-orm');
+  const { createNotification } = await import('./db/notifications');
+
+  const db = await getDb();
+  if (!db) return { cancelled: 0, errors: 0 };
+
+  const now = new Date();
+
+  // Read timeout from systemSettings (default: 7 days)
+  const daySetting = overrideDays != null
+    ? null
+    : await getSystemSetting('meetup_cancel_days').catch(() => null);
+  const cancelDays = overrideDays ?? (daySetting ? parseInt(daySetting.settingValue) : 7);
+  const cutoff = new Date(now.getTime() - cancelDays * 24 * 60 * 60 * 1000);
+
+  // Find meetup orders stuck in payable states beyond the cutoff
+  const stuckOrders = await db.select({
+    id: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    buyerId: marketplaceOrders.buyerId,
+    sellerId: marketplaceOrders.sellerId,
+    listingId: marketplaceOrders.listingId,
+    orderStatus: marketplaceOrders.orderStatus,
+    createdAt: marketplaceOrders.createdAt,
+  })
+    .from(marketplaceOrders)
+    .where(
+      and(
+        eq(marketplaceOrders.shippingMethod, 'meetup'),
+        inArray(marketplaceOrders.orderStatus, ['payment_received', 'paid_held', 'processing']),
+        lt(marketplaceOrders.createdAt, cutoff)
+      )
+    );
+
+  if (stuckOrders.length === 0) {
+    console.log('[MeetupAutoCancel] No stuck meetup orders found');
+    return { cancelled: 0, errors: 0 };
+  }
+
+  console.log(`[MeetupAutoCancel] Found ${stuckOrders.length} stuck meetup orders to cancel (>${cancelDays} days)`);
+
+  let cancelled = 0;
+  let errors = 0;
+
+  for (const order of stuckOrders) {
+    try {
+      // Cancel the order
+      await db.update(marketplaceOrders)
+        .set({ orderStatus: 'cancelled', updatedAt: now })
+        .where(eq(marketplaceOrders.id, order.id));
+
+      // Restore listing stock
+      const items = await db.select()
+        .from(marketplaceOrderItems)
+        .where(eq(marketplaceOrderItems.orderId, order.id));
+
+      if (items.length > 0) {
+        for (const item of items) {
+          await restoreListingStock(item.listingId, item.quantity ?? 1);
+        }
+      } else if (order.listingId) {
+        await restoreListingStock(order.listingId, 1);
+      }
+
+      // Mark any accepted offers linked to this order as expired
+      await db.update(offersTable)
+        .set({ status: 'expired', updatedAt: now })
+        .where(
+          and(
+            eq(offersTable.orderId, order.id),
+            eq(offersTable.status, 'accepted')
+          )
+        );
+
+      // Notify buyer
+      await createNotification({
+        userId: order.buyerId,
+        type: 'order',
+        title: '面交訂單已自動取消',
+        body: `訂單 #${order.orderNo} 因超過 ${cancelDays} 天未完成面交確認，已自動取消，商品已重新上架。如有疑問請聯絡賣家。`,
+        linkUrl: '/orders',
+        relatedId: order.id,
+      }).catch(() => {});
+
+      // Notify seller
+      if (order.sellerId != null) {
+        const sellerProf = await getSellerProfileById(order.sellerId);
+        if (sellerProf?.userId) {
+          await createNotification({
+            userId: sellerProf.userId,
+            type: 'order',
+            title: '面交訂單已自動取消',
+            body: `訂單 #${order.orderNo} 因超過 ${cancelDays} 天未確認面交，已自動取消，商品已重新上架。`,
+            linkUrl: '/seller',
+            relatedId: order.id,
+          }).catch(() => {});
+        }
+      }
+
+      console.log(`[MeetupAutoCancel] Cancelled meetup order ${order.orderNo} (id: ${order.id})`);
+      cancelled++;
+    } catch (err) {
+      console.error(`[MeetupAutoCancel] Failed to cancel order ${order.id}:`, err);
+      errors++;
+    }
+  }
+
+  console.log(`[MeetupAutoCancel] Done: cancelled=${cancelled}, errors=${errors}`);
+  return { cancelled, errors };
+}

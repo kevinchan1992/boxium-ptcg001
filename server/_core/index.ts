@@ -17,7 +17,7 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import { getListingById, getCardById, getSealedProductById } from "../db";
@@ -924,6 +924,8 @@ async function startServer() {
     startCartExpiryNotificationScheduler();
     // Start the 7-day confirm receipt reminder scheduler (daily at 09:00 HKT)
     startConfirmReceiptReminderScheduler();
+    // Start the meetup order auto-cancel scheduler (daily at 02:00 HKT, cancels unconfirmed meetup orders after 7 days)
+    startMeetupAutoCancelScheduler();
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();

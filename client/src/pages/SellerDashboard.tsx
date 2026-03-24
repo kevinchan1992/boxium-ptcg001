@@ -531,7 +531,7 @@ export default function SellerDashboard() {
    // ─── Listing filter state ─────────────────────────────────────────
   const [listingFilter, setListingFilter] = useState<'all' | 'active' | 'sold' | 'removed' | 'pending_review'>('all');
   // ─── Order filter state ─────────────────────────────────────────
-  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'pending' | 'active' | 'done'>('all');
+  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'pending' | 'active' | 'done' | 'meetup'>('all');
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
 
   // ─── Edit / Deactivate / Batch state ─────────────────────────────────────
@@ -1364,19 +1364,23 @@ export default function SellerDashboard() {
                         { key: 'pending', label: '待確認' },
                         { key: 'active', label: '進行中' },
                         { key: 'done', label: '已完成' },
+                        { key: 'meetup', label: '🤝 面交' },
                       ] as const).map(f => (
                         <button
                           key={f.key}
                           onClick={() => setOrderStatusFilter(f.key)}
                           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
                             orderStatusFilter === f.key
-                              ? 'bg-[#06038d] text-white border-[#06038d]'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-[#06038d] hover:text-[#06038d]'
+                              ? f.key === 'meetup' ? 'bg-amber-400 text-amber-900 border-amber-400' : 'bg-[#06038d] text-white border-[#06038d]'
+                              : f.key === 'meetup' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-white text-gray-600 border-gray-200 hover:border-[#06038d] hover:text-[#06038d]'
                           }`}
                         >
                           {f.label}
                           {f.key === 'all' && (
                             <span className="ml-1 opacity-60">({myOrders?.length ?? 0})</span>
+                          )}
+                          {f.key === 'meetup' && (
+                            <span className="ml-1 opacity-70">({(myOrders as any[])?.filter((o: any) => o.shippingMethod === 'meetup').length ?? 0})</span>
                           )}
                         </button>
                       ))}
@@ -1406,9 +1410,12 @@ export default function SellerDashboard() {
                     pending: ['payment_submitted', 'alipay_pending', 'pending_payment'],
                     active: ['payment_confirmed', 'payment_received', 'paid_held', 'processing', 'shipped', 'delivered'],
                     done: ['completed', 'cancelled', 'disputed'],
+                    meetup: [],
                   };
                   let filtered = (myOrders as any[]) ?? [];
-                  if (orderStatusFilter !== 'all') {
+                  if (orderStatusFilter === 'meetup') {
+                    filtered = filtered.filter(o => o.shippingMethod === 'meetup');
+                  } else if (orderStatusFilter !== 'all') {
                     filtered = filtered.filter(o => SELLER_ORDER_STATUS_GROUPS[orderStatusFilter]?.includes(o.orderStatus));
                   }
                   if (orderSearchQuery.trim()) {

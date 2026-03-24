@@ -5802,4 +5802,14 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 買家訂單列表（/orders）加入面交標籤（黃色 badge）
 - [x] 面交訂單建立後自動通知賣家（含買家電話）
 - [x] 撰寫單元測試（4 tests passed）
+- [x] 保存 checkpoint
+
+---
+
+## 🤝 面交訂單改進（第六輪）
+
+- [x] 後端：面交訂單自動取消排程（7天未確認自動取消並通知買賣雙方）
+- [x] 訂單詳情頁面（/orders/{orderNo}）Hero Banner 加入面交標籤
+- [x] SellerDashboard 訂單篩選加入「🤝 面交」按鈕（球形按鈕，顯示面交訂單數量）
+- [x] 撰寫單元測試（4 tests passed）
 - [ ] 保存 checkpoint
