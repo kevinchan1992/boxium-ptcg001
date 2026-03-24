@@ -2237,6 +2237,260 @@ All three checks must pass for verified to be true. Respond with JSON only match
       return { orderNo };
     }),
 
+  // ============================================================
+  // BUYER - Batch Stripe Checkout (multiple items in one payment)
+  // ============================================================
+  createBatchStripeOrder: protectedProcedure
+    .input(z.object({
+      items: z.array(z.object({
+        listingId: z.number().int(),
+        offerId: z.number().int().optional(),
+      })).min(1),
+      buyerPhone: z.string().optional().default(""),
+      shippingMethod: z.string().optional(),
+      shippingAddress: z.object({
+        name: z.string().min(1),
+        phone: z.string().optional().default(""),
+        address: z.string().min(1),
+        district: z.string().optional(),
+        region: z.string().optional(),
+        sfStationCode: z.string().optional(),
+        sfStationName: z.string().optional(),
+      }).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+      const feeRate = await getPlatformFeeRate();
+
+      // Step 1: Validate all listings and compute prices
+      const orderItems: Array<{
+        listing: any;
+        effectivePrice: number;
+        offerId?: number;
+        offerRecord?: any;
+      }> = [];
+
+      for (const item of input.items) {
+        const listing = await getListingById(item.listingId);
+        if (!listing || listing.status !== "active" || listing.quantity < 1) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing?.title ?? item.listingId}」不存在或已售出` });
+        }
+        // Check if locked by another user
+        const activeOrder = await getActiveOrderByListingId(item.listingId);
+        if (activeOrder && activeOrder.buyerId !== ctx.user.id) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」目前有其他買家正在付款，請稍後再試。` });
+        }
+        // Cancel any existing pending orders for this listing by this buyer (payment method switch)
+        if (activeOrder && activeOrder.buyerId === ctx.user.id) {
+          await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', updatedAt: new Date() });
+        }
+
+        let effectivePrice = parseFloat(listing.priceHkd as string);
+        let offerRecord: any = null;
+        if (item.offerId) {
+          offerRecord = await getOfferById(item.offerId);
+          if (!offerRecord || offerRecord.buyerId !== ctx.user.id || offerRecord.listingId !== item.listingId) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "出價不存在或不屬於您" });
+          }
+          if (offerRecord.status !== "accepted") {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "此出價尚未被接受" });
+          }
+          effectivePrice = parseFloat(offerRecord.offerPriceHkd as string);
+        }
+        if (effectivePrice < 4.00) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `商品「${listing.title}」金額 HKD ${effectivePrice.toFixed(2)} 低於 Stripe 最低付款金額 HKD 4.00，請改用支付寶 HK 付款。`,
+          });
+        }
+        orderItems.push({ listing, effectivePrice, offerId: item.offerId, offerRecord });
+      }
+
+      // Step 2: Create all orders in DB with pending_payment status
+      const createdOrders: Array<{ orderNo: string; orderId: number; listingId: number; effectivePrice: number }> = [];
+      for (const { listing, effectivePrice, offerId } of orderItems) {
+        const orderNo = await generateOrderNo();
+        const newOrder = await createMarketplaceOrder({
+          orderNo,
+          buyerId: ctx.user.id,
+          sellerId: listing.sellerId ?? null,
+          sellerType: listing.sellerType as any,
+          paymentMethod: "stripe",
+          paymentStatus: "pending",
+          orderStatus: "pending_payment",
+          subtotalHkd: effectivePrice.toFixed(2),
+          listingId: listing.id,
+          unitPriceHkd: effectivePrice.toFixed(2),
+          quantity: 1,
+          platformFeeRate: feeRate.toFixed(4),
+          platformFeeHkd: calcPlatformFeeWithRate(listing.sellerType, effectivePrice, feeRate).toFixed(2),
+          sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, effectivePrice, feeRate).toFixed(2),
+          stripePaymentIntentId: null,
+          stripeSessionId: null,
+          shippingName: input.shippingAddress?.name ?? null,
+          shippingPhone: input.shippingAddress?.phone ?? null,
+          shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
+          shippingMethod: (input.shippingMethod ?? null) as any,
+          buyerPhone: input.buyerPhone || null,
+        });
+        createdOrders.push({ orderNo, orderId: newOrder.id, listingId: listing.id, effectivePrice });
+      }
+
+      // Step 3: Create a single Stripe Checkout Session for all orders
+      const totalAmount = createdOrders.reduce((sum, o) => sum + o.effectivePrice, 0);
+      const batchOrderNos = createdOrders.map(o => o.orderNo).join(",");
+      const firstOrderNo = createdOrders[0].orderNo;
+
+      const lineItems = orderItems.map(({ listing, effectivePrice }) => ({
+        price_data: {
+          currency: "hkd",
+          product_data: { name: listing.title, description: listing.description ?? undefined },
+          unit_amount: Math.round(effectivePrice * 100),
+        },
+        quantity: 1,
+      }));
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: lineItems,
+        mode: "payment",
+        success_url: `${ctx.req.headers.origin}/orders?payment=success&batch=${encodeURIComponent(batchOrderNos)}`,
+        cancel_url: `${ctx.req.headers.origin}/cart?payment=cancelled`,
+        client_reference_id: ctx.user.id.toString(),
+        metadata: {
+          user_id: ctx.user.id.toString(),
+          batch_order_nos: batchOrderNos,
+          order_no: firstOrderNo, // backward compat
+          total_amount: totalAmount.toFixed(2),
+        },
+        payment_intent_data: {
+          metadata: {
+            batch_order_nos: batchOrderNos,
+            buyerId: ctx.user.id.toString(),
+          },
+        },
+      });
+
+      // Step 4: Update all orders with Stripe session ID
+      for (const { orderId } of createdOrders) {
+        await updateMarketplaceOrder(orderId, {
+          stripeSessionId: session.id,
+          stripePaymentIntentId: session.payment_intent as string ?? null,
+          updatedAt: new Date(),
+        });
+      }
+
+      console.log(`[createBatchStripeOrder] Created ${createdOrders.length} orders, session ${session.id}, total HKD ${totalAmount}`);
+      return { checkoutUrl: session.url!, orderNos: createdOrders.map(o => o.orderNo), totalAmount };
+    }),
+
+  // ============================================================
+  // BUYER - Batch Alipay Checkout (multiple items, create all orders)
+  // ============================================================
+  createBatchAlipayOrder: protectedProcedure
+    .input(z.object({
+      items: z.array(z.object({
+        listingId: z.number().int(),
+        offerId: z.number().int().optional(),
+      })).min(1),
+      proofImageUrl: z.string().optional().default(""),
+      buyerPhone: z.string().optional().default(""),
+      shippingMethod: z.string().optional(),
+      shippingAddress: z.object({
+        name: z.string().min(1),
+        phone: z.string().optional().default(""),
+        address: z.string().min(1),
+        district: z.string().optional(),
+        region: z.string().optional().default("香港"),
+        sfStationCode: z.string().optional(),
+        sfStationName: z.string().optional(),
+      }).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const feeRate = await getPlatformFeeRate();
+      const createdOrders: Array<{ orderNo: string; listingTitle: string; effectivePrice: number }> = [];
+      let totalAmount = 0;
+
+      for (const item of input.items) {
+        const listing = await getListingById(item.listingId);
+        if (!listing || listing.status !== "active" || listing.quantity < 1) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing?.title ?? item.listingId}」不存在或已售出` });
+        }
+        const activeOrder = await getActiveOrderByListingId(item.listingId);
+        if (activeOrder && activeOrder.buyerId !== ctx.user.id) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」目前有其他買家正在付款，請稍後再試。` });
+        }
+        // Cancel any existing pending orders (payment method switch)
+        if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'stripe') {
+          await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', updatedAt: new Date() });
+        }
+        // Reuse existing alipay pending order
+        if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'alipay_hk') {
+          await updateMarketplaceOrder(activeOrder.id, {
+            alipayProofImageUrl: input.proofImageUrl,
+            shippingName: input.shippingAddress?.name ?? null,
+            shippingPhone: input.shippingAddress?.phone ?? null,
+            shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
+            updatedAt: new Date(),
+          });
+          const price = parseFloat(activeOrder.subtotalHkd as string);
+          createdOrders.push({ orderNo: activeOrder.orderNo, listingTitle: listing.title, effectivePrice: price });
+          totalAmount += price;
+          continue;
+        }
+
+        let effectivePrice = parseFloat(listing.priceHkd as string);
+        if (item.offerId) {
+          const offerRecord = await getOfferById(item.offerId);
+          if (!offerRecord || offerRecord.buyerId !== ctx.user.id || offerRecord.listingId !== item.listingId) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "出價不存在或不屬於您" });
+          }
+          if (offerRecord.status !== "accepted") {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "此出價尚未被接受" });
+          }
+          effectivePrice = parseFloat(offerRecord.offerPriceHkd as string);
+        }
+
+        const orderNo = await generateOrderNo();
+        await createMarketplaceOrder({
+          orderNo,
+          buyerId: ctx.user.id,
+          sellerId: listing.sellerId ?? null,
+          sellerType: listing.sellerType as any,
+          paymentMethod: "alipay_hk",
+          paymentStatus: "pending",
+          orderStatus: "pending_payment",
+          subtotalHkd: effectivePrice.toFixed(2),
+          listingId: listing.id,
+          unitPriceHkd: effectivePrice.toFixed(2),
+          quantity: 1,
+          platformFeeRate: feeRate.toFixed(4),
+          platformFeeHkd: calcPlatformFeeWithRate(listing.sellerType, effectivePrice, feeRate).toFixed(2),
+          sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, effectivePrice, feeRate).toFixed(2),
+          alipayMerchantTransId: null,
+          alipayProofImageUrl: input.proofImageUrl,
+          shippingName: input.shippingAddress?.name ?? null,
+          shippingPhone: input.shippingAddress?.phone ?? null,
+          shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
+          shippingMethod: (input.shippingMethod ?? null) as any,
+          buyerPhone: input.buyerPhone || null,
+        });
+        createdOrders.push({ orderNo, listingTitle: listing.title, effectivePrice });
+        totalAmount += effectivePrice;
+      }
+
+      // Notify admin
+      const orderSummary = createdOrders.map(o => `${o.listingTitle} HKD ${o.effectivePrice.toFixed(2)}`).join("、");
+      await notifyAdmin({
+        title: `支付寶 HK 批量訂單待審核 💰（${createdOrders.length} 件）`,
+        content: `買家已提交支付寶 HK 付款，共 ${createdOrders.length} 個訂單，合計 HKD ${totalAmount.toFixed(2)}。商品：${orderSummary}。請前往管理後台審核。`,
+      }).catch(() => {});
+
+      console.log(`[createBatchAlipayOrder] Created ${createdOrders.length} orders, total HKD ${totalAmount}`);
+      return { orderNos: createdOrders.map(o => o.orderNo), totalAmount, firstOrderNo: createdOrders[0]?.orderNo };
+    }),
+
   // Get single order by orderNo (for detail page)
   getOrderByNo: protectedProcedure
     .input(z.object({ orderNo: z.string() }))

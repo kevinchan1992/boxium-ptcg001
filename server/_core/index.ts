@@ -84,15 +84,71 @@ async function startServer() {
         const session = event.data.object;
         const orderNo = session.metadata?.order_no;
         const orderId = session.metadata?.orderId;
-        console.log(`[Webhook] checkout.session.completed: orderNo=${orderNo}, orderId=${orderId}`);
-        const { updateMarketplaceOrder, getMarketplaceOrderById } = await import("../db");
+        const batchOrderNos = session.metadata?.batch_order_nos;
+        console.log(`[Webhook] checkout.session.completed: orderNo=${orderNo}, orderId=${orderId}, batchOrderNos=${batchOrderNos}`);
+        const { updateMarketplaceOrder, getMarketplaceOrderById, getMarketplaceOrderByNo } = await import("../db");
         const { createNotification } = await import("../db/notifications");
+
+        // Handle batch orders (multiple items in one Stripe session)
+        if (batchOrderNos && batchOrderNos.includes(",")) {
+          const orderNoList = batchOrderNos.split(",").map((s: string) => s.trim()).filter(Boolean);
+          console.log(`[Webhook] Processing batch orders: ${orderNoList.join(", ")}`);
+          const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null;
+          for (const batchOrderNo of orderNoList) {
+            try {
+              const batchOrder = await getMarketplaceOrderByNo(batchOrderNo);
+              if (!batchOrder) { console.warn(`[Webhook] Batch order ${batchOrderNo} not found`); continue; }
+              if (batchOrder.orderStatus === "cancelled") {
+                // Auto-refund for cancelled orders is complex in batch; log for manual review
+                console.warn(`[Webhook] Batch order ${batchOrderNo} already cancelled but payment received — needs manual review`);
+                const { notifyAdmin: _na } = await import("../emailService");
+                await _na({ title: "批量訂單中有已取消訂單收到付款", content: `訂單 ${batchOrderNo} 已取消但批量付款已收取，請手動處理退款。Session: ${session.id}` }).catch(() => {});
+                continue;
+              }
+              if (batchOrder.orderStatus === "pending_payment") {
+                await updateMarketplaceOrder(batchOrder.id, {
+                  paymentStatus: "paid",
+                  orderStatus: "payment_received",
+                  stripePaymentIntentId: paymentIntentId ?? batchOrder.stripePaymentIntentId,
+                });
+                console.log(`[Webhook] Batch order ${batchOrderNo} marked as payment_received`);
+                if (batchOrder.listingId) {
+                  const { updateListing } = await import("../db");
+                  await updateListing(batchOrder.listingId, { status: "sold" });
+                }
+                await createNotification({
+                  userId: batchOrder.buyerId,
+                  type: 'trade',
+                  title: '付款成功 ✅',
+                  body: `訂單 ${batchOrderNo} 的 Stripe 付款已確認，訂單現在進入處理中。`,
+                  linkUrl: `/orders/${batchOrderNo}`,
+                }).catch(() => {});
+                if (batchOrder.sellerId) {
+                  const { getSellerProfileById } = await import('../db');
+                  const sp = await getSellerProfileById(batchOrder.sellerId);
+                  if (sp?.userId) {
+                    await createNotification({
+                      userId: sp.userId,
+                      type: 'trade',
+                      title: '新訂單已付款 🎉',
+                      body: `訂單 ${batchOrderNo} 買家已完成 Stripe 付款，請盡快安排出貨。`,
+                      linkUrl: "/seller",
+                    }).catch(() => {});
+                  }
+                }
+              }
+            } catch (batchErr: any) {
+              console.error(`[Webhook] Error processing batch order ${batchOrderNo}:`, batchErr.message);
+            }
+          }
+          return res.json({ received: true });
+        }
+
         let order: any = null;
         if (orderId) {
           order = await getMarketplaceOrderById(parseInt(orderId));
-        } else if (orderNo) {
-          const { getMarketplaceOrderByNo } = await import("../db");
-          order = await getMarketplaceOrderByNo(orderNo);
+        } else if (orderNo || batchOrderNos) {
+          order = await getMarketplaceOrderByNo(orderNo ?? batchOrderNos);
         }
         if (order && order.orderStatus === "cancelled") {
           // Order was already cancelled (e.g., by payment timeout) but Stripe payment arrived late

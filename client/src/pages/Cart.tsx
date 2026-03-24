@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock, Check, X, Phone, MapPin, CreditCard, Truck, Users, ChevronDown } from "lucide-react";
+import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock, Check, X, Phone, MapPin, CreditCard, Truck, Users, ChevronDown, Smartphone, Copy } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SF_STATIONS as sfStations, SFStation } from "@/lib/sfStations";
+
+const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
 const CONDITION_LABELS: Record<string, string> = {
   mint: "Mint",
@@ -608,7 +610,8 @@ function CheckoutDialog({
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const [isValidatingStock, setIsValidatingStock] = React.useState(false);
-  const [checkoutStep, setCheckoutStep] = useState<1 | 2>(1);
+  const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3>(1);
+  const [alipayOrderNos, setAlipayOrderNos] = useState<string[]>([]);
 
   // Fetch saved addresses
   const { data: savedAddresses } = trpc.marketplace.getMyShippingAddresses.useQuery(undefined, {
@@ -644,15 +647,15 @@ function CheckoutDialog({
 
   // For cart checkout we create individual orders per listing (one order per item)
   // since each listing is from potentially different sellers
-  const createStripeOrderMutation = trpc.marketplace.createStripeOrder.useMutation({
+  const createBatchStripeOrderMutation = trpc.marketplace.createBatchStripeOrder.useMutation({
     onError: (err) => toast.error(err.message || "建立訂單失敗"),
   });
 
-  const createAlipayOrderMutation = trpc.marketplace.createAlipayOrder.useMutation({
+  const createBatchAlipayOrderMutation = trpc.marketplace.createBatchAlipayOrder.useMutation({
     onError: (err) => toast.error(err.message || "建立訂單失敗"),
   });
 
-  const isProcessing = createStripeOrderMutation.isPending || createAlipayOrderMutation.isPending;
+  const isProcessing = createBatchStripeOrderMutation.isPending || createBatchAlipayOrderMutation.isPending;
 
   const canProceedStep1 = useMemo(() => {
     if (activeItems.length === 0) return false;
@@ -698,13 +701,13 @@ function CheckoutDialog({
     };
   };
 
-  // Batch checkout state: track which items have been processed
+  // Batch checkout state
   const [batchProgress, setBatchProgress] = useState<{ total: number; done: number; errors: number } | null>(null);
 
   const handleCheckout = async () => {
-    if (!canProceedStep1 || batchProgress) return;
+    if (isProcessing || batchProgress) return;
 
-    // Pre-checkout inventory validation: check all active items are still available
+    // Pre-checkout inventory validation
     setIsValidatingStock(true);
     try {
       const freshCart = await utils.marketplace.getMyCart.fetch();
@@ -712,7 +715,6 @@ function CheckoutDialog({
         (freshCart ?? []).filter((i) => i.status === "active").map((i) => i.listingId)
       );
       const nowUnavailable = activeItems.filter((i) => !freshActiveIds.has(i.listingId));
-
       if (nowUnavailable.length > 0) {
         const names = nowUnavailable.map((i) => i.title).join("、");
         toast.error(`以下商品已下架或售出，已自動從購物車移除：${names}`);
@@ -722,126 +724,76 @@ function CheckoutDialog({
         return;
       }
     } catch {
-      // Non-fatal: if validation fails, proceed to checkout
+      // Non-fatal
     }
     setIsValidatingStock(false);
+
     const shippingAddress = buildShippingAddress();
-    const items = [...activeItems];
-    setBatchProgress({ total: items.length, done: 0, errors: 0 });
+    const itemsPayload = activeItems.map((item) => ({
+      listingId: item.listingId,
+      ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
+    }));
 
-    let done = 0;
-    let errors = 0;
-    let firstOrderNo: string | null = null;
-    let firstStripeCheckoutUrl: string | null = null;
-
-    for (const item of items) {
+    if (form.paymentMethod === "stripe") {
+      // ── Stripe: batch checkout, one payment for all items ──
+      setBatchProgress({ total: activeItems.length, done: 0, errors: 0 });
       try {
-        if (form.paymentMethod === "stripe") {
-          if (done === 0) {
-            // First item: use Stripe, capture checkoutUrl
-            await new Promise<void>((resolve, reject) => {
-              createStripeOrderMutation.mutate({
-                listingId: item.listingId,
-                shippingAddress,
-                shippingMethod: form.shippingMethod,
-                buyerPhone: buyerPhone || undefined,
-                ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
-              }, {
-                onSuccess: (data) => {
-                  if (data.checkoutUrl) firstStripeCheckoutUrl = data.checkoutUrl;
-                  if (data.orderNo && !firstOrderNo) firstOrderNo = data.orderNo;
-                  resolve();
-                },
-                onError: (e) => reject(e),
-              });
-            });
-          } else {
-            // Remaining items: use Alipay (fallback)
-            await new Promise<void>((resolve, reject) => {
-              createAlipayOrderMutation.mutate({
-                listingId: item.listingId,
-                proofImageUrl: "",
-                shippingAddress,
-                shippingMethod: form.shippingMethod,
-                buyerPhone: buyerPhone || undefined,
-                ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
-              }, {
-                onSuccess: () => resolve(),
-                onError: (e) => reject(e),
-              });
-            });
-          }
-        } else {
-          // AlipayHK: capture first orderNo for redirect
-          await new Promise<void>((resolve, reject) => {
-            createAlipayOrderMutation.mutate({
-              listingId: item.listingId,
-              proofImageUrl: "",
-              shippingAddress,
-              shippingMethod: form.shippingMethod,
-              buyerPhone: buyerPhone || undefined,
-              ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
-            }, {
-              onSuccess: (data) => {
-                if (data.orderNo && !firstOrderNo) firstOrderNo = data.orderNo;
-                resolve();
-              },
-              onError: (e) => reject(e),
-            });
+        const result = await new Promise<{ checkoutUrl: string; orderNos: string[]; totalAmount: number }>((resolve, reject) => {
+          createBatchStripeOrderMutation.mutate({
+            items: itemsPayload,
+            shippingAddress,
+            shippingMethod: form.shippingMethod,
+            buyerPhone: buyerPhone || undefined,
+          }, {
+            onSuccess: resolve,
+            onError: reject,
           });
-        }
-        done++;
+        });
+        utils.marketplace.getMyCart.invalidate();
+        utils.marketplace.getCartCount.invalidate();
+        setBatchProgress(null);
+        onClose();
+        toast.success(`已建立 ${result.orderNos.length} 個訂單，正在跳轉至 Stripe 付款頁面...`);
+        window.open(result.checkoutUrl, "_blank");
       } catch {
-        errors++;
-      }
-      setBatchProgress({ total: items.length, done: done + errors, errors });
-    }
-
-    utils.marketplace.getMyCart.invalidate();
-    utils.marketplace.getCartCount.invalidate();
-    setBatchProgress(null);
-    onClose();
-
-    if (errors === 0) {
-      if (form.paymentMethod === "stripe" && firstStripeCheckoutUrl) {
-        // Stripe: open checkout in new tab (already handled by mutation onSuccess for single item)
-        // For multi-item, open the first stripe checkout
-        window.open(firstStripeCheckoutUrl, "_blank");
-        if (done > 1) {
-          toast.info(`已建立 ${done} 個訂單，其餘請到「我的訂單」完成付款`);
-        }
-      } else if (form.paymentMethod === "alipay_hk" && firstOrderNo) {
-        // AlipayHK: navigate directly to order detail page for payment
-        toast.success(done > 1 ? `已建立 ${done} 個訂單，正在跳轉至付款頁面...` : "訂單已建立，請完成支付寶付款");
-        setLocation(`/orders/${firstOrderNo}`);
-        if (done > 1) {
-          setTimeout(() => toast.info(`其餘 ${done - 1} 個訂單請到「我的訂單」完成付款`), 1500);
-        }
-      } else {
-        toast.success(`已成功建立 ${done} 個訂單！`);
-        setLocation("/orders");
+        setBatchProgress(null);
+        // Error already shown by mutation onError
       }
     } else {
+      // ── AlipayHK: create all orders, then show QR code ──
+      setBatchProgress({ total: activeItems.length, done: 0, errors: 0 });
       try {
-        const freshCart2 = await utils.marketplace.getMyCart.fetch();
-        const freshActiveIds2 = new Set(
-          (freshCart2 ?? []).filter((i) => i.status === "active").map((i) => i.listingId)
-        );
-        const failedItems = activeItems.filter((i) => !freshActiveIds2.has(i.listingId));
-        if (failedItems.length > 0) {
-          const names = failedItems.map((i) => i.title).join("、");
-          toast.warning(`建立了 ${done} 個訂單，${errors} 個因商品已下架或售出而失敗，已自動移除：${names}`);
-        } else {
-          toast.warning(`建立了 ${done} 個訂單，${errors} 個失敗，請檢查訂單頁面`);
-        }
+        const result = await new Promise<{ orderNos: string[]; totalAmount: number; firstOrderNo: string }>((resolve, reject) => {
+          createBatchAlipayOrderMutation.mutate({
+            items: itemsPayload,
+            proofImageUrl: "",
+            shippingAddress,
+            shippingMethod: form.shippingMethod,
+            buyerPhone: buyerPhone || undefined,
+          }, {
+            onSuccess: resolve,
+            onError: reject,
+          });
+        });
+        utils.marketplace.getMyCart.invalidate();
+        utils.marketplace.getCartCount.invalidate();
+        setBatchProgress(null);
+        // Show QR code step
+        setAlipayOrderNos(result.orderNos);
+        setCheckoutStep(3);
       } catch {
-        toast.warning(`建立了 ${done} 個訂單，${errors} 個失敗，請檢查訂單頁面`);
+        setBatchProgress(null);
+        // Error already shown by mutation onError
       }
-      if (firstOrderNo && form.paymentMethod === "alipay_hk") {
-        setLocation(`/orders/${firstOrderNo}`);
-      } else {
-        setLocation("/orders");
-      }
+    }
+  };
+
+  const handleAlipayDone = () => {
+    onClose();
+    if (alipayOrderNos.length === 1) {
+      setLocation(`/orders/${alipayOrderNos[0]}`);
+    } else {
+      setLocation("/orders");
     }
   };
 
@@ -864,7 +816,7 @@ function CheckoutDialog({
           </div>
           {/* Step Indicator */}
           <div className="flex items-center gap-0">
-            {[{ n: 1 as const, label: "送貨方式" }, { n: 2 as const, label: "付款確認" }].map(({ n, label }, idx) => (
+            {[{ n: 1 as const, label: "送貨方式" }, { n: 2 as const, label: "付款確認" }, ...(checkoutStep === 3 ? [{ n: 3 as const, label: "掃碼付款" }] : [])].map(({ n, label }, idx) => (
               <React.Fragment key={n}>
                 <div className="flex flex-col items-center gap-1">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -878,7 +830,7 @@ function CheckoutDialog({
                     checkoutStep >= n ? "text-[#FEDD00]" : "text-white/40"
                   }`}>{label}</span>
                 </div>
-                {idx < 1 && (
+                {idx < (checkoutStep === 3 ? 2 : 1) && (
                   <div className={`flex-1 h-0.5 mb-4 mx-1 transition-all ${
                     checkoutStep > n ? "bg-[#FEDD00]" : "bg-white/20"
                   }`} />
@@ -1301,11 +1253,19 @@ function CheckoutDialog({
                 </RadioGroup>
               </div>
 
-              {activeItems.length > 1 && (
-                <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
-                  <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-700">
-                    將為 {activeItems.length} 件商品建立 {activeItems.length} 個訂單（每個賣家各一個）。Stripe 結帳時會開啟第一個訂單的付款頁，其餘訂單請到「我的訂單」完成支付。
+              {activeItems.length > 1 && form.paymentMethod === "stripe" && (
+                <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-200">
+                  <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-blue-700">
+                    將為 {activeItems.length} 件商品建立 {activeItems.length} 個訂單，並合併為一筆 HK${activeSubtotal.toFixed(0)} 的 Stripe 付款，一次完成所有訂單的支付。
+                  </p>
+                </div>
+              )}
+              {activeItems.length > 1 && form.paymentMethod === "alipay_hk" && (
+                <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-200">
+                  <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-blue-700">
+                    將為 {activeItems.length} 件商品建立 {activeItems.length} 個訂單，確認後顯示支付寶 HK 收款 QR 碼，掃碼支付合計 HK${activeSubtotal.toFixed(0)}，完成後上傳截圖確認。
                   </p>
                 </div>
               )}
@@ -1325,6 +1285,66 @@ function CheckoutDialog({
                 </div>
               )}
             </>
+          )}
+
+          {/* ── Step 3: AlipayHK QR Code ── */}
+          {checkoutStep === 3 && (
+            <div className="space-y-4">
+              {/* Amount summary */}
+              <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4">
+                <p className="text-xs font-semibold text-[#06038D] mb-2">訂單已建立，請完成支付寶 HK 付款</p>
+                {activeItems.map((item) => (
+                  <div key={item.listingId} className="flex justify-between text-sm text-gray-700 mb-1">
+                    <span className="truncate flex-1 mr-2">{item.title}</span>
+                    <span className="flex-shrink-0 font-medium">
+                      {item.acceptedOfferPrice ? `HK$${Number(item.acceptedOfferPrice).toFixed(0)}` : `HK$${Number(item.priceHkd).toFixed(0)}`}
+                    </span>
+                  </div>
+                ))}
+                <div className="border-t border-[#06038D]/20 pt-2 mt-2 flex justify-between font-bold text-[#06038D]">
+                  <span>合計付款金額</span>
+                  <span className="text-lg">HK${activeSubtotal.toFixed(0)}</span>
+                </div>
+              </div>
+
+              {/* QR Code */}
+              <div className="text-center space-y-3">
+                <p className="text-sm font-medium text-gray-700">請用 AlipayHK App 掃描以下 QR 碼付款</p>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(ALIPAY_QR_URL)}`}
+                  alt="支付寶 HK QR Code"
+                  className="w-52 h-52 mx-auto rounded-xl border-4 border-white shadow-lg"
+                />
+                <a href={ALIPAY_QR_URL} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-[#06038D] hover:underline text-sm">
+                  <Smartphone className="w-4 h-4" />在手機上開啟支付寶 HK
+                </a>
+              </div>
+
+              {/* Reference note */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+                <p className="font-medium">付款備注請填寫訂單編號：</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="font-mono text-sm font-bold tracking-wide flex-1">
+                    {alipayOrderNos.length === 1 ? `#${alipayOrderNos[0]}` : `#${alipayOrderNos[0]} 等 ${alipayOrderNos.length} 個訂單`}
+                  </p>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(alipayOrderNos.map(no => `#${no}`).join(" "));
+                      toast.success("訂單編號已複製！請貼上到支付寶備注欄位");
+                    }}
+                    className="flex items-center gap-1 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg px-2 py-1 text-xs font-medium transition-colors"
+                  >
+                    <Copy className="w-3 h-3" />複製
+                  </button>
+                </div>
+                <p className="text-amber-600 mt-1">⚠️ 請務必在支付寶備注欄填寫以上編號，方便核對付款</p>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
+                <p>ℹ️ 完成支付寶 HK 付款後，請點擊「我已完成付款」前往訂單頁面上傳付款截圖。管理員審核後訂單即生效。</p>
+              </div>
+            </div>
           )}
         </div>
 
@@ -1369,6 +1389,15 @@ function CheckoutDialog({
                 : activeItems.length > 1
                 ? `確認結帳（${activeItems.length} 件）`
                 : "確認結帳"}
+            </Button>
+          )}
+          {checkoutStep === 3 && (
+            <Button
+              className="flex-1 font-bold"
+              style={{ background: '#FEDD00', color: '#06038D' }}
+              onClick={handleAlipayDone}
+            >
+              我已完成付款，前往訂單頁面
             </Button>
           )}
         </div>
