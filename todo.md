@@ -6090,3 +6090,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 前端：Profile.tsx BatchOrderCard 加入 isAllCancelled 判斷，顯示「此批次已全部取消」標籤
 - [x] 後端：adminUpdateOrderStatus 取消時加入 batchRef 批次取消邏輯（恢復庫存 + 取消 offer）
 - [x] 15 項測試全部通過（batch-order-enhancements.test.ts）
+
+---
+## 🛒 批次訂單三項 UX 優化（2026-03-24 第五批）
+- [x] 前端：BatchOrderCard 全部取消標籤旁加入「🛍️ 前往市集」按鈕（Link to /marketplace）
+- [x] 後端：adminUpdateOrderStatus 批次取消改為逐筆 Email（dedupeKey: order_cancelled_admin_{id}）
+- [x] 前端：Profile 待付款 Tab 改為批次數量計算（同一 batchRef 算一筆），全部 Tab 同步修正
+- [x] 12 項測試全部通過（batch-ux-enhancements.test.ts）

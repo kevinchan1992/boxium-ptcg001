@@ -1794,11 +1794,12 @@ export const marketplaceRouter = router({
       if (["shipped", "completed", "cancelled"].includes(input.orderStatus) && order.orderStatus !== input.orderStatus) {
         try {
           const { sendOrderEmail, buildOrderShippedEmail, buildOrderCompletedBuyerEmail, buildOrderCompletedSellerEmail, buildOrderCancelledEmail, getOrderEmailData } = await import("../emailService");
-          const emailData = await getOrderEmailData(order);
           if (input.orderStatus === "shipped") {
+            const emailData = await getOrderEmailData(order);
             const { subject, html } = buildOrderShippedEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
             await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `order_shipped_buyer_${order.id}` });
           } else if (input.orderStatus === "completed") {
+            const emailData = await getOrderEmailData(order);
             const { subject: bs, html: bh } = buildOrderCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
             await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `order_completed_buyer_${order.id}` });
             // Use sellerProfile.userId, NOT order.sellerId
@@ -1810,8 +1811,29 @@ export const marketplaceRouter = router({
               }
             }
           } else if (input.orderStatus === "cancelled") {
-            const { subject, html } = buildOrderCancelledEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, note: input.note });
-            await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `order_cancelled_buyer_${order.id}` });
+            // ── Batch cancel: send one email per order (mirrors buyerCancelOrder behaviour) ────────────
+            for (const batchOrderId of batchOrderIds) {
+              const targetOrder = batchOrderId === input.orderId ? order : await getMarketplaceOrderById(batchOrderId);
+              if (!targetOrder) continue;
+              try {
+                const emailData = await getOrderEmailData(targetOrder);
+                const { subject, html } = buildOrderCancelledEmail({
+                  orderNo: targetOrder.orderNo,
+                  itemName: emailData.itemName,
+                  priceHkd: emailData.priceHkd,
+                  note: input.note,
+                });
+                await sendOrderEmail({
+                  userId: targetOrder.buyerId,
+                  subject,
+                  html,
+                  emailType: 'order',
+                  dedupeKey: `order_cancelled_admin_${targetOrder.id}`,
+                });
+              } catch (singleEmailErr: any) {
+                console.warn(`[Admin] Cancel email failed for order ${targetOrder.orderNo}:`, singleEmailErr.message);
+              }
+            }
           }
         } catch (emailErr: any) {
           console.warn("[Admin] Order status email failed:", emailErr.message);

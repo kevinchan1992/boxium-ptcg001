@@ -1079,9 +1079,45 @@ function EmbeddedOrdersSection() {
       )
     : statusFiltered;
 
+  // For "pending" tab: count by batch (one batchRef = one unit), not by individual order.
+  // This prevents the badge showing "2" when there's really only 1 batch of 2 items.
+  const pendingOrders = allOrders.filter(o => STATUS_GROUPS.pending.includes(o.orderStatus));
+  const pendingBatchCount = (() => {
+    const seenBatchRefs = new Set<string>();
+    let count = 0;
+    for (const o of pendingOrders) {
+      if (o.batchRef) {
+        if (!seenBatchRefs.has(o.batchRef)) {
+          seenBatchRefs.add(o.batchRef);
+          count++;
+        }
+      } else {
+        count++; // standalone order counts individually
+      }
+    }
+    return count;
+  })();
+
+  // Similarly, count "all" tab by batch units
+  const allBatchCount = (() => {
+    const seenBatchRefs = new Set<string>();
+    let count = 0;
+    for (const o of allOrders) {
+      if (o.batchRef) {
+        if (!seenBatchRefs.has(o.batchRef)) {
+          seenBatchRefs.add(o.batchRef);
+          count++;
+        }
+      } else {
+        count++;
+      }
+    }
+    return count;
+  })();
+
   const filterTabs = [
-    { id: "all", label: "全部", count: allOrders.length },
-    { id: "pending", label: "待付款", count: allOrders.filter(o => STATUS_GROUPS.pending.includes(o.orderStatus)).length },
+    { id: "all", label: "全部", count: allBatchCount },
+    { id: "pending", label: "待付款", count: pendingBatchCount },
     { id: "active", label: "進行中", count: allOrders.filter(o => STATUS_GROUPS.active.includes(o.orderStatus)).length },
     { id: "done", label: "已完成", count: allOrders.filter(o => STATUS_GROUPS.done.includes(o.orderStatus)).length },
   ];
@@ -1431,9 +1467,16 @@ function BatchOrderCard({ orders }: { orders: any[] }) {
             </span>
           )}
           {isAllCancelled && (
-            <span className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
-              <span className="text-sm">❌</span>此批次已全部取消，如需購買請重新下單
-            </span>
+            <>
+              <span className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+                <span className="text-sm">❌</span>此批次已全部取消
+              </span>
+              <Link href="/marketplace">
+                <Button size="sm" variant="outline" className="text-xs font-semibold border-[#06038d] text-[#06038d] hover:bg-[#06038d]/5">
+                  🛍️ 前往市集
+                </Button>
+              </Link>
+            </>
           )}
         </div>
       )}
