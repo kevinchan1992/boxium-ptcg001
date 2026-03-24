@@ -2308,6 +2308,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
 
       // Step 2: Create all orders in DB with pending_payment status
+      const batchRef = orderItems.length > 1 ? `BATCH-${Date.now()}-${ctx.user.id}` : undefined;
       const createdOrders: Array<{ orderNo: string; orderId: number; listingId: number; effectivePrice: number }> = [];
       for (const { listing, effectivePrice, offerId } of orderItems) {
         const orderNo = await generateOrderNo();
@@ -2333,7 +2334,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
           shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
           shippingMethod: (input.shippingMethod ?? null) as any,
           buyerPhone: input.buyerPhone || null,
-        });
+          batchRef: batchRef ?? null,
+        } as any);
         createdOrders.push({ orderNo, orderId: newOrder.id, listingId: listing.id, effectivePrice });
       }
 
@@ -2355,7 +2357,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         payment_method_types: ["card"],
         line_items: lineItems,
         mode: "payment",
-        success_url: `${ctx.req.headers.origin}/orders?payment=success&batch=${encodeURIComponent(batchOrderNos)}`,
+        success_url: `${ctx.req.headers.origin}/cart?success=true&orders=${encodeURIComponent(batchOrderNos)}`,
         cancel_url: `${ctx.req.headers.origin}/cart?payment=cancelled`,
         client_reference_id: ctx.user.id.toString(),
         metadata: {
@@ -2411,6 +2413,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const feeRate = await getPlatformFeeRate();
       const createdOrders: Array<{ orderNo: string; listingTitle: string; effectivePrice: number }> = [];
       let totalAmount = 0;
+      const batchRef = input.items.length > 1 ? `BATCH-${Date.now()}-${ctx.user.id}` : undefined;
 
       for (const item of input.items) {
         const listing = await getListingById(item.listingId);
@@ -2475,7 +2478,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
           shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
           shippingMethod: (input.shippingMethod ?? null) as any,
           buyerPhone: input.buyerPhone || null,
-        });
+          batchRef: batchRef ?? null,
+        } as any);
         createdOrders.push({ orderNo, listingTitle: listing.title, effectivePrice });
         totalAmount += effectivePrice;
       }

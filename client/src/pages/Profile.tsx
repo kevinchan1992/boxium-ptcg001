@@ -1138,7 +1138,23 @@ function EmbeddedOrdersSection() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((order: any) => <EmbeddedOrderCard key={order.id} order={order} />)}
+          {(() => {
+            // Group orders by batchRef; orders without batchRef are shown individually
+            const rendered: React.ReactNode[] = [];
+            const seenBatchRefs = new Set<string>();
+            for (const order of filtered) {
+              const batchRef = order.batchRef as string | null;
+              if (batchRef) {
+                if (seenBatchRefs.has(batchRef)) continue; // already rendered
+                seenBatchRefs.add(batchRef);
+                const batchOrders = filtered.filter((o: any) => o.batchRef === batchRef);
+                rendered.push(<BatchOrderCard key={`batch-${batchRef}`} orders={batchOrders} />);
+              } else {
+                rendered.push(<EmbeddedOrderCard key={order.id} order={order} />);
+              }
+            }
+            return rendered;
+          })()}
           <p className="text-xs text-gray-400 text-center pt-1">共 {filtered.length} 筆訂單</p>
         </div>
       )}
@@ -1338,6 +1354,107 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
           <Star className={`w-7 h-7 transition-colors ${star <= (hovered || value) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
         </button>
       ))}
+    </div>
+  );
+}
+
+// ─── Batch Order Card (multiple orders with same batchRef) ───
+function BatchOrderCard({ orders }: { orders: any[] }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!orders.length) return null;
+  const firstOrder = orders[0];
+  const totalAmount = orders.reduce((sum, o) => sum + parseFloat(o.subtotalHkd ?? '0'), 0);
+  // Use the "worst" status (pending_payment > others)
+  const batchStatus = orders.some(o => o.orderStatus === 'pending_payment') ? 'pending_payment'
+    : orders.some(o => ['payment_submitted', 'alipay_pending'].includes(o.orderStatus)) ? 'payment_submitted'
+    : orders.some(o => ['paid_held', 'payment_received', 'processing'].includes(o.orderStatus)) ? 'processing'
+    : orders.some(o => o.orderStatus === 'shipped') ? 'shipped'
+    : orders.some(o => o.orderStatus === 'completed') ? 'completed'
+    : firstOrder.orderStatus;
+  const isPending = batchStatus === 'pending_payment';
+  const isWaitingShipment = ['paid_held', 'payment_received', 'processing'].includes(batchStatus);
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+      {/* Brand Header Bar */}
+      <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+        <span className="text-xs text-white/80 font-mono tracking-wide">訂單批次 · {orders.length} 件商品</span>
+        <OrderStatusBadge status={batchStatus} />
+      </div>
+      {/* Products list */}
+      <div className="p-4 space-y-3">
+        {orders.map((order: any) => {
+          const imgs = (() => { try { return JSON.parse(order.listingImages ?? '[]'); } catch { return []; } })();
+          const thumb = imgs[0];
+          return (
+            <div key={order.id} className="flex items-center gap-3">
+              {thumb ? (
+                <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
+                  <img src={thumb} alt={order.listingTitle ?? '商品'} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="flex-shrink-0 w-12 h-12 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
+                  <span className="text-xl">🃏</span>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate text-gray-900">{order.listingTitle ?? '商品'}</p>
+                <p className="text-xs text-gray-500 font-mono">#{order.orderNo}</p>
+              </div>
+              <p className="text-sm font-semibold flex-shrink-0" style={{ color: BRAND_BLUE }}>HKD {parseFloat(order.subtotalHkd ?? '0').toFixed(2)}</p>
+            </div>
+          );
+        })}
+        {/* Total */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="text-sm font-semibold text-gray-700">合計（不含運費）</span>
+          <span className="text-base font-bold" style={{ color: BRAND_BLUE }}>HKD {totalAmount.toFixed(2)}</span>
+        </div>
+        {/* Payment method */}
+        <p className="text-xs text-gray-500">{firstOrder.paymentMethod?.replace('_', ' ')} · {new Date(firstOrder.createdAt).toLocaleDateString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      </div>
+      {/* Action buttons */}
+      {(isPending || isWaitingShipment) && (
+        <div className="px-4 pb-3 flex flex-wrap items-center gap-2">
+          {isPending && (
+            <Link href={`/orders/${firstOrder.orderNo}`}>
+              <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: BRAND_BLUE }}>
+                <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
+              </Button>
+            </Link>
+          )}
+          {isWaitingShipment && (
+            <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+              <Package className="w-3.5 h-3.5" />付款成功，等待賣家出貨
+            </span>
+          )}
+        </div>
+      )}
+      {/* Expand toggle */}
+      <button
+        className="w-full px-4 py-2.5 border-t text-xs text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+        onClick={() => setExpanded(e => !e)}
+      >
+        {expanded ? <><ChevronUp className="w-3.5 h-3.5" />收起訂單詳情</> : <><ChevronDown className="w-3.5 h-3.5" />查看各訂單詳情</>}
+      </button>
+      {expanded && (
+        <div className="border-t p-4 space-y-2" style={{ backgroundColor: '#f8f9fa' }}>
+          {orders.map((order: any) => (
+            <Link key={order.id} href={`/orders/${order.orderNo}`}>
+              <div className="flex items-center justify-between py-2 px-3 bg-white rounded-lg border border-gray-100 hover:border-[#06038d]/30 transition-colors cursor-pointer">
+                <div>
+                  <p className="text-xs font-mono text-gray-500">#{order.orderNo}</p>
+                  <p className="text-sm font-medium text-gray-800 truncate max-w-[180px]">{order.listingTitle}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <OrderStatusBadge status={order.orderStatus} />
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

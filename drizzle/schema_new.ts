@@ -868,6 +868,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   stripeSessionId: varchar("stripeSessionId", { length: 200 }),
   trackingNo: varchar("trackingNo", { length: 100 }),
+  batchRef: varchar("batchRef", { length: 100 }), // Groups multiple orders from same cart checkout (e.g. BATCH-20240101-001)
 }, (table) => ({
   orderNoIdx: index("mo_orderNo_idx").on(table.orderNo),
   buyerIdIdx: index("mo_buyerId_idx").on(table.buyerId),

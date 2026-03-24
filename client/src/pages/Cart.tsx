@@ -56,8 +56,12 @@ interface CheckoutForm {
 }
 
 export default function Cart() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { data: user } = trpc.auth.me.useQuery();
+  // Parse URL params for Stripe success page
+  const urlParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const isStripeSuccess = urlParams.get('success') === 'true';
+  const stripeOrderNos = urlParams.get('orders')?.split(',').filter(Boolean) ?? [];
   const utils = trpc.useUtils();
 
   const { data: cartItems, isLoading } = trpc.marketplace.getMyCart.useQuery(undefined, {
@@ -235,6 +239,75 @@ export default function Cart() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center text-gray-500">載入中...</div>
+      </div>
+    );
+  }
+
+  // Stripe payment success page
+  if (isStripeSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Banner */}
+        <div className="relative" style={{ background: "linear-gradient(135deg, #06038D 0%, #0a06b5 100%)" }}>
+          <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FEDD00" }} />
+          <div className="max-w-5xl mx-auto px-4 pt-5 pb-6">
+            <div className="flex items-center justify-between mb-4">
+              <Link href="/">
+                <img src="/boxium-logo.png" alt="BOXIUM" className="h-16 cursor-pointer p-1" />
+              </Link>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-lg mx-auto px-4 py-12">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Success header */}
+            <div className="px-6 py-8 text-center" style={{ background: "linear-gradient(135deg, #06038D 0%, #0a06b5 100%)" }}>
+              <div className="w-16 h-16 bg-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">付款成功！</h2>
+              <p className="text-white/80 text-sm">Stripe 信用卡付款已確認</p>
+            </div>
+            {/* Order numbers */}
+            <div className="p-6">
+              {stripeOrderNos.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">已建立訂單：</p>
+                  {stripeOrderNos.map((orderNo) => (
+                    <Link key={orderNo} href={`/orders/${orderNo}`}>
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-[#06038d]/30 transition-colors cursor-pointer">
+                        <div>
+                          <p className="text-xs text-gray-500">訂單編號</p>
+                          <p className="font-mono font-medium text-gray-800">#{orderNo}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500">訂單已建立，請前往「我的訂單」查看詳情</p>
+                </div>
+              )}
+              <div className="mt-6 space-y-3">
+                <button
+                  onClick={() => setLocation('/profile?tab=orders')}
+                  className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-colors"
+                  style={{ backgroundColor: '#06038D' }}
+                >
+                  前往我的訂單
+                </button>
+                <button
+                  onClick={() => setLocation('/marketplace')}
+                  className="w-full py-3 rounded-xl text-gray-700 font-semibold text-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                  繼續購物
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

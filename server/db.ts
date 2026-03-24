@@ -3236,6 +3236,7 @@ export async function getBuyerOrders(buyerId: number) {
     buyerConfirmedAt: marketplaceOrders.buyerConfirmedAt,
     alipayProofImageUrl: marketplaceOrders.alipayProofImageUrl,
     buyerPhone: marketplaceOrders.buyerPhone,
+    batchRef: sql<string | null>`${marketplaceOrders}.batch_ref`,
     createdAt: marketplaceOrders.createdAt,
     updatedAt: marketplaceOrders.updatedAt,
     // Listing info for display
