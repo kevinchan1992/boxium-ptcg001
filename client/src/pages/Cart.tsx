@@ -407,28 +407,19 @@ export default function Cart() {
                 <p className="text-xs text-gray-400 mt-1">（不含運費）</p>
 
                 <div className="mt-4 space-y-2">
-                  <Button
-                    className="w-full bg-[#06038D] text-white hover:bg-[#06038D]/90 font-bold"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  <button
+                    className="w-full h-9 rounded-md text-sm font-bold bg-[#06038D] text-white hover:bg-[#06038D]/90 disabled:opacity-50 disabled:pointer-events-none cursor-pointer transition-all"
                     disabled={activeItems.length === 0}
                     onClick={() => setShowCheckout(true)}
                   >
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      前往結帳
-                      <ChevronRight className="w-4 h-4" />
-                    </span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5 font-semibold bg-white"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    前往結帳
+                  </button>
+                  <button
+                    className="w-full h-9 rounded-md text-sm font-semibold bg-white text-[#06038D] border border-[#06038D] hover:bg-[#06038D]/5 cursor-pointer transition-all"
                     onClick={() => setLocation("/marketplace")}
                   >
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      <ArrowLeft className="w-4 h-4" />
-                      繼續購物
-                    </span>
-                  </Button>
+                    繼續購物
+                  </button>
                 </div>
 
                 {unavailableItems.length > 0 && (
