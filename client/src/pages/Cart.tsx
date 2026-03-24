@@ -406,22 +406,24 @@ export default function Cart() {
                 </div>
                 <p className="text-xs text-gray-400 mt-1">（不含運費）</p>
 
-                <Button
-                  className="w-full mt-4 bg-[#06038D] text-white hover:bg-[#06038D]/90 font-bold"
-                  disabled={activeItems.length === 0}
-                  onClick={() => setShowCheckout(true)}
-                >
-                  前往結帳
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full mt-2 border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5 font-semibold bg-white"
-                  onClick={() => setLocation("/marketplace")}
-                >
-                  <ArrowLeft className="w-4 h-4 mr-1.5" />
-                  繼續購物
-                </Button>
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <Button
+                    className="w-full max-w-xs mx-auto block bg-[#06038D] text-white hover:bg-[#06038D]/90 font-bold"
+                    disabled={activeItems.length === 0}
+                    onClick={() => setShowCheckout(true)}
+                  >
+                    前往結帳
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full max-w-xs mx-auto block border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5 font-semibold bg-white"
+                    onClick={() => setLocation("/marketplace")}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1.5" />
+                    繼續購物
+                  </Button>
+                </div>
 
                 {unavailableItems.length > 0 && (
                   <p className="text-xs text-red-400 mt-2 text-center">

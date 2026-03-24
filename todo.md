@@ -5834,4 +5834,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 建立 VisuallyHidden 組件（client/src/components/ui/visually-hidden.tsx）
 - [x] 修復 OrderDetail.tsx、Cart.tsx、SellerDashboard.tsx、MarketplaceListing.tsx 中的 DialogTitle 無障礙警告
 - [x] TypeScript 零錯誤
+- [x] 保存 checkpoint
+
+---
+
+## 🎨 UI 修復：購物車按鈕置中 + 主頁按鈕並排
+
+- [x] 購物車頁面「前往結帳」和「繼續購物」按鈕在所有設備下置中顯示
+- [x] 主頁「開始探索」和「前往市集」按鈕並排一行
 - [ ] 保存 checkpoint
