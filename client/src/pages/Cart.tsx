@@ -409,21 +409,25 @@ export default function Cart() {
                 <div className="mt-4 space-y-2">
                   <Button
                     className="w-full bg-[#06038D] text-white hover:bg-[#06038D]/90 font-bold"
-                    style={{ justifyContent: 'center' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     disabled={activeItems.length === 0}
                     onClick={() => setShowCheckout(true)}
                   >
-                    前往結帳
-                    <ChevronRight className="w-4 h-4 ml-1" />
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      前往結帳
+                      <ChevronRight className="w-4 h-4" />
+                    </span>
                   </Button>
                   <Button
                     variant="outline"
                     className="w-full border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5 font-semibold bg-white"
-                    style={{ justifyContent: 'center' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     onClick={() => setLocation("/marketplace")}
                   >
-                    <ArrowLeft className="w-4 h-4 mr-1.5" />
-                    繼續購物
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <ArrowLeft className="w-4 h-4" />
+                      繼續購物
+                    </span>
                   </Button>
                 </div>
 
