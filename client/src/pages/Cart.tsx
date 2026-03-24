@@ -406,17 +406,18 @@ export default function Cart() {
                 </div>
                 <p className="text-xs text-gray-400 mt-1">（不含運費）</p>
 
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 flex flex-col gap-2">
                   <button
-                    className="w-full h-9 rounded-md text-sm font-bold bg-[#06038D] text-white border border-transparent hover:bg-[#06038D]/90 disabled:opacity-50 disabled:pointer-events-none cursor-pointer transition-all"
+                    className="h-9 rounded-md text-sm font-bold bg-[#06038D] text-white hover:bg-[#06038D]/90 disabled:opacity-50 disabled:pointer-events-none cursor-pointer transition-all"
+                    style={{ alignSelf: 'stretch', border: 'none', outline: 'none' }}
                     disabled={activeItems.length === 0}
                     onClick={() => setShowCheckout(true)}
                   >
                     前往結帳
                   </button>
                   <button
-                    className="w-full h-9 rounded-md text-sm font-semibold bg-white text-[#06038D] hover:bg-[#06038D]/5 cursor-pointer transition-all"
-                    style={{ outline: '1px solid #06038D', outlineOffset: '-1px' }}
+                    className="h-9 rounded-md text-sm font-semibold bg-white text-[#06038D] hover:bg-[#06038D]/5 cursor-pointer transition-all"
+                    style={{ alignSelf: 'stretch', border: '1px solid #06038D', outline: 'none' }}
                     onClick={() => setLocation("/marketplace")}
                   >
                     繼續購物
