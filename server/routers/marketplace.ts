@@ -909,7 +909,7 @@ export const marketplaceRouter = router({
         orderStatus: "shipped",
         shippedAt: new Date(),
         trackingNumber: input.trackingNo ?? null,
-        shippingMethod: input.shippingMethod ?? null,
+        shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hongkong_post" | "other" | "sf_cod" | "meetup" | null,
         autoCompleteAt,
       });
       // Notify buyer of shipment
@@ -2013,7 +2013,7 @@ export const marketplaceRouter = router({
         shippingName: input.shippingAddress?.name ?? null,
         shippingPhone: input.shippingAddress?.phone ?? null,
         shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
-        shippingMethod: input.shippingMethod ?? null,
+        shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hongkong_post" | "other" | "sf_cod" | "meetup" | null,
         buyerPhone: input.buyerPhone || null,
       });
       // Notify seller for meetup orders
@@ -2212,7 +2212,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         shippingName: input.shippingAddress?.name ?? null,
         shippingPhone: input.shippingAddress?.phone ?? null,
         shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
-        shippingMethod: input.shippingMethod ?? null,
+        shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hongkong_post" | "other" | "sf_cod" | "meetup" | null,
         buyerPhone: input.buyerPhone || null,
       });
       // Notify seller for meetup orders

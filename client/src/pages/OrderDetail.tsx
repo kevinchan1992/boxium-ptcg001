@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -102,6 +103,7 @@ function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listi
 
       <Dialog open={open} onOpenChange={(v) => { if (!v) resetAndClose(); }}>
         <DialogContent showCloseButton={false} className="sm:max-w-md p-0 overflow-visible border-2 border-[#FEDD00] gap-0">
+          <VisuallyHidden><DialogTitle>付款方式</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">

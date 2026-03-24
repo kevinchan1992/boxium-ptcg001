@@ -4,7 +4,8 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -1130,6 +1131,7 @@ export default function MarketplaceListing() {
       {/* ── Alipay Dialog ── */}
       <Dialog open={showAlipay} onOpenChange={() => setShowAlipay(false)}>
         <DialogContent showCloseButton={false} className="sm:max-w-md p-0 overflow-visible border-2 border-[#FEDD00] gap-0">
+          <VisuallyHidden><DialogTitle>支付寶 HK 付款</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1486,6 +1488,7 @@ export default function MarketplaceListing() {
       {/* ── Shipping Dialog ── */}
       <Dialog open={showShippingDialog} onOpenChange={(open) => { setShowShippingDialog(open); if (!open) { setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "", sfStationAddress: "" }); setSelectedSavedAddressId(null); } }}>
         <DialogContent bottomSheet showCloseButton={false} className="sm:max-w-md p-0 overflow-hidden border-2 border-[#FEDD00] gap-0">
+          <VisuallyHidden><DialogTitle>填寫收貨地址</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1679,6 +1682,7 @@ export default function MarketplaceListing() {
       {/* ── Offer Dialog ── */}
       <Dialog open={showOfferDialog} onOpenChange={setShowOfferDialog}>
         <DialogContent bottomSheet showCloseButton={false} className="sm:max-w-sm p-0 overflow-hidden border-2 border-[#FEDD00] gap-0">
+          <VisuallyHidden><DialogTitle>出價洽議</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1773,6 +1777,7 @@ export default function MarketplaceListing() {
       {/* ── Report Dialog ── */}
       <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
         <DialogContent bottomSheet className="sm:max-w-sm p-0 overflow-hidden border-2 border-red-400">
+          <VisuallyHidden><DialogTitle>舉報商品</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">

@@ -5812,4 +5812,26 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 訂單詳情頁面（/orders/{orderNo}）Hero Banner 加入面交標籤
 - [x] SellerDashboard 訂單篩選加入「🤝 面交」按鈕（球形按鈕，顯示面交訂單數量）
 - [x] 撰寫單元測試（4 tests passed）
+- [x] 保存 checkpoint
+
+---
+
+## 🐛 修復訂單建立 SQL 錯誤和 Dialog 無障礙警告
+
+- [ ] 分析 marketplaceOrders insert SQL 失敗原因（缺少欄位）
+- [ ] 修復 createMarketplaceOrder 函數或 schema
+- [ ] 修復 DialogContent 缺少 DialogTitle 的無障礙警告
+- [ ] 保存 checkpoint
+
+---
+
+## 🐛 修復訂單建立 SQL 錯誤和 Dialog 無障礙警告
+
+- [x] 分析 marketplaceOrders insert SQL 失敗原因（shippingMethod ENUM 缺少 sf_cod/meetup 值）
+- [x] 執行資料庫遷移：ALTER TABLE 更新 shippingMethod ENUM 加入 sf_cod 和 meetup
+- [x] 更新 schema_new.ts 中的 shippingMethod 定義為 mysqlEnum
+- [x] 修復 marketplace.ts 中 shippingMethod 的 TypeScript 類型轉換（3 處）
+- [x] 建立 VisuallyHidden 組件（client/src/components/ui/visually-hidden.tsx）
+- [x] 修復 OrderDetail.tsx、Cart.tsx、SellerDashboard.tsx、MarketplaceListing.tsx 中的 DialogTitle 無障礙警告
+- [x] TypeScript 零錯誤
 - [ ] 保存 checkpoint

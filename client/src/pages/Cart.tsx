@@ -11,7 +11,9 @@ import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Cl
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -847,6 +849,7 @@ function CheckoutDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg max-h-[92vh]">
+        <VisuallyHidden><DialogTitle>結帳</DialogTitle></VisuallyHidden>
         {/* Header - /seller style */}
         <div className="px-5 pt-5 pb-4 flex-shrink-0" style={{ backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00' }}>
           <div className="flex items-center justify-between mb-3">

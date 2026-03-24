@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -1827,6 +1828,7 @@ export default function SellerDashboard() {
       {/* ─── Bulk Upload Dialog ─────────────────────────────────────────── */}
       <Dialog open={showBulkUpload} onOpenChange={(open) => { setShowBulkUpload(open); if (!open) { setCsvRows([]); setBulkUploading(false); } }}>
         <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-2xl">
+          <VisuallyHidden><DialogTitle>批量上架商品</DialogTitle></VisuallyHidden>
           <div className="px-5 pt-5 pb-4" style={{backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00'}}>
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-base font-bold text-white">批量上架商品</h2>
@@ -2110,6 +2112,7 @@ export default function SellerDashboard() {
       {/* ─── Edit Listing Dialog ─────────────────────────────────────────── */}
       <Dialog open={showEditDialog} onOpenChange={(open) => { setShowEditDialog(open); if (!open) setEditingListing(null); }}>
         <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg">
+          <VisuallyHidden><DialogTitle>編輯商品資訊</DialogTitle></VisuallyHidden>
           {/* Header - same style as new listing */}
           <div className="px-5 pt-5 pb-4" style={{backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00'}}>
             <div className="flex items-center justify-between">
@@ -2242,6 +2245,7 @@ export default function SellerDashboard() {
 
       <Dialog open={showNewListing} onOpenChange={(open) => { setShowNewListing(open); if (!open) setListingStep(1); }}>
         <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg">
+          <VisuallyHidden><DialogTitle>上架新商品</DialogTitle></VisuallyHidden>
           {/* Step Header */}
           <div className="px-5 pt-5 pb-4" style={{backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00'}}>
             <div className="flex items-center justify-between mb-3">
