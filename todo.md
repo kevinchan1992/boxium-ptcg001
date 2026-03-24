@@ -6076,3 +6076,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 17 項新測試全部通過（new-features-phase3.test.ts）
 - [x] 17 項 order-cart-bugfix 測試通過（無回歸）
 - [x] 27 項 admin-new-features 測試通過（無回歸）
+
+---
+## 🐛 Bug 修復：批次訂單取消只取消單一訂單（2026-03-24）
+- [x] 後端：buyerCancelOrder 加入 batchRef 批次取消邏輯（取消同一批次所有 pending_payment 訂單）
+- [x] 後端：批次取消時恢復所有關聯商品的庫存狀態（restoreListingStock）
+- [x] 後端：批次取消時通知管理員（含批次筆數）
+- [x] 9 項測試全部通過（batch-cancel-bugfix.test.ts）

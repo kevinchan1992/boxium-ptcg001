@@ -2913,46 +2913,74 @@ All three checks must pass for verified to be true. Respond with JSON only match
       if (order.orderStatus !== "pending_payment") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "只有待付款的訂單可以取消" });
       }
-      await updateMarketplaceOrder(input.orderId, {
-        orderStatus: "cancelled",
-        paymentStatus: "cancelled",
-        alipayProofImageUrl: null,
-        aiVerificationResult: null,
-      });
-      // Cancel the associated accepted offer so it no longer shows as "accepted" on the listing page
-      try {
-        const db = await getDb();
-        if (db) {
+
+      // ── Find all orders in the same batch (batchRef) ──────────────────────────
+      // When a buyer checks out multiple items together, they share a batchRef.
+      // Cancelling one order should cancel ALL pending_payment orders in the batch.
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+      let batchOrderIds: number[] = [input.orderId];
+      if (order.batchRef) {
+        const batchOrders = await db.select({ id: marketplaceOrders.id, orderNo: marketplaceOrders.orderNo })
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.batchRef, order.batchRef),
+              eq(marketplaceOrders.buyerId, ctx.user.id),
+              eq(marketplaceOrders.orderStatus, 'pending_payment')
+            )
+          );
+        batchOrderIds = batchOrders.map(o => o.id);
+        console.log(`[BuyerCancel] batchRef=${order.batchRef}, cancelling ${batchOrderIds.length} orders: ${batchOrders.map(o => o.orderNo).join(', ')}`);
+      }
+
+      // ── Cancel all orders in the batch ────────────────────────────────────────
+      for (const orderId of batchOrderIds) {
+        const targetOrder = orderId === input.orderId ? order : await getMarketplaceOrderById(orderId);
+        if (!targetOrder) continue;
+
+        await updateMarketplaceOrder(orderId, {
+          orderStatus: "cancelled",
+          paymentStatus: "cancelled",
+          alipayProofImageUrl: null,
+          aiVerificationResult: null,
+        });
+
+        // Cancel the associated accepted offer
+        try {
           await db.update(offers)
             .set({ status: "cancelled", respondedAt: new Date() })
-            .where(and(eq(offers.orderId, input.orderId), eq(offers.status, "accepted")));
+            .where(and(eq(offers.orderId, orderId), eq(offers.status, "accepted")));
+        } catch (offerErr: any) {
+          console.warn(`[BuyerCancel] Failed to cancel offer for order ${orderId}:`, offerErr.message);
         }
-      } catch (offerErr: any) {
-        console.warn("[BuyerCancel] Failed to cancel offer:", offerErr.message);
-      }
-      // If listing was marked sold, restore it to active
-      if (order.listingId) {
-        const listing = await getListingById(order.listingId);
-        if (listing && listing.status === "sold") {
-          const db = await getDb();
-          if (db) {
-            await db.update(marketplaceListings)
-              .set({ status: "active" })
-              .where(eq(marketplaceListings.id, order.listingId));
+
+        // Restore listing stock (handles reserved → active and sold → active)
+        if (targetOrder.listingId) {
+          try {
+            await restoreListingStock(targetOrder.listingId, targetOrder.quantity ?? 1);
+            console.log(`[BuyerCancel] Restored stock for listing ${targetOrder.listingId} (order ${targetOrder.orderNo})`);
+          } catch (stockErr: any) {
+            console.warn(`[BuyerCancel] Failed to restore stock for listing ${targetOrder.listingId}:`, stockErr.message);
           }
         }
       }
-      // Notify owner
+
+      // ── Notify admin ──────────────────────────────────────────────────────────
+      const cancelledCount = batchOrderIds.length;
+      const batchNote = cancelledCount > 1 ? `（批次取消，共 ${cancelledCount} 筆）` : '';
       await notifyAdmin({
         title: "買家取消訂單",
-        content: `訂單 ${order.orderNo} 已由買家取消。${input.reason ? `原因：${input.reason}` : ""}`,
+        content: `訂單 ${order.orderNo} 已由買家取消${batchNote}。${input.reason ? `原因：${input.reason}` : ""}`,
       }).catch(() => {});
-      // Send cancellation email
+
+      // ── Send cancellation email (for the primary order) ───────────────────────
       try {
         const { sendOrderEmail, buildOrderCancelledEmail, getOrderEmailData } = await import("../emailService");
         const emailData = await getOrderEmailData(order);
         const { subject, html } = buildOrderCancelledEmail({
-          orderNo: order.orderNo,
+          orderNo: cancelledCount > 1 ? `${order.orderNo} 等 ${cancelledCount} 筆` : order.orderNo,
           itemName: emailData.itemName,
           priceHkd: emailData.priceHkd,
           note: input.reason ?? "買家主動取消",
@@ -2961,7 +2989,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       } catch (emailErr: any) {
         console.warn("[BuyerCancel] Email failed:", emailErr.message);
       }
-      return { success: true };
+
+      return { success: true, cancelledCount };
     }),
 
   // ============================================================
