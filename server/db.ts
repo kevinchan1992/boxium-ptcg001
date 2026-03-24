@@ -2967,6 +2967,8 @@ export async function getAllSellerProfiles(page = 1, pageSize = 20, search?: str
       ratingCount: sellerProfiles.ratingCount,
       isActive: sellerProfiles.isActive,
       rejectReason: sellerProfiles.rejectReason,
+      isSuspended: sellerProfiles.isSuspended,
+      suspensionReason: sellerProfiles.suspensionReason,
       createdAt: sellerProfiles.createdAt,
       updatedAt: sellerProfiles.updatedAt,
       // From users join

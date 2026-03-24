@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer, XCircle, Settings, Timer } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer, XCircle, Settings, Timer, Shield, ShieldOff, ScrollText, Bot } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
@@ -2526,6 +2526,35 @@ function AlipayPendingTab() {
     onError: (e) => toast.error(e.message),
   });
 
+  // AI Verify mutation
+  const [aiVerifyingIds, setAiVerifyingIds] = useState<Set<number>>(new Set());
+  const aiVerifyMutation = trpc.marketplace.adminAiVerifyAlipay.useMutation({
+    onSuccess: (result, variables) => {
+      setAiVerifyingIds(prev => { const n = new Set(prev); n.delete(variables.orderId); return n; });
+      refetch();
+      if (result.verified) {
+        toast.success(`AI 核對通過（${result.confidence === 'high' ? '高' : result.confidence === 'medium' ? '中' : '低'}可信度）`);
+      } else {
+        toast.error(`AI 核對不通過：${result.reason}`);
+      }
+    },
+    onError: (e, variables) => {
+      setAiVerifyingIds(prev => { const n = new Set(prev); n.delete(variables.orderId); return n; });
+      toast.error(`AI 核對失敗：${e.message}`);
+    },
+  });
+  const handleAiVerify = (orderId: number) => {
+    setAiVerifyingIds(prev => new Set(prev).add(orderId));
+    aiVerifyMutation.mutate({ orderId });
+  };
+  const handleBatchAiVerify = () => {
+    const ids = Array.from(selectedIds);
+    const ordersWithProof = filteredOrders.filter((o: any) => ids.includes(o.id) && o.alipayProofImageUrl && !o.aiVerificationResult);
+    if (ordersWithProof.length === 0) { toast.error('所選訂單均無截圖或已核對'); return; }
+    ordersWithProof.forEach((o: any) => handleAiVerify(o.id));
+    toast.info(`正在批量 AI 核對 ${ordersWithProof.length} 筆訂單...`);
+  };
+
   const [showBatchRejectDialog, setShowBatchRejectDialog] = useState(false);
   const [batchRejectReason, setBatchRejectReason] = useState("");
   const batchRejectMutation = trpc.marketplace.adminRejectAlipayPayment.useMutation({
@@ -2636,6 +2665,15 @@ function AlipayPendingTab() {
               <Button
                 size="sm"
                 variant="outline"
+                className="border-indigo-300 text-indigo-600 hover:bg-indigo-50"
+                onClick={handleBatchAiVerify}
+              >
+                <Bot className="w-3 h-3 mr-1" />
+                批量 AI 核對
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 className="border-red-300 text-red-600 hover:bg-red-50"
                 onClick={() => { setBatchRejectReason(""); setShowBatchRejectDialog(true); }}
               >
@@ -2693,10 +2731,17 @@ function AlipayPendingTab() {
                     </a>
                   )}
                   {order.alipayProofImageUrl && !order.aiVerificationResult && (
-                    <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                      <span className="animate-spin inline-block w-3 h-3 border border-gray-400 border-t-transparent rounded-full"></span>
-                      AI 驗證中...
-                    </div>
+                    aiVerifyingIds.has(order.id) ? (
+                      <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        AI 核對中...
+                      </div>
+                    ) : (
+                      <button onClick={() => handleAiVerify(order.id)}
+                        className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors cursor-pointer">
+                        <Bot className="w-3 h-3" />AI 核對
+                      </button>
+                    )
                   )}
                   {order.aiVerificationResult && (() => {
                     try {
@@ -2745,10 +2790,17 @@ function AlipayPendingTab() {
                 <img src={selectedOrder.alipayProofImageUrl} alt="付款截圖" className="rounded-lg border max-h-48 object-contain w-full" />
               )}
                   {selectedOrder.alipayProofImageUrl && !selectedOrder.aiVerificationResult && (
-                <div className="rounded-lg p-3 text-sm border bg-gray-50 border-gray-200 flex items-center gap-2 text-gray-600">
-                  <span className="animate-spin inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full"></span>
-                  AI 驗證中，請稍候...
-                </div>
+                aiVerifyingIds.has(selectedOrder.id) ? (
+                  <div className="rounded-lg p-3 text-sm border bg-indigo-50 border-indigo-200 flex items-center gap-2 text-indigo-700">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    AI 核對中，請稍候...
+                  </div>
+                ) : (
+                  <button onClick={() => handleAiVerify(selectedOrder.id)}
+                    className="w-full rounded-lg p-3 text-sm border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer flex items-center gap-2 font-medium">
+                    <Bot className="w-4 h-4" />點擊 AI 核對付款截圖
+                  </button>
+                )
               )}
               {selectedOrder.aiVerificationResult && (() => {
                 try {
@@ -3101,6 +3153,9 @@ function SellersTab() {
   const [selectedSellerId, setSelectedSellerId] = useState<number | null>(null);
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; sellerId: number; sellerName: string }>({ open: false, sellerId: 0, sellerName: "" });
   const [rejectReason, setRejectReason] = useState("");
+  const [suspendDialog, setSuspendDialog] = useState<{ open: boolean; sellerId: number; sellerName: string }>({ open: false, sellerId: 0, sellerName: "" });
+  const [suspendReason, setSuspendReason] = useState("");
+  const [unsuspendDialog, setUnsuspendDialog] = useState<{ open: boolean; sellerId: number; sellerName: string }>({ open: false, sellerId: 0, sellerName: "" });
   const { data, isLoading, refetch } = trpc.marketplace.adminGetSellers.useQuery({ page, pageSize: 20, search: searchQuery || undefined });
   const utils = trpc.useUtils();
   const approveMutation = trpc.marketplace.adminApproveSeller.useMutation({
@@ -3110,6 +3165,23 @@ function SellersTab() {
       setRejectReason("");
       refetch();
       utils.marketplace.adminGetStats.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const suspendMutation = trpc.marketplace.adminSuspendSeller.useMutation({
+    onSuccess: () => {
+      toast.success("賣家已凍結，所有商品已下架");
+      setSuspendDialog({ open: false, sellerId: 0, sellerName: "" });
+      setSuspendReason("");
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const unsuspendMutation = trpc.marketplace.adminUnsuspendSeller.useMutation({
+    onSuccess: () => {
+      toast.success("賣家已解凍，可重新上架商品");
+      setUnsuspendDialog({ open: false, sellerId: 0, sellerName: "" });
+      refetch();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -3177,8 +3249,8 @@ function SellersTab() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-white text-sm font-semibold">#{seller.id} · {seller.displayName}</span>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    seller.isActive ? 'bg-green-200 text-green-900' : 'bg-yellow-200 text-yellow-900'
-                  }`}>{seller.isActive ? '已批准' : '待審核'}</span>
+                    seller.isSuspended ? 'bg-red-200 text-red-900' : seller.isActive ? 'bg-green-200 text-green-900' : 'bg-yellow-200 text-yellow-900'
+                  }`}>{seller.isSuspended ? '❄️ 已凍結' : seller.isActive ? '已批准' : '待審核'}</span>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     seller.stripeConnectStatus === 'active' ? 'bg-green-200 text-green-900' :
                     seller.stripeConnectStatus === 'pending' ? 'bg-yellow-200 text-yellow-900' :
@@ -3199,6 +3271,11 @@ function SellersTab() {
                       拒絕原因：{seller.rejectReason}
                     </div>
                   )}
+                  {seller.isSuspended && seller.suspensionReason && (
+                    <div className="mt-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1 flex items-center gap-1">
+                      <Shield className="w-3 h-3" />凍結原因：{seller.suspensionReason}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => setSelectedSellerId(seller.id)}>
@@ -3210,11 +3287,22 @@ function SellersTab() {
                       onClick={() => approveMutation.mutate({ sellerId: seller.id, approve: true })}>
                       <CheckCircle className="w-3 h-3 mr-1" />批准
                     </Button>
-                  ) : (
-                    <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-300 hover:bg-red-50"
-                      onClick={() => { setRejectDialog({ open: true, sellerId: seller.id, sellerName: seller.displayName }); setRejectReason(""); }}>
-                      停用
+                  ) : seller.isSuspended ? (
+                    <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => setUnsuspendDialog({ open: true, sellerId: seller.id, sellerName: seller.displayName })}>
+                      <ShieldOff className="w-3 h-3 mr-1" />解凍
                     </Button>
+                  ) : (
+                    <>
+                      <Button size="sm" variant="outline" className="text-xs text-orange-600 border-orange-300 hover:bg-orange-50"
+                        onClick={() => { setSuspendDialog({ open: true, sellerId: seller.id, sellerName: seller.displayName }); setSuspendReason(""); }}>
+                        <Shield className="w-3 h-3 mr-1" />凍結
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-300 hover:bg-red-50"
+                        onClick={() => { setRejectDialog({ open: true, sellerId: seller.id, sellerName: seller.displayName }); setRejectReason(""); }}>
+                        停用
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -3260,6 +3348,68 @@ function SellersTab() {
               onClick={() => approveMutation.mutate({ sellerId: rejectDialog.sellerId, approve: false, rejectReason: rejectReason.trim() || undefined })}
             >
               {approveMutation.isPending ? "處理中..." : "確認停用"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Suspend Dialog */}
+      <Dialog open={suspendDialog.open} onOpenChange={(o) => setSuspendDialog(d => ({ ...d, open: o }))}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Shield className="w-5 h-5 text-orange-500" />凍結賣家帳號</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
+              <p>凍結 <strong>{suspendDialog.sellerName}</strong> 後：</p>
+              <ul className="list-disc list-inside mt-1 text-xs space-y-0.5">
+                <li>所有上架中的商品將自動下架</li>
+                <li>賣家無法新增或重新上架商品</li>
+                <li>系統將發送凍結通知給賣家</li>
+              </ul>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">凍結原因 <span className="text-red-500">*</span></label>
+              <textarea
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none bg-white text-gray-900"
+                rows={3}
+                placeholder="例：涉嫌售賣假貨、多次投訴、違反平台規則..."
+                value={suspendReason}
+                onChange={e => setSuspendReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setSuspendDialog(d => ({ ...d, open: false }))}>取消</Button>
+            <Button
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+              disabled={suspendMutation.isPending || !suspendReason.trim()}
+              onClick={() => suspendMutation.mutate({ sellerProfileId: suspendDialog.sellerId, reason: suspendReason.trim() })}
+            >
+              {suspendMutation.isPending ? "處理中..." : "確認凍結"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Unsuspend Dialog */}
+      <Dialog open={unsuspendDialog.open} onOpenChange={(o) => setUnsuspendDialog(d => ({ ...d, open: o }))}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><ShieldOff className="w-5 h-5 text-blue-500" />解凍賣家帳號</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              <p>確認解凍 <strong>{unsuspendDialog.sellerName}</strong>？</p>
+              <p className="mt-1 text-xs">解凍後賣家可重新上架商品，系統將發送解凍通知。</p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setUnsuspendDialog(d => ({ ...d, open: false }))}>取消</Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={unsuspendMutation.isPending}
+              onClick={() => unsuspendMutation.mutate({ sellerProfileId: unsuspendDialog.sellerId })}
+            >
+              {unsuspendMutation.isPending ? "處理中..." : "確認解凍"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -4799,6 +4949,154 @@ function TimeoutSettingsTab() {
   );
 }
 
+// ============================================================
+// AUDIT LOGS TAB
+// ============================================================
+const actionLabels: Record<string, string> = {
+  confirm_alipay: '確認支付寶付款',
+  update_order_status: '更新訂單狀態',
+  resolve_dispute: '解決爭議',
+  suspend_seller: '凍結賣家',
+  unsuspend_seller: '解凍賣家',
+  ai_verify_alipay: 'AI 核對支付寶',
+};
+const actionColors: Record<string, string> = {
+  confirm_alipay: 'bg-green-100 text-green-800',
+  update_order_status: 'bg-blue-100 text-blue-800',
+  resolve_dispute: 'bg-purple-100 text-purple-800',
+  suspend_seller: 'bg-orange-100 text-orange-800',
+  unsuspend_seller: 'bg-cyan-100 text-cyan-800',
+  ai_verify_alipay: 'bg-indigo-100 text-indigo-800',
+};
+
+function AuditLogsTab() {
+  const [page, setPage] = useState(1);
+  const [actionFilter, setActionFilter] = useState<string>('');
+  const [targetTypeFilter, setTargetTypeFilter] = useState<string>('');
+  const { data, isLoading, refetch } = trpc.marketplace.adminGetAuditLogs.useQuery({
+    page,
+    pageSize: 30,
+    action: actionFilter || undefined,
+    targetType: targetTypeFilter || undefined,
+  });
+  const logs = data?.logs ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / 30);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <ScrollText className="w-5 h-5" />審計日誌
+          <span className="text-sm font-normal text-gray-500">(共 {total} 筆)</span>
+        </h2>
+        <Button size="sm" variant="outline" onClick={() => refetch()} className="text-gray-700 bg-white">
+          <RefreshCw className="w-3.5 h-3.5 mr-1" />刷新
+        </Button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <Select value={actionFilter} onValueChange={v => { setActionFilter(v === 'all' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[180px] bg-white text-gray-900">
+            <SelectValue placeholder="篩選操作類型" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部操作</SelectItem>
+            {Object.entries(actionLabels).map(([k, v]) => (
+              <SelectItem key={k} value={k}>{v}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={targetTypeFilter} onValueChange={v => { setTargetTypeFilter(v === 'all' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[180px] bg-white text-gray-900">
+            <SelectValue placeholder="篩選目標類型" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部目標</SelectItem>
+            <SelectItem value="order">訂單</SelectItem>
+            <SelectItem value="seller">賣家</SelectItem>
+            <SelectItem value="dispute">爭議</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Logs Table */}
+      {isLoading ? (
+        <div className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>
+      ) : logs.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">
+          <ScrollText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p>暫無審計日誌</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-left text-gray-600">
+                <th className="pb-2 pr-3 font-medium">時間</th>
+                <th className="pb-2 pr-3 font-medium">操作</th>
+                <th className="pb-2 pr-3 font-medium">目標</th>
+                <th className="pb-2 pr-3 font-medium">管理員 ID</th>
+                <th className="pb-2 font-medium">詳情</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log: any) => {
+                let details: any = null;
+                try { details = log.details ? JSON.parse(log.details) : null; } catch { details = null; }
+                return (
+                  <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-2.5 pr-3 text-xs text-gray-500 whitespace-nowrap">
+                      {new Date(log.createdAt).toLocaleString('zh-HK', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${actionColors[log.action] || 'bg-gray-100 text-gray-800'}`}>
+                        {actionLabels[log.action] || log.action}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-3 text-xs">
+                      <span className="text-gray-600">{log.targetType}</span>
+                      <span className="text-gray-400 ml-1">#{log.targetId}</span>
+                    </td>
+                    <td className="py-2.5 pr-3 text-xs text-gray-600">#{log.adminId}</td>
+                    <td className="py-2.5 text-xs text-gray-600 max-w-[300px] truncate">
+                      {details ? (
+                        <span title={JSON.stringify(details, null, 2)}>
+                          {details.reason && <span>原因：{details.reason}</span>}
+                          {details.newStatus && <span>新狀態：{details.newStatus}</span>}
+                          {details.outcome && <span>結果：{details.outcome}</span>}
+                          {details.verified !== undefined && <span>AI核對：{details.verified ? '通過' : '不通過'}</span>}
+                          {!details.reason && !details.newStatus && !details.outcome && details.verified === undefined && JSON.stringify(details).slice(0, 80)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2">
+          <Button variant="outline" className="text-gray-700 bg-white" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="flex items-center text-sm text-gray-600">第 {page} 頁 / 共 {totalPages} 頁</span>
+          <Button variant="outline" className="text-gray-700 bg-white" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Sidebar menu items configuration
 type SidebarItem = { key: string; label: string; icon: any; badgeKey?: string };
 const sidebarMenuItems: SidebarItem[] = [
@@ -4812,6 +5110,7 @@ const sidebarMenuItems: SidebarItem[] = [
   { key: 'payouts', label: '放款管理', icon: DollarSign },
   { key: 'offers', label: '出價管理', icon: Tag },
   { key: 'timeout_settings', label: '超時時限設定', icon: Timer },
+  { key: 'audit_logs', label: '審計日誌', icon: ScrollText },
 ];
 
 export default function AdminMarketplace() {
@@ -4854,6 +5153,7 @@ export default function AdminMarketplace() {
       case 'payouts': return <PayoutsTab />;
       case 'offers': return <OffersTab />;
       case 'timeout_settings': return <TimeoutSettingsTab />;
+      case 'audit_logs': return <AuditLogsTab />;
       default: return <ListingsTab onViewOrders={handleViewOrders} />;
     }
   };

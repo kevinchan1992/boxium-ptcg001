@@ -4249,4 +4249,123 @@ All three checks must pass for verified to be true. Respond with JSON only match
         );
       return { count: Number(rows[0]?.count ?? 0) };
     }),
+
+  // ============================================================
+  // AI VERIFY ALIPAY SCREENSHOT
+  // ============================================================
+  adminAiVerifyAlipay: adminProcedure
+    .input(z.object({ orderId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND', message: '訂單不存在' });
+      if (!order.alipayProofImageUrl) throw new TRPCError({ code: 'BAD_REQUEST', message: '訂單沒有支付寶付款截圖' });
+      if (order.aiVerificationResult) {
+        // Already verified, return existing result
+        try {
+          return JSON.parse(order.aiVerificationResult);
+        } catch {
+          // Re-verify if parse fails
+        }
+      }
+
+      const expectedAmount = parseFloat(order.subtotalHkd || '0').toFixed(2);
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: 'system',
+              content: `You are a payment verification assistant. Analyze the payment screenshot and compare it with the expected payment details. Return a JSON object with the following fields:
+- verified: boolean (true if the screenshot appears to be a valid payment matching the expected amount)
+- detectedAmount: string or null (the payment amount detected in the screenshot, in HKD)
+- detectedPayee: string or null (the payee/recipient name detected)
+- detectedStatus: string or null (the payment status detected, e.g. "Completed", "Success")
+- confidence: "high" | "medium" | "low" (your confidence level in the verification)
+- reason: string (brief explanation of your verification decision in Traditional Chinese)
+
+Expected payment amount: HKD ${expectedAmount}
+Expected payee: BOXIUM or Boxium Limited
+
+IMPORTANT:
+- The screenshot should show a completed payment (not pending or failed)
+- The amount should match or be very close to the expected amount
+- Look for AlipayHK / 支付寶香港 payment interface elements
+- If the image is unclear, blurry, or doesn't appear to be a payment screenshot, set verified to false with low confidence
+- Return ONLY the JSON object, no other text`
+            },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'image_url' as const,
+                  image_url: {
+                    url: order.alipayProofImageUrl,
+                    detail: 'high' as const,
+                  },
+                },
+                {
+                  type: 'text' as const,
+                  text: `Please verify this AlipayHK payment screenshot. Expected amount: HKD ${expectedAmount}. Order number: ${order.orderNo}.`,
+                },
+              ],
+            },
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'alipay_verification',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  verified: { type: 'boolean', description: 'Whether the payment screenshot is valid and matches expected amount' },
+                  detectedAmount: { type: ['string', 'null'], description: 'Detected payment amount in HKD' },
+                  detectedPayee: { type: ['string', 'null'], description: 'Detected payee name' },
+                  detectedStatus: { type: ['string', 'null'], description: 'Detected payment status' },
+                  confidence: { type: 'string', enum: ['high', 'medium', 'low'], description: 'Confidence level' },
+                  reason: { type: 'string', description: 'Explanation in Traditional Chinese' },
+                },
+                required: ['verified', 'detectedAmount', 'detectedPayee', 'detectedStatus', 'confidence', 'reason'],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const content = response.choices?.[0]?.message?.content;
+        let result: any;
+        try {
+          result = JSON.parse(content || '{}');
+        } catch {
+          result = { verified: false, detectedAmount: null, detectedPayee: null, detectedStatus: null, confidence: 'low', reason: 'AI 回應解析失敗' };
+        }
+
+        // Save result to order
+        const db = await getDb();
+        if (db) {
+          await db.update(marketplaceOrders)
+            .set({ aiVerificationResult: JSON.stringify(result) })
+            .where(eq(marketplaceOrders.id, input.orderId));
+        }
+
+        // Create audit log
+        await createAuditLog({
+          adminId: ctx.user.id,
+          action: 'ai_verify_alipay',
+          targetType: 'order',
+          targetId: input.orderId,
+          details: JSON.stringify({
+            verified: result.verified,
+            detectedAmount: result.detectedAmount,
+            confidence: result.confidence,
+            expectedAmount,
+          }),
+        });
+
+        return result;
+      } catch (err: any) {
+        console.error('[AI Verify Alipay] Error:', err?.message);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'AI 核對失敗，請稍後重試' });
+      }
+    }),
 });

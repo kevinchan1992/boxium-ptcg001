@@ -5939,3 +5939,31 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] autoCompleteOrders 使用 executeSellerPayout 替換舊內聯 Transfer 邏輯
 - [x] 確認無殘留舊版 stripe.transfers.create 內聯代碼
 - [x] 確認無 TODO/FIXME/HACK 殘留標記
+
+
+---
+
+## 🛠️ 管理員後台增強功能（審計日誌 + 賣家凍結 UI + 支付寶 AI 核對）
+
+### 審計日誌 Tab
+- [x] AdminMarketplace 新增「審計日誌」Tab（sidebarMenuItems + renderContent switch）
+- [x] 審計日誌列表（時間、管理員、操作類型、目標、詳情）
+- [x] 篩選功能（按操作類型下拉選單）
+- [x] 分頁功能（上一頁/下一頁）
+
+### 賣家凍結 UI
+- [x] 賣家管理 Tab 加入凍結/解凍按鈕（根據 isSuspended 狀態切換）
+- [x] 凍結時彈出 Dialog 輸入凍結原因（suspendDialog）
+- [x] 賣家列表顯示凍結狀態標籤（紅色 Badge + 凍結原因）
+- [x] 解凍確認 Dialog（unsuspendDialog）
+- [x] getAllSellerProfiles 加入 isSuspended + suspensionReason 欄位
+
+### 支付寶截圖 AI 核對
+- [x] 後端：adminAiVerifyAlipay procedure（invokeLLM 多模態圖片分析 + JSON Schema 結構化輸出）
+- [x] 後端：返回 verified/detectedAmount/detectedPayee/detectedStatus/confidence/reason
+- [x] 後端：結果存入 aiVerificationResult 欄位 + 審計日誌
+- [x] 前端：訂單卡片「AI 核對」按鈕（替換舊版「AI 驗證中...」佔位符）
+- [x] 前端：確認收款 Dialog 「點擊 AI 核對付款截圖」按鈕
+- [x] 前端：批量 AI 核對按鈕（批量操作欄）
+- [x] 前端：核對中 loading 狀態（Loader2 動畫）
+- [x] 前端：核對結果展示（通過/失敗 + 可信度 + 偵測金額/收款方/狀態/原因）
