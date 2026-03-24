@@ -122,12 +122,14 @@ export default function Cart() {
   );
 
   const activeItems = useMemo(
-    () => (cartItems ?? []).filter((item) => item.status === "active"),
+    // Items are "active" if the listing is active, OR if the buyer already has a pending_payment
+    // order for this listing (meaning they checked out but haven't paid yet).
+    () => (cartItems ?? []).filter((item) => item.status === "active" || (item as any).hasPendingOrder),
     [cartItems]
   );
 
   const unavailableItems = useMemo(
-    () => (cartItems ?? []).filter((item) => item.status !== "active"),
+    () => (cartItems ?? []).filter((item) => item.status !== "active" && !(item as any).hasPendingOrder),
     [cartItems]
   );
 
@@ -542,6 +544,8 @@ interface CartItemRowProps {
     acceptedOfferPrice?: string | number | null;
     acceptedOfferExpiresAt?: Date | string | null;
     isOfferExpired?: boolean;
+    hasPendingOrder?: boolean;
+    pendingOrderNo?: string | null;
   };
   onRemove: () => void;
   removing: boolean;
@@ -625,6 +629,9 @@ function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps
             )}
             {unavailable && (
               <Badge variant="destructive" className="text-xs px-1.5 py-0 h-5">已下架</Badge>
+            )}
+            {item.hasPendingOrder && !unavailable && (
+              <Badge className="text-xs px-1.5 py-0 h-5 bg-amber-100 text-amber-700 border-amber-200">待付款</Badge>
             )}
           </div>
         </div>

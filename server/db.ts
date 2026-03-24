@@ -3117,12 +3117,14 @@ export async function updateListing(id: number, data: Partial<InsertMarketplaceL
 export async function reserveListingStock(listingId: number, quantity: number): Promise<boolean> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // Atomic UPDATE: only succeeds if listing is active AND has enough quantity
+  // Atomic UPDATE: only succeeds if listing is active AND has enough quantity.
+  // NOTE: We do NOT change status to 'sold' here — the listing stays 'active' until
+  // payment is confirmed (Stripe webhook / admin Alipay confirm). This prevents the
+  // cart from showing "已下架" for pending-payment orders.
   const result = await db.execute(
     sql`UPDATE marketplaceListings
         SET quantity = quantity - ${quantity},
             remainingQuantity = remainingQuantity - ${quantity},
-            status = CASE WHEN (quantity - ${quantity}) <= 0 THEN 'sold' ELSE status END,
             updatedAt = NOW()
         WHERE id = ${listingId}
           AND status = 'active'
@@ -3240,8 +3242,8 @@ export async function getBuyerOrders(buyerId: number) {
     buyerConfirmedAt: marketplaceOrders.buyerConfirmedAt,
     alipayProofImageUrl: marketplaceOrders.alipayProofImageUrl,
     buyerPhone: marketplaceOrders.buyerPhone,
-    batchRef: sql<string | null>`${marketplaceOrders}.batch_ref`,
-    cartOrderId: sql<number | null>`${marketplaceOrders}.cart_order_id`,
+    batchRef: marketplaceOrders.batchRef,
+    cartOrderId: marketplaceOrders.cartOrderId,
     createdAt: marketplaceOrders.createdAt,
     updatedAt: marketplaceOrders.updatedAt,
     // Listing info for display
@@ -3345,6 +3347,7 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
     buyerPhone: buyerAlias.phone,
     // Seller info (from sellerProfiles + sellerAlias users)
     sellerDisplayName: sellerProfiles.displayName,
+    sellerName: sql<string>`COALESCE(${sellerProfiles.displayName}, ${sellerAlias.name}, '平台自有商品')`,
     sellerUserId: sellerProfiles.userId,
     sellerUserName: sellerAlias.name,
     sellerUserEmail: sellerAlias.email,

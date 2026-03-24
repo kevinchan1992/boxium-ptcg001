@@ -4185,12 +4185,24 @@ All three checks must pass for verified to be true. Respond with JSON only match
         const offerData = acceptedOffer[0];
         // Check if accepted offer is still valid (not expired)
         const isOfferValid = offerData && offerData.expiresAt && new Date() < new Date(offerData.expiresAt);
+        // Check if buyer has a pending_payment order for this listing
+        const pendingOrder = await db
+          .select({ id: marketplaceOrders.id, orderNo: marketplaceOrders.orderNo })
+          .from(marketplaceOrders)
+          .where(and(
+            eq(marketplaceOrders.listingId, row.listingId),
+            eq(marketplaceOrders.buyerId, ctx.user.id),
+            eq(marketplaceOrders.orderStatus, 'pending_payment')
+          ))
+          .limit(1);
         return {
           ...row,
           acceptedOfferId: isOfferValid ? (offerData?.id ?? null) : null,
           acceptedOfferPrice: isOfferValid ? (offerData?.offerPriceHkd ?? null) : null,
           acceptedOfferExpiresAt: offerData?.expiresAt ?? null,
           isOfferExpired: offerData && !isOfferValid ? true : false,
+          hasPendingOrder: pendingOrder.length > 0,
+          pendingOrderNo: pendingOrder[0]?.orderNo ?? null,
         };
       }));
       return rowsWithOffers;

@@ -6004,3 +6004,28 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 ### 測試
 - [x] 27 項新測試全部通過（admin-new-features.test.ts）
 - [x] 全部 106 項核心測試通過（P0 + 系統改造 + 管理員功能）
+
+---
+## ✅ 訂單/購物車/商品狀態 Bug 修復（2026-03-24）
+
+### Bug 1：Admin 訂單管理賣家資料顯示「不明」
+- [x] 後端：getAdminOrders 加入 sellerName 欄位（COALESCE(displayName, userName, '平台自有商品')）
+- [x] 前端：AdminMarketplace.tsx 所有 order.sellerName 欄位已對應後端 sellerName
+
+### Bug 2：買家「我的訂單」顯示空白
+- [x] 後端：getBuyerOrders 修復 batchRef 和 cartOrderId 欄位（使用 Drizzle ORM 欄位而非原始 SQL batch_ref）
+- [x] 確認：訂單為 cancelled 狀態（測試訂單已取消），EmbeddedOrdersSection 顯示邏輯正確
+
+### Bug 3：購物車商品顯示「已下架」
+- [x] 後端：getMyCart 加入 hasPendingOrder 和 pendingOrderNo 欄位（查詢買家自己的 pending_payment 訂單）
+- [x] 前端：Cart.tsx activeItems 包含 hasPendingOrder 商品（不再歸類為 unavailable）
+- [x] 前端：CartItemRow 加入「待付款」標籤（hasPendingOrder 為 true 時顯示）
+
+### Bug 4/5：商品過早標為「已售出」/ 商品狀態時機錯誤
+- [x] 後端：reserveListingStock 移除 CASE WHEN stock=0 THEN 'sold' 邏輯，下單時商品保持 active
+- [x] 確認：Stripe webhook checkout.session.completed 付款成功後才改為 sold（原本正確）
+- [x] 確認：adminConfirmAlipayPayment 確認付款後才改為 sold（原本正確）
+
+### 測試
+- [x] 17 項新測試全部通過（order-cart-bugfix.test.ts）
+- [x] 27 項 admin-new-features 測試通過（無回歸）
