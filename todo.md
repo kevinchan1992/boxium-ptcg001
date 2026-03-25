@@ -6199,3 +6199,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 篩選 Tab：加入「🚫 強制下架」篩選選項（紅色樣式）
 - [x] 後端 getAdminListings：確認回傳 adminDelisted 欄位（db.select() 全欄位）
 - [x] 撰寫測試（admin-delisted-ui.test.ts，15 項全部通過）並保存 checkpoint
+
+---
+
+## 📦 訂單卡片新增買家確認收貨日期時間（2026-03-25）
+
+- [ ] 查看資料庫 marketplaceOrders 的 confirmedAt 欄位
+- [ ] 查看 AdminMarketplace 訂單卡片 UI 結構（賣家資料欄位）
+- [ ] 在訂單卡片賣家資料欄位加入「確認收貨：日期 時間」顯示
+- [ ] 確認 getAdminOrders 後端 query 回傳 confirmedAt
+- [ ] 撰寫測試並保存 checkpoint

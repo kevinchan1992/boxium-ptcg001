@@ -1780,6 +1780,9 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                         } catch { return order.shippingAddress; }
                       })()}</p>
                     )}
+                    {order.buyerConfirmedAt && (
+                      <p className="text-green-700 font-medium">✅ 確認收貨：{new Date(order.buyerConfirmedAt).toLocaleString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                    )}
                   </div>
                 </div>
                 {/* Col 3: Seller + Actions */}
