@@ -6189,3 +6189,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] listing-stock-repair.test.ts：10 項測試全部通過
 - [x] admin-delisted-feature.test.ts：16 項新測試全部通過（共 39 項測試）
 - [x] 保存 checkpoint
+
+---
+
+## 🔴 Admin 下架 UI 提示優化（adminDelisted Badge）
+
+- [x] 管理後台商品列表：adminDelisted=true 商品加入紅色「強制下架」Badge
+- [x] 商品詳情 Dialog：顯示「此商品已被管理員強制下架」警告橫幅
+- [x] 篩選 Tab：加入「🚫 強制下架」篩選選項（紅色樣式）
+- [x] 後端 getAdminListings：確認回傳 adminDelisted 欄位（db.select() 全欄位）
+- [x] 撰寫測試（admin-delisted-ui.test.ts，15 項全部通過）並保存 checkpoint

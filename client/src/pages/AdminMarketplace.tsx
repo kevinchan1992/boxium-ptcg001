@@ -612,6 +612,17 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
         ) : listing ? (
           <div className="bg-white flex-1 overflow-y-auto flex flex-col min-h-0">
 
+            {/* ── 強制下架警告橫幅 ─────────────────────── */}
+            {(listing as any).adminDelisted && (
+              <div className="mx-5 mt-4 rounded-lg bg-red-50 border-2 border-red-400 px-4 py-3 flex items-start gap-2">
+                <span className="text-red-600 text-lg flex-shrink-0">🚫</span>
+                <div>
+                  <p className="text-sm font-bold text-red-700">此商品已被管理員強制下架</p>
+                  <p className="text-xs text-red-600 mt-0.5">賣家無法自行重新上架此商品。如需恢復上架，請由管理員手動將狀態改為「上架中」，系統將自動清除強制下架標記。</p>
+                </div>
+              </div>
+            )}
+
             {/* ── 賣家商品唯讀提示 ─────────────────────── */}
             {!isPlatformListing && (
               <div className="mx-5 mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-start gap-2">
@@ -762,6 +773,11 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                         <Badge className={listing.status === 'active' ? 'bg-green-100 text-green-800' : listing.status === 'reserved' ? 'bg-amber-100 text-amber-800' : listing.status === 'pending_review' ? 'bg-yellow-100 text-yellow-800' : listing.status === 'sold' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
                           {listing.status === 'active' ? '上架中' : listing.status === 'reserved' ? '🔒 鎖定中' : listing.status === 'pending_review' ? '待審核' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
                         </Badge>
+                        {(listing as any).adminDelisted && (
+                          <Badge className="bg-red-600 text-white font-bold border-0">
+                            🚫 強制下架
+                          </Badge>
+                        )}
                         {(listing as any).cardNumber && <Badge variant="outline" className="font-mono text-xs border-[#06038d]/30 text-[#06038d]">#{(listing as any).cardNumber}</Badge>}
                         {listing.allowOffers && <Badge variant="outline" className="text-xs border-green-300 text-green-700">接受出價</Badge>}
                       </div>
@@ -1014,9 +1030,12 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
   };
   const { data, isLoading, refetch } = trpc.marketplace.adminGetListings.useQuery({
     page, pageSize: 20,
-    status: statusFilter === "all" ? undefined : statusFilter,
+    status: statusFilter === "all" ? undefined : statusFilter === "admin_delisted" ? "removed" : statusFilter,
     tcgSeries: seriesFilter === "all" ? undefined : seriesFilter as any,
   });
+  const filteredListings = statusFilter === "admin_delisted"
+    ? (data?.listings ?? []).filter((l: any) => l.adminDelisted)
+    : (data?.listings ?? []);
   const updateMutation = trpc.marketplace.adminUpdateListing.useMutation({
     onSuccess: () => { toast.success("已更新"); refetch(); invalidateStats(); },
     onError: (e) => toast.error(e.message)
@@ -1030,7 +1049,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
     },
     onError: (e) => toast.error(e.message)
   });
-  const listings = data?.listings ?? [];
+  const listings = filteredListings;
   const total = data?.total ?? 0;
   const allIds = listings.map((l: any) => l.id);
   const allSelected = allIds.length > 0 && allIds.every((id: number) => selectedIds.has(id));
@@ -1072,11 +1091,13 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          {["all", "active", "reserved", "pending_review", "draft", "sold", "removed"].map(s => (
+          {["all", "active", "reserved", "pending_review", "draft", "sold", "removed", "admin_delisted"].map(s => (
             <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
               onClick={() => { setStatusFilter(s); setPage(1); setSelectedIds(new Set()); }}
-              className={statusFilter === s ? (s === 'reserved' ? 'bg-amber-600 text-white' : 'bg-[#06038d] text-white') : (s === 'reserved' ? 'text-amber-700 bg-amber-50 border-amber-300' : 'text-gray-700 bg-white')}>
-              {s === "all" ? "全部" : s === "active" ? "上架中" : s === "reserved" ? "🔒 鎖定中" : s === "pending_review" ? "待審核" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : "已下架"}
+              className={statusFilter === s
+                ? (s === 'reserved' ? 'bg-amber-600 text-white' : s === 'admin_delisted' ? 'bg-red-600 text-white' : 'bg-[#06038d] text-white')
+                : (s === 'reserved' ? 'text-amber-700 bg-amber-50 border-amber-300' : s === 'admin_delisted' ? 'text-red-700 bg-red-50 border-red-300' : 'text-gray-700 bg-white')}>
+              {s === "all" ? "全部" : s === "active" ? "上架中" : s === "reserved" ? "🔒 鎖定中" : s === "pending_review" ? "待審核" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : s === "admin_delisted" ? "🚫 強制下架" : "已下架"}
             </Button>
           ))}
         </div>
@@ -1204,6 +1225,11 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
                   }`}>
                     {listing.status === 'active' ? '上架中' : listing.status === 'reserved' ? '🔒 鎖定中' : listing.status === 'pending_review' ? '待審核' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
                   </span>
+                  {(listing as any).adminDelisted && (
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-600 text-white flex items-center gap-1">
+                      🚫 強制下架
+                    </span>
+                  )}
                   <span className="text-white/80 text-xs">{new Date(listing.createdAt).toLocaleDateString('zh-HK')}</span>
                 </div>
               </div>
