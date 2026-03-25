@@ -6222,3 +6222,15 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 加入財務摘要次要指標（AOV、手續費率、Stripe 佔比）
 - [x] 改善整體排版（報告標題、報告日期、審計說明 Footer）
 - [x] 撰寫測試（sales-report-ui.test.ts，26 項全部通過）並保存 checkpoint
+
+---
+
+## 💰 財務報告：退款統計 + 手續費明細下鑽（2026-03-25）
+
+- [x] 後端 getSalesReport：月度加入 refundedCount、cancelledCount、refundedAmountHkd
+- [x] 後端 getSalesReport：overall 加入同上欄位 + netRevenueHkd（GMV - 退款）
+- [x] 後端新增 adminGetFeeDetails procedure：查詢指定月份所有 C2C 訂單手續費明細（支持分頁）
+- [x] 前端月度表格：加入退款金額、淨收入、退款/取消欄位
+- [x] 前端 KPI 卡片：加入淨收入卡片（綠色標題）、退款金額卡片、取消訂單卡片
+- [x] 前端手續費明細 Dialog：點擊手續費金額即彈出 Dialog，顯示賣家名稱、訂單號、手續費、賣家實收、付款方式、日期
+- [x] 撰寫測試（sales-report-refund-fee.test.ts，29 項全部通過）並保存 checkpoint

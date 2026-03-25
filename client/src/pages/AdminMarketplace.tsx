@@ -3801,6 +3801,14 @@ function SalesReportTab() {
   const [months, setMonths] = useState(12);
   const { data, isLoading } = trpc.marketplace.adminGetSalesReport.useQuery({ months });
 
+  // Fee detail drill-down state
+  const [feeDetailMonth, setFeeDetailMonth] = useState<string | null>(null);
+  const [feeDetailPage, setFeeDetailPage] = useState(1);
+  const { data: feeDetailData, isLoading: feeDetailLoading } = trpc.marketplace.adminGetFeeDetails.useQuery(
+    { yearMonth: feeDetailMonth!, page: feeDetailPage, pageSize: 50 },
+    { enabled: !!feeDetailMonth }
+  );
+
   const fmtHkd = (v: number) => v.toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtYearMonth = (ym: string) => {
     const [y, m] = ym.split('-');
@@ -3818,6 +3826,7 @@ function SalesReportTab() {
   const totalOrders = overall?.totalOrders ?? 0;
   const totalSales = overall?.totalSalesHkd ?? 0;
   const totalFees = overall?.totalFeesHkd ?? 0;
+  const netRevenue = overall?.netRevenueHkd ?? (totalSales - (overall?.refundedAmountHkd ?? 0));
   const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
   const feeRate = overall?.sellerSalesHkd && overall.sellerSalesHkd > 0
     ? (totalFees / overall.sellerSalesHkd) * 100
@@ -3937,6 +3946,48 @@ function SalesReportTab() {
         </div>
       </div>
 
+      {/* ── Section 1b: Net Revenue + Refund KPI Cards ──────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Net Revenue */}
+        <div className="bg-white rounded-xl border-2 border-emerald-200 shadow-sm p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-2 rounded-lg bg-emerald-50">
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
+            </div>
+            <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">淨收入</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-1">淨收入（GMV 扣退款）</p>
+          <p className="text-xl font-bold text-emerald-700">HKD {fmtHkd(netRevenue)}</p>
+          <p className="text-xs text-gray-400 mt-1">退款 HKD {fmtHkd(overall?.refundedAmountHkd ?? 0)}</p>
+        </div>
+
+        {/* Refund Stats */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-2 rounded-lg bg-red-50">
+              <XCircle className="w-4 h-4 text-red-500" />
+            </div>
+            <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">退款</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-1">退款金額</p>
+          <p className="text-xl font-bold text-red-600">HKD {fmtHkd(overall?.refundedAmountHkd ?? 0)}</p>
+          <p className="text-xs text-gray-400 mt-1">{overall?.refundedCount ?? 0} 筆退款</p>
+        </div>
+
+        {/* Cancelled Orders */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-2 rounded-lg bg-orange-50">
+              <AlertCircle className="w-4 h-4 text-orange-500" />
+            </div>
+            <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">取消</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-1">取消訂單數</p>
+          <p className="text-xl font-bold text-orange-600">{overall?.cancelledCount ?? 0}</p>
+          <p className="text-xs text-gray-400 mt-1">已取消訂單</p>
+        </div>
+      </div>
+
       {/* ── Section 2: Secondary Metrics ──────────────────── */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
@@ -4040,12 +4091,13 @@ function SalesReportTab() {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">月份</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">銷售總額</th>
+                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">退款金額</th>
+                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">淨收入</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">平台直售</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">C2C 銷售</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">手續費收入</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">訂單數</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Stripe</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">支付寶 HK</th>
+                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">退款/取消</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">環比</th>
                 </tr>
               </thead>
@@ -4061,14 +4113,34 @@ function SalesReportTab() {
                       <td className="px-4 py-3.5 text-right">
                         <span className="font-bold text-[#06038d]">HKD {fmtHkd(row.totalSalesHkd)}</span>
                       </td>
+                      <td className="px-4 py-3.5 text-right">
+                        {(row as any).refundedAmountHkd > 0
+                          ? <span className="text-red-600 font-medium">-HKD {fmtHkd((row as any).refundedAmountHkd)}</span>
+                          : <span className="text-gray-300 text-xs">—</span>}
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <span className="font-semibold text-emerald-700">HKD {fmtHkd((row as any).netRevenueHkd ?? row.totalSalesHkd)}</span>
+                      </td>
                       <td className="px-4 py-3.5 text-right text-blue-700 font-medium">HKD {fmtHkd(row.platformSalesHkd)}</td>
                       <td className="px-4 py-3.5 text-right text-purple-700 font-medium">HKD {fmtHkd(row.sellerSalesHkd)}</td>
                       <td className="px-4 py-3.5 text-right">
-                        <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">HKD {fmtHkd(row.sellerFeesHkd)}</span>
+                        <button
+                          onClick={() => { setFeeDetailMonth(row.yearMonth); setFeeDetailPage(1); }}
+                          className="font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-md transition-colors cursor-pointer inline-flex items-center gap-1"
+                        >
+                          HKD {fmtHkd(row.sellerFeesHkd)}
+                          <ExternalLink className="w-3 h-3 opacity-60" />
+                        </button>
                       </td>
                       <td className="px-4 py-3.5 text-right text-gray-700 font-medium">{row.orderCount}</td>
-                      <td className="px-4 py-3.5 text-right text-gray-600">{row.stripeCount}</td>
-                      <td className="px-4 py-3.5 text-right text-gray-600">{row.alipayCount}</td>
+                      <td className="px-4 py-3.5 text-right">
+                        <span className="text-xs text-gray-500">
+                          {(row as any).refundedCount > 0 && <span className="text-red-500">{(row as any).refundedCount}退</span>}
+                          {(row as any).refundedCount > 0 && (row as any).cancelledCount > 0 && ' / '}
+                          {(row as any).cancelledCount > 0 && <span className="text-orange-500">{(row as any).cancelledCount}消</span>}
+                          {!(row as any).refundedCount && !(row as any).cancelledCount && <span className="text-gray-300">—</span>}
+                        </span>
+                      </td>
                       <td className="px-4 py-3.5 text-right">
                         {growth !== null ? (
                           <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
@@ -4087,14 +4159,26 @@ function SalesReportTab() {
                 <tr className="bg-[#06038d]/[0.04] border-t-2 border-[#06038d]/20">
                   <td className="px-4 py-3.5 font-bold text-gray-900 text-xs uppercase tracking-wide">合計</td>
                   <td className="px-4 py-3.5 text-right font-bold text-[#06038d]">HKD {fmtHkd(monthly.reduce((s, r) => s + r.totalSalesHkd, 0))}</td>
+                  <td className="px-4 py-3.5 text-right font-semibold text-red-600">
+                    {monthly.reduce((s, r) => s + ((r as any).refundedAmountHkd ?? 0), 0) > 0
+                      ? `-HKD ${fmtHkd(monthly.reduce((s, r) => s + ((r as any).refundedAmountHkd ?? 0), 0))}`
+                      : <span className="text-gray-300">—</span>}
+                  </td>
+                  <td className="px-4 py-3.5 text-right font-bold text-emerald-700">HKD {fmtHkd(monthly.reduce((s, r) => s + ((r as any).netRevenueHkd ?? r.totalSalesHkd), 0))}</td>
                   <td className="px-4 py-3.5 text-right font-semibold text-blue-700">HKD {fmtHkd(monthly.reduce((s, r) => s + r.platformSalesHkd, 0))}</td>
                   <td className="px-4 py-3.5 text-right font-semibold text-purple-700">HKD {fmtHkd(monthly.reduce((s, r) => s + r.sellerSalesHkd, 0))}</td>
                   <td className="px-4 py-3.5 text-right">
                     <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">HKD {fmtHkd(monthly.reduce((s, r) => s + r.sellerFeesHkd, 0))}</span>
                   </td>
                   <td className="px-4 py-3.5 text-right font-bold text-gray-900">{monthly.reduce((s, r) => s + r.orderCount, 0)}</td>
-                  <td className="px-4 py-3.5 text-right font-semibold text-gray-700">{monthly.reduce((s, r) => s + r.stripeCount, 0)}</td>
-                  <td className="px-4 py-3.5 text-right font-semibold text-gray-700">{monthly.reduce((s, r) => s + r.alipayCount, 0)}</td>
+                  <td className="px-4 py-3.5 text-right">
+                    <span className="text-xs">
+                      {monthly.reduce((s, r) => s + ((r as any).refundedCount ?? 0), 0) > 0 && <span className="text-red-500 font-semibold">{monthly.reduce((s, r) => s + ((r as any).refundedCount ?? 0), 0)}退</span>}
+                      {monthly.reduce((s, r) => s + ((r as any).refundedCount ?? 0), 0) > 0 && monthly.reduce((s, r) => s + ((r as any).cancelledCount ?? 0), 0) > 0 && ' / '}
+                      {monthly.reduce((s, r) => s + ((r as any).cancelledCount ?? 0), 0) > 0 && <span className="text-orange-500 font-semibold">{monthly.reduce((s, r) => s + ((r as any).cancelledCount ?? 0), 0)}消</span>}
+                      {monthly.reduce((s, r) => s + ((r as any).refundedCount ?? 0) + ((r as any).cancelledCount ?? 0), 0) === 0 && <span className="text-gray-300">—</span>}
+                    </span>
+                  </td>
                   <td className="px-4 py-3.5 text-right text-gray-300">—</td>
                 </tr>
               </tfoot>
@@ -4105,9 +4189,93 @@ function SalesReportTab() {
 
       {/* ── Section 6: Audit Footer ────────────────────────── */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <p className="text-xs text-gray-400">本報告由系統自動生成 · 數據截至 {reportDate} · 僅包含已付款訂單（payment_received / processing / shipped / delivered / completed）</p>
+        <p className="text-xs text-gray-400">本報告由系統自動生成 · 數據截至 {reportDate} · 已付款訂單（payment_received / processing / shipped / delivered / completed）· 退款/取消統計獨立計算</p>
         <p className="text-xs text-gray-400 font-mono">BOXIUM PTCG · 財務審核用途</p>
       </div>
+
+      {/* ── Fee Detail Drill-down Dialog ──────────────────── */}
+      <Dialog open={!!feeDetailMonth} onOpenChange={open => { if (!open) setFeeDetailMonth(null); }}>
+        <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-emerald-600" />
+              {feeDetailMonth ? fmtYearMonth(feeDetailMonth) : ''} · C2C 手續費明細
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            {feeDetailLoading ? (
+              <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#06038d]" /></div>
+            ) : !feeDetailData?.rows?.length ? (
+              <div className="text-center py-12 text-gray-400">本月無 C2C 手續費記錄</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="text-left px-3 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">訂單號</th>
+                      <th className="text-left px-3 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">賣家</th>
+                      <th className="text-right px-3 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">訂單金額</th>
+                      <th className="text-right px-3 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">手續費</th>
+                      <th className="text-right px-3 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">賣家實收</th>
+                      <th className="text-right px-3 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">付款方式</th>
+                      <th className="text-right px-3 py-2.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">日期</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {feeDetailData.rows.map((r: any) => (
+                      <tr key={r.orderId} className="hover:bg-gray-50/70">
+                        <td className="px-3 py-2.5 font-mono text-xs text-gray-700">{r.orderNo}</td>
+                        <td className="px-3 py-2.5 text-gray-800 font-medium">{r.sellerDisplayName}</td>
+                        <td className="px-3 py-2.5 text-right text-gray-700">HKD {fmtHkd(r.subtotalHkd)}</td>
+                        <td className="px-3 py-2.5 text-right">
+                          <span className="font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-xs">HKD {fmtHkd(r.platformFeeHkd)}</span>
+                        </td>
+                        <td className="px-3 py-2.5 text-right text-blue-700 font-medium">HKD {fmtHkd(r.sellerReceivableHkd)}</td>
+                        <td className="px-3 py-2.5 text-right">
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                            r.paymentMethod === 'stripe' ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'
+                          }`}>{r.paymentMethod === 'stripe' ? 'Stripe' : '支付寶'}</span>
+                        </td>
+                        <td className="px-3 py-2.5 text-right text-gray-500 text-xs">
+                          {r.createdAt ? new Date(r.createdAt).toLocaleDateString('zh-HK') : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-emerald-50/50 border-t-2 border-emerald-200">
+                      <td colSpan={3} className="px-3 py-2.5 font-bold text-gray-700 text-xs">合計（{feeDetailData.total} 筆）</td>
+                      <td className="px-3 py-2.5 text-right">
+                        <span className="font-bold text-emerald-700">HKD {fmtHkd(feeDetailData.rows.reduce((s: number, r: any) => s + r.platformFeeHkd, 0))}</span>
+                      </td>
+                      <td className="px-3 py-2.5 text-right font-semibold text-blue-700">HKD {fmtHkd(feeDetailData.rows.reduce((s: number, r: any) => s + r.sellerReceivableHkd, 0))}</td>
+                      <td colSpan={2}></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+          </div>
+          {feeDetailData && feeDetailData.total > 50 && (
+            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+              <p className="text-xs text-gray-500">共 {feeDetailData.total} 筆，每頁 50 筆</p>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={feeDetailPage <= 1}
+                  onClick={() => setFeeDetailPage(p => p - 1)}
+                  className="p-1 rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+                ><ChevronLeft className="w-4 h-4" /></button>
+                <span className="text-xs text-gray-600">第 {feeDetailPage} 頁</span>
+                <button
+                  disabled={feeDetailPage * 50 >= feeDetailData.total}
+                  onClick={() => setFeeDetailPage(p => p + 1)}
+                  className="p-1 rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+                ><ChevronRight className="w-4 h-4" /></button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

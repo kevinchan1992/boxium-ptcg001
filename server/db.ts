@@ -4087,8 +4087,9 @@ export async function getSalesReport(months: number = 12) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const paidStatuses = ['payment_received', 'processing', 'shipped', 'delivered', 'completed'];
+  const refundCancelStatuses = ['refunded', 'cancelled'];
 
-  // Monthly breakdown: group by year-month
+  // Monthly breakdown: group by year-month (paid orders)
   const monthlyRows = await db.select({
     yearMonth: sql<string>`DATE_FORMAT(createdAt, '%Y-%m')`,
     totalSales: sql<string>`COALESCE(SUM(subtotalHkd), 0)`,
@@ -4105,7 +4106,31 @@ export async function getSalesReport(months: number = 12) {
     .orderBy(sql`DATE_FORMAT(createdAt, '%Y-%m') DESC`)
     .limit(months);
 
-  // Overall totals
+  // Monthly refund/cancel stats
+  const monthlyRefundRows = await db.select({
+    yearMonth: sql<string>`DATE_FORMAT(createdAt, '%Y-%m')`,
+    refundedCount: sql<number>`SUM(CASE WHEN orderStatus = 'refunded' THEN 1 ELSE 0 END)`,
+    cancelledCount: sql<number>`SUM(CASE WHEN orderStatus = 'cancelled' THEN 1 ELSE 0 END)`,
+    refundedAmount: sql<string>`COALESCE(SUM(CASE WHEN orderStatus = 'refunded' THEN subtotalHkd ELSE 0 END), 0)`,
+  })
+    .from(marketplaceOrders)
+    .where(inArray(marketplaceOrders.orderStatus, refundCancelStatuses as any[]))
+    .groupBy(sql`DATE_FORMAT(createdAt, '%Y-%m')`)
+    .orderBy(sql`DATE_FORMAT(createdAt, '%Y-%m') DESC`);
+
+  // Build refund map keyed by yearMonth
+  const refundMap = new Map<string, { refundedCount: number; cancelledCount: number; refundedAmountHkd: number }>();
+  for (const r of monthlyRefundRows) {
+    if (r.yearMonth) {
+      refundMap.set(r.yearMonth, {
+        refundedCount: Number(r.refundedCount ?? 0),
+        cancelledCount: Number(r.cancelledCount ?? 0),
+        refundedAmountHkd: parseFloat(r.refundedAmount ?? '0'),
+      });
+    }
+  }
+
+  // Overall totals (paid)
   const [overall] = await db.select({
     totalSales: sql<string>`COALESCE(SUM(subtotalHkd), 0)`,
     totalFees: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
@@ -4116,26 +4141,109 @@ export async function getSalesReport(months: number = 12) {
     alipayCount: sql<number>`SUM(CASE WHEN paymentMethod = 'alipay_hk' THEN 1 ELSE 0 END)`,
   }).from(marketplaceOrders).where(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]));
 
+  // Overall refund/cancel totals
+  const [overallRefund] = await db.select({
+    refundedCount: sql<number>`SUM(CASE WHEN orderStatus = 'refunded' THEN 1 ELSE 0 END)`,
+    cancelledCount: sql<number>`SUM(CASE WHEN orderStatus = 'cancelled' THEN 1 ELSE 0 END)`,
+    refundedAmount: sql<string>`COALESCE(SUM(CASE WHEN orderStatus = 'refunded' THEN subtotalHkd ELSE 0 END), 0)`,
+  }).from(marketplaceOrders).where(inArray(marketplaceOrders.orderStatus, refundCancelStatuses as any[]));
+
+  const totalSalesHkd = parseFloat(overall?.totalSales ?? '0');
+  const totalRefundedHkd = parseFloat(overallRefund?.refundedAmount ?? '0');
+
   return {
-    monthly: monthlyRows.map(r => ({
-      yearMonth: r.yearMonth,
-      totalSalesHkd: parseFloat(r.totalSales ?? '0'),
-      orderCount: Number(r.orderCount ?? 0),
-      stripeCount: Number(r.stripeCount ?? 0),
-      alipayCount: Number(r.alipayCount ?? 0),
-      platformSalesHkd: parseFloat(r.platformSales ?? '0'),
-      sellerSalesHkd: parseFloat(r.sellerSales ?? '0'),
-      sellerFeesHkd: parseFloat(r.sellerFees ?? '0'),
-    })),
+    monthly: monthlyRows.map(r => {
+      const refund = refundMap.get(r.yearMonth) ?? { refundedCount: 0, cancelledCount: 0, refundedAmountHkd: 0 };
+      const salesHkd = parseFloat(r.totalSales ?? '0');
+      return {
+        yearMonth: r.yearMonth,
+        totalSalesHkd: salesHkd,
+        orderCount: Number(r.orderCount ?? 0),
+        stripeCount: Number(r.stripeCount ?? 0),
+        alipayCount: Number(r.alipayCount ?? 0),
+        platformSalesHkd: parseFloat(r.platformSales ?? '0'),
+        sellerSalesHkd: parseFloat(r.sellerSales ?? '0'),
+        sellerFeesHkd: parseFloat(r.sellerFees ?? '0'),
+        refundedCount: refund.refundedCount,
+        cancelledCount: refund.cancelledCount,
+        refundedAmountHkd: refund.refundedAmountHkd,
+        netRevenueHkd: salesHkd - refund.refundedAmountHkd,
+      };
+    }),
     overall: {
-      totalSalesHkd: parseFloat(overall?.totalSales ?? '0'),
+      totalSalesHkd,
       totalFeesHkd: parseFloat(overall?.totalFees ?? '0'),
       totalOrders: Number(overall?.totalOrders ?? 0),
       platformSalesHkd: parseFloat(overall?.platformSales ?? '0'),
       sellerSalesHkd: parseFloat(overall?.sellerSales ?? '0'),
       stripeCount: Number(overall?.stripeCount ?? 0),
       alipayCount: Number(overall?.alipayCount ?? 0),
+      refundedCount: Number(overallRefund?.refundedCount ?? 0),
+      cancelledCount: Number(overallRefund?.cancelledCount ?? 0),
+      refundedAmountHkd: totalRefundedHkd,
+      netRevenueHkd: totalSalesHkd - totalRefundedHkd,
     },
+  };
+}
+
+// --- Admin Fee Details: C2C orders for a specific month ---
+export async function getAdminFeeDetails(yearMonth: string, page = 1, pageSize = 50) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const paidStatuses = ['payment_received', 'processing', 'shipped', 'delivered', 'completed'];
+
+  const offset = (page - 1) * pageSize;
+
+  const rows = await db.select({
+    orderId: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    subtotalHkd: marketplaceOrders.subtotalHkd,
+    platformFeeHkd: marketplaceOrders.platformFeeHkd,
+    sellerReceivableHkd: marketplaceOrders.sellerReceivableHkd,
+    orderStatus: marketplaceOrders.orderStatus,
+    paymentMethod: marketplaceOrders.paymentMethod,
+    createdAt: marketplaceOrders.createdAt,
+    sellerId: marketplaceOrders.sellerId,
+    sellerDisplayName: sellerProfiles.displayName,
+    sellerUserName: users.name,
+  })
+    .from(marketplaceOrders)
+    .leftJoin(sellerProfiles, eq(marketplaceOrders.sellerId, sellerProfiles.id))
+    .leftJoin(users, eq(sellerProfiles.userId, users.id))
+    .where(
+      and(
+        eq(marketplaceOrders.sellerType, 'seller'),
+        inArray(marketplaceOrders.orderStatus, paidStatuses as any[]),
+        sql`DATE_FORMAT(${marketplaceOrders.createdAt}, '%Y-%m') = ${yearMonth}`
+      )
+    )
+    .orderBy(desc(marketplaceOrders.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const [countRow] = await db.select({ total: sql<number>`count(*)` })
+    .from(marketplaceOrders)
+    .where(
+      and(
+        eq(marketplaceOrders.sellerType, 'seller'),
+        inArray(marketplaceOrders.orderStatus, paidStatuses as any[]),
+        sql`DATE_FORMAT(${marketplaceOrders.createdAt}, '%Y-%m') = ${yearMonth}`
+      )
+    );
+
+  return {
+    rows: rows.map(r => ({
+      orderId: r.orderId,
+      orderNo: r.orderNo,
+      subtotalHkd: parseFloat(String(r.subtotalHkd ?? '0')),
+      platformFeeHkd: parseFloat(String(r.platformFeeHkd ?? '0')),
+      sellerReceivableHkd: parseFloat(String(r.sellerReceivableHkd ?? '0')),
+      orderStatus: r.orderStatus,
+      paymentMethod: r.paymentMethod,
+      createdAt: r.createdAt,
+      sellerDisplayName: r.sellerDisplayName ?? r.sellerUserName ?? `賣家 #${r.sellerId}`,
+    })),
+    total: Number(countRow?.total ?? 0),
   };
 }
 
