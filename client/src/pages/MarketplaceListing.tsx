@@ -1900,16 +1900,26 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
     );
   }
 
-  // Already in cart - show go to cart button
+  // Already in cart - show disabled "already in cart" button + link to cart
   if (inCart) {
     return (
-      <Button
-        className="w-full bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold h-12 text-base rounded-xl shadow-sm"
-        onClick={() => setLocation("/cart")}
-      >
-        <ShoppingCart className="w-5 h-5 mr-2" />
-        {isAcceptedOffer ? "前往購物車付款" : "查看購物車"}
-      </Button>
+      <div className="space-y-2">
+        <Button
+          className="w-full font-bold h-12 text-base rounded-xl shadow-sm cursor-not-allowed"
+          style={{ background: "#e5e7eb", color: "#6b7280" }}
+          disabled
+        >
+          <Check className="w-5 h-5 mr-2" />
+          {isAcceptedOffer ? "已在購物車（待付款）" : "已在購物車"}
+        </Button>
+        <button
+          onClick={() => setLocation("/cart")}
+          className="w-full text-sm text-[#06038D] hover:underline flex items-center justify-center gap-1"
+        >
+          <ShoppingCart className="w-3.5 h-3.5" />
+          {isAcceptedOffer ? "前往購物車付款" : "前往購物車"}
+        </button>
+      </div>
     );
   }
 

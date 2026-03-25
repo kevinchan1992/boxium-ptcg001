@@ -6279,3 +6279,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 後端庫存不足驗證（quantity < 1）+ 前端明確錯誤提示（duration: 5000）
 - [x] useCartBounce Context 跨組件觸發動畫
 - [ ] 儲存 Checkpoint
+
+---
+
+## 🛒 購物車失效提示 + 按鈕防重複點擊（2026-03-25）
+
+- [x] /cart 頁面頂部加入橙色警告橫幅（X 件商品已下架或售出，請移除後再結帳 + 一鍵清理按鈕）
+- [x] MarketplaceListing「加入購物車」按鈕：商品已在購物車時改為灰色「已在購物車」禁用按鈕 + 「前往購物車」文字連結
+- [ ] 儲存 Checkpoint

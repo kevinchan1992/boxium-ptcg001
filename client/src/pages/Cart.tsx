@@ -388,6 +388,25 @@ export default function Cart() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Unavailable items top warning banner */}
+            {unavailableItems.length > 0 && (
+              <div className="lg:col-span-3 flex items-center justify-between gap-3 bg-orange-50 border border-orange-300 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                  <span className="text-sm font-semibold text-orange-700">
+                    {unavailableItems.length} 件商品已下架或售出，請移除後再結帳
+                  </span>
+                </div>
+                <button
+                  onClick={() => clearUnavailableMutation.mutate()}
+                  disabled={clearUnavailableMutation.isPending}
+                  className="text-xs text-orange-600 hover:text-orange-800 font-medium whitespace-nowrap flex items-center gap-1 border border-orange-300 rounded-lg px-2.5 py-1.5 bg-white hover:bg-orange-50 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  一鍵清理
+                </button>
+              </div>
+            )}
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               {/* Available items */}
