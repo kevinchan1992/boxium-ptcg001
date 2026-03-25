@@ -126,8 +126,8 @@ export function BrandTabsTrigger({ value, children, className, icon, label }: Br
       {/* Icon: always visible */}
       {icon && <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">{icon}</span>}
 
-      {/* Label: hidden on very small screens (<480px), visible on sm+ */}
-      <span className="hidden min-[480px]:inline leading-none">{children}</span>
+      {/* Label: always visible, children control responsive text via sm:hidden/hidden sm:inline */}
+      <span className="leading-none flex items-center gap-1">{children}</span>
 
       {/* Yellow accent bar at bottom of active tab */}
       {isActive && (

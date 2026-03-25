@@ -6251,3 +6251,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 移除前端 SellerDashboard 中 getMyPayouts 的 useQuery 呼叫
 - [ ] 在收款記錄 Tab 頂部加入說明文字
 - [ ] 儲存 Checkpoint
+
+---
+
+## 📱 SellerDashboard 手機版 Tab 排版修改（2026-03-25）
+
+- [x] 主 Tab 列：手機版顯示簡短文字（商品/訂單/出價/收款），桌面版顯示完整文字
+- [x] 商品篩選 Tab：已有手機版橫向滾動實作（overflow-x-auto）
+- [x] BrandTabs 組件：移除 hidden min-[480px]:inline 限制，改為 children 自行控制响應式文字
+- [x] 儲存 Checkpoint

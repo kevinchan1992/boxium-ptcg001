@@ -1011,24 +1011,32 @@ export default function SellerDashboard() {
 
             <BrandTabs defaultValue="listings">
               <BrandTabsList>
-                <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="我的商品">我的商品</BrandTabsTrigger>
+                <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="我的商品">
+                  <span className="sm:hidden">商品</span>
+                  <span className="hidden sm:inline">我的商品</span>
+                </BrandTabsTrigger>
                 <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="訂單管理">
-                  訂單管理
+                  <span className="sm:hidden">訂單</span>
+                  <span className="hidden sm:inline">訂單管理</span>
                   {pendingOrdersCount > 0 && (
-                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                    <span className="ml-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
                       {pendingOrdersCount > 99 ? '99+' : pendingOrdersCount}
                     </span>
                   )}
                 </BrandTabsTrigger>
                 <BrandTabsTrigger value="offers" icon={<MessageSquare className="w-4 h-4" />} label="買家出價">
-                  買家出價
+                  <span className="sm:hidden">出價</span>
+                  <span className="hidden sm:inline">買家出價</span>
                   {pendingSellerOffersCount > 0 && (
-                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                    <span className="ml-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
                       {pendingSellerOffersCount > 99 ? '99+' : pendingSellerOffersCount}
                     </span>
                   )}
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label="收款記錄">收款記錄</BrandTabsTrigger>
+                <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label="收款記錄">
+                  <span className="sm:hidden">收款</span>
+                  <span className="hidden sm:inline">收款記錄</span>
+                </BrandTabsTrigger>
               </BrandTabsList>
 
               <BrandTabsContent value="listings" className="mt-4">
