@@ -430,19 +430,8 @@ function MarketplaceMaintenancePage() {
 export default function Marketplace() {
   const [, setLocation] = useLocation();
   const searchStr = useSearch();
-  // ── Maintenance mode check ──────────────────────────────────────────────────────────────────────────────
+  // ── Maintenance mode check ──
   const { data: accessData, isLoading: accessLoading } = trpc.marketplace.getMarketplaceAccess.useQuery();
-  if (accessLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#06038D]">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
-      </div>
-    );
-  }
-  if (accessData && !accessData.allowed) {
-    return <MarketplaceMaintenancePage />;
-  }
-  // ──────────────────────────────────────────────────────────────────────────────
   // 初始化時從 URL 讀取篩選狀態
   const initParams = useMemo(() => {
     const p = new URLSearchParams(searchStr);
@@ -678,6 +667,18 @@ export default function Marketplace() {
     clearAllFilters, hasActiveFilters, activeFilterCount,
     resetAndSearch,
   };
+
+  // ── Maintenance mode guard (must be after all hooks) ──
+  if (accessLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#06038D]">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      </div>
+    );
+  }
+  if (accessData && !accessData.allowed) {
+    return <MarketplaceMaintenancePage />;
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F5F7] overflow-x-hidden">

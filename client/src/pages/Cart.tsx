@@ -58,18 +58,8 @@ interface CheckoutForm {
 export default function Cart() {
   const [location, setLocation] = useLocation();
   const { data: user } = trpc.auth.me.useQuery();
-  // ── Maintenance mode check ──
+  // ── Maintenance mode check (query placed before other hooks, guard after all hooks) ──
   const { data: accessData, isLoading: accessLoading } = trpc.marketplace.getMarketplaceAccess.useQuery();
-  if (accessLoading) return <div className="min-h-screen flex items-center justify-center bg-[#06038D]"><div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" /></div>;
-  if (accessData && !accessData.allowed) return (
-    <div className="min-h-screen bg-[#06038D] flex items-center justify-center px-4">
-      <div className="text-center max-w-md">
-        <h1 className="text-3xl font-bold text-white mb-3">市集正在維護中</h1>
-        <p className="text-white/70 mb-6">我們正在緊鑼密鼓地開發中，敬請期待！</p>
-        <a href="/" className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">返回首頁</a>
-      </div>
-    </div>
-  );
   // Parse URL params for Stripe success page
   const urlParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const isStripeSuccess = urlParams.get('success') === 'true';
@@ -201,6 +191,17 @@ export default function Cart() {
     return null;
   }, [personalizedListings, recentListings]);
 
+  // ── Maintenance mode guard (after all hooks) ──
+  if (accessLoading) return <div className="min-h-screen flex items-center justify-center bg-[#06038D]"><div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" /></div>;
+  if (accessData && !accessData.allowed) return (
+    <div className="min-h-screen bg-[#06038D] flex items-center justify-center px-4">
+      <div className="text-center max-w-md">
+        <h1 className="text-3xl font-bold text-white mb-3">市集正在維護中</h1>
+        <p className="text-white/70 mb-6">我們正在緊鑼密鼓地開發中，敬請期待！</p>
+        <a href="/" className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">返回首頁</a>
+      </div>
+    </div>
+  );
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50">
