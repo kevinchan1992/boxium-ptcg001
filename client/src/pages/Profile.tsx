@@ -1627,6 +1627,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
   const isCompleted = order.orderStatus === "completed";
   const isPending = order.orderStatus === "pending_payment";
   const isDisputed = order.orderStatus === "disputed";
+  const isCancelled = order.orderStatus === "cancelled";
   const paymentCountdown = useBatchPaymentCountdown(
     isPending ? order.createdAt : null,
     paymentTimeoutMinutes ?? 30,
@@ -1672,7 +1673,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
         </div>
       </div>
       {/* Action buttons */}
-      {(canConfirm || canDispute || isPending || canReview || isDisputed) && (
+      {(canConfirm || canDispute || isPending || canReview || isDisputed || isCancelled) && (
         <div className="px-4 pb-3 flex flex-wrap items-center gap-2">
           {canConfirm && (
             <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => setShowConfirmDialog(true)}>
@@ -1723,6 +1724,18 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
             <span className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
               <AlertCircle className="w-3.5 h-3.5" />爭議處理中，請等待管理員回覆
             </span>
+          )}
+          {isCancelled && (
+            <>
+              <span className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+                <span className="text-sm">❌</span>訂單已取消
+              </span>
+              <Link href="/marketplace">
+                <Button size="sm" variant="outline" className="text-xs font-semibold border-[#06038d] text-[#06038d] hover:bg-[#06038d]/5">
+                  🛍️ 前往市集
+                </Button>
+              </Link>
+            </>
           )}
         </div>
       )}

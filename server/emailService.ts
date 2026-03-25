@@ -329,22 +329,44 @@ export function buildOrderRefundedEmail(data: OrderEmailData): { subject: string
 }
 
 /** Order cancelled — to buyer */
-export function buildOrderCancelledEmail(data: OrderEmailData & { batchCount?: number; batchIndex?: number }): { subject: string; html: string } {
+export function buildOrderCancelledEmail(data: OrderEmailData & { batchCount?: number; batchIndex?: number; cancelledItems?: Array<{ orderNo: string; itemName: string; priceHkd: string }> }): { subject: string; html: string } {
   const siteUrl = data.siteUrl || "https://boxium.asia";
   // For batch cancellations, the first email uses a batch subject; subsequent emails use individual subjects
-  const subject = (data.batchCount && data.batchCount > 1 && data.batchIndex === 0)
+  const isBatchFirstEmail = !!(data.batchCount && data.batchCount > 1 && data.batchIndex === 0);
+  const subject = isBatchFirstEmail
     ? `❌ 您的 ${data.batchCount} 件商品訂單已取消`
     : `❌ 訂單已取消 — ${data.orderNo}`;
   const noteBlock = data.note
     ? `<p style="background:#fff3f3;border-left:4px solid #ef4444;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;"><strong>取消原因：</strong>${data.note}</p>`
     : "";
+  // For the first email in a batch cancellation, show all cancelled items
+  const batchItemsBlock = (isBatchFirstEmail && data.cancelledItems && data.cancelledItems.length > 1)
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #c8cbf0;border-radius:8px;margin:16px 0;">
+        <tr><td style="padding:16px 20px;">
+          <p style="margin:0 0 12px;font-size:14px;color:#06038d;font-weight:bold;">📌 已取消的商品清單</p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${data.cancelledItems.map((item, idx) => `
+              <tr style="${idx > 0 ? 'border-top:1px solid #e5e7f0;' : ''}">
+                <td style="padding:8px 0;font-size:13px;color:#333;">${item.itemName}</td>
+                <td style="padding:8px 0;font-size:13px;color:#555;font-family:monospace;">#${item.orderNo}</td>
+                <td style="padding:8px 0;font-size:13px;color:#06038d;font-weight:bold;text-align:right;">HKD ${parseFloat(item.priceHkd).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+            <tr style="border-top:2px solid #c8cbf0;">
+              <td colspan="2" style="padding:10px 0 4px;font-size:14px;color:#333;font-weight:bold;">合計</td>
+              <td style="padding:10px 0 4px;font-size:14px;color:#06038d;font-weight:bold;text-align:right;">HKD ${data.cancelledItems.reduce((sum, item) => sum + parseFloat(item.priceHkd), 0).toFixed(2)}</td>
+            </tr>
+          </table>
+        </td></tr>
+      </table>`
+    : orderInfoBlock(data.orderNo, data.itemName, data.priceHkd);
   const html = wrapHtml(subject, `
     <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單已取消 ❌</h2>
-    <p style="margin:0 0 16px;color:#555;font-size:15px;">您的訂單已被取消。</p>
-    ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">${isBatchFirstEmail ? `您的 ${data.batchCount} 件商品訂單已被取消。` : '您的訂單已被取消。'}</p>
+    ${batchItemsBlock}
     ${noteBlock}
     <p style="color:#555;font-size:14px;">如有任何疑問，請聯絡客服。</p>
-    ${ctaButton("繼續購物", `${siteUrl}`)}
+    ${ctaButton("前往市集重新選購", `${siteUrl}/marketplace`)}
   `);
   return { subject, html };
 }

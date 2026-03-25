@@ -1813,6 +1813,18 @@ export const marketplaceRouter = router({
           } else if (input.orderStatus === "cancelled") {
             // ── Batch cancel: send one email per order (mirrors buyerCancelOrder behaviour) ────────────
             const adminBatchCount = batchOrderIds.length;
+            // Pre-fetch all batch order email data for the cancelledItems list in the first email
+            const adminAllBatchEmailData: Array<{ orderNo: string; itemName: string; priceHkd: string }> = [];
+            if (adminBatchCount > 1) {
+              for (const bId of batchOrderIds) {
+                const bOrder = bId === input.orderId ? order : await getMarketplaceOrderById(bId);
+                if (!bOrder) continue;
+                try {
+                  const bData = await getOrderEmailData(bOrder);
+                  adminAllBatchEmailData.push({ orderNo: bOrder.orderNo, itemName: bData.itemName, priceHkd: bData.priceHkd });
+                } catch { /* skip */ }
+              }
+            }
             for (let adminBatchIdx = 0; adminBatchIdx < batchOrderIds.length; adminBatchIdx++) {
               const batchOrderId = batchOrderIds[adminBatchIdx];
               const targetOrder = batchOrderId === input.orderId ? order : await getMarketplaceOrderById(batchOrderId);
@@ -1826,6 +1838,8 @@ export const marketplaceRouter = router({
                   note: input.note,
                   batchCount: adminBatchCount,
                   batchIndex: adminBatchIdx,
+                  // First email gets the full cancelled items list
+                  cancelledItems: adminBatchIdx === 0 && adminAllBatchEmailData.length > 1 ? adminAllBatchEmailData : undefined,
                 });
                 await sendOrderEmail({
                   userId: targetOrder.buyerId,
@@ -3061,9 +3075,22 @@ All three checks must pass for verified to be true. Respond with JSON only match
 
       // ── Send cancellation email for EACH order in the batch ────────────────────
       // Each order gets its own email so the buyer knows exactly which items were cancelled.
+      // The FIRST email in a batch also includes a full list of all cancelled items.
       try {
         const { sendOrderEmail, buildOrderCancelledEmail, getOrderEmailData } = await import("../emailService");
         const batchCount = batchOrderIds.length;
+        // Pre-fetch all batch order email data for the cancelledItems list in the first email
+        const allBatchEmailData: Array<{ orderNo: string; itemName: string; priceHkd: string }> = [];
+        if (batchCount > 1) {
+          for (const bId of batchOrderIds) {
+            const bOrder = bId === input.orderId ? order : await getMarketplaceOrderById(bId);
+            if (!bOrder) continue;
+            try {
+              const bData = await getOrderEmailData(bOrder);
+              allBatchEmailData.push({ orderNo: bOrder.orderNo, itemName: bData.itemName, priceHkd: bData.priceHkd });
+            } catch { /* skip */ }
+          }
+        }
         for (let batchIndex = 0; batchIndex < batchOrderIds.length; batchIndex++) {
           const orderId = batchOrderIds[batchIndex];
           const targetOrder = orderId === input.orderId ? order : await getMarketplaceOrderById(orderId);
@@ -3077,6 +3104,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
               note: input.reason ?? "買家主動取消",
               batchCount,
               batchIndex,
+              // First email gets the full cancelled items list
+              cancelledItems: batchIndex === 0 && allBatchEmailData.length > 1 ? allBatchEmailData : undefined,
             });
             await sendOrderEmail({
               userId: targetOrder.buyerId,

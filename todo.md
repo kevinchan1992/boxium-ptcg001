@@ -6112,3 +6112,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 前端：EmbeddedOrderCard 倒數归零後同樣自動呼叫 invalidate()
 - [x] 後端：批次取消第一封 Email 主旨改為「您的 N 件商品訂單已取消」，其餘保持對應訂單號
 - [x] 11 項測試全部通過（countdown-email-enhancements.test.ts）
+
+---
+## 🔔 第八批優化：OrderDetail 倒數 + 重新下單引導 + Email 商品清單（2026-03-25）
+- [x] 前端：OrderDetail 頁面已有完整倒數計時 banner（確認現有功能已完整，無需修改）
+- [x] 前端：EmbeddedOrderCard 取消後加入「❌ 訂單已取消」 + 「🛍️ 前往市集」按鈕
+- [x] 前端：BatchOrderCard 倒數归零 → invalidate() → isAllCancelled=true → 自動顯示「前往市集」（已有邏輯，確認正確）
+- [x] 後端：buyerCancelOrder 批次取消第一封 Email 加入 cancelledItems 商品清單（含合計）
+- [x] 後端：adminUpdateOrderStatus 批次取消第一封 Email 同樣加入 cancelledItems 商品清單
+- [x] 15 項測試全部通過（order-ux-email-enhancements.test.ts）+ 47 項回歸測試通過
