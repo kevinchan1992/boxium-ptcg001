@@ -1,0 +1,23 @@
+{
+  "query": "SELECT o.id, o.orderNo, o.orderStatus, o.paymentStatus, o.subtotalHkd, o.platformFeeHkd, o.sellerReceivableHkd, o.paymentMethod, o.createdAt, o.updatedAt, l.title FROM marketplaceOrders o LEFT JOIN marketplaceListings l ON o.listingId = l.id WHERE o.sellerReceivableHkd = 9.50 OR o.subtotalHkd = 9.50 OR o.platformFeeHkd = 0.50 ORDER BY o.createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT o.id, o.orderNo, o.orderStatus, o.paymentStatus, o.subtotalHkd, o.platformFeeHkd, o.sellerReceivableHkd, o.paymentMethod, o.createdAt, o.updatedAt, l.title FROM marketplaceOrders o LEFT JOIN marketplaceListings l ON o.listingId = l.id WHERE o.sellerReceivableHkd = 9.50 OR o.subtotalHkd = 9.50 OR o.platformFeeHkd = 0.50 ORDER BY o.createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "90002",
+      "orderNo": "BOXIUM-20260309-7593",
+      "orderStatus": "cancelled",
+      "paymentStatus": "paid",
+      "subtotalHkd": "10.00",
+      "platformFeeHkd": "0.50",
+      "sellerReceivableHkd": "9.50",
+      "paymentMethod": "stripe",
+      "createdAt": "2026-03-09 05:10:28",
+      "updatedAt": "2026-03-11 01:36:31",
+      "title": "測試001"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torderNo\torderStatus\tpaymentStatus\tsubtotalHkd\tplatformFeeHkd\tsellerReceivableHkd\tpaymentMethod\tcreatedAt\tupdatedAt\ttitle\n90002\tBOXIUM-20260309-7593\tcancelled\tpaid\t10.00\t0.50\t9.50\tstripe\t2026-03-09 05:10:28\t2026-03-11 01:36:31\t測試001\n",
+  "stderr": "",
+  "execution_time_ms": 1573
+}

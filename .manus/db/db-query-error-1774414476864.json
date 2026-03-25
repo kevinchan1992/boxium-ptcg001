@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, orderNo, orderStatus, paymentStatus, payoutStatus, totalAmount, platformFee, sellerPayout, stripeTransferId FROM marketplaceOrders WHERE id = 90002;\n\nSELECT id, listingNo, title, status, price, quantity, remainingQuantity FROM marketplaceListings WHERE id = 60001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, orderNo, orderStatus, paymentStatus, payoutStatus, totalAmount, platformFee, sellerPayout, stripeTransferId FROM marketplaceOrders WHERE id = 90002;\n\nSELECT id, listingNo, title, status, price, quantity, remainingQuantity FROM marketplaceListings WHERE id = 60001;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'totalamount' in 'field list'"
+  ]
+}

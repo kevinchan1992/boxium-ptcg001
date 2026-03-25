@@ -806,6 +806,10 @@ export const marketplaceRouter = router({
       if (input.status === "active" && seller.stripeConnectStatus !== "active") {
         throw new TRPCError({ code: "FORBIDDEN", message: "請先完成 Stripe Connect 收款帳戶設定，才能上架商品" });
       }
+      // Admin 下架的商品，賣家無法自行重新上架
+      if (input.status === "active" && (listing as any).adminDelisted) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "此商品已被管理員下架，如有疑問請聯絡平台客服" });
+      }
       const { id, ...updateData } = input;
       const updatePayload: Record<string, any> = { ...updateData };
       const oldPriceHkd = parseFloat(listing.priceHkd as string);
@@ -887,15 +891,21 @@ export const marketplaceRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { marketplaceListings } = await import("../../drizzle/schema_new");
       const { eq: eqFn, inArray: inArrayFn } = await import("drizzle-orm");
-      const listings = await db.select({ id: marketplaceListings.id, sellerId: marketplaceListings.sellerId })
+      const listings = await db.select({ id: marketplaceListings.id, sellerId: marketplaceListings.sellerId, adminDelisted: marketplaceListings.adminDelisted })
         .from(marketplaceListings)
         .where(inArrayFn(marketplaceListings.id, input.ids));
       const unauthorized = listings.filter(l => l.sellerId !== seller.id);
       if (unauthorized.length > 0) throw new TRPCError({ code: "FORBIDDEN", message: "部分商品不屬於你" });
+      // 過濾掉 Admin 下架的商品，賣家無法重新上架
+      const adminDelistedIds = listings.filter(l => l.adminDelisted).map(l => l.id);
+      const allowedIds = input.ids.filter(id => !adminDelistedIds.includes(id));
+      if (allowedIds.length === 0) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "這些商品已被管理員下架，無法重新上架" });
+      }
       await db.update(marketplaceListings)
         .set({ status: "active" })
-        .where(inArrayFn(marketplaceListings.id, input.ids));
-      return { success: true, count: input.ids.length };
+        .where(inArrayFn(marketplaceListings.id, allowedIds));
+      return { success: true, count: allowedIds.length, skipped: adminDelistedIds.length };
     }),
 
   getMySellerOrders: protectedProcedure
@@ -1246,6 +1256,13 @@ export const marketplaceRouter = router({
         delete updatePayload.price;
       }
       if (rejectedReason) updatePayload.rejectedReason = rejectedReason;
+      // Admin 下架時設 adminDelisted=true，防止賣家自行重新上架
+      if (data.status === 'removed') {
+        updatePayload.adminDelisted = true;
+      } else if (data.status === 'active') {
+        // Admin 手動重新上架時清除 adminDelisted 標記
+        updatePayload.adminDelisted = false;
+      }
       // Fetch listing before update to detect status change
       const prevListing = await getListingById(id);
       await updateListing(id, updatePayload);

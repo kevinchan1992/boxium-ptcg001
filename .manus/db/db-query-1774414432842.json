@@ -1,0 +1,38 @@
+{
+  "query": "SELECT 'orders' as tbl, COUNT(*) as cnt FROM marketplaceOrders\nUNION ALL SELECT 'listings', COUNT(*) FROM marketplaceListings\nUNION ALL SELECT 'sellerProfiles', COUNT(*) FROM sellerProfiles\nUNION ALL SELECT 'payouts', COUNT(*) FROM marketplacePayouts\nUNION ALL SELECT 'notifications', COUNT(*) FROM notifications\nUNION ALL SELECT 'offers', COUNT(*) FROM offers\nUNION ALL SELECT 'cartItems', COUNT(*) FROM cartItems;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT 'orders' as tbl, COUNT(*) as cnt FROM marketplaceOrders\nUNION ALL SELECT 'listings', COUNT(*) FROM marketplaceListings\nUNION ALL SELECT 'sellerProfiles', COUNT(*) FROM sellerProfiles\nUNION ALL SELECT 'payouts', COUNT(*) FROM marketplacePayouts\nUNION ALL SELECT 'notifications', COUNT(*) FROM notifications\nUNION ALL SELECT 'offers', COUNT(*) FROM offers\nUNION ALL SELECT 'cartItems', COUNT(*) FROM cartItems;",
+  "rows": [
+    {
+      "tbl": "listings",
+      "cnt": "1"
+    },
+    {
+      "tbl": "orders",
+      "cnt": "1"
+    },
+    {
+      "tbl": "sellerProfiles",
+      "cnt": "1"
+    },
+    {
+      "tbl": "notifications",
+      "cnt": "0"
+    },
+    {
+      "tbl": "payouts",
+      "cnt": "0"
+    },
+    {
+      "tbl": "cartItems",
+      "cnt": "0"
+    },
+    {
+      "tbl": "offers",
+      "cnt": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "tbl\tcnt\nlistings\t1\norders\t1\nsellerProfiles\t1\nnotifications\t0\npayouts\t0\ncartItems\t0\noffers\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1513
+}

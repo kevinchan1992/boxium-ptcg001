@@ -778,6 +778,7 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   // Status
   status: mysqlEnum("status", ["draft", "pending_review", "active", "reserved", "sold", "removed"]).default("draft").notNull(),
   rejectedReason: text("rejectedReason"),
+  adminDelisted: boolean("adminDelisted").default(false).notNull(), // true = Admin 強制下架，賣家無法重新上架
   // Offer settings
   allowOffers: boolean("allowOffers").default(false).notNull(),
   minOfferHkd: decimal("minOfferHkd", { precision: 10, scale: 2 }),

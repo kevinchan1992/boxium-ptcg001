@@ -1,0 +1,82 @@
+{
+  "query": "SELECT id, title, sellerType, status, adminDelisted, updatedAt FROM marketplaceListings WHERE status = 'removed' ORDER BY updatedAt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, sellerType, status, adminDelisted, updatedAt FROM marketplaceListings WHERE status = 'removed' ORDER BY updatedAt DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "180001",
+      "title": "吶喊比卡超",
+      "sellerType": "seller",
+      "status": "removed",
+      "adminDelisted": "0",
+      "updatedAt": "2026-03-25 04:07:29"
+    },
+    {
+      "id": "210001",
+      "title": "123",
+      "sellerType": "platform",
+      "status": "removed",
+      "adminDelisted": "0",
+      "updatedAt": "2026-03-25 04:06:18"
+    },
+    {
+      "id": "150002",
+      "title": "Pikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)",
+      "sellerType": "seller",
+      "status": "removed",
+      "adminDelisted": "0",
+      "updatedAt": "2026-03-20 05:42:51"
+    },
+    {
+      "id": "150001",
+      "title": "Easter's  Pikachu: PROMO[SM-P 055](SM-P Promotional cards)",
+      "sellerType": "seller",
+      "status": "removed",
+      "adminDelisted": "0",
+      "updatedAt": "2026-03-19 05:31:43"
+    },
+    {
+      "id": "120004",
+      "title": "003",
+      "sellerType": "platform",
+      "status": "removed",
+      "adminDelisted": "0",
+      "updatedAt": "2026-03-18 09:36:59"
+    },
+    {
+      "id": "90001",
+      "title": "Easter's  Pikachu: PROMO[SM-P 055](SM-P Promotional cards)",
+      "sellerType": "seller",
+      "status": "removed",
+      "adminDelisted": "0",
+      "updatedAt": "2026-03-17 01:17:34"
+    },
+    {
+      "id": "120001",
+      "title": "測試 - 002",
+      "sellerType": "platform",
+      "status": "removed",
+      "adminDelisted": "0",
+      "updatedAt": "2026-03-10 08:04:11"
+    },
+    {
+      "id": "120002",
+      "title": "測試 - 003",
+      "sellerType": "platform",
+      "status": "removed",
+      "adminDelisted": "0",
+      "updatedAt": "2026-03-10 08:04:09"
+    },
+    {
+      "id": "2",
+      "title": "測試使用001 - Easter's Pikachu 055/SM-P Promo",
+      "sellerType": "platform",
+      "status": "removed",
+      "adminDelisted": "0",
+      "updatedAt": "2026-03-10 03:36:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tsellerType\tstatus\tadminDelisted\tupdatedAt\n180001\t吶喊比卡超\tseller\tremoved\t0\t2026-03-25 04:07:29\n210001\t123\tplatform\tremoved\t0\t2026-03-25 04:06:18\n150002\tPikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)\tseller\tremoved\t0\t2026-03-20 05:42:51\n150001\tEaster's  Pikachu: PROMO[SM-P 055](SM-P Promotional cards)\tseller\tremoved\t0\t2026-03-19 05:31:43\n120004\t003\tplatform\tremoved\t0\t2026-03-18 09:36:59\n90001\tEaster's  Pikachu: PROMO[SM-P 055](SM-P Promotional cards)\tseller\tremoved\t0\t2026-03-17 01:17:34\n120001\t測試 - 002\tplatform\tremoved\t0\t2026-03-10 08:04:11\n120002\t測試 - 003\tplatform\tremoved\t0\t2026-03-10 08:04:09\n2\t測試使用001 - Easter's Pikachu 055/SM-P Promo\tplatform\tremoved\t0\t2026-03-10 03:36:00\n",
+  "stderr": "",
+  "execution_time_ms": 1565
+}

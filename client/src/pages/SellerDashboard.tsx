@@ -1190,6 +1190,7 @@ export default function SellerDashboard() {
                       const isSold = listing.status === "sold";
                       const isRemoved = listing.status === "removed";
                       const isActive = listing.status === "active";
+                      const isAdminDelisted = !!(listing as any).adminDelisted;
                       const isSelected = selectedIds.has(listing.id);
                       const listingUrl = `${window.location.origin}/marketplace/${listing.id}`;
                       const shareText = `「${listing.title}」 HKD ${parseFloat(listing.priceHkd as string).toFixed(2)} - BOXIUM PTCG`;
@@ -1283,7 +1284,7 @@ export default function SellerDashboard() {
                                     下架
                                   </Button>
                                 )}
-                                {isRemoved && (
+                                {isRemoved && !isAdminDelisted && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -1294,6 +1295,9 @@ export default function SellerDashboard() {
                                     <Eye className="w-3 h-3 mr-1" />
                                     重新上架
                                   </Button>
+                                )}
+                                {isRemoved && isAdminDelisted && (
+                                  <span className="text-xs text-red-500 font-medium px-1">⛔ 管理員已下架</span>
                                 )}
                                 {/* View detail */}
                                 {(isSold || isActive) && (

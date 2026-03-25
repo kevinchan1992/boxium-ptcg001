@@ -1,0 +1,27 @@
+{
+  "query": "SELECT id, orderNo, orderStatus, paymentStatus, subtotalHkd, platformFeeHkd, sellerReceivableHkd, paymentMethod, stripePaymentIntentId, stripeChargeId, stripeTransferId, sellerId, buyerId, createdAt, updatedAt FROM marketplaceOrders WHERE id = 90002;\nSELECT * FROM marketplacePayouts WHERE orderId = 90002;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, orderNo, orderStatus, paymentStatus, subtotalHkd, platformFeeHkd, sellerReceivableHkd, paymentMethod, stripePaymentIntentId, stripeChargeId, stripeTransferId, sellerId, buyerId, createdAt, updatedAt FROM marketplaceOrders WHERE id = 90002;\nSELECT * FROM marketplacePayouts WHERE orderId = 90002;",
+  "rows": [
+    {
+      "id": "90002",
+      "orderNo": "BOXIUM-20260309-7593",
+      "orderStatus": "cancelled",
+      "paymentStatus": "paid",
+      "subtotalHkd": "10.00",
+      "platformFeeHkd": "0.50",
+      "sellerReceivableHkd": "9.50",
+      "paymentMethod": "stripe",
+      "stripePaymentIntentId": "pi_3T8w5kEFJpV6IgaP0do4XkP6",
+      "stripeChargeId": "NULL",
+      "stripeTransferId": "NULL",
+      "sellerId": "1",
+      "buyerId": "330001",
+      "createdAt": "2026-03-09 05:10:28",
+      "updatedAt": "2026-03-11 01:36:31"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torderNo\torderStatus\tpaymentStatus\tsubtotalHkd\tplatformFeeHkd\tsellerReceivableHkd\tpaymentMethod\tstripePaymentIntentId\tstripeChargeId\tstripeTransferId\tsellerId\tbuyerId\tcreatedAt\tupdatedAt\n90002\tBOXIUM-20260309-7593\tcancelled\tpaid\t10.00\t0.50\t9.50\tstripe\tpi_3T8w5kEFJpV6IgaP0do4XkP6\tNULL\tNULL\t1\t330001\t2026-03-09 05:10:28\t2026-03-11 01:36:31\n",
+  "stderr": "",
+  "execution_time_ms": 1788
+}

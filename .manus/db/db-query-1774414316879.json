@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE marketplaceOrders \nSET \n  orderStatus = 'completed',\n  payoutStatus = 'paid',\n  manualPayoutAt = '2026-03-19 00:00:00',\n  manualPayoutNote = 'Stripe Connect 自動放款 acct_1T8hMxCblQuzQFtP，已提現至中國銀行香港 ****3089',\n  stripeTransferId = 'acct_1T8hMxCblQuzQFtP',\n  updatedAt = NOW()\nWHERE id = 90002;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute UPDATE marketplaceOrders \nSET \n  orderStatus = 'completed',\n  payoutStatus = 'paid',\n  manualPayoutAt = '2026-03-19 00:00:00',\n  manualPayoutNote = 'Stripe Connect 自動放款 acct_1T8hMxCblQuzQFtP，已提現至中國銀行香港 ****3089',\n  stripeTransferId = 'acct_1T8hMxCblQuzQFtP',\n  updatedAt = NOW()\nWHERE id = 90002;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1579
+}

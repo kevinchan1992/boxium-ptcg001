@@ -6150,3 +6150,42 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 ## ✅ Bug 修復：Admin Marketplace ResizeObserver loop 錯誤（2026-03-25）
 - [x] 定位根源：asside 使用 min-h-screen + sticky + self-start 在 flex 容器中造成高度計算循環
 - [x] 修復：外層改為 h-screen flex-col overflow-hidden，sidebar 改為 shrink-0 overflow-y-auto，main 加入 overflow-y-auto
+
+## 🐛 Bug 修復：Admin 下架商品後賣家仍可重新上架（2026-03-25）
+- [ ] 查看 relistListing 和 adminDelistListing 的後端邏輯
+- [ ] 在 marketplaceListings 加入 adminDelisted 標記欄位
+- [ ] 修復 relistListing：如果 adminDelisted=true 則拒絕賣家重新上架
+- [ ] 修復前端：Admin 下架的商品隱藏「重新上架」按鈕
+- [ ] 更新資料庫 schema 並執行 migration
+- [ ] 撰寫測試並儲存 Checkpoint
+
+---
+
+## ✅ Admin 下架權限漏洞修復 + 測試資料清理（2026-03-25）
+
+### 完成的修復
+- [x] Bug #2：付款方式切換時舊訂單加入 paymentStatus='cancelled'（4 處）
+- [x] Bug #3：paymentTimeout 排程器加入 paymentStatus='cancelled'
+- [x] Bug #4：getPublicListings 加入 remainingQuantity 欄位
+- [x] TypeScript 錯誤從 12 個減至 0 個
+- [x] Admin ResizeObserver loop 錯誤修復（sticky sidebar 佈局問題）
+- [x] Admin 下架權限漏洞修復（adminDelisted boolean 欄位）
+  - marketplaceListings 表新增 adminDelisted boolean 欄位（default false）
+  - adminUpdateListing：status=removed 時設 adminDelisted=true，status=active 時清除
+  - updateMyListing：若 adminDelisted=true，賣家無法將 status 改為 active
+  - batchReactivateListings：過濾掉 adminDelisted 商品，賣家無法批量重新上架
+  - 賣家頁面：隱藏 adminDelisted 商品的「重新上架」按鈕，顯示警告訊息
+
+### 測試資料清理
+- [x] 清除所有測試訂單（保留真實交易 BOXIUM-20260309-7593，id=90002）
+- [x] 清除所有測試商品（保留真實商品 #BOXIUM-60001，id=60001）
+- [x] 清除所有測試賣家資料（保留真實賣家 id=1）
+- [x] 清除所有 marketplacePayouts（測試記錄）
+- [x] 清除所有 offers、cartItems、cartOrders
+- [x] 清除所有 listingReports、notifications、marketplaceSearchLogs、marketplaceReviews
+
+### 測試結果
+- [x] marketplace-bugfix.test.ts：13 項測試全部通過
+- [x] listing-stock-repair.test.ts：10 項測試全部通過
+- [x] admin-delisted-feature.test.ts：16 項新測試全部通過（共 39 項測試）
+- [x] 保存 checkpoint
