@@ -1812,7 +1812,9 @@ export const marketplaceRouter = router({
             }
           } else if (input.orderStatus === "cancelled") {
             // ── Batch cancel: send one email per order (mirrors buyerCancelOrder behaviour) ────────────
-            for (const batchOrderId of batchOrderIds) {
+            const adminBatchCount = batchOrderIds.length;
+            for (let adminBatchIdx = 0; adminBatchIdx < batchOrderIds.length; adminBatchIdx++) {
+              const batchOrderId = batchOrderIds[adminBatchIdx];
               const targetOrder = batchOrderId === input.orderId ? order : await getMarketplaceOrderById(batchOrderId);
               if (!targetOrder) continue;
               try {
@@ -1822,6 +1824,8 @@ export const marketplaceRouter = router({
                   itemName: emailData.itemName,
                   priceHkd: emailData.priceHkd,
                   note: input.note,
+                  batchCount: adminBatchCount,
+                  batchIndex: adminBatchIdx,
                 });
                 await sendOrderEmail({
                   userId: targetOrder.buyerId,
@@ -3059,7 +3063,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
       // Each order gets its own email so the buyer knows exactly which items were cancelled.
       try {
         const { sendOrderEmail, buildOrderCancelledEmail, getOrderEmailData } = await import("../emailService");
-        for (const orderId of batchOrderIds) {
+        const batchCount = batchOrderIds.length;
+        for (let batchIndex = 0; batchIndex < batchOrderIds.length; batchIndex++) {
+          const orderId = batchOrderIds[batchIndex];
           const targetOrder = orderId === input.orderId ? order : await getMarketplaceOrderById(orderId);
           if (!targetOrder) continue;
           try {
@@ -3069,6 +3075,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
               itemName: emailData.itemName,
               priceHkd: emailData.priceHkd,
               note: input.reason ?? "買家主動取消",
+              batchCount,
+              batchIndex,
             });
             await sendOrderEmail({
               userId: targetOrder.buyerId,

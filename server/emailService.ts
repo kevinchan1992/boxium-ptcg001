@@ -329,9 +329,12 @@ export function buildOrderRefundedEmail(data: OrderEmailData): { subject: string
 }
 
 /** Order cancelled — to buyer */
-export function buildOrderCancelledEmail(data: OrderEmailData): { subject: string; html: string } {
+export function buildOrderCancelledEmail(data: OrderEmailData & { batchCount?: number; batchIndex?: number }): { subject: string; html: string } {
   const siteUrl = data.siteUrl || "https://boxium.asia";
-  const subject = `❌ 訂單已取消 — ${data.orderNo}`;
+  // For batch cancellations, the first email uses a batch subject; subsequent emails use individual subjects
+  const subject = (data.batchCount && data.batchCount > 1 && data.batchIndex === 0)
+    ? `❌ 您的 ${data.batchCount} 件商品訂單已取消`
+    : `❌ 訂單已取消 — ${data.orderNo}`;
   const noteBlock = data.note
     ? `<p style="background:#fff3f3;border-left:4px solid #ef4444;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;"><strong>取消原因：</strong>${data.note}</p>`
     : "";

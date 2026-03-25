@@ -6104,3 +6104,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 前端：BatchOrderCard 待付款狀態加入倒數計時（「剩 MM:SS」amber 標籤），超時顯示「付款時限已到」
 - [x] 前端：EmbeddedOrdersSection 加入 trpc.system.getTimeoutSettings 查詢，傳入 paymentTimeoutMinutes 給 BatchOrderCard
 - [x] 12 項測試全部通過（tab-count-countdown.test.ts）
+
+---
+## ⏱️ 倒數計時 + Email 主旨優化（2026-03-25 第七批）
+- [x] 前端：EmbeddedOrderCard 加入付款截止倒數計時（與 BatchOrderCard 共用 useBatchPaymentCountdown hook）
+- [x] 前端：BatchOrderCard 倒數归零後自動呼叫 getMyOrders.invalidate()，1.5 秒延遲觸發
+- [x] 前端：EmbeddedOrderCard 倒數归零後同樣自動呼叫 invalidate()
+- [x] 後端：批次取消第一封 Email 主旨改為「您的 N 件商品訂單已取消」，其餘保持對應訂單號
+- [x] 11 項測試全部通過（countdown-email-enhancements.test.ts）

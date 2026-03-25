@@ -1169,7 +1169,7 @@ function EmbeddedOrdersSection() {
                 const batchOrders = filtered.filter((o: any) => o.batchRef === batchRef);
                 rendered.push(<BatchOrderCard key={`batch-${batchRef}`} orders={batchOrders} paymentTimeoutMinutes={paymentTimeoutMinutes} />);
               } else {
-                rendered.push(<EmbeddedOrderCard key={order.id} order={order} />);
+                rendered.push(<EmbeddedOrderCard key={order.id} order={order} paymentTimeoutMinutes={paymentTimeoutMinutes} />);
               }
             }
             return rendered;
@@ -1378,14 +1378,25 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 }
 
 // ─── Payment countdown hook (shared between BatchOrderCard and single order card) ───
-function useBatchPaymentCountdown(createdAt: Date | string | null | undefined, timeoutMinutes: number) {
+function useBatchPaymentCountdown(createdAt: Date | string | null | undefined, timeoutMinutes: number, onExpire?: () => void) {
   const [timeLeft, setTimeLeft] = useState<{ minutes: number; seconds: number; expired: boolean } | null>(null);
+  const onExpireRef = useRef(onExpire);
+  useEffect(() => { onExpireRef.current = onExpire; }, [onExpire]);
   useEffect(() => {
     if (!createdAt || !timeoutMinutes) return;
     const deadline = new Date(createdAt).getTime() + timeoutMinutes * 60 * 1000;
+    let hasExpiredFired = false;
     const calc = () => {
       const diff = deadline - Date.now();
-      if (diff <= 0) { setTimeLeft({ minutes: 0, seconds: 0, expired: true }); return; }
+      if (diff <= 0) {
+        setTimeLeft({ minutes: 0, seconds: 0, expired: true });
+        if (!hasExpiredFired) {
+          hasExpiredFired = true;
+          // Delay slightly to let UI update first, then trigger refresh
+          setTimeout(() => onExpireRef.current?.(), 1500);
+        }
+        return;
+      }
       const minutes = Math.floor(diff / 60000);
       const seconds = Math.floor((diff % 60000) / 1000);
       setTimeLeft({ minutes, seconds, expired: false });
@@ -1400,6 +1411,7 @@ function useBatchPaymentCountdown(createdAt: Date | string | null | undefined, t
 // ─── Batch Order Card (multiple orders with same batchRef) ───
 function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paymentTimeoutMinutes?: number }) {
   const [expanded, setExpanded] = useState(false);
+  const utils = trpc.useUtils();
   if (!orders.length) return null;
   const firstOrder = orders[0];
   const totalAmount = orders.reduce((sum, o) => sum + parseFloat(o.subtotalHkd ?? '0'), 0);
@@ -1418,7 +1430,8 @@ function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paym
   const pendingOrder = orders.find(o => o.orderStatus === 'pending_payment');
   const paymentCountdown = useBatchPaymentCountdown(
     isPending ? pendingOrder?.createdAt : null,
-    paymentTimeoutMinutes ?? 30
+    paymentTimeoutMinutes ?? 30,
+    () => { utils.marketplace.getMyOrders.invalidate(); }
   );
 
   return (
@@ -1531,7 +1544,7 @@ function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paym
   );
 }
 
-function EmbeddedOrderCard({ order }: { order: any }) {
+function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; paymentTimeoutMinutes?: number }) {
   const [expanded, setExpanded] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showDisputeDialog, setShowDisputeDialog] = useState(false);
@@ -1614,6 +1627,11 @@ function EmbeddedOrderCard({ order }: { order: any }) {
   const isCompleted = order.orderStatus === "completed";
   const isPending = order.orderStatus === "pending_payment";
   const isDisputed = order.orderStatus === "disputed";
+  const paymentCountdown = useBatchPaymentCountdown(
+    isPending ? order.createdAt : null,
+    paymentTimeoutMinutes ?? 30,
+    () => { utils.marketplace.getMyOrders.invalidate(); }
+  );
   const isWaitingShipment = ["paid_held", "payment_received", "processing"].includes(order.orderStatus);
   const canReview = isCompleted && order.sellerType === "seller" && !existingReview;
 
@@ -1677,12 +1695,23 @@ function EmbeddedOrderCard({ order }: { order: any }) {
             </span>
           )}
           {isPending && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Link href={`/orders/${order.orderNo}`}>
                 <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: BRAND_BLUE }}>
                   <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
                 </Button>
               </Link>
+              {paymentCountdown && !paymentCountdown.expired && (
+                <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5 font-mono font-semibold">
+                  <Clock className="w-3 h-3 text-amber-500" />
+                  剩 {String(paymentCountdown.minutes).padStart(2, '0')}:{String(paymentCountdown.seconds).padStart(2, '0')}
+                </span>
+              )}
+              {paymentCountdown?.expired && (
+                <span className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1">
+                  <XCircle className="w-3 h-3" />付款時限已到
+                </span>
+              )}
             </div>
           )}
           {isWaitingShipment && (
