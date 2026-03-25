@@ -1024,7 +1024,6 @@ export default function SellerDashboard() {
                     </span>
                   )}
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="payouts" icon={<Wallet className="w-4 h-4" />} label="放款記錄">放款記錄</BrandTabsTrigger>
                 <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label="收款記錄">收款記錄</BrandTabsTrigger>
               </BrandTabsList>
 
@@ -1612,67 +1611,7 @@ export default function SellerDashboard() {
                 })()}
               </BrandTabsContent>
 
-              <BrandTabsContent value="payouts" className="mt-4">
-                {!myPayouts?.length ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>尚無放款記錄</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {(myPayouts as any[]).map((payout) => (
-                      <div key={`${payout.source ?? 'stripe'}-${payout.id}`} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-                        {/* Brand Header Bar */}
-                        <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-white/80 font-medium">
-                              {payout.orderNo ? `#${payout.orderNo}` : `#${payout.id}`}
-                            </span>
-                            {payout.source === 'alipay_hk' && (
-                              <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-300/30 text-blue-100">支付寶 HK</span>
-                            )}
-                          </div>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                            payout.status === "completed"
-                              ? "bg-green-400/20 text-green-200 border border-green-400/30"
-                              : "bg-yellow-400/20 text-yellow-200 border border-yellow-400/30"
-                          }`}>
-                            {payout.status === "completed" ? "已放款" : "處理中"}
-                          </span>
-                        </div>
-                        {/* Card Body */}
-                        <div className="p-4 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-semibold text-gray-900">HKD {parseFloat(payout.amountHkd ?? payout.amount ?? 0).toFixed(2)}</p>
-                              <p className="text-sm text-gray-500 mt-0.5">
-                                {payout.createdAt ? new Date(payout.createdAt).toLocaleDateString("zh-HK") : '-'}
-                              </p>
-                              {payout.listingTitle && (
-                                <p className="text-xs text-gray-400 mt-0.5">{payout.listingTitle}</p>
-                              )}
-                            </div>
-                            <DollarSign className="w-5 h-5 text-[#06038d]/30" />
-                          </div>
-                          {/* Alipay HK manual payout details */}
-                          {payout.source === 'alipay_hk' && (
-                            <div className="border-t border-gray-100 pt-2 space-y-1.5">
-                              {payout.manualPayoutNote && (
-                                <p className="text-xs text-gray-600">
-                                  <span className="font-medium">備注：</span>{payout.manualPayoutNote}
-                                </p>
-                              )}
-                              {payout.manualPayoutProofUrl && (
-                                <PayoutProofThumbnail url={payout.manualPayoutProofUrl} />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </BrandTabsContent>
+
 
               <BrandTabsContent value="offers" className="mt-4">
                 {/* Offer Filter Tabs */}

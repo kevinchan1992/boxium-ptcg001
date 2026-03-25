@@ -6234,3 +6234,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 前端 KPI 卡片：加入淨收入卡片（綠色標題）、退款金額卡片、取消訂單卡片
 - [x] 前端手續費明細 Dialog：點擊手續費金額即彈出 Dialog，顯示賣家名稱、訂單號、手續費、賣家實收、付款方式、日期
 - [x] 撰寫測試（sales-report-refund-fee.test.ts，29 項全部通過）並保存 checkpoint
+
+---
+
+## 🗑️ 移除賣家中心「放款記錄」Tab（2026-03-25）
+
+- [x] 找出 Seller 頁面放款記錄 Tab 代碼並移除 Tab 按鈕與對應內容
+- [x] 確認收款記錄 Tab 保留（賣家仍需要看收款記錄）
+- [ ] 儲存 Checkpoint
