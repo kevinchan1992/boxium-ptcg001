@@ -6209,3 +6209,16 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 在訂單卡片賣家資料欄位加入「確認收貨：日期 時間」顯示
 - [ ] 確認 getAdminOrders 後端 query 回傳 confirmedAt
 - [ ] 撰寫測試並保存 checkpoint
+
+---
+
+## 📊 銷售總覽頁面重新設計（財務審核專業版）（2026-03-25）
+
+- [x] 查看現有 SalesOverviewTab 完整代碼與後端資料結構
+- [x] 重新設計頂部財務 KPI 卡片（白底卡片 + 圖示 + 標籤，清晰財務指標分組）
+- [x] 重新設計月度明細表格（uppercase 表頭、手續費綠色 Badge、合計列深藍底色）
+- [x] 加入月度銷售趨勢 AreaChart（recharts，三條線：總額/平台/C2C）
+- [x] 加入手續費收入 BarChart（月度分佈）
+- [x] 加入財務摘要次要指標（AOV、手續費率、Stripe 佔比）
+- [x] 改善整體排版（報告標題、報告日期、審計說明 Footer）
+- [x] 撰寫測試（sales-report-ui.test.ts，26 項全部通過）並保存 checkpoint
