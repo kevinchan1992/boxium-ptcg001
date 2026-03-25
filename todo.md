@@ -6131,3 +6131,10 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 後端：priceUpdateScheduler.ts HotCardPoll 批量插入加入模糊去重過濾
 - [x] 清理現有重複記錄：刪除 29,942 筆重複，保留每組最早的 soldAt
 - [x] 14 項測試全部通過（snkrdunk-dedup-fix.test.ts）
+
+---
+## ✅ Bug 修復：取消訂單後商品庫存未恢復（2026-03-25）
+- [x] 查詢資料庫確認 #BOXIUM-180001 商品狀態和庫存問題根因（舊版 buyerCancelOrder 只恢復 status，未恢復 quantity）
+- [x] 加入每日庫存一致性修復排程器（startListingStockRepairScheduler，每日 04:00 HKT 執行）
+- [x] 手動修復 #BOXIUM-180001（quantity=1, remainingQuantity=1, status=active）
+- [x] 撰寫 listing-stock-repair.test.ts（10 項測試全部通過）

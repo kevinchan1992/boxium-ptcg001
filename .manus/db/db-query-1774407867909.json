@@ -1,0 +1,19 @@
+{
+  "query": "\nSELECT id, title, status, quantity, remainingQuantity, sellerId, sellerType\nFROM marketplaceListings\nWHERE status = 'active' AND (quantity <= 0 OR remainingQuantity <= 0)\nORDER BY id DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT id, title, status, quantity, remainingQuantity, sellerId, sellerType\nFROM marketplaceListings\nWHERE status = 'active' AND (quantity <= 0 OR remainingQuantity <= 0)\nORDER BY id DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "180001",
+      "title": "吶喊比卡超",
+      "status": "active",
+      "quantity": "0",
+      "remainingQuantity": "0",
+      "sellerId": "1",
+      "sellerType": "seller"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tstatus\tquantity\tremainingQuantity\tsellerId\tsellerType\n180001\t吶喊比卡超\tactive\t0\t0\t1\tseller\n",
+  "stderr": "",
+  "execution_time_ms": 2518
+}

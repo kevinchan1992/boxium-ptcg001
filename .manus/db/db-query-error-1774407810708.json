@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT id, orderNo, status, batchRef, createdAt, updatedAt\nFROM marketplaceOrders\nWHERE listingId = 180001\nORDER BY createdAt DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT id, orderNo, status, batchRef, createdAt, updatedAt\nFROM marketplaceOrders\nWHERE listingId = 180001\nORDER BY createdAt DESC;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'status' in 'field list'"
+  ]
+}

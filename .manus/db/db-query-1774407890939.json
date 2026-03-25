@@ -1,0 +1,200 @@
+{
+  "query": "\nSELECT id, orderNo, orderStatus, paymentStatus, quantity, batchRef, createdAt, updatedAt\nFROM marketplaceOrders\nWHERE listingId = 180001\nORDER BY createdAt ASC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT id, orderNo, orderStatus, paymentStatus, quantity, batchRef, createdAt, updatedAt\nFROM marketplaceOrders\nWHERE listingId = 180001\nORDER BY createdAt ASC;\n",
+  "rows": [
+    {
+      "id": "210001",
+      "orderNo": "BOXIUM-20260320-5173",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-20 05:47:11",
+      "updatedAt": "2026-03-20 06:30:00"
+    },
+    {
+      "id": "210002",
+      "orderNo": "BOXIUM-20260320-3297",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-20 06:18:59",
+      "updatedAt": "2026-03-20 06:50:00"
+    },
+    {
+      "id": "210003",
+      "orderNo": "BOXIUM-20260320-8843",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-20 07:14:16",
+      "updatedAt": "2026-03-20 07:50:00"
+    },
+    {
+      "id": "240001",
+      "orderNo": "BOXIUM-20260321-2857",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-21 00:33:38",
+      "updatedAt": "2026-03-21 01:10:00"
+    },
+    {
+      "id": "270001",
+      "orderNo": "BOXIUM-20260323-5492",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-23 06:15:38",
+      "updatedAt": "2026-03-23 06:50:00"
+    },
+    {
+      "id": "270002",
+      "orderNo": "BOXIUM-20260323-9188",
+      "orderStatus": "cancelled",
+      "paymentStatus": "cancelled",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-23 07:52:20",
+      "updatedAt": "2026-03-23 09:42:34"
+    },
+    {
+      "id": "300001",
+      "orderNo": "BOXIUM-20260324-9635",
+      "orderStatus": "cancelled",
+      "paymentStatus": "cancelled",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-24 01:33:25",
+      "updatedAt": "2026-03-24 01:33:37"
+    },
+    {
+      "id": "300002",
+      "orderNo": "BOXIUM-20260324-5772",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-24 02:13:49",
+      "updatedAt": "2026-03-24 02:15:15"
+    },
+    {
+      "id": "300004",
+      "orderNo": "BOXIUM-20260324-3097",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-24 02:15:14",
+      "updatedAt": "2026-03-24 03:50:18"
+    },
+    {
+      "id": "300007",
+      "orderNo": "BOXIUM-20260324-3273",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-24 03:50:17",
+      "updatedAt": "2026-03-24 03:52:34"
+    },
+    {
+      "id": "300009",
+      "orderNo": "BOXIUM-20260324-9077",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-24 03:52:34",
+      "updatedAt": "2026-03-24 04:10:49"
+    },
+    {
+      "id": "300011",
+      "orderNo": "BOXIUM-20260324-7898",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-24 04:10:48",
+      "updatedAt": "2026-03-24 04:11:20"
+    },
+    {
+      "id": "300013",
+      "orderNo": "BOXIUM-20260324-8469",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-24 04:11:19",
+      "updatedAt": "2026-03-24 04:13:47"
+    },
+    {
+      "id": "300015",
+      "orderNo": "BOXIUM-20260324-1450",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "NULL",
+      "createdAt": "2026-03-24 04:13:46",
+      "updatedAt": "2026-03-24 04:30:06"
+    },
+    {
+      "id": "300017",
+      "orderNo": "BOXIUM-20260324-6357",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "BATCH-1774326605544-330001",
+      "createdAt": "2026-03-24 04:30:05",
+      "updatedAt": "2026-03-24 04:34:50"
+    },
+    {
+      "id": "300019",
+      "orderNo": "BOXIUM-20260324-1899",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "BATCH-1774326889603-330001",
+      "createdAt": "2026-03-24 04:34:49",
+      "updatedAt": "2026-03-24 04:35:11"
+    },
+    {
+      "id": "300021",
+      "orderNo": "BOXIUM-20260324-2512",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "BATCH-1774326911219-330001",
+      "createdAt": "2026-03-24 04:35:11",
+      "updatedAt": "2026-03-24 06:05:57"
+    },
+    {
+      "id": "300023",
+      "orderNo": "BOXIUM-20260324-3652",
+      "orderStatus": "cancelled",
+      "paymentStatus": "pending",
+      "quantity": "1",
+      "batchRef": "BATCH-1774332357028-330001",
+      "createdAt": "2026-03-24 06:05:57",
+      "updatedAt": "2026-03-24 08:10:01"
+    },
+    {
+      "id": "330002",
+      "orderNo": "BOXIUM-20260324-8611",
+      "orderStatus": "cancelled",
+      "paymentStatus": "cancelled",
+      "quantity": "1",
+      "batchRef": "BATCH-1774340623460-330001",
+      "createdAt": "2026-03-24 08:23:43",
+      "updatedAt": "2026-03-24 09:28:16"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torderNo\torderStatus\tpaymentStatus\tquantity\tbatchRef\tcreatedAt\tupdatedAt\n210001\tBOXIUM-20260320-5173\tcancelled\tpending\t1\tNULL\t2026-03-20 05:47:11\t2026-03-20 06:30:00\n210002\tBOXIUM-20260320-3297\tcancelled\tpending\t1\tNULL\t2026-03-20 06:18:59\t2026-03-20 06:50:00\n210003\tBOXIUM-20260320-8843\tcancelled\tpending\t1\tNULL\t2026-03-20 07:14:16\t2026-03-20 07:50:00\n240001\tBOXIUM-20260321-2857\tcancelled\tpending\t1\tNULL\t2026-03-21 00:33:38\t2026-03-21 01:10:00\n270001\tBOXIUM-20260323-5492\tcancelled\tpending\t1\tNULL\t2026-03-23 06:15:38\t2026-03-23 06:50:00\n270002\tBOXIUM-20260323-9188\tcancelled\tcancelled\t1\tNULL\t2026-03-23 07:52:20\t2026-03-23 09:42:34\n300001\tBOXIUM-20260324-9635\tcancelled\tcancelled\t1\tNULL\t2026-03-24 01:33:25\t2026-03-24 01:33:37\n300002\tBOXIUM-20260324-5772\tcancelled\tpending\t1\tNULL\t2026-03-24 02:13:49\t2026-03-24 02:15:15\n300004\tBOXIUM-20260324-3097\tcancelled\tpending\t1\tNULL\t2026-03-24 02:15:14\t2026-03-24 03:50:18\n300007\tBOXIUM-20260324-3273\tcancelled\tpending\t1\tNULL\t2026-03-24 03:50:17\t2026-03-24 03:52:34\n300009\tBOXIUM-20260324-9077\tcancelled\tpending\t1\tNULL\t2026-03-24 03:52:34\t2026-03-24 04:10:49\n300011\tBOXIUM-20260324-7898\tcancelled\tpending\t1\tNULL\t2026-03-24 04:10:48\t2026-03-24 04:11:20\n300013\tBOXIUM-20260324-8469\tcancelled\tpending\t1\tNULL\t2026-03-24 04:11:19\t2026-03-24 04:13:47\n300015\tBOXIUM-20260324-1450\tcancelled\tpending\t1\tNULL\t2026-03-24 04:13:46\t2026-03-24 04:30:06\n300017\tBOXIUM-20260324-6357\tcancelled\tpending\t1\tBATCH-1774326605544-330001\t2026-03-24 04:30:05\t2026-03-24 04:34:50\n300019\tBOXIUM-20260324-1899\tcancelled\tpending\t1\tBATCH-1774326889603-330001\t2026-03-24 04:34:49\t2026-03-24 04:35:11\n300021\tBOXIUM-20260324-2512\tcancelled\tpending\t1\tBATCH-1774326911219-330001\t2026-03-24 04:35:11\t2026-03-24 06:05:57\n300023\tBOXIUM-20260324-3652\tcancelled\tpending\t1\tBATCH-1774332357028-330001\t2026-03-24 06:05:57\t2026-03-24 08:10:01\n330002\tBOXIUM-20260324-8611\tcancelled\tcancelled\t1\tBATCH-1774340623460-330001\t2026-03-24 08:23:43\t2026-03-24 09:28:16\n",
+  "stderr": "",
+  "execution_time_ms": 1512
+}

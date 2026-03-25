@@ -1772,3 +1772,90 @@ export async function runMeetupAutoCancel(overrideDays?: number): Promise<{ canc
   console.log(`[MeetupAutoCancel] Done: cancelled=${cancelled}, errors=${errors}`);
   return { cancelled, errors };
 }
+
+// ─── Listing Stock Consistency Repair Scheduler ─────────────────────────────
+// Runs daily at 04:00 HKT to detect and repair listings with inconsistent stock.
+// Fixes two known issues from legacy code:
+//   1. active listings with quantity=0 (old buyerCancelOrder didn't restore quantity)
+//   2. reserved listings with no pending_payment orders (stuck in reserved state)
+let listingStockRepairCronJob: ReturnType<typeof cron.schedule> | null = null;
+export function startListingStockRepairScheduler() {
+  if (listingStockRepairCronJob) return;
+  listingStockRepairCronJob = cron.schedule(
+    '0 4 * * *', // Daily at 04:00 HKT
+    async () => {
+      try {
+        const { getDb } = await import('./db');
+        const { marketplaceListings, marketplaceOrders } = await import('../drizzle/schema_new');
+        const { eq, and, sql: sqlFn, notInArray } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) return;
+
+        // Fix 1: active listings with quantity=0 but no pending_payment orders
+        // These are stuck due to legacy bug where buyerCancelOrder only restored status, not quantity
+        const activeZeroStock = await db.execute(
+          sqlFn`SELECT l.id, l.title, l.quantity, l.remainingQuantity
+                FROM marketplaceListings l
+                WHERE l.status = 'active'
+                  AND l.quantity <= 0
+                  AND NOT EXISTS (
+                    SELECT 1 FROM marketplaceOrders o
+                    WHERE o.listingId = l.id AND o.orderStatus = 'pending_payment'
+                  )`
+        );
+        const fix1Rows = (activeZeroStock as any)?.[0] ?? [];
+        if (fix1Rows.length > 0) {
+          console.log(`[StockRepair] Found ${fix1Rows.length} active listings with quantity=0, repairing...`);
+          for (const row of fix1Rows) {
+            await db.execute(
+              sqlFn`UPDATE marketplaceListings
+                    SET quantity = 1, remainingQuantity = 1, updatedAt = NOW()
+                    WHERE id = ${row.id} AND status = 'active' AND quantity <= 0`
+            );
+            console.log(`[StockRepair] Fixed listing ${row.id} (${row.title}): quantity restored to 1`);
+          }
+        }
+
+        // Fix 2: reserved listings with no pending_payment orders (stuck reserved state)
+        const stuckReserved = await db.execute(
+          sqlFn`SELECT l.id, l.title, l.quantity, l.remainingQuantity
+                FROM marketplaceListings l
+                WHERE l.status = 'reserved'
+                  AND NOT EXISTS (
+                    SELECT 1 FROM marketplaceOrders o
+                    WHERE o.listingId = l.id AND o.orderStatus = 'pending_payment'
+                  )`
+        );
+        const fix2Rows = (stuckReserved as any)?.[0] ?? [];
+        if (fix2Rows.length > 0) {
+          console.log(`[StockRepair] Found ${fix2Rows.length} stuck reserved listings, repairing...`);
+          for (const row of fix2Rows) {
+            await db.execute(
+              sqlFn`UPDATE marketplaceListings
+                    SET status = 'active',
+                        quantity = GREATEST(quantity, 1),
+                        remainingQuantity = GREATEST(remainingQuantity, 1),
+                        updatedAt = NOW()
+                    WHERE id = ${row.id} AND status = 'reserved'`
+            );
+            console.log(`[StockRepair] Fixed stuck reserved listing ${row.id} (${row.title}): restored to active`);
+          }
+        }
+
+        if (fix1Rows.length === 0 && fix2Rows.length === 0) {
+          console.log('[StockRepair] No inconsistent listings found.');
+        }
+      } catch (err) {
+        console.error('[StockRepair] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[StockRepair] Listing stock repair scheduler started (daily at 04:00 HKT)');
+}
+export function stopListingStockRepairScheduler() {
+  if (listingStockRepairCronJob) {
+    listingStockRepairCronJob.stop();
+    listingStockRepairCronJob = null;
+  }
+}
