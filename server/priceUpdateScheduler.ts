@@ -1257,7 +1257,7 @@ export async function runHotCardPoll(limit: number = 100): Promise<{ updated: nu
       return { updated: 0, skipped: 0, failed: 0 };
     }
     const { priceHistory: priceHistoryTable, dataSources: dataSourcesTable } = await import('../drizzle/schema_new');
-    const { eq } = await import('drizzle-orm');
+    const { eq, and, gte, lte, sql } = await import('drizzle-orm');
 
     for (let i = 0; i < products.length; i += PARALLEL) {
       const batch = products.slice(i, i + PARALLEL);
@@ -1297,8 +1297,38 @@ export async function runHotCardPoll(limit: number = 100): Promise<{ updated: nu
             listingUrl: product.sourceUrl,
           }));
 
-          for (let j = 0; j < records.length; j += 50) {
-            const chunk = records.slice(j, j + 50);
+          // SNKRDUNK Fuzzy Deduplication: filter out records that already exist within ±7 days
+          const windowMs = 7 * 24 * 60 * 60 * 1000;
+          const filteredRecords: typeof records = [];
+          for (const record of records) {
+            if (record.soldAt && record.jpyPrice) {
+              const soldAtMs = record.soldAt.getTime();
+              const windowStart = new Date(soldAtMs - windowMs);
+              const windowEnd = new Date(soldAtMs + windowMs);
+              const existing = await database
+                .select({ id: priceHistoryTable.id })
+                .from(priceHistoryTable)
+                .where(
+                  and(
+                    eq(priceHistoryTable.cardId, record.cardId),
+                    eq(priceHistoryTable.source, record.source),
+                    record.grade ? eq(priceHistoryTable.grade, record.grade) : sql`${priceHistoryTable.grade} IS NULL`,
+                    sql`${priceHistoryTable.jpyPrice} = ${record.jpyPrice}`,
+                    gte(priceHistoryTable.soldAt, windowStart),
+                    lte(priceHistoryTable.soldAt, windowEnd)
+                  )
+                )
+                .limit(1);
+              if (existing.length === 0) {
+                filteredRecords.push(record);
+              }
+            } else {
+              filteredRecords.push(record);
+            }
+          }
+
+          for (let j = 0; j < filteredRecords.length; j += 50) {
+            const chunk = filteredRecords.slice(j, j + 50);
             await database.insert(priceHistoryTable)
               .values(chunk)
               .onDuplicateKeyUpdate({ set: { cardId: chunk[0].cardId } });

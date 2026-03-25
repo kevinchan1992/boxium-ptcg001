@@ -1,0 +1,9 @@
+{
+  "query": "\nDELETE ph FROM priceHistory ph\nINNER JOIN (\n  SELECT \n    cardId, source, grade, jpyPrice,\n    MIN(soldAt) as keep_soldAt,\n    MIN(id) as keep_id\n  FROM priceHistory\n  WHERE source = 'snkrdunk' AND jpyPrice IS NOT NULL\n  GROUP BY cardId, source, grade, jpyPrice\n  HAVING COUNT(*) > 1\n    AND DATEDIFF(MAX(soldAt), MIN(soldAt)) <= 7\n) keep_table ON (\n  ph.cardId = keep_table.cardId\n  AND ph.source = keep_table.source\n  AND (ph.grade = keep_table.grade OR (ph.grade IS NULL AND keep_table.grade IS NULL))\n  AND ph.jpyPrice = keep_table.jpyPrice\n)\nWHERE ph.id != keep_table.keep_id\n  AND ABS(DATEDIFF(ph.soldAt, keep_table.keep_soldAt)) <= 7;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nDELETE ph FROM priceHistory ph\nINNER JOIN (\n  SELECT \n    cardId, source, grade, jpyPrice,\n    MIN(soldAt) as keep_soldAt,\n    MIN(id) as keep_id\n  FROM priceHistory\n  WHERE source = 'snkrdunk' AND jpyPrice IS NOT NULL\n  GROUP BY cardId, source, grade, jpyPrice\n  HAVING COUNT(*) > 1\n    AND DATEDIFF(MAX(soldAt), MIN(soldAt)) <= 7\n) keep_table ON (\n  ph.cardId = keep_table.cardId\n  AND ph.source = keep_table.source\n  AND (ph.grade = keep_table.grade OR (ph.grade IS NULL AND keep_table.grade IS NULL))\n  AND ph.jpyPrice = keep_table.jpyPrice\n)\nWHERE ph.id != keep_table.keep_id\n  AND ABS(DATEDIFF(ph.soldAt, keep_table.keep_soldAt)) <= 7;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2967
+}

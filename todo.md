@@ -6121,3 +6121,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 後端：buyerCancelOrder 批次取消第一封 Email 加入 cancelledItems 商品清單（含合計）
 - [x] 後端：adminUpdateOrderStatus 批次取消第一封 Email 同樣加入 cancelledItems 商品清單
 - [x] 15 項測試全部通過（order-ux-email-enhancements.test.ts）+ 47 項回歸測試通過
+
+---
+## 🔍 爆取邏輯診斷修復（2026-03-25）
+- [x] 查認確認：卡牌 814576 的 snkrdunkId 確實是 141442，URL 對應正確
+- [x] 查認確認：SNKRDUNK API 永遠回傳相對日期，"0日前" 在不同天爆取會產生不同 soldAt（日期漂移問題）
+- [x] 後端：addPriceHistory 加入模糊去重（同一 cardId+source+grade+jpyPrice 在 ±7 天內視為重複，跳過插入）
+- [x] 後端：persistentSnkrdunkBatchUpdate.ts 批量插入加入模糊去重過濾
+- [x] 後端：priceUpdateScheduler.ts HotCardPoll 批量插入加入模糊去重過濾
+- [x] 清理現有重複記錄：刪除 29,942 筆重複，保留每組最早的 soldAt
+- [x] 14 項測試全部通過（snkrdunk-dedup-fix.test.ts）

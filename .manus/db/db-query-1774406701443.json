@@ -1,0 +1,14 @@
+{
+  "query": "\nSELECT \n  COUNT(*) as duplicate_count,\n  SUM(dup_count - 1) as records_to_delete\nFROM (\n  SELECT \n    cardId, source, grade, jpyPrice,\n    MIN(soldAt) as earliest_soldAt,\n    COUNT(*) as dup_count\n  FROM priceHistory\n  WHERE source = 'snkrdunk' AND jpyPrice IS NOT NULL\n  GROUP BY cardId, source, grade, jpyPrice\n  HAVING COUNT(*) > 1\n    AND DATEDIFF(MAX(soldAt), MIN(soldAt)) <= 7\n) t;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT \n  COUNT(*) as duplicate_count,\n  SUM(dup_count - 1) as records_to_delete\nFROM (\n  SELECT \n    cardId, source, grade, jpyPrice,\n    MIN(soldAt) as earliest_soldAt,\n    COUNT(*) as dup_count\n  FROM priceHistory\n  WHERE source = 'snkrdunk' AND jpyPrice IS NOT NULL\n  GROUP BY cardId, source, grade, jpyPrice\n  HAVING COUNT(*) > 1\n    AND DATEDIFF(MAX(soldAt), MIN(soldAt)) <= 7\n) t;\n",
+  "rows": [
+    {
+      "duplicate_count": "24666",
+      "records_to_delete": "29942"
+    }
+  ],
+  "messages": [],
+  "stdout": "duplicate_count\trecords_to_delete\n24666\t29942\n",
+  "stderr": "",
+  "execution_time_ms": 3509
+}

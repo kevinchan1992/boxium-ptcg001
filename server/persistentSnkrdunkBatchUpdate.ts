@@ -196,10 +196,44 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
           listingUrl: product.sourceUrl,
         }));
         
+        // SNKRDUNK Fuzzy Deduplication:
+        // SNKRDUNK API returns relative dates ("N日前") which drift each scrape, bypassing UNIQUE INDEX.
+        // For each record, check if a same cardId+source+grade+jpyPrice exists within ±7 days.
+        // Only insert records that pass this fuzzy check.
+        const { and: drizzleAnd, eq: drizzleEq, gte: drizzleGte, lte: drizzleLte, sql: drizzleSql } = await import('drizzle-orm');
+        const windowMs = 7 * 24 * 60 * 60 * 1000;
+        const filteredRecords: typeof records = [];
+        for (const record of records) {
+          if (record.soldAt && record.jpyPrice) {
+            const soldAtMs = record.soldAt.getTime();
+            const windowStart = new Date(soldAtMs - windowMs);
+            const windowEnd = new Date(soldAtMs + windowMs);
+            const existing = await database
+              .select({ id: priceHistoryTable.id })
+              .from(priceHistoryTable)
+              .where(
+                drizzleAnd(
+                  drizzleEq(priceHistoryTable.cardId, record.cardId),
+                  drizzleEq(priceHistoryTable.source, record.source),
+                  record.grade ? drizzleEq(priceHistoryTable.grade, record.grade) : drizzleSql`${priceHistoryTable.grade} IS NULL`,
+                  drizzleSql`${priceHistoryTable.jpyPrice} = ${record.jpyPrice}`,
+                  drizzleGte(priceHistoryTable.soldAt, windowStart),
+                  drizzleLte(priceHistoryTable.soldAt, windowEnd)
+                )
+              )
+              .limit(1);
+            if (existing.length === 0) {
+              filteredRecords.push(record);
+            }
+          } else {
+            filteredRecords.push(record); // No soldAt/jpyPrice: use UNIQUE INDEX as fallback
+          }
+        }
+
         // Batch insert in chunks of 50 to avoid query size limits
         // Use onDuplicateKeyUpdate with a no-op to silently skip duplicates (INSERT IGNORE equivalent)
-        for (let i = 0; i < records.length; i += 50) {
-          const chunk = records.slice(i, i + 50);
+        for (let i = 0; i < filteredRecords.length; i += 50) {
+          const chunk = filteredRecords.slice(i, i + 50);
           try {
             const { sql } = await import('drizzle-orm');
             await database

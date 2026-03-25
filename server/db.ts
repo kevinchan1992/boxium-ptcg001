@@ -901,6 +901,38 @@ export async function addPriceHistory(data: {
   const db = await getDb();
   if (!db) return null;
 
+  // SNKRDUNK-specific fuzzy deduplication:
+  // SNKRDUNK API always returns relative dates ("N時間前", "N日前") which are converted to absolute dates
+  // at scrape time. The same transaction scraped on different days gets different soldAt values,
+  // bypassing the UNIQUE INDEX. We check for existing records with the same cardId+source+grade+jpyPrice
+  // within a ±7-day window to prevent duplicate insertions from date drift.
+  if (data.source === 'snkrdunk' && data.jpyPrice && data.soldAt) {
+    const windowMs = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    const soldAtMs = data.soldAt.getTime();
+    const windowStart = new Date(soldAtMs - windowMs);
+    const windowEnd = new Date(soldAtMs + windowMs);
+
+    const existing = await db
+      .select({ id: priceHistory.id })
+      .from(priceHistory)
+      .where(
+        and(
+          eq(priceHistory.cardId, data.cardId),
+          eq(priceHistory.source, data.source),
+          data.grade ? eq(priceHistory.grade, data.grade) : sql`${priceHistory.grade} IS NULL`,
+          sql`${priceHistory.jpyPrice} = ${data.jpyPrice}`,
+          gte(priceHistory.soldAt, windowStart),
+          lte(priceHistory.soldAt, windowEnd)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Duplicate detected within 7-day window — skip insertion
+      return null;
+    }
+  }
+
   // Deduplication: rely entirely on the database UNIQUE INDEX (cardId, source, grade, soldAt, jpyPrice)
   // jpyPrice (original JPY) is used instead of HKD price to avoid false duplicates from exchange rate fluctuations
   // onDuplicateKeyUpdate is a no-op that silently ignores constraint violations

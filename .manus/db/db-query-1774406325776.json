@@ -1,0 +1,15 @@
+{
+  "query": "\nSELECT id, nameJa, snkrdunkId FROM cards WHERE id = 814576 LIMIT 1;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT id, nameJa, snkrdunkId FROM cards WHERE id = 814576 LIMIT 1;\n",
+  "rows": [
+    {
+      "id": "814576",
+      "nameJa": "ピカチュウV RR[s8a 020/028](拡張パック「25th アニバーサリーコレクション」)",
+      "snkrdunkId": "141442"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnameJa\tsnkrdunkId\n814576\tピカチュウV RR[s8a 020/028](拡張パック「25th アニバーサリーコレクション」)\t141442\n",
+  "stderr": "",
+  "execution_time_ms": 1538
+}

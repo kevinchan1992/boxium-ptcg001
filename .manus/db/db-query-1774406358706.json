@@ -1,0 +1,230 @@
+{
+  "query": "\nSELECT id, cardId, grade, price, currency, jpyPrice, soldAt, source, createdAt\nFROM priceHistory\nWHERE cardId = 814576 AND source = 'snkrdunk'\nORDER BY soldAt DESC, createdAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT id, cardId, grade, price, currency, jpyPrice, soldAt, source, createdAt\nFROM priceHistory\nWHERE cardId = 814576 AND source = 'snkrdunk'\nORDER BY soldAt DESC, createdAt DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "9900285",
+      "cardId": "814576",
+      "grade": "PSA10",
+      "price": "2519.00",
+      "currency": "HKD",
+      "jpyPrice": "45800",
+      "soldAt": "2026-03-25 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-25 01:03:20"
+    },
+    {
+      "id": "9900291",
+      "cardId": "814576",
+      "grade": "PSA9",
+      "price": "181.50",
+      "currency": "HKD",
+      "jpyPrice": "3300",
+      "soldAt": "2026-03-25 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-25 01:03:20"
+    },
+    {
+      "id": "9900278",
+      "cardId": "814576",
+      "grade": "A",
+      "price": "137.50",
+      "currency": "HKD",
+      "jpyPrice": "2500",
+      "soldAt": "2026-03-25 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-25 01:03:20"
+    },
+    {
+      "id": "9601032",
+      "cardId": "814576",
+      "grade": "PSA9",
+      "price": "181.50",
+      "currency": "HKD",
+      "jpyPrice": "3300",
+      "soldAt": "2026-03-24 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-24 07:32:51"
+    },
+    {
+      "id": "9900282",
+      "cardId": "814576",
+      "grade": "A",
+      "price": "165.00",
+      "currency": "HKD",
+      "jpyPrice": "3000",
+      "soldAt": "2026-03-23 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-25 01:03:20"
+    },
+    {
+      "id": "8972998",
+      "cardId": "814576",
+      "grade": "A",
+      "price": "77.00",
+      "currency": "HKD",
+      "jpyPrice": "1400",
+      "soldAt": "2026-03-23 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-23 03:25:59"
+    },
+    {
+      "id": "8972995",
+      "cardId": "814576",
+      "grade": "A",
+      "price": "66.00",
+      "currency": "HKD",
+      "jpyPrice": "1200",
+      "soldAt": "2026-03-23 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-23 03:25:59"
+    },
+    {
+      "id": "8972997",
+      "cardId": "814576",
+      "grade": "A",
+      "price": "70.40",
+      "currency": "HKD",
+      "jpyPrice": "1280",
+      "soldAt": "2026-03-23 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-23 03:25:59"
+    },
+    {
+      "id": "9215424",
+      "cardId": "814576",
+      "grade": "A",
+      "price": "70.40",
+      "currency": "HKD",
+      "jpyPrice": "1280",
+      "soldAt": "2026-03-22 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-23 14:07:15"
+    },
+    {
+      "id": "9215425",
+      "cardId": "814576",
+      "grade": "A",
+      "price": "77.00",
+      "currency": "HKD",
+      "jpyPrice": "1400",
+      "soldAt": "2026-03-22 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-23 14:07:15"
+    },
+    {
+      "id": "9215422",
+      "cardId": "814576",
+      "grade": "A",
+      "price": "66.00",
+      "currency": "HKD",
+      "jpyPrice": "1200",
+      "soldAt": "2026-03-22 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-23 14:07:15"
+    },
+    {
+      "id": "8973000",
+      "cardId": "814576",
+      "grade": "PSA10",
+      "price": "2859.95",
+      "currency": "HKD",
+      "jpyPrice": "51999",
+      "soldAt": "2026-03-22 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-23 03:25:59"
+    },
+    {
+      "id": "8582664",
+      "cardId": "814576",
+      "grade": "PSA10",
+      "price": "2859.95",
+      "currency": "HKD",
+      "jpyPrice": "51999",
+      "soldAt": "2026-03-21 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-22 10:15:54"
+    },
+    {
+      "id": "7850128",
+      "cardId": "814576",
+      "grade": "PSA9",
+      "price": "181.50",
+      "currency": "HKD",
+      "jpyPrice": "3300",
+      "soldAt": "2026-03-21 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-20 18:24:15"
+    },
+    {
+      "id": "8582671",
+      "cardId": "814576",
+      "grade": "PSA9",
+      "price": "181.50",
+      "currency": "HKD",
+      "jpyPrice": "3300",
+      "soldAt": "2026-03-20 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-22 10:15:54"
+    },
+    {
+      "id": "7529911",
+      "cardId": "814576",
+      "grade": "PSA9",
+      "price": "165.00",
+      "currency": "HKD",
+      "jpyPrice": "3000",
+      "soldAt": "2026-03-20 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-20 02:52:46"
+    },
+    {
+      "id": "7005545",
+      "cardId": "814576",
+      "grade": "PSA9",
+      "price": "165.00",
+      "currency": "HKD",
+      "jpyPrice": "3000",
+      "soldAt": "2026-03-19 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-19 03:23:10"
+    },
+    {
+      "id": "6482257",
+      "cardId": "814576",
+      "grade": "PSA10",
+      "price": "687.50",
+      "currency": "HKD",
+      "jpyPrice": "12500",
+      "soldAt": "2026-03-18 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-18 01:50:35"
+    },
+    {
+      "id": "5907326",
+      "cardId": "814576",
+      "grade": "PSA10",
+      "price": "1474.00",
+      "currency": "HKD",
+      "jpyPrice": "26800",
+      "soldAt": "2026-03-17 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-17 02:58:02"
+    },
+    {
+      "id": "7850131",
+      "cardId": "814576",
+      "grade": "PSA10",
+      "price": "1474.00",
+      "currency": "HKD",
+      "jpyPrice": "26800",
+      "soldAt": "2026-03-16 00:00:00",
+      "source": "snkrdunk",
+      "createdAt": "2026-03-20 18:24:15"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\tgrade\tprice\tcurrency\tjpyPrice\tsoldAt\tsource\tcreatedAt\n9900285\t814576\tPSA10\t2519.00\tHKD\t45800\t2026-03-25 00:00:00\tsnkrdunk\t2026-03-25 01:03:20\n9900291\t814576\tPSA9\t181.50\tHKD\t3300\t2026-03-25 00:00:00\tsnkrdunk\t2026-03-25 01:03:20\n9900278\t814576\tA\t137.50\tHKD\t2500\t2026-03-25 00:00:00\tsnkrdunk\t2026-03-25 01:03:20\n9601032\t814576\tPSA9\t181.50\tHKD\t3300\t2026-03-24 00:00:00\tsnkrdunk\t2026-03-24 07:32:51\n9900282\t814576\tA\t165.00\tHKD\t3000\t2026-03-23 00:00:00\tsnkrdunk\t2026-03-25 01:03:20\n8972998\t814576\tA\t77.00\tHKD\t1400\t2026-03-23 00:00:00\tsnkrdunk\t2026-03-23 03:25:59\n8972995\t814576\tA\t66.00\tHKD\t1200\t2026-03-23 00:00:00\tsnkrdunk\t2026-03-23 03:25:59\n8972997\t814576\tA\t70.40\tHKD\t1280\t2026-03-23 00:00:00\tsnkrdunk\t2026-03-23 03:25:59\n9215424\t814576\tA\t70.40\tHKD\t1280\t2026-03-22 00:00:00\tsnkrdunk\t2026-03-23 14:07:15\n9215425\t814576\tA\t77.00\tHKD\t1400\t2026-03-22 00:00:00\tsnkrdunk\t2026-03-23 14:07:15\n9215422\t814576\tA\t66.00\tHKD\t1200\t2026-03-22 00:00:00\tsnkrdunk\t2026-03-23 14:07:15\n8973000\t814576\tPSA10\t2859.95\tHKD\t51999\t2026-03-22 00:00:00\tsnkrdunk\t2026-03-23 03:25:59\n8582664\t814576\tPSA10\t2859.95\tHKD\t51999\t2026-03-21 00:00:00\tsnkrdunk\t2026-03-22 10:15:54\n7850128\t814576\tPSA9\t181.50\tHKD\t3300\t2026-03-21 00:00:00\tsnkrdunk\t2026-03-20 18:24:15\n8582671\t814576\tPSA9\t181.50\tHKD\t3300\t2026-03-20 00:00:00\tsnkrdunk\t2026-03-22 10:15:54\n7529911\t814576\tPSA9\t165.00\tHKD\t3000\t2026-03-20 00:00:00\tsnkrdunk\t2026-03-20 02:52:46\n7005545\t814576\tPSA9\t165.00\tHKD\t3000\t2026-03-19 00:00:00\tsnkrdunk\t2026-03-19 03:23:10\n6482257\t814576\tPSA10\t687.50\tHKD\t12500\t2026-03-18 00:00:00\tsnkrdunk\t2026-03-18 01:50:35\n5907326\t814576\tPSA10\t1474.00\tHKD\t26800\t2026-03-17 00:00:00\tsnkrdunk\t2026-03-17 02:58:02\n7850131\t814576\tPSA10\t1474.00\tHKD\t26800\t2026-03-16 00:00:00\tsnkrdunk\t2026-03-20 18:24:15\n",
+  "stderr": "",
+  "execution_time_ms": 1549
+}
