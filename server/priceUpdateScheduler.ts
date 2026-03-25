@@ -947,7 +947,7 @@ export function startPaymentTimeoutCancelScheduler() {
           try {
             // Cancel the order
             await db.update(marketplaceOrders)
-              .set({ orderStatus: 'cancelled', updatedAt: now })
+              .set({ orderStatus: 'cancelled', paymentStatus: 'cancelled', updatedAt: now })
               .where(eq(marketplaceOrders.id, order.id));
             // Restore listing stock using atomic operation
             const { restoreListingStock, getListingById, updateListing } = await import('./db');

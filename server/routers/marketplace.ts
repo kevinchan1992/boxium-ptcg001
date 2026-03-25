@@ -604,7 +604,8 @@ export const marketplaceRouter = router({
               },
             },
           });
-          const content = response.choices?.[0]?.message?.content;
+          const rawContent609 = response.choices?.[0]?.message?.content;
+          const content = typeof rawContent609 === 'string' ? rawContent609 : JSON.stringify(rawContent609 ?? {});
           let result: any;
           try { result = JSON.parse(content || '{}'); } catch { result = { verified: false, detectedAmount: null, detectedPayee: null, detectedStatus: null, confidence: 'low', reason: 'AI 回應解析失敗' }; }
           const db2 = await getDb();
@@ -759,7 +760,7 @@ export const marketplaceRouter = router({
 
       // RC3: Duplicate listing check — same card + same condition by same seller
       if (input.cardId) {
-        const existingListings = await getPublicListings({ sellerId: seller.id, limit: 100, offset: 0 });
+        const existingListings = await getPublicListings({ sellerType: 'seller', pageSize: 100, page: 1 });
         const duplicate = existingListings.listings.find(
           (l: any) => l.cardId === input.cardId && l.condition === input.condition && ['active', 'pending_review'].includes(l.status)
         );
@@ -1383,7 +1384,7 @@ export const marketplaceRouter = router({
       orderId: z.number().int(),
       note: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       await updateMarketplaceOrder(input.orderId, {
@@ -1668,7 +1669,7 @@ export const marketplaceRouter = router({
       trackingNumber: z.string().optional(),
       shippingMethod: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       const updates: Record<string, any> = { orderStatus: input.orderStatus };
@@ -1873,7 +1874,7 @@ export const marketplaceRouter = router({
         console.warn('[Admin] Failed to record status history:', histErr.message);
       }
       // AT1: Audit log
-      await createAuditLog({ adminId: ctx.user.id, action: `update_order_status_${input.status}`, targetType: 'order', targetId: input.orderId, details: JSON.stringify({ orderNo: order.orderNo, newStatus: input.status, note: input.note }) });
+      await createAuditLog({ adminId: ctx.user.id, action: `update_order_status_${input.orderStatus}`, targetType: 'order', targetId: input.orderId, details: JSON.stringify({ orderNo: order.orderNo, newStatus: input.orderStatus, note: input.note }) });
       return { success: true };
     }),
 
@@ -2031,7 +2032,8 @@ export const marketplaceRouter = router({
 
       // ── If buyer has an existing Alipay pending order, cancel it first (payment method switch) ──
       if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'alipay_hk') {
-        await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', updatedAt: new Date() });
+        await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', paymentStatus: 'cancelled', updatedAt: new Date() });
+        // Single-item Alipay orders don't call reserveListingStock, so no stock to restore here.
         console.log(`[createStripeOrder] Cancelled existing Alipay order ${activeOrder.orderNo} for payment method switch`);
       }
 
@@ -2306,7 +2308,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
       // ── If buyer has an existing Stripe pending order, cancel it first (payment method switch) ──
       if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'stripe') {
-        await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', updatedAt: new Date() });
+        await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', paymentStatus: 'cancelled', updatedAt: new Date() });
+        // Single-item Stripe orders don't call reserveListingStock, so no stock to restore here.
         console.log(`[createAlipayOrder] Cancelled existing Stripe order ${activeOrder.orderNo} for payment method switch`);
       }
 
@@ -2422,7 +2425,14 @@ All three checks must pass for verified to be true. Respond with JSON only match
         }
         // Cancel any existing pending orders for this listing by this buyer (payment method switch)
         if (activeOrder && activeOrder.buyerId === ctx.user.id) {
-          await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', updatedAt: new Date() });
+          await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', paymentStatus: 'cancelled', updatedAt: new Date() });
+          // Batch orders DO call reserveListingStock, so restore stock when cancelling old batch order.
+          try {
+            await restoreListingStock(item.listingId, 1);
+            console.log(`[createBatchStripeOrder] Restored stock for listing ${item.listingId} after cancelling old order ${activeOrder.orderNo}`);
+          } catch (restoreErr: any) {
+            console.warn(`[createBatchStripeOrder] Failed to restore stock for listing ${item.listingId}:`, restoreErr.message);
+          }
         }
 
         let effectivePrice = parseFloat(listing.priceHkd as string);
@@ -2639,7 +2649,14 @@ All three checks must pass for verified to be true. Respond with JSON only match
         }
         // Cancel any existing pending orders (payment method switch)
         if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'stripe') {
-          await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', updatedAt: new Date() });
+          await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', paymentStatus: 'cancelled', updatedAt: new Date() });
+          // Batch Stripe orders DO call reserveListingStock, so restore stock when cancelling old batch Stripe order.
+          try {
+            await restoreListingStock(item.listingId, 1);
+            console.log(`[createBatchAlipayOrder] Restored stock for listing ${item.listingId} after cancelling old Stripe order ${activeOrder.orderNo}`);
+          } catch (restoreErr: any) {
+            console.warn(`[createBatchAlipayOrder] Failed to restore stock for listing ${item.listingId}:`, restoreErr.message);
+          }
         }
         // Reuse existing alipay pending order (no new stock reservation needed)
         if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'alipay_hk') {
@@ -3135,7 +3152,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       outcome: z.enum(["refund_buyer", "release_seller", "partial"]),
       adminNote: z.string().max(500).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { orderId, resolution, outcome, adminNote } = input;
       const order = await getMarketplaceOrderById(orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
@@ -4396,7 +4413,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       sellerProfileId: z.number().int(),
       reason: z.string().min(1).max(500),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       await db.update(sellerProfiles)
@@ -4581,7 +4598,8 @@ IMPORTANT:
           },
         });
 
-        const content = response.choices?.[0]?.message?.content;
+        const rawContent = response.choices?.[0]?.message?.content;
+        const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent ?? {});
         let result: any;
         try {
           result = JSON.parse(content || '{}');

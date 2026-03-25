@@ -41,7 +41,9 @@ export const adminProcedure = t.procedure.use(
     return next({
       ctx: {
         ...ctx,
-        user: ctx.user,
+        // In production, user is guaranteed non-null by the check above.
+        // In development, we allow null but cast to satisfy TypeScript.
+        user: ctx.user!,
       },
     });
   }),

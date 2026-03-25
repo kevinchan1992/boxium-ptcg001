@@ -1,0 +1,58 @@
+{
+  "query": "\nSELECT sp.id, sp.userId, sp.displayName, sp.isActive, sp.isSuspended,\n       sp.stripeConnectId, sp.stripeConnectStatus,\n       u.email, u.name, u.role\nFROM sellerProfiles sp\nJOIN users u ON sp.userId = u.id\nORDER BY sp.id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT sp.id, sp.userId, sp.displayName, sp.isActive, sp.isSuspended,\n       sp.stripeConnectId, sp.stripeConnectStatus,\n       u.email, u.name, u.role\nFROM sellerProfiles sp\nJOIN users u ON sp.userId = u.id\nORDER BY sp.id;\n",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "8",
+      "displayName": "PTCG001",
+      "isActive": "1",
+      "isSuspended": "0",
+      "stripeConnectId": "acct_1T8hMxCblQuzQFtP",
+      "stripeConnectStatus": "active",
+      "email": "tearshim1004@gmail.com",
+      "name": "kevin",
+      "role": "user"
+    },
+    {
+      "id": "30001",
+      "userId": "330001",
+      "displayName": "ABC測試",
+      "isActive": "1",
+      "isSuspended": "0",
+      "stripeConnectId": "acct_1T8uGiCa1ib1hSeb",
+      "stripeConnectStatus": "restricted",
+      "email": "himlove1111@gmail.com",
+      "name": "GOGOGO",
+      "role": "user"
+    },
+    {
+      "id": "30002",
+      "userId": "1",
+      "displayName": "PTCG001",
+      "isActive": "1",
+      "isSuspended": "0",
+      "stripeConnectId": "NULL",
+      "stripeConnectStatus": "pending",
+      "email": "xyz.asia.co@gmail.com",
+      "name": "Admin",
+      "role": "admin"
+    },
+    {
+      "id": "30004",
+      "userId": "330011",
+      "displayName": "PTCG002",
+      "isActive": "1",
+      "isSuspended": "0",
+      "stripeConnectId": "acct_1T8xI5EIlaB0q9Sg",
+      "stripeConnectStatus": "restricted",
+      "email": "abcabc@gmail.com",
+      "name": "abcabc",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tdisplayName\tisActive\tisSuspended\tstripeConnectId\tstripeConnectStatus\temail\tname\trole\n1\t8\tPTCG001\t1\t0\tacct_1T8hMxCblQuzQFtP\tactive\ttearshim1004@gmail.com\tkevin\tuser\n30001\t330001\tABC測試\t1\t0\tacct_1T8uGiCa1ib1hSeb\trestricted\thimlove1111@gmail.com\tGOGOGO\tuser\n30002\t1\tPTCG001\t1\t0\tNULL\tpending\txyz.asia.co@gmail.com\tAdmin\tadmin\n30004\t330011\tPTCG002\t1\t0\tacct_1T8xI5EIlaB0q9Sg\trestricted\tabcabc@gmail.com\tabcabc\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 1564
+}

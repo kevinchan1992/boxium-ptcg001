@@ -1,0 +1,44 @@
+{
+  "query": "\nSELECT l.id, l.title, l.sellerType, l.sellerId, l.status, l.quantity, l.remainingQuantity,\n       l.priceHkd, l.allowOffers, l.condition, l.tcgSeries,\n       sp.displayName as sellerName, sp.stripeConnectStatus, sp.isActive, sp.isSuspended\nFROM marketplaceListings l\nLEFT JOIN sellerProfiles sp ON l.sellerId = sp.id\nWHERE l.status = 'active'\nORDER BY l.id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT l.id, l.title, l.sellerType, l.sellerId, l.status, l.quantity, l.remainingQuantity,\n       l.priceHkd, l.allowOffers, l.condition, l.tcgSeries,\n       sp.displayName as sellerName, sp.stripeConnectStatus, sp.isActive, sp.isSuspended\nFROM marketplaceListings l\nLEFT JOIN sellerProfiles sp ON l.sellerId = sp.id\nWHERE l.status = 'active'\nORDER BY l.id;\n",
+  "rows": [
+    {
+      "id": "180001",
+      "title": "吶喊比卡超",
+      "sellerType": "seller",
+      "sellerId": "1",
+      "status": "active",
+      "quantity": "1",
+      "remainingQuantity": "1",
+      "priceHkd": "10000.00",
+      "allowOffers": "1",
+      "condition": "psa10",
+      "tcgSeries": "pokemon",
+      "sellerName": "PTCG001",
+      "stripeConnectStatus": "active",
+      "isActive": "1",
+      "isSuspended": "0"
+    },
+    {
+      "id": "210001",
+      "title": "123",
+      "sellerType": "platform",
+      "sellerId": "NULL",
+      "status": "active",
+      "quantity": "1",
+      "remainingQuantity": "1",
+      "priceHkd": "1000.00",
+      "allowOffers": "0",
+      "condition": "psa10",
+      "tcgSeries": "onepiece",
+      "sellerName": "NULL",
+      "stripeConnectStatus": "NULL",
+      "isActive": "NULL",
+      "isSuspended": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tsellerType\tsellerId\tstatus\tquantity\tremainingQuantity\tpriceHkd\tallowOffers\tcondition\ttcgSeries\tsellerName\tstripeConnectStatus\tisActive\tisSuspended\n180001\t吶喊比卡超\tseller\t1\tactive\t1\t1\t10000.00\t1\tpsa10\tpokemon\tPTCG001\tactive\t1\t0\n210001\t123\tplatform\tNULL\tactive\t1\t1\t1000.00\t0\tpsa10\tonepiece\tNULL\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1631
+}

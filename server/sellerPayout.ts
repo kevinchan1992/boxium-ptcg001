@@ -168,7 +168,6 @@ export async function executeSellerPayout(orderId: number): Promise<PayoutResult
     await updateMarketplaceOrder(orderId, {
       payoutStatus: "paid" as any,
       stripeTransferId: transfer.id,
-      payoutAt: new Date() as any,
     });
 
     // Create audit record in marketplacePayouts

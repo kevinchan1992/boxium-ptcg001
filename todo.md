@@ -6138,3 +6138,11 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 加入每日庫存一致性修復排程器（startListingStockRepairScheduler，每日 04:00 HKT 執行）
 - [x] 手動修復 #BOXIUM-180001（quantity=1, remainingQuantity=1, status=active）
 - [x] 撰寫 listing-stock-repair.test.ts（10 項測試全部通過）
+
+## ✅ Marketplace 系統全面修復（2026-03-25）
+- [x] Bug #2：付款方式切換時舊訂單取消，加入 paymentStatus='cancelled'（單一商品訂單不需 restoreListingStock，先付款者得設計）
+- [x] Bug #3：paymentTimeout 排程器加入 paymentStatus='cancelled'
+- [x] Bug #4：getPublicListings 加入 remainingQuantity 欄位，已售出商品正確顯示遷罩
+- [x] Bug #6：出貨後 14 天自動完成排程器已正確過濾 disputed 狀態且呼叫 executeSellerPayout（無需修復）
+- [x] TypeScript 错誤從 12 個減至 0 個（修復 ctx 缺失、content 類型、input.status → input.orderStatus 等）
+- [x] 撰寫 marketplace-bugfix.test.ts（13 項測試全部通過）

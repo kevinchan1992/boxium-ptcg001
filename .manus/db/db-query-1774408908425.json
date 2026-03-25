@@ -1,0 +1,19 @@
+{
+  "query": "\nSELECT 'listings' as tbl, COUNT(*) as total,\n  SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) as active,\n  SUM(CASE WHEN status='reserved' THEN 1 ELSE 0 END) as reserved,\n  SUM(CASE WHEN status='sold' THEN 1 ELSE 0 END) as sold,\n  SUM(CASE WHEN status='removed' THEN 1 ELSE 0 END) as removed,\n  SUM(CASE WHEN status='draft' OR status='pending_review' THEN 1 ELSE 0 END) as draft_pending\nFROM marketplaceListings;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT 'listings' as tbl, COUNT(*) as total,\n  SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) as active,\n  SUM(CASE WHEN status='reserved' THEN 1 ELSE 0 END) as reserved,\n  SUM(CASE WHEN status='sold' THEN 1 ELSE 0 END) as sold,\n  SUM(CASE WHEN status='removed' THEN 1 ELSE 0 END) as removed,\n  SUM(CASE WHEN status='draft' OR status='pending_review' THEN 1 ELSE 0 END) as draft_pending\nFROM marketplaceListings;\n",
+  "rows": [
+    {
+      "tbl": "listings",
+      "total": "12",
+      "active": "2",
+      "reserved": "0",
+      "sold": "3",
+      "removed": "7",
+      "draft_pending": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "tbl\ttotal\tactive\treserved\tsold\tremoved\tdraft_pending\nlistings\t12\t2\t0\t3\t7\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1642
+}

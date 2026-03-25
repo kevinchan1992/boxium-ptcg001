@@ -1,0 +1,46 @@
+{
+  "query": "\nSELECT 'orders' as tbl, COUNT(*) as total,\n  SUM(CASE WHEN orderStatus='pending_payment' THEN 1 ELSE 0 END) as pending_payment,\n  SUM(CASE WHEN orderStatus IN ('paid','paid_held','payment_received','processing') THEN 1 ELSE 0 END) as paid,\n  SUM(CASE WHEN orderStatus IN ('shipped','delivered','completed') THEN 1 ELSE 0 END) as shipped_done,\n  SUM(CASE WHEN orderStatus='cancelled' THEN 1 ELSE 0 END) as cancelled,\n  SUM(CASE WHEN orderStatus IN ('disputed','refunded') THEN 1 ELSE 0 END) as disputed\nFROM marketplaceOrders\nUNION ALL\nSELECT 'sellers', COUNT(*),\n  SUM(CASE WHEN isActive=1 AND isSuspended=0 THEN 1 ELSE 0 END),\n  SUM(CASE WHEN isSuspended=1 THEN 1 ELSE 0 END),\n  SUM(CASE WHEN stripeConnectStatus='active' OR stripeConnectStatus='verified' THEN 1 ELSE 0 END),\n  SUM(CASE WHEN stripeConnectStatus='not_started' OR stripeConnectStatus='pending' THEN 1 ELSE 0 END),\n  0\nFROM sellerProfiles\nUNION ALL\nSELECT 'cartItems', COUNT(*), NULL, NULL, NULL, NULL, NULL FROM cartItems\nUNION ALL\nSELECT 'offers', COUNT(*),\n  SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END),\n  SUM(CASE WHEN status='accepted' THEN 1 ELSE 0 END),\n  SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END),\n  SUM(CASE WHEN status IN ('cancelled','expired') THEN 1 ELSE 0 END),\n  0\nFROM offers;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT 'orders' as tbl, COUNT(*) as total,\n  SUM(CASE WHEN orderStatus='pending_payment' THEN 1 ELSE 0 END) as pending_payment,\n  SUM(CASE WHEN orderStatus IN ('paid','paid_held','payment_received','processing') THEN 1 ELSE 0 END) as paid,\n  SUM(CASE WHEN orderStatus IN ('shipped','delivered','completed') THEN 1 ELSE 0 END) as shipped_done,\n  SUM(CASE WHEN orderStatus='cancelled' THEN 1 ELSE 0 END) as cancelled,\n  SUM(CASE WHEN orderStatus IN ('disputed','refunded') THEN 1 ELSE 0 END) as disputed\nFROM marketplaceOrders\nUNION ALL\nSELECT 'sellers', COUNT(*),\n  SUM(CASE WHEN isActive=1 AND isSuspended=0 THEN 1 ELSE 0 END),\n  SUM(CASE WHEN isSuspended=1 THEN 1 ELSE 0 END),\n  SUM(CASE WHEN stripeConnectStatus='active' OR stripeConnectStatus='verified' THEN 1 ELSE 0 END),\n  SUM(CASE WHEN stripeConnectStatus='not_started' OR stripeConnectStatus='pending' THEN 1 ELSE 0 END),\n  0\nFROM sellerProfiles\nUNION ALL\nSELECT 'cartItems', COUNT(*), NULL, NULL, NULL, NULL, NULL FROM cartItems\nUNION ALL\nSELECT 'offers', COUNT(*),\n  SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END),\n  SUM(CASE WHEN status='accepted' THEN 1 ELSE 0 END),\n  SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END),\n  SUM(CASE WHEN status IN ('cancelled','expired') THEN 1 ELSE 0 END),\n  0\nFROM offers;\n",
+  "rows": [
+    {
+      "tbl": "cartItems",
+      "total": "1",
+      "pending_payment": "NULL",
+      "paid": "NULL",
+      "shipped_done": "NULL",
+      "cancelled": "NULL",
+      "disputed": "NULL"
+    },
+    {
+      "tbl": "offers",
+      "total": "16",
+      "pending_payment": "0",
+      "paid": "0",
+      "shipped_done": "6",
+      "cancelled": "10",
+      "disputed": "0"
+    },
+    {
+      "tbl": "sellers",
+      "total": "5",
+      "pending_payment": "5",
+      "paid": "0",
+      "shipped_done": "1",
+      "cancelled": "2",
+      "disputed": "0"
+    },
+    {
+      "tbl": "orders",
+      "total": "43",
+      "pending_payment": "0",
+      "paid": "0",
+      "shipped_done": "2",
+      "cancelled": "41",
+      "disputed": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "tbl\ttotal\tpending_payment\tpaid\tshipped_done\tcancelled\tdisputed\ncartItems\t1\tNULL\tNULL\tNULL\tNULL\tNULL\noffers\t16\t0\t0\t6\t10\t0\nsellers\t5\t5\t0\t1\t2\t0\norders\t43\t0\t0\t2\t41\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1646
+}
