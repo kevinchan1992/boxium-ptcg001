@@ -6287,3 +6287,28 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] /cart 頁面頂部加入橙色警告橫幅（X 件商品已下架或售出，請移除後再結帳 + 一鍵清理按鈕）
 - [x] MarketplaceListing「加入購物車」按鈕：商品已在購物車時改為灰色「已在購物車」禁用按鈕 + 「前往購物車」文字連結
 - [ ] 儲存 Checkpoint
+
+
+---
+
+## ✅ 市集維護模式（Marketplace Maintenance Mode）
+
+### 功能描述
+Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
+- 維護模式開啟時，非白名單用戶訪問市集相關頁面會看到「市集正在維護中」提示頁面
+- 白名單用戶可以正常瀏覽和操作市集
+- Admin 用戶始終可以訪問市集
+
+### 任務清單
+- [x] 建立 marketplaceWhitelist 資料庫表格（via SQL）
+- [x] 在 schema_new.ts 加入 marketplaceWhitelist 表格定義
+- [x] 在 db.ts 加入維護模式 helper 函數（isMarketplaceMaintenanceMode, getMarketplaceWhitelist, addToMarketplaceWhitelist, removeFromMarketplaceWhitelist, searchUserForWhitelist）
+- [x] 在 marketplace.ts router 加入維護模式 procedures（getMarketplaceAccess, getMaintenanceMode, setMaintenanceMode, getWhitelist, addToWhitelist, removeFromWhitelist, searchUsers）
+- [x] 在 AdminMarketplace.tsx 加入「維護模式」側邊欄選項
+- [x] 實作 MaintenanceModeTab 組件（開關、白名單管理）
+- [x] 在 Marketplace.tsx 加入維護模式攔截（非白名單用戶看到維護頁面）
+- [x] 在 MarketplaceListing.tsx 加入維護模式攔截
+- [x] 在 SellerDashboard.tsx 加入維護模式攔截
+- [x] 在 Cart.tsx 加入維護模式攔截
+- [x] TypeScript 零錯誤確認
+- [x] 保存 checkpoint

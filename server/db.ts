@@ -4419,3 +4419,46 @@ export async function getAuditLogs(opts: { page?: number; pageSize?: number; act
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(adminAuditLogs).where(where);
   return { logs: rows, total: Number(countRows[0]?.count ?? 0) };
 }
+
+// ─── Marketplace Maintenance Mode ─────────────────────────────────────────────
+import { marketplaceWhitelist as mwTable } from "../drizzle/schema_new";
+
+export async function isMarketplaceMaintenanceMode(): Promise<boolean> {
+  const row = await getSystemSetting('marketplace_maintenance_mode');
+  return row?.settingValue === 'true';
+}
+
+export async function isMarketplaceWhitelisted(userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const [row] = await db.select({ id: mwTable.id }).from(mwTable).where(eq(mwTable.userId, userId)).limit(1);
+  return !!row;
+}
+
+export async function getMarketplaceWhitelist() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select({
+    id: mwTable.id,
+    userId: mwTable.userId,
+    addedBy: mwTable.addedBy,
+    note: mwTable.note,
+    createdAt: mwTable.createdAt,
+    userName: users.name,
+    userEmail: users.email,
+  }).from(mwTable).leftJoin(users, eq(mwTable.userId, users.id)).orderBy(desc(mwTable.createdAt));
+}
+
+export async function addMarketplaceWhitelist(userId: number, addedBy: number, note?: string) {
+  const db = await getDb();
+  if (!db) throw new Error('DB not available');
+  await db.insert(mwTable).values({ userId, addedBy, note }).onDuplicateKeyUpdate({ set: { note, addedBy } });
+  const [row] = await db.select().from(mwTable).where(eq(mwTable.userId, userId)).limit(1);
+  return row;
+}
+
+export async function removeMarketplaceWhitelist(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(mwTable).where(eq(mwTable.userId, userId));
+}

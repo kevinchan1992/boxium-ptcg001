@@ -5506,6 +5506,7 @@ const sidebarMenuItems: SidebarItem[] = [
   { key: 'offers', label: '出價管理', icon: Tag },
   { key: 'timeout_settings', label: '超時時限設定', icon: Timer },
   { key: 'audit_logs', label: '審計日誌', icon: ScrollText },
+  { key: 'maintenance', label: '維護模式', icon: Shield },
 ];
 
 export default function AdminMarketplace() {
@@ -5549,6 +5550,7 @@ export default function AdminMarketplace() {
       case 'offers': return <OffersTab />;
       case 'timeout_settings': return <TimeoutSettingsTab />;
       case 'audit_logs': return <AuditLogsTab />;
+      case 'maintenance': return <MaintenanceModeTab />;
       default: return <ListingsTab onViewOrders={handleViewOrders} />;
     }
   };
@@ -5712,6 +5714,131 @@ export default function AdminMarketplace() {
           </div>
           {renderContent()}
         </main>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MAINTENANCE MODE TAB
+// ============================================================
+function MaintenanceModeTab() {
+  const utils = trpc.useUtils();
+  const { data: modeData, isLoading: modeLoading } = trpc.marketplace.getMarketplaceMaintenanceMode.useQuery();
+  const { data: whitelistData, isLoading: whitelistLoading } = trpc.marketplace.getMarketplaceWhitelist.useQuery();
+  const [searchEmail, setSearchEmail] = useState('');
+  const [searchResult, setSearchResult] = useState<{ id: number; name: string; email: string } | null | 'not_found'>(null);
+  const searchQuery = trpc.marketplace.searchUserForWhitelist.useQuery(
+    { email: searchEmail.trim() || 'placeholder@example.com' },
+    { enabled: false }
+  );
+  const toggleMaintenanceMutation = trpc.marketplace.setMarketplaceMaintenanceMode.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.enabled ? '市集維護模式已開啟' : '市集維護模式已關閉');
+      utils.marketplace.getMarketplaceMaintenanceMode.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const addWhitelistMutation = trpc.marketplace.addMarketplaceWhitelist.useMutation({
+    onSuccess: () => {
+      toast.success('已加入白名單');
+      utils.marketplace.getMarketplaceWhitelist.invalidate();
+      setSearchEmail(''); setSearchResult(null);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const removeWhitelistMutation = trpc.marketplace.removeMarketplaceWhitelist.useMutation({
+    onSuccess: () => {
+      toast.success('已從白名單移除');
+      utils.marketplace.getMarketplaceWhitelist.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const handleSearchUser = async () => {
+    if (!searchEmail.trim()) return;
+    setSearchResult(null);
+    const result = await searchQuery.refetch();
+    if (result.data) setSearchResult({ id: result.data.id, name: result.data.name ?? '', email: result.data.email });
+    else setSearchResult('not_found');
+  };
+  const isSearching = searchQuery.isFetching;
+  const isMaintenanceOn = modeData?.enabled ?? false;
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <div>
+        <h2 className="text-xl font-bold text-[#06038d] mb-1">市集維護模式</h2>
+        <p className="text-sm text-gray-500">開啟後，只有管理員和白名單用戶可以訪問市集。非白名單用戶將看到「開發中」提示頁面。</p>
+      </div>
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">維護模式開關</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {modeLoading ? '載入中...' : isMaintenanceOn ? '🔴 目前已開啟維護模式' : '🟢 目前市集正常開放'}
+            </p>
+          </div>
+          <Button
+            onClick={() => toggleMaintenanceMutation.mutate({ enabled: !isMaintenanceOn })}
+            disabled={modeLoading || toggleMaintenanceMutation.isPending}
+            className={isMaintenanceOn ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}
+          >
+            {toggleMaintenanceMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : isMaintenanceOn ? <ShieldOff className="w-4 h-4 mr-1" /> : <Shield className="w-4 h-4 mr-1" />}
+            {isMaintenanceOn ? '關閉維護模式' : '開啟維護模式'}
+          </Button>
+        </div>
+        {isMaintenanceOn && (
+          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
+            ⚠️ 維護模式已開啟。只有管理員和白名單用戶可以訪問市集。
+          </div>
+        )}
+      </div>
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <h3 className="text-base font-semibold text-gray-900 mb-3">白名單管理</h3>
+        <p className="text-sm text-gray-500 mb-4">白名單用戶在維護模式下仍可正常訪問市集。管理員自動擁有訪問權限，無需加入白名單。</p>
+        <div className="flex gap-2 mb-4">
+          <Input placeholder="輸入用戶 Email 搜尋..." value={searchEmail} onChange={e => setSearchEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearchUser()} className="flex-1 text-sm" />
+          <Button onClick={handleSearchUser} disabled={isSearching || !searchEmail.trim()} className="bg-[#06038d] text-white hover:bg-[#06038d]/90">
+            {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+          </Button>
+        </div>
+        {searchResult === 'not_found' && <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-3">找不到此 Email 的用戶</div>}
+        {searchResult && typeof searchResult !== 'string' && (
+          <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3">
+            <div>
+              <p className="text-sm font-medium text-gray-900">{searchResult.name || '（無名稱）'}</p>
+              <p className="text-xs text-gray-500">{searchResult.email} · ID: {searchResult.id}</p>
+            </div>
+            <Button size="sm" onClick={() => { if (searchResult && typeof searchResult !== 'string') addWhitelistMutation.mutate({ userId: searchResult.id }); }} disabled={addWhitelistMutation.isPending} className="bg-[#06038d] text-white hover:bg-[#06038d]/90 text-xs">
+              {addWhitelistMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3 mr-1" />}
+              加入白名單
+            </Button>
+          </div>
+        )}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-gray-50 px-3 py-2 border-b">
+            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">白名單用戶（{whitelistData?.length ?? 0} 人）</span>
+          </div>
+          {whitelistLoading ? (
+            <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+          ) : !whitelistData || whitelistData.length === 0 ? (
+            <div className="text-center py-8 text-sm text-gray-400"><Shield className="w-8 h-8 mx-auto mb-2 text-gray-300" />白名單目前為空</div>
+          ) : (
+            <div className="divide-y">
+              {whitelistData.map(entry => (
+                <div key={entry.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-gray-50">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{entry.userName || '（無名稱）'}</p>
+                    <p className="text-xs text-gray-500 truncate">{entry.userEmail} · ID: {entry.userId}</p>
+                    {entry.note && <p className="text-xs text-blue-600 mt-0.5">備注：{entry.note}</p>}
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => removeWhitelistMutation.mutate({ userId: entry.userId })} disabled={removeWhitelistMutation.isPending} className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-2 shrink-0">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

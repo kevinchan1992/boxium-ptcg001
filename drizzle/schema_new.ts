@@ -1218,3 +1218,15 @@ export const adminAuditLogs = mysqlTable("adminAuditLogs", {
 }));
 export type AdminAuditLog = typeof adminAuditLogs.$inferSelect;
 export type InsertAdminAuditLog = typeof adminAuditLogs.$inferInsert;
+
+export const marketplaceWhitelist = mysqlTable("marketplaceWhitelist", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  addedBy: int("addedBy").notNull(),
+  note: varchar("note", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: uniqueIndex("mw_userId_idx").on(table.userId),
+}));
+export type MarketplaceWhitelist = typeof marketplaceWhitelist.$inferSelect;
+export type InsertMarketplaceWhitelist = typeof marketplaceWhitelist.$inferInsert;

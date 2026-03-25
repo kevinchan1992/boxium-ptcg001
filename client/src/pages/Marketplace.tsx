@@ -400,12 +400,49 @@ function SidebarFilter({
   );
 }
 
-// ─── Main Page ───────────────────────────────────────────────────────────────
+//// ─── Maintenance Page ───────────────────────────────────────────────────────
+function MarketplaceMaintenancePage() {
+  return (
+    <div className="min-h-screen bg-[#06038D] flex items-center justify-center px-4">
+      <div className="text-center max-w-md">
+        <div className="w-20 h-20 bg-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+          <Shield className="w-10 h-10 text-[#06038D]" />
+        </div>
+        <h1 className="text-3xl font-bold text-white mb-3">市集正在維護中</h1>
+        <p className="text-white/70 text-base mb-6 leading-relaxed">
+          我們正在緊鑼密鼓地開發中，敬請期待！<br />
+          維護期間市集暫停對外開放，感謝您的耐心等候。
+        </p>
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <span className="w-2 h-2 rounded-full bg-yellow-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 rounded-full bg-yellow-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 rounded-full bg-yellow-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+        </div>
+        <a href="/" className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">
+          返回首頁
+        </a>
+      </div>
+    </div>
+  );
+}
 
+// ─── Main Page ───────────────────────────────────────────────────────────────
 export default function Marketplace() {
   const [, setLocation] = useLocation();
   const searchStr = useSearch();
-
+  // ── Maintenance mode check ──────────────────────────────────────────────────────────────────────────────
+  const { data: accessData, isLoading: accessLoading } = trpc.marketplace.getMarketplaceAccess.useQuery();
+  if (accessLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#06038D]">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      </div>
+    );
+  }
+  if (accessData && !accessData.allowed) {
+    return <MarketplaceMaintenancePage />;
+  }
+  // ──────────────────────────────────────────────────────────────────────────────
   // 初始化時從 URL 讀取篩選狀態
   const initParams = useMemo(() => {
     const p = new URLSearchParams(searchStr);

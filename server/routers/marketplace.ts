@@ -29,6 +29,13 @@ import { getPublicListings, getListingById, createListing, updateListing,
   createCartOrder, getCartOrderById, getCartOrderByStripeSession, updateCartOrder,
   // Phase 5: Audit logs
   createAuditLog, getAuditLogs,
+  // Maintenance mode
+  isMarketplaceMaintenanceMode,
+  isMarketplaceWhitelisted,
+  getMarketplaceWhitelist,
+  addMarketplaceWhitelist,
+  removeMarketplaceWhitelist,
+  setSystemSetting,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
@@ -4712,5 +4719,60 @@ IMPORTANT:
       });
       const csv = [header.join(','), ...csvRows].join('\n');
       return { csv, total: rows.length };
+    }),
+
+  // ============================================================
+  // MAINTENANCE MODE
+  // ============================================================
+  getMarketplaceAccess: publicProcedure.query(async ({ ctx }) => {
+    const maintenanceMode = await isMarketplaceMaintenanceMode();
+    if (!maintenanceMode) return { allowed: true, maintenanceMode: false };
+    if (!ctx.user) return { allowed: false, maintenanceMode: true };
+    if (ctx.user.role === 'admin') return { allowed: true, maintenanceMode: true };
+    const whitelisted = await isMarketplaceWhitelisted(ctx.user.id);
+    return { allowed: whitelisted, maintenanceMode: true };
+  }),
+
+  setMarketplaceMaintenanceMode: adminProcedure
+    .input(z.object({ enabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await setSystemSetting('marketplace_maintenance_mode', input.enabled ? 'true' : 'false', '\u5e02\u96c6\u7dad\u8b77\u6a21\u5f0f\u958b\u95dc');
+      await createAuditLog({ adminId: ctx.user.id, action: input.enabled ? 'marketplace_maintenance_on' : 'marketplace_maintenance_off', targetType: 'system', targetId: null, details: `\u5e02\u96c6\u7dad\u8b77\u6a21\u5f0f\u5df2${input.enabled ? '\u958b\u555f' : '\u95dc\u9589'}` });
+      return { success: true, enabled: input.enabled };
+    }),
+
+  getMarketplaceMaintenanceMode: adminProcedure.query(async () => {
+    const enabled = await isMarketplaceMaintenanceMode();
+    return { enabled };
+  }),
+
+  getMarketplaceWhitelist: adminProcedure.query(async () => {
+    return await getMarketplaceWhitelist();
+  }),
+
+  addMarketplaceWhitelist: adminProcedure
+    .input(z.object({ userId: z.number().int().positive(), note: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const entry = await addMarketplaceWhitelist(input.userId, ctx.user.id, input.note);
+      await createAuditLog({ adminId: ctx.user.id, action: 'marketplace_whitelist_add', targetType: 'user', targetId: input.userId, details: `\u5df2\u5c07\u7528\u6236 ${input.userId} \u52a0\u5165\u5e02\u96c6\u767d\u540d\u55ae` });
+      return entry;
+    }),
+
+  removeMarketplaceWhitelist: adminProcedure
+    .input(z.object({ userId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      await removeMarketplaceWhitelist(input.userId);
+      await createAuditLog({ adminId: ctx.user.id, action: 'marketplace_whitelist_remove', targetType: 'user', targetId: input.userId, details: `\u5df2\u5c07\u7528\u6236 ${input.userId} \u5f9e\u5e02\u96c6\u767d\u540d\u55ae\u79fb\u9664` });
+      return { success: true };
+    }),
+
+  searchUserForWhitelist: adminProcedure
+    .input(z.object({ email: z.string().email() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB not available' });
+      const [user] = await db.select({ id: users.id, name: users.name, email: users.email })
+        .from(users).where(eq(users.email, input.email)).limit(1);
+      return user ?? null;
     }),
 });

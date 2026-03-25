@@ -1,0 +1,9 @@
+{
+  "query": "\nCREATE TABLE IF NOT EXISTS marketplaceWhitelist (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  addedBy INT NOT NULL,\n  note VARCHAR(255),\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  UNIQUE INDEX mw_userId_idx (userId)\n);\n\nINSERT IGNORE INTO systemSettings (settingKey, settingValue, description)\nVALUES ('marketplace_maintenance_mode', 'false', '市集維護模式開關');\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nCREATE TABLE IF NOT EXISTS marketplaceWhitelist (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  addedBy INT NOT NULL,\n  note VARCHAR(255),\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  UNIQUE INDEX mw_userId_idx (userId)\n);\n\nINSERT IGNORE INTO systemSettings (settingKey, settingValue, description)\nVALUES ('marketplace_maintenance_mode', 'false', '市集維護模式開關');\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1891
+}
