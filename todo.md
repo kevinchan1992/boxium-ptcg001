@@ -6146,3 +6146,7 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] Bug #6：出貨後 14 天自動完成排程器已正確過濾 disputed 狀態且呼叫 executeSellerPayout（無需修復）
 - [x] TypeScript 错誤從 12 個減至 0 個（修復 ctx 缺失、content 類型、input.status → input.orderStatus 等）
 - [x] 撰寫 marketplace-bugfix.test.ts（13 項測試全部通過）
+
+## ✅ Bug 修復：Admin Marketplace ResizeObserver loop 錯誤（2026-03-25）
+- [x] 定位根源：asside 使用 min-h-screen + sticky + self-start 在 flex 容器中造成高度計算循環
+- [x] 修復：外層改為 h-screen flex-col overflow-hidden，sidebar 改為 shrink-0 overflow-y-auto，main 加入 overflow-y-auto

@@ -5192,9 +5192,9 @@ export default function AdminMarketplace() {
   const currentLabel = sidebarMenuItems.find(i => i.key === activeSection)?.label ?? '商品管理';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
       {/* Mobile Header */}
-      <div className="lg:hidden sticky top-0 z-40 bg-[#06038d] text-white px-4 py-3 flex items-center justify-between shadow-md">
+      <div className="lg:hidden shrink-0 z-40 bg-[#06038d] text-white px-4 py-3 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 rounded hover:bg-white/10">
             <Layers className="w-5 h-5" />
@@ -5269,9 +5269,9 @@ export default function AdminMarketplace() {
         </div>
       )}
 
-      <div className="flex">
+      <div className="flex flex-1 min-h-0">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-[#06038d] text-white sticky top-0 self-start">
+        <aside className="hidden lg:flex flex-col w-60 shrink-0 bg-[#06038d] text-white overflow-y-auto">
           <div className="p-4 border-b border-white/10">
             <Link href="/admin" className="flex items-center gap-2 text-white/70 hover:text-white text-xs mb-3">
               <ArrowLeft className="w-3 h-3" />返回 Admin
@@ -5339,7 +5339,7 @@ export default function AdminMarketplace() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 p-4 lg:p-6 bg-white text-gray-900">
+        <main className="flex-1 min-w-0 overflow-y-auto p-4 lg:p-6 bg-white text-gray-900">
           {/* Breadcrumb */}
           <div className="hidden lg:flex items-center gap-2 text-xs text-gray-500 mb-4">
             <Link href="/admin" className="hover:text-gray-900">Admin</Link>
