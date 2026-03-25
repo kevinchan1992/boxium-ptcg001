@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
-import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown, Layers, ChevronRight, Pencil, EyeOff, Eye, Trash2, CheckSquare, Square, ChevronDown, Phone, Users } from "lucide-react";
+import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown, Layers, ChevronRight, Pencil, EyeOff, Eye, Trash2, CheckSquare, Square, ChevronDown, Phone, Users, Info } from "lucide-react";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -347,6 +347,13 @@ function EarningsTab() {
   const pendingPayoutAmount = (salesStats as any)?.pendingPayoutAmount ?? 0;
   return (
     <div className="space-y-4">
+      {/* Info Banner */}
+      <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+        <Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+        <p className="text-xs text-blue-700 leading-relaxed">
+          以下為平台透過 Stripe 轉帳至你帳戶的收款記錄。所有金額均已扣除 5% 平台手續費。如有疑問請聯絡客服。
+        </p>
+      </div>
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
@@ -499,9 +506,6 @@ export default function SellerDashboard() {
     undefined, { enabled: !!sellerProfile || isAdmin }
   );
   const { data: myOrders } = trpc.marketplace.getMySellerOrders.useQuery(
-    undefined, { enabled: !!sellerProfile }
-  );
-  const { data: myPayouts } = trpc.marketplace.getMyPayouts.useQuery(
     undefined, { enabled: !!sellerProfile }
   );
   const { data: salesStats } = trpc.marketplace.getSellerSalesStats.useQuery(

@@ -6242,3 +6242,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 找出 Seller 頁面放款記錄 Tab 代碼並移除 Tab 按鈕與對應內容
 - [x] 確認收款記錄 Tab 保留（賣家仍需要看收款記錄）
 - [ ] 儲存 Checkpoint
+
+---
+
+## 🧹 getMyPayouts API 清理 + 收款記錄說明文字（2026-03-25）
+
+- [ ] 移除後端 getMyPayouts procedure（已無前端呼叫）
+- [ ] 移除前端 SellerDashboard 中 getMyPayouts 的 useQuery 呼叫
+- [ ] 在收款記錄 Tab 頂部加入說明文字
+- [ ] 儲存 Checkpoint

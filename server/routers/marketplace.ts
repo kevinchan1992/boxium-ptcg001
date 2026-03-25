@@ -919,13 +919,6 @@ export const marketplaceRouter = router({
       return getSellerOrderItems(seller.id);
     }),
 
-  getMyPayouts: protectedProcedure
-    .query(async ({ ctx }) => {
-      const seller = await getSellerProfileByUserId(ctx.user.id);
-      if (!seller) return [];
-      return getSellerPayouts(seller.id);
-    }),
-
   // ============================================================
   // SELLER - Get Earnings Summary (completed orders)
   // ============================================================
