@@ -6260,3 +6260,12 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 商品篩選 Tab：已有手機版橫向滾動實作（overflow-x-auto）
 - [x] BrandTabs 組件：移除 hidden min-[480px]:inline 限制，改為 children 自行控制响應式文字
 - [x] 儲存 Checkpoint
+
+---
+
+## 🛒 加入購物車後不跳轉 /cart（2026-03-25）
+
+- [x] 找出加入購物車後跳轉 /cart 的代碼並移除（MarketplaceListing.tsx 第 1865 行）
+- [x] 確認購物車圖示紅點正確顯示（TopNav CartBadge 透過 getCartCount.invalidate 即時更新）
+- [x] 加入 toast.success("已加入購物車") 提示
+- [ ] 儲存 Checkpoint

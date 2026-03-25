@@ -1856,14 +1856,14 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
     onSuccess: () => {
       utils.marketplace.isInCart.invalidate({ listingId });
       utils.marketplace.getCartCount.invalidate();
-      // Trigger fly animation then navigate
+      // Trigger fly animation only, no navigation
       setFlyAnim(true);
       setShowSuccess(true);
       setTimeout(() => {
         setFlyAnim(false);
         setShowSuccess(false);
-        setLocation("/cart");
       }, 900);
+      toast.success("已加入購物車");
     },
     onError: (err) => toast.error(err.message || "加入購物車失敗"),
   });
