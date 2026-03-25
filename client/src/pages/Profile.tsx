@@ -1033,12 +1033,13 @@ function ShippingAddressSection() {
   );
 }
 
-// ─── Embedded Orders Section ───────────────────────────────────
+// ─── Embedded Orders Section ───────────────────────────────────────────────
 function EmbeddedOrdersSection() {
   const { data: orders, isLoading } = trpc.marketplace.getMyOrders.useQuery();
+  const { data: timeoutSettings } = trpc.system.getTimeoutSettings.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+  const paymentTimeoutMinutes = timeoutSettings?.paymentTimeoutMinutes ?? 30;
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-
   if (isLoading) {
     return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}</div>;
   }
@@ -1079,30 +1080,12 @@ function EmbeddedOrdersSection() {
       )
     : statusFiltered;
 
-  // For "pending" tab: count by batch (one batchRef = one unit), not by individual order.
-  // This prevents the badge showing "2" when there's really only 1 batch of 2 items.
-  const pendingOrders = allOrders.filter(o => STATUS_GROUPS.pending.includes(o.orderStatus));
-  const pendingBatchCount = (() => {
+  // Count orders by batch unit: one batchRef = one unit, standalone orders count individually.
+  // Applied to ALL tabs for consistent display across the page.
+  const countByBatch = (orders: any[]) => {
     const seenBatchRefs = new Set<string>();
     let count = 0;
-    for (const o of pendingOrders) {
-      if (o.batchRef) {
-        if (!seenBatchRefs.has(o.batchRef)) {
-          seenBatchRefs.add(o.batchRef);
-          count++;
-        }
-      } else {
-        count++; // standalone order counts individually
-      }
-    }
-    return count;
-  })();
-
-  // Similarly, count "all" tab by batch units
-  const allBatchCount = (() => {
-    const seenBatchRefs = new Set<string>();
-    let count = 0;
-    for (const o of allOrders) {
+    for (const o of orders) {
       if (o.batchRef) {
         if (!seenBatchRefs.has(o.batchRef)) {
           seenBatchRefs.add(o.batchRef);
@@ -1113,13 +1096,13 @@ function EmbeddedOrdersSection() {
       }
     }
     return count;
-  })();
+  };
 
   const filterTabs = [
-    { id: "all", label: "全部", count: allBatchCount },
-    { id: "pending", label: "待付款", count: pendingBatchCount },
-    { id: "active", label: "進行中", count: allOrders.filter(o => STATUS_GROUPS.active.includes(o.orderStatus)).length },
-    { id: "done", label: "已完成", count: allOrders.filter(o => STATUS_GROUPS.done.includes(o.orderStatus)).length },
+    { id: "all", label: "全部", count: countByBatch(allOrders) },
+    { id: "pending", label: "待付款", count: countByBatch(allOrders.filter(o => STATUS_GROUPS.pending.includes(o.orderStatus))) },
+    { id: "active", label: "進行中", count: countByBatch(allOrders.filter(o => STATUS_GROUPS.active.includes(o.orderStatus))) },
+    { id: "done", label: "已完成", count: countByBatch(allOrders.filter(o => STATUS_GROUPS.done.includes(o.orderStatus))) },
   ];
 
   return (
@@ -1184,7 +1167,7 @@ function EmbeddedOrdersSection() {
                 if (seenBatchRefs.has(batchRef)) continue; // already rendered
                 seenBatchRefs.add(batchRef);
                 const batchOrders = filtered.filter((o: any) => o.batchRef === batchRef);
-                rendered.push(<BatchOrderCard key={`batch-${batchRef}`} orders={batchOrders} />);
+                rendered.push(<BatchOrderCard key={`batch-${batchRef}`} orders={batchOrders} paymentTimeoutMinutes={paymentTimeoutMinutes} />);
               } else {
                 rendered.push(<EmbeddedOrderCard key={order.id} order={order} />);
               }
@@ -1394,8 +1377,28 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
+// ─── Payment countdown hook (shared between BatchOrderCard and single order card) ───
+function useBatchPaymentCountdown(createdAt: Date | string | null | undefined, timeoutMinutes: number) {
+  const [timeLeft, setTimeLeft] = useState<{ minutes: number; seconds: number; expired: boolean } | null>(null);
+  useEffect(() => {
+    if (!createdAt || !timeoutMinutes) return;
+    const deadline = new Date(createdAt).getTime() + timeoutMinutes * 60 * 1000;
+    const calc = () => {
+      const diff = deadline - Date.now();
+      if (diff <= 0) { setTimeLeft({ minutes: 0, seconds: 0, expired: true }); return; }
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setTimeLeft({ minutes, seconds, expired: false });
+    };
+    calc();
+    const t = setInterval(calc, 1000);
+    return () => clearInterval(t);
+  }, [createdAt, timeoutMinutes]);
+  return timeLeft;
+}
+
 // ─── Batch Order Card (multiple orders with same batchRef) ───
-function BatchOrderCard({ orders }: { orders: any[] }) {
+function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paymentTimeoutMinutes?: number }) {
   const [expanded, setExpanded] = useState(false);
   if (!orders.length) return null;
   const firstOrder = orders[0];
@@ -1411,6 +1414,12 @@ function BatchOrderCard({ orders }: { orders: any[] }) {
   const isWaitingShipment = ['paid_held', 'payment_received', 'processing'].includes(batchStatus);
   // Check if ALL orders in the batch are cancelled
   const isAllCancelled = orders.length > 0 && orders.every(o => o.orderStatus === 'cancelled');
+  // Payment countdown: use the earliest createdAt among pending orders
+  const pendingOrder = orders.find(o => o.orderStatus === 'pending_payment');
+  const paymentCountdown = useBatchPaymentCountdown(
+    isPending ? pendingOrder?.createdAt : null,
+    paymentTimeoutMinutes ?? 30
+  );
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
@@ -1455,11 +1464,24 @@ function BatchOrderCard({ orders }: { orders: any[] }) {
       {(isPending || isWaitingShipment || isAllCancelled) && (
         <div className="px-4 pb-3 flex flex-wrap items-center gap-2">
           {isPending && (
-            <Link href={`/orders/${firstOrder.orderNo}`}>
-              <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: BRAND_BLUE }}>
-                <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
-              </Button>
-            </Link>
+            <>
+              <Link href={`/orders/${firstOrder.orderNo}`}>
+                <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: BRAND_BLUE }}>
+                  <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
+                </Button>
+              </Link>
+              {paymentCountdown && !paymentCountdown.expired && (
+                <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5 font-mono font-semibold">
+                  <Clock className="w-3 h-3 text-amber-500" />
+                  剩 {String(paymentCountdown.minutes).padStart(2, '0')}:{String(paymentCountdown.seconds).padStart(2, '0')}
+                </span>
+              )}
+              {paymentCountdown?.expired && (
+                <span className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1">
+                  <XCircle className="w-3 h-3" />付款時限已到
+                </span>
+              )}
+            </>
           )}
           {isWaitingShipment && (
             <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1">

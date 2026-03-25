@@ -3245,6 +3245,7 @@ export async function getBuyerOrders(buyerId: number) {
     buyerPhone: marketplaceOrders.buyerPhone,
     batchRef: marketplaceOrders.batchRef,
     cartOrderId: marketplaceOrders.cartOrderId,
+    paymentExpiresAt: marketplaceOrders.paymentExpiresAt,
     createdAt: marketplaceOrders.createdAt,
     updatedAt: marketplaceOrders.updatedAt,
     // Listing info for display
