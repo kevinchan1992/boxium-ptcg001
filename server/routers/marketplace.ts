@@ -4297,6 +4297,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const [listing] = await db.select().from(marketplaceListings)
         .where(and(eq(marketplaceListings.id, input.listingId), eq(marketplaceListings.status, 'active')));
       if (!listing) throw new TRPCError({ code: 'NOT_FOUND', message: '商品不存在或已下架' });
+      // Check stock availability
+      if ((listing.quantity ?? 0) < 1) throw new TRPCError({ code: 'BAD_REQUEST', message: '此商品庫存不足，無法加入購物車' });
       // Cannot add own listing to cart
       if (listing.sellerId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: '不能將自己的商品加入購物車' });
       // Upsert (ignore if already in cart) — expiresAt = 14 days from now

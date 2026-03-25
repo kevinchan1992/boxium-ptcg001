@@ -6269,3 +6269,13 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [x] 確認購物車圖示紅點正確顯示（TopNav CartBadge 透過 getCartCount.invalidate 即時更新）
 - [x] 加入 toast.success("已加入購物車") 提示
 - [ ] 儲存 Checkpoint
+
+---
+
+## 🛒 購物車 UX 改善（2026-03-25）
+
+- [x] 購物車圖示彈跳動畫（framer-motion scale keyframe [1, 1.3, 0.9, 1.15, 1]）
+- [x] toast 加入「查看購物車」 action button（點擊導向 /cart）
+- [x] 後端庫存不足驗證（quantity < 1）+ 前端明確錯誤提示（duration: 5000）
+- [x] useCartBounce Context 跨組件觸發動畫
+- [ ] 儲存 Checkpoint

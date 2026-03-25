@@ -3,6 +3,7 @@ import { useParams, Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useCartBounce } from "@/components/TopNav";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
@@ -1852,6 +1853,8 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
     { enabled: isLoggedIn }
   );
 
+  const { trigger: triggerCartBounce } = useCartBounce();
+
   const addToCartMutation = trpc.marketplace.addToCart.useMutation({
     onSuccess: () => {
       utils.marketplace.isInCart.invalidate({ listingId });
@@ -1863,9 +1866,26 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
         setFlyAnim(false);
         setShowSuccess(false);
       }, 900);
-      toast.success("已加入購物車");
+      // Trigger cart icon bounce animation
+      triggerCartBounce();
+      // Show toast with action button
+      toast.success("已加入購物車", {
+        action: {
+          label: "查看購物車",
+          onClick: () => window.location.href = "/cart",
+        },
+        duration: 4000,
+      });
     },
-    onError: (err) => toast.error(err.message || "加入購物車失敗"),
+    onError: (err) => {
+      const msg = err.message || "加入購物車失敗";
+      // Show specific stock error message
+      if (msg.includes("庫存不足") || msg.includes("已下架") || msg.includes("不存在")) {
+        toast.error(msg, { duration: 5000 });
+      } else {
+        toast.error(msg);
+      }
+    },
   });
 
   if (!isLoggedIn) {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, LogOut, User, Bell, Tag, ShoppingBag, LogIn, Package, MessageSquare, CheckCheck, ExternalLink, ShoppingCart } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -36,6 +36,10 @@ function CartBadge() {
   );
 }
 
+/** Context to trigger cart icon bounce animation from anywhere */
+const CartBounceContext = createContext<{ trigger: () => void }>({ trigger: () => {} });
+export function useCartBounce() { return useContext(CartBounceContext); }
+
 export function TopNav() {
   const { t } = useTranslation();
   const [location, setLocation] = useLocation();
@@ -44,6 +48,14 @@ export function TopNav() {
   const [isVisible, setIsVisible] = useState(false);
   const [showSellDialog, setShowSellDialog] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [cartBouncing, setCartBouncing] = useState(false);
+  const cartBounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerCartBounce = () => {
+    setCartBouncing(true);
+    if (cartBounceTimer.current) clearTimeout(cartBounceTimer.current);
+    cartBounceTimer.current = setTimeout(() => setCartBouncing(false), 600);
+  };
 
   const { data: user } = trpc.auth.me.useQuery();
   const utils = trpc.useUtils();
@@ -144,6 +156,7 @@ export function TopNav() {
   const handleNavClick = () => setIsMenuOpen(false);
 
   return (
+    <CartBounceContext.Provider value={{ trigger: triggerCartBounce }}>
     <>
       {/* Sell Guide Dialog for unauthenticated users */}
       <Dialog open={showSellDialog} onOpenChange={setShowSellDialog}>
@@ -252,7 +265,12 @@ export function TopNav() {
             {/* Shopping Cart — logged-in only */}
             {user && (
               <Link href="/cart">
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  animate={cartBouncing ? { scale: [1, 1.3, 0.9, 1.15, 1] } : {}}
+                  transition={cartBouncing ? { duration: 0.5, ease: "easeInOut" } : {}}
+                >
                   <Button variant="ghost" size="sm" className="relative text-white hover:text-[#FEDD00] p-2">
                     <ShoppingCart className="w-5 h-5" />
                     <CartBadge />
@@ -508,5 +526,6 @@ export function TopNav() {
         )}
       </AnimatePresence>
     </>
+    </CartBounceContext.Provider>
   );
 }
