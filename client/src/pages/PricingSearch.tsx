@@ -3,7 +3,7 @@ import { useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, AlertCircle, ShoppingBag, RefreshCw } from "lucide-react";
+import { Search, AlertCircle, ShoppingBag } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
@@ -164,9 +164,13 @@ export default function PricingSearch() {
             {t("pricing.searchResultsFor")}: "{query}"
           </h2>
           {isRefreshing && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <RefreshCw className="w-3 h-3 animate-spin" />
-              <span>更新在售價格中...</span>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-0.5 items-center">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce [animation-delay:0ms]" />
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce [animation-delay:150ms]" />
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce [animation-delay:300ms]" />
+              </div>
+              <span className="text-xs text-muted-foreground">更新在售價格中</span>
             </div>
           )}
         </div>
@@ -188,9 +192,17 @@ export default function PricingSearch() {
 
       {/* Results Grid */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <span className="ml-2 text-sm text-muted-foreground">{t("pricing.searching")}</span>
+        <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 sm:gap-3">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="aspect-[2/3] bg-muted animate-pulse" />
+              <div className="p-1.5 sm:p-2 space-y-1">
+                <div className="h-2 sm:h-2.5 w-full rounded bg-muted animate-pulse" />
+                <div className="h-2 sm:h-2.5 w-3/4 rounded bg-muted animate-pulse" />
+                <div className="h-2 sm:h-2.5 w-1/2 rounded bg-orange-400/20 animate-pulse mt-1" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-12">
@@ -248,9 +260,9 @@ export default function PricingSearch() {
                           </p>
                         </div>
                       ) : isRefreshing ? (
-                        <div className="flex items-center gap-0.5">
-                          <RefreshCw className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground flex-shrink-0 animate-spin" />
-                          <p className="text-[9px] sm:text-xs text-muted-foreground">更新中</p>
+                        <div className="space-y-1">
+                          <div className="h-2 sm:h-2.5 w-full rounded animate-pulse bg-muted-foreground/20" />
+                          <div className="h-2 sm:h-2.5 w-2/3 rounded animate-pulse bg-muted-foreground/15" />
                         </div>
                       ) : (
                         <p className="text-[9px] sm:text-xs text-muted-foreground">--</p>

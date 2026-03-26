@@ -190,8 +190,17 @@ export default function SearchResults() {
 
         {/* Results Grid */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 sm:gap-3">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
+                <div className="aspect-[2/3] bg-muted animate-pulse" />
+                <div className="p-1.5 sm:p-2 space-y-1">
+                  <div className="h-2 sm:h-2.5 w-full rounded bg-muted animate-pulse" />
+                  <div className="h-2 sm:h-2.5 w-3/4 rounded bg-muted animate-pulse" />
+                  <div className="h-2 sm:h-2.5 w-1/2 rounded bg-orange-400/20 animate-pulse mt-1" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="flex items-center justify-center py-12">
@@ -323,9 +332,13 @@ export default function SearchResults() {
             {query && (
               <div className="w-full max-w-md">
                 {isSuggesting ? (
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>正在尋找相似搜尋...</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-0.5 items-center">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:0ms]" />
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:150ms]" />
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:300ms]" />
+                    </div>
+                    <span className="text-sm text-muted-foreground">正在尋找相似搜尋</span>
                   </div>
                 ) : suggestions.length > 0 ? (
                   <div className="bg-card border border-border rounded-xl p-4">
