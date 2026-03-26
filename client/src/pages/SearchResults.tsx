@@ -208,12 +208,12 @@ export default function SearchResults() {
               <span>顯示 {(currentPage - 1) * limit + 1}-{Math.min(currentPage * limit, totalResults)} 張</span>
             </div>
             
-          <div className="grid grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3">
             {searchResults.map((card: any) => (
               <div
                 key={card.id}
                 onClick={() => handleItemClick(card)}
-                className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-110 hover:shadow-lg"
+                className="bg-card rounded-xl border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-[1.03] hover:shadow-lg"
               >
                 <div className="aspect-[2/3] relative bg-muted">
                   {card.imageUrl ? (
@@ -225,31 +225,31 @@ export default function SearchResults() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <p className="text-muted-foreground text-sm">無圖片</p>
+                      <p className="text-muted-foreground text-xs">無圖片</p>
                     </div>
                   )}
                 </div>
-                <div className="p-1.5 sm:p-2">
+                <div className="p-2">
                   {card.productType === 'sealed_product' && (
-                    <span className="inline-block text-[8px] sm:text-[9px] bg-primary/20 text-primary px-1 py-0.5 rounded mb-0.5 font-medium">
+                    <span className="inline-block text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded mb-1 font-medium">
                       卡盒
                     </span>
                   )}
-                  <h3 className="font-semibold text-foreground text-[10px] sm:text-xs mb-0.5 truncate">
+                  <h3 className="font-semibold text-foreground text-xs mb-0.5 line-clamp-2 leading-tight">
                     {card.name}
                   </h3>
                   {card.nameJa && (
-                    <p className="text-[9px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1 truncate line-clamp-1">
+                    <p className="text-[10px] text-muted-foreground mb-0.5 truncate">
                       {card.nameJa}
                     </p>
                   )}
                   {card.cardNumber && (
-                    <p className="text-[9px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">
+                    <p className="text-[10px] text-muted-foreground mb-1">
                       #{card.cardNumber}
                     </p>
                   )}
                   {card.latestPrice && (
-                    <p className="text-xs sm:text-sm font-bold text-primary">
+                    <p className="text-xs font-bold text-primary">
                       {formatCurrency(card.latestPrice)}
                     </p>
                   )}

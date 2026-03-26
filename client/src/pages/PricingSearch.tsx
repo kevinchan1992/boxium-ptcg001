@@ -201,14 +201,14 @@ export default function PricingSearch() {
         </div>
       ) : searchResults.length > 0 ? (
         <>
-          <div className="grid grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3">
             {searchResults.map((card: any) => {
               const lowestPrice = lowestPrices[card.id];
               return (
                 <div
                   key={card.id}
                   onClick={() => handleCardClick(card.id)}
-                  className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-110 hover:shadow-lg"
+                  className="bg-card rounded-xl border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-[1.03] hover:shadow-lg"
                 >
                   <div className="aspect-[2/3] relative bg-muted">
                     {card.imageUrl ? (
@@ -220,36 +220,36 @@ export default function PricingSearch() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <p className="text-muted-foreground text-sm">{t("pricing.noImage")}</p>
+                        <p className="text-muted-foreground text-xs">{t("pricing.noImage")}</p>
                       </div>
                     )}
                   </div>
-                  <div className="p-1.5 sm:p-2">
-                    <h3 className="font-semibold text-foreground text-[10px] sm:text-xs mb-0.5 truncate">
+                  <div className="p-2">
+                    <h3 className="font-semibold text-foreground text-xs mb-0.5 line-clamp-2 leading-tight">
                       {card.name}
                     </h3>
                     {card.nameJa && (
-                      <p className="text-[9px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1 truncate line-clamp-1">
+                      <p className="text-[10px] text-muted-foreground mb-0.5 truncate">
                         {card.nameJa}
                       </p>
                     )}
                     {card.cardNumber && (
-                      <p className="text-[9px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">
+                      <p className="text-[10px] text-muted-foreground mb-1">
                         #{card.cardNumber}
                       </p>
                     )}
                     {/* Lowest active listing price from SNKRDUNK */}
                     {lowestPrice !== undefined ? (
-                      <div className="flex items-center gap-0.5 mt-0.5">
-                        <ShoppingBag className="w-2.5 h-2.5 text-orange-400 flex-shrink-0" />
-                        <p className="text-[9px] sm:text-xs font-bold text-orange-400">
-                          HK${lowestPrice.toLocaleString()}起
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <ShoppingBag className="w-3 h-3 text-orange-400 flex-shrink-0" />
+                        <p className="text-xs font-bold text-orange-400">
+                          HKD {lowestPrice.toLocaleString()}起
                         </p>
                       </div>
                     ) : isRefreshing ? (
-                      <div className="flex items-center gap-0.5 mt-0.5">
-                        <RefreshCw className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 animate-spin" />
-                        <p className="text-[9px] sm:text-xs text-muted-foreground">更新中</p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <RefreshCw className="w-3 h-3 text-muted-foreground flex-shrink-0 animate-spin" />
+                        <p className="text-xs text-muted-foreground">更新中</p>
                       </div>
                     ) : null}
                   </div>
