@@ -8,94 +8,122 @@ export default function Footer() {
 
   return (
     <footer style={{ backgroundColor: "#06038d" }} className="border-t border-white/10">
-      {/* Main footer content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        {/*
-          Responsive grid:
-          - Mobile  (< sm):  1 col, stacked
-          - Tablet  (sm–lg): 2 cols
-          - Desktop (≥ lg):  4 cols side-by-side
-        */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
-          {/* Col 1 – Brand */}
-          <div className="sm:col-span-2 lg:col-span-1">
+        {/* Top row: Logo + Social (mobile: side by side) */}
+        <div className="flex items-start justify-between mb-5">
+          {/* Brand */}
+          <div className="flex-1 min-w-0">
             <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
               <img
                 src="/boxium-logo.png"
                 alt="BOXIUM Logo"
-                className="h-16 mb-3 cursor-pointer hover:opacity-90 transition-opacity"
+                className="h-10 sm:h-12 mb-1.5 cursor-pointer hover:opacity-90 transition-opacity"
               />
             </Link>
-            <p className="text-white/70 text-xs leading-relaxed">
+            <p className="text-white/60 text-xs leading-relaxed hidden sm:block max-w-xs">
               {t("footer.description")}
             </p>
           </div>
 
-          {/* Col 2 – Quick Links */}
+          {/* Social icons – always visible top-right on mobile */}
+          <div className="flex-shrink-0 ml-4">
+            <p className="text-white/50 text-xs uppercase tracking-wider mb-2 text-right">Follow Us</p>
+            <div className="flex gap-2 justify-end">
+              <a
+                href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Facebook"
+                className="flex items-center justify-center w-7 h-7 rounded-full border border-white/20 text-white/70 hover:text-[#FEDD00] hover:border-[#FEDD00] transition-colors"
+              >
+                <Facebook className="h-3.5 w-3.5" />
+              </a>
+              <a
+                href="https://www.instagram.com/boxium.gamecard?igsh=MTBha2wyNWR4d3lpcQ%3D%3D&utm_source=qr"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Instagram"
+                className="flex items-center justify-center w-7 h-7 rounded-full border border-white/20 text-white/70 hover:text-[#FEDD00] hover:border-[#FEDD00] transition-colors"
+              >
+                <Instagram className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Description – mobile only (below logo) */}
+        <p className="text-white/60 text-xs leading-relaxed sm:hidden mb-4">
+          {t("footer.description")}
+        </p>
+
+        {/* Links grid: 2 cols on mobile, 3 cols on tablet, 4 cols on desktop */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-4 sm:gap-x-6">
+
+          {/* Quick Links */}
           <div>
-            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">
+            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-2">
               {t("footer.quickLinks")}
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               <li>
-                <Link href="/research" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                <Link href="/research" className="text-white/65 hover:text-[#FEDD00] transition-colors text-xs sm:text-sm">
                   卡牌搜尋
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                <Link href="/pricing" className="text-white/65 hover:text-[#FEDD00] transition-colors text-xs sm:text-sm">
                   市場格價
                 </Link>
               </li>
               <li>
-                <Link href="/marketplace" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                <Link href="/marketplace" className="text-white/65 hover:text-[#FEDD00] transition-colors text-xs sm:text-sm">
                   市集
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                <Link href="/blog" className="text-white/65 hover:text-[#FEDD00] transition-colors text-xs sm:text-sm">
                   最新消息
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Col 3 – About Us */}
+          {/* About Us */}
           <div>
-            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">
+            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-2">
               {t("footer.aboutUs")}
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               <li>
-                <Link href="/about" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                <Link href="/about" className="text-white/65 hover:text-[#FEDD00] transition-colors text-xs sm:text-sm">
                   {t("footer.platformIntro")}
                 </Link>
               </li>
               <li>
-                <Link href="/disclaimer" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                <Link href="/disclaimer" className="text-white/65 hover:text-[#FEDD00] transition-colors text-xs sm:text-sm">
                   {t("footer.disclaimer")}
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                <Link href="/terms" className="text-white/65 hover:text-[#FEDD00] transition-colors text-xs sm:text-sm">
                   {t("footer.terms")}
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="text-white/70 hover:text-[#FEDD00] transition-colors text-sm">
+                <Link href="/privacy" className="text-white/65 hover:text-[#FEDD00] transition-colors text-xs sm:text-sm">
                   {t("footer.privacy")}
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Col 4 – Social */}
-          <div>
-            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">
+          {/* Social – tablet/desktop only (already shown top-right on mobile) */}
+          <div className="hidden sm:block lg:col-span-2">
+            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-2">
               Follow Us
             </h4>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <a
                 href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr"
                 target="_blank"
@@ -116,12 +144,13 @@ export default function Footer() {
               </a>
             </div>
           </div>
+
         </div>
       </div>
 
       {/* Bottom bar */}
       <div className="border-t border-white/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex flex-row items-center justify-between gap-2">
           <p className="text-white/50 text-xs">
             © {currentYear} BOXIUM. All rights reserved.
           </p>
