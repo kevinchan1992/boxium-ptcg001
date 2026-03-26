@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useLocation, useSearch, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -695,7 +695,9 @@ export default function Marketplace() {
             {/* Left: Branding */}
             <div className="mb-4 md:mb-0 md:shrink-0">
               <div className="flex items-center gap-3 mb-1.5">
-                <img src="/boxium-logo.png" alt="BOXIUM" className="h-9 w-auto object-contain" />
+                <Link href="/">
+                  <img src="/boxium-logo.png" alt="BOXIUM" className="h-9 w-auto object-contain hover:opacity-80 transition-opacity cursor-pointer" />
+                </Link>
                 <div className="h-7 w-px bg-white/20" />
                 <span className="text-[#FEDD00] font-bold text-xl tracking-wide">商城</span>
               </div>
