@@ -11,7 +11,7 @@ import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/
 import {
   Package, ArrowLeft, CheckCircle, Truck, Clock, XCircle, AlertCircle,
   ChevronDown, ChevronUp, MapPin, Phone, User, CreditCard, Loader2,
-  Star, MessageSquare, Flag, Tag
+  Star, MessageSquare, Flag, Tag, Camera, ImageIcon, RotateCcw
 } from "lucide-react";
 
 const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -435,6 +435,32 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
             <span className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
               <AlertCircle className="w-3.5 h-3.5" />爭議處理中，請等待管理員回覆
             </span>
+          )}
+          {order.paymentMethod === "alipay_hk" && order.alipayProofStatus === "pending_review" && (
+            <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+              <Camera className="w-3.5 h-3.5" />截圖審核中，請耐心等待管理員確認
+            </span>
+          )}
+          {order.paymentMethod === "alipay_hk" && order.alipayProofStatus === "approved" && (
+            <span className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+              <CheckCircle className="w-3.5 h-3.5" />截圖已核准，付款確認完成
+            </span>
+          )}
+          {order.paymentMethod === "alipay_hk" && order.alipayProofStatus === "rejected" && (
+            <span className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 flex items-center gap-1 flex-wrap">
+              <RotateCcw className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>截圖審核未通過，請重新上傳</span>
+              {order.paymentRejectionReason && (
+                <span className="w-full mt-0.5 text-red-600">原因：{order.paymentRejectionReason}</span>
+              )}
+            </span>
+          )}
+          {order.paymentMethod === "alipay_hk" && !order.alipayProofStatus && order.orderStatus === "pending_payment" && !order.alipayProofImageUrl && (
+            <Link href={`/orders/${order.orderNo}`}>
+              <span className="text-xs text-[#06038d] bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1 cursor-pointer hover:bg-blue-100 transition-colors">
+                <ImageIcon className="w-3.5 h-3.5" />尚未上傳付款截圖，點此前往上傳
+              </span>
+            </Link>
           )}
         </div>
       )}

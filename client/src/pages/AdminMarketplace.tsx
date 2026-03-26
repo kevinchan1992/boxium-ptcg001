@@ -2761,6 +2761,21 @@ function AlipayPendingTab() {
                       <Eye className="w-3 h-3" />查看付款截圖
                     </a>
                   )}
+                  {order.alipayProofStatus === "pending_review" && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                      ⏳ 截圖待審核
+                    </span>
+                  )}
+                  {order.alipayProofStatus === "approved" && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                      ✅ 截圖已核准
+                    </span>
+                  )}
+                  {order.alipayProofStatus === "rejected" && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                      ❌ 截圖已拒絕
+                    </span>
+                  )}
                   {order.alipayProofImageUrl && !order.aiVerificationResult && (
                     aiVerifyingIds.has(order.id) ? (
                       <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
@@ -2817,6 +2832,16 @@ function AlipayPendingTab() {
                 <p>金額：<strong>HKD {parseFloat(selectedOrder.subtotalHkd || "0").toFixed(2)}</strong></p>
                 {selectedOrder.shippingName && <p>買家：<strong>{selectedOrder.shippingName}</strong></p>}
               </div>
+              {selectedOrder.alipayProofStatus && (
+                <div className={`rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-2 ${
+                  selectedOrder.alipayProofStatus === "pending_review" ? "bg-amber-50 border border-amber-200 text-amber-800" :
+                  selectedOrder.alipayProofStatus === "approved" ? "bg-green-50 border border-green-200 text-green-800" :
+                  "bg-red-50 border border-red-200 text-red-800"
+                }`}>
+                  {selectedOrder.alipayProofStatus === "pending_review" ? "⏳ 截圖待審核" :
+                   selectedOrder.alipayProofStatus === "approved" ? "✅ 截圖已核准" : "❌ 截圖已拒絕"}
+                </div>
+              )}
               {selectedOrder.alipayProofImageUrl && (
                 <img src={selectedOrder.alipayProofImageUrl} alt="付款截圖" className="rounded-lg border max-h-48 object-contain w-full" />
               )}

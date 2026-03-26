@@ -985,6 +985,29 @@ export default function OrderDetail() {
           )}
         </div>
 
+        {/* Payment Proof Status Banner */}
+        {isBuyer && order.paymentMethod === "alipay_hk" && (order as any).alipayProofStatus === "pending_review" && (
+          <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex items-start gap-3">
+            <div className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-amber-800 text-sm">截圖審核中</p>
+              <p className="text-amber-700 text-xs mt-1">管理員正在核對您的付款截圖，通常在 1 個工作日內完成。</p>
+            </div>
+          </div>
+        )}
+        {isBuyer && order.paymentMethod === "alipay_hk" && (order as any).alipayProofStatus === "approved" && (
+          <div className="bg-green-50 border border-green-300 rounded-xl p-4 flex items-start gap-3">
+            <div className="w-5 h-5 flex-shrink-0 mt-0.5 text-green-500">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-green-800 text-sm">截圖已核准 ✅</p>
+              <p className="text-green-700 text-xs mt-1">您的付款截圖已通過管理員審核，付款已確認完成。</p>
+            </div>
+          </div>
+        )}
         {/* Payment Rejected Banner */}
         {isBuyer && order.orderStatus === "pending_payment" && order.paymentMethod === "alipay_hk" && (order as any).paymentRejectionReason && (
           <div className="bg-red-50 border border-red-300 rounded-xl p-4 flex items-start gap-3">

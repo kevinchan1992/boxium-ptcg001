@@ -824,6 +824,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   alipayProofImageUrl: text("alipayProofImageUrl"), // S3 URL of payment proof screenshot
   alipayProofSubmittedAt: timestamp("alipayProofSubmittedAt"), // When buyer submitted the proof screenshot
   alipayReviewReminderSentAt: timestamp("alipayReviewReminderSentAt"), // When 24hr reminder was sent to admin
+  alipayProofStatus: mysqlEnum("alipayProofStatus", ["pending_review", "approved", "rejected"]), // Proof review status visible to buyer
   aiVerificationResult: text("aiVerificationResult"), // JSON: { verified, detectedAmount, confidence, reason }
   paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "failed", "refunded", "cancelled"]).default("pending").notNull(),
   // Order status

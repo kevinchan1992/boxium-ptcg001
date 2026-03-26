@@ -653,7 +653,7 @@ export const marketplaceRouter = router({
           if (order.paymentMethod !== "alipay_hk") { results.push({ orderNo, success: false, error: "\u975e\u652f\u4ed8\u5bf6\u8a02\u55ae" }); continue; }
           if (order.orderStatus === "cancelled") { results.push({ orderNo, success: false, error: "\u8a02\u55ae\u5df2\u53d6\u6d88" }); continue; }
           if (order.paymentStatus === "paid") { results.push({ orderNo, success: false, error: "\u5df2\u4ed8\u6b3e\u78ba\u8a8d" }); continue; }
-          await updateMarketplaceOrder(order.id, { alipayProofImageUrl: url, alipayProofSubmittedAt: new Date(), alipayReviewReminderSentAt: null });
+          await updateMarketplaceOrder(order.id, { alipayProofImageUrl: url, alipayProofSubmittedAt: new Date(), alipayReviewReminderSentAt: null, alipayProofStatus: 'pending_review' });
           results.push({ orderNo, success: true });
         } catch (err: any) {
           results.push({ orderNo, success: false, error: err?.message ?? "\u672a\u77e5\u932f\u8aa4" });
@@ -1451,6 +1451,7 @@ export const marketplaceRouter = router({
       await updateMarketplaceOrder(input.orderId, {
         paymentStatus: "paid",
         orderStatus: "payment_received",
+        alipayProofStatus: "approved",
       });
       // Mark listing as sold
       if (order.listingId) {
@@ -1559,6 +1560,7 @@ export const marketplaceRouter = router({
         alipayProofImageUrl: null,
         aiVerificationResult: null,
         paymentRejectionReason: input.reason,
+        alipayProofStatus: "rejected",
       });
       // Notify buyer of rejection with reason
       await createNotification({
