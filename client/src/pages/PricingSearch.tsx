@@ -192,7 +192,7 @@ export default function PricingSearch() {
 
       {/* Results Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 sm:gap-3">
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 sm:gap-3">
           {Array.from({ length: 20 }).map((_, i) => (
             <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
               <div className="aspect-[2/3] bg-muted animate-pulse" />
@@ -213,7 +213,7 @@ export default function PricingSearch() {
         </div>
       ) : searchResults.length > 0 ? (
         <>
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5 sm:gap-2">
             {searchResults.map((card: any) => {
               const lowestPrice = lowestPrices[card.id];
               return (

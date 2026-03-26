@@ -167,7 +167,7 @@ export default function Home() {
                   {t("home.startExploring")}
                 </Button>
               </Link>
-              <Link href="/marketplace">
+              <Link href="/pricing">
                 <Button
                   className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2 border-[#FEDD00] bg-transparent text-[#FEDD00] hover:bg-[#FEDD00]/10"
                 >
