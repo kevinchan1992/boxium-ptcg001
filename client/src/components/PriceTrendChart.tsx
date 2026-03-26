@@ -57,8 +57,8 @@ export function PriceTrendChart({
       })();
 
   const formatPrice = (price: number) => {
-    if (price >= 1000) return `$${(price / 1000).toFixed(1)}k`;
-    return `$${price.toFixed(0)}`;
+    if (price >= 1000) return `HKD ${(price / 1000).toFixed(1)}k`;
+    return `HKD ${price.toFixed(0)}`;
   };
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -120,7 +120,8 @@ export function PriceTrendChart({
         </div>
         <div className="flex flex-col items-center justify-center h-48 bg-zinc-900/30 gap-3">
           <TrendingUp className="w-10 h-10 text-zinc-700" />
-          <p className="text-zinc-500 text-sm">{t("cardDetail.noData")}</p>
+          <p className="text-zinc-400 text-sm font-medium">{t("cardDetail.noPsa10Data", "此卡牌暫無 PSA 10 成交記錄")}</p>
+          <p className="text-zinc-600 text-xs">{t("cardDetail.noPsa10DataSub", "PSA 10 成交數據將在有新記錄時自動更新")}</p>
         </div>
       </div>
     );

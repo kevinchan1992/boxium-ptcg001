@@ -6334,3 +6334,13 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 全頁面統一 border accent（左側黃色豎條）
 - [x] TypeScript 零錯誤
 - [x] 保存 checkpoint
+
+---
+
+## 🔧 三項改進（2026-03-26）
+
+- [x] PriceTrendChart Y 軸改 HKD 格式（HKD 1.6k）
+- [x] PriceTrendChart 無資料時顯示「此卡牌暫無 PSA 10 成交記錄」友好提示
+- [x] 修復市集維護模式後端 procedures（已完整實作，資料庫表已存在）
+- [x] 補齊 AdminMarketplace 白名單管理 UI（已完整實作）
+- [x] 確認維護模式對非白名單用戶生效（目前維護模式已開啟）

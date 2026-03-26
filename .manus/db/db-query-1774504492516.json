@@ -1,0 +1,17 @@
+{
+  "query": "SELECT * FROM systemSettings WHERE settingKey = 'marketplace_maintenance_mode';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT * FROM systemSettings WHERE settingKey = 'marketplace_maintenance_mode';",
+  "rows": [
+    {
+      "id": "30001",
+      "settingKey": "marketplace_maintenance_mode",
+      "settingValue": "true",
+      "description": "市集維護模式開關",
+      "updatedAt": "2026-03-26 00:22:39"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsettingKey\tsettingValue\tdescription\tupdatedAt\n30001\tmarketplace_maintenance_mode\ttrue\t市集維護模式開關\t2026-03-26 00:22:39\n",
+  "stderr": "",
+  "execution_time_ms": 1619
+}
