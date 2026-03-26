@@ -1,17 +1,14 @@
 import React, { useState } from "react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface PriceTrendData {
@@ -45,36 +42,41 @@ export function PriceTrendChart({
   const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("all");
 
-  // Filter data based on time range using actual dates
-  const filteredData = timeRange === "all" 
-    ? trendData 
+  const filteredData = timeRange === "all"
+    ? trendData
     : (() => {
         const now = new Date();
         const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90;
         const cutoffDate = new Date(now);
         cutoffDate.setDate(cutoffDate.getDate() - days);
-        
         return trendData.filter(item => {
           const itemDate = new Date(item.date);
           return itemDate >= cutoffDate;
         });
       })();
 
-  // Format price for display
   const formatPrice = (price: number) => {
-    return `$${price.toFixed(2)}`;
+    if (price >= 1000) return `$${(price / 1000).toFixed(1)}k`;
+    return `$${price.toFixed(0)}`;
   };
 
-  // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-          <p className="text-sm font-medium text-foreground">{data.date}</p>
+        <div className="bg-[#0A1628] border border-[#1565C0]/60 rounded-lg p-3 shadow-xl shadow-black/50">
+          <p className="text-xs text-zinc-400 mb-1.5">{data.date}</p>
           {data.snkrdunkPrice && (
-            <p className="text-sm text-blue-500">
-              SNKRDUNK: {formatPrice(data.snkrdunkPrice)} ({data.snkrdunkCount} records)
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#FFD600] inline-block" />
+              <p className="text-sm font-bold text-white">
+                ¥{data.snkrdunkPrice.toLocaleString()}
+              </p>
+            </div>
+          )}
+          {data.snkrdunkCount && (
+            <p className="text-[10px] text-zinc-500 mt-1">
+              {data.snkrdunkCount} {t("cardDetail.records", "筆成交")}
             </p>
           )}
         </div>
@@ -83,99 +85,159 @@ export function PriceTrendChart({
     return null;
   };
 
+  const timeRangeOptions = [
+    { key: "7d" as const, label: t("cardDetail.timeRange.7days") },
+    { key: "30d" as const, label: t("cardDetail.timeRange.30days") },
+    { key: "90d" as const, label: t("cardDetail.timeRange.90days") },
+    { key: "all" as const, label: t("cardDetail.timeRange.all") },
+  ];
+
   if (isLoading) {
     return (
-      <Card className="p-6 bg-card border-border">
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="rounded-xl overflow-hidden border border-zinc-800">
+        <div className="bg-zinc-900 px-4 py-3 border-b border-zinc-800">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block" />
+            <span className="text-sm font-semibold text-white">{t("cardDetail.chartTitle")}</span>
+          </div>
         </div>
-      </Card>
+        <div className="flex items-center justify-center h-64 bg-zinc-900/30">
+          <Loader2 className="w-6 h-6 animate-spin text-[#FFD600]" />
+        </div>
+      </div>
     );
   }
 
   if (filteredData.length === 0) {
     return (
-      <Card className="p-6 bg-card border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-4">{t("cardDetail.chartTitle")}</h3>
-        <div className="flex items-center justify-center h-96 text-muted-foreground">
-          {t("cardDetail.noData")}
+      <div className="rounded-xl overflow-hidden border border-zinc-800">
+        <div className="bg-zinc-900 px-4 py-3 border-b border-zinc-800">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block" />
+            <span className="text-sm font-semibold text-white">{t("cardDetail.chartTitle")}</span>
+          </div>
         </div>
-      </Card>
+        <div className="flex flex-col items-center justify-center h-48 bg-zinc-900/30 gap-3">
+          <TrendingUp className="w-10 h-10 text-zinc-700" />
+          <p className="text-zinc-500 text-sm">{t("cardDetail.noData")}</p>
+        </div>
+      </div>
     );
   }
 
+  const prices = filteredData.map(d => d.snkrdunkPrice).filter(Boolean) as number[];
+  const minVal = prices.length > 0 ? Math.min(...prices) : 0;
+  const maxVal = prices.length > 0 ? Math.max(...prices) : 0;
+  const padding = (maxVal - minVal) * 0.1 || maxVal * 0.1;
+  const yMin = Math.max(0, minVal - padding);
+  const yMax = maxVal + padding;
+
   return (
-    <Card className="p-6 bg-card border-border">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">{t("cardDetail.chartTitle")} - {cardName}</h3>
-
-        {/* Time Range Buttons */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <span className="text-xs sm:text-sm text-muted-foreground self-center mr-0 sm:mr-2 w-full sm:w-auto mb-1 sm:mb-0">{t("cardDetail.timeRangeLabel")}：</span>
-          <Button
-            variant={timeRange === "7d" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setTimeRange("7d")}
-            className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-8 sm:h-9"
-          >
-            {t("cardDetail.timeRange.7days")}
-          </Button>
-          <Button
-            variant={timeRange === "30d" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setTimeRange("30d")}
-            className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-8 sm:h-9"
-          >
-            {t("cardDetail.timeRange.30days")}
-          </Button>
-          <Button
-            variant={timeRange === "90d" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setTimeRange("90d")}
-            className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-8 sm:h-9"
-          >
-            {t("cardDetail.timeRange.90days")}
-          </Button>
-          <Button
-            variant={timeRange === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setTimeRange("all")}
-            className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-8 sm:h-9"
-          >
-            {t("cardDetail.timeRange.all")}
-          </Button>
+    <div className="rounded-xl overflow-hidden border border-zinc-800">
+      {/* Header */}
+      <div className="bg-zinc-900 px-4 py-3 border-b border-zinc-800">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block" />
+            <h3 className="text-sm font-semibold text-white">
+              {t("cardDetail.chartTitle")}
+              <span className="text-zinc-400 font-normal ml-2 text-xs">· {cardName}</span>
+            </h3>
+          </div>
+          {/* Time Range Selector */}
+          <div className="flex items-center gap-1 bg-zinc-800/80 rounded-lg p-1">
+            {timeRangeOptions.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTimeRange(key)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                  timeRange === key
+                    ? "bg-[#1565C0] text-white shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
+      </div>
 
-        {/* Chart */}
-        <ResponsiveContainer width="100%" height={300} className="sm:h-[400px]">
-          <LineChart data={filteredData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+      {/* Chart Body */}
+      <div className="bg-[#0A1628]/60 p-4">
+        <ResponsiveContainer width="100%" height={260}>
+          <AreaChart
+            data={filteredData}
+            margin={{ top: 8, right: 8, left: -8, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#FFD600" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#FFD600" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#1e2a3a"
+              vertical={false}
+            />
             <XAxis
               dataKey="date"
-              stroke="#9CA3AF"
-              style={{ fontSize: "10px" }}
-              tick={{ fill: "#9CA3AF" }}
-              className="sm:text-xs"
+              stroke="#374151"
+              tick={{ fill: "#6B7280", fontSize: 10 }}
+              tickLine={false}
+              axisLine={{ stroke: "#1e2a3a" }}
+              interval="preserveStartEnd"
             />
             <YAxis
-              stroke="#3B82F6"
-              style={{ fontSize: "10px" }}
-              tick={{ fill: "#3B82F6" }}
-              className="sm:text-xs"
+              stroke="#374151"
+              tick={{ fill: "#6B7280", fontSize: 10 }}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={formatPrice}
+              domain={[yMin, yMax]}
             />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Line
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ stroke: "#FFD600", strokeWidth: 1, strokeDasharray: "4 4" }}
+            />
+            <Area
               type="monotone"
               dataKey="snkrdunkPrice"
-              stroke="#3B82F6"
+              stroke="#FFD600"
+              strokeWidth={2}
+              fill="url(#priceGradient)"
               dot={false}
-              name="SNKRDUNK PSA 10 價格"
-              isAnimationActive={false}
+              activeDot={{
+                r: 4,
+                fill: "#FFD600",
+                stroke: "#0A1628",
+                strokeWidth: 2,
+              }}
+              name="SNKRDUNK PSA 10"
+              isAnimationActive={true}
+              animationDuration={600}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
+
+        {/* Stats Footer */}
+        {stats.snkrdunk.avgPrice > 0 && (
+          <div className="mt-3 pt-3 border-t border-zinc-800/60 grid grid-cols-4 gap-2">
+            {[
+              { label: t("cardDetail.avgPrice", "均價"), value: `¥${stats.snkrdunk.avgPrice.toLocaleString()}`, color: "text-[#FFD600]" },
+              { label: t("cardDetail.latestPrice", "最新"), value: `¥${stats.snkrdunk.latestPrice.toLocaleString()}`, color: "text-white" },
+              { label: t("cardDetail.minPriceLabel", "最低"), value: `¥${stats.snkrdunk.minPrice.toLocaleString()}`, color: "text-green-400" },
+              { label: t("cardDetail.maxPriceLabel", "最高"), value: `¥${stats.snkrdunk.maxPrice.toLocaleString()}`, color: "text-red-400" },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="text-center">
+                <p className="text-[10px] text-zinc-500 mb-0.5">{label}</p>
+                <p className={`text-xs font-bold ${color}`}>{value}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    </Card>
+    </div>
   );
 }

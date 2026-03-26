@@ -6312,3 +6312,25 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 在 Cart.tsx 加入維護模式攔截
 - [x] TypeScript 零錯誤確認
 - [x] 保存 checkpoint
+
+---
+
+## ✅ CardDetail 頁面重新設計（2026-03-26）
+
+### 設計目標
+- 整體顏色協調：深黑底色 + 深藍卡片 + 黃色 (#FFD600) accent
+- 更專業的視覺層次和排版
+- 圖表從 LineChart 改為 AreaChart（黃色折線 + 漸層填充）
+- 參考 MarketplaceListing 詳細頁的深藍卡片風格
+
+### 完成項目
+- [x] Hero 區域重新設計：卡片圖片 + 標題 + 操作按鈕 + 評級切換
+- [x] 參考價格卡片：深藍背景 (#0D47A1)，三欄顯示均價/最低/最高，黃色均價
+- [x] 7日漲跌幅指示器（TrendingUp/TrendingDown icon）
+- [x] PriceTrendChart 重新設計：AreaChart + 黃色折線 + 深藍背景 + 圖表底部統計列
+- [x] 時間範圍切換器：改為 pill 樣式 tab bar
+- [x] 成交歷史表格：深色卡片，交替行色，評級 badge 樣式
+- [x] 基本資料區域：網格排列，更清晰的標籤/值顯示
+- [x] 全頁面統一 border accent（左側黃色豎條）
+- [x] TypeScript 零錯誤
+- [x] 保存 checkpoint
