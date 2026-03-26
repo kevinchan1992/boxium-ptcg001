@@ -1,10 +1,21 @@
 import { Link } from "wouter";
-import { Facebook, Instagram } from "lucide-react";
+import { Facebook, Instagram, Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+const languages = [
+  { code: "zh-TW", label: "繁中", flag: "🇭🇰" },
+  { code: "en",    label: "EN",   flag: "🇺🇸" },
+  { code: "ja",    label: "日本語", flag: "🇯🇵" },
+];
+
 export default function Footer() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentYear = new Date().getFullYear();
+
+  const changeLanguage = (code: string) => {
+    i18n.changeLanguage(code);
+    localStorage.setItem("preferred-language", code);
+  };
 
   return (
     <footer style={{ backgroundColor: "#06038d" }} className="border-t border-white/10">
@@ -150,13 +161,32 @@ export default function Footer() {
 
       {/* Bottom bar */}
       <div className="border-t border-white/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex flex-row items-center justify-between gap-2">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex flex-row items-center justify-between gap-2 flex-wrap">
           <p className="text-white/50 text-xs">
             © {currentYear} BOXIUM. All rights reserved.
           </p>
-          <p className="text-white/40 text-xs tracking-wide">
-            Luck in Every Box
-          </p>
+
+          {/* Language switcher */}
+          <div className="flex items-center gap-1">
+            <Globe className="h-3 w-3 text-white/40 mr-0.5" />
+            {languages.map((lang, idx) => (
+              <span key={lang.code} className="flex items-center">
+                <button
+                  onClick={() => changeLanguage(lang.code)}
+                  className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+                    i18n.language === lang.code
+                      ? "text-[#FEDD00] font-semibold"
+                      : "text-white/50 hover:text-white/80"
+                  }`}
+                >
+                  {lang.label}
+                </button>
+                {idx < languages.length - 1 && (
+                  <span className="text-white/20 text-xs">|</span>
+                )}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </footer>
