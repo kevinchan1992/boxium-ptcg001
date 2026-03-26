@@ -1007,6 +1007,7 @@ export const appRouter = router({
     getSimilarCards: publicProcedure
       .input(z.object({
         cardId: z.number(),
+        series: z.string().optional(),
         limit: z.number().optional().default(6),
       }))
       .query(async ({ input }) => {
@@ -1015,44 +1016,62 @@ export const appRouter = router({
         const dbConn = await (await import('./db')).getDb();
         if (!dbConn) return [];
         const { cards: cardsTable } = await import('../drizzle/schema_new');
-        const { and, ne, like } = await import('drizzle-orm');
-        // Extract character name (first word before space or bracket)
-        const nameParts = card.name.split(/[\s\[\(]/);
-        const characterName = nameParts[0] || '';
-        // Extract set code e.g. [SM11b] -> SM11b
-        const setCodeMatch = card.name.match(/\[([A-Za-z0-9]+)/);
-        const setCode = setCodeMatch ? setCodeMatch[1] : null;
+        const { and, ne, like, eq } = await import('drizzle-orm');
         let similar: any[] = [];
-        // Try: same character + same set
-        if (characterName && setCode) {
+        // Priority 1: Use series field if provided (most accurate)
+        if (input.series) {
           similar = await dbConn
             .select()
             .from(cardsTable)
             .where(
               and(
                 ne(cardsTable.id, input.cardId),
-                like(cardsTable.name, `%${characterName}%`),
-                like(cardsTable.name, `%${setCode}%`)
+                eq(cardsTable.series, input.series)
               )
             )
             .limit(input.limit);
         }
-        // Fallback: same character name only
-        if (similar.length < 3 && characterName) {
-          const extra = await dbConn
-            .select()
-            .from(cardsTable)
-            .where(
-              and(
-                ne(cardsTable.id, input.cardId),
-                like(cardsTable.name, `%${characterName}%`)
+        // Fallback: Extract set code from name e.g. [SM11b] -> SM11b
+        if (similar.length < 3) {
+          const setCodeMatch = card.name.match(/\[([A-Za-z0-9]+)/);
+          const setCode = setCodeMatch ? setCodeMatch[1] : null;
+          if (setCode) {
+            const extra = await dbConn
+              .select()
+              .from(cardsTable)
+              .where(
+                and(
+                  ne(cardsTable.id, input.cardId),
+                  like(cardsTable.name, `%${setCode}%`)
+                )
               )
-            )
-            .limit(input.limit * 2);
-          const existingIds = new Set(similar.map((c: any) => c.id));
-          for (const c of extra) {
-            if (!existingIds.has(c.id)) similar.push(c);
-            if (similar.length >= input.limit) break;
+              .limit(input.limit * 2);
+            const existingIds = new Set(similar.map((c: any) => c.id));
+            for (const c of extra) {
+              if (!existingIds.has(c.id)) similar.push(c);
+              if (similar.length >= input.limit) break;
+            }
+          }
+        }
+        // Final fallback: same character name (first word)
+        if (similar.length < 3) {
+          const characterName = card.name.split(/[\s\[\(]/)[0] || '';
+          if (characterName) {
+            const extra = await dbConn
+              .select()
+              .from(cardsTable)
+              .where(
+                and(
+                  ne(cardsTable.id, input.cardId),
+                  like(cardsTable.name, `%${characterName}%`)
+                )
+              )
+              .limit(input.limit * 2);
+            const existingIds = new Set(similar.map((c: any) => c.id));
+            for (const c of extra) {
+              if (!existingIds.has(c.id)) similar.push(c);
+              if (similar.length >= input.limit) break;
+            }
           }
         }
         return similar.slice(0, input.limit);

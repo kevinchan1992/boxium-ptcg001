@@ -576,18 +576,18 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
       {/* Similar Cards Section */}
       {!isSealedProduct && cardId && (
-        <SimilarCardsSection cardId={cardId} currentCardName={product.name} />
+        <SimilarCardsSection cardId={cardId} series={product.series ?? null} cardName={product.name} />
       )}
     </div>
   );
 }
 
-function SimilarCardsSection({ cardId, currentCardName }: { cardId: number; currentCardName: string }) {
+function SimilarCardsSection({ cardId, series, cardName }: { cardId: number; series: string | null; cardName: string }) {
   const [, setLocation] = useLocation();
-  // Extract series keyword from card name for search
-  const seriesKeyword = currentCardName.split(/[\s\[\(]/)[0];
+  // Use series field if available, otherwise fall back to first word of card name
+  const seriesKeyword = series || cardName.split(/[\s\[\(]/)[0];
   const { data: similarCards, isLoading } = trpc.cards.getSimilarCards.useQuery(
-    { cardId, limit: 6 },
+    { cardId, series: series ?? undefined, limit: 6 },
     { enabled: !!cardId }
   );
 
@@ -600,7 +600,7 @@ function SimilarCardsSection({ cardId, currentCardName }: { cardId: number; curr
         <div className="flex items-center gap-2">
           <div className="w-1 h-5 rounded-full bg-yellow-400" />
           <h3 className="text-base font-semibold text-white">相似卡牌</h3>
-          <span className="text-xs text-zinc-500 ml-1">{seriesKeyword} 系列</span>
+          {seriesKeyword && <span className="text-xs text-zinc-500 ml-1">{seriesKeyword}</span>}
         </div>
         <button
           onClick={() => setLocation(`/search?q=${encodeURIComponent(seriesKeyword)}`)}
