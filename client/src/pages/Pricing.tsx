@@ -277,13 +277,12 @@ export default function Pricing() {
                 onClick={() => handleCardClick(card.id)}
                 className="group relative w-28 sm:w-32 transition-transform hover:scale-105"
               >
-                <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-card border border-border shadow-sm">
+                <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
                   <img
                     src={card.imageUrl}
                     alt={card.name}
                     className="w-full h-full object-cover transition-transform group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
 
               </button>
