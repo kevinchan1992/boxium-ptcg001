@@ -669,7 +669,7 @@ export default function OrderDetail() {
 
   const uploadDisputeEvidenceMutation = trpc.marketplace.uploadDisputeEvidence.useMutation();
 
-  const reuploadProofMutation = trpc.marketplace.submitAlipayProof.useMutation({
+  const reuploadProofMutation = trpc.marketplace.resubmitAlipayProof.useMutation({
     onError: (e: any) => toast.error(e.message || "上傳失敗，請重試"),
   });
 
@@ -683,7 +683,7 @@ export default function OrderDetail() {
     onError: (e: any) => { setIsReuploadVerifying(false); toast.error("驗證失敗：" + e.message); },
   });
 
-  const handleReuploadProof = async (e: React.ChangeEvent<HTMLInputElement>, orderId: number, amount: string) => {
+  const handleReuploadProof = async (e: React.ChangeEvent<HTMLInputElement>, orderNo: string, amount: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { toast.error("截圖不能超過 5MB"); return; }
@@ -695,7 +695,7 @@ export default function OrderDetail() {
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      const result = await reuploadProofMutation.mutateAsync({ orderId, proofImageBase64: base64, mimeType: file.type });
+      const result = await reuploadProofMutation.mutateAsync({ orderNo, proofImageBase64: base64, mimeType: file.type });
       setReuploadProofUrl(result.proofUrl);
       toast.success("截圖已上傳，正在 AI 驗證金額...");
       setIsReuploadVerifying(true);
@@ -1009,14 +1009,24 @@ export default function OrderDetail() {
           </div>
         )}
         {/* Payment Rejected Banner */}
-        {isBuyer && order.orderStatus === "pending_payment" && order.paymentMethod === "alipay_hk" && (order as any).paymentRejectionReason && (
-          <div className="bg-red-50 border border-red-300 rounded-xl p-4 flex items-start gap-3">
-            <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-red-800 text-sm">付款截圖已被拒絕</p>
-              <p className="text-red-700 text-xs mt-1">管理員拒絕原因：{(order as any).paymentRejectionReason}</p>
-              <p className="text-red-600 text-xs mt-1">請重新上傳正確的付款截圖，或選擇其他付款方式。</p>
+        {isBuyer && order.paymentMethod === "alipay_hk" && (order as any).alipayProofStatus === "rejected" && (
+          <div className="bg-red-50 border border-red-300 rounded-xl p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-red-800 text-sm">付款截圖已被拒絕</p>
+                {(order as any).paymentRejectionReason && (
+                  <p className="text-red-700 text-xs mt-1">管理員拒絕原因：{(order as any).paymentRejectionReason}</p>
+                )}
+                <p className="text-red-600 text-xs mt-1">請重新上傳正確的付款截圖。</p>
+              </div>
             </div>
+            <button
+              className="w-full text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg py-2.5 transition-colors flex items-center justify-center gap-2"
+              onClick={() => { setReuploadProofUrl(""); setReuploadVerifyResult(null); setShowReuploadDialog(true); }}
+            >
+              <span>🔄</span> 重新上傳付款截圖
+            </button>
           </div>
         )}
 
@@ -1361,7 +1371,7 @@ export default function OrderDetail() {
                     </div>
                   ) : (
                     <div>
-                      <input type="file" accept="image/*" onChange={(e) => handleReuploadProof(e, order!.id, order?.subtotalHkd as string ?? "0")} className="hidden" id="reupload-proof-input" />
+                      <input type="file" accept="image/*" onChange={(e) => handleReuploadProof(e, order!.orderNo, order?.subtotalHkd as string ?? "0")} className="hidden" id="reupload-proof-input" />
                       <label htmlFor="reupload-proof-input" className="cursor-pointer">
                         <div className="text-3xl mb-2">📷</div>
                         <p className="text-sm text-gray-500">點擊上傳截圖</p>

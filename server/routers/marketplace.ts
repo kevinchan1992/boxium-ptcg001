@@ -669,6 +669,36 @@ export const marketplaceRouter = router({
       return { success: successCount > 0, proofUrl: url, results, successCount };
     }),
   // ============================================================
+  // BUYER - Resubmit Alipay Proof (after rejection)
+  // =============================================================
+  resubmitAlipayProof: protectedProcedure
+    .input(z.object({
+      orderNo: z.string(),
+      proofImageBase64: z.string(),
+      mimeType: z.string().default('image/jpeg'),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderByNo(input.orderNo);
+      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' });
+      if (order.paymentMethod !== 'alipay_hk') throw new TRPCError({ code: 'BAD_REQUEST', message: '非支付寶訂單' });
+      if (order.alipayProofStatus !== 'rejected') throw new TRPCError({ code: 'BAD_REQUEST', message: '只有被拒絕的截圖才能重新提交' });
+      const { storagePut } = await import('../storage');
+      const buffer = Buffer.from(input.proofImageBase64, 'base64');
+      const key = `alipay-proofs/resubmit-${input.orderNo}-${Date.now()}.jpg`;
+      const { url } = await storagePut(key, buffer, input.mimeType);
+      await updateMarketplaceOrder(order.id, {
+        alipayProofImageUrl: url,
+        alipayProofSubmittedAt: new Date(),
+        alipayProofStatus: 'pending_review',
+        paymentRejectionReason: null,
+      });
+      notifyAdmin({
+        title: '重新提交截圖待核對',
+        content: `買家已重新上傳訂單 ${input.orderNo} 的支付寶 HK 付款截圖，請前往管理後台核對收款。`,
+      }).catch(() => {});
+      return { success: true, proofUrl: url };
+    }),
+  // ============================================================
   // BUYER - Confirm Receipt + Trigger Payout
   // =============================================================
   confirmReceipt: protectedProcedure
@@ -1348,9 +1378,10 @@ export const marketplaceRouter = router({
       dateTo: z.string().optional(),   // YYYY-MM-DD
       payoutFilter: z.string().optional(), // 'pending_alipay' for unpaid alipay orders
       listingId: z.number().int().optional(), // filter by specific listing
+      proofStatus: z.string().optional(), // 'pending_review' | 'approved' | 'rejected'
     }))
     .query(async ({ input }) => {
-      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType, input.dateFrom, input.dateTo, input.payoutFilter, input.listingId);
+      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType, input.dateFrom, input.dateTo, input.payoutFilter, input.listingId, input.proofStatus);
     }),
 
   // Fix historical platform order fees (set platformFeeHkd=0, sellerReceivableHkd=subtotalHkd for all platform orders)

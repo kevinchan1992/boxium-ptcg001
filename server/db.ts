@@ -3301,7 +3301,7 @@ export async function getBuyerOrders(buyerId: number) {
     .orderBy(desc(marketplaceOrders.createdAt));
   return rows;
 }
-export async function getAdminOrders(page = 1, pageSize = 20, status?: string, sellerType?: string, dateFrom?: string, dateTo?: string, payoutFilter?: string, listingId?: number) {
+export async function getAdminOrders(page = 1, pageSize = 20, status?: string, sellerType?: string, dateFrom?: string, dateTo?: string, payoutFilter?: string, listingId?: number, proofStatus?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
@@ -3331,6 +3331,10 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
   // Optional listingId filter
   if (listingId) {
     conditions.push(eq(marketplaceOrders.listingId, listingId));
+  }
+  // Optional proofStatus filter: 'pending_review' | 'approved' | 'rejected'
+  if (proofStatus) {
+    conditions.push(eq(marketplaceOrders.alipayProofStatus, proofStatus as any));
   }
   // Alias for buyer and seller user joins to avoid column name conflicts
   const { alias } = await import('drizzle-orm/mysql-core');

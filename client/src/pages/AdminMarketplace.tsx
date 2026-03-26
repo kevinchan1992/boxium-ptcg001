@@ -1373,6 +1373,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sellerTypeFilter, setSellerTypeFilter] = useState<'all' | 'platform' | 'seller'>('all');
+  const [proofStatusFilter, setProofStatusFilter] = useState<'all' | 'pending_review' | 'rejected'>('all');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [viewListingId, setViewListingId] = useState<number | null>(null);
@@ -1410,6 +1411,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
     dateFrom: qDateFrom,
     dateTo: qDateTo,
     listingId: listingFilter ?? undefined,
+    proofStatus: proofStatusFilter === 'all' ? undefined : proofStatusFilter,
   });
   const updateStatusMutation = trpc.marketplace.adminUpdateOrderStatus.useMutation({
     onSuccess: () => { toast.success("訂單狀態已更新"); refetch(); setSelectedOrder(null); setTrackingNumber(""); invalidateStats(); },
@@ -1603,6 +1605,23 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
               onClick={() => { setSellerTypeFilter(opt.value); setPage(1); }}
               className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                 sellerTypeFilter === opt.value ? 'bg-[#06038d] text-white' : 'bg-white text-gray-900 hover:bg-gray-50'
+              }`}>{opt.label}</button>
+          ))}
+        </div>
+      </div>
+      {/* Row 1c: Alipay Proof Status filter */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-600 font-medium">截圖審核：</span>
+        <div className="flex rounded-lg overflow-hidden border border-gray-200">
+          {([
+            { value: 'all', label: '全部', activeClass: 'bg-[#06038d] text-white' },
+            { value: 'pending_review', label: '✅ 待審核', activeClass: 'bg-amber-500 text-white' },
+            { value: 'rejected', label: '❌ 已拒絕', activeClass: 'bg-red-500 text-white' },
+          ] as const).map(opt => (
+            <button key={opt.value}
+              onClick={() => { setProofStatusFilter(opt.value); setPage(1); }}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                proofStatusFilter === opt.value ? opt.activeClass : 'bg-white text-gray-900 hover:bg-gray-50'
               }`}>{opt.label}</button>
           ))}
         </div>

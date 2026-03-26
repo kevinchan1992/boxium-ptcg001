@@ -6353,3 +6353,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] CardDetail 相似卡牌推薦區塊（頁面底部，後端 getSimilarCards procedure）
 - [x] 統一全站 LOGO 點擊返回主頁（Research、Pricing 頁面加入 Link 包裝）
 - [x] 商品詳情頁麵包屑導航（MarketplaceListing 已有完整實作：商城 > 評級 > 商品名稱）
+
+## 截圖審核延伸功能（2026-03-26）
+
+- [ ] 後端：新增 resubmitAlipayProof procedure（接受 orderNo + 新截圖 URL，重置 alipayProofStatus 為 pending_review）
+- [ ] 後端：submitBatchAlipayProof 和 resubmitAlipayProof 發送 Email 通知管理員（Gmail SMTP）
+- [ ] 前端：OrderDetail.tsx 截圖被拒絕後顯示「重新上傳截圖」區塊（拖放/點擊上傳 + 預覽 + 提交按鈕）
+- [ ] 前端：AdminMarketplace.tsx 訂單列表新增「截圖待審核」快速篩選按鈕
+- [ ] 後端：getAdminOrders 支援 proofStatus 篩選參數
+- [ ] 測試並儲存 Checkpoint
