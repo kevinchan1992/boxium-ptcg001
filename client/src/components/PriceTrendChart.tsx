@@ -6,6 +6,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
 import { Loader2, TrendingUp } from "lucide-react";
@@ -42,6 +43,7 @@ export function PriceTrendChart({
 }: PriceTrendChartProps) {
   const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("all");
+  const [activeDate, setActiveDate] = useState<string | null>(null);
 
   const filteredData = timeRange === "all"
     ? trendData
@@ -59,6 +61,14 @@ export function PriceTrendChart({
   const formatPrice = (price: number) => {
     if (price >= 1000) return `${(price / 1000).toFixed(1)}k`;
     return `${price.toFixed(0)}`;
+  };
+
+  // Format date: "2026-02-17" → "02/17"
+  const formatXDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) return `${parts[1]}/${parts[2]}`;
+    return dateStr;
   };
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -171,6 +181,12 @@ export function PriceTrendChart({
           <AreaChart
             data={filteredData}
             margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            onMouseMove={(state: any) => {
+              if (state?.activePayload?.[0]?.payload?.date) {
+                setActiveDate(state.activePayload[0].payload.date);
+              }
+            }}
+            onMouseLeave={() => setActiveDate(null)}
           >
             <defs>
               <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
@@ -190,6 +206,7 @@ export function PriceTrendChart({
               tickLine={false}
               axisLine={{ stroke: "#1e2a3a" }}
               interval="preserveStartEnd"
+              tickFormatter={formatXDate}
             />
             <YAxis
               stroke="#374151"
@@ -204,7 +221,17 @@ export function PriceTrendChart({
             <Tooltip
               content={<CustomTooltip />}
               cursor={{ stroke: "#FFD600", strokeWidth: 1, strokeDasharray: "4 4" }}
+              isAnimationActive={false}
             />
+            {activeDate && (
+              <ReferenceLine
+                x={activeDate}
+                stroke="#FFD600"
+                strokeWidth={1}
+                strokeDasharray="4 4"
+                strokeOpacity={0.6}
+              />
+            )}
             <Area
               type="monotone"
               dataKey="snkrdunkPrice"
