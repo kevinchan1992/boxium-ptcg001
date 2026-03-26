@@ -400,6 +400,13 @@
       "when": 1772600000000,
       "tag": "0056_fix_price_history_jpy",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "5",
+      "when": 1772640000000,
+      "tag": "0057_cleanup_dead_columns",
+      "breakpoints": true
     }
   ]
 }

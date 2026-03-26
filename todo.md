@@ -6362,3 +6362,30 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] 前端：AdminMarketplace.tsx 訂單列表新增「截圖待審核」快速篩選按鈕
 - [ ] 後端：getAdminOrders 支援 proofStatus 篩選參數
 - [ ] 測試並儲存 Checkpoint
+
+---
+
+## ✅ 系統審計清理（2026-03-26）
+
+### 資料庫欄位清理（DB 中無數據，代碼無讀取）
+- [x] 移除 `marketplaceOrders.alipayAcquirementId`（DB 0 筆，代碼無讀取）
+- [x] 移除 `marketplaceOrders.alipayMerchantTransId`（DB 0 筆，僅寫入 null）
+- [x] 移除 `marketplaceOrders.trackingNo`（DB 0 筆，已有 trackingNumber 替代）
+- [x] 移除 `marketplaceOrders.paymentExpiresAt`（DB 0 筆，從未被寫入）
+- [x] 移除 `marketplaceListings.refMarketPriceHkd`（DB 0 筆，代碼無讀寫）
+- [x] 移除 `marketplaceListings.refMarketPriceDate`（DB 0 筆，代碼無讀寫）
+- [x] 移除 `marketplaceListings.favoriteCount`（DB 全部為 0，代碼無讀寫）
+- [x] 移除 `favorites` 表定義（DB 中本來就不存在）
+
+### 代碼清理
+- [x] 移除 `pricing.ts` 的 `search` procedure（前端無任何調用，SNKRDUNK 部分為 TODO 未實作）
+- [x] 移除 `pricing.ts` 中孤立的 `PriceListing`、`PriceStats` interface 和 `calculateStats` 函數
+- [x] 移除 `marketplace.ts` 中 `alipayMerchantTransId: null` 兩處賦值
+- [x] 移除 `AdminMarketplace.tsx` 中 `trackingNo` fallback（3 處，包含隨貨單和出貨標籤模板）
+- [x] 建立 migration 記錄 `0057_cleanup_dead_columns.sql`
+- [x] 保存 checkpoint
+
+### 保留項目（確認仍有用途）
+- eBay 相關代碼（pricing 頁面數據來源）
+- `scheduler.ts`（仍被 routers.ts import，提供排程狀態查詢功能）
+- `trackingNo` 作為 tRPC input 欄位名稱（marketplace.ts input schema）

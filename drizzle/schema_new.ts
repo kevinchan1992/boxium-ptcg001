@@ -368,19 +368,6 @@ export type SystemSetting = typeof systemSettings.$inferSelect;
 export type InsertSystemSetting = typeof systemSettings.$inferInsert;
 
 /**
- * Favorites table - stores user's favorite cards
- */
-export const favorites = mysqlTable("favorites", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(), // Foreign key to users table
-  cardId: int("cardId").notNull(), // Foreign key to cards table
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type Favorite = typeof favorites.$inferSelect;
-export type InsertFavorite = typeof favorites.$inferInsert;
-
-/**
  * Search stats table - stores eBay search statistics for monitoring
  */
 export const searchStats = mysqlTable("searchStats", {
@@ -772,9 +759,6 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   remainingQuantity: int("remainingQuantity").default(1).notNull(),
   // Images (JSON array of URLs)
   images: text("images"), // JSON array of image URLs
-  // Market reference price
-  refMarketPriceHkd: decimal("refMarketPriceHkd", { precision: 10, scale: 2 }),
-  refMarketPriceDate: timestamp("refMarketPriceDate"),
   // Status
   status: mysqlEnum("status", ["draft", "pending_review", "active", "reserved", "sold", "removed"]).default("draft").notNull(),
   rejectedReason: text("rejectedReason"),
@@ -784,7 +768,6 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   minOfferHkd: decimal("minOfferHkd", { precision: 10, scale: 2 }),
   // Metadata
   viewCount: int("viewCount").default(0).notNull(),
-  favoriteCount: int("favoriteCount").default(0).notNull(),
   listedAt: timestamp("listedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
@@ -819,8 +802,6 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 200 }),
   stripeChargeId: varchar("stripeChargeId", { length: 200 }),
   stripeTransferId: varchar("stripeTransferId", { length: 200 }),
-  alipayAcquirementId: varchar("alipayAcquirementId", { length: 100 }),
-  alipayMerchantTransId: varchar("alipayMerchantTransId", { length: 100 }),
   alipayProofImageUrl: text("alipayProofImageUrl"), // S3 URL of payment proof screenshot
   alipayProofSubmittedAt: timestamp("alipayProofSubmittedAt"), // When buyer submitted the proof screenshot
   alipayReviewReminderSentAt: timestamp("alipayReviewReminderSentAt"), // When 24hr reminder was sent to admin
@@ -865,13 +846,11 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   manualPayoutAt: timestamp("manualPayoutAt"), // For alipay_hk orders: when admin manually paid out
   manualPayoutNote: varchar("manualPayoutNote", { length: 500 }), // Admin note for manual payout
   manualPayoutProofUrl: text("manualPayoutProofUrl"), // S3 URL of payment proof screenshot
-  paymentExpiresAt: timestamp("paymentExpiresAt"),
   adminNote: text("adminNote"), // Admin internal note for this order
   paymentRejectionReason: text("paymentRejectionReason"), // Reason for rejecting alipay payment (shown to buyer)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   stripeSessionId: varchar("stripeSessionId", { length: 200 }),
-  trackingNo: varchar("trackingNo", { length: 100 }),
   batchRef: varchar("batchRef", { length: 100 }), // Groups multiple orders from same cart checkout (e.g. BATCH-20240101-001)
   cartOrderId: int("cartOrderId"), // P1: FK to cartOrders (null for legacy orders pre-P1)
 }, (table) => ({
