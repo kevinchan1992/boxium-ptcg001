@@ -278,7 +278,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
           {/* Card Image */}
           <div className="lg:col-span-1 flex justify-center lg:justify-start">
-            <div className="relative w-48 sm:w-56 md:w-64 lg:w-full max-w-xs">
+            <div className="relative w-full">
               {isSealedProduct && (
                 <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/90 text-black text-xs font-bold">
                   <Package className="w-3 h-3" />
@@ -289,11 +289,11 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-full rounded-xl shadow-2xl hover:scale-[1.02] transition-transform duration-300 border border-white/10"
+                  className="w-full rounded-xl shadow-2xl hover:scale-[1.02] transition-transform duration-300"
                   style={{ height: "auto" }}
                 />
               ) : (
-                <div className="w-full aspect-[2/3] bg-zinc-800 rounded-xl flex items-center justify-center border border-white/10">
+                <div className="w-full aspect-[2/3] bg-zinc-800 rounded-xl flex items-center justify-center">
                   <p className="text-zinc-500 text-sm">{t("home.noImage")}</p>
                 </div>
               )}
@@ -425,18 +425,6 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           </div>
         </div>
 
-        {/* ── Price Trend Chart ── */}
-        <div className="mb-4 sm:mb-6">
-          <PriceTrendChart
-            cardName={product.name}
-            trendData={activeTrendData?.trendData || []}
-            stats={activeTrendData?.stats || {
-              snkrdunk: { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 }
-            }}
-            isLoading={activeTrendLoading}
-          />
-        </div>
-
         {/* ── Price History Table ── */}
         <div className="rounded-xl overflow-hidden border border-zinc-800 mb-4 sm:mb-6">
           <div className="bg-zinc-900 px-4 py-3 flex items-center gap-2 border-b border-zinc-800">
@@ -501,6 +489,18 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               </p>
             </div>
           )}
+        </div>
+
+        {/* ── Price Trend Chart ── */}
+        <div className="mb-4 sm:mb-6">
+          <PriceTrendChart
+            cardName={product.name}
+            trendData={activeTrendData?.trendData || []}
+            stats={activeTrendData?.stats || {
+              snkrdunk: { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 }
+            }}
+            isLoading={activeTrendLoading}
+          />
         </div>
 
         {/* ── Basic Information ── */}

@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { Loader2, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { formatCurrency } from "@/lib/formatCurrency";
 
 interface PriceTrendData {
   date: string;
@@ -70,7 +71,7 @@ export function PriceTrendChart({
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#FFD600] inline-block" />
               <p className="text-sm font-bold text-white">
-                ¥{data.snkrdunkPrice.toLocaleString()}
+                {formatCurrency(data.snkrdunkPrice)}
               </p>
             </div>
           )}
@@ -137,12 +138,12 @@ export function PriceTrendChart({
       {/* Header */}
       <div className="bg-zinc-900 px-4 py-3 border-b border-zinc-800">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block" />
-            <h3 className="text-sm font-semibold text-white">
-              {t("cardDetail.chartTitle")}
-              <span className="text-zinc-400 font-normal ml-2 text-xs">· {cardName}</span>
-            </h3>
+          <div className="flex items-start gap-2">
+            <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block mt-0.5 shrink-0" />
+            <div>
+              <h3 className="text-sm font-semibold text-white">{t("cardDetail.chartTitle")}</h3>
+              <p className="text-xs text-zinc-400 mt-0.5 leading-snug">{cardName}</p>
+            </div>
           </div>
           {/* Time Range Selector */}
           <div className="flex items-center gap-1 bg-zinc-800/80 rounded-lg p-1">
@@ -225,10 +226,10 @@ export function PriceTrendChart({
         {stats.snkrdunk.avgPrice > 0 && (
           <div className="mt-3 pt-3 border-t border-zinc-800/60 grid grid-cols-4 gap-2">
             {[
-              { label: t("cardDetail.avgPrice", "均價"), value: `¥${stats.snkrdunk.avgPrice.toLocaleString()}`, color: "text-[#FFD600]" },
-              { label: t("cardDetail.latestPrice", "最新"), value: `¥${stats.snkrdunk.latestPrice.toLocaleString()}`, color: "text-white" },
-              { label: t("cardDetail.minPriceLabel", "最低"), value: `¥${stats.snkrdunk.minPrice.toLocaleString()}`, color: "text-green-400" },
-              { label: t("cardDetail.maxPriceLabel", "最高"), value: `¥${stats.snkrdunk.maxPrice.toLocaleString()}`, color: "text-red-400" },
+              { label: t("cardDetail.avgPrice", "均價"), value: formatCurrency(stats.snkrdunk.avgPrice), color: "text-[#FFD600]" },
+              { label: t("cardDetail.latestPrice", "最新"), value: formatCurrency(stats.snkrdunk.latestPrice), color: "text-white" },
+              { label: t("cardDetail.minPriceLabel", "最低"), value: formatCurrency(stats.snkrdunk.minPrice), color: "text-green-400" },
+              { label: t("cardDetail.maxPriceLabel", "最高"), value: formatCurrency(stats.snkrdunk.maxPrice), color: "text-red-400" },
             ].map(({ label, value, color }) => (
               <div key={label} className="text-center">
                 <p className="text-[10px] text-zinc-500 mb-0.5">{label}</p>
