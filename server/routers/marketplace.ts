@@ -633,10 +633,44 @@ export const marketplaceRouter = router({
       });
       return { success: true, proofUrl: url, aiVerificationPending: true };
     }),
-
+  // Submit Alipay HK proof for multiple orders at once (batch cart checkout flow)
+  submitBatchAlipayProof: protectedProcedure
+    .input(z.object({
+      orderNos: z.array(z.string()).min(1),
+      proofImageBase64: z.string(),
+      mimeType: z.string().default("image/jpeg"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const buffer = Buffer.from(input.proofImageBase64, "base64");
+      const key = `alipay-proofs/batch-${input.orderNos[0]}-${Date.now()}.jpg`;
+      const { url } = await storagePut(key, buffer, input.mimeType);
+      const results: Array<{ orderNo: string; success: boolean; error?: string }> = [];
+      for (const orderNo of input.orderNos) {
+        try {
+          const order = await getMarketplaceOrderByNo(orderNo);
+          if (!order) { results.push({ orderNo, success: false, error: "\u8a02\u55ae\u4e0d\u5b58\u5728" }); continue; }
+          if (order.buyerId !== ctx.user.id) { results.push({ orderNo, success: false, error: "\u7121\u6b0a\u9650" }); continue; }
+          if (order.paymentMethod !== "alipay_hk") { results.push({ orderNo, success: false, error: "\u975e\u652f\u4ed8\u5bf6\u8a02\u55ae" }); continue; }
+          if (order.orderStatus === "cancelled") { results.push({ orderNo, success: false, error: "\u8a02\u55ae\u5df2\u53d6\u6d88" }); continue; }
+          if (order.paymentStatus === "paid") { results.push({ orderNo, success: false, error: "\u5df2\u4ed8\u6b3e\u78ba\u8a8d" }); continue; }
+          await updateMarketplaceOrder(order.id, { alipayProofImageUrl: url, alipayProofSubmittedAt: new Date(), alipayReviewReminderSentAt: null });
+          results.push({ orderNo, success: true });
+        } catch (err: any) {
+          results.push({ orderNo, success: false, error: err?.message ?? "\u672a\u77e5\u932f\u8aa4" });
+        }
+      }
+      const successCount = results.filter(r => r.success).length;
+      if (successCount > 0) {
+        notifyAdmin({
+          title: `\uD83D\uDCF8 \u652f\u4ed8\u5bf6 HK \u6279\u91cf\u622a\u5716\u5f85\u6838\u5c0d\uff08${successCount} \u7b46\uff09`,
+          content: `\u8cb7\u5bb6\u5df2\u4e0a\u50b3 ${successCount} \u500b\u8a02\u55ae\u7684\u652f\u4ed8\u5bf6 HK \u4ed8\u6b3e\u622a\u5716\uff0c\u8acb\u524d\u5f80\u7ba1\u7406\u5f8c\u53f0\u6838\u5c0d\u6536\u6b3e\u3002\n\u8a02\u55ae\uff1a${input.orderNos.join("\u3001")}`,
+        }).catch(() => {});
+      }
+      return { success: successCount > 0, proofUrl: url, results, successCount };
+    }),
   // ============================================================
   // BUYER - Confirm Receipt + Trigger Payout
-  // ============================================================
+  // =============================================================
   confirmReceipt: protectedProcedure
     .input(z.object({ orderId: z.number().int() }))
     .mutation(async ({ ctx, input }) => {

@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock, Check, X, Phone, MapPin, CreditCard, Truck, Users, ChevronDown, Smartphone, Copy } from "lucide-react";
+import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock, Check, X, Phone, MapPin, CreditCard, Truck, Users, ChevronDown, Smartphone, Copy, Upload, Loader2, CheckCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -726,8 +726,13 @@ function CheckoutDialog({
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const [isValidatingStock, setIsValidatingStock] = React.useState(false);
-  const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3>(1);
+  const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3 | 4>(1);
   const [alipayOrderNos, setAlipayOrderNos] = useState<string[]>([]);
+  // Step 4: Payment proof upload
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
+  const [isSubmittingProof, setIsSubmittingProof] = useState(false);
+  const [proofSubmitted, setProofSubmitted] = useState(false);
 
   // Fetch saved addresses
   const { data: savedAddresses } = trpc.marketplace.getMyShippingAddresses.useQuery(undefined, {
@@ -739,7 +744,15 @@ function CheckoutDialog({
 
   // Auto-fill from saved address when dialog opens
   useEffect(() => {
-    if (!open) { setCheckoutStep(1); setSelectedAddressId(null); return; }
+    if (!open) {
+      setCheckoutStep(1);
+      setSelectedAddressId(null);
+      setProofFile(null);
+      setProofPreview(null);
+      setIsSubmittingProof(false);
+      setProofSubmitted(false);
+      return;
+    }
     if (savedAddresses && savedAddresses.length > 0) {
       const defaultAddr = savedAddresses.find((a: any) => a.isDefault) ?? savedAddresses[0];
       if (defaultAddr) {
@@ -772,6 +785,55 @@ function CheckoutDialog({
   });
 
   const isProcessing = createBatchStripeOrderMutation.isPending || createBatchAlipayOrderMutation.isPending;
+
+  const submitBatchAlipayProofMutation = trpc.marketplace.submitBatchAlipayProof.useMutation({
+    onError: (err) => toast.error(err.message || "上傳截圖失敗，請重試"),
+  });
+
+  const handleProofFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("請上傳圖片格式的截圖（JPG、PNG 等）");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("截圖大小不能超過 10MB");
+      return;
+    }
+    setProofFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setProofPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitProof = async () => {
+    if (!proofFile || alipayOrderNos.length === 0) return;
+    setIsSubmittingProof(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const result = ev.target?.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(proofFile);
+      });
+      await submitBatchAlipayProofMutation.mutateAsync({
+        orderNos: alipayOrderNos,
+        proofImageBase64: base64,
+        mimeType: proofFile.type || "image/jpeg",
+      });
+      setProofSubmitted(true);
+      utils.marketplace.getMyCart.invalidate();
+      utils.marketplace.getCartCount.invalidate();
+    } catch {
+      // Error already shown by mutation onError
+    } finally {
+      setIsSubmittingProof(false);
+    }
+  };
 
   // P0: Detect if any item is from a C2C seller — restricts payment to Stripe only
   const hasSellerItems = useMemo(
@@ -918,6 +980,11 @@ function CheckoutDialog({
   };
 
   const handleAlipayDone = () => {
+    // Go to Step 4 to upload payment proof instead of navigating away
+    setCheckoutStep(4);
+  };
+
+  const handleFinishAndGoToOrders = () => {
     onClose();
     if (alipayOrderNos.length === 1) {
       setLocation(`/orders/${alipayOrderNos[0]}`);
@@ -945,7 +1012,10 @@ function CheckoutDialog({
           </div>
           {/* Step Indicator */}
           <div className="flex items-center gap-0">
-            {[{ n: 1 as const, label: "送貨方式" }, { n: 2 as const, label: "付款確認" }, ...(checkoutStep === 3 ? [{ n: 3 as const, label: "掃碼付款" }] : [])].map(({ n, label }, idx) => (
+            {(checkoutStep <= 2
+              ? [{ n: 1 as const, label: "送貨方式" }, { n: 2 as const, label: "付款確認" }]
+              : [{ n: 1 as const, label: "送貨方式" }, { n: 2 as const, label: "付款確認" }, { n: 3 as const, label: "掃碼付款" }, { n: 4 as const, label: "上傳截圖" }]
+            ).map(({ n, label }, idx, arr) => (
               <React.Fragment key={n}>
                 <div className="flex flex-col items-center gap-1">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -959,7 +1029,7 @@ function CheckoutDialog({
                     checkoutStep >= n ? "text-[#FEDD00]" : "text-white/40"
                   }`}>{label}</span>
                 </div>
-                {idx < (checkoutStep === 3 ? 2 : 1) && (
+                {idx < arr.length - 1 && (
                   <div className={`flex-1 h-0.5 mb-4 mx-1 transition-all ${
                     checkoutStep > n ? "bg-[#FEDD00]" : "bg-white/20"
                   }`} />
@@ -1500,8 +1570,76 @@ function CheckoutDialog({
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
-                <p>ℹ️ 完成支付寶 HK 付款後，請點擊「我已完成付款」前往訂單頁面上傳付款截圖。管理員審核後訂單即生效。</p>
+                <p>ℹ️ 完成支付寶 HK 付款後，請點擊下方按鈕進入下一步上傳截圖。管理員審核後訂單即生效。</p>
               </div>
+            </div>
+          )}
+          {/* Step 4: Upload Payment Proof */}
+          {checkoutStep === 4 && (
+            <div className="space-y-4">
+              {proofSubmitted ? (
+                <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: '#06038D' }}>
+                    <CheckCircle className="w-9 h-9 text-[#FEDD00]" />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-lg font-bold text-gray-800 mb-1">截圖已成功上傳！</h3>
+                    <p className="text-sm text-gray-500">管理員將在 1 個工作天內審核你的付款截圖，審核通過後訂單即生效。</p>
+                  </div>
+                  <div className="w-full bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700">
+                    <p className="font-medium mb-1">✅ 訂單已建立，截圖待審核</p>
+                    <p>訂單編號：{alipayOrderNos.length === 1 ? `#${alipayOrderNos[0]}` : alipayOrderNos.map(no => `#${no}`).join("、")}</p>
+                    <p className="mt-1">你可以在「我的訂單」頁面查看訂單狀態。</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4">
+                    <p className="text-xs font-semibold text-[#06038D] mb-2">上傳支付寶 HK 付款截圖</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">請上傳支付寶 HK 付款成功的截圖，截圖需清晰顯示：</p>
+                    <ul className="mt-2 space-y-1">
+                      <li className="text-xs text-gray-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06038D] flex-shrink-0" />收款方：零度有限公司</li>
+                      <li className="text-xs text-gray-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06038D] flex-shrink-0" />付款金額：HKD {activeSubtotal.toFixed(0)}</li>
+                      <li className="text-xs text-gray-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06038D] flex-shrink-0" />付款狀態：成功</li>
+                    </ul>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                    <p className="text-xs font-medium text-amber-800 mb-1">訂單編號（請確認已在備注填寫）：</p>
+                    <p className="text-sm font-mono font-bold text-amber-900">
+                      {alipayOrderNos.length === 1 ? `#${alipayOrderNos[0]}` : alipayOrderNos.map(no => `#${no}`).join(" · ")}
+                    </p>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="proof-upload"
+                      className={`flex flex-col items-center justify-center w-full rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+                        proofPreview
+                          ? "border-[#06038D] bg-[#06038D]/5 p-2"
+                          : "border-gray-300 hover:border-[#06038D] bg-gray-50 hover:bg-[#06038D]/5 p-8"
+                      }`}
+                    >
+                      {proofPreview ? (
+                        <div className="relative w-full">
+                          <img src={proofPreview} alt="付款截圖預覽" className="w-full max-h-64 object-contain rounded-lg" />
+                          <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-lg">點擊更換截圖</div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mb-3">
+                            <Upload className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <p className="text-sm font-medium text-gray-600">點擊上傳付款截圖</p>
+                          <p className="text-xs text-gray-400 mt-1">支援 JPG、PNG，最大 10MB</p>
+                        </>
+                      )}
+                    </label>
+                    <input id="proof-upload" type="file" accept="image/*" className="hidden" onChange={handleProofFileChange} />
+                  </div>
+                  {proofFile && (
+                    <p className="text-xs text-gray-500 text-center">已選擇：{proofFile.name}（{(proofFile.size / 1024).toFixed(0)} KB）</p>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
@@ -1555,8 +1693,35 @@ function CheckoutDialog({
               style={{ background: '#FEDD00', color: '#06038D' }}
               onClick={handleAlipayDone}
             >
-              我已完成付款，前往訂單頁面
+              我已完成付款 → 上傳截圖
             </Button>
+          )}
+          {checkoutStep === 4 && !proofSubmitted && (
+            <Button
+              variant="outline"
+              className="flex-shrink-0 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white px-4"
+              onClick={() => setCheckoutStep(3)}
+              disabled={isSubmittingProof}
+            >返回</Button>
+          )}
+          {checkoutStep === 4 && !proofSubmitted && (
+            <Button
+              className="flex-1 font-bold"
+              style={{ background: proofFile ? '#FEDD00' : '#e5e7eb', color: proofFile ? '#06038D' : '#9ca3af' }}
+              onClick={handleSubmitProof}
+              disabled={!proofFile || isSubmittingProof}
+            >
+              {isSubmittingProof ? (
+                <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />上傳中...</span>
+              ) : "提交付款截圖"}
+            </Button>
+          )}
+          {checkoutStep === 4 && proofSubmitted && (
+            <Button
+              className="flex-1 font-bold"
+              style={{ background: '#FEDD00', color: '#06038D' }}
+              onClick={handleFinishAndGoToOrders}
+            >前往我的訂單</Button>
           )}
         </div>
       </DialogContent>
