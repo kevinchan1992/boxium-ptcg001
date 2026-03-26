@@ -6389,3 +6389,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - eBay 相關代碼（pricing 頁面數據來源）
 - `scheduler.ts`（仍被 routers.ts import，提供排程狀態查詢功能）
 - `trackingNo` 作為 tRPC input 欄位名稱（marketplace.ts input schema）
+
+## ✅ Admin 熱門卡牌管理升級（2026-03-26）
+
+- [x] Admin 熱門卡牌管理：按遊戲分類顯示 Pokémon / One Piece 各自的 cache 狀態（含上次計算時間、下次更新時間）
+- [x] Admin 熱門卡牌管理：各遊戲獨立面板 + 全局「全部重新計算」按鈕
+- [x] 確認每日排程正確呼叫新版 calculateAndCacheTrendingCards()（per-game Top 5）
+  - startTrendingCardsScheduler() 已在 server/_core/index.ts:1042 啟動
+  - cron: '0 6 * * *' timezone: 'Asia/Hong_Kong'（每日 06:00 HKT）
+  - 呼叫 calculateAndCacheTrendingCards()（已支援 per-game Top 5）
