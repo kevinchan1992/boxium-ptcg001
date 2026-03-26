@@ -1614,12 +1614,13 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
   console.log(`[calculateAndCacheTrendingCards] This week: ${sevenDaysAgo.toISOString()} → ${now.toISOString()}`);
   console.log(`[calculateAndCacheTrendingCards] Last week: ${fourteenDaysAgo.toISOString()} → ${sevenDaysAgo.toISOString()}`);
 
-  // Fetch PSA10 SNKRDUNK records for the last 14 days in one query
+  // Fetch PSA10 SNKRDUNK records for the last 14 days — include gameId for per-game ranking
   const cardsWithPrices = await db
     .select({
       cardId: priceHistory.cardId,
       price: priceHistory.price,
       soldAt: priceHistory.soldAt,
+      gameId: cards.gameId,
     })
     .from(priceHistory)
     .innerJoin(cards, eq(priceHistory.cardId, cards.id))
@@ -1635,14 +1636,17 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
 
   console.log(`[calculateAndCacheTrendingCards] Found ${cardsWithPrices.length} PSA10 records in last 14 days`);
 
-  // Group by cardId, split into this-week and last-week buckets
+  // Group by cardId, split into this-week and last-week buckets, also track gameId per card
   const thisWeekMap  = new Map<number, { price: number; date: Date }[]>();
   const lastWeekMap  = new Map<number, { price: number; date: Date }[]>();
+  const cardGameMap  = new Map<number, number>(); // cardId -> gameId
 
   for (const record of cardsWithPrices) {
     const cardId = record.cardId;
     const price  = parseFloat(record.price as any);
     const date   = record.soldAt!;
+
+    cardGameMap.set(cardId, record.gameId ?? 1);
 
     if (date >= sevenDaysAgo) {
       if (!thisWeekMap.has(cardId)) thisWeekMap.set(cardId, []);
@@ -1658,6 +1662,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
 
   const trendingCards: Array<{
     cardId: number;
+    gameId: number;
     priceChange: number;
     oldPrice: number;     // last-week weighted avg
     currentPrice: number; // this-week weighted avg
@@ -1684,7 +1689,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     const priceChange = ((thisWeekAvg - lastWeekAvg) / lastWeekAvg) * 100;
 
     console.log(
-      `[calculateAndCacheTrendingCards] Card ${cardId}: ` +
+      `[calculateAndCacheTrendingCards] Card ${cardId} (gameId=${cardGameMap.get(cardId)}): ` +
       `lastWeek=${lastWeekAvg.toFixed(2)}, thisWeek=${thisWeekAvg.toFixed(2)}, ` +
       `change=${priceChange.toFixed(2)}% ` +
       `(${lastWeekRecords.length} last-week / ${thisWeekRecords.length} this-week records)`
@@ -1693,6 +1698,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     if (priceChange > 0) {
       trendingCards.push({
         cardId,
+        gameId: cardGameMap.get(cardId) ?? 1,
         priceChange,
         oldPrice: lastWeekAvg,
         currentPrice: thisWeekAvg,
@@ -1700,39 +1706,56 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     }
   }
 
-  // Sort by price change (highest first) and take top 5
+  // Sort by price change (highest first), then take Top 5 PER GAME
   trendingCards.sort((a, b) => b.priceChange - a.priceChange);
-  const top5 = trendingCards.slice(0, 5);
 
-  console.log(`[calculateAndCacheTrendingCards] Found ${trendingCards.length} eligible cards, storing top ${top5.length}`);
-  if (top5.length > 0) {
-    console.log(`[calculateAndCacheTrendingCards] Top card: cardId=${top5[0].cardId}, change=${top5[0].priceChange.toFixed(2)}%`);
+  // Group by gameId and take top 5 each
+  const byGame = new Map<number, typeof trendingCards>();
+  for (const card of trendingCards) {
+    if (!byGame.has(card.gameId)) byGame.set(card.gameId, []);
+    const list = byGame.get(card.gameId)!;
+    if (list.length < 5) list.push(card);
+  }
+
+  // Flatten: all per-game top-5 lists into one array to insert
+  const allTop: typeof trendingCards = [];
+  for (const [, list] of Array.from(byGame.entries())) {
+    allTop.push(...list);
+  }
+
+  console.log(`[calculateAndCacheTrendingCards] Found ${trendingCards.length} eligible cards, storing ${allTop.length} (top 5 per game)`);
+  for (const [gid, list] of Array.from(byGame.entries())) {
+    if (list.length > 0) {
+      console.log(`[calculateAndCacheTrendingCards] Game ${gid} top card: cardId=${list[0].cardId}, change=${list[0].priceChange.toFixed(2)}%`);
+    }
   }
 
   // Clear existing cache
   await db.delete(trendingCardsCache);
 
-  // Insert new cache
+  // Insert new cache — rank is per-game (1-5 within each gameId)
   const calculatedAt = new Date();
-  for (let i = 0; i < top5.length; i++) {
-    const card = top5[i];
-    await db.insert(trendingCardsCache).values({
-      cardId: card.cardId,
-      rank: i + 1,
-      priceChange7d: card.priceChange.toFixed(2),
-      oldPrice: card.oldPrice.toFixed(2),
-      currentPrice: card.currentPrice.toFixed(2),
-      calculatedAt,
-    });
+  for (const [, list] of Array.from(byGame.entries())) {
+    for (let i = 0; i < list.length; i++) {
+      const card = list[i];
+      await db.insert(trendingCardsCache).values({
+        cardId: card.cardId,
+        rank: i + 1,
+        priceChange7d: card.priceChange.toFixed(2),
+        oldPrice: card.oldPrice.toFixed(2),
+        currentPrice: card.currentPrice.toFixed(2),
+        calculatedAt,
+      });
+    }
   }
 
-  console.log("[calculateAndCacheTrendingCards] Cache updated successfully");
+  console.log("[calculateAndCacheTrendingCards] Cache updated successfully (per-game top 5)");
 }
 
 /**
  * Get cached trending cards (TOP 5)
  */
-export async function getCachedTrendingCards() {
+export async function getCachedTrendingCards(gameId?: number) {
   const db = await getDb();
   if (!db) {
     console.log('[getCachedTrendingCards] DB connection failed');
@@ -1755,9 +1778,11 @@ export async function getCachedTrendingCards() {
       imageUrl: cards.imageUrl,
       cardNumber: cards.cardNumber,
       series: cards.series,
+      gameId: cards.gameId,
     })
     .from(trendingCardsCache)
     .leftJoin(cards, eq(trendingCardsCache.cardId, cards.id))
+    .where(gameId !== undefined ? eq(cards.gameId, gameId) : undefined)
     .orderBy(trendingCardsCache.rank);
 
   console.log('[getCachedTrendingCards] Query result count:', cached.length);
@@ -1771,6 +1796,7 @@ export async function getCachedTrendingCards() {
     cardNumber: item.cardNumber,
     series: item.series,
     rank: item.rank,
+    gameId: item.gameId,
     priceChange7d: parseFloat(item.priceChange7d as any),
     oldPrice: parseFloat(item.oldPrice as any),
     currentPrice: parseFloat(item.currentPrice as any),

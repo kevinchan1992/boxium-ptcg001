@@ -1,0 +1,80 @@
+{
+  "query": "SELECT t.cardId, t.`rank`, t.priceChange7d, c.name, c.gameId FROM trendingCardsCache t LEFT JOIN cards c ON t.cardId = c.id ORDER BY c.gameId, t.`rank`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT t.cardId, t.`rank`, t.priceChange7d, c.name, c.gameId FROM trendingCardsCache t LEFT JOIN cards c ON t.cardId = c.id ORDER BY c.gameId, t.`rank`;",
+  "rows": [
+    {
+      "cardId": "814576",
+      "rank": "1",
+      "priceChange7d": "137.81",
+      "name": "Pikachu V RR[s8a 020/028](Expansion Pack \"25th Anniversary Collection\")",
+      "gameId": "1"
+    },
+    {
+      "cardId": "1020570",
+      "rank": "2",
+      "priceChange7d": "133.20",
+      "name": "Pikachu C [SM11b 016/049](Enhanced Expansion Pack \"Dream League\")",
+      "gameId": "1"
+    },
+    {
+      "cardId": "816129",
+      "rank": "3",
+      "priceChange7d": "114.89",
+      "name": "Raichu [SNP 003/010](Evolution Pack \"Raichu BREAK\")",
+      "gameId": "1"
+    },
+    {
+      "cardId": "819455",
+      "rank": "4",
+      "priceChange7d": "63.70",
+      "name": "Eevee AR Style [MC 755/742](Start Deck 100 \"Battle Collection\")",
+      "gameId": "1"
+    },
+    {
+      "cardId": "813110",
+      "rank": "5",
+      "priceChange7d": "62.20",
+      "name": "Whitney SR[SM8 101/095](Expansion Pack \"Super-Burst Impact\")",
+      "gameId": "1"
+    },
+    {
+      "cardId": "1290606",
+      "rank": "1",
+      "priceChange7d": "114.80",
+      "name": "Monkey D Luffy SEC-P [OP05-119] (Booster Pack Awakening of the New Era)",
+      "gameId": "2"
+    },
+    {
+      "cardId": "1290499",
+      "rank": "2",
+      "priceChange7d": "94.10",
+      "name": "Sabo SR [OP04-083] ( 8 Pack Battle Winner Prize)",
+      "gameId": "2"
+    },
+    {
+      "cardId": "1290023",
+      "rank": "3",
+      "priceChange7d": "83.20",
+      "name": "Nami R-P [OP01-016] (Premium Card Collection 25th Anniversary Edition)",
+      "gameId": "2"
+    },
+    {
+      "cardId": "1292858",
+      "rank": "4",
+      "priceChange7d": "64.60",
+      "name": "Monkey D Luffy P [P-043]  (Weekly Shonen  JUMP 2023 36/37 combined issue supplement)",
+      "gameId": "2"
+    },
+    {
+      "cardId": "1297433",
+      "rank": "5",
+      "priceChange7d": "61.40",
+      "name": "Koby SR-SP (Comic Parallel) [EB04-044](Extra Booster \"EGGHEAD CRISIS\")",
+      "gameId": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\trank\tpriceChange7d\tname\tgameId\n814576\t1\t137.81\tPikachu V RR[s8a 020/028](Expansion Pack \"25th Anniversary Collection\")\t1\n1020570\t2\t133.20\tPikachu C [SM11b 016/049](Enhanced Expansion Pack \"Dream League\")\t1\n816129\t3\t114.89\tRaichu [SNP 003/010](Evolution Pack \"Raichu BREAK\")\t1\n819455\t4\t63.70\tEevee AR Style [MC 755/742](Start Deck 100 \"Battle Collection\")\t1\n813110\t5\t62.20\tWhitney SR[SM8 101/095](Expansion Pack \"Super-Burst Impact\")\t1\n1290606\t1\t114.80\tMonkey D Luffy SEC-P [OP05-119] (Booster Pack Awakening of the New Era)\t2\n1290499\t2\t94.10\tSabo SR [OP04-083] ( 8 Pack Battle Winner Prize)\t2\n1290023\t3\t83.20\tNami R-P [OP01-016] (Premium Card Collection 25th Anniversary Edition)\t2\n1292858\t4\t64.60\tMonkey D Luffy P [P-043]  (Weekly Shonen  JUMP 2023 36/37 combined issue supplement)\t2\n1297433\t5\t61.40\tKoby SR-SP (Comic Parallel) [EB04-044](Extra Booster \"EGGHEAD CRISIS\")\t2\n",
+  "stderr": "",
+  "execution_time_ms": 1645
+}

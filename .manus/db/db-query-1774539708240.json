@@ -1,0 +1,100 @@
+{
+  "query": "\nSELECT \n  c.id as cardId,\n  c.name,\n  c.gameId,\n  COUNT(CASE WHEN ph.soldAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as thisWeekCount,\n  COUNT(CASE WHEN ph.soldAt < DATE_SUB(NOW(), INTERVAL 7 DAY) AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY) THEN 1 END) as lastWeekCount,\n  AVG(CASE WHEN ph.soldAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN ph.price END) as thisWeekAvg,\n  AVG(CASE WHEN ph.soldAt < DATE_SUB(NOW(), INTERVAL 7 DAY) AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY) THEN ph.price END) as lastWeekAvg\nFROM priceHistory ph\nINNER JOIN cards c ON ph.cardId = c.id\nWHERE ph.source = 'snkrdunk'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY)\n  AND c.gameId = 2\nGROUP BY c.id, c.name, c.gameId\nHAVING thisWeekCount >= 3 AND lastWeekCount >= 3\nORDER BY (thisWeekAvg - lastWeekAvg) / lastWeekAvg DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT \n  c.id as cardId,\n  c.name,\n  c.gameId,\n  COUNT(CASE WHEN ph.soldAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as thisWeekCount,\n  COUNT(CASE WHEN ph.soldAt < DATE_SUB(NOW(), INTERVAL 7 DAY) AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY) THEN 1 END) as lastWeekCount,\n  AVG(CASE WHEN ph.soldAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN ph.price END) as thisWeekAvg,\n  AVG(CASE WHEN ph.soldAt < DATE_SUB(NOW(), INTERVAL 7 DAY) AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY) THEN ph.price END) as lastWeekAvg\nFROM priceHistory ph\nINNER JOIN cards c ON ph.cardId = c.id\nWHERE ph.source = 'snkrdunk'\n  AND ph.grade = 'PSA10'\n  AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY)\n  AND c.gameId = 2\nGROUP BY c.id, c.name, c.gameId\nHAVING thisWeekCount >= 3 AND lastWeekCount >= 3\nORDER BY (thisWeekAvg - lastWeekAvg) / lastWeekAvg DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "cardId": "1290606",
+      "name": "Monkey D Luffy SEC-P [OP05-119] (Booster Pack Awakening of the New Era)",
+      "gameId": "2",
+      "thisWeekCount": "70",
+      "lastWeekCount": "26",
+      "thisWeekAvg": "4590.175000",
+      "lastWeekAvg": "2137.146538"
+    },
+    {
+      "cardId": "1290499",
+      "name": "Sabo SR [OP04-083] ( 8 Pack Battle Winner Prize)",
+      "gameId": "2",
+      "thisWeekCount": "31",
+      "lastWeekCount": "8",
+      "thisWeekAvg": "1517.246452",
+      "lastWeekAvg": "781.681250"
+    },
+    {
+      "cardId": "1290023",
+      "name": "Nami R-P [OP01-016] (Premium Card Collection 25th Anniversary Edition)",
+      "gameId": "2",
+      "thisWeekCount": "4",
+      "lastWeekCount": "7",
+      "thisWeekAvg": "1512.475000",
+      "lastWeekAvg": "825.392857"
+    },
+    {
+      "cardId": "1292858",
+      "name": "Monkey D Luffy P [P-043]  (Weekly Shonen  JUMP 2023 36/37 combined issue supplement)",
+      "gameId": "2",
+      "thisWeekCount": "68",
+      "lastWeekCount": "33",
+      "thisWeekAvg": "1680.815294",
+      "lastWeekAvg": "1020.973030"
+    },
+    {
+      "cardId": "1297433",
+      "name": "Koby SR-SP (Comic Parallel) [EB04-044](Extra Booster \"EGGHEAD CRISIS\")",
+      "gameId": "2",
+      "thisWeekCount": "8",
+      "lastWeekCount": "4",
+      "thisWeekAvg": "9408.816250",
+      "lastWeekAvg": "5830.000000"
+    },
+    {
+      "cardId": "1290575",
+      "name": "Monkey D Luffy SR [ST01-012] (Booster Pack Awakening of the New Era)",
+      "gameId": "2",
+      "thisWeekCount": "28",
+      "lastWeekCount": "31",
+      "thisWeekAvg": "1527.390357",
+      "lastWeekAvg": "952.661613"
+    },
+    {
+      "cardId": "1410087",
+      "name": "Monkey.D.Luffy SEC-SP (Comic Parallel) [OP13-118](Booster Pack \"CARRYING ON HIS WILL\")",
+      "gameId": "2",
+      "thisWeekCount": "24",
+      "lastWeekCount": "18",
+      "thisWeekAvg": "18035.507083",
+      "lastWeekAvg": "11487.300000"
+    },
+    {
+      "cardId": "1294164",
+      "name": "Monkey.D.Luffy L-P [OP09-061](Booster Pack \"Emperors In The New World\")",
+      "gameId": "2",
+      "thisWeekCount": "24",
+      "lastWeekCount": "14",
+      "thisWeekAvg": "1153.625000",
+      "lastWeekAvg": "742.014286"
+    },
+    {
+      "cardId": "1380704",
+      "name": "Dracule Mihawk SEC-SP (Comic Parallel) [OP14-119](Booster Pack \"THE AZURE SEA'S SEVEN\")",
+      "gameId": "2",
+      "thisWeekCount": "18",
+      "lastWeekCount": "6",
+      "thisWeekAvg": "7458.300000",
+      "lastWeekAvg": "4806.991667"
+    },
+    {
+      "cardId": "1410088",
+      "name": "Portgas.D.Ace SEC-SP (Comic Parallel) [OP13-119](Booster Pack \"CARRYING ON HIS WILL\")",
+      "gameId": "2",
+      "thisWeekCount": "18",
+      "lastWeekCount": "10",
+      "thisWeekAvg": "8251.769444",
+      "lastWeekAvg": "5457.100000"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\tname\tgameId\tthisWeekCount\tlastWeekCount\tthisWeekAvg\tlastWeekAvg\n1290606\tMonkey D Luffy SEC-P [OP05-119] (Booster Pack Awakening of the New Era)\t2\t70\t26\t4590.175000\t2137.146538\n1290499\tSabo SR [OP04-083] ( 8 Pack Battle Winner Prize)\t2\t31\t8\t1517.246452\t781.681250\n1290023\tNami R-P [OP01-016] (Premium Card Collection 25th Anniversary Edition)\t2\t4\t7\t1512.475000\t825.392857\n1292858\tMonkey D Luffy P [P-043]  (Weekly Shonen  JUMP 2023 36/37 combined issue supplement)\t2\t68\t33\t1680.815294\t1020.973030\n1297433\tKoby SR-SP (Comic Parallel) [EB04-044](Extra Booster \"EGGHEAD CRISIS\")\t2\t8\t4\t9408.816250\t5830.000000\n1290575\tMonkey D Luffy SR [ST01-012] (Booster Pack Awakening of the New Era)\t2\t28\t31\t1527.390357\t952.661613\n1410087\tMonkey.D.Luffy SEC-SP (Comic Parallel) [OP13-118](Booster Pack \"CARRYING ON HIS WILL\")\t2\t24\t18\t18035.507083\t11487.300000\n1294164\tMonkey.D.Luffy L-P [OP09-061](Booster Pack \"Emperors In The New World\")\t2\t24\t14\t1153.625000\t742.014286\n1380704\tDracule Mihawk SEC-SP (Comic Parallel) [OP14-119](Booster Pack \"THE AZURE SEA'S SEVEN\")\t2\t18\t6\t7458.300000\t4806.991667\n1410088\tPortgas.D.Ace SEC-SP (Comic Parallel) [OP13-119](Booster Pack \"CARRYING ON HIS WILL\")\t2\t18\t10\t8251.769444\t5457.100000\n",
+  "stderr": "",
+  "execution_time_ms": 1638
+}

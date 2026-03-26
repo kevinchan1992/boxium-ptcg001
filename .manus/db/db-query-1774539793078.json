@@ -1,0 +1,55 @@
+{
+  "query": "SELECT c.id as cardId, c.name, c.gameId, COUNT(CASE WHEN ph.soldAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as thisWeekCount, COUNT(CASE WHEN ph.soldAt < DATE_SUB(NOW(), INTERVAL 7 DAY) AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY) THEN 1 END) as lastWeekCount, AVG(CASE WHEN ph.soldAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN ph.price END) as thisWeekAvg, AVG(CASE WHEN ph.soldAt < DATE_SUB(NOW(), INTERVAL 7 DAY) AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY) THEN ph.price END) as lastWeekAvg FROM priceHistory ph INNER JOIN cards c ON ph.cardId = c.id WHERE ph.source = 'snkrdunk' AND ph.grade = 'PSA10' AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY) AND c.gameId = 1 AND c.id NOT IN (814576, 1020570, 816129) GROUP BY c.id, c.name, c.gameId HAVING thisWeekCount >= 3 AND lastWeekCount >= 3 ORDER BY (thisWeekAvg - lastWeekAvg) / lastWeekAvg DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT c.id as cardId, c.name, c.gameId, COUNT(CASE WHEN ph.soldAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as thisWeekCount, COUNT(CASE WHEN ph.soldAt < DATE_SUB(NOW(), INTERVAL 7 DAY) AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY) THEN 1 END) as lastWeekCount, AVG(CASE WHEN ph.soldAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN ph.price END) as thisWeekAvg, AVG(CASE WHEN ph.soldAt < DATE_SUB(NOW(), INTERVAL 7 DAY) AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY) THEN ph.price END) as lastWeekAvg FROM priceHistory ph INNER JOIN cards c ON ph.cardId = c.id WHERE ph.source = 'snkrdunk' AND ph.grade = 'PSA10' AND ph.soldAt >= DATE_SUB(NOW(), INTERVAL 14 DAY) AND c.gameId = 1 AND c.id NOT IN (814576, 1020570, 816129) GROUP BY c.id, c.name, c.gameId HAVING thisWeekCount >= 3 AND lastWeekCount >= 3 ORDER BY (thisWeekAvg - lastWeekAvg) / lastWeekAvg DESC LIMIT 5;",
+  "rows": [
+    {
+      "cardId": "819455",
+      "name": "Eevee AR Style [MC 755/742](Start Deck 100 \"Battle Collection\")",
+      "gameId": "1",
+      "thisWeekCount": "6",
+      "lastWeekCount": "3",
+      "thisWeekAvg": "7608.325000",
+      "lastWeekAvg": "4647.500000"
+    },
+    {
+      "cardId": "813110",
+      "name": "Whitney SR[SM8 101/095](Expansion Pack \"Super-Burst Impact\")",
+      "gameId": "1",
+      "thisWeekCount": "16",
+      "lastWeekCount": "19",
+      "thisWeekAvg": "3519.415625",
+      "lastWeekAvg": "2169.408947"
+    },
+    {
+      "cardId": "814556",
+      "name": "Lugia: Mirror [s8a 005/028](Expansion Pack \"25th Anniversary Collection\")",
+      "gameId": "1",
+      "thisWeekCount": "7",
+      "lastWeekCount": "6",
+      "thisWeekAvg": "886.907143",
+      "lastWeekAvg": "596.741667"
+    },
+    {
+      "cardId": "781580",
+      "name": "Origin Forme Dialga V SR: SA[S10D 075/067](Expansion Pack \"Time Gazer\")",
+      "gameId": "1",
+      "thisWeekCount": "21",
+      "lastWeekCount": "13",
+      "thisWeekAvg": "1760.233810",
+      "lastWeekAvg": "1206.607692"
+    },
+    {
+      "cardId": "781593",
+      "name": "Origin Forme Palkia V SR: SA[S10P 071/067](Expansion Pack \"Space Juggler\")",
+      "gameId": "1",
+      "thisWeekCount": "22",
+      "lastWeekCount": "17",
+      "thisWeekAvg": "1742.438636",
+      "lastWeekAvg": "1208.376471"
+    }
+  ],
+  "messages": [],
+  "stdout": "cardId\tname\tgameId\tthisWeekCount\tlastWeekCount\tthisWeekAvg\tlastWeekAvg\n819455\tEevee AR Style [MC 755/742](Start Deck 100 \"Battle Collection\")\t1\t6\t3\t7608.325000\t4647.500000\n813110\tWhitney SR[SM8 101/095](Expansion Pack \"Super-Burst Impact\")\t1\t16\t19\t3519.415625\t2169.408947\n814556\tLugia: Mirror [s8a 005/028](Expansion Pack \"25th Anniversary Collection\")\t1\t7\t6\t886.907143\t596.741667\n781580\tOrigin Forme Dialga V SR: SA[S10D 075/067](Expansion Pack \"Time Gazer\")\t1\t21\t13\t1760.233810\t1206.607692\n781593\tOrigin Forme Palkia V SR: SA[S10P 071/067](Expansion Pack \"Space Juggler\")\t1\t22\t17\t1742.438636\t1208.376471\n",
+  "stderr": "",
+  "execution_time_ms": 2320
+}

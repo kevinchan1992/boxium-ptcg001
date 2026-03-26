@@ -598,11 +598,12 @@ export const appRouter = router({
     getTrending: publicProcedure
       .input(z.object({
         limit: z.number().optional().default(5),
+        gameId: z.number().optional(), // Filter by game type (1=Pokémon, 2=One Piece)
       }))
       .query(async ({ input }) => {
         try {
           // Use cached trending cards (calculated daily at 06:00 HKT)
-          const cachedCards = await db.getCachedTrendingCards();
+          const cachedCards = await db.getCachedTrendingCards(input.gameId);
           
           // If cache is empty, return empty array
           // (Cache will be populated by daily scheduler)

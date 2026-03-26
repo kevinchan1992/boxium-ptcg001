@@ -1,0 +1,8 @@
+{
+  "query": "INSERT INTO trendingCardsCache (cardId, rank, priceChange7d, oldPrice, currentPrice, calculatedAt) VALUES (814576, 1, '137.81', '1232.00', '2930.00', NOW()), (1020570, 2, '133.20', '1350.00', '3148.00', NOW()), (816129, 3, '114.89', '1359.30', '2920.98', NOW());",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute INSERT INTO trendingCardsCache (cardId, rank, priceChange7d, oldPrice, currentPrice, calculatedAt) VALUES (814576, 1, '137.81', '1232.00', '2930.00', NOW()), (1020570, 2, '133.20', '1350.00', '3148.00', NOW()), (816129, 3, '114.89', '1359.30', '2920.98', NOW());",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 44 near \"rank, priceChange7d, oldPrice, currentPrice, calculatedAt) VALUES (814576, 1, '137.81', '1232.00', '2930.00', NOW()), (1020570, 2, '133.20', '1350.00', '3148.00', NOW()), (816129, 3, '114.89', '1359.30', '2920.98', NOW())\""
+  ]
+}

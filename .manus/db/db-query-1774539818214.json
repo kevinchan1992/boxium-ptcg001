@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO trendingCardsCache (cardId, `rank`, priceChange7d, oldPrice, currentPrice, calculatedAt) VALUES (1290606, 1, 114.80, 2137.15, 4590.18, NOW()), (1290499, 2, 94.10, 781.68, 1517.25, NOW()), (1290023, 3, 83.20, 825.39, 1512.48, NOW()), (1292858, 4, 64.60, 1020.97, 1680.82, NOW()), (1297433, 5, 61.40, 5830.00, 9408.82, NOW());",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute INSERT INTO trendingCardsCache (cardId, `rank`, priceChange7d, oldPrice, currentPrice, calculatedAt) VALUES (1290606, 1, 114.80, 2137.15, 4590.18, NOW()), (1290499, 2, 94.10, 781.68, 1517.25, NOW()), (1290023, 3, 83.20, 825.39, 1512.48, NOW()), (1292858, 4, 64.60, 1020.97, 1680.82, NOW()), (1297433, 5, 61.40, 5830.00, 9408.82, NOW());",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1661
+}

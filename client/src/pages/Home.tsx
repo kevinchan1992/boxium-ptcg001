@@ -11,79 +11,189 @@ import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
 
 
 
-function TrendingCardsGrid() {
+// Rank medal config — professional metallic palette
+const RANK_CONFIG: Record<number, { gradient: string; textColor: string; borderColor: string; label: string }> = {
+  1: {
+    gradient: "linear-gradient(135deg, #f5c518 0%, #e8a900 50%, #c8860a 100%)",
+    textColor: "#5a3a00",
+    borderColor: "rgba(248,197,24,0.6)",
+    label: "1",
+  },
+  2: {
+    gradient: "linear-gradient(135deg, #e8e8e8 0%, #c8c8c8 50%, #a0a0a0 100%)",
+    textColor: "#3a3a3a",
+    borderColor: "rgba(192,192,192,0.6)",
+    label: "2",
+  },
+  3: {
+    gradient: "linear-gradient(135deg, #e8a87c 0%, #cd7f32 50%, #a0520a 100%)",
+    textColor: "#fff",
+    borderColor: "rgba(205,127,50,0.6)",
+    label: "3",
+  },
+  4: {
+    gradient: "linear-gradient(135deg, #4a5568 0%, #2d3748 100%)",
+    textColor: "#e2e8f0",
+    borderColor: "rgba(74,85,104,0.5)",
+    label: "4",
+  },
+  5: {
+    gradient: "linear-gradient(135deg, #4a5568 0%, #2d3748 100%)",
+    textColor: "#e2e8f0",
+    borderColor: "rgba(74,85,104,0.5)",
+    label: "5",
+  },
+};
+
+function TrendingCardRow({ gameId, logoUrl, logoAlt, accentColor, badgeBg }: {
+  gameId: number;
+  logoUrl: string;
+  logoAlt: string;
+  accentColor: string;
+  badgeBg: string;
+}) {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
-  const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery({ limit: 5 });
+  const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery({ limit: 5, gameId });
   const logSearchMutation = trpc.cards.logSearch.useMutation();
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: "#06038d" }}></div>
-      </div>
-    );
-  }
-
-  if (trendingCards.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 text-lg">{t("home.noTrendingCards")}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 lg:gap-6">
-      {trendingCards.map((card: any) => (
+    <div className="mb-8 md:mb-10">
+      {/* Section header with game logo */}
+      <div className="flex items-center gap-3 mb-4">
+        {/* Left accent bar */}
         <div
-          key={card.id}
-          onClick={() => {
-            // Log user click behavior for trending cards
-            logSearchMutation.mutate({
-              cardId: card.id,
-              source: "home_page",
-            });
-            setLocation(`/card/${card.id}`);
-          }}
-          className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer hover:scale-105 border-2 border-transparent hover:border-[#FEDD00]"
-        >
-          {/* Card Image */}
-          <div className="aspect-[2.5/3.5] bg-gray-100 relative overflow-hidden">
-            {card.imageUrl ? (
-              <img
-                src={card.imageUrl}
-                alt={card.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                <span className="text-sm">{t("home.noImage")}</span>
-              </div>
-            )}
-            {/* Price Change Badge */}
-            <div className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 md:top-1.5 md:right-1.5 bg-red-500 text-white px-0.5 py-0 sm:px-1 sm:py-0.5 md:px-1.5 md:py-0.5 rounded text-[7px] sm:text-[9px] md:text-xs font-bold shadow-lg">
-              {card.priceChangeFormatted}
-            </div>
-          </div>
+          className="h-6 w-[3px] rounded-full flex-shrink-0"
+          style={{ background: accentColor }}
+        />
+        {/* Game logo */}
+        <img
+          src={logoUrl}
+          alt={logoAlt}
+          className="h-7 sm:h-9 md:h-11 w-auto object-contain flex-shrink-0"
+          loading="lazy"
+        />
+        {/* Thin divider line */}
+        <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, ${accentColor}40, transparent)` }} />
+      </div>
 
-          {/* Card Info */}
-          <div className="p-1 sm:p-1.5 md:p-2 lg:p-3">
-            <h3 className="font-bold text-[8px] sm:text-[10px] md:text-xs lg:text-sm mb-0.5 line-clamp-2" style={{ color: "#06038d" }}>
-              {card.name}
-            </h3>
-            {card.nameJa && (
-              <p className="text-[7px] sm:text-[9px] md:text-[10px] text-gray-500 mb-0.5 line-clamp-1">{card.nameJa}</p>
-            )}
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-[9px] sm:text-xs md:text-sm lg:text-base font-bold" style={{ color: "#06038d" }}>
-                {formatCurrency(card.currentPrice)}
-              </span>
-            </div>
-          </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: accentColor }} />
         </div>
-      ))}
+      ) : trendingCards.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-400 text-sm">{t("home.noTrendingCards")}</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 lg:gap-5">
+          {trendingCards.map((card: any, index: number) => {
+            const rankNum = card.rank ?? (index + 1);
+            const rc = RANK_CONFIG[rankNum] || RANK_CONFIG[5];
+            return (
+              <div
+                key={card.id}
+                onClick={() => {
+                  logSearchMutation.mutate({ cardId: card.id, source: "home_page" });
+                  setLocation(`/card/${card.id}`);
+                }}
+                className="group bg-white rounded-xl overflow-hidden shadow hover:shadow-xl transition-all duration-200 cursor-pointer border border-gray-100 hover:border-[#FEDD00]"
+              >
+                {/* Card Image */}
+                <div className="aspect-[2.5/3.5] bg-gray-50 relative overflow-hidden">
+                  {card.imageUrl ? (
+                    <img
+                      src={card.imageUrl}
+                      alt={card.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                      <span className="text-xs">{t("home.noImage")}</span>
+                    </div>
+                  )}
+
+                  {/* Rank Medal — top-left: circular metallic badge */}
+                  <div
+                    className="absolute top-1 left-1 flex items-center justify-center rounded-full font-black shadow-md select-none"
+                    style={{
+                      background: rc.gradient,
+                      color: rc.textColor,
+                      border: `1.5px solid ${rc.borderColor}`,
+                      fontSize: "clamp(7px, 1.6vw, 12px)",
+                      width: "clamp(16px, 3.8vw, 24px)",
+                      height: "clamp(16px, 3.8vw, 24px)",
+                      letterSpacing: "-0.02em",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {rc.label}
+                  </div>
+
+                  {/* Price Change Badge — top-right */}
+                  <div
+                    className="absolute top-1 right-1 text-white font-bold shadow-md rounded"
+                    style={{
+                      background: badgeBg,
+                      fontSize: "clamp(6px, 1.4vw, 11px)",
+                      padding: "1px 4px",
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    {card.priceChangeFormatted}
+                  </div>
+                </div>
+
+                {/* Card Info */}
+                <div className="p-1 sm:p-1.5 md:p-2">
+                  <h3
+                    className="font-semibold text-[8px] sm:text-[10px] md:text-[11px] lg:text-xs mb-0.5 line-clamp-2 leading-tight"
+                    style={{ color: "#06038d" }}
+                  >
+                    {card.name}
+                  </h3>
+                  {card.nameJa && (
+                    <p className="text-[7px] sm:text-[8px] md:text-[9px] text-gray-400 mb-0.5 line-clamp-1">
+                      {card.nameJa}
+                    </p>
+                  )}
+                  <p
+                    className="text-[9px] sm:text-[11px] md:text-xs lg:text-sm font-bold tabular-nums"
+                    style={{ color: "#06038d" }}
+                  >
+                    {formatCurrency(card.currentPrice)}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const POKEMON_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif";
+const ONEPIECE_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif";
+
+function TrendingCardsGrid() {
+  return (
+    <div>
+      <TrendingCardRow
+        gameId={1}
+        logoUrl={POKEMON_LOGO}
+        logoAlt="Pokémon TCG"
+        accentColor="#06038d"
+        badgeBg="linear-gradient(135deg, #e63946, #c1121f)"
+      />
+      <TrendingCardRow
+        gameId={2}
+        logoUrl={ONEPIECE_LOGO}
+        logoAlt="One Piece Card Game"
+        accentColor="#dc2626"
+        badgeBg="linear-gradient(135deg, #dc2626, #991b1b)"
+      />
     </div>
   );
 }

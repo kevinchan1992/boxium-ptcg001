@@ -1,0 +1,55 @@
+{
+  "query": "SELECT t.id, t.cardId, t.rank, t.priceChange7d, t.currentPrice, c.gameId, c.name FROM trendingCardsCache t LEFT JOIN cards c ON t.cardId = c.id ORDER BY t.rank LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT t.id, t.cardId, t.rank, t.priceChange7d, t.currentPrice, c.gameId, c.name FROM trendingCardsCache t LEFT JOIN cards c ON t.cardId = c.id ORDER BY t.rank LIMIT 10;",
+  "rows": [
+    {
+      "id": "1740016",
+      "cardId": "814576",
+      "rank": "1",
+      "priceChange7d": "137.81",
+      "currentPrice": "2718.83",
+      "gameId": "1",
+      "name": "Pikachu V RR[s8a 020/028](Expansion Pack \"25th Anniversary Collection\")"
+    },
+    {
+      "id": "1740017",
+      "cardId": "1020570",
+      "rank": "2",
+      "priceChange7d": "133.20",
+      "currentPrice": "1507.00",
+      "gameId": "1",
+      "name": "Pikachu C [SM11b 016/049](Enhanced Expansion Pack \"Dream League\")"
+    },
+    {
+      "id": "1740018",
+      "cardId": "816129",
+      "rank": "3",
+      "priceChange7d": "114.89",
+      "currentPrice": "2920.98",
+      "gameId": "1",
+      "name": "Raichu [SNP 003/010](Evolution Pack \"Raichu BREAK\")"
+    },
+    {
+      "id": "1740019",
+      "cardId": "1290606",
+      "rank": "4",
+      "priceChange7d": "114.51",
+      "currentPrice": "4693.33",
+      "gameId": "2",
+      "name": "Monkey D Luffy SEC-P [OP05-119] (Booster Pack Awakening of the New Era)"
+    },
+    {
+      "id": "1740020",
+      "cardId": "1290499",
+      "rank": "5",
+      "priceChange7d": "96.35",
+      "currentPrice": "1541.63",
+      "gameId": "2",
+      "name": "Sabo SR [OP04-083] ( 8 Pack Battle Winner Prize)"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\trank\tpriceChange7d\tcurrentPrice\tgameId\tname\n1740016\t814576\t1\t137.81\t2718.83\t1\tPikachu V RR[s8a 020/028](Expansion Pack \"25th Anniversary Collection\")\n1740017\t1020570\t2\t133.20\t1507.00\t1\tPikachu C [SM11b 016/049](Enhanced Expansion Pack \"Dream League\")\n1740018\t816129\t3\t114.89\t2920.98\t1\tRaichu [SNP 003/010](Evolution Pack \"Raichu BREAK\")\n1740019\t1290606\t4\t114.51\t4693.33\t2\tMonkey D Luffy SEC-P [OP05-119] (Booster Pack Awakening of the New Era)\n1740020\t1290499\t5\t96.35\t1541.63\t2\tSabo SR [OP04-083] ( 8 Pack Battle Winner Prize)\n",
+  "stderr": "",
+  "execution_time_ms": 1632
+}
