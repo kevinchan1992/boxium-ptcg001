@@ -229,30 +229,34 @@ export default function SearchResults() {
                     </div>
                   )}
                 </div>
-                <div className="p-2">
+                <div className="p-1.5 sm:p-2 flex flex-col">
                   {card.productType === 'sealed_product' && (
-                    <span className="inline-block text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded mb-1 font-medium">
+                    <span className="inline-block text-[9px] bg-primary/20 text-primary px-1 py-0.5 rounded mb-0.5 font-medium">
                       卡盒
                     </span>
                   )}
-                  <h3 className="font-semibold text-foreground text-xs mb-0.5 line-clamp-2 leading-tight">
+                  <h3 className="font-semibold text-foreground text-[9px] sm:text-xs mb-0 sm:mb-0.5 line-clamp-2 leading-tight">
                     {card.name}
                   </h3>
                   {card.nameJa && (
-                    <p className="text-[10px] text-muted-foreground mb-0.5 truncate">
+                    <p className="hidden sm:block text-[10px] text-muted-foreground mb-0.5 truncate">
                       {card.nameJa}
                     </p>
                   )}
                   {card.cardNumber && (
-                    <p className="text-[10px] text-muted-foreground mb-1">
+                    <p className="hidden sm:block text-[10px] text-muted-foreground mb-1">
                       #{card.cardNumber}
                     </p>
                   )}
-                  {card.latestPrice && (
-                    <p className="text-xs font-bold text-primary">
-                      {formatCurrency(card.latestPrice)}
-                    </p>
-                  )}
+                  <div className="mt-auto pt-1">
+                    {card.latestPrice ? (
+                      <p className="text-[9px] sm:text-xs font-bold text-primary truncate">
+                        {formatCurrency(card.latestPrice)}
+                      </p>
+                    ) : (
+                      <p className="text-[9px] sm:text-xs text-muted-foreground">--</p>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

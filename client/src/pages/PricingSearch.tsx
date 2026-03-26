@@ -224,34 +224,38 @@ export default function PricingSearch() {
                       </div>
                     )}
                   </div>
-                  <div className="p-2">
-                    <h3 className="font-semibold text-foreground text-xs mb-0.5 line-clamp-2 leading-tight">
+                  <div className="p-1.5 sm:p-2 flex flex-col">
+                    <h3 className="font-semibold text-foreground text-[9px] sm:text-xs mb-0 sm:mb-0.5 line-clamp-2 leading-tight">
                       {card.name}
                     </h3>
                     {card.nameJa && (
-                      <p className="text-[10px] text-muted-foreground mb-0.5 truncate">
+                      <p className="hidden sm:block text-[10px] text-muted-foreground mb-0.5 truncate">
                         {card.nameJa}
                       </p>
                     )}
                     {card.cardNumber && (
-                      <p className="text-[10px] text-muted-foreground mb-1">
+                      <p className="hidden sm:block text-[10px] text-muted-foreground mb-1">
                         #{card.cardNumber}
                       </p>
                     )}
                     {/* Lowest active listing price from SNKRDUNK */}
-                    {lowestPrice !== undefined ? (
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <ShoppingBag className="w-3 h-3 text-orange-400 flex-shrink-0" />
-                        <p className="text-xs font-bold text-orange-400">
-                          HKD {lowestPrice.toLocaleString()}起
-                        </p>
-                      </div>
-                    ) : isRefreshing ? (
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <RefreshCw className="w-3 h-3 text-muted-foreground flex-shrink-0 animate-spin" />
-                        <p className="text-xs text-muted-foreground">更新中</p>
-                      </div>
-                    ) : null}
+                    <div className="mt-auto pt-1">
+                      {lowestPrice !== undefined ? (
+                        <div className="flex items-center gap-0.5">
+                          <ShoppingBag className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-orange-400 flex-shrink-0" />
+                          <p className="text-[9px] sm:text-xs font-bold text-orange-400 truncate">
+                            HKD {lowestPrice.toLocaleString()}起
+                          </p>
+                        </div>
+                      ) : isRefreshing ? (
+                        <div className="flex items-center gap-0.5">
+                          <RefreshCw className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground flex-shrink-0 animate-spin" />
+                          <p className="text-[9px] sm:text-xs text-muted-foreground">更新中</p>
+                        </div>
+                      ) : (
+                        <p className="text-[9px] sm:text-xs text-muted-foreground">--</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
