@@ -285,9 +285,7 @@ export default function Pricing() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <p className="mt-2 text-xs sm:text-sm font-medium text-foreground line-clamp-2">
-                  {card.name}
-                </p>
+
               </button>
             ))
           )}
