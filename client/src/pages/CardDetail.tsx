@@ -275,10 +275,10 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
       <div className="max-w-6xl mx-auto">
         {/* ── Hero Section ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-4 sm:gap-6 mb-4 sm:mb-6">
           {/* Card Image */}
-          <div className="lg:col-span-1 flex justify-center lg:justify-start">
-            <div className="relative w-full">
+          <div className="flex justify-center lg:justify-start">
+            <div className="relative w-full lg:sticky lg:top-6 lg:self-start">
               {isSealedProduct && (
                 <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/90 text-black text-xs font-bold">
                   <Package className="w-3 h-3" />
@@ -301,7 +301,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           </div>
 
           {/* Card Info + Price */}
-          <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
             {/* Title */}
             <div>
               <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white leading-tight mb-1">
