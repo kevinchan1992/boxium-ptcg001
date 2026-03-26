@@ -277,7 +277,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
       <div className="max-w-6xl mx-auto">
         {/* ── Hero Section ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-4 sm:gap-6 mb-4 sm:mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_4fr] gap-4 sm:gap-6 mb-4 sm:mb-6">
           {/* Card Image */}
           <div className="flex justify-center lg:justify-start">
             <div className="relative w-full lg:sticky lg:top-6 lg:self-start">
@@ -584,6 +584,8 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
 function SimilarCardsSection({ cardId, currentCardName }: { cardId: number; currentCardName: string }) {
   const [, setLocation] = useLocation();
+  // Extract series keyword from card name for search
+  const seriesKeyword = currentCardName.split(/[\s\[\(]/)[0];
   const { data: similarCards, isLoading } = trpc.cards.getSimilarCards.useQuery(
     { cardId, limit: 6 },
     { enabled: !!cardId }
@@ -594,10 +596,19 @@ function SimilarCardsSection({ cardId, currentCardName }: { cardId: number; curr
 
   return (
     <div className="mt-6 rounded-2xl bg-zinc-900/80 border border-white/5 p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-1 h-5 rounded-full bg-yellow-400" />
-        <h3 className="text-base font-semibold text-white">相似卡牌</h3>
-        <span className="text-xs text-zinc-500 ml-1">{currentCardName.split(/[\s\[\(]/)[0]} 系列</span>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-5 rounded-full bg-yellow-400" />
+          <h3 className="text-base font-semibold text-white">相似卡牌</h3>
+          <span className="text-xs text-zinc-500 ml-1">{seriesKeyword} 系列</span>
+        </div>
+        <button
+          onClick={() => setLocation(`/search?q=${encodeURIComponent(seriesKeyword)}`)}
+          className="text-xs text-yellow-400 hover:text-yellow-300 transition-colors flex items-center gap-1 font-medium"
+        >
+          查看更多
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
       </div>
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
         {similarCards.map((card: any) => (

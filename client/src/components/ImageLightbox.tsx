@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { X, ZoomIn } from "lucide-react";
 
 interface ImageLightboxProps {
@@ -26,38 +27,76 @@ export function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightboxProps)
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 99999,
+        backgroundColor: "rgba(0,0,0,0.95)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
       onClick={onClose}
     >
       {/* Close button */}
       <button
-        className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
-        onClick={onClose}
+        style={{
+          position: "absolute",
+          top: "1rem",
+          right: "1rem",
+          zIndex: 100000,
+          width: "2.5rem",
+          height: "2.5rem",
+          borderRadius: "9999px",
+          background: "rgba(255,255,255,0.15)",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+        }}
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
         aria-label="關閉"
       >
-        <X className="w-5 h-5" />
+        <X size={20} />
       </button>
 
-      {/* Image */}
-      <div
-        className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+      {/* Image — stop propagation so clicking the image itself doesn't close */}
+      <img
+        src={src}
+        alt={alt}
+        style={{
+          maxWidth: "90vw",
+          maxHeight: "90vh",
+          objectFit: "contain",
+          borderRadius: "0.75rem",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.8)",
+          userSelect: "none",
+          pointerEvents: "none",
+        }}
         onClick={(e) => e.stopPropagation()}
-      >
-        <img
-          src={src}
-          alt={alt}
-          className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
-          style={{ userSelect: "none" }}
-        />
-      </div>
+      />
 
       {/* Hint */}
-      <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs">
+      <p
+        style={{
+          position: "absolute",
+          bottom: "1rem",
+          left: "50%",
+          transform: "translateX(-50%)",
+          color: "rgba(255,255,255,0.4)",
+          fontSize: "0.75rem",
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
+        }}
+      >
         點擊任意位置或按 Esc 關閉
       </p>
-    </div>
+    </div>,
+    document.body
   );
 }
 
