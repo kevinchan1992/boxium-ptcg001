@@ -136,10 +136,10 @@
     "jpyPrice": "日幣價格",
     "ebayDesc": "全球最大的線上拍賣平台，提供國際市場的卡牌交易記錄和價格參考",
     "globalMarket": "全球市場數據",
-    "startExploring": "開始探索",
+    "startExploring": "卡牌探索",
     "startSearching": "開始搜尋卡牌",
     "viewMarketTrends": "比較市場格價",
-    "goToMarketplace": "前往市集",
+    "goToMarketplace": "市場格價",
     "readyToStart": "準備好開始你的Pokémon TCG之旅了嗎？",
     "readyToStartDesc": "使用 BOXIUM 的智能搜尋和價格分析工具，找到你的愛好收藏品。",
     "footerDesc": "專注於 Pokémon TCG 價格查詢與市場分析的綜合平台",
@@ -155,7 +155,7 @@
     "privacyPolicy": "隱私權政策"
   },
   "footer": {
-    "description": "專注於 Pokémon TCG 價格查詢與市場分析的綜合平台",
+    "description": "專注於全球 TCG 價格查詢與市場分析的綜合平台",
     "quickLinks": "快速連結",
     "cardSearch": "卡牧搜尋",
     "trending": "熱門排行榜",
