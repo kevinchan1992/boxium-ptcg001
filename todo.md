@@ -6344,3 +6344,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復市集維護模式後端 procedures（已完整實作，資料庫表已存在）
 - [x] 補齊 AdminMarketplace 白名單管理 UI（已完整實作）
 - [x] 確認維護模式對非白名單用戶生效（目前維護模式已開啟）
+
+---
+
+## 🔧 四項新功能（2026-03-26）
+
+- [x] CardDetail 燈箱放大功能（點擊圖片全螢幕顯示）
+- [x] CardDetail 相似卡牌推薦區塊（頁面底部，後端 getSimilarCards procedure）
+- [x] 統一全站 LOGO 點擊返回主頁（Research、Pricing 頁面加入 Link 包裝）
+- [x] 商品詳情頁麵包屑導航（MarketplaceListing 已有完整實作：商城 > 評級 > 商品名稱）

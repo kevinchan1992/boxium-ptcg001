@@ -11,6 +11,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { useTranslation } from "react-i18next";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { formatDate } from "@/lib/formatDate";
+import { ImageLightbox, ClickableCardImage } from "@/components/ImageLightbox";
 
 const grades = ["PSA 10", "中古"];
 
@@ -24,6 +25,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const [, params] = useRoute("/card/:id");
   const [, sealedParams] = useRoute("/sealed-product/:id");
   const [activeGrade, setActiveGrade] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const cardId = sealedProductId ??
     (sealedParams?.id ? parseInt(sealedParams.id, 10) : null) ??
@@ -286,12 +288,21 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 </div>
               )}
               {product.imageUrl ? (
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-full rounded-xl shadow-2xl hover:scale-[1.02] transition-transform duration-300"
-                  style={{ height: "auto" }}
-                />
+                <>
+                  <ClickableCardImage
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="w-full rounded-xl shadow-2xl"
+                    style={{ height: "auto" }}
+                    onClick={() => setLightboxOpen(true)}
+                  />
+                  <ImageLightbox
+                    src={product.imageUrl}
+                    alt={product.name}
+                    isOpen={lightboxOpen}
+                    onClose={() => setLightboxOpen(false)}
+                  />
+                </>
               ) : (
                 <div className="w-full aspect-[2/3] bg-zinc-800 rounded-xl flex items-center justify-center">
                   <p className="text-zinc-500 text-sm">{t("home.noImage")}</p>
@@ -561,6 +572,63 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             </dl>
           </div>
         </div>
+      </div>
+
+      {/* Similar Cards Section */}
+      {!isSealedProduct && cardId && (
+        <SimilarCardsSection cardId={cardId} currentCardName={product.name} />
+      )}
+    </div>
+  );
+}
+
+function SimilarCardsSection({ cardId, currentCardName }: { cardId: number; currentCardName: string }) {
+  const [, setLocation] = useLocation();
+  const { data: similarCards, isLoading } = trpc.cards.getSimilarCards.useQuery(
+    { cardId, limit: 6 },
+    { enabled: !!cardId }
+  );
+
+  if (isLoading) return null;
+  if (!similarCards || similarCards.length === 0) return null;
+
+  return (
+    <div className="mt-6 rounded-2xl bg-zinc-900/80 border border-white/5 p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-1 h-5 rounded-full bg-yellow-400" />
+        <h3 className="text-base font-semibold text-white">相似卡牌</h3>
+        <span className="text-xs text-zinc-500 ml-1">{currentCardName.split(/[\s\[\(]/)[0]} 系列</span>
+      </div>
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+        {similarCards.map((card: any) => (
+          <button
+            key={card.id}
+            onClick={() => setLocation(`/card/${card.id}`)}
+            className="group flex flex-col gap-2 text-left hover:scale-[1.03] transition-transform duration-200"
+          >
+            <div className="aspect-[2/3] rounded-lg overflow-hidden bg-zinc-800">
+              {card.imageUrl ? (
+                <img
+                  src={card.imageUrl}
+                  alt={card.name}
+                  className="w-full h-full object-cover group-hover:brightness-110 transition-all duration-200"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-zinc-600 text-xs">無圖</span>
+                </div>
+              )}
+            </div>
+            <p className="text-[10px] text-zinc-400 leading-tight line-clamp-2 group-hover:text-yellow-400 transition-colors">
+              {card.name}
+            </p>
+            {card.latestPrice && (
+              <p className="text-[10px] text-yellow-400 font-semibold">
+                HKD {Number(card.latestPrice).toLocaleString('en-HK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </p>
+            )}
+          </button>
+        ))}
       </div>
     </div>
   );

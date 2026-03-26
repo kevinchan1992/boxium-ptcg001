@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, Camera, Upload, X, Crop } from "lucide-react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { TypeAnimation } from 'react-type-animation';
@@ -216,11 +216,13 @@ export default function Pricing() {
       <div className="text-center space-y-5 max-w-3xl w-full">
         {/* Logo/Brand */}
         <div className="space-y-3">
-          <img
-            src="/boxium-logo-white.png"
-            alt="BOXIUM"
-            className="h-24 sm:h-28 mx-auto"
-          />
+          <Link href="/">
+            <img
+              src="/boxium-logo-white.png"
+              alt="BOXIUM"
+              className="h-24 sm:h-28 mx-auto cursor-pointer hover:opacity-80 transition-opacity"
+            />
+          </Link>
           <h2 className="text-base sm:text-lg font-semibold text-foreground">{t("pricing.title")}</h2>
         </div>
 

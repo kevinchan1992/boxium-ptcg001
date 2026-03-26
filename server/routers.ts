@@ -1004,6 +1004,59 @@ export const appRouter = router({
         })();
         return { triggered: input.cardIds.length };
       }),
+    getSimilarCards: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+        limit: z.number().optional().default(6),
+      }))
+      .query(async ({ input }) => {
+        const card = await db.getCardById(input.cardId);
+        if (!card) return [];
+        const dbConn = await (await import('./db')).getDb();
+        if (!dbConn) return [];
+        const { cards: cardsTable } = await import('../drizzle/schema_new');
+        const { and, ne, like } = await import('drizzle-orm');
+        // Extract character name (first word before space or bracket)
+        const nameParts = card.name.split(/[\s\[\(]/);
+        const characterName = nameParts[0] || '';
+        // Extract set code e.g. [SM11b] -> SM11b
+        const setCodeMatch = card.name.match(/\[([A-Za-z0-9]+)/);
+        const setCode = setCodeMatch ? setCodeMatch[1] : null;
+        let similar: any[] = [];
+        // Try: same character + same set
+        if (characterName && setCode) {
+          similar = await dbConn
+            .select()
+            .from(cardsTable)
+            .where(
+              and(
+                ne(cardsTable.id, input.cardId),
+                like(cardsTable.name, `%${characterName}%`),
+                like(cardsTable.name, `%${setCode}%`)
+              )
+            )
+            .limit(input.limit);
+        }
+        // Fallback: same character name only
+        if (similar.length < 3 && characterName) {
+          const extra = await dbConn
+            .select()
+            .from(cardsTable)
+            .where(
+              and(
+                ne(cardsTable.id, input.cardId),
+                like(cardsTable.name, `%${characterName}%`)
+              )
+            )
+            .limit(input.limit * 2);
+          const existingIds = new Set(similar.map((c: any) => c.id));
+          for (const c of extra) {
+            if (!existingIds.has(c.id)) similar.push(c);
+            if (similar.length >= input.limit) break;
+          }
+        }
+        return similar.slice(0, input.limit);
+      }),
   }),
   prices: router({
     getHistory: publicProcedure
