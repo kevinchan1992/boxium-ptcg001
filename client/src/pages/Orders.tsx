@@ -207,6 +207,7 @@ function BuyerCancelButton({ orderId, onSuccess }: { orderId: number; onSuccess:
 
 function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
   const [expanded, setExpanded] = useState(false);
+  const [showStepper, setShowStepper] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Auto-expand and scroll into view when highlighted after payment success
@@ -330,220 +331,275 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
   return (
     <div
       ref={cardRef}
-      className={`bg-white rounded-2xl shadow-md overflow-hidden transition-all duration-700 ${
+      className={`bg-white rounded-2xl overflow-hidden transition-all duration-700 ${
         highlight
-          ? "border-2 border-[#FEDD00] shadow-[0_0_0_4px_rgba(254,221,0,0.25)] ring-2 ring-[#FEDD00]/40"
-          : "border border-gray-100"
+          ? "border-2 border-[#FEDD00] shadow-[0_0_0_4px_rgba(254,221,0,0.25)]"
+          : "border border-gray-100 shadow-sm hover:shadow-md"
       }`}
     >
-      {/* Brand Header Bar */}
-      <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+      {/* ── Brand Header Bar ── */}
+      <div className="px-4 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-white/80 font-mono tracking-wide">#{order.orderNo}</span>
+          <span className="text-[11px] text-white/60 font-mono tracking-wider uppercase">訂單</span>
+          <span className="text-xs text-white font-bold font-mono tracking-wide">#{order.orderNo}</span>
           {order.shippingMethod === 'meetup' && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-400 text-amber-900">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-amber-900">
               🤝 面交
             </span>
           )}
         </div>
         <OrderStatusBadge status={order.orderStatus} />
       </div>
-      {/* Header */}
-      <div className="p-4 flex items-start justify-between gap-3">
-        {/* Product Thumbnail */}
-        {(() => {
-          const imgs = (() => { try { return JSON.parse(order.listingImages ?? '[]'); } catch { return []; } })();
-          const thumb = imgs[0];
-          return thumb ? (
-            <div className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
-              <img src={thumb} alt={order.listingTitle ?? '商品'} className="w-full h-full object-cover" />
+
+      {/* ── Product Info Row ── */}
+      <div className="p-4">
+        <div className="flex items-start gap-3.5">
+          {/* Thumbnail */}
+          {(() => {
+            const imgs = (() => { try { return JSON.parse(order.listingImages ?? '[]'); } catch { return []; } })();
+            const thumb = imgs[0];
+            return thumb ? (
+              <div className="flex-shrink-0 w-[72px] h-[72px] rounded-xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm">
+                <img src={thumb} alt={order.listingTitle ?? '商品'} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className="flex-shrink-0 w-[72px] h-[72px] rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center shadow-sm">
+                <span className="text-3xl">🃏</span>
+              </div>
+            );
+          })()}
+          {/* Product Details */}
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm text-gray-900 line-clamp-2 leading-snug">{order.listingTitle ?? "商品"}</p>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className="text-base font-extrabold" style={{ color: "#06038d" }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span>
+              {order.paymentMethod && (
+                <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full capitalize">
+                  {order.paymentMethod === 'stripe' ? '信用卡' : order.paymentMethod === 'alipay_hk' ? '支付寶HK' : order.paymentMethod}
+                </span>
+              )}
             </div>
-          ) : (
-            <div className="flex-shrink-0 w-14 h-14 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
-              <span className="text-2xl">🃏</span>
-            </div>
-          );
-        })()}
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm truncate text-gray-900">{order.listingTitle ?? "商品"}</p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {new Date(order.createdAt).toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric" })}
-          </p>
-        </div>
-        <div className="text-right flex-shrink-0 space-y-1">
-          <p className="font-bold text-[#06038d]">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</p>
-          <p className="text-xs text-gray-500 capitalize">{order.paymentMethod?.replace("_", " ")}</p>
-          <Link href={`/orders/${order.orderNo}`}>
-            <Button variant="outline" size="sm" className="text-xs h-7 px-2 text-[#06038D] border-[#06038D]/30 hover:bg-[#06038D]/5">查看詳情</Button>
+            <p className="text-[11px] text-gray-400 mt-1">
+              {new Date(order.createdAt).toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric" })}
+            </p>
+          </div>
+          {/* View Detail Button */}
+          <Link href={`/orders/${order.orderNo}`} className="flex-shrink-0">
+            <Button variant="outline" size="sm" className="text-[11px] h-8 px-2.5 text-[#06038D] border-[#06038D]/30 hover:bg-[#06038D]/5 hover:border-[#06038D]/60 rounded-lg">
+              詳情
+            </Button>
           </Link>
         </div>
       </div>
 
-      {/* Action buttons */}
-      {(canConfirm || canDispute || isPending || canReview || isDisputed) && (
-        <div className="px-3 pb-3 flex items-stretch gap-2">
-          {canConfirm && (
-            <Button
-              size="sm"
-              className="flex-1 h-9 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded-xl"
-              onClick={() => setShowConfirmDialog(true)}
-            >
-              <CheckCircle className="w-3.5 h-3.5 mr-1" />確認收貨
-            </Button>
-          )}
-          {canDispute && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex-1 h-9 text-xs font-semibold border-red-300 text-red-600 hover:bg-red-50 rounded-xl"
-              onClick={() => setShowDisputeDialog(true)}
-            >
-              <Flag className="w-3.5 h-3.5 mr-1" />申請爭議
-            </Button>
-          )}
-          {canReview && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex-1 h-9 text-xs font-semibold border-yellow-300 text-yellow-700 hover:bg-yellow-50 rounded-xl"
-              onClick={() => setShowReviewDialog(true)}
-            >
-              <Star className="w-3.5 h-3.5 mr-1" />評價賣家
-            </Button>
-          )}
-          {isCompleted && existingReview && (
-            <span className="flex-1 text-xs text-green-600 bg-green-50 border border-green-200 rounded-xl px-3 h-9 flex items-center justify-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-              已評價 {existingReview.rating} 星
-            </span>
-          )}
-          {isPending && (
-            <>
-              <Link href={`/orders/${order.orderNo}`} className="flex-1">
-                <Button size="sm" className="w-full h-9 text-xs font-semibold text-white rounded-xl" style={{ backgroundColor: "#06038d" }}>
-                  <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
-                </Button>
-              </Link>
-              <div className="flex-1"><BuyerCancelButton orderId={order.id} onSuccess={() => utils.marketplace.getMyOrders.invalidate()} /></div>
-            </>
-          )}
-          {isWaitingShipment && (
-            <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
-              <Package className="w-3.5 h-3.5" />付款成功，等待賣家出貨
-            </span>
-          )}
-          {isDisputed && (
-            <span className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
-              <AlertCircle className="w-3.5 h-3.5" />爭議處理中，請等待管理員回覆
-            </span>
-          )}
-          {order.paymentMethod === "alipay_hk" && order.alipayProofStatus === "pending_review" && (
-            <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
-              <Camera className="w-3.5 h-3.5" />截圖審核中，請耐心等待管理員確認
-            </span>
-          )}
-          {order.paymentMethod === "alipay_hk" && order.alipayProofStatus === "approved" && (
-            <span className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
-              <CheckCircle className="w-3.5 h-3.5" />截圖已核准，付款確認完成
-            </span>
-          )}
-          {order.paymentMethod === "alipay_hk" && order.alipayProofStatus === "rejected" && (
-            <span className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 flex items-center gap-1 flex-wrap">
-              <RotateCcw className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>截圖審核未通過，請重新上傳</span>
-              {order.paymentRejectionReason && (
-                <span className="w-full mt-0.5 text-red-600">原因：{order.paymentRejectionReason}</span>
-              )}
-            </span>
-          )}
-          {order.paymentMethod === "alipay_hk" && !order.alipayProofStatus && order.orderStatus === "pending_payment" && !order.alipayProofImageUrl && (
-            <Link href={`/orders/${order.orderNo}`}>
-              <span className="text-xs text-[#06038d] bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1 cursor-pointer hover:bg-blue-100 transition-colors">
-                <ImageIcon className="w-3.5 h-3.5" />尚未上傳付款截圖，點此前往上傳
-              </span>
-            </Link>
-          )}
-        </div>
-      )}
-
-      {/* Order Status Stepper */}
+      {/* ── Order Progress Stepper (Collapsible) ── */}
       <div className="px-4 pb-3">
-        <OrderStatusStepper
-          orderStatus={order.orderStatus}
-          shippingMethod={order.shippingMethod}
-          role="buyer"
-        />
+        <button
+          className="w-full flex items-center justify-between py-2.5 px-3.5 rounded-xl bg-[#f0f4ff] border border-[#06038d]/10 hover:bg-[#e8edff] hover:border-[#06038d]/20 transition-all group"
+          onClick={() => setShowStepper(s => !s)}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+              order.orderStatus === 'completed' ? 'bg-green-500' :
+              order.orderStatus === 'cancelled' ? 'bg-gray-400' :
+              order.orderStatus === 'refunded' ? 'bg-teal-500' :
+              order.orderStatus === 'disputed' ? 'bg-orange-500' :
+              'bg-[#06038d] animate-pulse'
+            }`} />
+            <span className="text-xs font-semibold text-[#06038d]">
+              {ORDER_STATUS_LABEL[order.orderStatus]?.label ?? order.orderStatus}
+            </span>
+          </div>
+          <div className="flex items-center gap-1 text-[11px] text-[#06038d]/50 group-hover:text-[#06038d] transition-colors font-medium">
+            <span>{showStepper ? '收起進度' : '查看進度'}</span>
+            {showStepper ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </div>
+        </button>
+        {showStepper && (
+          <div className="mt-3 pt-3 border-t border-[#06038d]/10">
+            <OrderStatusStepper
+              orderStatus={order.orderStatus}
+              shippingMethod={order.shippingMethod}
+              role="buyer"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Dispute info banner */}
-      {isDisputed && order.disputeReason && (
-        <div className="mx-4 mb-3 bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-800">
-          <div className="font-medium mb-1">爭議原因：</div>
-          <div>{order.disputeReason}</div>
-          {order.disputeResolution && (
-            <div className="mt-2 pt-2 border-t border-red-200">
-              <div className="font-medium mb-1 text-green-700">處理結果：</div>
-              <div className="text-green-700">{order.disputeResolution}</div>
+      {/* ── Status Info Banners ── */}
+      <div className="px-4 space-y-2 pb-2">
+        {/* Dispute info */}
+        {isDisputed && order.disputeReason && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-800">
+            <div className="font-semibold mb-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />爭議原因</div>
+            <div className="text-red-700">{order.disputeReason}</div>
+            {order.disputeResolution && (
+              <div className="mt-2 pt-2 border-t border-red-200">
+                <div className="font-semibold mb-0.5 text-green-700">處理結果：</div>
+                <div className="text-green-700">{order.disputeResolution}</div>
+              </div>
+            )}
+          </div>
+        )}
+        {/* Tracking info */}
+        {(order.orderStatus === "shipped" || order.orderStatus === "delivered" || isCompleted) && order.trackingNumber && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
+            <div className="flex items-center gap-2 text-indigo-800">
+              <Truck className="w-3.5 h-3.5 flex-shrink-0" />
+              <div className="text-xs">
+                <span className="font-semibold">{order.shippingMethod ?? "快遞"}</span>
+                <span className="mx-1.5 text-indigo-300">|</span>
+                追蹤號：<span className="font-mono font-bold">{order.trackingNumber}</span>
+              </div>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+        {/* Auto-complete notice */}
+        {order.orderStatus === "shipped" && order.autoCompleteAt && (
+          <div className="text-[11px] text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 flex items-center gap-1.5">
+            <Clock className="w-3 h-3 flex-shrink-0" />
+            如未確認收貨，系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成訂單
+          </div>
+        )}
+        {/* Alipay proof status */}
+        {order.paymentMethod === "alipay_hk" && order.alipayProofStatus === "pending_review" && (
+          <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 flex items-center gap-1.5">
+            <Camera className="w-3.5 h-3.5" />截圖審核中，請耐心等待管理員確認
+          </div>
+        )}
+        {order.paymentMethod === "alipay_hk" && order.alipayProofStatus === "approved" && (
+          <div className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2 flex items-center gap-1.5">
+            <CheckCircle className="w-3.5 h-3.5" />截圖已核准，付款確認完成
+          </div>
+        )}
+        {order.paymentMethod === "alipay_hk" && order.alipayProofStatus === "rejected" && (
+          <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2 space-y-0.5">
+            <div className="flex items-center gap-1.5"><RotateCcw className="w-3.5 h-3.5 flex-shrink-0" />截圖審核未通過，請重新上傳</div>
+            {order.paymentRejectionReason && (
+              <div className="text-red-600 pl-5">原因：{order.paymentRejectionReason}</div>
+            )}
+          </div>
+        )}
+        {order.paymentMethod === "alipay_hk" && !order.alipayProofStatus && order.orderStatus === "pending_payment" && !order.alipayProofImageUrl && (
+          <Link href={`/orders/${order.orderNo}`}>
+            <div className="text-xs text-[#06038d] bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 flex items-center gap-1.5 cursor-pointer hover:bg-blue-100 transition-colors">
+              <ImageIcon className="w-3.5 h-3.5" />尚未上傳付款截圖，點此前往上傳
+            </div>
+          </Link>
+        )}
+        {isWaitingShipment && (
+          <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 flex items-center gap-1.5">
+            <Package className="w-3.5 h-3.5" />付款成功，等待賣家出貨中
+          </div>
+        )}
+        {isDisputed && !order.disputeReason && (
+          <div className="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5" />爭議處理中，請等待管理員回覆
+          </div>
+        )}
+      </div>
 
-      {/* Shipping info (if shipped) */}
-      {(order.orderStatus === "shipped" || order.orderStatus === "delivered" || isCompleted) && order.trackingNumber && (
-        <div className="mx-4 mb-3 bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-          <div className="flex items-center gap-2 text-indigo-800">
-            <Truck className="w-4 h-4 flex-shrink-0" />
-            <div className="text-xs">
-              <span className="font-medium">{order.shippingMethod ?? "快遞"}</span>
-              <span className="mx-1">·</span>
-              追蹤號：<span className="font-mono font-medium">{order.trackingNumber}</span>
-            </div>
+      {/* ── Primary Action Buttons ── */}
+      {(canConfirm || canDispute || isPending || canReview) && (
+        <div className="px-4 pb-4 pt-1">
+          <div className="flex items-stretch gap-2">
+            {canConfirm && (
+              <Button
+                size="sm"
+                className="flex-1 h-10 text-xs font-bold bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-sm"
+                onClick={() => setShowConfirmDialog(true)}
+              >
+                <CheckCircle className="w-3.5 h-3.5 mr-1.5" />確認收貨
+              </Button>
+            )}
+            {canDispute && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-10 text-xs font-semibold border-red-300 text-red-600 hover:bg-red-50 rounded-xl"
+                onClick={() => setShowDisputeDialog(true)}
+              >
+                <Flag className="w-3.5 h-3.5 mr-1.5" />申請爭議
+              </Button>
+            )}
+            {canReview && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-10 text-xs font-bold border-yellow-400 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 rounded-xl"
+                onClick={() => setShowReviewDialog(true)}
+              >
+                <Star className="w-3.5 h-3.5 mr-1.5" />評價賣家
+              </Button>
+            )}
+            {isCompleted && existingReview && (
+              <span className="flex-1 text-xs text-green-600 bg-green-50 border border-green-200 rounded-xl px-3 h-10 flex items-center justify-center gap-1.5 font-medium">
+                <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                已評價 {existingReview.rating} 星
+              </span>
+            )}
+            {isPending && (
+              <>
+                <Link href={`/orders/${order.orderNo}`} className="flex-1">
+                  <Button size="sm" className="w-full h-10 text-xs font-bold text-white rounded-xl shadow-sm" style={{ backgroundColor: "#06038d" }}>
+                    <CreditCard className="w-3.5 h-3.5 mr-1.5" />前往付款
+                  </Button>
+                </Link>
+                <div className="flex-shrink-0"><BuyerCancelButton orderId={order.id} onSuccess={() => utils.marketplace.getMyOrders.invalidate()} /></div>
+              </>
+            )}
           </div>
         </div>
       )}
 
-      {/* Auto-complete notice */}
-      {order.orderStatus === "shipped" && order.autoCompleteAt && (
-        <div className="mx-4 mb-3 text-xs text-muted-foreground bg-gray-50 border rounded-lg px-3 py-2">
-          如未確認收貨，系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成訂單
-        </div>
-      )}
-
-      {/* Expand toggle */}
+      {/* ── Expand / Collapse Details ── */}
       <button
-        className="w-full px-4 py-2.5 border-t text-xs text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+        className="w-full px-4 py-2.5 border-t border-gray-100 text-[11px] text-gray-400 hover:text-[#06038d] hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5 font-medium"
         onClick={() => setExpanded(e => !e)}
       >
-        {expanded ? <><ChevronUp className="w-3.5 h-3.5" />收起詳情</> : <><ChevronDown className="w-3.5 h-3.5" />查看詳情</>}
+        {expanded ? <><ChevronUp className="w-3.5 h-3.5" />收起收貨 / 付款資料</> : <><ChevronDown className="w-3.5 h-3.5" />展開收貨 / 付款資料</>}
       </button>
 
-      {/* Expanded details */}
+      {/* ── Expanded Details ── */}
       {expanded && (
-        <div className="border-t p-4 space-y-3" style={{ backgroundColor: "#f8f9fa" }}>
+        <div className="border-t border-gray-100 bg-[#f8f9fc] p-4 space-y-4">
           {shippingAddr && (
-            <div className="space-y-1.5">
-              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#06038d" }}>收貨資料</p>
-              <div className="text-sm space-y-1 text-gray-800">
-                <div className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-gray-500" />{shippingAddr.name}</div>
-                <div className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-gray-500" />{shippingAddr.phone}</div>
-                <div className="flex items-start gap-2"><MapPin className="w-3.5 h-3.5 text-gray-500 mt-0.5" />
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#06038d" }}>收貨資料</p>
+              <div className="bg-white rounded-xl border border-gray-100 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                  <span className="font-medium">{shippingAddr.name}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <Phone className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                  <span>{shippingAddr.phone}</span>
+                </div>
+                <div className="flex items-start gap-2 text-sm text-gray-700">
+                  <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
                   <span>{shippingAddr.address}{shippingAddr.district ? `，${shippingAddr.district}` : ""}{shippingAddr.region ? `，${shippingAddr.region}` : ""}</span>
                 </div>
               </div>
             </div>
           )}
-          <div className="border-t border-gray-200" />
-          <div className="space-y-1.5">
-            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#06038d" }}>付款資料</p>
-            <div className="text-sm space-y-1">
-              <div className="flex justify-between"><span className="text-gray-500">商品金額</span><span className="text-gray-800">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
-              <div className="flex justify-between font-semibold"><span className="text-gray-800">總計</span><span style={{ color: "#06038d" }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#06038d" }}>付款摘要</p>
+            <div className="bg-white rounded-xl border border-gray-100 p-3 space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500">商品金額</span>
+                <span className="text-gray-800 font-medium">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span>
+              </div>
+              <div className="border-t border-gray-100 pt-2 flex justify-between items-center">
+                <span className="text-sm font-bold text-gray-800">總計</span>
+                <span className="text-base font-extrabold" style={{ color: "#06038d" }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span>
+              </div>
             </div>
           </div>
           {order.listingId && (
             <Link href={`/marketplace/${order.listingId}`}>
-              <Button variant="outline" size="sm" className="w-full text-xs border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white">查看商品頁面</Button>
+              <Button variant="outline" size="sm" className="w-full text-xs border-[#06038d]/30 text-[#06038d] hover:bg-[#06038d] hover:text-white rounded-xl h-9">
+                查看商品頁面
+              </Button>
             </Link>
           )}
         </div>

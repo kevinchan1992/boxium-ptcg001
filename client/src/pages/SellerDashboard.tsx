@@ -186,6 +186,59 @@ const orderStatusLabel: Record<string, { label: string; color: string }> = {
   disputed: { label: "爭議中", color: "bg-orange-100 text-orange-800" },
 };
 
+// ─── SellerOrderStepper ─────────────────────────────────────────────────────
+function SellerOrderStepper({ item }: { item: any }) {
+  const [showStep, setShowStep] = useState(false);
+  const statusText = (() => {
+    const s = item.orderStatus;
+    if (s === 'pending_payment') return '待買家付款';
+    if (s === 'payment_review' || s === 'payment_submitted' || s === 'alipay_pending') return '付款審核中';
+    if (s === 'paid' || s === 'paid_held' || s === 'payment_received' || s === 'processing') return '已收款，請出貨';
+    if (s === 'shipped') return '已寄出，等待買家確認';
+    if (s === 'delivered') return '買家確認收貨中';
+    if (s === 'completed') return '訂單已完成';
+    if (s === 'cancelled') return '訂單已取消';
+    if (s === 'dispute' || s === 'disputed') return '爭議處理中';
+    if (s === 'refunded') return '已退款';
+    if (s === 'meetup_pending') return '等待面交';
+    if (s === 'meetup_completed') return '面交已完成';
+    return s;
+  })();
+  const isTerminal = ['completed', 'cancelled', 'refunded', 'meetup_completed'].includes(item.orderStatus);
+  const isDispute = ['dispute', 'disputed'].includes(item.orderStatus);
+  return (
+    <div>
+      <button
+        className="w-full flex items-center justify-between py-2 px-3 rounded-xl bg-blue-50/60 border border-blue-100 hover:bg-blue-50 transition-colors group"
+        onClick={() => setShowStep(s => !s)}
+      >
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+            isTerminal ? 'bg-green-500' :
+            isDispute ? 'bg-orange-400' :
+            item.orderStatus === 'cancelled' ? 'bg-red-400' :
+            'bg-[#06038d] animate-pulse'
+          }`} />
+          <span className="text-xs font-medium text-[#06038d]">{statusText}</span>
+        </div>
+        <div className="flex items-center gap-1 text-xs text-gray-400 group-hover:text-[#06038d] transition-colors">
+          <span>{showStep ? '收起' : '查看進度'}</span>
+          {showStep ? <ChevronDown className="w-3.5 h-3.5 rotate-180" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </div>
+      </button>
+      {showStep && (
+        <div className="mt-2 pt-2 border-t border-blue-100">
+          <OrderStatusStepper
+            orderStatus={item.orderStatus}
+            shippingMethod={item.shippingMethod}
+            role="seller"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── ShareButton ─────────────────────────────────────────────────────────────
 function ShareButton({
   listingUrl, shareText, title, priceHkd, coverImg, condition
@@ -538,6 +591,9 @@ export default function SellerDashboard() {
 
    // ─── Listing filter state ─────────────────────────────────────────
   const [listingFilter, setListingFilter] = useState<'all' | 'active' | 'sold' | 'removed' | 'pending_review'>('all');
+  const [listingViewMode, setListingViewMode] = useState<'list' | 'grid'>(() => {
+    return (localStorage.getItem('seller-listing-view') as 'list' | 'grid') ?? 'list';
+  });
   const [activeTab, setActiveTab] = useState<string>('listings');
   // ─── Order filter state ─────────────────────────────────────────
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'pending' | 'active' | 'done' | 'meetup'>('all');
@@ -1149,7 +1205,7 @@ export default function SellerDashboard() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className={listingViewMode === 'grid' ? 'space-y-3' : 'space-y-3'}>
                     {/* Toolbar */}
                     <div className="space-y-2">
                       {/* Row 1: Main actions */}
@@ -1174,9 +1230,36 @@ export default function SellerDashboard() {
                             批量上架
                           </Button>
                         )}
+                        {/* View mode toggle */}
+                        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden ml-auto">
+                          <button
+                            className={`h-8 w-8 flex items-center justify-center transition-colors ${
+                              listingViewMode === 'list' ? 'bg-[#06038d] text-white' : 'bg-white text-gray-400 hover:bg-gray-50'
+                            }`}
+                            onClick={() => { setListingViewMode('list'); localStorage.setItem('seller-listing-view', 'list'); }}
+                            title="列表視圖"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                            </svg>
+                          </button>
+                          <button
+                            className={`h-8 w-8 flex items-center justify-center transition-colors ${
+                              listingViewMode === 'grid' ? 'bg-[#06038d] text-white' : 'bg-white text-gray-400 hover:bg-gray-50'
+                            }`}
+                            onClick={() => { setListingViewMode('grid'); localStorage.setItem('seller-listing-view', 'grid'); }}
+                            title="網格視圖"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                            </svg>
+                          </button>
+                        </div>
                         <Button
                           size="sm"
-                          className="ml-auto text-xs h-8 font-bold"
+                          className="text-xs h-8 font-bold"
                           style={{ background: '#FEDD00', color: '#06038D' }}
                           onClick={() => {
                             if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
@@ -1230,7 +1313,9 @@ export default function SellerDashboard() {
                         <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
                         <p className="text-sm">此類別無商品</p>
                       </div>
-                    ) : filteredListings.map((listing: any) => {
+                    ) : (
+                    <div className={listingViewMode === 'grid' ? 'grid grid-cols-2 gap-2.5' : 'space-y-3'}>
+                    {filteredListings.map((listing: any) => {
                       let coverImg: string | null = null;
                       try {
                         const imgs = listing.images ? JSON.parse(listing.images as string) : null;
@@ -1252,65 +1337,115 @@ export default function SellerDashboard() {
                           onClick={batchMode ? () => toggleSelectId(listing.id) : undefined}
                           style={batchMode ? { cursor: "pointer" } : undefined}
                         >
-                          {/* Brand Header Bar */}
-                          <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                            <div className="flex items-center gap-2">
-                              {batchMode && (
-                                <div className="w-4 h-4 rounded border-2 border-white/60 flex items-center justify-center" style={isSelected ? { background: '#FEDD00', borderColor: '#FEDD00' } : {}}>
-                                  {isSelected && <Check className="w-3 h-3" style={{ color: '#06038D' }} />}
+                          {listingViewMode === 'grid' ? (
+                            /* Grid Card Layout */
+                            <>
+                              {/* Cover Image - full width */}
+                              <div className="relative">
+                                <div className="aspect-square overflow-hidden" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                                  {coverImg ? (
+                                    <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <span className="text-white font-black text-sm tracking-tight text-center leading-tight">BOX<br/>IUM</span>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                              <span className="text-xs text-white/80 font-medium">#BOXIUM-{listing.id}</span>
-                              <span className="text-xs text-white/50">庫存 {listing.quantity}</span>
-                            </div>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                              isActive ? "bg-green-400/20 text-green-200 border border-green-400/30" :
-                              listing.status === "pending_review" ? "bg-yellow-400/20 text-yellow-200 border border-yellow-400/30" :
-                              isSold ? "bg-blue-400/20 text-blue-200 border border-blue-400/30" :
-                              isRemoved ? "bg-red-400/20 text-red-200 border border-red-400/30" :
-                              "bg-white/20 text-white/70 border border-white/30"
-                            }`}>
-                              {isActive ? "上架中" :
-                               listing.status === "pending_review" ? "審核中" :
-                               isSold ? "已售出" :
-                               isRemoved ? "已下架" : listing.status}
-                            </span>
-                          </div>
-                          {/* Card Body */}
-                          <div className="flex items-start gap-3 px-3 py-3">
-                            {/* Cover Image - fixed 1:1 aspect ratio */}
-                            <div className="w-16 flex-shrink-0">
-                              <div className="aspect-square rounded-lg overflow-hidden border border-gray-200" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                                {coverImg ? (
-                                  <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <span className="text-white font-black text-[9px] tracking-tight text-center leading-tight">BOX<br/>IUM</span>
+                                {/* Status badge overlay */}
+                                <span className={`absolute top-1.5 right-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                                  isActive ? "bg-green-500 text-white" :
+                                  listing.status === "pending_review" ? "bg-yellow-400 text-yellow-900" :
+                                  isSold ? "bg-blue-500 text-white" :
+                                  isRemoved ? "bg-red-500 text-white" :
+                                  "bg-gray-500 text-white"
+                                }`}>
+                                  {isActive ? "上架" :
+                                   listing.status === "pending_review" ? "審核" :
+                                   isSold ? "售出" :
+                                   isRemoved ? "下架" : listing.status}
+                                </span>
+                                {/* Batch select overlay */}
+                                {batchMode && (
+                                  <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                    isSelected ? 'border-[#FEDD00] bg-[#FEDD00]' : 'border-white bg-white/30'
+                                  }`}>
+                                    {isSelected && <Check className="w-3 h-3" style={{ color: '#06038D' }} />}
                                   </div>
                                 )}
                               </div>
-                            </div>
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm leading-snug text-gray-900 line-clamp-2">{listing.title}</p>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                {(() => {
-                                  const tcgLogos: Record<string, { logo: string; label: string }> = {
-                                    pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
-                                    onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
-                                    yugioh:   { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  label: "Yu-Gi-Oh!" },
-                                  };
-                                  const series = tcgLogos[listing.tcgSeries as string];
-                                  return series ? (
-                                    <img src={series.logo} alt={series.label} title={series.label} className="h-5 w-auto object-contain opacity-70" />
-                                  ) : null;
-                                })()}
+                              {/* Info */}
+                              <div className="px-2 py-2">
+                                <p className="font-semibold text-xs leading-snug text-gray-900 line-clamp-2 mb-1">{listing.title}</p>
                                 <p className="text-sm font-bold" style={{ color: '#06038D' }}>
                                   HKD {parseFloat(listing.priceHkd as string).toFixed(2)}
                                 </p>
+                                <p className="text-[10px] text-gray-400 mt-0.5">庫存 {listing.quantity}</p>
                               </div>
-                            </div>
-                          </div>
+                            </>
+                          ) : (
+                            /* List Card Layout */
+                            <>
+                              {/* Brand Header Bar */}
+                              <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                                <div className="flex items-center gap-2">
+                                  {batchMode && (
+                                    <div className="w-4 h-4 rounded border-2 border-white/60 flex items-center justify-center" style={isSelected ? { background: '#FEDD00', borderColor: '#FEDD00' } : {}}>
+                                      {isSelected && <Check className="w-3 h-3" style={{ color: '#06038D' }} />}
+                                    </div>
+                                  )}
+                                  <span className="text-xs text-white/80 font-medium">#BOXIUM-{listing.id}</span>
+                                  <span className="text-xs text-white/50">庫存 {listing.quantity}</span>
+                                </div>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  isActive ? "bg-green-400/20 text-green-200 border border-green-400/30" :
+                                  listing.status === "pending_review" ? "bg-yellow-400/20 text-yellow-200 border border-yellow-400/30" :
+                                  isSold ? "bg-blue-400/20 text-blue-200 border border-blue-400/30" :
+                                  isRemoved ? "bg-red-400/20 text-red-200 border border-red-400/30" :
+                                  "bg-white/20 text-white/70 border border-white/30"
+                                }`}>
+                                  {isActive ? "上架中" :
+                                   listing.status === "pending_review" ? "審核中" :
+                                   isSold ? "已售出" :
+                                   isRemoved ? "已下架" : listing.status}
+                                </span>
+                              </div>
+                              {/* Card Body */}
+                              <div className="flex items-start gap-3 px-3 py-3">
+                                {/* Cover Image - fixed 1:1 aspect ratio */}
+                                <div className="w-16 flex-shrink-0">
+                                  <div className="aspect-square rounded-lg overflow-hidden border border-gray-200" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                                    {coverImg ? (
+                                      <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center">
+                                        <span className="text-white font-black text-[9px] tracking-tight text-center leading-tight">BOX<br/>IUM</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-sm leading-snug text-gray-900 line-clamp-2">{listing.title}</p>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    {(() => {
+                                      const tcgLogos: Record<string, { logo: string; label: string }> = {
+                                        pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
+                                        onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
+                                        yugioh:   { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  label: "Yu-Gi-Oh!" },
+                                      };
+                                      const series = tcgLogos[listing.tcgSeries as string];
+                                      return series ? (
+                                        <img src={series.logo} alt={series.label} title={series.label} className="h-5 w-auto object-contain opacity-70" />
+                                      ) : null;
+                                    })()}
+                                    <p className="text-sm font-bold" style={{ color: '#06038D' }}>
+                                      HKD {parseFloat(listing.priceHkd as string).toFixed(2)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </>
+                          )}
                           {/* Action Bar */}
                           {!batchMode && (
                             <div className="flex items-center gap-1.5 px-3 pb-3">
@@ -1404,6 +1539,8 @@ export default function SellerDashboard() {
                         </div>
                       );
                     })}
+                    </div>
+                    )}
                   </div>
                 )}
                       </div>
@@ -1574,12 +1711,8 @@ export default function SellerDashboard() {
                               {item.shippedAt && <p>📅 出貨日期：{new Date(item.shippedAt).toLocaleDateString('zh-HK')}</p>}
                             </div>
                           )}
-                          {/* Order Status Stepper */}
-                          <OrderStatusStepper
-                            orderStatus={item.orderStatus}
-                            shippingMethod={item.shippingMethod}
-                            role="seller"
-                          />
+                          {/* Order Status Stepper - Collapsible */}
+                          <SellerOrderStepper item={item} />
 
                           {/* Show shipping status for shipped orders */}
                           {item.orderStatus === 'shipped' && !item.shippingName && (
