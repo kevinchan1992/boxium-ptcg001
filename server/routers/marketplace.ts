@@ -36,12 +36,17 @@ import { getPublicListings, getListingById, createListing, updateListing,
   addMarketplaceWhitelist,
   removeMarketplaceWhitelist,
   setSystemSetting,
+  // P1 Fix #4: Order Messages
+  createOrderMessage,
+  getOrderMessagesByOrderNo,
+  markMessagesRead,
+  getUnreadMessageCount,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
 import { createNotification } from "../db/notifications";
 import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail, notifyAdmin, buildSellerSuspendedEmail, buildSellerUnsuspendedEmail } from "../emailService";
-import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs, cartItems, adminAuditLogs } from "../../drizzle/schema_new";
+import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs, cartItems, adminAuditLogs, orderMessages } from "../../drizzle/schema_new";
 import { eq, and, isNotNull, isNull, or, desc, sql, inArray, like } from 'drizzle-orm';
 import Stripe from 'stripe';
 
@@ -665,6 +670,83 @@ export const marketplaceRouter = router({
           title: `\uD83D\uDCF8 \u652f\u4ed8\u5bf6 HK \u6279\u91cf\u622a\u5716\u5f85\u6838\u5c0d\uff08${successCount} \u7b46\uff09`,
           content: `\u8cb7\u5bb6\u5df2\u4e0a\u50b3 ${successCount} \u500b\u8a02\u55ae\u7684\u652f\u4ed8\u5bf6 HK \u4ed8\u6b3e\u622a\u5716\uff0c\u8acb\u524d\u5f80\u7ba1\u7406\u5f8c\u53f0\u6838\u5c0d\u6536\u6b3e\u3002\n\u8a02\u55ae\uff1a${input.orderNos.join("\u3001")}`,
         }).catch(() => {});
+
+        // P1 Fix #3: AI verification for batch proof — use TOTAL amount across all orders
+        // Previously only single-order submitAlipayProof had AI verification.
+        // Batch proof shares one screenshot for multiple orders, so AI must verify the total.
+        setImmediate(async () => {
+          try {
+            // Calculate total amount across all successful orders
+            let batchTotalAmount = 0;
+            const orderDetails: string[] = [];
+            for (const r of results.filter(r2 => r2.success)) {
+              const o = await getMarketplaceOrderByNo(r.orderNo);
+              if (o) {
+                batchTotalAmount += parseFloat(o.subtotalHkd as string || '0');
+                orderDetails.push(`${r.orderNo}: HKD ${parseFloat(o.subtotalHkd as string || '0').toFixed(2)}`);
+              }
+            }
+            const expectedTotal = batchTotalAmount.toFixed(2);
+            const response = await invokeLLM({
+              messages: [
+                {
+                  role: 'system',
+                  content: `You are a payment verification assistant. Analyze the payment screenshot and compare it with the expected TOTAL payment amount. This is a BATCH payment for ${successCount} orders. Return a JSON object with the following fields:\n- verified: boolean\n- detectedAmount: string or null\n- detectedPayee: string or null\n- detectedStatus: string or null\n- confidence: "high" | "medium" | "low"\n- reason: string (Traditional Chinese)\nExpected TOTAL payment amount: HKD ${expectedTotal}\nOrder breakdown: ${orderDetails.join(', ')}\nExpected payee: BOXIUM or Boxium Limited\nReturn ONLY the JSON object, no other text`,
+                },
+                {
+                  role: 'user',
+                  content: [
+                    { type: 'image_url' as const, image_url: { url, detail: 'high' as const } },
+                    { type: 'text' as const, text: `Verify AlipayHK batch payment. Expected TOTAL: HKD ${expectedTotal} for ${successCount} orders.` },
+                  ],
+                },
+              ],
+              response_format: {
+                type: 'json_schema',
+                json_schema: {
+                  name: 'alipay_batch_verification',
+                  strict: true,
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      verified: { type: 'boolean' },
+                      detectedAmount: { type: ['string', 'null'] },
+                      detectedPayee: { type: ['string', 'null'] },
+                      detectedStatus: { type: ['string', 'null'] },
+                      confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+                      reason: { type: 'string' },
+                    },
+                    required: ['verified', 'detectedAmount', 'detectedPayee', 'detectedStatus', 'confidence', 'reason'],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            });
+            const rawContent = response.choices?.[0]?.message?.content;
+            const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent ?? {});
+            let result: any;
+            try { result = JSON.parse(content || '{}'); } catch { result = { verified: false, detectedAmount: null, detectedPayee: null, detectedStatus: null, confidence: 'low', reason: 'AI \u56de\u61c9\u89e3\u6790\u5931\u6557' }; }
+            // Save AI result to ALL orders in the batch
+            const db2 = await getDb();
+            if (db2) {
+              for (const r of results.filter(r2 => r2.success)) {
+                const o = await getMarketplaceOrderByNo(r.orderNo);
+                if (o) {
+                  await db2.update(marketplaceOrders)
+                    .set({ aiVerificationResult: JSON.stringify({ ...result, batchTotal: expectedTotal, orderCount: successCount }) })
+                    .where(eq(marketplaceOrders.id, o.id));
+                }
+              }
+            }
+            notifyAdmin({
+              title: result.verified ? '\u2705 AI \u6838\u5c0d\u901a\u904e \u2014 \u652f\u4ed8\u5bf6\u6279\u91cf\u622a\u5716' : '\u26a0\ufe0f AI \u6838\u5c0d\u672a\u901a\u904e \u2014 \u652f\u4ed8\u5bf6\u6279\u91cf\u622a\u5716',
+              content: `\u6279\u91cf\u8a02\u55ae (${successCount} \u7b46)\n\u7e3d\u91d1\u984d\uff1aHKD ${expectedTotal}\nAI \u6838\u5c0d\uff1a${result.reason}\n\u4fe1\u5fc3\u5ea6\uff1a${result.confidence}`,
+            }).catch(() => {});
+            console.log(`[Auto AI Verify Batch] ${successCount} orders, total HKD ${expectedTotal}: verified=${result.verified}, confidence=${result.confidence}`);
+          } catch (err: any) {
+            console.error('[Auto AI Verify Batch] Error:', err?.message);
+          }
+        });
       }
       return { success: successCount > 0, proofUrl: url, results, successCount };
     }),
@@ -1614,9 +1696,18 @@ export const marketplaceRouter = router({
     .mutation(async ({ input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
-      // Allow alipay_hk orders for both platform and seller (admin records receipt)
+      // P1 Fix #6: Corrected condition — use || instead of &&
+      // Original: paymentMethod !== 'alipay_hk' && sellerType !== 'seller' — allowed Stripe platform orders through
+      // Fixed: must be EITHER alipay_hk OR C2C seller to qualify for manual payout
       if (order.paymentMethod !== 'alipay_hk' && order.sellerType !== 'seller') {
         throw new TRPCError({ code: "BAD_REQUEST", message: "僅支付寶 HK 訂單或 C2C 訂單可手動標記放款" });
+      }
+      // Additional guard: only allow payout for completed orders
+      if (!['completed', 'payment_received', 'shipped', 'delivered'].includes(order.orderStatus)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `訂單狀態為 ${order.orderStatus}，無法標記放款。僅已完成/已付款/已出貨/已送達的訂單可放款。` });
+      }
+      if (order.payoutStatus === 'paid' || order.payoutStatus === 'completed') {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已放款，無法重複操作" });
       }
       const updateData: Record<string, any> = {
         payoutStatus: "paid",
@@ -1766,6 +1857,29 @@ export const marketplaceRouter = router({
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // P2 Fix #6: Order status machine — enforce valid transitions
+      const validTransitions: Record<string, string[]> = {
+        pending_payment: ['processing', 'payment_received', 'cancelled'],
+        paid_held: ['payment_received', 'cancelled'],
+        payment_received: ['processing', 'shipped', 'cancelled', 'disputed'],
+        processing: ['shipped', 'cancelled', 'disputed'],
+        shipped: ['delivered', 'completed', 'disputed'],
+        delivered: ['completed', 'disputed'],
+        completed: [],  // terminal state
+        cancelled: [],   // terminal state
+        disputed: ['cancelled', 'completed'],  // resolved by admin
+        refunded: [],    // terminal state
+      };
+      const currentStatus = order.orderStatus;
+      const allowedNext = validTransitions[currentStatus] ?? [];
+      if (!allowedNext.includes(input.orderStatus)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `無法將訂單從「${currentStatus}」轉為「${input.orderStatus}」。允許的下一狀態：${allowedNext.join(', ') || '無（已終結）'}`,
+        });
+      }
+
       const updates: Record<string, any> = { orderStatus: input.orderStatus };
       if (input.orderStatus === "shipped") {
         updates.shippedAt = new Date();
@@ -2383,6 +2497,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
       if (!listing || listing.status !== "active" || listing.quantity < 1) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "商品不存在或已售出" });
       }
+      // P0 Fix #1: Reject Alipay HK for C2C seller items
+      // Alipay HK payments go to the platform account; C2C sellers can only receive via Stripe Connect.
+      if (listing.sellerType === "seller") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "個人賣家商品僅支援 Stripe 信用卡付款，不支援支付寶 HK。" });
+      }
       // Check if listing is locked by another user's pending order
       const activeOrder = await getActiveOrderByListingId(input.listingId);
       if (activeOrder && activeOrder.buyerId !== ctx.user.id) {
@@ -2451,8 +2570,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
         shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hongkong_post" | "other" | "sf_cod" | "meetup" | null,
         buyerPhone: input.buyerPhone || null,
       });
-      // Notify seller for meetup orders
-      if (input.shippingMethod === 'meetup' && listing.sellerType === 'seller' && listing.sellerId) {
+      // Notify seller for meetup orders (defensive: currently unreachable due to P0 #1 seller check above)
+      if (input.shippingMethod === 'meetup' && (listing.sellerType as string) === 'seller' && listing.sellerId) {
         const sellerProfileForNotifyAlipay = await getSellerProfileById(listing.sellerId);
         if (sellerProfileForNotifyAlipay?.userId) {
           const buyerPhoneDisplayAlipay = input.buyerPhone ? `買家電話：${input.buyerPhone}` : '買家未提供電話';
@@ -3048,12 +3167,18 @@ All three checks must pass for verified to be true. Respond with JSON only match
           throw new TRPCError({ code: "BAD_REQUEST", message: `爭議申請期限已過（出貨後 ${DISPUTE_WINDOW_DAYS} 天內），如有問題請聯絡客服` });
         }
       }
+      // P2 Fix #10: Set dispute SLA deadline (default 72 hours from systemSettings)
+      const disputeSlaHours = await getSystemSetting('dispute_sla_hours').catch(() => null);
+      const slaHours = disputeSlaHours ? parseInt(disputeSlaHours.settingValue, 10) : 72;
+      const disputeDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000);
+
       await updateMarketplaceOrder(input.orderId, {
         orderStatus: "disputed",
         payoutStatus: "hold",  // Lock payout during dispute — prevents auto-complete from transferring funds
         disputeOpenedAt: new Date(),
         disputeReason: input.reason,
         disputeEvidenceUrls: input.evidenceUrls ? JSON.stringify(input.evidenceUrls) : null,
+        disputeDeadlineAt: disputeDeadline,
       });
       // Notify admin
       await notifyAdmin({
@@ -3290,6 +3415,16 @@ All three checks must pass for verified to be true. Respond with JSON only match
           } catch (err: any) {
             console.error(`[Dispute] Stripe refund failed for order ${order.orderNo}:`, err.message);
           }
+        }
+        // P1 Fix #5: Track Alipay HK refund status
+        if (order.paymentMethod === 'alipay_hk' && order.paymentStatus === 'paid') {
+          await updateMarketplaceOrder(input.orderId, {
+            alipayRefundStatus: 'pending',
+            alipayRefundAmount: order.subtotalHkd,
+            alipayRefundRequestedAt: new Date(),
+            alipayRefundNote: `爭議退款：${input.resolution}`,
+          });
+          console.log(`[Dispute] Alipay refund tracking set to pending for order ${order.orderNo}`);
         }
       }
       // If releasing to seller, trigger payout via centralized executeSellerPayout
@@ -4839,5 +4974,203 @@ IMPORTANT:
       const [user] = await db.select({ id: users.id, name: users.name, email: users.email })
         .from(users).where(eq(users.email, input.email)).limit(1);
       return user ?? null;
+    }),
+
+  // ============================================================
+  // P1 Fix #5: Alipay HK Refund Tracking
+  // ============================================================
+  adminProcessAlipayRefund: adminProcedure
+    .input(z.object({ orderId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (order.paymentMethod !== 'alipay_hk') throw new TRPCError({ code: 'BAD_REQUEST', message: '僅適用於支付寶 HK 訂單' });
+      if (order.alipayRefundStatus !== 'pending') throw new TRPCError({ code: 'BAD_REQUEST', message: '此訂單不在待退款狀態' });
+      await updateMarketplaceOrder(input.orderId, { alipayRefundStatus: 'processing' });
+      await createAuditLog({ adminId: ctx.user.id, action: 'alipay_refund_processing', targetType: 'order', targetId: input.orderId, details: `訂單 ${order.orderNo} Alipay 退款處理中` });
+      return { success: true };
+    }),
+
+  adminCompleteAlipayRefund: adminProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      proofUrl: z.string().url().optional(),
+      note: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (order.paymentMethod !== 'alipay_hk') throw new TRPCError({ code: 'BAD_REQUEST', message: '僅適用於支付寶 HK 訂單' });
+      if (!['pending', 'processing'].includes(order.alipayRefundStatus ?? '')) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '此訂單不在待退款/處理中狀態' });
+      }
+      const updateData: Record<string, any> = {
+        alipayRefundStatus: 'completed',
+        alipayRefundCompletedAt: new Date(),
+        paymentStatus: 'refunded',
+      };
+      if (input.proofUrl) updateData.alipayRefundProofUrl = input.proofUrl;
+      if (input.note) updateData.alipayRefundNote = (order.alipayRefundNote ?? '') + `\n[已完成] ${input.note}`;
+      await updateMarketplaceOrder(input.orderId, updateData);
+      // Notify buyer
+      await createNotification({
+        userId: order.buyerId,
+        type: 'trade',
+        title: '退款已完成 ✅',
+        body: `訂單 ${order.orderNo} 的支付寶 HK 退款 HKD ${parseFloat(order.alipayRefundAmount as string ?? order.subtotalHkd as string).toFixed(2)} 已處理完成。`,
+        linkUrl: `/orders/${order.orderNo}`,
+      }).catch(() => {});
+      await createAuditLog({ adminId: ctx.user.id, action: 'alipay_refund_completed', targetType: 'order', targetId: input.orderId, details: `訂單 ${order.orderNo} Alipay 退款已完成` });
+      return { success: true };
+    }),
+
+  getAlipayRefundOrders: adminProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select()
+        .from(marketplaceOrders)
+        .where(
+          and(
+            eq(marketplaceOrders.paymentMethod, 'alipay_hk'),
+            inArray(marketplaceOrders.alipayRefundStatus, ['pending', 'processing'])
+          )
+        )
+        .orderBy(desc(marketplaceOrders.alipayRefundRequestedAt));
+    }),
+
+  // ============================================================
+  // P1 Fix #4: Order Messages — Internal messaging system
+  // Allows buyers, sellers, and admins to communicate within order context
+  // ============================================================
+  getOrderMessages: protectedProcedure
+    .input(z.object({ orderNo: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderByNo(input.orderNo);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND', message: '訂單不存在' });
+      // Determine role
+      const isAdmin = ctx.user.role === 'admin';
+      const isBuyer = order.buyerId === ctx.user.id;
+      let isSeller = false;
+      if (order.sellerId) {
+        const sp = await getSellerProfileById(order.sellerId);
+        if (sp?.userId === ctx.user.id) isSeller = true;
+      }
+      if (!isBuyer && !isSeller && !isAdmin) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: '無權查看此訂單訊息' });
+      }
+      // Mark messages as read for this role
+      const role = isAdmin ? 'admin' : isSeller ? 'seller' : 'buyer';
+      await markMessagesRead(order.id, role);
+      const messages = await getOrderMessagesByOrderNo(input.orderNo);
+      // Enrich with sender info
+      const db = await getDb();
+      if (!db) return messages;
+      const senderIds = Array.from(new Set(messages.map(m => m.senderId)));
+      const senderInfos = senderIds.length > 0
+        ? await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, senderIds))
+        : [];
+      const senderMap = new Map(senderInfos.map(s => [s.id, s]));
+      return messages.map(m => ({
+        ...m,
+        senderName: m.isSystemMessage ? '系統訊息' : (senderMap.get(m.senderId)?.name ?? '未知用戶'),
+        senderInitial: m.isSystemMessage ? null : (senderMap.get(m.senderId)?.name?.charAt(0) ?? '?'),
+      }));
+    }),
+
+  sendOrderMessage: protectedProcedure
+    .input(z.object({
+      orderNo: z.string(),
+      content: z.string().min(1).max(2000),
+      imageBase64: z.string().optional(),
+      imageMimeType: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderByNo(input.orderNo);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND', message: '訂單不存在' });
+      // Determine sender role
+      const isAdmin = ctx.user.role === 'admin';
+      const isBuyer = order.buyerId === ctx.user.id;
+      let isSeller = false;
+      if (order.sellerId) {
+        const sp = await getSellerProfileById(order.sellerId);
+        if (sp?.userId === ctx.user.id) isSeller = true;
+      }
+      if (!isBuyer && !isSeller && !isAdmin) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: '無權在此訂單發送訊息' });
+      }
+      // Only allow messaging for active orders (not cancelled/completed unless admin)
+      if (!isAdmin && ['cancelled'].includes(order.orderStatus)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '已取消的訂單無法發送訊息' });
+      }
+      const senderRole = isAdmin ? 'admin' : isSeller ? 'seller' : 'buyer';
+      // Handle image upload
+      let imageUrl: string | null = null;
+      if (input.imageBase64) {
+        const buffer = Buffer.from(input.imageBase64, 'base64');
+        const ext = input.imageMimeType?.includes('png') ? 'png' : 'jpg';
+        const key = `order-messages/${input.orderNo}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const result = await storagePut(key, buffer, input.imageMimeType ?? 'image/jpeg');
+        imageUrl = result.url;
+      }
+      const { id } = await createOrderMessage({
+        orderId: order.id,
+        orderNo: input.orderNo,
+        senderId: ctx.user.id,
+        senderRole,
+        content: input.content,
+        imageUrl,
+        isSystemMessage: false,
+        readByBuyer: isBuyer,
+        readBySeller: isSeller,
+        readByAdmin: isAdmin,
+      });
+      // Send notification to the other party
+      const senderLabel = isAdmin ? '管理員' : isSeller ? '賣家' : '買家';
+      if (!isBuyer) {
+        await createNotification({
+          userId: order.buyerId,
+          type: 'order',
+          title: `訂單 #${input.orderNo} 有新訊息`,
+          body: `${senderLabel}已在訂單 #${input.orderNo} 發送了新訊息。`,
+          linkUrl: `/orders/${input.orderNo}`,
+        }).catch(() => {});
+      }
+      if (!isSeller && order.sellerId) {
+        const sp = await getSellerProfileById(order.sellerId);
+        if (sp?.userId) {
+          await createNotification({
+            userId: sp.userId,
+            type: 'order',
+            title: `訂單 #${input.orderNo} 有新訊息`,
+            body: `${senderLabel}已在訂單 #${input.orderNo} 發送了新訊息。`,
+            linkUrl: '/seller',
+          }).catch(() => {});
+        }
+      }
+      if (!isAdmin) {
+        notifyAdmin({
+          title: `訂單 #${input.orderNo} 新訊息`,
+          content: `${senderLabel}在訂單 #${input.orderNo} 發送了訊息：${input.content.slice(0, 100)}`,
+        }).catch(() => {});
+      }
+      return { success: true, messageId: id };
+    }),
+
+  getOrderUnreadCount: protectedProcedure
+    .input(z.object({ orderNo: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderByNo(input.orderNo);
+      if (!order) return { count: 0 };
+      const isAdmin = ctx.user.role === 'admin';
+      const isBuyer = order.buyerId === ctx.user.id;
+      let isSeller = false;
+      if (order.sellerId) {
+        const sp = await getSellerProfileById(order.sellerId);
+        if (sp?.userId === ctx.user.id) isSeller = true;
+      }
+      const role = isAdmin ? 'admin' : isSeller ? 'seller' : 'buyer';
+      const count = await getUnreadMessageCount(order.id, role);
+      return { count };
     }),
 });

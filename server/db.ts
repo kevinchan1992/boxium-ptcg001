@@ -4519,3 +4519,62 @@ export async function removeMarketplaceWhitelist(userId: number) {
   if (!db) return;
   await db.delete(mwTable).where(eq(mwTable.userId, userId));
 }
+
+
+// ============================================================
+// P1 Fix #4: Order Messages — Internal messaging for order communication
+// ============================================================
+import { orderMessages, InsertOrderMessage } from "../drizzle/schema_new";
+
+export async function createOrderMessage(data: InsertOrderMessage) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(orderMessages).values(data);
+  return { id: Number(result[0].insertId) };
+}
+
+export async function getOrderMessages(orderId: number, limit = 100, offset = 0) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select()
+    .from(orderMessages)
+    .where(eq(orderMessages.orderId, orderId))
+    .orderBy(asc(orderMessages.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function getOrderMessagesByOrderNo(orderNo: string, limit = 100, offset = 0) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select()
+    .from(orderMessages)
+    .where(eq(orderMessages.orderNo, orderNo))
+    .orderBy(asc(orderMessages.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function markMessagesRead(orderId: number, role: 'buyer' | 'seller' | 'admin') {
+  const db = await getDb();
+  if (!db) return;
+  const fieldMap = { buyer: 'readByBuyer', seller: 'readBySeller', admin: 'readByAdmin' } as const;
+  const field = role === 'buyer' ? orderMessages.readByBuyer
+    : role === 'seller' ? orderMessages.readBySeller
+    : orderMessages.readByAdmin;
+  await db.update(orderMessages)
+    .set({ [fieldMap[role]]: true })
+    .where(and(eq(orderMessages.orderId, orderId), eq(field, false)));
+}
+
+export async function getUnreadMessageCount(orderId: number, role: 'buyer' | 'seller' | 'admin') {
+  const db = await getDb();
+  if (!db) return 0;
+  const field = role === 'buyer' ? orderMessages.readByBuyer
+    : role === 'seller' ? orderMessages.readBySeller
+    : orderMessages.readByAdmin;
+  const result = await db.select({ count: sql<number>`count(*)` })
+    .from(orderMessages)
+    .where(and(eq(orderMessages.orderId, orderId), eq(field, false)));
+  return result[0]?.count ?? 0;
+}

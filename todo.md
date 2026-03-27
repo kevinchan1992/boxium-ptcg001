@@ -6458,3 +6458,23 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 出價卡片手機版：改為底部行動列（接受/拒絕 + 狀態標籤 + 前往商品）
 - [x] 統計卡片點擊快速跳轉：上架商品→商品 Tab(上架中)、已完成訂單→訂單 Tab、本月收益→收款記錄 Tab
 - [x] 儲存 Checkpoint
+
+## 🔧 交易流程邏輯問題修復（2026-03-27）
+
+### P0 立即修復
+- [x] #1 createAlipayOrder 加入 C2C 賣家限制（sellerType=seller 拒絕 Alipay HK）
+- [x] #3 checkout.session.expired Webhook 自動取消訂單並恢復庫存
+
+### P1 近期改善
+- [x] #2 批量 Alipay 訂單 AI 驗證改為比對總金額 + UI 提示總金額
+- [x] #4 adminManualPayout 條件判斷修復（&& 改為 || + 訂單狀態檢查）
+- [x] #5 單件訂單 Webhook 路徑的 CartOrder 更新邏輯檢查修復（已確認正常）
+- [x] #6 面交訂單聯絡機制：開發平台內部通訊功能（OrderChat 組件 + orderMessages 表）
+- [x] #7 Alipay HK 退款追蹤：新增退款欄位 + 管理員確認退款 + 買家退款狀態顯示
+
+### P2 長期優化
+- [x] #8 訂單狀態機強制執行：後端加入 validTransitions 狀態轉換驗證
+- [x] 批量訂單原子性：已有 reserveListingStock 回滾機制（createBatchStripeOrder 已實現）
+- [x] 賣家放款失敗重試機制：新增 startPayoutRetryScheduler（每 2 小時自動重試）
+- [x] 訂單超時時間動態配置：Alipay 審核 SLA 改從 systemSettings 讀取
+- [x] 爭議處理自動化：新增 disputeDeadlineAt + startDisputeSlaEscalationScheduler（每 4 小時檢查）

@@ -1473,7 +1473,11 @@ async function runAlipayReviewTimeoutCheck() {
     const database = await getDb();
     if (!database) return;
 
-    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+    // P2 Fix #9: Read Alipay review SLA from systemSettings (default: 24 hours)
+    const { getSystemSetting } = await import('./db');
+    const alipayReviewSlaSetting = await getSystemSetting('alipay_review_sla_hours').catch(() => null);
+    const alipayReviewSlaHours = alipayReviewSlaSetting ? parseInt(alipayReviewSlaSetting.settingValue, 10) : 24;
+    const cutoff = new Date(Date.now() - alipayReviewSlaHours * 60 * 60 * 1000);
 
     // Find orders with proof submitted >24hrs ago, not yet confirmed/rejected, and reminder not yet sent
     const overdueOrders = await database
@@ -1857,5 +1861,198 @@ export function stopListingStockRepairScheduler() {
   if (listingStockRepairCronJob) {
     listingStockRepairCronJob.stop();
     listingStockRepairCronJob = null;
+  }
+}
+
+
+// ============================================================
+// P2 Fix #8: Payout Retry Scheduler
+// Automatically retries failed payouts every 2 hours
+// ============================================================
+let payoutRetryCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startPayoutRetryScheduler() {
+  if (payoutRetryCronJob) return;
+
+  payoutRetryCronJob = cron.schedule(
+    '0 */2 * * *', // Every 2 hours
+    async () => {
+      console.log('[PayoutRetry] Starting failed payout retry...');
+      try {
+        const { getDb } = await import('./db');
+        const { marketplaceOrders } = await import('../drizzle/schema_new');
+        const { eq, and } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) return;
+
+        // Find failed payouts that are retryable
+        const failedOrders = await db.select({
+          id: marketplaceOrders.id,
+          orderNo: marketplaceOrders.orderNo,
+        })
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.orderStatus, 'completed'),
+              eq(marketplaceOrders.sellerType, 'seller'),
+              eq(marketplaceOrders.payoutStatus, 'failed')
+            )
+          )
+          .limit(20);
+
+        if (failedOrders.length === 0) {
+          console.log('[PayoutRetry] No failed payouts to retry.');
+          return;
+        }
+
+        console.log(`[PayoutRetry] Found ${failedOrders.length} failed payouts to retry.`);
+        let succeeded = 0;
+        let stillFailed = 0;
+
+        for (const { id, orderNo } of failedOrders) {
+          try {
+            const { executeSellerPayout } = await import('./sellerPayout');
+            const result = await executeSellerPayout(id);
+            if (result.success) {
+              succeeded++;
+              console.log(`[PayoutRetry] \u2705 Order ${orderNo} retry succeeded: ${result.transferId}`);
+            } else {
+              stillFailed++;
+              console.warn(`[PayoutRetry] \u274c Order ${orderNo} retry failed: ${result.error}`);
+            }
+          } catch (err: any) {
+            stillFailed++;
+            console.error(`[PayoutRetry] Order ${orderNo} retry threw:`, err.message);
+          }
+        }
+
+        console.log(`[PayoutRetry] Completed: ${succeeded} succeeded, ${stillFailed} still failed.`);
+
+        // Notify admin if there are persistent failures
+        if (stillFailed > 0) {
+          try {
+            const { createNotification } = await import('./db/notifications');
+            // Notify admin via owner notification
+            const { notifyOwner } = await import('./_core/notification');
+            await notifyOwner({
+              title: '放款重試報告',
+              content: `自動重試 ${failedOrders.length} 筆失敗放款：${succeeded} 筆成功，${stillFailed} 筆仍失敗。請到管理後台查看詳情。`,
+            });
+          } catch {}
+        }
+      } catch (err) {
+        console.error('[PayoutRetry] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[PayoutRetry] Payout retry scheduler started (every 2 hours)');
+}
+
+export function stopPayoutRetryScheduler() {
+  if (payoutRetryCronJob) {
+    payoutRetryCronJob.stop();
+    payoutRetryCronJob = null;
+  }
+}
+
+
+// ============================================================
+// P2 Fix #10: Dispute SLA Escalation Scheduler
+// Checks for disputes past their SLA deadline and escalates
+// ============================================================
+let disputeSlaEscalationCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startDisputeSlaEscalationScheduler() {
+  if (disputeSlaEscalationCronJob) return;
+
+  disputeSlaEscalationCronJob = cron.schedule(
+    '30 */4 * * *', // Every 4 hours at :30
+    async () => {
+      console.log('[DisputeSLA] Checking for overdue disputes...');
+      try {
+        const { getDb } = await import('./db');
+        const { marketplaceOrders } = await import('../drizzle/schema_new');
+        const { eq, and, lte, isNotNull, isNull } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) return;
+
+        const now = new Date();
+        // Find disputed orders past their SLA deadline that haven't been resolved
+        const overdueDisputes = await db.select({
+          id: marketplaceOrders.id,
+          orderNo: marketplaceOrders.orderNo,
+          disputeOpenedAt: marketplaceOrders.disputeOpenedAt,
+          disputeDeadlineAt: marketplaceOrders.disputeDeadlineAt,
+          disputePriority: marketplaceOrders.disputePriority,
+          subtotalHkd: marketplaceOrders.subtotalHkd,
+        })
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.orderStatus, 'disputed'),
+              isNotNull(marketplaceOrders.disputeDeadlineAt),
+              lte(marketplaceOrders.disputeDeadlineAt, now),
+              isNull(marketplaceOrders.disputeResolvedAt)
+            )
+          )
+          .limit(20);
+
+        if (overdueDisputes.length === 0) {
+          console.log('[DisputeSLA] No overdue disputes found.');
+          return;
+        }
+
+        console.log(`[DisputeSLA] Found ${overdueDisputes.length} overdue dispute(s).`);
+
+        // Escalate priority and notify admin
+        for (const dispute of overdueDisputes) {
+          try {
+            // Escalate to high priority if not already
+            if (dispute.disputePriority !== 'high') {
+              await db.update(marketplaceOrders)
+                .set({ disputePriority: 'high' })
+                .where(eq(marketplaceOrders.id, dispute.id));
+            }
+
+            const openedAt = dispute.disputeOpenedAt
+              ? new Date(dispute.disputeOpenedAt).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' })
+              : '未知';
+            const deadlineAt = dispute.disputeDeadlineAt
+              ? new Date(dispute.disputeDeadlineAt).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' })
+              : '未知';
+
+            // Notify admin via email
+            const { notifyAdmin } = await import('./emailService');
+            await notifyAdmin({
+              title: `⚠️ 爭議 SLA 超時 — 訂單 ${dispute.orderNo}`,
+              content: `訂單 ${dispute.orderNo} 的爭議已超過 SLA 期限。\n開啟時間：${openedAt}\nSLA 期限：${deadlineAt}\n金額：HKD ${dispute.subtotalHkd}\n優先級已自動升級為「高」。請盡快處理。`,
+            });
+
+            // Also notify owner
+            const { notifyOwner } = await import('./_core/notification');
+            await notifyOwner({
+              title: `爭議 SLA 超時 — ${dispute.orderNo}`,
+              content: `訂單 ${dispute.orderNo} 的爭議已超過 SLA 期限，優先級已升級為「高」。`,
+            });
+
+            console.log(`[DisputeSLA] Escalated dispute for order ${dispute.orderNo} to high priority.`);
+          } catch (err: any) {
+            console.error(`[DisputeSLA] Failed to escalate dispute for order ${dispute.orderNo}:`, err.message);
+          }
+        }
+      } catch (err) {
+        console.error('[DisputeSLA] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[DisputeSLA] Dispute SLA escalation scheduler started (every 4 hours)');
+}
+
+export function stopDisputeSlaEscalationScheduler() {
+  if (disputeSlaEscalationCronJob) {
+    disputeSlaEscalationCronJob.stop();
+    disputeSlaEscalationCronJob = null;
   }
 }

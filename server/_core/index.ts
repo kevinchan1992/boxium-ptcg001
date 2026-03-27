@@ -17,7 +17,7 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler, startPayoutRetryScheduler, startDisputeSlaEscalationScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import { getListingById, getCardById, getSealedProductById } from "../db";
@@ -302,30 +302,97 @@ async function startServer() {
           }
         }
       } else if (event.type === "checkout.session.expired") {
-        // Stripe checkout session expired without payment — notify buyer
+        // P0 Fix #2: Stripe checkout session expired — cancel orders AND restore stock
+        // Previously only notified buyer; now also cancels pending_payment orders and restores listing stock.
         const session = event.data.object;
         const orderNo = session.metadata?.order_no;
         const batchOrderNos = session.metadata?.batch_order_nos;
         const buyerIdStr = session.metadata?.user_id ?? session.metadata?.buyer_id;
         console.log(`[Webhook] checkout.session.expired: orderNo=${orderNo}, batchOrderNos=${batchOrderNos}, buyerId=${buyerIdStr}`);
+
+        const { updateMarketplaceOrder, getMarketplaceOrderByNo, restoreListingStock } = await import("../db");
+        const { createNotification } = await import("../db/notifications");
+        const { marketplaceOrderItems } = await import("../../drizzle/schema_new");
+        const { offers: offersTable } = await import("../../drizzle/schema_new");
+        const { eq, and } = await import("drizzle-orm");
+        const { getDb } = await import("../db");
+
+        // Collect all order numbers to cancel
+        const orderNosToCancel: string[] = [];
+        if (batchOrderNos && batchOrderNos.includes(',')) {
+          orderNosToCancel.push(...batchOrderNos.split(',').map((s: string) => s.trim()).filter(Boolean));
+        } else if (orderNo) {
+          orderNosToCancel.push(orderNo);
+        } else if (batchOrderNos) {
+          orderNosToCancel.push(batchOrderNos);
+        }
+
+        let cancelledCount = 0;
+        for (const cancelOrderNo of orderNosToCancel) {
+          try {
+            const order = await getMarketplaceOrderByNo(cancelOrderNo);
+            if (!order) { console.warn(`[Webhook:expired] Order ${cancelOrderNo} not found`); continue; }
+            // Only cancel if still pending_payment
+            if (order.orderStatus !== 'pending_payment') {
+              console.log(`[Webhook:expired] Order ${cancelOrderNo} status=${order.orderStatus}, skipping cancel`);
+              continue;
+            }
+            // Cancel the order
+            await updateMarketplaceOrder(order.id, {
+              orderStatus: 'cancelled',
+              paymentStatus: 'cancelled',
+            });
+            // Restore listing stock
+            const db = await getDb();
+            if (db) {
+              const items = await db.select().from(marketplaceOrderItems).where(eq(marketplaceOrderItems.orderId, order.id));
+              if (items.length > 0) {
+                for (const item of items) {
+                  await restoreListingStock(item.listingId, item.quantity ?? 1);
+                }
+              } else if (order.listingId) {
+                await restoreListingStock(order.listingId, order.quantity ?? 1);
+              }
+              // Expire accepted offers linked to this order
+              await db.update(offersTable)
+                .set({ status: 'expired', updatedAt: new Date() })
+                .where(and(eq(offersTable.orderId, order.id), eq(offersTable.status, 'accepted')))
+                .catch(() => {});
+            }
+            cancelledCount++;
+            console.log(`[Webhook:expired] Cancelled order ${cancelOrderNo} and restored stock`);
+          } catch (cancelErr: any) {
+            console.error(`[Webhook:expired] Failed to cancel order ${cancelOrderNo}:`, cancelErr.message);
+          }
+        }
+
+        // Also update cartOrder if present
+        const cartOrderId = session.metadata?.cart_order_id;
+        if (cartOrderId) {
+          try {
+            const { updateCartOrder } = await import("../db");
+            await updateCartOrder(parseInt(cartOrderId), { paymentStatus: 'failed' });
+            console.log(`[Webhook:expired] cartOrder#${cartOrderId} marked as failed`);
+          } catch (cartErr: any) {
+            console.warn(`[Webhook:expired] Failed to update cartOrder#${cartOrderId}:`, cartErr.message);
+          }
+        }
+
+        // Notify buyer
         if (buyerIdStr) {
           const buyerId = parseInt(buyerIdStr);
-          const { createNotification } = await import("../db/notifications");
-          // Determine display order number
           let displayOrderNo = orderNo ?? '';
-          if (batchOrderNos && batchOrderNos.includes(',')) {
-            const nos = batchOrderNos.split(',').map((s: string) => s.trim()).filter(Boolean);
-            displayOrderNo = nos[0] ?? orderNo ?? '';
-          }
+          if (orderNosToCancel.length > 0) displayOrderNo = orderNosToCancel[0];
+          const batchNote = cancelledCount > 1 ? `（共 ${cancelledCount} 筆訂單）` : '';
           await createNotification({
             userId: buyerId,
             type: 'order',
-            title: 'Stripe 結帳頁面已過期',
-            body: `訂單 ${displayOrderNo ? `#${displayOrderNo} ` : ''}的 Stripe 結帳頁面已過期，如需完成付款請前往訂單頁面重新發起付款。`,
+            title: 'Stripe 結帳已過期，訂單已自動取消',
+            body: `訂單 ${displayOrderNo ? `#${displayOrderNo} ` : ''}${batchNote}的 Stripe 結帳頁面已過期，訂單已自動取消，商品已重新上架。如需購買請重新下單。`,
             linkUrl: displayOrderNo ? `/orders?highlight=${displayOrderNo}` : '/orders',
             relatedId: null,
           }).catch(() => {});
-          console.log(`[Webhook] Notified buyer ${buyerId} of expired Stripe session (order: ${displayOrderNo})`);
+          console.log(`[Webhook:expired] Notified buyer ${buyerId}, cancelled ${cancelledCount} orders`);
         }
       } else if (event.type === "payment_intent.payment_failed") {
         const paymentIntent = event.data.object;
@@ -1066,6 +1133,10 @@ async function startServer() {
     startMeetupAutoCancelScheduler();
     // Start the listing stock repair scheduler (daily at 04:00 HKT, fixes active listings with quantity=0)
     startListingStockRepairScheduler();
+    // P2 Fix #8: Start the payout retry scheduler (every 2 hours, retries failed payouts)
+    startPayoutRetryScheduler();
+    // P2 Fix #10: Start the dispute SLA escalation scheduler (every 4 hours)
+    startDisputeSlaEscalationScheduler();
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();

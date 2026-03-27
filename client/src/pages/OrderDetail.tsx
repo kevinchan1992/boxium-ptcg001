@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
+import OrderChat from "@/components/OrderChat";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -1288,6 +1289,28 @@ export default function OrderDetail() {
                 {order.paymentStatus === "paid" ? "已付款" : order.paymentStatus === "pending" ? "待付款" : order.paymentStatus === "refunded" ? "已退款" : order.paymentStatus}
               </span>
             </div>
+            {/* P1 Fix #5: Alipay HK Refund Tracking */}
+            {order.paymentMethod === 'alipay_hk' && (order as any).alipayRefundStatus && (order as any).alipayRefundStatus !== 'not_applicable' && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-amber-800">支付寶 HK 退款狀態</span>
+                  <Badge variant="outline" className={
+                    (order as any).alipayRefundStatus === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
+                    (order as any).alipayRefundStatus === 'processing' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                    'bg-amber-100 text-amber-800 border-amber-200'
+                  }>
+                    {(order as any).alipayRefundStatus === 'completed' ? '已退款' :
+                     (order as any).alipayRefundStatus === 'processing' ? '退款處理中' : '待退款'}
+                  </Badge>
+                </div>
+                {(order as any).alipayRefundAmount && (
+                  <p className="text-xs text-amber-700">退款金額：HKD {parseFloat((order as any).alipayRefundAmount).toFixed(2)}</p>
+                )}
+                {(order as any).alipayRefundCompletedAt && (
+                  <p className="text-xs text-green-700">退款完成時間：{new Date((order as any).alipayRefundCompletedAt).toLocaleString('zh-HK')}</p>
+                )}
+              </div>
+            )}
             <Separator />
             <div className="flex justify-between font-bold">
               <span>總計</span>
@@ -1346,6 +1369,11 @@ export default function OrderDetail() {
             )}
           </div>
         </div>
+
+        {/* P1 Fix #4: Order Messages */}
+        {order.orderStatus !== 'pending_payment' && (
+          <OrderChat orderNo={orderNo!} />
+        )}
 
         {/* Order Meta */}
         <div className="text-xs text-gray-500 space-y-1 px-1">

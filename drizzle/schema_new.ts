@@ -838,6 +838,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   disputeResolution: text("disputeResolution"),
   disputeResolutionHistory: text("disputeResolutionHistory"), // JSON array of {timestamp, outcome, resolution, adminNote}
   disputePriority: mysqlEnum("disputePriority", ["high", "medium", "low"]).default("medium"),
+  disputeDeadlineAt: timestamp("disputeDeadlineAt"), // P2 Fix #10: SLA deadline for dispute resolution
   shippingReminderSentAt: timestamp("shippingReminderSentAt"), // tracks when overdue reminder was sent
   paymentReminderSentAt: timestamp("paymentReminderSentAt"), // tracks when 12-hour payment reminder was sent
   confirmReceiptReminderSentAt: timestamp("confirmReceiptReminderSentAt"), // tracks when 7-day confirm receipt reminder was sent
@@ -848,6 +849,13 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   manualPayoutProofUrl: text("manualPayoutProofUrl"), // S3 URL of payment proof screenshot
   adminNote: text("adminNote"), // Admin internal note for this order
   paymentRejectionReason: text("paymentRejectionReason"), // Reason for rejecting alipay payment (shown to buyer)
+  // P1 Fix #5: Alipay HK refund tracking
+  alipayRefundStatus: mysqlEnum("alipayRefundStatus", ["not_applicable", "pending", "processing", "completed"]).default("not_applicable"),
+  alipayRefundAmount: decimal("alipayRefundAmount", { precision: 10, scale: 2 }),
+  alipayRefundRequestedAt: timestamp("alipayRefundRequestedAt"),
+  alipayRefundCompletedAt: timestamp("alipayRefundCompletedAt"),
+  alipayRefundNote: text("alipayRefundNote"), // Admin note for refund
+  alipayRefundProofUrl: text("alipayRefundProofUrl"), // S3 URL of refund proof screenshot
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   stripeSessionId: varchar("stripeSessionId", { length: 200 }),
@@ -1210,3 +1218,31 @@ export const marketplaceWhitelist = mysqlTable("marketplaceWhitelist", {
 }));
 export type MarketplaceWhitelist = typeof marketplaceWhitelist.$inferSelect;
 export type InsertMarketplaceWhitelist = typeof marketplaceWhitelist.$inferInsert;
+
+
+/**
+ * P1 Fix #4: Order Messages - Internal messaging system for order communication
+ * Allows buyers, sellers, and admins to communicate within an order context.
+ * Replaces the need to expose phone numbers before order completion.
+ */
+export const orderMessages = mysqlTable("orderMessages", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(), // FK to marketplaceOrders
+  orderNo: varchar("orderNo", { length: 64 }).notNull(),
+  senderId: int("senderId").notNull(), // FK to users
+  senderRole: mysqlEnum("senderRole", ["buyer", "seller", "admin"]).notNull(),
+  content: text("content").notNull(),
+  imageUrl: text("imageUrl"), // optional image attachment (S3 URL)
+  isSystemMessage: boolean("isSystemMessage").default(false).notNull(), // for auto-generated messages
+  readByBuyer: boolean("readByBuyer").default(false).notNull(),
+  readBySeller: boolean("readBySeller").default(false).notNull(),
+  readByAdmin: boolean("readByAdmin").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  orderIdIdx: index("om_orderId_idx").on(table.orderId),
+  orderNoIdx: index("om_orderNo_idx").on(table.orderNo),
+  senderIdx: index("om_senderId_idx").on(table.senderId),
+  createdAtIdx: index("om_createdAt_idx").on(table.createdAt),
+}));
+export type OrderMessage = typeof orderMessages.$inferSelect;
+export type InsertOrderMessage = typeof orderMessages.$inferInsert;
