@@ -537,6 +537,7 @@ export default function SellerDashboard() {
 
    // ─── Listing filter state ─────────────────────────────────────────
   const [listingFilter, setListingFilter] = useState<'all' | 'active' | 'sold' | 'removed' | 'pending_review'>('all');
+  const [activeTab, setActiveTab] = useState<string>('listings');
   // ─── Order filter state ─────────────────────────────────────────
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'pending' | 'active' | 'done' | 'meetup'>('all');
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
@@ -970,7 +971,9 @@ export default function SellerDashboard() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
               {/* Stat: 上架商品 */}
-              <div className="rounded-xl border border-gray-100 shadow-sm p-3" style={{ background: "#f8faff" }}>
+              <div className="rounded-xl border border-gray-100 shadow-sm p-3 cursor-pointer hover:shadow-md hover:border-[#06038d]/30 transition-all active:scale-95" style={{ background: "#f8faff" }}
+                onClick={() => { setActiveTab('listings'); setListingFilter('active'); }}
+                title="點擊查看上架中商品">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#e8edff" }}>
                     <Package className="w-4 h-4" style={{ color: "#06038d" }} />
@@ -982,7 +985,9 @@ export default function SellerDashboard() {
                 </div>
               </div>
               {/* Stat: 已完成訂單 */}
-              <div className="rounded-xl border border-gray-100 shadow-sm p-3" style={{ background: "#f8faff" }}>
+              <div className="rounded-xl border border-gray-100 shadow-sm p-3 cursor-pointer hover:shadow-md hover:border-[#06038d]/30 transition-all active:scale-95" style={{ background: "#f8faff" }}
+                onClick={() => setActiveTab('orders')}
+                title="點擊查看訂單">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#e8edff" }}>
                     <ShoppingBag className="w-4 h-4" style={{ color: "#06038d" }} />
@@ -994,7 +999,9 @@ export default function SellerDashboard() {
                 </div>
               </div>
               {/* Stat: 本月收益 */}
-              <div className="rounded-xl border border-gray-100 shadow-sm p-3" style={{ background: "#f8faff" }}>
+              <div className="rounded-xl border border-gray-100 shadow-sm p-3 cursor-pointer hover:shadow-md hover:border-[#b8860b]/30 transition-all active:scale-95" style={{ background: "#f8faff" }}
+                onClick={() => setActiveTab('earnings')}
+                title="點擊查看收款記錄">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#fff8e0" }}>
                     <DollarSign className="w-4 h-4" style={{ color: "#b8860b" }} />
@@ -1025,7 +1032,7 @@ export default function SellerDashboard() {
               </div>
             </div>
 
-            <BrandTabs defaultValue="listings">
+            <BrandTabs defaultValue="listings" value={activeTab} onValueChange={setActiveTab}>
               <BrandTabsList>
                 <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="我的商品">
                   <span className="sm:hidden">商品</span>
@@ -1519,29 +1526,7 @@ export default function SellerDashboard() {
                               </p>
                               <p className="text-xs text-gray-400 mt-0.5">{new Date(item.createdAt).toLocaleDateString('zh-HK')}</p>
                             </div>
-                            {(["processing", "payment_received", "paid_held"].includes(item.orderStatus)) && (
-                              item.shippingMethod === 'meetup' ? (
-                                <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
-                                  onClick={() => setMeetupConfirmDialog({ open: true, orderId: item.orderId ?? item.id, orderNo: item.orderNo ?? '' })}>
-                                  確認已面交
-                                </Button>
-                              ) : (
-                                <Button size="sm" className="bg-[#06038d] hover:bg-[#0804b8] text-white flex-shrink-0"
-                                  onClick={() => {
-                                    setShipDialog({
-                                      open: true,
-                                      orderId: item.orderId ?? item.id,
-                                      orderNo: item.orderNo ?? "",
-                                      shippingName: item.shippingName ?? undefined,
-                                      shippingPhone: item.shippingPhone ?? undefined,
-                                      shippingAddress: item.shippingAddress ?? undefined,
-                                    });
-                                    setShipForm({ shippingMethod: "sf_express", trackingNumber: "" });
-                                  }}>
-                                  填寫出貨資料
-                                </Button>
-                              )
-                            )}
+
                           </div>
                           {item.shippingName && (
                             <div className="text-xs text-gray-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 space-y-1">
@@ -1624,18 +1609,44 @@ export default function SellerDashboard() {
                               )}
                             </div>
                           )}
-                          {/* View Order Detail Button */}
-                          {item.orderNo && (
-                            <div className="flex justify-end pt-1">
+                          {/* Bottom Action Bar */}
+                          <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                            {/* Primary action: ship or meetup confirm */}
+                            {["processing", "payment_received", "paid_held"].includes(item.orderStatus) && (
+                              item.shippingMethod === 'meetup' ? (
+                                <Button size="sm" className="flex-1 h-8 text-xs bg-amber-500 hover:bg-amber-600 text-white"
+                                  onClick={() => setMeetupConfirmDialog({ open: true, orderId: item.orderId ?? item.id, orderNo: item.orderNo ?? '' })}>
+                                  <Users className="w-3 h-3 mr-1" />確認已面交
+                                </Button>
+                              ) : (
+                                <Button size="sm" className="flex-1 h-8 text-xs bg-[#06038d] hover:bg-[#0804b8] text-white"
+                                  onClick={() => {
+                                    setShipDialog({
+                                      open: true,
+                                      orderId: item.orderId ?? item.id,
+                                      orderNo: item.orderNo ?? "",
+                                      shippingName: item.shippingName ?? undefined,
+                                      shippingPhone: item.shippingPhone ?? undefined,
+                                      shippingAddress: item.shippingAddress ?? undefined,
+                                    });
+                                    setShipForm({ shippingMethod: "sf_express", trackingNumber: "" });
+                                  }}>
+                                  <Package className="w-3 h-3 mr-1" />填寫出貨資料
+                                </Button>
+                              )
+                            )}
+                            {/* View detail link */}
+                            {item.orderNo && (
                               <a
                                 href={`/orders/${item.orderNo}`}
-                                className="inline-flex items-center gap-1.5 text-xs text-[#06038d] hover:text-[#0804b8] font-medium border border-[#06038d]/30 hover:border-[#06038d] rounded-lg px-3 py-1.5 transition-colors bg-white hover:bg-blue-50"
+                                className={`inline-flex items-center justify-center gap-1 text-xs text-[#06038d] hover:text-[#0804b8] font-medium border border-[#06038d]/30 hover:border-[#06038d] rounded-lg px-3 h-8 transition-colors bg-white hover:bg-blue-50 ${
+                                  ["processing", "payment_received", "paid_held"].includes(item.orderStatus) ? 'flex-shrink-0' : 'flex-1'
+                                }`}
                               >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                                查看詳情
+                                <ExternalLink className="w-3 h-3" />查看詳情
                               </a>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1772,27 +1783,47 @@ export default function SellerDashboard() {
                                 })()}
                               </div>
                             </div>
-                            {offer.status === 'pending' && (
-                              <div className="flex gap-2 flex-shrink-0">
-                                <Button size="sm" className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
-                                  disabled={respondToOfferMutation.isPending}
-                                  onClick={() => respondToOfferMutation.mutate({ offerId: offer.id, action: 'accept' })}
-                                >接受</Button>
-                                <Button size="sm" variant="outline" className="h-8 text-xs border-red-300 text-red-600 hover:bg-red-50"
-                                  disabled={respondToOfferMutation.isPending}
-                                  onClick={() => { setRejectingOfferId(offer.id); setRejectionReason(""); setShowRejectDialog(true); }}
-                                >拒絕</Button>
-                              </div>
-                            )}
+                            {/* Bottom Action Bar for offer */}
+                            <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                              {offer.status === 'pending' ? (
+                                <>
+                                  <Button size="sm" className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                    disabled={respondToOfferMutation.isPending}
+                                    onClick={() => respondToOfferMutation.mutate({ offerId: offer.id, action: 'accept' })}
+                                  >
+                                    <Check className="w-3 h-3 mr-1" />接受出價
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="flex-1 h-8 text-xs border-red-300 text-red-600 hover:bg-red-50"
+                                    disabled={respondToOfferMutation.isPending}
+                                    onClick={() => { setRejectingOfferId(offer.id); setRejectionReason(""); setShowRejectDialog(true); }}
+                                  >
+                                    <X className="w-3 h-3 mr-1" />拒絕
+                                  </Button>
+                                </>
+                              ) : (
+                                <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+                                  offer.status === 'accepted' ? 'bg-green-50 text-green-700 border border-green-200' :
+                                  offer.status === 'rejected' ? 'bg-red-50 text-red-700 border border-red-200' :
+                                  'bg-gray-50 text-gray-600 border border-gray-200'
+                                }`}>
+                                  {offer.status === 'accepted' ? <>✔️ 已接受</> : offer.status === 'rejected' ? <>❌ 已拒絕</> : <>⏰ 已過期</>}
+                                </span>
+                              )}
+                              {offer.listingId && (
+                                <Link href={`/listing/${offer.listingId}`} className="inline-flex items-center gap-1 text-xs text-[#06038d] hover:text-[#0804b8] font-medium border border-[#06038d]/30 hover:border-[#06038d] rounded-lg px-3 h-8 transition-colors bg-white hover:bg-blue-50 flex-shrink-0">
+                                  <ExternalLink className="w-3 h-3" />前往商品
+                                </Link>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
                   );
-                })()}
+                })()
+              }
               </BrandTabsContent>
-
               <BrandTabsContent value="earnings" className="mt-4">
                 <EarningsTab />
               </BrandTabsContent>
