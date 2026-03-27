@@ -169,7 +169,7 @@ export function TopNav() {
           </DialogHeader>
           <div className="py-2 space-y-3">
             <p className="text-sm text-muted-foreground">
-              在 BOXIUM 平台上架你的寶可夢卡牌，觸及更多買家。
+              在 BOXIUM 平台上架你的 TCG 卡牌，觸及更多買家。
             </p>
             <div className="space-y-2">
               {[

@@ -31,7 +31,7 @@ export const ARTICLE_TEMPLATES: Record<string, ArticleTemplate> = {
     name: "市場快報",
     description: "每日市場動態和價格趨勢報告",
     structure: {
-      titleFormat: "{date} 寶可夢卡牌市場快報：{mainTopic}",
+      titleFormat: "{date} TCG 卡牌市場快報：{mainTopic}",
       introduction: "今日市場概況：簡述當日主要市場動態和值得關注的卡牌。",
       mainSections: [
         "## 📈 價格漲幅榜\n列出今日漲幅最大的卡牌，分析漲價原因。",
@@ -80,7 +80,7 @@ export const ARTICLE_TEMPLATES: Record<string, ArticleTemplate> = {
     name: "投資指南",
     description: "投資策略和市場分析指南",
     structure: {
-      titleFormat: "{topic}：寶可夢卡牌投資完全指南",
+      titleFormat: "{topic}：TCG 卡牌投資完全指南",
       introduction: "說明投資主題的重要性和本指南的目標讀者。",
       mainSections: [
         "## 📚 基礎知識\n介紹相關的基礎概念和術語。",

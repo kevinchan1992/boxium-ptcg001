@@ -3410,7 +3410,7 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
             },
             { 
               role: 'user', 
-              content: `Analyze this article and generate metadata:\n\nTitle: ${input.title}\n\nExcerpt: ${input.excerpt}\n\nContent:\n${input.content.substring(0, 2000)}...\n\nPlease generate:\n1. A single category (e.g., "市場分析", "卡牌評測", "新聞資訊", "投資指南")\n2. 3-5 relevant tags (e.g., "Pokémon TCG", "卡牌價格", "市場趨勢")\n3. 5-8 SEO keywords (e.g., "Pokémon TCG", "寶可夢卡牌", "市場分析", "投資指南")` 
+              content: `Analyze this article and generate metadata:\n\nTitle: ${input.title}\n\nExcerpt: ${input.excerpt}\n\nContent:\n${input.content.substring(0, 2000)}...\n\nPlease generate:\n1. A single category (e.g., "市場分析", "卡牌評測", "新聞資訊", "投資指南")\n2. 3-5 relevant tags (e.g., "TCG", "卡牌價格", "市場趨勢")\n3. 5-8 SEO keywords (e.g., "TCG", "集換式卡牌", "市場分析", "投資指南")`
             }
           ],
           response_format: {

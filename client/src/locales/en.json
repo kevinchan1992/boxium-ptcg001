@@ -90,14 +90,14 @@
     "goToMarketplace": "Market Prices",
     "readyToStart": "Ready to Start Your PTCG Journey?",
     "readyToStartDesc": "Use BOXIUM's smart search and price analysis tools to find your favorite collectibles.",
-    "footerDesc": "A comprehensive platform focused on Pokémon TCG price inquiry and market analysis",
+    "footerDesc": "A comprehensive platform focused on TCG price inquiry and market analysis, covering Pokémon, One Piece and more",
     "quickLinks": "Quick Links",
     "cardSearch": "Card Search",
     "marketReport": "Market Report",
     "priceQuery": "Price Query",
     "adminPanel": "Admin Panel",
     "aboutUs": "About Us",
-    "aboutUsDesc": "BOXIUM is committed to providing the most accurate and professional market information and price analysis tools for Pokémon TCG investors and collectors.",
+    "aboutUsDesc": "BOXIUM is committed to providing the most accurate and professional market information and price analysis tools for TCG investors and collectors.",
     "socialMedia": "Social Media",
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy"
@@ -369,7 +369,7 @@
   },
   "blogPage": {
     "title": "BOXIUM PTCG Blog",
-    "subtitle": "Professional Pokémon TCG market analysis, price trends, and investment advice",
+    "subtitle": "Professional TCG market analysis, price trends, and investment advice",
     "searchPlaceholder": "Search articles...",
     "allCategories": "All Categories",
     "loading": "Loading...",
@@ -513,17 +513,17 @@
       },
       "intellectualProperty": {
         "title": "Intellectual Property Notice",
-        "content": "All content on this platform (including text, images, design, and code) is protected by copyright law. Pokémon and related trademarks are registered trademarks of The Pokémon Company; this platform has no official affiliation with The Pokémon Company. Reproduction or use of any platform content without authorization is prohibited."
+        "content": "All content on this platform (including text, images, design, and code) is protected by copyright law. All game trademarks mentioned on this platform (such as Pokémon, One Piece, etc.) belong to their respective rights holders; this platform has no official affiliation with any game company. Reproduction or use of any platform content without authorization is prohibited."
       }
     }
   },
   "aboutPage": {
     "title": "About BOXIUM",
-    "subtitle": "The all-in-one marketplace platform for Pokémon TCG collectors and investors",
+    "subtitle": "Welcome to Boxium ~ The paradise for TCG enthusiasts! Integrating global TCG market data with real-time, accurate pricing.",
     "trackedCards": "Cards Tracked",
     "dataSources": "Data Sources",
     "ourMission": "Our Mission",
-    "missionContent": "BOXIUM is dedicated to providing Pokémon TCG collectors, investors, and sellers with the most accurate and up-to-date market data and trading environment. We aggregate real transaction records from major global trading platforms and offer a secure PSA 10 card secondary market, allowing users to research, compare prices, and trade all in one place—empowering smarter collecting and investment decisions.",
+    "missionContent": "BOXIUM is dedicated to providing TCG collectors, investors, and sellers with the most accurate and up-to-date market data and trading environment. We aggregate real transaction records from major global trading platforms, covering Pokémon, One Piece and more, and offer a secure card secondary market, allowing users to research, compare prices, and trade all in one place\u2014empowering smarter collecting and investment decisions.",
     "coreServices": "Core Services",
     "platformFeatures": "Platform Features",
     "contactInfo": "For any questions or suggestions, please contact us through the platform's contact channels.",

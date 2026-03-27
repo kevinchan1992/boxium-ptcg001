@@ -422,7 +422,7 @@ export async function generateArticle(input: any): Promise<any> {
   const toneGuide = toneMap[tone] || '專業正式';
   const langGuide = langMap[language as string] || '繁體中文';
 
-  const systemPrompt = `你是 Boxium PTCG 平台的專業文章撰寫員，專門撰寫 Pokémon Trading Card Game（PTCG）相關的市場分析和收藏指南文章。
+  const systemPrompt = `你是 Boxium 平台的專業文章撰寫員，專門撰寫 TCG（集換式卡牌遊戲）相關的市場分析和收藏指南文章，涵蓋 Pokémon、One Piece 等多款遊戲。
 你的文章特點：
 - 語言：${langGuide}
 - 風格：${toneGuide}
@@ -612,7 +612,7 @@ function parseGeneratedArticle(rawContent: string, articleType: string, featured
     suggestedCategory: categoryMap[articleType] || '市場分析',
     suggestedTags: tagsMap[articleType] || ['PTCG'],
     seoMetadata: {
-      keywords: ['PTCG', 'Pokémon TCG', '寶可夢卡牌', '市場分析', 'HKD', '香港'],
+      keywords: ['TCG', '集換式卡牌', 'PTCG', 'One Piece', '市場分析', 'HKD', '香港'],
     },
     featuredImage,
   };

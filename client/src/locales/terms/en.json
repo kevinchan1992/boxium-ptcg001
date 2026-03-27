@@ -4,7 +4,7 @@
   "intro": "Welcome to Boxium (hereinafter referred to as 'the Platform'). These Terms of Service (hereinafter referred to as 'the Terms') govern your rights and obligations when using the services provided by the Platform. By using the Platform, you acknowledge that you have read, understood, and agree to be bound by all the contents of these Terms. If you do not agree with any part of these Terms, please do not use the Platform.",
   "section1": {
     "title": "1. Services",
-    "p1": "Boxium is a one-stop marketplace platform designed for Pokémon Trading Card Game (PTCG) enthusiasts, collectors, and investors. The Platform integrates data from multiple global markets and provides a secure PSA 10 graded card secondary marketplace.",
+    "p1": "Boxium is a one-stop marketplace platform designed for TCG (Trading Card Game) enthusiasts, collectors, and investors, covering Pokémon, One Piece and more. The Platform integrates data from multiple global markets and provides a secure graded card secondary marketplace.",
     "p2": "The services provided by the Platform include but are not limited to:",
     "services": [
       "Card Research: Search card information and view PSA 10 historical transaction price trends",
@@ -88,7 +88,7 @@
   "section7": {
     "title": "7. Intellectual Property",
     "p1": "All content on the Platform, including but not limited to text, images, charts, logos, interface design, code, and data arrangements, is protected by copyright law, trademark law, and other intellectual property laws. Without the Platform's written consent, you may not copy, modify, distribute, display, publish, or otherwise use any content from the Platform.",
-    "p2": "Pokémon, Pokémon Trading Card Game, and related trademarks are registered trademarks of The Pokémon Company. The Platform has no official affiliation with or authorization from The Pokémon Company."
+    "p2": "All game trademarks mentioned on this platform (such as Pokémon, One Piece, etc.) belong to their respective rights holders. The Platform has no official affiliation with or authorization from any game company."
   },
   "section8": {
     "title": "8. Amendments to Terms",

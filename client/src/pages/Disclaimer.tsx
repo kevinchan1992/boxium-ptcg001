@@ -25,7 +25,7 @@ export default function Disclaimer() {
       },
       {
         "@type": "Question",
-        "name": currentLang === 'ja' ? 'ポケモンカードへの投資にはリスクがありますか？' : currentLang === 'en' ? 'Is investing in Pokémon cards risky?' : '投資寶可夢卡牌有風險嗎？',
+        "name": currentLang === 'ja' ? 'TCGカードへの投資にはリスクがありますか？' : currentLang === 'en' ? 'Is investing in TCG cards risky?' : '投資 TCG 卡牌有風險嗎？',
         "acceptedAnswer": {
           "@type": "Answer",
           "text": t('disclaimerPage.sections.investmentRisk.content')

@@ -206,7 +206,7 @@ export default function Home() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "BOXIUM PTCG",
-    "description": "專注於 Pokémon TCG 價格查詢與市場分析的綜合平台",
+    "description": "整合全球 TCG 市場數據，為集換式卡牌愛好者提供即時、準確的價格資訊與市場分析",
     "url": "https://boxiumptcg.manus.space",
     "potentialAction": {
       "@type": "SearchAction",

@@ -123,11 +123,11 @@ async function generateArticleWithAI(params: {
   const templateId = templateMap[style] || "news-brief";
   const template = getTemplate(templateId);
   
-  const systemPrompt = `You are a professional Pokémon TCG content writer for BOXIUM platform. 
+  const systemPrompt = `You are a professional TCG content writer for BOXIUM platform, covering Pokémon, One Piece and other trading card games. 
 Your task is to analyze the provided content and create an original, engaging article in ${targetLanguage}.
 
 Article Style: ${style}
-Target Audience: Pokémon TCG collectors and investors
+Target Audience: TCG collectors and investors
 Platform Focus: Card pricing, market trends, investment insights
 
 ${template ? `Template Structure:

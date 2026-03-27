@@ -600,7 +600,7 @@ export default function Home() {
                     isDragging ? 'text-primary' : 'text-muted-foreground'
                   }`} />
                   <p className="text-sm text-muted-foreground mb-2">
-                    {isDragging ? '釋放以上傳圖片' : '選擇或拖放一張寶可夢卡牌圖片'}
+                    {isDragging ? '釋放以上傳圖片' : '選擇或拖放一張 TCG 卡牌圖片'}
                   </p>
                   <p className="text-xs text-muted-foreground mb-3">支持 JPG、PNG 格式</p>
                   <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">

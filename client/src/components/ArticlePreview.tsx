@@ -481,7 +481,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
                         toast.info('AI 正在生成圖片，這可能需要 10-20 秒...');
                         
                         // Generate prompt based on article title and excerpt
-                        const prompt = `Create a professional and visually appealing featured image for a Pokémon TCG blog article titled "${currentArticle.title}". ${currentArticle.excerpt ? `The article is about: ${currentArticle.excerpt}` : ''} The image should be eye-catching, modern, and related to Pokémon trading cards. Include vibrant colors and a clean design suitable for a blog header.`;
+                        const prompt = `Create a professional and visually appealing featured image for a TCG (Trading Card Game) blog article titled "${currentArticle.title}". ${currentArticle.excerpt ? `The article is about: ${currentArticle.excerpt}` : ''} The image should be eye-catching, modern, and related to trading card games. Include vibrant colors and a clean design suitable for a blog header.`;
                         
                         // Call tRPC API to generate image
                         const response = await fetch('/api/trpc/blog.generateThemeImage', {
@@ -540,7 +540,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
                   value={currentArticle.tags || ''}
                   onChange={(e) => setCurrentArticle({ ...currentArticle, tags: e.target.value })}
                   className="bg-white border-gray-300 text-gray-900"
-                  placeholder="用逗號分隔，例如：寶可夢, TCG, 投資"
+                  placeholder="用逗號分隔，例如：TCG, 卡牌, 投資"
                 />
               </div>
 
@@ -598,7 +598,7 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
                   value={currentArticle.seoKeywords || ''}
                   onChange={(e) => setCurrentArticle({ ...currentArticle, seoKeywords: e.target.value })}
                   className="bg-white border-gray-300 text-gray-900"
-                  placeholder="例如：Pokémon TCG, 卡牌價格, 市場分析（以逗號分隔）"
+                  placeholder="例如：TCG, 卡牌價格, 市場分析（以逗號分隔）"
                 />
                 <p className="text-xs text-gray-500 mt-1">用於搜尋引擎優化，幫助文章被更多人找到</p>
               </div>

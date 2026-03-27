@@ -851,7 +851,7 @@ export function buildWelcomeEmail(data: {
     <h2 style="margin:0 0 8px;color:#06038d;font-size:24px;">歡迎加入 BOXIUM PTCG！🎉</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${data.userName}</strong>，<br/>
-      感謝您加入 BOXIUM PTCG — 香港及台灣最專業的寶可夢集換式卡牌交易平台！
+      感謝您加入 BOXIUM — 遊戲迷的專屬樂園！我們整合全球 TCG 市場數據，為喜愛集換式卡牌的你提供即時、準確的價格資訊。
     </p>
 
     <!-- Feature highlights -->

@@ -376,7 +376,7 @@ function calculateMatchScore(
     
     if (cardName.includes(pokemonName)) {
       score += 15;
-      reasons.push(`寶可夢名稱匹配: ${identification.pokemonName}`);
+      reasons.push(`卡牌名稱匹配: ${identification.pokemonName}`);
     }
   }
 
@@ -387,7 +387,7 @@ function calculateMatchScore(
     
     if (cardNameJa.includes(pokemonNameJa)) {
       score += 15;
-      reasons.push(`寶可夢日文名匹配: ${identification.pokemonNameJa}`);
+      reasons.push(`卡牌日文名匹配: ${identification.pokemonNameJa}`);
     }
   }
 

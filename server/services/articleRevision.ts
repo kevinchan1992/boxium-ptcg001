@@ -20,7 +20,7 @@ interface ReviseArticleResult {
 export async function reviseArticle(input: ReviseArticleInput): Promise<ReviseArticleResult> {
   const { originalTitle, originalContent, originalExcerpt, revisionRequest, targetLanguage } = input;
 
-  const systemPrompt = `你是一位專業的 Pokémon TCG 文章編輯。
+  const systemPrompt = `你是一位專業的 TCG（集換式卡牌遊戲）文章編輯，涵蓋 Pokémon、One Piece 等多款遊戲。
 用戶會提供一篇原始文章和修改要求，你需要根據要求修改文章。
 
 修改原則：

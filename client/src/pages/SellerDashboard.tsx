@@ -838,7 +838,7 @@ export default function SellerDashboard() {
             </div>
             <h2 className="text-xl font-bold mb-2" style={{ color: "#06038d" }}>成為 BOXIUM 賣家</h2>
             <p className="text-gray-500 mb-6 max-w-md">
-              在 BOXIUM 平台上架你的寶可夢卡牡，觸及更多買家。平台收取 5% 服務費，款項透過 Stripe 自動轉帳到你的帳戶。
+              在 BOXIUM 平台上架你的 TCG 卡牌，觸及更多買家。平台收取 5% 服務費，款項透過 Stripe 自動轉帳到你的帳戶。
             </p>
             <Button onClick={() => setShowApply(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white font-bold">
               申請成為賣家

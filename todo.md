@@ -6478,3 +6478,13 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 賣家放款失敗重試機制：新增 startPayoutRetryScheduler（每 2 小時自動重試）
 - [x] 訂單超時時間動態配置：Alipay 審核 SLA 改從 systemSettings 讀取
 - [x] 爭議處理自動化：新增 disputeDeadlineAt + startDisputeSlaEscalationScheduler（每 4 小時檢查）
+
+## 🔄 平台描述更新 — 從「僅限 Pokémon」改為「涵蓋所有 TCG」（2026-03-27）
+- [x] 搜索並修改所有提及「Pokémon」或僅限寶可夢的描述
+- [x] 更新首頁 Home.tsx 的歡迎語和描述
+- [x] 更新 SEO meta 標籤（title, description, og:description）
+- [x] 更新 About 頁面描述
+- [x] 更新 Terms / Privacy 頁面中的平台描述
+- [x] 更新 Footer 描述
+- [x] 更新 JSON-LD 結構化數據
+- [x] 更新後端 email 模板中的平台描述

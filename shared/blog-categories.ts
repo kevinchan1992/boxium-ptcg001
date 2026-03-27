@@ -12,7 +12,9 @@ export const BLOG_CATEGORIES = [
 
 // 預定義的博客標籤
 export const BLOG_TAGS = [
-  'Pokémon TCG',
+  'TCG',
+  'Pokémon',
+  'One Piece',
   'PSA10',
   '中古品',
   '價格趨勢',

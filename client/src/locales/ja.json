@@ -1,6 +1,6 @@
 {
   "trending": {
-    "title": "🔥 Pokemon TCG 人気ランキング",
+    "title": "🔥 TCG 人気ランキング",
     "subtitle": "過去2ヶ月以内のPSA 10グレードカード市場トレンド",
     "searchHeat": "検索人気",
     "searchHeatShort": "人気",
@@ -90,14 +90,14 @@
     "goToMarketplace": "市場価格",
     "readyToStart": "PTCGの旅を始める準備はできましたか？",
     "readyToStartDesc": "BOXIUMのスマート検索と価格分析ツールを使用して、お気に入りのコレクションを見つけましょう。",
-    "footerDesc": "Pokémon TCGの価格照会と市場分析に特化した総合プラットフォーム",
+    "footerDesc": "Pokémon、One Pieceなど複数のTCGの価格照会と市場分析に特化した総合プラットフォーム",
     "quickLinks": "クイックリンク",
     "cardSearch": "カード検索",
     "marketReport": "市場レポート",
     "priceQuery": "価格照会",
     "adminPanel": "管理パネル",
     "aboutUs": "私たちについて",
-    "aboutUsDesc": "BOXIUMはPokémon TCG投資家とコレクターに最も正確で専門的な市場情報と価格分析ツールを提供することに尽力しています。",
+    "aboutUsDesc": "BOXIUMはTCG投資家とコレクターに最も正確で専門的な市場情報と価格分析ツールを提供することに尽力しています。",
     "socialMedia": "ソーシャルメディア",
     "termsOfService": "利用規約",
     "privacyPolicy": "プライバシーポリシー"
@@ -352,7 +352,7 @@
   },
   "blogPage": {
     "title": "BOXIUM PTCG ブログ",
-    "subtitle": "プロの Pokémon TCG 市場分析、価格トレンド、投資アドバイス",
+    "subtitle": "プロのTCG市場分析、価格トレンド、投資アドバイス",
     "searchPlaceholder": "記事を検索...",
     "allCategories": "すべてのカテゴリ",
     "loading": "読み込み中...",
@@ -496,17 +496,17 @@
       },
       "intellectualProperty": {
         "title": "知的財産権に関する通知",
-        "content": "本プラットフォームのすべてのコンテンツ（テキスト、画像、デザイン、コードを含む）は著作権法によって保護されています。ポケモンおよび関連商標はThe Pokémon Companyの登録商標であり、本プラットフォームはThe Pokémon Companyと公式な関係はありません。無断でプラットフォームコンテンツを複製または使用することは禁止されています。"
+        "content": "本プラットフォームのすべてのコンテンツ（テキスト、画像、デザイン、コードを含む）は著作権法によって保護されています。プラットフォーム上の各ゲーム商標（Pokémon、One Pieceなど）はそれぞれの権利者に帰属し、本プラットフォームは各ゲーム会社と公式な関係はありません。無断でプラットフォームコンテンツを複製または使用することは禁止されています。"
       }
     }
   },
   "aboutPage": {
     "title": "BOXIUMについて",
-    "subtitle": "ポケモンTCGコレクターと投資家のためのオールインワンマーケットプレイス",
+    "subtitle": "Boxiumへようこそ～ゲームファンのためのパラダイス！グローバルTCG市場データを統合し、リアルタイムで正確な価格情報を提供。",
     "trackedCards": "追跡カード数",
     "dataSources": "データソース",
     "ourMission": "私たちのミッション",
-    "missionContent": "BOXIUMは、ポケモンTCGのコレクター、投資家、売り手に最も正確でリアルタイムな市場データと取引環境を提供することに専念しています。世界の主要取引プラットフォームからの実際の取引記録を集約し、安全で信頼性の高いPSA 10カードの二次市場を提供することで、ユーザーが同一プラットフォームでリサーチ、価格比較、取引を完結できるようにし、賢明なコレクションと投資の意思決定をサポートします。",
+    "missionContent": "BOXIUMは、TCGコレクター、投資家、売り手に最も正確でリアルタイムな市場データと取引環境を提供することに専念しています。Pokémon、One Pieceなど複数のゲームをカバーし、世界の主要取引プラットフォームからの実際の取引記録を集約し、安全で信頼性の高いカードの二次市場を提供します。",
     "coreServices": "コアサービス",
     "platformFeatures": "プラットフォームの特徴",
     "contactInfo": "ご質問やご提案がございましたら、プラットフォームの連絡先よりお問い合わせください。",

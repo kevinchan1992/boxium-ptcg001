@@ -105,19 +105,19 @@ export default function SearchResults() {
   // SEO: Update document title and meta tags
   useEffect(() => {
     if (query) {
-      document.title = `搜尋「${query}」的寶可夢卡牌價格 - BOXIUM PTCG 市場格價平台`;
+      document.title = `搜尋「${query}」的 TCG 卡牌價格 - BOXIUM 市場格價平台`;
       
       let metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
-        metaDesc.setAttribute('content', `在 BOXIUM 搜尋「${query}」相關的寶可夢卡牌，查看 PSA 10 價格、SNKRDUNK 交易記錄和市場趨勢分析。`);
+        metaDesc.setAttribute('content', `在 BOXIUM 搜尋「${query}」相關的 TCG 卡牌，查看 PSA 10 價格、SNKRDUNK 交易記錄和市場趨勢分析。`);
       }
       
       let metaKeywords = document.querySelector('meta[name="keywords"]');
       if (metaKeywords) {
-        metaKeywords.setAttribute('content', `${query},寶可夢卡牌,PSA 10,卡牌價格,SNKRDUNK,市場格價`);
+        metaKeywords.setAttribute('content', `${query},TCG 卡牌,集換式卡牌,PSA 10,卡牌價格,SNKRDUNK,市場格價`);
       }
     } else {
-      document.title = '搜尋寶可夢卡牌價格 - BOXIUM PTCG 市場格價平台';
+      document.title = '搜尋 TCG 卡牌價格 - BOXIUM 市場格價平台';
     }
   }, [query]);
 
@@ -177,7 +177,7 @@ export default function SearchResults() {
         {/* Results Header with H1 */}
         <div className="mb-4 sm:mb-6">
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
-            {query ? `搜尋「${query}」的寶可夢卡牌價格` : '搜尋寶可夢卡牌價格'}
+            {query ? `搜尋「${query}」的 TCG 卡牌價格` : '搜尋 TCG 卡牌價格'}
           </h1>
           {isLoading ? (
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">搜尋中...</p>
