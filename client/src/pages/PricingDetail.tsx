@@ -48,7 +48,13 @@ export default function PricingDetail() {
   };
 
   const handleBack = () => {
-    setLocation("/pricing");
+    // Use browser history to go back to the previous page (search results)
+    // instead of always navigating to /pricing
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      setLocation("/pricing");
+    }
   };
 
   const handleViewDetail = () => {

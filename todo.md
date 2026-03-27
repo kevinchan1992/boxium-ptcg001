@@ -6488,3 +6488,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 更新 Footer 描述
 - [x] 更新 JSON-LD 結構化數據
 - [x] 更新後端 email 模板中的平台描述
+
+## 🕷️ SNKRDUNK 爬蟲修改 — 新增遊戲王（Yu-Gi-Oh!）卡牌爬取支援（2026-03-27）
+- [x] 修改爬蟲腳本的搜尋 URL 為遊戲王卡牌（brandIds=yu-gi-oh）
+- [x] 更新 UI 標題和描述為遊戲王主題
+- [x] 更新 localStorage key 避免與其他爬蟲衝突（ygo_crawler_v4）
+- [x] 確認爬蟲邏輯與現有 Pokémon/One Piece 爬蟲一致
+
+## 🐛 Pricing 頁面返回按鈕修復（2026-03-27）
+- [x] 修復從 Pricing 卡牌詳情頁（/pricing/:id）返回時，應回到搜尋結果而非 /pricing 首頁
