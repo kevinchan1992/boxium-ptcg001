@@ -6513,3 +6513,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] 檢查專案中所有引用的 CDN URL，找出不再使用的舊版資源
 - [ ] 移除 client/public 中不再需要的本地 og-image.png（已上傳 CDN）
 - [ ] 確認所有 CDN 引用都指向最新版本
+
+## 📊 訂單狀態流程圖示（2026-03-27）
+- [x] 建立 OrderStatusStepper 共用組件（支援一般快遞流程和面交流程）
+- [x] 整合到買家訂單頁面（Orders.tsx）每張訂單卡片
+- [x] 整合到賣家訂單頁面（SellerDashboard.tsx）每張訂單卡片
+- [x] 已取消/爭議/退款訂單顯示特殊狀態樣式
+- [ ] 儲存 Checkpoint

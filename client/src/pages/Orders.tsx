@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
+import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import {
   Package, ArrowLeft, CheckCircle, Truck, Clock, XCircle, AlertCircle,
   ChevronDown, ChevronUp, MapPin, Phone, User, CreditCard, Loader2,
@@ -464,6 +465,15 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
           )}
         </div>
       )}
+
+      {/* Order Status Stepper */}
+      <div className="px-4 pb-3">
+        <OrderStatusStepper
+          orderStatus={order.orderStatus}
+          shippingMethod={order.shippingMethod}
+          role="buyer"
+        />
+      </div>
 
       {/* Dispute info banner */}
       {isDisputed && order.disputeReason && (

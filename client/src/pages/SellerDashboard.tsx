@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
+import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown, Layers, ChevronRight, Pencil, EyeOff, Eye, Trash2, CheckSquare, Square, ChevronDown, Phone, Users, Info } from "lucide-react";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
@@ -1560,6 +1561,13 @@ export default function SellerDashboard() {
                               {item.shippedAt && <p>📅 出貨日期：{new Date(item.shippedAt).toLocaleDateString('zh-HK')}</p>}
                             </div>
                           )}
+                          {/* Order Status Stepper */}
+                          <OrderStatusStepper
+                            orderStatus={item.orderStatus}
+                            shippingMethod={item.shippingMethod}
+                            role="seller"
+                          />
+
                           {/* Show shipping status for shipped orders */}
                           {item.orderStatus === 'shipped' && !item.shippingName && (
                             <div className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
