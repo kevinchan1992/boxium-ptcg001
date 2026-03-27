@@ -6592,3 +6592,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
   - [x] 主要操作按鈕（確認收貨/申請爭議/評價賣家）高度增加至 h-10，更易點擊
   - [x] 展開詳情區塊（收貨資料/付款摘要）改為白色卡片 + 更清晰的標題
 - [x] 保存 checkpoint
+
+---
+
+## ✅ 修復個人中心/賣家中心 Header 的 Logo 位置問題
+
+- [x] 找到個人中心和賣家中心頁面的 Header 組件
+- [x] 分析 BOXIUM logo 位置不協調的原因（手機版 Header 右側有多餘的 logo，TopNav 已有品牌標識）
+- [x] 修復 logo 佈局（移除 Profile.tsx 和 SellerDashboard.tsx 手機版 Header 右側的 BOXIUM logo）
+- [x] 保存 checkpoint

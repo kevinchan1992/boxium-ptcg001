@@ -874,9 +874,6 @@ export default function SellerDashboard() {
               <h1 className="text-base font-bold text-white leading-tight">賣家中心</h1>
               <p className="text-white/60 text-xs">管理商品、訂單和收款</p>
             </div>
-            <Link href="/">
-              <img src="/boxium-logo.png" alt="BOXIUM" className="h-8 opacity-80" />
-            </Link>
           </div>
           {/* Desktop: original layout */}
           <div className="hidden md:block">

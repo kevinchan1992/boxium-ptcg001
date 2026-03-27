@@ -184,10 +184,6 @@ export default function Profile() {
                 {t("profile.joinedAt")}{joinDate}
               </p>
             </div>
-            {/* Back to home */}
-            <Link href="/">
-              <img src="/boxium-logo.png" alt="BOXIUM" className="h-8 opacity-80" />
-            </Link>
           </div>
           {/* Desktop: original layout */}
           <div className="hidden md:block">
