@@ -968,54 +968,58 @@ export default function SellerDashboard() {
               </Card>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-              <div className="rounded-xl border border-gray-100 shadow-sm p-4" style={{ background: "#f8faff" }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#e8edff" }}>
-                    <Package className="w-5 h-5" style={{ color: "#06038d" }} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+              {/* Stat: 上架商品 */}
+              <div className="rounded-xl border border-gray-100 shadow-sm p-3" style={{ background: "#f8faff" }}>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#e8edff" }}>
+                    <Package className="w-4 h-4" style={{ color: "#06038d" }} />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{myListings?.length ?? 0}</p>
-                    <p className="text-xs text-gray-500">上架商品</p>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-xl border border-gray-100 shadow-sm p-4" style={{ background: "#f8faff" }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#e8edff" }}>
-                    <ShoppingBag className="w-5 h-5" style={{ color: "#06038d" }} />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{salesStats?.completedOrders ?? sellerProfile?.totalSales ?? 0}</p>
-                    <p className="text-xs text-gray-500">已完成訂單</p>
+                  <div className="min-w-0">
+                    <p className="text-xl font-bold leading-tight" style={{ color: "#06038d" }}>{myListings?.length ?? 0}</p>
+                    <p className="text-[11px] text-gray-500 leading-tight">上架商品</p>
                   </div>
                 </div>
               </div>
-              <div className="rounded-xl border border-gray-100 shadow-sm p-4" style={{ background: "#f8faff" }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#fff8e0" }}>
-                    <DollarSign className="w-5 h-5" style={{ color: "#b8860b" }} />
+              {/* Stat: 已完成訂單 */}
+              <div className="rounded-xl border border-gray-100 shadow-sm p-3" style={{ background: "#f8faff" }}>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#e8edff" }}>
+                    <ShoppingBag className="w-4 h-4" style={{ color: "#06038d" }} />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>HK${(salesStats?.thisMonthRevenue ?? 0).toFixed(0)}</p>
-                    <p className="text-xs text-gray-500">本月收益</p>
-                      {salesStats && salesStats.lastMonthRevenue > 0 && (
-                        <p className="text-xs mt-0.5" style={{ color: salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '#22c55e' : '#ef4444' }}>
-                          {salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '▲' : '▼'}
-                          {Math.abs(((salesStats.thisMonthRevenue - salesStats.lastMonthRevenue) / salesStats.lastMonthRevenue) * 100).toFixed(0)}% 與上月比
-                        </p>
-                      )}
-                    </div>
+                  <div className="min-w-0">
+                    <p className="text-xl font-bold leading-tight" style={{ color: "#06038d" }}>{salesStats?.completedOrders ?? sellerProfile?.totalSales ?? 0}</p>
+                    <p className="text-[11px] text-gray-500 leading-tight">已完成訂單</p>
                   </div>
+                </div>
               </div>
-              <div className="rounded-xl border border-gray-100 shadow-sm p-4" style={{ background: "#f8faff" }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#fff8e0" }}>
-                    <Star className="w-5 h-5" style={{ color: "#b8860b" }} />
+              {/* Stat: 本月收益 */}
+              <div className="rounded-xl border border-gray-100 shadow-sm p-3" style={{ background: "#f8faff" }}>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#fff8e0" }}>
+                    <DollarSign className="w-4 h-4" style={{ color: "#b8860b" }} />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{parseFloat((sellerProfile?.avgRating as string) ?? '0').toFixed(1)}</p>
-                    <p className="text-xs text-gray-500">評分 ({sellerProfile?.ratingCount ?? 0} 則)</p>
+                  <div className="min-w-0">
+                    <p className="text-base font-bold leading-tight truncate" style={{ color: "#06038d" }}>HK${(salesStats?.thisMonthRevenue ?? 0).toFixed(0)}</p>
+                    <p className="text-[11px] text-gray-500 leading-tight">本月收益</p>
+                    {salesStats && salesStats.lastMonthRevenue > 0 && (
+                      <p className="text-[10px] leading-tight" style={{ color: salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '#22c55e' : '#ef4444' }}>
+                        {salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '▲' : '▼'}
+                        {Math.abs(((salesStats.thisMonthRevenue - salesStats.lastMonthRevenue) / salesStats.lastMonthRevenue) * 100).toFixed(0)}%
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* Stat: 評分 */}
+              <div className="rounded-xl border border-gray-100 shadow-sm p-3" style={{ background: "#f8faff" }}>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#fff8e0" }}>
+                    <Star className="w-4 h-4" style={{ color: "#b8860b" }} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xl font-bold leading-tight" style={{ color: "#06038d" }}>{parseFloat((sellerProfile?.avgRating as string) ?? '0').toFixed(1)}</p>
+                    <p className="text-[11px] text-gray-500 leading-tight">評分 ({sellerProfile?.ratingCount ?? 0} 則)</p>
                   </div>
                 </div>
               </div>
@@ -1127,7 +1131,8 @@ export default function SellerDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {/* Toolbar */}
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="space-y-2">
+                      {/* Row 1: Main actions */}
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
@@ -1138,52 +1143,20 @@ export default function SellerDashboard() {
                           {batchMode ? <X className="w-3 h-3 mr-1" /> : <CheckSquare className="w-3 h-3 mr-1" />}
                           {batchMode ? "取消批量" : "批量管理"}
                         </Button>
-                        {batchMode && (
-                          <>
-                            <Button size="sm" variant="outline" className="text-xs h-8" onClick={toggleSelectAll}>
-                              {selectedIds.size === filteredListings.length ? <CheckSquare className="w-3 h-3 mr-1" /> : <Square className="w-3 h-3 mr-1" />}
-                              {selectedIds.size === filteredListings.length ? "取消全選" : "全選"}
-                            </Button>
-                            {selectedIds.size > 0 && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs h-8 border-red-400 text-red-600 hover:bg-red-50"
-                                  disabled={batchDeactivateMutation.isPending}
-                                  onClick={() => batchDeactivateMutation.mutate({ ids: Array.from(selectedIds) })}
-                                >
-                                  <EyeOff className="w-3 h-3 mr-1" />
-                                  下架 ({selectedIds.size})
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs h-8 border-green-500 text-green-700 hover:bg-green-50"
-                                  disabled={batchReactivateMutation.isPending}
-                                  onClick={() => batchReactivateMutation.mutate({ ids: Array.from(selectedIds) })}
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  重新上架 ({selectedIds.size})
-                                </Button>
-                              </>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
                         {isAdmin && (
                           <Button
                             variant="outline"
-                            className="font-bold flex items-center gap-2 text-sm h-8 border-[#06038D] text-[#06038D] hover:bg-[#06038D]/10 bg-white"
+                            size="sm"
+                            className="text-xs h-8 border-[#06038D] text-[#06038D] hover:bg-[#06038D]/10 bg-white"
                             onClick={() => setShowBulkUpload(true)}
                           >
-                            <Layers className="w-4 h-4" />
+                            <Layers className="w-3 h-3 mr-1" />
                             批量上架
                           </Button>
                         )}
                         <Button
-                          className="font-bold flex items-center gap-2 text-sm h-8"
+                          size="sm"
+                          className="ml-auto text-xs h-8 font-bold"
                           style={{ background: '#FEDD00', color: '#06038D' }}
                           onClick={() => {
                             if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
@@ -1193,10 +1166,43 @@ export default function SellerDashboard() {
                             setShowNewListing(true);
                           }}
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5 mr-1" />
                           上架新商品
                         </Button>
                       </div>
+                      {/* Row 2: Batch actions (shown only in batch mode) */}
+                      {batchMode && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Button size="sm" variant="outline" className="text-xs h-8" onClick={toggleSelectAll}>
+                            {selectedIds.size === filteredListings.length ? <CheckSquare className="w-3 h-3 mr-1" /> : <Square className="w-3 h-3 mr-1" />}
+                            {selectedIds.size === filteredListings.length ? "取消全選" : "全選"}
+                          </Button>
+                          {selectedIds.size > 0 && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-8 border-red-400 text-red-600 hover:bg-red-50"
+                                disabled={batchDeactivateMutation.isPending}
+                                onClick={() => batchDeactivateMutation.mutate({ ids: Array.from(selectedIds) })}
+                              >
+                                <EyeOff className="w-3 h-3 mr-1" />
+                                下架 ({selectedIds.size})
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-8 border-green-500 text-green-700 hover:bg-green-50"
+                                disabled={batchReactivateMutation.isPending}
+                                onClick={() => batchReactivateMutation.mutate({ ids: Array.from(selectedIds) })}
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                重新上架 ({selectedIds.size})
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {filteredListings.length === 0 ? (
@@ -1251,8 +1257,9 @@ export default function SellerDashboard() {
                             </span>
                           </div>
                           {/* Card Body */}
-                          <div className="flex items-center gap-3 p-4 flex-wrap">
-                            <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                          <div className="flex items-start gap-3 px-3 py-3">
+                            {/* Cover Image */}
+                            <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
                               {coverImg ? (
                                 <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
                               ) : (
@@ -1261,9 +1268,10 @@ export default function SellerDashboard() {
                                 </div>
                               )}
                             </div>
+                            {/* Info */}
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold truncate text-gray-900">{listing.title}</p>
-                              <div className="flex items-center gap-1.5 mt-0.5">
+                              <p className="font-semibold text-sm leading-snug text-gray-900 line-clamp-2">{listing.title}</p>
+                              <div className="flex items-center gap-1.5 mt-1">
                                 {(() => {
                                   const tcgLogos: Record<string, { logo: string; label: string }> = {
                                     pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
@@ -1272,7 +1280,7 @@ export default function SellerDashboard() {
                                   };
                                   const series = tcgLogos[listing.tcgSeries as string];
                                   return series ? (
-                                    <img src={series.logo} alt={series.label} title={series.label} className="h-6 w-auto object-contain opacity-80" />
+                                    <img src={series.logo} alt={series.label} title={series.label} className="h-5 w-auto object-contain opacity-70" />
                                   ) : null;
                                 })()}
                                 <p className="text-sm font-bold" style={{ color: '#06038D' }}>
@@ -1280,97 +1288,98 @@ export default function SellerDashboard() {
                                 </p>
                               </div>
                             </div>
-                            {!batchMode && (
-                              <div className="flex items-center gap-1.5 flex-shrink-0">
-                                {/* Edit button */}
-                                {!isSold && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-xs h-7 px-2 border-[#06038d] text-[#06038d] hover:bg-blue-50"
-                                    onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}
-                                  >
-                                    <Pencil className="w-3 h-3 mr-1" />
-                                    編輯
-                                  </Button>
-                                )}
-                                {/* Deactivate / Reactivate */}
-                                {isActive && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-xs h-7 px-2 border-red-400 text-red-600 hover:bg-red-50"
-                                    disabled={deactivateMutation.isPending}
-                                    onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}
-                                  >
-                                    <EyeOff className="w-3 h-3 mr-1" />
-                                    下架
-                                  </Button>
-                                )}
-                                {isRemoved && !isAdminDelisted && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-xs h-7 px-2 border-green-500 text-green-700 hover:bg-green-50"
-                                    disabled={reactivateMutation.isPending}
-                                    onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}
-                                  >
-                                    <Eye className="w-3 h-3 mr-1" />
-                                    重新上架
-                                  </Button>
-                                )}
-                                {isRemoved && isAdminDelisted && (
-                                  <span className="text-xs text-red-500 font-medium px-1">⛔ 管理員已下架</span>
-                                )}
-                                {/* View detail */}
-                                {(isSold || isActive) && (
-                                  <Link href={`/marketplace/${listing.id}`}>
-                                    <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-gray-300 text-gray-600 hover:bg-gray-50">
-                                      <ExternalLink className="w-3 h-3" />
-                                    </Button>
-                                  </Link>
-                                )}
-                                {/* Admin: Duplicate listing */}
-                                {isAdmin && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-xs h-7 px-2 border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/10"
-                                    title="複製此商品"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setListingForm({
-                                        title: listing.title ?? '',
-                                        description: listing.description ?? '',
-                                        condition: listing.condition ?? 'raw_a',
-                                        price: parseFloat(listing.priceHkd as string).toFixed(2),
-                                        quantity: String(listing.quantity ?? 1),
-                                        tcgSeries: (listing as any).tcgSeries ?? 'pokemon',
-                                        acceptOffers: !!(listing as any).allowOffers,
-                                        minOffer: (listing as any).minOfferHkd ? String(parseFloat((listing as any).minOfferHkd)) : '',
-                                      });
-                                      setListingImages([]);
-                                      setSelectedCard(null);
-                                      setListingStep(1);
-                                      setShowNewListing(true);
-                                      toast.info('已複製商品資訊，請檢查後上架');
-                                    }}
-                                  >
-                                    <Layers className="w-3 h-3" />
-                                  </Button>
-                                )}
-                                {/* Share Button */}
-                                <ShareButton
-                                  listingUrl={listingUrl}
-                                  shareText={shareText}
-                                  title={listing.title}
-                                  priceHkd={listing.priceHkd as string}
-                                  coverImg={coverImg}
-                                  condition={listing.condition ?? undefined}
-                                />
-                              </div>
-                            )}
                           </div>
+                          {/* Action Bar */}
+                          {!batchMode && (
+                            <div className="flex items-center gap-1.5 px-3 pb-3 flex-wrap">
+                              {/* Edit button */}
+                              {!isSold && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-8 px-3 border-[#06038d] text-[#06038d] hover:bg-blue-50 flex-1 sm:flex-none"
+                                  onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}
+                                >
+                                  <Pencil className="w-3 h-3 mr-1" />
+                                  編輯
+                                </Button>
+                              )}
+                              {/* Deactivate / Reactivate */}
+                              {isActive && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-8 px-3 border-red-400 text-red-600 hover:bg-red-50 flex-1 sm:flex-none"
+                                  disabled={deactivateMutation.isPending}
+                                  onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}
+                                >
+                                  <EyeOff className="w-3 h-3 mr-1" />
+                                  下架
+                                </Button>
+                              )}
+                              {isRemoved && !isAdminDelisted && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-8 px-3 border-green-500 text-green-700 hover:bg-green-50 flex-1 sm:flex-none"
+                                  disabled={reactivateMutation.isPending}
+                                  onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  重新上架
+                                </Button>
+                              )}
+                              {isRemoved && isAdminDelisted && (
+                                <span className="text-xs text-red-500 font-medium px-1">⛔ 管理員已下架</span>
+                              )}
+                              {/* View detail */}
+                              {(isSold || isActive) && (
+                                <Link href={`/marketplace/${listing.id}`}>
+                                  <Button size="sm" variant="outline" className="text-xs h-8 px-2.5 border-gray-300 text-gray-600 hover:bg-gray-50">
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </Button>
+                                </Link>
+                              )}
+                              {/* Admin: Duplicate listing */}
+                              {isAdmin && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-8 px-2.5 border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/10"
+                                  title="複製此商品"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setListingForm({
+                                      title: listing.title ?? '',
+                                      description: listing.description ?? '',
+                                      condition: listing.condition ?? 'raw_a',
+                                      price: parseFloat(listing.priceHkd as string).toFixed(2),
+                                      quantity: String(listing.quantity ?? 1),
+                                      tcgSeries: (listing as any).tcgSeries ?? 'pokemon',
+                                      acceptOffers: !!(listing as any).allowOffers,
+                                      minOffer: (listing as any).minOfferHkd ? String(parseFloat((listing as any).minOfferHkd)) : '',
+                                    });
+                                    setListingImages([]);
+                                    setSelectedCard(null);
+                                    setListingStep(1);
+                                    setShowNewListing(true);
+                                    toast.info('已複製商品資訊，請檢查後上架');
+                                  }}
+                                >
+                                  <Layers className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+                              {/* Share Button */}
+                              <ShareButton
+                                listingUrl={listingUrl}
+                                shareText={shareText}
+                                title={listing.title}
+                                priceHkd={listing.priceHkd as string}
+                                coverImg={coverImg}
+                                condition={listing.condition ?? undefined}
+                              />
+                            </div>
+                          )}
                         </div>
                       );
                     })}
