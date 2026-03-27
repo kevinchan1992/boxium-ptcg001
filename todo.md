@@ -6520,3 +6520,16 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 整合到賣家訂單頁面（SellerDashboard.tsx）每張訂單卡片
 - [x] 已取消/爭議/退款訂單顯示特殊狀態樣式
 - [ ] 儲存 Checkpoint
+
+## 🔖 訂單詳情頁 Stepper + 時間戳記 + 推送通知（2026-03-27）
+- [ ] 升級 OrderStatusStepper 支援時間戳記（每個已完成步驟顯示時間）和大版模式（size="lg"）
+- [ ] 整合大版 Stepper 到訂單詳情頁（/orders/:orderNo）頂部
+- [ ] 後端 tRPC 訂單狀態更新時自動推送通知給買家
+- [ ] 儲存 Checkpoint
+
+## 🔖 訂單詳情頁 Stepper + 時間戳記 + 推送通知（2026-03-27）
+- [x] 升級 OrderStatusStepper 支援 size="lg" 大版模式（垂直時間軸樣式）
+- [x] 升級 OrderStatusStepper 支援 timestamps prop（各步驟顯示時間戳記）
+- [x] 整合大版 Stepper 到訂單詳情頁（替換舊版 OrderTimeline）
+- [x] 驗證後端通知機制已完整覆蓋所有關鍵狀態更新
+- [ ] 儲存 Checkpoint

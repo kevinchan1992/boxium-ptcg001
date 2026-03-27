@@ -9,11 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import {
-  ArrowLeft, Package, CheckCircle, Truck, Clock, XCircle, AlertCircle,
+import { ArrowLeft, Package, CheckCircle, Truck, Clock, XCircle, AlertCircle,
   CreditCard, MapPin, Phone, User, Flag, Star, MessageSquare, Loader2,
   Copy, ExternalLink, ShieldCheck, CircleDot, Smartphone, FileImage, CheckSquare, XSquare, Hourglass
 } from "lucide-react";
+import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { Label } from "@/components/ui/label";
 
 type VerifyResult = {
@@ -1082,7 +1082,20 @@ export default function OrderDetail() {
           <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: "#06038d" }}>
             <ShieldCheck className="w-4 h-4" style={{ color: "#06038d" }} />訂單進度
           </h2>
-          <OrderTimeline order={order} />
+          <OrderStatusStepper
+            orderStatus={order.orderStatus}
+            shippingMethod={order.shippingMethod}
+            role={isBuyer ? "buyer" : "seller"}
+            size="lg"
+            timestamps={{
+              createdAt: order.createdAt,
+              paidAt: (order as any).paidAt ?? (order.orderStatus !== "pending_payment" ? order.updatedAt : null),
+              shippedAt: order.shippedAt,
+              deliveredAt: (order as any).deliveredAt,
+              completedAt: order.buyerConfirmedAt,
+              meetupCompletedAt: order.buyerConfirmedAt,
+            }}
+          />
         </div>
 
         {/* Shipping Tracking */}
