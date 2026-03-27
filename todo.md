@@ -6532,4 +6532,23 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 升級 OrderStatusStepper 支援 timestamps prop（各步驟顯示時間戳記）
 - [x] 整合大版 Stepper 到訂單詳情頁（替換舊版 OrderTimeline）
 - [x] 驗證後端通知機制已完整覆蓋所有關鍵狀態更新
+- [x] 儲存 Checkpoint (d2284a0c)
+
+## 📱 Seller + Profile 手機版重設計（2026-03-27）
+- [ ] 分析現有頁面結構和痛點
+- [ ] Profile 頁面：重設計 Hero 區域（更緊湊的頭像+資訊佈局）
+- [ ] Profile 頁面：Tab 導航改為底部固定或更緊湊的橫向滑動
+- [ ] Profile 頁面：個人資訊表單改為更現代的 Card 樣式
+- [ ] Seller Dashboard：商品卡片重設計（圖片+資訊更緊湊）
+- [ ] Seller Dashboard：操作按鈕改為 icon-only 或更小的按鈕組
+- [ ] Seller Dashboard：統計數據改為更緊湊的橫向滑動 Card
+- [ ] 儲存 Checkpoint
+
+## 📱 Seller + Profile 手機版重設計（2026-03-27）
+- [x] Profile Hero 區域改為緊湊橫向佈局（頭像左側 + 資訊右側），減少垂直高度
+- [x] Profile Tab 導航改為 icon + 短標籤的等寬格子佈局，頂部藍色指示線
+- [x] Profile InfoSection 改為 iOS 設定頁風格 List Row（個人資料 / 帳戶資訊 / 安全設定三組）
+- [x] SellerDashboard Hero 區域改為緊湊橫向佈局
+- [x] SellerDashboard 主容器手機版間距優化（px-3, mt-3, pb-20）
+- [x] 商品卡片操作按鈕改為 flex-1 均分佈局，圖示按鈕改為 w-8 h-8 正方形
 - [ ] 儲存 Checkpoint

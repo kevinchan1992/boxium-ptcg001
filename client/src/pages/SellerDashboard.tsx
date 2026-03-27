@@ -798,39 +798,55 @@ export default function SellerDashboard() {
     </div>
   );
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      {/* ── Hero Banner ── */}
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* ── Hero Banner (Mobile-first compact) ── */}
       <div
         className="relative"
         style={{ background: `linear-gradient(135deg, #06038d 0%, #0a06b5 100%)` }}
       >
         <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: "#FEDD00" }} />
-        <div className="max-w-5xl mx-auto px-4 pt-5 pb-8">
-          {/* LOGO row */}
-          <div className="mb-5">
+        <div className="max-w-5xl mx-auto px-4 pt-4 pb-5">
+          {/* Mobile: compact horizontal layout */}
+          <div className="flex items-center gap-3 md:hidden">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "#FEDD00" }}
+            >
+              <ShoppingBag className="w-5 h-5" style={{ color: "#06038d" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-bold text-white leading-tight">賣家中心</h1>
+              <p className="text-white/60 text-xs">管理商品、訂單和收款</p>
+            </div>
             <Link href="/">
-              <img src="/boxium-logo.png" alt="BOXIUM" className="h-16 cursor-pointer p-1" />
+              <img src="/boxium-logo.png" alt="BOXIUM" className="h-8 opacity-80" />
             </Link>
           </div>
-          <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
-            <div
-              className="w-20 h-20 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
-              style={{ background: "#FEDD00", borderColor: "white" }}
-            >
-              <ShoppingBag className="w-10 h-10" style={{ color: "#06038d" }} />
+          {/* Desktop: original layout */}
+          <div className="hidden md:block">
+            <div className="mb-5">
+              <Link href="/">
+                <img src="/boxium-logo.png" alt="BOXIUM" className="h-16 cursor-pointer p-1" />
+              </Link>
             </div>
-            <div className="text-center md:text-left pb-1 flex-1">
-              <div className="flex items-center gap-3 justify-center md:justify-start flex-wrap">
-                <h1 className="text-2xl md:text-3xl font-bold text-white">賣家中心</h1>
+            <div className="flex flex-row items-end gap-6">
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
+                style={{ background: "#FEDD00", borderColor: "white" }}
+              >
+                <ShoppingBag className="w-10 h-10" style={{ color: "#06038d" }} />
               </div>
-              <p className="text-white/70 text-sm mt-1">管理你的商品、訂單和收款</p>
+              <div className="text-left pb-1 flex-1">
+                <h1 className="text-3xl font-bold text-white">賣家中心</h1>
+                <p className="text-white/70 text-sm mt-1">管理你的商品、訂單和收款</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-6 pb-16">
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden p-6">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 mt-3 md:mt-6 pb-20 md:pb-16">
+        <div className="bg-white rounded-2xl shadow-sm md:shadow-lg border border-gray-100 overflow-hidden p-3 sm:p-6">
 
         {!sellerProfile && !isAdmin && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -970,7 +986,7 @@ export default function SellerDashboard() {
               </Card>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mb-4 sm:mb-5">
               {/* Stat: 上架商品 */}
               <div className="rounded-xl border border-gray-100 shadow-sm p-3 cursor-pointer hover:shadow-md hover:border-[#06038d]/30 transition-all active:scale-95" style={{ background: "#f8faff" }}
                 onClick={() => { setActiveTab('listings'); setListingFilter('active'); }}
@@ -1299,17 +1315,18 @@ export default function SellerDashboard() {
                           </div>
                           {/* Action Bar */}
                           {!batchMode && (
-                            <div className="flex items-center gap-1.5 px-3 pb-3 flex-wrap">
+                            <div className="flex items-center gap-1.5 px-3 pb-3">
                               {/* Edit button */}
                               {!isSold && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-xs h-8 px-3 border-[#06038d] text-[#06038d] hover:bg-blue-50 flex-1 sm:flex-none"
+                                  className="text-xs h-8 px-3 border-[#06038d] text-[#06038d] hover:bg-blue-50 flex-1"
                                   onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}
                                 >
                                   <Pencil className="w-3 h-3 mr-1" />
-                                  編輯
+                                  <span className="hidden sm:inline">編輯</span>
+                                  <span className="sm:hidden">編輯</span>
                                 </Button>
                               )}
                               {/* Deactivate / Reactivate */}
@@ -1317,24 +1334,22 @@ export default function SellerDashboard() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-xs h-8 px-3 border-red-400 text-red-600 hover:bg-red-50 flex-1 sm:flex-none"
+                                  className="text-xs h-8 px-3 border-red-400 text-red-600 hover:bg-red-50 flex-1"
                                   disabled={deactivateMutation.isPending}
                                   onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}
                                 >
-                                  <EyeOff className="w-3 h-3 mr-1" />
-                                  下架
+                                  <EyeOff className="w-3 h-3 mr-1" />下架
                                 </Button>
                               )}
                               {isRemoved && !isAdminDelisted && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-xs h-8 px-3 border-green-500 text-green-700 hover:bg-green-50 flex-1 sm:flex-none"
+                                  className="text-xs h-8 px-3 border-green-500 text-green-700 hover:bg-green-50 flex-1"
                                   disabled={reactivateMutation.isPending}
                                   onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}
                                 >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  重新上架
+                                  <Eye className="w-3 h-3 mr-1" />重新上架
                                 </Button>
                               )}
                               {isRemoved && isAdminDelisted && (
@@ -1343,7 +1358,7 @@ export default function SellerDashboard() {
                               {/* View detail */}
                               {(isSold || isActive) && (
                                 <Link href={`/marketplace/${listing.id}`}>
-                                  <Button size="sm" variant="outline" className="text-xs h-8 px-2.5 border-gray-300 text-gray-600 hover:bg-gray-50">
+                                  <Button size="sm" variant="outline" className="h-8 w-8 p-0 border-gray-300 text-gray-600 hover:bg-gray-50 flex-shrink-0">
                                     <ExternalLink className="w-3.5 h-3.5" />
                                   </Button>
                                 </Link>

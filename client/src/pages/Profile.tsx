@@ -156,47 +156,78 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      {/* ── Hero Banner ── */}
+      {/* ── Hero Banner (Mobile-first compact design) ── */}
       <div className="relative" style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #0a06b5 100%)` }}>
         <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: BRAND_YELLOW }} />
-        <div className="max-w-6xl mx-auto px-4 pt-5 pb-8">
-          {/* LOGO row */}
-          <div className="mb-5">
-            <Link href="/">
-              <img src="/boxium-logo.png" alt="BOXIUM" className="h-16 cursor-pointer p-1" />
-            </Link>
-          </div>
-          <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+        <div className="max-w-6xl mx-auto px-4 pt-4 pb-5">
+          {/* Mobile: compact horizontal layout */}
+          <div className="flex items-center gap-4 md:hidden">
+            {/* Avatar */}
             <div
-              className="w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
-              style={{ background: BRAND_YELLOW, borderColor: "white" }}
+              className="w-14 h-14 rounded-full flex items-center justify-center border-2 shadow-lg flex-shrink-0"
+              style={{ background: BRAND_YELLOW, borderColor: "rgba(255,255,255,0.6)" }}
             >
-              <User className="w-12 h-12 md:w-14 md:h-14" style={{ color: BRAND_BLUE }} />
+              <User className="w-7 h-7" style={{ color: BRAND_BLUE }} />
             </div>
-            <div className="text-center md:text-left pb-1">
-              <div className="flex items-center gap-2 justify-center md:justify-start mb-1">
-                <h1 className="text-2xl md:text-3xl font-bold text-white">{user.name || t("profile.user")}</h1>
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg font-bold text-white truncate">{user.name || t("profile.user")}</h1>
                 {isAdmin && (
-                  <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
-                    <Crown className="w-3 h-3" />Admin
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
+                    <Crown className="w-2.5 h-2.5" />Admin
                   </span>
                 )}
               </div>
-              <p className="text-white/70 text-sm flex items-center gap-1.5 justify-center md:justify-start">
-                <Calendar className="w-3.5 h-3.5" />
+              <p className="text-white/60 text-xs flex items-center gap-1 mt-0.5">
+                <Calendar className="w-3 h-3" />
                 {t("profile.joinedAt")}{joinDate}
               </p>
+            </div>
+            {/* Back to home */}
+            <Link href="/">
+              <img src="/boxium-logo.png" alt="BOXIUM" className="h-8 opacity-80" />
+            </Link>
+          </div>
+          {/* Desktop: original layout */}
+          <div className="hidden md:block">
+            <div className="mb-5">
+              <Link href="/">
+                <img src="/boxium-logo.png" alt="BOXIUM" className="h-16 cursor-pointer p-1" />
+              </Link>
+            </div>
+            <div className="flex flex-row items-end gap-6">
+              <div
+                className="w-28 h-28 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
+                style={{ background: BRAND_YELLOW, borderColor: "white" }}
+              >
+                <User className="w-14 h-14" style={{ color: BRAND_BLUE }} />
+              </div>
+              <div className="text-left pb-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-3xl font-bold text-white">{user.name || t("profile.user")}</h1>
+                  {isAdmin && (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
+                      <Crown className="w-3 h-3" />Admin
+                    </span>
+                  )}
+                </div>
+                <p className="text-white/70 text-sm flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {t("profile.joinedAt")}{joinDate}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Two-column layout ── */}
-      <div className="max-w-6xl mx-auto px-4 py-6 pb-16">
-        {/* Mobile: horizontal scrollable nav */}
-        <div className="md:hidden mb-4 overflow-x-auto">
-          <div className="flex gap-1 bg-white rounded-xl shadow-sm border border-gray-100 p-1.5 min-w-max">
-            {navItems.map(item => (
+      <div className="max-w-6xl mx-auto px-3 py-3 pb-20 md:pb-16 md:px-4 md:py-6">
+        {/* Mobile: compact icon tabs */}
+        <div className="md:hidden mb-3">
+          <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {navItems.map((item, idx) => (
               <button
                 key={item.id}
                 onClick={() => {
@@ -204,20 +235,34 @@ export default function Profile() {
                   const url = item.id === 'info' ? '/profile' : `/profile?tab=${item.id}`;
                   window.history.pushState({ tab: item.id }, '', url);
                 }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  activeSection === item.id
-                    ? "text-white shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50"
+                className={`flex-1 flex flex-col items-center justify-center py-2.5 px-1 relative transition-all ${
+                  idx !== 0 ? "border-l border-gray-100" : ""
+                } ${
+                  activeSection === item.id ? "" : "hover:bg-gray-50"
                 }`}
-                style={activeSection === item.id ? { background: BRAND_BLUE } : {}}
+                style={activeSection === item.id ? { background: `${BRAND_BLUE}0d` } : {}}
               >
-                {item.icon}
-                {item.label}
-                {item.badge && (
-                  <span className="ml-0.5 text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
-                    {item.badge}
-                  </span>
+                {/* Active indicator */}
+                {activeSection === item.id && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-b-full" style={{ background: BRAND_BLUE }} />
                 )}
+                {/* Icon with badge */}
+                <div className="relative">
+                  <span style={{ color: activeSection === item.id ? BRAND_BLUE : "#9ca3af" }}>
+                    {item.icon}
+                  </span>
+                  {item.badge && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 px-0.5 text-[9px] font-bold rounded-full flex items-center justify-center" style={{ background: "#ef4444", color: "white" }}>
+                      {item.badge > 9 ? "9+" : item.badge}
+                    </span>
+                  )}
+                </div>
+                {/* Label */}
+                <span className={`text-[10px] mt-0.5 font-medium leading-tight text-center ${
+                  activeSection === item.id ? "" : "text-gray-400"
+                }`} style={activeSection === item.id ? { color: BRAND_BLUE } : {}}>
+                  {item.label.length > 4 ? item.label.slice(0, 4) : item.label}
+                </span>
               </button>
             ))}
           </div>
@@ -383,87 +428,110 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
     },
   ];
   return (
-    <div className="space-y-6">
-      {/* ── Editable Profile Block ── */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-base font-bold text-gray-900">編輯個人資料</h2>
-            <p className="text-xs text-gray-500 mt-0.5">更新您的姓名和聯繫電話</p>
+    <div className="space-y-4">
+      {/* ── Editable Profile Block (iOS-style list rows) ── */}
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+        {/* Section header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BRAND_BLUE}15` }}>
+              <User className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+            </div>
+            <span className="text-sm font-bold text-gray-900">個人資料</span>
           </div>
           {!isEditing ? (
-            <Button
-              size="sm"
-              variant="outline"
+            <button
               onClick={() => { setEditName(user.name || ""); setEditPhone(user.phone || ""); setIsEditing(true); }}
-              className="font-semibold border-2 transition-all duration-200 hover:scale-[1.03] hover:shadow-md active:scale-[0.97] gap-1.5"
-              style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
+              className="flex items-center gap-1 text-sm font-semibold transition-colors"
+              style={{ color: BRAND_BLUE }}
             >
-              <Edit2 className="w-3.5 h-3.5" /> 編輯
-            </Button>
+              <Edit2 className="w-3.5 h-3.5" />編輯
+            </button>
           ) : (
             <div className="flex gap-2">
-              <Button
-                size="sm"
+              <button
                 onClick={() => updateProfile.mutate({ name: editName || undefined, phone: editPhone || null })}
                 disabled={updateProfile.isPending}
-                className="font-semibold gap-1.5 transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] disabled:scale-100"
-                style={{ background: BRAND_BLUE, color: "white" }}
+                className="flex items-center gap-1 text-sm font-semibold"
+                style={{ color: BRAND_BLUE }}
               >
-                <Save className="w-3.5 h-3.5" /> {updateProfile.isPending ? "儲存中..." : "儲存"}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setIsEditing(false)} className="gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
-                <X className="w-3.5 h-3.5" /> 取消
-              </Button>
+                <Save className="w-3.5 h-3.5" />{updateProfile.isPending ? "儲存中..." : "儲存"}
+              </button>
+              <span className="text-gray-300">|</span>
+              <button onClick={() => setIsEditing(false)} className="text-sm font-medium text-gray-500">取消</button>
             </div>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
-              {t("profile.infoSection.username")}
-            </Label>
-            {isEditing ? (
-              <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="輸入您的姓名" className="border-gray-300 focus:border-blue-500 bg-white text-gray-900" />
-            ) : (
-              <div className="h-9 flex items-center px-3 rounded-md border border-gray-200 bg-gray-50 text-gray-800 text-sm">
-                {user.name || <span className="text-gray-400">{t("profile.infoSection.notSet")}</span>}
-              </div>
-            )}
+        {/* Username row */}
+        <div className="flex items-center px-4 py-3.5 border-b border-gray-50">
+          <div className="flex items-center gap-2 w-24 flex-shrink-0">
+            <User className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-sm text-gray-500">{t("profile.infoSection.username")}</span>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
-              聯繫電話
-            </Label>
-            {isEditing ? (
-              <Input value={editPhone} onChange={e => setEditPhone(e.target.value)} placeholder="+852 XXXX XXXX" className="border-gray-300 focus:border-blue-500 bg-white text-gray-900" />
-            ) : (
-              <div className="h-9 flex items-center px-3 rounded-md border border-gray-200 bg-gray-50 text-gray-800 text-sm">
-                {user.phone || <span className="text-gray-400">未設定</span>}
-              </div>
-            )}
+          {isEditing ? (
+            <Input
+              value={editName}
+              onChange={e => setEditName(e.target.value)}
+              placeholder="輸入姓名"
+              className="flex-1 border-0 border-b border-gray-200 rounded-none px-0 h-7 text-sm focus-visible:ring-0 bg-transparent text-gray-900"
+            />
+          ) : (
+            <span className="flex-1 text-sm text-right text-gray-700 truncate">
+              {user.name || <span className="text-gray-400 text-xs">{t("profile.infoSection.notSet")}</span>}
+            </span>
+          )}
+        </div>
+        {/* Phone row */}
+        <div className="flex items-center px-4 py-3.5">
+          <div className="flex items-center gap-2 w-24 flex-shrink-0">
+            <Phone className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-sm text-gray-500">電話</span>
           </div>
+          {isEditing ? (
+            <Input
+              value={editPhone}
+              onChange={e => setEditPhone(e.target.value)}
+              placeholder="+852 XXXX XXXX"
+              className="flex-1 border-0 border-b border-gray-200 rounded-none px-0 h-7 text-sm focus-visible:ring-0 bg-transparent text-gray-900"
+            />
+          ) : (
+            <span className="flex-1 text-sm text-right text-gray-700">
+              {user.phone || <span className="text-gray-400 text-xs">未設定</span>}
+            </span>
+          )}
         </div>
       </div>
-      {/* ── Read-only Account Info ── */}
-      <div>
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">帳戶資訊</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {readonlyFields.map(({ icon: Icon, label, value }) => (
-            <div key={label} className="space-y-1.5">
-              <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
-                <Icon className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
-                {label}
-              </Label>
-              <Input value={value} disabled className="bg-gray-50 border-gray-200 text-gray-800 disabled:opacity-100 disabled:cursor-default" />
+
+      {/* ── Read-only Account Info (iOS-style) ── */}
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BRAND_BLUE}15` }}>
+            <Shield className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+          </div>
+          <span className="text-sm font-bold text-gray-900">帳戶資訊</span>
+        </div>
+        {readonlyFields.map(({ icon: Icon, label, value }, idx) => (
+          <div key={label} className={`flex items-center px-4 py-3.5 ${idx < readonlyFields.length - 1 ? "border-b border-gray-50" : ""}`}>
+            <div className="flex items-center gap-2 w-28 flex-shrink-0">
+              <Icon className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-sm text-gray-500 truncate">{label}</span>
             </div>
-          ))}
-        </div>
+            <span className="flex-1 text-sm text-right text-gray-600 truncate pl-2">{value}</span>
+          </div>
+        ))}
       </div>
-      <div className="pt-2 border-t border-gray-100">
-        <ChangePasswordDialog />
+
+      {/* ── Security ── */}
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BRAND_BLUE}15` }}>
+            <Lock className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+          </div>
+          <span className="text-sm font-bold text-gray-900">安全設定</span>
+        </div>
+        <div className="px-4 py-3">
+          <ChangePasswordDialog />
+        </div>
       </div>
     </div>
   );
