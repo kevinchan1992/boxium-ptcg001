@@ -6497,3 +6497,19 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 
 ## 🐛 Pricing 頁面返回按鈕修復（2026-03-27）
 - [x] 修復從 Pricing 卡牌詳情頁（/pricing/:id）返回時，應回到搜尋結果而非 /pricing 首頁
+
+## 🔧 Pricing 搜尋結果 URL 持久化（2026-03-27）
+- [ ] 確保搜尋頁碼保存在 URL 參數中（?q=xxx&page=2）
+- [ ] 確保瀏覽器前進/後退能完整保留搜尋狀態（關鍵字+頁碼）
+- [ ] 確保從卡牌詳情頁返回時能恢復正確的搜尋頁碼
+
+## 🐛 Facebook OG 分享修復（2026-03-27）
+- [x] OG 圖片藍色背景改為 LOGO 正確藍色 #06038D
+- [x] OG 描述從「寶可夢卡牌市場數據平台」改為通用 TCG 描述
+- [x] OG 圖片上傳至 CDN 並更新 index.html 中的 og:image URL
+- [x] Twitter card 改為 summary_large_image 以顯示大圖預覽
+
+## 🧹 CDN 舊版資源清理（2026-03-27）
+- [ ] 檢查專案中所有引用的 CDN URL，找出不再使用的舊版資源
+- [ ] 移除 client/public 中不再需要的本地 og-image.png（已上傳 CDN）
+- [ ] 確認所有 CDN 引用都指向最新版本
