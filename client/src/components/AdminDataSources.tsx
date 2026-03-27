@@ -836,14 +836,15 @@ export function AdminDataSources() {
                   return displayData.map((source: any) => (
                   <div
                     key={source.id}
-                    className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-4 bg-background rounded-lg border border-border"
+                    className="flex flex-col gap-0 p-4 bg-background rounded-lg border border-border"
                   >
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {/* 頂部行：Checkbox + 主要資訊 + 卡牌圖片 */}
+                    <div className="flex items-start gap-3">
                       <Checkbox
                         id={`select-${source.id}`}
                         checked={selectedIds.includes(source.id)}
                         onCheckedChange={() => toggleSelect(source.id)}
-                        className="mt-1"
+                        className="mt-1 flex-shrink-0"
                       />
                       <div className="flex-1 space-y-2 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -927,26 +928,28 @@ export function AdminDataSources() {
                         </p>
                         )}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 sm:flex-shrink-0 self-start sm:self-auto">
+                      {/* 卡牌圖片：手機版顯示在右側，不被截斷 */}
                       {source.card?.imageUrl && (
                         <img
                           src={source.card.imageUrl}
                           alt={source.card.name || "Card"}
-                          className="w-14 h-20 sm:w-20 sm:h-28 object-cover rounded-md border border-border"
+                          className="w-12 h-16 sm:w-16 sm:h-24 object-cover rounded-md border border-border flex-shrink-0 self-start"
                         />
                       )}
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRefresh(source.id)}
-                          disabled={refreshDataSourceMutation.isPending}
-                          title="更新 SNKRDUNK 價格"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                        </Button>
-                      </div>
+                    </div>
+                    {/* 底部行動列：重新爬取按鈕（完整寬度，易於點擊） */}
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/40">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRefresh(source.id)}
+                        disabled={refreshDataSourceMutation.isPending}
+                        className="flex-1 sm:flex-none h-8 text-xs"
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1.5" />
+                        重新爬取
+                      </Button>
+                      <span className="text-xs text-muted-foreground ml-auto">ID: {source.id}</span>
                     </div>
                   </div>
                   ));
