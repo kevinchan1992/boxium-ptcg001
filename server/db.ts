@@ -3291,6 +3291,7 @@ export async function getBuyerOrders(buyerId: number) {
     shippingMethod: marketplaceOrders.shippingMethod,
     trackingNumber: marketplaceOrders.trackingNumber,
     shippedAt: marketplaceOrders.shippedAt,
+    paidAt: marketplaceOrders.paidAt,
     autoCompleteAt: marketplaceOrders.autoCompleteAt,
     payoutStatus: marketplaceOrders.payoutStatus,
     stripePaymentIntentId: marketplaceOrders.stripePaymentIntentId,

@@ -1089,7 +1089,7 @@ export default function OrderDetail() {
             size="lg"
             timestamps={{
               createdAt: order.createdAt,
-              paidAt: (order as any).paidAt ?? (order.orderStatus !== "pending_payment" ? order.updatedAt : null),
+              paidAt: order.paidAt ?? (order.orderStatus !== "pending_payment" ? order.updatedAt : null),
               shippedAt: order.shippedAt,
               deliveredAt: (order as any).deliveredAt,
               completedAt: order.buyerConfirmedAt,

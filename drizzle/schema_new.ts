@@ -808,6 +808,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   alipayProofStatus: mysqlEnum("alipayProofStatus", ["pending_review", "approved", "rejected"]), // Proof review status visible to buyer
   aiVerificationResult: text("aiVerificationResult"), // JSON: { verified, detectedAmount, confidence, reason }
   paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "failed", "refunded", "cancelled"]).default("pending").notNull(),
+  paidAt: timestamp("paidAt"), // When payment was confirmed
   // Order status
   orderStatus: mysqlEnum("orderStatus", [
     "pending_payment",

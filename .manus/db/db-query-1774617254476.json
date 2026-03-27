@@ -1,0 +1,210 @@
+{
+  "query": "SHOW COLUMNS FROM marketplaceOrders LIKE '%At%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SHOW COLUMNS FROM marketplaceOrders LIKE '%At%';",
+  "rows": [
+    {
+      "Field": "platformFeeRate",
+      "Type": "decimal(5,4)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "platformFeeHkd",
+      "Type": "decimal(10,2)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "alipayProofSubmittedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "alipayReviewReminderSentAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "aiVerificationResult",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "paymentStatus",
+      "Type": "enum('pending','paid','failed','refunded','cancelled')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "pending",
+      "Extra": ""
+    },
+    {
+      "Field": "orderStatus",
+      "Type": "enum('pending_payment','paid_held','payment_received','processing','shipped','delivered','completed','cancelled','disputed','refunded')",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "pending_payment",
+      "Extra": ""
+    },
+    {
+      "Field": "shippedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "autoCompleteAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "buyerConfirmedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "disputeOpenedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "disputeResolvedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "payoutStatus",
+      "Type": "enum('not_applicable','pending','processing','completed','paid','failed','hold')",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "pending",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "shippingReminderSentAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "paymentReminderSentAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "manualPayoutAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "disputeDeadlineAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "confirmReceiptReminderSentAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "batchRef",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "alipayProofStatus",
+      "Type": "enum('pending_review','approved','rejected')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "alipayRefundStatus",
+      "Type": "enum('not_applicable','pending','processing','completed')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "not_applicable",
+      "Extra": ""
+    },
+    {
+      "Field": "alipayRefundRequestedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "alipayRefundCompletedAt",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nplatformFeeRate\tdecimal(5,4)\tNO\t\tNULL\t\nplatformFeeHkd\tdecimal(10,2)\tNO\t\tNULL\t\nalipayProofSubmittedAt\ttimestamp\tYES\t\tNULL\t\nalipayReviewReminderSentAt\ttimestamp\tYES\t\tNULL\t\naiVerificationResult\ttext\tYES\t\tNULL\t\npaymentStatus\tenum('pending','paid','failed','refunded','cancelled')\tNO\t\tpending\t\norderStatus\tenum('pending_payment','paid_held','payment_received','processing','shipped','delivered','completed','cancelled','disputed','refunded')\tNO\tMUL\tpending_payment\t\nshippedAt\ttimestamp\tYES\t\tNULL\t\nautoCompleteAt\ttimestamp\tYES\t\tNULL\t\nbuyerConfirmedAt\ttimestamp\tYES\t\tNULL\t\ndisputeOpenedAt\ttimestamp\tYES\t\tNULL\t\ndisputeResolvedAt\ttimestamp\tYES\t\tNULL\t\npayoutStatus\tenum('not_applicable','pending','processing','completed','paid','failed','hold')\tNO\tMUL\tpending\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\nshippingReminderSentAt\ttimestamp\tYES\t\tNULL\t\npaymentReminderSentAt\ttimestamp\tYES\t\tNULL\t\nmanualPayoutAt\ttimestamp\tYES\t\tNULL\t\ndisputeDeadlineAt\ttimestamp\tYES\t\tNULL\t\nconfirmReceiptReminderSentAt\ttimestamp\tYES\t\tNULL\t\nbatchRef\tvarchar(100)\tYES\tMUL\tNULL\t\nalipayProofStatus\tenum('pending_review','approved','rejected')\tYES\t\tNULL\t\nalipayRefundStatus\tenum('not_applicable','pending','processing','completed')\tYES\t\tnot_applicable\t\nalipayRefundRequestedAt\ttimestamp\tYES\t\tNULL\t\nalipayRefundCompletedAt\ttimestamp\tYES\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 1692
+}

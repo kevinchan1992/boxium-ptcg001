@@ -6601,3 +6601,30 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 分析 BOXIUM logo 位置不協調的原因（手機版 Header 右側有多餘的 logo，TopNav 已有品牌標識）
 - [x] 修復 logo 佈局（移除 Profile.tsx 和 SellerDashboard.tsx 手機版 Header 右側的 BOXIUM logo）
 - [x] 保存 checkpoint
+
+---
+
+## 🔧 訂單步驟器時間戳記 + 賣家格狀視圖優化
+
+- [ ] 分析 OrderStatusStepper 組件結構，了解步驟資料來源
+- [ ] 確認訂單資料中是否有各步驟的時間戳記欄位
+- [ ] 在步驟器中加入每個步驟的時間戳記顯示
+- [ ] 賣家格狀視圖圖片改為 aspect-ratio: 1/1 正方形
+- [ ] 保存 checkpoint
+
+---
+
+## ✅ 訂單步驟器時間戳記 + 賣家格狀視圖優化
+
+- [x] 分析 OrderStatusStepper 組件結構，了解步驟資料來源
+- [x] 確認訂單資料中是否有各步驟的時間戳記欄位（加入 paidAt 欄位）
+- [x] 在資料庫 marketplaceOrders 表加入 paidAt 欄位
+- [x] 在 schema_new.ts 同步 paidAt 欄位定義
+- [x] 在 getBuyerOrders 查詢中加入 paidAt 欄位
+- [x] 在 Stripe webhook（批量+單筆）付款確認時設置 paidAt
+- [x] 在 Alipay 付款確認（單筆+批量）時設置 paidAt
+- [x] 在 Orders.tsx 的 OrderStatusStepper 傳入 timestamps prop（含 paidAt/shippedAt/buyerConfirmedAt）
+- [x] 更新 OrderDetail.tsx 使用正確的 paidAt 欄位（移除 as any 型別轉換）
+- [x] 賣家格狀視圖圖片已為 aspect-square 正方形，優化卡片資訊區塊（加入 TCG logo、庫存標籤）
+- [x] TypeScript 編譯 0 個錯誤
+- [x] 保存 checkpoint

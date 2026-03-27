@@ -138,6 +138,7 @@ async function startServer() {
               if (batchOrder.orderStatus === "pending_payment") {
                 await updateMarketplaceOrder(batchOrder.id, {
                   paymentStatus: "paid",
+                  paidAt: new Date(),
                   orderStatus: "payment_received",
                   stripePaymentIntentId: paymentIntentId ?? batchOrder.stripePaymentIntentId,
                 });
@@ -251,6 +252,7 @@ async function startServer() {
           }
           await updateMarketplaceOrder(order.id, {
             paymentStatus: "paid",
+            paidAt: new Date(),
             orderStatus: "payment_received",
             stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : order.stripePaymentIntentId,
           });

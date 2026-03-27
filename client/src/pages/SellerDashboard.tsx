@@ -1371,12 +1371,26 @@ export default function SellerDashboard() {
                                 )}
                               </div>
                               {/* Info */}
-                              <div className="px-2 py-2">
-                                <p className="font-semibold text-xs leading-snug text-gray-900 line-clamp-2 mb-1">{listing.title}</p>
-                                <p className="text-sm font-bold" style={{ color: '#06038D' }}>
-                                  HKD {parseFloat(listing.priceHkd as string).toFixed(2)}
-                                </p>
-                                <p className="text-[10px] text-gray-400 mt-0.5">庫存 {listing.quantity}</p>
+                              <div className="px-2.5 pt-2 pb-1">
+                                {/* TCG logo */}
+                                {(() => {
+                                  const tcgLogos: Record<string, { logo: string; label: string }> = {
+                                    pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
+                                    onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
+                                    yugioh:   { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  label: "Yu-Gi-Oh!" },
+                                  };
+                                  const series = tcgLogos[listing.tcgSeries as string];
+                                  return series ? (
+                                    <img src={series.logo} alt={series.label} title={series.label} className="h-4 w-auto object-contain opacity-60 mb-1" />
+                                  ) : null;
+                                })()}
+                                <p className="font-semibold text-xs leading-snug text-gray-900 line-clamp-2 mb-1.5">{listing.title}</p>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm font-bold" style={{ color: '#06038D' }}>
+                                    HKD {parseFloat(listing.priceHkd as string).toFixed(2)}
+                                  </p>
+                                  <span className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded-full border border-gray-100">×{listing.quantity}</span>
+                                </div>
                               </div>
                             </>
                           ) : (

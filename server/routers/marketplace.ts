@@ -1563,6 +1563,7 @@ export const marketplaceRouter = router({
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       await updateMarketplaceOrder(input.orderId, {
         paymentStatus: "paid",
+        paidAt: new Date(),
         orderStatus: "payment_received",
         alipayProofStatus: "approved",
       });
@@ -1622,6 +1623,7 @@ export const marketplaceRouter = router({
           if (!order) { results.push({ orderId, success: false, error: "訂單不存在" }); continue; }
           await updateMarketplaceOrder(orderId, {
             paymentStatus: "paid",
+            paidAt: new Date(),
             orderStatus: "payment_received",
           });
           // Mark listing as sold

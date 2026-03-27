@@ -421,6 +421,14 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
               orderStatus={order.orderStatus}
               shippingMethod={order.shippingMethod}
               role="buyer"
+              timestamps={{
+                createdAt: order.createdAt,
+                paidAt: order.paidAt ?? null,
+                shippedAt: order.shippedAt,
+                deliveredAt: order.autoCompleteAt ?? null,
+                completedAt: order.buyerConfirmedAt ?? null,
+                meetupCompletedAt: order.buyerConfirmedAt ?? null,
+              }}
             />
           </div>
         )}
