@@ -6398,3 +6398,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
   - startTrendingCardsScheduler() 已在 server/_core/index.ts:1042 啟動
   - cron: '0 6 * * *' timezone: 'Asia/Hong_Kong'（每日 06:00 HKT）
   - 呼叫 calculateAndCacheTrendingCards()（已支援 per-game Top 5）
+
+## 🎨 Admin 頁面重新設計（2026-03-27）
+
+- [x] 重新設計 Admin 頁面：左側功能選擇列 + 右側功能區域的專業佈局
+- [x] 確保深色模式下所有文字清晰可讀
+- [x] 遷移所有現有功能模組到新佈局
+- [x] 驗證所有功能正常運作

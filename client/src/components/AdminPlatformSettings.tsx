@@ -181,7 +181,7 @@ export default function AdminPlatformSettings() {
       <Card className="bg-gray-900 border-gray-700 opacity-60">
         <CardHeader>
           <CardTitle className="text-gray-500 text-base">更多設定（即將推出）</CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardDescription className="text-gray-500">
             最低出售金額、最高出價折扣上限、自動完成訂單天數等設定將在此管理。
           </CardDescription>
         </CardHeader>

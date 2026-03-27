@@ -232,7 +232,7 @@ export function AdminScraperPerformance() {
           <div className="space-y-2">
             {performance.recentLogs.length === 0 ? (
               <div className="text-center py-8">
-                <Activity className="h-8 w-8 text-gray-600 mx-auto mb-2" />
+                <Activity className="h-8 w-8 text-gray-500 mx-auto mb-2" />
                 <p className="text-sm text-gray-400">暫無爬取記錄</p>
               </div>
             ) : (

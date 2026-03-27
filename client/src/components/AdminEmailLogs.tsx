@@ -18,9 +18,9 @@ import {
 } from "recharts";
 
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  sent: { label: "已發送", color: "bg-green-100 text-green-800", icon: <CheckCircle className="w-3 h-3" /> },
-  failed: { label: "發送失敗", color: "bg-red-100 text-red-800", icon: <XCircle className="w-3 h-3" /> },
-  skipped: { label: "已跳過(退訂)", color: "bg-gray-100 text-gray-600", icon: <MinusCircle className="w-3 h-3" /> },
+  sent: { label: "已發送", color: "bg-green-900/40 text-green-400", icon: <CheckCircle className="w-3 h-3" /> },
+  failed: { label: "發送失敗", color: "bg-red-900/40 text-red-400", icon: <XCircle className="w-3 h-3" /> },
+  skipped: { label: "已跳過(退訂)", color: "bg-gray-800 text-gray-300", icon: <MinusCircle className="w-3 h-3" /> },
 };
 
 const EMAIL_TYPES = [
@@ -39,12 +39,12 @@ const EMAIL_TYPES = [
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs">
-      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+    <div className="bg-[#1a1a2e] border border-white/10 rounded-lg shadow-lg p-3 text-xs">
+      <p className="font-semibold text-gray-200 mb-1">{label}</p>
       {payload.map((entry: any) => (
         <div key={entry.dataKey} className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full inline-block" style={{ background: entry.color }} />
-          <span className="text-gray-600">{entry.name}：</span>
+          <span className="text-gray-400">{entry.name}：</span>
           <span className="font-bold" style={{ color: entry.color }}>{entry.value}</span>
         </div>
       ))}
@@ -95,34 +95,34 @@ export default function AdminEmailLogs() {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-blue-950/40 border-blue-800/40">
             <CardContent className="p-3 text-center">
-              <div className="text-2xl font-bold text-blue-700">{stats.total}</div>
-              <div className="text-xs text-blue-600">總計</div>
+              <div className="text-2xl font-bold text-blue-400">{stats.total}</div>
+              <div className="text-xs text-blue-400/70">總計</div>
             </CardContent>
           </Card>
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-green-950/40 border-green-800/40">
             <CardContent className="p-3 text-center">
-              <div className="text-2xl font-bold text-green-700">{stats.sent}</div>
-              <div className="text-xs text-green-600">已發送</div>
+              <div className="text-2xl font-bold text-green-400">{stats.sent}</div>
+              <div className="text-xs text-green-400/70">已發送</div>
             </CardContent>
           </Card>
-          <Card className="bg-red-50 border-red-200">
+          <Card className="bg-red-950/40 border-red-800/40">
             <CardContent className="p-3 text-center">
-              <div className="text-2xl font-bold text-red-700">{stats.failed}</div>
-              <div className="text-xs text-red-600">發送失敗</div>
+              <div className="text-2xl font-bold text-red-400">{stats.failed}</div>
+              <div className="text-xs text-red-400/70">發送失敗</div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-50 border-gray-200">
+          <Card className="bg-gray-800/40 border-gray-700/40">
             <CardContent className="p-3 text-center">
-              <div className="text-2xl font-bold text-gray-700">{stats.skipped}</div>
-              <div className="text-xs text-gray-600">退訂跳過</div>
+              <div className="text-2xl font-bold text-gray-300">{stats.skipped}</div>
+              <div className="text-xs text-gray-400">退訂跳過</div>
             </CardContent>
           </Card>
-          <Card className="bg-purple-50 border-purple-200">
+          <Card className="bg-purple-950/40 border-purple-800/40">
             <CardContent className="p-3 text-center">
-              <div className="text-2xl font-bold text-purple-700">{stats.last24h}</div>
-              <div className="text-xs text-purple-600">過去 24 小時</div>
+              <div className="text-2xl font-bold text-purple-400">{stats.last24h}</div>
+              <div className="text-xs text-purple-400/70">過去 24 小時</div>
             </CardContent>
           </Card>
         </div>
@@ -153,7 +153,7 @@ export default function AdminEmailLogs() {
                 data={chartData.days}
                 margin={{ top: 5, right: 16, left: -20, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 11, fill: "#6b7280" }}
@@ -277,14 +277,14 @@ export default function AdminEmailLogs() {
           {/* Table */}
           <div className="overflow-x-auto rounded-md border">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-white/[0.03] border-b border-white/[0.06]">
                 <tr>
-                  <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium">時間</th>
-                  <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium">收件人</th>
-                  <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium">主旨</th>
-                  <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium">類型</th>
-                  <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium hidden xl:table-cell">DedupeKey</th>
-                  <th className="text-left px-3 py-2 text-xs text-gray-500 font-medium">狀態</th>
+                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium">時間</th>
+                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium">收件人</th>
+                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium">主旨</th>
+                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium">類型</th>
+                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium hidden xl:table-cell">DedupeKey</th>
+                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium">狀態</th>
                 </tr>
               </thead>
               <tbody>
@@ -303,8 +303,8 @@ export default function AdminEmailLogs() {
                   data.logs.map((log) => {
                     const statusInfo = STATUS_LABELS[log.status] ?? STATUS_LABELS.sent;
                     return (
-                      <tr key={log.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
-                        <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">
+                      <tr key={log.id} className="border-b last:border-0 hover:bg-white/[0.03] transition-colors">
+                        <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">
                           {new Date(log.sentAt).toLocaleString("zh-HK", {
                             timeZone: "Asia/Hong_Kong",
                             year: "2-digit",
@@ -330,7 +330,7 @@ export default function AdminEmailLogs() {
                           )}
                         </td>
                         <td className="px-3 py-2">
-                          <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">
+                          <span className="text-xs bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded">
                             {log.emailType}
                           </span>
                         </td>
@@ -359,7 +359,7 @@ export default function AdminEmailLogs() {
 
           {/* Pagination */}
           {data && data.total > PAGE_SIZE && (
-            <div className="flex items-center justify-between text-sm text-gray-500">
+            <div className="flex items-center justify-between text-sm text-gray-400">
               <span>共 {data.total} 筆，第 {page}/{totalPages} 頁</span>
               <div className="flex gap-1">
                 <Button
