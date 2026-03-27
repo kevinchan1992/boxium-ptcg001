@@ -6410,3 +6410,16 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 
 - [x] localStorage 導航記憶：記住管理員上次選擇的功能模組
 - [x] 響應式優化：手機/平板側邊欄自動收合 + 漢堡選單
+
+### 📱 Admin 子組件響應式優化（2026-03-27）
+- [x] AdminDashboard：統計卡片改為響應式 grid（手機 2 欄、桌面 5 欄），字體大小適配手機
+- [x] AdminDataSources：卡片圖片在手機版縮小（w-14 h-20）
+- [x] AdminTrendingCards：標題區域改為垂直堆疊佈局（手機友善）
+- [x] AdminBlogManagement：輸入方式 grid-cols-3 和圖片預覽 grid-cols-4 改為響應式
+- [x] AdminSFStationUpdate：標題區域和解析結果數字改為響應式
+- [x] AdminUserManagement：表格已有 overflow-x-auto，無需變更
+- [x] AdminCacheManagement：表格已有 overflow-x-auto，無需變更
+- [x] AdminScheduleManagement：表格已有 overflow-x-auto，無需變更
+- [x] AdminScraperPerformance：表格已有 overflow-x-auto，無需變更
+- [x] AdminTaskHistory：表格已有 overflow-x-auto，無需變更
+- [x] AdminEmailLogs：表格已有 overflow-x-auto，無需變更

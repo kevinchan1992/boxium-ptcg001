@@ -20,7 +20,7 @@ export function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(5)].map((_, i) => (
           <Card key={i} className="p-6 animate-pulse">
             <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
@@ -88,19 +88,19 @@ export function AdminDashboard() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card 
+              <Card 
               key={index} 
-              className="p-6 hover:shadow-lg transition-all hover:scale-105 border-l-4" 
+              className="p-3 sm:p-6 hover:shadow-lg transition-all hover:scale-105 border-l-4" 
               style={{ borderLeftColor: stat.color }}
             >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-400 mb-0.5 sm:mb-1">{stat.title}</p>
-                  <p className="text-xl sm:text-2xl font-bold text-white">{stat.value.toLocaleString()}</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{stat.value.toLocaleString()}</p>
                 </div>
                 <div className={`p-2 sm:p-3 rounded-full ${stat.bgColor}`}>
                   <Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: stat.color }} />
@@ -130,7 +130,7 @@ function SearchStatsPanel() {
     return (
       <div className="space-y-4">
         <div className="h-6 bg-muted rounded w-1/4 animate-pulse"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="p-6 animate-pulse">
               <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
@@ -180,11 +180,11 @@ function SearchStatsPanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">搜尋統計</h2>
-        <p className="text-gray-400">數據源搜尋效果與效能分析</p>
+        <h2 className="text-lg sm:text-xl font-bold text-white mb-1">搜尋統計</h2>
+        <p className="text-xs sm:text-sm text-gray-400">數據源搜尋效果與效能分析</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {searchStatCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -200,7 +200,7 @@ function SearchStatsPanel() {
               </div>
               <div>
                 <p className="text-sm text-gray-400 mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-white mb-2">{stat.value}</p>
+                <p className="text-xl sm:text-3xl font-bold text-white mb-2">{stat.value}</p>
                 <p className="text-xs text-gray-400">{stat.description}</p>
               </div>
             </Card>

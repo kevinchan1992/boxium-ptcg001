@@ -822,7 +822,7 @@ function AIArticleGenerator({
         {/* Input Method */}
         <div>
           <Label className="text-white mb-2 block text-sm">輸入方式</Label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {[
               { key: 'url' as const, icon: FileText, label: '網址' },
               { key: 'image' as const, icon: ImageIcon, label: '圖片' },
@@ -905,7 +905,7 @@ function AIArticleGenerator({
             {uploadedImageUrls.length > 0 && (
               <div>
                 <Label className="text-white mb-2 block text-sm">已上傳 ({uploadedImageUrls.length})</Label>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                   {uploadedImageUrls.map((url, i) => (
                     <div key={i} className="relative group">
                       <img src={url} alt="" className="w-full h-24 object-cover rounded-lg border border-zinc-700" />

@@ -163,7 +163,7 @@ export function AdminSFStationUpdate() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h3 className="text-white font-bold text-lg flex items-center gap-2">
             <MapPin className="w-5 h-5 text-[#FEDD00]" />
@@ -171,7 +171,7 @@ export function AdminSFStationUpdate() {
           </h3>
           <p className="text-gray-400 text-sm mt-1">上傳 CSV 文件更新順豐站和智能櫃列表</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-400" onClick={() => downloadTemplate("stations")}>
             <Download className="w-4 h-4 mr-1.5" />順豐站模板
           </Button>
@@ -182,7 +182,7 @@ export function AdminSFStationUpdate() {
       </div>
 
       {/* Current Stats */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-[#1a1a2e] rounded-xl p-4 border border-gray-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -247,18 +247,18 @@ export function AdminSFStationUpdate() {
       {parseResult && (
         <div className="space-y-4">
           {/* Summary */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <div className="bg-[#1a1a2e] rounded-xl p-3 border border-gray-700 text-center">
               <p className="text-gray-400 text-xs">總站點數</p>
-              <p className="text-white font-bold text-2xl">{parseResult.stations.length}</p>
+              <p className="text-white font-bold text-xl sm:text-2xl">{parseResult.stations.length}</p>
             </div>
             <div className="bg-[#1a1a2e] rounded-xl p-3 border border-blue-700/50 text-center">
               <p className="text-blue-400 text-xs">順豐站</p>
-              <p className="text-white font-bold text-2xl">{stationCount}</p>
+              <p className="text-white font-bold text-xl sm:text-2xl">{stationCount}</p>
             </div>
             <div className="bg-[#1a1a2e] rounded-xl p-3 border border-amber-700/50 text-center">
               <p className="text-amber-400 text-xs">智能櫃</p>
-              <p className="text-white font-bold text-2xl">{lockerCount}</p>
+              <p className="text-white font-bold text-xl sm:text-2xl">{lockerCount}</p>
             </div>
           </div>
 

@@ -836,7 +836,7 @@ export function AdminDataSources() {
                   return displayData.map((source: any) => (
                   <div
                     key={source.id}
-                    className="flex items-start justify-between gap-4 p-4 bg-background rounded-lg border border-border"
+                    className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-4 bg-background rounded-lg border border-border"
                   >
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <Checkbox
@@ -928,12 +928,12 @@ export function AdminDataSources() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center gap-3 sm:flex-shrink-0 self-start sm:self-auto">
                       {source.card?.imageUrl && (
                         <img
                           src={source.card.imageUrl}
                           alt={source.card.name || "Card"}
-                          className="w-20 h-28 object-cover rounded-md border border-border"
+                          className="w-14 h-20 sm:w-20 sm:h-28 object-cover rounded-md border border-border"
                         />
                       )}
                       <div className="flex flex-col gap-2">
