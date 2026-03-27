@@ -844,7 +844,7 @@ export function AdminDataSources() {
                         id={`select-${source.id}`}
                         checked={selectedIds.includes(source.id)}
                         onCheckedChange={() => toggleSelect(source.id)}
-                        className="mt-1 flex-shrink-0"
+                        className="mt-1 flex-shrink-0 w-4 h-4"
                       />
                       <div className="flex-1 space-y-2 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">

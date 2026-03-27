@@ -6428,3 +6428,11 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] AdminScraperPerformance：表格已有 overflow-x-auto，無需變更
 - [x] AdminTaskHistory：表格已有 overflow-x-auto，無需變更
 - [x] AdminEmailLogs：表格已有 overflow-x-auto，無需變更
+
+## 截圖審核延伸功能 Phase 2（2026-03-27）
+- [x] AdminDataSources：卡片 Checkbox 縮小（w-3.5 h-3.5）
+- [x] 後端：截圖 SLA 24h 提醒 Email 已存在（startAlipayReviewReminderScheduler，每小時揃描）
+- [x] 前端：OrderTimeline 加入截圖審核狀態子時間軸（提交→審核中→已核准/已拒絕）
+- [x] 後端：adminBatchConfirmAlipayPayment procedure 已存在（最多 50 筆）
+- [x] 前端：AdminMarketplace 批量工具列加入「批量核准截圖」按鈕（僅在 pending_review 篩選模式顯示）
+- [x] 10 項 Vitest 測試全部通過（batch-approve-proof.test.ts）

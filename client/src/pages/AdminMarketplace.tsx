@@ -1547,6 +1547,17 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
     },
     onError: (e) => toast.error(e.message),
   });
+  // Batch approve alipay proof dialog state
+  const [showBatchApproveProofDialog, setShowBatchApproveProofDialog] = useState(false);
+  const batchApproveProofMutation = trpc.marketplace.adminBatchConfirmAlipayPayment.useMutation({
+    onSuccess: (data) => {
+      toast.success(`批量截圖核准完成：${data.successCount} 筆成功${data.failCount > 0 ? `，${data.failCount} 筆失敗` : ''}`);
+      refetch();
+      setSelectedOrderIds(new Set());
+      setShowBatchApproveProofDialog(false);
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const handleExportCSV = () => {
     const rows = orders.map((o: any) => ({
@@ -1683,6 +1694,12 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
               onClick={() => setShowBatchNoteDialog(true)}>
               <FileText className="w-3.5 h-3.5 mr-1" />批量新增備注
             </Button>
+            {proofStatusFilter === 'pending_review' && (
+              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => setShowBatchApproveProofDialog(true)}>
+                <CheckCircle className="w-3.5 h-3.5 mr-1" />批量核准截圖
+              </Button>
+            )}
             <button className="text-xs text-[#06038d]/70 hover:text-[#06038d] underline"
               onClick={() => setSelectedOrderIds(new Set())}>
               取消全選
@@ -2508,6 +2525,38 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
         </DialogContent>
       </Dialog>
 
+      {/* Batch approve alipay proof dialog */}
+      <Dialog open={showBatchApproveProofDialog} onOpenChange={setShowBatchApproveProofDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              批量核准支付寶截圖
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
+              <p>將對已選 <strong>{selectedOrderIds.size}</strong> 筆訂單的支付寶 HK 截圖進行核准，訂單狀態將變更為「已收款」並通知買家。</p>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+              <p className="font-medium">ℹ️ 請先登入支付寶 HK 商戶後台核對收款，確認收到以下訂單的付款後再進行批量核准。</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBatchApproveProofDialog(false)}>取消</Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={batchApproveProofMutation.isPending}
+              onClick={() => batchApproveProofMutation.mutate({
+                orderIds: Array.from(selectedOrderIds),
+              })}
+            >
+              {batchApproveProofMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <CheckCircle className="w-3.5 h-3.5 mr-1.5" />}
+              確認核准 {selectedOrderIds.size} 筆截圖
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Listing detail dialog triggered from order detail */}
       {viewListingId && (
         <ListingDetailDialog

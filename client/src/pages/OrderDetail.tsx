@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, Package, CheckCircle, Truck, Clock, XCircle, AlertCircle,
   CreditCard, MapPin, Phone, User, Flag, Star, MessageSquare, Loader2,
-  Copy, ExternalLink, ShieldCheck, CircleDot, Smartphone
+  Copy, ExternalLink, ShieldCheck, CircleDot, Smartphone, FileImage, CheckSquare, XSquare, Hourglass
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
@@ -599,6 +599,52 @@ function OrderTimeline({ order }: { order: any }) {
                 <p className="text-xs text-gray-500 mt-1">
                   系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成
                 </p>
+              )}
+              {/* Alipay proof sub-timeline: 截圖已提交 → 審核中 → 已核准/已拒絕 */}
+              {step.key === "pending_payment" && order.paymentMethod === "alipay_hk" && order.alipayProofSubmittedAt && (
+                <div className="mt-2 ml-1 border-l-2 border-dashed border-gray-200 pl-3 space-y-2">
+                  {/* 截圖已提交 */}
+                  <div className="flex items-start gap-2">
+                    <FileImage className="w-3.5 h-3.5 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-medium text-gray-700">截圖已提交</p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(order.alipayProofSubmittedAt).toLocaleDateString("zh-HK", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  </div>
+                  {/* 審核狀態 */}
+                  {order.alipayProofStatus === "pending_review" && (
+                    <div className="flex items-start gap-2">
+                      <Hourglass className="w-3.5 h-3.5 text-yellow-500 mt-0.5 flex-shrink-0 animate-pulse" />
+                      <div>
+                        <p className="text-xs font-medium text-yellow-700">截圖審核中</p>
+                        <p className="text-xs text-gray-400">管理員將盡快核對，通常在 24 小時內完成</p>
+                      </div>
+                    </div>
+                  )}
+                  {order.alipayProofStatus === "approved" && (
+                    <div className="flex items-start gap-2">
+                      <CheckSquare className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-green-700">截圖已核准</p>
+                        <p className="text-xs text-gray-400">付款已確認，賣家將開始處理訂單</p>
+                      </div>
+                    </div>
+                  )}
+                  {order.alipayProofStatus === "rejected" && (
+                    <div className="flex items-start gap-2">
+                      <XSquare className="w-3.5 h-3.5 text-red-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-red-700">截圖已拒絕</p>
+                        {order.alipayProofRejectionReason && (
+                          <p className="text-xs text-red-500">{order.alipayProofRejectionReason}</p>
+                        )}
+                        <p className="text-xs text-gray-400">請重新上傳正確的付款截圖</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
