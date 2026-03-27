@@ -3701,6 +3701,25 @@ export async function getMarketplaceStats() {
       eq(marketplaceOrders.orderStatus, 'cancelled'),
       sql`createdAt >= ${firstDayOfMonth}`
     ));
+  // Alipay proof review stats
+  const [pendingProofCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
+    .where(and(
+      eq(marketplaceOrders.alipayProofStatus, 'pending_review'),
+      sql`${marketplaceOrders.alipayProofSubmittedAt} IS NOT NULL`
+    ));
+  const todayStartMs = new Date(); todayStartMs.setHours(0, 0, 0, 0);
+  const [todayRejectedProofCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
+    .where(and(
+      eq(marketplaceOrders.alipayProofStatus, 'rejected'),
+      sql`${marketplaceOrders.alipayProofSubmittedAt} >= ${todayStartMs.getTime()}`
+    ));
+  const fortyEightHoursAgoMs = Date.now() - 48 * 60 * 60 * 1000;
+  const [overdueProofCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders)
+    .where(and(
+      eq(marketplaceOrders.alipayProofStatus, 'pending_review'),
+      sql`${marketplaceOrders.alipayProofSubmittedAt} IS NOT NULL`,
+      sql`${marketplaceOrders.alipayProofSubmittedAt} < ${fortyEightHoursAgoMs}`
+    ));
   return {
     activeListings: Number(listingCount?.count ?? 0),
     totalOrders: Number(orderCount?.count ?? 0),
@@ -3718,6 +3737,9 @@ export async function getMarketplaceStats() {
     stripePaidCount: Number(stripeCount?.count ?? 0),
     alipayPaidCount: Number(alipayCount?.count ?? 0),
     thisMonthCancelledOrders: Number(thisMonthCancelledOrders?.count ?? 0),
+    pendingProofCount: Number(pendingProofCount?.count ?? 0),
+    todayRejectedProofCount: Number(todayRejectedProofCount?.count ?? 0),
+    overdueProofCount: Number(overdueProofCount?.count ?? 0),
   };
 }
 

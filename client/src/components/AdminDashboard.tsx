@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { formatHKLocale } from "@/lib/formatDate";
-import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2, RefreshCw } from "lucide-react";
+import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2, RefreshCw, Camera, AlertTriangle, XCircle, ShieldCheck } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -113,6 +113,12 @@ export function AdminDashboard() {
 
 
 
+      {/* 截圖審核統計面板 */}
+      <ProofReviewStatsPanel
+        pendingProofCount={stats?.pendingProofCount ?? 0}
+        todayRejectedProofCount={stats?.todayRejectedProofCount ?? 0}
+        overdueProofCount={stats?.overdueProofCount ?? 0}
+      />
       {/* 搜尋統計面板 */}
       <SearchStatsPanel />
 
@@ -121,6 +127,110 @@ export function AdminDashboard() {
 }
 
 
+
+// 截圖審核統計面板組件
+function ProofReviewStatsPanel({
+  pendingProofCount,
+  todayRejectedProofCount,
+  overdueProofCount,
+}: {
+  pendingProofCount: number;
+  todayRejectedProofCount: number;
+  overdueProofCount: number;
+}) {
+  const [, setLocation] = useLocation();
+  const proofCards = [
+    {
+      title: "待審核截圖",
+      value: pendingProofCount,
+      icon: Camera,
+      color: pendingProofCount > 0 ? "#f59e0b" : "#10b981",
+      bgColor: pendingProofCount > 0 ? "bg-amber-50" : "bg-green-50",
+      description: "待管理員審核的支付寶截圖",
+      alert: pendingProofCount > 0,
+    },
+    {
+      title: "超時未審核",
+      value: overdueProofCount,
+      icon: AlertTriangle,
+      color: overdueProofCount > 0 ? "#ef4444" : "#10b981",
+      bgColor: overdueProofCount > 0 ? "bg-red-50" : "bg-green-50",
+      description: "提交超過 48 小時未審核",
+      alert: overdueProofCount > 0,
+    },
+    {
+      title: "今日已拒絕",
+      value: todayRejectedProofCount,
+      icon: XCircle,
+      color: todayRejectedProofCount > 0 ? "#f97316" : "#10b981",
+      bgColor: todayRejectedProofCount > 0 ? "bg-orange-50" : "bg-green-50",
+      description: "今日被拒絕的截圖（買家需重新提交）",
+      alert: todayRejectedProofCount > 0,
+    },
+  ];
+  const hasAlerts = pendingProofCount > 0 || overdueProofCount > 0;
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-1 flex items-center gap-2">
+            <Camera className="w-5 h-5 text-amber-400" />
+            支付寶截圖審核
+            {hasAlerts && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white animate-pulse">
+                需處理
+              </span>
+            )}
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-400">支付寶 HK 截圖審核狀態監控</p>
+        </div>
+        {hasAlerts && (
+          <button
+            onClick={() => setLocation('/admin?tab=marketplace&proofStatus=pending_review')}
+            className="text-xs text-amber-400 hover:text-amber-300 underline"
+          >
+            前往審核 →
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        {proofCards.map((card, index) => {
+          const Icon = card.icon;
+          return (
+            <Card
+              key={index}
+              className={`p-3 sm:p-4 hover:shadow-lg transition-all hover:scale-105 border-l-4 ${
+                card.alert ? 'ring-1 ring-amber-500/30' : ''
+              }`}
+              style={{ borderLeftColor: card.color }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-400 mb-0.5 truncate">{card.title}</p>
+                  <p className={`text-xl sm:text-2xl font-bold ${
+                    card.alert ? 'text-amber-400' : 'text-white'
+                  }`}>
+                    {card.value.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{card.description}</p>
+                </div>
+                <div className={`p-2 rounded-full ${card.bgColor} flex-shrink-0 ml-2`}>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: card.color }} />
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+      {!hasAlerts && (
+        <div className="flex items-center gap-2 text-sm text-green-400 bg-green-900/20 rounded-lg px-4 py-2">
+          <ShieldCheck className="w-4 h-4" />
+          <span>所有截圖已審核，無待處理項目</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // 搜尋統計面板組件
 function SearchStatsPanel() {

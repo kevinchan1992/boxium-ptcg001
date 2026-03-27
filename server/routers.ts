@@ -2021,6 +2021,8 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
           const totalDataSources = await db.getTotalDataSourceCount();
           const activeDataSources = await db.getActiveDataSourceCount();
           const totalPriceRecords = await db.getTotalPriceRecordCount();
+          // Alipay proof review stats
+          const marketStats = await db.getMarketplaceStats();
           
           return {
             totalUsers: 0, // 平台已公開，無用戶系統
@@ -2028,6 +2030,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
             totalDataSources,
             activeDataSources,
             totalPriceRecords,
+            pendingProofCount: marketStats.pendingProofCount,
+            todayRejectedProofCount: marketStats.todayRejectedProofCount,
+            overdueProofCount: marketStats.overdueProofCount,
           };
         } catch (error: any) {
           console.error("[Admin] Failed to get dashboard stats:", error);

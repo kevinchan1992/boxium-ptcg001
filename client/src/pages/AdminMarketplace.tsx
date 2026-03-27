@@ -2829,11 +2829,24 @@ function AlipayPendingTab() {
                       <Eye className="w-3 h-3" />查看付款截圖
                     </a>
                   )}
-                  {order.alipayProofStatus === "pending_review" && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                      ⏳ 截圖待審核
-                    </span>
-                  )}
+                  {order.alipayProofStatus === "pending_review" && (() => {
+                    const submittedMs = order.alipayProofSubmittedAt ? new Date(order.alipayProofSubmittedAt).getTime() : null;
+                    const isOverdue = submittedMs !== null && (Date.now() - submittedMs) > 48 * 60 * 60 * 1000;
+                    const isResubmitted = (order.alipayProofImageUrl ?? '').includes('resubmit-');
+                    return isOverdue ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                        ⚠️ 超時未審核
+                      </span>
+                    ) : isResubmitted ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                        🔄 已重新提交
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                        ⏳ 截圖待審核
+                      </span>
+                    );
+                  })()}
                   {order.alipayProofStatus === "approved" && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
                       ✅ 截圖已核准

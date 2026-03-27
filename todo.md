@@ -6436,3 +6436,11 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 後端：adminBatchConfirmAlipayPayment procedure 已存在（最多 50 筆）
 - [x] 前端：AdminMarketplace 批量工具列加入「批量核准截圖」按鈕（僅在 pending_review 篩選模式顯示）
 - [x] 10 項 Vitest 測試全部通過（batch-approve-proof.test.ts）
+
+## 截圖審核增強功能（2026-03-27）
+- [x] 後端：getMarketplaceStats 新增 pendingProofCount、todayRejectedProofCount、overdueProofCount
+- [x] 後端：getDashboardStats procedure 回傳截圖審核統計數據
+- [x] 前端：AdminDashboard 新增截圖審核統計面板（待審核、今日已拒絕、超時未審核）
+- [x] 前端：AdminMarketplace 訂單卡片顯示「🔄 已重新提交」標籤（URL 包含 resubmit-）
+- [x] 前端：AdminMarketplace 訂單卡片顯示「⚠️ 超時未審核」紅色標籤（pending_review 超過 48h）
+- [x] 13 項 Vitest 測試全部通過（proof-review-stats.test.ts）
