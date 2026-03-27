@@ -2,14 +2,18 @@
  * BrandTabs – Unified tab bar component for BOXIUM PTCG
  *
  * Responsive behaviour:
- *  - xs (<480px): icon only, tooltip via aria-label
- *  - sm+ (≥480px): icon + full label
+ *  - xs (<480px): icon + short mobileLabel stacked vertically (grid mode)
+ *  - sm+ (≥480px): icon + full label side by side
  *
  * Variants:
  *  - light: gray-50 bg, for white-background pages (Profile, AdminMarketplace)
  *  - dark:  white/5 bg, for dark-background pages (Admin)
  *
  * Active state: #06038d pill + #FEDD00 bottom accent bar
+ *
+ * Grid mode (grid={true}):
+ *  - Equal-width columns, mobile-first
+ *  - Set --tab-count CSS var via style on BrandTabsList for correct column count
  */
 
 import { ReactNode, createContext, useContext, useState } from "react";
@@ -62,22 +66,28 @@ interface BrandTabsListProps {
   className?: string;
   /** Allow tabs to wrap onto multiple lines (for many tabs like Admin) */
   wrap?: boolean;
+  /** Grid layout: equal-width columns (mobile-first, matches Profile tab style) */
+  grid?: boolean;
+  /** Number of tabs for grid column calculation */
+  tabCount?: number;
 }
-export function BrandTabsList({ children, className, wrap = false }: BrandTabsListProps) {
+export function BrandTabsList({ children, className, wrap = false, grid = false, tabCount = 4 }: BrandTabsListProps) {
   const { variant } = useContext(TabsContext);
   return (
     <div
       className={cn(
-        // Horizontal scroll on very small screens, wrap on larger when requested
-        "flex items-center gap-1 p-1 rounded-xl border",
-        wrap
-          ? "flex-wrap"
-          : "flex-nowrap overflow-x-auto",
+        "p-1 rounded-xl border",
+        grid
+          ? "grid"
+          : wrap
+          ? "flex flex-wrap items-center gap-1"
+          : "flex items-center gap-1 flex-nowrap overflow-x-auto",
         variant === "dark"
           ? "bg-white/5 border-white/10"
           : "bg-gray-100 border-gray-200",
         className
       )}
+      style={grid ? { gridTemplateColumns: `repeat(${tabCount}, minmax(0, 1fr))` } : undefined}
       role="tablist"
     >
       {children}
@@ -88,15 +98,17 @@ export function BrandTabsList({ children, className, wrap = false }: BrandTabsLi
 // ─── Tab Trigger ──────────────────────────────────────────────────────────────
 interface BrandTabsTriggerProps {
   value: string;
-  /** Label text shown beside the icon */
+  /** Full label text (shown on desktop) */
   children: ReactNode;
   className?: string;
-  /** Icon element rendered before the label */
+  /** Icon element rendered before/above the label */
   icon?: ReactNode;
-  /** Accessible label for icon-only display on very small screens */
+  /** Accessible label for screen readers */
   label?: string;
+  /** Short label shown below icon on mobile (grid mode) */
+  mobileLabel?: string;
 }
-export function BrandTabsTrigger({ value, children, className, icon, label }: BrandTabsTriggerProps) {
+export function BrandTabsTrigger({ value, children, className, icon, label, mobileLabel }: BrandTabsTriggerProps) {
   const { active, setActive, variant } = useContext(TabsContext);
   const isActive = active === value;
 
@@ -107,13 +119,12 @@ export function BrandTabsTrigger({ value, children, className, icon, label }: Br
       aria-label={label}
       onClick={() => setActive(value)}
       className={cn(
-        // Layout: icon + text always visible; on very small screens text hidden
-        "relative flex items-center justify-center gap-1.5",
-        // Padding: tighter on mobile, comfortable on desktop
-        "px-2.5 py-2 xs:px-3.5 xs:py-2.5 sm:px-4",
-        "text-sm font-medium rounded-lg",
+        // Mobile: column layout (icon on top, label below); Desktop: row layout
+        "relative flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5",
+        "py-2 px-1 sm:px-4",
+        "text-xs sm:text-sm font-medium rounded-lg",
         "transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
-        "whitespace-nowrap flex-shrink-0",
+        "whitespace-nowrap",
         isActive
           ? "text-white shadow-sm"
           : variant === "dark"
@@ -126,13 +137,20 @@ export function BrandTabsTrigger({ value, children, className, icon, label }: Br
       {/* Icon: always visible */}
       {icon && <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">{icon}</span>}
 
-      {/* Label: always visible, children control responsive text via sm:hidden/hidden sm:inline */}
-      <span className="leading-none flex items-center gap-1">{children}</span>
+      {/* Mobile: short label below icon; Desktop: full label beside icon */}
+      {mobileLabel ? (
+        <>
+          <span className="sm:hidden text-[10px] leading-none">{mobileLabel}</span>
+          <span className="hidden sm:flex leading-none items-center gap-1">{children}</span>
+        </>
+      ) : (
+        <span className="leading-none flex items-center gap-1">{children}</span>
+      )}
 
       {/* Yellow accent bar at bottom of active tab */}
       {isActive && (
         <span
-          className="absolute bottom-0.5 left-3 right-3 h-0.5 rounded-full"
+          className="absolute bottom-0.5 left-2 right-2 h-0.5 rounded-full"
           style={{ background: BRAND_YELLOW }}
         />
       )}

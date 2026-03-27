@@ -6552,3 +6552,9 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] SellerDashboard 主容器手機版間距優化（px-3, mt-3, pb-20）
 - [x] 商品卡片操作按鈕改為 flex-1 均分佈局，圖示按鈕改為 w-8 h-8 正方形
 - [ ] 儲存 Checkpoint
+
+## 📱 手機版 UI 三項優化（2026-03-27）
+- [x] 買家訂單卡片操作按鈕改為均分佈局（flex-1）
+- [x] 賣家中心 Tab 導航改為 icon 格子設計（BrandTabs grid 模式 + mobileLabel）
+- [x] 商品卡片圖片改為固定 1:1 比例（aspect-square）
+- [ ] 儲存 Checkpoint

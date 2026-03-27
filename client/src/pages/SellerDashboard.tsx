@@ -1050,32 +1050,28 @@ export default function SellerDashboard() {
             </div>
 
             <BrandTabs defaultValue="listings" value={activeTab} onValueChange={setActiveTab}>
-              <BrandTabsList>
-                <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="我的商品">
-                  <span className="sm:hidden">商品</span>
-                  <span className="hidden sm:inline">我的商品</span>
+              <BrandTabsList grid tabCount={4}>
+                <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="我的商品" mobileLabel="商品">
+                  我的商品
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="訂單管理">
-                  <span className="sm:hidden">訂單</span>
-                  <span className="hidden sm:inline">訂單管理</span>
+                <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="訂單管理" mobileLabel="訂單">
+                  訂單管理
                   {pendingOrdersCount > 0 && (
-                    <span className="ml-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                    <span className="inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
                       {pendingOrdersCount > 99 ? '99+' : pendingOrdersCount}
                     </span>
                   )}
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="offers" icon={<MessageSquare className="w-4 h-4" />} label="買家出價">
-                  <span className="sm:hidden">出價</span>
-                  <span className="hidden sm:inline">買家出價</span>
+                <BrandTabsTrigger value="offers" icon={<MessageSquare className="w-4 h-4" />} label="買家出價" mobileLabel="出價">
+                  買家出價
                   {pendingSellerOffersCount > 0 && (
-                    <span className="ml-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                    <span className="inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
                       {pendingSellerOffersCount > 99 ? '99+' : pendingSellerOffersCount}
                     </span>
                   )}
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label="收款記錄">
-                  <span className="sm:hidden">收款</span>
-                  <span className="hidden sm:inline">收款記錄</span>
+                <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label="收款記錄" mobileLabel="收款">
+                  收款記錄
                 </BrandTabsTrigger>
               </BrandTabsList>
 
@@ -1282,15 +1278,17 @@ export default function SellerDashboard() {
                           </div>
                           {/* Card Body */}
                           <div className="flex items-start gap-3 px-3 py-3">
-                            {/* Cover Image */}
-                            <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                              {coverImg ? (
-                                <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <span className="text-white font-black text-[9px] tracking-tight text-center leading-tight">BOX<br/>IUM</span>
-                                </div>
-                              )}
+                            {/* Cover Image - fixed 1:1 aspect ratio */}
+                            <div className="w-16 flex-shrink-0">
+                              <div className="aspect-square rounded-lg overflow-hidden border border-gray-200" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                                {coverImg ? (
+                                  <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <span className="text-white font-black text-[9px] tracking-tight text-center leading-tight">BOX<br/>IUM</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             {/* Info */}
                             <div className="flex-1 min-w-0">

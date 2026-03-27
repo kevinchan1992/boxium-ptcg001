@@ -175,7 +175,7 @@ function BuyerCancelButton({ orderId, onSuccess }: { orderId: number; onSuccess:
       <Button
         size="sm"
         variant="outline"
-        className="text-xs border-gray-300 text-gray-600 hover:bg-gray-50"
+        className="w-full h-9 text-xs font-semibold border-red-300 text-red-600 hover:bg-red-50 rounded-xl"
         onClick={() => setShowDialog(true)}
       >
         <XCircle className="w-3.5 h-3.5 mr-1" />取消訂單
@@ -381,51 +381,51 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
 
       {/* Action buttons */}
       {(canConfirm || canDispute || isPending || canReview || isDisputed) && (
-        <div className="px-4 pb-3 flex flex-wrap items-center gap-2">
+        <div className="px-3 pb-3 flex items-stretch gap-2">
           {canConfirm && (
             <Button
               size="sm"
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 h-9 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded-xl"
               onClick={() => setShowConfirmDialog(true)}
             >
-              <CheckCircle className="w-4 h-4 mr-1.5" />確認收貨
+              <CheckCircle className="w-3.5 h-3.5 mr-1" />確認收貨
             </Button>
           )}
           {canDispute && (
             <Button
               size="sm"
               variant="outline"
-              className="border-red-300 text-red-600 hover:bg-red-50"
+              className="flex-1 h-9 text-xs font-semibold border-red-300 text-red-600 hover:bg-red-50 rounded-xl"
               onClick={() => setShowDisputeDialog(true)}
             >
-              <Flag className="w-4 h-4 mr-1.5" />申請爭議
+              <Flag className="w-3.5 h-3.5 mr-1" />申請爭議
             </Button>
           )}
           {canReview && (
             <Button
               size="sm"
               variant="outline"
-              className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+              className="flex-1 h-9 text-xs font-semibold border-yellow-300 text-yellow-700 hover:bg-yellow-50 rounded-xl"
               onClick={() => setShowReviewDialog(true)}
             >
-              <Star className="w-4 h-4 mr-1.5" />評價賣家
+              <Star className="w-3.5 h-3.5 mr-1" />評價賣家
             </Button>
           )}
           {isCompleted && existingReview && (
-            <span className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+            <span className="flex-1 text-xs text-green-600 bg-green-50 border border-green-200 rounded-xl px-3 h-9 flex items-center justify-center gap-1">
               <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
               已評價 {existingReview.rating} 星
             </span>
           )}
           {isPending && (
-            <div className="flex items-center gap-2">
-              <Link href={`/orders/${order.orderNo}`}>
-                <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: "#06038d" }}>
+            <>
+              <Link href={`/orders/${order.orderNo}`} className="flex-1">
+                <Button size="sm" className="w-full h-9 text-xs font-semibold text-white rounded-xl" style={{ backgroundColor: "#06038d" }}>
                   <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
                 </Button>
               </Link>
-              <BuyerCancelButton orderId={order.id} onSuccess={() => utils.marketplace.getMyOrders.invalidate()} />
-            </div>
+              <div className="flex-1"><BuyerCancelButton orderId={order.id} onSuccess={() => utils.marketplace.getMyOrders.invalidate()} /></div>
+            </>
           )}
           {isWaitingShipment && (
             <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
