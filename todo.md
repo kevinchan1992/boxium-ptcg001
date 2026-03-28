@@ -6653,3 +6653,27 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 重新設計為淡色背景、白色卡片風格（白色背景 + 圆角氣泡 + 角色分色）
 - [x] 訊息氣泡、輸入框、標題列全部改為淡色專業樣式
 - [x] 保存 checkpoint
+
+---
+
+## 🔔 訊息功能三項增強
+
+- [ ] 分析訊息資料結構（schema + db.ts + routers）
+- [ ] 在訊息表加入 isRead 欄位（或 readAt）
+- [ ] 實作已讀/未讀標記 API（markAsRead mutation）
+- [ ] OrderChat.tsx 訊息氣泡右下角加入單勾/雙勾標記
+- [ ] 實作全局未讀訊息計數 API
+- [ ] TopNav.tsx 鈴鐺圖示加入紅點提示（有未讀訊息時）
+- [ ] 賣家中心訂單分頁加入 OrderChat 組件
+- [ ] 保存 checkpoint
+
+---
+
+## ✅ 訊息三項增強功能完成
+
+- [x] 分析訊息資料結構（已有 readByBuyer/readBySeller/readByAdmin 欄位）
+- [x] 在 OrderChat.tsx 訊息氣泡加入已讀/未讀標記（單勾=已送出，雙勾=對方已讀）
+- [x] 在 db.ts 加入 getTotalUnreadMessageCount 函數
+- [x] 在 marketplace.ts 加入 getTotalUnreadMessages 路由
+- [x] 在 TopNav.tsx 鈴鐺計數改用 totalUnread（通知+訊息）
+- [x] 在 SellerDashboard.tsx 訂單分頁每個訂單卡片底部加入 OrderChat 組件

@@ -41,6 +41,7 @@ import { getPublicListings, getListingById, createListing, updateListing,
   getOrderMessagesByOrderNo,
   markMessagesRead,
   getUnreadMessageCount,
+  getTotalUnreadMessageCount,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
@@ -5174,5 +5175,22 @@ IMPORTANT:
       const role = isAdmin ? 'admin' : isSeller ? 'seller' : 'buyer';
       const count = await getUnreadMessageCount(order.id, role);
       return { count };
+    }),
+
+  getTotalUnreadMessages: protectedProcedure
+    .query(async ({ ctx }) => {
+      const isAdmin = ctx.user.role === 'admin';
+      // Check if user is a seller
+      const sp = await getSellerProfileByUserId(ctx.user.id);
+      const isSeller = !!sp;
+      // Buyer unread
+      const buyerCount = await getTotalUnreadMessageCount(ctx.user.id, 'buyer');
+      // Seller unread (if applicable)
+      const sellerCount = isSeller ? await getTotalUnreadMessageCount(ctx.user.id, 'seller') : 0;
+      // Admin unread
+      const adminCount = isAdmin ? await getTotalUnreadMessageCount(ctx.user.id, 'admin') : 0;
+      // Deduplicate: use max to avoid double-counting same message
+      const total = Math.max(buyerCount, sellerCount) + adminCount;
+      return { count: total, buyerCount, sellerCount, adminCount };
     }),
 });

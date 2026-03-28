@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
+import OrderChat from "@/components/OrderChat";
 import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown, Layers, ChevronRight, Pencil, EyeOff, Eye, Trash2, CheckSquare, Square, ChevronDown, Phone, Users, Info } from "lucide-react";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
@@ -1812,6 +1813,12 @@ export default function SellerDashboard() {
                               </a>
                             )}
                           </div>
+                          {/* Order Chat - inline message component */}
+                          {item.orderNo && (
+                            <div className="mt-2">
+                              <OrderChat orderNo={item.orderNo} />
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

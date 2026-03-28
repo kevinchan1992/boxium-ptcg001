@@ -79,6 +79,12 @@ export function TopNav() {
     { enabled: !!user, refetchInterval: 30000 }
   );
 
+  const { data: msgUnreadData } = trpc.marketplace.getTotalUnreadMessages.useQuery(
+    undefined,
+    { enabled: !!user, refetchInterval: 30000 }
+  );
+  const totalUnread = (unreadData?.count ?? 0) + (msgUnreadData?.count ?? 0);
+
   const { data: notifData, isLoading: notifLoading } = trpc.notifications.getMyNotifications.useQuery(
     { limit: 10, offset: 0 },
     { enabled: !!user && notifOpen, staleTime: 10000 }
@@ -286,9 +292,9 @@ export function TopNav() {
                   <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                     <Button variant="ghost" size="sm" className="relative text-white hover:text-[#FEDD00] p-2">
                       <Bell className="w-5 h-5" />
-                      {(unreadData?.count ?? 0) > 0 && (
+                      {totalUnread > 0 && (
                         <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                          {(unreadData?.count ?? 0) > 9 ? "9+" : unreadData?.count}
+                          {totalUnread > 9 ? "9+" : totalUnread}
                         </span>
                       )}
                     </Button>

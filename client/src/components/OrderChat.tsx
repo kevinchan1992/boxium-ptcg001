@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Send, ImagePlus, Loader2, MessageCircle, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Send, ImagePlus, Loader2, MessageCircle, ChevronDown, ChevronUp, X, Check, CheckCheck } from "lucide-react";
+import { trpc as trpcClient } from "@/lib/trpc";
 
 const ROLE_COLORS: Record<string, { badge: string; avatar: string; bubble: string }> = {
   buyer:  { badge: "bg-blue-100 text-blue-700 border-blue-200",   avatar: "bg-blue-100 text-blue-700",   bubble: "bg-blue-50 border border-blue-100" },
@@ -19,6 +20,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default function OrderChat({ orderNo }: { orderNo: string }) {
+  const { data: user } = trpcClient.auth.me.useQuery();
   const [expanded, setExpanded] = useState(false);
   const [message, setMessage] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -163,6 +165,17 @@ export default function OrderChat({ orderNo }: { orderNo: string }) {
                               className="max-w-[200px] max-h-[150px] rounded-lg border border-gray-200 object-cover hover:opacity-90 transition-opacity"
                             />
                           </a>
+                        )}
+                        {/* Read receipt — only for messages sent by the current user */}
+                        {msg.senderId === user?.id && (
+                          <div className="flex justify-end mt-1">
+                            {/* Double-check = read by at least one other party; single = sent only */}
+                            {(msg.readByBuyer && msg.readBySeller) || (msg.readByBuyer && msg.readByAdmin) || (msg.readBySeller && msg.readByAdmin) ? (
+                              <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5 text-gray-400" />
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>

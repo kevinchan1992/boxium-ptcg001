@@ -4579,3 +4579,34 @@ export async function getUnreadMessageCount(orderId: number, role: 'buyer' | 'se
     .where(and(eq(orderMessages.orderId, orderId), eq(field, false)));
   return result[0]?.count ?? 0;
 }
+
+export async function getTotalUnreadMessageCount(userId: number, role: 'buyer' | 'seller' | 'admin') {
+  const db = await getDb();
+  if (!db) return 0;
+  const field = role === 'buyer' ? orderMessages.readByBuyer
+    : role === 'seller' ? orderMessages.readBySeller
+    : orderMessages.readByAdmin;
+  if (role === 'buyer') {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(orderMessages)
+      .innerJoin(marketplaceOrders, eq(orderMessages.orderId, marketplaceOrders.id))
+      .where(and(eq(marketplaceOrders.buyerId, userId), eq(field, false)));
+    return Number(result[0]?.count ?? 0);
+  } else if (role === 'seller') {
+    const spRows = await db.select({ id: sellerProfiles.id })
+      .from(sellerProfiles)
+      .where(eq(sellerProfiles.userId, userId))
+      .limit(1);
+    if (!spRows[0]) return 0;
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(orderMessages)
+      .innerJoin(marketplaceOrders, eq(orderMessages.orderId, marketplaceOrders.id))
+      .where(and(eq(marketplaceOrders.sellerId, spRows[0].id), eq(field, false)));
+    return Number(result[0]?.count ?? 0);
+  } else {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(orderMessages)
+      .where(eq(field, false));
+    return Number(result[0]?.count ?? 0);
+  }
+}
