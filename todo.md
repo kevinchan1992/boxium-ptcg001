@@ -6628,3 +6628,11 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 賣家格狀視圖圖片已為 aspect-square 正方形，優化卡片資訊區塊（加入 TCG logo、庫存標籤）
 - [x] TypeScript 編譯 0 個錯誤
 - [x] 保存 checkpoint
+
+---
+
+## 🐛 修復 PSA 10 價格趨勢統計欄位顯示格式
+
+- [x] 找到價格趨勢圖下方統計欄位的組件（PriceTrendChart.tsx）
+- [x] 統一四個欄位（均價/最新/最低/最高）的格式：HKD 一行、數字一行
+- [x] 保存 checkpoint

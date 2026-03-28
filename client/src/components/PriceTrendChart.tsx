@@ -254,18 +254,23 @@ export function PriceTrendChart({
 
         {/* Stats Footer */}
         {stats.snkrdunk.avgPrice > 0 && (
-          <div className="mt-3 pt-3 border-t border-zinc-800/60 grid grid-cols-4 gap-2">
+          <div className="mt-3 pt-3 border-t border-zinc-800/60 grid grid-cols-4 gap-1">
             {[
-              { label: t("cardDetail.avgPrice", "均價"), value: formatCurrency(stats.snkrdunk.avgPrice), color: "text-[#FFD600]" },
-              { label: t("cardDetail.latestPrice", "最新"), value: formatCurrency(stats.snkrdunk.latestPrice), color: "text-white" },
-              { label: t("cardDetail.minPriceLabel", "最低"), value: formatCurrency(stats.snkrdunk.minPrice), color: "text-green-400" },
-              { label: t("cardDetail.maxPriceLabel", "最高"), value: formatCurrency(stats.snkrdunk.maxPrice), color: "text-red-400" },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="text-center">
-                <p className="text-[10px] text-zinc-500 mb-0.5">{label}</p>
-                <p className={`text-xs font-bold ${color}`}>{value}</p>
-              </div>
-            ))}
+              { label: t("cardDetail.avgPrice", "均價"), amount: stats.snkrdunk.avgPrice, color: "text-[#FFD600]" },
+              { label: t("cardDetail.latestPrice", "最新"), amount: stats.snkrdunk.latestPrice, color: "text-white" },
+              { label: t("cardDetail.minPriceLabel", "最低"), amount: stats.snkrdunk.minPrice, color: "text-green-400" },
+              { label: t("cardDetail.maxPriceLabel", "最高"), amount: stats.snkrdunk.maxPrice, color: "text-red-400" },
+            ].map(({ label, amount, color }) => {
+              const numAmount = typeof amount === "string" ? parseFloat(amount) : (amount ?? 0);
+              const formatted = numAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              return (
+                <div key={label} className="text-center">
+                  <p className="text-[10px] text-zinc-500 mb-0.5">{label}</p>
+                  <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
+                  <p className={`text-xs font-bold ${color} leading-tight`}>{formatted}</p>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
