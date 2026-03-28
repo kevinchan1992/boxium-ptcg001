@@ -1183,3 +1183,42 @@ export function buildSellerUnsuspendedEmail(data: SellerSuspensionEmailData): { 
   `);
   return { subject, html };
 }
+
+// ─── Order Message Notification Email ─────────────────────────────────────────
+
+/**
+ * Email sent to buyer/seller when they receive a new order message.
+ */
+export function buildNewOrderMessageEmail(data: {
+  recipientName: string;
+  senderRole: string;  // "買家" | "賣家" | "管理員"
+  orderNo: string;
+  messagePreview: string;
+  ordersUrl: string;
+}): { subject: string; html: string } {
+  const subject = `【BOXIUM PTCG】訂單 #${data.orderNo} 有新訊息`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:${BRAND_BLUE};font-size:22px;">您有一條新訊息 💬</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.recipientName}</strong>，<br/>
+      <strong>${data.senderRole}</strong> 已在訂單 <strong>#${data.orderNo}</strong> 中向您發送了新訊息。
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6ff;border:2px solid #dde0f5;border-radius:10px;margin:20px 0;overflow:hidden;">
+      <tr>
+        <td style="background:${BRAND_BLUE};padding:10px 16px;">
+          <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.7);">訂單編號</p>
+          <p style="margin:2px 0 0;font-size:14px;font-weight:bold;color:#ffffff;font-family:monospace;">${data.orderNo}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;">
+          <p style="margin:0;font-size:12px;color:#888;">訊息內容</p>
+          <p style="margin:6px 0 0;font-size:15px;color:#1a1a2e;font-style:italic;">"${data.messagePreview}"</p>
+        </td>
+      </tr>
+    </table>
+    <p style="color:#555;font-size:14px;">請登入 BOXIUM PTCG 查看完整訊息並回覆。</p>
+    ${ctaButton('查看訊息', data.ordersUrl)}
+  `);
+  return { subject, html };
+}

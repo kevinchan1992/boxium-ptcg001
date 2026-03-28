@@ -40,13 +40,15 @@ import { getPublicListings, getListingById, createListing, updateListing,
   createOrderMessage,
   getOrderMessagesByOrderNo,
   markMessagesRead,
+  getAdminAllMessages,
+  getAdminMessageStats,
   getUnreadMessageCount,
   getTotalUnreadMessageCount,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
 import { createNotification } from "../db/notifications";
-import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail, notifyAdmin, buildSellerSuspendedEmail, buildSellerUnsuspendedEmail } from "../emailService";
+import { sendEmail, buildSellerApprovedEmail, buildSellerRejectedEmail, buildNewOfferEmail, notifyAdmin, buildSellerSuspendedEmail, buildSellerUnsuspendedEmail, buildNewOrderMessageEmail, sendOrderEmail } from "../emailService";
 import { marketplaceListings, offers, listingReports, marketplaceOrders, sellerProfiles, users, orderStatusHistory, marketplaceSearchLogs, cartItems, adminAuditLogs, orderMessages } from "../../drizzle/schema_new";
 import { eq, and, isNotNull, isNull, or, desc, sql, inArray, like } from 'drizzle-orm';
 import Stripe from 'stripe';
@@ -5157,6 +5159,44 @@ IMPORTANT:
           content: `${senderLabel}在訂單 #${input.orderNo} 發送了訊息：${input.content.slice(0, 100)}`,
         }).catch(() => {});
       }
+      // Send Email notifications
+      const siteUrl = ctx.req.headers.origin ?? 'https://boxium.asia';
+      const ordersUrl = `${siteUrl}/orders/${input.orderNo}`;
+      const sellerDashUrl = `${siteUrl}/seller`;
+      const msgPreview = input.content.slice(0, 80) + (input.content.length > 80 ? '…' : '');
+      // Email to buyer (if sender is not buyer)
+      if (!isBuyer) {
+        const { getUserById } = await import('../userManagement');
+        const buyer = await getUserById(order.buyerId);
+        if (buyer?.name) {
+          const { subject, html } = buildNewOrderMessageEmail({
+            recipientName: buyer.name,
+            senderRole: senderLabel,
+            orderNo: input.orderNo,
+            messagePreview: msgPreview,
+            ordersUrl,
+          });
+          sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `msg_buyer_${id}` }).catch(() => {});
+        }
+      }
+      // Email to seller (if sender is not seller)
+      if (!isSeller && order.sellerId) {
+        const sp2 = await getSellerProfileById(order.sellerId);
+        if (sp2?.userId) {
+          const { getUserById } = await import('../userManagement');
+          const seller = await getUserById(sp2.userId);
+          if (seller?.name) {
+            const { subject, html } = buildNewOrderMessageEmail({
+              recipientName: seller.name,
+              senderRole: senderLabel,
+              orderNo: input.orderNo,
+              messagePreview: msgPreview,
+              ordersUrl: sellerDashUrl,
+            });
+            sendOrderEmail({ userId: sp2.userId, subject, html, emailType: 'order', dedupeKey: `msg_seller_${id}` }).catch(() => {});
+          }
+        }
+      }
       return { success: true, messageId: id };
     }),
 
@@ -5175,6 +5215,28 @@ IMPORTANT:
       const role = isAdmin ? 'admin' : isSeller ? 'seller' : 'buyer';
       const count = await getUnreadMessageCount(order.id, role);
       return { count };
+    }),
+
+  adminGetAllMessages: adminProcedure
+    .input(z.object({
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+      orderNo: z.string().optional(),
+      unreadOnly: z.boolean().optional(),
+    }))
+    .query(async ({ input }) => {
+      const [messages, stats] = await Promise.all([
+        getAdminAllMessages(input),
+        getAdminMessageStats(),
+      ]);
+      return { messages, stats };
+    }),
+
+  adminMarkOrderMessagesRead: adminProcedure
+    .input(z.object({ orderId: z.number() }))
+    .mutation(async ({ input }) => {
+      await markMessagesRead(input.orderId, 'admin');
+      return { success: true };
     }),
 
   getTotalUnreadMessages: protectedProcedure

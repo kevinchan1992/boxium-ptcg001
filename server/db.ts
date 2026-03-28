@@ -4610,3 +4610,53 @@ export async function getTotalUnreadMessageCount(userId: number, role: 'buyer' |
     return Number(result[0]?.count ?? 0);
   }
 }
+
+export async function getAdminAllMessages(options: {
+  limit?: number;
+  offset?: number;
+  orderNo?: string;
+  unreadOnly?: boolean;
+} = {}) {
+  const db = await getDb();
+  if (!db) return [];
+  const { limit = 50, offset = 0, orderNo, unreadOnly } = options;
+  const conditions: ReturnType<typeof eq>[] = [];
+  if (orderNo) conditions.push(eq(orderMessages.orderNo, orderNo));
+  if (unreadOnly) conditions.push(eq(orderMessages.readByAdmin, false));
+  const rows = await db.select({
+    id: orderMessages.id,
+    orderId: orderMessages.orderId,
+    orderNo: orderMessages.orderNo,
+    senderId: orderMessages.senderId,
+    senderRole: orderMessages.senderRole,
+    content: orderMessages.content,
+    imageUrl: orderMessages.imageUrl,
+    isSystemMessage: orderMessages.isSystemMessage,
+    readByBuyer: orderMessages.readByBuyer,
+    readBySeller: orderMessages.readBySeller,
+    readByAdmin: orderMessages.readByAdmin,
+    createdAt: orderMessages.createdAt,
+  })
+    .from(orderMessages)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(orderMessages.createdAt))
+    .limit(limit)
+    .offset(offset);
+  return rows;
+}
+
+export async function getAdminMessageStats() {
+  const db = await getDb();
+  if (!db) return { total: 0, unread: 0, activeOrders: 0 };
+  const [totalRow] = await db.select({ count: sql<number>`count(*)` }).from(orderMessages);
+  const [unreadRow] = await db.select({ count: sql<number>`count(*)` })
+    .from(orderMessages)
+    .where(eq(orderMessages.readByAdmin, false));
+  const [activeRow] = await db.select({ count: sql<number>`count(distinct ${orderMessages.orderNo})` })
+    .from(orderMessages);
+  return {
+    total: Number(totalRow?.count ?? 0),
+    unread: Number(unreadRow?.count ?? 0),
+    activeOrders: Number(activeRow?.count ?? 0),
+  };
+}

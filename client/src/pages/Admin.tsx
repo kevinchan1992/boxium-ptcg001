@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive,
   Clock, Activity, History, MapPin, Mail, FlaskConical, Settings,
-  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X
+  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare
 } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -17,6 +17,7 @@ import { AdminSFStationUpdate } from "@/components/AdminSFStationUpdate";
 import AdminEmailLogs from "@/components/AdminEmailLogs";
 import AdminEmailTest from "@/components/AdminEmailTest";
 import AdminPlatformSettings from "@/components/AdminPlatformSettings";
+import AdminMessages from "@/components/AdminMessages";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,7 @@ const STORAGE_KEY_COLLAPSED = "boxium_admin_sidebar_collapsed";
 const VALID_TABS = [
   "dashboard", "users", "datasources", "trending", "blog",
   "cache", "schedule", "performance", "taskhistory",
-  "sfstations", "emaillogs", "emailtest", "platformsettings"
+  "sfstations", "emaillogs", "emailtest", "platformsettings", "messages"
 ] as const;
 
 type TabId = typeof VALID_TABS[number];
@@ -77,6 +78,7 @@ function useNavItems(): NavItem[] {
     { id: "taskhistory", label: "任務歷史", icon: <History className="w-[18px] h-[18px]" />, group: "system" },
     { id: "emaillogs", label: "電郵日誌", icon: <Mail className="w-[18px] h-[18px]" />, group: "communication" },
     { id: "emailtest", label: "電郵測試", icon: <FlaskConical className="w-[18px] h-[18px]" />, group: "communication" },
+    { id: "messages", label: "訊息管理", icon: <MessageSquare className="w-[18px] h-[18px]" />, group: "communication" },
     { id: "sfstations", label: "順豐站管理", icon: <MapPin className="w-[18px] h-[18px]" />, group: "other" },
     { id: "platformsettings", label: "平台設定", icon: <Settings className="w-[18px] h-[18px]" />, group: "other" },
   ];
@@ -98,6 +100,7 @@ function AdminContent({ activeTab }: { activeTab: string }) {
     case "emaillogs": return <AdminEmailLogs />;
     case "emailtest": return <AdminEmailTest />;
     case "platformsettings": return <AdminPlatformSettings />;
+    case "messages": return <AdminMessages />;
     default: return <AdminDashboard />;
   }
 }

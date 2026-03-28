@@ -6677,3 +6677,15 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 在 marketplace.ts 加入 getTotalUnreadMessages 路由
 - [x] 在 TopNav.tsx 鈴鐺計數改用 totalUnread（通知+訊息）
 - [x] 在 SellerDashboard.tsx 訂單分頁每個訂單卡片底部加入 OrderChat 組件
+
+---
+
+## 🔔 訊息三項進階功能
+
+- [x] 分析現有訊息結構和管理員後台
+- [x] 在 OrderChat.tsx 加入 refetchInterval（每 10 秒輪詢）
+- [x] 在 TopNav.tsx 的未讀計數也加入輪詢
+- [x] 在 sendMessage 後端加入 Email 通知邏輯（通知對方有新訊息）
+- [x] 建立管理員訊息面板頁面（/admin/messages）
+- [x] 在管理後台導覽加入「訊息管理」入口
+- [ ] 保存 checkpoint
