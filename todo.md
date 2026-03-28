@@ -6706,3 +6706,19 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] OrderChat 加入 defaultExpanded prop 支援
 - [x] 撰寫並通過 9 項單元測試（message-features.test.ts）
 - [x] 保存 checkpoint
+
+---
+
+## 🔥 爭議處理進階功能（第三批）
+
+- [ ] 後端新增 uploadDisputeMedia mutation（S3 上傳，回傳 URL）
+- [ ] 後端新增 getDisputeMedia query（查詢訂單的爭議媒體）
+- [ ] schema 新增 disputeMedia 表（orderId, mediaUrl, mediaType, uploaderId）
+- [ ] 前端訂單詳情頁加入「上傳爭議證據」區塊（圖片/影片，僅 disputed 狀態顯示）
+- [ ] AdminMessages 面板顯示爭議媒體縮圖
+- [ ] AdminMessages 加入「解決爭議」按鈕（支持買家/賣家/部分退款三選一）
+- [ ] 解決爭議後自動發送 Email 通知買家和賣家（使用現有 buildDisputeResolvedSellerEmail）
+- [ ] 新增 buildDisputeResolvedBuyerEmail Email 模板
+- [ ] OrderChat 已讀回條加入時間戳（顯示「已讀 HH:MM」）
+- [ ] 撰寫並通過單元測試
+- [ ] 保存 checkpoint

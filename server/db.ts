@@ -2,7 +2,7 @@ import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from 
 import { alias } from "drizzle-orm/mysql-core";
 import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns, buildSeriesPrefixPatterns } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
-import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks } from "../drizzle/schema_new";
+import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks, disputeMedia, InsertDisputeMedia, DisputeMedia } from "../drizzle/schema_new";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -4560,11 +4560,13 @@ export async function markMessagesRead(orderId: number, role: 'buyer' | 'seller'
   const db = await getDb();
   if (!db) return;
   const fieldMap = { buyer: 'readByBuyer', seller: 'readBySeller', admin: 'readByAdmin' } as const;
+  const atFieldMap = { buyer: 'readAtBuyer', seller: 'readAtSeller', admin: 'readAtAdmin' } as const;
   const field = role === 'buyer' ? orderMessages.readByBuyer
     : role === 'seller' ? orderMessages.readBySeller
     : orderMessages.readByAdmin;
+  const now = new Date();
   await db.update(orderMessages)
-    .set({ [fieldMap[role]]: true })
+    .set({ [fieldMap[role]]: true, [atFieldMap[role]]: now })
     .where(and(eq(orderMessages.orderId, orderId), eq(field, false)));
 }
 
@@ -4737,4 +4739,27 @@ export async function getRecentUnreadOrderThreads(userId: number, role: 'buyer' 
     latestContent: latestContentMap.get(r.orderNo) ?? null,
     latestAt: r.latestAt,
   }));
+}
+
+
+// ─── Dispute Media helpers ────────────────────────────────────────────────────
+export async function insertDisputeMedia(data: InsertDisputeMedia): Promise<DisputeMedia> {
+  const db = await getDb();
+  if (!db) throw new Error('DB not available');
+  const [result] = await db.insert(disputeMedia).values(data);
+  const id = (result as any).insertId as number;
+  const [row] = await db.select().from(disputeMedia).where(eq(disputeMedia.id, id));
+  return row;
+}
+export async function getDisputeMediaByOrderId(orderId: number): Promise<DisputeMedia[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(disputeMedia)
+    .where(eq(disputeMedia.orderId, orderId))
+    .orderBy(disputeMedia.createdAt);
+}
+export async function deleteDisputeMedia(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(disputeMedia).where(eq(disputeMedia.id, id));
 }

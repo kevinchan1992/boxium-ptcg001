@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Search, Eye, CheckCheck, RefreshCw, Filter, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { MessageSquare, Search, Eye, CheckCheck, RefreshCw, Filter, ChevronDown, ChevronUp, AlertTriangle, Scale, ShieldCheck, User } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 import OrderChat from "@/components/OrderChat";
+import DisputeMediaUpload from "@/components/DisputeMediaUpload";
 
 const ROLE_LABELS: Record<string, string> = {
   buyer: "買家",
@@ -30,9 +31,18 @@ export default function AdminMessages() {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [offset, setOffset] = useState(0);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+
+  // Dispute dialog state
   const [disputeOrderId, setDisputeOrderId] = useState<number | null>(null);
   const [disputeOrderNo, setDisputeOrderNo] = useState<string>("");
   const [disputeReason, setDisputeReason] = useState("");
+
+  // Resolve dialog state
+  const [resolveOrderId, setResolveOrderId] = useState<number | null>(null);
+  const [resolveOrderNo, setResolveOrderNo] = useState<string>("");
+  const [resolveInFavorOf, setResolveInFavorOf] = useState<"buyer" | "seller">("buyer");
+  const [resolveResolution, setResolveResolution] = useState("");
+
   const LIMIT = 50;
 
   const queryInput = useMemo(() => ({
@@ -60,15 +70,31 @@ export default function AdminMessages() {
     onError: (e: any) => toast.error(e.message || "操作失敗"),
   });
 
+  const resolveDispute = trpc.marketplace.adminResolveDispute.useMutation({
+    onSuccess: () => {
+      toast.success(`爭議已解決，Email 通知已發送`);
+      setResolveOrderId(null);
+      setResolveResolution("");
+      refetch();
+    },
+    onError: (e: any) => toast.error(e.message || "操作失敗"),
+  });
+
   const messages = data?.messages ?? [];
   const stats = data?.stats ?? { total: 0, unread: 0, activeOrders: 0 };
 
   // Group messages by orderNo
   const orderGroups = useMemo(() => {
-    const map = new Map<string, { orderId: number; msgs: typeof messages; unreadCount: number; latestMsg: (typeof messages)[0] | undefined }>();
+    const map = new Map<string, {
+      orderId: number;
+      msgs: typeof messages;
+      unreadCount: number;
+      latestMsg: (typeof messages)[0] | undefined;
+      orderStatus?: string;
+    }>();
     for (const msg of messages) {
       if (!map.has(msg.orderNo)) {
-        map.set(msg.orderNo, { orderId: msg.orderId, msgs: [], unreadCount: 0, latestMsg: undefined });
+        map.set(msg.orderNo, { orderId: msg.orderId, msgs: [], unreadCount: 0, latestMsg: undefined, orderStatus: (msg as any).orderStatus });
       }
       const group = map.get(msg.orderNo)!;
       group.msgs.push(msg);
@@ -188,8 +214,9 @@ export default function AdminMessages() {
               {orderGroups.map(group => {
                 const isExpanded = expandedOrders.has(group.orderNo);
                 const latestMsg = group.latestMsg;
+                const isDisputed = group.orderStatus === "disputed";
                 return (
-                  <div key={group.orderNo} className={`${group.unreadCount > 0 ? "bg-orange-50/40" : ""}`}>
+                  <div key={group.orderNo} className={`${group.unreadCount > 0 ? "bg-orange-50/40" : ""} ${isDisputed ? "border-l-2 border-red-400" : ""}`}>
                     {/* Order header row */}
                     <div className="px-4 py-3 flex items-center gap-3">
                       {/* Expand toggle */}
@@ -208,6 +235,11 @@ export default function AdminMessages() {
                               #{group.orderNo}
                             </span>
                           </Link>
+                          {isDisputed && (
+                            <Badge className="bg-red-100 text-red-600 border-red-200 text-[10px] px-1.5 py-0 h-4">
+                              爭議中
+                            </Badge>
+                          )}
                           {group.unreadCount > 0 && (
                             <Badge className="bg-orange-100 text-orange-600 border-orange-200 text-[10px] px-1.5 py-0 h-4">
                               {group.unreadCount} 未讀
@@ -226,7 +258,7 @@ export default function AdminMessages() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
                         {latestMsg && (
                           <span className="text-[11px] text-gray-400">
                             {new Date(latestMsg.createdAt).toLocaleString('zh-HK', {
@@ -247,27 +279,56 @@ export default function AdminMessages() {
                             <span className="text-xs">已讀</span>
                           </Button>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-2 text-red-600 border-red-200 hover:bg-red-50"
-                          title="標記此訂單為爭議"
-                          onClick={() => {
-                            setDisputeOrderId(group.orderId);
-                            setDisputeOrderNo(group.orderNo);
-                            setDisputeReason("");
-                          }}
-                        >
-                          <AlertTriangle className="w-3.5 h-3.5 mr-1" />
-                          <span className="text-xs">標記爭議</span>
-                        </Button>
+                        {/* Resolve dispute button — only for disputed orders */}
+                        {isDisputed && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-green-600 border-green-200 hover:bg-green-50"
+                            title="解決此訂單爭議"
+                            onClick={() => {
+                              setResolveOrderId(group.orderId);
+                              setResolveOrderNo(group.orderNo);
+                              setResolveInFavorOf("buyer");
+                              setResolveResolution("");
+                            }}
+                          >
+                            <Scale className="w-3.5 h-3.5 mr-1" />
+                            <span className="text-xs">解決爭議</span>
+                          </Button>
+                        )}
+                        {/* Mark dispute button */}
+                        {!isDisputed && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-red-600 border-red-200 hover:bg-red-50"
+                            title="標記此訂單為爭議"
+                            onClick={() => {
+                              setDisputeOrderId(group.orderId);
+                              setDisputeOrderNo(group.orderNo);
+                              setDisputeReason("");
+                            }}
+                          >
+                            <AlertTriangle className="w-3.5 h-3.5 mr-1" />
+                            <span className="text-xs">標記爭議</span>
+                          </Button>
+                        )}
                       </div>
                     </div>
 
-                    {/* Expanded: inline OrderChat */}
+                    {/* Expanded: inline OrderChat + Dispute Media */}
                     {isExpanded && (
-                      <div className="px-4 pb-4">
+                      <div className="px-4 pb-4 space-y-3">
                         <OrderChat orderNo={group.orderNo} defaultExpanded={true} />
+                        {/* Dispute media — shown for all orders (read-only for admin) */}
+                        <div className="rounded-xl bg-white border border-orange-100 p-3">
+                          <DisputeMediaUpload
+                            orderId={group.orderId}
+                            orderNo={group.orderNo}
+                            canUpload={false}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -299,7 +360,7 @@ export default function AdminMessages() {
         </div>
       )}
 
-      {/* Dispute Dialog */}
+      {/* Mark Dispute Dialog */}
       <Dialog open={disputeOrderId !== null} onOpenChange={(open) => { if (!open) setDisputeOrderId(null); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -335,6 +396,91 @@ export default function AdminMessages() {
             >
               {markDisputed.isPending ? <RefreshCw className="w-4 h-4 animate-spin mr-1" /> : <AlertTriangle className="w-4 h-4 mr-1" />}
               確認標記爭議
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resolve Dispute Dialog */}
+      <Dialog open={resolveOrderId !== null} onOpenChange={(open) => { if (!open) setResolveOrderId(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <Scale className="w-5 h-5" />
+              解決訂單爭議
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-gray-600">
+              訂單 <span className="font-mono font-semibold text-[#06038d]">#{resolveOrderNo}</span> 的爭議裁決。解決後將自動發送 Email 通知買家和賣家。
+            </p>
+            {/* Favor selection */}
+            <div>
+              <label className="text-xs font-medium text-gray-700 mb-2 block">裁決支持方</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setResolveInFavorOf("buyer")}
+                  className={`flex items-center justify-center gap-2 rounded-lg border-2 py-3 px-4 transition-all ${
+                    resolveInFavorOf === "buyer"
+                      ? "border-blue-500 bg-blue-50 text-blue-700"
+                      : "border-gray-200 text-gray-500 hover:border-blue-200 hover:bg-blue-50/30"
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                  <span className="text-sm font-medium">支持買家</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResolveInFavorOf("seller")}
+                  className={`flex items-center justify-center gap-2 rounded-lg border-2 py-3 px-4 transition-all ${
+                    resolveInFavorOf === "seller"
+                      ? "border-green-500 bg-green-50 text-green-700"
+                      : "border-gray-200 text-gray-500 hover:border-green-200 hover:bg-green-50/30"
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span className="text-sm font-medium">支持賣家</span>
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                {resolveInFavorOf === "buyer"
+                  ? "支持買家：訂單將退款給買家，賣家收到相應通知。"
+                  : "支持賣家：訂單視為完成，買家收到相應通知。"}
+              </p>
+            </div>
+            {/* Resolution note */}
+            <div>
+              <label className="text-xs font-medium text-gray-700 mb-1 block">裁決說明（選填）</label>
+              <Textarea
+                placeholder="例如：根據買家提供的照片，商品確實與描述不符，決定退款給買家..."
+                value={resolveResolution}
+                onChange={e => setResolveResolution(e.target.value)}
+                className="text-sm min-h-[80px] resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResolveOrderId(null)}>取消</Button>
+            <Button
+              className={resolveInFavorOf === "buyer" ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-green-600 hover:bg-green-700 text-white"}
+              disabled={resolveDispute.isPending}
+              onClick={() => {
+                if (resolveOrderId !== null) {
+                  resolveDispute.mutate({
+                    orderId: resolveOrderId,
+                    outcome: resolveInFavorOf === 'buyer' ? 'refund_buyer' : 'release_seller',
+                    resolution: resolveResolution.trim() || (
+                      resolveInFavorOf === 'buyer'
+                        ? '管理員裁決支持買家，訂單退款處理。'
+                        : '管理員裁決支持賣家，訂單完成。'
+                    ),
+                  });
+                }
+              }}
+            >
+              {resolveDispute.isPending ? <RefreshCw className="w-4 h-4 animate-spin mr-1" /> : <Scale className="w-4 h-4 mr-1" />}
+              確認裁決（支持{resolveInFavorOf === "buyer" ? "買家" : "賣家"}）
             </Button>
           </DialogFooter>
         </DialogContent>

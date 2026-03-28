@@ -3887,7 +3887,6 @@ function DisputesTab() {
                 orderId: selectedDispute.id,
                 resolution: resolution.trim(),
                 outcome,
-                adminNote: adminNote.trim() || undefined,
               })}
             >
               {resolveMutation.isPending

@@ -45,6 +45,8 @@ import { getPublicListings, getListingById, createListing, updateListing,
   getUnreadMessageCount,
   getTotalUnreadMessageCount,
   getRecentUnreadOrderThreads,
+  insertDisputeMedia,
+  getDisputeMediaByOrderId,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
@@ -5309,5 +5311,68 @@ IMPORTANT:
         }
       })();
       return { success: true, orderNo: order.orderNo };
+    }),
+
+  // ─── Dispute Media ────────────────────────────────────────────────────────────
+
+  uploadDisputeMedia: protectedProcedure
+    .input(z.object({
+      orderId: z.number().int().positive(),
+      orderNo: z.string(),
+      mediaBase64: z.string(),
+      mediaType: z.enum(['image', 'video']).default('image'),
+      fileName: z.string().max(255),
+      mimeType: z.string(),
+      fileSize: z.number().int().positive().max(20 * 1024 * 1024),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND', message: '訂單不存在' });
+      if (order.orderStatus !== 'disputed') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '只有爭議中的訂單才能上傳證據' });
+      }
+      let uploaderRole: 'buyer' | 'seller' | 'admin';
+      if (ctx.user.role === 'admin') {
+        uploaderRole = 'admin';
+      } else if (order.buyerId === ctx.user.id) {
+        uploaderRole = 'buyer';
+      } else {
+        const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+        if (sellerProfile && order.sellerId === sellerProfile.id) {
+          uploaderRole = 'seller';
+        } else {
+          throw new TRPCError({ code: 'FORBIDDEN', message: '您無權上傳此訂單的爭議證據' });
+        }
+      }
+      const buffer = Buffer.from(input.mediaBase64, 'base64');
+      const ext = input.fileName.split('.').pop() || 'jpg';
+      const fileKey = `dispute-media/${input.orderId}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { url } = await storagePut(fileKey, buffer, input.mimeType);
+      const media = await insertDisputeMedia({
+        orderId: input.orderId,
+        orderNo: input.orderNo,
+        uploaderId: ctx.user.id,
+        uploaderRole,
+        mediaUrl: url,
+        mediaType: input.mediaType,
+        fileName: input.fileName,
+        fileSize: input.fileSize,
+      });
+      return { success: true, media };
+    }),
+
+  getDisputeMedia: protectedProcedure
+    .input(z.object({ orderId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND', message: '訂單不存在' });
+      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      const isBuyer = order.buyerId === ctx.user.id;
+      const isSeller = sellerProfile && order.sellerId === sellerProfile.id;
+      const isAdmin = ctx.user.role === 'admin';
+      if (!isBuyer && !isSeller && !isAdmin) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      return getDisputeMediaByOrderId(input.orderId);
     }),
 });

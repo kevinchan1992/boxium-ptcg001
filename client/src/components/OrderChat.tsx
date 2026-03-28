@@ -167,16 +167,39 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
                           </a>
                         )}
                         {/* Read receipt — only for messages sent by the current user */}
-                        {msg.senderId === user?.id && (
-                          <div className="flex justify-end mt-1">
-                            {/* Double-check = read by at least one other party; single = sent only */}
-                            {(msg.readByBuyer && msg.readBySeller) || (msg.readByBuyer && msg.readByAdmin) || (msg.readBySeller && msg.readByAdmin) ? (
-                              <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
-                            ) : (
-                              <Check className="w-3.5 h-3.5 text-gray-400" />
-                            )}
-                          </div>
-                        )}
+                        {msg.senderId === user?.id && (() => {
+                          const senderRole = msg.senderRole;
+                          const isRead = senderRole === 'buyer'
+                            ? (msg.readBySeller || msg.readByAdmin)
+                            : senderRole === 'seller'
+                            ? (msg.readByBuyer || msg.readByAdmin)
+                            : (msg.readByBuyer || msg.readBySeller);
+                          const readAtCandidates: (Date | null | string)[] = senderRole === 'buyer'
+                            ? [msg.readAtSeller ?? null, msg.readAtAdmin ?? null]
+                            : senderRole === 'seller'
+                            ? [msg.readAtBuyer ?? null, msg.readAtAdmin ?? null]
+                            : [msg.readAtBuyer ?? null, msg.readAtSeller ?? null];
+                          const validDates = readAtCandidates.filter(Boolean) as (Date | string)[];
+                          const earliestReadAt = validDates.length > 0
+                            ? new Date(Math.min(...validDates.map(d => new Date(d).getTime())))
+                            : null;
+                          return (
+                            <div className="flex items-center justify-end gap-1 mt-1">
+                              {isRead ? (
+                                <>
+                                  <CheckCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                  {earliestReadAt && (
+                                    <span className="text-[10px] text-blue-400 leading-none">
+                                      已讀 {new Date(earliestReadAt).toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <Check className="w-3.5 h-3.5 text-gray-400" />
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>

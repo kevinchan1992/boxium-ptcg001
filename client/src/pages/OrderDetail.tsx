@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import OrderChat from "@/components/OrderChat";
+import DisputeMediaUpload from "@/components/DisputeMediaUpload";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -1386,6 +1387,16 @@ export default function OrderDetail() {
         {/* P1 Fix #4: Order Messages */}
         {order.orderStatus !== 'pending_payment' && (
           <OrderChat orderNo={orderNo!} />
+        )}
+        {/* Dispute Evidence Upload — visible when order is disputed */}
+        {order.orderStatus === 'disputed' && order.id && (
+          <div className="rounded-xl overflow-hidden bg-white border border-orange-200 shadow-sm p-4">
+            <DisputeMediaUpload
+              orderId={order.id}
+              orderNo={orderNo!}
+              canUpload={true}
+            />
+          </div>
         )}
 
         {/* Order Meta */}

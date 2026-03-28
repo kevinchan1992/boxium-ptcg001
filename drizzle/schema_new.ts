@@ -1238,6 +1238,9 @@ export const orderMessages = mysqlTable("orderMessages", {
   readByBuyer: boolean("readByBuyer").default(false).notNull(),
   readBySeller: boolean("readBySeller").default(false).notNull(),
   readByAdmin: boolean("readByAdmin").default(false).notNull(),
+  readAtBuyer: timestamp("readAtBuyer"),
+  readAtSeller: timestamp("readAtSeller"),
+  readAtAdmin: timestamp("readAtAdmin"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   orderIdIdx: index("om_orderId_idx").on(table.orderId),
@@ -1247,3 +1250,26 @@ export const orderMessages = mysqlTable("orderMessages", {
 }));
 export type OrderMessage = typeof orderMessages.$inferSelect;
 export type InsertOrderMessage = typeof orderMessages.$inferInsert;
+
+/**
+ * Dispute Media — evidence uploaded by buyers/sellers during a dispute
+ * Stores S3 URLs for images/videos attached to a disputed order.
+ */
+export const disputeMedia = mysqlTable("disputeMedia", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(),
+  orderNo: varchar("orderNo", { length: 64 }).notNull(),
+  uploaderId: int("uploaderId").notNull(), // FK to users
+  uploaderRole: mysqlEnum("uploaderRole", ["buyer", "seller", "admin"]).notNull(),
+  mediaUrl: text("mediaUrl").notNull(), // S3 URL
+  mediaType: mysqlEnum("mediaType", ["image", "video"]).default("image").notNull(),
+  fileName: varchar("fileName", { length: 255 }),
+  fileSize: int("fileSize"), // bytes
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  orderIdIdx: index("dm_orderId_idx").on(table.orderId),
+  orderNoIdx: index("dm_orderNo_idx").on(table.orderNo),
+  uploaderIdx: index("dm_uploaderId_idx").on(table.uploaderId),
+}));
+export type DisputeMedia = typeof disputeMedia.$inferSelect;
+export type InsertDisputeMedia = typeof disputeMedia.$inferInsert;

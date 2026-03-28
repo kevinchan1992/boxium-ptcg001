@@ -1222,3 +1222,63 @@ export function buildNewOrderMessageEmail(data: {
   `);
   return { subject, html };
 }
+
+
+/**
+ * Dispute resolved — buyer notification (covers all outcomes).
+ *   refund_buyer   → buyer "won"; refund processing
+ *   release_seller → buyer "lost"; order completed
+ *   partial        → partial refund
+ */
+export interface DisputeResolvedBuyerEmailData {
+  orderNo: string;
+  itemName: string;
+  priceHkd: string;
+  resolution: string;
+  outcome: "refund_buyer" | "release_seller" | "partial";
+  siteUrl?: string;
+}
+
+export function buildDisputeResolvedBuyerEmail(
+  data: DisputeResolvedBuyerEmailData
+): { subject: string; html: string } {
+  const siteUrl = data.siteUrl || "https://boxium.asia";
+  const isWon     = data.outcome === "refund_buyer";
+  const isPartial = data.outcome === "partial";
+
+  const subject = isWon
+    ? `✅ 爭議已解決（退款處理中）— ${data.orderNo}`
+    : isPartial
+    ? `⚖️ 爭議已解決（部分退款）— ${data.orderNo}`
+    : `📋 爭議已解決（訂單完成）— ${data.orderNo}`;
+
+  const headingColor = isWon ? "#2e7d32" : "#555";
+  const headingText  = isWon
+    ? "爭議已解決 — 退款處理中 ✅"
+    : isPartial
+    ? "爭議已解決 — 部分退款 ⚖️"
+    : "爭議已解決 — 訂單完成 📋";
+
+  const outcomeMessage = isWon
+    ? `管理員審查後，裁定退款給您。您的退款（<strong>HKD ${data.priceHkd}</strong>）將按原支付方式處理，請耐心等候。`
+    : isPartial
+    ? `管理員審查後，裁定部分退款。請查看訂單詳情了解具體安排。`
+    : `管理員審查後，裁定訂單正常完成。如對裁決有疑問，請聯絡客服。`;
+
+  const resolutionBlock = `
+    <div style="background:#f5f5f5;border-left:4px solid #06038d;padding:12px 16px;border-radius:4px;margin:16px 0;">
+      <p style="margin:0;font-size:13px;color:#555;"><strong>管理員裁決說明：</strong></p>
+      <p style="margin:6px 0 0;font-size:14px;color:#333;">${data.resolution}</p>
+    </div>`;
+
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:${headingColor};font-size:22px;">${headingText}</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">${outcomeMessage}</p>
+    ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
+    ${resolutionBlock}
+    <p style="color:#555;font-size:14px;">如對裁決有任何疑問，請聯絡平台客服：<a href="mailto:boxium.asia@gmail.com" style="color:#06038d;">boxium.asia@gmail.com</a></p>
+    ${ctaButton("查看我的訂單", `${siteUrl}/orders`)}
+  `);
+
+  return { subject, html };
+}
