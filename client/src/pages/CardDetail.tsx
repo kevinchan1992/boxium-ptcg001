@@ -395,9 +395,16 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   {/* Average Price */}
                   <div className="px-3 py-4 text-center">
                     <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">參考均價</p>
-                    <p className="text-sm sm:text-base md:text-lg font-bold text-[#FFD600] leading-tight">
-                      {avgPrice === "N/A" ? "N/A" : formatCurrency(avgPrice)}
-                    </p>
+                    {avgPrice === "N/A" ? (
+                      <p className="text-sm sm:text-base md:text-lg font-bold text-[#FFD600] leading-tight">N/A</p>
+                    ) : (
+                      <>
+                        <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
+                        <p className="text-sm sm:text-base md:text-lg font-bold text-[#FFD600] leading-tight">
+                          {(() => { const n = typeof avgPrice === 'string' ? parseFloat(avgPrice) : (avgPrice ?? 0); return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); })()}
+                        </p>
+                      </>
+                    )}
                     {priceTrend && (
                       <div className={`mt-1 flex items-center justify-center gap-0.5 text-[10px] font-semibold ${priceTrend.isIncrease ? 'text-green-400' : priceTrend.isDecrease ? 'text-red-400' : 'text-zinc-400'}`}>
                         {priceTrend.isIncrease ? <TrendingUp className="w-3 h-3" /> : priceTrend.isDecrease ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
@@ -408,16 +415,26 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   {/* Min Price */}
                   <div className="px-3 py-4 text-center">
                     <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">最低成交</p>
-                    <p className="text-sm sm:text-base font-bold text-green-400 leading-tight">
-                      {minPrice !== null ? formatCurrency(minPrice.toString()) : "N/A"}
-                    </p>
+                    {minPrice !== null ? (
+                      <>
+                        <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
+                        <p className="text-sm sm:text-base font-bold text-green-400 leading-tight">
+                          {minPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      </>
+                    ) : <p className="text-sm font-bold text-green-400">N/A</p>}
                   </div>
                   {/* Max Price */}
                   <div className="px-3 py-4 text-center">
                     <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">最高成交</p>
-                    <p className="text-sm sm:text-base font-bold text-red-400 leading-tight">
-                      {maxPrice !== null ? formatCurrency(maxPrice.toString()) : "N/A"}
-                    </p>
+                    {maxPrice !== null ? (
+                      <>
+                        <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
+                        <p className="text-sm sm:text-base font-bold text-red-400 leading-tight">
+                          {maxPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      </>
+                    ) : <p className="text-sm font-bold text-red-400">N/A</p>}
                   </div>
                 </div>
 
