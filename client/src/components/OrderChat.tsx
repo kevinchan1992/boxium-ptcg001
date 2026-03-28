@@ -19,9 +19,9 @@ const ROLE_LABELS: Record<string, string> = {
   admin: "管理員",
 };
 
-export default function OrderChat({ orderNo }: { orderNo: string }) {
+export default function OrderChat({ orderNo, defaultExpanded = false }: { orderNo: string; defaultExpanded?: boolean }) {
   const { data: user } = trpcClient.auth.me.useQuery();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [message, setMessage] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);

@@ -4660,3 +4660,81 @@ export async function getAdminMessageStats() {
     activeOrders: Number(activeRow?.count ?? 0),
   };
 }
+
+/**
+ * Get recent order threads with unread messages for the current user.
+ * Used by TopNav bell dropdown to show message threads.
+ */
+export async function getRecentUnreadOrderThreads(userId: number, role: 'buyer' | 'seller' | 'admin'): Promise<Array<{
+  orderNo: string;
+  orderId: number;
+  unreadCount: number;
+  latestContent: string | null;
+  latestAt: Date | null;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+  const { orderMessages, marketplaceOrders } = await import('../drizzle/schema_new');
+  const { eq, and, desc, sql } = await import('drizzle-orm');
+
+  let unreadCol;
+  if (role === 'buyer') {
+    unreadCol = orderMessages.readByBuyer;
+  } else if (role === 'seller') {
+    unreadCol = orderMessages.readBySeller;
+  } else {
+    unreadCol = orderMessages.readByAdmin;
+  }
+
+  let orderCondition;
+  if (role === 'buyer') {
+    orderCondition = eq(marketplaceOrders.buyerId, userId);
+  } else if (role === 'seller') {
+    orderCondition = eq(marketplaceOrders.sellerId, userId);
+  } else {
+    orderCondition = undefined;
+  }
+
+  const whereClause = orderCondition
+    ? and(eq(unreadCol, false), orderCondition)
+    : eq(unreadCol, false);
+
+  const rows = await db
+    .select({
+      orderNo: orderMessages.orderNo,
+      orderId: orderMessages.orderId,
+      unreadCount: sql<number>`count(*)`,
+      latestAt: sql<Date | null>`max(${orderMessages.createdAt})`,
+    })
+    .from(orderMessages)
+    .innerJoin(marketplaceOrders, eq(marketplaceOrders.id, orderMessages.orderId))
+    .where(whereClause)
+    .groupBy(orderMessages.orderNo, orderMessages.orderId)
+    .orderBy(desc(sql`max(${orderMessages.createdAt})`))
+    .limit(20);
+
+  if (rows.length === 0) return [];
+
+  // Fetch latest message content per order
+  const orderNos = rows.map(r => r.orderNo);
+  const latestMsgs = await db
+    .select({ orderNo: orderMessages.orderNo, content: orderMessages.content })
+    .from(orderMessages)
+    .where(inArray(orderMessages.orderNo, orderNos))
+    .orderBy(desc(orderMessages.createdAt));
+
+  const latestContentMap = new Map<string, string | null>();
+  for (const m of latestMsgs) {
+    if (!latestContentMap.has(m.orderNo)) {
+      latestContentMap.set(m.orderNo, m.content);
+    }
+  }
+
+  return rows.map(r => ({
+    orderNo: r.orderNo,
+    orderId: r.orderId,
+    unreadCount: Number(r.unreadCount),
+    latestContent: latestContentMap.get(r.orderNo) ?? null,
+    latestAt: r.latestAt,
+  }));
+}

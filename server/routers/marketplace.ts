@@ -44,6 +44,7 @@ import { getPublicListings, getListingById, createListing, updateListing,
   getAdminMessageStats,
   getUnreadMessageCount,
   getTotalUnreadMessageCount,
+  getRecentUnreadOrderThreads,
 } from "../db";
 import { storagePut } from "../storage";
 import { invokeLLM } from "../_core/llm";
@@ -5254,5 +5255,59 @@ IMPORTANT:
       // Deduplicate: use max to avoid double-counting same message
       const total = Math.max(buyerCount, sellerCount) + adminCount;
       return { count: total, buyerCount, sellerCount, adminCount };
+    }),
+
+  /** TopNav bell: get recent order threads with unread messages for current user */
+  getRecentUnreadOrderThreads: protectedProcedure
+    .query(async ({ ctx }) => {
+      const isAdmin = ctx.user.role === 'admin';
+      const sp = await getSellerProfileByUserId(ctx.user.id);
+      const isSeller = !!sp;
+      const role: 'buyer' | 'seller' | 'admin' = isAdmin ? 'admin' : isSeller ? 'seller' : 'buyer';
+      return getRecentUnreadOrderThreads(ctx.user.id, role);
+    }),
+
+  /** Admin: mark an order as disputed and send Email notifications to buyer and seller */
+  adminMarkOrderAsDisputed: adminProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      reason: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: 'NOT_FOUND', message: '訂單不存在' });
+      if (order.orderStatus === 'disputed') throw new TRPCError({ code: 'BAD_REQUEST', message: '訂單已處於爭議狀態' });
+      if (['completed', 'cancelled', 'refunded'].includes(order.orderStatus)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '已完成/取消/退款的訂單無法標記爭議' });
+      }
+      const reason = input.reason || '管理員介入處理';
+      // Update order status
+      await updateMarketplaceOrder(input.orderId, { orderStatus: 'disputed' as any });
+      // Insert system message
+      await createOrderMessage({
+        orderNo: order.orderNo,
+        orderId: order.id,
+        senderId: 0,
+        senderRole: 'admin',
+        content: `⚙️ 管理員已介入處理此訂單，訂單狀態已標記為爭議中。原因：${reason}`,
+        isSystemMessage: true,
+      });
+      // Send emails async
+      ;(async () => {
+        try {
+          const { sendOrderEmail, buildDisputeOpenedBuyerEmail, buildDisputeOpenedSellerEmail, getOrderEmailData } = await import('../emailService');
+          const emailData = await getOrderEmailData(order);
+          const siteUrl = 'https://boxium.asia';
+          const buyerEmail = buildDisputeOpenedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, reason, siteUrl });
+          const sellerEmail = buildDisputeOpenedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, reason, siteUrl });
+          await Promise.all([
+            sendOrderEmail({ userId: order.buyerId, subject: buyerEmail.subject, html: buyerEmail.html, emailType: 'dispute', dedupeKey: `dispute_buyer_${order.id}` }),
+            order.sellerId ? sendOrderEmail({ userId: order.sellerId, subject: sellerEmail.subject, html: sellerEmail.html, emailType: 'dispute', dedupeKey: `dispute_seller_${order.id}` }) : Promise.resolve(),
+          ]);
+        } catch (e) {
+          console.error('[adminMarkOrderAsDisputed] Email error:', e);
+        }
+      })();
+      return { success: true, orderNo: order.orderNo };
     }),
 });

@@ -48,6 +48,7 @@ export function TopNav() {
   const [isVisible, setIsVisible] = useState(false);
   const [showSellDialog, setShowSellDialog] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifTab, setNotifTab] = useState<'notif' | 'msg'>('notif');
   const [cartBouncing, setCartBouncing] = useState(false);
   const cartBounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -87,7 +88,12 @@ export function TopNav() {
 
   const { data: notifData, isLoading: notifLoading } = trpc.notifications.getMyNotifications.useQuery(
     { limit: 10, offset: 0 },
-    { enabled: !!user && notifOpen, staleTime: 10000 }
+    { enabled: !!user && notifOpen && notifTab === 'notif', staleTime: 10000 }
+  );
+
+  const { data: msgThreads, isLoading: msgThreadsLoading } = trpc.marketplace.getRecentUnreadOrderThreads.useQuery(
+    undefined,
+    { enabled: !!user && notifOpen && notifTab === 'msg', refetchInterval: notifOpen ? 15000 : false }
   );
 
   const markAsReadMutation = trpc.notifications.markAsRead.useMutation({
@@ -301,85 +307,155 @@ export function TopNav() {
                   </motion.div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 p-0 bg-[#111] border-white/15 text-white">
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-                    <span className="font-semibold text-sm">通知</span>
-                    <div className="flex items-center gap-2">
+                  {/* Tab Header */}
+                  <div className="flex border-b border-white/10">
+                    <button
+                      className={`flex-1 px-4 py-2.5 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
+                        notifTab === 'notif' ? 'text-white border-b-2 border-[#FEDD00]' : 'text-white/50 hover:text-white/80'
+                      }`}
+                      onClick={() => setNotifTab('notif')}
+                    >
+                      <Bell className="w-3.5 h-3.5" />
+                      通知
                       {(unreadData?.count ?? 0) > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs text-white/60 hover:text-white"
-                          onClick={() => markAllAsReadMutation.mutate()}
-                        >
-                          <CheckCheck className="w-3.5 h-3.5 mr-1" />
-                          全部已讀
-                        </Button>
+                        <span className="bg-red-500 text-white text-[9px] font-bold rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">
+                          {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
+                        </span>
                       )}
-                      <Link href="/profile?tab=notifications" onClick={() => setNotifOpen(false)}>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-white/60 hover:text-white">
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                  {/* Notification list */}
-                  <ScrollArea className="max-h-[360px]">
-                    {notifLoading ? (
-                      <div className="flex items-center justify-center py-8 text-white/40 text-sm">
-                        載入中...
-                      </div>
-                    ) : !notifData || notifData.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-8 gap-2 text-white/40">
-                        <Bell className="w-8 h-8 opacity-30" />
-                        <span className="text-sm">暫無通知</span>
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-white/5">
-                        {notifData.map((notif) => (
-                          <button
-                            key={notif.id}
-                            className={`w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-start gap-3 ${
-                              !notif.isRead ? "bg-white/[0.03]" : ""
-                            }`}
-                            onClick={() => handleNotifClick(notif)}
-                          >
-                            <div className="mt-0.5 flex-shrink-0">
-                              {getNotifIcon(notif.type)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-2">
-                                <p className={`text-xs font-medium leading-tight ${
-                                  !notif.isRead ? "text-white" : "text-white/70"
-                                }`}>
-                                  {notif.title}
-                                </p>
-                                {!notif.isRead && (
-                                  <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#FEDD00] mt-1" />
-                                )}
-                              </div>
-                              {notif.body && (
-                                <p className="text-[11px] text-white/50 mt-0.5 leading-snug line-clamp-2">
-                                  {notif.body}
-                                </p>
-                              )}
-                              <p className="text-[10px] text-white/30 mt-1">
-                                {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: zhTW })}
-                              </p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+                    </button>
+                    <button
+                      className={`flex-1 px-4 py-2.5 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
+                        notifTab === 'msg' ? 'text-white border-b-2 border-[#FEDD00]' : 'text-white/50 hover:text-white/80'
+                      }`}
+                      onClick={() => setNotifTab('msg')}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      訊息
+                      {(msgUnreadData?.count ?? 0) > 0 && (
+                        <span className="bg-red-500 text-white text-[9px] font-bold rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">
+                          {(msgUnreadData?.count ?? 0) > 9 ? '9+' : msgUnreadData?.count}
+                        </span>
+                      )}
+                    </button>
+                    {notifTab === 'notif' && (unreadData?.count ?? 0) > 0 && (
+                      <button
+                        className="px-3 py-2.5 text-white/40 hover:text-white/70 transition-colors"
+                        title="全部已讀"
+                        onClick={() => markAllAsReadMutation.mutate()}
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" />
+                      </button>
                     )}
-                  </ScrollArea>
-                  {/* Footer */}
-                  <div className="border-t border-white/10 px-4 py-2">
-                    <Link href="/profile?tab=notifications" onClick={() => setNotifOpen(false)}>
-                      <Button variant="ghost" size="sm" className="w-full text-xs text-white/50 hover:text-white h-7">
-                        查看全部通知
-                      </Button>
-                    </Link>
                   </div>
+
+                  {/* Notification Tab */}
+                  {notifTab === 'notif' && (
+                    <>
+                      <ScrollArea className="max-h-[320px]">
+                        {notifLoading ? (
+                          <div className="flex items-center justify-center py-8 text-white/40 text-sm">載入中...</div>
+                        ) : !notifData || notifData.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-8 gap-2 text-white/40">
+                            <Bell className="w-8 h-8 opacity-30" />
+                            <span className="text-sm">暫無通知</span>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-white/5">
+                            {notifData.map((notif) => (
+                              <button
+                                key={notif.id}
+                                className={`w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-start gap-3 ${
+                                  !notif.isRead ? "bg-white/[0.03]" : ""
+                                }`}
+                                onClick={() => handleNotifClick(notif)}
+                              >
+                                <div className="mt-0.5 flex-shrink-0">{getNotifIcon(notif.type)}</div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className={`text-xs font-medium leading-tight ${
+                                      !notif.isRead ? "text-white" : "text-white/70"
+                                    }`}>{notif.title}</p>
+                                    {!notif.isRead && <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#FEDD00] mt-1" />}
+                                  </div>
+                                  {notif.body && (
+                                    <p className="text-[11px] text-white/50 mt-0.5 leading-snug line-clamp-2">{notif.body}</p>
+                                  )}
+                                  <p className="text-[10px] text-white/30 mt-1">
+                                    {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: zhTW })}
+                                  </p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                      <div className="border-t border-white/10 px-4 py-2">
+                        <Link href="/profile?tab=notifications" onClick={() => setNotifOpen(false)}>
+                          <Button variant="ghost" size="sm" className="w-full text-xs text-white/50 hover:text-white h-7">
+                            查看全部通知
+                          </Button>
+                        </Link>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Messages Tab */}
+                  {notifTab === 'msg' && (
+                    <>
+                      <ScrollArea className="max-h-[320px]">
+                        {msgThreadsLoading ? (
+                          <div className="flex items-center justify-center py-8 text-white/40 text-sm">載入中...</div>
+                        ) : !msgThreads || msgThreads.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-8 gap-2 text-white/40">
+                            <MessageSquare className="w-8 h-8 opacity-30" />
+                            <span className="text-sm">暫無未讀訊息</span>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-white/5">
+                            {msgThreads.map((thread) => (
+                              <button
+                                key={thread.orderNo}
+                                className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-start gap-3 bg-white/[0.03]"
+                                onClick={() => {
+                                  setNotifOpen(false);
+                                  setLocation(`/orders/${thread.orderNo}`);
+                                }}
+                              >
+                                <div className="mt-0.5 flex-shrink-0">
+                                  <MessageSquare className="w-4 h-4 text-blue-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-xs font-medium text-white leading-tight">
+                                      訂單 #{thread.orderNo}
+                                    </p>
+                                    {thread.unreadCount > 0 && (
+                                      <span className="flex-shrink-0 bg-red-500 text-white text-[9px] font-bold rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">
+                                        {thread.unreadCount}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-white/50 mt-0.5 leading-snug line-clamp-2">
+                                    {thread.latestContent || '[圖片訊息]'}
+                                  </p>
+                                  <p className="text-[10px] text-white/30 mt-1">
+                                    {thread.latestAt ? formatDistanceToNow(new Date(thread.latestAt), { addSuffix: true, locale: zhTW }) : ''}
+                                  </p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                      <div className="border-t border-white/10 px-4 py-2">
+                        <Link href="/orders" onClick={() => setNotifOpen(false)}>
+                          <Button variant="ghost" size="sm" className="w-full text-xs text-white/50 hover:text-white h-7">
+                            查看全部訂單
+                          </Button>
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

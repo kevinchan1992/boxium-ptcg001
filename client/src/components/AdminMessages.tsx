@@ -4,8 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Search, Eye, CheckCheck, RefreshCw, Filter } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { MessageSquare, Search, Eye, CheckCheck, RefreshCw, Filter, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
+import { toast } from "sonner";
+import OrderChat from "@/components/OrderChat";
 
 const ROLE_LABELS: Record<string, string> = {
   buyer: "買家",
@@ -25,9 +29,12 @@ export default function AdminMessages() {
   const [searchOrderNo, setSearchOrderNo] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [offset, setOffset] = useState(0);
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [disputeOrderId, setDisputeOrderId] = useState<number | null>(null);
+  const [disputeOrderNo, setDisputeOrderNo] = useState<string>("");
+  const [disputeReason, setDisputeReason] = useState("");
   const LIMIT = 50;
 
-  // Stable query input
   const queryInput = useMemo(() => ({
     limit: LIMIT,
     offset,
@@ -43,8 +50,42 @@ export default function AdminMessages() {
     onSuccess: () => refetch(),
   });
 
+  const markDisputed = trpc.marketplace.adminMarkOrderAsDisputed.useMutation({
+    onSuccess: (res) => {
+      toast.success(`訂單 #${res.orderNo} 已標記為爭議，Email 通知已發送`);
+      setDisputeOrderId(null);
+      setDisputeReason("");
+      refetch();
+    },
+    onError: (e: any) => toast.error(e.message || "操作失敗"),
+  });
+
   const messages = data?.messages ?? [];
   const stats = data?.stats ?? { total: 0, unread: 0, activeOrders: 0 };
+
+  // Group messages by orderNo
+  const orderGroups = useMemo(() => {
+    const map = new Map<string, { orderId: number; msgs: typeof messages; unreadCount: number; latestMsg: (typeof messages)[0] | undefined }>();
+    for (const msg of messages) {
+      if (!map.has(msg.orderNo)) {
+        map.set(msg.orderNo, { orderId: msg.orderId, msgs: [], unreadCount: 0, latestMsg: undefined });
+      }
+      const group = map.get(msg.orderNo)!;
+      group.msgs.push(msg);
+      if (!msg.readByAdmin) group.unreadCount++;
+      if (!group.latestMsg) group.latestMsg = msg;
+    }
+    return Array.from(map.entries()).map(([orderNo, g]) => ({ orderNo, ...g }));
+  }, [messages]);
+
+  const toggleOrder = (orderNo: string) => {
+    setExpandedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderNo)) next.delete(orderNo);
+      else next.add(orderNo);
+      return next;
+    });
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,14 +161,14 @@ export default function AdminMessages() {
         </CardContent>
       </Card>
 
-      {/* Messages List */}
+      {/* Order Groups */}
       <Card className="border border-gray-200">
         <CardHeader className="pb-3 pt-4 px-4 border-b border-gray-100">
           <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <MessageSquare className="w-4 h-4" />
-            訊息記錄
-            {messages.length > 0 && (
-              <span className="text-xs font-normal text-gray-400">（最新 {messages.length} 條）</span>
+            訊息記錄（按訂單分組）
+            {orderGroups.length > 0 && (
+              <span className="text-xs font-normal text-gray-400">（{orderGroups.length} 個訂單）</span>
             )}
           </CardTitle>
         </CardHeader>
@@ -137,86 +178,101 @@ export default function AdminMessages() {
               <RefreshCw className="w-5 h-5 animate-spin text-gray-400 mr-2" />
               <span className="text-sm text-gray-500">載入中...</span>
             </div>
-          ) : messages.length === 0 ? (
+          ) : orderGroups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-400">
               <MessageSquare className="w-10 h-10 mb-3 opacity-30" />
               <p className="text-sm">暫無訊息記錄</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
-              {messages.map(msg => (
-                <div
-                  key={msg.id}
-                  className={`px-4 py-3 hover:bg-gray-50 transition-colors ${!msg.readByAdmin ? "bg-orange-50/50" : ""}`}
-                >
-                  <div className="flex items-start gap-3">
-                    {/* Role badge */}
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border flex-shrink-0 mt-0.5 ${ROLE_COLORS[msg.senderRole] ?? ROLE_COLORS.system}`}>
-                      {ROLE_LABELS[msg.senderRole] ?? msg.senderRole}
-                    </span>
+            <div className="divide-y divide-gray-100">
+              {orderGroups.map(group => {
+                const isExpanded = expandedOrders.has(group.orderNo);
+                const latestMsg = group.latestMsg;
+                return (
+                  <div key={group.orderNo} className={`${group.unreadCount > 0 ? "bg-orange-50/40" : ""}`}>
+                    {/* Order header row */}
+                    <div className="px-4 py-3 flex items-center gap-3">
+                      {/* Expand toggle */}
+                      <button
+                        onClick={() => toggleOrder(group.orderNo)}
+                        className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <Link href={`/orders/${msg.orderNo}`}>
-                          <span className="text-xs font-mono text-[#06038d] hover:underline cursor-pointer">
-                            #{msg.orderNo}
-                          </span>
-                        </Link>
-                        {!msg.readByAdmin && (
-                          <Badge className="bg-orange-100 text-orange-600 border-orange-200 text-[10px] px-1.5 py-0 h-4">
-                            未讀
-                          </Badge>
-                        )}
-                        {msg.isSystemMessage && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-gray-400">
-                            系統
-                          </Badge>
+                      {/* Order info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Link href={`/orders/${group.orderNo}`}>
+                            <span className="text-sm font-mono font-semibold text-[#06038d] hover:underline cursor-pointer">
+                              #{group.orderNo}
+                            </span>
+                          </Link>
+                          {group.unreadCount > 0 && (
+                            <Badge className="bg-orange-100 text-orange-600 border-orange-200 text-[10px] px-1.5 py-0 h-4">
+                              {group.unreadCount} 未讀
+                            </Badge>
+                          )}
+                          <span className="text-xs text-gray-400">{group.msgs.length} 條訊息</span>
+                        </div>
+                        {latestMsg && (
+                          <p className="text-xs text-gray-500 mt-0.5 truncate">
+                            <span className={`inline-flex items-center px-1.5 py-0 rounded-full text-[10px] font-medium border mr-1 ${ROLE_COLORS[latestMsg.senderRole] ?? ROLE_COLORS.system}`}>
+                              {ROLE_LABELS[latestMsg.senderRole] ?? latestMsg.senderRole}
+                            </span>
+                            {latestMsg.imageUrl ? "[圖片訊息]" : latestMsg.content}
+                          </p>
                         )}
                       </div>
-                      <p className="text-sm text-gray-700 break-words leading-relaxed">
-                        {msg.imageUrl ? (
-                          <span className="flex items-center gap-1 text-gray-400 italic text-xs">
-                            [圖片訊息]
-                          </span>
-                        ) : (
-                          msg.content
-                        )}
-                      </p>
-                    </div>
 
-                    {/* Right side: time + actions */}
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      <span className="text-[11px] text-gray-400">
-                        {msg.createdAt ? new Date(msg.createdAt).toLocaleString('zh-HK', {
-                          month: '2-digit', day: '2-digit',
-                          hour: '2-digit', minute: '2-digit',
-                        }) : '—'}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {/* Read status indicators */}
-                        <span title={`買家${msg.readByBuyer ? '已讀' : '未讀'}`}>
-                          <CheckCheck className={`w-3.5 h-3.5 ${msg.readByBuyer ? 'text-blue-400' : 'text-gray-200'}`} />
-                        </span>
-                        <span title={`賣家${msg.readBySeller ? '已讀' : '未讀'}`}>
-                          <CheckCheck className={`w-3.5 h-3.5 ${msg.readBySeller ? 'text-green-400' : 'text-gray-200'}`} />
-                        </span>
-                        {!msg.readByAdmin && (
+                      {/* Actions */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {latestMsg && (
+                          <span className="text-[11px] text-gray-400">
+                            {new Date(latestMsg.createdAt).toLocaleString('zh-HK', {
+                              month: '2-digit', day: '2-digit',
+                              hour: '2-digit', minute: '2-digit',
+                            })}
+                          </span>
+                        )}
+                        {group.unreadCount > 0 && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-6 w-6 p-0 hover:bg-orange-100"
-                            title="標記為已讀"
-                            onClick={() => markRead.mutate({ orderId: msg.orderId })}
+                            className="h-7 px-2 hover:bg-orange-100 text-orange-500"
+                            title="標記此訂單所有訊息為已讀"
+                            onClick={() => markRead.mutate({ orderId: group.orderId })}
                           >
-                            <Eye className="w-3.5 h-3.5 text-orange-500" />
+                            <Eye className="w-3.5 h-3.5 mr-1" />
+                            <span className="text-xs">已讀</span>
                           </Button>
                         )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-red-600 border-red-200 hover:bg-red-50"
+                          title="標記此訂單為爭議"
+                          onClick={() => {
+                            setDisputeOrderId(group.orderId);
+                            setDisputeOrderNo(group.orderNo);
+                            setDisputeReason("");
+                          }}
+                        >
+                          <AlertTriangle className="w-3.5 h-3.5 mr-1" />
+                          <span className="text-xs">標記爭議</span>
+                        </Button>
                       </div>
                     </div>
+
+                    {/* Expanded: inline OrderChat */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4">
+                        <OrderChat orderNo={group.orderNo} defaultExpanded={true} />
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -242,6 +298,47 @@ export default function AdminMessages() {
           </Button>
         </div>
       )}
+
+      {/* Dispute Dialog */}
+      <Dialog open={disputeOrderId !== null} onOpenChange={(open) => { if (!open) setDisputeOrderId(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              標記訂單為爭議
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-gray-600">
+              訂單 <span className="font-mono font-semibold text-[#06038d]">#{disputeOrderNo}</span> 將被標記為爭議狀態，系統將自動發送 Email 通知買家和賣家。
+            </p>
+            <div>
+              <label className="text-xs font-medium text-gray-700 mb-1 block">爭議原因（選填）</label>
+              <Textarea
+                placeholder="例如：買家反映商品與描述不符..."
+                value={disputeReason}
+                onChange={e => setDisputeReason(e.target.value)}
+                className="text-sm min-h-[80px] resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDisputeOrderId(null)}>取消</Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={markDisputed.isPending}
+              onClick={() => {
+                if (disputeOrderId !== null) {
+                  markDisputed.mutate({ orderId: disputeOrderId, reason: disputeReason.trim() || undefined });
+                }
+              }}
+            >
+              {markDisputed.isPending ? <RefreshCw className="w-4 h-4 animate-spin mr-1" /> : <AlertTriangle className="w-4 h-4 mr-1" />}
+              確認標記爭議
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

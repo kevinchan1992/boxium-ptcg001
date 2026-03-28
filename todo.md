@@ -6689,3 +6689,20 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 建立管理員訊息面板頁面（/admin/messages）
 - [x] 在管理後台導覽加入「訊息管理」入口
 - [ ] 保存 checkpoint
+
+---
+
+## ✅ 訊息管理三項進階功能（第二批）
+
+- [x] AdminMessages 面板內嵌 OrderChat（點擊訂單展開對話）
+- [x] 管理員可在面板內直接回覆訊息
+- [x] 訊息按訂單分組顯示（含未讀計數）
+- [x] TopNav 鈴鐺加入「訊息」分頁，顯示未讀訊息 thread
+- [x] 點擊訊息 thread 跳轉到對應訂單頁面
+- [x] AdminMessages 加入「標記爭議」按鈕（含原因輸入）
+- [x] 標記爭議後自動發送 Email 通知買家和賣家
+- [x] 後端新增 adminMarkOrderAsDisputed mutation
+- [x] 後端新增 getRecentUnreadOrderThreads query
+- [x] OrderChat 加入 defaultExpanded prop 支援
+- [x] 撰寫並通過 9 項單元測試（message-features.test.ts）
+- [x] 保存 checkpoint
