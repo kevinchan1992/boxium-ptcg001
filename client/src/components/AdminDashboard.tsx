@@ -1,8 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { formatHKLocale } from "@/lib/formatDate";
-import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2, RefreshCw, Camera, AlertTriangle, XCircle, ShieldCheck } from "lucide-react";
+import { Users, CreditCard, Database, TrendingUp, Activity, Image, FileText, Clock, CheckCircle2, RefreshCw, Camera, AlertTriangle, XCircle, ShieldCheck, Scale, BarChart3, Timer, Trophy } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -20,7 +19,7 @@ export function AdminDashboard() {
 
   if (isLoading) {
     return (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(5)].map((_, i) => (
           <Card key={i} className="p-6 animate-pulse">
             <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
@@ -92,7 +91,7 @@ export function AdminDashboard() {
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-              <Card 
+            <Card 
               key={index} 
               className="p-3 sm:p-6 hover:shadow-lg transition-all hover:scale-105 border-l-4" 
               style={{ borderLeftColor: stat.color }}
@@ -111,7 +110,8 @@ export function AdminDashboard() {
         })}
       </div>
 
-
+      {/* 爭議統計面板 */}
+      <DisputeStatsPanel />
 
       {/* 截圖審核統計面板 */}
       <ProofReviewStatsPanel
@@ -121,12 +121,172 @@ export function AdminDashboard() {
       />
       {/* 搜尋統計面板 */}
       <SearchStatsPanel />
-
     </div>
   );
 }
 
+// ─── 爭議統計面板 ──────────────────────────────────────────────────────────
+function DisputeStatsPanel() {
+  const [, setLocation] = useLocation();
+  const { data: disputeStats, isLoading } = trpc.admin.getDisputeStats.useQuery();
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="h-6 bg-muted rounded w-1/4 animate-pulse"></div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="p-4 animate-pulse">
+              <div className="h-4 bg-muted rounded w-1/2 mb-3"></div>
+              <div className="h-8 bg-muted rounded w-1/3"></div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const hasUrgent = (disputeStats?.unresolvedOver3DaysCount ?? 0) > 0;
+  const hasUnresolved = (disputeStats?.unresolvedCount ?? 0) > 0;
+
+  const cards = [
+    {
+      title: "本月新增爭議",
+      value: disputeStats?.thisMonthDisputeCount ?? 0,
+      icon: Scale,
+      color: "#f97316",
+      bgColor: "bg-orange-50",
+      description: "本月開啟的爭議案件數",
+      alert: false,
+    },
+    {
+      title: "超過 3 天未解決",
+      value: disputeStats?.unresolvedOver3DaysCount ?? 0,
+      icon: Timer,
+      color: (disputeStats?.unresolvedOver3DaysCount ?? 0) > 0 ? "#ef4444" : "#10b981",
+      bgColor: (disputeStats?.unresolvedOver3DaysCount ?? 0) > 0 ? "bg-red-50" : "bg-green-50",
+      description: "需要優先處理的爭議",
+      alert: hasUrgent,
+    },
+    {
+      title: "平均解決天數",
+      value: `${disputeStats?.avgResolutionDays ?? 0}天`,
+      icon: BarChart3,
+      color: "#3b82f6",
+      bgColor: "bg-blue-50",
+      description: `共 ${disputeStats?.totalResolvedCount ?? 0} 件已解決`,
+      alert: false,
+      isString: true,
+    },
+    {
+      title: "買家勝率",
+      value: `${disputeStats?.buyerWinRate ?? 0}%`,
+      icon: Trophy,
+      color: "#a855f7",
+      bgColor: "bg-purple-50",
+      description: `買家 ${disputeStats?.buyerWinCount ?? 0} 件 / 賣家 ${disputeStats?.sellerWinCount ?? 0} 件`,
+      alert: false,
+      isString: true,
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-1 flex items-center gap-2">
+            <Scale className="w-5 h-5 text-orange-400" />
+            爭議案件統計
+            {hasUrgent && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white animate-pulse">
+                需處理
+              </span>
+            )}
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-400">爭議案件健康度與解決效率監控</p>
+        </div>
+        {hasUnresolved && (
+          <button
+            onClick={() => setLocation('/admin?tab=messages')}
+            className="text-xs text-orange-400 hover:text-orange-300 underline"
+          >
+            前往處理 →
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        {cards.map((card, index) => {
+          const Icon = card.icon;
+          return (
+            <Card
+              key={index}
+              className={`p-3 sm:p-4 hover:shadow-lg transition-all hover:scale-105 border-l-4 ${
+                card.alert ? 'ring-1 ring-red-500/30' : ''
+              }`}
+              style={{ borderLeftColor: card.color }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-400 mb-0.5 truncate">{card.title}</p>
+                  <p className={`text-xl sm:text-2xl font-bold ${card.alert ? 'text-red-400' : 'text-white'}`}>
+                    {card.value}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{card.description}</p>
+                </div>
+                <div className={`p-2 rounded-full ${card.bgColor} flex-shrink-0 ml-2`}>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: card.color }} />
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* 勝率進度條 */}
+      {(disputeStats?.totalResolvedCount ?? 0) > 0 && (
+        <Card className="p-4 border-l-4 border-l-purple-500">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="w-4 h-4 text-purple-400" />
+            <h3 className="text-sm font-semibold text-white">爭議裁決分佈</h3>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-blue-400 w-16 shrink-0">買家勝訴</span>
+              <div className="flex-1 bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${disputeStats?.buyerWinRate ?? 0}%` }}
+                />
+              </div>
+              <span className="text-gray-400 w-10 text-right">{disputeStats?.buyerWinRate ?? 0}%</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-green-400 w-16 shrink-0">賣家勝訴</span>
+              <div className="flex-1 bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${disputeStats?.sellerWinRate ?? 0}%` }}
+                />
+              </div>
+              <span className="text-gray-400 w-10 text-right">{disputeStats?.sellerWinRate ?? 0}%</span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            基於 {disputeStats?.totalResolvedCount ?? 0} 件已解決案件的統計
+          </p>
+        </Card>
+      )}
+
+      {!hasUnresolved && (
+        <div className="flex items-center gap-2 text-sm text-green-400 bg-green-900/20 rounded-lg px-4 py-2">
+          <ShieldCheck className="w-4 h-4" />
+          <span>目前無待處理爭議案件</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // 截圖審核統計面板組件
 function ProofReviewStatsPanel({

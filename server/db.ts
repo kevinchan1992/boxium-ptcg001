@@ -1,4 +1,4 @@
-import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull } from "drizzle-orm";
+import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns, buildSeriesPrefixPatterns } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
@@ -4762,4 +4762,99 @@ export async function deleteDisputeMedia(id: number): Promise<void> {
   const db = await getDb();
   if (!db) return;
   await db.delete(disputeMedia).where(eq(disputeMedia.id, id));
+}
+
+// ─── Dispute Statistics ────────────────────────────────────────────────────
+/**
+ * Get comprehensive dispute statistics for the admin dashboard.
+ * Includes this month's dispute count, average resolution days, and buyer/seller win rates.
+ */
+export async function getDisputeStats() {
+  const db = await getDb();
+  if (!db) return {
+    thisMonthDisputeCount: 0,
+    totalResolvedCount: 0,
+    avgResolutionDays: 0,
+    buyerWinCount: 0,
+    sellerWinCount: 0,
+    buyerWinRate: 0,
+    sellerWinRate: 0,
+    unresolvedOver3DaysCount: 0,
+    unresolvedCount: 0,
+  };
+
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const threeDaysAgoMs = now.getTime() - 3 * 24 * 60 * 60 * 1000;
+
+  // This month's new disputes
+  const [thisMonthDisputes] = await db.select({ count: sql<number>`count(*)` })
+    .from(marketplaceOrders)
+    .where(and(
+      isNotNull(marketplaceOrders.disputeOpenedAt),
+      sql`${marketplaceOrders.disputeOpenedAt} >= ${firstDayOfMonth}`
+    ));
+
+  // Total resolved disputes (has disputeResolvedAt)
+  const resolvedOrders = await db.select({
+    disputeOpenedAt: marketplaceOrders.disputeOpenedAt,
+    disputeResolvedAt: marketplaceOrders.disputeResolvedAt,
+    disputeResolution: marketplaceOrders.disputeResolution,
+  })
+    .from(marketplaceOrders)
+    .where(and(
+      isNotNull(marketplaceOrders.disputeOpenedAt),
+      isNotNull(marketplaceOrders.disputeResolvedAt)
+    ))
+    .limit(500);
+
+  // Calculate average resolution days and win rates
+  let totalResolutionMs = 0;
+  let buyerWinCount = 0;
+  let sellerWinCount = 0;
+  for (const order of resolvedOrders) {
+    if (order.disputeOpenedAt && order.disputeResolvedAt) {
+      const openedMs = new Date(order.disputeOpenedAt).getTime();
+      const resolvedMs = new Date(order.disputeResolvedAt).getTime();
+      totalResolutionMs += resolvedMs - openedMs;
+    }
+    // Parse outcome from disputeResolution field: "[refund_buyer] ..." or "[release_seller] ..."
+    const resolution = order.disputeResolution ?? '';
+    if (resolution.includes('[refund_buyer]')) buyerWinCount++;
+    else if (resolution.includes('[release_seller]')) sellerWinCount++;
+  }
+
+  const totalResolvedCount = resolvedOrders.length;
+  const avgResolutionDays = totalResolvedCount > 0
+    ? Math.round((totalResolutionMs / totalResolvedCount) / (1000 * 60 * 60 * 24) * 10) / 10
+    : 0;
+  const totalDecided = buyerWinCount + sellerWinCount;
+  const buyerWinRate = totalDecided > 0 ? Math.round((buyerWinCount / totalDecided) * 100) : 0;
+  const sellerWinRate = totalDecided > 0 ? 100 - buyerWinRate : 0;
+
+  // Currently unresolved disputes
+  const [unresolvedCount] = await db.select({ count: sql<number>`count(*)` })
+    .from(marketplaceOrders)
+    .where(eq(marketplaceOrders.orderStatus, 'disputed'));
+
+  // Unresolved disputes over 3 days old
+  const [unresolvedOver3Days] = await db.select({ count: sql<number>`count(*)` })
+    .from(marketplaceOrders)
+    .where(and(
+      eq(marketplaceOrders.orderStatus, 'disputed'),
+      isNotNull(marketplaceOrders.disputeOpenedAt),
+      sql`${marketplaceOrders.disputeOpenedAt} <= ${new Date(threeDaysAgoMs)}`
+    ));
+
+  return {
+    thisMonthDisputeCount: Number(thisMonthDisputes?.count ?? 0),
+    totalResolvedCount,
+    avgResolutionDays,
+    buyerWinCount,
+    sellerWinCount,
+    buyerWinRate,
+    sellerWinRate,
+    unresolvedOver3DaysCount: Number(unresolvedOver3Days?.count ?? 0),
+    unresolvedCount: Number(unresolvedCount?.count ?? 0),
+  };
 }

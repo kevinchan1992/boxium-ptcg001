@@ -2045,6 +2045,16 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
 
     // === 持久化批量更新 API ===
 
+    getDisputeStats: adminProcedure
+      .query(async () => {
+        try {
+          return await db.getDisputeStats();
+        } catch (error: any) {
+          console.error('[Admin] Failed to get dispute stats:', error);
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+        }
+      }),
+
     // 啟動持久化 SNKRDUNK 批量更新
     startPersistentSnkrdunkBatchUpdate: adminProcedure
       .mutation(async () => {

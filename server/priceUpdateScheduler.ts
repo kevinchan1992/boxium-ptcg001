@@ -2056,3 +2056,91 @@ export function stopDisputeSlaEscalationScheduler() {
     disputeSlaEscalationCronJob = null;
   }
 }
+
+// ─── Dispute 3-Day Reminder Scheduler ────────────────────────────────────────
+let dispute3DayReminderCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+/**
+ * Check for disputes that have been open for more than 3 days without resolution.
+ * Runs every 6 hours. Sends an Email reminder to admin for each overdue dispute.
+ */
+export function startDispute3DayReminderScheduler() {
+  if (dispute3DayReminderCronJob) return;
+  dispute3DayReminderCronJob = cron.schedule(
+    '0 */6 * * *', // Every 6 hours
+    async () => {
+      console.log('[Dispute3Day] Checking for disputes open > 3 days...');
+      try {
+        const { getDb } = await import('./db');
+        const { marketplaceOrders } = await import('../drizzle/schema_new');
+        const { eq, and, lte, isNotNull } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) return;
+
+        const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+
+        // Find disputes open for more than 3 days that are still unresolved
+        const overdueDisputes = await db.select({
+          id: marketplaceOrders.id,
+          orderNo: marketplaceOrders.orderNo,
+          disputeOpenedAt: marketplaceOrders.disputeOpenedAt,
+          subtotalHkd: marketplaceOrders.subtotalHkd,
+          disputeReason: marketplaceOrders.disputeReason,
+        })
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.orderStatus, 'disputed'),
+              isNotNull(marketplaceOrders.disputeOpenedAt),
+              lte(marketplaceOrders.disputeOpenedAt, threeDaysAgo)
+            )
+          )
+          .limit(20);
+
+        if (overdueDisputes.length === 0) {
+          console.log('[Dispute3Day] No disputes open > 3 days.');
+          return;
+        }
+
+        console.log(`[Dispute3Day] Found ${overdueDisputes.length} dispute(s) open > 3 days.`);
+
+        // Build a summary email for admin
+        const disputeList = overdueDisputes.map((d, i) => {
+          const openedAt = d.disputeOpenedAt
+            ? new Date(d.disputeOpenedAt).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' })
+            : '未知';
+          const daysOpen = d.disputeOpenedAt
+            ? Math.floor((Date.now() - new Date(d.disputeOpenedAt).getTime()) / (1000 * 60 * 60 * 24))
+            : 0;
+          return `${i + 1}. 訂單 ${d.orderNo} — 已開啟 ${daysOpen} 天（${openedAt}）— HKD ${d.subtotalHkd}${d.disputeReason ? `\n   原因：${d.disputeReason}` : ''}`;
+        }).join('\n');
+
+        const { notifyAdmin } = await import('./emailService');
+        await notifyAdmin({
+          title: `⏰ ${overdueDisputes.length} 件爭議已超過 3 天未解決`,
+          content: `以下爭議案件已開啟超過 3 天，請盡快處理：\n\n${disputeList}\n\n請前往管理後台 → 訊息管理 → 爭議訂單進行處理。`,
+        });
+
+        // Also notify owner via platform notification
+        const { notifyOwner } = await import('./_core/notification');
+        await notifyOwner({
+          title: `${overdueDisputes.length} 件爭議超過 3 天未解決`,
+          content: `共 ${overdueDisputes.length} 件爭議案件已開啟超過 3 天，請盡快介入處理。`,
+        });
+
+        console.log(`[Dispute3Day] Sent reminder for ${overdueDisputes.length} overdue dispute(s).`);
+      } catch (err) {
+        console.error('[Dispute3Day] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[Dispute3Day] Dispute 3-day reminder scheduler started (every 6 hours)');
+}
+
+export function stopDispute3DayReminderScheduler() {
+  if (dispute3DayReminderCronJob) {
+    dispute3DayReminderCronJob.stop();
+    dispute3DayReminderCronJob = null;
+  }
+}

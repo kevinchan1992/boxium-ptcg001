@@ -456,23 +456,47 @@ function OrderTimeline({ order }: { order: any }) {
 
   if (isDisputed) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
         <div className="flex items-center gap-3 text-red-600">
-          <AlertCircle className="w-6 h-6" />
-          <div>
-            <p className="font-medium">爭議處理中</p>
+          <AlertCircle className="w-6 h-6 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold">爭議處理中</p>
             <p className="text-sm text-red-500">管理員將在 1-3 個工作天內處理</p>
           </div>
         </div>
         {order.disputeReason && (
-          <div className="mt-3 pt-3 border-t border-red-200">
+          <div className="pt-3 border-t border-red-200">
             <p className="text-xs font-medium text-red-700 mb-1">爭議原因：</p>
             <p className="text-sm text-red-800">{order.disputeReason}</p>
           </div>
         )}
+        {/* Evidence Upload CTA - shown when dispute not yet resolved */}
+        {!order.disputeResolution && (
+          <div className="pt-3 border-t border-red-200">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
+              <div className="flex items-start gap-2">
+                <span className="text-lg leading-none mt-0.5">📎</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-orange-900">提交證據可加快處理</p>
+                  <p className="text-xs text-orange-700 mt-0.5">上傳商品照片、對話截圖等證據，有助管理員在 1 個工作天內更快裁決。</p>
+                </div>
+              </div>
+            </div>
+            <button
+              className="inline-flex items-center gap-2 w-full justify-center px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+              style={{ background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)" }}
+              onClick={() => document.getElementById('dispute-evidence')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            >
+              <span>📤</span> 前往上傳爭議證據
+            </button>
+          </div>
+        )}
         {order.disputeResolution && (
-          <div className="mt-3 pt-3 border-t border-red-200">
-            <p className="text-xs font-medium text-green-700 mb-1">處理結果：</p>
+          <div className="pt-3 border-t border-red-200">
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <p className="text-xs font-semibold text-green-700">處理結果：</p>
+            </div>
             <p className="text-sm text-green-700">{order.disputeResolution}</p>
           </div>
         )}
@@ -1390,7 +1414,7 @@ export default function OrderDetail() {
         )}
         {/* Dispute Evidence Upload — visible when order is disputed */}
         {order.orderStatus === 'disputed' && order.id && (
-          <div className="rounded-xl overflow-hidden bg-white border border-orange-200 shadow-sm p-4">
+          <div id="dispute-evidence" className="rounded-xl overflow-hidden bg-white border border-orange-200 shadow-sm p-4">
             <DisputeMediaUpload
               orderId={order.id}
               orderNo={orderNo!}
