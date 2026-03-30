@@ -1,0 +1,17 @@
+{
+  "query": "\n-- Find the buyer who paid for BOXIUM-20260330-7825 and the listing\nSELECT o.buyerId, o.listingId, o.orderNo, o.orderStatus, ci.id as cartItemId\nFROM marketplaceOrders o\nLEFT JOIN cartItems ci ON ci.userId = o.buyerId AND ci.listingId = o.listingId\nWHERE o.orderNo = 'BOXIUM-20260330-7825';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- Find the buyer who paid for BOXIUM-20260330-7825 and the listing\nSELECT o.buyerId, o.listingId, o.orderNo, o.orderStatus, ci.id as cartItemId\nFROM marketplaceOrders o\nLEFT JOIN cartItems ci ON ci.userId = o.buyerId AND ci.listingId = o.listingId\nWHERE o.orderNo = 'BOXIUM-20260330-7825';\n",
+  "rows": [
+    {
+      "buyerId": "330001",
+      "listingId": "300001",
+      "orderNo": "BOXIUM-20260330-7825",
+      "orderStatus": "payment_received",
+      "cartItemId": "150001"
+    }
+  ],
+  "messages": [],
+  "stdout": "buyerId\tlistingId\torderNo\torderStatus\tcartItemId\n330001\t300001\tBOXIUM-20260330-7825\tpayment_received\t150001\n",
+  "stderr": "",
+  "execution_time_ms": 1564
+}

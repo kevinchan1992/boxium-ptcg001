@@ -143,6 +143,20 @@ async function startServer() {
                   stripePaymentIntentId: paymentIntentId ?? batchOrder.stripePaymentIntentId,
                 });
                 console.log(`[Webhook] Batch order ${batchOrderNo} marked as payment_received`);
+                // Clear cart item for this listing after successful payment
+                try {
+                  const { cartItems: _bCartItemsTable } = await import('../../drizzle/schema_new');
+                  const { eq: _bceq, and: _bcand } = await import('drizzle-orm');
+                  const { getDb: _bGetDb } = await import('../db');
+                  const _bcdb = await _bGetDb();
+                  if (_bcdb && batchOrder.listingId) {
+                    await _bcdb.delete(_bCartItemsTable)
+                      .where(_bcand(_bceq(_bCartItemsTable.userId, batchOrder.buyerId), _bceq(_bCartItemsTable.listingId, batchOrder.listingId)));
+                    console.log(`[Webhook] Cleared cart item for buyer ${batchOrder.buyerId}, listing ${batchOrder.listingId}`);
+                  }
+                } catch (_bCartClearErr: any) {
+                  console.warn('[Webhook] Failed to clear batch cart item after payment:', _bCartClearErr.message);
+                }
                 if (batchOrder.listingId) {
                   const { claimListingAsSold } = await import("../db");
                   const batchClaimed = await claimListingAsSold(batchOrder.listingId, batchOrder.quantity ?? 1);
@@ -293,6 +307,20 @@ async function startServer() {
             stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : order.stripePaymentIntentId,
           });
           console.log(`[Webhook] Order ${order.orderNo} marked as payment_received, listing ${order.listingId} claimed as sold`);
+          // Clear cart items for this listing after successful payment
+          try {
+            const { cartItems: _cartItemsTable } = await import('../../drizzle/schema_new');
+            const { eq: _ceq, and: _cand } = await import('drizzle-orm');
+            const { getDb: _getDb } = await import('../db');
+            const _cdb = await _getDb();
+            if (_cdb && order.listingId) {
+              await _cdb.delete(_cartItemsTable)
+                .where(_cand(_ceq(_cartItemsTable.userId, order.buyerId), _ceq(_cartItemsTable.listingId, order.listingId)));
+              console.log(`[Webhook] Cleared cart item for buyer ${order.buyerId}, listing ${order.listingId}`);
+            }
+          } catch (_cartClearErr: any) {
+            console.warn('[Webhook] Failed to clear cart item after payment:', _cartClearErr.message);
+          }
           // Notify buyer of payment confirmation
           await createNotification({
             userId: order.buyerId,

@@ -3355,8 +3355,12 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
   // If no status filter, show all orders including pending_payment so admin can see all orders
+  // Special status 'paid' = all paid order statuses (payment_received/processing/shipped/delivered/completed)
+  const PAID_STATUSES = ['payment_received', 'processing', 'shipped', 'delivered', 'completed'] as const;
   const conditions: any[] = status
-    ? [eq(marketplaceOrders.orderStatus, status as any)]
+    ? status === 'paid'
+      ? [inArray(marketplaceOrders.orderStatus, PAID_STATUSES)]
+      : [eq(marketplaceOrders.orderStatus, status as any)]
     : [];
   // Optional sellerType filter
   if (sellerType) {

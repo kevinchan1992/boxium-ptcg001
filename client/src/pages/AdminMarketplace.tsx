@@ -5010,7 +5010,7 @@ function PayoutsTab() {
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.marketplace.adminGetOrders.useQuery({
     page, pageSize: 20,
-    status: payoutFilter === 'pending_alipay' ? 'completed' : 'completed',
+    status: payoutFilter === 'pending_alipay' ? 'paid' : 'paid',
     sellerType: sellerTypeFilter,
     payoutFilter: payoutFilter === 'all' ? undefined : payoutFilter,
   });
