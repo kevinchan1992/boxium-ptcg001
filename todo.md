@@ -6738,3 +6738,4 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] Bug: 付款成功後購物車未自動清除已購買商品（商品顯示為「已下架」殘留在購物車）
 - [ ] Bug: BOXIUM-20260330-7825 訂單未顯示在放款管理頁面（已付款訂單應顯示）
 - [x] 支付寶確認付款後自動清除購物車（adminConfirmAlipayPayment + adminBatchConfirmAlipayPayment）
+- [x] Bug: 已售出商品不應顯示「重新上架」按鈕（批次操作已過濾 sold 商品，後端加入 sold 保護）

@@ -970,6 +970,10 @@ export const marketplaceRouter = router({
       if (input.status === "active" && (listing as any).adminDelisted) {
         throw new TRPCError({ code: "FORBIDDEN", message: "此商品已被管理員下架，如有疑問請聯絡平台客服" });
       }
+      // 已售出的商品不對重新上架
+      if (input.status === "active" && listing.status === "sold") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "此商品已售出，無法重新上架" });
+      }
       const { id, ...updateData } = input;
       const updatePayload: Record<string, any> = { ...updateData };
       const oldPriceHkd = parseFloat(listing.priceHkd as string);
@@ -1051,16 +1055,18 @@ export const marketplaceRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { marketplaceListings } = await import("../../drizzle/schema_new");
       const { eq: eqFn, inArray: inArrayFn } = await import("drizzle-orm");
-      const listings = await db.select({ id: marketplaceListings.id, sellerId: marketplaceListings.sellerId, adminDelisted: marketplaceListings.adminDelisted })
+      const listings = await db.select({ id: marketplaceListings.id, sellerId: marketplaceListings.sellerId, adminDelisted: marketplaceListings.adminDelisted, status: marketplaceListings.status })
         .from(marketplaceListings)
         .where(inArrayFn(marketplaceListings.id, input.ids));
       const unauthorized = listings.filter(l => l.sellerId !== seller.id);
       if (unauthorized.length > 0) throw new TRPCError({ code: "FORBIDDEN", message: "部分商品不屬於你" });
       // 過濾掉 Admin 下架的商品，賣家無法重新上架
       const adminDelistedIds = listings.filter(l => l.adminDelisted).map(l => l.id);
-      const allowedIds = input.ids.filter(id => !adminDelistedIds.includes(id));
+      // 過濾掉已售出的商品，已售出的商品不對重新上架
+      const soldIds = listings.filter(l => l.status === 'sold').map(l => l.id);
+      const allowedIds = input.ids.filter(id => !adminDelistedIds.includes(id) && !soldIds.includes(id));
       if (allowedIds.length === 0) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "這些商品已被管理員下架，無法重新上架" });
+        throw new TRPCError({ code: "FORBIDDEN", message: "這些商品已售出或已被管理員下架，無法重新上架" });
       }
       await db.update(marketplaceListings)
         .set({ status: "active" })

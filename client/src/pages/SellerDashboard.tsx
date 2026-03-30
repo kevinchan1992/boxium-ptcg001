@@ -1290,16 +1290,26 @@ export default function SellerDashboard() {
                                 <EyeOff className="w-3 h-3 mr-1" />
                                 下架 ({selectedIds.size})
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs h-8 border-green-500 text-green-700 hover:bg-green-50"
-                                disabled={batchReactivateMutation.isPending}
-                                onClick={() => batchReactivateMutation.mutate({ ids: Array.from(selectedIds) })}
-                              >
-                                <Eye className="w-3 h-3 mr-1" />
-                                重新上架 ({selectedIds.size})
-                              </Button>
+{(() => {
+                                // Only count non-sold listings that can be relisted
+                                const relistableIds = Array.from(selectedIds).filter(id => {
+                                  const l = filteredListings.find((x: any) => x.id === id);
+                                  return l && l.status === 'removed' && !(l as any).adminDelisted;
+                                });
+                                if (relistableIds.length === 0) return null;
+                                return (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-8 border-green-500 text-green-700 hover:bg-green-50"
+                                    disabled={batchReactivateMutation.isPending}
+                                    onClick={() => batchReactivateMutation.mutate({ ids: relistableIds })}
+                                  >
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    重新上架 ({relistableIds.length})
+                                  </Button>
+                                );
+                              })()}
                             </>
                           )}
                         </div>
