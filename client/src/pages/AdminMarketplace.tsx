@@ -2904,9 +2904,9 @@ function AlipayPendingTab() {
 
       {/* Single confirm dialog - Platform Style */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-md p-0 overflow-hidden bg-white">
-          {/* Header */}
-          <div className="bg-[#06038d] px-5 py-4">
+        <DialogContent className="max-w-md p-0 bg-white flex flex-col max-h-[90dvh] sm:max-h-[85vh]">
+          {/* Header - sticky */}
+          <div className="bg-[#06038d] px-5 py-4 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
                 <CheckCircle className="w-5 h-5 text-white" />
@@ -2918,7 +2918,7 @@ function AlipayPendingTab() {
             </div>
           </div>
           {selectedOrder && (
-            <div className="px-5 py-4 space-y-4">
+            <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1">
               {/* Order summary card */}
               <div className="bg-[#06038d]/5 border border-[#06038d]/20 rounded-xl p-4">
                 <div className="grid grid-cols-2 gap-y-2 text-sm">
@@ -3025,8 +3025,8 @@ function AlipayPendingTab() {
               </div>
             </div>
           )}
-          {/* Footer */}
-          <div className="px-5 pb-5 flex gap-3">
+          {/* Footer - sticky */}
+          <div className="px-5 py-4 flex gap-3 flex-shrink-0 border-t border-gray-100 bg-white">
             <Button variant="outline" className="flex-1 border-gray-300 text-gray-700" onClick={() => setSelectedOrder(null)}>取消</Button>
             <Button
               className="flex-1 bg-[#06038d] hover:bg-[#0804b8] text-white font-semibold"
