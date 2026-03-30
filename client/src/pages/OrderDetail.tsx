@@ -1194,6 +1194,34 @@ export default function OrderDetail() {
           );
         })()}
 
+        {/* Shipping Proof Image */}
+        {(order as any).shippingImageUrl && (
+          <div className="rounded-xl p-4" style={{ backgroundColor: "#f0f4ff", border: "1px solid #c7d2fe" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#06038d" }}>
+                <Package className="w-4 h-4 text-white" />
+              </div>
+              <p className="font-semibold text-sm" style={{ color: "#06038d" }}>賣家出貨憑證</p>
+            </div>
+            <div
+              className="relative rounded-lg overflow-hidden cursor-pointer group border border-indigo-200"
+              onClick={() => window.open((order as any).shippingImageUrl, '_blank')}
+            >
+              <img
+                src={(order as any).shippingImageUrl}
+                alt="出貨憑證"
+                className="w-full max-h-64 object-contain bg-white"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full shadow">
+                  點擊查看大圖
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-indigo-600 mt-2">賣家已上傳出貨憑證圖片，如有疑問請聯絡客服。</p>
+          </div>
+        )}
+
         {/* Product Info */}
         {listing && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-gray-900">

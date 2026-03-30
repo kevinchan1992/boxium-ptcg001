@@ -3125,35 +3125,79 @@ function AlipayPendingTab() {
         </DialogContent>
       </Dialog>
 
-      {/* Batch confirm dialog */}
+      {/* Batch confirm dialog - Platform Style */}
       <Dialog open={showBatchDialog} onOpenChange={setShowBatchDialog}>
-        <DialogContent bottomSheet className="sm:max-w-md">
-          <DialogHeader><DialogTitle>批量確認支付寶 HK 收款</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-              <p>將確認以下 <strong>{selectedIds.size}</strong> 筆訂單的支付寶 HK 收款：</p>
-              <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+        <DialogContent bottomSheet className="sm:max-w-md p-0 bg-white">
+          {/* Header */}
+          <div className="bg-[#06038d] px-5 py-4 rounded-t-2xl sm:rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white">批量確認支付寶 HK 收款</h2>
+                <p className="text-xs text-white/70 mt-0.5">共 {selectedIds.size} 筆訂單待確認</p>
+              </div>
+            </div>
+          </div>
+          {/* Body */}
+          <div className="px-5 py-4 space-y-4">
+            {/* Summary card */}
+            <div className="bg-[#06038d]/5 border border-[#06038d]/20 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-[#06038d]">確認訂單清單</span>
+                <span className="text-xs bg-[#06038d] text-white px-2 py-0.5 rounded-full font-medium">{selectedIds.size} 筆</span>
+              </div>
+              <ul className="space-y-2 max-h-44 overflow-y-auto">
                 {orders?.filter((o: any) => selectedIds.has(o.id)).map((o: any) => (
-                  <li key={o.id} className="flex justify-between">
-                    <span className="font-mono">{o.orderNo}</span>
-                    <span className="font-medium">HKD {parseFloat(o.subtotalHkd || "0").toFixed(2)}</span>
+                  <li key={o.id} className="flex justify-between items-center py-1.5 border-b border-[#06038d]/10 last:border-0">
+                    <span className="font-mono text-xs text-gray-700">{o.orderNo}</span>
+                    <span className="font-bold text-sm text-[#06038d]">HKD {parseFloat(o.subtotalHkd || "0").toFixed(2)}</span>
                   </li>
                 ))}
               </ul>
+              {/* Total */}
+              <div className="flex justify-between items-center mt-3 pt-3 border-t border-[#06038d]/20">
+                <span className="text-sm font-semibold text-gray-700">合計收款</span>
+                <span className="text-lg font-bold text-[#06038d]">
+                  HKD {orders?.filter((o: any) => selectedIds.has(o.id)).reduce((sum: number, o: any) => sum + parseFloat(o.subtotalHkd || "0"), 0).toFixed(2)}
+                </span>
+              </div>
             </div>
-            <div><Label>備注（可選，會發送給所有買家）</Label><Input value={batchNote} onChange={e => setBatchNote(e.target.value)} placeholder="例：已批量核對支付寶 HK 後台收款記錄" /></div>
-            <p className="text-sm text-green-700 bg-green-50 rounded p-2">ℹ️ 確認後系統會自動通知所有買家和賣家。</p>
+            {/* Note input */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">備注（可選，會發送給所有買家）</Label>
+              <Input
+                value={batchNote}
+                onChange={e => setBatchNote(e.target.value)}
+                placeholder="例：已批量核對支付寶 HK 後台收款記錄"
+                className="border-gray-300 focus:border-[#06038d] focus:ring-[#06038d]/20"
+              />
+            </div>
+            {/* Warning */}
+            <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 flex items-start gap-2">
+              <span className="text-amber-500 text-sm mt-0.5">⚠️</span>
+              <p className="text-xs text-amber-800">請確認已在支付寶 HK 商戶後台核對到所有收款後，再點擊確認。</p>
+            </div>
+            {/* Notification notice */}
+            <div className="flex items-start gap-2 rounded-xl bg-[#06038d]/5 border border-[#06038d]/20 px-3 py-2.5">
+              <CheckCircle className="w-4 h-4 text-[#06038d] mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-[#06038d]">確認後系統會自動發送通知給所有買家和賣家。</p>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBatchDialog(false)}>取消</Button>
+          {/* Footer */}
+          <div className="px-5 pb-5 pt-2 flex gap-3 border-t border-gray-100">
+            <Button variant="outline" className="flex-1 border-gray-300 text-gray-700" onClick={() => setShowBatchDialog(false)}>取消</Button>
             <Button
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 bg-[#06038d] hover:bg-[#0804b8] text-white font-semibold"
               disabled={batchConfirmMutation.isPending}
               onClick={() => batchConfirmMutation.mutate({ orderIds: Array.from(selectedIds), note: batchNote || undefined })}
             >
-              {batchConfirmMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />審核中...</> : `確認 ${selectedIds.size} 筆收款`}
+              {batchConfirmMutation.isPending
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />確認中...</>
+                : <><CheckCircle className="w-4 h-4 mr-2" />確認 {selectedIds.size} 筆收款</>}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
