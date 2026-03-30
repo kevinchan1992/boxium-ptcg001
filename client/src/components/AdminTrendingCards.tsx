@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 
 const POKEMON_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif";
 const ONEPIECE_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif";
+const YUGIOH_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp";
 
 const RANK_CONFIG: Record<number, { bg: string; text: string; border: string; label: string }> = {
   1: { bg: "linear-gradient(135deg,#f5c518,#c8860a)", text: "#5a3a00", border: "rgba(248,197,24,0.7)", label: "1" },
@@ -231,6 +232,17 @@ export function AdminTrendingCards() {
         logoAlt="One Piece Card Game"
         accentColor="#dc2626"
         badgeBg="linear-gradient(135deg,#dc2626,#991b1b)"
+        onRefreshAll={handleCalculate}
+        isRefreshing={isCalculating}
+      />
+
+      {/* Yu-Gi-Oh! 面板 */}
+      <GameTrendingPanel
+        gameId={3}
+        logoUrl={YUGIOH_LOGO}
+        logoAlt="Yu-Gi-Oh! TCG"
+        accentColor="#7c3aed"
+        badgeBg="linear-gradient(135deg,#7c3aed,#5b21b6)"
         onRefreshAll={handleCalculate}
         isRefreshing={isCalculating}
       />

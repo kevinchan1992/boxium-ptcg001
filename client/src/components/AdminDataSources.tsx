@@ -489,6 +489,7 @@ export function AdminDataSources() {
                   <SelectContent>
                     <SelectItem value="1">Pokémon TCG</SelectItem>
                     <SelectItem value="2">One Piece Card Game</SelectItem>
+                    <SelectItem value="3">Yu-Gi-Oh! TCG</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground mt-2">

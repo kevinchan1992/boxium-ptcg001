@@ -176,6 +176,7 @@ function TrendingCardRow({ gameId, logoUrl, logoAlt, accentColor, badgeBg }: {
 
 const POKEMON_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif";
 const ONEPIECE_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif";
+const YUGIOH_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp";
 
 function TrendingCardsGrid() {
   return (
@@ -193,6 +194,13 @@ function TrendingCardsGrid() {
         logoAlt="One Piece Card Game"
         accentColor="#dc2626"
         badgeBg="linear-gradient(135deg, #dc2626, #991b1b)"
+      />
+      <TrendingCardRow
+        gameId={3}
+        logoUrl={YUGIOH_LOGO}
+        logoAlt="Yu-Gi-Oh! TCG"
+        accentColor="#7c3aed"
+        badgeBg="linear-gradient(135deg, #7c3aed, #5b21b6)"
       />
     </div>
   );
