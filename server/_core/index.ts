@@ -144,8 +144,17 @@ async function startServer() {
                 });
                 console.log(`[Webhook] Batch order ${batchOrderNo} marked as payment_received`);
                 if (batchOrder.listingId) {
-                  const { updateListing } = await import("../db");
-                  await updateListing(batchOrder.listingId, { status: "sold" });
+                  const { claimListingAsSold } = await import("../db");
+                  const batchClaimed = await claimListingAsSold(batchOrder.listingId, batchOrder.quantity ?? 1);
+                  if (!batchClaimed) {
+                    // Oversell: cancel this batch order and auto-refund (partial refund from batch session is complex — notify admin)
+                    console.warn(`[Webhook] Oversell in batch: listing ${batchOrder.listingId}, order ${batchOrderNo}`);
+                    await updateMarketplaceOrder(batchOrder.id, { orderStatus: 'cancelled', paymentStatus: 'cancelled' });
+                    const { notifyAdmin: _bna } = await import('../emailService');
+                    await _bna({ title: '❗ 批次訂單超賣需手動退款', content: `批次訂單 ${batchOrderNo} 商品已售罄，請在 Stripe Dashboard 手動退款對應金額。` }).catch(() => {});
+                    await createNotification({ userId: batchOrder.buyerId, type: 'trade', title: '訂單已取消 — 商品已售罄 😔', body: `非常抱歉，訂單 ${batchOrderNo} 的商品已售罄，管理員將對您進行退款。`, linkUrl: `/orders/${batchOrderNo}` }).catch(() => {});
+                    continue;
+                  }
                 }
                 await createNotification({
                   userId: batchOrder.buyerId,
@@ -250,19 +259,40 @@ async function startServer() {
               console.warn(`[Webhook] Failed to update single cartOrder#${singleCartOrderId}:`, cartSingleErr.message);
             }
           }
+          // First-pay-first-served: atomically claim the listing stock before confirming order
+          if (order.listingId) {
+            const { claimListingAsSold, updateMarketplaceOrder: _updateOrder } = await import("../db");
+            const claimed = await claimListingAsSold(order.listingId, order.quantity ?? 1);
+            if (!claimed) {
+              // Another buyer already paid — cancel this order and auto-refund
+              console.warn(`[Webhook] Oversell detected for listing ${order.listingId}, order ${order.orderNo} — auto-refunding`);
+              await _updateOrder(order.id, { orderStatus: 'cancelled', paymentStatus: 'cancelled' });
+              try {
+                const stripeClient = getStripe();
+                const piId = typeof session.payment_intent === 'string' ? session.payment_intent : null;
+                if (piId) await stripeClient.refunds.create({ payment_intent: piId, reason: 'duplicate' });
+              } catch (refundErr: any) {
+                console.error(`[Webhook] Auto-refund failed for oversold order ${order.orderNo}:`, refundErr.message);
+                const { notifyAdmin: _na } = await import('../emailService');
+                await _na({ title: '❗ 超賣自動退款失敗', content: `訂單 ${order.orderNo} 超賣但自動退款失敗，請手動處理。PaymentIntent: ${session.payment_intent}` }).catch(() => {});
+              }
+              await createNotification({
+                userId: order.buyerId,
+                type: 'trade',
+                title: '訂單已取消 — 商品已售罄 😔',
+                body: `非常抱歉，訂單 ${order.orderNo} 的商品已被其他買家搶先付款，您的付款將全額退回。`,
+                linkUrl: `/orders/${order.orderNo}`,
+              }).catch(() => {});
+              return res.json({ received: true });
+            }
+          }
           await updateMarketplaceOrder(order.id, {
             paymentStatus: "paid",
             paidAt: new Date(),
             orderStatus: "payment_received",
             stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : order.stripePaymentIntentId,
           });
-          console.log(`[Webhook] Order ${order.orderNo} marked as payment_received`);
-          // Mark listing as sold
-          if (order.listingId) {
-            const { updateListing } = await import("../db");
-            await updateListing(order.listingId, { status: "sold" });
-            console.log(`[Webhook] Listing ${order.listingId} marked as sold`);
-          }
+          console.log(`[Webhook] Order ${order.orderNo} marked as payment_received, listing ${order.listingId} claimed as sold`);
           // Notify buyer of payment confirmation
           await createNotification({
             userId: order.buyerId,

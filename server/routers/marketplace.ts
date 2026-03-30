@@ -24,6 +24,7 @@ import { getPublicListings, getListingById, createListing, updateListing,
   getActiveOrderByListingId,
   reserveListingStock,
   restoreListingStock,
+  claimListingAsSold,
   getSystemSetting,
   // P1: Cart Orders (Master order)
   createCartOrder, getCartOrderById, getCartOrderByStripeSession, updateCartOrder,
@@ -1567,16 +1568,28 @@ export const marketplaceRouter = router({
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      // First-pay-first-served: atomically claim the listing stock before confirming Alipay order
+      if (order.listingId) {
+        const claimed = await claimListingAsSold(order.listingId, order.quantity ?? 1);
+        if (!claimed) {
+          // Another buyer already paid — cancel this order and notify admin for manual refund
+          await updateMarketplaceOrder(input.orderId, { orderStatus: 'cancelled', paymentStatus: 'cancelled', alipayProofStatus: 'rejected' });
+          await createNotification({
+            userId: order.buyerId,
+            type: 'trade',
+            title: '訂單已取消 — 商品已售罄 😔',
+            body: `非常抱歉，訂單 ${order.orderNo} 的商品已被其他買家搶先付款，管理員將對您的支付寶 HK 付款進行退款。`,
+            linkUrl: `/orders/${order.orderNo}`,
+          }).catch(() => {});
+          throw new TRPCError({ code: 'CONFLICT', message: `訂單 ${order.orderNo} 的商品已售罄（已被其他買家搶先付款），訂單已自動取消，請手動退款支付寶 HK 付款。` });
+        }
+      }
       await updateMarketplaceOrder(input.orderId, {
         paymentStatus: "paid",
         paidAt: new Date(),
         orderStatus: "payment_received",
         alipayProofStatus: "approved",
       });
-      // Mark listing as sold
-      if (order.listingId) {
-        await updateListing(order.listingId, { status: "sold" });
-      }
       // Notify buyer of payment confirmation
       await createNotification({
         userId: order.buyerId,
@@ -1627,15 +1640,21 @@ export const marketplaceRouter = router({
         try {
           const order = await getMarketplaceOrderById(orderId);
           if (!order) { results.push({ orderId, success: false, error: "訂單不存在" }); continue; }
+          // First-pay-first-served: atomically claim the listing stock
+          if (order.listingId) {
+            const batchAlipayClaimedOk = await claimListingAsSold(order.listingId, order.quantity ?? 1);
+            if (!batchAlipayClaimedOk) {
+              await updateMarketplaceOrder(orderId, { orderStatus: 'cancelled', paymentStatus: 'cancelled', alipayProofStatus: 'rejected' });
+              await createNotification({ userId: order.buyerId, type: 'trade', title: '訂單已取消 — 商品已售罄 😔', body: `非常抱歉，訂單 ${order.orderNo} 的商品已售罄，管理員將進行退款。`, linkUrl: `/orders/${order.orderNo}` }).catch(() => {});
+              results.push({ orderId, success: false, error: `商品已售罄（超賣），訂單已取消，請手動退款` });
+              continue;
+            }
+          }
           await updateMarketplaceOrder(orderId, {
             paymentStatus: "paid",
             paidAt: new Date(),
             orderStatus: "payment_received",
           });
-          // Mark listing as sold
-          if (order.listingId) {
-            await updateListing(order.listingId, { status: "sold" });
-          }
           // Notify buyer of payment confirmation
           await createNotification({
             userId: order.buyerId,

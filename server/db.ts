@@ -3197,6 +3197,29 @@ export async function reserveListingStock(listingId: number, quantity: number): 
 }
 
 /**
+ * Atomically claim a listing as sold on payment success (first-pay-first-served).
+ * Returns true if this caller was first to claim (stock decremented and status set to 'sold').
+ * Returns false if another payment already claimed the stock (oversell protection).
+ * Accepts both 'active' and 'reserved' status to handle batch-checkout items.
+ */
+export async function claimListingAsSold(listingId: number, quantity: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.execute(
+    sql`UPDATE marketplaceListings
+        SET quantity = quantity - ${quantity},
+            remainingQuantity = remainingQuantity - ${quantity},
+            status = 'sold',
+            updatedAt = NOW()
+        WHERE id = ${listingId}
+          AND status IN ('active', 'reserved')
+          AND quantity >= ${quantity}`
+  );
+  const affectedRows = (result as any)?.[0]?.affectedRows ?? (result as any)?.affectedRows ?? 0;
+  return affectedRows > 0;
+}
+
+/**
  * Restore listing stock after order cancellation / payment timeout.
  * Re-activates the listing if it was marked as sold.
  */
