@@ -1547,15 +1547,7 @@ export default function SellerDashboard() {
                                   <Layers className="w-3.5 h-3.5" />
                                 </Button>
                               )}
-                              {/* Share Button */}
-                              <ShareButton
-                                listingUrl={listingUrl}
-                                shareText={shareText}
-                                title={listing.title}
-                                priceHkd={listing.priceHkd as string}
-                                coverImg={coverImg}
-                                condition={listing.condition ?? undefined}
-                              />
+
                             </div>
                           )}
                         </div>
@@ -2360,7 +2352,7 @@ export default function SellerDashboard() {
             <div>
               <Label className="text-[#06038D] font-semibold">商品名稱</Label>
               <Input
-                className="mt-1"
+                className="mt-1 bg-white text-black border-gray-300 placeholder:text-gray-400 focus:border-[#06038D]"
                 value={editForm.title}
                 onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="商品名稱"
@@ -2369,7 +2361,7 @@ export default function SellerDashboard() {
             <div>
               <Label className="text-[#06038D] font-semibold">商品描述</Label>
               <Textarea
-                className="mt-1 resize-none"
+                className="mt-1 resize-none bg-white text-black border-gray-300 placeholder:text-gray-400 focus:border-[#06038D]"
                 rows={3}
                 value={editForm.description}
                 onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
@@ -2384,6 +2376,7 @@ export default function SellerDashboard() {
                   type="number"
                   min="4"
                   step="0.01"
+                  className="bg-white text-black border-gray-300 placeholder:text-gray-400 focus:border-[#06038D]"
                   value={editForm.price}
                   onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))}
                   placeholder="100.00"
@@ -2395,6 +2388,7 @@ export default function SellerDashboard() {
                 <Input
                   type="number"
                   min="1"
+                  className="bg-white text-black border-gray-300 placeholder:text-gray-400 focus:border-[#06038D]"
                   value={editForm.quantity}
                   onChange={e => setEditForm(f => ({ ...f, quantity: e.target.value }))}
                   placeholder="1"
@@ -2405,7 +2399,7 @@ export default function SellerDashboard() {
 
           {/* Footer */}
           <div className="px-5 py-4 border-t border-gray-100 bg-white flex gap-3">
-            <Button variant="outline" className="flex-1 h-11 border-gray-300" onClick={() => setShowEditDialog(false)}>取消</Button>
+            <Button variant="outline" className="flex-1 h-11 border-red-500 text-red-600 hover:bg-red-50" onClick={() => setShowEditDialog(false)}>取消</Button>
             <Button
               className="flex-1 h-11 font-bold text-base"
               style={{ background: '#FEDD00', color: '#06038D' }}
