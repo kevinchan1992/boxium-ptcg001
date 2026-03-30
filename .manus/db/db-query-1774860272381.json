@@ -1,0 +1,19 @@
+{
+  "query": "SELECT orderNo, stripeTransferId, stripePaymentIntentId, stripeChargeId, payoutStatus, orderStatus, sellerType FROM marketplaceOrders WHERE orderNo = 'BOXIUM-20260309-7593' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT orderNo, stripeTransferId, stripePaymentIntentId, stripeChargeId, payoutStatus, orderStatus, sellerType FROM marketplaceOrders WHERE orderNo = 'BOXIUM-20260309-7593' LIMIT 1;",
+  "rows": [
+    {
+      "orderNo": "BOXIUM-20260309-7593",
+      "stripeTransferId": "acct_1T8hMxCblQuzQFtP",
+      "stripePaymentIntentId": "pi_3T8w5kEFJpV6IgaP0do4XkP6",
+      "stripeChargeId": "NULL",
+      "payoutStatus": "paid",
+      "orderStatus": "completed",
+      "sellerType": "seller"
+    }
+  ],
+  "messages": [],
+  "stdout": "orderNo\tstripeTransferId\tstripePaymentIntentId\tstripeChargeId\tpayoutStatus\torderStatus\tsellerType\nBOXIUM-20260309-7593\tacct_1T8hMxCblQuzQFtP\tpi_3T8w5kEFJpV6IgaP0do4XkP6\tNULL\tpaid\tcompleted\tseller\n",
+  "stderr": "",
+  "execution_time_ms": 1677
+}

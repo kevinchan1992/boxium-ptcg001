@@ -6734,3 +6734,4 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] 撰寫並通過超賣保護單元測試
 - [ ] 保存 checkpoint
 - [x] 放款管理頁面訂單卡片新增視覺化狀態流程圖示（已付款→處理中→已發貨→已收貨→待放款→已放款）
+- [x] Bug: 放款管理頁面「查看 Stripe 放款狀態」顯示「查詢失敗 No such transfer: acct_...」（錯誤的 Connect 帳號 ID 被寫入 stripeTransferId）

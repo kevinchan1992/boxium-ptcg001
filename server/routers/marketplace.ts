@@ -1809,11 +1809,15 @@ export const marketplaceRouter = router({
     .query(async ({ input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
-      // If already has a transfer ID, fetch it from Stripe
-      if (order.stripeTransferId) {
+      const stripe = getStripe();
+      // Validate the stored transferId — it must start with 'tr_' to be a real Transfer
+      const rawTransferId = order.stripeTransferId;
+      const validTransferId = rawTransferId && rawTransferId.startsWith('tr_') ? rawTransferId : null;
+
+      // If we have a valid Transfer ID, fetch it directly
+      if (validTransferId) {
         try {
-          const stripe = getStripe();
-          const transfer = await stripe.transfers.retrieve(order.stripeTransferId);
+          const transfer = await stripe.transfers.retrieve(validTransferId);
           return {
             status: "completed" as const,
             transferId: transfer.id,
@@ -1825,9 +1829,56 @@ export const marketplaceRouter = router({
             reversed: transfer.reversed,
           };
         } catch (err: any) {
-          return { status: "fetch_error" as const, error: err.message, transferId: order.stripeTransferId };
+          return { status: "fetch_error" as const, error: err.message, transferId: validTransferId };
         }
       }
+
+      // If payoutStatus is 'paid' but no valid transferId, try to recover via PaymentIntent
+      if ((order as any).payoutStatus === 'paid' && order.stripePaymentIntentId) {
+        try {
+          const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
+          const chargeId = typeof (pi as any).latest_charge === 'string' ? (pi as any).latest_charge : null;
+          if (chargeId) {
+            // List transfers that used this charge as source_transaction
+            const transfers = await stripe.transfers.list({ limit: 10 });
+            const matched = transfers.data.find((t: any) => {
+              const src = typeof t.source_transaction === 'string' ? t.source_transaction : (t.source_transaction as any)?.id;
+              return src === chargeId;
+            });
+            if (matched) {
+              // Backfill the correct transferId into the database
+              await updateMarketplaceOrder(input.orderId, { stripeTransferId: matched.id });
+              return {
+                status: "completed" as const,
+                transferId: matched.id,
+                amount: matched.amount / 100,
+                currency: matched.currency.toUpperCase(),
+                created: new Date(matched.created * 1000).toISOString(),
+                destination: typeof matched.destination === 'string' ? matched.destination : (matched.destination as any)?.id,
+                reversals: matched.reversals?.data?.length ?? 0,
+                reversed: matched.reversed,
+                note: '已從 PaymentIntent 反查並補回 Transfer ID',
+              };
+            }
+          }
+          // Could not find transfer — mark as paid but transfer ID missing
+          return {
+            status: "paid_no_transfer" as const,
+            payoutStatus: 'paid',
+            paymentIntentId: order.stripePaymentIntentId,
+            note: '放款狀態為已付款，但找不到對應的 Stripe Transfer 記錄。可能是早期版本的放款記錄，請在 Stripe Dashboard 手動核查。',
+            invalidStoredId: rawTransferId ?? undefined,
+          };
+        } catch (piErr: any) {
+          return {
+            status: "paid_no_transfer" as const,
+            payoutStatus: 'paid',
+            note: `放款狀態為已付款，但查詢 PaymentIntent 失敗：${piErr.message}`,
+            invalidStoredId: rawTransferId ?? undefined,
+          };
+        }
+      }
+
       // No transfer yet - diagnose why
       const reasons: string[] = [];
       if (order.paymentMethod !== 'stripe') {
@@ -1839,8 +1890,8 @@ export const marketplaceRouter = router({
       if (order.orderStatus !== 'completed') {
         reasons.push(`訂單尚未完成（目前狀態：${order.orderStatus}）`);
       }
-      if (order.payoutStatus === 'failed') {
-        reasons.push(`放款失敗：${order.stripeTransferError ?? '未知原因'}`);
+      if ((order as any).payoutStatus === 'failed') {
+        reasons.push(`放款失敗：${(order as any).stripeTransferError ?? '未知原因'}`);
       }
       if (order.sellerId) {
         const sellerProf = await getSellerProfileById(order.sellerId);
@@ -1852,9 +1903,9 @@ export const marketplaceRouter = router({
       if (!order.stripePaymentIntentId) reasons.push("缺少 Stripe Payment Intent ID");
       return {
         status: "pending" as const,
-        payoutStatus: order.payoutStatus,
+        payoutStatus: (order as any).payoutStatus,
         reasons: reasons.length > 0 ? reasons : ["等待訂單完成後自動放款"],
-        stripeTransferError: order.stripeTransferError,
+        stripeTransferError: (order as any).stripeTransferError,
       };
     }),
 

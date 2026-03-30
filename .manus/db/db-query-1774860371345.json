@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE marketplaceOrders SET stripeTransferId = NULL WHERE orderNo = 'BOXIUM-20260309-7593' AND stripeTransferId = 'acct_1T8hMxCblQuzQFtP';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute UPDATE marketplaceOrders SET stripeTransferId = NULL WHERE orderNo = 'BOXIUM-20260309-7593' AND stripeTransferId = 'acct_1T8hMxCblQuzQFtP';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1534
+}

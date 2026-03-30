@@ -1,0 +1,17 @@
+{
+  "query": "SELECT orderNo, stripeTransferId, stripePaymentIntentId, payoutStatus, orderStatus FROM marketplaceOrders WHERE orderNo = 'BOXIUM-20260309-7593';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT orderNo, stripeTransferId, stripePaymentIntentId, payoutStatus, orderStatus FROM marketplaceOrders WHERE orderNo = 'BOXIUM-20260309-7593';",
+  "rows": [
+    {
+      "orderNo": "BOXIUM-20260309-7593",
+      "stripeTransferId": "NULL",
+      "stripePaymentIntentId": "pi_3T8w5kEFJpV6IgaP0do4XkP6",
+      "payoutStatus": "paid",
+      "orderStatus": "completed"
+    }
+  ],
+  "messages": [],
+  "stdout": "orderNo\tstripeTransferId\tstripePaymentIntentId\tpayoutStatus\torderStatus\nBOXIUM-20260309-7593\tNULL\tpi_3T8w5kEFJpV6IgaP0do4XkP6\tpaid\tcompleted\n",
+  "stderr": "",
+  "execution_time_ms": 1569
+}

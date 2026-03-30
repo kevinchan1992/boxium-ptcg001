@@ -4908,10 +4908,30 @@ function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () =>
                   <p className="text-gray-500">{(s as any).reason}</p>
                 );
                 if (s.status === 'fetch_error') return (
-                  <div>
+                  <div className="space-y-1">
                     <p className="font-semibold text-red-700">❌ 查詢失敗</p>
                     <p className="text-gray-600">Transfer ID: {(s as any).transferId}</p>
                     <p className="text-red-600">{(s as any).error}</p>
+                  </div>
+                );
+                if (s.status === 'paid_no_transfer') return (
+                  <div className="space-y-1">
+                    <p className="font-semibold text-orange-700">⚠️ 放款已記錄，但無 Transfer 記錄</p>
+                    <p className="text-gray-600">{(s as any).note}</p>
+                    {(s as any).paymentIntentId && (
+                      <p className="text-gray-500">Payment Intent: {(s as any).paymentIntentId}</p>
+                    )}
+                    {(s as any).invalidStoredId && (
+                      <p className="text-gray-400 text-[10px]">旧記錄的無效 ID：{(s as any).invalidStoredId}</p>
+                    )}
+                    <a
+                      href={`https://dashboard.stripe.com/transfers`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 underline text-[11px] mt-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />在 Stripe Dashboard 查看轉帳記錄
+                    </a>
                   </div>
                 );
                 return null;
