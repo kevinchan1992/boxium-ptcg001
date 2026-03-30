@@ -3044,73 +3044,128 @@ function AlipayPendingTab() {
 
       {/* Reject payment dialog */}
       <Dialog open={!!rejectOrder} onOpenChange={(v) => { if (!v) { setRejectOrder(null); setRejectReason(""); } }}>
-        <DialogContent bottomSheet className="sm:max-w-md">
-          <DialogHeader><DialogTitle className="flex items-center gap-2 text-red-700"><XCircle className="w-5 h-5" />拒絕支付寶 HK 付款</DialogTitle></DialogHeader>
-          {rejectOrder && (
-            <div className="space-y-4">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
-                <p>訂單：<strong>{rejectOrder.orderNo}</strong></p>
-                <p>金額：<strong>HKD {parseFloat(rejectOrder.subtotalHkd || "0").toFixed(2)}</strong></p>
-                {rejectOrder.shippingName && <p>買家：<strong>{rejectOrder.shippingName}</strong></p>}
+        <DialogContent bottomSheet className="sm:max-w-md p-0 bg-white">
+          {/* Header */}
+          <div className="bg-red-700 px-5 py-4 rounded-t-2xl sm:rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <XCircle className="w-5 h-5 text-white" />
               </div>
-              {rejectOrder.alipayProofImageUrl && (
-                <img src={rejectOrder.alipayProofImageUrl} alt="付款截圖" className="rounded-lg border max-h-48 object-contain w-full" />
-              )}
               <div>
-                <Label className="text-sm font-medium">拒絕原因 *</Label>
+                <h2 className="text-base font-bold text-white">拒絕支付寶 HK 付款</h2>
+                {rejectOrder && <p className="text-xs text-white/70 mt-0.5 font-mono">{rejectOrder.orderNo}</p>}
+              </div>
+            </div>
+          </div>
+          {/* Body */}
+          {rejectOrder && (
+            <div className="px-5 py-4 space-y-4">
+              {/* Order info card */}
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">收款金額</span>
+                  <span className="font-bold text-red-700 text-base">HKD {parseFloat(rejectOrder.subtotalHkd || "0").toFixed(2)}</span>
+                </div>
+                {rejectOrder.shippingName && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">買家</span>
+                    <span className="text-sm font-medium text-gray-800">{rejectOrder.shippingName}</span>
+                  </div>
+                )}
+              </div>
+              {/* Payment screenshot */}
+              {rejectOrder.alipayProofImageUrl && (
+                <div className="space-y-1.5">
+                  <p className="text-sm font-medium text-gray-700">📷 買家付款截圖</p>
+                  <img src={rejectOrder.alipayProofImageUrl} alt="付款截圖" className="rounded-xl border border-red-100 max-h-48 object-contain w-full bg-white" />
+                </div>
+              )}
+              {/* Reject reason */}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-gray-700">拒絕原因 <span className="text-red-500">*</span></Label>
                 <Input
                   value={rejectReason}
                   onChange={e => setRejectReason(e.target.value)}
                   placeholder="例：截圖金額不符、截圖不清晰、收款方不符等"
-                  className="mt-1.5"
+                  className="border-gray-300 focus:border-red-500 focus:ring-red-200"
                 />
               </div>
-              <p className="text-sm text-red-700 bg-red-50 rounded p-2">⚠️ 拒絕後訂單將回到「待付款」狀態，買家將收到通知並被要求重新上傳截圖。</p>
+              {/* Warning */}
+              <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2.5 flex items-start gap-2">
+                <span className="text-red-500 text-sm mt-0.5">⚠️</span>
+                <p className="text-xs text-red-800">拒絕後訂單將回到「待付款」狀態，買家將收到通知並被要求重新上傳截圖。</p>
+              </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setRejectOrder(null); setRejectReason(""); }}>取消</Button>
+          {/* Footer */}
+          <div className="px-5 pb-5 pt-2 flex gap-3 border-t border-gray-100">
+            <Button variant="outline" className="flex-1 border-gray-300 text-gray-700" onClick={() => { setRejectOrder(null); setRejectReason(""); }}>取消</Button>
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
               disabled={rejectMutation.isPending || !rejectReason.trim()}
-              onClick={() => rejectMutation.mutate({ orderId: rejectOrder.id, reason: rejectReason.trim() })}>
-              {rejectMutation.isPending ? "拒絕中..." : "確認拒絕"}
+              onClick={() => rejectMutation.mutate({ orderId: rejectOrder.id, reason: rejectReason.trim() })}
+            >
+              {rejectMutation.isPending
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />拒絕中...</>
+                : <><XCircle className="w-4 h-4 mr-2" />確認拒絕</>}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Batch reject dialog */}
+      {/* Batch reject dialog - Platform Red Style */}
       <Dialog open={showBatchRejectDialog} onOpenChange={setShowBatchRejectDialog}>
-        <DialogContent bottomSheet className="sm:max-w-md">
-          <DialogHeader><DialogTitle className="text-red-700">批量拒絕支付寶 HK 付款</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
-              <p>將拒絕以下 <strong>{selectedIds.size}</strong> 筆訂單的支付寶 HK 付款：</p>
-              <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+        <DialogContent bottomSheet className="sm:max-w-md p-0 bg-white">
+          {/* Header */}
+          <div className="bg-red-700 px-5 py-4 rounded-t-2xl sm:rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <XCircle className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white">批量拒絕支付寶 HK 付款</h2>
+                <p className="text-xs text-white/70 mt-0.5">共 {selectedIds.size} 筆訂單待拒絕</p>
+              </div>
+            </div>
+          </div>
+          {/* Body */}
+          <div className="px-5 py-4 space-y-4">
+            {/* Order list */}
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-red-700">拒絕訂單清單</span>
+                <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full font-medium">{selectedIds.size} 筆</span>
+              </div>
+              <ul className="space-y-2 max-h-44 overflow-y-auto">
                 {orders?.filter((o: any) => selectedIds.has(o.id)).map((o: any) => (
-                  <li key={o.id} className="flex justify-between">
-                    <span className="font-mono">{o.orderNo}</span>
-                    <span className="font-medium">HKD {parseFloat(o.subtotalHkd || "0").toFixed(2)}</span>
+                  <li key={o.id} className="flex justify-between items-center py-1.5 border-b border-red-100 last:border-0">
+                    <span className="font-mono text-xs text-gray-700">{o.orderNo}</span>
+                    <span className="font-bold text-sm text-red-700">HKD {parseFloat(o.subtotalHkd || "0").toFixed(2)}</span>
                   </li>
                 ))}
               </ul>
             </div>
-            <div>
-              <Label>拒絕原因 *</Label>
+            {/* Reject reason */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">拒絕原因 <span className="text-red-500">*</span></Label>
               <Input
                 value={batchRejectReason}
                 onChange={e => setBatchRejectReason(e.target.value)}
                 placeholder="例：付款金額不符、截圖不清晰、收款方不符合"
-                className="mt-1"
+                className="border-gray-300 focus:border-red-500 focus:ring-red-200"
               />
             </div>
-            <p className="text-sm text-red-700 bg-red-50 rounded p-2">⚠️ 拒絕後系統會自動通知所有買家重新上傳截圖。</p>
+            {/* Warning */}
+            <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2.5 flex items-start gap-2">
+              <span className="text-red-500 text-sm mt-0.5">⚠️</span>
+              <p className="text-xs text-red-800">拒絕後系統會自動通知所有買家重新上傳截圖。</p>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBatchRejectDialog(false)}>取消</Button>
+          {/* Footer */}
+          <div className="px-5 pb-5 pt-2 flex gap-3 border-t border-gray-100">
+            <Button variant="outline" className="flex-1 border-gray-300 text-gray-700" onClick={() => setShowBatchRejectDialog(false)}>取消</Button>
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
               disabled={!batchRejectReason.trim() || batchRejectMutation.isPending}
               onClick={async () => {
                 const ids = Array.from(selectedIds);
@@ -3119,9 +3174,11 @@ function AlipayPendingTab() {
                 }
               }}
             >
-              {batchRejectMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />拒絕中...</> : `拒絕 ${selectedIds.size} 筆訂單`}
+              {batchRejectMutation.isPending
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />拒絕中...</>
+                : <><XCircle className="w-4 h-4 mr-2" />拒絕 {selectedIds.size} 筆訂單</>}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

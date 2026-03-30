@@ -15,6 +15,7 @@ import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import OrderChat from "@/components/OrderChat";
 import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown, Layers, ChevronRight, Pencil, EyeOff, Eye, Trash2, CheckSquare, Square, ChevronDown, Phone, Users, Info } from "lucide-react";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
+import { ImageLightbox } from "@/components/ImageLightbox";
 import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
@@ -186,6 +187,31 @@ const orderStatusLabel: Record<string, { label: string; color: string }> = {
   cancelled: { label: "已取消", color: "bg-red-100 text-red-800" },
   disputed: { label: "爭議中", color: "bg-orange-100 text-orange-800" },
 };
+
+// ─── SellerShippingProof ────────────────────────────────────────────────────
+function SellerShippingProof({ url }: { url: string }) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  return (
+    <>
+      <div className="mt-1.5">
+        <p className="text-xs text-indigo-600 font-medium mb-1">📷 出貨憑證</p>
+        <button
+          onClick={() => setLightboxOpen(true)}
+          className="relative group w-24 h-16 rounded-lg overflow-hidden border border-indigo-200 hover:border-[#06038d] transition-colors block"
+          title="點擊放大查看出貨憑證"
+        >
+          <img src={url} alt="出貨憑證" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+            <svg className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+            </svg>
+          </div>
+        </button>
+      </div>
+      <ImageLightbox src={url} alt="出貨憑證" isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} />
+    </>
+  );
+}
 
 // ─── SellerOrderStepper ─────────────────────────────────────────────────────
 function SellerOrderStepper({ item }: { item: any }) {
@@ -1725,7 +1751,14 @@ export default function SellerDashboard() {
                               })()}
                               {item.trackingNumber && <p>🚚 追蹤號：{item.trackingNumber}</p>}
                               {item.shippedAt && <p>📅 出貨日期：{new Date(item.shippedAt).toLocaleDateString('zh-HK')}</p>}
+                              {(item as any).shippingImageUrl && (
+                                <SellerShippingProof url={(item as any).shippingImageUrl} />
+                              )}
                             </div>
+                          )}
+                          {/* Shipping proof for shipped orders without shippingName */}
+                          {item.orderStatus === 'shipped' && !item.shippingName && (item as any).shippingImageUrl && (
+                            <SellerShippingProof url={(item as any).shippingImageUrl} />
                           )}
                           {/* Order Status Stepper - Collapsible */}
                           <SellerOrderStepper item={item} />

@@ -15,6 +15,7 @@ import { ArrowLeft, Package, CheckCircle, Truck, Clock, XCircle, AlertCircle,
   Copy, ExternalLink, ShieldCheck, CircleDot, Smartphone, FileImage, CheckSquare, XSquare, Hourglass
 } from "lucide-react";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
+import { ImageLightbox } from "@/components/ImageLightbox";
 import { Label } from "@/components/ui/label";
 
 type VerifyResult = {
@@ -696,6 +697,8 @@ export default function OrderDetail() {
   const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  // Shipping proof lightbox
+  const [shippingProofLightbox, setShippingProofLightbox] = useState(false);
   // Re-upload alipay proof state
   const [showReuploadDialog, setShowReuploadDialog] = useState(false);
   const [reuploadProofUrl, setReuploadProofUrl] = useState("");
@@ -1205,7 +1208,7 @@ export default function OrderDetail() {
             </div>
             <div
               className="relative rounded-lg overflow-hidden cursor-pointer group border border-indigo-200"
-              onClick={() => window.open((order as any).shippingImageUrl, '_blank')}
+              onClick={() => setShippingProofLightbox(true)}
             >
               <img
                 src={(order as any).shippingImageUrl}
@@ -1214,13 +1217,14 @@ export default function OrderDetail() {
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full shadow">
-                  點擊查看大圖
+                  點擊放大查看
                 </span>
               </div>
             </div>
             <p className="text-xs text-indigo-600 mt-2">賣家已上傳出貨憑證圖片，如有疑問請聯絡客服。</p>
           </div>
         )}
+        <ImageLightbox src={(order as any).shippingImageUrl ?? ""} alt="出貨憑證" isOpen={shippingProofLightbox} onClose={() => setShippingProofLightbox(false)} />
 
         {/* Product Info */}
         {listing && (
