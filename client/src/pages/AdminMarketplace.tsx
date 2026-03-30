@@ -14,6 +14,7 @@ import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, 
 import { Checkbox } from "@/components/ui/checkbox";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
+import { ImageLightbox } from "@/components/ImageLightbox";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
 
 const conditionLabel: Record<string, string> = {
@@ -1381,6 +1382,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
   const [adminNote, setAdminNote] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [shippingMethod, setShippingMethod] = useState("sf_express");
+  const [adminShippingProofLightbox, setAdminShippingProofLightbox] = useState(false);
   // Date range filter
   const [datePreset, setDatePreset] = useState<"all" | "this_month" | "last_month" | "custom">("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -2026,11 +2028,47 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                   <span className="font-mono text-xs text-gray-800">{selectedOrder.trackingNumber || '—'}</span>
                   <span className="text-gray-500">出貨日期</span>
                   <span className="text-gray-800">{selectedOrder.shippedAt ? new Date(selectedOrder.shippedAt).toLocaleDateString('zh-HK') : '—'}</span>
-                  {selectedOrder.autoCompleteAt && <><span className="text-gray-500">自動完成</span><span className="text-gray-800">{new Date(selectedOrder.autoCompleteAt).toLocaleDateString('zh-HK')}</span></>}
+                   {selectedOrder.autoCompleteAt && <><span className="text-gray-500">自動完成</span><span className="text-gray-800">{new Date(selectedOrder.autoCompleteAt).toLocaleDateString('zh-HK')}</span></>}
                 </div>
               </div>
 
-              {/* ── 爭議資訊（如有） ─────────────────── */}
+              {/* ── 出貨憑證（如有） ──────────────────────── */}
+              {selectedOrder.shippingImageUrl && (
+                <div className="rounded-lg border border-indigo-200 overflow-hidden">
+                  <div className="bg-indigo-50 px-4 py-2 border-b border-indigo-200">
+                    <p className="text-indigo-700 font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <Package className="w-3.5 h-3.5" />出貨憑證
+                    </p>
+                  </div>
+                  <div className="p-3 space-y-2">
+                    <p className="text-xs text-gray-500">賣家已上傳出貨憑證，可放大查看以核對物流資訊。</p>
+                    <button
+                      onClick={() => setAdminShippingProofLightbox(true)}
+                      className="relative group w-full rounded-lg overflow-hidden border border-indigo-200 hover:border-indigo-400 transition-colors block"
+                      title="點擊放大查看出貨憑證"
+                    >
+                      <img
+                        src={selectedOrder.shippingImageUrl}
+                        alt="出貨憑證"
+                        className="w-full max-h-52 object-contain bg-white"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full shadow">
+                          🔍 點擊放大查看
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+              <ImageLightbox
+                src={selectedOrder?.shippingImageUrl ?? ""}
+                alt="出貨憑證"
+                isOpen={adminShippingProofLightbox}
+                onClose={() => setAdminShippingProofLightbox(false)}
+              />
+
+              {/* ── 爭議資訊（如有） ───────────────── */}
               {selectedOrder.disputeOpenedAt && (
                 <div className="rounded-lg border border-red-200 overflow-hidden">
                   <div className="bg-red-50 px-4 py-2 border-b border-red-200">

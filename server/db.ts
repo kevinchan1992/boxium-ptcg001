@@ -3416,6 +3416,7 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
     shippingMethod: marketplaceOrders.shippingMethod,
     trackingNumber: marketplaceOrders.trackingNumber,
     shippedAt: marketplaceOrders.shippedAt,
+    shippingImageUrl: marketplaceOrders.shippingImageUrl,
     autoCompleteAt: marketplaceOrders.autoCompleteAt,
     payoutStatus: marketplaceOrders.payoutStatus,
     stripeSessionId: marketplaceOrders.stripeSessionId,
