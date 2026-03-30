@@ -3986,9 +3986,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
       // Accept: create order at offer price
       const listing = await getListingById(offer.listingId);
       if (!listing || listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架" });
-      // Atomic stock reservation — prevents overselling under concurrent requests
-      const reserved = await reserveListingStock(listing.id, 1);
-      if (!reserved) throw new TRPCError({ code: "BAD_REQUEST", message: "庫存不足，商品可能已被其他買家搶購" });
+      // NOTE: We do NOT reserve stock here. Stock is deducted only on payment success.
+      // Multiple buyers may have accepted offers; the first to complete payment wins (first-pay-first-served).
+      if ((listing.remainingQuantity ?? listing.quantity ?? 0) < 1) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "商品已售罄，無法接受出價" });
+      }
       const offerPrice = parseFloat(offer.offerPriceHkd as string);
       // Platform fee is deducted from seller's payout (buyer pays offer price only)
       // Platform-owned listings are exempt from platform fees
@@ -4508,12 +4510,14 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
-      // Check listing exists and is available
+      // Check listing exists and is active
       const [listing] = await db.select().from(marketplaceListings)
         .where(and(eq(marketplaceListings.id, input.listingId), eq(marketplaceListings.status, 'active')));
       if (!listing) throw new TRPCError({ code: 'NOT_FOUND', message: '商品不存在或已下架' });
-      // Check stock availability
-      if ((listing.quantity ?? 0) < 1) throw new TRPCError({ code: 'BAD_REQUEST', message: '此商品庫存不足，無法加入購物車' });
+      // Check stock availability (remainingQuantity is the live count)
+      if ((listing.remainingQuantity ?? listing.quantity ?? 0) < 1) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '此商品庫存不足，無法加入購物車' });
+      }
       // Cannot add own listing to cart
       if (listing.sellerId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: '不能將自己的商品加入購物車' });
       // Upsert (ignore if already in cart) — expiresAt = 14 days from now
@@ -4543,7 +4547,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .mutation(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
-      // Find all cart items where listing is not active
+      // Find all cart items where listing is no longer active
       const myCartItems = await db.select({ id: cartItems.id, listingId: cartItems.listingId })
         .from(cartItems).where(eq(cartItems.userId, ctx.user.id));
       if (myCartItems.length === 0) return { removed: 0 };
