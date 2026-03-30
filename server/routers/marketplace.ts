@@ -1590,6 +1590,16 @@ export const marketplaceRouter = router({
         orderStatus: "payment_received",
         alipayProofStatus: "approved",
       });
+      // Clear cart item for this listing after Alipay payment confirmed
+      try {
+        const db = await getDb();
+        if (db && order.listingId) {
+          await db.delete(cartItems).where(and(eq(cartItems.userId, order.buyerId), eq(cartItems.listingId, order.listingId)));
+          console.log(`[adminConfirmAlipay] Cleared cart item for buyer ${order.buyerId}, listing ${order.listingId}`);
+        }
+      } catch (_cartErr: any) {
+        console.warn('[adminConfirmAlipay] Failed to clear cart item:', _cartErr.message);
+      }
       // Notify buyer of payment confirmation
       await createNotification({
         userId: order.buyerId,
@@ -1655,6 +1665,16 @@ export const marketplaceRouter = router({
             paidAt: new Date(),
             orderStatus: "payment_received",
           });
+          // Clear cart item for this listing after Alipay payment confirmed
+          try {
+            const _batchDb = await getDb();
+            if (_batchDb && order.listingId) {
+              await _batchDb.delete(cartItems).where(and(eq(cartItems.userId, order.buyerId), eq(cartItems.listingId, order.listingId)));
+              console.log(`[adminBatchConfirmAlipay] Cleared cart item for buyer ${order.buyerId}, listing ${order.listingId}`);
+            }
+          } catch (_bCartErr: any) {
+            console.warn('[adminBatchConfirmAlipay] Failed to clear cart item:', _bCartErr.message);
+          }
           // Notify buyer of payment confirmation
           await createNotification({
             userId: order.buyerId,
