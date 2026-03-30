@@ -2244,7 +2244,7 @@ export default function SellerDashboard() {
 
       {/* ─── Reject Offer Dialog ──────────────────────────────────────────── */}
       <Dialog open={showRejectDialog} onOpenChange={(v) => { setShowRejectDialog(v); if (!v) { setRejectingOfferId(null); setRejectionReason(""); } }}>
-        <DialogContent className="max-w-sm bg-white text-gray-900">
+        <DialogContent bottomSheet className="sm:max-w-sm bg-white text-gray-900">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>拒絕出價</DialogTitle>
           </DialogHeader>
@@ -2951,7 +2951,7 @@ export default function SellerDashboard() {
 
       {/* Meetup Confirm Dialog */}
       <Dialog open={meetupConfirmDialog.open} onOpenChange={(open) => !open && setMeetupConfirmDialog({ open: false, orderId: 0, orderNo: '' })}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-amber-500" />

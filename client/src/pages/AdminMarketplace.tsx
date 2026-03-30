@@ -2265,7 +2265,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
 
       {/* Send message to buyer dialog */}
       <Dialog open={showSendMessageDialog} onOpenChange={setShowSendMessageDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-[#06038d]" />
@@ -2316,7 +2316,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       </Dialog>
       {/* Batch shipping dialog */}
       <Dialog open={showBatchShippingDialog} onOpenChange={setShowBatchShippingDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent bottomSheet className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="w-5 h-5 text-blue-600" />
@@ -2431,7 +2431,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
 
       {/* Batch payout dialog */}
       <Dialog open={showBatchPayoutDialog} onOpenChange={setShowBatchPayoutDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Banknote className="w-5 h-5 text-emerald-600" />
@@ -2475,7 +2475,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
 
       {/* Batch Note Dialog */}
       <Dialog open={showBatchNoteDialog} onOpenChange={setShowBatchNoteDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-amber-500" />
@@ -2527,7 +2527,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
 
       {/* Batch approve alipay proof dialog */}
       <Dialog open={showBatchApproveProofDialog} onOpenChange={setShowBatchApproveProofDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
@@ -2904,7 +2904,7 @@ function AlipayPendingTab() {
 
       {/* Single confirm dialog - Platform Style */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-md p-0 bg-white flex flex-col max-h-[90dvh] sm:max-h-[85vh]">
+        <DialogContent bottomSheet className="sm:max-w-md p-0 bg-white">
           {/* Header - sticky */}
           <div className="bg-[#06038d] px-5 py-4 flex-shrink-0">
             <div className="flex items-center gap-3">
@@ -2918,7 +2918,7 @@ function AlipayPendingTab() {
             </div>
           </div>
           {selectedOrder && (
-            <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1">
+            <div className="px-5 py-4 space-y-4">
               {/* Order summary card */}
               <div className="bg-[#06038d]/5 border border-[#06038d]/20 rounded-xl p-4">
                 <div className="grid grid-cols-2 gap-y-2 text-sm">
@@ -3025,8 +3025,8 @@ function AlipayPendingTab() {
               </div>
             </div>
           )}
-          {/* Footer - sticky */}
-          <div className="px-5 py-4 flex gap-3 flex-shrink-0 border-t border-gray-100 bg-white">
+          {/* Footer */}
+          <div className="px-5 pb-5 pt-2 flex gap-3 border-t border-gray-100">
             <Button variant="outline" className="flex-1 border-gray-300 text-gray-700" onClick={() => setSelectedOrder(null)}>取消</Button>
             <Button
               className="flex-1 bg-[#06038d] hover:bg-[#0804b8] text-white font-semibold"
@@ -3044,7 +3044,7 @@ function AlipayPendingTab() {
 
       {/* Reject payment dialog */}
       <Dialog open={!!rejectOrder} onOpenChange={(v) => { if (!v) { setRejectOrder(null); setRejectReason(""); } }}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader><DialogTitle className="flex items-center gap-2 text-red-700"><XCircle className="w-5 h-5" />拒絕支付寶 HK 付款</DialogTitle></DialogHeader>
           {rejectOrder && (
             <div className="space-y-4">
@@ -3082,7 +3082,7 @@ function AlipayPendingTab() {
 
       {/* Batch reject dialog */}
       <Dialog open={showBatchRejectDialog} onOpenChange={setShowBatchRejectDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader><DialogTitle className="text-red-700">批量拒絕支付寶 HK 付款</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
@@ -3127,7 +3127,7 @@ function AlipayPendingTab() {
 
       {/* Batch confirm dialog */}
       <Dialog open={showBatchDialog} onOpenChange={setShowBatchDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader><DialogTitle>批量確認支付寶 HK 收款</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
@@ -3523,7 +3523,7 @@ function SellersTab() {
 
       {/* Reject/Deactivate Dialog */}
       <Dialog open={rejectDialog.open} onOpenChange={(o) => setRejectDialog(d => ({ ...d, open: o }))}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>停用賣家帳號</DialogTitle>
           </DialogHeader>
@@ -3554,7 +3554,7 @@ function SellersTab() {
       </Dialog>
       {/* Suspend Dialog */}
       <Dialog open={suspendDialog.open} onOpenChange={(o) => setSuspendDialog(d => ({ ...d, open: o }))}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Shield className="w-5 h-5 text-orange-500" />凍結賣家帳號</DialogTitle>
           </DialogHeader>
@@ -3592,7 +3592,7 @@ function SellersTab() {
       </Dialog>
       {/* Unsuspend Dialog */}
       <Dialog open={unsuspendDialog.open} onOpenChange={(o) => setUnsuspendDialog(d => ({ ...d, open: o }))}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><ShieldOff className="w-5 h-5 text-blue-500" />解凍賣家帳號</DialogTitle>
           </DialogHeader>
@@ -3828,7 +3828,7 @@ function DisputesTab() {
 
       {/* Resolve Dispute Dialog */}
       <Dialog open={!!selectedDispute} onOpenChange={(o) => !o && setSelectedDispute(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Flag className="w-5 h-5 text-red-500" />

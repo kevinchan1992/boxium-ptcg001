@@ -91,7 +91,7 @@ function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: stri
       </Button>
 
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setAlipayStep(false); }}>
-        <DialogContent className="max-w-sm bg-white text-gray-900">
+        <DialogContent bottomSheet className="sm:max-w-sm bg-white text-gray-900">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>
               選擇付款方式
@@ -181,7 +181,7 @@ function BuyerCancelButton({ orderId, onSuccess }: { orderId: number; onSuccess:
         <XCircle className="w-3.5 h-3.5 mr-1" />取消訂單
       </Button>
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-sm bg-white text-gray-900">
+        <DialogContent bottomSheet className="sm:max-w-sm bg-white text-gray-900">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-gray-900">確認取消訂單</DialogTitle>
           </DialogHeader>
@@ -615,7 +615,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
 
       {/* Confirm Receipt Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>確認收貨</DialogTitle>
           </DialogHeader>
@@ -643,7 +643,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
 
       {/* Open Dispute Dialog */}
       <Dialog open={showDisputeDialog} onOpenChange={(open) => { setShowDisputeDialog(open); if (!open) { setDisputeReason(""); setDisputeEvidenceUrls([]); } }}>
-        <DialogContent className="max-w-md">
+        <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Flag className="w-5 h-5 text-red-500" />申請爭議
@@ -729,7 +729,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
 
       {/* Review Dialog */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-400" />評價賣家

@@ -1874,7 +1874,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
       )}
       {/* Confirm Receipt Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="max-w-sm bg-white text-gray-900">
+        <DialogContent bottomSheet className="sm:max-w-sm bg-white text-gray-900">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-gray-900">確認收貨</DialogTitle>
           </DialogHeader>
@@ -1890,7 +1890,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
       </Dialog>
       {/* Dispute Dialog */}
       <Dialog open={showDisputeDialog} onOpenChange={setShowDisputeDialog}>
-        <DialogContent className="max-w-sm bg-white text-gray-900">
+        <DialogContent bottomSheet className="sm:max-w-sm bg-white text-gray-900">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-red-700 flex items-center gap-2"><Flag className="w-5 h-5" />申請爭議</DialogTitle>
           </DialogHeader>
@@ -1938,7 +1938,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
       </Dialog>
       {/* Review Dialog */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Star className="w-5 h-5 text-yellow-400" />評價賣家</DialogTitle>
           </DialogHeader>

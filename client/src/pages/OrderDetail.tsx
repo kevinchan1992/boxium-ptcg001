@@ -1432,7 +1432,7 @@ export default function OrderDetail() {
 
       {/* Reupload Alipay Proof Dialog */}
       <Dialog open={showReuploadDialog} onOpenChange={(v) => { if (!v) { setShowReuploadDialog(false); setReuploadProofUrl(""); setReuploadVerifyResult(null); } }}>
-        <DialogContent className="max-w-sm bg-white text-gray-900">
+        <DialogContent bottomSheet className="sm:max-w-sm bg-white text-gray-900">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>
               {reuploadVerifyResult?.verified ? "截圖驗證成功" : "上傳支付寶 HK 截圖"}
