@@ -1014,10 +1014,16 @@ export const marketplaceRouter = router({
   deleteMyListing: protectedProcedure
     .input(z.object({ id: z.number().int() }))
     .mutation(async ({ ctx, input }) => {
+      const listing = await getListingById(input.id);
+      if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
+      // Admin can deactivate platform listings (sellerType='platform', sellerId=null)
+      if (ctx.user.role === 'admin' && listing.sellerType === 'platform') {
+        await updateListing(input.id, { status: "removed" });
+        return { success: true };
+      }
       const seller = await getSellerProfileByUserId(ctx.user.id);
       if (!seller) throw new TRPCError({ code: "FORBIDDEN" });
-      const listing = await getListingById(input.id);
-      if (!listing || listing.sellerId !== seller.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (listing.sellerId !== seller.id) throw new TRPCError({ code: "FORBIDDEN" });
       await updateListing(input.id, { status: "removed" });
       return { success: true };
     }),
@@ -1026,18 +1032,23 @@ export const marketplaceRouter = router({
   batchDeactivateListings: protectedProcedure
     .input(z.object({ ids: z.array(z.number().int()).min(1).max(100) }))
     .mutation(async ({ ctx, input }) => {
-      const seller = await getSellerProfileByUserId(ctx.user.id);
-      if (!seller) throw new TRPCError({ code: "FORBIDDEN" });
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      // Verify all listings belong to this seller
       const { marketplaceListings } = await import("../../drizzle/schema_new");
-      const { eq: eqFn, inArray: inArrayFn } = await import("drizzle-orm");
-      const listings = await db.select({ id: marketplaceListings.id, sellerId: marketplaceListings.sellerId })
+      const { inArray: inArrayFn } = await import("drizzle-orm");
+      const listings = await db.select({ id: marketplaceListings.id, sellerId: marketplaceListings.sellerId, sellerType: marketplaceListings.sellerType })
         .from(marketplaceListings)
         .where(inArrayFn(marketplaceListings.id, input.ids));
-      const unauthorized = listings.filter(l => l.sellerId !== seller.id);
-      if (unauthorized.length > 0) throw new TRPCError({ code: "FORBIDDEN", message: "部分商品不屬於你" });
+      // Admin can deactivate platform listings
+      if (ctx.user.role === 'admin') {
+        const nonPlatform = listings.filter(l => l.sellerType !== 'platform');
+        if (nonPlatform.length > 0) throw new TRPCError({ code: "FORBIDDEN", message: "管理員只能批量下架平台商品" });
+      } else {
+        const seller = await getSellerProfileByUserId(ctx.user.id);
+        if (!seller) throw new TRPCError({ code: "FORBIDDEN" });
+        const unauthorized = listings.filter(l => l.sellerId !== seller.id);
+        if (unauthorized.length > 0) throw new TRPCError({ code: "FORBIDDEN", message: "部分商品不屬於你" });
+      }
       // Batch update status to removed
       await db.update(marketplaceListings)
         .set({ status: "removed" })
@@ -1128,6 +1139,7 @@ export const marketplaceRouter = router({
       orderId: z.number().int(),
       trackingNo: z.string().min(1, "追蹤號碼為必填"),
       shippingMethod: z.string().min(1, "物流公司為必填"),
+      shippingImageUrl: z.string().url().optional(), // Optional shipping proof image
     }))
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
@@ -1149,6 +1161,7 @@ export const marketplaceRouter = router({
         shippedAt: new Date(),
         trackingNumber: input.trackingNo ?? null,
         shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hongkong_post" | "other" | "sf_cod" | "meetup" | null,
+        shippingImageUrl: input.shippingImageUrl ?? null,
         autoCompleteAt,
       });
       // Notify buyer of shipment
@@ -1174,6 +1187,32 @@ export const marketplaceRouter = router({
         console.warn("[Order] Shipped email failed:", emailErr.message);
       }
       return { success: true };
+    }),
+
+  // ============================================================
+  // SELLER - Upload Shipping Image
+  // ============================================================
+  uploadShippingImage: protectedProcedure
+    .input(z.object({
+      orderId: z.number().int(),
+      imageBase64: z.string(),
+      mimeType: z.string().default("image/jpeg"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await getMarketplaceOrderById(input.orderId);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      // Admin can upload for platform orders; seller must own the order
+      if (ctx.user.role === 'admin' && order.sellerType === 'platform') {
+        // Admin is allowed
+      } else {
+        const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+        if (!sellerProfile || order.sellerId !== sellerProfile.id) throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const buffer = Buffer.from(input.imageBase64, "base64");
+      const key = `shipping-proofs/${order.orderNo}-${Date.now()}.jpg`;
+      const { url } = await storagePut(key, buffer, input.mimeType);
+      await updateMarketplaceOrder(input.orderId, { shippingImageUrl: url });
+      return { url };
     }),
 
   // ============================================================

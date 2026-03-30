@@ -1,0 +1,38 @@
+{
+  "query": "SELECT id, title, status, sellerId, sellerType FROM marketplaceListings WHERE status IN ('active', 'reserved') LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, title, status, sellerId, sellerType FROM marketplaceListings WHERE status IN ('active', 'reserved') LIMIT 10;",
+  "rows": [
+    {
+      "id": "60001",
+      "title": "測試001",
+      "status": "reserved",
+      "sellerId": "1",
+      "sellerType": "seller"
+    },
+    {
+      "id": "270001",
+      "title": "Pikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)",
+      "status": "active",
+      "sellerId": "NULL",
+      "sellerType": "platform"
+    },
+    {
+      "id": "300002",
+      "title": "Charlotte Katakuri SEC [OP03-123] [EN](Promotional Card \"Championship 2024 Offline Regional Top 16\")",
+      "status": "active",
+      "sellerId": "1",
+      "sellerType": "seller"
+    },
+    {
+      "id": "300003",
+      "title": "Pikachu P [PCG-P 123](Promotional Cards \"Mcdonald's Original February 2006\")",
+      "status": "reserved",
+      "sellerId": "NULL",
+      "sellerType": "platform"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tstatus\tsellerId\tsellerType\n60001\t測試001\treserved\t1\tseller\n270001\tPikachu Munch Exhibition: PROMO[SM-P 288](SM-P Promotional cards)\tactive\tNULL\tplatform\n300002\tCharlotte Katakuri SEC [OP03-123] [EN](Promotional Card \"Championship 2024 Offline Regional Top 16\")\tactive\t1\tseller\n300003\tPikachu P [PCG-P 123](Promotional Cards \"Mcdonald's Original February 2006\")\treserved\tNULL\tplatform\n",
+  "stderr": "",
+  "execution_time_ms": 404
+}

@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, userId, isActive, stripeConnectStatus FROM sellerProfiles LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, userId, isActive, stripeConnectStatus FROM sellerProfiles LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "8",
+      "isActive": "1",
+      "stripeConnectStatus": "active"
+    },
+    {
+      "id": "60001",
+      "userId": "330011",
+      "isActive": "1",
+      "stripeConnectStatus": "pending"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tisActive\tstripeConnectStatus\n1\t8\t1\tactive\n60001\t330011\t1\tpending\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}

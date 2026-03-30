@@ -3560,6 +3560,7 @@ export async function getSellerOrderItems(sellerId: number) {
     disputeResolution: marketplaceOrders.disputeResolution,
     disputeResolvedAt: marketplaceOrders.disputeResolvedAt,
     buyerPhone: marketplaceOrders.buyerPhone,
+    shippingImageUrl: marketplaceOrders.shippingImageUrl,
     createdAt: marketplaceOrders.createdAt,
     updatedAt: marketplaceOrders.updatedAt,
     title: marketplaceListings.title,
@@ -3604,7 +3605,8 @@ export async function getPlatformOrders() {
     shippedAt: marketplaceOrders.shippedAt,
     autoCompleteAt: marketplaceOrders.autoCompleteAt,
     payoutStatus: marketplaceOrders.payoutStatus,
-    buyerPhone: marketplaceOrders.buyerPhone,
+     buyerPhone: marketplaceOrders.buyerPhone,
+    shippingImageUrl: marketplaceOrders.shippingImageUrl,
     createdAt: marketplaceOrders.createdAt,
     updatedAt: marketplaceOrders.updatedAt,
     title: marketplaceListings.title,
@@ -3621,7 +3623,6 @@ export async function getPlatformOrders() {
     .orderBy(desc(marketplaceOrders.createdAt));
   return rows;
 }
-
 export async function getPendingPayoutItems() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

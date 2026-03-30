@@ -2902,80 +2902,143 @@ function AlipayPendingTab() {
         </div>
       )}
 
-      {/* Single confirm dialog */}
+      {/* Single confirm dialog - Platform Style */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>確認支付寶 HK 收款</DialogTitle></DialogHeader>
-          {selectedOrder && (
-            <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-                <p>訂單：<strong>{selectedOrder.orderNo}</strong></p>
-                <p>金額：<strong>HKD {parseFloat(selectedOrder.subtotalHkd || "0").toFixed(2)}</strong></p>
-                {selectedOrder.shippingName && <p>買家：<strong>{selectedOrder.shippingName}</strong></p>}
+        <DialogContent className="max-w-md p-0 overflow-hidden bg-white">
+          {/* Header */}
+          <div className="bg-[#06038d] px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-white" />
               </div>
+              <div>
+                <h2 className="text-base font-bold text-white">確認支付寶 HK 收款</h2>
+                {selectedOrder && <p className="text-xs text-white/70 mt-0.5">訂單 {selectedOrder.orderNo}</p>}
+              </div>
+            </div>
+          </div>
+          {selectedOrder && (
+            <div className="px-5 py-4 space-y-4">
+              {/* Order summary card */}
+              <div className="bg-[#06038d]/5 border border-[#06038d]/20 rounded-xl p-4">
+                <div className="grid grid-cols-2 gap-y-2 text-sm">
+                  <span className="text-gray-500">訂單編號</span>
+                  <span className="font-mono font-semibold text-[#06038d] text-right">{selectedOrder.orderNo}</span>
+                  <span className="text-gray-500">收款金額</span>
+                  <span className="font-bold text-lg text-[#06038d] text-right">HKD {parseFloat(selectedOrder.subtotalHkd || "0").toFixed(2)}</span>
+                  {selectedOrder.shippingName && (
+                    <>
+                      <span className="text-gray-500">買家</span>
+                      <span className="font-medium text-gray-800 text-right">{selectedOrder.shippingName}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Proof status badge */}
               {selectedOrder.alipayProofStatus && (
-                <div className={`rounded-lg px-3 py-2 text-xs font-medium flex items-center gap-2 ${
-                  selectedOrder.alipayProofStatus === "pending_review" ? "bg-amber-50 border border-amber-200 text-amber-800" :
-                  selectedOrder.alipayProofStatus === "approved" ? "bg-green-50 border border-green-200 text-green-800" :
-                  "bg-red-50 border border-red-200 text-red-800"
+                <div className={`rounded-lg px-3 py-2 text-xs font-semibold flex items-center gap-2 ${
+                  selectedOrder.alipayProofStatus === "pending_review" ? "bg-amber-50 border border-amber-300 text-amber-800" :
+                  selectedOrder.alipayProofStatus === "approved" ? "bg-green-50 border border-green-300 text-green-800" :
+                  "bg-red-50 border border-red-300 text-red-800"
                 }`}>
                   {selectedOrder.alipayProofStatus === "pending_review" ? "⏳ 截圖待審核" :
                    selectedOrder.alipayProofStatus === "approved" ? "✅ 截圖已核准" : "❌ 截圖已拒絕"}
                 </div>
               )}
+
+              {/* Proof image */}
               {selectedOrder.alipayProofImageUrl && (
-                <img src={selectedOrder.alipayProofImageUrl} alt="付款截圖" className="rounded-lg border max-h-48 object-contain w-full" />
+                <div className="rounded-xl overflow-hidden border-2 border-[#06038d]/20 bg-gray-50">
+                  <div className="px-3 py-1.5 bg-[#06038d]/5 border-b border-[#06038d]/10">
+                    <p className="text-xs font-semibold text-[#06038d]">📸 買家付款截圖</p>
+                  </div>
+                  <img src={selectedOrder.alipayProofImageUrl} alt="付款截圖" className="max-h-52 object-contain w-full p-2" />
+                </div>
               )}
-                  {selectedOrder.alipayProofImageUrl && !selectedOrder.aiVerificationResult && (
+
+              {/* AI verify button */}
+              {selectedOrder.alipayProofImageUrl && !selectedOrder.aiVerificationResult && (
                 aiVerifyingIds.has(selectedOrder.id) ? (
-                  <div className="rounded-lg p-3 text-sm border bg-indigo-50 border-indigo-200 flex items-center gap-2 text-indigo-700">
+                  <div className="rounded-xl p-3 text-sm border border-indigo-200 bg-indigo-50 flex items-center gap-2 text-indigo-700">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     AI 核對中，請稍候...
                   </div>
                 ) : (
                   <button onClick={() => handleAiVerify(selectedOrder.id)}
-                    className="w-full rounded-lg p-3 text-sm border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer flex items-center gap-2 font-medium">
+                    className="w-full rounded-xl p-3 text-sm border-2 border-dashed border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer flex items-center justify-center gap-2 font-medium">
                     <Bot className="w-4 h-4" />點擊 AI 核對付款截圖
                   </button>
                 )
               )}
+
+              {/* AI result */}
               {selectedOrder.aiVerificationResult && (() => {
                 try {
                   const ai = JSON.parse(selectedOrder.aiVerificationResult);
                   const confidenceLabel = ai.confidence === 'high' ? '高可信度' : ai.confidence === 'medium' ? '中可信度' : ai.confidence === 'low' ? '低可信度（建議人工核對）' : '';
                   return (
-                    <div className={`rounded-lg p-3 text-sm border ${
+                    <div className={`rounded-xl p-3 text-sm border-2 ${
                       ai.verified ? "bg-green-50 border-green-300" : "bg-red-50 border-red-300"
                     }`}>
-                      <div className="flex items-center gap-2 font-semibold mb-1">
+                      <div className="flex items-center gap-2 font-bold mb-2">
                         {ai.verified
                           ? <span className="text-green-700">✅ AI 驗證：付款截圖有效</span>
                           : <span className="text-red-700">⚠️ AI 驗證：對比失敗</span>
                         }
                         {confidenceLabel && (
-                          <span className="text-xs text-gray-500 ml-auto">{confidenceLabel}</span>
+                          <span className="text-xs text-gray-500 ml-auto font-normal">{confidenceLabel}</span>
                         )}
                       </div>
-                      {ai.detectedAmount && <p className="text-xs text-gray-600">偵測金額: HKD {ai.detectedAmount}</p>}
-                      {ai.detectedPayee && <p className="text-xs text-gray-600">偵測收款方: {ai.detectedPayee}</p>}
-                      {ai.detectedStatus && <p className="text-xs text-gray-600">偵測狀態: {ai.detectedStatus}</p>}
-                      {ai.reason && <p className="text-xs text-gray-600 mt-1 border-t border-gray-200 pt-1">{ai.reason}</p>}
+                      <div className="space-y-1">
+                        {ai.detectedAmount && <p className="text-xs text-gray-600">💰 偵測金額: <strong>HKD {ai.detectedAmount}</strong></p>}
+                        {ai.detectedPayee && <p className="text-xs text-gray-600">🏦 偵測收款方: <strong>{ai.detectedPayee}</strong></p>}
+                        {ai.detectedStatus && <p className="text-xs text-gray-600">📊 偵測狀態: <strong>{ai.detectedStatus}</strong></p>}
+                        {ai.reason && <p className="text-xs text-gray-600 mt-1.5 border-t border-gray-200 pt-1.5">{ai.reason}</p>}
+                      </div>
                     </div>
                   );
                 } catch { return null; }
               })()}
-              <div><Label>備注（可選）</Label><Input value={note} onChange={e => setNote(e.target.value)} placeholder="例：已在支付寶後台核對，交易號 xxxx" /></div>
-              <p className="text-sm text-green-700 bg-green-50 rounded p-2">ℹ️ 確認後系統會自動發送通知給買家和賣家。</p>
-              <p className="text-sm text-amber-700 bg-amber-50 rounded p-2">請確認已在支付寶 HK 商戶後台核對到此筆收款後，再點擊確認。</p>
+
+              {/* Note input */}
+              <div className="space-y-1.5">
+                <Label className="text-gray-700 font-medium text-sm">備注（可選）</Label>
+                <Input
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  placeholder="例：已在支付寶後台核對，交易號 xxxx"
+                  className="bg-white border-gray-300 text-gray-900"
+                />
+              </div>
+
+              {/* Notices */}
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5">
+                  <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-amber-800">請確認已在支付寶 HK 商戶後台核對到此筆收款後，再點擊確認。</p>
+                </div>
+                <div className="flex items-start gap-2 rounded-xl bg-[#06038d]/5 border border-[#06038d]/20 px-3 py-2.5">
+                  <CheckCircle className="w-4 h-4 text-[#06038d] mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-[#06038d]">確認後系統會自動發送通知給買家和賣家。</p>
+                </div>
+              </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedOrder(null)}>取消</Button>
-            <Button className="bg-green-600 hover:bg-green-700 text-white" disabled={confirmMutation.isPending}
-              onClick={() => confirmMutation.mutate({ orderId: selectedOrder.id, note })}>
-              {confirmMutation.isPending ? "確認中..." : "確認已收款"}
+          {/* Footer */}
+          <div className="px-5 pb-5 flex gap-3">
+            <Button variant="outline" className="flex-1 border-gray-300 text-gray-700" onClick={() => setSelectedOrder(null)}>取消</Button>
+            <Button
+              className="flex-1 bg-[#06038d] hover:bg-[#0804b8] text-white font-semibold"
+              disabled={confirmMutation.isPending}
+              onClick={() => confirmMutation.mutate({ orderId: selectedOrder!.id, note })}>
+              {confirmMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />確認中...</>
+              ) : (
+                <><CheckCircle className="w-4 h-4 mr-2" />確認已收款</>
+              )}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

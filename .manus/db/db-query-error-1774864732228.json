@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE `marketplaceOrders` ADD COLUMN `shippingImageUrl` TEXT NULL AFTER `disputeDeadlineAt`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute ALTER TABLE `marketplaceOrders` ADD COLUMN `shippingImageUrl` TEXT NULL AFTER `disputeDeadlineAt`;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1060 (42S21) at line 1: Duplicate column name 'shippingImageUrl'"
+  ]
+}

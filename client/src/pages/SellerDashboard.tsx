@@ -804,7 +804,8 @@ export default function SellerDashboard() {
   }, [sellerProfile?.id]);
 
   const [shipDialog, setShipDialog] = useState<{ open: boolean; orderId: number; orderNo: string; shippingName?: string; shippingPhone?: string; shippingAddress?: string }>({ open: false, orderId: 0, orderNo: "" });
-  const [shipForm, setShipForm] = useState({ shippingMethod: "sf_express", trackingNumber: "" });
+  const [shipForm, setShipForm] = useState({ shippingMethod: "sf_express", trackingNumber: "", shippingImageUrl: "" });
+  const [shipImageUploading, setShipImageUploading] = useState(false);
   const CARRIERS = [
     { value: "sf_express", label: "順豐速運 (SF Express)", trackingUrl: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/" },
     { value: "hkpost", label: "香港郵政 (HK Post)", trackingUrl: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
@@ -824,11 +825,12 @@ export default function SellerDashboard() {
     },
     onError: (e) => toast.error(e.message),
   });
+  const uploadShippingImageMutation = trpc.marketplace.uploadShippingImage.useMutation();
   const markShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
     onSuccess: () => {
       toast.success("已標記為已寄出，已通知買家");
       setShipDialog({ open: false, orderId: 0, orderNo: "" });
-      setShipForm({ shippingMethod: "", trackingNumber: "" });
+      setShipForm({ shippingMethod: "", trackingNumber: "", shippingImageUrl: "" });
       utils.marketplace.getMySellerOrders.invalidate();
     },
     onError: (e) => toast.error(e.message),
@@ -1797,7 +1799,7 @@ export default function SellerDashboard() {
                                       shippingPhone: item.shippingPhone ?? undefined,
                                       shippingAddress: item.shippingAddress ?? undefined,
                                     });
-                                    setShipForm({ shippingMethod: "sf_express", trackingNumber: "" });
+                                    setShipForm({ shippingMethod: "sf_express", trackingNumber: "", shippingImageUrl: "" });
                                   }}>
                                   <Package className="w-3 h-3 mr-1" />填寫出貨資料
                                 </Button>
@@ -2826,16 +2828,16 @@ export default function SellerDashboard() {
 
       {/* Ship Dialog */}
       <Dialog open={shipDialog.open} onOpenChange={(o) => setShipDialog(d => ({ ...d, open: o }))}>
-        <DialogContent bottomSheet className="sm:max-w-sm">
+        <DialogContent bottomSheet className="sm:max-w-md bg-white text-gray-900">
           <DialogHeader>
-            <DialogTitle>填寫出貨資料</DialogTitle>
+            <DialogTitle className="text-[#06038d] font-bold">填寫出貨資料</DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            {shipDialog.orderNo && <p className="text-xs text-muted-foreground">訂單號：{shipDialog.orderNo}</p>}
+            {shipDialog.orderNo && <p className="text-xs text-gray-500">訂單號：<span className="font-mono font-semibold text-[#06038d]">{shipDialog.orderNo}</span></p>}
             {/* 買家收件資訊 */}
             {shipDialog.shippingName && (
-              <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 space-y-1">
-                <p className="text-xs font-semibold text-blue-700 mb-1">📦 買家收件資訊</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 space-y-1">
+                <p className="text-xs font-semibold text-[#06038d] mb-1">📦 買家收件資訊</p>
                 <p className="text-xs text-gray-700">收件人：{shipDialog.shippingName}{shipDialog.shippingPhone ? ` · ${shipDialog.shippingPhone}` : ""}</p>
                 {shipDialog.shippingAddress && (
                   <p className="text-xs text-gray-700">地址：{(() => {
@@ -2853,32 +2855,92 @@ export default function SellerDashboard() {
               </div>
             )}
             <div className="space-y-1.5">
-              <Label>物流公司 <span className="text-red-500">*</span></Label>
+              <Label className="text-gray-800 font-medium">物流公司 <span className="text-red-500">*</span></Label>
               <Select value={shipForm.shippingMethod} onValueChange={(v) => setShipForm(f => ({ ...f, shippingMethod: v }))}>
-                <SelectTrigger><SelectValue placeholder="選擇物流公司" /></SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-300 text-gray-900"><SelectValue placeholder="選擇物流公司" /></SelectTrigger>
                 <SelectContent>
                   {CARRIERS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>追蹤號碼 <span className="text-red-500">*</span></Label>
+              <Label className="text-gray-800 font-medium">追蹤號碼 <span className="text-red-500">*</span></Label>
               <Input
+                className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
                 placeholder="例：SF1234567890"
                 value={shipForm.trackingNumber}
                 onChange={(e) => setShipForm(f => ({ ...f, trackingNumber: e.target.value }))}
               />
             </div>
+            {/* Shipping proof image upload */}
+            <div className="space-y-1.5">
+              <Label className="text-gray-800 font-medium">出貨憑證圖片（可選）</Label>
+              {shipForm.shippingImageUrl ? (
+                <div className="relative">
+                  <img src={shipForm.shippingImageUrl} alt="出貨憑證" className="w-full max-h-40 object-contain rounded-lg border border-[#06038d]/30 bg-gray-50" />
+                  <button
+                    type="button"
+                    onClick={() => setShipForm(f => ({ ...f, shippingImageUrl: "" }))}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                  >✕</button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#06038d]/40 rounded-lg cursor-pointer bg-blue-50/50 hover:bg-blue-50 transition-colors">
+                  {shipImageUploading ? (
+                    <div className="flex items-center gap-2 text-[#06038d]">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-xs">上傳中...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 text-[#06038d]">
+                      <ImagePlus className="w-6 h-6" />
+                      <span className="text-xs font-medium">點擊上傳出貨照片</span>
+                      <span className="text-xs text-gray-400">支援 JPG、PNG（最大 10MB）</span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={shipImageUploading}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 10 * 1024 * 1024) { toast.error("圖片大小不能超過 10MB"); return; }
+                      setShipImageUploading(true);
+                      try {
+                        const reader = new FileReader();
+                        reader.onload = async (ev) => {
+                          const base64 = (ev.target?.result as string).split(',')[1];
+                          const result = await uploadShippingImageMutation.mutateAsync({
+                            orderId: shipDialog.orderId,
+                            imageBase64: base64,
+                            mimeType: file.type,
+                          });
+                          setShipForm(f => ({ ...f, shippingImageUrl: result.url }));
+                          setShipImageUploading(false);
+                        };
+                        reader.readAsDataURL(file);
+                      } catch (err: any) {
+                        toast.error(err.message || "上傳失敗");
+                        setShipImageUploading(false);
+                      }
+                    }}
+                  />
+                </label>
+              )}
+            </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShipDialog(d => ({ ...d, open: false }))}>取消</Button>
+            <Button variant="outline" className="border-red-400 text-red-600 hover:bg-red-50" onClick={() => setShipDialog(d => ({ ...d, open: false }))}>取消</Button>
             <Button
               className="bg-[#06038d] hover:bg-[#0804b8] text-white"
-              disabled={!shipForm.shippingMethod || !shipForm.trackingNumber || markShippedMutation.isPending}
+              disabled={!shipForm.shippingMethod || !shipForm.trackingNumber || markShippedMutation.isPending || shipImageUploading}
               onClick={() => markShippedMutation.mutate({
                 orderId: shipDialog.orderId,
                 shippingMethod: shipForm.shippingMethod,
                 trackingNo: shipForm.trackingNumber,
+                shippingImageUrl: shipForm.shippingImageUrl || undefined,
               })}
             >
               {markShippedMutation.isPending ? "處理中..." : "確認出貨"}

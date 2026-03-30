@@ -840,6 +840,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   disputeResolutionHistory: text("disputeResolutionHistory"), // JSON array of {timestamp, outcome, resolution, adminNote}
   disputePriority: mysqlEnum("disputePriority", ["high", "medium", "low"]).default("medium"),
   disputeDeadlineAt: timestamp("disputeDeadlineAt"), // P2 Fix #10: SLA deadline for dispute resolution
+  shippingImageUrl: text("shippingImageUrl"), // S3 URL of shipping proof photo uploaded by seller
   shippingReminderSentAt: timestamp("shippingReminderSentAt"), // tracks when overdue reminder was sent
   paymentReminderSentAt: timestamp("paymentReminderSentAt"), // tracks when 12-hour payment reminder was sent
   confirmReceiptReminderSentAt: timestamp("confirmReceiptReminderSentAt"), // tracks when 7-day confirm receipt reminder was sent
