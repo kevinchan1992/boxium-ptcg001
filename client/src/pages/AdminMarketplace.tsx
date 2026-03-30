@@ -4587,6 +4587,79 @@ function OffersTab() {
 // ============================================================
 // PAYOUTS TAB
 // ============================================================
+
+// ─── Order Status Stepper (Payout Card) ───────────────────────────────────────────────
+const PAYOUT_ORDER_STEPS: { key: string; label: string; icon: string }[] = [
+  { key: 'payment_received', label: '已付款', icon: '💳' },
+  { key: 'processing',       label: '處理中', icon: '⚙️' },
+  { key: 'shipped',          label: '已發貨', icon: '📦' },
+  { key: 'delivered',        label: '已收貨', icon: '✅' },
+  { key: 'payout_pending',   label: '待放款', icon: '⏳' },
+  { key: 'payout_done',      label: '已放款', icon: '💰' },
+];
+
+function resolvePayoutStepKey(orderStatus: string, payoutStatus: string): string {
+  if (payoutStatus === 'paid' || payoutStatus === 'completed') return 'payout_done';
+  if (orderStatus === 'completed' || orderStatus === 'delivered') return 'payout_pending';
+  if (orderStatus === 'shipped') return 'shipped';
+  if (orderStatus === 'processing') return 'processing';
+  return 'payment_received';
+}
+
+function OrderStatusStepper({ orderStatus, payoutStatus }: { orderStatus: string; payoutStatus: string }) {
+  const isCancelled = ['cancelled', 'refunded', 'disputed'].includes(orderStatus);
+  const cancelMeta: Record<string, { label: string; cls: string; icon: string }> = {
+    cancelled: { label: '訂單已取消', cls: 'bg-red-50 border-red-200 text-red-700', icon: '🚫' },
+    refunded:  { label: '訂單已退款', cls: 'bg-orange-50 border-orange-200 text-orange-700', icon: '💸' },
+    disputed:  { label: '爭議處理中', cls: 'bg-yellow-50 border-yellow-200 text-yellow-800', icon: '⚠️' },
+  };
+  if (isCancelled) {
+    const m = cancelMeta[orderStatus] ?? { label: orderStatus, cls: 'bg-gray-50 border-gray-200 text-gray-600', icon: '❓' };
+    return (
+      <div className={`mx-4 mb-3 mt-1 px-3 py-2 rounded-lg border text-xs font-medium flex items-center gap-2 ${m.cls}`}>
+        <span>{m.icon}</span><span>訂單狀態：{m.label}</span>
+      </div>
+    );
+  }
+  const currentKey = resolvePayoutStepKey(orderStatus, payoutStatus);
+  const currentIdx = PAYOUT_ORDER_STEPS.findIndex(s => s.key === currentKey);
+  return (
+    <div className="mx-4 mb-3 mt-1">
+      <div className="flex items-center">
+        {PAYOUT_ORDER_STEPS.map((step, idx) => {
+          const isDone    = idx < currentIdx;
+          const isCurrent = idx === currentIdx;
+          const isLast    = idx === PAYOUT_ORDER_STEPS.length - 1;
+          return (
+            <React.Fragment key={step.key}>
+              <div className="flex flex-col items-center flex-shrink-0">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
+                  isDone    ? 'bg-green-500 border-green-500 text-white' :
+                  isCurrent ? 'bg-[#06038d] border-[#06038d] text-white ring-2 ring-[#06038d]/30' :
+                              'bg-white border-gray-300 text-gray-400'
+                }`}>
+                  {isDone ? '✓' : <span className="text-[11px]">{step.icon}</span>}
+                </div>
+                <span className={`text-[10px] mt-0.5 font-medium whitespace-nowrap ${
+                  isDone    ? 'text-green-600' :
+                  isCurrent ? 'text-[#06038d] font-bold' :
+                              'text-gray-400'
+                }`}>{step.label}</span>
+              </div>
+              {!isLast && (
+                <div className={`flex-1 h-0.5 mx-1 mb-3.5 rounded-full ${
+                  idx < currentIdx ? 'bg-green-400' : 'bg-gray-200'
+                }`} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────────
+
 const payoutStatusBadge: Record<string, { label: string; color: string }> = {
   pending: { label: "待放款", color: "bg-yellow-100 text-yellow-800" },
   processing: { label: "處理中", color: "bg-blue-100 text-blue-800" },
@@ -4675,6 +4748,10 @@ function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () =>
           <span className="text-xs text-white/70">{new Date(o.createdAt).toLocaleDateString('zh-HK')}</span>
           <span className="text-sm text-yellow-300 font-bold">賣家應收：HKD {sellerReceivable.toFixed(2)}</span>
         </div>
+      </div>
+      {/* Order Status Stepper */}
+      <div className="bg-gray-50 border-b border-gray-100 py-2">
+        <OrderStatusStepper orderStatus={o.orderStatus ?? 'payment_received'} payoutStatus={o.payoutStatus ?? 'pending'} />
       </div>
       {/* Order Body */}
       <div className="p-4 bg-white grid grid-cols-1 lg:grid-cols-3 gap-4">
