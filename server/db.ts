@@ -4227,8 +4227,15 @@ export async function getSalesReport(months: number = 12) {
     totalOrders: sql<number>`count(*)`,
     platformSales: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'platform' THEN subtotalHkd ELSE 0 END), 0)`,
     sellerSales: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'seller' THEN subtotalHkd ELSE 0 END), 0)`,
+    sellerReceivable: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'seller' THEN sellerReceivableHkd ELSE 0 END), 0)`,
     stripeCount: sql<number>`SUM(CASE WHEN paymentMethod = 'stripe' THEN 1 ELSE 0 END)`,
     alipayCount: sql<number>`SUM(CASE WHEN paymentMethod = 'alipay_hk' THEN 1 ELSE 0 END)`,
+    stripeSales: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'stripe' THEN subtotalHkd ELSE 0 END), 0)`,
+    alipaySales: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'alipay_hk' THEN subtotalHkd ELSE 0 END), 0)`,
+    stripePlatformSales: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'stripe' AND sellerType = 'platform' THEN subtotalHkd ELSE 0 END), 0)`,
+    alipayPlatformSales: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'alipay_hk' AND sellerType = 'platform' THEN subtotalHkd ELSE 0 END), 0)`,
+    stripeSellerFees: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'stripe' AND sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
+    alipaySellerFees: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'alipay_hk' AND sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
   }).from(marketplaceOrders).where(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]));
 
   // Overall refund/cancel totals
@@ -4238,22 +4245,40 @@ export async function getSalesReport(months: number = 12) {
     refundedAmount: sql<string>`COALESCE(SUM(CASE WHEN orderStatus = 'refunded' THEN subtotalHkd ELSE 0 END), 0)`,
   }).from(marketplaceOrders).where(inArray(marketplaceOrders.orderStatus, refundCancelStatuses as any[]));
 
+  // Payout totals: how much has been paid out to sellers, how much is pending
+  const [payoutStats] = await db.select({
+    paidOutAmount: sql<string>`COALESCE(SUM(CASE WHEN payoutStatus = 'paid' THEN sellerReceivableHkd ELSE 0 END), 0)`,
+    pendingPayoutAmount: sql<string>`COALESCE(SUM(CASE WHEN payoutStatus IN ('processing', 'pending') AND sellerType = 'seller' THEN sellerReceivableHkd ELSE 0 END), 0)`,
+    pendingPayoutCount: sql<number>`SUM(CASE WHEN payoutStatus IN ('processing', 'pending') AND sellerType = 'seller' THEN 1 ELSE 0 END)`,
+    paidOutCount: sql<number>`SUM(CASE WHEN payoutStatus = 'paid' THEN 1 ELSE 0 END)`,
+  }).from(marketplaceOrders).where(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]));
+
   const totalSalesHkd = parseFloat(overall?.totalSales ?? '0');
   const totalRefundedHkd = parseFloat(overallRefund?.refundedAmount ?? '0');
+  const totalFeesHkd = parseFloat(overall?.totalFees ?? '0');
+  const platformSalesHkd = parseFloat(overall?.platformSales ?? '0');
+  // Platform income = platform direct sales + C2C fees
+  const platformIncomeHkd = platformSalesHkd + totalFeesHkd;
+  // Platform payout (outcome) = seller receivable paid out + refunds
+  const paidOutHkd = parseFloat(payoutStats?.paidOutAmount ?? '0');
+  const pendingPayoutHkd = parseFloat(payoutStats?.pendingPayoutAmount ?? '0');
 
   return {
     monthly: monthlyRows.map(r => {
       const refund = refundMap.get(r.yearMonth) ?? { refundedCount: 0, cancelledCount: 0, refundedAmountHkd: 0 };
       const salesHkd = parseFloat(r.totalSales ?? '0');
+      const feesHkd = parseFloat(r.sellerFees ?? '0');
+      const platSalesHkd = parseFloat(r.platformSales ?? '0');
       return {
         yearMonth: r.yearMonth,
         totalSalesHkd: salesHkd,
         orderCount: Number(r.orderCount ?? 0),
         stripeCount: Number(r.stripeCount ?? 0),
         alipayCount: Number(r.alipayCount ?? 0),
-        platformSalesHkd: parseFloat(r.platformSales ?? '0'),
+        platformSalesHkd: platSalesHkd,
         sellerSalesHkd: parseFloat(r.sellerSales ?? '0'),
-        sellerFeesHkd: parseFloat(r.sellerFees ?? '0'),
+        sellerFeesHkd: feesHkd,
+        platformIncomeHkd: platSalesHkd + feesHkd,
         refundedCount: refund.refundedCount,
         cancelledCount: refund.cancelledCount,
         refundedAmountHkd: refund.refundedAmountHkd,
@@ -4262,16 +4287,31 @@ export async function getSalesReport(months: number = 12) {
     }),
     overall: {
       totalSalesHkd,
-      totalFeesHkd: parseFloat(overall?.totalFees ?? '0'),
+      totalFeesHkd,
       totalOrders: Number(overall?.totalOrders ?? 0),
-      platformSalesHkd: parseFloat(overall?.platformSales ?? '0'),
+      platformSalesHkd,
       sellerSalesHkd: parseFloat(overall?.sellerSales ?? '0'),
+      sellerReceivableTotalHkd: parseFloat(overall?.sellerReceivable ?? '0'),
       stripeCount: Number(overall?.stripeCount ?? 0),
       alipayCount: Number(overall?.alipayCount ?? 0),
+      stripeSalesHkd: parseFloat(overall?.stripeSales ?? '0'),
+      alipaySalesHkd: parseFloat(overall?.alipaySales ?? '0'),
+      stripePlatformSalesHkd: parseFloat(overall?.stripePlatformSales ?? '0'),
+      alipayPlatformSalesHkd: parseFloat(overall?.alipayPlatformSales ?? '0'),
+      stripeSellerFeesHkd: parseFloat(overall?.stripeSellerFees ?? '0'),
+      alipaySellerFeesHkd: parseFloat(overall?.alipaySellerFees ?? '0'),
       refundedCount: Number(overallRefund?.refundedCount ?? 0),
       cancelledCount: Number(overallRefund?.cancelledCount ?? 0),
       refundedAmountHkd: totalRefundedHkd,
       netRevenueHkd: totalSalesHkd - totalRefundedHkd,
+      // Platform income/outcome
+      platformIncomeHkd,
+      paidOutHkd,
+      pendingPayoutHkd,
+      pendingPayoutCount: Number(payoutStats?.pendingPayoutCount ?? 0),
+      paidOutCount: Number(payoutStats?.paidOutCount ?? 0),
+      // Net platform profit = income - refunds
+      platformNetProfitHkd: platformIncomeHkd - totalRefundedHkd,
     },
   };
 }

@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { ImageLightbox } from "@/components/ImageLightbox";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, LineChart, Line, ComposedChart } from "recharts";
 
 const conditionLabel: Record<string, string> = {
   psa10: "PSA 10", psa9: "PSA 9", psa8_below: "PSA 8↓",
@@ -4116,6 +4116,9 @@ function SalesReportTab() {
     { enabled: !!feeDetailMonth }
   );
 
+  // Active view tab: 'overview' | 'cashflow' | 'payment' | 'monthly'
+  const [viewTab, setViewTab] = useState<'overview' | 'cashflow' | 'payment' | 'monthly'>('overview');
+
   const fmtHkd = (v: number) => v.toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtYearMonth = (ym: string) => {
     const [y, m] = ym.split('-');
@@ -4133,12 +4136,17 @@ function SalesReportTab() {
   const totalOrders = overall?.totalOrders ?? 0;
   const totalSales = overall?.totalSalesHkd ?? 0;
   const totalFees = overall?.totalFeesHkd ?? 0;
-  const netRevenue = overall?.netRevenueHkd ?? (totalSales - (overall?.refundedAmountHkd ?? 0));
+  const platformSales = overall?.platformSalesHkd ?? 0;
+  const platformIncome = overall?.platformIncomeHkd ?? (platformSales + totalFees);
+  const paidOut = overall?.paidOutHkd ?? 0;
+  const pendingPayout = overall?.pendingPayoutHkd ?? 0;
+  const refundedAmount = overall?.refundedAmountHkd ?? 0;
+  const platformNetProfit = overall?.platformNetProfitHkd ?? (platformIncome - refundedAmount);
+  const netRevenue = overall?.netRevenueHkd ?? (totalSales - refundedAmount);
   const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
   const feeRate = overall?.sellerSalesHkd && overall.sellerSalesHkd > 0
     ? (totalFees / overall.sellerSalesHkd) * 100
     : 0;
-  const stripeRatio = totalOrders > 0 ? ((overall?.stripeCount ?? 0) / totalOrders) * 100 : 0;
 
   // Chart data (reversed for chronological order)
   const chartData = [...monthly].reverse().map(r => ({
@@ -4147,22 +4155,44 @@ function SalesReportTab() {
     平台直售: parseFloat(r.platformSalesHkd.toFixed(2)),
     C2C銷售: parseFloat(r.sellerSalesHkd.toFixed(2)),
     手續費: parseFloat(r.sellerFeesHkd.toFixed(2)),
+    平台收入: parseFloat(((r as any).platformIncomeHkd ?? (r.platformSalesHkd + r.sellerFeesHkd)).toFixed(2)),
+    退款: parseFloat(((r as any).refundedAmountHkd ?? 0).toFixed(2)),
   }));
+
+  // Payment method pie data
+  const paymentPieData = [
+    { name: 'Stripe', value: overall?.stripeSalesHkd ?? 0, color: '#6366f1' },
+    { name: '支付寶 HK', value: overall?.alipaySalesHkd ?? 0, color: '#06b6d4' },
+  ].filter(d => d.value > 0);
+
+  // Income breakdown pie data
+  const incomePieData = [
+    { name: '平台直售', value: platformSales, color: '#3b82f6' },
+    { name: 'C2C 手續費', value: totalFees, color: '#10b981' },
+  ].filter(d => d.value > 0);
 
   const reportDate = new Date().toLocaleDateString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric' });
 
+  const viewTabs = [
+    { key: 'overview' as const, label: '財務總覽' },
+    { key: 'cashflow' as const, label: '收支分析' },
+    { key: 'payment' as const, label: '付款方式' },
+    { key: 'monthly' as const, label: '月度明細' },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* ── Report Header ─────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-gray-200">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">財務銷售報告</h2>
+          <h2 className="text-xl font-bold text-gray-900">財務報告</h2>
           <p className="text-sm text-gray-500 mt-0.5">報告日期：{reportDate} · 顯示最近
             <Select value={String(months)} onValueChange={v => setMonths(Number(v))}>
               <SelectTrigger className="inline-flex h-6 w-20 text-xs px-1.5 mx-1 bg-white text-gray-700 border-gray-300">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="3">3 個月</SelectItem>
                 <SelectItem value="6">6 個月</SelectItem>
                 <SelectItem value="12">12 個月</SelectItem>
                 <SelectItem value="24">24 個月</SelectItem>
@@ -4181,320 +4211,525 @@ function SalesReportTab() {
             const rows = monthly.map(r => ({
               '月份': fmtYearMonth(r.yearMonth),
               '銷售總額 (HKD)': r.totalSalesHkd.toFixed(2),
+              '退款金額 (HKD)': ((r as any).refundedAmountHkd ?? 0).toFixed(2),
+              '淨收入 (HKD)': ((r as any).netRevenueHkd ?? r.totalSalesHkd).toFixed(2),
               '平台直售 (HKD)': r.platformSalesHkd.toFixed(2),
               'C2C 銷售 (HKD)': r.sellerSalesHkd.toFixed(2),
               '手續費收入 (HKD)': r.sellerFeesHkd.toFixed(2),
+              '平台收入合計 (HKD)': ((r as any).platformIncomeHkd ?? (r.platformSalesHkd + r.sellerFeesHkd)).toFixed(2),
               '訂單數': r.orderCount,
               'Stripe 訂單': r.stripeCount,
               '支付寶 訂單': r.alipayCount,
+              '退款筆數': (r as any).refundedCount ?? 0,
+              '取消筆數': (r as any).cancelledCount ?? 0,
             }));
-            exportToCSV(rows, `銷售財務報告_${new Date().toISOString().slice(0,10)}.csv`);
+            exportToCSV(rows, `BOXIUM財務報告_${new Date().toISOString().slice(0,10)}.csv`);
           }}
         >
           <Download className="w-3.5 h-3.5 mr-1.5" />匯出 CSV
         </Button>
       </div>
 
-      {/* ── Section 1: KPI Cards ───────────────────────────── */}
-      <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">核心財務指標</p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Revenue */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="p-2 rounded-lg bg-[#06038d]/10">
-                <DollarSign className="w-4 h-4 text-[#06038d]" />
-              </div>
-              <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">GMV</span>
-            </div>
-            <p className="text-xs text-gray-500 mb-1">平台銷售總額</p>
-            <p className="text-xl font-bold text-gray-900">HKD {fmtHkd(totalSales)}</p>
-            <p className="text-xs text-gray-400 mt-1">{totalOrders} 筆已付款訂單</p>
-          </div>
-
-          {/* Platform Fee Revenue */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="p-2 rounded-lg bg-emerald-50">
-                <TrendingUp className="w-4 h-4 text-emerald-600" />
-              </div>
-              <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">收入</span>
-            </div>
-            <p className="text-xs text-gray-500 mb-1">C2C 手續費收入</p>
-            <p className="text-xl font-bold text-gray-900">HKD {fmtHkd(totalFees)}</p>
-            <p className="text-xs text-gray-400 mt-1">費率 {feeRate.toFixed(1)}% · C2C 訂單</p>
-          </div>
-
-          {/* Platform Direct Sales */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <Package className="w-4 h-4 text-blue-600" />
-              </div>
-              <span className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">直售</span>
-            </div>
-            <p className="text-xs text-gray-500 mb-1">平台直售額</p>
-            <p className="text-xl font-bold text-gray-900">HKD {fmtHkd(overall?.platformSalesHkd ?? 0)}</p>
-            <p className="text-xs text-gray-400 mt-1">官方上架商品</p>
-          </div>
-
-          {/* C2C Sales */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="p-2 rounded-lg bg-purple-50">
-                <Users className="w-4 h-4 text-purple-600" />
-              </div>
-              <span className="text-xs font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">C2C</span>
-            </div>
-            <p className="text-xs text-gray-500 mb-1">C2C 賣家銷售額</p>
-            <p className="text-xl font-bold text-gray-900">HKD {fmtHkd(overall?.sellerSalesHkd ?? 0)}</p>
-            <p className="text-xs text-gray-400 mt-1">Stripe {overall?.stripeCount ?? 0} · 支付寶 {overall?.alipayCount ?? 0}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Section 1b: Net Revenue + Refund KPI Cards ──────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Net Revenue */}
-        <div className="bg-white rounded-xl border-2 border-emerald-200 shadow-sm p-4">
+      {/* ── Top KPI Strip ─────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Platform Net Income - Hero Card */}
+        <div className="col-span-2 lg:col-span-1 bg-gradient-to-br from-[#06038d] to-[#1a17b3] rounded-xl p-5 text-white shadow-lg">
           <div className="flex items-start justify-between mb-3">
-            <div className="p-2 rounded-lg bg-emerald-50">
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-            </div>
-            <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">淨收入</span>
+            <div className="p-2 rounded-lg bg-white/15"><TrendingUp className="w-4 h-4 text-white" /></div>
+            <span className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">平台淨利潤</span>
           </div>
-          <p className="text-xs text-gray-500 mb-1">淨收入（GMV 扣退款）</p>
-          <p className="text-xl font-bold text-emerald-700">HKD {fmtHkd(netRevenue)}</p>
-          <p className="text-xs text-gray-400 mt-1">退款 HKD {fmtHkd(overall?.refundedAmountHkd ?? 0)}</p>
+          <p className="text-xs text-white/70 mb-1">平台收入 − 退款</p>
+          <p className="text-2xl font-bold">HKD {fmtHkd(platformNetProfit)}</p>
+          <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between text-xs text-white/70">
+            <span>收入 HKD {fmtHkd(platformIncome)}</span>
+            <span>退款 -HKD {fmtHkd(refundedAmount)}</span>
+          </div>
         </div>
 
-        {/* Refund Stats */}
+        {/* GMV */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-2 rounded-lg bg-red-50">
-              <XCircle className="w-4 h-4 text-red-500" />
-            </div>
-            <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">退款</span>
+          <div className="flex items-start justify-between mb-2">
+            <div className="p-2 rounded-lg bg-gray-100"><DollarSign className="w-4 h-4 text-gray-600" /></div>
+            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">GMV</span>
           </div>
-          <p className="text-xs text-gray-500 mb-1">退款金額</p>
-          <p className="text-xl font-bold text-red-600">HKD {fmtHkd(overall?.refundedAmountHkd ?? 0)}</p>
-          <p className="text-xs text-gray-400 mt-1">{overall?.refundedCount ?? 0} 筆退款</p>
+          <p className="text-xs text-gray-500 mb-1">平台交易總額</p>
+          <p className="text-xl font-bold text-gray-900">HKD {fmtHkd(totalSales)}</p>
+          <p className="text-xs text-gray-400 mt-1">{totalOrders} 筆已付款訂單</p>
         </div>
 
-        {/* Cancelled Orders */}
+        {/* Pending Payout */}
+        <div className="bg-white rounded-xl border border-amber-200 shadow-sm p-4">
+          <div className="flex items-start justify-between mb-2">
+            <div className="p-2 rounded-lg bg-amber-50"><Clock className="w-4 h-4 text-amber-600" /></div>
+            <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">待放款</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-1">待放款給賣家</p>
+          <p className="text-xl font-bold text-amber-700">HKD {fmtHkd(pendingPayout)}</p>
+          <p className="text-xs text-gray-400 mt-1">{overall?.pendingPayoutCount ?? 0} 筆待處理</p>
+        </div>
+
+        {/* Paid Out */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-2 rounded-lg bg-orange-50">
-              <AlertCircle className="w-4 h-4 text-orange-500" />
-            </div>
-            <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">取消</span>
+          <div className="flex items-start justify-between mb-2">
+            <div className="p-2 rounded-lg bg-emerald-50"><CheckCircle className="w-4 h-4 text-emerald-600" /></div>
+            <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">已放款</span>
           </div>
-          <p className="text-xs text-gray-500 mb-1">取消訂單數</p>
-          <p className="text-xl font-bold text-orange-600">{overall?.cancelledCount ?? 0}</p>
-          <p className="text-xs text-gray-400 mt-1">已取消訂單</p>
+          <p className="text-xs text-gray-500 mb-1">已放款給賣家</p>
+          <p className="text-xl font-bold text-emerald-700">HKD {fmtHkd(paidOut)}</p>
+          <p className="text-xs text-gray-400 mt-1">{overall?.paidOutCount ?? 0} 筆已完成</p>
         </div>
       </div>
 
-      {/* ── Section 2: Secondary Metrics ──────────────────── */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
-          <p className="text-xs text-gray-500 mb-1">平均訂單金額</p>
-          <p className="text-lg font-bold text-gray-800">HKD {fmtHkd(avgOrderValue)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">AOV</p>
-        </div>
-        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
-          <p className="text-xs text-gray-500 mb-1">C2C 手續費率</p>
-          <p className="text-lg font-bold text-gray-800">{feeRate.toFixed(2)}%</p>
-          <p className="text-xs text-gray-400 mt-0.5">手續費 / C2C 銷售</p>
-        </div>
-        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
-          <p className="text-xs text-gray-500 mb-1">Stripe 佔比</p>
-          <p className="text-lg font-bold text-gray-800">{stripeRatio.toFixed(1)}%</p>
-          <p className="text-xs text-gray-400 mt-0.5">{overall?.stripeCount ?? 0} / {totalOrders} 筆</p>
-        </div>
+      {/* ── Sub-navigation tabs ───────────────────────────── */}
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+        {viewTabs.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setViewTab(t.key)}
+            className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
+              viewTab === t.key
+                ? 'bg-white text-[#06038d] shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >{t.label}</button>
+        ))}
       </div>
 
-      {/* ── Section 3: Revenue Trend Chart ────────────────── */}
-      {!isLoading && chartData.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-800">月度銷售趨勢</p>
-              <p className="text-xs text-gray-400 mt-0.5">各收入來源月度走勢</p>
+      {/* ── OVERVIEW TAB ──────────────────────────────────── */}
+      {viewTab === 'overview' && (
+        <div className="space-y-5">
+          {/* Income Breakdown Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Income breakdown card */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <p className="text-sm font-semibold text-gray-800 mb-1">平台收入來源</p>
+              <p className="text-xs text-gray-400 mb-4">平台直售 + C2C 手續費</p>
+              {incomePieData.length > 0 ? (
+                <div className="flex items-center gap-4">
+                  <ResponsiveContainer width={100} height={100}>
+                    <PieChart>
+                      <Pie data={incomePieData} cx="50%" cy="50%" innerRadius={28} outerRadius={46} dataKey="value" strokeWidth={2}>
+                        {incomePieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex-1 space-y-2">
+                    {incomePieData.map(d => (
+                      <div key={d.name}>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
+                          <span className="text-xs text-gray-500">{d.name}</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-800 pl-4">HKD {fmtHkd(d.value)}</p>
+                        <p className="text-xs text-gray-400 pl-4">{platformIncome > 0 ? ((d.value / platformIncome) * 100).toFixed(1) : 0}%</p>
+                      </div>
+                    ))}
+                    <div className="pt-2 border-t border-gray-100">
+                      <p className="text-xs text-gray-500">合計</p>
+                      <p className="text-sm font-bold text-[#06038d]">HKD {fmtHkd(platformIncome)}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-400 text-xs">暫無數據</div>
+              )}
             </div>
-            <div className="flex items-center gap-4 text-xs text-gray-500">
-              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-[#06038d] inline-block rounded"></span>銷售總額</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-blue-500 inline-block rounded"></span>平台直售</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-purple-500 inline-block rounded"></span>C2C銷售</span>
+
+            {/* Revenue trend chart */}
+            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">月度銷售趨勢</p>
+                  <p className="text-xs text-gray-400 mt-0.5">各收入來源月度走勢</p>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-[#06038d] inline-block rounded" />GMV</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-blue-500 inline-block rounded" />平台直售</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-emerald-500 inline-block rounded" />平台收入</span>
+                </div>
+              </div>
+              {!isLoading && chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={200}>
+                  <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradGMV" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#06038d" stopOpacity={0.12}/>
+                        <stop offset="95%" stopColor="#06038d" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={52} tickFormatter={v => `${v}`} />
+                    <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} formatter={(v: any) => [`HKD ${Number(v).toLocaleString('zh-HK', { minimumFractionDigits: 2 })}`, undefined]} />
+                    <Area type="monotone" dataKey="銷售總額" stroke="#06038d" strokeWidth={2} fill="url(#gradGMV)" dot={false} />
+                    <Line type="monotone" dataKey="平台直售" stroke="#3b82f6" strokeWidth={1.5} dot={false} />
+                    <Line type="monotone" dataKey="平台收入" stroke="#10b981" strokeWidth={2} strokeDasharray="4 2" dot={false} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex justify-center items-center h-[200px] text-gray-400 text-sm">
+                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : '暫無數據'}
+                </div>
+              )}
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#06038d" stopOpacity={0.15}/>
-                  <stop offset="95%" stopColor="#06038d" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorPlatform" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.12}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorSeller" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a855f7" stopOpacity={0.12}/>
-                  <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}`} width={50} />
-              <Tooltip
-                contentStyle={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                formatter={(value: any) => [`HKD ${Number(value).toLocaleString('zh-HK', { minimumFractionDigits: 2 })}`, undefined]}
-              />
-              <Area type="monotone" dataKey="銷售總額" stroke="#06038d" strokeWidth={2} fill="url(#colorTotal)" dot={false} />
-              <Area type="monotone" dataKey="平台直售" stroke="#3b82f6" strokeWidth={1.5} fill="url(#colorPlatform)" dot={false} />
-              <Area type="monotone" dataKey="C2C銷售" stroke="#a855f7" strokeWidth={1.5} fill="url(#colorSeller)" dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+
+          {/* Secondary metrics row */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+              <p className="text-xs text-gray-500 mb-1">平均訂單金額 (AOV)</p>
+              <p className="text-lg font-bold text-gray-800">HKD {fmtHkd(avgOrderValue)}</p>
+              <p className="text-xs text-gray-400 mt-0.5">已付款訂單均值</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+              <p className="text-xs text-gray-500 mb-1">C2C 手續費率</p>
+              <p className="text-lg font-bold text-gray-800">{feeRate.toFixed(2)}%</p>
+              <p className="text-xs text-gray-400 mt-0.5">手續費 / C2C 銷售</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+              <p className="text-xs text-gray-500 mb-1">退款率</p>
+              <p className={`text-lg font-bold ${refundedAmount > 0 ? 'text-red-600' : 'text-gray-800'}`}>
+                {totalSales > 0 ? ((refundedAmount / totalSales) * 100).toFixed(2) : '0.00'}%
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">{overall?.refundedCount ?? 0} 筆 · HKD {fmtHkd(refundedAmount)}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+              <p className="text-xs text-gray-500 mb-1">取消訂單</p>
+              <p className="text-lg font-bold text-orange-600">{overall?.cancelledCount ?? 0}</p>
+              <p className="text-xs text-gray-400 mt-0.5">已取消訂單數</p>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ── Section 4: Fee Income Bar Chart ───────────────── */}
-      {!isLoading && chartData.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <div className="mb-4">
-            <p className="text-sm font-semibold text-gray-800">月度手續費收入</p>
-            <p className="text-xs text-gray-400 mt-0.5">C2C 平台收入逐月分佈</p>
+      {/* ── CASHFLOW TAB ──────────────────────────────────── */}
+      {viewTab === 'cashflow' && (
+        <div className="space-y-5">
+          {/* Income vs Outcome Statement */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-gray-50 px-5 py-3 border-b border-gray-200">
+              <p className="text-sm font-bold text-gray-800">平台損益表</p>
+              <p className="text-xs text-gray-400 mt-0.5">收入與支出核對（累計期間）</p>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {/* INCOME section */}
+              <div className="px-5 py-3 bg-emerald-50/40">
+                <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-3">▲ 收入 (INCOME)</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">平台直售收入</p>
+                      <p className="text-xs text-gray-400">平台自有商品銷售</p>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">HKD {fmtHkd(platformSales)}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">C2C 手續費收入</p>
+                      <p className="text-xs text-gray-400">C2C 交易手續費（費率 {feeRate.toFixed(2)}%）</p>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">HKD {fmtHkd(totalFees)}</p>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-emerald-200">
+                    <p className="text-sm font-bold text-emerald-800">平台收入合計</p>
+                    <p className="text-base font-bold text-emerald-700">HKD {fmtHkd(platformIncome)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* OUTCOME section */}
+              <div className="px-5 py-3 bg-red-50/30">
+                <p className="text-xs font-bold text-red-700 uppercase tracking-wider mb-3">▼ 支出 (OUTCOME)</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">已放款給賣家</p>
+                      <p className="text-xs text-gray-400">{overall?.paidOutCount ?? 0} 筆 C2C 訂單已完成放款</p>
+                    </div>
+                    <p className="text-sm font-semibold text-red-600">-HKD {fmtHkd(paidOut)}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">退款支出</p>
+                      <p className="text-xs text-gray-400">{overall?.refundedCount ?? 0} 筆退款</p>
+                    </div>
+                    <p className="text-sm font-semibold text-red-600">-HKD {fmtHkd(refundedAmount)}</p>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-red-200">
+                    <p className="text-sm font-bold text-red-700">支出合計</p>
+                    <p className="text-base font-bold text-red-600">-HKD {fmtHkd(paidOut + refundedAmount)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* PENDING section */}
+              <div className="px-5 py-3 bg-amber-50/40">
+                <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-3">⏳ 待結算 (PENDING)</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">待放款給賣家</p>
+                      <p className="text-xs text-gray-400">{overall?.pendingPayoutCount ?? 0} 筆 C2C 訂單待放款</p>
+                    </div>
+                    <p className="text-sm font-semibold text-amber-700">HKD {fmtHkd(pendingPayout)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* NET PROFIT */}
+              <div className="px-5 py-4 bg-[#06038d]/[0.04]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-base font-bold text-[#06038d]">平台淨利潤</p>
+                    <p className="text-xs text-gray-500 mt-0.5">平台收入 − 退款（不含待放款）</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-[#06038d]">HKD {fmtHkd(platformNetProfit)}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">利潤率 {platformIncome > 0 ? ((platformNetProfit / platformIncome) * 100).toFixed(1) : 0}%</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={50} />
-              <Tooltip
-                contentStyle={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                formatter={(value: any) => [`HKD ${Number(value).toLocaleString('zh-HK', { minimumFractionDigits: 2 })}`, '手續費']}
-              />
-              <Bar dataKey="手續費" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-            </BarChart>
-          </ResponsiveContainer>
+
+          {/* Monthly income vs payout bar chart */}
+          {!isLoading && chartData.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <p className="text-sm font-semibold text-gray-800 mb-1">月度平台收入 vs 退款</p>
+              <p className="text-xs text-gray-400 mb-4">按月對比平台收入與退款支出</p>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={52} />
+                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} formatter={(v: any) => [`HKD ${Number(v).toLocaleString('zh-HK', { minimumFractionDigits: 2 })}`, undefined]} />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                  <Bar dataKey="平台收入" fill="#10b981" radius={[3, 3, 0, 0]} maxBarSize={36} />
+                  <Bar dataKey="退款" fill="#f87171" radius={[3, 3, 0, 0]} maxBarSize={36} />
+                  <Bar dataKey="手續費" fill="#6366f1" radius={[3, 3, 0, 0]} maxBarSize={36} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── Section 5: Monthly Detail Table ───────────────── */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">月度明細（港幣 HKD）</p>
-          <p className="text-xs text-gray-400">共 {monthly.length} 個月</p>
-        </div>
-        {isLoading ? (
-          <div className="text-center py-12 text-gray-500"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />載入中...</div>
-        ) : monthly.length === 0 ? (
-          <div className="text-center py-12 text-gray-500"><BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無銷售數據</p></div>
-        ) : (
-          <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">月份</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">銷售總額</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">退款金額</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">淨收入</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">平台直售</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">C2C 銷售</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">手續費收入</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">訂單數</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">退款/取消</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">環比</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {monthly.map((row, idx) => {
-                  const prev = monthly[idx + 1];
-                  const growth = prev && prev.totalSalesHkd > 0
-                    ? ((row.totalSalesHkd - prev.totalSalesHkd) / prev.totalSalesHkd * 100)
-                    : null;
-                  return (
-                    <tr key={row.yearMonth} className="hover:bg-gray-50/70 transition-colors">
-                      <td className="px-4 py-3.5 font-semibold text-gray-800">{fmtYearMonth(row.yearMonth)}</td>
-                      <td className="px-4 py-3.5 text-right">
-                        <span className="font-bold text-[#06038d]">HKD {fmtHkd(row.totalSalesHkd)}</span>
-                      </td>
-                      <td className="px-4 py-3.5 text-right">
-                        {(row as any).refundedAmountHkd > 0
-                          ? <span className="text-red-600 font-medium">-HKD {fmtHkd((row as any).refundedAmountHkd)}</span>
-                          : <span className="text-gray-300 text-xs">—</span>}
-                      </td>
-                      <td className="px-4 py-3.5 text-right">
-                        <span className="font-semibold text-emerald-700">HKD {fmtHkd((row as any).netRevenueHkd ?? row.totalSalesHkd)}</span>
-                      </td>
-                      <td className="px-4 py-3.5 text-right text-blue-700 font-medium">HKD {fmtHkd(row.platformSalesHkd)}</td>
-                      <td className="px-4 py-3.5 text-right text-purple-700 font-medium">HKD {fmtHkd(row.sellerSalesHkd)}</td>
-                      <td className="px-4 py-3.5 text-right">
-                        <button
-                          onClick={() => { setFeeDetailMonth(row.yearMonth); setFeeDetailPage(1); }}
-                          className="font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-md transition-colors cursor-pointer inline-flex items-center gap-1"
-                        >
-                          HKD {fmtHkd(row.sellerFeesHkd)}
-                          <ExternalLink className="w-3 h-3 opacity-60" />
-                        </button>
-                      </td>
-                      <td className="px-4 py-3.5 text-right text-gray-700 font-medium">{row.orderCount}</td>
-                      <td className="px-4 py-3.5 text-right">
-                        <span className="text-xs text-gray-500">
-                          {(row as any).refundedCount > 0 && <span className="text-red-500">{(row as any).refundedCount}退</span>}
-                          {(row as any).refundedCount > 0 && (row as any).cancelledCount > 0 && ' / '}
-                          {(row as any).cancelledCount > 0 && <span className="text-orange-500">{(row as any).cancelledCount}消</span>}
-                          {!(row as any).refundedCount && !(row as any).cancelledCount && <span className="text-gray-300">—</span>}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-right">
-                        {growth !== null ? (
-                          <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            growth >= 0 ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50'
-                          }`}>
-                            {growth >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                            {Math.abs(growth).toFixed(1)}%
-                          </span>
-                        ) : <span className="text-gray-300 text-xs">—</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="bg-[#06038d]/[0.04] border-t-2 border-[#06038d]/20">
-                  <td className="px-4 py-3.5 font-bold text-gray-900 text-xs uppercase tracking-wide">合計</td>
-                  <td className="px-4 py-3.5 text-right font-bold text-[#06038d]">HKD {fmtHkd(monthly.reduce((s, r) => s + r.totalSalesHkd, 0))}</td>
-                  <td className="px-4 py-3.5 text-right font-semibold text-red-600">
-                    {monthly.reduce((s, r) => s + ((r as any).refundedAmountHkd ?? 0), 0) > 0
-                      ? `-HKD ${fmtHkd(monthly.reduce((s, r) => s + ((r as any).refundedAmountHkd ?? 0), 0))}`
-                      : <span className="text-gray-300">—</span>}
-                  </td>
-                  <td className="px-4 py-3.5 text-right font-bold text-emerald-700">HKD {fmtHkd(monthly.reduce((s, r) => s + ((r as any).netRevenueHkd ?? r.totalSalesHkd), 0))}</td>
-                  <td className="px-4 py-3.5 text-right font-semibold text-blue-700">HKD {fmtHkd(monthly.reduce((s, r) => s + r.platformSalesHkd, 0))}</td>
-                  <td className="px-4 py-3.5 text-right font-semibold text-purple-700">HKD {fmtHkd(monthly.reduce((s, r) => s + r.sellerSalesHkd, 0))}</td>
-                  <td className="px-4 py-3.5 text-right">
-                    <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">HKD {fmtHkd(monthly.reduce((s, r) => s + r.sellerFeesHkd, 0))}</span>
-                  </td>
-                  <td className="px-4 py-3.5 text-right font-bold text-gray-900">{monthly.reduce((s, r) => s + r.orderCount, 0)}</td>
-                  <td className="px-4 py-3.5 text-right">
-                    <span className="text-xs">
-                      {monthly.reduce((s, r) => s + ((r as any).refundedCount ?? 0), 0) > 0 && <span className="text-red-500 font-semibold">{monthly.reduce((s, r) => s + ((r as any).refundedCount ?? 0), 0)}退</span>}
-                      {monthly.reduce((s, r) => s + ((r as any).refundedCount ?? 0), 0) > 0 && monthly.reduce((s, r) => s + ((r as any).cancelledCount ?? 0), 0) > 0 && ' / '}
-                      {monthly.reduce((s, r) => s + ((r as any).cancelledCount ?? 0), 0) > 0 && <span className="text-orange-500 font-semibold">{monthly.reduce((s, r) => s + ((r as any).cancelledCount ?? 0), 0)}消</span>}
-                      {monthly.reduce((s, r) => s + ((r as any).refundedCount ?? 0) + ((r as any).cancelledCount ?? 0), 0) === 0 && <span className="text-gray-300">—</span>}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 text-right text-gray-300">—</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* ── PAYMENT METHOD TAB ────────────────────────────── */}
+      {viewTab === 'payment' && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Stripe breakdown */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="bg-indigo-50 px-5 py-3 border-b border-indigo-100 flex items-center gap-2">
+                <div className="w-5 h-5 bg-indigo-600 rounded flex items-center justify-center">
+                  <CreditCard className="w-3 h-3 text-white" />
+                </div>
+                <p className="text-sm font-bold text-indigo-800">Stripe 付款</p>
+                <span className="ml-auto text-xs text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">{overall?.stripeCount ?? 0} 筆</span>
+              </div>
+              <div className="divide-y divide-gray-100">
+                <div className="px-5 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">Stripe 交易總額</p>
+                    <p className="text-xs text-gray-400">所有 Stripe 付款訂單</p>
+                  </div>
+                  <p className="text-sm font-bold text-gray-900">HKD {fmtHkd(overall?.stripeSalesHkd ?? 0)}</p>
+                </div>
+                <div className="px-5 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">其中：平台直售</p>
+                    <p className="text-xs text-gray-400">Stripe 付款的平台商品</p>
+                  </div>
+                  <p className="text-sm font-semibold text-blue-700">HKD {fmtHkd(overall?.stripePlatformSalesHkd ?? 0)}</p>
+                </div>
+                <div className="px-5 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">其中：C2C 手續費</p>
+                    <p className="text-xs text-gray-400">Stripe C2C 訂單手續費</p>
+                  </div>
+                  <p className="text-sm font-semibold text-emerald-700">HKD {fmtHkd(overall?.stripeSellerFeesHkd ?? 0)}</p>
+                </div>
+                <div className="px-5 py-3 bg-indigo-50/40 flex items-center justify-between">
+                  <p className="text-sm font-bold text-indigo-800">Stripe 平台收入</p>
+                  <p className="text-base font-bold text-indigo-700">HKD {fmtHkd((overall?.stripePlatformSalesHkd ?? 0) + (overall?.stripeSellerFeesHkd ?? 0))}</p>
+                </div>
+              </div>
+            </div>
 
-      {/* ── Section 6: Audit Footer ────────────────────────── */}
+            {/* Alipay HK breakdown */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="bg-cyan-50 px-5 py-3 border-b border-cyan-100 flex items-center gap-2">
+                <div className="w-5 h-5 bg-cyan-600 rounded flex items-center justify-center">
+                  <Banknote className="w-3 h-3 text-white" />
+                </div>
+                <p className="text-sm font-bold text-cyan-800">支付寶 HK 付款</p>
+                <span className="ml-auto text-xs text-cyan-600 bg-cyan-100 px-2 py-0.5 rounded-full">{overall?.alipayCount ?? 0} 筆</span>
+              </div>
+              <div className="divide-y divide-gray-100">
+                <div className="px-5 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">支付寶 HK 交易總額</p>
+                    <p className="text-xs text-gray-400">所有支付寶 HK 付款訂單</p>
+                  </div>
+                  <p className="text-sm font-bold text-gray-900">HKD {fmtHkd(overall?.alipaySalesHkd ?? 0)}</p>
+                </div>
+                <div className="px-5 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">其中：平台直售</p>
+                    <p className="text-xs text-gray-400">支付寶 HK 付款的平台商品</p>
+                  </div>
+                  <p className="text-sm font-semibold text-blue-700">HKD {fmtHkd(overall?.alipayPlatformSalesHkd ?? 0)}</p>
+                </div>
+                <div className="px-5 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">其中：C2C 手續費</p>
+                    <p className="text-xs text-gray-400">支付寶 HK C2C 訂單手續費</p>
+                  </div>
+                  <p className="text-sm font-semibold text-emerald-700">HKD {fmtHkd(overall?.alipaySellerFeesHkd ?? 0)}</p>
+                </div>
+                <div className="px-5 py-3 bg-cyan-50/40 flex items-center justify-between">
+                  <p className="text-sm font-bold text-cyan-800">支付寶 HK 平台收入</p>
+                  <p className="text-base font-bold text-cyan-700">HKD {fmtHkd((overall?.alipayPlatformSalesHkd ?? 0) + (overall?.alipaySellerFeesHkd ?? 0))}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment method distribution pie */}
+          {paymentPieData.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <p className="text-sm font-semibold text-gray-800 mb-4">付款方式分佈（按交易金額）</p>
+              <div className="flex items-center gap-8">
+                <ResponsiveContainer width={180} height={180}>
+                  <PieChart>
+                    <Pie data={paymentPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" strokeWidth={3} stroke="#fff">
+                      {paymentPieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: any) => [`HKD ${Number(v).toLocaleString('zh-HK', { minimumFractionDigits: 2 })}`, undefined]} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex-1 space-y-4">
+                  {paymentPieData.map(d => (
+                    <div key={d.name} className="flex items-center gap-3">
+                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: d.color }} />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-700">{d.name}</span>
+                          <span className="text-sm font-bold text-gray-900">HKD {fmtHkd(d.value)}</span>
+                        </div>
+                        <div className="mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${totalSales > 0 ? (d.value / totalSales * 100) : 0}%`, background: d.color }} />
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">{totalSales > 0 ? ((d.value / totalSales) * 100).toFixed(1) : 0}% 佔比</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── MONTHLY DETAIL TAB ────────────────────────────── */}
+      {viewTab === 'monthly' && (
+        <div className="space-y-4">
+          {isLoading ? (
+            <div className="text-center py-12 text-gray-500"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />載入中...</div>
+          ) : monthly.length === 0 ? (
+            <div className="text-center py-12 text-gray-500"><BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無銷售數據</p></div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">月份</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">GMV</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">退款</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">淨收入</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">平台直售</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">C2C 銷售</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">手續費</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide bg-emerald-50">平台收入</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">訂單數</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">環比</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {monthly.map((row, idx) => {
+                    const prev = monthly[idx + 1];
+                    const growth = prev && prev.totalSalesHkd > 0
+                      ? ((row.totalSalesHkd - prev.totalSalesHkd) / prev.totalSalesHkd * 100)
+                      : null;
+                    const rowIncome = (row as any).platformIncomeHkd ?? (row.platformSalesHkd + row.sellerFeesHkd);
+                    return (
+                      <tr key={row.yearMonth} className="hover:bg-gray-50/70 transition-colors">
+                        <td className="px-4 py-3.5 font-semibold text-gray-800">{fmtYearMonth(row.yearMonth)}</td>
+                        <td className="px-4 py-3.5 text-right font-bold text-[#06038d]">HKD {fmtHkd(row.totalSalesHkd)}</td>
+                        <td className="px-4 py-3.5 text-right">
+                          {(row as any).refundedAmountHkd > 0
+                            ? <span className="text-red-600 font-medium">-HKD {fmtHkd((row as any).refundedAmountHkd)}</span>
+                            : <span className="text-gray-300 text-xs">—</span>}
+                        </td>
+                        <td className="px-4 py-3.5 text-right font-semibold text-emerald-700">HKD {fmtHkd((row as any).netRevenueHkd ?? row.totalSalesHkd)}</td>
+                        <td className="px-4 py-3.5 text-right text-blue-700 font-medium">HKD {fmtHkd(row.platformSalesHkd)}</td>
+                        <td className="px-4 py-3.5 text-right text-purple-700 font-medium">HKD {fmtHkd(row.sellerSalesHkd)}</td>
+                        <td className="px-4 py-3.5 text-right">
+                          <button
+                            onClick={() => { setFeeDetailMonth(row.yearMonth); setFeeDetailPage(1); }}
+                            className="font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-md transition-colors cursor-pointer inline-flex items-center gap-1"
+                          >
+                            HKD {fmtHkd(row.sellerFeesHkd)}
+                            <ExternalLink className="w-3 h-3 opacity-60" />
+                          </button>
+                        </td>
+                        <td className="px-4 py-3.5 text-right bg-emerald-50/30">
+                          <span className="font-bold text-emerald-700">HKD {fmtHkd(rowIncome)}</span>
+                        </td>
+                        <td className="px-4 py-3.5 text-right text-gray-700 font-medium">{row.orderCount}</td>
+                        <td className="px-4 py-3.5 text-right">
+                          {growth !== null ? (
+                            <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                              growth >= 0 ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50'
+                            }`}>
+                              {growth >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                              {Math.abs(growth).toFixed(1)}%
+                            </span>
+                          ) : <span className="text-gray-300 text-xs">—</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-[#06038d]/[0.04] border-t-2 border-[#06038d]/20">
+                    <td className="px-4 py-3.5 font-bold text-gray-900 text-xs uppercase tracking-wide">合計</td>
+                    <td className="px-4 py-3.5 text-right font-bold text-[#06038d]">HKD {fmtHkd(monthly.reduce((s, r) => s + r.totalSalesHkd, 0))}</td>
+                    <td className="px-4 py-3.5 text-right font-semibold text-red-600">
+                      {monthly.reduce((s, r) => s + ((r as any).refundedAmountHkd ?? 0), 0) > 0
+                        ? `-HKD ${fmtHkd(monthly.reduce((s, r) => s + ((r as any).refundedAmountHkd ?? 0), 0))}`
+                        : <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="px-4 py-3.5 text-right font-bold text-emerald-700">HKD {fmtHkd(monthly.reduce((s, r) => s + ((r as any).netRevenueHkd ?? r.totalSalesHkd), 0))}</td>
+                    <td className="px-4 py-3.5 text-right font-semibold text-blue-700">HKD {fmtHkd(monthly.reduce((s, r) => s + r.platformSalesHkd, 0))}</td>
+                    <td className="px-4 py-3.5 text-right font-semibold text-purple-700">HKD {fmtHkd(monthly.reduce((s, r) => s + r.sellerSalesHkd, 0))}</td>
+                    <td className="px-4 py-3.5 text-right">
+                      <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">HKD {fmtHkd(monthly.reduce((s, r) => s + r.sellerFeesHkd, 0))}</span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right bg-emerald-50/30">
+                      <span className="font-bold text-emerald-700">HKD {fmtHkd(monthly.reduce((s, r) => s + ((r as any).platformIncomeHkd ?? (r.platformSalesHkd + r.sellerFeesHkd)), 0))}</span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right font-bold text-gray-900">{monthly.reduce((s, r) => s + r.orderCount, 0)}</td>
+                    <td className="px-4 py-3.5 text-right text-gray-300">—</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Audit Footer ──────────────────────────────────── */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <p className="text-xs text-gray-400">本報告由系統自動生成 · 數據截至 {reportDate} · 已付款訂單（payment_received / processing / shipped / delivered / completed）· 退款/取消統計獨立計算</p>
         <p className="text-xs text-gray-400 font-mono">BOXIUM PTCG · 財務審核用途</p>
