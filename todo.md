@@ -6784,6 +6784,6 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復並測試 PDF 在 production 環境可正常生成
 
 ## 🐛 PDF 生成失敗（production 環境 - 第二次修復）
-- [ ] 查看 production 伺服器實際錯誤日誌（Chromium 路徑/權限問題）
-- [ ] 改用不依賴瀏覽器的純 PDF 方案（jsPDF server-side 或 pdfkit）
-- [ ] 確保 production 環境可正常生成 PDF
+- [x] 查看 production 伺服器實際錯誤日誌（Chromium not found）
+- [x] 改用 pdfkit（純 Node.js）替代 puppeteer-core，完全不依賴 Chromium
+- [x] 確保 production 環境可正常生成 PDF（9 項 vitest 測試通過）

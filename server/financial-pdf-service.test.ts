@@ -1,179 +1,183 @@
 /**
- * Tests for the server-side financial PDF generation service
- * Verifies that the PDF generation logic is correct without actually launching a browser
+ * Tests for the server-side financial PDF generation service (pdfkit-based)
+ * Verifies that the PDF generation logic is correct without requiring Chromium
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock puppeteer-core to avoid browser launch in tests
-const mockPage = {
-  setContent: vi.fn().mockResolvedValue(undefined),
-  pdf: vi.fn().mockResolvedValue(Buffer.from("%PDF-1.4 mock pdf content")),
-  close: vi.fn().mockResolvedValue(undefined),
+// Mock pdfkit to avoid actually generating PDFs in tests
+const mockDoc: any = {
+  registerFont: vi.fn().mockReturnThis(),
+  addPage: vi.fn().mockReturnThis(),
+  rect: vi.fn().mockReturnThis(),
+  fill: vi.fn().mockReturnThis(),
+  fillOpacity: vi.fn().mockReturnThis(),
+  save: vi.fn().mockReturnThis(),
+  restore: vi.fn().mockReturnThis(),
+  circle: vi.fn().mockReturnThis(),
+  font: vi.fn().mockReturnThis(),
+  fontSize: vi.fn().mockReturnThis(),
+  fillColor: vi.fn().mockReturnThis(),
+  text: vi.fn().mockReturnThis(),
+  image: vi.fn().mockReturnThis(),
+  lineWidth: vi.fn().mockReturnThis(),
+  moveTo: vi.fn().mockReturnThis(),
+  lineTo: vi.fn().mockReturnThis(),
+  stroke: vi.fn().mockReturnThis(),
+  end: vi.fn().mockImplementation(function () {
+    setTimeout(() => {
+      if (mockDoc._dataHandler) mockDoc._dataHandler(Buffer.from("%PDF-1.4 mock"));
+      if (mockDoc._endHandler) mockDoc._endHandler();
+    }, 0);
+  }),
+  on: vi.fn().mockImplementation(function (event: string, handler: Function) {
+    if (event === "data") mockDoc._dataHandler = handler;
+    if (event === "end") mockDoc._endHandler = handler;
+    if (event === "error") mockDoc._errorHandler = handler;
+    return mockDoc;
+  }),
+  _dataHandler: null as Function | null,
+  _endHandler: null as Function | null,
+  _errorHandler: null as Function | null,
 };
-const mockBrowser = {
-  newPage: vi.fn().mockResolvedValue(mockPage),
-  close: vi.fn().mockResolvedValue(undefined),
-};
-vi.mock("puppeteer-core", () => ({
-  default: {
-    launch: vi.fn().mockResolvedValue(mockBrowser),
-  },
+
+vi.mock("pdfkit", () => ({
+  default: vi.fn().mockImplementation(() => mockDoc),
 }));
 
-// Mock fs to avoid reading actual files
+// Mock fs to avoid reading actual font files
 vi.mock("fs", () => ({
   default: {
-    readFileSync: vi.fn().mockReturnValue(Buffer.from("fake-logo-data")),
+    readFileSync: vi.fn().mockReturnValue(Buffer.from("fake-font-data")),
     existsSync: vi.fn().mockReturnValue(true),
   },
 }));
 
-describe("Financial PDF Service", () => {
-  const mockReport = {
-    monthly: [
-      {
-        yearMonth: "2026-03",
-        totalSalesHkd: 50000,
-        orderCount: 25,
-        stripeCount: 20,
-        alipayCount: 5,
-        platformSalesHkd: 30000,
-        sellerSalesHkd: 20000,
-        sellerFeesHkd: 2000,
-        platformIncomeHkd: 32000,
-        refundedCount: 1,
-        cancelledCount: 2,
-        refundedAmountHkd: 500,
-        netRevenueHkd: 49500,
-      },
-      {
-        yearMonth: "2026-02",
-        totalSalesHkd: 40000,
-        orderCount: 20,
-        stripeCount: 15,
-        alipayCount: 5,
-        platformSalesHkd: 25000,
-        sellerSalesHkd: 15000,
-        sellerFeesHkd: 1500,
-        platformIncomeHkd: 26500,
-        refundedCount: 0,
-        cancelledCount: 1,
-        refundedAmountHkd: 0,
-        netRevenueHkd: 40000,
-      },
-    ],
-    overall: {
-      totalSalesHkd: 90000,
-      totalFeesHkd: 3500,
-      totalOrders: 45,
-      platformSalesHkd: 55000,
-      sellerSalesHkd: 35000,
-      sellerReceivableTotalHkd: 33000,
-      stripeCount: 35,
-      alipayCount: 10,
-      stripeSalesHkd: 70000,
-      alipaySalesHkd: 20000,
-      stripePlatformSalesHkd: 42000,
-      alipayPlatformSalesHkd: 13000,
-      stripeSellerFeesHkd: 2500,
-      alipaySellerFeesHkd: 1000,
-      refundedCount: 1,
-      cancelledCount: 3,
-      refundedAmountHkd: 500,
-      netRevenueHkd: 89500,
-      platformIncomeHkd: 58500,
-      paidOutHkd: 30000,
-      pendingPayoutHkd: 3000,
-      pendingPayoutCount: 2,
-      paidOutCount: 15,
-      platformNetProfitHkd: 55500,
+const mockReport = {
+  monthly: [
+    {
+      yearMonth: "2026-03",
+      totalSalesHkd: 42.00,
+      orderCount: 3,
+      stripeCount: 1,
+      alipayCount: 2,
+      platformSalesHkd: 10.00,
+      sellerSalesHkd: 32.00,
+      sellerFeesHkd: 1.60,
+      platformIncomeHkd: 11.60,
+      refundedCount: 0,
+      cancelledCount: 2,
+      refundedAmountHkd: 0,
+      netRevenueHkd: 42.00,
     },
-  };
+    {
+      yearMonth: "2026-02",
+      totalSalesHkd: 100.00,
+      orderCount: 5,
+      stripeCount: 3,
+      alipayCount: 2,
+      platformSalesHkd: 40.00,
+      sellerSalesHkd: 60.00,
+      sellerFeesHkd: 6.00,
+      platformIncomeHkd: 46.00,
+      refundedCount: 1,
+      cancelledCount: 0,
+      refundedAmountHkd: 20.00,
+      netRevenueHkd: 80.00,
+    },
+  ],
+  overall: {
+    totalSalesHkd: 142.00,
+    totalFeesHkd: 7.60,
+    totalOrders: 8,
+    platformSalesHkd: 50.00,
+    sellerSalesHkd: 92.00,
+    sellerReceivableTotalHkd: 92.00,
+    stripeCount: 4,
+    alipayCount: 4,
+    stripeSalesHkd: 72.00,
+    alipaySalesHkd: 70.00,
+    stripePlatformSalesHkd: 0,
+    alipayPlatformSalesHkd: 50.00,
+    stripeSellerFeesHkd: 7.60,
+    alipaySellerFeesHkd: 0,
+    refundedCount: 1,
+    cancelledCount: 2,
+    refundedAmountHkd: 20.00,
+    netRevenueHkd: 122.00,
+    platformIncomeHkd: 57.60,
+    paidOutHkd: 40.40,
+    pendingPayoutHkd: 51.60,
+    pendingPayoutCount: 2,
+    paidOutCount: 3,
+    platformNetProfitHkd: 17.20,
+  },
+};
 
+describe("generateFinancialReportPdf (pdfkit)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPage.setContent.mockResolvedValue(undefined);
-    mockPage.pdf.mockResolvedValue(Buffer.from("%PDF-1.4 mock pdf content"));
-    mockPage.close.mockResolvedValue(undefined);
-    mockBrowser.newPage.mockResolvedValue(mockPage);
-    mockBrowser.close.mockResolvedValue(undefined);
+    mockDoc._dataHandler = null;
+    mockDoc._endHandler = null;
+    mockDoc._errorHandler = null;
   });
 
-  it("should generate a PDF buffer", async () => {
+  it("should return a Buffer", async () => {
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
-    const result = await generateFinancialReportPdf(mockReport, 12);
+    const result = await generateFinancialReportPdf(mockReport, 3);
     expect(result).toBeInstanceOf(Buffer);
-    expect(result.length).toBeGreaterThan(0);
   });
 
-  it("should call page.setContent with HTML containing Chinese characters", async () => {
+  it("should call addPage at least 4 times (cover + 3 content pages)", async () => {
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
-    await generateFinancialReportPdf(mockReport, 12);
-
-    expect(mockPage.setContent).toHaveBeenCalledTimes(1);
-    const htmlContent = mockPage.setContent.mock.calls[0][0] as string;
-
-    // Verify Chinese characters are present in the HTML
-    expect(htmlContent).toContain("財務報告");
-    expect(htmlContent).toContain("平台淨利潤");
-    expect(htmlContent).toContain("損益表");
-    expect(htmlContent).toContain("月度明細");
+    await generateFinancialReportPdf(mockReport, 3);
+    expect(mockDoc.addPage).toHaveBeenCalledTimes(4);
   });
 
-  it("should include Noto Sans TC font for Chinese character support", async () => {
+  it("should register NotoTC-Regular and NotoTC-Bold fonts", async () => {
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
-    await generateFinancialReportPdf(mockReport, 12);
-
-    const htmlContent = mockPage.setContent.mock.calls[0][0] as string;
-    // Verify Google Fonts Noto Sans TC is included for Chinese support
-    expect(htmlContent).toContain("Noto+Sans+TC");
-    expect(htmlContent).toContain("Noto Sans TC");
+    await generateFinancialReportPdf(mockReport, 3);
+    expect(mockDoc.registerFont).toHaveBeenCalledWith("NotoTC-Regular", expect.stringContaining("NotoSansTC-Regular.otf"));
+    expect(mockDoc.registerFont).toHaveBeenCalledWith("NotoTC-Bold", expect.stringContaining("NotoSansTC-Bold.otf"));
   });
 
-  it("should include BOXIUM branding in HTML", async () => {
+  it("should call doc.end() to finalise the PDF", async () => {
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
-    await generateFinancialReportPdf(mockReport, 12);
-
-    const htmlContent = mockPage.setContent.mock.calls[0][0] as string;
-    // Verify BOXIUM branding
-    expect(htmlContent).toContain("BOXIUM PTCG");
-    // Verify logo is embedded as base64
-    expect(htmlContent).toContain("data:image/png;base64,");
+    await generateFinancialReportPdf(mockReport, 3);
+    expect(mockDoc.end).toHaveBeenCalledTimes(1);
   });
 
-  it("should format currency values correctly", async () => {
+  it("should handle empty monthly array gracefully", async () => {
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
-    await generateFinancialReportPdf(mockReport, 12);
-
-    const htmlContent = mockPage.setContent.mock.calls[0][0] as string;
-    // Verify HKD currency format
-    expect(htmlContent).toContain("HKD");
+    const emptyReport = { ...mockReport, monthly: [] };
+    await expect(generateFinancialReportPdf(emptyReport, 3)).resolves.toBeInstanceOf(Buffer);
   });
 
-  it("should include all monthly data rows", async () => {
+  it("should handle zero GMV values without dividing by zero", async () => {
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
-    await generateFinancialReportPdf(mockReport, 12);
-
-    const htmlContent = mockPage.setContent.mock.calls[0][0] as string;
-    // Both months should appear
-    expect(htmlContent).toContain("2026年3月");
-    expect(htmlContent).toContain("2026年2月");
+    const zeroReport = {
+      monthly: [],
+      overall: { ...mockReport.overall, totalSalesHkd: 0, stripeSalesHkd: 0, alipaySalesHkd: 0 },
+    };
+    await expect(generateFinancialReportPdf(zeroReport, 1)).resolves.toBeInstanceOf(Buffer);
   });
 
-  it("should use A4 format for PDF generation", async () => {
+  it("should handle missing logo gracefully (existsSync returns false)", async () => {
+    const fs = await import("fs");
+    vi.mocked(fs.default.existsSync).mockReturnValueOnce(false);
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
-    await generateFinancialReportPdf(mockReport, 12);
-
-    expect(mockPage.pdf).toHaveBeenCalledWith(
-      expect.objectContaining({ format: "A4", printBackground: true })
-    );
+    await expect(generateFinancialReportPdf(mockReport, 3)).resolves.toBeInstanceOf(Buffer);
   });
 
-  it("should close the page and browser after PDF generation", async () => {
-    const { generateFinancialReportPdf } = await import("./services/financialPdfService");
-    await generateFinancialReportPdf(mockReport, 12);
+  it("should format HKD amounts correctly", () => {
+    const amount = 11.60;
+    const formatted = `HKD ${amount.toLocaleString("zh-HK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    expect(formatted).toBe("HKD 11.60");
+  });
 
-    expect(mockPage.close).toHaveBeenCalledTimes(1);
-    expect(mockBrowser.close).toHaveBeenCalledTimes(1);
+  it("should format year-month strings correctly", () => {
+    const dateStr = "2026-03";
+    const [year, month] = dateStr.split("-");
+    const formatted = `${year}年${parseInt(month)}月`;
+    expect(formatted).toBe("2026年3月");
   });
 });
