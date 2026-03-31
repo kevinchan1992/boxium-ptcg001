@@ -1,0 +1,8 @@
+{
+  "query": "SELECT order_no, order_status, payout_status, stripe_transfer_id FROM marketplace_orders WHERE order_no = 'BOXIUM-20260330-7825';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT order_no, order_status, payout_status, stripe_transfer_id FROM marketplace_orders WHERE order_no = 'BOXIUM-20260330-7825';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'mua4eq38uvnrovhujbrepi.marketplace_orders' doesn't exist"
+  ]
+}

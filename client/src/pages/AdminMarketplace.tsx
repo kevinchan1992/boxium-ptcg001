@@ -4800,15 +4800,17 @@ const PAYOUT_ORDER_STEPS: { key: string; label: string; icon: string }[] = [
   { key: 'payout_done',      label: '已放款', icon: '💰' },
 ];
 
-function resolvePayoutStepKey(orderStatus: string, payoutStatus: string): string {
+function resolvePayoutStepKey(orderStatus: string, payoutStatus: string, stripeTransferId?: string | null): string {
   if (payoutStatus === 'paid' || payoutStatus === 'completed') return 'payout_done';
+  // If a Stripe transfer ID exists, the payout actually succeeded regardless of status field
+  if (stripeTransferId) return 'payout_done';
   if (orderStatus === 'completed' || orderStatus === 'delivered') return 'payout_pending';
   if (orderStatus === 'shipped') return 'shipped';
   if (orderStatus === 'processing') return 'processing';
   return 'payment_received';
 }
 
-function OrderStatusStepper({ orderStatus, payoutStatus }: { orderStatus: string; payoutStatus: string }) {
+function OrderStatusStepper({ orderStatus, payoutStatus, stripeTransferId }: { orderStatus: string; payoutStatus: string; stripeTransferId?: string | null }) {
   const isCancelled = ['cancelled', 'refunded', 'disputed'].includes(orderStatus);
   const cancelMeta: Record<string, { label: string; cls: string; icon: string }> = {
     cancelled: { label: '訂單已取消', cls: 'bg-red-50 border-red-200 text-red-700', icon: '🚫' },
@@ -4823,7 +4825,7 @@ function OrderStatusStepper({ orderStatus, payoutStatus }: { orderStatus: string
       </div>
     );
   }
-  const currentKey = resolvePayoutStepKey(orderStatus, payoutStatus);
+  const currentKey = resolvePayoutStepKey(orderStatus, payoutStatus, stripeTransferId);
   const currentIdx = PAYOUT_ORDER_STEPS.findIndex(s => s.key === currentKey);
   return (
     <div className="mx-4 mb-3 mt-1">
@@ -4953,7 +4955,7 @@ function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () =>
       </div>
       {/* Order Status Stepper */}
       <div className="bg-gray-50 border-b border-gray-100 py-2">
-        <OrderStatusStepper orderStatus={o.orderStatus ?? 'payment_received'} payoutStatus={o.payoutStatus ?? 'pending'} />
+        <OrderStatusStepper orderStatus={o.orderStatus ?? 'payment_received'} payoutStatus={o.payoutStatus ?? 'pending'} stripeTransferId={o.stripeTransferId} />
       </div>
       {/* Order Body */}
       <div className="p-4 bg-white grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -5304,14 +5306,6 @@ function PayoutsTab() {
     }
   };
 
-  const fixFeesMutation = trpc.marketplace.adminFixPlatformOrderFees.useMutation({
-    onSuccess: (result) => {
-      alert(result.message);
-      utils.marketplace.adminGetOrders.invalidate();
-    },
-    onError: (err) => alert('修復失敗：' + err.message),
-  });
-
   // Fix: use sellerReceivableHkd (correct field name from backend)
   // Platform orders (sellerType='platform') have platformFeeHkd=0, sellerReceivableHkd=subtotalHkd
   const totalPayout = data?.orders?.reduce((sum: number, o: any) => {
@@ -5406,20 +5400,7 @@ function PayoutsTab() {
           >
             <Download className="w-3.5 h-3.5 mr-1" />匯出 CSV
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs border-red-200 text-red-600 hover:bg-red-50"
-            disabled={fixFeesMutation.isPending}
-            onClick={() => {
-              if (confirm('確定要將所有平台訂單的手續費修正為 0？此操作不可復原。')) {
-                fixFeesMutation.mutate();
-              }
-            }}
-          >
-            {fixFeesMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
-            修復歷史平台訂單手續費
-          </Button>
+
         </div>
       </div>
 
