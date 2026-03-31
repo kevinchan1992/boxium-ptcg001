@@ -1,0 +1,100 @@
+{
+  "query": "SELECT t.id, t.cardId, t.rank, t.priceChange7d, c.name, c.imageUrl, c.gameId FROM trendingCardsCache t LEFT JOIN cards c ON t.cardId = c.id ORDER BY t.rank LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT t.id, t.cardId, t.rank, t.priceChange7d, c.name, c.imageUrl, c.gameId FROM trendingCardsCache t LEFT JOIN cards c ON t.cardId = c.id ORDER BY t.rank LIMIT 20;",
+  "rows": [
+    {
+      "id": "1920071",
+      "cardId": "210006",
+      "rank": "1",
+      "priceChange7d": "82.12",
+      "name": "Pikachu ex UR [SV8a 236/187](High Class Pack \"Terastal Festival ex\")",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20241205121426-2.webp",
+      "gameId": "1"
+    },
+    {
+      "id": "1920076",
+      "cardId": "1297424",
+      "rank": "1",
+      "priceChange7d": "65.85",
+      "name": "Monkey.D.Luffy SEC-P [EB04-061](Extra Booster \"EGGHEAD CRISIS\")",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20260130070831-0.webp",
+      "gameId": "2"
+    },
+    {
+      "id": "1920077",
+      "cardId": "1380202",
+      "rank": "2",
+      "priceChange7d": "57.17",
+      "name": "Monkey.D.Luffy SEC-P [OP13-118](Booster Pack \"CARRYING ON HIS WILL\")",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/OPC-TCG-2025-08-15-25-of.webp",
+      "gameId": "2"
+    },
+    {
+      "id": "1920072",
+      "cardId": "546178",
+      "rank": "2",
+      "priceChange7d": "63.56",
+      "name": "Gyarados : Old Back [PMCG4 No.130](Expansion Pack \"Team Rocket\")",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7303274.webp",
+      "gameId": "1"
+    },
+    {
+      "id": "1920078",
+      "cardId": "1410174",
+      "rank": "3",
+      "priceChange7d": "42.69",
+      "name": "Nami SR [OP11-054](Promotional Card \"3rd ANNIVERSARY SET\")",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/OPC-TCG-3AS-002-of.webp",
+      "gameId": "2"
+    },
+    {
+      "id": "1920073",
+      "cardId": "812826",
+      "rank": "3",
+      "priceChange7d": "50.62",
+      "name": "Pikachu V[SN 001/024](Start Deck 100 CoroCoro Comic ver.)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20221018023005-0.webp",
+      "gameId": "1"
+    },
+    {
+      "id": "1920079",
+      "cardId": "1294159",
+      "rank": "4",
+      "priceChange7d": "40.93",
+      "name": "Buggy : Wanted R-SPC [OP09-051](Booster Pack \"Emperors In The New World\")",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20240831045755-0.webp",
+      "gameId": "2"
+    },
+    {
+      "id": "1920074",
+      "cardId": "210009",
+      "rank": "4",
+      "priceChange7d": "50.60",
+      "name": "Iono's Bellibolt ex SAR [M2a 236/193](High Class Pack \"MEGA Dream ex\")",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20251127044048-2.webp",
+      "gameId": "1"
+    },
+    {
+      "id": "1920080",
+      "cardId": "1297968",
+      "rank": "5",
+      "priceChange7d": "35.45",
+      "name": "Monkey.D.Luffy SEC-P [OP10-118](Booster Pack \"Royal Blood\")",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20241129074012-8.webp",
+      "gameId": "2"
+    },
+    {
+      "id": "1920075",
+      "cardId": "545917",
+      "rank": "5",
+      "priceChange7d": "49.63",
+      "name": "Aerodactyl V SR: SA[S11 106/100](Expansion Pack \"Lost Abyss\")",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20220901072007-0.webp",
+      "gameId": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcardId\trank\tpriceChange7d\tname\timageUrl\tgameId\n1920071\t210006\t1\t82.12\tPikachu ex UR [SV8a 236/187](High Class Pack \"Terastal Festival ex\")\thttps://cdn.snkrdunk.com/upload_bg_removed/20241205121426-2.webp\t1\n1920076\t1297424\t1\t65.85\tMonkey.D.Luffy SEC-P [EB04-061](Extra Booster \"EGGHEAD CRISIS\")\thttps://cdn.snkrdunk.com/upload_bg_removed/20260130070831-0.webp\t2\n1920077\t1380202\t2\t57.17\tMonkey.D.Luffy SEC-P [OP13-118](Booster Pack \"CARRYING ON HIS WILL\")\thttps://cdn.snkrdunk.com/upload_bg_removed/OPC-TCG-2025-08-15-25-of.webp\t2\n1920072\t546178\t2\t63.56\tGyarados : Old Back [PMCG4 No.130](Expansion Pack \"Team Rocket\")\thttps://cdn.snkrdunk.com/upload_bg_removed/7303274.webp\t1\n1920078\t1410174\t3\t42.69\tNami SR [OP11-054](Promotional Card \"3rd ANNIVERSARY SET\")\thttps://cdn.snkrdunk.com/upload_bg_removed/OPC-TCG-3AS-002-of.webp\t2\n1920073\t812826\t3\t50.62\tPikachu V[SN 001/024](Start Deck 100 CoroCoro Comic ver.)\thttps://cdn.snkrdunk.com/upload_bg_removed/20221018023005-0.webp\t1\n1920079\t1294159\t4\t40.93\tBuggy : Wanted R-SPC [OP09-051](Booster Pack \"Emperors In The New World\")\thttps://cdn.snkrdunk.com/upload_bg_removed/20240831045755-0.webp\t2\n1920074\t210009\t4\t50.60\tIono's Bellibolt ex SAR [M2a 236/193](High Class Pack \"MEGA Dream ex\")\thttps://cdn.snkrdunk.com/upload_bg_removed/20251127044048-2.webp\t1\n1920080\t1297968\t5\t35.45\tMonkey.D.Luffy SEC-P [OP10-118](Booster Pack \"Royal Blood\")\thttps://cdn.snkrdunk.com/upload_bg_removed/20241129074012-8.webp\t2\n1920075\t545917\t5\t49.63\tAerodactyl V SR: SA[S11 106/100](Expansion Pack \"Lost Abyss\")\thttps://cdn.snkrdunk.com/upload_bg_removed/20220901072007-0.webp\t1\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}

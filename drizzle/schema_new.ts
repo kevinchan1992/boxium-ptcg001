@@ -790,6 +790,13 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   winnerId: int("winnerId"),
   winningBidId: int("winningBidId"),
   auctionTermsVersion: varchar("auctionTermsVersion", { length: 20 }),
+  // High-value risk control
+  isHighValueReview: boolean("isHighValueReview").default(false).notNull(), // true = requires extra admin review (startingBid > HKD 10000)
+  // Auction payment (winner pays via Stripe after auction ends)
+  auctionPaymentSessionId: varchar("auctionPaymentSessionId", { length: 200 }),
+  auctionPaymentStatus: mysqlEnum("auctionPaymentStatus", ["pending", "paid", "failed", "expired"]),
+  auctionPaymentPaidAt: timestamp("auctionPaymentPaidAt"),
+  auctionOrderId: int("auctionOrderId"),
   // Metadata
   viewCount: int("viewCount").default(0).notNull(),
   listedAt: timestamp("listedAt"),
@@ -1321,6 +1328,12 @@ export const auctionBids = mysqlTable("auctionBids", {
   status: mysqlEnum("status", ["active", "outbid", "winning", "retracted"]).default("active").notNull(),
   ipHash: varchar("ipHash", { length: 64 }),
   userAgent: text("userAgent"),
+  // Deposit (pre-authorization) fields
+  depositAmountHkd: decimal("depositAmountHkd", { precision: 10, scale: 2 }),
+  depositPaymentIntentId: varchar("depositPaymentIntentId", { length: 200 }),
+  depositStatus: mysqlEnum("depositStatus", ["none", "held", "released", "captured"]).default("none").notNull(),
+  depositHeldAt: timestamp("depositHeldAt"),
+  depositReleasedAt: timestamp("depositReleasedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   listingIdIdx: index("ab_listingId_idx").on(table.listingId),

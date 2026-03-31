@@ -713,6 +713,8 @@ export default function SellerDashboard() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showNewListing, setShowNewListing] = useState(false);
   const [listingStep, setListingStep] = useState<1 | 2 | 3>(1);
+  const [showSellerTerms, setShowSellerTerms] = useState(false);
+  const [pendingAuctionSubmit, setPendingAuctionSubmit] = useState(false);
   const [applyForm, setApplyForm] = useState({ displayName: "", bio: "" });
   const [listingForm, setListingForm] = useState({
     title: "", description: "", condition: "raw_a", price: "", quantity: "1",
@@ -908,6 +910,37 @@ export default function SellerDashboard() {
       setListingImages([]);
       setSelectedCard(null);
       refetchListings();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const { data: sellerTermsData, refetch: refetchSellerTerms } = trpc.auction.checkTermsAgreement.useQuery(
+    { role: 'seller' },
+    { enabled: !!me }
+  );
+  const agreeSellerTermsMutation = trpc.auction.agreeToTerms.useMutation({
+    onSuccess: () => {
+      refetchSellerTerms();
+      setShowSellerTerms(false);
+      // Auto-submit auction if user was trying to submit
+      if (pendingAuctionSubmit) {
+        setPendingAuctionSubmit(false);
+        createAuctionMutation.mutate({
+          title: listingForm.title,
+          description: listingForm.description || undefined,
+          condition: listingForm.condition as any,
+          quantity: parseInt(listingForm.quantity),
+          images: listingImages.length > 0 ? listingImages : undefined,
+          cardId: selectedCard?.id ?? undefined,
+          tcgSeries: listingForm.tcgSeries as any,
+          startingBid: parseFloat(listingForm.startingBid),
+          reservePrice: listingForm.reservePrice ? parseFloat(listingForm.reservePrice) : undefined,
+          buyNowPrice: listingForm.buyNowPrice ? parseFloat(listingForm.buyNowPrice) : undefined,
+          bidIncrement: parseFloat(listingForm.bidIncrement || '10'),
+          auctionStartAt: listingForm.auctionStartAt ? new Date(listingForm.auctionStartAt) : undefined,
+          auctionEndAt: new Date(listingForm.auctionEndAt),
+        });
+      }
     },
     onError: (e) => toast.error(e.message),
   });
@@ -3125,6 +3158,12 @@ export default function SellerDashboard() {
                 disabled={createListingMutation.isPending || adminCreateListingMutation.isPending || createAuctionMutation.isPending}
                 onClick={() => {
                   if (listingForm.listingMode === 'auction') {
+                    // Check if seller has agreed to terms first
+                    if (!sellerTermsData?.agreed) {
+                      setPendingAuctionSubmit(true);
+                      setShowSellerTerms(true);
+                      return;
+                    }
                     // Auction mode - call auction.create
                     createAuctionMutation.mutate({
                       title: listingForm.title,
@@ -3185,6 +3224,59 @@ export default function SellerDashboard() {
           }
         }}
       />
+
+      {/* Seller Terms Dialog */}
+      <Dialog open={showSellerTerms} onOpenChange={(o) => { setShowSellerTerms(o); if (!o) setPendingAuctionSubmit(false); }}>
+        <DialogContent className="max-w-lg bg-[#06038D] text-white">
+          <DialogHeader>
+            <DialogTitle className="text-[#FEDD00] font-black text-lg flex items-center gap-2">
+              <Gavel className="w-5 h-5" />
+              拍賣賣家條款
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-white/90 max-h-72 overflow-y-auto pr-1">
+            <p className="font-semibold text-white">在上架拍賣前，請仔細閱讀以下條款：</p>
+            <div className="space-y-2">
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">📋 競標規則</p>
+                <p className="text-xs">所有出價均具法律約束力。一旦出價，不得撤回。賣家須確保商品描述準確，圖片真實。</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">💳 付款期限</p>
+                <p className="text-xs">得標者須在結標後 24 小時內完成付款。逾期未付將被記錄違規，影響帳戶信用評分。</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">⚠️ 棄標懲罰</p>
+                <p className="text-xs">首次棄標：警告 → 第二次：7 天封禁 → 第三次：30 天封禁 → 第四次：永久封禁</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">🏷️ 新賣家限制</p>
+                <p className="text-xs">完成成交少於 5 次的新賣家，拍賣起拍價上限為 HK$5,000。起拍價超過 HK$10,000 的拍賣需額外審核。</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">📦 出貨責任</p>
+                <p className="text-xs">賣家須在收款後 3 個工作天內安排出貨，並提供有效追蹤號碼。</p>
+              </div>
+            </div>
+            <p className="text-xs text-white/60 mt-2">
+              如需查看完整條款，請訪問 <Link href="/auction/terms" className="text-[#FEDD00] underline">拍賣條款頁面</Link>
+            </p>
+          </div>
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" onClick={() => { setShowSellerTerms(false); setPendingAuctionSubmit(false); }} className="border-white/30 text-white hover:bg-white/10 bg-transparent">
+              取消
+            </Button>
+            <Button
+              className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
+              onClick={() => agreeSellerTermsMutation.mutate({ role: 'seller' })}
+              disabled={agreeSellerTermsMutation.isPending}
+            >
+              {agreeSellerTermsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
+              我同意並繼續上架
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Ship Dialog */}
       <Dialog open={shipDialog.open} onOpenChange={(o) => setShipDialog(d => ({ ...d, open: o }))}>

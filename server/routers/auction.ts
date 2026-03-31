@@ -15,8 +15,25 @@ import {
   generateOrderNo, createMarketplaceOrder, createOrderItems,
   getSellerAuctions, getAuctionAdminStats,
   getAllAuctionViolations, liftAuctionBan,
+  getSellerProfileByUserId,
 } from "../db";
 import { createNotification } from "../db/notifications";
+import Stripe from 'stripe';
+
+// Shared Stripe instance for auction deposit/payment
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
+}
+
+// High-value auction thresholds
+const HIGH_VALUE_THRESHOLD_HKD = 10000; // Listings above this need extra admin review
+const NEW_SELLER_MAX_BID_HKD = 5000;    // New sellers (totalSales < 5) can't list above this
+const NEW_SELLER_SALES_THRESHOLD = 5;   // Number of completed sales to be considered "established"
+
+// Deposit rate: 10% of starting bid, min HKD 50, max HKD 500
+function calcDepositAmount(startingBid: number): number {
+  return Math.min(Math.max(Math.round(startingBid * 0.10), 50), 500);
+}
 
 // Current terms version — bump this when terms change
 const AUCTION_TERMS_VERSION = "1.0";
@@ -97,6 +114,20 @@ export const auctionRouter = router({
       const banned = await isUserAuctionBanned(ctx.user.id);
       if (banned) throw new TRPCError({ code: "FORBIDDEN", message: "您的帳戶已被禁止參與拍賣" });
 
+      // High-value risk control: check seller's completed sales count
+      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      const sellerTotalSales = sellerProfile?.totalSales ?? 0;
+      const isNewSeller = sellerTotalSales < NEW_SELLER_SALES_THRESHOLD;
+      if (isNewSeller && input.startingBid > NEW_SELLER_MAX_BID_HKD) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `新賣家（完成成交少於 ${NEW_SELLER_SALES_THRESHOLD} 次）的拍賣起拍價上限為 HK$${NEW_SELLER_MAX_BID_HKD.toLocaleString()}。請先完成更多交易以提高額度限制。`,
+        });
+      }
+
+      // Flag high-value listings for extra admin review
+      const isHighValueReview = input.startingBid > HIGH_VALUE_THRESHOLD_HKD;
+
       const startAt = input.auctionStartAt ?? new Date();
       const endAt = input.auctionEndAt;
 
@@ -124,9 +155,22 @@ export const auctionRouter = router({
         bidIncrement: input.bidIncrement.toString(),
         antiSnipingMinutes: input.antiSnipingMinutes,
         auctionTermsVersion: AUCTION_TERMS_VERSION,
+        isHighValueReview: isHighValueReview,
+        auctionPaymentStatus: 'pending',
       } as any);
 
-      return { success: true, listingId: listing?.id };
+      // Notify admin for high-value listings
+      if (isHighValueReview) {
+        const { notifyAdmin } = await import('../emailService').catch(() => ({ notifyAdmin: null }));
+        if (notifyAdmin) {
+          await notifyAdmin({
+            title: '高價拍賣待額外審核',
+            content: `賣家 #${ctx.user.id} 上架的拍賣起拍價為 HK$${input.startingBid.toLocaleString()}，超過 HK$${HIGH_VALUE_THRESHOLD_HKD.toLocaleString()} 門標，需要額外審核。拍賣 ID: ${listing?.id}`,
+          }).catch(() => {});
+        }
+      }
+
+      return { success: true, listingId: listing?.id, isHighValueReview };
     }),
 
   /** Buyer places a bid */
@@ -549,6 +593,134 @@ export const auctionRouter = router({
     .input(z.object({ violationId: z.number().int() }))
     .mutation(async ({ input }) => {
       await liftAuctionBan(input.violationId);
+      return { success: true };
+    }),
+
+  /** Admin: approve high-value listing */
+  adminApproveHighValue: adminProcedure
+    .input(z.object({ listingId: z.number().int() }))
+    .mutation(async ({ input }) => {
+      const listing = await getAuctionListingById(input.listingId);
+      if (!listing) throw new TRPCError({ code: 'NOT_FOUND' });
+      await updateAuctionListing(input.listingId, { isHighValueReview: false } as any);
+      // Notify seller
+      const { getSellerProfileByUserId: getSP } = await import('../db');
+      const sp = listing.sellerId ? await getSP(listing.sellerId) : null;
+      if (sp?.userId) {
+        await createNotification({
+          userId: sp.userId,
+          type: 'auction_won',
+          title: '高價拍賣審核通過 ✅',
+          body: `您的拍賣「${listing.title}」已通過高價額外審核，即將按排程開始。`,
+          linkUrl: `/auction/${listing.id}`,
+        }).catch(() => {});
+      }
+      return { success: true };
+    }),
+
+  /** Winner: create Stripe Checkout session to pay for won auction */
+  createAuctionPayment: protectedProcedure
+    .input(z.object({
+      listingId: z.number().int(),
+      origin: z.string().url(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await getAuctionListingById(input.listingId);
+      if (!listing) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (listing.winnerId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN', message: '您不是此拍賣的得標者' });
+      if (listing.auctionPaymentStatus === 'paid') throw new TRPCError({ code: 'BAD_REQUEST', message: '此拍賣已完成付款' });
+      const endedStatuses = ['ended_sold', 'ended_no_bid'] as const;
+      if (!endedStatuses.includes(listing.auctionStatus as any)) throw new TRPCError({ code: 'BAD_REQUEST', message: '拍賣尚未結標' });
+
+      const stripe = getStripe();
+      const winningBid = parseFloat(listing.currentHighestBid ?? '0');
+      if (winningBid <= 0) throw new TRPCError({ code: 'BAD_REQUEST', message: '無效的得標金額' });
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        customer_email: ctx.user.email ?? undefined,
+        line_items: [{
+          price_data: {
+            currency: 'hkd',
+            product_data: {
+              name: listing.title ?? `拍賣 #${listing.id}`,
+              description: `得標拍賣，拍賣 ID: ${listing.id}`,
+            },
+            unit_amount: Math.round(winningBid * 100),
+          },
+          quantity: 1,
+        }],
+        metadata: {
+          auction_listing_id: listing.id.toString(),
+          user_id: ctx.user.id.toString(),
+          customer_email: ctx.user.email ?? '',
+          customer_name: ctx.user.name ?? '',
+        },
+        client_reference_id: ctx.user.id.toString(),
+        success_url: `${input.origin}/auction/${listing.id}?payment=success`,
+        cancel_url: `${input.origin}/auction/${listing.id}?payment=cancelled`,
+        allow_promotion_codes: false,
+      });
+
+      // Save session ID to listing
+      await updateAuctionListing(listing.id, {
+        auctionPaymentSessionId: session.id,
+      } as any);
+
+      return { checkoutUrl: session.url };
+    }),
+
+  /** Submit review for completed auction (buyer reviews seller, seller reviews buyer) */
+  submitAuctionReview: protectedProcedure
+    .input(z.object({
+      listingId: z.number().int(),
+      rating: z.number().int().min(1).max(5),
+      comment: z.string().max(500).optional(),
+      isAnonymous: z.boolean().optional().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await getAuctionListingById(input.listingId);
+      if (!listing) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (listing.auctionPaymentStatus !== 'paid') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '拍賣尚未完成付款，無法評價' });
+      }
+
+      const isBuyer = listing.winnerId === ctx.user.id;
+      const isSeller = listing.sellerId === ctx.user.id;
+      if (!isBuyer && !isSeller) throw new TRPCError({ code: 'FORBIDDEN' });
+
+      const orderId = listing.auctionOrderId;
+      if (!orderId) throw new TRPCError({ code: 'BAD_REQUEST', message: '找不到對應訂單' });
+
+      // Check if already reviewed for this order+reviewer combination
+      const { getReviewByOrderId, createReview, getSellerProfileByUserId: getSP2 } = await import('../db');
+      const existingReview = await getReviewByOrderId(orderId);
+      if (existingReview) throw new TRPCError({ code: 'BAD_REQUEST', message: '此拍賣已評價過' });
+
+      const sellerProf = listing.sellerId ? await getSP2(listing.sellerId) : null;
+      await createReview({
+        orderId,
+        listingId: listing.id,
+        buyerId: listing.winnerId!,
+        sellerId: sellerProf?.id ?? listing.sellerId!,
+        rating: input.rating,
+        comment: input.comment ?? null,
+        isAnonymous: input.isAnonymous ?? false,
+      });
+
+      // Notify the other party
+      const notifyUserId = isBuyer ? (sellerProf?.userId ?? null) : listing.winnerId;
+      if (notifyUserId) {
+        await createNotification({
+          userId: notifyUserId,
+          type: 'trade',
+          title: `拍賣收到新評價 ${'⭐'.repeat(input.rating)}`,
+          body: `${isBuyer ? '買家' : '賣家'}對拍賣「${listing.title}」給了 ${input.rating} 星評價${input.comment ? `：${input.comment.slice(0, 50)}` : ''}`,
+          linkUrl: `/auction/${listing.id}`,
+        }).catch(() => {});
+      }
+
       return { success: true };
     }),
 });

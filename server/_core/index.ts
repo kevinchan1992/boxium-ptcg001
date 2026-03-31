@@ -198,6 +198,84 @@ async function startServer() {
           return res.json({ received: true });
         }
 
+        // Handle auction payment (winner pays after auction ends)
+        const auctionListingId = session.metadata?.auction_listing_id;
+        if (auctionListingId) {
+          console.log(`[Webhook] Auction payment received for listing ${auctionListingId}`);
+          try {
+            const { updateAuctionListing, getAuctionListingById } = await import('../db');
+            const auctionListing = await getAuctionListingById(parseInt(auctionListingId));
+            if (auctionListing && auctionListing.auctionPaymentStatus === 'pending') {
+              const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : null;
+              // Create the marketplace order for this auction
+              const { generateOrderNo, createMarketplaceOrder, createOrderItems, getSellerProfileByUserId } = await import('../db');
+              const winnerId = auctionListing.winnerId;
+              if (winnerId) {
+                const orderNo_ = await generateOrderNo();
+                const winningBidAmount = parseFloat(auctionListing.currentHighestBid ?? '0');
+                const platformFeeRate = 0.05;
+                const platformFee = winningBidAmount * platformFeeRate;
+                const sellerReceivable = winningBidAmount - platformFee;
+                const sellerProf = auctionListing.sellerId ? await getSellerProfileByUserId(auctionListing.sellerId) : null;
+                const newOrder = await createMarketplaceOrder({
+                  orderNo: orderNo_,
+                  buyerId: winnerId,
+                  sellerId: sellerProf?.id ?? null,
+                  paymentMethod: 'stripe',
+                  subtotalHkd: winningBidAmount.toString(),
+                  platformFeeHkd: platformFee.toString(),
+                  sellerReceivableHkd: sellerReceivable.toString(),
+                  totalHkd: winningBidAmount.toString(),
+                  orderStatus: 'payment_received',
+                  paymentStatus: 'paid',
+                  paidAt: new Date(),
+                  stripePaymentIntentId: paymentIntentId,
+                  stripeSessionId: session.id,
+                  orderSource: 'auction',
+                  auctionListingId: parseInt(auctionListingId),
+                  auctionWinningBidId: auctionListing.winningBidId ?? null,
+                } as any);
+                if (newOrder?.id) {
+                  await createOrderItems([{
+                    orderId: newOrder.id,
+                    listingId: auctionListing.id,
+                    quantity: 1,
+                    priceHkd: winningBidAmount.toString(),
+                    title: auctionListing.title ?? `拍賣 #${auctionListingId}`,
+                    images: auctionListing.images,
+                    condition: auctionListing.condition,
+                  }] as any);
+                  await updateAuctionListing(parseInt(auctionListingId), {
+                    auctionPaymentStatus: 'paid',
+                    auctionPaymentPaidAt: new Date(),
+                    auctionOrderId: newOrder.id,
+                  } as any);
+                  await createNotification({
+                    userId: winnerId,
+                    type: 'auction_won',
+                    title: '拍賣付款成功 ✅',
+                    body: `您已成功支付拍賣商品「${auctionListing.title ?? `拍賣 #${auctionListingId}`}」，訂單 ${orderNo_} 現已進入處理中。`,
+                    linkUrl: `/orders/${orderNo_}`,
+                  }).catch(() => {});
+                  if (sellerProf?.userId) {
+                    await createNotification({
+                      userId: sellerProf.userId,
+                      type: 'trade',
+                      title: '拍賣訂單已付款 🎉',
+                      body: `拍賣「${auctionListing.title ?? `拍賣 #${auctionListingId}`}」得標者已完成付款，訂單 ${orderNo_} 請盡快安排出貨。`,
+                      linkUrl: '/seller',
+                    }).catch(() => {});
+                  }
+                  console.log(`[Webhook] Auction order ${orderNo_} created for listing ${auctionListingId}`);
+                }
+              }
+            }
+          } catch (auctionPayErr: any) {
+            console.error(`[Webhook] Auction payment processing error:`, auctionPayErr.message);
+          }
+          return res.json({ received: true });
+        }
+
         let order: any = null;
         if (orderId) {
           order = await getMarketplaceOrderById(parseInt(orderId));

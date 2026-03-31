@@ -11,8 +11,10 @@ import { toast } from "sonner";
 import {
   Gavel, Clock, TrendingUp, ChevronLeft, User, Shield, Zap,
   AlertTriangle, CheckCircle2, ArrowUp, Loader2, Eye, Package,
-  ChevronRight, ImageIcon
+  ChevronRight, ImageIcon, Star, CreditCard
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 // ─── Countdown Hook ───────────────────────────────────────────────────────────
 function useCountdown(endTime: Date | string | null) {
@@ -118,6 +120,160 @@ function TermsDialog({
           >
             {agreeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
             我已閱讀並同意
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Winner Payment Panel ───────────────────────────────────────────────────
+function WinnerPaymentPanel({ listing, onRefetch }: { listing: any; onRefetch: () => void }) {
+  const { data: me } = trpc.auth.me.useQuery();
+  const [showReview, setShowReview] = useState(false);
+
+  const paymentMutation = trpc.auction.createAuctionPayment.useMutation({
+    onSuccess: (data) => {
+      if (data.checkoutUrl) {
+        toast.success('正在前往付款頁面...');
+        window.open(data.checkoutUrl, '_blank');
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const winningBid = parseFloat(listing.currentHighestBid ?? '0');
+  const isWinner = me && listing.winnerId === (me as any).id;
+  const isPaid = listing.auctionPaymentStatus === 'paid';
+  const canReview = isPaid && isWinner;
+
+  if (!isWinner) return null;
+
+  return (
+    <div className="space-y-3">
+      {!isPaid ? (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <div className="flex items-start gap-3 mb-3">
+            <CreditCard className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-800">🎉 恭喜您得標！</p>
+              <p className="text-xs text-amber-700 mt-0.5">得標金額：<strong>HK${winningBid.toLocaleString()}</strong></p>
+              <p className="text-xs text-amber-600 mt-1">請在 24 小時內完成付款，逾期將被記錄違規。</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => paymentMutation.mutate({ listingId: listing.id, origin: window.location.origin })}
+            disabled={paymentMutation.isPending}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold"
+          >
+            {paymentMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
+            立即付款 HK${winningBid.toLocaleString()}
+          </Button>
+        </div>
+      ) : (
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+            <div>
+              <p className="font-bold text-green-800">付款已完成 ✅</p>
+              <p className="text-xs text-green-600 mt-0.5">賣家將盡快安排出貨，請留意訂單狀態。</p>
+            </div>
+          </div>
+          {canReview && (
+            <Button
+              onClick={() => setShowReview(true)}
+              variant="outline"
+              className="w-full mt-3 border-green-300 text-green-700 hover:bg-green-100"
+            >
+              <Star className="w-4 h-4 mr-2" />
+              為此拍賣評分
+            </Button>
+          )}
+        </div>
+      )}
+      {showReview && (
+        <AuctionReviewDialog
+          listing={listing}
+          open={showReview}
+          onClose={() => setShowReview(false)}
+          onSuccess={() => { setShowReview(false); onRefetch(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Auction Review Dialog ────────────────────────────────────────────────────
+function AuctionReviewDialog({
+  listing, open, onClose, onSuccess
+}: { listing: any; open: boolean; onClose: () => void; onSuccess: () => void }) {
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
+
+  const reviewMutation = trpc.auction.submitAuctionReview.useMutation({
+    onSuccess: () => { toast.success('評價已提交！'); onSuccess(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Star className="w-5 h-5 text-amber-500" />
+            為拍賣評分
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">評分</Label>
+            <div className="flex gap-2">
+              {[1,2,3,4,5].map(s => (
+                <button
+                  key={s}
+                  onClick={() => setRating(s)}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                    s <= rating ? 'bg-amber-400 text-white' : 'bg-gray-100 text-gray-400 hover:bg-amber-100'
+                  }`}
+                >
+                  <Star className="w-5 h-5" fill={s <= rating ? 'currentColor' : 'none'} />
+                </button>
+              ))}
+              <span className="ml-2 text-sm text-gray-500 self-center">{rating} 星</span>
+            </div>
+          </div>
+          <div>
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">評語（選填）</Label>
+            <Textarea
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              placeholder="分享您的交易體驗..."
+              className="resize-none"
+              rows={3}
+              maxLength={500}
+            />
+            <p className="text-xs text-gray-400 mt-1 text-right">{comment.length}/500</p>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isAnonymous}
+              onChange={e => setIsAnonymous(e.target.checked)}
+              className="rounded"
+            />
+            <span className="text-sm text-gray-600">匿名評價</span>
+          </label>
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button
+            className="bg-[#06038D] hover:bg-[#0804b8] text-white"
+            onClick={() => reviewMutation.mutate({ listingId: listing.id, rating, comment: comment || undefined, isAnonymous })}
+            disabled={reviewMutation.isPending}
+          >
+            {reviewMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Star className="w-4 h-4 mr-2" />}
+            提交評價
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -297,6 +453,10 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
             </>
           )}
         </div>
+      )}
+      {/* Winner payment panel */}
+      {listing.auctionStatus === 'ended_sold' && (
+        <WinnerPaymentPanel listing={listing} onRefetch={onRefetch} />
       )}
 
       {/* Scheduled */}

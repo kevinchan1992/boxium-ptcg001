@@ -1671,7 +1671,9 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
   }
 
   const HALF_LIFE_DAYS = 7; // Shorter half-life for weekly comparison
-  const MIN_RECORDS    = 3; // Minimum records per window to avoid noise
+  // Per-game minimum records: Yu-Gi-Oh (gameId=3) has fewer SNKRDUNK transactions, use lower threshold
+  const MIN_RECORDS_DEFAULT = 3;
+  const MIN_RECORDS_YUGIOH  = 1;
 
   const trendingCards: Array<{
     cardId: number;
@@ -1683,6 +1685,8 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
 
   for (const [cardId, thisWeekRecords] of Array.from(thisWeekMap.entries())) {
     const lastWeekRecords = lastWeekMap.get(cardId) ?? [];
+    const cardGameId = cardGameMap.get(cardId) ?? 1;
+    const MIN_RECORDS = cardGameId === 3 ? MIN_RECORDS_YUGIOH : MIN_RECORDS_DEFAULT;
 
     // Both windows must have enough records
     if (thisWeekRecords.length < MIN_RECORDS) {

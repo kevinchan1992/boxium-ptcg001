@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE marketplaceListings \n  ADD COLUMN IF NOT EXISTS isHighValueReview TINYINT(1) NOT NULL DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS auctionPaymentSessionId VARCHAR(255) NULL,\n  ADD COLUMN IF NOT EXISTS auctionPaymentStatus ENUM('pending','paid','expired','refunded') NOT NULL DEFAULT 'pending',\n  ADD COLUMN IF NOT EXISTS auctionPaymentPaidAt BIGINT NULL,\n  ADD COLUMN IF NOT EXISTS auctionOrderId INT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nALTER TABLE marketplaceListings \n  ADD COLUMN IF NOT EXISTS isHighValueReview TINYINT(1) NOT NULL DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS auctionPaymentSessionId VARCHAR(255) NULL,\n  ADD COLUMN IF NOT EXISTS auctionPaymentStatus ENUM('pending','paid','expired','refunded') NOT NULL DEFAULT 'pending',\n  ADD COLUMN IF NOT EXISTS auctionPaymentPaidAt BIGINT NULL,\n  ADD COLUMN IF NOT EXISTS auctionOrderId INT NULL;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 449
+}

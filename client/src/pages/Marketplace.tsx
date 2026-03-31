@@ -749,41 +749,7 @@ export default function Marketplace() {
                   搜尋
                 </Button>
               </div>
-              {/* Hot search tags */}
-              <div className="flex items-center gap-2 mt-2.5 flex-wrap">
-                <span className="text-white/40 text-[10px] font-medium shrink-0">熱門：</span>
-{(() => {
-                    // Show dynamic hot keywords if available, otherwise show static fallback
-                    const STATIC_TAGS = [
-                      { label: 'PSA 10', search: 'PSA 10', series: 'all' },
-                      { label: 'Charizard', search: 'Charizard', series: 'pokemon' },
-                      { label: 'Luffy', search: 'Luffy', series: 'onepiece' },
-                      { label: 'Blue-Eyes', search: 'Blue-Eyes', series: 'yugioh' },
-                      { label: 'Pikachu', search: 'Pikachu', series: 'pokemon' },
-                      { label: 'Nami', search: 'Nami', series: 'onepiece' },
-                    ];
-                    const dynamicTags: { label: string; search: string; series: string }[] = hotKeywordsData && hotKeywordsData.length >= 3
-                      ? hotKeywordsData.map((k: { keyword: string; tcgSeries: string | null; count: number }) => ({ label: k.keyword, search: k.keyword, series: k.tcgSeries ?? 'all' }))
-                      : STATIC_TAGS;
-                    return dynamicTags.map((tag: { label: string; search: string; series: string }) => (
-                      <button
-                        key={tag.label}
-                        type="button"
-                        onClick={() => {
-                          (document.activeElement as HTMLElement)?.blur();
-                          setSearchInput(tag.search);
-                          setSearch(tag.search);
-                          if (tag.series && tag.series !== 'all') setTcgSeries(tag.series);
-                          logSearchMutation.mutate({ keyword: tag.search, tcgSeries: tag.series !== 'all' ? tag.series : undefined });
-                          resetAndSearch();
-                        }}
-                        className="text-[10px] sm:text-xs text-white/60 hover:text-[#FEDD00] hover:bg-white/10 px-2 py-0.5 rounded-full border border-white/10 hover:border-[#FEDD00]/40 transition-all"
-                      >
-                        {tag.label}
-                      </button>
-                    ));
-                  })()}
-              </div>
+
             </form>
           </div>
         </div>

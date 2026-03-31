@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, name, imageUrl, gameId FROM cards WHERE gameId = 3 LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, imageUrl, gameId FROM cards WHERE gameId = 3 LIMIT 10;",
+  "rows": [
+    {
+      "id": "1500001",
+      "name": "Shooting Star Dragon PSE[DAMA-JPS01](DAWN OF MAJESTY)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7126976.webp",
+      "gameId": "3"
+    },
+    {
+      "id": "1500002",
+      "name": "Aussa the Earth Charmer PSE[POTE-JP032](Power Of The Elements)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7129039.webp",
+      "gameId": "3"
+    },
+    {
+      "id": "1500003",
+      "name": "The Iris Swordsoul PSE[DAMA-JP009](DAWN OF MAJESTY)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7126867.webp",
+      "gameId": "3"
+    },
+    {
+      "id": "1500004",
+      "name": "Lyna the Light Charmer, Lustrous PSE[LIOV-JP049](LIGHTNING OVERDRIVE)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20230508110157-0.webp",
+      "gameId": "3"
+    },
+    {
+      "id": "1500005",
+      "name": "Exosisters Magnifica PSE[DIFO-JP046](DIMENSION FORCE)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7128556.webp",
+      "gameId": "3"
+    },
+    {
+      "id": "1500006",
+      "name": "Kurikara Avatar of the Immovable PSE[POTE-JP031](Power Of The Elements)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7129035.webp",
+      "gameId": "3"
+    },
+    {
+      "id": "1500007",
+      "name": "Tearalaments Chaetocaros PSE[POTE-JP042](Power Of The Elements)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7129056.webp",
+      "gameId": "3"
+    },
+    {
+      "id": "1500008",
+      "name": "Artemate Slay PSE[POTE-JP067](Power Of The Elements)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7129096.webp",
+      "gameId": "3"
+    },
+    {
+      "id": "1500009",
+      "name": "Dragon Master Knight PSE[BACH-JPS01](BATTLE OF CHAOS)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7128154.webp",
+      "gameId": "3"
+    },
+    {
+      "id": "1500010",
+      "name": "Illusion of Chaos PSE[BACH-JP034](BATTLE OF CHAOS)",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7128074.webp",
+      "gameId": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\timageUrl\tgameId\n1500001\tShooting Star Dragon PSE[DAMA-JPS01](DAWN OF MAJESTY)\thttps://cdn.snkrdunk.com/upload_bg_removed/7126976.webp\t3\n1500002\tAussa the Earth Charmer PSE[POTE-JP032](Power Of The Elements)\thttps://cdn.snkrdunk.com/upload_bg_removed/7129039.webp\t3\n1500003\tThe Iris Swordsoul PSE[DAMA-JP009](DAWN OF MAJESTY)\thttps://cdn.snkrdunk.com/upload_bg_removed/7126867.webp\t3\n1500004\tLyna the Light Charmer, Lustrous PSE[LIOV-JP049](LIGHTNING OVERDRIVE)\thttps://cdn.snkrdunk.com/upload_bg_removed/20230508110157-0.webp\t3\n1500005\tExosisters Magnifica PSE[DIFO-JP046](DIMENSION FORCE)\thttps://cdn.snkrdunk.com/upload_bg_removed/7128556.webp\t3\n1500006\tKurikara Avatar of the Immovable PSE[POTE-JP031](Power Of The Elements)\thttps://cdn.snkrdunk.com/upload_bg_removed/7129035.webp\t3\n1500007\tTearalaments Chaetocaros PSE[POTE-JP042](Power Of The Elements)\thttps://cdn.snkrdunk.com/upload_bg_removed/7129056.webp\t3\n1500008\tArtemate Slay PSE[POTE-JP067](Power Of The Elements)\thttps://cdn.snkrdunk.com/upload_bg_removed/7129096.webp\t3\n1500009\tDragon Master Knight PSE[BACH-JPS01](BATTLE OF CHAOS)\thttps://cdn.snkrdunk.com/upload_bg_removed/7128154.webp\t3\n1500010\tIllusion of Chaos PSE[BACH-JP034](BATTLE OF CHAOS)\thttps://cdn.snkrdunk.com/upload_bg_removed/7128074.webp\t3\n",
+  "stderr": "",
+  "execution_time_ms": 377
+}

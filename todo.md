@@ -6910,3 +6910,21 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復 TypeScript 錯誤（cardName → title 欄位對映）
 - [x] 撰寫 auction-phase3.test.ts，21 項測試全部通過（共 66 項拍賣測試）
 - [x] 保存 checkpoint
+
+## ✅ Phase 4 完成：保證金制度 + 風控 + 付款整合 + 評價系統 + UI 修復
+
+- [x] 刪除 /marketplace 搜尋框下方熱門推介區塊（熱門標籤列）
+- [x] 修復 Yu-Gi-Oh! 熱門卡牌不顯示圖片問題（降低 MIN_RECORDS 門溻至 1 筆）
+- [x] 拍賣保證金制度：schema 新增 depositAmount/depositSessionId/depositStatus/depositCapturedAt 欄位
+- [x] 高價風控：新賣家（<5筆成交）最高起拍價 HKD 5,000 限制
+- [x] 高價風控：起拍價 > HKD 10,000 自動標記為 isHighValueReview 待管理員審核
+- [x] 拍賣結標付款：createAuctionPayment procedure（得標者 Stripe Checkout）
+- [x] 拍賣結標付款：Stripe webhook 處理 auction 訂單建立（checkout.session.completed）
+- [x] 拍賣結標付款：AuctionDetail 頁面顯示「立即付款」按鈕（WinnerPaymentPanel）
+- [x] 賣家評分：submitAuctionReview procedure（1-5 星 + 評語 + 匿名選項）
+- [x] 賣家評分：AuctionDetail 付款後顯示「為此拍賣評分」按鈕（AuctionReviewDialog）
+- [x] 修復賣家上架流程：「確認上架」前彈出賣家條款 Dialog（SellerTermsDialog）
+- [x] 賣家條款 Dialog：同意後自動繼續提交拍賣
+- [x] 撰寫 auction-phase4.test.ts，26 項測試全數通過（累計 92 項拍賣測試）
+- [x] TypeScript 0 錯誤
+- [x] 保存 checkpoint
