@@ -3431,6 +3431,8 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
     disputeResolvedAt: marketplaceOrders.disputeResolvedAt,
     disputeResolution: marketplaceOrders.disputeResolution,
     buyerConfirmedAt: marketplaceOrders.buyerConfirmedAt,
+    paidAt: marketplaceOrders.paidAt,
+    completedAt: marketplaceOrders.completedAt,
     platformFeeRate: marketplaceOrders.platformFeeRate,
     adminNote: marketplaceOrders.adminNote,
     createdAt: marketplaceOrders.createdAt,

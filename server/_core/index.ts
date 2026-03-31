@@ -457,6 +457,77 @@ async function startServer() {
       } else if (event.type === "payment_intent.payment_failed") {
         const paymentIntent = event.data.object;
         console.log(`[Webhook] payment_intent.payment_failed: ${paymentIntent.id}`);
+      } else if (event.type === "transfer.created" || event.type === "transfer.updated") {
+        // Auto-sync payoutStatus when Stripe transfer is created/updated
+        const transfer = event.data.object as any;
+        const transferId = transfer.id as string;
+        console.log(`[Webhook] ${event.type}: transferId=${transferId}, amount=${transfer.amount}, reversed=${transfer.reversed}`);
+        try {
+          const { getDb } = await import("../db");
+          const { marketplaceOrders } = await import("../../drizzle/schema_new");
+          const { eq } = await import("drizzle-orm");
+          const db2 = await getDb();
+          if (db2) {
+            // Find order by stripeTransferId
+            const [affectedOrder] = await db2.select().from(marketplaceOrders)
+              .where(eq(marketplaceOrders.stripeTransferId, transferId))
+              .limit(1);
+            if (affectedOrder) {
+              const newPayoutStatus = transfer.reversed ? 'failed' : 'paid';
+              if (affectedOrder.payoutStatus !== newPayoutStatus) {
+                await db2.update(marketplaceOrders)
+                  .set({ payoutStatus: newPayoutStatus })
+                  .where(eq(marketplaceOrders.id, affectedOrder.id));
+                console.log(`[Webhook] Auto-synced payoutStatus for ${affectedOrder.orderNo}: ${affectedOrder.payoutStatus} -> ${newPayoutStatus}`);
+                const { notifyOwner: _notifyOwner1 } = await import("./notification");
+                if (newPayoutStatus === 'paid') {
+                  _notifyOwner1({
+                    title: `✅ Stripe 放款成功 — ${affectedOrder.orderNo}`,
+                    content: `訂單 ${affectedOrder.orderNo} 的賣家放款已完成。\nTransfer ID: ${transferId}\n金額: HKD ${affectedOrder.sellerReceivableHkd ?? affectedOrder.subtotalHkd}`,
+                  }).catch(() => {});
+                } else {
+                  _notifyOwner1({
+                    title: `❌ Stripe 放款失敗 — ${affectedOrder.orderNo}`,
+                    content: `訂單 ${affectedOrder.orderNo} 的 Stripe Transfer 已被撤回或失敗。\nTransfer ID: ${transferId}\n請前往放款管理手動處理。`,
+                  }).catch(() => {});
+                }
+              }
+            } else {
+              console.log(`[Webhook] No order found for transferId=${transferId}, skipping payoutStatus sync`);
+            }
+          }
+        } catch (syncErr: any) {
+          console.error(`[Webhook] Error syncing payoutStatus for transfer ${transferId}:`, syncErr?.message);
+        }
+      } else if (event.type === "transfer.reversed") {
+        // Transfer was reversed — mark payout as failed
+        const reversal = event.data.object as any;
+        const transferId = reversal.transfer as string;
+        console.log(`[Webhook] transfer.reversed: transferId=${transferId}`);
+        try {
+          const { getDb } = await import("../db");
+          const { marketplaceOrders } = await import("../../drizzle/schema_new");
+          const { eq } = await import("drizzle-orm");
+          const db2 = await getDb();
+          if (db2) {
+            const [affectedOrder] = await db2.select().from(marketplaceOrders)
+              .where(eq(marketplaceOrders.stripeTransferId, transferId))
+              .limit(1);
+            if (affectedOrder && affectedOrder.payoutStatus !== 'failed') {
+              await db2.update(marketplaceOrders)
+                .set({ payoutStatus: 'failed' })
+                .where(eq(marketplaceOrders.id, affectedOrder.id));
+              console.log(`[Webhook] Marked payoutStatus=failed for ${affectedOrder.orderNo} due to transfer reversal`);
+              const { notifyOwner: _notifyOwner2 } = await import("./notification");
+              _notifyOwner2({
+                title: `❌ Stripe 放款已撤回 — ${affectedOrder.orderNo}`,
+                content: `訂單 ${affectedOrder.orderNo} 的 Stripe Transfer 已被撤回。\nTransfer ID: ${transferId}\n請前往放款管理重新處理。`,
+              }).catch(() => {});
+            }
+          }
+        } catch (syncErr: any) {
+          console.error(`[Webhook] Error handling transfer.reversed for ${transferId}:`, syncErr?.message);
+        }
       } else if (event.type === "account.updated") {
         // KYC / Stripe Connect onboarding status sync
         const account = event.data.object;

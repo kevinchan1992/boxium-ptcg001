@@ -4956,6 +4956,22 @@ function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () =>
       {/* Order Status Stepper */}
       <div className="bg-gray-50 border-b border-gray-100 py-2">
         <OrderStatusStepper orderStatus={o.orderStatus ?? 'payment_received'} payoutStatus={o.payoutStatus ?? 'pending'} stripeTransferId={o.stripeTransferId} />
+        {/* Status Timeline */}
+        <div className="mx-4 mb-2 flex flex-wrap gap-x-4 gap-y-1">
+          {([
+            { label: '下單', ts: o.createdAt, icon: '🛒' },
+            { label: '付款', ts: o.paidAt, icon: '💳' },
+            { label: '出貨', ts: o.shippedAt, icon: '📦' },
+            { label: '收貨', ts: o.buyerConfirmedAt, icon: '✅' },
+            { label: '放款', ts: o.manualPayoutAt ?? (o.payoutStatus === 'paid' || o.stripeTransferId ? o.updatedAt : null), icon: '💰' },
+          ] as { label: string; ts: Date | string | null | undefined; icon: string }[]).map(({ label, ts, icon }) => ts ? (
+            <span key={label} className="flex items-center gap-1 text-[10px] text-gray-500">
+              <span>{icon}</span>
+              <span className="font-medium text-gray-700">{label}</span>
+              <span>{new Date(ts).toLocaleString('zh-HK', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+            </span>
+          ) : null)}
+        </div>
       </div>
       {/* Order Body */}
       <div className="p-4 bg-white grid grid-cols-1 lg:grid-cols-3 gap-4">
