@@ -5314,16 +5314,26 @@ export async function getSellerAuctions(sellerId: number, opts: {
 export async function getAuctionAdminStats(): Promise<{
   totalAuctions: number;
   activeAuctions: number;
+  endingSoonAuctions: number;
   endedSold: number;
   endedNoBid: number;
   pendingReview: number;
   totalBids: number;
   totalRevenue: number;
+  todayNewAuctions: number;
+  monthlyRevenue: number;
+  monthlyCompletedAuctions: number;
+  abandonRate: number;
+  totalViolations: number;
 }> {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
 
-  const [statusCounts, totalBidsResult] = await Promise.all([
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [statusCounts, totalBidsResult, todayResult, monthlyResult, violationsResult] = await Promise.all([
     db.select({
       auctionStatus: marketplaceListings.auctionStatus,
       count: sql<number>`COUNT(*)`,
@@ -5333,6 +5343,26 @@ export async function getAuctionAdminStats(): Promise<{
       .where(eq(marketplaceListings.listingMode as any, 'auction'))
       .groupBy(marketplaceListings.auctionStatus),
     db.select({ count: sql<number>`COUNT(*)` }).from(auctionBids),
+    // Today new auctions
+    db.select({ count: sql<number>`COUNT(*)` })
+      .from(marketplaceListings)
+      .where(and(
+        eq(marketplaceListings.listingMode as any, 'auction'),
+        gt(marketplaceListings.createdAt, todayStart),
+      )),
+    // Monthly completed auctions + revenue
+    db.select({
+      count: sql<number>`COUNT(*)`,
+      revenue: sql<number>`COALESCE(SUM(CAST(${marketplaceListings.currentHighestBid} AS DECIMAL(10,2))), 0)`,
+    })
+      .from(marketplaceListings)
+      .where(and(
+        eq(marketplaceListings.listingMode as any, 'auction'),
+        eq(marketplaceListings.auctionStatus as any, 'ended_sold'),
+        gt(marketplaceListings.updatedAt, monthStart),
+      )),
+    // Total violations
+    db.select({ count: sql<number>`COUNT(*)` }).from(auctionViolations),
   ]);
 
   const counts: Record<string, number> = {};
@@ -5344,14 +5374,25 @@ export async function getAuctionAdminStats(): Promise<{
     }
   }
 
+  const totalCompleted = (counts['ended_sold'] ?? 0) + (counts['ended_no_bid'] ?? 0);
+  const abandonRate = totalCompleted > 0
+    ? (Number(violationsResult[0]?.count ?? 0) / totalCompleted) * 100
+    : 0;
+
   return {
     totalAuctions: Object.values(counts).reduce((a, b) => a + b, 0),
-    activeAuctions: (counts['active'] ?? 0) + (counts['ending_soon'] ?? 0),
+    activeAuctions: counts['active'] ?? 0,
+    endingSoonAuctions: counts['ending_soon'] ?? 0,
     endedSold: counts['ended_sold'] ?? 0,
     endedNoBid: counts['ended_no_bid'] ?? 0,
     pendingReview: counts['pending_review'] ?? 0,
     totalBids: Number(totalBidsResult[0]?.count ?? 0),
     totalRevenue,
+    todayNewAuctions: Number(todayResult[0]?.count ?? 0),
+    monthlyRevenue: Number(monthlyResult[0]?.revenue ?? 0),
+    monthlyCompletedAuctions: Number(monthlyResult[0]?.count ?? 0),
+    abandonRate,
+    totalViolations: Number(violationsResult[0]?.count ?? 0),
   };
 }
 

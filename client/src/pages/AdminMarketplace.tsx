@@ -6410,6 +6410,8 @@ function AuctionsAdminTab() {
   const [page, setPage] = useState(1);
   const utils = trpc.useUtils();
 
+  const { data: auctionStats } = trpc.auction.adminGetStats.useQuery(undefined, { refetchInterval: 30000 });
+
   const { data, isLoading, refetch } = trpc.auction.adminList.useQuery({
     status: filterStatus === 'all' ? undefined : filterStatus,
     page,
@@ -6471,6 +6473,44 @@ function AuctionsAdminTab() {
           刷新
         </Button>
       </div>
+
+      {/* Stats Cards */}
+      {auctionStats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-gradient-to-br from-[#06038D] to-[#0a06c4] rounded-xl p-4 text-white shadow-md">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-white/70 font-medium">今日新拍賣</span>
+              <div className="p-1.5 rounded-lg bg-white/15"><TrendingUp className="w-3.5 h-3.5 text-white" /></div>
+            </div>
+            <p className="text-2xl font-bold">{auctionStats.todayNewAuctions}</p>
+            <p className="text-xs text-white/60 mt-1">待審核 {auctionStats.pendingReview} 筆</p>
+          </div>
+          <div className="bg-gradient-to-br from-[#16a34a] to-[#15803d] rounded-xl p-4 text-white shadow-md">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-white/70 font-medium">進行中競標</span>
+              <div className="p-1.5 rounded-lg bg-white/15"><Timer className="w-3.5 h-3.5 text-white" /></div>
+            </div>
+            <p className="text-2xl font-bold">{auctionStats.activeAuctions}</p>
+            <p className="text-xs text-white/60 mt-1">即將結標 {auctionStats.endingSoonAuctions} 筆</p>
+          </div>
+          <div className="bg-gradient-to-br from-[#FEDD00] to-[#f0c800] rounded-xl p-4 shadow-md">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-[#06038D]/70 font-medium">本月成交額</span>
+              <div className="p-1.5 rounded-lg bg-[#06038D]/10"><DollarSign className="w-3.5 h-3.5 text-[#06038D]" /></div>
+            </div>
+            <p className="text-2xl font-bold text-[#06038D]">HK${auctionStats.monthlyRevenue.toLocaleString()}</p>
+            <p className="text-xs text-[#06038D]/60 mt-1">共 {auctionStats.monthlyCompletedAuctions} 筆成交</p>
+          </div>
+          <div className="bg-gradient-to-br from-[#ef4444] to-[#dc2626] rounded-xl p-4 text-white shadow-md">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-white/70 font-medium">棄標率</span>
+              <div className="p-1.5 rounded-lg bg-white/15"><AlertCircle className="w-3.5 h-3.5 text-white" /></div>
+            </div>
+            <p className="text-2xl font-bold">{auctionStats.abandonRate.toFixed(1)}%</p>
+            <p className="text-xs text-white/60 mt-1">共 {auctionStats.totalViolations} 筆違規</p>
+          </div>
+        </div>
+      )}
 
       {/* Status filter */}
       <div className="flex gap-2 flex-wrap">

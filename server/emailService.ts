@@ -1288,3 +1288,111 @@ export function buildDisputeResolvedBuyerEmail(
 
   return { subject, html };
 }
+
+// ─── Auction Outbid Email ─────────────────────────────────────────────────────
+
+export interface AuctionOutbidEmailData {
+  bidderName: string;
+  cardName: string;
+  yourBidHkd: string;
+  newHighestBidHkd: string;
+  auctionEndAt: string;
+  auctionUrl: string;
+  siteUrl?: string;
+}
+
+/** Notify a bidder that they have been outbid */
+export function buildAuctionOutbidEmail(data: AuctionOutbidEmailData): { subject: string; html: string } {
+  const siteUrl = data.siteUrl ?? "https://boxium.asia";
+  const subject = `🔔 您已被超越出價 — ${data.cardName}`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#e97316;font-size:22px;">您已被超越出價 🔔</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${data.bidderName}</strong>，<br/>
+      有人出了更高的價格，您在以下拍賣中的出價已被超越。如仍有興趣，請立即回去出價！
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff8f0;border:2px solid #fed7aa;border-radius:10px;margin:20px 0;overflow:hidden;">
+      <tr>
+        <td style="background:#e97316;padding:10px 16px;">
+          <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.8);">拍賣商品</p>
+          <p style="margin:2px 0 0;font-size:15px;font-weight:bold;color:#ffffff;">${data.cardName}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;">
+          <p style="margin:0;font-size:13px;color:#666;">您的出價</p>
+          <p style="margin:4px 0 0;font-size:15px;color:#9ca3af;text-decoration:line-through;">HKD ${data.yourBidHkd}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;border-top:1px solid #fed7aa;">
+          <p style="margin:0;font-size:13px;color:#666;">目前最高出價</p>
+          <p style="margin:4px 0 0;font-size:22px;font-weight:bold;color:#e97316;">HKD ${data.newHighestBidHkd}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;border-top:1px solid #fed7aa;background:#fffbf5;">
+          <p style="margin:0;font-size:13px;color:#666;">拍賣結束時間</p>
+          <p style="margin:4px 0 0;font-size:14px;color:#ef4444;font-weight:bold;">${data.auctionEndAt}</p>
+        </td>
+      </tr>
+    </table>
+    <p style="color:#555;font-size:14px;">⚡ 立即出價，搶回領先位置！</p>
+    ${ctaButton("立即前往出價", data.auctionUrl)}
+    <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:8px;">
+      拍賣結束後將無法再出價，請把握時機。
+    </p>
+  `);
+  return { subject, html };
+}
+
+/** Send outbid notification email to a bidder */
+export async function sendAuctionOutbidEmail({
+  userId,
+  cardName,
+  yourBidHkd,
+  newHighestBidHkd,
+  auctionEndAt,
+  listingId,
+}: {
+  userId: number;
+  cardName: string;
+  yourBidHkd: string;
+  newHighestBidHkd: string;
+  auctionEndAt: string;
+  listingId: number;
+}): Promise<boolean> {
+  try {
+    const { getDb } = await import('./db');
+    const { users } = await import('../drizzle/schema_new');
+    const { eq } = await import('drizzle-orm');
+    const db = await getDb();
+    if (!db) return false;
+
+    const [user] = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+    if (!user?.email) return false;
+
+    const siteUrl = "https://boxium.asia";
+    const { subject, html } = buildAuctionOutbidEmail({
+      bidderName: user.name ?? '競標者',
+      cardName,
+      yourBidHkd,
+      newHighestBidHkd,
+      auctionEndAt,
+      auctionUrl: `${siteUrl}/auction/${listingId}`,
+      siteUrl,
+    });
+
+    return sendEmail({
+      to: user.email,
+      subject,
+      html,
+      emailType: 'auction_outbid',
+      toUserId: userId,
+      dedupeKey: `auction_outbid_${listingId}_${userId}_${newHighestBidHkd}`,
+    });
+  } catch (err) {
+    console.error('[EmailService] Failed to send auction outbid email:', err);
+    return false;
+  }
+}

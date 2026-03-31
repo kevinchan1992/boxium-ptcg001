@@ -216,7 +216,7 @@ export const auctionRouter = router({
       }
       await updateAuctionListing(input.listingId, updateData);
 
-      // Notify previous highest bidder if outbid
+      // Notify previous highest bidder if outbid (station notification + email)
       if (listing.currentHighestBidderId && listing.currentHighestBidderId !== ctx.user.id) {
         await createNotification({
           userId: listing.currentHighestBidderId,
@@ -225,6 +225,22 @@ export const auctionRouter = router({
           body: `您在拍賣 #${input.listingId} 的出價已被超越，最新最高出價為 HK$${input.amount}`,
           relatedId: input.listingId,
         });
+        // Also send email notification (non-blocking)
+        const cardName = listing.title ?? `拍賣 #${input.listingId}`;
+        const prevBidAmount = listing.currentHighestBid ?? '0';
+        const endAtStr = listing.auctionEndAt
+          ? new Date(listing.auctionEndAt).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+          : '未知';
+        import('../emailService').then(({ sendAuctionOutbidEmail }) => {
+          sendAuctionOutbidEmail({
+            userId: listing.currentHighestBidderId!,
+            cardName,
+            yourBidHkd: parseFloat(prevBidAmount).toLocaleString('en-HK', { minimumFractionDigits: 0 }),
+            newHighestBidHkd: input.amount.toLocaleString('en-HK', { minimumFractionDigits: 0 }),
+            auctionEndAt: endAtStr,
+            listingId: input.listingId,
+          }).catch(e => console.error('[Auction] Failed to send outbid email:', e));
+        }).catch(e => console.error('[Auction] Failed to import emailService:', e));
       }
 
       return {

@@ -80,7 +80,17 @@ function TermsDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 text-sm text-gray-600 max-h-64 overflow-y-auto pr-2">
-          <p className="font-semibold text-gray-800">請仔細閱讀以下條款：</p>
+          <div className="flex items-center justify-between">
+            <p className="font-semibold text-gray-800">請仔細閱讀以下條款：</p>
+            <a
+              href="/auction/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-[#06038D] hover:underline flex items-center gap-1"
+            >
+              查看完整條款 →
+            </a>
+          </div>
           {role === 'buyer' ? (
             <ul className="space-y-2 list-disc list-inside">
               <li>出價即代表您承諾以該金額購買商品</li>

@@ -6900,3 +6900,13 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ## ✅ 拍賣功能 Phase 2 完成
 - [x] 29 項 vitest 測試全部通過（auction-phase2.test.ts）
 - [x] TypeScript 0 錯誤
+
+## ✅ 拍賣功能 Phase 3 完成：條款頁面 + 通知完善 + 統計 Dashboard
+
+- [x] 建立 /auction/terms 條款頁面（BOXIUM 深藍風格，列明競標規則、24小時付款、棄標懲罰）
+- [x] AuctionDetail 條款 Dialog 加入「查看完整條款」連結至 /auction/terms
+- [x] 後端 placeBid：加入被超標 Email 通知給前一位最高出價者（buildAuctionOutbidEmail + sendAuctionOutbidEmail）
+- [x] AdminMarketplace 拍賣 Tab 頂部加入統計卡片（今日新拍賣、進行中、本月成交額、棄標率）
+- [x] 修復 TypeScript 錯誤（cardName → title 欄位對映）
+- [x] 撰寫 auction-phase3.test.ts，21 項測試全部通過（共 66 項拍賣測試）
+- [x] 保存 checkpoint
