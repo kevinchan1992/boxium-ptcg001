@@ -6818,3 +6818,11 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修改參考價格計算（PSA10 均價/最低/最高）排除 isSuspectedBulk=true 的記錄（db.ts 多處查詢）
 - [x] 在卡牌詳情頁的 SNKRDUNK 成交歷史表格中，對 isSuspectedBulk=true 的記錄顯示「⚠ 可能為批量成交」警告標記（CardDetail.tsx）
 - [x] 更新 vitest 測試（server/suspectedBulk.test.ts，14 項測試全部通過）
+
+## 🔧 批次更新速度優化 + 隱藏批量成交記錄
+
+- [x] 檢查 persistentSnkrdunkBatchUpdate.ts 目前的並發數/批次大小設定（v7.2 PARALLEL=4）
+- [x] 提高並發處理數量：4 → 8（v7.3），預期吞吐量 4 c/s → 7-8 c/s
+- [x] 批次間隔 50ms → 0ms，錯誤後延遲 1000ms → 500ms，請求 timeout 30s → 15s
+- [x] 前端 CardDetail.tsx：移除批量成交徽章，回復举潔表格顯示（後端已過濾）
+- [x] 後端 getPriceHistory 查詢：加入 isSuspectedBulk=false 過濾，批量記錄從源頭排除

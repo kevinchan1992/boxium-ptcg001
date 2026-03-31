@@ -1,5 +1,5 @@
 /**
- * SNKRDUNK Persistent Batch Update (v7.2 - PARALLEL=4)
+ * SNKRDUNK Persistent Batch Update (v7.3 - PARALLEL=8)
  * 
  * v7 proved controlled 2-parallel is STABLE and FAST (~3.6/s, 0 failures).
  * 
@@ -19,11 +19,13 @@
  * Other tasks (cachePreloader, trendingCards, autoCompleteOrders) are all
  * sequential and do not compete with batch update connections.
  * 
- * WHY 4 PARALLEL IS SAFE:
- * mysql2 default pool = 10 connections.
- * Each product needs: 1 batch INSERT + 1 updateDataSourceFetchStatus = 2 DB ops
- * But drizzle releases pool connections after each await, so peak is ~4-7.
- * Well within pool of 10.
+ * v7.3 UPGRADE: PARALLEL raised from 4 → 8 (2026-03-31).
+ * SNKRDUNK API is stateless HTTP — no session/cookie limits per connection.
+ * Each product: 1 API call (avg ~0.3s) + 2 DB ops (drizzle releases immediately).
+ * DELAY_BETWEEN_BATCHES: 50ms → 0ms (no throttle needed for stateless HTTP).
+ * DELAY_AFTER_ERROR: 1000ms → 500ms (faster recovery).
+ * REQUEST_TIMEOUT: 30s → 15s (fail fast on slow/dead endpoints).
+ * Expected throughput: ~7-8 c/s (2x vs v7.2 at P=4).
  */
 
 import * as db from './db';
@@ -31,21 +33,26 @@ import * as batchTaskManager from './batchTaskManager';
 import { extractSnkrdunkId, fetchPriceHistoryFromApi, convertJpyToHkd } from './snkrdunkScraper';
 import { getRecentlyViewedCardIds } from './db';
 
-// ─── Configuration (v7.1 - Fixed Metadata) ──────────────────
+// ─── Configuration (v7.3 - Higher Parallelism) ──────────────
 const CONFIG = {
   // Number of products to process in parallel
-  // Raised to 4 after stability testing (2026-03-09): 1.7x speedup, 100% success rate.
-  // DB connection pool peak at P=4: ~6-7 (safe within pool=10).
-  PARALLEL: 4,
-  
+  // v7.3: Raised to 8 (2026-03-31). SNKRDUNK API is stateless HTTP.
+  // Each product: 1 API call (avg ~0.3s) + 2 DB ops (drizzle releases immediately).
+  // Expected peak DB connections: ~8-10, safe with pool=20.
+  // Expected throughput: ~7-8 c/s (2x vs v7.2 at P=4).
+  PARALLEL: 8,
+
   // Delay between parallel batches (ms)
-  DELAY_BETWEEN_BATCHES: 50,
-  
+  // Set to 0 — no throttle needed for stateless HTTP API calls.
+  DELAY_BETWEEN_BATCHES: 0,
+
   // Delay after error (ms)
-  DELAY_AFTER_ERROR: 1000,
-  
+  // Reduced from 1000ms to 500ms to recover faster.
+  DELAY_AFTER_ERROR: 500,
+
   // API request timeout (ms)
-  REQUEST_TIMEOUT: 30000,
+  // Reduced from 30s to 15s to fail fast on slow/dead endpoints.
+  REQUEST_TIMEOUT: 15000,
   
   // Max consecutive errors before stopping (HTTP errors only, not timeouts)
   MAX_CONSECUTIVE_ERRORS: 50,

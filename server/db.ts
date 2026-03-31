@@ -334,6 +334,9 @@ export async function getPriceHistory(cardId: number, source?: string, grade?: s
     conditions.push(gte(priceHistory.soldAt, cutoffDate));
   }
 
+  // 排除疑似批量成交的記錄（超過同評級中位數 4 倍）
+  conditions.push(eq(priceHistory.isSuspectedBulk, false));
+
   const result = await db
     .select()
     .from(priceHistory)
