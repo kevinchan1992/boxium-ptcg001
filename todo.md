@@ -6770,3 +6770,15 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 診斷 PDF 下載失敗原因（可能是 Playwright 在 production 環境無法啟動，或 CORS/redirect 問題）
 - [x] 修復 PDF 端點使其在 production 環境正常工作（改用 fetch + credentials: include 方式）
 - [x] 測試並確認 PDF 可正常下載
+
+## 🐛 逐筆交易明細 KPI 計算錯誤（取消/退款訂單不應計入）
+- [x] 修復 GMV 合計：排除 cancelled 和 refunded 訂單
+- [x] 修復平台收入合計：排除 cancelled 和 refunded 訂單
+- [x] 修復賣家應收合計：排除 cancelled 和 refunded 訂單
+- [x] 確認後端 adminGetMonthlyTransactions 回傳的訂單是否也需要過濾
+
+## 🐛 PDF 生成失敗（Failed to generate PDF - production 環境）
+- [x] 查看 production 伺服器 PDF 端點的錯誤日誌
+- [x] 診斷 Playwright 在 production 環境的問題（可能是 sandbox/chromium 路徑問題）
+- [x] 改用 puppeteer-core + 系統 Chromium 替代 Playwright，更穩定的 production 方案
+- [x] 修復並測試 PDF 在 production 環境可正常生成

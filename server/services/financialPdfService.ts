@@ -1,6 +1,25 @@
-import { playwrightPool } from "./playwrightPool";
+import puppeteer from "puppeteer-core";
 import fs from "fs";
 import path from "path";
+
+// Find Chromium executable path - try multiple locations
+function getChromiumPath(): string {
+  const candidates = [
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    process.env.CHROMIUM_PATH || '',
+  ];
+  for (const p of candidates) {
+    if (p && fs.existsSync(p)) return p;
+  }
+  // Fallback: try playwright's chromium cache
+  const home = process.env.HOME || '/home/ubuntu';
+  const playwrightChrome = `${home}/.cache/ms-playwright/chromium-1208/chrome-linux/chrome`;
+  if (fs.existsSync(playwrightChrome)) return playwrightChrome;
+  throw new Error('Chromium not found. Please install chromium-browser.');
+}
 
 // Read BOXIUM logo as base64 (PNG format)
 function getLogoBase64(): string {
@@ -806,22 +825,36 @@ export async function generateFinancialReportPdf(report: SalesReport, months: nu
 
   const html = buildHtml(report, months, generatedAt, logoB64);
 
-  const browser = await playwrightPool.getBrowser();
-  const page = await browser.newPage();
+  const executablePath = getChromiumPath();
+  console.log(`[PDF] Using Chromium at: ${executablePath}`);
 
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--font-render-hinting=none',
+    ],
+  });
+
+  const page = await browser.newPage();
   try {
-    await page.setContent(html, { waitUntil: "networkidle", timeout: 30000 });
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
     // Wait for fonts to load
-    await page.waitForTimeout(1500);
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     const pdfBuffer = await page.pdf({
-      format: "A4",
+      format: 'A4',
       printBackground: true,
-      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+      margin: { top: '0', right: '0', bottom: '0', left: '0' },
     });
 
     return Buffer.from(pdfBuffer);
   } finally {
     await page.close();
+    await browser.close();
   }
 }

@@ -4,17 +4,19 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock the playwrightPool to avoid browser launch in tests
-vi.mock("./services/playwrightPool", () => ({
-  playwrightPool: {
-    getBrowser: vi.fn().mockResolvedValue({
-      newPage: vi.fn().mockResolvedValue({
-        setContent: vi.fn().mockResolvedValue(undefined),
-        waitForTimeout: vi.fn().mockResolvedValue(undefined),
-        pdf: vi.fn().mockResolvedValue(Buffer.from("%PDF-1.4 mock pdf content")),
-        close: vi.fn().mockResolvedValue(undefined),
-      }),
-    }),
+// Mock puppeteer-core to avoid browser launch in tests
+const mockPage = {
+  setContent: vi.fn().mockResolvedValue(undefined),
+  pdf: vi.fn().mockResolvedValue(Buffer.from("%PDF-1.4 mock pdf content")),
+  close: vi.fn().mockResolvedValue(undefined),
+};
+const mockBrowser = {
+  newPage: vi.fn().mockResolvedValue(mockPage),
+  close: vi.fn().mockResolvedValue(undefined),
+};
+vi.mock("puppeteer-core", () => ({
+  default: {
+    launch: vi.fn().mockResolvedValue(mockBrowser),
   },
 }));
 
@@ -22,6 +24,7 @@ vi.mock("./services/playwrightPool", () => ({
 vi.mock("fs", () => ({
   default: {
     readFileSync: vi.fn().mockReturnValue(Buffer.from("fake-logo-data")),
+    existsSync: vi.fn().mockReturnValue(true),
   },
 }));
 
@@ -87,6 +90,15 @@ describe("Financial PDF Service", () => {
     },
   };
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPage.setContent.mockResolvedValue(undefined);
+    mockPage.pdf.mockResolvedValue(Buffer.from("%PDF-1.4 mock pdf content"));
+    mockPage.close.mockResolvedValue(undefined);
+    mockBrowser.newPage.mockResolvedValue(mockPage);
+    mockBrowser.close.mockResolvedValue(undefined);
+  });
+
   it("should generate a PDF buffer", async () => {
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
     const result = await generateFinancialReportPdf(mockReport, 12);
@@ -95,17 +107,6 @@ describe("Financial PDF Service", () => {
   });
 
   it("should call page.setContent with HTML containing Chinese characters", async () => {
-    const { playwrightPool } = await import("./services/playwrightPool");
-    const mockPage = {
-      setContent: vi.fn().mockResolvedValue(undefined),
-      waitForTimeout: vi.fn().mockResolvedValue(undefined),
-      pdf: vi.fn().mockResolvedValue(Buffer.from("%PDF-1.4 test")),
-      close: vi.fn().mockResolvedValue(undefined),
-    };
-    (playwrightPool.getBrowser as any).mockResolvedValue({
-      newPage: vi.fn().mockResolvedValue(mockPage),
-    });
-
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
     await generateFinancialReportPdf(mockReport, 12);
 
@@ -120,17 +121,6 @@ describe("Financial PDF Service", () => {
   });
 
   it("should include Noto Sans TC font for Chinese character support", async () => {
-    const { playwrightPool } = await import("./services/playwrightPool");
-    const mockPage = {
-      setContent: vi.fn().mockResolvedValue(undefined),
-      waitForTimeout: vi.fn().mockResolvedValue(undefined),
-      pdf: vi.fn().mockResolvedValue(Buffer.from("%PDF-1.4 test")),
-      close: vi.fn().mockResolvedValue(undefined),
-    };
-    (playwrightPool.getBrowser as any).mockResolvedValue({
-      newPage: vi.fn().mockResolvedValue(mockPage),
-    });
-
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
     await generateFinancialReportPdf(mockReport, 12);
 
@@ -141,17 +131,6 @@ describe("Financial PDF Service", () => {
   });
 
   it("should include BOXIUM branding in HTML", async () => {
-    const { playwrightPool } = await import("./services/playwrightPool");
-    const mockPage = {
-      setContent: vi.fn().mockResolvedValue(undefined),
-      waitForTimeout: vi.fn().mockResolvedValue(undefined),
-      pdf: vi.fn().mockResolvedValue(Buffer.from("%PDF-1.4 test")),
-      close: vi.fn().mockResolvedValue(undefined),
-    };
-    (playwrightPool.getBrowser as any).mockResolvedValue({
-      newPage: vi.fn().mockResolvedValue(mockPage),
-    });
-
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
     await generateFinancialReportPdf(mockReport, 12);
 
@@ -163,17 +142,6 @@ describe("Financial PDF Service", () => {
   });
 
   it("should format currency values correctly", async () => {
-    const { playwrightPool } = await import("./services/playwrightPool");
-    const mockPage = {
-      setContent: vi.fn().mockResolvedValue(undefined),
-      waitForTimeout: vi.fn().mockResolvedValue(undefined),
-      pdf: vi.fn().mockResolvedValue(Buffer.from("%PDF-1.4 test")),
-      close: vi.fn().mockResolvedValue(undefined),
-    };
-    (playwrightPool.getBrowser as any).mockResolvedValue({
-      newPage: vi.fn().mockResolvedValue(mockPage),
-    });
-
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
     await generateFinancialReportPdf(mockReport, 12);
 
@@ -183,17 +151,6 @@ describe("Financial PDF Service", () => {
   });
 
   it("should include all monthly data rows", async () => {
-    const { playwrightPool } = await import("./services/playwrightPool");
-    const mockPage = {
-      setContent: vi.fn().mockResolvedValue(undefined),
-      waitForTimeout: vi.fn().mockResolvedValue(undefined),
-      pdf: vi.fn().mockResolvedValue(Buffer.from("%PDF-1.4 test")),
-      close: vi.fn().mockResolvedValue(undefined),
-    };
-    (playwrightPool.getBrowser as any).mockResolvedValue({
-      newPage: vi.fn().mockResolvedValue(mockPage),
-    });
-
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
     await generateFinancialReportPdf(mockReport, 12);
 
@@ -204,17 +161,6 @@ describe("Financial PDF Service", () => {
   });
 
   it("should use A4 format for PDF generation", async () => {
-    const { playwrightPool } = await import("./services/playwrightPool");
-    const mockPage = {
-      setContent: vi.fn().mockResolvedValue(undefined),
-      waitForTimeout: vi.fn().mockResolvedValue(undefined),
-      pdf: vi.fn().mockResolvedValue(Buffer.from("%PDF-1.4 test")),
-      close: vi.fn().mockResolvedValue(undefined),
-    };
-    (playwrightPool.getBrowser as any).mockResolvedValue({
-      newPage: vi.fn().mockResolvedValue(mockPage),
-    });
-
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
     await generateFinancialReportPdf(mockReport, 12);
 
@@ -223,21 +169,11 @@ describe("Financial PDF Service", () => {
     );
   });
 
-  it("should close the page after PDF generation", async () => {
-    const { playwrightPool } = await import("./services/playwrightPool");
-    const mockPage = {
-      setContent: vi.fn().mockResolvedValue(undefined),
-      waitForTimeout: vi.fn().mockResolvedValue(undefined),
-      pdf: vi.fn().mockResolvedValue(Buffer.from("%PDF-1.4 test")),
-      close: vi.fn().mockResolvedValue(undefined),
-    };
-    (playwrightPool.getBrowser as any).mockResolvedValue({
-      newPage: vi.fn().mockResolvedValue(mockPage),
-    });
-
+  it("should close the page and browser after PDF generation", async () => {
     const { generateFinancialReportPdf } = await import("./services/financialPdfService");
     await generateFinancialReportPdf(mockReport, 12);
 
     expect(mockPage.close).toHaveBeenCalledTimes(1);
+    expect(mockBrowser.close).toHaveBeenCalledTimes(1);
   });
 });

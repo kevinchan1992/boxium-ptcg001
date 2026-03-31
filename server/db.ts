@@ -4442,13 +4442,21 @@ export async function getAdminMonthlyTransactions(yearMonth: string, page = 1, p
       payoutStatus: r.payoutStatus,
       sellerType: r.sellerType,
       quantity: r.quantity,
-      subtotalHkd: parseFloat(String(r.subtotalHkd ?? '0')),
+      // subtotalHkd: 0 for cancelled/refunded (GMV should not include these)
+      subtotalHkd: (r.orderStatus === 'cancelled' || r.orderStatus === 'refunded')
+        ? 0
+        : parseFloat(String(r.subtotalHkd ?? '0')),
       platformFeeHkd: parseFloat(String(r.platformFeeHkd ?? '0')),
-      sellerReceivableHkd: parseFloat(String(r.sellerReceivableHkd ?? '0')),
-      // Platform income: for platform orders = subtotal; for C2C = fee only
-      platformIncomeHkd: r.sellerType === 'platform'
-        ? parseFloat(String(r.subtotalHkd ?? '0'))
-        : parseFloat(String(r.platformFeeHkd ?? '0')),
+      // sellerReceivableHkd: 0 for cancelled/refunded (seller doesn't receive payment)
+      sellerReceivableHkd: (r.orderStatus === 'cancelled' || r.orderStatus === 'refunded')
+        ? 0
+        : parseFloat(String(r.sellerReceivableHkd ?? '0')),
+      // Platform income: 0 for cancelled/refunded orders (no money was collected)
+      platformIncomeHkd: (r.orderStatus === 'cancelled' || r.orderStatus === 'refunded')
+        ? 0
+        : r.sellerType === 'platform'
+          ? parseFloat(String(r.subtotalHkd ?? '0'))
+          : parseFloat(String(r.platformFeeHkd ?? '0')),
       paidAt: r.paidAt,
       createdAt: r.createdAt,
       buyerName: r.buyerName ?? '—',
