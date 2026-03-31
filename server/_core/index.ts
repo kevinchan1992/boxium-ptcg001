@@ -1165,6 +1165,30 @@ async function startServer() {
     }
   });
 
+  // Financial Report PDF Export
+  app.get("/api/admin/financial-report-pdf", async (req, res) => {
+    try {
+      // Auth check: must be admin
+      const { createContext } = await import("./context");
+      const ctx = await createContext({ req, res } as any);
+      if (!ctx.user || ctx.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+      const months = parseInt((req.query.months as string) || '12', 10);
+      const { getSalesReport } = await import("../db");
+      const { generateFinancialReportPdf } = await import("../services/financialPdfService");
+      const report = await getSalesReport(Math.min(Math.max(months, 1), 36));
+      const pdfBuffer = await generateFinancialReportPdf(report, months);
+      const dateStr = new Date().toISOString().split('T')[0];
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="BOXIUM_財務報告_${dateStr}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (err) {
+      console.error('[PDF] Error generating financial report:', err);
+      res.status(500).json({ error: 'Failed to generate PDF' });
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",

@@ -16,7 +16,7 @@ import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, LineChart, Line, ComposedChart } from "recharts";
-import { exportFinancialReportPDF } from "@/lib/financialReportPdf";
+// PDF export is now server-side via /api/admin/financial-report-pdf
 
 const conditionLabel: Record<string, string> = {
   psa10: "PSA 10", psa9: "PSA 9", psa8_below: "PSA 8↓",
@@ -4217,9 +4217,12 @@ function SalesReportTab() {
           className="border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white self-start sm:self-auto transition-colors"
           disabled={monthly.length === 0 || !overall}
           onClick={() => {
-            if (!overall) return;
-            exportFinancialReportPDF(overall as any, monthly as any, months)
-              .catch(() => {});
+            const dateStr = new Date().toISOString().split('T')[0];
+            const url = `/api/admin/financial-report-pdf?months=${months}`;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `BOXIUM_財務報告_${dateStr}.pdf`;
+            a.click();
           }}
         >
           <FileText className="w-3.5 h-3.5 mr-1.5" />匯出 PDF

@@ -6741,3 +6741,19 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] Bug: 已售出商品不應顯示「重新上架」按鈕（批次操作已過濾 sold 商品，後端加入 sold 保護）
 - [x] UI: 編輯商品對話框改為淺色版面，修復輸入框文字不可見問題
 - [x] UI: 刪除賣家我的商品頁面所有商品卡片上的分享按鈕
+
+## ✅ 後端 PDF 財務報告生成（解決中文字符亂碼問題）
+- [x] 建立 server/services/financialPdfService.ts（Playwright HTML→PDF）
+- [x] HTML 模板使用 Noto Sans TC Google Font，支援繁體中文字符
+- [x] 嵌入 BOXIUM 公司 Logo（base64 PNG）
+- [x] 封面頁：深色漸層背景 + 金色標題 + 報告元數據
+- [x] 第一頁：KPI 卡片 + 損益表（P&L Statement）
+- [x] 第二頁：付款方式分析（Stripe vs 支付寶 HK）+ 放款狀態
+- [x] 第三頁：月度明細表（逐月 GMV / 退款 / 淨收入 / 平台收入）
+- [x] 建立 server/services/playwrightPool.ts（共享瀏覽器實例，5分鐘閒置自動關閉）
+- [x] 在 server/_core/index.ts 新增 GET /api/admin/financial-report-pdf 端點
+- [x] 端點包含 Admin 角色驗證（403 Forbidden for non-admin）
+- [x] 前端 AdminMarketplace.tsx PDF 匯出按鈕改為呼叫後端端點
+- [x] 撰寫並通過 8 項單元測試（financial-pdf-service.test.ts）
+- [x] TypeScript 0 錯誤
+- [x] 保存 checkpoint
