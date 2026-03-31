@@ -699,6 +699,10 @@ export default function OrderDetail() {
   const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  // Admin ship dialog state
+  const [showAdminShipDialog, setShowAdminShipDialog] = useState(false);
+  const [adminShipForm, setAdminShipForm] = useState({ shippingMethod: 'sf_express', trackingNo: '', shippingImageUrl: '' });
+  const [isAdminShipImageUploading, setIsAdminShipImageUploading] = useState(false);
   // Shipping proof lightbox
   const [shippingProofLightbox, setShippingProofLightbox] = useState(false);
   // Re-upload alipay proof state
@@ -709,6 +713,8 @@ export default function OrderDetail() {
   const [reuploadVerifyResult, setReuploadVerifyResult] = useState<VerifyResult | null>(null);
 
   const utils = trpc.useUtils();
+  const { data: me } = trpc.auth.me.useQuery();
+  const isAdmin = me?.role === 'admin';
 
   const { data, isLoading, error } = trpc.marketplace.getOrderByNo.useQuery(
     { orderNo },
@@ -826,6 +832,37 @@ export default function OrderDetail() {
       setIsUploadingEvidence(false);
       e.target.value = "";
     }
+  };
+
+  const markOrderShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
+    onSuccess: () => {
+      toast.success("📦 已確認出貨，買家將收到通知");
+      setShowAdminShipDialog(false);
+      setAdminShipForm({ shippingMethod: 'sf_express', trackingNo: '', shippingImageUrl: '' });
+      utils.marketplace.getOrderByNo.invalidate({ orderNo });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const uploadShippingImageMutation = trpc.marketplace.uploadShippingImage.useMutation();
+
+  const handleAdminShipImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, orderId: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("圖片不能超過 10MB"); return; }
+    setIsAdminShipImageUploading(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const result = await uploadShippingImageMutation.mutateAsync({ orderId, imageBase64: base64, mimeType: file.type });
+      setAdminShipForm(f => ({ ...f, shippingImageUrl: result.url }));
+      toast.success("出貨憑證已上傳");
+    } catch { toast.error("圖片上傳失敗，請重試"); }
+    finally { setIsAdminShipImageUploading(false); e.target.value = ""; }
   };
 
   const submitReviewMutation = trpc.marketplace.submitReview.useMutation({
@@ -1023,6 +1060,18 @@ export default function OrderDetail() {
               <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 inline-flex items-center gap-1.5">
                 <Package className="w-3.5 h-3.5" />付款已成功，等待賣家出貨中...
               </span>
+            </div>
+          )}
+          {/* Admin seller actions: ship order */}
+          {isAdmin && order.sellerType === 'platform' && ["payment_received", "processing", "paid_held"].includes(order.orderStatus) && (
+            <div className="px-4 pb-4 border-t pt-3 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                className="bg-[#06038d] hover:bg-[#0804b8] text-white"
+                onClick={() => setShowAdminShipDialog(true)}
+              >
+                <Truck className="w-4 h-4 mr-1.5" />確認出貨
+              </Button>
             </div>
           )}
           {/* Action Buttons */}
@@ -1739,6 +1788,99 @@ export default function OrderDetail() {
               {submitReviewMutation.isPending
                 ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</>
                 : <><MessageSquare className="w-4 h-4 mr-2" />提交評價</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin Ship Dialog */}
+      <Dialog open={showAdminShipDialog} onOpenChange={(open) => { setShowAdminShipDialog(open); if (!open) setAdminShipForm({ shippingMethod: 'sf_express', trackingNo: '', shippingImageUrl: '' }); }}>
+        <DialogContent bottomSheet className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="w-5 h-5" style={{ color: '#06038d' }} />填寫出貨資料
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-4">
+            {/* Buyer info */}
+            {shippingAddr && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 space-y-1">
+                <p className="font-semibold text-sm text-blue-900">📦 買家收貨資訊</p>
+                <p>收件人：{shippingAddr.name} {shippingAddr.phone}</p>
+                <p>地址：{shippingAddr.address}{shippingAddr.district ? `，${shippingAddr.district}` : ''}，{shippingAddr.region}，香港</p>
+              </div>
+            )}
+            {/* Carrier select */}
+            <div className="space-y-1.5">
+              <Label className="text-gray-800 font-medium">物流公司 <span className="text-red-500">*</span></Label>
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#06038d]"
+                value={adminShipForm.shippingMethod}
+                onChange={e => setAdminShipForm(f => ({ ...f, shippingMethod: e.target.value }))}
+              >
+                <option value="sf_express">順豐速運 (SF Express)</option>
+                <option value="hkpost">香港郵政 (HK Post)</option>
+                <option value="dhl">DHL</option>
+                <option value="fedex">FedEx</option>
+                <option value="ups">UPS</option>
+                <option value="chunghwa_post">中華郵政</option>
+                <option value="black_cat">黑貓宅急</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+            {/* Tracking number */}
+            <div className="space-y-1.5">
+              <Label className="text-gray-800 font-medium">追蹤號碼 <span className="text-red-500">*</span></Label>
+              <input
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d]"
+                placeholder="例：SF1234567890"
+                value={adminShipForm.trackingNo}
+                onChange={e => setAdminShipForm(f => ({ ...f, trackingNo: e.target.value }))}
+              />
+            </div>
+            {/* Shipping proof image */}
+            <div className="space-y-1.5">
+              <Label className="text-gray-800 font-medium">出貨憑證圖片 <span className="text-red-500">*</span></Label>
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">⚠️ 必須上傳出貨憑證（如快遞單、收據截圖），否則無法提交</p>
+              {adminShipForm.shippingImageUrl ? (
+                <div className="relative">
+                  <img src={adminShipForm.shippingImageUrl} alt="出貨憑證" className="w-full max-h-40 object-contain rounded-lg border border-[#06038d]/30 bg-gray-50" />
+                  <button type="button" onClick={() => setAdminShipForm(f => ({ ...f, shippingImageUrl: '' }))} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600">✕</button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#06038d]/40 rounded-lg cursor-pointer bg-blue-50/50 hover:bg-blue-50 transition-colors">
+                  {isAdminShipImageUploading ? (
+                    <div className="flex items-center gap-2 text-[#06038d]">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-xs">上傳中...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 text-[#06038d]">
+                      <FileImage className="w-6 h-6" />
+                      <span className="text-xs font-medium">點擊上傳出貨照片</span>
+                      <span className="text-xs text-gray-400">支援 JPG、PNG（最大 10MB）</span>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" className="hidden" disabled={isAdminShipImageUploading} onChange={(e) => handleAdminShipImageUpload(e, order.id)} />
+                </label>
+              )}
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowAdminShipDialog(false)}>取消</Button>
+            <Button
+              className="bg-[#06038d] hover:bg-[#0804b8] text-white"
+              disabled={!adminShipForm.shippingMethod || !adminShipForm.trackingNo || !adminShipForm.shippingImageUrl || markOrderShippedMutation.isPending || isAdminShipImageUploading}
+              onClick={() => markOrderShippedMutation.mutate({
+                orderId: order.id,
+                shippingMethod: adminShipForm.shippingMethod,
+                trackingNo: adminShipForm.trackingNo,
+                shippingImageUrl: adminShipForm.shippingImageUrl || undefined,
+              })}
+            >
+              {markOrderShippedMutation.isPending
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</>
+                : <><Truck className="w-4 h-4 mr-2" />確認出貨</>}
             </Button>
           </DialogFooter>
         </DialogContent>

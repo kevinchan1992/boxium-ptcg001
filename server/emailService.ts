@@ -221,21 +221,27 @@ export function buildOrderConfirmedEmail(data: OrderEmailData): { subject: strin
 }
 
 /** Order shipped — to buyer */
-export function buildOrderShippedEmail(data: OrderEmailData): { subject: string; html: string } {
+export function buildOrderShippedEmail(data: OrderEmailData & { shippingMethodName?: string; shippingImageUrl?: string }): { subject: string; html: string } {
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `📦 訂單已出貨 — ${data.orderNo}`;
-  const trackingBlock = data.trackingNo
+  const trackingBlock = (data.trackingNo || data.shippingMethodName)
     ? `<p style="background:#fff8e1;border-left:4px solid ${BRAND_YELLOW};padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;">
-        <strong>物流追蹤號：</strong>${data.trackingNo}
+        ${data.shippingMethodName ? `<strong>物流公司：</strong>${data.shippingMethodName}<br/>` : ''}
+        ${data.trackingNo ? `<strong>追蹤號碼：</strong>${data.trackingNo}` : ''}
        </p>`
+    : "";
+  const proofBlock = data.shippingImageUrl
+    ? `<p style="margin:8px 0 4px;font-size:13px;color:#666;">出貨憑證：</p>
+       <img src="${data.shippingImageUrl}" alt="出貨憑證" style="max-width:100%;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:12px;" />`
     : "";
   const html = wrapHtml(subject, `
     <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單已出貨 📦</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">您的商品已由賣家寄出，請留意查收。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd)}
     ${trackingBlock}
+    ${proofBlock}
     <p style="color:#555;font-size:14px;">收到商品後，請記得在平台上確認收貨。如 <strong>14 天</strong>內未確認，系統將自動完成訂單。</p>
-    ${ctaButton("確認收貨", `${siteUrl}/orders`)}
+    ${ctaButton("確認收貨", `${siteUrl}/orders/${data.orderNo}`)}
   `);
   return { subject, html };
 }

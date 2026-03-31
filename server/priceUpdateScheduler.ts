@@ -432,7 +432,7 @@ export function startAutoCompleteOrdersScheduler() {
               type: 'trade',
               title: '訂單已自動完成 ✅',
               body: `訂單 ${order.orderNo} 已超過 14 天未確認收貨，系統已自動完成訂單。如有問題請聯絡客服。`,
-              linkUrl: '/orders',
+              linkUrl: `/orders/${order.orderNo}`,
             }).catch(() => {});
             // Send auto-completed email to buyer
             try {
@@ -465,8 +465,8 @@ export function startAutoCompleteOrdersScheduler() {
                     type: 'trade',
                     title: payoutResult.success ? '款項已自動轉帳 💰' : '訂單已自動完成 ✅',
                     body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨）。${payoutMsg}`,
-                    linkUrl: '/seller',
-                  }).catch(() => {});
+                    linkUrl: `/seller`,
+                }).catch(() => {});
                   try {
                     const { sendOrderEmail, buildOrderAutoCompletedSellerEmail, getOrderEmailData } = await import('./emailService');
                     const emailData = await getOrderEmailData(order);
@@ -562,7 +562,7 @@ export function startShippingReminderScheduler() {
                   type: 'trade',
                   title: '⏰ 請盡快安排出貨',
                   body: `訂單 ${order.orderNo} 已付款超過 12 小時，請盡快安排出貨並填寫追蹤號碼。`,
-                  linkUrl: '/seller',
+                  linkUrl: `/seller`,
                 }).catch(() => {});
 
                 // Send email to seller
@@ -981,7 +981,7 @@ export function startPaymentTimeoutCancelScheduler() {
               type: 'order',
               title: '訂單已自動取消',
               body: `訂單 #${order.orderNo} 因超過 ${timeoutMinutes} 分鐘未完成付款，已自動取消，商品已重新上架。`,
-              linkUrl: '/orders',
+              linkUrl: `/orders/${order.orderNo}`,
               relatedId: order.id,
             }).catch(() => {});
             // Notify seller (only if it's a C2C listing with a seller)
@@ -1127,7 +1127,7 @@ export function startPaymentReminderScheduler() {
               type: 'order',
               title: '⏰ 付款提醒 — 訂單即將取消',
               body: `訂單 #${order.orderNo} 已超過 1 小時未付款，請盡快完成付款，否則訂單將自動取消。`,
-              linkUrl: `/orders`,
+              linkUrl: `/orders/${order.orderNo}`,
               relatedId: order.id,
             }).catch(() => {});
 
@@ -1746,7 +1746,7 @@ export async function runMeetupAutoCancel(overrideDays?: number): Promise<{ canc
         type: 'order',
         title: '面交訂單已自動取消',
         body: `訂單 #${order.orderNo} 因超過 ${cancelDays} 天未完成面交確認，已自動取消，商品已重新上架。如有疑問請聯絡賣家。`,
-        linkUrl: '/orders',
+        linkUrl: `/orders/${order.orderNo}`,
         relatedId: order.id,
       }).catch(() => {});
 

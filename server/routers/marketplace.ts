@@ -1178,13 +1178,20 @@ export const marketplaceRouter = router({
         shippingImageUrl: input.shippingImageUrl ?? null,
         autoCompleteAt,
       });
+      // Map shippingMethod code to display name
+      const SHIPPING_METHOD_NAMES: Record<string, string> = {
+        sf_express: '順豐速運 (SF Express)', hkpost: '香港郵政 (HK Post)', dhl: 'DHL',
+        fedex: 'FedEx', ups: 'UPS', chunghwa_post: '中華郵政', black_cat: '黑貓宅急',
+        sf_cod: '順豐到付', other: '其他', meetup: '面交',
+      };
+      const shippingMethodName = SHIPPING_METHOD_NAMES[input.shippingMethod] || input.shippingMethod;
       // Notify buyer of shipment
       await createNotification({
         userId: order.buyerId,
         type: "trade",
         title: "你的訂單已出貨 📦",
-        body: `訂單 ${order.orderNo} 已出貨${input.trackingNo ? `，物流追蹤號：${input.trackingNo}` : ""}。如 14 天內未確認收貨，系統將自動完成訂單。`,
-        linkUrl: "/orders",
+        body: `訂單 ${order.orderNo} 已出貨${input.trackingNo ? `，${shippingMethodName} 追蹤號：${input.trackingNo}` : ""}。如 14 天內未確認收貨，系統將自動完成訂單。`,
+        linkUrl: `/orders/${order.orderNo}`,
       }).catch(err => console.warn("[Order] Failed to notify buyer of shipment:", err));
       // Send shipped email to buyer
       try {
@@ -1195,6 +1202,8 @@ export const marketplaceRouter = router({
           itemName: emailData.itemName,
           priceHkd: emailData.priceHkd,
           trackingNo: input.trackingNo,
+          shippingMethodName,
+          shippingImageUrl: input.shippingImageUrl,
         });
         await sendOrderEmail({ userId: order.buyerId, subject, html, emailType: 'order', dedupeKey: `order_shipped_buyer_${order.id}` });
       } catch (emailErr: any) {
@@ -1275,7 +1284,7 @@ export const marketplaceRouter = router({
         type: 'trade',
         title: '面交訂單已完成 🎉',
         body: `訂單 ${order.orderNo} 賣家已確認面交完成，感謝您的支持！`,
-        linkUrl: '/orders',
+        linkUrl: `/orders/${order.orderNo}`,
       }).catch(() => {});
       // Send completed emails
       try {
