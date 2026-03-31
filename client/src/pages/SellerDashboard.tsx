@@ -2907,7 +2907,8 @@ export default function SellerDashboard() {
             </div>
             {/* Shipping proof image upload */}
             <div className="space-y-1.5">
-              <Label className="text-gray-800 font-medium">出貨憑證圖片（可選）</Label>
+              <Label className="text-gray-800 font-medium">出貨憑證圖片 <span className="text-red-500">*</span></Label>
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">⚠️ 必須上傳出貨憑證（如快遞單、收據截圖），否則無法提交</p>
               {shipForm.shippingImageUrl ? (
                 <div className="relative">
                   <img src={shipForm.shippingImageUrl} alt="出貨憑證" className="w-full max-h-40 object-contain rounded-lg border border-[#06038d]/30 bg-gray-50" />
@@ -2968,7 +2969,7 @@ export default function SellerDashboard() {
             <Button variant="outline" className="border-red-400 text-red-600 hover:bg-red-50" onClick={() => setShipDialog(d => ({ ...d, open: false }))}>取消</Button>
             <Button
               className="bg-[#06038d] hover:bg-[#0804b8] text-white"
-              disabled={!shipForm.shippingMethod || !shipForm.trackingNumber || markShippedMutation.isPending || shipImageUploading}
+              disabled={!shipForm.shippingMethod || !shipForm.trackingNumber || !shipForm.shippingImageUrl || markShippedMutation.isPending || shipImageUploading}
               onClick={() => markShippedMutation.mutate({
                 orderId: shipDialog.orderId,
                 shippingMethod: shipForm.shippingMethod,
