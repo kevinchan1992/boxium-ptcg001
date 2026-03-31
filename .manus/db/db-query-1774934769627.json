@@ -1,0 +1,15 @@
+{
+  "query": "\nSELECT id, snkrdunkId, name FROM cards WHERE id = 819372 LIMIT 1;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT id, snkrdunkId, name FROM cards WHERE id = 819372 LIMIT 1;\n",
+  "rows": [
+    {
+      "id": "819372",
+      "snkrdunkId": "NULL",
+      "name": "Team Rocket's Mimikyu AR [M2a 205/193](High Class Pack \"MEGA Dream ex\")"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsnkrdunkId\tname\n819372\tNULL\tTeam Rocket's Mimikyu AR [M2a 205/193](High Class Pack \"MEGA Dream ex\")\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

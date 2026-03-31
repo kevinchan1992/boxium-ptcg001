@@ -6787,3 +6787,18 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 查看 production 伺服器實際錯誤日誌（Chromium not found）
 - [x] 改用 pdfkit（純 Node.js）替代 puppeteer-core，完全不依賴 Chromium
 - [x] 確保 production 環境可正常生成 PDF（9 項 vitest 測試通過）
+
+## 🐛 SNKRDUNK 爬取邏輯只儲存每天一筆交易（同日多筆被覆蓋）
+- [ ] 修復 snkrdunkScraper.ts：加入分頁爬取（目前只爬 page=1，需爬所有頁直到無資料）
+- [ ] 修復 persistentSnkrdunkBatchUpdate.ts：移除 7 天模糊去重，改用精準去重
+- [ ] 修復資料庫 UNIQUE INDEX：允許同日同價多筆（加入 position/rownum 欄位或移除 jpyPrice 限制）
+- [ ] 測試並確認同日多筆交易可正確顯示
+
+## ✅ SNKRDUNK 爬取邏輯修復（同日多筆交易 + 分頁）
+
+- [x] 修復 snkrdunkScraper.ts：加入分頁爬取（最多 20 頁 × 100 筆 = 2000 筆），原本只爬 page=1
+- [x] 修復 persistentSnkrdunkBatchUpdate.ts：移除 7 天模糊去重，改用 sourcePosition 精準去重
+- [x] 修復 db.ts addPriceHistory：移除 7 天模糊去重邏輯，加入 sourcePosition 欄位
+- [x] 修復資料庫 UNIQUE INDEX：加入 sourcePosition 欄位，允許同日同價多筆交易
+- [x] 執行 SQL migration：ALTER TABLE priceHistory ADD COLUMN sourcePosition，重建 UNIQUE INDEX
+- [x] TypeScript 0 錯誤，financial-pdf-service.test.ts 9 項測試全部通過

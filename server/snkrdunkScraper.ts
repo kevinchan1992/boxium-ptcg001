@@ -128,28 +128,38 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
 }>> {
   const timeout = options?.timeout || 15000;
   const throwOnError = options?.throwOnError || false;
+  const PER_PAGE = 100;
+  const MAX_PAGES = 20; // Safety cap: max 2000 records per card
+  const priceHistory: Array<{
+    price: number;
+    jpyPrice: number;
+    currency: string;
+    soldAt: Date;
+    grade?: string;
+    quantity?: string;
+  }> = [];
+
   try {
-    const apiUrl = `https://snkrdunk.com/v1/apparels/${productId}/sales-history?size_id=0&page=1&per_page=100`;
-    
-    const response = await axios.get(apiUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json",
-        "Referer": `https://snkrdunk.com/apparels/${productId}`,
-      },
-      timeout,
-    });
-    const data = response.data;
-    const priceHistory: Array<{
-      price: number;
-      jpyPrice: number;
-      currency: string;
-      soldAt: Date;
-      grade?: string;
-      quantity?: string;
-    }> = [];
-    // Parse API response
-    if (data.history && Array.isArray(data.history)) {
+    // Paginate through ALL pages to capture every transaction
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const apiUrl = `https://snkrdunk.com/v1/apparels/${productId}/sales-history?size_id=0&page=${page}&per_page=${PER_PAGE}`;
+      
+      const response = await axios.get(apiUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "application/json",
+          "Referer": `https://snkrdunk.com/apparels/${productId}`,
+        },
+        timeout,
+      });
+      const data = response.data;
+
+      // No more pages if history is empty or missing
+      if (!data.history || !Array.isArray(data.history) || data.history.length === 0) {
+        break;
+      }
+
+      // Parse each record on this page
       for (const item of data.history) {
         const record: {
           price: number;
@@ -175,6 +185,11 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
         
         priceHistory.push(record);
       }
+
+      // If fewer than PER_PAGE records returned, this is the last page
+      if (data.history.length < PER_PAGE) {
+        break;
+      }
     }
     return priceHistory;
   } catch (error: any) {
@@ -187,8 +202,8 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
       (enhancedError as any).statusCode = error.response?.status;
       throw enhancedError;
     }
-    // Return empty array if API fails, don't throw error (backward compatible)
-    return [];
+    // Return partial results if we already fetched some pages before the error
+    return priceHistory.length > 0 ? priceHistory : [];
   }
 }
 

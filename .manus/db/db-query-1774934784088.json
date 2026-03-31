@@ -1,0 +1,17 @@
+{
+  "query": "\nSELECT grade, jpyPrice, soldAt, price, currency \nFROM priceHistory \nWHERE cardId = 819372 AND source = 'snkrdunk'\nAND DATE(soldAt) = '2026-03-30'\nORDER BY soldAt, jpyPrice;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT grade, jpyPrice, soldAt, price, currency \nFROM priceHistory \nWHERE cardId = 819372 AND source = 'snkrdunk'\nAND DATE(soldAt) = '2026-03-30'\nORDER BY soldAt, jpyPrice;\n",
+  "rows": [
+    {
+      "grade": "PSA10",
+      "jpyPrice": "65000",
+      "soldAt": "2026-03-30 00:00:00",
+      "price": "3575.00",
+      "currency": "HKD"
+    }
+  ],
+  "messages": [],
+  "stdout": "grade\tjpyPrice\tsoldAt\tprice\tcurrency\nPSA10\t65000\t2026-03-30 00:00:00\t3575.00\tHKD\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

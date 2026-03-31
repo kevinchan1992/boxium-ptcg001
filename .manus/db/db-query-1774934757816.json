@@ -1,0 +1,9 @@
+{
+  "query": "\nSELECT c.id as cardId, c.snkrdunkId, COUNT(*) as total_records,\n  SUM(CASE WHEN DATE(ph.soldAt) = '2026-03-30' THEN 1 ELSE 0 END) as march30_records\nFROM cards c\nJOIN priceHistory ph ON ph.cardId = c.id\nWHERE c.snkrdunkId = '730942'\nGROUP BY c.id, c.snkrdunkId;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT c.id as cardId, c.snkrdunkId, COUNT(*) as total_records,\n  SUM(CASE WHEN DATE(ph.soldAt) = '2026-03-30' THEN 1 ELSE 0 END) as march30_records\nFROM cards c\nJOIN priceHistory ph ON ph.cardId = c.id\nWHERE c.snkrdunkId = '730942'\nGROUP BY c.id, c.snkrdunkId;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 71
+}

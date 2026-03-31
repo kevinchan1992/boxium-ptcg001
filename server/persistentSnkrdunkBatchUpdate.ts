@@ -183,12 +183,16 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
       if (database) {
         const { priceHistory: priceHistoryTable } = await import('../drizzle/schema_new');
         
-        const records = priceHistory.map(entry => ({
+        // Assign sourcePosition (0-based index in API response) to differentiate same-day same-price
+        // transactions. The UNIQUE INDEX now includes sourcePosition, so all distinct API records
+        // can be stored without false-positive deduplication.
+        const records = priceHistory.map((entry, idx) => ({
           cardId: product.id,
           source: "snkrdunk" as const,
           price: convertJpyToHkd(entry.price).toString(),
           currency: "HKD",
           jpyPrice: entry.jpyPrice ?? entry.price, // Original JPY price - used for stable deduplication
+          sourcePosition: idx, // Position in API response (0-based) - allows multiple same-day same-price records
           grade: productType === 'single_card' ? (entry.normalisedGrade ?? null) : null,
           quantity: productType === 'sealed_product' ? (entry.quantity || null) : null,
           productType,
@@ -196,46 +200,13 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
           listingUrl: product.sourceUrl,
         }));
         
-        // SNKRDUNK Fuzzy Deduplication:
-        // SNKRDUNK API returns relative dates ("N日前") which drift each scrape, bypassing UNIQUE INDEX.
-        // For each record, check if a same cardId+source+grade+jpyPrice exists within ±7 days.
-        // Only insert records that pass this fuzzy check.
-        const { and: drizzleAnd, eq: drizzleEq, gte: drizzleGte, lte: drizzleLte, sql: drizzleSql } = await import('drizzle-orm');
-        const windowMs = 7 * 24 * 60 * 60 * 1000;
-        const filteredRecords: typeof records = [];
-        for (const record of records) {
-          if (record.soldAt && record.jpyPrice) {
-            const soldAtMs = record.soldAt.getTime();
-            const windowStart = new Date(soldAtMs - windowMs);
-            const windowEnd = new Date(soldAtMs + windowMs);
-            const existing = await database
-              .select({ id: priceHistoryTable.id })
-              .from(priceHistoryTable)
-              .where(
-                drizzleAnd(
-                  drizzleEq(priceHistoryTable.cardId, record.cardId),
-                  drizzleEq(priceHistoryTable.source, record.source),
-                  record.grade ? drizzleEq(priceHistoryTable.grade, record.grade) : drizzleSql`${priceHistoryTable.grade} IS NULL`,
-                  drizzleSql`${priceHistoryTable.jpyPrice} = ${record.jpyPrice}`,
-                  drizzleGte(priceHistoryTable.soldAt, windowStart),
-                  drizzleLte(priceHistoryTable.soldAt, windowEnd)
-                )
-              )
-              .limit(1);
-            if (existing.length === 0) {
-              filteredRecords.push(record);
-            }
-          } else {
-            filteredRecords.push(record); // No soldAt/jpyPrice: use UNIQUE INDEX as fallback
-          }
-        }
-
-        // Batch insert in chunks of 50 to avoid query size limits
-        // Use onDuplicateKeyUpdate with a no-op to silently skip duplicates (INSERT IGNORE equivalent)
-        for (let i = 0; i < filteredRecords.length; i += 50) {
-          const chunk = filteredRecords.slice(i, i + 50);
+        // Batch insert in chunks of 50 to avoid query size limits.
+        // The UNIQUE INDEX (cardId, source, grade, soldAt, jpyPrice, sourcePosition) handles deduplication.
+        // onDuplicateKeyUpdate with a no-op silently skips already-inserted records (idempotent).
+        const { sql } = await import('drizzle-orm');
+        for (let i = 0; i < records.length; i += 50) {
+          const chunk = records.slice(i, i + 50);
           try {
-            const { sql } = await import('drizzle-orm');
             await database
               .insert(priceHistoryTable)
               .values(chunk)
@@ -244,7 +215,6 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
             // If batch fails, fall back to individual inserts with no-op dedup
             for (const record of chunk) {
               try {
-                const { sql } = await import('drizzle-orm');
                 await database
                   .insert(priceHistoryTable)
                   .values(record)
