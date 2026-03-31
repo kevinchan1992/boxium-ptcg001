@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import OrderChat from "@/components/OrderChat";
-import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown, Layers, ChevronRight, Pencil, EyeOff, Eye, Trash2, CheckSquare, Square, ChevronDown, Phone, Users, Info } from "lucide-react";
+import { Package, ShoppingBag, DollarSign, ExternalLink, Plus, AlertCircle, CheckCircle, Clock, ImagePlus, Loader2, X, Star, Tag, Wallet, MessageSquare, Share2, Link2, Check, ImageDown, Layers, ChevronRight, Pencil, EyeOff, Eye, Trash2, CheckSquare, Square, ChevronDown, Phone, Users, Info, Gavel } from "lucide-react";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
@@ -544,6 +544,154 @@ function EarningsTab() {
                   <div className="border-t border-gray-200 pt-1.5 flex justify-between">
                     <span className="font-semibold text-gray-800">淨收入</span>
                     <span className="font-bold text-green-600">HKD {parseFloat(order.sellerReceivableHkd ?? order.subtotalHkd ?? '0').toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SellerAuctionsTab ────────────────────────────────────────
+function SellerAuctionsTab() {
+  const [subTab, setSubTab] = useState<"active" | "ended">("active");
+  const { data: auctions, isLoading } = trpc.auction.sellerAuctions.useQuery({ page: 1, pageSize: 50 });
+
+  const activeAuctions = (auctions?.listings ?? []).filter((a: any) =>
+    ["active", "scheduled", "pending_review"].includes(a.auctionStatus)
+  );
+  const endedAuctions = (auctions?.listings ?? []).filter((a: any) =>
+    ["ended", "cancelled", "sold"].includes(a.auctionStatus)
+  );
+  const current = subTab === "active" ? activeAuctions : endedAuctions;
+
+  function AuctionStatusBadge({ status }: { status: string }) {
+    const map: Record<string, { label: string; cls: string }> = {
+      active:         { label: "競拍中",   cls: "bg-blue-100 text-blue-700" },
+      scheduled:      { label: "待開始",   cls: "bg-purple-100 text-purple-700" },
+      pending_review: { label: "審核中",   cls: "bg-yellow-100 text-yellow-700" },
+      ended:          { label: "已結標",   cls: "bg-green-100 text-green-700" },
+      sold:           { label: "已成交",   cls: "bg-green-100 text-green-700" },
+      cancelled:      { label: "已取消",   cls: "bg-gray-100 text-gray-500" },
+    };
+    const s = map[status] ?? { label: status, cls: "bg-gray-100 text-gray-500" };
+    return <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>;
+  }
+
+  function AuctionCountdown({ endAt }: { endAt: string | null }) {
+    const [timeLeft, setTimeLeft] = useState("");
+    useEffect(() => {
+      if (!endAt) { setTimeLeft("—"); return; }
+      const update = () => {
+        const diff = new Date(endAt).getTime() - Date.now();
+        if (diff <= 0) { setTimeLeft("已結標"); return; }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        setTimeLeft(h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`);
+      };
+      update();
+      const t = setInterval(update, 1000);
+      return () => clearInterval(t);
+    }, [endAt]);
+    const isUrgent = endAt && new Date(endAt).getTime() - Date.now() < 3600000;
+    return <span className={`text-xs font-mono font-bold ${isUrgent ? "text-red-600" : "text-gray-600"}`}>{timeLeft}</span>;
+  }
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#06038d]" /></div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Sub-tab switcher */}
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+        {(["active", "ended"] as const).map(t => (
+          <button
+            key={t}
+            onClick={() => setSubTab(t)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+              subTab === t ? "text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+            }`}
+            style={subTab === t ? { background: "#06038d" } : {}}
+          >
+            {t === "active" ? "進行中" : "已結標"}
+            <span className={`text-xs rounded-full px-1.5 py-0.5 font-bold ${
+              subTab === t ? "bg-white/25 text-white" : "bg-gray-200 text-gray-600"
+            }`}>
+              {t === "active" ? activeAuctions.length : endedAuctions.length}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {current.length === 0 ? (
+        <div className="text-center py-12">
+          <Gavel className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+          <p className="text-gray-400 text-sm">{subTab === "active" ? "目前沒有進行中的拍賣" : "尚無已結標的拍賣"}</p>
+          {subTab === "active" && (
+            <p className="text-gray-400 text-xs mt-1">在「我的商品」標籤中選擇「拍賣模式」上架新拍賣</p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {current.map((auction: any) => (
+            <div key={auction.id} className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
+              <div className="flex items-start gap-3">
+                {auction.imageUrls?.[0] && (
+                  <img
+                    src={auction.imageUrls[0]}
+                    alt={auction.title}
+                    className="w-14 h-14 object-cover rounded-lg border border-gray-100 flex-shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm truncate">{auction.title}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {auction.cardName && `${auction.cardName} · `}
+                        {auction.grade && `PSA ${auction.grade}`}
+                      </p>
+                    </div>
+                    <AuctionStatusBadge status={auction.auctionStatus} />
+                  </div>
+
+                  <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <p className="text-xs text-gray-400">起標價</p>
+                        <p className="text-sm font-bold" style={{ color: "#06038d" }}>¥{auction.startingBid?.toLocaleString() ?? "—"}</p>
+                      </div>
+                      {auction.currentBid && (
+                        <div>
+                          <p className="text-xs text-gray-400">當前最高出價</p>
+                          <p className="text-sm font-bold text-orange-600">¥{auction.currentBid?.toLocaleString()}</p>
+                        </div>
+                      )}
+                      {auction.bidCount !== undefined && (
+                        <div>
+                          <p className="text-xs text-gray-400">出價次數</p>
+                          <p className="text-sm font-bold text-gray-700">{auction.bidCount} 次</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {auction.auctionStatus === "active" && (
+                        <div className="text-right">
+                          <p className="text-xs text-gray-400">剩餘時間</p>
+                          <AuctionCountdown endAt={auction.auctionEndAt} />
+                        </div>
+                      )}
+                      <a href={`/auction/${auction.id}`} target="_blank" rel="noopener noreferrer">
+                        <button className="text-xs px-3 py-1.5 rounded-lg font-semibold border border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white transition-colors">
+                          查看拍賣
+                        </button>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1149,7 +1297,7 @@ export default function SellerDashboard() {
             </div>
 
             <BrandTabs defaultValue="listings" value={activeTab} onValueChange={setActiveTab}>
-              <BrandTabsList grid tabCount={4}>
+              <BrandTabsList grid tabCount={5}>
                 <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="我的商品" mobileLabel="商品">
                   我的商品
                 </BrandTabsTrigger>
@@ -1171,6 +1319,9 @@ export default function SellerDashboard() {
                 </BrandTabsTrigger>
                 <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label="收款記錄" mobileLabel="收款">
                   收款記錄
+                </BrandTabsTrigger>
+                <BrandTabsTrigger value="auctions" icon={<Gavel className="w-4 h-4" />} label="我的拍賣" mobileLabel="拍賣">
+                  我的拍賣
                 </BrandTabsTrigger>
               </BrandTabsList>
 
@@ -2055,6 +2206,9 @@ export default function SellerDashboard() {
               </BrandTabsContent>
               <BrandTabsContent value="earnings" className="mt-4">
                 <EarningsTab />
+              </BrandTabsContent>
+              <BrandTabsContent value="auctions" className="mt-4">
+                <SellerAuctionsTab />
               </BrandTabsContent>
             </BrandTabs>
           </>

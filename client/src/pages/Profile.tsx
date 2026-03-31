@@ -108,12 +108,17 @@ export default function Profile() {
   const { data: unreadCountData } = trpc.notifications.getUnreadCount.useQuery(undefined, { enabled: !!user });
   const unreadNotifCount = (unreadCountData as any)?.count ?? 0;
 
+  // 活躍競拍數量
+  const { data: myBidsData } = trpc.auction.myBids.useQuery(undefined, { enabled: !!user });
+  const activeBidsCount = (myBidsData ?? []).filter((b: any) => b.status === 'active' || b.status === 'winning').length;
+
   const navItems: NavItem[] = [
     { id: "info", icon: <User className="w-4 h-4" />, label: t("profile.tabs.info") },
     { id: "watchlist", icon: <Heart className="w-4 h-4" />, label: t("profile.tabs.watchlist") },
     { id: "addresses", icon: <MapPin className="w-4 h-4" />, label: "收貨地址" },
     { id: "orders", icon: <ShoppingBag className="w-4 h-4" />, label: "我的訂單", badge: activeOrdersCount > 0 ? activeOrdersCount : undefined },
     { id: "offers", icon: <Tag className="w-4 h-4" />, label: "我的出價" },
+    { id: "auctions", icon: <DollarSign className="w-4 h-4" />, label: "我的競拍", badge: activeBidsCount > 0 ? activeBidsCount : undefined },
     { id: "notifications", icon: <Bell className="w-4 h-4" />, label: "通知中心", badge: unreadNotifCount > 0 ? unreadNotifCount : undefined },
   ];
 
@@ -324,6 +329,7 @@ export default function Profile() {
                 {activeSection === "addresses" && <ShippingAddressSection />}
                 {activeSection === "orders" && <EmbeddedOrdersSection />}
                 {activeSection === "offers" && <EmbeddedOffersSection userId={user.id} />}
+                {activeSection === "auctions" && <MyAuctionsSection bids={myBidsData ?? []} />}
                 {activeSection === "notifications" && <EmbeddedNotificationsSection />}
               </div>
             </div>
@@ -2049,6 +2055,187 @@ function EmbeddedOffersSection({ userId }: { userId: number }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ─── My Auctions Section ──────────────────────────────────────
+function MyAuctionsSection({ bids }: { bids: any[] }) {
+  const [tab, setTab] = useState<"active" | "won" | "history">("active");
+  const utils = trpc.useUtils();
+
+  const activeBids = bids.filter(b => b.status === "active" || b.status === "winning");
+  const wonBids = bids.filter(b => b.status === "won");
+  const historyBids = bids.filter(b => b.status === "lost" || b.status === "retracted");
+
+  const tabs = [
+    { id: "active" as const, label: "正在競拍", count: activeBids.length },
+    { id: "won" as const, label: "已得標", count: wonBids.length },
+    { id: "history" as const, label: "歷史競拍", count: historyBids.length },
+  ];
+
+  const currentBids = tab === "active" ? activeBids : tab === "won" ? wonBids : historyBids;
+
+  function AuctionCountdown({ endAt }: { endAt: string | null }) {
+    const [timeLeft, setTimeLeft] = useState("");
+    useEffect(() => {
+      if (!endAt) { setTimeLeft("—"); return; }
+      const update = () => {
+        const diff = new Date(endAt).getTime() - Date.now();
+        if (diff <= 0) { setTimeLeft("已結標"); return; }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        setTimeLeft(h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`);
+      };
+      update();
+      const t = setInterval(update, 1000);
+      return () => clearInterval(t);
+    }, [endAt]);
+    const isUrgent = endAt && new Date(endAt).getTime() - Date.now() < 3600000;
+    return (
+      <span className={`text-xs font-mono font-bold ${isUrgent ? "text-red-600" : "text-gray-600"}`}>
+        {timeLeft}
+      </span>
+    );
+  }
+
+  if (bids.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: `#06038d15` }}>
+          <DollarSign className="w-8 h-8" style={{ color: "#06038d" }} />
+        </div>
+        <p className="text-gray-500 font-medium">您尚未參與任何拍賣</p>
+        <p className="text-gray-400 text-sm mt-1">前往市集探索正在進行的拍賣</p>
+        <Link href="/marketplace">
+          <Button className="mt-4 font-semibold" style={{ background: "#06038d", color: "white" }}>
+            前往市集
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Tab switcher */}
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+              tab === t.id ? "text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+            }`}
+            style={tab === t.id ? { background: "#06038d" } : {}}
+          >
+            {t.label}
+            {t.count > 0 && (
+              <span className={`text-xs rounded-full px-1.5 py-0.5 font-bold ${
+                tab === t.id ? "bg-white/25 text-white" : "bg-gray-200 text-gray-600"
+              }`}>
+                {t.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Bid list */}
+      {currentBids.length === 0 ? (
+        <div className="text-center py-10 text-gray-400 text-sm">此分類暫無記錄</div>
+      ) : (
+        <div className="space-y-3">
+          {currentBids.map((bid: any) => (
+            <div key={bid.id} className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
+              <div className="flex items-start gap-3">
+                {/* Card image */}
+                {bid.listing?.imageUrls?.[0] && (
+                  <img
+                    src={bid.listing.imageUrls[0]}
+                    alt={bid.listing.title}
+                    className="w-14 h-14 object-cover rounded-lg border border-gray-100 flex-shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm truncate">
+                        {bid.listing?.title ?? `拍賣 #${bid.listingId}`}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {bid.listing?.cardName && `${bid.listing.cardName} · `}
+                        {bid.listing?.grade && `PSA ${bid.listing.grade}`}
+                      </p>
+                    </div>
+                    {/* Status badge */}
+                    {bid.status === "winning" && (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "#FEDD00", color: "#06038d" }}>
+                        領先中
+                      </span>
+                    )}
+                    {bid.status === "active" && (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 bg-blue-100 text-blue-700">
+                        競拍中
+                      </span>
+                    )}
+                    {bid.status === "won" && (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 bg-green-100 text-green-700">
+                        已得標
+                      </span>
+                    )}
+                    {bid.status === "lost" && (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 bg-gray-100 text-gray-500">
+                        未得標
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="text-xs text-gray-400">我的出價</p>
+                        <p className="text-sm font-bold" style={{ color: "#06038d" }}>
+                          ¥{bid.amount?.toLocaleString()}
+                        </p>
+                      </div>
+                      {bid.listing?.currentBid && (
+                        <div>
+                          <p className="text-xs text-gray-400">當前最高</p>
+                          <p className="text-sm font-bold text-gray-700">
+                            ¥{bid.listing.currentBid?.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {(bid.status === "active" || bid.status === "winning") && bid.listing?.auctionEndAt && (
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400">剩餘時間</p>
+                        <AuctionCountdown endAt={bid.listing.auctionEndAt} />
+                      </div>
+                    )}
+                    {bid.status === "won" && bid.listing?.id && (
+                      <Link href={`/auction/${bid.listing.id}`}>
+                        <Button size="sm" className="text-xs font-semibold" style={{ background: "#06038d", color: "white" }}>
+                          前往付款
+                        </Button>
+                      </Link>
+                    )}
+                    {(bid.status === "active" || bid.status === "winning") && bid.listing?.id && (
+                      <Link href={`/auction/${bid.listing.id}`}>
+                        <Button size="sm" variant="outline" className="text-xs font-semibold border-[#06038d] text-[#06038d]">
+                          查看拍賣
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

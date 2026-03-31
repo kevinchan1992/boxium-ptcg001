@@ -17,6 +17,7 @@ import {
   generateOrderNo,
   createMarketplaceOrder,
   createOrderItems,
+  getDistinctBidderIds,
 } from "./db";
 import { createNotification } from "./db/notifications";
 
@@ -77,24 +78,37 @@ export async function processScheduledAuctions(): Promise<void> {
 // ---- Notify ending soon (call every 5min) ----
 export async function notifyEndingSoon(): Promise<void> {
   try {
-    const endingSoon = await getAuctionsEndingSoon(30); // within 30 minutes
+    // Notify at 1 hour before end (Phase 2 requirement)
+    const endingSoon = await getAuctionsEndingSoon(60); // within 60 minutes
     for (const listing of endingSoon) {
       if (endingSoonNotified.has(listing.id)) continue;
 
-      // Mark as ending_soon
+      // Mark as ending_soon when within 15 minutes
       if (listing.auctionStatus === 'active') {
-        await updateAuctionListing(listing.id, { auctionStatus: 'ending_soon' });
+        const now = new Date();
+        const endAt = listing.auctionEndAt ? new Date(listing.auctionEndAt) : null;
+        if (endAt && (endAt.getTime() - now.getTime()) <= 15 * 60 * 1000) {
+          await updateAuctionListing(listing.id, { auctionStatus: 'ending_soon' });
+        }
       }
 
-      // Notify current highest bidder
-      if (listing.currentHighestBidderId) {
-        await createNotification({
-          userId: listing.currentHighestBidderId,
-          type: 'auction_ending_soon',
-          title: '您正在領先的拍賣即將結束',
-          body: `拍賣 #${listing.id} 將在 30 分鐘內結束，您目前是最高出價者`,
-          relatedId: listing.id,
-        });
+      // Notify ALL distinct bidders (not just the current highest)
+      try {
+        const bidderIds = await getDistinctBidderIds(listing.id);
+        for (const bidderId of bidderIds) {
+          const isLeading = bidderId === listing.currentHighestBidderId;
+          await createNotification({
+            userId: bidderId,
+            type: 'auction_ending_soon',
+            title: isLeading ? '您正在領先的拍賣即將結束' : '您參與的拍賣即將結束',
+            body: isLeading
+              ? `拍賣 #${listing.id} 將在 1 小時內結束，您目前是最高出價者`
+              : `拍賣 #${listing.id} 將在 1 小時內結束，您目前已被超越`,
+            relatedId: listing.id,
+          });
+        }
+      } catch (err) {
+        console.error(`[AuctionProcessor] Failed to notify bidders for auction ${listing.id}:`, err);
       }
 
       // Notify seller
@@ -103,7 +117,7 @@ export async function notifyEndingSoon(): Promise<void> {
           userId: listing.sellerId,
           type: 'auction_ending_soon',
           title: '您的拍賣即將結束',
-          body: `拍賣 #${listing.id} 將在 30 分鐘內結束`,
+          body: `拍賣 #${listing.id} 將在 1 小時內結束，當前最高出價：HK$${listing.currentHighestBid ?? listing.startingBid ?? '未有出價'}`,
           relatedId: listing.id,
         });
       }

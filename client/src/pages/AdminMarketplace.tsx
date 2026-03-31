@@ -6592,11 +6592,241 @@ function AuctionsAdminTab() {
   );
 }
 
+// ─── Auction Violations Admin Tab ───────────────────────────────────────────
+function AuctionViolationsAdminTab() {
+  const [page, setPage] = useState(1);
+  const [filterUserId, setFilterUserId] = useState<string>('');
+  const [recordDialog, setRecordDialog] = useState(false);
+  const [recordForm, setRecordForm] = useState({ userId: '', type: 'no_payment' as const, penalty: 'warning' as const, listingId: '', adminNote: '' });
+
+  const { data, refetch, isLoading } = trpc.auction.adminGetViolations.useQuery({
+    page,
+    pageSize: 20,
+    userId: filterUserId ? parseInt(filterUserId) : undefined,
+  });
+
+  const liftBanMutation = trpc.auction.adminLiftBan.useMutation({
+    onSuccess: () => { toast.success('已解除封禁'); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const recordViolationMutation = trpc.auction.adminRecordViolation.useMutation({
+    onSuccess: () => { toast.success('違規記錄已新增'); setRecordDialog(false); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const penaltyLabel: Record<string, string> = {
+    warning: '⚠️ 警告', ban_7d: '🚫 封禁 7 天', ban_30d: '🚫 封禁 30 天', permanent: '🔴 永久封禁',
+  };
+  const penaltyColor: Record<string, string> = {
+    warning: 'bg-yellow-100 text-yellow-800', ban_7d: 'bg-orange-100 text-orange-800',
+    ban_30d: 'bg-red-100 text-red-800', permanent: 'bg-red-200 text-red-900',
+  };
+  const typeLabel: Record<string, string> = {
+    no_payment: '未付款', fake_bid: '假出價', seller_cancel: '賣家取消',
+  };
+
+  const totalPages = Math.ceil((data?.total ?? 0) / 20);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold">⚠️ 拍賣違規管理</h2>
+          <p className="text-sm text-muted-foreground">共 {data?.total ?? 0} 筆違規記錄</p>
+        </div>
+        <Button onClick={() => setRecordDialog(true)} className="bg-[#06038D] hover:bg-[#06038D]/90 text-white">
+          <Plus className="w-4 h-4 mr-1" /> 新增違規記錄
+        </Button>
+      </div>
+
+      {/* Filter */}
+      <div className="flex gap-2">
+        <Input
+          placeholder="按用戶 ID 篩選..."
+          value={filterUserId}
+          onChange={e => { setFilterUserId(e.target.value); setPage(1); }}
+          className="max-w-xs"
+        />
+        {filterUserId && (
+          <Button variant="outline" onClick={() => { setFilterUserId(''); setPage(1); }}>清除</Button>
+        )}
+      </div>
+
+      {/* Violations Table */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="rounded-lg border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left px-4 py-3 font-medium">用戶</th>
+                <th className="text-left px-4 py-3 font-medium">違規類型</th>
+                <th className="text-left px-4 py-3 font-medium">處罰</th>
+                <th className="text-left px-4 py-3 font-medium">相關拍賣</th>
+                <th className="text-left px-4 py-3 font-medium">備註</th>
+                <th className="text-left px-4 py-3 font-medium">記錄時間</th>
+                <th className="text-left px-4 py-3 font-medium">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {(data?.violations ?? []).map((v: any) => (
+                <tr key={v.id} className="hover:bg-muted/20">
+                  <td className="px-4 py-3">
+                    <div className="font-medium">{v.userName ?? '未知用戶'}</div>
+                    <div className="text-xs text-muted-foreground">{v.userEmail ?? `ID: ${v.userId}`}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant="outline">{typeLabel[v.type] ?? v.type}</Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${penaltyColor[v.penalty] ?? 'bg-gray-100 text-gray-800'}`}>
+                      {penaltyLabel[v.penalty] ?? v.penalty}
+                    </span>
+                    {v.banExpiresAt && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        至 {new Date(v.banExpiresAt).toLocaleDateString('zh-HK')}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {v.listingId ? `#${v.listingId}` : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate">
+                    {v.adminNote ?? '-'}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {new Date(v.createdAt).toLocaleDateString('zh-HK')}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs border-red-200 text-red-600 hover:bg-red-50"
+                      onClick={() => {
+                        if (confirm(`確定解除此違規記錄 #${v.id}？`)) {
+                          liftBanMutation.mutate({ violationId: v.id });
+                        }
+                      }}
+                    >
+                      <ShieldOff className="w-3 h-3 mr-1" /> 解除
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+              {(data?.violations ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">暫無違規記錄</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground">{page} / {totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Record Violation Dialog */}
+      <Dialog open={recordDialog} onOpenChange={setRecordDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>新增違規記錄</DialogTitle>
+            <DialogDescription>手動記錄用戶拍賣違規行為</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>用戶 ID</Label>
+              <Input
+                placeholder="輸入用戶 ID"
+                value={recordForm.userId}
+                onChange={e => setRecordForm(f => ({ ...f, userId: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>違規類型</Label>
+              <Select value={recordForm.type} onValueChange={v => setRecordForm(f => ({ ...f, type: v as any }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no_payment">未付款</SelectItem>
+                  <SelectItem value="fake_bid">假出價</SelectItem>
+                  <SelectItem value="seller_cancel">賣家取消</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>處罰</Label>
+              <Select value={recordForm.penalty} onValueChange={v => setRecordForm(f => ({ ...f, penalty: v as any }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="warning">⚠️ 警告</SelectItem>
+                  <SelectItem value="ban_7d">🚫 封禁 7 天</SelectItem>
+                  <SelectItem value="ban_30d">🚫 封禁 30 天</SelectItem>
+                  <SelectItem value="permanent">🔴 永久封禁</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>相關拍賣 ID（選填）</Label>
+              <Input
+                placeholder="拍賣 listing ID"
+                value={recordForm.listingId}
+                onChange={e => setRecordForm(f => ({ ...f, listingId: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>管理員備註（選填）</Label>
+              <Textarea
+                placeholder="記錄違規原因..."
+                value={recordForm.adminNote}
+                onChange={e => setRecordForm(f => ({ ...f, adminNote: e.target.value }))}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRecordDialog(false)}>取消</Button>
+            <Button
+              className="bg-[#06038D] hover:bg-[#06038D]/90 text-white"
+              disabled={!recordForm.userId || recordViolationMutation.isPending}
+              onClick={() => {
+                recordViolationMutation.mutate({
+                  userId: parseInt(recordForm.userId),
+                  type: recordForm.type,
+                  penalty: recordForm.penalty,
+                  listingId: recordForm.listingId ? parseInt(recordForm.listingId) : undefined,
+                  adminNote: recordForm.adminNote || undefined,
+                });
+              }}
+            >
+              {recordViolationMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : '確認記錄'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // Sidebar menu items configuration
 type SidebarItem = { key: string; label: string; icon: any; badgeKey?: string };
 const sidebarMenuItems: SidebarItem[] = [
   { key: 'listings', label: '商品管理', icon: Package, badgeKey: 'pendingReviewListings' },
   { key: 'auctions', label: '🔨 拍賣管理', icon: Package },
+  { key: 'auction_violations', label: '⚠️ 拍賣違規', icon: Shield },
   { key: 'orders', label: '訂單管理', icon: ShoppingBag },
   { key: 'alipay', label: '支付寶核對', icon: DollarSign, badgeKey: 'pendingAlipayConfirmation' },
   { key: 'sellers', label: '賣家管理', icon: Users },
@@ -6642,6 +6872,7 @@ export default function AdminMarketplace() {
     switch (activeSection) {
       case 'listings': return <ListingsTab onViewOrders={handleViewOrders} />;
       case 'auctions': return <AuctionsAdminTab />;
+      case 'auction_violations': return <AuctionViolationsAdminTab />;
       case 'orders': return <OrdersTab listingFilter={ordersListingFilter} onClearListingFilter={() => setOrdersListingFilter(null)} onViewOrders={handleViewOrders} />;
       case 'alipay': return <AlipayPendingTab />;
       case 'sellers': return <SellersTab />;

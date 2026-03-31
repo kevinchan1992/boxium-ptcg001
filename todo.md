@@ -6854,3 +6854,49 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] SellerDashboard 提交邏輯：拍賣模式呼叫 auction.create
 - [x] AdminMarketplace 新增「🔨 拍賣管理」Tab（待審核/競標中/已成交等狀態篩選、審核通過/拒絕/強制取消）
 - [x] vitest 測試：server/auction.test.ts（16 項測試全部通過）：出價驗證、防狙擊延伸、拍賣狀態計算
+
+## 🏆 拍賣功能開發 Phase 2：體驗增強
+
+### 後端增強
+- [ ] auction router：placeBid 加入防狙擊延長邏輯（最後 N 分鐘出價自動延長結標時間，最多 3 次）
+- [ ] auction router：placeBid 加入保留價判斷（更新 hasReserveMet）
+- [ ] auction router：buyNow 完整流程（立即結標 + 建立訂單 + 通知）
+- [ ] 棄標懲罰自動化：auctionPaymentTimeout 整合到現有 paymentTimeoutCancelScheduler（記錄 auctionViolations + 自動封禁）
+- [ ] auction.getMyBids procedure（買家查看自己的出價記錄）
+- [ ] auction.getSellerAuctions procedure（賣家查看自己的拍賣列表）
+- [ ] auction.adminGetStats procedure（管理員拍賣統計數據）
+- [ ] auction.getViolations / addViolation / checkBanStatus procedures
+
+### 通知完善
+- [ ] 被超越通知：出價成功後通知前一位最高出價者（站內 + Email）
+- [ ] 即將結標通知（結標前 1 小時）：通知所有出價者
+-- [x] 結標通知（得標者）：站內 + Email
+- [x] 結標通知（未得標者）：站內通知
+- [x] 結標通知（流拍）：通知賣家 + 所有出價者
+- [x] 結標通知（賣家成交）：站內 + Email
+- [x] 付款提醒（12 小時後）：通知得標者（現有 paymentTimeoutCancelScheduler 覆蓋）
+- [x] 逾期未付款通知：通知得標者 + 賣家
+### 前端：我的競拍頁面
+- [x] /profile 新增「我的競拍」 Tab
+- [x] 正在競拍列表（顯示當前出價狀態：領先/被超越）
+- [x] 已得標待付款列表（顯示倒數付款時限）
+- [x] 歷史拍賣記錄（得標/未得標/流拍）
+### 前端：賣家拍賣管理
+- [x] SellerDashboard 新增「我的拍賣」 Tab
+- [x] 進行中拍賣列表（顯示當前最高出價、出價次數、剩餘時間）
+- [x] 已結標拍賣列表（顯示得標者、成交價）
+- [x] 待審核/已取消拍賣列表
+### 前端：AuctionDetail 增強
+- [x] 保留價狀態顯示（已達/未達，不顯示金額）
+- [x] 一口價購買流程（已在 Phase 1 AuctionDetail 實作）
+- [x] 防狙擊延長提示 Banner（顯示已延長提示）
+- [x] 條款同意 Dialog（首次出價前必須同意）
+- [x] 出價確認 Dialog（「出價具約束力，得標後需 24 小時內付款」）
+### 前端：AdminMarketplace 違規管理
+- [x] 新增「⚠️ 拍賣違規」 Tab
+- [x] 棄標記錄列表（顯示用戶、拍賣、違規類型、封禁狀態）
+- [x] 手動新增違規 / 解除封禁功能
+
+## ✅ 拍賣功能 Phase 2 完成
+- [x] 29 項 vitest 測試全部通過（auction-phase2.test.ts）
+- [x] TypeScript 0 錯誤

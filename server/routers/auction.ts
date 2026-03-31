@@ -13,6 +13,8 @@ import {
   getViolationsByUserId, isUserAuctionBanned, createViolation,
   createListing, updateListing, getListingById,
   generateOrderNo, createMarketplaceOrder, createOrderItems,
+  getSellerAuctions, getAuctionAdminStats,
+  getAllAuctionViolations, liftAuctionBan,
 } from "../db";
 import { createNotification } from "../db/notifications";
 
@@ -352,6 +354,17 @@ export const auctionRouter = router({
       return getViolationsByUserId(ctx.user.id);
     }),
 
+  /** Seller: get their own auction listings */
+  sellerAuctions: protectedProcedure
+    .input(z.object({
+      status: z.string().optional(),
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(50).default(20),
+    }))
+    .query(async ({ ctx, input }) => {
+      return getSellerAuctions(ctx.user.id, input);
+    }),
+
   // ---- Admin ----
 
   /** Admin: list all auctions with optional status filter */
@@ -496,5 +509,30 @@ export const auctionRouter = router({
       });
 
       return { success: true, violationId: violation.id };
+    }),
+
+  /** Admin: get auction statistics overview */
+  adminGetStats: adminProcedure
+    .query(async () => {
+      return getAuctionAdminStats();
+    }),
+
+  /** Admin: list all violations with pagination */
+  adminGetViolations: adminProcedure
+    .input(z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(50).default(20),
+      userId: z.number().int().optional(),
+    }))
+    .query(async ({ input }) => {
+      return getAllAuctionViolations(input);
+    }),
+
+  /** Admin: lift a ban by deleting the violation record */
+  adminLiftBan: adminProcedure
+    .input(z.object({ violationId: z.number().int() }))
+    .mutation(async ({ input }) => {
+      await liftAuctionBan(input.violationId);
+      return { success: true };
     }),
 });

@@ -5275,3 +5275,172 @@ export async function isUserAuctionBanned(userId: number): Promise<boolean> {
     .limit(1);
   return !!row;
 }
+
+
+// ── Phase 2: Seller auctions list ─────────────────────────────────────────────
+export async function getSellerAuctions(sellerId: number, opts: {
+  status?: string;
+  page?: number;
+  pageSize?: number;
+} = {}): Promise<{ listings: any[]; total: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const page = opts.page ?? 1;
+  const pageSize = opts.pageSize ?? 20;
+  const offset = (page - 1) * pageSize;
+
+  const conditions: any[] = [
+    eq(marketplaceListings.sellerId, sellerId),
+    eq(marketplaceListings.listingMode as any, 'auction'),
+  ];
+  if (opts.status) {
+    conditions.push(eq(marketplaceListings.auctionStatus as any, opts.status));
+  }
+
+  const [listings, countResult] = await Promise.all([
+    db.select().from(marketplaceListings)
+      .where(and(...conditions))
+      .orderBy(desc(marketplaceListings.createdAt))
+      .limit(pageSize)
+      .offset(offset),
+    db.select({ count: sql<number>`COUNT(*)` }).from(marketplaceListings)
+      .where(and(...conditions)),
+  ]);
+
+  return { listings, total: Number(countResult[0]?.count ?? 0) };
+}
+
+// ── Phase 2: Admin auction stats ──────────────────────────────────────────────
+export async function getAuctionAdminStats(): Promise<{
+  totalAuctions: number;
+  activeAuctions: number;
+  endedSold: number;
+  endedNoBid: number;
+  pendingReview: number;
+  totalBids: number;
+  totalRevenue: number;
+}> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+
+  const [statusCounts, totalBidsResult] = await Promise.all([
+    db.select({
+      auctionStatus: marketplaceListings.auctionStatus,
+      count: sql<number>`COUNT(*)`,
+      revenue: sql<number>`COALESCE(SUM(CAST(${marketplaceListings.currentHighestBid} AS DECIMAL(10,2))), 0)`,
+    })
+      .from(marketplaceListings)
+      .where(eq(marketplaceListings.listingMode as any, 'auction'))
+      .groupBy(marketplaceListings.auctionStatus),
+    db.select({ count: sql<number>`COUNT(*)` }).from(auctionBids),
+  ]);
+
+  const counts: Record<string, number> = {};
+  let totalRevenue = 0;
+  for (const row of statusCounts) {
+    if (row.auctionStatus) {
+      counts[row.auctionStatus] = Number(row.count);
+      if (row.auctionStatus === 'ended_sold') totalRevenue = Number(row.revenue);
+    }
+  }
+
+  return {
+    totalAuctions: Object.values(counts).reduce((a, b) => a + b, 0),
+    activeAuctions: (counts['active'] ?? 0) + (counts['ending_soon'] ?? 0),
+    endedSold: counts['ended_sold'] ?? 0,
+    endedNoBid: counts['ended_no_bid'] ?? 0,
+    pendingReview: counts['pending_review'] ?? 0,
+    totalBids: Number(totalBidsResult[0]?.count ?? 0),
+    totalRevenue,
+  };
+}
+
+// ── Phase 2: Get all distinct bidder IDs for a listing ────────────────────────
+export async function getDistinctBidderIds(listingId: number): Promise<number[]> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const rows = await db.selectDistinct({ bidderId: auctionBids.bidderId })
+    .from(auctionBids)
+    .where(eq(auctionBids.listingId, listingId));
+  return rows.map(r => r.bidderId);
+}
+
+// ── Phase 2: Count violations by user and type ────────────────────────────────
+export async function countViolationsByUser(userId: number, type: string): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const [row] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(auctionViolations)
+    .where(and(
+      eq(auctionViolations.userId, userId),
+      eq(auctionViolations.type as any, type),
+    ));
+  return Number(row?.count ?? 0);
+}
+
+// ── Phase 2: Get auction orders past 24h payment deadline ────────────────────
+export async function getOverdueAuctionOrders(): Promise<any[]> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const now = new Date();
+  // Auction orders older than 24 hours that are still pending_payment
+  const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  return db.select({
+    id: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    buyerId: marketplaceOrders.buyerId,
+    sellerId: marketplaceOrders.sellerId,
+    auctionListingId: (marketplaceOrders as any).auctionListingId,
+    createdAt: marketplaceOrders.createdAt,
+  })
+    .from(marketplaceOrders)
+    .where(and(
+      eq(marketplaceOrders.orderStatus, 'pending_payment'),
+      eq((marketplaceOrders as any).orderSource, 'auction'),
+      lt(marketplaceOrders.createdAt, cutoff24h),
+    ));
+}
+
+// ─── Admin: Auction Violations ───────────────────────────────────────────────
+
+export async function getAllAuctionViolations(opts: {
+  page: number;
+  pageSize: number;
+  userId?: number;
+}): Promise<{ violations: any[]; total: number }> {
+  const db = await getDb();
+  if (!db) return { violations: [], total: 0 };
+  const offset = (opts.page - 1) * opts.pageSize;
+  const whereClause = opts.userId ? eq(auctionViolations.userId, opts.userId) : undefined;
+  const [violations, countResult] = await Promise.all([
+    db.select({
+      id: auctionViolations.id,
+      userId: auctionViolations.userId,
+      type: auctionViolations.type,
+      penalty: auctionViolations.penalty,
+      listingId: auctionViolations.listingId,
+      orderId: auctionViolations.orderId,
+      adminNote: auctionViolations.adminNote,
+      banExpiresAt: auctionViolations.banExpiresAt,
+      createdAt: auctionViolations.createdAt,
+      userName: users.name,
+      userEmail: users.email,
+    })
+      .from(auctionViolations)
+      .leftJoin(users, eq(auctionViolations.userId, users.id))
+      .where(whereClause)
+      .orderBy(desc(auctionViolations.createdAt))
+      .limit(opts.pageSize)
+      .offset(offset),
+    db.select({ count: sql`count(*)` })
+      .from(auctionViolations)
+      .where(whereClause),
+  ]);
+  return { violations, total: Number(countResult[0]?.count ?? 0) };
+}
+
+export async function liftAuctionBan(violationId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(auctionViolations).where(eq(auctionViolations.id, violationId));
+}

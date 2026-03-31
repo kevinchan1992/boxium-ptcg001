@@ -517,6 +517,39 @@ export default function AuctionDetail() {
               </div>
             </div>
 
+            {/* Anti-snipe extension notice */}
+            {listing.antiSnipingExtensions > 0 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-orange-700">防狙擊延長</p>
+                  <p className="text-xs text-orange-600 mt-0.5">
+                    有人在結標前 {listing.antiSnipingMinutes ?? 5} 分鐘內出價，結標時間已延長 {listing.antiSnipingExtensions} 次（每次 {listing.antiSnipingMinutes ?? 5} 分鐘）。
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Reserve price status */}
+            {listing.reservePrice && (
+              <div className={`rounded-xl p-3 flex items-center gap-2 ${
+                listing.hasReserveMet
+                  ? 'bg-green-50 border border-green-200'
+                  : 'bg-amber-50 border border-amber-200'
+              }`}>
+                <Shield className={`w-4 h-4 shrink-0 ${
+                  listing.hasReserveMet ? 'text-green-500' : 'text-amber-500'
+                }`} />
+                <p className={`text-xs font-semibold ${
+                  listing.hasReserveMet ? 'text-green-700' : 'text-amber-700'
+                }`}>
+                  {listing.hasReserveMet
+                    ? '✓ 保留價已達到，得標者將確認成交'
+                    : '保留價尚未達到，目前出價不保證成交'}
+                </p>
+              </div>
+            )}
+
             {/* Bid panel */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <BidPanel listing={listing} bids={bids} onRefetch={refetch} />
