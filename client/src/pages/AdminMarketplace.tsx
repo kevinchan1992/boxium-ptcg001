@@ -6404,15 +6404,204 @@ function AuditLogsTab() {
   );
 }
 
+// ---- Auction Admin Tab ----
+function AuctionsAdminTab() {
+  const [filterStatus, setFilterStatus] = useState<string>('pending_review');
+  const [page, setPage] = useState(1);
+  const utils = trpc.useUtils();
+
+  const { data, isLoading, refetch } = trpc.auction.adminList.useQuery({
+    status: filterStatus === 'all' ? undefined : filterStatus,
+    page,
+    pageSize: 20,
+  });
+
+  const approveMutation = trpc.auction.adminApprove.useMutation({
+    onSuccess: () => { toast.success('拍賣已審核通過'); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const rejectMutation = trpc.auction.adminReject.useMutation({
+    onSuccess: () => { toast.success('拍賣已拒絕'); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const cancelMutation = trpc.auction.adminCancel.useMutation({
+    onSuccess: () => { toast.success('拍賣已強制取消'); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const statusOptions = [
+    { value: 'pending_review', label: '待審核' },
+    { value: 'scheduled', label: '已排程' },
+    { value: 'active', label: '競標中' },
+    { value: 'ending_soon', label: '即將結標' },
+    { value: 'ended_sold', label: '已成交' },
+    { value: 'ended_no_bid', label: '流標' },
+    { value: 'cancelled', label: '已取消' },
+    { value: 'all', label: '全部' },
+  ];
+
+  const auctionStatusBadge = (status: string) => {
+    const map: Record<string, { label: string; className: string }> = {
+      pending_review: { label: '待審核', className: 'bg-amber-100 text-amber-700' },
+      scheduled: { label: '已排程', className: 'bg-blue-100 text-blue-700' },
+      active: { label: '競標中', className: 'bg-green-100 text-green-700' },
+      ending_soon: { label: '即將結標', className: 'bg-orange-100 text-orange-700' },
+      ended_sold: { label: '已成交', className: 'bg-[#06038D]/10 text-[#06038D]' },
+      ended_no_bid: { label: '流標', className: 'bg-gray-100 text-gray-500' },
+      cancelled: { label: '已取消', className: 'bg-red-100 text-red-600' },
+    };
+    const s = map[status] ?? { label: status, className: 'bg-gray-100 text-gray-500' };
+    return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${s.className}`}>{s.label}</span>;
+  };
+
+  const listings = data?.listings ?? [];
+  const totalPages = data ? Math.ceil(data.total / data.pageSize) : 1;
+
+  return (
+    <div className="p-4 md:p-6 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#06038D]">🔨 拍賣管理</h2>
+          <p className="text-sm text-[#06038D]/60 mt-0.5">審核拍賣上架申請、監控進行中競標</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()} className="border-[#06038D]/30 text-[#06038D]">
+          刷新
+        </Button>
+      </div>
+
+      {/* Status filter */}
+      <div className="flex gap-2 flex-wrap">
+        {statusOptions.map(opt => (
+          <button
+            key={opt.value}
+            onClick={() => { setFilterStatus(opt.value); setPage(1); }}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              filterStatus === opt.value
+                ? 'bg-[#06038D] text-white'
+                : 'bg-[#06038D]/10 text-[#06038D] hover:bg-[#06038D]/20'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-2 border-[#06038D] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : listings.length === 0 ? (
+        <div className="text-center py-12 text-[#06038D]/40">
+          <p className="text-lg">目前沒有{statusOptions.find(o => o.value === filterStatus)?.label ?? ''}的拍賣</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {listings.map((listing: any) => (
+            <div key={listing.id} className="bg-white rounded-xl border border-[#06038D]/15 p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    {auctionStatusBadge(listing.auctionStatus ?? 'pending_review')}
+                    <span className="text-xs text-[#06038D]/50">#{listing.id}</span>
+                    <span className="text-xs text-[#06038D]/50">{listing.tcgSeries?.toUpperCase()}</span>
+                  </div>
+                  <p className="font-semibold text-[#06038D] truncate">{listing.title ?? `卡牌 #${listing.cardId}`}</p>
+                  <div className="flex items-center gap-3 mt-1 flex-wrap">
+                    <span className="text-xs text-[#06038D]/60">賣家: {listing.sellerName ?? listing.sellerId}</span>
+                    <span className="text-xs text-[#06038D]/60">起標: HKD {parseFloat(listing.startingBid ?? '0').toLocaleString()}</span>
+                    {listing.buyNowPrice && <span className="text-xs text-[#06038D]/60">即買: HKD {parseFloat(listing.buyNowPrice).toLocaleString()}</span>}
+                    <span className="text-xs text-[#06038D]/60">出價: {listing.bidCount ?? 0} 筆</span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 flex-wrap">
+                    {listing.auctionStartAt && <span className="text-xs text-[#06038D]/50">開始: {new Date(listing.auctionStartAt).toLocaleString('zh-HK')}</span>}
+                    {listing.auctionEndAt && <span className="text-xs text-[#06038D]/50">結標: {new Date(listing.auctionEndAt).toLocaleString('zh-HK')}</span>}
+                  </div>
+                </div>
+                {/* Action buttons */}
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {listing.auctionStatus === 'pending_review' && (
+                    <>
+                      <Button
+                        size="sm"
+                        className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold text-xs h-8"
+                        disabled={approveMutation.isPending}
+                        onClick={() => approveMutation.mutate({ listingId: listing.id })}
+                      >
+                        ✓ 審核通過
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-300 text-red-600 hover:bg-red-50 text-xs h-8"
+                        disabled={rejectMutation.isPending}
+                        onClick={() => {
+                          const reason = prompt('請輸入拒絕原因：');
+                          if (reason) rejectMutation.mutate({ listingId: listing.id, reason });
+                        }}
+                      >
+                        ✗ 拒絕
+                      </Button>
+                    </>
+                  )}
+                  {['active', 'ending_soon', 'scheduled'].includes(listing.auctionStatus ?? '') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-red-300 text-red-600 hover:bg-red-50 text-xs h-8"
+                      disabled={cancelMutation.isPending}
+                      onClick={() => {
+                        const reason = prompt('請輸入取消原因：');
+                        if (reason) cancelMutation.mutate({ listingId: listing.id, reason });
+                      }}
+                    >
+                      強制取消
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-[#06038D]/30 text-[#06038D] text-xs h-8"
+                    onClick={() => window.open(`/auction/${listing.id}`, '_blank')}
+                  >
+                    查看
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <Button variant="outline" size="sm" className="text-[#06038D] border-[#06038D]/30" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+            上一頁
+          </Button>
+          <span className="text-sm text-[#06038D]/60">第 {page} 頁 / 共 {totalPages} 頁</span>
+          <Button variant="outline" size="sm" className="text-[#06038D] border-[#06038D]/30" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+            下一頁
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Sidebar menu items configuration
 type SidebarItem = { key: string; label: string; icon: any; badgeKey?: string };
 const sidebarMenuItems: SidebarItem[] = [
   { key: 'listings', label: '商品管理', icon: Package, badgeKey: 'pendingReviewListings' },
+  { key: 'auctions', label: '🔨 拍賣管理', icon: Package },
   { key: 'orders', label: '訂單管理', icon: ShoppingBag },
   { key: 'alipay', label: '支付寶核對', icon: DollarSign, badgeKey: 'pendingAlipayConfirmation' },
   { key: 'sellers', label: '賣家管理', icon: Users },
   { key: 'disputes', label: '爭議處理', icon: Flag, badgeKey: 'unresolvedDisputeCount' },
-  { key: 'sales', label: '銷售總覽', icon: BarChart3 },
+  { key: 'sales', label: '销售總覽', icon: BarChart3 },
   { key: 'reports', label: '舉報管理', icon: Flag },
   { key: 'payouts', label: '放款管理', icon: DollarSign },
   { key: 'offers', label: '出價管理', icon: Tag },
@@ -6452,6 +6641,7 @@ export default function AdminMarketplace() {
   const renderContent = () => {
     switch (activeSection) {
       case 'listings': return <ListingsTab onViewOrders={handleViewOrders} />;
+      case 'auctions': return <AuctionsAdminTab />;
       case 'orders': return <OrdersTab listingFilter={ordersListingFilter} onClearListingFilter={() => setOrdersListingFilter(null)} onViewOrders={handleViewOrders} />;
       case 'alipay': return <AlipayPendingTab />;
       case 'sellers': return <SellersTab />;

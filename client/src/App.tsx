@@ -17,6 +17,7 @@ import Admin from "./pages/Admin";
 import AdminMarketplace from "./pages/AdminMarketplace";
 import Marketplace from "./pages/Marketplace";
 import MarketplaceListing from "./pages/MarketplaceListing";
+import AuctionDetail from "./pages/AuctionDetail";
 import SellerDashboard from "./pages/SellerDashboard";
 import Wishlist from "./pages/Wishlist";
 import Terms from "./pages/Terms";
@@ -93,6 +94,7 @@ function Router() {
       </Route>
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/marketplace/:id" component={MarketplaceListing} />
+      <Route path="/auction/:id" component={AuctionDetail} />
       {/* /shop/:id is an alias for /marketplace/:id */}
       <Route path="/shop/:id">
         {(params: { id?: string }) => {

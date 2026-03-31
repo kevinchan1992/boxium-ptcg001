@@ -569,6 +569,10 @@ export default function SellerDashboard() {
   const [listingForm, setListingForm] = useState({
     title: "", description: "", condition: "raw_a", price: "", quantity: "1",
     minOffer: "", acceptOffers: false, tcgSeries: "pokemon" as string,
+    // Auction fields
+    listingMode: "buy_now" as "buy_now" | "auction",
+    startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10",
+    auctionStartAt: "", auctionEndAt: "",
   });
   const [listingImages, setListingImages] = useState<string[]>([]);
   const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
@@ -751,7 +755,20 @@ export default function SellerDashboard() {
     onSuccess: () => {
       toast.success("商品已提交審核");
       setShowNewListing(false);
-      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon" });
+      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "" });
+      setListingStep(1);
+      setListingImages([]);
+      setSelectedCard(null);
+      refetchListings();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const createAuctionMutation = trpc.auction.create.useMutation({
+    onSuccess: () => {
+      toast.success("🔨 拍賣已提交審核，審核通過後即可開始競標");
+      setShowNewListing(false);
+      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "" });
       setListingStep(1);
       setListingImages([]);
       setSelectedCard(null);
@@ -782,7 +799,7 @@ export default function SellerDashboard() {
         { duration: 8000 }
       );
       setShowNewListing(false);
-      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon" });
+      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "" });
       setListingStep(1);
       setListingImages([]);
       setSelectedCard(null);
@@ -1564,6 +1581,9 @@ export default function SellerDashboard() {
                                       tcgSeries: (listing as any).tcgSeries ?? 'pokemon',
                                       acceptOffers: !!(listing as any).allowOffers,
                                       minOffer: (listing as any).minOfferHkd ? String(parseFloat((listing as any).minOfferHkd)) : '',
+                                      listingMode: 'buy_now',
+                                      startingBid: '', reservePrice: '', buyNowPrice: '', bidIncrement: '10',
+                                      auctionStartAt: '', auctionEndAt: '',
                                     });
                                     setListingImages([]);
                                     setSelectedCard(null);
@@ -2587,6 +2607,32 @@ export default function SellerDashboard() {
                     ))}
                   </div>
                 </div>
+                {/* Listing Mode Selector */}
+                <div>
+                  <Label className="text-[#06038D] font-semibold">上架模式 *</Label>
+                  <div className="mt-1 grid grid-cols-2 gap-2">
+                    {[
+                      { value: "buy_now", label: "立即購買", icon: "🛒", desc: "買家直接以定價購買" },
+                      { value: "auction", label: "拍賣", icon: "🔨", desc: "買家競價，時限結標" },
+                    ].map(mode => (
+                      <button
+                        key={mode.value}
+                        type="button"
+                        onClick={() => setListingForm(p => ({ ...p, listingMode: mode.value as any }))}
+                        className={`flex flex-col items-start gap-1 p-3 rounded-xl border-2 transition-all text-left ${
+                          listingForm.listingMode === mode.value
+                            ? "border-[#06038D] bg-[#06038D]/5 shadow-sm"
+                            : "border-gray-200 bg-white hover:border-[#06038D]/40"
+                        }`}
+                      >
+                        <span className="text-xl">{mode.icon}</span>
+                        <span className={`text-sm font-bold ${ listingForm.listingMode === mode.value ? "text-[#06038D]" : "text-gray-700" }`}>{mode.label}</span>
+                        <span className="text-[10px] text-gray-400">{mode.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-[#06038D] font-semibold">品相 *</Label>
@@ -2621,11 +2667,14 @@ export default function SellerDashboard() {
                     <span className="text-xs text-[#06038D]/60">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition}</span>
                     <span className="text-xs text-[#06038D]/40">·</span>
                     <span className="text-xs text-[#06038D]/60">數量 {listingForm.quantity}</span>
+                    <span className="text-xs text-[#06038D]/40">·</span>
+                    <span className="text-xs font-semibold text-[#06038D]">{listingForm.listingMode === 'auction' ? '🔨 拍賣' : '🛒 立即購買'}</span>
                   </div>
                 </div>
+                {/* Buy Now pricing */}
+                {listingForm.listingMode === 'buy_now' && (
                 <div>
                   <Label className="text-[#06038D] font-semibold">售價（HKD）*</Label>
-                  {/* Dynamic condition-based market price */}
                   {selectedCard && (
                     <div className="mt-1 mb-2">
                       {conditionPriceLoading ? (
@@ -2648,10 +2697,6 @@ export default function SellerDashboard() {
                       )}
                     </div>
                   )}
-                  {/* Fallback: show PSA10 reference price if no card selected */}
-                  {!selectedCard && selectedCard === null && false && (
-                    <p className="text-xs text-[#06038D]/70 mt-0.5 mb-1">PSA 10 市場均價：HKD --</p>
-                  )}
                   <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="4" step="0.01" placeholder="最低 HKD 4.00"
                     value={listingForm.price}
                     onChange={(e) => setListingForm(p => ({ ...p, price: e.target.value }))} />
@@ -2669,31 +2714,98 @@ export default function SellerDashboard() {
                     );
                   })()}
                 </div>
-                <div className="space-y-3 pt-1">
-                  <div className="flex items-center justify-between p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
-                    <div>
-                      <p className="text-sm font-medium text-[#06038D]">接受買家出價</p>
-                      <p className="text-xs text-[#06038D]/50">買家可提交低於定價的出價</p>
+                )}
+
+                {/* Auction pricing fields */}
+                {listingForm.listingMode === 'auction' && (
+                <div className="space-y-3">
+                  {/* Market price reference */}
+                  {selectedCard && conditionPriceData?.avgPrice && (
+                    <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-[#06038D] mb-1">📊 市場參考價</p>
+                      <p className="text-sm font-bold text-[#06038D]">
+                        HKD {conditionPriceData.avgPrice.toLocaleString()}
+                        <span className="text-xs font-normal text-[#06038D]/50 ml-1">(基於 {conditionPriceData.recordCount} 筆成交)</span>
+                      </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setListingForm(p => ({ ...p, acceptOffers: !p.acceptOffers }))}
-                      className={`w-11 h-6 rounded-full transition-colors relative ${
-                        listingForm.acceptOffers ? "bg-[#FEDD00]" : "bg-gray-200"
-                      }`}
-                    >
-                      <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-transform ${
-                        listingForm.acceptOffers ? "translate-x-5.5 left-0.5 bg-[#06038D]" : "left-0.5 bg-white"
-                      }`} />
-                    </button>
+                  )}
+                  {/* Starting bid */}
+                  <div>
+                    <Label className="text-[#06038D] font-semibold">起標價（HKD）*</Label>
+                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="1" step="1" placeholder="例：100"
+                      value={listingForm.startingBid}
+                      onChange={(e) => setListingForm(p => ({ ...p, startingBid: e.target.value }))} />
                   </div>
-                  {listingForm.acceptOffers && (
+                  {/* Reserve price */}
+                  <div>
+                    <Label className="text-[#06038D] font-semibold">底價（HKD，選填）</Label>
+                    <p className="text-[10px] text-[#06038D]/50 mb-1">競價須達底價才會成交，底價不公開顯示</p>
+                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="1" step="1" placeholder="留空表示無底價"
+                      value={listingForm.reservePrice}
+                      onChange={(e) => setListingForm(p => ({ ...p, reservePrice: e.target.value }))} />
+                  </div>
+                  {/* Buy now price */}
+                  <div>
+                    <Label className="text-[#06038D] font-semibold">即買價（HKD，選填）</Label>
+                    <p className="text-[10px] text-[#06038D]/50 mb-1">買家可以此價直接結標購買</p>
+                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="1" step="1" placeholder="留空表示無即買價"
+                      value={listingForm.buyNowPrice}
+                      onChange={(e) => setListingForm(p => ({ ...p, buyNowPrice: e.target.value }))} />
+                  </div>
+                  {/* Bid increment */}
+                  <div>
+                    <Label className="text-[#06038D] font-semibold">最低加價幅度（HKD）</Label>
+                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]" type="number" min="1" step="1"
+                      value={listingForm.bidIncrement}
+                      onChange={(e) => setListingForm(p => ({ ...p, bidIncrement: e.target.value }))} />
+                  </div>
+                  {/* Auction timing */}
+                  <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <Label className="text-[#06038D] font-semibold">最低接受出價（HKD，選填）</Label>
-                      <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="4" step="0.01" placeholder="留空表示不設下限"
-                        value={listingForm.minOffer}
-                        onChange={(e) => setListingForm(p => ({ ...p, minOffer: e.target.value }))} />
+                      <Label className="text-[#06038D] font-semibold">開始時間（留空表示審核通過後立即開始）</Label>
+                      <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]" type="datetime-local"
+                        value={listingForm.auctionStartAt}
+                        onChange={(e) => setListingForm(p => ({ ...p, auctionStartAt: e.target.value }))} />
                     </div>
+                    <div>
+                      <Label className="text-[#06038D] font-semibold">結標時間 *</Label>
+                      <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]" type="datetime-local"
+                        value={listingForm.auctionEndAt}
+                        onChange={(e) => setListingForm(p => ({ ...p, auctionEndAt: e.target.value }))} />
+                    </div>
+                  </div>
+                </div>
+                )}
+
+                <div className="space-y-3 pt-1">
+                  {listingForm.listingMode === 'buy_now' && (
+                    <>
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
+                        <div>
+                          <p className="text-sm font-medium text-[#06038D]">接受買家出價</p>
+                          <p className="text-xs text-[#06038D]/50">買家可提交低於定價的出價</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setListingForm(p => ({ ...p, acceptOffers: !p.acceptOffers }))}
+                          className={`w-11 h-6 rounded-full transition-colors relative ${
+                            listingForm.acceptOffers ? "bg-[#FEDD00]" : "bg-gray-200"
+                          }`}
+                        >
+                          <span className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-transform ${
+                            listingForm.acceptOffers ? "translate-x-5.5 left-0.5 bg-[#06038D]" : "left-0.5 bg-white"
+                          }`} />
+                        </button>
+                      </div>
+                      {listingForm.acceptOffers && (
+                        <div>
+                          <Label className="text-[#06038D] font-semibold">最低接受出價（HKD，選填）</Label>
+                          <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="4" step="0.01" placeholder="留空表示不設下限"
+                            value={listingForm.minOffer}
+                            onChange={(e) => setListingForm(p => ({ ...p, minOffer: e.target.value }))} />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </>
@@ -2735,14 +2847,49 @@ export default function SellerDashboard() {
                       <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">數量</span>
                       <span className="text-sm text-[#06038D]">{listingForm.quantity}</span>
                     </div>
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">售價</span>
-                      <span className="text-base font-bold text-[#06038D]">HKD {parseFloat(listingForm.price || "0").toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">買家出價</span>
-                      <span className="text-sm text-[#06038D]">{listingForm.acceptOffers ? `接受${listingForm.minOffer ? `（最低 HKD ${listingForm.minOffer}）` : ""}` : "不接受"}</span>
-                    </div>
+                    {listingForm.listingMode === 'buy_now' ? (
+                      <>
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">售價</span>
+                          <span className="text-base font-bold text-[#06038D]">HKD {parseFloat(listingForm.price || "0").toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">買家出價</span>
+                          <span className="text-sm text-[#06038D]">{listingForm.acceptOffers ? `接受${listingForm.minOffer ? `（最低 HKD ${listingForm.minOffer}）` : ""}` : "不接受"}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">上架模式</span>
+                          <span className="text-sm font-bold text-[#06038D]">🔨 拍賣</span>
+                        </div>
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">起標價</span>
+                          <span className="text-base font-bold text-[#06038D]">HKD {parseFloat(listingForm.startingBid || "0").toLocaleString()}</span>
+                        </div>
+                        {listingForm.reservePrice && (
+                          <div className="flex items-center justify-between px-4 py-3">
+                            <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">底價</span>
+                            <span className="text-sm text-[#06038D]">HKD {parseFloat(listingForm.reservePrice).toLocaleString()} (不公開)</span>
+                          </div>
+                        )}
+                        {listingForm.buyNowPrice && (
+                          <div className="flex items-center justify-between px-4 py-3">
+                            <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">即買價</span>
+                            <span className="text-sm font-semibold text-[#06038D]">HKD {parseFloat(listingForm.buyNowPrice).toLocaleString()}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">加價幅度</span>
+                          <span className="text-sm text-[#06038D]">HKD {parseFloat(listingForm.bidIncrement || "10").toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">結標時間</span>
+                          <span className="text-sm text-[#06038D]">{listingForm.auctionEndAt ? new Date(listingForm.auctionEndAt).toLocaleString('zh-HK') : '-'}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                   {isAdmin && (
                     <div className="space-y-2">
@@ -2805,7 +2952,14 @@ export default function SellerDashboard() {
             {listingStep < 3 && (
               <Button
                 className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
-                disabled={listingStep === 1 ? !listingForm.title : (listingStep === 2 ? (!listingForm.price || parseFloat(listingForm.price) < 4.00) : false)}
+                disabled={
+                  listingStep === 1 ? !listingForm.title :
+                  listingStep === 2 ? (
+                    listingForm.listingMode === 'auction'
+                      ? (!listingForm.startingBid || !listingForm.auctionEndAt)
+                      : (!listingForm.price || parseFloat(listingForm.price) < 4.00)
+                  ) : false
+                }
                 onClick={() => setListingStep(s => (s + 1) as 1 | 2 | 3)}
               >
                 下一步
@@ -2814,31 +2968,50 @@ export default function SellerDashboard() {
             {listingStep === 3 && (
               <Button
                 className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
-                disabled={createListingMutation.isPending || adminCreateListingMutation.isPending}
+                disabled={createListingMutation.isPending || adminCreateListingMutation.isPending || createAuctionMutation.isPending}
                 onClick={() => {
-                  const payload = {
-                    title: listingForm.title,
-                    description: listingForm.description || undefined,
-                    condition: listingForm.condition as any,
-                    price: parseFloat(listingForm.price),
-                    quantity: parseInt(listingForm.quantity),
-                    images: listingImages.length > 0 ? listingImages : undefined,
-                    cardId: selectedCard?.id ?? undefined,
-                    tcgSeries: listingForm.tcgSeries as any,
-                  };
-                  if (isAdmin) {
-                    adminCreateListingMutation.mutate({
-                      ...payload,
-                      status: 'active',
-                      allowOffers: listingForm.acceptOffers,
-                      minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined,
+                  if (listingForm.listingMode === 'auction') {
+                    // Auction mode - call auction.create
+                    createAuctionMutation.mutate({
+                      title: listingForm.title,
+                      description: listingForm.description || undefined,
+                      condition: listingForm.condition as any,
+                      quantity: parseInt(listingForm.quantity),
+                      images: listingImages.length > 0 ? listingImages : undefined,
+                      cardId: selectedCard?.id ?? undefined,
+                      tcgSeries: listingForm.tcgSeries as any,
+                      startingBid: parseFloat(listingForm.startingBid),
+                      reservePrice: listingForm.reservePrice ? parseFloat(listingForm.reservePrice) : undefined,
+                      buyNowPrice: listingForm.buyNowPrice ? parseFloat(listingForm.buyNowPrice) : undefined,
+                      bidIncrement: parseFloat(listingForm.bidIncrement || '10'),
+                      auctionStartAt: listingForm.auctionStartAt ? new Date(listingForm.auctionStartAt) : undefined,
+                      auctionEndAt: new Date(listingForm.auctionEndAt),
                     });
                   } else {
-                    createListingMutation.mutate({ ...payload, allowOffers: listingForm.acceptOffers, minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined });
+                    const payload = {
+                      title: listingForm.title,
+                      description: listingForm.description || undefined,
+                      condition: listingForm.condition as any,
+                      price: parseFloat(listingForm.price),
+                      quantity: parseInt(listingForm.quantity),
+                      images: listingImages.length > 0 ? listingImages : undefined,
+                      cardId: selectedCard?.id ?? undefined,
+                      tcgSeries: listingForm.tcgSeries as any,
+                    };
+                    if (isAdmin) {
+                      adminCreateListingMutation.mutate({
+                        ...payload,
+                        status: 'active',
+                        allowOffers: listingForm.acceptOffers,
+                        minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined,
+                      });
+                    } else {
+                      createListingMutation.mutate({ ...payload, allowOffers: listingForm.acceptOffers, minOfferHkd: listingForm.acceptOffers && listingForm.minOffer ? parseFloat(listingForm.minOffer) : undefined });
+                    }
                   }
                 }}
               >
-                {(createListingMutation.isPending || adminCreateListingMutation.isPending) ? "提交中..." : isAdmin ? "確認上架" : "提交審核"}
+                {(createListingMutation.isPending || adminCreateListingMutation.isPending || createAuctionMutation.isPending) ? "提交中..." : isAdmin ? "確認上架" : "提交審核"}
               </Button>
             )}
           </div>

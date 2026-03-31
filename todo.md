@@ -6832,3 +6832,25 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 診斷 logo 不顯示問題（boxium-logo.png 實為 WebP 格式，PDFKit 不支援）
 - [x] 用 Pillow 將 WebP logo 轉換為真正的 PNG（server/fonts/boxium-logo-pdf.png）
 - [x] 更新 financialPdfService.ts 優先讀取轉換後的 PNG，封面和所有內頁頁首均顯示 BOXIUM logo
+
+## 🏆 拍賣功能開發 Phase 1 MVP
+
+- [x] 資料庫 Schema 擴展：marketplaceListings 新增 17 個拍賣欄位（listingMode, auctionStatus, startingBid, reservePrice, buyNowPrice, bidIncrement, auctionStartAt, auctionEndAt, antiSnipingMinutes 等）
+- [x] 新增 auctionBids 表（出價記錄）
+- [x] 新增 auctionAgreements 表（條款同意記錄）
+- [x] 新增 auctionViolations 表（違規記錄）
+- [x] marketplaceOrders 新增 orderSource / auctionId / winningBidId 欄位
+- [x] drizzle/schema_new.ts 同步更新
+- [x] 後端 server/db.ts 新增拍賣 db 查詢函數（getAuctionListings, getAuctionListingById, placeBid, getBidsByListingId, getWinningBid, markBidsAsOutbid, hasAgreedToTerms, recordAgreement, isUserAuctionBanned, createViolation 等）
+- [x] 後端 server/routers/auction.ts：auction.list / getById / create / checkTermsAgreement / agreeToTerms / placeBid / buyNow / cancel / adminList / adminApprove / adminReject / adminCancel
+- [x] 後端 auction router 已註冊至 server/routers.ts
+- [x] 結標定時任務 server/auctionProcessor.ts：processEndedAuctions（每30秒）、processScheduledAuctions（每分鐘）、notifyEndingSoon（每5分鐘）
+- [x] 定時任務已註冊至 server/_core/index.ts
+- [x] 前端 AuctionCard 組件（倒數計時、最高出價、即買價標籤）
+- [x] 前端 Marketplace 新增「商城 / 拍賣」Tab 切換
+- [x] 前端 AuctionDetail 詳情頁（BidPanel、BidHistory、AuctionCountdown）
+- [x] 前端路由 /auction/:id 已加入 App.tsx
+- [x] SellerDashboard 新增拍賣上架模式選擇（Step 1 模式切換、Step 2 拍賣定價欄位、Step 3 確認顯示）
+- [x] SellerDashboard 提交邏輯：拍賣模式呼叫 auction.create
+- [x] AdminMarketplace 新增「🔨 拍賣管理」Tab（待審核/競標中/已成交等狀態篩選、審核通過/拒絕/強制取消）
+- [x] vitest 測試：server/auction.test.ts（16 項測試全部通過）：出價驗證、防狙擊延伸、拍賣狀態計算

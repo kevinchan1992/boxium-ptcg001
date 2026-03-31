@@ -768,6 +768,28 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   // Offer settings
   allowOffers: boolean("allowOffers").default(false).notNull(),
   minOfferHkd: decimal("minOfferHkd", { precision: 10, scale: 2 }),
+  // Listing mode (buy_now | offer | auction)
+  listingMode: mysqlEnum("listingMode", ["buy_now", "offer", "auction"]).default("buy_now").notNull(),
+  // Auction fields
+  auctionStartAt: timestamp("auctionStartAt"),
+  auctionEndAt: timestamp("auctionEndAt"),
+  startingBid: decimal("startingBid", { precision: 10, scale: 2 }),
+  reservePrice: decimal("reservePrice", { precision: 10, scale: 2 }),
+  buyNowPrice: decimal("buyNowPrice", { precision: 10, scale: 2 }),
+  bidIncrement: decimal("bidIncrement", { precision: 10, scale: 2 }).default("5.00"),
+  currentHighestBid: decimal("currentHighestBid", { precision: 10, scale: 2 }),
+  currentHighestBidderId: int("currentHighestBidderId"),
+  bidCount: int("bidCount").default(0).notNull(),
+  auctionStatus: mysqlEnum("auctionStatus", [
+    "draft", "pending_review", "scheduled", "active",
+    "ending_soon", "ended_sold", "ended_no_bid", "cancelled"
+  ]),
+  antiSnipingMinutes: int("antiSnipingMinutes").default(5).notNull(),
+  antiSnipingExtensions: int("antiSnipingExtensions").default(0).notNull(),
+  hasReserveMet: boolean("hasReserveMet").default(false).notNull(),
+  winnerId: int("winnerId"),
+  winningBidId: int("winningBidId"),
+  auctionTermsVersion: varchar("auctionTermsVersion", { length: 20 }),
   // Metadata
   viewCount: int("viewCount").default(0).notNull(),
   listedAt: timestamp("listedAt"),
@@ -778,6 +800,9 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   sellerIdIdx: index("ml_sellerId_idx").on(table.sellerId),
   statusIdx: index("ml_status_idx").on(table.status),
   cardIdIdx: index("ml_cardId_idx").on(table.cardId),
+  listingModeIdx: index("ml_listingMode_idx").on(table.listingMode),
+  auctionStatusIdx: index("ml_auctionStatus_idx").on(table.auctionStatus),
+  auctionEndAtIdx: index("ml_auctionEndAt_idx").on(table.auctionEndAt),
 }));
 export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
 export type InsertMarketplaceListing = typeof marketplaceListings.$inferInsert;
@@ -863,8 +888,12 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   stripeSessionId: varchar("stripeSessionId", { length: 200 }),
-  batchRef: varchar("batchRef", { length: 100 }), // Groups multiple orders from same cart checkout (e.g. BATCH-20240101-001)
-  cartOrderId: int("cartOrderId"), // P1: FK to cartOrders (null for legacy orders pre-P1)
+  batchRef: varchar("batchRef", { length: 100 }),
+  cartOrderId: int("cartOrderId"),
+  // Auction order fields
+  orderSource: mysqlEnum("orderSource", ["direct", "offer", "auction"]).default("direct").notNull(),
+  auctionListingId: int("auctionListingId"),
+  auctionWinningBidId: int("auctionWinningBidId"),
 }, (table) => ({
   orderNoIdx: index("mo_orderNo_idx").on(table.orderNo),
   buyerIdIdx: index("mo_buyerId_idx").on(table.buyerId),
@@ -1276,3 +1305,64 @@ export const disputeMedia = mysqlTable("disputeMedia", {
 }));
 export type DisputeMedia = typeof disputeMedia.$inferSelect;
 export type InsertDisputeMedia = typeof disputeMedia.$inferInsert;
+
+// ============================================================
+// AUCTION FEATURE TABLES
+// ============================================================
+
+/**
+ * Auction Bids - records every bid placed on an auction listing
+ */
+export const auctionBids = mysqlTable("auctionBids", {
+  id: int("id").autoincrement().primaryKey(),
+  listingId: int("listingId").notNull(),
+  bidderId: int("bidderId").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  status: mysqlEnum("status", ["active", "outbid", "winning", "retracted"]).default("active").notNull(),
+  ipHash: varchar("ipHash", { length: 64 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  listingIdIdx: index("ab_listingId_idx").on(table.listingId),
+  bidderIdIdx: index("ab_bidderId_idx").on(table.bidderId),
+  statusIdx: index("ab_status_idx").on(table.status),
+}));
+export type AuctionBid = typeof auctionBids.$inferSelect;
+export type InsertAuctionBid = typeof auctionBids.$inferInsert;
+
+/**
+ * Auction Agreements - records buyer/seller terms acceptance
+ */
+export const auctionAgreements = mysqlTable("auctionAgreements", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", ["buyer", "seller"]).notNull(),
+  termsVersion: varchar("termsVersion", { length: 20 }).notNull(),
+  agreedAt: timestamp("agreedAt").defaultNow().notNull(),
+  ipHash: varchar("ipHash", { length: 64 }),
+}, (table) => ({
+  userIdIdx: index("aa_userId_idx").on(table.userId),
+  userRoleVersionIdx: uniqueIndex("aa_user_role_version_idx").on(table.userId, table.role, table.termsVersion),
+}));
+export type AuctionAgreement = typeof auctionAgreements.$inferSelect;
+export type InsertAuctionAgreement = typeof auctionAgreements.$inferInsert;
+
+/**
+ * Auction Violations - tracks rule violations
+ */
+export const auctionViolations = mysqlTable("auctionViolations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", ["no_payment", "fake_bid", "seller_cancel"]).notNull(),
+  listingId: int("listingId"),
+  orderId: int("orderId"),
+  penalty: mysqlEnum("penalty", ["warning", "ban_7d", "ban_30d", "permanent"]).notNull(),
+  banExpiresAt: timestamp("banExpiresAt"),
+  adminNote: text("adminNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("av_userId_idx").on(table.userId),
+  typeIdx: index("av_type_idx").on(table.type),
+}));
+export type AuctionViolation = typeof auctionViolations.$inferSelect;
+export type InsertAuctionViolation = typeof auctionViolations.$inferInsert;

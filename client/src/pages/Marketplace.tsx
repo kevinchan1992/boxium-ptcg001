@@ -8,8 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search, Package, ChevronLeft, ChevronRight, X, ShoppingBag,
   SlidersHorizontal, Heart, Star, Tag, Shield, Award,
-  ShoppingCart, TrendingUp, Zap, Loader2, ArrowUp, Filter, Share2, Copy, Check
+  ShoppingCart, TrendingUp, Zap, Loader2, ArrowUp, Filter, Share2, Copy, Check, Gavel
 } from "lucide-react";
+import { AuctionCard, AuctionCardSkeleton } from "@/components/AuctionCard";
 import { toast } from "sonner";
 import {
   CONDITION_GROUPS, CONDITION_SHORT, CONDITION_BADGE,
@@ -476,7 +477,21 @@ export default function Marketplace() {
   }, [bannerAnimating]);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
+  const [marketTab, setMarketTab] = useState<'shop' | 'auction'>('shop');
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Auction list query
+  const [auctionPage, setAuctionPage] = useState(1);
+  const [auctionSeries, setAuctionSeries] = useState<string>('all');
+  const [auctionSort, setAuctionSort] = useState<'ending_soon' | 'newest' | 'price_asc' | 'price_desc'>('ending_soon');
+  const auctionQueryInput = useMemo(() => ({
+    page: auctionPage,
+    pageSize: 20,
+    tcgSeries: auctionSeries !== 'all' ? auctionSeries : undefined,
+    sortBy: auctionSort,
+    status: ['active', 'ending_soon'],
+  }), [auctionPage, auctionSeries, auctionSort]);
+  const { data: auctionData, isLoading: auctionLoading } = trpc.auction.list.useQuery(auctionQueryInput);
 
   // Banners
   const FALLBACK_BANNERS = useMemo(() => [
@@ -872,6 +887,41 @@ export default function Marketplace() {
         </div>
       </div>
 
+      {/* ── Market Tab Switcher ── */}
+      <div className="max-w-7xl mx-auto px-4 mt-4">
+        <div className="flex items-center gap-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-1.5">
+          <button
+            onClick={() => setMarketTab('shop')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+              marketTab === 'shop'
+                ? 'bg-[#06038D] text-white shadow-sm'
+                : 'text-gray-500 hover:text-[#06038D] hover:bg-gray-50'
+            }`}
+          >
+            <ShoppingBag className="w-4 h-4" />
+            商城
+          </button>
+          <button
+            onClick={() => setMarketTab('auction')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+              marketTab === 'auction'
+                ? 'bg-[#06038D] text-white shadow-sm'
+                : 'text-gray-500 hover:text-[#06038D] hover:bg-gray-50'
+            }`}
+          >
+            <Gavel className="w-4 h-4" />
+            拍賣
+            {auctionData && auctionData.total > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                marketTab === 'auction' ? 'bg-[#FEDD00] text-[#06038D]' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {auctionData.total}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
       {/* ── TCG Series Quick Filter ── */}
       <div className="max-w-7xl mx-auto px-4 mt-4">
         <div className="grid grid-cols-4 gap-3">
@@ -931,16 +981,106 @@ export default function Marketplace() {
       <div className="max-w-7xl mx-auto py-5" style={{ paddingLeft: '1rem', paddingRight: '1rem', boxSizing: 'border-box', overflow: 'hidden' }}>
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', overflow: 'hidden' }}>
 
-          {/* ── Left Sidebar (desktop) ── */}
+          {/* ── Left Sidebar (desktop) - only show for shop tab ── */}
+          {marketTab === 'shop' && (
           <div className="hidden lg:block" style={{ width: '240px', flexShrink: 0, position: 'sticky', top: '1rem', alignSelf: 'flex-start', overflow: 'hidden' }}>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" style={{ width: '240px', boxSizing: 'border-box', overflow: 'hidden' }}>
               <SidebarFilter {...sidebarProps} />
             </div>
           </div>
+          )}
 
           {/* ── Right: Products Area ── */}
           <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
 
+            {/* ── AUCTION TAB CONTENT ── */}
+            {marketTab === 'auction' && (
+              <div>
+                {/* Auction top bar */}
+                <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                  <p className="text-sm text-gray-500">
+                    {auctionLoading ? '載入中...' : auctionData && auctionData.total > 0 ? (
+                      <>共 <span className="text-[#06038D] font-bold">{auctionData.total}</span> 個拍賣</>
+                    ) : '暫無進行中的拍賣'}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {/* Series filter for auction */}
+                    <Select value={auctionSeries} onValueChange={v => { setAuctionSeries(v); setAuctionPage(1); }}>
+                      <SelectTrigger className="h-8 text-xs border-gray-200 bg-white focus:ring-[#06038D] rounded-full shrink-0" style={{width:'7rem'}}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent align="end">
+                        <SelectItem value="all">全部系列</SelectItem>
+                        <SelectItem value="pokemon">Pokémon</SelectItem>
+                        <SelectItem value="onepiece">One Piece</SelectItem>
+                        <SelectItem value="yugioh">Yu-Gi-Oh!</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={auctionSort} onValueChange={v => { setAuctionSort(v as typeof auctionSort); setAuctionPage(1); }}>
+                      <SelectTrigger className="h-8 text-xs border-gray-200 bg-white focus:ring-[#06038D] rounded-full shrink-0" style={{width:'7.5rem'}}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent align="end">
+                        <SelectItem value="ending_soon">即將結標</SelectItem>
+                        <SelectItem value="newest">最新上架</SelectItem>
+                        <SelectItem value="price_asc">價格低→高</SelectItem>
+                        <SelectItem value="price_desc">價格高→低</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Auction grid */}
+                {auctionLoading ? (
+                  <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
+                    {Array.from({ length: 8 }).map((_, i) => <AuctionCardSkeleton key={i} />)}
+                  </div>
+                ) : !auctionData || auctionData.listings.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-gray-100">
+                    <div className="w-20 h-20 rounded-full bg-[#06038D]/5 flex items-center justify-center mb-4">
+                      <Gavel className="w-10 h-10 text-[#06038D]/30" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[#06038D] mb-2">暫無進行中的拍賣</h3>
+                    <p className="text-sm text-gray-500 max-w-xs">即將開放拍賣功能，敬請期待！</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
+                    {auctionData.listings.map((auction: any) => (
+                      <AuctionCard key={auction.id} auction={auction} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Auction pagination */}
+                {auctionData && auctionData.total > 20 && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={auctionPage <= 1}
+                      onClick={() => setAuctionPage(p => p - 1)}
+                      className="border-gray-200"
+                    >
+                      上一頁
+                    </Button>
+                    <span className="text-sm text-gray-500">第 {auctionPage} 頁</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={auctionPage * 20 >= auctionData.total}
+                      onClick={() => setAuctionPage(p => p + 1)}
+                      className="border-gray-200"
+                    >
+                      下一頁
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── SHOP TAB CONTENT ── */}
+            {marketTab === 'shop' && (
+            <>
             {/* Top bar: count + sort + mobile filter */}
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
               <div className="flex items-center gap-3">
@@ -1079,6 +1219,8 @@ export default function Marketplace() {
                 </div>
               </>
             )}
+            </> /* end shop fragment */
+            )} {/* end shop tab */}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull, isNull } from "drizzle-orm";
+import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull, isNull, ne, gt, lt } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns, buildSeriesPrefixPatterns } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
@@ -5036,4 +5036,242 @@ export async function getDisputeStats() {
     unresolvedOver3DaysCount: Number(unresolvedOver3Days?.count ?? 0),
     unresolvedCount: Number(unresolvedCount?.count ?? 0),
   };
+}
+
+// ============================================================
+// AUCTION DB HELPERS
+// ============================================================
+import {
+  auctionBids, auctionAgreements, auctionViolations,
+  type AuctionBid, type InsertAuctionBid,
+  type AuctionAgreement, type InsertAuctionAgreement,
+  type AuctionViolation, type InsertAuctionViolation,
+} from "../drizzle/schema_new";
+// ne, gt, lt already imported at top of file
+
+// ---- Auction Listings ----
+
+export async function getAuctionListings(opts: {
+  status?: string[];
+  page?: number;
+  pageSize?: number;
+  cardId?: number;
+}) {
+  const { status = ['active', 'ending_soon', 'scheduled'], page = 1, pageSize = 20, cardId } = opts;
+  const offset = (page - 1) * pageSize;
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+
+  const conditions: any[] = [
+    eq(marketplaceListings.listingMode, 'auction'),
+    inArray(marketplaceListings.auctionStatus, status as any[]),
+  ];
+  if (cardId) conditions.push(eq(marketplaceListings.cardId, cardId));
+
+  const rows = await db.select().from(marketplaceListings)
+    .where(and(...conditions))
+    .orderBy(asc(marketplaceListings.auctionEndAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const [{ total }] = await db.select({ total: sql<number>`count(*)` })
+    .from(marketplaceListings)
+    .where(and(...conditions));
+
+  return { listings: rows, total: Number(total), page, pageSize };
+}
+
+export async function getAuctionListingById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const [row] = await db.select().from(marketplaceListings)
+    .where(and(eq(marketplaceListings.id, id), eq(marketplaceListings.listingMode, 'auction')));
+  return row ?? null;
+}
+
+export async function updateAuctionListing(id: number, data: Partial<typeof marketplaceListings.$inferInsert>) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(marketplaceListings).set({ ...data, updatedAt: new Date() }).where(eq(marketplaceListings.id, id));
+}
+
+export async function getAuctionsEndingSoon(withinMinutes: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const now = new Date();
+  const cutoff = new Date(now.getTime() + withinMinutes * 60 * 1000);
+  return db.select().from(marketplaceListings)
+    .where(and(
+      eq(marketplaceListings.listingMode, 'auction'),
+      eq(marketplaceListings.auctionStatus, 'active'),
+      gt(marketplaceListings.auctionEndAt, now),
+      lt(marketplaceListings.auctionEndAt, cutoff),
+    ));
+}
+
+export async function getExpiredActiveAuctions() {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const now = new Date();
+  return db.select().from(marketplaceListings)
+    .where(and(
+      eq(marketplaceListings.listingMode, 'auction'),
+      inArray(marketplaceListings.auctionStatus, ['active', 'ending_soon']),
+      lt(marketplaceListings.auctionEndAt, now),
+    ));
+}
+
+export async function getScheduledAuctionsToStart() {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const now = new Date();
+  return db.select().from(marketplaceListings)
+    .where(and(
+      eq(marketplaceListings.listingMode, 'auction'),
+      eq(marketplaceListings.auctionStatus, 'scheduled'),
+      lt(marketplaceListings.auctionStartAt, now),
+    ));
+}
+
+export async function getAdminAuctionListings(opts: {
+  status?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const { status, page = 1, pageSize = 20 } = opts;
+  const offset = (page - 1) * pageSize;
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+
+  const conditions: any[] = [eq(marketplaceListings.listingMode, 'auction')];
+  if (status) conditions.push(eq(marketplaceListings.auctionStatus, status as any));
+
+  const rows = await db.select().from(marketplaceListings)
+    .where(and(...conditions))
+    .orderBy(desc(marketplaceListings.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const [{ total }] = await db.select({ total: sql<number>`count(*)` })
+    .from(marketplaceListings)
+    .where(and(...conditions));
+
+  return { listings: rows, total: Number(total), page, pageSize };
+}
+
+// ---- Auction Bids ----
+
+export async function placeBid(data: InsertAuctionBid): Promise<AuctionBid> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const [result] = await db.insert(auctionBids).values(data);
+  const insertId = (result as any).insertId;
+  const [row] = await db.select().from(auctionBids).where(eq(auctionBids.id, insertId));
+  return row;
+}
+
+export async function getBidsByListingId(listingId: number, limit = 50): Promise<AuctionBid[]> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.select().from(auctionBids)
+    .where(eq(auctionBids.listingId, listingId))
+    .orderBy(desc(auctionBids.createdAt))
+    .limit(limit);
+}
+
+export async function getWinningBid(listingId: number): Promise<AuctionBid | null> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const [row] = await db.select().from(auctionBids)
+    .where(and(eq(auctionBids.listingId, listingId), eq(auctionBids.status, 'winning')))
+    .orderBy(desc(auctionBids.amount))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function markBidsAsOutbid(listingId: number, exceptBidId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(auctionBids)
+    .set({ status: 'outbid' })
+    .where(and(
+      eq(auctionBids.listingId, listingId),
+      ne(auctionBids.id, exceptBidId),
+      eq(auctionBids.status, 'active'),
+    ));
+}
+
+export async function updateBidStatus(bidId: number, status: AuctionBid['status']) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(auctionBids).set({ status }).where(eq(auctionBids.id, bidId));
+}
+
+export async function getBidsByBidderId(bidderId: number, limit = 50): Promise<AuctionBid[]> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.select().from(auctionBids)
+    .where(eq(auctionBids.bidderId, bidderId))
+    .orderBy(desc(auctionBids.createdAt))
+    .limit(limit);
+}
+
+// ---- Auction Agreements ----
+
+export async function hasAgreedToTerms(userId: number, role: 'buyer' | 'seller', version: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const [row] = await db.select({ id: auctionAgreements.id })
+    .from(auctionAgreements)
+    .where(and(
+      eq(auctionAgreements.userId, userId),
+      eq(auctionAgreements.role, role),
+      eq(auctionAgreements.termsVersion, version),
+    ));
+  return !!row;
+}
+
+export async function recordAgreement(data: InsertAuctionAgreement): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.insert(auctionAgreements).values(data).onDuplicateKeyUpdate({ set: { agreedAt: new Date() } });
+}
+
+// ---- Auction Violations ----
+
+export async function createViolation(data: InsertAuctionViolation): Promise<AuctionViolation> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const [result] = await db.insert(auctionViolations).values(data);
+  const insertId = (result as any).insertId;
+  const [row] = await db.select().from(auctionViolations).where(eq(auctionViolations.id, insertId));
+  return row;
+}
+
+export async function getViolationsByUserId(userId: number): Promise<AuctionViolation[]> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.select().from(auctionViolations)
+    .where(eq(auctionViolations.userId, userId))
+    .orderBy(desc(auctionViolations.createdAt));
+}
+
+export async function isUserAuctionBanned(userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const now = new Date();
+  const [row] = await db.select({ id: auctionViolations.id })
+    .from(auctionViolations)
+    .where(and(
+      eq(auctionViolations.userId, userId),
+      or(
+        eq(auctionViolations.penalty, 'permanent'),
+        and(
+          inArray(auctionViolations.penalty, ['ban_7d', 'ban_30d']),
+          gt(auctionViolations.banExpiresAt, now),
+        )
+      )
+    ))
+    .limit(1);
+  return !!row;
 }
