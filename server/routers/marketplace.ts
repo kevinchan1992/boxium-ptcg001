@@ -816,10 +816,12 @@ export const marketplaceRouter = router({
       if (order.orderStatus !== "shipped" && order.orderStatus !== "delivered") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "訂單尚未出貨，無法確認收貨" });
       }
+      // Platform orders: payment already collected by platform, no payout needed
+      const isPlatformOrder = order.sellerType === 'platform';
       await updateMarketplaceOrder(input.orderId, {
         orderStatus: "completed",
         buyerConfirmedAt: new Date(),
-        payoutStatus: "processing",
+        payoutStatus: isPlatformOrder ? "not_applicable" : "processing",
       });
       // P2: Handle payout for C2C orders via executeSellerPayout (centralized logic)
       let sellerUserIdForNotify: number | null = null;

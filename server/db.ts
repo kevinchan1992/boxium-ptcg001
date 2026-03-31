@@ -3380,7 +3380,8 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
   // Optional payout filter: 'pending_alipay' = alipay_hk orders with payoutStatus != 'paid'
   if (payoutFilter === 'pending_alipay') {
     conditions.push(eq(marketplaceOrders.paymentMethod, 'alipay_hk'));
-    conditions.push(sql`${marketplaceOrders.payoutStatus} != 'paid'`);
+    // Exclude already paid AND not_applicable (platform orders that don't need payout)
+    conditions.push(sql`${marketplaceOrders.payoutStatus} NOT IN ('paid', 'not_applicable')`);
   }
   // Optional listingId filter
   if (listingId) {

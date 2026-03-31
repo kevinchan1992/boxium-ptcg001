@@ -422,8 +422,10 @@ export function startAutoCompleteOrdersScheduler() {
 
         for (const order of overdueOrders) {
           try {
+            // Platform orders: payment already collected by platform, no payout needed
+            const isPlatformOrder = order.sellerType === 'platform';
             await db.update(marketplaceOrders)
-              .set({ orderStatus: 'completed', buyerConfirmedAt: now, payoutStatus: 'processing' })
+              .set({ orderStatus: 'completed', buyerConfirmedAt: now, payoutStatus: isPlatformOrder ? 'not_applicable' : 'processing' })
               .where(eq(marketplaceOrders.id, order.id));
 
             // Notify buyer: order auto-completed
