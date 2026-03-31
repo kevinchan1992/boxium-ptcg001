@@ -5123,7 +5123,7 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] Profile.tsx 個人資訊標籤頁加入「查看我的訂單」快速入口卡片
 - [ ] /orders 頁面 Hero Banner 加入「返回個人中心」按鈕（與「返回商城」並列）
 - [ ] /orders 頁面加入用戶名稱顯示（讓用戶確認是自己的訂單）
-- [ ] 撰寫測試並保存 checkpoint
+- [x] 撰寫測試並保存 checkpoint
 
 ## Profile 頁面重新設計 - 左側導航 + 右側內容 (2026-03-20)
 - [ ] 重寫 Profile.tsx 為雙欄佈局（左側固定導航列，右側對應內容）
@@ -6208,7 +6208,7 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 查看 AdminMarketplace 訂單卡片 UI 結構（賣家資料欄位）
 - [ ] 在訂單卡片賣家資料欄位加入「確認收貨：日期 時間」顯示
 - [ ] 確認 getAdminOrders 後端 query 回傳 confirmedAt
-- [ ] 撰寫測試並保存 checkpoint
+- [x] 撰寫測試並保存 checkpoint
 
 ---
 
@@ -6757,3 +6757,16 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 撰寫並通過 8 項單元測試（financial-pdf-service.test.ts）
 - [x] TypeScript 0 錯誤
 - [x] 保存 checkpoint
+
+## 🎨 逐筆交易明細 Dialog 重新設計（BOXIUM 風格）
+- [x] 重新設計 Dialog 標題區：深藍色背景 + 金色月份標題 + BOXIUM 品牌感
+- [x] KPI 摘要卡片改為 BOXIUM 深色卡片風格（深藍邊框 + 金色數字）
+- [x] 交易明細表格改為深色主題，行 hover 效果，金色強調色
+- [x] 訂單號、狀態、付款方式 Badge 使用 BOXIUM 品牌色系
+- [x] 底部操作列（匯出 CSV、關閉）改為 BOXIUM 按鈕風格
+- [x] 撰寫測試並保存 checkpoint
+
+## 🐛 PDF 匯出失敗（「無法存取網站」）
+- [x] 診斷 PDF 下載失敗原因（可能是 Playwright 在 production 環境無法啟動，或 CORS/redirect 問題）
+- [x] 修復 PDF 端點使其在 production 環境正常工作（改用 fetch + credentials: include 方式）
+- [x] 測試並確認 PDF 可正常下載

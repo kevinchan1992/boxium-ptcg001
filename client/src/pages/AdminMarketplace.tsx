@@ -4216,13 +4216,27 @@ function SalesReportTab() {
           variant="outline"
           className="border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white self-start sm:self-auto transition-colors"
           disabled={monthly.length === 0 || !overall}
-          onClick={() => {
+          onClick={async () => {
             const dateStr = new Date().toISOString().split('T')[0];
             const url = `/api/admin/financial-report-pdf?months=${months}`;
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `BOXIUM_財務報告_${dateStr}.pdf`;
-            a.click();
+            try {
+              toast.loading('正在生成 PDF，請稍候...', { id: 'pdf-export' });
+              const res = await fetch(url, { credentials: 'include' });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+                throw new Error(err.error || `HTTP ${res.status}`);
+              }
+              const blob = await res.blob();
+              const objectUrl = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = objectUrl;
+              a.download = `BOXIUM_財務報告_${dateStr}.pdf`;
+              a.click();
+              URL.revokeObjectURL(objectUrl);
+              toast.success('PDF 已成功下載', { id: 'pdf-export' });
+            } catch (e: any) {
+              toast.error(`PDF 生成失敗：${e.message}`, { id: 'pdf-export' });
+            }
           }}
         >
           <FileText className="w-3.5 h-3.5 mr-1.5" />匯出 PDF
@@ -4768,116 +4782,171 @@ function SalesReportTab() {
 
       {/* ── Transaction Detail Dialog ─────────────────────── */}
       <Dialog open={!!txDetailMonth} onOpenChange={open => { if (!open) setTxDetailMonth(null); }}>
-        <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#06038d]" />
-              {txDetailMonth ? fmtYearMonth(txDetailMonth) : ''} · 逐筆交易明細
-            </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
-              顯示該月所有已付款、已出貨、已完成、已取消及退款訂單
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden border border-[#1e2235] shadow-2xl" style={{background: '#0d0f1a'}}>
+          {/* ── BOXIUM Header ── */}
+          <div className="relative flex-shrink-0 px-6 py-4" style={{background: 'linear-gradient(135deg, #06038d 0%, #0a0570 50%, #06038d 100%)'}}>
+            <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'repeating-linear-gradient(45deg, #FEDD00 0, #FEDD00 1px, transparent 0, transparent 50%)', backgroundSize: '8px 8px'}} />
+            <div className="relative flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-1 h-5 rounded-full" style={{background: '#FEDD00'}} />
+                  <DialogTitle className="text-white font-bold text-lg tracking-wide">
+                    {txDetailMonth ? fmtYearMonth(txDetailMonth) : ''} · 逐筆交易明細
+                  </DialogTitle>
+                </div>
+                <DialogDescription className="text-white/50 text-xs pl-3">
+                  顯示該月所有已付款、已出貨、已完成、已取消及退款訂單
+                </DialogDescription>
+              </div>
+              <div className="text-right">
+                <p className="font-black text-sm tracking-widest" style={{color: '#FEDD00'}}>BOXIUM</p>
+                <p className="text-white/40 text-[10px] tracking-wider">PTCG FINANCIAL</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
             {txDetailLoading ? (
-              <div className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#06038d]" />載入交易記錄...</div>
+              <div className="text-center py-16">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" style={{color: '#FEDD00'}} />
+                <p className="text-white/50 text-sm">載入交易記錄...</p>
+              </div>
             ) : !txDetailData || txDetailData.rows.length === 0 ? (
-              <div className="text-center py-10 text-gray-400">本月暫無交易記錄</div>
+              <div className="text-center py-16">
+                <FileText className="w-10 h-10 mx-auto mb-3 text-white/20" />
+                <p className="text-white/40">本月暫無交易記錄</p>
+              </div>
             ) : (
-              <div className="space-y-3">
-                {/* Summary bar */}
-                <div className="grid grid-cols-4 gap-3 mb-4">
-                  <div className="bg-[#06038d]/5 rounded-lg p-3 text-center">
-                    <p className="text-xs text-gray-500 mb-1">總交易筆數</p>
-                    <p className="text-lg font-bold text-[#06038d]">{txDetailData.total}</p>
+              <div className="space-y-4">
+                {/* ── KPI Summary Cards ── */}
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="rounded-xl p-3.5 text-center relative overflow-hidden" style={{background: 'rgba(6,3,141,0.3)', border: '1px solid rgba(6,3,141,0.5)'}}>
+                    <div className="absolute top-0 left-0 right-0 h-0.5" style={{background: '#FEDD00'}} />
+                    <p className="text-white/50 text-[10px] uppercase tracking-wider mb-1.5">總交易筆數</p>
+                    <p className="text-2xl font-black" style={{color: '#FEDD00'}}>{txDetailData.total}</p>
+                    <p className="text-white/30 text-[10px] mt-1">筆訂單</p>
                   </div>
-                  <div className="bg-emerald-50 rounded-lg p-3 text-center">
-                    <p className="text-xs text-gray-500 mb-1">GMV 合計</p>
-                    <p className="text-lg font-bold text-emerald-700">HKD {fmtHkd(txDetailData.rows.reduce((s, r) => s + r.subtotalHkd, 0))}</p>
+                  <div className="rounded-xl p-3.5 text-center relative overflow-hidden" style={{background: 'rgba(10,31,21,0.6)', border: '1px solid rgba(52,211,153,0.3)'}}>
+                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-400" />
+                    <p className="text-white/50 text-[10px] uppercase tracking-wider mb-1.5">GMV 合計</p>
+                    <p className="text-sm font-black text-emerald-400">HKD {fmtHkd(txDetailData.rows.reduce((s, r) => s + r.subtotalHkd, 0))}</p>
+                    <p className="text-white/30 text-[10px] mt-1">總交易額</p>
                   </div>
-                  <div className="bg-blue-50 rounded-lg p-3 text-center">
-                    <p className="text-xs text-gray-500 mb-1">平台收入</p>
-                    <p className="text-lg font-bold text-blue-700">HKD {fmtHkd(txDetailData.rows.reduce((s, r) => s + r.platformIncomeHkd, 0))}</p>
+                  <div className="rounded-xl p-3.5 text-center relative overflow-hidden" style={{background: 'rgba(6,3,141,0.2)', border: '1px solid rgba(96,165,250,0.3)'}}>
+                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-400" />
+                    <p className="text-white/50 text-[10px] uppercase tracking-wider mb-1.5">平台收入</p>
+                    <p className="text-sm font-black text-blue-300">HKD {fmtHkd(txDetailData.rows.reduce((s, r) => s + r.platformIncomeHkd, 0))}</p>
+                    <p className="text-white/30 text-[10px] mt-1">直售 + 手續費</p>
                   </div>
-                  <div className="bg-amber-50 rounded-lg p-3 text-center">
-                    <p className="text-xs text-gray-500 mb-1">賣家應收</p>
-                    <p className="text-lg font-bold text-amber-700">HKD {fmtHkd(txDetailData.rows.reduce((s, r) => s + r.sellerReceivableHkd, 0))}</p>
+                  <div className="rounded-xl p-3.5 text-center relative overflow-hidden" style={{background: 'rgba(26,18,0,0.6)', border: '1px solid rgba(251,191,36,0.3)'}}>
+                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-amber-400" />
+                    <p className="text-white/50 text-[10px] uppercase tracking-wider mb-1.5">賣家應收</p>
+                    <p className="text-sm font-black text-amber-400">HKD {fmtHkd(txDetailData.rows.reduce((s, r) => s + r.sellerReceivableHkd, 0))}</p>
+                    <p className="text-white/30 text-[10px] mt-1">C2C 賣家應得</p>
                   </div>
                 </div>
-                {/* Transaction table */}
-                <div className="overflow-x-auto rounded-lg border border-gray-200">
+
+                {/* ── Transaction Table ── */}
+                <div className="overflow-x-auto rounded-xl" style={{border: '1px solid #1e2235'}}>
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-gray-50 border-b border-gray-200">
-                        <th className="text-left px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">訂單號</th>
-                        <th className="text-left px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">商品</th>
-                        <th className="text-left px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">買家</th>
-                        <th className="text-left px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">賣家</th>
-                        <th className="text-center px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">類型</th>
-                        <th className="text-center px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">付款</th>
-                        <th className="text-center px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">狀態</th>
-                        <th className="text-right px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">金額</th>
-                        <th className="text-right px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide bg-emerald-50">平台收入</th>
-                        <th className="text-right px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">賣家應收</th>
-                        <th className="text-left px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">日期</th>
+                      <tr style={{background: '#111327', borderBottom: '1px solid #1e2235'}}>
+                        <th className="text-left px-3 py-3 font-semibold text-white/40 uppercase tracking-wider text-[10px]">訂單號</th>
+                        <th className="text-left px-3 py-3 font-semibold text-white/40 uppercase tracking-wider text-[10px]">商品</th>
+                        <th className="text-left px-3 py-3 font-semibold text-white/40 uppercase tracking-wider text-[10px]">買家</th>
+                        <th className="text-left px-3 py-3 font-semibold text-white/40 uppercase tracking-wider text-[10px]">賣家</th>
+                        <th className="text-center px-3 py-3 font-semibold text-white/40 uppercase tracking-wider text-[10px]">類型</th>
+                        <th className="text-center px-3 py-3 font-semibold text-white/40 uppercase tracking-wider text-[10px]">付款</th>
+                        <th className="text-center px-3 py-3 font-semibold text-white/40 uppercase tracking-wider text-[10px]">狀態</th>
+                        <th className="text-right px-3 py-3 font-semibold text-white/40 uppercase tracking-wider text-[10px]">金額</th>
+                        <th className="text-right px-3 py-3 font-semibold text-emerald-400/60 uppercase tracking-wider text-[10px]" style={{background: 'rgba(16,185,129,0.08)'}}>平台收入</th>
+                        <th className="text-right px-3 py-3 font-semibold text-amber-400/60 uppercase tracking-wider text-[10px]">賣家應收</th>
+                        <th className="text-left px-3 py-3 font-semibold text-white/40 uppercase tracking-wider text-[10px]">日期</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {txDetailData.rows.map(tx => {
-                        const statusMap: Record<string, { label: string; cls: string }> = {
-                          payment_received: { label: '已付款', cls: 'bg-blue-50 text-blue-700' },
-                          processing: { label: '處理中', cls: 'bg-indigo-50 text-indigo-700' },
-                          shipped: { label: '已出貨', cls: 'bg-purple-50 text-purple-700' },
-                          delivered: { label: '已送達', cls: 'bg-teal-50 text-teal-700' },
-                          completed: { label: '已完成', cls: 'bg-emerald-50 text-emerald-700' },
-                          cancelled: { label: '已取消', cls: 'bg-gray-100 text-gray-500' },
-                          refunded: { label: '已退款', cls: 'bg-red-50 text-red-600' },
+                    <tbody>
+                      {txDetailData.rows.map((tx, idx) => {
+                        const statusMap: Record<string, { label: string; bg: string; text: string; border: string }> = {
+                          payment_received: { label: '已付款', bg: 'rgba(59,130,246,0.15)', text: '#93c5fd', border: 'rgba(59,130,246,0.3)' },
+                          processing: { label: '處理中', bg: 'rgba(99,102,241,0.15)', text: '#a5b4fc', border: 'rgba(99,102,241,0.3)' },
+                          shipped: { label: '已出貨', bg: 'rgba(168,85,247,0.15)', text: '#d8b4fe', border: 'rgba(168,85,247,0.3)' },
+                          delivered: { label: '已送達', bg: 'rgba(20,184,166,0.15)', text: '#5eead4', border: 'rgba(20,184,166,0.3)' },
+                          completed: { label: '已完成', bg: 'rgba(16,185,129,0.15)', text: '#6ee7b7', border: 'rgba(16,185,129,0.3)' },
+                          cancelled: { label: '已取消', bg: 'rgba(255,255,255,0.05)', text: 'rgba(255,255,255,0.3)', border: 'rgba(255,255,255,0.1)' },
+                          refunded: { label: '已退款', bg: 'rgba(239,68,68,0.15)', text: '#fca5a5', border: 'rgba(239,68,68,0.3)' },
                         };
-                        const s = statusMap[tx.orderStatus] ?? { label: tx.orderStatus, cls: 'bg-gray-100 text-gray-500' };
+                        const s = statusMap[tx.orderStatus] ?? { label: tx.orderStatus, bg: 'rgba(255,255,255,0.05)', text: 'rgba(255,255,255,0.3)', border: 'rgba(255,255,255,0.1)' };
+                        const isDimmed = tx.orderStatus === 'cancelled' || tx.orderStatus === 'refunded';
+                        const isEven = idx % 2 === 0;
                         return (
-                          <tr key={tx.orderId} className={`hover:bg-gray-50/70 transition-colors ${
-                            tx.orderStatus === 'cancelled' || tx.orderStatus === 'refunded' ? 'opacity-60' : ''
-                          }`}>
-                            <td className="px-3 py-2.5">
-                              <a href={`/orders/${tx.orderNo}`} target="_blank" rel="noreferrer"
-                                className="font-mono text-[#06038d] hover:underline text-xs">
+                          <tr key={tx.orderId}
+                            style={{
+                              borderBottom: '1px solid #1e2235',
+                              background: isEven ? 'rgba(255,255,255,0.01)' : 'transparent',
+                              opacity: isDimmed ? 0.5 : 1,
+                              transition: 'background 0.15s',
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(6,3,141,0.2)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = isEven ? 'rgba(255,255,255,0.01)' : 'transparent')}
+                          >
+                            <td className="px-3 py-3">
+                              <a href={`/orders/${tx.orderNo}`} target="_blank" rel="noopener noreferrer"
+                                className="font-mono text-[10px] font-semibold hover:underline transition-colors"
+                                style={{color: '#FEDD00'}}>
                                 {tx.orderNo}
                               </a>
                             </td>
-                            <td className="px-3 py-2.5 max-w-[160px]">
-                              <p className="truncate text-gray-800 font-medium" title={tx.listingTitle}>{tx.listingTitle}</p>
-                              <p className="text-gray-400">×{tx.quantity}</p>
+                            <td className="px-3 py-3">
+                              <p className="font-medium text-white/80 truncate max-w-[120px]">{tx.listingTitle}</p>
+                              <p className="text-white/30 text-[10px]">×{tx.quantity}</p>
                             </td>
-                            <td className="px-3 py-2.5">
-                              <p className="text-gray-800 font-medium">{tx.buyerName}</p>
-                              <p className="text-gray-400 truncate max-w-[100px]" title={tx.buyerEmail}>{tx.buyerEmail}</p>
+                            <td className="px-3 py-3">
+                              <p className="font-medium text-white/70">{tx.buyerName}</p>
+                              <p className="text-white/30 text-[10px] truncate max-w-[120px]">{tx.buyerEmail}</p>
                             </td>
-                            <td className="px-3 py-2.5 text-gray-700">{tx.sellerName}</td>
-                            <td className="px-3 py-2.5 text-center">
-                              <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${
-                                tx.sellerType === 'platform' ? 'bg-[#06038d]/10 text-[#06038d]' : 'bg-purple-50 text-purple-700'
-                              }`}>
-                                {tx.sellerType === 'platform' ? '平台' : 'C2C'}
+                            <td className="px-3 py-3 text-white/60 text-xs">{tx.sellerName}</td>
+                            <td className="px-3 py-3 text-center">
+                              {tx.sellerType === 'platform' ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                  style={{background: 'rgba(254,221,0,0.15)', color: '#FEDD00', border: '1px solid rgba(254,221,0,0.35)'}}>
+                                  平台
+                                </span>
+                              ) : (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                  style={{background: 'rgba(168,85,247,0.15)', color: '#d8b4fe', border: '1px solid rgba(168,85,247,0.3)'}}>
+                                  C2C
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-center">
+                              {tx.paymentMethod === 'stripe' ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                  style={{background: 'rgba(99,91,255,0.15)', color: '#a89eff', border: '1px solid rgba(99,91,255,0.35)'}}>
+                                  Stripe
+                                </span>
+                              ) : (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                  style={{background: 'rgba(22,119,255,0.15)', color: '#69b1ff', border: '1px solid rgba(22,119,255,0.35)'}}>
+                                  支付寶
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-center">
+                              <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                style={{background: s.bg, color: s.text, border: `1px solid ${s.border}`}}>
+                                {s.label}
                               </span>
                             </td>
-                            <td className="px-3 py-2.5 text-center">
-                              <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${
-                                tx.paymentMethod === 'stripe' ? 'bg-indigo-50 text-indigo-700' : 'bg-cyan-50 text-cyan-700'
-                              }`}>
-                                {tx.paymentMethod === 'stripe' ? 'Stripe' : '支付寶'}
-                              </span>
+                            <td className="px-3 py-3 text-right font-semibold text-white/80 text-xs">HKD {fmtHkd(tx.subtotalHkd)}</td>
+                            <td className="px-3 py-3 text-right text-xs" style={{background: 'rgba(16,185,129,0.06)'}}>
+                              <span className="font-bold text-emerald-400">HKD {fmtHkd(tx.platformIncomeHkd)}</span>
                             </td>
-                            <td className="px-3 py-2.5 text-center">
-                              <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${s.cls}`}>{s.label}</span>
+                            <td className="px-3 py-3 text-right text-xs">
+                              {tx.sellerType === 'platform'
+                                ? <span className="text-white/20">—</span>
+                                : <span className="font-medium text-amber-400">HKD {fmtHkd(tx.sellerReceivableHkd)}</span>}
                             </td>
-                            <td className="px-3 py-2.5 text-right font-semibold text-gray-900">HKD {fmtHkd(tx.subtotalHkd)}</td>
-                            <td className="px-3 py-2.5 text-right bg-emerald-50/30">
-                              <span className="font-bold text-emerald-700">HKD {fmtHkd(tx.platformIncomeHkd)}</span>
-                            </td>
-                            <td className="px-3 py-2.5 text-right text-amber-700 font-medium">
-                              {tx.sellerType === 'platform' ? <span className="text-gray-300">—</span> : `HKD ${fmtHkd(tx.sellerReceivableHkd)}`}
-                            </td>
-                            <td className="px-3 py-2.5 text-gray-500">
+                            <td className="px-3 py-3 text-white/40 text-xs">
                               {tx.paidAt ? new Date(tx.paidAt).toLocaleDateString('zh-HK', { month: 'short', day: 'numeric' }) : new Date(tx.createdAt).toLocaleDateString('zh-HK', { month: 'short', day: 'numeric' })}
                             </td>
                           </tr>
@@ -4888,21 +4957,23 @@ function SalesReportTab() {
                 </div>
                 {/* Pagination */}
                 {txDetailData.total > 100 && (
-                  <div className="flex items-center justify-between pt-2">
-                    <p className="text-xs text-gray-500">共 {txDetailData.total} 筆 · 每頁 100 筆</p>
+                  <div className="flex items-center justify-between pt-1">
+                    <p className="text-xs text-white/30">共 {txDetailData.total} 筆 · 每頁 100 筆</p>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" disabled={txDetailPage <= 1} onClick={() => setTxDetailPage(p => p - 1)}>上一頁</Button>
-                      <Button size="sm" variant="outline" disabled={txDetailPage * 100 >= txDetailData.total} onClick={() => setTxDetailPage(p => p + 1)}>下一頁</Button>
+                      <Button size="sm" variant="outline" className="text-white/60 hover:text-white" style={{borderColor: '#1e2235', background: 'transparent'}} disabled={txDetailPage <= 1} onClick={() => setTxDetailPage(p => p - 1)}>上一頁</Button>
+                      <Button size="sm" variant="outline" className="text-white/60 hover:text-white" style={{borderColor: '#1e2235', background: 'transparent'}} disabled={txDetailPage * 100 >= txDetailData.total} onClick={() => setTxDetailPage(p => p + 1)}>下一頁</Button>
                     </div>
                   </div>
                 )}
               </div>
             )}
           </div>
-          <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+          {/* ── Footer Actions ── */}
+          <div className="flex justify-between items-center px-5 py-3 flex-shrink-0" style={{borderTop: '1px solid #1e2235', background: '#0d0f1a'}}>
             <Button
-              size="sm" variant="outline"
-              className="border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white"
+              size="sm"
+              className="gap-1.5 text-white border-0"
+              style={{background: '#06038d'}}
               disabled={!txDetailData || txDetailData.rows.length === 0}
               onClick={() => {
                 if (!txDetailData) return;
@@ -4926,9 +4997,9 @@ function SalesReportTab() {
                 exportToCSV(rows, `BOXIUM交易明細_${txDetailMonth}_${new Date().toISOString().slice(0,10)}.csv`);
               }}
             >
-              <Download className="w-3.5 h-3.5 mr-1.5" />匯出本月 CSV
+              <Download className="w-3.5 h-3.5" />匯出本月 CSV
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setTxDetailMonth(null)}>關閉</Button>
+            <Button size="sm" variant="outline" className="text-white/60 hover:text-white" style={{borderColor: '#1e2235', background: 'transparent'}} onClick={() => setTxDetailMonth(null)}>關閉</Button>
           </div>
         </DialogContent>
       </Dialog>
