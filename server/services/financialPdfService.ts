@@ -226,12 +226,22 @@ function drawPlRow(
 export async function generateFinancialReportPdf(report: SalesReport, months: number): Promise<Buffer> {
   const { overall, monthly } = report;
 
-  // Load logo
+  // Load logo — use pre-converted PNG files (WebP is not supported by PDFKit)
+  // The server/fonts/boxium-logo-pdf.png is a proper PNG converted from the WebP source.
   let logoData: Buffer | null = null;
-  try {
-    const logoPath = path.join(process.cwd(), "client/public/boxium-logo.png");
-    if (fs.existsSync(logoPath)) logoData = fs.readFileSync(logoPath);
-  } catch { /* skip */ }
+  const logoCandidates = [
+    path.join(process.cwd(), "server/fonts/boxium-logo-pdf.png"),
+    path.join(process.cwd(), "server/fonts/boxium-logo-white-pdf.png"),
+    path.join(process.cwd(), "client/public/boxium-logo.png"),
+  ];
+  for (const candidate of logoCandidates) {
+    try {
+      if (fs.existsSync(candidate)) {
+        logoData = fs.readFileSync(candidate);
+        break;
+      }
+    } catch { /* try next */ }
+  }
 
   const generatedAt = new Date().toLocaleDateString("zh-HK", {
     year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Hong_Kong",

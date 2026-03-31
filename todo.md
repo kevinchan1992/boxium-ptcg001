@@ -6826,3 +6826,9 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 批次間隔 50ms → 0ms，錯誤後延遲 1000ms → 500ms，請求 timeout 30s → 15s
 - [x] 前端 CardDetail.tsx：移除批量成交徽章，回復举潔表格顯示（後端已過濾）
 - [x] 後端 getPriceHistory 查詢：加入 isSuspectedBulk=false 過濾，批量記錄從源頭排除
+
+## 🖼️ PDF Logo 修復
+
+- [x] 診斷 logo 不顯示問題（boxium-logo.png 實為 WebP 格式，PDFKit 不支援）
+- [x] 用 Pillow 將 WebP logo 轉換為真正的 PNG（server/fonts/boxium-logo-pdf.png）
+- [x] 更新 financialPdfService.ts 優先讀取轉換後的 PNG，封面和所有內頁頁首均顯示 BOXIUM logo
