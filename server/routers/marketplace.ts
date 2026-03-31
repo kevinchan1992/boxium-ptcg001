@@ -3124,11 +3124,14 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .query(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderByNo(input.orderNo);
       if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
-      // Only buyer or seller can view
+      // Admin can view any order; buyer or seller can view their own
+      const isAdmin = ctx.user.role === 'admin';
       const isBuyer = order.buyerId === ctx.user.id;
       const sellerProfile = order.sellerId ? await getSellerProfileById(order.sellerId) : null;
       const isSeller = !!(sellerProfile?.userId === ctx.user.id);
-      if (!isBuyer && !isSeller) throw new TRPCError({ code: "FORBIDDEN" });
+      // Platform orders (sellerType='platform') have no sellerProfile — admin is the implicit seller
+      const isPlatformSeller = isAdmin && order.sellerType === 'platform';
+      if (!isAdmin && !isBuyer && !isSeller) throw new TRPCError({ code: "FORBIDDEN" });
       const items = await getOrderItems(order.id);
       const listing = order.listingId ? await getListingById(order.listingId) : null;
       const review = await getReviewByOrderId(order.id);
@@ -3149,7 +3152,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         // Buyer phone from order record
         buyerContactPhone = order.buyerPhone ?? null;
       }
-      return { order, items, listing, review, isBuyer, isSeller, sellerPhone, buyerContactPhone, isMeetup, isCompleted };
+      return { order, items, listing, review, isBuyer, isSeller: isSeller || isPlatformSeller, sellerPhone, buyerContactPhone, isMeetup, isCompleted };
     }),
 
   // ============================================================
