@@ -4377,6 +4377,91 @@ export async function getAdminFeeDetails(yearMonth: string, page = 1, pageSize =
   };
 }
 
+// --- Admin Monthly Transaction Detail (all orders for a given month) ---
+export async function getAdminMonthlyTransactions(yearMonth: string, page = 1, pageSize = 100) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const paidStatuses = ['payment_received', 'processing', 'shipped', 'delivered', 'completed', 'cancelled', 'refunded'];
+  const offset = (page - 1) * pageSize;
+
+  const rows = await db.select({
+    orderId: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    orderStatus: marketplaceOrders.orderStatus,
+    paymentMethod: marketplaceOrders.paymentMethod,
+    paymentStatus: marketplaceOrders.paymentStatus,
+    payoutStatus: marketplaceOrders.payoutStatus,
+    sellerType: marketplaceOrders.sellerType,
+    quantity: marketplaceOrders.quantity,
+    subtotalHkd: marketplaceOrders.subtotalHkd,
+    platformFeeHkd: marketplaceOrders.platformFeeHkd,
+    sellerReceivableHkd: marketplaceOrders.sellerReceivableHkd,
+    paidAt: marketplaceOrders.paidAt,
+    createdAt: marketplaceOrders.createdAt,
+    // Buyer info
+    buyerName: users.name,
+    buyerEmail: users.email,
+    // Listing info (from order items snapshot)
+    listingTitle: marketplaceOrderItems.title,
+    // Seller info
+    sellerId: marketplaceOrders.sellerId,
+    sellerDisplayName: sellerProfiles.displayName,
+    sellerUserName: sql<string>`seller_users.name`,
+  })
+    .from(marketplaceOrders)
+    .leftJoin(users, eq(marketplaceOrders.buyerId, users.id))
+    .leftJoin(marketplaceOrderItems, eq(marketplaceOrderItems.orderId, marketplaceOrders.id))
+    .leftJoin(sellerProfiles, eq(marketplaceOrders.sellerId, sellerProfiles.id))
+    .leftJoin(sql`users as seller_users`, sql`seller_users.id = ${sellerProfiles.userId}`)
+    .where(
+      and(
+        inArray(marketplaceOrders.orderStatus, paidStatuses as any[]),
+        sql`DATE_FORMAT(${marketplaceOrders.createdAt}, '%Y-%m') = ${yearMonth}`
+      )
+    )
+    .orderBy(desc(marketplaceOrders.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const [countRow] = await db.select({ total: sql<number>`count(DISTINCT ${marketplaceOrders.id})` })
+    .from(marketplaceOrders)
+    .where(
+      and(
+        inArray(marketplaceOrders.orderStatus, paidStatuses as any[]),
+        sql`DATE_FORMAT(${marketplaceOrders.createdAt}, '%Y-%m') = ${yearMonth}`
+      )
+    );
+
+  return {
+    rows: rows.map(r => ({
+      orderId: r.orderId,
+      orderNo: r.orderNo,
+      orderStatus: r.orderStatus,
+      paymentMethod: r.paymentMethod,
+      paymentStatus: r.paymentStatus,
+      payoutStatus: r.payoutStatus,
+      sellerType: r.sellerType,
+      quantity: r.quantity,
+      subtotalHkd: parseFloat(String(r.subtotalHkd ?? '0')),
+      platformFeeHkd: parseFloat(String(r.platformFeeHkd ?? '0')),
+      sellerReceivableHkd: parseFloat(String(r.sellerReceivableHkd ?? '0')),
+      // Platform income: for platform orders = subtotal; for C2C = fee only
+      platformIncomeHkd: r.sellerType === 'platform'
+        ? parseFloat(String(r.subtotalHkd ?? '0'))
+        : parseFloat(String(r.platformFeeHkd ?? '0')),
+      paidAt: r.paidAt,
+      createdAt: r.createdAt,
+      buyerName: r.buyerName ?? '—',
+      buyerEmail: r.buyerEmail ?? '—',
+      listingTitle: r.listingTitle ?? '—',
+      sellerName: r.sellerType === 'platform'
+        ? '平台直售'
+        : (r.sellerDisplayName ?? r.sellerUserName ?? `賣家 #${r.sellerId}`),
+    })),
+    total: Number(countRow?.total ?? 0),
+  };
+}
+
 // --- Admin Seller Detail with User Account Info ---
 export async function getAdminSellerDetail(sellerId: number) {
   const db = await getDb();

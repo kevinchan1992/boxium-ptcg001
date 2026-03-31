@@ -10,7 +10,7 @@ import { getPublicListings, getListingById, createListing, updateListing,
   getSellerProfileByUserId, getSellerProfileById, createSellerProfile, updateSellerProfile, getAllSellerProfiles, getAdminSellerDetail,
   createMarketplaceOrder, getMarketplaceOrderById, getMarketplaceOrderByNo, updateMarketplaceOrder, getBuyerOrders, getAdminOrders, getAlipayPendingOrders, generateOrderNo,
   createOrderItems, getOrderItems, getSellerOrderItems, getPlatformOrders,
-  getSellerPayouts, getMarketplaceStats, getSalesReport, getAdminFeeDetails,
+  getSellerPayouts, getMarketplaceStats, getSalesReport, getAdminFeeDetails, getAdminMonthlyTransactions,
   getActiveBanners, getAllBanners, createBanner, updateBanner, deleteBanner,
   getUserWishlist, isInWishlist, addToWishlistListing, removeFromWishlistListing, getWishlistListingIds,
   getDisputedOrders, getSellerProfileByStripeConnectId,
@@ -1416,6 +1416,16 @@ export const marketplaceRouter = router({
     }))
     .query(async ({ input }) => {
       return getAdminFeeDetails(input.yearMonth, input.page, input.pageSize);
+    }),
+
+  adminGetMonthlyTransactions: adminProcedure
+    .input(z.object({
+      yearMonth: z.string().regex(/^\d{4}-\d{2}$/),
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(200).default(100),
+    }))
+    .query(async ({ input }) => {
+      return getAdminMonthlyTransactions(input.yearMonth, input.page, input.pageSize);
     }),
 
   adminGetListings: adminProcedure

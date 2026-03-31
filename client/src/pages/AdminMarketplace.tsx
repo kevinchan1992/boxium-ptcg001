@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -4117,6 +4117,13 @@ function SalesReportTab() {
     { enabled: !!feeDetailMonth }
   );
 
+  // Transaction detail drill-down state
+  const [txDetailMonth, setTxDetailMonth] = useState<string | null>(null);
+  const [txDetailPage, setTxDetailPage] = useState(1);
+  const { data: txDetailData, isLoading: txDetailLoading } = trpc.marketplace.adminGetMonthlyTransactions.useQuery(
+    { yearMonth: txDetailMonth!, page: txDetailPage, pageSize: 100 },
+    { enabled: !!txDetailMonth }
+  );
   // Active view tab: 'overview' | 'cashflow' | 'payment' | 'monthly'
   const [viewTab, setViewTab] = useState<'overview' | 'cashflow' | 'payment' | 'monthly'>('overview');
 
@@ -4659,6 +4666,7 @@ function SalesReportTab() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide w-8"></th>
                     <th className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">月份</th>
                     <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">GMV</th>
                     <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">退款</th>
@@ -4680,6 +4688,15 @@ function SalesReportTab() {
                     const rowIncome = (row as any).platformIncomeHkd ?? (row.platformSalesHkd + row.sellerFeesHkd);
                     return (
                       <tr key={row.yearMonth} className="hover:bg-gray-50/70 transition-colors">
+                        <td className="px-3 py-3.5">
+                          <button
+                            onClick={() => { setTxDetailMonth(row.yearMonth); setTxDetailPage(1); }}
+                            className="p-1 rounded hover:bg-[#06038d]/10 text-[#06038d] transition-colors"
+                            title="查看逐筆交易記錄"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
                         <td className="px-4 py-3.5 font-semibold text-gray-800">{fmtYearMonth(row.yearMonth)}</td>
                         <td className="px-4 py-3.5 text-right font-bold text-[#06038d]">HKD {fmtHkd(row.totalSalesHkd)}</td>
                         <td className="px-4 py-3.5 text-right">
@@ -4719,6 +4736,7 @@ function SalesReportTab() {
                 </tbody>
                 <tfoot>
                   <tr className="bg-[#06038d]/[0.04] border-t-2 border-[#06038d]/20">
+                    <td className="px-3 py-3.5"></td>
                     <td className="px-4 py-3.5 font-bold text-gray-900 text-xs uppercase tracking-wide">合計</td>
                     <td className="px-4 py-3.5 text-right font-bold text-[#06038d]">HKD {fmtHkd(monthly.reduce((s, r) => s + r.totalSalesHkd, 0))}</td>
                     <td className="px-4 py-3.5 text-right font-semibold text-red-600">
@@ -4744,6 +4762,173 @@ function SalesReportTab() {
           )}
         </div>
       )}
+
+      {/* ── Transaction Detail Dialog ─────────────────────── */}
+      <Dialog open={!!txDetailMonth} onOpenChange={open => { if (!open) setTxDetailMonth(null); }}>
+        <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-[#06038d]" />
+              {txDetailMonth ? fmtYearMonth(txDetailMonth) : ''} · 逐筆交易明細
+            </DialogTitle>
+            <DialogDescription className="text-xs text-gray-500">
+              顯示該月所有已付款、已出貨、已完成、已取消及退款訂單
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            {txDetailLoading ? (
+              <div className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#06038d]" />載入交易記錄...</div>
+            ) : !txDetailData || txDetailData.rows.length === 0 ? (
+              <div className="text-center py-10 text-gray-400">本月暫無交易記錄</div>
+            ) : (
+              <div className="space-y-3">
+                {/* Summary bar */}
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  <div className="bg-[#06038d]/5 rounded-lg p-3 text-center">
+                    <p className="text-xs text-gray-500 mb-1">總交易筆數</p>
+                    <p className="text-lg font-bold text-[#06038d]">{txDetailData.total}</p>
+                  </div>
+                  <div className="bg-emerald-50 rounded-lg p-3 text-center">
+                    <p className="text-xs text-gray-500 mb-1">GMV 合計</p>
+                    <p className="text-lg font-bold text-emerald-700">HKD {fmtHkd(txDetailData.rows.reduce((s, r) => s + r.subtotalHkd, 0))}</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-3 text-center">
+                    <p className="text-xs text-gray-500 mb-1">平台收入</p>
+                    <p className="text-lg font-bold text-blue-700">HKD {fmtHkd(txDetailData.rows.reduce((s, r) => s + r.platformIncomeHkd, 0))}</p>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg p-3 text-center">
+                    <p className="text-xs text-gray-500 mb-1">賣家應收</p>
+                    <p className="text-lg font-bold text-amber-700">HKD {fmtHkd(txDetailData.rows.reduce((s, r) => s + r.sellerReceivableHkd, 0))}</p>
+                  </div>
+                </div>
+                {/* Transaction table */}
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200">
+                        <th className="text-left px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">訂單號</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">商品</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">買家</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">賣家</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">類型</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">付款</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">狀態</th>
+                        <th className="text-right px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">金額</th>
+                        <th className="text-right px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide bg-emerald-50">平台收入</th>
+                        <th className="text-right px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">賣家應收</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-gray-500 uppercase tracking-wide">日期</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {txDetailData.rows.map(tx => {
+                        const statusMap: Record<string, { label: string; cls: string }> = {
+                          payment_received: { label: '已付款', cls: 'bg-blue-50 text-blue-700' },
+                          processing: { label: '處理中', cls: 'bg-indigo-50 text-indigo-700' },
+                          shipped: { label: '已出貨', cls: 'bg-purple-50 text-purple-700' },
+                          delivered: { label: '已送達', cls: 'bg-teal-50 text-teal-700' },
+                          completed: { label: '已完成', cls: 'bg-emerald-50 text-emerald-700' },
+                          cancelled: { label: '已取消', cls: 'bg-gray-100 text-gray-500' },
+                          refunded: { label: '已退款', cls: 'bg-red-50 text-red-600' },
+                        };
+                        const s = statusMap[tx.orderStatus] ?? { label: tx.orderStatus, cls: 'bg-gray-100 text-gray-500' };
+                        return (
+                          <tr key={tx.orderId} className={`hover:bg-gray-50/70 transition-colors ${
+                            tx.orderStatus === 'cancelled' || tx.orderStatus === 'refunded' ? 'opacity-60' : ''
+                          }`}>
+                            <td className="px-3 py-2.5">
+                              <a href={`/orders/${tx.orderNo}`} target="_blank" rel="noreferrer"
+                                className="font-mono text-[#06038d] hover:underline text-xs">
+                                {tx.orderNo}
+                              </a>
+                            </td>
+                            <td className="px-3 py-2.5 max-w-[160px]">
+                              <p className="truncate text-gray-800 font-medium" title={tx.listingTitle}>{tx.listingTitle}</p>
+                              <p className="text-gray-400">×{tx.quantity}</p>
+                            </td>
+                            <td className="px-3 py-2.5">
+                              <p className="text-gray-800 font-medium">{tx.buyerName}</p>
+                              <p className="text-gray-400 truncate max-w-[100px]" title={tx.buyerEmail}>{tx.buyerEmail}</p>
+                            </td>
+                            <td className="px-3 py-2.5 text-gray-700">{tx.sellerName}</td>
+                            <td className="px-3 py-2.5 text-center">
+                              <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${
+                                tx.sellerType === 'platform' ? 'bg-[#06038d]/10 text-[#06038d]' : 'bg-purple-50 text-purple-700'
+                              }`}>
+                                {tx.sellerType === 'platform' ? '平台' : 'C2C'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-center">
+                              <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${
+                                tx.paymentMethod === 'stripe' ? 'bg-indigo-50 text-indigo-700' : 'bg-cyan-50 text-cyan-700'
+                              }`}>
+                                {tx.paymentMethod === 'stripe' ? 'Stripe' : '支付寶'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-center">
+                              <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${s.cls}`}>{s.label}</span>
+                            </td>
+                            <td className="px-3 py-2.5 text-right font-semibold text-gray-900">HKD {fmtHkd(tx.subtotalHkd)}</td>
+                            <td className="px-3 py-2.5 text-right bg-emerald-50/30">
+                              <span className="font-bold text-emerald-700">HKD {fmtHkd(tx.platformIncomeHkd)}</span>
+                            </td>
+                            <td className="px-3 py-2.5 text-right text-amber-700 font-medium">
+                              {tx.sellerType === 'platform' ? <span className="text-gray-300">—</span> : `HKD ${fmtHkd(tx.sellerReceivableHkd)}`}
+                            </td>
+                            <td className="px-3 py-2.5 text-gray-500">
+                              {tx.paidAt ? new Date(tx.paidAt).toLocaleDateString('zh-HK', { month: 'short', day: 'numeric' }) : new Date(tx.createdAt).toLocaleDateString('zh-HK', { month: 'short', day: 'numeric' })}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Pagination */}
+                {txDetailData.total > 100 && (
+                  <div className="flex items-center justify-between pt-2">
+                    <p className="text-xs text-gray-500">共 {txDetailData.total} 筆 · 每頁 100 筆</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" disabled={txDetailPage <= 1} onClick={() => setTxDetailPage(p => p - 1)}>上一頁</Button>
+                      <Button size="sm" variant="outline" disabled={txDetailPage * 100 >= txDetailData.total} onClick={() => setTxDetailPage(p => p + 1)}>下一頁</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+            <Button
+              size="sm" variant="outline"
+              className="border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white"
+              disabled={!txDetailData || txDetailData.rows.length === 0}
+              onClick={() => {
+                if (!txDetailData) return;
+                const rows = txDetailData.rows.map(tx => ({
+                  '訂單號': tx.orderNo,
+                  '商品名稱': tx.listingTitle,
+                  '數量': tx.quantity,
+                  '買家姓名': tx.buyerName,
+                  '買家 Email': tx.buyerEmail,
+                  '賣家': tx.sellerName,
+                  '類型': tx.sellerType === 'platform' ? '平台直售' : 'C2C',
+                  '付款方式': tx.paymentMethod === 'stripe' ? 'Stripe' : '支付寶 HK',
+                  '訂單狀態': tx.orderStatus,
+                  '交易金額 (HKD)': tx.subtotalHkd.toFixed(2),
+                  '平台收入 (HKD)': tx.platformIncomeHkd.toFixed(2),
+                  '手續費 (HKD)': tx.platformFeeHkd.toFixed(2),
+                  '賣家應收 (HKD)': tx.sellerType === 'platform' ? '' : tx.sellerReceivableHkd.toFixed(2),
+                  '付款時間': tx.paidAt ? new Date(tx.paidAt).toLocaleString('zh-HK') : '',
+                  '下單時間': new Date(tx.createdAt).toLocaleString('zh-HK'),
+                }));
+                exportToCSV(rows, `BOXIUM交易明細_${txDetailMonth}_${new Date().toISOString().slice(0,10)}.csv`);
+              }}
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5" />匯出本月 CSV
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setTxDetailMonth(null)}>關閉</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Audit Footer ──────────────────────────────────── */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
