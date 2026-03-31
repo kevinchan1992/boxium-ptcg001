@@ -6802,3 +6802,9 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復資料庫 UNIQUE INDEX：加入 sourcePosition 欄位，允許同日同價多筆交易
 - [x] 執行 SQL migration：ALTER TABLE priceHistory ADD COLUMN sourcePosition，重建 UNIQUE INDEX
 - [x] TypeScript 0 錯誤，financial-pdf-service.test.ts 9 項測試全部通過
+
+## ✅ PDF Content-Disposition 標頭修復
+
+- [x] 修復 Content-Disposition header 中的中文字符問題（HTTP header 不允許非 ASCII 字符）
+- [x] 改用 RFC 5987 編碼：`filename="BOXIUM_Financial_Report_DATE.pdf"; filename*=UTF-8''BOXIUM_%E8%B2%A1%E5%8B%99%E5%A0%B1%E5%91%8A_DATE.pdf`
+- [x] TypeScript 0 錯誤

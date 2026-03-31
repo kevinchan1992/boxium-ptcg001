@@ -1181,7 +1181,9 @@ async function startServer() {
       const pdfBuffer = await generateFinancialReportPdf(report, months);
       const dateStr = new Date().toISOString().split('T')[0];
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="BOXIUM_財務報告_${dateStr}.pdf"`);
+      const asciiFilename = `BOXIUM_Financial_Report_${dateStr}.pdf`;
+      const utf8Filename = encodeURIComponent(`BOXIUM_財務報告_${dateStr}.pdf`);
+      res.setHeader('Content-Disposition', `attachment; filename="${asciiFilename}"; filename*=UTF-8''${utf8Filename}`);
       res.send(pdfBuffer);
     } catch (err: any) {
       const errMsg = err?.message || String(err);
