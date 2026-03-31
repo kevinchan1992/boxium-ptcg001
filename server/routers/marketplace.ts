@@ -412,7 +412,7 @@ export const marketplaceRouter = router({
         cancel_url: `${origin}/orders`,
         allow_promotion_codes: true,
       });
-      await updateMarketplaceOrder(order.id, { stripeSessionId: session.id });
+      await updateMarketplaceOrder(order.id, { stripeSessionId: session.id, paymentMethod: "stripe" });
       return { checkoutUrl: session.url! };
     }),
 

@@ -33,9 +33,11 @@ type VerifyResult = {
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
-function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listingId?: number | null; amount: string }) {
+function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShippingAddress }: { orderId: number; listingId?: number | null; amount: string; paymentMethod?: string; hasShippingAddress?: boolean }) {
   const [open, setOpen] = useState(false);
-  const [alipayStep, setAlipayStep] = useState<"select" | "qr" | "shipping" | "upload" | "done">("select");
+  // If order already has alipay_hk selected, start at qr step directly
+  const initialStep = paymentMethod === "alipay_hk" ? "qr" : "select";
+  const [alipayStep, setAlipayStep] = useState<"select" | "qr" | "shipping" | "upload" | "done">(initialStep);
   const [proofUrl, setProofUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -96,11 +98,11 @@ function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listi
   const canSubmitProof = proofUrl && verifyResult?.verified === true;
   const isPending = getCheckoutMutation.isPending || switchToAlipayMutation.isPending;
 
-  const resetAndClose = () => { setOpen(false); setAlipayStep("select"); setProofUrl(""); setVerifyResult(null); setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港" }); };
+  const resetAndClose = () => { setOpen(false); setAlipayStep(initialStep); setProofUrl(""); setVerifyResult(null); setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港" }); };
 
   return (
     <>
-      <Button className="text-white font-bold" style={{ backgroundColor: "#06038d" }} onClick={() => { setAlipayStep("select"); setOpen(true); }}>
+      <Button className="text-white font-bold" style={{ backgroundColor: "#06038d" }} onClick={() => { setAlipayStep(initialStep); setOpen(true); }}>
         <CreditCard className="w-4 h-4 mr-2" />前往付款
       </Button>
 
@@ -175,8 +177,8 @@ function PayOrderButton({ orderId, listingId, amount }: { orderId: number; listi
                 </div>
                 <p className="text-amber-600 mt-1">⚠️ 請務必在支付寶備注欄填寫以上編號，方便核對付款</p>
               </div>
-              <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => setAlipayStep("shipping")}>
-                我已完成付款，填寫收貨地址
+              <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => setAlipayStep(hasShippingAddress ? "upload" : "shipping")}>
+                {hasShippingAddress ? "我已完成付款，上傳截圖" : "我已完成付款，填寫收貨地址"}
               </Button>
             </div>
           )}
@@ -1002,6 +1004,8 @@ export default function OrderDetail() {
                 orderId={order.id}
                 listingId={order.listingId}
                 amount={order.subtotalHkd as string ?? "0"}
+                paymentMethod={order.paymentMethod ?? undefined}
+                hasShippingAddress={!!(order as any).shippingAddress}
               />
               <Button
                 size="sm"
