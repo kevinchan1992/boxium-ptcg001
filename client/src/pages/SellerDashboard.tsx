@@ -589,16 +589,16 @@ export default function SellerDashboard() {
     undefined, { enabled: !!sellerProfile || isAdmin }
   );
   const { data: myOrders } = trpc.marketplace.getMySellerOrders.useQuery(
-    undefined, { enabled: !!sellerProfile }
+    undefined, { enabled: !!sellerProfile || isAdmin }
   );
   const { data: salesStats } = trpc.marketplace.getSellerSalesStats.useQuery(
-    undefined, { enabled: !!sellerProfile }
+    undefined, { enabled: !!sellerProfile || isAdmin }
   );
   const { data: myOffers } = trpc.marketplace.getMyOffers.useQuery(
     undefined, { enabled: !!sellerProfile }
   );
   const { data: sellerOffers } = trpc.marketplace.getSellerOffers.useQuery(
-    undefined, { enabled: !!sellerProfile, refetchInterval: 60000 }
+    undefined, { enabled: !!sellerProfile || isAdmin, refetchInterval: 60000 }
   );
   const pendingSellerOffersCount = sellerOffers?.filter((o: any) => o.status === 'pending').length ?? 0;
   // 待確認訂單：截圖已提交待審核、支付寶待確認、待付款狀態
