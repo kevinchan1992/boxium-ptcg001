@@ -6808,3 +6808,13 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復 Content-Disposition header 中的中文字符問題（HTTP header 不允許非 ASCII 字符）
 - [x] 改用 RFC 5987 編碼：`filename="BOXIUM_Financial_Report_DATE.pdf"; filename*=UTF-8''BOXIUM_%E8%B2%A1%E5%8B%99%E5%A0%B1%E5%91%8A_DATE.pdf`
 - [x] TypeScript 0 錯誤
+
+## 🔧 SNKRDUNK 批量成交自動偵測（isSuspectedBulk）
+
+- [x] 資料庫 migration：priceHistory 加入 isSuspectedBulk 欄位（boolean, default false）
+- [x] 實作 computeMedianJpyPrice() 函數：查詢同卡同評級過去 30 天的中位數（server/db.ts）
+- [x] 在 persistentSnkrdunkBatchUpdate.ts batchInsert 時自動計算並標記 isSuspectedBulk（超過中位數 4 倍）
+- [x] 對現有資料庫記錄執行回溯標記（SQL UPDATE + backfillSuspectedBulk.mjs，231,243 筆中標記 333 筆）
+- [x] 修改參考價格計算（PSA10 均價/最低/最高）排除 isSuspectedBulk=true 的記錄（db.ts 多處查詢）
+- [x] 在卡牌詳情頁的 SNKRDUNK 成交歷史表格中，對 isSuspectedBulk=true 的記錄顯示「⚠ 可能為批量成交」警告標記（CardDetail.tsx）
+- [x] 更新 vitest 測試（server/suspectedBulk.test.ts，14 項測試全部通過）

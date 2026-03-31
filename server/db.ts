@@ -58,7 +58,7 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     const latestPrices = await db
       .select({ cardId: priceHistory.cardId, price: priceHistory.price, soldAt: priceHistory.soldAt })
       .from(priceHistory)
-      .where(and(inArray(priceHistory.cardId, cardIds), eq(priceHistory.source, 'snkrdunk'), eq(priceHistory.grade, 'PSA10')))
+      .where(and(inArray(priceHistory.cardId, cardIds), eq(priceHistory.source, 'snkrdunk'), eq(priceHistory.grade, 'PSA10'), eq(priceHistory.isSuspectedBulk, false)))
       .orderBy(desc(priceHistory.soldAt));
 
     const priceMap = new Map<number, number>();
@@ -114,7 +114,8 @@ export async function searchCards(query: string, limit: number = 20, offset: num
       and(
         inArray(priceHistory.cardId, cardIds),
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10')
+        eq(priceHistory.grade, 'PSA10'),
+        eq(priceHistory.isSuspectedBulk, false)
       )
     )
     .orderBy(desc(priceHistory.soldAt));
@@ -179,6 +180,42 @@ export async function getCardBySnkrdunkId(snkrdunkId: string) {
  * Get average price for a card by grade/condition
  * Returns average of latest 10 records within 6 months for the specified grade
  */
+/**
+ * Compute the median JPY price for a card+grade over the past 30 days.
+ * Used to detect bulk/lot transactions (isSuspectedBulk detection).
+ */
+export async function computeMedianJpyPrice(cardId: number, grade: string): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const records = await db
+    .select({ jpyPrice: priceHistory.jpyPrice })
+    .from(priceHistory)
+    .where(
+      and(
+        eq(priceHistory.cardId, cardId),
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.grade, grade),
+        gte(priceHistory.soldAt, thirtyDaysAgo),
+        eq(priceHistory.isSuspectedBulk, false)
+      )
+    )
+    .orderBy(asc(priceHistory.jpyPrice));
+
+  const prices = records
+    .map(r => r.jpyPrice)
+    .filter((p): p is number => p !== null && p > 0);
+
+  if (prices.length === 0) return null;
+
+  const mid = Math.floor(prices.length / 2);
+  return prices.length % 2 === 0
+    ? (prices[mid - 1] + prices[mid]) / 2
+    : prices[mid];
+}
+
 export async function getCardPriceByGrade(cardId: number, grade: string): Promise<{ avgPrice: number | null; recordCount: number; grade: string }> {
   const db = await getDb();
   if (!db) return { avgPrice: null, recordCount: 0, grade };
@@ -186,7 +223,7 @@ export async function getCardPriceByGrade(cardId: number, grade: string): Promis
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-  // Get latest 10 records for this grade within 6 months
+  // Get latest 10 records for this grade within 6 months (exclude suspected bulk transactions)
   const records = await db
     .select({ price: priceHistory.price, soldAt: priceHistory.soldAt })
     .from(priceHistory)
@@ -195,7 +232,8 @@ export async function getCardPriceByGrade(cardId: number, grade: string): Promis
         eq(priceHistory.cardId, cardId),
         eq(priceHistory.source, 'snkrdunk'),
         eq(priceHistory.grade, grade),
-        gte(priceHistory.soldAt, sixMonthsAgo)
+        gte(priceHistory.soldAt, sixMonthsAgo),
+        eq(priceHistory.isSuspectedBulk, false)
       )
     )
     .orderBy(desc(priceHistory.soldAt))
@@ -210,7 +248,8 @@ export async function getCardPriceByGrade(cardId: number, grade: string): Promis
         and(
           eq(priceHistory.cardId, cardId),
           eq(priceHistory.source, 'snkrdunk'),
-          eq(priceHistory.grade, grade)
+          eq(priceHistory.grade, grade),
+          eq(priceHistory.isSuspectedBulk, false)
         )
       )
       .orderBy(desc(priceHistory.soldAt))
@@ -1599,7 +1638,8 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
         eq(priceHistory.source, "snkrdunk"),
         eq(priceHistory.grade, "PSA10"),
         gte(priceHistory.soldAt, fourteenDaysAgo),
-        sql`${priceHistory.soldAt} IS NOT NULL`
+        sql`${priceHistory.soldAt} IS NOT NULL`,
+        eq(priceHistory.isSuspectedBulk, false)
       )
     )
     .orderBy(priceHistory.cardId, priceHistory.soldAt);
@@ -2055,7 +2095,8 @@ export async function getTrendingByPriceDecrease(options: {
         lte(priceHistory.soldAt, now),
         sql`${priceHistory.soldAt} IS NOT NULL`,
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10')
+        eq(priceHistory.grade, 'PSA10'),
+        eq(priceHistory.isSuspectedBulk, false)
       )
     )
     .orderBy(asc(priceHistory.soldAt));

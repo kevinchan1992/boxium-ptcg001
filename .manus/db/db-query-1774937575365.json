@@ -1,0 +1,9 @@
+{
+  "query": "\nUPDATE priceHistory ph\nJOIN (\n  SELECT \n    cardId,\n    grade,\n    AVG(jpyPrice) as avgPrice,\n    COUNT(*) as cnt\n  FROM priceHistory\n  WHERE source = 'snkrdunk' AND productType = 'single_card' AND jpyPrice IS NOT NULL\n  GROUP BY cardId, grade\n) stats ON ph.cardId = stats.cardId AND (ph.grade = stats.grade OR (ph.grade IS NULL AND stats.grade IS NULL))\nSET ph.isSuspectedBulk = CASE \n  WHEN stats.cnt >= 5 AND ph.jpyPrice > 4 * stats.avgPrice THEN 1\n  ELSE 0\nEND\nWHERE ph.source = 'snkrdunk' AND ph.productType = 'single_card' AND ph.jpyPrice IS NOT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nUPDATE priceHistory ph\nJOIN (\n  SELECT \n    cardId,\n    grade,\n    AVG(jpyPrice) as avgPrice,\n    COUNT(*) as cnt\n  FROM priceHistory\n  WHERE source = 'snkrdunk' AND productType = 'single_card' AND jpyPrice IS NOT NULL\n  GROUP BY cardId, grade\n) stats ON ph.cardId = stats.cardId AND (ph.grade = stats.grade OR (ph.grade IS NULL AND stats.grade IS NULL))\nSET ph.isSuspectedBulk = CASE \n  WHEN stats.cnt >= 5 AND ph.jpyPrice > 4 * stats.avgPrice THEN 1\n  ELSE 0\nEND\nWHERE ph.source = 'snkrdunk' AND ph.productType = 'single_card' AND ph.jpyPrice IS NOT NULL;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2547
+}

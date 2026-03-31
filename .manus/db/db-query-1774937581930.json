@@ -1,0 +1,15 @@
+{
+  "query": "SELECT \n  COUNT(*) as total, \n  SUM(CASE WHEN isSuspectedBulk = 1 THEN 1 ELSE 0 END) as suspected,\n  ROUND(SUM(CASE WHEN isSuspectedBulk = 1 THEN 1 ELSE 0 END) / COUNT(*) * 100, 2) as pct\nFROM priceHistory \nWHERE source = 'snkrdunk' AND productType = 'single_card';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT \n  COUNT(*) as total, \n  SUM(CASE WHEN isSuspectedBulk = 1 THEN 1 ELSE 0 END) as suspected,\n  ROUND(SUM(CASE WHEN isSuspectedBulk = 1 THEN 1 ELSE 0 END) / COUNT(*) * 100, 2) as pct\nFROM priceHistory \nWHERE source = 'snkrdunk' AND productType = 'single_card';",
+  "rows": [
+    {
+      "total": "231243",
+      "suspected": "333",
+      "pct": "0.14"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tsuspected\tpct\n231243\t333\t0.14\n",
+  "stderr": "",
+  "execution_time_ms": 276
+}

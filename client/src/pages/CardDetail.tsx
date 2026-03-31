@@ -485,8 +485,9 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   {activePriceHistory.map((item, index) => {
                     const displayValue = isSealedProduct ? (item.quantity || '-') : (item.quantity || item.grade);
                     const isEmpty = !displayValue;
+                    const isBulk = !!(item as any).isSuspectedBulk;
                     return (
-                      <tr key={index} className={`border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-colors ${index % 2 === 0 ? 'bg-zinc-900/30' : 'bg-zinc-900/60'}`}>
+                      <tr key={index} className={`border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-colors ${isBulk ? 'opacity-60' : ''} ${index % 2 === 0 ? 'bg-zinc-900/30' : 'bg-zinc-900/60'}`}>
                         <td className="py-2.5 px-4 text-zinc-400 text-xs sm:text-sm">
                           {item.soldAt ? formatDate(item.soldAt) : "N/A"}
                         </td>
@@ -500,8 +501,16 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                               {displayValue}
                             </span>
                           )}
+                          {isBulk && (
+                            <span
+                              className="ml-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-400 text-[10px] border border-amber-700/40 cursor-help"
+                              title={t("cardDetail.suspectedBulkTooltip", "此成交價格異常偏高，可能為批量購入（多張合購），已排除於參考均價計算之外")}
+                            >
+                              ⚠ {t("cardDetail.suspectedBulk", "可能為批量成交")}
+                            </span>
+                          )}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-semibold text-[#FFD600] text-xs sm:text-sm">
+                        <td className={`py-2.5 px-4 text-right font-semibold text-xs sm:text-sm ${isBulk ? 'text-zinc-500 line-through' : 'text-[#FFD600]'}`}>
                           {formatCurrency(item.price)}
                         </td>
                       </tr>

@@ -200,17 +200,51 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
           listingUrl: product.sourceUrl,
         }));
         
+        // ─── Bulk purchase detection (isSuspectedBulk) ─────────────
+        // For single cards: compute 30-day median JPY price per grade,
+        // then flag any transaction exceeding 4× the median as a suspected bulk/lot.
+        // This prevents lot purchases (e.g., ¥65,000 for 8 cards) from skewing PSA10 averages.
+        const BULK_MULTIPLIER = 4;
+        const medianByGrade = new Map<string, number>();
+        if (productType === 'single_card') {
+          // Group existing non-bulk records by grade to compute per-grade medians
+          const gradeGroups = new Map<string, number[]>();
+          for (const rec of records) {
+            const g = rec.grade || 'unknown';
+            if (!gradeGroups.has(g)) gradeGroups.set(g, []);
+            gradeGroups.get(g)!.push(rec.jpyPrice as number);
+          }
+          for (const [grade, prices] of Array.from(gradeGroups.entries())) {
+            const sorted = [...prices].sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            const median = sorted.length % 2 === 0
+              ? (sorted[mid - 1] + sorted[mid]) / 2
+              : sorted[mid];
+            medianByGrade.set(grade, median);
+          }
+        }
+
+        // Apply isSuspectedBulk flag based on median threshold
+        const flaggedRecords = records.map(rec => {
+          if (productType !== 'single_card') return rec;
+          const grade = rec.grade || 'unknown';
+          const median = medianByGrade.get(grade);
+          const jpyPrice = rec.jpyPrice as number;
+          const isSuspectedBulk = !!(median && median > 0 && jpyPrice > BULK_MULTIPLIER * median);
+          return { ...rec, isSuspectedBulk };
+        });
+
         // Batch insert in chunks of 50 to avoid query size limits.
         // The UNIQUE INDEX (cardId, source, grade, soldAt, jpyPrice, sourcePosition) handles deduplication.
-        // onDuplicateKeyUpdate with a no-op silently skips already-inserted records (idempotent).
+        // onDuplicateKeyUpdate with isSuspectedBulk updates the flag on re-runs.
         const { sql } = await import('drizzle-orm');
-        for (let i = 0; i < records.length; i += 50) {
-          const chunk = records.slice(i, i + 50);
+        for (let i = 0; i < flaggedRecords.length; i += 50) {
+          const chunk = flaggedRecords.slice(i, i + 50);
           try {
             await database
               .insert(priceHistoryTable)
               .values(chunk)
-              .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+              .onDuplicateKeyUpdate({ set: { isSuspectedBulk: sql`VALUES(isSuspectedBulk)` } });
           } catch (insertErr: any) {
             // If batch fails, fall back to individual inserts with no-op dedup
             for (const record of chunk) {
@@ -218,7 +252,7 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
                 await database
                   .insert(priceHistoryTable)
                   .values(record)
-                  .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+                  .onDuplicateKeyUpdate({ set: { isSuspectedBulk: sql`VALUES(isSuspectedBulk)` } });
               } catch (e) {
                 // Skip silently
               }

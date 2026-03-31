@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COUNT(*) as total, SUM(CASE WHEN isSuspectedBulk = 1 THEN 1 ELSE 0 END) as suspected FROM priceHistory WHERE source = 'snkrdunk' AND productType = 'single_card';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT COUNT(*) as total, SUM(CASE WHEN isSuspectedBulk = 1 THEN 1 ELSE 0 END) as suspected FROM priceHistory WHERE source = 'snkrdunk' AND productType = 'single_card';",
+  "rows": [
+    {
+      "total": "231243",
+      "suspected": "141"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tsuspected\n231243\t141\n",
+  "stderr": "",
+  "execution_time_ms": 431
+}

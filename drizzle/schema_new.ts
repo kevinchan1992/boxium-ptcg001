@@ -120,6 +120,7 @@ export const priceHistory = mysqlTable("priceHistory", {
   sourcePosition: int("sourcePosition").default(0).notNull(), // Position in source API response (0-based); differentiates multiple same-day same-price transactions
   listingUrl: text("listingUrl"), // URL to the listing
   soldAt: timestamp("soldAt"), // Transaction timestamp
+  isSuspectedBulk: boolean("isSuspectedBulk").default(false).notNull(), // Auto-flagged: price exceeds 4x the 30-day median for same grade → likely a bulk/lot transaction
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   // UNIQUE index to prevent duplicate price history records
