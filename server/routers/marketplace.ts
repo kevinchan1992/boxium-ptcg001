@@ -570,19 +570,33 @@ export const marketplaceRouter = router({
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
       if (order.paymentMethod !== "alipay_hk") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不是支付寶 HK 付款" });
-      if (order.orderStatus === "cancelled") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已取消，無法上傳付款截圖" });
+      // Block only if already fully paid; allow resubmission on cancelled orders (buyer retrying payment)
       if (order.paymentStatus === "paid") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已付款確認，無需重複上傳" });
+      const isCancelledRetry = order.orderStatus === "cancelled";
 
       const buffer = Buffer.from(input.proofImageBase64, "base64");
       const key = `alipay-proofs/${order.orderNo}-${Date.now()}.jpg`;
       const { url } = await storagePut(key, buffer, input.mimeType);
-      // Save proof URL to database so it can be displayed in order detail page
-      await updateMarketplaceOrder(input.orderId, { alipayProofImageUrl: url, alipayProofSubmittedAt: new Date(), alipayReviewReminderSentAt: null });
+      // Save proof URL; if order was cancelled, reactivate it to pending_payment so Admin sees it again
+      const reactivateFields = isCancelledRetry ? {
+        orderStatus: 'pending_payment' as const,
+        paymentStatus: 'pending' as const,
+        alipayProofStatus: 'pending_review' as const,
+      } : {};
+      await updateMarketplaceOrder(input.orderId, {
+        alipayProofImageUrl: url,
+        alipayProofSubmittedAt: new Date(),
+        alipayReviewReminderSentAt: null,
+        ...reactivateFields,
+      });
       // Notify owner that a new Alipay HK payment proof has been submitted
-      notifyAdmin({
-        title: "📸 新支付寶 HK 付款截圖待核對",
-        content: `訂單 ${order.orderNo} 的買家已上傳支付寶 HK 付款截圖，請前往管理後台核對收款。\n金額：HKD ${order.subtotalHkd}\n前往核對：/admin/marketplace`,
-      }).catch(() => {});
+      const notifyTitle = isCancelledRetry
+        ? "🔄 買家重新提交支付寶 HK 截圖（訂單已重新激活）"
+        : "📸 新支付寶 HK 付款截圖待核對";
+      const notifyContent = isCancelledRetry
+        ? `訂單 ${order.orderNo} 原本已取消，買家重新上傳付款截圖，訂單已自動重新激活為「待付款」狀態，請前往管理後台核對收款。\n金額：HKD ${order.subtotalHkd}\n前往核對：/admin/marketplace`
+        : `訂單 ${order.orderNo} 的買家已上傳支付寶 HK 付款截圖，請前往管理後台核對收款。\n金額：HKD ${order.subtotalHkd}\n前往核對：/admin/marketplace`;
+      notifyAdmin({ title: notifyTitle, content: notifyContent }).catch(() => {});
       // Auto-trigger AI verification in background (non-blocking)
       const autoVerifyOrder = { ...order, alipayProofImageUrl: url };
       setImmediate(async () => {

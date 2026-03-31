@@ -1,0 +1,17 @@
+{
+  "query": "SELECT orderNo, orderStatus, paymentStatus, alipayProofStatus, alipayProofImageUrl FROM marketplaceOrders WHERE orderNo = 'BOXIUM-20260331-6461';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT orderNo, orderStatus, paymentStatus, alipayProofStatus, alipayProofImageUrl FROM marketplaceOrders WHERE orderNo = 'BOXIUM-20260331-6461';",
+  "rows": [
+    {
+      "orderNo": "BOXIUM-20260331-6461",
+      "orderStatus": "pending_payment",
+      "paymentStatus": "pending",
+      "alipayProofStatus": "pending_review",
+      "alipayProofImageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-proofs/resubmit-BOXIUM-20260331-6461-1774920703571.jpg"
+    }
+  ],
+  "messages": [],
+  "stdout": "orderNo\torderStatus\tpaymentStatus\talipayProofStatus\talipayProofImageUrl\nBOXIUM-20260331-6461\tpending_payment\tpending\tpending_review\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-proofs/resubmit-BOXIUM-20260331-6461-1774920703571.jpg\n",
+  "stderr": "",
+  "execution_time_ms": 366
+}
