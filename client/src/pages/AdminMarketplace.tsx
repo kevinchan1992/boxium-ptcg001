@@ -4223,8 +4223,9 @@ function SalesReportTab() {
               toast.loading('正在生成 PDF，請稍候...', { id: 'pdf-export' });
               const res = await fetch(url, { credentials: 'include' });
               if (!res.ok) {
-                const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-                throw new Error(err.error || `HTTP ${res.status}`);
+                const err = await res.json().catch(() => ({ error: 'Unknown error', detail: '' }));
+                const detail = err.detail ? ` (${err.detail})` : '';
+                throw new Error((err.error || `HTTP ${res.status}`) + detail);
               }
               const blob = await res.blob();
               const objectUrl = URL.createObjectURL(blob);

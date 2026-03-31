@@ -1183,9 +1183,12 @@ async function startServer() {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="BOXIUM_財務報告_${dateStr}.pdf"`);
       res.send(pdfBuffer);
-    } catch (err) {
-      console.error('[PDF] Error generating financial report:', err);
-      res.status(500).json({ error: 'Failed to generate PDF' });
+    } catch (err: any) {
+      const errMsg = err?.message || String(err);
+      const errStack = err?.stack?.split('\n').slice(0, 5).join(' | ') || '';
+      console.error('[PDF] Error generating financial report:', errMsg);
+      console.error('[PDF] Stack:', errStack);
+      res.status(500).json({ error: 'Failed to generate PDF', detail: errMsg });
     }
   });
 
