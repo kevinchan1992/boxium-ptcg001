@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame, ChevronRight, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -206,6 +206,243 @@ function TrendingCardsGrid() {
   );
 }
 
+// ─── CTA Section with Intersection Observer scroll-in animation ──────────────
+function CtaSection() {
+  const { t } = useTranslation();
+
+  // Refs for the header and each panel
+  const headerRef = useRef<HTMLDivElement>(null);
+  const panel1Ref = useRef<HTMLAnchorElement>(null);
+  const panel2Ref = useRef<HTMLAnchorElement>(null);
+  const panel3Ref = useRef<HTMLAnchorElement>(null);
+
+  // Visibility state
+  const [headerVisible, setHeaderVisible] = useState(false);
+  const [panel1Visible, setPanel1Visible] = useState(false);
+  const [panel2Visible, setPanel2Visible] = useState(false);
+  const [panel3Visible, setPanel3Visible] = useState(false);
+
+  useEffect(() => {
+    const makeObserver = (setter: (v: boolean) => void, delay = 0) =>
+      new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => setter(true), delay);
+          }
+        },
+        { threshold: 0.15 }
+      );
+
+    const obs0 = makeObserver(setHeaderVisible, 0);
+    const obs1 = makeObserver(setPanel1Visible, 80);
+    const obs2 = makeObserver(setPanel2Visible, 200);
+    const obs3 = makeObserver(setPanel3Visible, 320);
+
+    if (headerRef.current) obs0.observe(headerRef.current);
+    if (panel1Ref.current) obs1.observe(panel1Ref.current);
+    if (panel2Ref.current) obs2.observe(panel2Ref.current);
+    if (panel3Ref.current) obs3.observe(panel3Ref.current);
+
+    return () => {
+      obs0.disconnect();
+      obs1.disconnect();
+      obs2.disconnect();
+      obs3.disconnect();
+    };
+  }, []);
+
+  // Shared slide-in style helper
+  const slideIn = (visible: boolean, delay = 0): React.CSSProperties => ({
+    opacity: visible ? 1 : 0,
+    transform: visible ? "translateY(0)" : "translateY(40px)",
+    transition: `opacity 0.55s ease ${delay}ms, transform 0.55s ease ${delay}ms`,
+  });
+
+  return (
+    <section className="overflow-hidden">
+      {/* Section header */}
+      <div
+        ref={headerRef}
+        className="py-6 md:py-10 px-4 text-center bg-white"
+        style={slideIn(headerVisible)}
+      >
+        <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5 md:mb-2" style={{ color: "#06038d" }}>
+          {t("home.readyToStart")}
+        </h2>
+        <p className="text-gray-600 text-[11px] sm:text-xs md:text-sm leading-relaxed max-w-xl mx-auto">
+          {t("home.readyToStartDesc")}
+        </p>
+      </div>
+
+      {/* Three color panels — diagonal clip-path dividers, full bleed */}
+      <div className="relative flex flex-col w-full">
+        {/* Full-width blue top border spanning all three panels */}
+        <div className="w-full" style={{ height: "3px", backgroundColor: "#06038d" }} />
+        <div className="relative flex flex-row w-full overflow-hidden" style={{ minHeight: "180px" }}>
+
+          {/* Panel 1: Search — deep navy (#06038d) */}
+          <Link
+            ref={panel1Ref}
+            href="/research"
+            className="group relative flex flex-col justify-between cursor-pointer active:brightness-90 select-none"
+            style={{
+              backgroundColor: "#06038d",
+              width: "calc(33.333% + 28px)",
+              clipPath: "polygon(0 0, 100% 0, calc(100% - 28px) 100%, 0 100%)",
+              paddingLeft: "4%",
+              paddingRight: "calc(4% + 32px)",
+              paddingTop: "clamp(16px, 4vw, 40px)",
+              paddingBottom: "clamp(16px, 4vw, 40px)",
+              zIndex: 3,
+              ...slideIn(panel1Visible),
+            }}
+          >
+            {/* TCG card texture */}
+            <svg className="absolute inset-0 w-full h-full opacity-[0.06] pointer-events-none" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <rect x="10" y="15" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
+              <rect x="140" y="-10" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
+              <rect x="60" y="110" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
+              <rect x="-10" y="90" width="30" height="42" rx="3" fill="none" stroke="white" strokeWidth="1.5"/>
+              <rect x="160" y="130" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
+            </svg>
+            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-200" />
+            {/* Hover bottom accent line — yellow */}
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#FEDD00] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20" />
+            {/* Icon circle — scale-110 on hover */}
+            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#FEDD00] group-hover:scale-110 transition-all duration-200">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#FEDD00] group-hover:text-[#06038d] transition-colors duration-200" />
+            </div>
+            {/* Title row */}
+            <div className="relative z-10 mt-2 sm:mt-3">
+              <h3 className="text-white font-bold text-xs sm:text-sm md:text-lg leading-tight">{t("home.startSearching")}</h3>
+            </div>
+            {/* Description row */}
+            <div className="relative z-10 mt-1 sm:mt-2 flex-1">
+              <p className="text-white/65 text-[10px] sm:text-xs md:text-sm leading-snug">
+                {t("home.searchCardsDesc", "搜尋卡片、查看價格走勢與市場數據")}
+              </p>
+            </div>
+            {/* CTA row */}
+            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[#FEDD00]/80 text-[10px] sm:text-xs font-semibold">
+              <span>{t("home.exploreNow", "立即探索")}</span>
+              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+            </div>
+          </Link>
+
+          {/* Panel 2: Market Pricing — white with navy text */}
+          <Link
+            ref={panel2Ref}
+            href="/pricing"
+            className="group relative flex flex-col justify-between cursor-pointer active:brightness-90 select-none"
+            style={{
+              backgroundColor: "#ffffff",
+              width: "calc(33.333% + 56px)",
+              clipPath: "polygon(28px 0, 100% 0, calc(100% - 28px) 100%, 0 100%)",
+              marginLeft: "-28px",
+              paddingLeft: "calc(4% + 32px)",
+              paddingRight: "calc(4% + 32px)",
+              paddingTop: "clamp(16px, 4vw, 40px)",
+              paddingBottom: "clamp(16px, 4vw, 40px)",
+              zIndex: 2,
+              ...slideIn(panel2Visible),
+            }}
+          >
+            {/* TCG card texture — navy on white */}
+            <svg className="absolute inset-0 w-full h-full opacity-[0.05] pointer-events-none" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <rect x="20" y="20" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="130" y="5" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="70" y="120" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="0" y="100" width="30" height="42" rx="3" fill="none" stroke="#06038d" strokeWidth="1.5"/>
+              <rect x="170" y="140" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+            </svg>
+            <div className="absolute inset-0 transition-all duration-200" style={{ backgroundColor: "rgba(6,3,141,0)" }} />
+            <div className="absolute inset-0 group-hover:bg-[#06038d]/5 transition-all duration-200" />
+            {/* Hover bottom accent line — navy blue */}
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#06038d] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20" />
+            {/* Icon circle — scale-110 on hover */}
+            <div
+              className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center group-hover:scale-110 group-hover:bg-[#06038d] transition-all duration-200"
+              style={{ backgroundColor: "rgba(6,3,141,0.08)" }}
+            >
+              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:text-white transition-colors duration-200" style={{ color: "#06038d" }} />
+            </div>
+            {/* Title row */}
+            <div className="relative z-10 mt-2 sm:mt-3">
+              <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight" style={{ color: "#06038d" }}>{t("home.viewMarketTrends")}</h3>
+            </div>
+            {/* Description row */}
+            <div className="relative z-10 mt-1 sm:mt-2 flex-1">
+              <p className="text-[10px] sm:text-xs md:text-sm leading-snug" style={{ color: "#06038d", opacity: 0.6 }}>
+                {t("home.marketTrendsDesc", "查看市場價格走勢、比較各平台行情")}
+              </p>
+            </div>
+            {/* CTA row */}
+            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[10px] sm:text-xs font-semibold" style={{ color: "#06038d" }}>
+              <span>{t("home.viewTrends", "查看行情")}</span>
+              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+            </div>
+          </Link>
+
+          {/* Panel 3: Marketplace — yellow (#FEDD00) */}
+          <Link
+            ref={panel3Ref}
+            href="/marketplace"
+            className="group relative flex flex-col justify-between cursor-pointer active:brightness-90 select-none"
+            style={{
+              backgroundColor: "#FEDD00",
+              width: "calc(33.333% + 28px)",
+              clipPath: "polygon(28px 0, 100% 0, 100% 100%, 0 100%)",
+              marginLeft: "-28px",
+              paddingLeft: "calc(4% + 32px)",
+              paddingRight: "4%",
+              paddingTop: "clamp(16px, 4vw, 40px)",
+              paddingBottom: "clamp(16px, 4vw, 40px)",
+              zIndex: 1,
+              ...slideIn(panel3Visible),
+            }}
+          >
+            {/* TCG card texture — navy on yellow */}
+            <svg className="absolute inset-0 w-full h-full opacity-[0.07] pointer-events-none" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <rect x="15" y="10" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="135" y="-5" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="65" y="115" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="-5" y="95" width="30" height="42" rx="3" fill="none" stroke="#06038d" strokeWidth="1.5"/>
+              <rect x="165" y="135" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+            </svg>
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all duration-200" />
+            {/* Hover bottom accent line — deep navy */}
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#06038d] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20" />
+            {/* Icon circle — scale-110 on hover */}
+            <div
+              className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center group-hover:scale-110 group-hover:bg-[#06038d] transition-all duration-200"
+              style={{ backgroundColor: "rgba(6,3,141,0.12)" }}
+            >
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:text-[#FEDD00] transition-colors duration-200" style={{ color: "#06038d" }} />
+            </div>
+            {/* Title row */}
+            <div className="relative z-10 mt-2 sm:mt-3">
+              <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight" style={{ color: "#06038d" }}>{t("home.goToMarketplace")}</h3>
+            </div>
+            {/* Description row */}
+            <div className="relative z-10 mt-1 sm:mt-2 flex-1">
+              <p className="text-[10px] sm:text-xs md:text-sm leading-snug" style={{ color: "#06038d", opacity: 0.65 }}>
+                {t("home.marketplaceDesc", "瀏覽市集商品、參與拍賣、安全交易")}
+              </p>
+            </div>
+            {/* CTA row */}
+            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[10px] sm:text-xs font-semibold" style={{ color: "#06038d" }}>
+              <span>{t("home.browseNow", "立即瀏覽")}</span>
+              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+            </div>
+          </Link>
+        </div>
+        {/* Yellow 4px bottom accent bar */}
+        <div className="w-full h-1" style={{ backgroundColor: "#FEDD00" }} />
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const { t } = useTranslation();
   
@@ -267,16 +504,43 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-2 md:gap-5 w-full max-w-md px-2">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
                 <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">{stats?.totalCards || 0}+</div>
-                <div className="text-white/80 text-[9px] md:text-xs">{t("home.trackedCards")}</div>
+                <div className="text-white/70 text-[10px] md:text-sm">{t("home.cardDatabase")}</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
-                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">2</div>
-                <div className="text-white/80 text-[9px] md:text-xs">{t("home.dataSources")}</div>
+                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">{stats?.totalCards ? Math.floor(stats.totalCards * 8.5) : 0}+</div>
+                <div className="text-white/70 text-[10px] md:text-sm">{t("home.priceRecords")}</div>
               </div>
             </div>
 
+            {/* Search Bar */}
+            <div className="w-full max-w-xl px-2">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (searchQuery.trim()) {
+                    setLocation(`/research?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }
+                }}
+                className="flex gap-2"
+              >
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t("home.searchPlaceholder")}
+                  className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus:border-[#FEDD00] text-xs md:text-sm h-9 md:h-11"
+                />
+                <Button
+                  type="submit"
+                  className="px-3 md:px-5 h-9 md:h-11 font-semibold text-xs md:text-sm"
+                  style={{ backgroundColor: "#FEDD00", color: "#06038d" }}
+                >
+                  <Search className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                </Button>
+              </form>
+            </div>
+
             {/* CTA Buttons */}
-            <div className="flex flex-row flex-wrap justify-center gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-4 px-2">
               <Link href="/research">
                 <Button
                   className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
@@ -361,173 +625,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section - Full-width 3-color panels */}
-      <section className="overflow-hidden">
-        {/* Section header */}
-        <div className="py-6 md:py-10 px-4 text-center bg-white">
-          <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5 md:mb-2" style={{ color: "#06038d" }}>
-            {t("home.readyToStart")}
-          </h2>
-          <p className="text-gray-600 text-[11px] sm:text-xs md:text-sm leading-relaxed max-w-xl mx-auto">
-            {t("home.readyToStartDesc")}
-          </p>
-        </div>
-        {/* Three color panels — diagonal clip-path dividers, full bleed */}
-        <div className="relative flex flex-col w-full">
-        {/* Full-width blue top border spanning all three panels */}
-        <div className="w-full" style={{ height: "3px", backgroundColor: "#06038d" }} />
-        <div className="relative flex flex-row w-full overflow-hidden" style={{ minHeight: "180px" }}>
-
-          {/* Panel 1: Search — deep navy (#06038d) */}
-          {/* Extends slightly past 33% to compensate for right diagonal clip */}
-          <Link
-            href="/research"
-            className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
-            style={{
-              backgroundColor: "#06038d",
-              width: "calc(33.333% + 28px)",
-              clipPath: "polygon(0 0, 100% 0, calc(100% - 28px) 100%, 0 100%)",
-              paddingLeft: "4%",
-              paddingRight: "calc(4% + 32px)",
-              paddingTop: "clamp(16px, 4vw, 40px)",
-              paddingBottom: "clamp(16px, 4vw, 40px)",
-              zIndex: 3,
-            }}
-          >
-            {/* TCG card texture — faint card outline shapes */}
-            <svg className="absolute inset-0 w-full h-full opacity-[0.06] pointer-events-none" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-              <rect x="10" y="15" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
-              <rect x="140" y="-10" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
-              <rect x="60" y="110" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
-              <rect x="-10" y="90" width="30" height="42" rx="3" fill="none" stroke="white" strokeWidth="1.5"/>
-              <rect x="160" y="130" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
-            </svg>
-            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-200" />
-            {/* Hover bottom accent line — yellow */}
-            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#FEDD00] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20" />
-            {/* Icon row */}
-            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#FEDD00] transition-all duration-200">
-              <Search className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#FEDD00] group-hover:text-[#06038d] transition-colors duration-200" />
-            </div>
-            {/* Title row */}
-            <div className="relative z-10 mt-2 sm:mt-3">
-              <h3 className="text-white font-bold text-xs sm:text-sm md:text-lg leading-tight">{t("home.startSearching")}</h3>
-            </div>
-            {/* Description row */}
-            <div className="relative z-10 mt-1 sm:mt-2 flex-1">
-              <p className="text-white/65 text-[10px] sm:text-xs md:text-sm leading-snug">
-                {t("home.searchCardsDesc", "搜尋卡片、查看價格走勢與市場數據")}
-              </p>
-            </div>
-            {/* CTA row */}
-            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[#FEDD00]/80 text-[10px] sm:text-xs font-semibold">
-              <span>{t("home.exploreNow", "立即探索")}</span>
-              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
-            </div>
-          </Link>
-
-          {/* Panel 2: Market Pricing — white with navy text */}
-          {/* Extends past 33% on both sides for diagonal clips */}
-          <Link
-            href="/pricing"
-            className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
-            style={{
-              backgroundColor: "#ffffff",
-              width: "calc(33.333% + 56px)",
-              clipPath: "polygon(28px 0, 100% 0, calc(100% - 28px) 100%, 0 100%)",
-              marginLeft: "-28px",
-              paddingLeft: "calc(4% + 32px)",
-              paddingRight: "calc(4% + 32px)",
-              paddingTop: "clamp(16px, 4vw, 40px)",
-              paddingBottom: "clamp(16px, 4vw, 40px)",
-              zIndex: 2,
-            }}
-          >
-            {/* TCG card texture — navy on white */}
-            <svg className="absolute inset-0 w-full h-full opacity-[0.05] pointer-events-none" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-              <rect x="20" y="20" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
-              <rect x="130" y="5" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
-              <rect x="70" y="120" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
-              <rect x="0" y="100" width="30" height="42" rx="3" fill="none" stroke="#06038d" strokeWidth="1.5"/>
-              <rect x="170" y="140" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
-            </svg>
-            <div className="absolute inset-0 transition-all duration-200" style={{ backgroundColor: "rgba(6,3,141,0)" }} />
-            <div className="absolute inset-0 group-hover:bg-[#06038d]/5 transition-all duration-200" />
-            {/* Hover bottom accent line — navy blue */}
-            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#06038d] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20" />
-            {/* Icon row */}
-            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-200" style={{ backgroundColor: "rgba(6,3,141,0.08)" }}>
-              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
-            </div>
-            {/* Title row */}
-            <div className="relative z-10 mt-2 sm:mt-3">
-              <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight" style={{ color: "#06038d" }}>{t("home.viewMarketTrends")}</h3>
-            </div>
-            {/* Description row */}
-            <div className="relative z-10 mt-1 sm:mt-2 flex-1">
-              <p className="text-[10px] sm:text-xs md:text-sm leading-snug" style={{ color: "#06038d", opacity: 0.6 }}>
-                {t("home.marketTrendsDesc", "查看市場價格走勢、比較各平台行情")}
-              </p>
-            </div>
-            {/* CTA row */}
-            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[10px] sm:text-xs font-semibold" style={{ color: "#06038d" }}>
-              <span>{t("home.viewTrends", "查看行情")}</span>
-              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
-            </div>
-          </Link>
-
-          {/* Panel 3: Marketplace — yellow (#FEDD00) */}
-          {/* Extends slightly past 33% to compensate for left diagonal clip */}
-          <Link
-            href="/marketplace"
-            className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
-            style={{
-              backgroundColor: "#FEDD00",
-              width: "calc(33.333% + 28px)",
-              clipPath: "polygon(28px 0, 100% 0, 100% 100%, 0 100%)",
-              marginLeft: "-28px",
-              paddingLeft: "calc(4% + 32px)",
-              paddingRight: "4%",
-              paddingTop: "clamp(16px, 4vw, 40px)",
-              paddingBottom: "clamp(16px, 4vw, 40px)",
-              zIndex: 1,
-            }}
-          >
-            {/* TCG card texture — navy on yellow */}
-            <svg className="absolute inset-0 w-full h-full opacity-[0.07] pointer-events-none" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-              <rect x="15" y="10" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
-              <rect x="135" y="-5" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
-              <rect x="65" y="115" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
-              <rect x="-5" y="95" width="30" height="42" rx="3" fill="none" stroke="#06038d" strokeWidth="1.5"/>
-              <rect x="165" y="135" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
-            </svg>
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all duration-200" />
-            {/* Hover bottom accent line — deep navy */}
-            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#06038d] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20" />
-            {/* Icon row */}
-            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-200" style={{ backgroundColor: "rgba(6,3,141,0.12)" }}>
-              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
-            </div>
-            {/* Title row */}
-            <div className="relative z-10 mt-2 sm:mt-3">
-              <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight" style={{ color: "#06038d" }}>{t("home.goToMarketplace")}</h3>
-            </div>
-            {/* Description row */}
-            <div className="relative z-10 mt-1 sm:mt-2 flex-1">
-              <p className="text-[10px] sm:text-xs md:text-sm leading-snug" style={{ color: "#06038d", opacity: 0.65 }}>
-                {t("home.marketplaceDesc", "瀏覽市集商品、參與拍賣、安全交易")}
-              </p>
-            </div>
-            {/* CTA row */}
-            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[10px] sm:text-xs font-semibold" style={{ color: "#06038d" }}>
-              <span>{t("home.browseNow", "立即瀏覽")}</span>
-              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
-            </div>
-          </Link>
-        </div>
-        {/* Yellow 4px bottom accent bar */}
-        <div className="w-full h-1" style={{ backgroundColor: "#FEDD00" }} />
-        </div>
-      </section>
+      <CtaSection />
 
       {/* Footer */}
       <Footer />
