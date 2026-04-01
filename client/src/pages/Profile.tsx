@@ -2197,14 +2197,14 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
                       <div>
                         <p className="text-xs text-gray-400">我的出價</p>
                         <p className="text-sm font-bold" style={{ color: "#06038d" }}>
-                          ¥{bid.amount?.toLocaleString()}
+                          HK${bid.amount?.toLocaleString()}
                         </p>
                       </div>
                       {bid.listing?.currentBid && (
                         <div>
                           <p className="text-xs text-gray-400">當前最高</p>
                           <p className="text-sm font-bold text-gray-700">
-                            ¥{bid.listing.currentBid?.toLocaleString()}
+                            HK${bid.listing.currentBid?.toLocaleString()}
                           </p>
                         </div>
                       )}

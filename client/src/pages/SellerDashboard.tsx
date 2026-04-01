@@ -702,12 +702,12 @@ function SellerAuctionsTab() {
                     <div className="flex items-center gap-4">
                       <div>
                         <p className="text-xs text-gray-400">起標價</p>
-                        <p className="text-sm font-bold" style={{ color: "#06038d" }}>¥{auction.startingBid?.toLocaleString() ?? "—"}</p>
+                        <p className="text-sm font-bold" style={{ color: "#06038d" }}>HK${auction.startingBid?.toLocaleString() ?? "—"}</p>
                       </div>
                       {auction.currentBid && (
                         <div>
                           <p className="text-xs text-gray-400">當前最高出價</p>
-                          <p className="text-sm font-bold text-orange-600">¥{auction.currentBid?.toLocaleString()}</p>
+                          <p className="text-sm font-bold text-orange-600">HK${auction.currentBid?.toLocaleString()}</p>
                         </div>
                       )}
                       {auction.bidCount !== undefined && (
@@ -1394,6 +1394,9 @@ export default function SellerDashboard() {
                 <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="我的商品" mobileLabel="商品">
                   我的商品
                 </BrandTabsTrigger>
+                <BrandTabsTrigger value="auctions" icon={<Gavel className="w-4 h-4" />} label="我的拍賣" mobileLabel="拍賣">
+                  我的拍賣
+                </BrandTabsTrigger>
                 <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="訂單管理" mobileLabel="訂單">
                   訂單管理
                   {pendingOrdersCount > 0 && (
@@ -1412,9 +1415,6 @@ export default function SellerDashboard() {
                 </BrandTabsTrigger>
                 <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label="收款記錄" mobileLabel="收款">
                   收款記錄
-                </BrandTabsTrigger>
-                <BrandTabsTrigger value="auctions" icon={<Gavel className="w-4 h-4" />} label="我的拍賣" mobileLabel="拍賣">
-                  我的拍賣
                 </BrandTabsTrigger>
               </BrandTabsList>
 
