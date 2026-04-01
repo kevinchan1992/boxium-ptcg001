@@ -373,6 +373,8 @@ export default function Home() {
         </div>
         {/* Three color panels — diagonal clip-path dividers, full bleed */}
         {/* Wrapper: overflow-hidden to contain the clipped panels */}
+        {/* Yellow 4px bottom accent bar */}
+        <div className="relative flex flex-col w-full">
         <div className="relative flex flex-row w-full overflow-hidden" style={{ minHeight: "180px" }}>
 
           {/* Panel 1: Search — deep navy (#06038d) */}
@@ -382,10 +384,10 @@ export default function Home() {
             className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
             style={{
               backgroundColor: "#06038d",
-              width: "calc(33.333% + 16px)",
-              clipPath: "polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%)",
+              width: "calc(33.333% + 28px)",
+              clipPath: "polygon(0 0, 100% 0, calc(100% - 28px) 100%, 0 100%)",
               paddingLeft: "4%",
-              paddingRight: "calc(4% + 20px)",
+              paddingRight: "calc(4% + 32px)",
               paddingTop: "clamp(16px, 4vw, 40px)",
               paddingBottom: "clamp(16px, 4vw, 40px)",
               zIndex: 3,
@@ -422,12 +424,13 @@ export default function Home() {
             className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
             style={{
               backgroundColor: "#ffffff",
-              width: "calc(33.333% + 32px)",
-              clipPath: "polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%)",
-              marginLeft: "-16px",
-              paddingLeft: "calc(4% + 20px)",
-              paddingRight: "calc(4% + 20px)",
-              paddingTop: "clamp(16px, 4vw, 40px)",
+              borderTop: "3px solid #06038d",
+              width: "calc(33.333% + 56px)",
+              clipPath: "polygon(28px 0, 100% 0, calc(100% - 28px) 100%, 0 100%)",
+              marginLeft: "-28px",
+              paddingLeft: "calc(4% + 32px)",
+              paddingRight: "calc(4% + 32px)",
+              paddingTop: "clamp(13px, 4vw, 37px)",
               paddingBottom: "clamp(16px, 4vw, 40px)",
               zIndex: 2,
             }}
@@ -467,10 +470,10 @@ export default function Home() {
             className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
             style={{
               backgroundColor: "#FEDD00",
-              width: "calc(33.333% + 16px)",
-              clipPath: "polygon(16px 0, 100% 0, 100% 100%, 0 100%)",
-              marginLeft: "-16px",
-              paddingLeft: "calc(4% + 20px)",
+              width: "calc(33.333% + 28px)",
+              clipPath: "polygon(28px 0, 100% 0, 100% 100%, 0 100%)",
+              marginLeft: "-28px",
+              paddingLeft: "calc(4% + 32px)",
               paddingRight: "4%",
               paddingTop: "clamp(16px, 4vw, 40px)",
               paddingBottom: "clamp(16px, 4vw, 40px)",
@@ -503,6 +506,9 @@ export default function Home() {
               <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </div>
           </Link>
+        </div>
+        {/* Yellow 4px bottom accent bar */}
+        <div className="w-full h-1" style={{ backgroundColor: "#FEDD00" }} />
         </div>
       </section>
 
