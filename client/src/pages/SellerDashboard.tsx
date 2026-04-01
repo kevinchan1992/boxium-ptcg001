@@ -611,45 +611,57 @@ function EditRejectedAuctionDialog({
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 border-0 rounded-2xl">
-        {/* Header */}
-        <div className="bg-[#06038D] px-6 pt-5 pb-4 rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#FEDD00] rounded-xl flex items-center justify-center shrink-0">
-              <Pencil className="w-4 h-4 text-[#06038D]" />
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 border-0 rounded-2xl bg-white text-gray-900">
+        {/* Header - BOXIUM deep blue */}
+        <div className="bg-[#06038D] px-6 pt-5 pb-5 rounded-t-2xl relative overflow-hidden">
+          {/* Decorative circles */}
+          <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-8 w-16 h-16 bg-[#FEDD00]/10 rounded-full translate-y-1/2" />
+          <div className="relative flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#FEDD00] rounded-xl flex items-center justify-center shrink-0 shadow-lg">
+              <Pencil className="w-5 h-5 text-[#06038D]" />
             </div>
             <div>
-              <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider">編輯已拒絕拍賣</p>
-              <h2 className="text-base font-black text-white">修改拍賣內容</h2>
+              <p className="text-[10px] text-white/60 font-semibold uppercase tracking-widest">編輯已拒絕拍賣</p>
+              <h2 className="text-lg font-black text-white leading-tight">修改拍賣內容</h2>
             </div>
           </div>
         </div>
 
         {/* Rejection reason reminder */}
         {auction?.rejectedReason && (
-          <div className="mx-5 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl">
-            <p className="text-xs font-semibold text-red-600 mb-0.5">拒絕原因</p>
-            <p className="text-xs text-red-700">{auction.rejectedReason}</p>
+          <div className="mx-5 mt-4 p-3.5 bg-red-50 border border-red-200 rounded-xl flex gap-2.5">
+            <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-red-500 text-xs font-black">!</span>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-red-600 mb-0.5">拒絕原因</p>
+              <p className="text-xs text-red-700 leading-relaxed">{auction.rejectedReason}</p>
+            </div>
           </div>
         )}
 
         {/* Form */}
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-5 py-4 space-y-4 bg-white">
           <div>
-            <Label className="text-[#06038D] font-semibold text-xs">標題</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)} className="mt-1 text-gray-900" placeholder="請輸入標題" />
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">標題</Label>
+            <Input value={title} onChange={e => setTitle(e.target.value)}
+              className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] focus:ring-[#06038D]/20 rounded-xl h-10"
+              placeholder="請輸入標題" />
           </div>
           <div>
-            <Label className="text-[#06038D] font-semibold text-xs">描述</Label>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1 text-gray-900 min-h-[80px]" placeholder="請輸入描述" />
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">描述</Label>
+            <Textarea value={description} onChange={e => setDescription(e.target.value)}
+              className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] focus:ring-[#06038D]/20 rounded-xl min-h-[80px] resize-none"
+              placeholder="請輸入描述" />
           </div>
           <div>
-            <Label className="text-[#06038D] font-semibold text-xs">品相</Label>
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">品相</Label>
             <Select value={condition} onValueChange={setCondition}>
-              <SelectTrigger className="mt-1 text-gray-900">
+              <SelectTrigger className="mt-1.5 text-gray-900 bg-white border-gray-200 rounded-xl h-10">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white text-gray-900">
                 <SelectItem value="raw_a">無封全新 (Raw A)</SelectItem>
                 <SelectItem value="raw_b">無封輕微使用 (Raw B)</SelectItem>
                 <SelectItem value="raw_c">無封一般 (Raw C)</SelectItem>
@@ -663,32 +675,40 @@ function EditRejectedAuctionDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-[#06038D] font-semibold text-xs">起標價 (HK$)</Label>
-              <Input type="number" value={startingBid} onChange={e => setStartingBid(e.target.value)} className="mt-1 text-gray-900" min={1} />
+              <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">起標價 (HK$)</Label>
+              <Input type="number" value={startingBid} onChange={e => setStartingBid(e.target.value)}
+                className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] rounded-xl h-10" min={1} />
             </div>
             <div>
-              <Label className="text-[#06038D] font-semibold text-xs">加價幅度 (HK$)</Label>
-              <Input type="number" value={bidIncrement} onChange={e => setBidIncrement(e.target.value)} className="mt-1 text-gray-900" min={1} />
+              <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">加價幅度 (HK$)</Label>
+              <Input type="number" value={bidIncrement} onChange={e => setBidIncrement(e.target.value)}
+                className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] rounded-xl h-10" min={1} />
             </div>
           </div>
           <div>
-            <Label className="text-[#06038D] font-semibold text-xs">即時購價 (HK$)（可留空）</Label>
-            <Input type="number" value={buyNowPrice} onChange={e => setBuyNowPrice(e.target.value)} className="mt-1 text-gray-900" min={1} placeholder="不設即時購價" />
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">即時購價 (HK$) <span className="text-gray-400 normal-case font-normal">(可留空)</span></Label>
+            <Input type="number" value={buyNowPrice} onChange={e => setBuyNowPrice(e.target.value)}
+              className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] rounded-xl h-10" min={1} placeholder="不設即時購價" />
           </div>
           <div>
-            <Label className="text-[#06038D] font-semibold text-xs">結標時間</Label>
-            <Input type="datetime-local" value={auctionEndAt} onChange={e => setAuctionEndAt(e.target.value)} className="mt-1 text-gray-900" />
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">結標時間</Label>
+            <Input type="datetime-local" value={auctionEndAt} onChange={e => setAuctionEndAt(e.target.value)}
+              className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] rounded-xl h-10" />
           </div>
-          <ImageUploader images={images} onChange={setImages} />
+          <div>
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide mb-1.5 block">拍賣圖片（最多 5 張）</Label>
+            <ImageUploader images={images} onChange={setImages} />
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-5 flex gap-2.5 border-t border-gray-100 pt-3">
-          <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl border-2 border-gray-200 text-gray-600 font-bold h-11 bg-white hover:bg-gray-50">
+        <div className="px-5 pb-5 flex gap-2.5 border-t border-gray-100 pt-4 bg-white rounded-b-2xl">
+          <Button variant="outline" onClick={onClose}
+            className="flex-1 rounded-xl border-2 border-gray-200 text-gray-600 font-bold h-11 bg-white hover:bg-gray-50 hover:border-gray-300">
             取消
           </Button>
           <Button
-            className="flex-[2] bg-[#06038D] hover:bg-[#0804b8] text-white rounded-xl font-black h-11"
+            className="flex-[2] bg-[#06038D] hover:bg-[#0804b8] text-white rounded-xl font-black h-11 shadow-lg shadow-[#06038D]/20"
             onClick={handleSave}
             disabled={updateMutation.isPending}
           >
@@ -851,14 +871,18 @@ function SellerAuctionsTab() {
                     <div className="flex items-center gap-4">
                       <div>
                         <p className="text-xs text-gray-400">起標價</p>
-                        <p className="text-sm font-bold" style={{ color: "#06038d" }}>HK${auction.startingBid?.toLocaleString() ?? "—"}</p>
+                        <p className="text-sm font-bold" style={{ color: "#06038d" }}>HK${parseFloat(auction.startingBid ?? '0').toLocaleString()}</p>
                       </div>
-                      {auction.currentBid && (
-                        <div>
-                          <p className="text-xs text-gray-400">當前最高出價</p>
-                          <p className="text-sm font-bold text-orange-600">HK${auction.currentBid?.toLocaleString()}</p>
-                        </div>
-                      )}
+                      <div>
+                        <p className="text-xs text-gray-400">目前最高出價</p>
+                        {auction.currentHighestBid ? (
+                          <p className="text-sm font-black text-[#FEDD00] bg-[#06038D] px-2 py-0.5 rounded-lg inline-block">
+                            HK${parseFloat(auction.currentHighestBid).toLocaleString()}
+                          </p>
+                        ) : (
+                          <p className="text-sm font-bold text-gray-400">尚無出價</p>
+                        )}
+                      </div>
                       {auction.bidCount !== undefined && (
                         <div>
                           <p className="text-xs text-gray-400">出價次數</p>
