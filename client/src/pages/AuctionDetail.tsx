@@ -12,7 +12,7 @@ import {
   Gavel, Clock, TrendingUp, ChevronLeft, User, Shield, Zap,
   AlertTriangle, CheckCircle2, ArrowUp, Loader2, Eye, Package,
   ChevronRight, ImageIcon, Star, CreditCard, Trophy, Flame,
-  Info, ChevronDown, ChevronUp
+  Info, ChevronDown, ChevronUp, X
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -115,30 +115,39 @@ function TermsDialog({
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md p-0 overflow-hidden border-0 rounded-3xl">
+      <DialogContent className="max-w-md p-0 overflow-hidden border-0 rounded-3xl bg-white" showCloseButton={false}>
+        {/* Close button - top right corner, above everything */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-50 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
+          aria-label="關閉"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
         {/* Header - BOXIUM brand */}
         <div className="bg-[#06038D] px-6 pt-6 pb-5 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#FEDD00]/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#FEDD00] rounded-xl flex items-center justify-center shrink-0">
-                <Shield className="w-5 h-5 text-[#06038D]" />
-              </div>
-              <div>
-                <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider">拍賣條款</p>
+          <div className="relative flex items-center gap-3 pr-8">
+            <div className="w-10 h-10 bg-[#FEDD00] rounded-xl flex items-center justify-center shrink-0">
+              <Shield className="w-5 h-5 text-[#06038D]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider">拍賣條款</p>
+              <div className="flex items-center gap-3">
                 <h2 className="text-lg font-black text-white">{role === 'buyer' ? '買家' : '賣家'}參與協議</h2>
+                <a href="/auction/terms" target="_blank" rel="noopener noreferrer"
+                  className="text-[10px] text-[#FEDD00] hover:text-yellow-300 flex items-center gap-1 font-bold transition-colors whitespace-nowrap">
+                  完整條款 →
+                </a>
               </div>
             </div>
-            <a href="/auction/terms" target="_blank" rel="noopener noreferrer"
-              className="text-[10px] text-[#FEDD00] hover:text-yellow-300 flex items-center gap-1 font-bold transition-colors">
-              完整條款 →
-            </a>
           </div>
         </div>
 
-        {/* Terms list */}
-        <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
+        {/* Terms list - white background */}
+        <div className="bg-white px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
           <p className="text-xs text-gray-500 font-medium mb-3">請仔細閱讀以下所有條款，同意後方可出價：</p>
           {terms.map((term, i) => (
             <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-2xl hover:bg-[#06038D]/5 transition-colors">
@@ -151,12 +160,12 @@ function TermsDialog({
           ))}
         </div>
 
-        {/* Footer */}
-        <div className="px-5 pb-5 pt-2 flex gap-2.5">
+        {/* Footer - white background */}
+        <div className="bg-white px-5 pb-5 pt-2 flex gap-2.5 border-t border-gray-100">
           <Button
             variant="outline"
             onClick={onClose}
-            className="flex-1 rounded-xl border-2 border-gray-200 text-gray-600 font-bold h-11"
+            className="flex-1 rounded-xl border-2 border-gray-200 text-gray-600 font-bold h-11 bg-white hover:bg-gray-50"
           >
             取消
           </Button>
