@@ -402,15 +402,23 @@ export default function Home() {
               <rect x="160" y="130" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
             </svg>
             <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-200" />
-            <div className="relative z-10">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 sm:mb-3 group-hover:bg-[#FEDD00] transition-all duration-200">
-                <Search className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#FEDD00] group-hover:text-[#06038d] transition-colors duration-200" />
-              </div>
-              <h3 className="text-white font-bold text-xs sm:text-sm md:text-lg leading-tight mb-1 sm:mb-2">{t("home.startSearching")}</h3>
+            {/* Hover bottom accent line — yellow */}
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#FEDD00] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20" />
+            {/* Icon row */}
+            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#FEDD00] transition-all duration-200">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#FEDD00] group-hover:text-[#06038d] transition-colors duration-200" />
+            </div>
+            {/* Title row */}
+            <div className="relative z-10 mt-2 sm:mt-3">
+              <h3 className="text-white font-bold text-xs sm:text-sm md:text-lg leading-tight">{t("home.startSearching")}</h3>
+            </div>
+            {/* Description row */}
+            <div className="relative z-10 mt-1 sm:mt-2 flex-1">
               <p className="text-white/65 text-[10px] sm:text-xs md:text-sm leading-snug">
                 {t("home.searchCardsDesc", "搜尋卡片、查看價格走勢與市場數據")}
               </p>
             </div>
+            {/* CTA row */}
             <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[#FEDD00]/80 text-[10px] sm:text-xs font-semibold">
               <span>{t("home.exploreNow", "立即探索")}</span>
               <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -445,18 +453,23 @@ export default function Home() {
             </svg>
             <div className="absolute inset-0 transition-all duration-200" style={{ backgroundColor: "rgba(6,3,141,0)" }} />
             <div className="absolute inset-0 group-hover:bg-[#06038d]/5 transition-all duration-200" />
-            <div className="relative z-10">
-              <div
-                className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-2 sm:mb-3 transition-all duration-200"
-                style={{ backgroundColor: "rgba(6,3,141,0.08)" }}
-              >
-                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
-              </div>
-              <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight mb-1 sm:mb-2" style={{ color: "#06038d" }}>{t("home.viewMarketTrends")}</h3>
+            {/* Hover bottom accent line — navy blue */}
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#06038d] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20" />
+            {/* Icon row */}
+            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-200" style={{ backgroundColor: "rgba(6,3,141,0.08)" }}>
+              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
+            </div>
+            {/* Title row */}
+            <div className="relative z-10 mt-2 sm:mt-3">
+              <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight" style={{ color: "#06038d" }}>{t("home.viewMarketTrends")}</h3>
+            </div>
+            {/* Description row */}
+            <div className="relative z-10 mt-1 sm:mt-2 flex-1">
               <p className="text-[10px] sm:text-xs md:text-sm leading-snug" style={{ color: "#06038d", opacity: 0.6 }}>
                 {t("home.marketTrendsDesc", "查看市場價格走勢、比較各平台行情")}
               </p>
             </div>
+            {/* CTA row */}
             <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[10px] sm:text-xs font-semibold" style={{ color: "#06038d" }}>
               <span>{t("home.viewTrends", "查看行情")}</span>
               <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -489,18 +502,23 @@ export default function Home() {
               <rect x="165" y="135" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
             </svg>
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all duration-200" />
-            <div className="relative z-10">
-              <div
-                className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-2 sm:mb-3 transition-all duration-200"
-                style={{ backgroundColor: "rgba(6,3,141,0.12)" }}
-              >
-                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
-              </div>
-              <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight mb-1 sm:mb-2" style={{ color: "#06038d" }}>{t("home.goToMarketplace")}</h3>
+            {/* Hover bottom accent line — deep navy */}
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#06038d] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20" />
+            {/* Icon row */}
+            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-200" style={{ backgroundColor: "rgba(6,3,141,0.12)" }}>
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
+            </div>
+            {/* Title row */}
+            <div className="relative z-10 mt-2 sm:mt-3">
+              <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight" style={{ color: "#06038d" }}>{t("home.goToMarketplace")}</h3>
+            </div>
+            {/* Description row */}
+            <div className="relative z-10 mt-1 sm:mt-2 flex-1">
               <p className="text-[10px] sm:text-xs md:text-sm leading-snug" style={{ color: "#06038d", opacity: 0.65 }}>
                 {t("home.marketplaceDesc", "瀏覽市集商品、參與拍賣、安全交易")}
               </p>
             </div>
+            {/* CTA row */}
             <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[10px] sm:text-xs font-semibold" style={{ color: "#06038d" }}>
               <span>{t("home.browseNow", "立即瀏覽")}</span>
               <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
