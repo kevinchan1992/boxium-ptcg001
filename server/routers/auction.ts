@@ -479,9 +479,11 @@ export const auctionRouter = router({
       const startAt = listing.auctionStartAt ? new Date(listing.auctionStartAt) : now;
       const newStatus = startAt <= now ? 'active' : 'scheduled';
 
+      // NOTE: Do NOT set status='active' for auction listings.
+      // Auction listings use auctionStatus for lifecycle management.
+      // Setting status='active' would cause them to appear in the regular marketplace product list.
       await updateAuctionListing(input.listingId, {
         auctionStatus: newStatus,
-        status: 'active',
       });
 
       // Notify seller

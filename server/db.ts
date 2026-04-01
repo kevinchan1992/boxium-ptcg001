@@ -3410,6 +3410,11 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
   if (proofStatus) {
     conditions.push(eq(marketplaceOrders.alipayProofStatus, proofStatus as any));
   }
+  // Exclude auction orders — auctions have their own order management in the Auction Admin tab
+  // This join-based filter ensures only direct-purchase (non-auction) orders appear here
+  conditions.push(sql`${marketplaceOrders.listingId} NOT IN (
+    SELECT id FROM marketplaceListings WHERE listingMode = 'auction'
+  )`);
   // Alias for buyer and seller user joins to avoid column name conflicts
   const { alias } = await import('drizzle-orm/mysql-core');
   const buyerAlias = alias(users, 'buyerAlias');

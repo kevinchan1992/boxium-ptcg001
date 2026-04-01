@@ -6934,7 +6934,7 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] 後端：adminGetListings 過濾排除 listingMode=auction 的商品（商品管理只顯示立即購買）
 - [ ] 前端：商品管理通知徽章只計算非拍賣待審核數量
 - [ ] 前端：拍賣管理卡片加入商品圖片縮圖（images 欄位第一張）
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 拍賣拒絕流程修復
 
@@ -6943,4 +6943,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 前端：拍賣管理加入「已拒絕」筛選器 tab
 - [x] 前端：賣家中心「我的拍賣」 Tab 顯示被拒絕的拍賣（含拒絕原因紅色提示）
 - [x] 前端：賣家中心被拒絕拍賣卡片加入「重新提交」按鈕（可修改後重新申請審核）
+- [ ] 儲存 checkpoint
+
+## 🔧 拍賣品與商品管理分離修復
+
+- [x] 後端：getAdminListings 加入 `listingMode != 'auction'` 過濾
+- [x] 後端：getMarketplaceStats pendingReview 排除拍賣品
+- [x] 後端：adminApprove 拍賣品批准後不設 `status: 'active'`（避免出現在商品管理）
+- [x] 後端：getAdminOrders 加入子查詢排除拍賣訂單（直購 vs 拍賣分隔）
 - [ ] 儲存 checkpoint
