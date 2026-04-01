@@ -1774,21 +1774,31 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     )
     .orderBy(desc(priceHistory.soldAt));
 
-  // Group by cardId (already newest-first)
+  // Group by cardId (already newest-first); skip invalid prices
   const refPricesByCard = new Map<number, number[]>();
   for (const rec of refPriceRecords) {
     const cid = rec.cardId;
+    const parsed = parseFloat(rec.price as any);
+    if (!isFinite(parsed) || isNaN(parsed) || parsed <= 0) continue;
     if (!refPricesByCard.has(cid)) refPricesByCard.set(cid, []);
-    refPricesByCard.get(cid)!.push(parseFloat(rec.price as any));
+    refPricesByCard.get(cid)!.push(parsed);
   }
 
-  // Helper: simple median
-  const simpleMedianDb = (prices: number[]): number => {
-    const sorted = [...prices].sort((a, b) => a - b);
+  // Helper: simple median (returns null when no valid prices)
+  const simpleMedianDb = (prices: number[]): number | null => {
+    const valid = prices.filter(p => isFinite(p) && !isNaN(p) && p > 0);
+    if (valid.length === 0) return null;
+    const sorted = [...valid].sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
     return sorted.length % 2 === 0
       ? (sorted[mid - 1] + sorted[mid]) / 2
       : sorted[mid];
+  };
+
+  // Helper: safe toFixed — returns '0.00' for NaN/Infinity to prevent MySQL decimal errors
+  const safeFixed = (n: number, digits = 2): string => {
+    if (!isFinite(n) || isNaN(n)) return '0.00';
+    return n.toFixed(digits);
   };
 
   // Build a map: cardId -> PSA10 latest-5 median (reference price)
@@ -1798,11 +1808,22 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     if (allPrices.length === 0) {
       // Fallback to weighted avg if no price records found
       const card = allTop.find(c => c.cardId === cardId);
-      if (card) refPriceMap.set(cardId, card.currentPrice);
+      if (card && isFinite(card.currentPrice) && card.currentPrice > 0) {
+        refPriceMap.set(cardId, card.currentPrice);
+      }
       continue;
     }
     const usePrices = allPrices.slice(0, Math.min(5, allPrices.length));
-    refPriceMap.set(cardId, simpleMedianDb(usePrices));
+    const median = simpleMedianDb(usePrices);
+    if (median !== null) {
+      refPriceMap.set(cardId, median);
+    } else {
+      // Fallback to weighted avg
+      const card = allTop.find(c => c.cardId === cardId);
+      if (card && isFinite(card.currentPrice) && card.currentPrice > 0) {
+        refPriceMap.set(cardId, card.currentPrice);
+      }
+    }
   }
 
   console.log(`[calculateAndCacheTrendingCards] Calculated PSA10 reference prices for ${refPriceMap.size} cards`);
@@ -1821,9 +1842,9 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
       await db.insert(trendingCardsCache).values({
         cardId: card.cardId,
         rank: i + 1,
-        priceChange7d: card.priceChange.toFixed(2),
-        oldPrice: card.oldPrice.toFixed(2),
-        currentPrice: referencePrice.toFixed(2), // PSA10 latest-5 median
+        priceChange7d: safeFixed(card.priceChange),
+        oldPrice: safeFixed(card.oldPrice),
+        currentPrice: safeFixed(referencePrice), // PSA10 latest-5 median
         calculatedAt,
       });
     }
