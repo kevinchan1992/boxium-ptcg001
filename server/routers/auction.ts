@@ -537,6 +537,7 @@ export const auctionRouter = router({
       status: z.string().optional(),
       page: z.number().int().min(1).default(1),
       pageSize: z.number().int().min(1).max(100).default(20),
+      isHighValueReview: z.boolean().optional(),
     }))
     .query(async ({ input }) => {
       return getAdminAuctionListings(input);
@@ -884,5 +885,18 @@ export const auctionRouter = router({
       await updateAuctionListing(input.listingId, updateData);
 
       return { success: true };
+    }),
+
+  /** Admin: List auction orders with filtering */
+  adminGetAuctionOrders: adminProcedure
+    .input(z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(20),
+      status: z.string().optional(),
+      search: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const { getAdminAuctionOrders } = await import('../db');
+      return getAdminAuctionOrders(input);
     }),
 });

@@ -5,6 +5,7 @@
  * - processExpiredAuctions: runs every 30s, ends auctions past their end time
  * - processScheduledAuctions: runs every 60s, activates scheduled auctions
  * - notifyEndingSoon: runs every 5min, notifies bidders of auctions ending in 30min
+ * - processPaymentReminders: runs every 30min, sends 12h payment reminders to unpaid winners
  */
 import {
   getExpiredActiveAuctions,
@@ -18,10 +19,31 @@ import {
   createMarketplaceOrder,
   createOrderItems,
   getDistinctBidderIds,
+  getSellerProfileById,
+  getAuctionOrdersNeedingPaymentReminder,
+  markAuctionPaymentReminderSent,
 } from "./db";
 import { createNotification } from "./db/notifications";
+import {
+  sendAuctionWonEmail,
+  sendAuctionSoldEmail,
+  sendAuctionPaymentReminderEmail,
+} from "./emailService";
 
 let endingSoonNotified = new Set<number>(); // listing IDs already notified this cycle
+
+// ---- Format date in HKT for emails ----
+function formatHKT(date: Date): string {
+  return date.toLocaleString('zh-HK', {
+    timeZone: 'Asia/Hong_Kong',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }) + ' (HKT)';
+}
 
 // ---- Process expired auctions (call every 30s) ----
 export async function processExpiredAuctions(): Promise<void> {
@@ -137,6 +159,70 @@ export async function notifyEndingSoon(): Promise<void> {
   }
 }
 
+// ---- Process 12-hour payment reminders (call every 30min) ----
+export async function processPaymentReminders(): Promise<void> {
+  try {
+    const orders = await getAuctionOrdersNeedingPaymentReminder();
+    if (orders.length === 0) return;
+
+    console.log(`[AuctionProcessor] Sending payment reminders for ${orders.length} order(s)`);
+
+    for (const order of orders) {
+      try {
+        // Get listing title for email
+        let cardName = `拍賣品 #${order.auctionListingId ?? order.id}`;
+        if (order.auctionListingId) {
+          try {
+            const { getDb } = await import('./db');
+            const { marketplaceListings } = await import('../drizzle/schema_new');
+            const { eq } = await import('drizzle-orm');
+            const db = await getDb();
+            if (db) {
+              const [listing] = await db.select({ title: marketplaceListings.title })
+                .from(marketplaceListings)
+                .where(eq(marketplaceListings.id, order.auctionListingId))
+                .limit(1);
+              if (listing?.title) cardName = listing.title;
+            }
+          } catch { /* ignore */ }
+        }
+
+        const paymentDeadline = order.createdAt
+          ? formatHKT(new Date(new Date(order.createdAt).getTime() + 24 * 60 * 60 * 1000))
+          : '結標後 24 小時';
+
+        // Send reminder email to buyer
+        await sendAuctionPaymentReminderEmail({
+          userId: order.buyerId,
+          cardName,
+          winAmountHkd: parseFloat(order.subtotalHkd ?? '0').toFixed(0),
+          orderNo: order.orderNo,
+          paymentDeadline,
+        });
+
+        // Mark reminder as sent
+        await markAuctionPaymentReminderSent(order.id);
+
+        // Also send in-app notification
+        await createNotification({
+          userId: order.buyerId,
+          type: 'auction_payment_reminder',
+          title: '付款提醒：您的得標訂單尚未付款',
+          body: `訂單 ${order.orderNo} 尚未付款，請在截止時間前完成付款，以免失去得標資格。`,
+          relatedId: order.id,
+          linkUrl: `/orders/${order.orderNo}`,
+        });
+
+        console.log(`[AuctionProcessor] Payment reminder sent for order ${order.orderNo}`);
+      } catch (err) {
+        console.error(`[AuctionProcessor] Failed to send payment reminder for order ${order.orderNo}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error("[AuctionProcessor] processPaymentReminders error:", err);
+  }
+}
+
 // ---- Finalize a single auction ----
 async function finalizeAuction(listing: any): Promise<void> {
   const winningBid = await getWinningBid(listing.id);
@@ -191,6 +277,7 @@ async function finalizeAuction(listing: any): Promise<void> {
   const winAmount = parseFloat(winningBid.amount as any);
   const orderNo = await generateOrderNo();
   const paymentDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  const paymentDeadlineStr = formatHKT(paymentDeadline);
 
   const order = await createMarketplaceOrder({
     orderNo,
@@ -217,7 +304,7 @@ async function finalizeAuction(listing: any): Promise<void> {
 
     console.log(`[AuctionProcessor] Auction ${listing.id} ended → Order ${orderNo} created`);
 
-    // Notify winner
+    // Notify winner (in-app)
     await createNotification({
       userId: winningBid.bidderId,
       type: 'auction_won',
@@ -227,7 +314,7 @@ async function finalizeAuction(listing: any): Promise<void> {
       linkUrl: `/orders/${orderNo}`,
     });
 
-    // Notify seller
+    // Notify seller (in-app)
     if (listing.sellerId) {
       await createNotification({
         userId: listing.sellerId,
@@ -237,6 +324,46 @@ async function finalizeAuction(listing: any): Promise<void> {
         relatedId: order.id,
         linkUrl: `/seller?tab=auctions`,
       });
+    }
+
+    // Get buyer name for seller email
+    let buyerName = '買家';
+    try {
+      const { getDb } = await import('./db');
+      const { users } = await import('../drizzle/schema_new');
+      const { eq } = await import('drizzle-orm');
+      const db = await getDb();
+      if (db) {
+        const [buyer] = await db.select({ name: users.name }).from(users).where(eq(users.id, winningBid.bidderId)).limit(1);
+        if (buyer?.name) buyerName = buyer.name;
+      }
+    } catch { /* ignore */ }
+
+    // Send email to winner
+    sendAuctionWonEmail({
+      userId: winningBid.bidderId,
+      cardName: listing.title ?? `拍賣品 #${listing.id}`,
+      winAmountHkd: winAmount.toFixed(0),
+      orderNo,
+      paymentDeadline: paymentDeadlineStr,
+    }).catch(err => console.error('[AuctionProcessor] Failed to send auction won email:', err));
+
+    // Send email to seller (get seller's userId from sellerProfile)
+    if (listing.sellerId) {
+      try {
+        const sellerProfile = await getSellerProfileById(listing.sellerId);
+        if (sellerProfile?.userId) {
+          sendAuctionSoldEmail({
+            userId: sellerProfile.userId,
+            cardName: listing.title ?? `拍賣品 #${listing.id}`,
+            winAmountHkd: winAmount.toFixed(0),
+            orderNo,
+            buyerName,
+          }).catch(err => console.error('[AuctionProcessor] Failed to send auction sold email:', err));
+        }
+      } catch (err) {
+        console.error('[AuctionProcessor] Failed to get seller profile for email:', err);
+      }
     }
   }
 

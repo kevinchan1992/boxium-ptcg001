@@ -924,6 +924,50 @@ export default function AuctionDetail() {
               </div>
             </div>
 
+            {/* Seller info */}
+            {listing.sellerInfo && (
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5">
+                <h3 className="font-black text-gray-900 text-base flex items-center gap-2 mb-4">
+                  <div className="w-7 h-7 bg-[#06038D] rounded-lg flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  賣家資訊
+                </h3>
+                <div
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => window.location.href = `/seller/${listing.sellerInfo!.userId}`}
+                >
+                  {listing.sellerInfo.avatarUrl ? (
+                    <img src={listing.sellerInfo.avatarUrl} alt="seller" className="w-12 h-12 rounded-full object-cover border-2 border-gray-100" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-[#06038D]/10 flex items-center justify-center">
+                      <User className="w-6 h-6 text-[#06038D]" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-gray-900 text-sm truncate">{listing.sellerInfo.displayName}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {[1,2,3,4,5].map(i => (
+                        <Star key={i} className={`w-3 h-3 ${
+                          i <= Math.round(parseFloat(listing.sellerInfo!.avgRating || '0'))
+                            ? 'text-yellow-400 fill-yellow-400'
+                            : 'text-gray-300'
+                        }`} />
+                      ))}
+                      <span className="text-xs text-gray-500 ml-1">
+                        {parseFloat(listing.sellerInfo.avgRating || '0').toFixed(1)}
+                        <span className="text-gray-400"> ({listing.sellerInfo.ratingCount} 評價)</span>
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-xs text-gray-400">累計成交</span>
+                  <span className="text-sm font-black text-[#06038D]">{listing.sellerInfo.totalSales} 筆</span>
+                </div>
+              </div>
+            )}
             {/* Buyer protection */}
             <div className="bg-[#06038D] rounded-3xl p-5 flex items-start gap-4">
               <div className="w-10 h-10 bg-[#FEDD00] rounded-xl flex items-center justify-center shrink-0">

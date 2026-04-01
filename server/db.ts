@@ -5066,6 +5066,7 @@ import {
   type AuctionAgreement, type InsertAuctionAgreement,
   type AuctionViolation, type InsertAuctionViolation,
 } from "../drizzle/schema_new";
+// sellerProfiles already imported at line ~2997
 // ne, gt, lt already imported at top of file
 
 // ---- Auction Listings ----
@@ -5105,7 +5106,21 @@ export async function getAuctionListingById(id: number) {
   if (!db) throw new Error("DB not available");
   const [row] = await db.select().from(marketplaceListings)
     .where(and(eq(marketplaceListings.id, id), eq(marketplaceListings.listingMode, 'auction')));
-  return row ?? null;
+  if (!row) return null;
+  // Enrich with seller info
+  let sellerInfo: { displayName: string; avatarUrl: string | null; avgRating: string | null; ratingCount: number; totalSales: number; userId: number } | null = null;
+  if (row.sellerId) {
+    const [sp] = await db.select({
+      displayName: sellerProfiles.displayName,
+      avatarUrl: sellerProfiles.avatarUrl,
+      avgRating: sellerProfiles.avgRating,
+      ratingCount: sellerProfiles.ratingCount,
+      totalSales: sellerProfiles.totalSales,
+      userId: sellerProfiles.userId,
+    }).from(sellerProfiles).where(eq(sellerProfiles.id, row.sellerId)).limit(1);
+    if (sp) sellerInfo = sp;
+  }
+  return { ...row, sellerInfo };
 }
 
 export async function updateAuctionListing(id: number, data: Partial<typeof marketplaceListings.$inferInsert>) {
@@ -5156,14 +5171,16 @@ export async function getAdminAuctionListings(opts: {
   status?: string;
   page?: number;
   pageSize?: number;
+  isHighValueReview?: boolean;
 }) {
-  const { status, page = 1, pageSize = 20 } = opts;
+  const { status, page = 1, pageSize = 20, isHighValueReview } = opts;
   const offset = (page - 1) * pageSize;
   const db = await getDb();
   if (!db) throw new Error("DB not available");
 
   const conditions: any[] = [eq(marketplaceListings.listingMode, 'auction')];
   if (status) conditions.push(eq(marketplaceListings.auctionStatus, status as any));
+  if (isHighValueReview === true) conditions.push(eq(marketplaceListings.isHighValueReview as any, true));
 
   const rows = await db.select().from(marketplaceListings)
     .where(and(...conditions))
@@ -5355,6 +5372,8 @@ export async function getAuctionAdminStats(): Promise<{
   endedSold: number;
   endedNoBid: number;
   pendingReview: number;
+  highValuePending: number;
+  rejectedCount: number;
   totalBids: number;
   totalRevenue: number;
   todayNewAuctions: number;
@@ -5370,7 +5389,7 @@ export async function getAuctionAdminStats(): Promise<{
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [statusCounts, totalBidsResult, todayResult, monthlyResult, violationsResult] = await Promise.all([
+  const [statusCounts, totalBidsResult, todayResult, monthlyResult, violationsResult, highValueResult] = await Promise.all([
     db.select({
       auctionStatus: marketplaceListings.auctionStatus,
       count: sql<number>`COUNT(*)`,
@@ -5400,6 +5419,14 @@ export async function getAuctionAdminStats(): Promise<{
       )),
     // Total violations
     db.select({ count: sql<number>`COUNT(*)` }).from(auctionViolations),
+    // High value pending
+    db.select({ count: sql<number>`COUNT(*)` })
+      .from(marketplaceListings)
+      .where(and(
+        eq(marketplaceListings.listingMode as any, 'auction'),
+        eq(marketplaceListings.isHighValueReview as any, true),
+        eq(marketplaceListings.auctionStatus as any, 'pending_review'),
+      )),
   ]);
 
   const counts: Record<string, number> = {};
@@ -5423,6 +5450,8 @@ export async function getAuctionAdminStats(): Promise<{
     endedSold: counts['ended_sold'] ?? 0,
     endedNoBid: counts['ended_no_bid'] ?? 0,
     pendingReview: counts['pending_review'] ?? 0,
+    highValuePending: Number(highValueResult[0]?.count ?? 0),
+    rejectedCount: counts['rejected'] ?? 0,
     totalBids: Number(totalBidsResult[0]?.count ?? 0),
     totalRevenue,
     todayNewAuctions: Number(todayResult[0]?.count ?? 0),
@@ -5521,4 +5550,117 @@ export async function liftAuctionBan(violationId: number): Promise<void> {
   const db = await getDb();
   if (!db) return;
   await db.delete(auctionViolations).where(eq(auctionViolations.id, violationId));
+}
+
+// ── Get auction orders needing 12-hour payment reminder ──────────────────────
+export async function getAuctionOrdersNeedingPaymentReminder(): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const now = new Date();
+  // Orders created between 12 and 24 hours ago (still pending_payment, reminder not yet sent)
+  const cutoff12h = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+  const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  return db.select({
+    id: marketplaceOrders.id,
+    orderNo: marketplaceOrders.orderNo,
+    buyerId: marketplaceOrders.buyerId,
+    sellerId: marketplaceOrders.sellerId,
+    subtotalHkd: marketplaceOrders.subtotalHkd,
+    auctionListingId: (marketplaceOrders as any).auctionListingId,
+    createdAt: marketplaceOrders.createdAt,
+    paymentReminderSentAt: (marketplaceOrders as any).paymentReminderSentAt,
+  })
+    .from(marketplaceOrders)
+    .where(and(
+      eq(marketplaceOrders.orderStatus, 'pending_payment'),
+      eq((marketplaceOrders as any).orderSource, 'auction'),
+      lt(marketplaceOrders.createdAt, cutoff12h),
+      gt(marketplaceOrders.createdAt, cutoff24h),
+      isNull((marketplaceOrders as any).paymentReminderSentAt),
+    ));
+}
+
+// ── Mark payment reminder as sent ────────────────────────────────────────────
+export async function markAuctionPaymentReminderSent(orderId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(marketplaceOrders)
+    .set({ paymentReminderSentAt: new Date() } as any)
+    .where(eq(marketplaceOrders.id, orderId));
+}
+
+// ─── Admin: Auction Orders ────────────────────────────────────────────────────
+export async function getAdminAuctionOrders(opts: {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+  search?: string;
+}): Promise<{ orders: any[]; total: number }> {
+  const db = await getDb();
+  if (!db) return { orders: [], total: 0 };
+  const page = opts.page ?? 1;
+  const pageSize = opts.pageSize ?? 20;
+  const offset = (page - 1) * pageSize;
+  const buyerAlias = alias(users, 'buyerAlias2');
+  const sellerAlias = alias(users, 'sellerAlias2');
+  const conditions: any[] = [
+    sql`${marketplaceListings.listingMode} = 'auction'`,
+  ];
+  if (opts.status && opts.status !== 'all') {
+    conditions.push(eq(marketplaceOrders.orderStatus, opts.status as any));
+  }
+  if (opts.search) {
+    const like2 = `%${opts.search}%`;
+    conditions.push(or(
+      like(marketplaceOrders.orderNo, like2),
+      like(buyerAlias.name, like2),
+      like(buyerAlias.email, like2),
+      like(marketplaceListings.title, like2),
+    ));
+  }
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  const [rows, countRows] = await Promise.all([
+    db.select({
+      id: marketplaceOrders.id,
+      orderNo: marketplaceOrders.orderNo,
+      buyerId: marketplaceOrders.buyerId,
+      sellerId: marketplaceOrders.sellerId,
+      subtotalHkd: marketplaceOrders.subtotalHkd,
+      paymentStatus: marketplaceOrders.paymentStatus,
+      orderStatus: marketplaceOrders.orderStatus,
+      paidAt: marketplaceOrders.paidAt,
+      createdAt: marketplaceOrders.createdAt,
+      updatedAt: marketplaceOrders.updatedAt,
+      paymentReminderSentAt: (marketplaceOrders as any).paymentReminderSentAt,
+      auctionListingId: (marketplaceOrders as any).auctionListingId,
+      auctionWinningBidId: (marketplaceOrders as any).auctionWinningBidId,
+      // Listing info
+      listingTitle: marketplaceListings.title,
+      listingImages: marketplaceListings.images,
+      listingId: marketplaceOrders.listingId,
+      // Buyer info
+      buyerName: buyerAlias.name,
+      buyerEmail: buyerAlias.email,
+      // Seller info
+      sellerDisplayName: sellerProfiles.displayName,
+      sellerUserId: sellerProfiles.userId,
+      sellerUserName: sellerAlias.name,
+      sellerUserEmail: sellerAlias.email,
+    })
+      .from(marketplaceOrders)
+      .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
+      .leftJoin(buyerAlias, eq(marketplaceOrders.buyerId, buyerAlias.id))
+      .leftJoin(sellerProfiles, eq(marketplaceOrders.sellerId, sellerProfiles.id))
+      .leftJoin(sellerAlias, eq(sellerProfiles.userId, sellerAlias.id))
+      .where(whereClause)
+      .orderBy(desc(marketplaceOrders.createdAt))
+      .limit(pageSize)
+      .offset(offset),
+    db.select({ count: sql`count(*)` })
+      .from(marketplaceOrders)
+      .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
+      .leftJoin(buyerAlias, eq(marketplaceOrders.buyerId, buyerAlias.id))
+      .where(whereClause),
+  ]);
+  return { orders: rows, total: Number(countRows[0]?.count ?? 0) };
 }

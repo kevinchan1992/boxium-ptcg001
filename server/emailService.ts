@@ -1396,3 +1396,280 @@ export async function sendAuctionOutbidEmail({
     return false;
   }
 }
+
+// ─── Auction Won Email (to winner) ───────────────────────────────────────────
+interface AuctionWonEmailData {
+  winnerName: string;
+  cardName: string;
+  winAmountHkd: string;
+  orderNo: string;
+  paymentDeadline: string;
+  orderUrl: string;
+  siteUrl?: string;
+}
+
+export function buildAuctionWonEmail(data: AuctionWonEmailData): { subject: string; html: string } {
+  const siteUrl = data.siteUrl ?? "https://boxium.asia";
+  const subject = `恭喜得標！${data.cardName} — 請在 24 小時內付款`;
+  const body = `
+    <div style="text-align:center;margin-bottom:24px;">
+      <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">恭喜您得標！</h2>
+      <p style="margin:0;color:#555;font-size:15px;">您在 BOXIUM 的競拍中勝出</p>
+    </div>
+    <p style="color:#333;font-size:16px;margin:0 0 24px;">親愛的 <strong>${data.winnerName}</strong>，</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-radius:12px;margin-bottom:24px;overflow:hidden;">
+      <tr><td style="padding:16px 20px;border-bottom:1px solid #eee;">
+        <p style="margin:0;font-size:12px;color:#888;">得標商品</p>
+        <p style="margin:4px 0 0;font-size:16px;font-weight:900;color:#06038d;">${data.cardName}</p>
+      </td></tr>
+      <tr><td style="padding:12px 20px;border-bottom:1px solid #eee;">
+        <p style="margin:0;font-size:12px;color:#888;">得標金額</p>
+        <p style="margin:4px 0 0;font-size:20px;font-weight:900;color:#06038d;">HK$${data.winAmountHkd}</p>
+      </td></tr>
+      <tr><td style="padding:12px 20px;border-bottom:1px solid #eee;">
+        <p style="margin:0;font-size:12px;color:#888;">訂單號碼</p>
+        <p style="margin:4px 0 0;font-size:14px;font-weight:bold;color:#333;">${data.orderNo}</p>
+      </td></tr>
+      <tr><td style="padding:12px 20px;">
+        <p style="margin:0;font-size:12px;color:#888;">付款期限</p>
+        <p style="margin:4px 0 0;font-size:14px;font-weight:bold;color:#ef4444;">${data.paymentDeadline}</p>
+      </td></tr>
+    </table>
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:16px;margin-bottom:24px;">
+      <p style="color:#856404;font-size:13px;margin:0;"><strong>重要提醒：</strong>請在 <strong>24 小時內</strong>完成付款，逾期將被記錄違規，累計 3 次違規將被禁止參與拍賣。</p>
+    </div>
+    ${ctaButton("立即前往付款", data.orderUrl)}
+  `;
+  const html = wrapHtml(subject, body);
+  return { subject, html };
+}
+
+export async function sendAuctionWonEmail({
+  userId,
+  cardName,
+  winAmountHkd,
+  orderNo,
+  paymentDeadline,
+}: {
+  userId: number;
+  cardName: string;
+  winAmountHkd: string;
+  orderNo: string;
+  paymentDeadline: string;
+}): Promise<boolean> {
+  try {
+    const { getDb } = await import('./db');
+    const { users } = await import('../drizzle/schema_new');
+    const { eq } = await import('drizzle-orm');
+    const db = await getDb();
+    if (!db) return false;
+    const [user] = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+    if (!user?.email) return false;
+    const siteUrl = "https://boxium.asia";
+    const { subject, html } = buildAuctionWonEmail({
+      winnerName: user.name ?? '競標者',
+      cardName,
+      winAmountHkd,
+      orderNo,
+      paymentDeadline,
+      orderUrl: `${siteUrl}/orders/${orderNo}`,
+      siteUrl,
+    });
+    return sendEmail({
+      to: user.email,
+      subject,
+      html,
+      emailType: 'auction_won',
+      toUserId: userId,
+      dedupeKey: `auction_won_${orderNo}_${userId}`,
+    });
+  } catch (err) {
+    console.error('[EmailService] Failed to send auction won email:', err);
+    return false;
+  }
+}
+
+// ─── Auction Sold Email (to seller) ──────────────────────────────────────────
+interface AuctionSoldEmailData {
+  sellerName: string;
+  cardName: string;
+  winAmountHkd: string;
+  orderNo: string;
+  buyerName: string;
+  sellerCenterUrl: string;
+  siteUrl?: string;
+}
+
+export function buildAuctionSoldEmail(data: AuctionSoldEmailData): { subject: string; html: string } {
+  const siteUrl = data.siteUrl ?? "https://boxium.asia";
+  const subject = `拍賣成功售出！${data.cardName} — HK$${data.winAmountHkd}`;
+  const body = `
+    <div style="text-align:center;margin-bottom:24px;">
+      <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">拍賣成功售出！</h2>
+      <p style="margin:0;color:#555;font-size:15px;">您的商品已找到買家</p>
+    </div>
+    <p style="color:#333;font-size:16px;margin:0 0 24px;">親愛的 <strong>${data.sellerName}</strong>，</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-radius:12px;margin-bottom:24px;overflow:hidden;">
+      <tr><td style="padding:16px 20px;border-bottom:1px solid #eee;">
+        <p style="margin:0;font-size:12px;color:#888;">售出商品</p>
+        <p style="margin:4px 0 0;font-size:16px;font-weight:900;color:#06038d;">${data.cardName}</p>
+      </td></tr>
+      <tr><td style="padding:12px 20px;border-bottom:1px solid #eee;">
+        <p style="margin:0;font-size:12px;color:#888;">成交金額</p>
+        <p style="margin:4px 0 0;font-size:20px;font-weight:900;color:#16a34a;">HK$${data.winAmountHkd}</p>
+      </td></tr>
+      <tr><td style="padding:12px 20px;border-bottom:1px solid #eee;">
+        <p style="margin:0;font-size:12px;color:#888;">訂單號碼</p>
+        <p style="margin:4px 0 0;font-size:14px;font-weight:bold;color:#333;">${data.orderNo}</p>
+      </td></tr>
+      <tr><td style="padding:12px 20px;">
+        <p style="margin:0;font-size:12px;color:#888;">買家</p>
+        <p style="margin:4px 0 0;font-size:14px;font-weight:bold;color:#333;">${data.buyerName}</p>
+      </td></tr>
+    </table>
+    <div style="background:#dcfce7;border:1px solid #86efac;border-radius:12px;padding:16px;margin-bottom:24px;">
+      <p style="color:#166534;font-size:13px;margin:0;"><strong>下一步：</strong>買家付款後，請在 <strong>3 個工作天內</strong>完成出貨，並在賣家中心更新物流資訊。</p>
+    </div>
+    ${ctaButton("前往賣家中心", data.sellerCenterUrl)}
+  `;
+  const html = wrapHtml(subject, body);
+  return { subject, html };
+}
+
+export async function sendAuctionSoldEmail({
+  userId,
+  cardName,
+  winAmountHkd,
+  orderNo,
+  buyerName,
+}: {
+  userId: number;
+  cardName: string;
+  winAmountHkd: string;
+  orderNo: string;
+  buyerName: string;
+}): Promise<boolean> {
+  try {
+    const { getDb } = await import('./db');
+    const { users } = await import('../drizzle/schema_new');
+    const { eq } = await import('drizzle-orm');
+    const db = await getDb();
+    if (!db) return false;
+    const [user] = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+    if (!user?.email) return false;
+    const siteUrl = "https://boxium.asia";
+    const { subject, html } = buildAuctionSoldEmail({
+      sellerName: user.name ?? '賣家',
+      cardName,
+      winAmountHkd,
+      orderNo,
+      buyerName,
+      sellerCenterUrl: `${siteUrl}/seller?tab=auctions`,
+      siteUrl,
+    });
+    return sendEmail({
+      to: user.email,
+      subject,
+      html,
+      emailType: 'auction_sold',
+      toUserId: userId,
+      dedupeKey: `auction_sold_${orderNo}_${userId}`,
+    });
+  } catch (err) {
+    console.error('[EmailService] Failed to send auction sold email:', err);
+    return false;
+  }
+}
+
+// ─── Auction Payment Reminder Email (to winner, 12h after end) ───────────────
+interface AuctionPaymentReminderEmailData {
+  winnerName: string;
+  cardName: string;
+  winAmountHkd: string;
+  orderNo: string;
+  paymentDeadline: string;
+  orderUrl: string;
+  siteUrl?: string;
+}
+
+export function buildAuctionPaymentReminderEmail(data: AuctionPaymentReminderEmailData): { subject: string; html: string } {
+  const siteUrl = data.siteUrl ?? "https://boxium.asia";
+  const subject = `催款提醒：${data.cardName} 尚未付款，請盡快完成`;
+  const body = `
+    <div style="text-align:center;margin-bottom:24px;">
+      <h2 style="margin:0 0 8px;color:#ef4444;font-size:22px;">付款提醒</h2>
+      <p style="margin:0;color:#555;font-size:15px;">您的得標訂單尚未付款</p>
+    </div>
+    <p style="color:#333;font-size:16px;margin:0 0 24px;">親愛的 <strong>${data.winnerName}</strong>，</p>
+    <p style="color:#555;font-size:14px;margin:0 0 16px;">您在 BOXIUM 競拍中得標的商品尚未完成付款，請盡快處理，以免失去得標資格。</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff3f3;border:1px solid #fecaca;border-radius:12px;margin-bottom:24px;overflow:hidden;">
+      <tr><td style="padding:16px 20px;border-bottom:1px solid #fecaca;">
+        <p style="margin:0;font-size:12px;color:#888;">得標商品</p>
+        <p style="margin:4px 0 0;font-size:16px;font-weight:900;color:#06038d;">${data.cardName}</p>
+      </td></tr>
+      <tr><td style="padding:12px 20px;border-bottom:1px solid #fecaca;">
+        <p style="margin:0;font-size:12px;color:#888;">得標金額</p>
+        <p style="margin:4px 0 0;font-size:20px;font-weight:900;color:#06038d;">HK$${data.winAmountHkd}</p>
+      </td></tr>
+      <tr><td style="padding:12px 20px;border-bottom:1px solid #fecaca;">
+        <p style="margin:0;font-size:12px;color:#888;">訂單號碼</p>
+        <p style="margin:4px 0 0;font-size:14px;font-weight:bold;color:#333;">${data.orderNo}</p>
+      </td></tr>
+      <tr><td style="padding:12px 20px;">
+        <p style="margin:0;font-size:12px;color:#888;">付款截止時間</p>
+        <p style="margin:4px 0 0;font-size:14px;font-weight:bold;color:#ef4444;">${data.paymentDeadline}</p>
+      </td></tr>
+    </table>
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:16px;margin-bottom:24px;">
+      <p style="color:#856404;font-size:13px;margin:0;"><strong>警告：</strong>若未在截止時間前付款，此訂單將被取消，並記錄為一次違規。累計 3 次違規將被禁止參與拍賣。</p>
+    </div>
+    ${ctaButton("立即前往付款", data.orderUrl)}
+  `;
+  const html = wrapHtml(subject, body);
+  return { subject, html };
+}
+
+export async function sendAuctionPaymentReminderEmail({
+  userId,
+  cardName,
+  winAmountHkd,
+  orderNo,
+  paymentDeadline,
+}: {
+  userId: number;
+  cardName: string;
+  winAmountHkd: string;
+  orderNo: string;
+  paymentDeadline: string;
+}): Promise<boolean> {
+  try {
+    const { getDb } = await import('./db');
+    const { users } = await import('../drizzle/schema_new');
+    const { eq } = await import('drizzle-orm');
+    const db = await getDb();
+    if (!db) return false;
+    const [user] = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+    if (!user?.email) return false;
+    const siteUrl = "https://boxium.asia";
+    const { subject, html } = buildAuctionPaymentReminderEmail({
+      winnerName: user.name ?? '競標者',
+      cardName,
+      winAmountHkd,
+      orderNo,
+      paymentDeadline,
+      orderUrl: `${siteUrl}/orders/${orderNo}`,
+      siteUrl,
+    });
+    return sendEmail({
+      to: user.email,
+      subject,
+      html,
+      emailType: 'auction_payment_reminder',
+      toUserId: userId,
+      dedupeKey: `auction_payment_reminder_${orderNo}_${userId}`,
+    });
+  } catch (err) {
+    console.error('[EmailService] Failed to send auction payment reminder email:', err);
+    return false;
+  }
+}

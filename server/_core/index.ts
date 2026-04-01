@@ -1384,13 +1384,15 @@ async function startServer() {
       console.error('[Server] Failed to start cache preloader:', err);
     });
     // Start auction lifecycle processors
-    import('../auctionProcessor').then(({ processExpiredAuctions, processScheduledAuctions, notifyEndingSoon }) => {
+    import('../auctionProcessor').then(({ processExpiredAuctions, processScheduledAuctions, notifyEndingSoon, processPaymentReminders }) => {
       // Process expired auctions every 30 seconds
       setInterval(() => processExpiredAuctions().catch(console.error), 30_000);
       // Activate scheduled auctions every 60 seconds
       setInterval(() => processScheduledAuctions().catch(console.error), 60_000);
       // Notify ending soon every 5 minutes
       setInterval(() => notifyEndingSoon().catch(console.error), 5 * 60_000);
+      // Send 12-hour payment reminders every 30 minutes
+      setInterval(() => processPaymentReminders().catch(console.error), 30 * 60_000);
       console.log('[Server] Auction processors started');
     }).catch(err => {
       console.error('[Server] Failed to start auction processors:', err);
