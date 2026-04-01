@@ -372,9 +372,9 @@ export default function Home() {
           </p>
         </div>
         {/* Three color panels — diagonal clip-path dividers, full bleed */}
-        {/* Wrapper: overflow-hidden to contain the clipped panels */}
-        {/* Yellow 4px bottom accent bar */}
         <div className="relative flex flex-col w-full">
+        {/* Full-width blue top border spanning all three panels */}
+        <div className="w-full" style={{ height: "3px", backgroundColor: "#06038d" }} />
         <div className="relative flex flex-row w-full overflow-hidden" style={{ minHeight: "180px" }}>
 
           {/* Panel 1: Search — deep navy (#06038d) */}
@@ -432,7 +432,6 @@ export default function Home() {
             className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
             style={{
               backgroundColor: "#ffffff",
-              borderTop: "3px solid #06038d",
               width: "calc(33.333% + 56px)",
               clipPath: "polygon(28px 0, 100% 0, calc(100% - 28px) 100%, 0 100%)",
               marginLeft: "-28px",
