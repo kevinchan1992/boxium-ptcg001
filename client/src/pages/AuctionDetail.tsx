@@ -446,50 +446,65 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
       {/* Bid input */}
       {isActive && !isEnded && (
         <div className="space-y-3">
-          <div>
-            <p className="text-xs text-gray-500 mb-1.5 font-medium">您的出價（最低 HK${minBid.toLocaleString()}）</p>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-bold">HK$</span>
-                <Input
-                  type="number"
-                  value={bidAmount}
-                  onChange={e => setBidAmount(e.target.value)}
-                  placeholder={minBid.toString()}
-                  className="pl-12 border-2 border-[#06038D]/20 focus:border-[#06038D] focus:ring-[#06038D]/20 rounded-xl text-base font-bold h-12 text-gray-900 bg-white"
-                  min={minBid}
-                  step={parseFloat(listing.bidIncrement || "10")}
-                />
+          {/* Highest bidder restriction */}
+          {user && listing.currentHighestBidderId === (user as any).id ? (
+            <div className="bg-[#FEDD00]/15 border-2 border-[#FEDD00] rounded-2xl p-4 flex items-start gap-3">
+              <div className="w-9 h-9 bg-[#FEDD00] rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                <Trophy className="w-4 h-4 text-[#06038D]" />
               </div>
-              <Button
-                onClick={() => handleBid()}
-                disabled={placeBidMutation.isPending || isEnded}
-                className="bg-[#06038D] hover:bg-[#0804b8] text-white px-5 shrink-0 h-12 rounded-xl font-bold text-base"
-              >
-                {placeBidMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Gavel className="w-5 h-5" />}
-                <span className="ml-1.5">出價</span>
-              </Button>
+              <div>
+                <p className="text-sm font-black text-[#06038D]">您目前是最高出價者</p>
+                <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">等待其他買家出價後方可繼續出價</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              <div>
+                <p className="text-xs text-gray-500 mb-1.5 font-medium">您的出價（最低 HK${minBid.toLocaleString()}）</p>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-bold">HK$</span>
+                    <Input
+                      type="number"
+                      value={bidAmount}
+                      onChange={e => setBidAmount(e.target.value)}
+                      placeholder={minBid.toString()}
+                      className="pl-12 border-2 border-[#06038D]/20 focus:border-[#06038D] focus:ring-[#06038D]/20 rounded-xl text-base font-bold h-12 text-gray-900 bg-white"
+                      min={minBid}
+                      step={parseFloat(listing.bidIncrement || "10")}
+                    />
+                  </div>
+                  <Button
+                    onClick={() => handleBid()}
+                    disabled={placeBidMutation.isPending || isEnded}
+                    className="bg-[#06038D] hover:bg-[#0804b8] text-white px-5 shrink-0 h-12 rounded-xl font-bold text-base"
+                  >
+                    {placeBidMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Gavel className="w-5 h-5" />}
+                    <span className="ml-1.5">出價</span>
+                  </Button>
+                </div>
+              </div>
 
-          {/* Quick bid buttons */}
-          <div className="flex gap-2 flex-wrap">
-            {[minBid, minBid + 50, minBid + 100, minBid + 200].map(amt => (
-              <button
-                key={amt}
-                onClick={() => setBidAmount(amt.toString())}
-                className={`text-xs px-3 py-1.5 rounded-full border-2 font-bold transition-all ${
-                  bidAmount === amt.toString()
-                    ? 'bg-[#06038D] text-white border-[#06038D]'
-                    : 'bg-white text-[#06038D] border-[#06038D]/20 hover:border-[#06038D]/60'
-                }`}
-              >
-                HK${amt.toLocaleString()}
-              </button>
-            ))}
-          </div>
+              {/* Quick bid buttons - grid layout for mobile */}
+              <div className="grid grid-cols-4 gap-2">
+                {[minBid, minBid + 50, minBid + 100, minBid + 200].map(amt => (
+                  <button
+                    key={amt}
+                    onClick={() => setBidAmount(amt.toString())}
+                    className={`text-xs px-2 py-2 rounded-xl border-2 font-bold transition-all text-center ${
+                      bidAmount === amt.toString()
+                        ? 'bg-[#06038D] text-white border-[#06038D]'
+                        : 'bg-white text-[#06038D] border-[#06038D]/20 hover:border-[#06038D]/60'
+                    }`}
+                  >
+                    HK${amt.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
-          {/* Buy now */}
+          {/* Buy now - always show if active and buy now price exists */}
           {buyNowPrice && (
             <div className="bg-[#FEDD00]/10 border-2 border-[#FEDD00] rounded-2xl p-4">
               <div className="flex items-center justify-between">

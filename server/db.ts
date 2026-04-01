@@ -5181,13 +5181,31 @@ export async function placeBid(data: InsertAuctionBid): Promise<AuctionBid> {
   return row;
 }
 
-export async function getBidsByListingId(listingId: number, limit = 50): Promise<AuctionBid[]> {
+export async function getBidsByListingId(listingId: number, limit = 50): Promise<(AuctionBid & { bidderName: string | null })[]> {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
-  return db.select().from(auctionBids)
+  const rows = await db.select({
+    id: auctionBids.id,
+    listingId: auctionBids.listingId,
+    bidderId: auctionBids.bidderId,
+    amount: auctionBids.amount,
+    status: auctionBids.status,
+    ipHash: auctionBids.ipHash,
+    userAgent: auctionBids.userAgent,
+    depositAmountHkd: auctionBids.depositAmountHkd,
+    depositPaymentIntentId: auctionBids.depositPaymentIntentId,
+    depositStatus: auctionBids.depositStatus,
+    depositHeldAt: auctionBids.depositHeldAt,
+    depositReleasedAt: auctionBids.depositReleasedAt,
+    createdAt: auctionBids.createdAt,
+    bidderName: users.name,
+  })
+    .from(auctionBids)
+    .leftJoin(users, eq(auctionBids.bidderId, users.id))
     .where(eq(auctionBids.listingId, listingId))
     .orderBy(desc(auctionBids.createdAt))
     .limit(limit);
+  return rows;
 }
 
 export async function getWinningBid(listingId: number): Promise<AuctionBid | null> {
