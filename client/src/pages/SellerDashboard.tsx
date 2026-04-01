@@ -1116,6 +1116,22 @@ export default function SellerDashboard() {
     onError: (e) => toast.error(e.message),
   });
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const batchDeleteMutation = trpc.marketplace.batchDeleteListings.useMutation({
+    onSuccess: (data) => {
+      toast.success(`已刪除 ${data.deletedCount} 件商品${data.cancelledOrdersCount > 0 ? `，已取消 ${data.cancelledOrdersCount} 個待付款訂單` : ''}`);
+      setSelectedIds(new Set());
+      setBatchMode(false);
+      setShowDeleteConfirm(false);
+      refetchListings();
+      utils.marketplace.getMySellerProfile.invalidate();
+    },
+    onError: (e) => {
+      toast.error(e.message);
+      setShowDeleteConfirm(false);
+    },
+  });
+
   const openEditDialog = (listing: any) => {
     setEditingListing(listing);
     setEditForm({
@@ -1792,6 +1808,27 @@ export default function SellerDashboard() {
                                   </Button>
                                 );
                               })()}
+                              {/* Batch Delete Button */}
+                              {(() => {
+                                // Only show delete for deletable listings (not sold)
+                                const deletableIds = Array.from(selectedIds).filter(id => {
+                                  const l = filteredListings.find((x: any) => x.id === id);
+                                  return l && l.status !== 'sold';
+                                });
+                                if (deletableIds.length === 0) return null;
+                                return (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-8 border-gray-400 text-gray-700 hover:bg-gray-50"
+                                    disabled={batchDeleteMutation.isPending}
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                  >
+                                    <Trash2 className="w-3 h-3 mr-1" />
+                                    刪除 ({deletableIds.length})
+                                  </Button>
+                                );
+                              })()}
                             </>
                           )}
                         </div>
@@ -1824,8 +1861,8 @@ export default function SellerDashboard() {
                           className={`bg-white rounded-2xl shadow-md border overflow-hidden transition-all ${
                             isSelected ? "border-[#06038d] ring-2 ring-[#06038d]/20" : "border-gray-100"
                           }${isSold ? " opacity-80" : ""}`}
-                          onClick={batchMode ? () => toggleSelectId(listing.id) : undefined}
-                          style={batchMode ? { cursor: "pointer" } : undefined}
+                          onClick={batchMode && !isSold ? () => toggleSelectId(listing.id) : undefined}
+                          style={batchMode && !isSold ? { cursor: "pointer" } : undefined}
                         >
                           {listingViewMode === 'grid' ? (
                             /* Grid Card Layout */
@@ -1854,8 +1891,8 @@ export default function SellerDashboard() {
                                    isSold ? "售出" :
                                    isRemoved ? "下架" : listing.status}
                                 </span>
-                                {/* Batch select overlay */}
-                                {batchMode && (
+                                {/* Batch select overlay (hidden for sold items) */}
+                                {batchMode && !isSold && (
                                   <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                                     isSelected ? 'border-[#FEDD00] bg-[#FEDD00]' : 'border-white bg-white/30'
                                   }`}>
@@ -1892,7 +1929,7 @@ export default function SellerDashboard() {
                               {/* Brand Header Bar */}
                               <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
                                 <div className="flex items-center gap-2">
-                                  {batchMode && (
+                                  {batchMode && !isSold && (
                                     <div className="w-4 h-4 rounded border-2 border-white/60 flex items-center justify-center" style={isSelected ? { background: '#FEDD00', borderColor: '#FEDD00' } : {}}>
                                       {isSelected && <Check className="w-3 h-3" style={{ color: '#06038D' }} />}
                                     </div>
@@ -3757,6 +3794,63 @@ export default function SellerDashboard() {
               onClick={() => confirmMeetupMutation.mutate({ orderId: meetupConfirmDialog.orderId })}
             >
               {confirmMeetupMutation.isPending ? '處理中...' : '確認已面交'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Batch Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              確認刪除商品
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3">
+            <p className="text-sm text-gray-700">
+              您即將永久刪除 <strong className="text-red-600">{(() => {
+                const deletableCount = Array.from(selectedIds).filter(id => {
+                  const l = (myListings ?? []).find((x: any) => x.id === id);
+                  return l && l.status !== 'sold';
+                }).length;
+                return deletableCount;
+              })()} 件</strong>商品，此操作不可復原。
+            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs text-amber-800 font-medium">⚠️ 注意事項：</p>
+              <ul className="text-xs text-amber-700 mt-1 space-y-1">
+                <li>• 商品將從資料庫永久刪除</li>
+                <li>• 如有待付款訂單，將自動更新為已取消</li>
+                <li>• 已售出商品不會被刪除</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={batchDeleteMutation.isPending}
+            >
+              取消
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={batchDeleteMutation.isPending}
+              onClick={() => {
+                const deletableIds = Array.from(selectedIds).filter(id => {
+                  const l = (myListings ?? []).find((x: any) => x.id === id);
+                  return l && l.status !== 'sold';
+                });
+                batchDeleteMutation.mutate({ ids: deletableIds });
+              }}
+            >
+              {batchDeleteMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-1 animate-spin" />刪除中...</>
+              ) : (
+                <><Trash2 className="w-4 h-4 mr-1" />確認刪除</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

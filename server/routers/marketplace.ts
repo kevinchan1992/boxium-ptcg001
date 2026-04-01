@@ -5552,4 +5552,87 @@ IMPORTANT:
       }
       return getDisputeMediaByOrderId(input.orderId);
     }),
+
+  // Batch permanently delete listings (not just delist)
+  batchDeleteListings: protectedProcedure
+    .input(z.object({ ids: z.array(z.number().int()).min(1).max(100) }))
+    .mutation(async ({ ctx, input }) => {
+      const seller = await getSellerProfileByUserId(ctx.user.id);
+      if (!seller) throw new TRPCError({ code: "FORBIDDEN", message: "你還沒有賣家資料" });
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { marketplaceListings, marketplaceOrders } = await import("../../drizzle/schema_new");
+      const { inArray: inArrayFn, eq: eqFn, and: andFn } = await import("drizzle-orm");
+
+      // 1. Query all requested listings
+      const listings = await db.select({
+        id: marketplaceListings.id,
+        sellerId: marketplaceListings.sellerId,
+        status: marketplaceListings.status,
+      })
+        .from(marketplaceListings)
+        .where(inArrayFn(marketplaceListings.id, input.ids));
+
+      // 2. Authorization: all listings must belong to current seller
+      const unauthorized = listings.filter(l => l.sellerId !== seller.id);
+      if (unauthorized.length > 0) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "部分商品不屬於你" });
+      }
+
+      // 3. HARD RULE: Never delete sold listings
+      const soldListings = listings.filter(l => l.status === 'sold');
+      if (soldListings.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `無法刪除已售出的商品（${soldListings.length} 個）`,
+        });
+      }
+
+      // 4. Only allow deleting: pending_review, removed, active
+      const deletableIds = listings
+        .filter(l => ['pending_review', 'removed', 'active'].includes(l.status))
+        .map(l => l.id);
+
+      if (deletableIds.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "沒有可刪除的商品（只能刪除審核中、已下架、上架中的商品）",
+        });
+      }
+
+      // 5. Find pending_payment orders for these listings and cancel them
+      const ordersToCancel = await db.select({
+        id: marketplaceOrders.id,
+      })
+        .from(marketplaceOrders)
+        .where(
+          andFn(
+            inArrayFn(marketplaceOrders.listingId, deletableIds),
+            eqFn(marketplaceOrders.orderStatus, 'pending_payment')
+          )
+        );
+
+      // 6. Cancel pending_payment orders
+      if (ordersToCancel.length > 0) {
+        const orderIds = ordersToCancel.map(o => o.id);
+        await db.update(marketplaceOrders)
+          .set({
+            orderStatus: 'cancelled',
+            paymentStatus: 'cancelled',
+          })
+          .where(inArrayFn(marketplaceOrders.id, orderIds));
+      }
+
+      // 7. Permanently delete the listings from database
+      await db.delete(marketplaceListings)
+        .where(inArrayFn(marketplaceListings.id, deletableIds));
+
+      return {
+        success: true,
+        deletedCount: deletableIds.length,
+        cancelledOrdersCount: ordersToCancel.length,
+        skippedCount: input.ids.length - deletableIds.length,
+      };
+    }),
 });

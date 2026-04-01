@@ -7086,3 +7086,18 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 保留「短期加權均價」作輔助顯示
 - [x] 保留「30 天價格帶（P25/P75）」
 - [x] 更新翻譯文字
+---
+
+## 🗑️ 賣家中心批量刪除商品功能
+
+- [x] 後端：新增批量刪除 API（seller.batchDeleteListings）
+  - [x] 檢查商品狀態（只能刪除 pending_review、removed、active）
+  - [x] **絕對不能刪除 sold 狀態商品**
+  - [x] 刪除商品時將 pending_payment 訂單更新為已取消（Admin 後台訂單保留）
+- [x] 前端：SellerDashboard 加入批量刪除功能
+  - [x] 已有 checkbox 多選功能（selectedIds）
+  - [x] 在批量操作工具列加入「刪除」按鈕
+  - [x] 刪除確認 Dialog（顯示將刪除的商品數量和警告）
+  - [x] **已售出商品不顯示 checkbox，不能被選中**
+- [x] 測試批量刪除功能
+- [x] 儲存 checkpoint
