@@ -7253,3 +7253,5 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 首頁統計數字加入從 0 滾動到目標値的計數動畫（useCountUp hook，1800ms ease-out cubic）
 
 - [x] 修復 Admin 後台「強制結標」功能失效的 SQL INSERT 錯誤（修復 createMarketplaceOrder 和 createOrderItems 欄位不匹配：加入 listingId/sellerType/title/price/platformFeeHkd/sellerReceivableHkd，移除 totalHkd/cardId/unitPriceHkd/subtotalHkd 非 schema 欄位）
+
+- [ ] 拍賣結標付款流程整合購物車：拍賣訂單加入購物車、顯示24小時倒數、平台自有商品不扣費且開放支付寶

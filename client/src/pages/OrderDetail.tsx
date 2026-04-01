@@ -34,7 +34,7 @@ type VerifyResult = {
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
-function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShippingAddress }: { orderId: number; listingId?: number | null; amount: string; paymentMethod?: string; hasShippingAddress?: boolean }) {
+function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShippingAddress, sellerType }: { orderId: number; listingId?: number | null; amount: string; paymentMethod?: string; hasShippingAddress?: boolean; sellerType?: string | null }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   // If order already has alipay_hk selected, start at qr step directly
@@ -99,6 +99,8 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
 
   const canSubmitProof = proofUrl && verifyResult?.verified === true;
   const isPending = getCheckoutMutation.isPending || switchToAlipayMutation.isPending;
+  // Alipay HK is available for platform orders and auction platform orders; C2C seller orders are Stripe-only
+  const canUseAlipay = sellerType !== 'seller';
 
   const resetAndClose = () => { setOpen(false); setAlipayStep(initialStep); setProofUrl(""); setVerifyResult(null); setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港" }); };
 
@@ -141,6 +143,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
                 </div>
                 {getCheckoutMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-gray-300 group-hover:text-[#06038d] text-lg">›</span>}
               </button>
+              {canUseAlipay && (
               <button className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-[#1677ff] hover:bg-[#f0f7ff] transition-all text-left group" disabled={isPending} onClick={() => switchToAlipayMutation.mutate({ orderId })}>
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#1677ff" }}>
                   <span className="text-white font-bold text-lg">支</span>
@@ -151,6 +154,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
                 </div>
                 {switchToAlipayMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-gray-300 group-hover:text-[#1677ff] text-lg">›</span>}
               </button>
+              )}
               <p className="text-xs text-gray-400 text-center pt-1">{t("orderDetail.encryptedPayment")}</p>
             </div>
           )}
@@ -884,9 +888,13 @@ export default function OrderDetail() {
   const { data: timeoutSettings } = trpc.system.getTimeoutSettings.useQuery(undefined, {
     staleTime: 5 * 60 * 1000,
   });
+  // Auction orders use system payment timeout (admin has set it to 1440 min / 24 hours);
+  // direct/offer orders also use system timeout setting
+  const isAuctionOrder = data?.order?.orderSource === 'auction';
+  const paymentTimeoutMinutes = timeoutSettings?.paymentTimeoutMinutes ?? (isAuctionOrder ? 1440 : 30);
   const paymentCountdown = usePaymentCountdown(
     data?.order?.orderStatus === "pending_payment" ? data?.order?.createdAt : null,
-    timeoutSettings?.paymentTimeoutMinutes ?? 30
+    paymentTimeoutMinutes
   );
 
   // Auto-complete countdown - MUST be called unconditionally before any conditional returns
@@ -1013,6 +1021,21 @@ export default function OrderDetail() {
             </div>
           </div>
 
+          {/* Auction order badge */}
+          {isAuctionOrder && order.orderStatus === "pending_payment" && (
+            <div className="mx-4 mb-3 bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl px-4 py-3 flex items-center gap-3">
+              <div className="bg-[#FEDD00] rounded-full p-1.5 flex-shrink-0">
+                <span className="text-[#06038D] font-bold text-sm">🏆</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-[#06038D]">拍賣得標訂單</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  此訂單為拍賣競標得標，請於 {paymentTimeoutMinutes >= 60 ? `${Math.floor(paymentTimeoutMinutes / 60)} 小時` : `${paymentTimeoutMinutes} 分鐘`} 內完成付款，逾時訂單將自動取消
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Payment countdown banner */}
           {order.orderStatus === "pending_payment" && paymentCountdown && !paymentCountdown.expired && (
             <div className="mx-4 mb-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
@@ -1020,12 +1043,15 @@ export default function OrderDetail() {
                 <Clock className="w-4 h-4 text-amber-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-amber-800">請盡快完成付款</p>
-                <p className="text-xs text-amber-600 mt-0.5">超時後訂單將自動取消，商品重新上架</p>
+                <p className="text-xs font-semibold text-amber-800">{isAuctionOrder ? `拍賣付款限時 ${paymentTimeoutMinutes >= 60 ? `${Math.floor(paymentTimeoutMinutes / 60)} 小時` : `${paymentTimeoutMinutes} 分鐘`}` : '請盡快完成付款'}</p>
+                <p className="text-xs text-amber-600 mt-0.5">{isAuctionOrder ? '逾時訂單將自動取消，商品重新上架拍賣' : '超時後訂單將自動取消，商品重新上架'}</p>
               </div>
               <div className="flex-shrink-0 text-right">
                 <p className="text-lg font-bold text-amber-700 tabular-nums">
-                  {String(paymentCountdown.minutes).padStart(2, '0')}:{String(paymentCountdown.seconds).padStart(2, '0')}
+                  {isAuctionOrder
+                    ? `${String(Math.floor(paymentCountdown.minutes / 60)).padStart(2, '0')}:${String(paymentCountdown.minutes % 60).padStart(2, '0')}:${String(paymentCountdown.seconds).padStart(2, '0')}`
+                    : `${String(paymentCountdown.minutes).padStart(2, '0')}:${String(paymentCountdown.seconds).padStart(2, '0')}`
+                  }
                 </p>
                 <p className="text-[10px] text-amber-500">剩餘時間</p>
               </div>
@@ -1047,6 +1073,7 @@ export default function OrderDetail() {
                 amount={order.subtotalHkd as string ?? "0"}
                 paymentMethod={order.paymentMethod ?? undefined}
                 hasShippingAddress={!!(order as any).shippingAddress}
+                sellerType={order.sellerType}
               />
               <Button
                 size="sm"

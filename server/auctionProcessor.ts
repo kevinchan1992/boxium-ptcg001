@@ -280,8 +280,10 @@ async function finalizeAuction(listing: any): Promise<void> {
   const paymentDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
   const paymentDeadlineStr = formatHKT(paymentDeadline);
 
-  // Calculate platform fee (5%) and seller receivable
-  const PLATFORM_FEE_RATE = 0.05;
+  // Determine seller type and calculate platform fee
+  // Platform-owned items (no sellerId) have 0% platform fee
+  const itemSellerType = listing.sellerId ? 'seller' : 'platform';
+  const PLATFORM_FEE_RATE = itemSellerType === 'platform' ? 0 : 0.05;
   const platformFee = parseFloat((winAmount * PLATFORM_FEE_RATE).toFixed(2));
   const sellerReceivable = parseFloat((winAmount - platformFee).toFixed(2));
 
@@ -289,7 +291,7 @@ async function finalizeAuction(listing: any): Promise<void> {
     orderNo,
     buyerId: winningBid.bidderId,
     sellerId: listing.sellerId ?? undefined,
-    sellerType: listing.sellerId ? 'seller' : 'platform',
+    sellerType: itemSellerType,
     listingId: listing.id,
     unitPriceHkd: winAmount.toFixed(2),
     quantity: 1,
@@ -310,7 +312,7 @@ async function finalizeAuction(listing: any): Promise<void> {
       orderId: order.id,
       listingId: listing.id,
       sellerId: listing.sellerId ?? undefined,
-      sellerType: listing.sellerId ? 'seller' : 'platform',
+      sellerType: itemSellerType,
       title: listing.title ?? `拍賣品 #${listing.id}`,
       price: winAmount.toFixed(2),
       quantity: 1,

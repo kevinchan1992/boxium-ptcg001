@@ -56,8 +56,8 @@ export const systemRouter = router({
       return { success: true, feeRate, feeRatePercent: input.feeRatePercent };
     }),
 
-  // Get marketplace timeout settings
-  getTimeoutSettings: adminProcedure
+  // Get marketplace timeout settings (public so order pages can read payment timeout)
+  getTimeoutSettings: publicProcedure
     .query(async () => {
       const [paymentTimeout, offerPaymentTimeout, reminderMinutes] = await Promise.all([
         getSystemSetting('payment_timeout_minutes'),
