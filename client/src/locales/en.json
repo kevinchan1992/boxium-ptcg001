@@ -2210,5 +2210,8 @@
     "returnToMarketplace": "Return to Marketplace",
     "totalItems": "Total {{count}} items"
   },
-  "home.marketTrendsDesc": "View market price trends and compare across platforms"
+  "home.marketTrendsDesc": "View market price trends and compare across platforms",
+  "home.exploreNow": "Explore Now",
+  "home.viewTrends": "View Trends",
+  "home.browseNow": "Browse Now"
 }

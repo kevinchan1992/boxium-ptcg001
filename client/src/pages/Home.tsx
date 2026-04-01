@@ -360,62 +360,73 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section - Three Cards */}
-      <section className="py-6 md:py-12 px-4 sm:px-6 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5 md:mb-3 text-center" style={{ color: "#06038d" }}>
+      {/* CTA Section - Full-width 3-color panels */}
+      <section className="overflow-hidden">
+        {/* Section header */}
+        <div className="py-6 md:py-10 px-4 text-center bg-white">
+          <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5 md:mb-2" style={{ color: "#06038d" }}>
             {t("home.readyToStart")}
           </h2>
-          <p className="text-gray-600 text-[11px] sm:text-xs md:text-sm mb-4 md:mb-6 leading-relaxed text-center max-w-2xl mx-auto">
+          <p className="text-gray-600 text-[11px] sm:text-xs md:text-sm leading-relaxed max-w-xl mx-auto">
             {t("home.readyToStartDesc")}
           </p>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-5">
-            {/* Card 1: Search Cards */}
-            <Link href="/research" className="block w-full">
-              <div className="group relative overflow-hidden rounded-xl p-3 sm:p-5 md:p-7 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] h-full select-none" style={{ backgroundColor: "#06038d" }}>
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                  <Search className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#FEDD00] flex-shrink-0" />
-                  <h3 className="text-white font-bold text-[11px] sm:text-sm md:text-base leading-tight">{t("home.startSearching")}</h3>
-                </div>
-                <p className="text-white/70 text-[9px] sm:text-xs md:text-sm leading-snug">
-                  {t("home.searchCardsDesc", "搜尋卡片、查看價格走勢與市場數據")}
-                </p>
-                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#FEDD00] transition-all">
-                  <ChevronRight className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-white/60 group-hover:text-[#06038d]" />
-                </div>
+        </div>
+        {/* Three color panels — no gap, full bleed */}
+        <div className="flex flex-row w-full" style={{ minHeight: "160px" }}>
+          {/* Panel 1: Search — deep navy */}
+          <Link href="/research" className="group flex-1 relative flex flex-col justify-between p-4 sm:p-6 md:p-10 cursor-pointer transition-all duration-200 active:brightness-90 select-none" style={{ backgroundColor: "#06038d" }}>
+            {/* hover overlay */}
+            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-200" />
+            <div className="relative z-10">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 sm:mb-3 group-hover:bg-[#FEDD00] transition-all duration-200">
+                <Search className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#FEDD00] group-hover:text-[#06038d] transition-colors duration-200" />
               </div>
-            </Link>
-            {/* Card 2: Market Pricing */}
-            <Link href="/pricing" className="block w-full">
-              <div className="group relative overflow-hidden rounded-xl p-3 sm:p-5 md:p-7 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] border-2 h-full select-none bg-white" style={{ borderColor: "#06038d" }}>
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                  <BarChart3 className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" style={{ color: "#06038d" }} />
-                  <h3 className="font-bold text-[11px] sm:text-sm md:text-base leading-tight" style={{ color: "#06038d" }}>{t("home.viewMarketTrends")}</h3>
-                </div>
-                <p className="text-[9px] sm:text-xs md:text-sm leading-snug" style={{ color: "#06038d", opacity: 0.65 }}>
-                  {t("home.marketTrendsDesc", "查看市場價格走勢、比較各平台行情")}
-                </p>
-                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center transition-all" style={{ backgroundColor: "rgba(6,3,141,0.08)" }}>
-                  <ChevronRight className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" style={{ color: "#06038d" }} />
-                </div>
+              <h3 className="text-white font-bold text-xs sm:text-sm md:text-lg leading-tight mb-1 sm:mb-2">{t("home.startSearching")}</h3>
+              <p className="text-white/65 text-[10px] sm:text-xs md:text-sm leading-snug">
+                {t("home.searchCardsDesc", "搜尋卡片、查看價格走勢與市場數據")}
+              </p>
+            </div>
+            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[#FEDD00]/80 text-[10px] sm:text-xs font-semibold">
+              <span>{t("home.exploreNow", "立即探索")}</span>
+              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+            </div>
+          </Link>
+
+          {/* Panel 2: Market Pricing — medium blue */}
+          <Link href="/pricing" className="group flex-1 relative flex flex-col justify-between p-4 sm:p-6 md:p-10 cursor-pointer transition-all duration-200 active:brightness-90 select-none" style={{ backgroundColor: "#1a1a8c" }}>
+            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-200" />
+            <div className="relative z-10">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 sm:mb-3 group-hover:bg-[#FEDD00] transition-all duration-200">
+                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white group-hover:text-[#06038d] transition-colors duration-200" />
               </div>
-            </Link>
-            {/* Card 3: Marketplace */}
-            <Link href="/marketplace" className="block w-full">
-              <div className="group relative overflow-hidden rounded-xl p-3 sm:p-5 md:p-7 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] h-full select-none" style={{ backgroundColor: "#FEDD00" }}>
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                  <ShoppingBag className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" style={{ color: "#06038d" }} />
-                  <h3 className="font-bold text-[11px] sm:text-sm md:text-base leading-tight" style={{ color: "#06038d" }}>{t("home.goToMarketplace")}</h3>
-                </div>
-                <p className="text-[9px] sm:text-xs md:text-sm leading-snug" style={{ color: "#06038d", opacity: 0.7 }}>
-                  {t("home.marketplaceDesc", "瀏覽市集商品、參與拍賣、安全交易")}
-                </p>
-                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center transition-all" style={{ backgroundColor: "rgba(6,3,141,0.1)" }}>
-                  <ChevronRight className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" style={{ color: "#06038d" }} />
-                </div>
+              <h3 className="text-white font-bold text-xs sm:text-sm md:text-lg leading-tight mb-1 sm:mb-2">{t("home.viewMarketTrends")}</h3>
+              <p className="text-white/65 text-[10px] sm:text-xs md:text-sm leading-snug">
+                {t("home.marketTrendsDesc", "查看市場價格走勢、比較各平台行情")}
+              </p>
+            </div>
+            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[#FEDD00]/80 text-[10px] sm:text-xs font-semibold">
+              <span>{t("home.viewTrends", "查看行情")}</span>
+              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+            </div>
+          </Link>
+
+          {/* Panel 3: Marketplace — yellow */}
+          <Link href="/marketplace" className="group flex-1 relative flex flex-col justify-between p-4 sm:p-6 md:p-10 cursor-pointer transition-all duration-200 active:brightness-90 select-none" style={{ backgroundColor: "#FEDD00" }}>
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all duration-200" />
+            <div className="relative z-10">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-2 sm:mb-3 transition-all duration-200" style={{ backgroundColor: "rgba(6,3,141,0.12)" }}>
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
               </div>
-            </Link>
-          </div>
+              <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight mb-1 sm:mb-2" style={{ color: "#06038d" }}>{t("home.goToMarketplace")}</h3>
+              <p className="text-[10px] sm:text-xs md:text-sm leading-snug" style={{ color: "#06038d", opacity: 0.65 }}>
+                {t("home.marketplaceDesc", "瀏覽市集商品、參與拍賣、安全交易")}
+              </p>
+            </div>
+            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[10px] sm:text-xs font-semibold" style={{ color: "#06038d" }}>
+              <span>{t("home.browseNow", "立即瀏覽")}</span>
+              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+            </div>
+          </Link>
         </div>
       </section>
 

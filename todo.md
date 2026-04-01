@@ -7183,3 +7183,8 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 恢復原有三個按鈕（搜尋卡牌、比較市場格價、前往市集）
 - [x] flex flex-row flex-wrap justify-center 確保手機版並排
 - [ ] 儲存 checkpoint
+
+---
+## 🎨 CTA 全寬三色分區設計
+- [ ] 改為全寬三色分區（無間距無邊框），三功能各佔三分之一
+- [ ] 儲存 checkpoint

@@ -2210,5 +2210,8 @@
     "returnToMarketplace": "マーケットプレイスに戻る",
     "totalItems": "合計 {{count}} 点"
   },
-  "home.marketTrendsDesc": "市場価格トレンドを確認し、各プラットフォームを比較"
+  "home.marketTrendsDesc": "市場価格トレンドを確認し、各プラットフォームを比較",
+  "home.exploreNow": "今すぐ探す",
+  "home.viewTrends": "相場を見る",
+  "home.browseNow": "今すぐ閲覧"
 }
