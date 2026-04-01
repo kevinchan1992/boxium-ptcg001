@@ -134,7 +134,7 @@ export const auctionRouter = router({
       // Create the listing in draft/pending_review state
       const listing = await createListing({
         sellerId: ctx.user.id,
-        sellerType: 'user',
+        sellerType: 'seller',
         cardId: input.cardId ?? null,
         title: input.title,
         description: input.description,
@@ -156,7 +156,6 @@ export const auctionRouter = router({
         antiSnipingMinutes: input.antiSnipingMinutes,
         auctionTermsVersion: AUCTION_TERMS_VERSION,
         isHighValueReview: isHighValueReview,
-        auctionPaymentStatus: 'pending',
       } as any);
 
       // Notify admin for high-value listings
