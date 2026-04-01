@@ -7242,3 +7242,8 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ### 驗證
 - [x] 伺服器正常運行，無 TypeScript 錯誤
 - [x] 保存 checkpoint
+
+- [x] 更新 Admin 後台熱門卡牌計算邏輯：calculateAndCacheTrendingCards 的 currentPrice 改用 PSA10 最近 5 筆中位數（含 NaN/Infinity 防護）
+- [x] 更新 AdminTrendingCards.tsx 顯示「PSA10 參考價」標籤
+- [x] 首頁 CTA 三面板加入 hover 圖示圓圈放大動畫（group-hover:scale-110）
+- [x] 首頁 CTA 區塊加入 Intersection Observer 滾動進場動畫（三面板依序從下方滑入）
