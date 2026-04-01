@@ -437,7 +437,7 @@ export default function Home() {
               marginLeft: "-28px",
               paddingLeft: "calc(4% + 32px)",
               paddingRight: "calc(4% + 32px)",
-              paddingTop: "clamp(13px, 4vw, 37px)",
+              paddingTop: "clamp(16px, 4vw, 40px)",
               paddingBottom: "clamp(16px, 4vw, 40px)",
               zIndex: 2,
             }}
