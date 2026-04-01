@@ -280,14 +280,26 @@ async function finalizeAuction(listing: any): Promise<void> {
   const paymentDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
   const paymentDeadlineStr = formatHKT(paymentDeadline);
 
+  // Calculate platform fee (5%) and seller receivable
+  const PLATFORM_FEE_RATE = 0.05;
+  const platformFee = parseFloat((winAmount * PLATFORM_FEE_RATE).toFixed(2));
+  const sellerReceivable = parseFloat((winAmount - platformFee).toFixed(2));
+
   const order = await createMarketplaceOrder({
     orderNo,
     buyerId: winningBid.bidderId,
-    sellerId: listing.sellerId,
-    totalHkd: winAmount.toString(),
+    sellerId: listing.sellerId ?? undefined,
+    sellerType: listing.sellerId ? 'seller' : 'platform',
+    listingId: listing.id,
+    unitPriceHkd: winAmount.toFixed(2),
+    quantity: 1,
+    subtotalHkd: winAmount.toFixed(2),
+    platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
+    platformFeeHkd: platformFee.toFixed(2),
+    sellerReceivableHkd: sellerReceivable.toFixed(2),
+    paymentMethod: 'stripe',
     orderStatus: 'pending_payment',
-    paymentStatus: 'unpaid',
-    paymentDeadline,
+    paymentStatus: 'pending',
     orderSource: 'auction',
     auctionListingId: listing.id,
     auctionWinningBidId: winningBid.id,
@@ -297,10 +309,11 @@ async function finalizeAuction(listing: any): Promise<void> {
     await createOrderItems([{
       orderId: order.id,
       listingId: listing.id,
-      cardId: listing.cardId,
+      sellerId: listing.sellerId ?? undefined,
+      sellerType: listing.sellerId ? 'seller' : 'platform',
+      title: listing.title ?? `拍賣品 #${listing.id}`,
+      price: winAmount.toFixed(2),
       quantity: 1,
-      unitPriceHkd: winAmount.toString(),
-      subtotalHkd: winAmount.toString(),
     } as any]);
 
     console.log(`[AuctionProcessor] Auction ${listing.id} ended → Order ${orderNo} created`);
