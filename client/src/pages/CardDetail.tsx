@@ -190,69 +190,112 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
     );
   }
 
-  // Calculate reference price
-  // ── Helper: weighted median ──────────────────────────────────────────────
-  // Each record gets weight = 2^(-daysAgo / halfLife). We sort by price, then
-  // find the price where cumulative weight crosses 50% of total weight.
-  const weightedMedian = (records: typeof activeRecentPrices, halfLifeDays: number): number | null => {
-    const now = new Date();
-    const weighted = records
-      .map(p => {
-        const price = parseFloat(p.price as any);
-        if (isNaN(price)) return null;
-        const daysAgo = p.soldAt
-          ? (now.getTime() - new Date(p.soldAt).getTime()) / (1000 * 60 * 60 * 24)
-          : halfLifeDays * 2;
-        return { price, weight: Math.pow(2, -daysAgo / halfLifeDays) };
-      })
-      .filter((x): x is { price: number; weight: number } => x !== null);
-    if (weighted.length === 0) return null;
-    weighted.sort((a, b) => a.price - b.price);
-    const totalWeight = weighted.reduce((s, x) => s + x.weight, 0);
-    let cumWeight = 0;
-    for (const { price, weight } of weighted) {
-      cumWeight += weight;
-      if (cumWeight >= totalWeight / 2) return price;
-    }
-    return weighted[weighted.length - 1].price;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // NEW 3-TIER PRICE ARCHITECTURE
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 1. 主顯示：近期成交中位數（最近 5 筆 → 14 天 → 30 天）
+  // 2. 輔助顯示：短期加權均價（7 天加權平均）
+  // 3. 價格帶：30 天 P25/P75
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Helper: Simple median ────────────────────────────────────────────────
+  const simpleMedian = (prices: number[]): number | null => {
+    if (prices.length === 0) return null;
+    const sorted = [...prices].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+      ? (sorted[mid - 1] + sorted[mid]) / 2
+      : sorted[mid];
   };
 
-  // ── Main reference price: weighted median (7d → 14d → 30d → 90d) ─────────
-  const calculateReferencePrice = (): { price: string; windowDays: number; recordCount: number } => {
-    if (activeRecentPrices.length === 0) return { price: "N/A", windowDays: 0, recordCount: 0 };
+  // ── Helper: Weighted average ─────────────────────────────────────────────
+  const weightedAverage = (records: typeof activeRecentPrices, halfLifeDays: number): number | null => {
+    if (records.length === 0) return null;
+    const now = new Date();
+    let weightedSum = 0;
+    let totalWeight = 0;
+    for (const r of records) {
+      const price = parseFloat(r.price as any);
+      if (isNaN(price)) continue;
+      const daysAgo = r.soldAt
+        ? (now.getTime() - new Date(r.soldAt).getTime()) / (1000 * 60 * 60 * 24)
+        : halfLifeDays * 2;
+      const w = Math.pow(2, -daysAgo / halfLifeDays);
+      weightedSum += price * w;
+      totalWeight += w;
+    }
+    return totalWeight > 0 ? weightedSum / totalWeight : null;
+  };
+
+  // ── 1️⃣ MAIN: 近期成交中位數（最近 5 筆 → 14 天 → 30 天）──────────────────
+  const calculateRecentMedian = (): { price: number | null; source: string; recordCount: number } => {
+    if (activeRecentPrices.length === 0) return { price: null, source: "N/A", recordCount: 0 };
     if (isSealedProduct) {
       const latest = activeRecentPrices[0];
-      if (!latest) return { price: "N/A", windowDays: 0, recordCount: 0 };
+      if (!latest) return { price: null, source: "N/A", recordCount: 0 };
       const price = parseFloat(latest.price as any);
       const qty = latest.quantity ? parseInt(latest.quantity as any, 10) : 1;
-      return { price: isNaN(price) ? "N/A" : (price / (qty || 1)).toString(), windowDays: 0, recordCount: 1 };
+      return { price: isNaN(price) ? null : price / (qty || 1), source: "最新成交", recordCount: 1 };
     }
-    const now = new Date();
-    const windows = [7, 14, 30, 90];
-    for (const days of windows) {
-      const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-      const records = activeRecentPrices.filter(p => p.soldAt && new Date(p.soldAt) >= cutoff);
-      if (records.length >= 3) {
-        const median = weightedMedian(records, 7);
-        return { price: median !== null ? median.toString() : "N/A", windowDays: days, recordCount: records.length };
+
+    // Step 1: Try latest 5 records
+    if (activeRecentPrices.length >= 5) {
+      const latest5 = activeRecentPrices.slice(0, 5);
+      const prices = latest5.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
+      if (prices.length >= 5) {
+        return { price: simpleMedian(prices), source: "最近 5 筆", recordCount: 5 };
       }
     }
+
+    // Step 2: Try 14-day window
+    const now = new Date();
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const records14d = activeRecentPrices.filter(p => p.soldAt && new Date(p.soldAt) >= fourteenDaysAgo);
+    if (records14d.length >= 3) {
+      const prices = records14d.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
+      return { price: simpleMedian(prices), source: "14 天", recordCount: prices.length };
+    }
+
+    // Step 3: Try 30-day window
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const records30d = activeRecentPrices.filter(p => p.soldAt && new Date(p.soldAt) >= thirtyDaysAgo);
+    if (records30d.length >= 3) {
+      const prices = records30d.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
+      return { price: simpleMedian(prices), source: "30 天", recordCount: prices.length };
+    }
+
     // Fallback: use all available records
-    const median = weightedMedian(activeRecentPrices, 7);
-    return { price: median !== null ? median.toString() : "N/A", windowDays: 90, recordCount: activeRecentPrices.length };
+    const allPrices = activeRecentPrices.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
+    return { price: simpleMedian(allPrices), source: "全部記錄", recordCount: allPrices.length };
   };
 
-  const refPriceResult = calculateReferencePrice();
-  const avgPrice = refPriceResult.price;
-  const refWindowDays = refPriceResult.windowDays;
-  const refRecordCount = refPriceResult.recordCount;
+  const recentMedianResult = calculateRecentMedian();
+  const mainPrice = recentMedianResult.price;
+  const mainPriceSource = recentMedianResult.source;
+  const mainPriceRecordCount = recentMedianResult.recordCount;
+
+  // ── 2️⃣ AUXILIARY: 短期加權均價（7 天加權平均）──────────────────────────────
+  const calculateWeightedAvg = (): { price: number | null; recordCount: number } => {
+    if (activeRecentPrices.length === 0 || isSealedProduct) return { price: null, recordCount: 0 };
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const records7d = activeRecentPrices.filter(p => p.soldAt && new Date(p.soldAt) >= sevenDaysAgo);
+    if (records7d.length < 2) return { price: null, recordCount: 0 };
+    return { price: weightedAverage(records7d, 7), recordCount: records7d.length };
+  };
+
+  const weightedAvgResult = calculateWeightedAvg();
+  const auxPrice = weightedAvgResult.price;
+  const auxPriceRecordCount = weightedAvgResult.recordCount;
+
+  // ── 3️⃣ PRICE BAND: 30 天價格帶（P25/P75）────────────────────────────────
   const recordCount = activeRecentPrices.length;
 
   // ── Latest single trade ───────────────────────────────────────────────────
   const latestTrade = activeRecentPrices.length > 0 ? activeRecentPrices[0] : null;
   const latestTradePrice = latestTrade ? parseFloat(latestTrade.price as any) : null;
 
-  // ── 30-day P25 / P75 ─────────────────────────────────────────────────────
+  // ── 30-day P25 / P75 (Price Band) ────────────────────────────────────────
   const thirtyDayPrices = (() => {
     const now = new Date();
     const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -424,86 +467,133 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 </div>
               </div>
 
-              {/* Price Stats Grid */}
+              {/* Price Stats Grid - 3-tier architecture */}
               <div className="bg-[#0A2472]/80 backdrop-blur-sm">
-                <div className="grid grid-cols-3 divide-x divide-[#1565C0]/40">
 
-                  {/* Col 1: Reference Price (weighted median) */}
-                  <div className="px-3 py-4 text-center">
-                    <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">
-                      {isSealedProduct ? '參考均價' : `參考價${refWindowDays > 0 ? ` (${refWindowDays}天)` : ''}`}
-                    </p>
-                    {avgPrice === "N/A" ? (
-                      <p className="text-sm sm:text-base md:text-lg font-bold text-[#FFD600] leading-tight">N/A</p>
-                    ) : (
-                      <>
-                        <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
-                        <p className="text-sm sm:text-base md:text-lg font-bold text-[#FFD600] leading-tight">
-                          {parseFloat(avgPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {/* 主顯示：近期成交中位數 */}
+                <div className="px-4 pt-4 pb-3 border-b border-[#1565C0]/30">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#FFD600] inline-block" />
+                        <p className="text-[10px] sm:text-xs text-zinc-300 font-semibold tracking-wide">
+                          {isSealedProduct ? '參考均價' : '近期成交中位數'}
                         </p>
-                      </>
-                    )}
+                        {!isSealedProduct && mainPriceSource !== "N/A" && (
+                          <span className="text-[9px] text-zinc-500 bg-zinc-800/60 px-1.5 py-0.5 rounded-full">
+                            {mainPriceSource}
+                          </span>
+                        )}
+                      </div>
+                      {mainPrice !== null ? (
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-[10px] text-zinc-400">HKD</span>
+                          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-[#FFD600] leading-none">
+                            {mainPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-xl sm:text-2xl font-bold text-[#FFD600]">N/A</p>
+                      )}
+                      {!isSealedProduct && mainPriceRecordCount > 0 && (
+                        <p className="text-[9px] text-zinc-500 mt-0.5">基於 {mainPriceRecordCount} 筆成交記錄</p>
+                      )}
+                    </div>
                     {priceTrend && (
-                      <div className={`mt-1 flex items-center justify-center gap-0.5 text-[10px] font-semibold ${priceTrend.isIncrease ? 'text-green-400' : priceTrend.isDecrease ? 'text-red-400' : 'text-zinc-400'}`}>
-                        {priceTrend.isIncrease ? <TrendingUp className="w-3 h-3" /> : priceTrend.isDecrease ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                        <span>{Math.abs(priceTrend.change).toFixed(1)}%</span>
+                      <div className={`flex flex-col items-end gap-0.5 ${priceTrend.isIncrease ? 'text-green-400' : priceTrend.isDecrease ? 'text-red-400' : 'text-zinc-400'}`}>
+                        <div className="flex items-center gap-0.5 text-sm font-bold">
+                          {priceTrend.isIncrease ? <TrendingUp className="w-4 h-4" /> : priceTrend.isDecrease ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                          <span>{Math.abs(priceTrend.change).toFixed(1)}%</span>
+                        </div>
+                        <p className="text-[9px] text-zinc-500">7 天趨勢</p>
                       </div>
                     )}
                   </div>
+                </div>
 
-                  {/* Col 2: Latest single trade */}
-                  <div className="px-3 py-4 text-center">
-                    <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">最近成交</p>
+                {/* 輔助資訊：3 欄小數據 */}
+                <div className="grid grid-cols-3 divide-x divide-[#1565C0]/40">
+
+                  {/* 小欄 1: 短期加權均價 */}
+                  <div className="px-3 py-3 text-center">
+                    <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">
+                      {isSealedProduct ? '最新成交' : '7天加權均價'}
+                    </p>
+                    {!isSealedProduct ? (
+                      auxPrice !== null ? (
+                        <>
+                          <p className="text-[9px] text-zinc-500">HKD</p>
+                          <p className="text-xs sm:text-sm font-semibold text-blue-300 leading-tight">
+                            {auxPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </p>
+                          <p className="text-[8px] text-zinc-600 mt-0.5">{auxPriceRecordCount} 筆</p>
+                        </>
+                      ) : (
+                        <p className="text-xs font-semibold text-zinc-600">-</p>
+                      )
+                    ) : (
+                      latestTradePrice !== null ? (
+                        <>
+                          <p className="text-[9px] text-zinc-500">HKD</p>
+                          <p className="text-xs sm:text-sm font-semibold text-blue-300 leading-tight">
+                            {latestTradePrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </p>
+                          {latestTrade?.soldAt && (
+                            <p className="text-[8px] text-zinc-600 mt-0.5">
+                              {new Date(latestTrade.soldAt).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })}
+                            </p>
+                          )}
+                        </>
+                      ) : <p className="text-xs font-semibold text-zinc-600">N/A</p>
+                    )}
+                  </div>
+
+                  {/* 小欄 2: 最近單筆成交 */}
+                  <div className="px-3 py-3 text-center">
+                    <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">最近單筆</p>
                     {latestTradePrice !== null && !isNaN(latestTradePrice) ? (
                       <>
-                        <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
-                        <p className="text-sm sm:text-base font-bold text-blue-300 leading-tight">
-                          {latestTradePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <p className="text-[9px] text-zinc-500">HKD</p>
+                        <p className="text-xs sm:text-sm font-semibold text-white leading-tight">
+                          {latestTradePrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </p>
                         {latestTrade?.soldAt && (
-                          <p className="text-[9px] text-zinc-500 mt-0.5">
+                          <p className="text-[8px] text-zinc-600 mt-0.5">
                             {new Date(latestTrade.soldAt).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })}
                           </p>
                         )}
                       </>
                     ) : (
-                      isSealedProduct && minPrice !== null ? (
-                        <>
-                          <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
-                          <p className="text-sm sm:text-base font-bold text-blue-300 leading-tight">
-                            {minPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </p>
-                        </>
-                      ) : <p className="text-sm font-bold text-blue-300">N/A</p>
+                      <p className="text-xs font-semibold text-zinc-600">N/A</p>
                     )}
                   </div>
 
-                  {/* Col 3: 30-day P25/P75 range (single cards) or max price (sealed) */}
-                  <div className="px-3 py-4 text-center">
+                  {/* 小欄 3: 30 天價格帶 */}
+                  <div className="px-3 py-3 text-center">
                     {!isSealedProduct && p25 !== null && p75 !== null ? (
                       <>
-                        <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">30天區間</p>
-                        <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
+                        <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">30天價格帶</p>
+                        <p className="text-[9px] text-zinc-500">HKD</p>
                         <p className="text-[10px] sm:text-xs font-semibold text-green-400 leading-tight">
                           {p25.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </p>
-                        <p className="text-[9px] text-zinc-500">↕</p>
+                        <p className="text-[8px] text-zinc-600">↕</p>
                         <p className="text-[10px] sm:text-xs font-semibold text-orange-400 leading-tight">
                           {p75.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </p>
-                        <p className="text-[9px] text-zinc-500 mt-0.5">P25 / P75</p>
+                        <p className="text-[8px] text-zinc-600 mt-0.5">P25 / P75</p>
                       </>
                     ) : (
                       <>
-                        <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">最高成交</p>
+                        <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">最高成交</p>
                         {maxPrice !== null ? (
                           <>
-                            <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
-                            <p className="text-sm sm:text-base font-bold text-orange-400 leading-tight">
-                              {maxPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            <p className="text-[9px] text-zinc-500">HKD</p>
+                            <p className="text-xs sm:text-sm font-semibold text-orange-400 leading-tight">
+                              {maxPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
                           </>
-                        ) : <p className="text-sm font-bold text-orange-400">N/A</p>}
+                        ) : <p className="text-xs font-semibold text-zinc-600">N/A</p>}
                       </>
                     )}
                   </div>
@@ -515,7 +605,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   <p className="text-[10px] text-zinc-500">
                     {isSealedProduct
                       ? t("cardDetail.basedOnLatestSealedRecords", { count: recordCount, months: 2 })
-                      : `基於最近 ${refRecordCount} 筆 PSA 10 成交記錄加權中位數（${refWindowDays} 天視窗，半衰期 7 天）`
+                      : `中位數基於 ${mainPriceRecordCount} 筆 PSA 10 成交記錄（${mainPriceSource}）`
                     }
                     {priceTrend && <span className="ml-1">· {t("cardDetail.priceTrend")}</span>}
                   </p>
