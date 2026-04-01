@@ -2209,5 +2209,6 @@
     "removedFromWishlist": "已從願望清單移除",
     "returnToMarketplace": "返回商城",
     "totalItems": "共 {{count}} 件商品"
-  }
+  },
+  "home.marketTrendsDesc": "查看市場價格走勢、比較各平台行情"
 }

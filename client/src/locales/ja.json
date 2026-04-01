@@ -2209,5 +2209,6 @@
     "removedFromWishlist": "ほしい物リストから削除しました",
     "returnToMarketplace": "マーケットプレイスに戻る",
     "totalItems": "合計 {{count}} 点"
-  }
+  },
+  "home.marketTrendsDesc": "市場価格トレンドを確認し、各プラットフォームを比較"
 }

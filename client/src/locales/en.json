@@ -2209,5 +2209,6 @@
     "removedFromWishlist": "Removed from wishlist",
     "returnToMarketplace": "Return to Marketplace",
     "totalItems": "Total {{count}} items"
-  }
+  },
+  "home.marketTrendsDesc": "View market price trends and compare across platforms"
 }

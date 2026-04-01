@@ -7171,4 +7171,15 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ## ✨ Footer 和 CTA 微優化
 - [x] Footer 手機版加入 Follow Us 小標題（所有裝置均顯示）
 - [x] CTA 卡片加入 active:scale-[0.97] 微動畫縮放效果
+- [x] 儲存 checkpoint (c58cd835)
+
+---
+## 🐛 CTA 手機版強制左右並排
+- [x] 改為 grid-cols-2 強制所有裝置左右並排
+- [ ] 儲存 checkpoint
+
+---
+## 🐛 CTA 恢復三個按鈕並排設計
+- [x] 恢復原有三個按鈕（搜尋卡牌、比較市場格價、前往市集）
+- [x] flex flex-row flex-wrap justify-center 確保手機版並排
 - [ ] 儲存 checkpoint
