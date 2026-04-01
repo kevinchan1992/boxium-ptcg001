@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SF_STATIONS as sfStations, SFStation } from "@/lib/sfStations";
+import { useTranslation } from "react-i18next";
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
@@ -56,6 +57,7 @@ interface CheckoutForm {
 }
 
 export default function Cart() {
+  const { t } = useTranslation();
   const [location, setLocation] = useLocation();
   const { data: user } = trpc.auth.me.useQuery();
   // ── Maintenance mode check (query placed before other hooks, guard after all hooks) ──
@@ -75,16 +77,16 @@ export default function Cart() {
     onSuccess: () => {
       utils.marketplace.getMyCart.invalidate();
       utils.marketplace.getCartCount.invalidate();
-      toast.success("已從購物車移除");
+      toast.success(t("cart.removedFromCart"));
     },
-    onError: () => toast.error("移除失敗，請重試"),
+    onError: () => toast.error(t("cart.removalFailed")),
   });
 
   const clearCartMutation = trpc.marketplace.clearCart.useMutation({
     onSuccess: () => {
       utils.marketplace.getMyCart.invalidate();
       utils.marketplace.getCartCount.invalidate();
-      toast.success("購物車已清空");
+      toast.success(t("cart.cartCleared"));
     },
   });
 
@@ -94,7 +96,7 @@ export default function Cart() {
       utils.marketplace.getCartCount.invalidate();
       toast.success(`已移除 ${data.removed} 件無效商品`);
     },
-    onError: () => toast.error("移除失敗，請重試"),
+    onError: () => toast.error(t("cart.removalFailed")),
   });
 
   const [showCheckout, setShowCheckout] = useState(false);
@@ -186,8 +188,8 @@ export default function Cart() {
   );
   // Use personalized if available, else fall back to recent
   const recommendedListings = useMemo(() => {
-    if (personalizedListings && personalizedListings.listings.length > 0) return { data: personalizedListings, label: "為你推薦（來自關注清單）" };
-    if (recentListings && recentListings.listings.length > 0) return { data: recentListings, label: "最新上架" };
+    if (personalizedListings && personalizedListings.listings.length > 0) return { data: personalizedListings, label: t("cart.recommendationsFromWatchlist") };
+    if (recentListings && recentListings.listings.length > 0) return { data: recentListings, label: t("cart.newlyListed") };
     return null;
   }, [personalizedListings, recentListings]);
 
@@ -196,9 +198,9 @@ export default function Cart() {
   if (accessData && !accessData.allowed) return (
     <div className="min-h-screen bg-[#06038D] flex items-center justify-center px-4">
       <div className="text-center max-w-md">
-        <h1 className="text-3xl font-bold text-white mb-3">市集正在維護中</h1>
-        <p className="text-white/70 mb-6">我們正在緊鑼密鼓地開發中，敬請期待！</p>
-        <a href="/" className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">返回首頁</a>
+        <h1 className="text-3xl font-bold text-white mb-3">{t("cart.maintenance.title")}</h1>
+        <p className="text-white/70 mb-6">{t("cart.maintenance.message")}</p>
+        <a href="/" className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">{t("cart.maintenance.backToHome")}</a>
       </div>
     </div>
   );
@@ -220,7 +222,7 @@ export default function Cart() {
             </div>
             <div className="flex items-center gap-3">
               <ShoppingCart className="w-7 h-7 text-white" />
-              <h1 className="text-2xl font-bold text-white">購物車</h1>
+              <h1 className="text-2xl font-bold text-white">{t("cart.title")}</h1>
             </div>
           </div>
         </div>
@@ -231,8 +233,8 @@ export default function Cart() {
               <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: "#FEDD00" }}>
                 <ShoppingCart className="w-10 h-10" style={{ color: "#06038D" }} />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">請先登入</h2>
-              <p className="text-white/70 mb-6">登入後即可查看購物車</p>
+              <h2 className="text-2xl font-bold text-white mb-2">{t("cart.loginPrompt.title")}</h2>
+              <p className="text-white/70 mb-6">{t("cart.loginPrompt.message")}</p>
               <Button
                 className="w-full h-12 font-bold text-base rounded-xl"
                 style={{ background: "#FEDD00", color: "#06038D" }}
@@ -241,7 +243,7 @@ export default function Cart() {
                 立即登入
               </Button>
               <Link href="/marketplace">
-                <p className="text-white/50 text-sm mt-4 hover:text-white/80 cursor-pointer transition-colors">先去市集看看 →</p>
+                <p className="text-white/50 text-sm mt-4 hover:text-white/80 cursor-pointer transition-colors">{t("cart.loginPrompt.browseMarketplace")}</p>
               </Link>
             </div>
           </div>
@@ -346,7 +348,7 @@ export default function Cart() {
           {/* Title row */}
           <div className="flex items-center gap-3">
             <ShoppingCart className="w-7 h-7 text-white" />
-            <h1 className="text-2xl font-bold text-white">購物車</h1>
+            <h1 className="text-2xl font-bold text-white">{t("cart.title")}</h1>
             {!isEmpty && (
               <span className="text-sm text-white/60">（{cartItems.length} 件商品）</span>
             )}
@@ -504,16 +506,16 @@ export default function Cart() {
                     <span>HK${activeSubtotal.toFixed(0)}</span>
                   </div>
                   <div className="flex justify-between text-gray-500">
-                    <span>運費</span>
-                    <span className="text-green-600">運費到付</span>
+                    <span>{t("cart.shippingFee")}</span>
+                    <span className="text-green-600">{t("cart.shippingFeeValue")}</span>
                   </div>
                 </div>
                 <Separator className="my-3" />
                 <div className="flex justify-between font-bold text-base text-[#06038D]">
-                  <span>合計</span>
+                  <span>{t("cart.total")}</span>
                   <span>HK${activeSubtotal.toFixed(0)}</span>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">（不含運費）</p>
+                <p className="text-xs text-gray-400 mt-1">{t("cart.totalDisclaimer")}</p>
 
                 <div className="mt-4 space-y-2">
                   <button
@@ -585,6 +587,7 @@ interface CartItemRowProps {
 }
 
 function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps) {
+  const { t } = useTranslation();
   const [timeLeft, setTimeLeft] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -657,10 +660,10 @@ function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps
               </Badge>
             )}
             {item.acceptedOfferId && !item.isOfferExpired && (
-              <Badge className="text-xs px-1.5 py-0 h-5 bg-green-100 text-green-700 border-green-200">已接受出價</Badge>
+              <Badge className="text-xs px-1.5 py-0 h-5 bg-green-100 text-green-700 border-green-200">{t("cart.offer.acceptedBadge")}</Badge>
             )}
             {unavailable && (
-              <Badge variant="destructive" className="text-xs px-1.5 py-0 h-5">已下架</Badge>
+              <Badge variant="destructive" className="text-xs px-1.5 py-0 h-5">{t("cart.item.unavailableBadge")}</Badge>
             )}
             {item.hasPendingOrder && !unavailable && (
               <Link href={item.pendingOrderNo ? `/orders?highlight=${item.pendingOrderNo}` : '/orders'}>
@@ -723,6 +726,7 @@ interface CheckoutDialogProps {
 function CheckoutDialog({
   open, onClose, form, setForm, filteredStations, selectedStation, activeItems, activeSubtotal, sfDistricts, user,
 }: CheckoutDialogProps) {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const [isValidatingStock, setIsValidatingStock] = React.useState(false);
@@ -998,11 +1002,11 @@ function CheckoutDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg max-h-[92vh]">
-        <VisuallyHidden><DialogTitle>結帳</DialogTitle></VisuallyHidden>
+        <VisuallyHidden><DialogTitle>{t("cart.checkoutDialog.title")}</DialogTitle></VisuallyHidden>
         {/* Header - /seller style */}
         <div className="px-5 pt-5 pb-4 flex-shrink-0" style={{ backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00' }}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-white">結帳</h2>
+            <h2 className="text-base font-bold text-white">{t("cart.checkoutDialog.title")}</h2>
             <button
               onClick={onClose}
               className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
@@ -1013,8 +1017,8 @@ function CheckoutDialog({
           {/* Step Indicator */}
           <div className="flex items-center gap-0">
             {(checkoutStep <= 2
-              ? [{ n: 1 as const, label: "送貨方式" }, { n: 2 as const, label: "付款確認" }]
-              : [{ n: 1 as const, label: "送貨方式" }, { n: 2 as const, label: "付款確認" }, { n: 3 as const, label: "掃碼付款" }, { n: 4 as const, label: "上傳截圖" }]
+              ? [{ n: 1 as const, label: t("cart.checkoutDialog.step1") }, { n: 2 as const, label: t("cart.checkoutDialog.step2") }]
+              : [{ n: 1 as const, label: t("cart.checkoutDialog.step1") }, { n: 2 as const, label: t("cart.checkoutDialog.step2") }, { n: 3 as const, label: t("cart.checkoutDialog.step3") }, { n: 4 as const, label: t("cart.checkoutDialog.step4") }]
             ).map(({ n, label }, idx, arr) => (
               <React.Fragment key={n}>
                 <div className="flex flex-col items-center gap-1">
@@ -1048,7 +1052,7 @@ function CheckoutDialog({
               {/* Saved Addresses */}
               {savedAddresses && savedAddresses.length > 0 && (
                 <div>
-                  <Label className="text-xs font-semibold text-[#06038D] mb-2 block">已儲存的地址</Label>
+                  <Label className="text-xs font-semibold text-[#06038D] mb-2 block">{t("cart.address.savedAddresses")}</Label>
                   <div className="space-y-2">
                     {savedAddresses.map((addr: any) => (
                       <button
@@ -1066,7 +1070,7 @@ function CheckoutDialog({
                             <div className="flex items-center gap-2 mb-0.5">
                               <span className="text-sm font-semibold text-gray-800">{addr.recipientName}</span>
                               {addr.isDefault && (
-                                <span className="text-[10px] bg-[#06038D] text-white px-1.5 py-0.5 rounded font-medium">預設</span>
+                                <span className="text-[10px] bg-[#06038D] text-white px-1.5 py-0.5 rounded font-medium">{t("cart.address.defaultBadge")}</span>
                               )}
                               {addr.label && addr.label !== "預設地址" && (
                                 <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{addr.label}</span>
@@ -1109,7 +1113,7 @@ function CheckoutDialog({
                 <div className="flex items-center justify-between p-3 rounded-xl border border-dashed border-[#06038D]/30 bg-[#06038D]/5">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#06038D]" />
-                    <span className="text-xs text-gray-600">尚未儲存任何收貨地址</span>
+                    <span className="text-xs text-gray-600">{t("cart.address.noSavedAddresses")}</span>
                   </div>
                   <a
                     href="/profile?tab=addresses"
@@ -1125,7 +1129,7 @@ function CheckoutDialog({
               {/* Manual Address / Shipping Method */}
               {(!savedAddresses || savedAddresses.length === 0 || selectedAddressId === null) && (<>
                 <div>
-                  <Label className="text-xs font-semibold text-[#06038D] mb-2 block">送貨方式</Label>
+                  <Label className="text-xs font-semibold text-[#06038D] mb-2 block">{t("cart.checkoutDialog.step1")}</Label>
                   <RadioGroup
                     value={form.shippingMethod}
                     onValueChange={(v) => setForm((f) => ({ ...f, shippingMethod: v as ShippingMethod, sfDistrict: "", sfStationCode: null }))}
@@ -1138,9 +1142,9 @@ function CheckoutDialog({
                       <Label htmlFor="sf_cod2" className="cursor-pointer flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <Truck className="w-4 h-4 text-[#06038D] flex-shrink-0" />
-                          <span className="font-semibold text-sm text-gray-800 whitespace-nowrap">順豐速運（運費到付）</span>
+                          <span className="font-semibold text-sm text-gray-800 whitespace-nowrap">{t("cart.shipping.sfExpressTitle")}</span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5 ml-6">運費由順豐速運收取，於取件時支付</p>
+                        <p className="text-xs text-gray-500 mt-0.5 ml-6">{t("cart.shipping.sfExpressDescription")}</p>
                       </Label>
                     </div>
                     <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
@@ -1150,9 +1154,9 @@ function CheckoutDialog({
                       <Label htmlFor="meetup2" className="cursor-pointer flex-1">
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4 text-[#06038D]" />
-                          <span className="font-semibold text-sm text-gray-800">面交 / 其他</span>
+                          <span className="font-semibold text-sm text-gray-800">{t("cart.shipping.meetupTitle")}</span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5 ml-6">請與賣家協商交收地點</p>
+                        <p className="text-xs text-gray-500 mt-0.5 ml-6">{t("cart.shipping.meetupDescription")}</p>
                       </Label>
                     </div>
                   </RadioGroup>
@@ -1328,7 +1332,7 @@ function CheckoutDialog({
             <>
               {/* Order Summary */}
               <div className="bg-[#06038D]/5 rounded-xl border border-[#06038D]/20 p-4 space-y-2">
-                <p className="text-xs font-semibold text-[#06038D] mb-2">訂單摘要</p>
+                <p className="text-xs font-semibold text-[#06038D] mb-2">{t("cart.summary")}</p>
                 {activeItems.map((item) => (
                   <div key={item.listingId} className="flex justify-between text-sm text-gray-700">
                     <span className="truncate flex-1 mr-2">
@@ -1702,7 +1706,7 @@ function CheckoutDialog({
               className="flex-shrink-0 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white px-4"
               onClick={() => setCheckoutStep(3)}
               disabled={isSubmittingProof}
-            >返回</Button>
+            >{t("cart.back")}</Button>
           )}
           {checkoutStep === 4 && !proofSubmitted && (
             <Button

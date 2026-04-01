@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Search, Loader2, TrendingUp, TrendingDown, Minus, BarChart3, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from "react-i18next";
 
 interface CardSelectionDialogProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface CardSelectionDialogProps {
 }
 
 export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelectionDialogProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -51,14 +53,14 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
 
   // Preview card data before inserting
   const handlePreview = () => {
-    if (selectedCardIds.length === 0) { toast.error('請至少選擇一張卡牌'); return; }
+    if (selectedCardIds.length === 0) { toast.error(t("cardSelectionDialog.selectAtLeastOneCard")); return; }
     setShowPreview(true);
     refetchCardDetails();
   };
 
   // Handle insert
   const handleInsert = async () => {
-    if (!cardDetails || cardDetails.length === 0) { toast.error('無法獲取卡牌資料'); return; }
+    if (!cardDetails || cardDetails.length === 0) { toast.error(t("cardSelectionDialog.failedToFetchCardData")); return; }
     const formattedData = formatCardData(cardDetails);
     onInsert(formattedData);
     setSelectedCardIds([]);
@@ -149,7 +151,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
           插入卡牌市場數據
         </span>
       }
-      description="搜尋並選擇卡牌，系統將自動從資料庫提取完整的卡牌資訊和所有成交數據供 AI 生成文章"
+      description={t("cardSelectionDialog.searchDescription")}
       className="bg-zinc-900 border-zinc-800 text-white sm:max-w-3xl"
     >
       <div className="flex flex-col gap-3">
@@ -159,7 +161,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="搜尋卡牌名稱或卡號（例如：pikachu、sv8a）"
+            placeholder={t("cardSelectionDialog.searchPlaceholder")}
             className="pl-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
           />
         </div>
@@ -204,7 +206,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
           {showPreview ? (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-white">數據預覽</h3>
+                <h3 className="text-base font-semibold text-white">{t("cardSelectionDialog.dataPreview")}</h3>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -218,7 +220,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
               {isLoadingDetails ? (
                 <div className="flex items-center justify-center py-10">
                   <Loader2 className="w-7 h-7 animate-spin text-[#FEDD00]" />
-                  <span className="ml-3 text-gray-400 text-sm">正在從資料庫提取完整數據...</span>
+                  <span className="ml-3 text-gray-400 text-sm">{t("cardSelectionDialog.fetchingData")}</span>
                 </div>
               ) : cardDetails && cardDetails.length > 0 ? (
                 cardDetails.map((card: any) => (
@@ -260,11 +262,11 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                         {card.psa10Stats && card.psa10Stats.totalVolume > 0 ? (
                           <div className="space-y-1.5">
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">平均價格</span>
+                              <span className="text-gray-400">{t("cardSelectionDialog.avgPrice")}</span>
                               <span className="text-white font-medium">HKD${Math.round(card.psa10Stats.avgPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs gap-2">
-                              <span className="text-gray-400 flex-shrink-0">價格區間</span>
+                              <span className="text-gray-400 flex-shrink-0">{t("cardSelectionDialog.priceRange")}</span>
                               <span className="text-white text-right break-all">HKD${Math.round(card.psa10Stats.minPrice).toLocaleString()} ~ HKD${Math.round(card.psa10Stats.maxPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs">
@@ -276,12 +278,12 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                               <PriceChangeBadge change={card.psa10Stats.priceChange30d} />
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">成交量</span>
+                              <span className="text-gray-400">{t("cardSelectionDialog.volume")}</span>
                               <span className="text-white">{card.psa10Stats.totalVolume} 筆</span>
                             </div>
                           </div>
                         ) : (
-                          <div className="text-xs text-gray-500 italic">暫無成交記錄</div>
+                          <div className="text-xs text-gray-500 italic">{t("cardSelectionDialog.noTransactions")}</div>
                         )}
                       </div>
 
@@ -293,11 +295,11 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                         {card.usedStats && card.usedStats.totalVolume > 0 ? (
                           <div className="space-y-1.5">
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">平均價格</span>
+                              <span className="text-gray-400">{t("cardSelectionDialog.avgPrice")}</span>
                               <span className="text-white font-medium">HKD${Math.round(card.usedStats.avgPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs gap-2">
-                              <span className="text-gray-400 flex-shrink-0">價格區間</span>
+                              <span className="text-gray-400 flex-shrink-0">{t("cardSelectionDialog.priceRange")}</span>
                               <span className="text-white text-right break-all">HKD${Math.round(card.usedStats.minPrice).toLocaleString()} ~ HKD${Math.round(card.usedStats.maxPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs">
@@ -309,12 +311,12 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                               <PriceChangeBadge change={card.usedStats.priceChange30d} />
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">成交量</span>
+                              <span className="text-gray-400">{t("cardSelectionDialog.volume")}</span>
                               <span className="text-white">{card.usedStats.totalVolume} 筆</span>
                             </div>
                           </div>
                         ) : (
-                          <div className="text-xs text-gray-500 italic">暫無成交記錄</div>
+                          <div className="text-xs text-gray-500 italic">{t("cardSelectionDialog.noTransactions")}</div>
                         )}
                       </div>
                     </div>
@@ -332,7 +334,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                   </div>
                 ))
               ) : (
-                <div className="text-center py-10 text-gray-400 text-sm">無法獲取卡牌資料</div>
+                <div className="text-center py-10 text-gray-400 text-sm">{t("cardSelectionDialog.failedToFetchCardData")}</div>
               )}
             </div>
           ) : (
@@ -343,7 +345,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                   <Loader2 className="w-7 h-7 animate-spin text-[#FEDD00]" />
                 </div>
               ) : debouncedQuery.length === 0 ? (
-                <div className="text-center py-10 text-gray-400 text-sm">請輸入搜尋關鍵字查找卡牌</div>
+                <div className="text-center py-10 text-gray-400 text-sm">{t("cardSelectionDialog.enterSearchKeyword")}</div>
               ) : cards && cards.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                   {cards.map((card) => (
@@ -375,7 +377,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-10 text-gray-400 text-sm">找不到符合的卡牌</div>
+                <div className="text-center py-10 text-gray-400 text-sm">{t("cardSelectionDialog.noMatchingCards")}</div>
               )}
             </>
           )}

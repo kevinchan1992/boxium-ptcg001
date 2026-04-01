@@ -14,6 +14,7 @@ import {
   ChevronDown, ChevronUp, MapPin, Phone, User, CreditCard, Loader2,
   Star, MessageSquare, Flag, Tag, Camera, ImageIcon, RotateCcw
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: <Clock className="w-3.5 h-3.5" /> },
@@ -63,6 +64,7 @@ function OrderStatusBadge({ status }: { status: string }) {
 }
 
 function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: string }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [alipayStep, setAlipayStep] = useState(false);
   const createOfferCheckout = trpc.marketplace.createOfferCheckout.useMutation({
@@ -100,7 +102,7 @@ function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: stri
 
           {!alipayStep ? (
             <div className="space-y-3 py-2">
-              <p className="text-sm text-gray-500">付款金額：<span className="font-bold text-gray-900">HKD {parseFloat(amount).toFixed(2)}</span></p>
+              <p className="text-sm text-gray-500">{t("orders.payment.amount")}<span className="font-bold text-gray-900">HKD {parseFloat(amount).toFixed(2)}</span></p>
 
               {/* Stripe */}
               <button
@@ -112,8 +114,8 @@ function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: stri
                   <CreditCard className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 group-hover:text-[#06038d]">Stripe 信用卡</p>
-                  <p className="text-xs text-gray-500">Visa / Mastercard / 其他信用卡</p>
+                  <p className="font-semibold text-gray-900 group-hover:text-[#06038d]">{t("orders.payment.stripeCreditCard")}</p>
+                  <p className="text-xs text-gray-500">{t("orders.payment.cardTypes")}</p>
                 </div>
                 {createOfferCheckout.isPending ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-gray-300 group-hover:text-[#06038d] text-lg">›</span>}
               </button>
@@ -128,13 +130,13 @@ function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: stri
                   <span className="text-white font-bold text-lg">支</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 group-hover:text-[#1677ff]">支付寶 HK</p>
-                  <p className="text-xs text-gray-500">AlipayHK 電子錢包付款</p>
+                  <p className="font-semibold text-gray-900 group-hover:text-[#1677ff]">{t("orders.payment.alipayHK")}</p>
+                  <p className="text-xs text-gray-500">{t("orders.payment.alipayHKWallet")}</p>
                 </div>
                 {createOfferCheckout.isPending ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-gray-300 group-hover:text-[#1677ff] text-lg">›</span>}
               </button>
 
-              <p className="text-xs text-gray-400 text-center pt-1">所有付款均通過加密傳輸保護</p>
+              <p className="text-xs text-gray-400 text-center pt-1">{t("orders.payment.encrypted")}</p>
             </div>
           ) : (
             <div className="space-y-4 py-2 text-center">
@@ -142,12 +144,12 @@ function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: stri
                 <span className="text-3xl">📲</span>
               </div>
               <div>
-                <p className="font-semibold text-gray-900">支付寶 HK 付款頁面已開啟</p>
-                <p className="text-sm text-gray-500 mt-1">請在新視窗完成付款，然後回到此頁面上傳付款截圖</p>
+                <p className="font-semibold text-gray-900">{t("orders.payment.alipayHKPageOpened")}</p>
+                <p className="text-sm text-gray-500 mt-1">{t("orders.payment.alipayHKCompletePayment")}</p>
               </div>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
-                <p className="text-xs text-amber-700 font-medium">⚠️ 付款後需要</p>
-                <p className="text-xs text-amber-600 mt-0.5">前往訂單詳情頁上傳支付寶付款截圖，以便管理員確認收款</p>
+                <p className="text-xs text-amber-700 font-medium">{t("orders.payment.alipayHKScreenshotRequired")}</p>
+                <p className="text-xs text-amber-600 mt-0.5">{t("orders.payment.alipayHKUploadScreenshot")}</p>
               </div>
               <Button className="w-full text-white font-bold" style={{ backgroundColor: "#06038d" }} onClick={() => setOpen(false)}>
                 我已完成付款
@@ -161,10 +163,11 @@ function OfferPaymentButton({ offerId, amount }: { offerId: number; amount: stri
 }
 
 function BuyerCancelButton({ orderId, onSuccess }: { orderId: number; onSuccess: () => void }) {
+  const { t } = useTranslation();
   const [showDialog, setShowDialog] = useState(false);
   const cancelMutation = trpc.marketplace.buyerCancelOrder.useMutation({
     onSuccess: () => {
-      toast.success("訂單已取消");
+      toast.success(t("orders.action.orderCancelled"));
       setShowDialog(false);
       onSuccess();
     },
@@ -183,11 +186,11 @@ function BuyerCancelButton({ orderId, onSuccess }: { orderId: number; onSuccess:
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent bottomSheet className="sm:max-w-sm bg-white text-gray-900">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-gray-900">確認取消訂單</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-gray-900">{t("orders.action.confirmCancelOrder")}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-gray-600 py-2">確定要取消此訂單？取消後商品將重新上架。</p>
+          <p className="text-sm text-gray-600 py-2">{t("orders.action.cancelOrderConfirmation")}</p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowDialog(false)}>返回</Button>
+            <Button variant="outline" size="sm" onClick={() => setShowDialog(false)}>{t("orders.action.back")}</Button>
             <Button
               size="sm"
               variant="outline"
@@ -206,6 +209,7 @@ function BuyerCancelButton({ orderId, onSuccess }: { orderId: number; onSuccess:
 }
 
 function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [showStepper, setShowStepper] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -565,7 +569,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
         className="w-full px-4 py-2.5 border-t border-gray-100 text-[11px] text-gray-400 hover:text-[#06038d] hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5 font-medium"
         onClick={() => setExpanded(e => !e)}
       >
-        {expanded ? <><ChevronUp className="w-3.5 h-3.5" />收起收貨 / 付款資料</> : <><ChevronDown className="w-3.5 h-3.5" />展開收貨 / 付款資料</>}
+        {expanded ? <><ChevronUp className="w-3.5 h-3.5" />{t("orders.details.toggle.hide")}</> : <><ChevronDown className="w-3.5 h-3.5" />{t("orders.details.toggle.show")}</>}
       </button>
 
       {/* ── Expanded Details ── */}
@@ -573,7 +577,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
         <div className="border-t border-gray-100 bg-[#f8f9fc] p-4 space-y-4">
           {shippingAddr && (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#06038d" }}>收貨資料</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#06038d" }}>{t("orders.details.shippingInfo")}</p>
               <div className="bg-white rounded-xl border border-gray-100 p-3 space-y-2">
                 <div className="flex items-center gap-2 text-sm text-gray-700">
                   <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -591,14 +595,14 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
             </div>
           )}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#06038d" }}>付款摘要</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#06038d" }}>{t("orders.details.paymentSummary")}</p>
             <div className="bg-white rounded-xl border border-gray-100 p-3 space-y-2">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500">商品金額</span>
+                <span className="text-gray-500">{t("orders.details.itemAmount")}</span>
                 <span className="text-gray-800 font-medium">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span>
               </div>
               <div className="border-t border-gray-100 pt-2 flex justify-between items-center">
-                <span className="text-sm font-bold text-gray-800">總計</span>
+                <span className="text-sm font-bold text-gray-800">{t("orders.details.total")}</span>
                 <span className="text-base font-extrabold" style={{ color: "#06038d" }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span>
               </div>
             </div>
@@ -617,25 +621,25 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>確認收貨</DialogTitle>
+            <DialogTitle>{t("orders.action.confirmReceipt")}</DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-muted-foreground">確認已收到商品後，款項將立即轉帳給賣家。此操作不可撤銷。</p>
+            <p className="text-sm text-muted-foreground">{t("orders.dialog.confirmReceipt.description")}</p>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
               <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
               請確認商品狀態與描述相符後再確認收貨。如有問題，請先申請爭議。
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>{t("orders.action.cancel")}</Button>
             <Button
               className="bg-green-600 hover:bg-green-700 text-white"
               disabled={confirmReceiptMutation.isPending}
               onClick={() => confirmReceiptMutation.mutate({ orderId: order.id })}
             >
               {confirmReceiptMutation.isPending
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</>
-                : <><CheckCircle className="w-4 h-4 mr-2" />確認收貨</>}
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("orders.dialog.confirmReceipt.processing")}</>
+                : <><CheckCircle className="w-4 h-4 mr-2" />{t("orders.action.confirmReceipt")}</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -650,9 +654,9 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-muted-foreground">請詳細描述問題，管理員將在 1-3 個工作天內處理。</p>
+            <p className="text-sm text-muted-foreground">{t("orders.dialog.fileDispute.description")}</p>
             <Textarea
-              placeholder="請描述問題，例如：商品與描述不符、未收到商品、商品損壞等（至少 10 字）"
+              placeholder={t("orders.dialog.fileDispute.placeholder")}
               value={disputeReason}
               onChange={e => setDisputeReason(e.target.value)}
               rows={4}
@@ -662,15 +666,15 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
               {disputeReason.trim().length < 10 && disputeReason.length > 0 ? (
                 <p className="text-xs text-red-500">還需輸入 {10 - disputeReason.trim().length} 個字</p>
               ) : disputeReason.trim().length >= 10 ? (
-                <p className="text-xs text-green-600">✓ 內容已符合要求</p>
+                <p className="text-xs text-green-600">{t("orders.dialog.fileDispute.charCount.ok")}</p>
               ) : (
-                <p className="text-xs text-muted-foreground">至少輸入 10 個字</p>
+                <p className="text-xs text-muted-foreground">{t("orders.dialog.fileDispute.charCount.min")}</p>
               )}
               <span className="text-xs text-muted-foreground">{disputeReason.length}/1000</span>
             </div>
             {/* Evidence Upload */}
             <div className="space-y-2">
-              <p className="text-sm font-medium">證據檔案（選填，最多 3 個）</p>
+              <p className="text-sm font-medium">{t("orders.dialog.fileDispute.evidence")}</p>
               <div className="flex gap-2 flex-wrap">
                 {disputeEvidenceUrls.map((url, i) => {
                   const isVideo = (disputeEvidenceMimeTypes[i] ?? "").startsWith("video/");
@@ -679,7 +683,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
                       {isVideo
                         ? <video src={url} className="w-full h-full object-cover" muted playsInline />
                         : <img src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />}
-                      {isVideo && <span className="absolute bottom-0.5 left-0.5 bg-black/60 text-white text-xs px-1 rounded">影片</span>}
+                      {isVideo && <span className="absolute bottom-0.5 left-0.5 bg-black/60 text-white text-xs px-1 rounded">{t("orders.dialog.fileDispute.evidence.videoLabel")}</span>}
                       <button
                         type="button"
                         onClick={() => {
@@ -713,14 +717,14 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => { setShowDisputeDialog(false); setDisputeReason(""); setDisputeEvidenceUrls([]); setDisputeEvidenceMimeTypes([]); }}>取消</Button>
+            <Button variant="outline" onClick={() => { setShowDisputeDialog(false); setDisputeReason(""); setDisputeEvidenceUrls([]); setDisputeEvidenceMimeTypes([]); }}>{t("orders.action.cancel")}</Button>
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={openDisputeMutation.isPending || disputeReason.trim().length < 10 || isUploadingEvidence}
               onClick={() => openDisputeMutation.mutate({ orderId: order.id, reason: disputeReason.trim(), evidenceUrls: disputeEvidenceUrls.length > 0 ? disputeEvidenceUrls : undefined })}
             >
               {openDisputeMutation.isPending
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</>
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("orders.dialog.rateSeller.submitting")}</>
                 : <><Flag className="w-4 h-4 mr-2" />提交爭議</>}
             </Button>
           </DialogFooter>
@@ -761,7 +765,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowReviewDialog(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setShowReviewDialog(false)}>{t("orders.action.cancel")}</Button>
             <Button
               className="bg-yellow-500 hover:bg-yellow-600 text-white"
               disabled={submitReviewMutation.isPending || reviewRating === 0}
@@ -772,8 +776,8 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
               })}
             >
               {submitReviewMutation.isPending
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</>
-                : <><MessageSquare className="w-4 h-4 mr-2" />提交評價</>}
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("orders.dialog.rateSeller.submitting")}</>
+                : <><MessageSquare className="w-4 h-4 mr-2" />{t("orders.dialog.rateSeller.submitButton")}</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -783,6 +787,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
 }
 
 function MyOffersTab({ userId }: { userId: number }) {
+  const { t } = useTranslation();
   const utils = trpc.useUtils();
   const { data: offers, isLoading } = trpc.marketplace.getMyOffers.useQuery();
   const cancelOfferMutation = trpc.marketplace.cancelOffer.useMutation({
@@ -794,7 +799,7 @@ function MyOffersTab({ userId }: { userId: number }) {
     accepted: { label: "已接受", color: "bg-green-100 text-green-800" },
     rejected: { label: "已拒絕", color: "bg-red-100 text-red-800" },
     expired: { label: "已過期", color: "bg-gray-100 text-gray-600" },
-    cancelled: { label: "已取消", color: "bg-gray-100 text-gray-600" },
+    cancelled: { label: t("orders.status.cancelled"), color: "bg-gray-100 text-gray-600" },
   };
   if (isLoading) return <div className="text-center py-12 text-muted-foreground"><Loader2 className="w-6 h-6 mx-auto animate-spin" /></div>;
   if (!offers || offers.length === 0) {
@@ -872,6 +877,7 @@ function MyOffersTab({ userId }: { userId: number }) {
 }
 
 export default function Orders() {
+  const { t } = useTranslation();
   const searchString = useSearch();
   const searchParams = new URLSearchParams(searchString);
   const paymentSuccess = searchParams.get("payment") === "success";
@@ -879,6 +885,7 @@ export default function Orders() {
 
   // P3: BatchOrderGroup component - shows a collapsible group of related orders
   function BatchOrderGroup({ group, highlightOrderNo }: { group: { key: string; isBatch: boolean; orders: any[] }; highlightOrderNo: string }) {
+  const { t } = useTranslation();
     const { orders: groupOrders, isBatch } = group;
     const [expanded, setExpanded] = useState(groupOrders.some(o => o.orderNo === highlightOrderNo));
     if (!isBatch || groupOrders.length === 1) {
@@ -1015,7 +1022,7 @@ export default function Orders() {
               <Package className="w-10 h-10" style={{ color: "#06038d" }} />
             </div>
             <div className="text-center md:text-left pb-1 flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-white">我的訂單</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-white">{t("orders.myOrders")}</h1>
               <p className="text-white/70 text-sm mt-1">共 {orders?.length ?? 0} 筆訂單（{activeGroups.length + pastGroups.length} 組）</p>
             </div>
             <Link href="/marketplace">
@@ -1031,7 +1038,7 @@ export default function Orders() {
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6">
         <BrandTabs defaultValue="orders" variant="light">
           <BrandTabsList className="mb-4">
-            <BrandTabsTrigger value="orders" icon={<Package className="w-4 h-4" />} label="我的訂單">
+            <BrandTabsTrigger value="orders" icon={<Package className="w-4 h-4" />} label={t("orders.myOrders")}>
               我的訂單
               {orders && orders.length > 0 && <span className="ml-1 bg-[#06038d] text-white text-xs rounded-full px-1.5 py-0.5">{orders.length}</span>}
             </BrandTabsTrigger>

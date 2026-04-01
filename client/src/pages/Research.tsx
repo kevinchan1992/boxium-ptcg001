@@ -548,7 +548,7 @@ export default function Home() {
                       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
                         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
                         <p className="text-sm font-medium text-foreground">{t('research.searching')}</p>
-                        <p className="text-xs text-muted-foreground mt-2">正在使用 AI 識別卡牌名稱、卡號、系列...</p>
+                        <p className="text-xs text-muted-foreground mt-2">{t("research.aiIdentifying")}</p>
                       </div>
                     )}
                   </div>
@@ -591,7 +591,7 @@ export default function Home() {
                       if (file.type.startsWith('image/')) {
                         processImageFile(file);
                       } else {
-                        toast.error('請上傳圖片檔案（JPG、PNG）');
+                        toast.error(t("research.imageUploadError"));
                       }
                     }
                   }}
@@ -602,14 +602,14 @@ export default function Home() {
                   <p className="text-sm text-muted-foreground mb-2">
                     {isDragging ? '釋放以上傳圖片' : '選擇或拖放一張 TCG 卡牌圖片'}
                   </p>
-                  <p className="text-xs text-muted-foreground mb-3">支持 JPG、PNG 格式</p>
+                  <p className="text-xs text-muted-foreground mb-3">{t("research.supportedFormats")}</p>
                   <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                     <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">💡 拍攝技巧：</p>
                     <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 text-left">
-                      <li>• 確保卡牌名稱和卡號清晰可見</li>
-                      <li>• 避免反光和陰影</li>
-                      <li>• 建議使用裁剪功能框選卡牌主體</li>
-                      <li>• AI 會自動識別卡名、卡號、系列和稀有度</li>
+                      <li>{t("research.tipClearName")}</li>
+                      <li>{t("research.tipAvoidReflection")}</li>
+                      <li>{t("research.tipUseCrop")}</li>
+                      <li>{t("research.tipAiRecognition")}</li>
                     </ul>
                   </div>
                 </div>

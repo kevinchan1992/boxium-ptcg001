@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CONDITION_BADGE, CONDITION_FULL, CONDITION_TOOLTIP, CONDITION_GROUP_COLOR, CONDITION_GROUPS, type ConditionValue } from "@/lib/conditions";
 import { searchSFPointsAsync, validateSFCode, type SFPoint } from "@/lib/sfStations";
+import { useTranslation } from "react-i18next";
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
@@ -36,6 +37,7 @@ function getConditionGroup(condition: string): string {
 // ─── Image Gallery ─────────────────────────────────────────────────────────────
 
 function ListingImageGallery({ images, title }: { images: string[] | null; title: string }) {
+  const { t } = useTranslation();
   const [activeIdx, setActiveIdx] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const imgs = images && images.length > 0 ? images : null;
@@ -45,7 +47,7 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
       <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex items-center justify-center border border-gray-200">
         <div className="text-center text-gray-400">
           <Package className="w-16 h-16 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">商品圖片</p>
+          <p className="text-sm">{t("marketplaceListing.productImage")}</p>
         </div>
       </div>
     );
@@ -151,6 +153,7 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
 // ─── SNKRDUNK Price Block ──────────────────────────────────────────────────────
 
 function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: number; listingPriceHkd: number; condition?: string }) {
+  const { t } = useTranslation();
   const [days, setDays] = useState(7);
 
   const { data: history, isLoading } = trpc.prices.getHistory.useQuery(
@@ -218,11 +221,11 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
       <div className="rounded-xl border border-gray-200 bg-white p-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-2 h-5 rounded-full bg-[#06038D]" />
-          <h3 className="font-semibold text-sm text-[#06038D]">BOXIUM 市場參考價</h3>
+          <h3 className="font-semibold text-sm text-[#06038D]">{t("marketplaceListing.boxiumMarketPrice")}</h3>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-400">
           <Loader2 className="w-4 h-4 animate-spin" />
-          <span>載入中...</span>
+          <span>{t("marketplaceListing.loading")}</span>
         </div>
       </div>
     );
@@ -233,9 +236,9 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
       <div className="rounded-xl border border-gray-200 bg-white p-4">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-2 h-5 rounded-full bg-[#06038D]" />
-          <h3 className="font-semibold text-sm text-[#06038D]">BOXIUM 市場參考價</h3>
+          <h3 className="font-semibold text-sm text-[#06038D]">{t("marketplaceListing.boxiumMarketPrice")}</h3>
         </div>
-        <p className="text-sm text-gray-400">暫無近期交易數據</p>
+        <p className="text-sm text-gray-400">{t("marketplaceListing.noRecentTransactions")}</p>
       </div>
     );
   }
@@ -250,7 +253,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
         <div className="flex items-center gap-2">
           <TrendIcon className="w-4 h-4 text-white" />
           <div>
-            <span className="text-white font-semibold text-sm">BOXIUM 市場參考價</span>
+            <span className="text-white font-semibold text-sm">{t("marketplaceListing.boxiumMarketPrice")}</span>
             {condition && <span className="ml-2 text-white/60 text-xs">({condition})</span>}
           </div>
         </div>
@@ -259,21 +262,21 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
           className="flex items-center gap-1 text-white/70 hover:text-white text-xs transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
-          <span>查看詳細行情</span>
+          <span>{t("marketplaceListing.viewDetailedChart")}</span>
         </a>
       </div>
       <div className="p-4 space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center bg-[#06038D]/5 rounded-xl p-3">
-            <p className="text-xs text-gray-500 mb-0.5">30天均價</p>
+            <p className="text-xs text-gray-500 mb-0.5">{t("marketplaceListing.30DayAverage")}</p>
             <p className="text-lg font-bold text-[#06038D]">HKD {Math.round(stats.avg).toLocaleString()}</p>
           </div>
           <div className="text-center bg-green-50 rounded-xl p-3">
-            <p className="text-xs text-gray-500 mb-0.5">最低</p>
+            <p className="text-xs text-gray-500 mb-0.5">{t("marketplaceListing.lowest")}</p>
             <p className="text-base font-semibold text-green-600">HKD {Math.round(stats.min).toLocaleString()}</p>
           </div>
           <div className="text-center bg-red-50 rounded-xl p-3">
-            <p className="text-xs text-gray-500 mb-0.5">最高</p>
+            <p className="text-xs text-gray-500 mb-0.5">{t("marketplaceListing.highest")}</p>
             <p className="text-base font-semibold text-red-500">HKD {Math.round(stats.max).toLocaleString()}</p>
           </div>
         </div>
@@ -294,7 +297,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-gray-500">成交走勢</span>
+            <span className="text-xs text-gray-500">{t("marketplaceListing.salesTrend")}</span>
             <div className="flex gap-1">
               {[7, 30, 90].map(d => (
                 <button
@@ -324,7 +327,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-xs text-gray-400 text-center py-4">此時間範圍內數據不足，請選擇更長時間範圍</p>
+            <p className="text-xs text-gray-400 text-center py-4">{t("marketplaceListing.chart.insufficientData")}</p>
           )}
         </div>
 
@@ -337,6 +340,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
 // ─── Seller Reviews ────────────────────────────────────────────────────────────
 
 function SellerReviewsSection({ sellerId }: { sellerId: number }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const { data } = trpc.marketplace.getSellerReviews.useQuery(
     { sellerId, page: 1, pageSize: 5 },
@@ -345,7 +349,7 @@ function SellerReviewsSection({ sellerId }: { sellerId: number }) {
   const reviews = data?.reviews ?? [];
   const total = data?.total ?? 0;
   if (total === 0) return (
-    <div className="text-sm text-gray-400 py-4 text-center">此賣家暫無評價記錄</div>
+    <div className="text-sm text-gray-400 py-4 text-center">{t("marketplaceListing.seller.noReviews")}</div>
   );
   const shown = expanded ? reviews : reviews.slice(0, 3);
   return (
@@ -442,9 +446,10 @@ type VerifyResult = {
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 function OfferPayButton({ orderId }: { orderId: number }) {
+  const { t } = useTranslation();
   const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
     onSuccess: (data) => {
-      toast.success("正在轉向付款頁面...");
+      toast.success(t("marketplaceListing.payment.redirecting"));
       window.location.href = data.checkoutUrl;
     },
     onError: (e: any) => toast.error(e.message || "無法獲取付款連結"),
@@ -463,6 +468,7 @@ function OfferPayButton({ orderId }: { orderId: number }) {
 }
 
 export default function MarketplaceListing() {
+  const { t } = useTranslation();
   const params = useParams<{ id: string }>();
   const id = parseInt(params.id ?? "0");
   // ── Maintenance mode check (query placed before other hooks, guard after all hooks) ──
@@ -532,7 +538,7 @@ export default function MarketplaceListing() {
       utils.marketplace.getWishlistIds.invalidate();
       utils.marketplace.getMyWishlist.invalidate(); // sync Profile wishlist tab
     },
-    onError: () => toast.error("請先登入才能收藏"),
+    onError: () => toast.error(t("marketplaceListing.wishlist.loginRequired")),
   });
 
   useEffect(() => {
@@ -592,7 +598,7 @@ export default function MarketplaceListing() {
 
   const makeOfferMutation = trpc.marketplace.makeOffer.useMutation({
     onSuccess: () => {
-      toast.success("出價已送出！賣家將盡快回覆。");
+      toast.success(t("marketplaceListing.offer.success"));
       setShowOfferDialog(false); setOfferAmount(""); setOfferMessage("");
       utils.marketplace.getMyOfferForListing.invalidate({ listingId: id });
     },
@@ -606,7 +612,7 @@ export default function MarketplaceListing() {
 
   const reportListingMutation = trpc.marketplace.reportListing.useMutation({
     onSuccess: () => {
-      toast.success("舉報已提交，我們將盡快審核。");
+      toast.success(t("marketplaceListing.report.success"));
       setShowReportDialog(false); setReportReason(""); setReportDetails("");
     },
     onError: (e) => toast.error(e.message),
@@ -620,8 +626,8 @@ export default function MarketplaceListing() {
   const verifyPaymentProofMutation = trpc.marketplace.verifyPaymentProof.useMutation({
     onSuccess: (data) => {
       setVerifyResult(data as VerifyResult); setIsVerifying(false);
-      if (data.verified) toast.success("✅ 付款金額驗證成功！");
-      else toast.error("⚠️ 付款金額不符，請重新確認");
+      if (data.verified) toast.success(t("marketplaceListing.payment.verification.success"));
+      else toast.error(t("marketplaceListing.payment.verification.failed"));
     },
     onError: (e) => { setIsVerifying(false); toast.error("驗證失敗：" + e.message); },
   });
@@ -629,7 +635,7 @@ export default function MarketplaceListing() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("截圖不能超過 5MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error(t("marketplaceListing.upload.sizeError")); return; }
     setIsUploading(true); setVerifyResult(null);
     try {
       const formData = new FormData();
@@ -638,11 +644,11 @@ export default function MarketplaceListing() {
       if (!res.ok) throw new Error("上傳失敗");
       const { url } = await res.json();
       setProofUrl(url);
-      toast.success("截圖已上傳，正在 AI 驗證金額...");
+      toast.success(t("marketplaceListing.upload.verifying"));
       setIsVerifying(true);
       const verifyPrice = acceptedOffer ? parseFloat(acceptedOffer.offerPriceHkd as string) : parseFloat((listing as any)?.priceHkd ?? "0");
       verifyPaymentProofMutation.mutate({ proofImageUrl: url, expectedAmountHkd: verifyPrice });
-    } catch { toast.error("截圖上傳失敗，請重試"); }
+    } catch { toast.error(t("marketplaceListing.upload.retry")); }
     finally { setIsUploading(false); }
   };
 
@@ -668,9 +674,9 @@ export default function MarketplaceListing() {
     <div className="min-h-screen bg-[#F8F9FA] pt-20 flex items-center justify-center">
       <div className="text-center">
         <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-        <p className="text-lg font-semibold text-gray-700">商品不存在或已下架</p>
+        <p className="text-lg font-semibold text-gray-700">{t("marketplaceListing.notFound")}</p>
         <Link href="/marketplace">
-          <Button className="mt-4 bg-[#06038D] hover:bg-[#0804b8] text-white">返回商城</Button>
+          <Button className="mt-4 bg-[#06038D] hover:bg-[#0804b8] text-white">{t("marketplaceListing.backToMarketplace")}</Button>
         </Link>
       </div>
     </div>
@@ -704,9 +710,9 @@ export default function MarketplaceListing() {
   if (accessData && !accessData.allowed) return (
     <div className="min-h-screen bg-[#06038D] flex items-center justify-center px-4">
       <div className="text-center max-w-md">
-        <h1 className="text-3xl font-bold text-white mb-3">市集正在維護中</h1>
-        <p className="text-white/70 mb-6">我們正在緊鑼密鼓地開發中，敬請期待！</p>
-        <a href="/" className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">返回首頁</a>
+        <h1 className="text-3xl font-bold text-white mb-3">{t("marketplaceListing.maintenance.title")}</h1>
+        <p className="text-white/70 mb-6">{t("marketplaceListing.maintenance.description")}</p>
+        <a href="/" className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">{t("marketplaceListing.backToHome")}</a>
       </div>
     </div>
   );
@@ -723,7 +729,7 @@ export default function MarketplaceListing() {
             </Link>
           <nav className="flex items-center gap-1.5 text-xs text-white/60 flex-1">
             <Link href="/marketplace">
-              <span className="text-[#FEDD00] hover:text-white font-medium cursor-pointer transition-colors">商城</span>
+              <span className="text-[#FEDD00] hover:text-white font-medium cursor-pointer transition-colors">{t("marketplaceListing.nav.marketplace")}</span>
             </Link>
             <ChevronRight className="w-3 h-3" />
             {conditionGroup && (
@@ -799,7 +805,7 @@ export default function MarketplaceListing() {
                    listing.tcgSeries === "mtg" ? "MTG" : "其他 TCG"}
                 </Badge>
               )}
-              {!isAvailable && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">已售出</Badge>}
+              {!isAvailable && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">{t("marketplaceListing.status.soldOut")}</Badge>}
             </div>
 
             {/* Title */}
@@ -820,10 +826,10 @@ export default function MarketplaceListing() {
               <div className="flex items-center gap-2 mt-1.5">
                 <button
                   className="inline-flex items-center gap-1 text-xs font-mono text-[#06038D]/60 hover:text-[#06038D] bg-[#06038D]/5 hover:bg-[#06038D]/10 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
-                  title="點擊複製商品編號"
+                  title={t("marketplaceListing.copyListingId.tooltip")}
                   onClick={() => {
                     navigator.clipboard.writeText(`#BOXIUM-${listing.id}`);
-                    toast.success('商品編號已複製');
+                    toast.success(t("marketplaceListing.copyListingId.success"));
                   }}
                 >
                   #BOXIUM-{listing.id}
@@ -836,7 +842,7 @@ export default function MarketplaceListing() {
             {/* Price Block */}
             <div className="bg-[#06038D] rounded-2xl p-4 flex items-center justify-between">
               <div>
-                <p className="text-white/60 text-xs mb-0.5">售價</p>
+                <p className="text-white/60 text-xs mb-0.5">{t("marketplaceListing.priceLabel")}</p>
                 {acceptedOffer ? (
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <span className="text-xl font-bold text-white/40 line-through">
@@ -856,7 +862,7 @@ export default function MarketplaceListing() {
 
               <button
                 onClick={() => {
-                  if (!me) { toast.error("請先登入才能收藏"); return; }
+                  if (!me) { toast.error(t("marketplaceListing.wishlist.loginRequired")); return; }
                   toggleWishlistMutation.mutate({ listingId: listing.id });
                 }}
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
@@ -900,7 +906,7 @@ export default function MarketplaceListing() {
                             <Star key={s} className={`w-3 h-3 ${s <= Math.round(parseFloat(sellerProfile.avgRating ?? "0")) ? "fill-[#FEDD00] text-[#FEDD00]" : "text-gray-200"}`} />
                           ))}
                         </div>
-                      ) : <span className="text-gray-400">新賣家</span>}
+                      ) : <span className="text-gray-400">{t("marketplaceListing.seller.profile.new")}</span>}
                       <span>·</span>
                       <span>已售 {sellerProfile.totalSales} 件</span>
                     </div>
@@ -922,7 +928,7 @@ export default function MarketplaceListing() {
             {completedOrderNo ? (
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
                 <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                <p className="text-green-800 font-semibold">訂單已提交！</p>
+                <p className="text-green-800 font-semibold">{t("marketplaceListing.order.submitted")}</p>
                 <p className="text-sm text-green-700 mt-1">訂單號：{completedOrderNo}</p>
               </div>
             ) : isAvailable ? (
@@ -937,7 +943,7 @@ export default function MarketplaceListing() {
                 {isLocked && !acceptedOffer && (
                   <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-sm text-orange-800 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>此商品目前有買家正在付款，請稍後再試。</span>
+                    <span>{t("marketplaceListing.purchase.pendingPayment")}</span>
                   </div>
                 )}
                 {/* Accepted offer banner */}
@@ -948,7 +954,7 @@ export default function MarketplaceListing() {
                         <CheckCircle className="w-4 h-4 text-green-600" />
                       </div>
                       <div>
-                        <p className="text-xs text-green-700 font-semibold leading-none">賣家已接受出價！請使用下方按鈕付款</p>
+                        <p className="text-xs text-green-700 font-semibold leading-none">{t("marketplaceListing.offer.accepted.banner")}</p>
                         <p className="font-bold text-green-800 text-base leading-tight">出價金額：HKD {effectivePrice.toFixed(2)}</p>
                       </div>
                     </div>
@@ -957,7 +963,7 @@ export default function MarketplaceListing() {
                 {effectivePrice < 4.00 && !acceptedOffer && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>此商品金額低於 Stripe 最低付款限額（HKD 4.00），請使用支付寶 HK 付款。</span>
+                    <span>{t("marketplaceListing.payment.stripe.minimumError")}</span>
                   </div>
                 )}
                 {/* Add to Cart button (primary) - always show */}
@@ -976,13 +982,13 @@ export default function MarketplaceListing() {
                             <Clock className="w-4 h-4 text-[#06038D]" />
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 leading-none">已出價</p>
+                            <p className="text-xs text-gray-500 leading-none">{t("marketplaceListing.offer.myOffer")}</p>
                             <p className="font-bold text-[#06038D] text-base leading-tight">
                               HKD {parseFloat(myPendingOffer.offerPriceHkd as string).toFixed(2)}
                             </p>
                           </div>
                         </div>
-                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">等待賣家回覆</span>
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">{t("marketplaceListing.offer.status.pending")}</span>
                       </div>
                       <p className="text-xs text-gray-500">出價將於 {new Date(myPendingOffer.expiresAt).toLocaleString("zh-HK", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })} 到期</p>
                     </div>
@@ -1020,22 +1026,22 @@ export default function MarketplaceListing() {
                 )}
               </div>
             ) : (
-              <Button disabled className="w-full h-12 rounded-xl text-base">商品已售出</Button>
+              <Button disabled className="w-full h-12 rounded-xl text-base">{t("marketplaceListing.status.sold")}</Button>
             )}
 
             {/* Trust badges */}
             <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2.5">
               <div className="flex items-center gap-2.5 text-sm text-gray-600">
                 <Shield className="w-4 h-4 text-green-500 shrink-0" />
-                <span>買家保障：商品與描述不符可申請退款</span>
+                <span>{t("marketplaceListing.buyerProtection.description")}</span>
               </div>
               <div className="flex items-center gap-2.5 text-sm text-gray-600">
                 <Truck className="w-4 h-4 text-[#06038D] shrink-0" />
-                <span>本地順豐到付 / 自取（詳情請聯絡賣家）</span>
+                <span>{t("marketplaceListing.shipping.local")}</span>
               </div>
               <div className="flex items-center gap-2.5 text-sm text-gray-600">
                 <Star className="w-4 h-4 text-[#FEDD00] shrink-0" />
-                <span>付款後 14 天自動確認完成交易</span>
+                <span>{t("marketplaceListing.order.autoConfirm")}</span>
               </div>
             </div>
 
@@ -1054,9 +1060,9 @@ export default function MarketplaceListing() {
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href).then(() => {
                     setCopiedLink(true);
-                    toast.success('連結已複製！');
+                    toast.success(t("marketplaceListing.share.copy.success"));
                     setTimeout(() => setCopiedLink(false), 2000);
-                  }).catch(() => toast.error('複製失敗'));
+                  }).catch(() => toast.error(t("marketplaceListing.share.copy.error")));
                 }}
                 className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors"
               >
@@ -1082,9 +1088,9 @@ export default function MarketplaceListing() {
           {/* Tab headers */}
           <div className="flex border-b border-gray-200">
             {[
-              { key: "price", label: "市場價格", icon: TrendingUp },
-              { key: "desc", label: "商品描述", icon: MessageSquare },
-              { key: "reviews", label: "賣家評價", icon: Star },
+              { key: "price", label: t("marketplaceListing.tabs.price"), icon: TrendingUp },
+              { key: "desc", label: t("marketplaceListing.tabs.description"), icon: MessageSquare },
+              { key: "reviews", label: t("marketplaceListing.tabs.reviews"), icon: Star },
             ].map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.key;
@@ -1112,7 +1118,7 @@ export default function MarketplaceListing() {
                 ? <SnkrdunkPriceBlock cardId={(listing as any).cardId} listingPriceHkd={price} />
                 : <div className="text-center py-8 text-gray-400">
                     <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>此商品暫無關聯卡牌價格數據</p>
+                    <p>{t("marketplaceListing.tabs.price.noData")}</p>
                   </div>
             )}
             {activeTab === "desc" && (
@@ -1120,7 +1126,7 @@ export default function MarketplaceListing() {
                 ? <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">{listing.description}</div>
                 : <div className="text-center py-8 text-gray-400">
                     <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>賣家暫未提供商品描述</p>
+                    <p>{t("marketplaceListing.tabs.description.noData")}</p>
                   </div>
             )}
             {activeTab === "reviews" && listing.sellerType === "seller" && sellerProfile && (
@@ -1129,7 +1135,7 @@ export default function MarketplaceListing() {
             {activeTab === "reviews" && listing.sellerType === "platform" && (
               <div className="text-center py-8 text-gray-400">
                 <Star className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>官方商品暫不顯示評價</p>
+                <p>{t("marketplaceListing.tabs.reviews.noData.official")}</p>
               </div>
             )}
           </div>
@@ -1146,14 +1152,14 @@ export default function MarketplaceListing() {
       {/* ── Alipay Dialog ── */}
       <Dialog open={showAlipay} onOpenChange={() => setShowAlipay(false)}>
         <DialogContent showCloseButton={false} className="sm:max-w-md p-0 overflow-visible border-2 border-[#FEDD00] gap-0">
-          <VisuallyHidden><DialogTitle>支付寶 HK 付款</DialogTitle></VisuallyHidden>
+          <VisuallyHidden><DialogTitle>{t("marketplaceListing.alipay.title")}</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#FEDD00]/20 flex items-center justify-center">
                 <Smartphone className="w-4 h-4 text-[#FEDD00]" />
               </div>
-              <h2 className="text-white font-bold text-lg">支付寶 HK 付款</h2>
+              <h2 className="text-white font-bold text-lg">{t("marketplaceListing.alipay.title")}</h2>
             </div>
             <button onClick={() => setShowAlipay(false)} className="text-white/60 hover:text-white transition-colors">
               <X className="w-5 h-5" />
@@ -1166,12 +1172,12 @@ export default function MarketplaceListing() {
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4 text-sm">
                 <p className="font-bold text-[#06038D]">
                   付款金額：<span className="text-lg">HKD {effectivePrice.toFixed(2)}</span>
-                  {acceptedOffer && <span className="text-xs text-green-600 ml-2">(出價價格)</span>}
+                  {acceptedOffer && <span className="text-xs text-green-600 ml-2">{t("marketplaceListing.alipay.offerPriceLabel")}</span>}
                 </p>
                 <p className="text-gray-600 mt-1">{listing.title}</p>
               </div>
               <div className="text-center space-y-3">
-                <p className="text-sm text-gray-500">請掃描 QR Code 或點擊連結付款</p>
+                <p className="text-sm text-gray-500">{t("marketplaceListing.alipay.scanPrompt")}</p>
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ALIPAY_QR_URL)}`}
                   alt="支付寶 HK QR Code"
@@ -1183,13 +1189,13 @@ export default function MarketplaceListing() {
                 </a>
               </div>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-                <p className="font-medium">付款備注填寫欄位請填寫商品編號：</p>
+                <p className="font-medium">{t("marketplaceListing.alipay.memoPrompt")}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="font-mono text-sm font-bold tracking-wide flex-1">#BOXIUM-{listing.id}</p>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(`#BOXIUM-${listing.id}`);
-                      toast.success("商品編號已複製！請貼上到支付寶備注欄位");
+                      toast.success(t("marketplaceListing.alipay.copySuccess"));
                     }}
                     className="flex items-center gap-1 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg px-2 py-1 text-xs font-medium transition-colors"
                   >
@@ -1197,7 +1203,7 @@ export default function MarketplaceListing() {
                     複製編號
                   </button>
                 </div>
-                <p className="text-amber-600 mt-1">⚠️ 請務必在支付寶備注欄填寫以上編號，方便核對付款</p>
+                <p className="text-amber-600 mt-1">{t("marketplaceListing.alipay.memoWarning")}</p>
               </div>
               <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white"
                 onClick={() => setAlipayStep("shipping")}>
@@ -1209,14 +1215,14 @@ export default function MarketplaceListing() {
           {alipayStep === "shipping" && (
             <div className="space-y-4">
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm text-[#06038D]">
-                <p className="font-medium">請填寫收貨地址</p>
-                <p className="text-xs mt-1 text-gray-500">收貨地址將提供給賣家安排寄送</p>
+                <p className="font-medium">{t("marketplaceListing.alipay.address.title")}</p>
+                <p className="text-xs mt-1 text-gray-500">{t("marketplaceListing.alipay.address.subtitle")}</p>
               </div>
               {/* 已儲存地址快速選擇 */}
               {savedAddresses && savedAddresses.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium text-gray-500">已儲存地址</p>
+                    <p className="text-xs font-medium text-gray-500">{t("marketplaceListing.alipay.address.saved")}</p>
                     {(alipayShippingForm.name || alipayShippingForm.phone) && (
                       <button
                         type="button"
@@ -1260,13 +1266,13 @@ export default function MarketplaceListing() {
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-400">點擊已儲存地址快速填入，或手動填寫以下欄位</p>
+                  <p className="text-xs text-gray-400">{t("marketplaceListing.alipay.address.manualFillPrompt")}</p>
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>收件人姓名 *</Label>
-                  <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：陳大文" value={alipayShippingForm.name} onChange={e => setAlipayShippingForm(f => ({ ...f, name: e.target.value }))} />
+                  <Label>{t("marketplaceListing.alipay.address.recipientName")}</Label>
+                  <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder={t("marketplaceListing.alipay.address.recipientName.placeholder")} value={alipayShippingForm.name} onChange={e => setAlipayShippingForm(f => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>聯絡電話 *</Label>
@@ -1362,7 +1368,7 @@ export default function MarketplaceListing() {
                         <option value="香港島">香港島</option>
                         <option value="九龍">九龍</option>
                         <option value="新界">新界</option>
-                        <option value="香港">香港（不指定）</option>
+                        <option value={t("marketplaceListing.address.region.hongkong")}>香港（不指定）</option>
                       </select>
                     </div>
                   </div>
@@ -1491,7 +1497,7 @@ export default function MarketplaceListing() {
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
-              <p className="font-bold text-lg text-[#06038D]">訂單已提交！</p>
+              <p className="font-bold text-lg text-[#06038D]">{t("marketplaceListing.order.submitted")}</p>
               <p className="text-sm text-gray-500">我們將在核對收款後確認你的訂單，通常需要 1-2 個工作天。</p>
               <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => setShowAlipay(false)}>關閉</Button>
             </div>
@@ -1520,7 +1526,7 @@ export default function MarketplaceListing() {
             {savedAddresses && savedAddresses.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">已儲存地址</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("marketplaceListing.alipay.address.saved")}</p>
                   {selectedSavedAddressId !== null && (
                     <button
                       type="button"
@@ -1549,13 +1555,13 @@ export default function MarketplaceListing() {
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400">點擊已儲存地址快速填入，或手動填寫以下欄位</p>
+                <p className="text-xs text-gray-400">{t("marketplaceListing.alipay.address.manualFillPrompt")}</p>
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="ship-name">收件人姓名 *</Label>
-                <input id="ship-name" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：陳大文" value={shippingForm.name} onChange={e => setShippingForm(f => ({ ...f, name: e.target.value }))} />
+                <Label htmlFor="ship-name">{t("marketplaceListing.alipay.address.recipientName")}</Label>
+                <input id="ship-name" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder={t("marketplaceListing.alipay.address.recipientName.placeholder")} value={shippingForm.name} onChange={e => setShippingForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="ship-phone">聯絡電話 *</Label>
@@ -1579,7 +1585,7 @@ export default function MarketplaceListing() {
                       <option value="香港島">香港島</option>
                       <option value="九龍">九龍</option>
                       <option value="新界">新界</option>
-                      <option value="香港">香港（不指定）</option>
+                      <option value={t("marketplaceListing.address.region.hongkong")}>香港（不指定）</option>
                     </select>
                   </div>
                 </div>
@@ -1697,14 +1703,14 @@ export default function MarketplaceListing() {
       {/* ── Offer Dialog ── */}
       <Dialog open={showOfferDialog} onOpenChange={setShowOfferDialog}>
         <DialogContent bottomSheet showCloseButton={false} className="sm:max-w-sm p-0 overflow-hidden border-2 border-[#FEDD00] gap-0">
-          <VisuallyHidden><DialogTitle>出價洽議</DialogTitle></VisuallyHidden>
+          <VisuallyHidden><DialogTitle>{t("marketplaceListing.offer.button.makeOffer")}</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#FEDD00]/20 flex items-center justify-center">
                 <Tag className="w-4 h-4 text-[#FEDD00]" />
               </div>
-              <h2 className="text-white font-bold text-lg">出價洽議</h2>
+              <h2 className="text-white font-bold text-lg">{t("marketplaceListing.offer.button.makeOffer")}</h2>
             </div>
             <button onClick={() => setShowOfferDialog(false)} className="text-white/60 hover:text-white transition-colors">
               <X className="w-5 h-5" />

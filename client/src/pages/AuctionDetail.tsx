@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "react-i18next";
 
 // ─── Countdown Hook ───────────────────────────────────────────────────────────
 function useCountdown(endTime: Date | string | null) {
@@ -33,9 +34,10 @@ function useCountdown(endTime: Date | string | null) {
 
 // ─── Countdown Display (BOXIUM style) ────────────────────────────────────────
 function CountdownDisplay({ ms, compact = false }: { ms: number; compact?: boolean }) {
+  const { t } = useTranslation();
   if (ms <= 0) return (
     <div className="flex items-center gap-2">
-      <span className="text-gray-400 font-bold text-sm">已結標</span>
+      <span className="text-gray-400 font-bold text-sm">{t("auctionDetail.countdown.ended")}</span>
     </div>
   );
   const s = Math.floor(ms / 1000);
@@ -90,6 +92,7 @@ function CountdownDisplay({ ms, compact = false }: { ms: number; compact?: boole
 function TermsDialog({
   open, onClose, role, onAgree
 }: { open: boolean; onClose: () => void; role: 'buyer' | 'seller'; onAgree: () => void }) {
+  const { t } = useTranslation();
   const agreeMutation = trpc.auction.agreeToTerms.useMutation({
     onSuccess: () => { onAgree(); onClose(); },
     onError: (e) => toast.error(e.message),
@@ -120,7 +123,7 @@ function TermsDialog({
         <button
           onClick={onClose}
           className="absolute top-3 right-3 z-50 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
-          aria-label="關閉"
+          aria-label={t("auctionDetail.terms.dialog.close")}
         >
           <X className="w-4 h-4" />
         </button>
@@ -134,7 +137,7 @@ function TermsDialog({
               <Shield className="w-5 h-5 text-[#06038D]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider">拍賣條款</p>
+              <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider">{t("auctionDetail.terms.dialog.title")}</p>
               <div className="flex items-center gap-3">
                 <h2 className="text-lg font-black text-white">{role === 'buyer' ? '買家' : '賣家'}參與協議</h2>
                 <a href="/auction/terms" target="_blank" rel="noopener noreferrer"
@@ -148,7 +151,7 @@ function TermsDialog({
 
         {/* Terms list - white background */}
         <div className="bg-white px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
-          <p className="text-xs text-gray-500 font-medium mb-3">請仔細閱讀以下所有條款，同意後方可出價：</p>
+          <p className="text-xs text-gray-500 font-medium mb-3">{t("auctionDetail.terms.dialog.instruction")}</p>
           {terms.map((term, i) => (
             <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-2xl hover:bg-[#06038D]/5 transition-colors">
               <span className="text-lg leading-none mt-0.5 shrink-0">{term.icon}</span>
@@ -188,13 +191,14 @@ function TermsDialog({
 
 // ─── Winner Payment Panel ───────────────────────────────────────────────────
 function WinnerPaymentPanel({ listing, onRefetch }: { listing: any; onRefetch: () => void }) {
+  const { t } = useTranslation();
   const { data: me } = trpc.auth.me.useQuery();
   const [showReview, setShowReview] = useState(false);
 
   const paymentMutation = trpc.auction.createAuctionPayment.useMutation({
     onSuccess: (data) => {
       if (data.checkoutUrl) {
-        toast.success('正在前往付款頁面...');
+        toast.success(t("auctionDetail.payment.redirecting"));
         window.open(data.checkoutUrl, '_blank');
       }
     },
@@ -217,9 +221,9 @@ function WinnerPaymentPanel({ listing, onRefetch }: { listing: any; onRefetch: (
               <Trophy className="w-5 h-5 text-[#06038D]" />
             </div>
             <div>
-              <p className="font-black text-[#06038D] text-base">🎉 恭喜您得標！</p>
-              <p className="text-sm text-gray-600 mt-0.5">得標金額：<strong className="text-[#06038D]">HK${winningBid.toLocaleString()}</strong></p>
-              <p className="text-xs text-amber-600 mt-1">請在 24 小時內完成付款，逾期將被記錄違規。</p>
+              <p className="font-black text-[#06038D] text-base">{t("auctionDetail.winnerPanel.congratulations")}</p>
+              <p className="text-sm text-gray-600 mt-0.5">{t("auctionDetail.winnerPanel.winningBid")}<strong className="text-[#06038D]">HK${winningBid.toLocaleString()}</strong></p>
+              <p className="text-xs text-amber-600 mt-1">{t("auctionDetail.winnerPanel.paymentReminder")}</p>
             </div>
           </div>
           <Button
@@ -236,7 +240,7 @@ function WinnerPaymentPanel({ listing, onRefetch }: { listing: any; onRefetch: (
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
             <div>
-              <p className="font-bold text-green-800">付款已完成 ✅</p>
+              <p className="font-bold text-green-800">{t("auctionDetail.winnerPanel.paymentCompleted")}</p>
               <p className="text-xs text-green-600 mt-0.5">賣家將盡快安排出貨，請留意訂單狀態。</p>
             </div>
           </div>
@@ -261,6 +265,7 @@ function WinnerPaymentPanel({ listing, onRefetch }: { listing: any; onRefetch: (
 function AuctionReviewDialog({
   listing, open, onClose, onSuccess
 }: { listing: any; open: boolean; onClose: () => void; onSuccess: () => void }) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -306,7 +311,7 @@ function AuctionReviewDialog({
           </label>
         </div>
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button variant="outline" onClick={onClose}>{t("auctionDetail.terms.dialog.cancel")}</Button>
           <Button className="bg-[#06038D] text-white"
             onClick={() => reviewMutation.mutate({ listingId: listing.id, rating, comment, isAnonymous })}
             disabled={reviewMutation.isPending}>
@@ -321,6 +326,7 @@ function AuctionReviewDialog({
 
 // ─── Bid Panel ────────────────────────────────────────────────────────────────
 function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onRefetch: () => void }) {
+  const { t } = useTranslation();
   const { data: me } = trpc.auth.me.useQuery();
   const user = me;
   const [, setLocation] = useLocation();
@@ -480,7 +486,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
                     className="bg-[#06038D] hover:bg-[#0804b8] text-white px-5 shrink-0 h-12 rounded-xl font-bold text-base"
                   >
                     {placeBidMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Gavel className="w-5 h-5" />}
-                    <span className="ml-1.5">出價</span>
+                    <span className="ml-1.5">{t("auctionDetail.bidPanel.placeBid")}</span>
                   </Button>
                 </div>
               </div>
@@ -509,7 +515,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
             <div className="bg-[#FEDD00]/10 border-2 border-[#FEDD00] rounded-2xl p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-gray-500 font-medium">即買價</p>
+                  <p className="text-xs text-gray-500 font-medium">{t("auctionDetail.bidPanel.buyNowPrice")}</p>
                   <p className="text-2xl font-black text-[#06038D]">HK${buyNowPrice.toLocaleString()}</p>
                 </div>
                 <Button
@@ -518,7 +524,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
                   className="bg-[#FEDD00] hover:bg-yellow-400 text-[#06038D] font-black px-5 rounded-xl h-12"
                 >
                   {buyNowMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-5 h-5" />}
-                  <span className="ml-1.5">立即購買</span>
+                  <span className="ml-1.5">{t("auctionDetail.bidPanel.buyNow")}</span>
                 </Button>
               </div>
             </div>
@@ -536,12 +542,12 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
           {listing.auctionStatus === 'ended_sold' ? (
             <>
               <Trophy className="w-10 h-10 text-amber-500 mx-auto mb-2" />
-              <p className="font-black text-green-700 text-base">拍賣已結束（已售出）</p>
+              <p className="font-black text-green-700 text-base">{t("auctionDetail.status.endedSold")}</p>
             </>
           ) : (
             <>
               <Gavel className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-              <p className="font-black text-gray-500 text-base">拍賣已結束</p>
+              <p className="font-black text-gray-500 text-base">{t("auctionDetail.status.ended")}</p>
             </>
           )}
         </div>
@@ -556,7 +562,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
       {listing.auctionStatus === 'scheduled' && (
         <div className="bg-[#06038D]/5 border-2 border-[#06038D]/20 rounded-2xl p-5 text-center">
           <Clock className="w-10 h-10 text-[#06038D] mx-auto mb-2" />
-          <p className="font-black text-[#06038D] text-base">拍賣尚未開始</p>
+          <p className="font-black text-[#06038D] text-base">{t("auctionDetail.status.notStarted")}</p>
           <p className="text-xs text-gray-500 mt-1">
             開始時間：{new Date(listing.auctionStartAt).toLocaleString('zh-HK')}
           </p>
@@ -574,6 +580,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
 
 // ─── Bid History ──────────────────────────────────────────────────────────────
 function BidHistory({ bids }: { bids: any[] }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const displayBids = expanded ? bids : bids.slice(0, 5);
 
@@ -581,8 +588,8 @@ function BidHistory({ bids }: { bids: any[] }) {
     return (
       <div className="text-center py-10 text-gray-400">
         <TrendingUp className="w-10 h-10 mx-auto mb-2 opacity-20" />
-        <p className="text-sm font-medium">暫無出價記錄</p>
-        <p className="text-xs mt-1 opacity-60">成為第一個出價者！</p>
+        <p className="text-sm font-medium">{t("auctionDetail.bidHistory.noBids")}</p>
+        <p className="text-xs mt-1 opacity-60">{t("auctionDetail.bidHistory.beTheFirst")}</p>
       </div>
     );
   }
@@ -602,7 +609,7 @@ function BidHistory({ bids }: { bids: any[] }) {
             <div>
               <p className={`text-xs font-bold ${i === 0 ? 'text-white' : 'text-gray-700'}`}>
                 {bid.bidderName || `買家 #${bid.bidderId}`}
-                {i === 0 && <span className="ml-1.5 text-[10px] bg-[#FEDD00] text-[#06038D] px-1.5 py-0.5 rounded-full font-black">最高出價</span>}
+                {i === 0 && <span className="ml-1.5 text-[10px] bg-[#FEDD00] text-[#06038D] px-1.5 py-0.5 rounded-full font-black">{t("auctionDetail.bidHistory.highestBid")}</span>}
               </p>
               <p className={`text-[10px] ${i === 0 ? 'text-white/60' : 'text-gray-400'}`}>
                 {new Date(bid.createdAt).toLocaleString('zh-HK')}
@@ -629,6 +636,7 @@ function BidHistory({ bids }: { bids: any[] }) {
 
 // ─── Main AuctionDetail Page ──────────────────────────────────────────────────
 export default function AuctionDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const [imgIdx, setImgIdx] = useState(0);
@@ -645,7 +653,7 @@ export default function AuctionDetail() {
           <div className="w-16 h-16 rounded-2xl bg-[#FEDD00] flex items-center justify-center animate-pulse">
             <Gavel className="w-8 h-8 text-[#06038D]" />
           </div>
-          <p className="text-white/60 text-sm font-medium">載入拍賣資料...</p>
+          <p className="text-white/60 text-sm font-medium">{t("auctionDetail.main.loading")}</p>
         </div>
       </div>
     );
@@ -656,7 +664,7 @@ export default function AuctionDetail() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-          <p className="text-gray-600 mb-4">找不到此拍賣</p>
+          <p className="text-gray-600 mb-4">{t("auctionDetail.main.notFound")}</p>
           <Button onClick={() => setLocation('/marketplace')} className="bg-[#06038D] text-white">
             返回市集
           </Button>
@@ -716,7 +724,7 @@ export default function AuctionDetail() {
             <div className="w-6 h-6 bg-[#FEDD00] rounded-md flex items-center justify-center">
               <Gavel className="w-3.5 h-3.5 text-[#06038D]" />
             </div>
-            <span className="text-white font-bold text-sm">拍賣詳情</span>
+            <span className="text-white font-bold text-sm">{t("auctionDetail.header.details")}</span>
           </div>
           <span className="text-white/40 text-xs ml-1">#{listing.id}</span>
 
@@ -768,7 +776,7 @@ export default function AuctionDetail() {
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-gray-200">
                     <ImageIcon className="w-20 h-20" />
-                    <p className="text-sm text-gray-300 font-medium">商品圖片</p>
+                    <p className="text-sm text-gray-300 font-medium">{t("auctionDetail.gallery.productImage")}</p>
                   </div>
                 )}
 
@@ -828,7 +836,7 @@ export default function AuctionDetail() {
               </p>
               {listing.condition && (
                 <div className="mt-4 flex items-center gap-2">
-                  <span className="text-xs text-gray-400 font-medium">品相：</span>
+                  <span className="text-xs text-gray-400 font-medium">{t("auctionDetail.description.condition")}</span>
                   <span className="text-xs font-black bg-[#06038D] text-[#FEDD00] px-3 py-1 rounded-full">
                     {listing.condition}
                   </span>
@@ -877,7 +885,7 @@ export default function AuctionDetail() {
                   <AlertTriangle className="w-4 h-4 text-orange-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-black text-orange-700">防狙擊延長</p>
+                  <p className="text-sm font-black text-orange-700">{t("auctionDetail.antiSnipe.title")}</p>
                   <p className="text-xs text-orange-600 mt-0.5">
                     有人在結標前 {listing.antiSnipingMinutes ?? 5} 分鐘內出價，結標時間已延長 {listing.antiSnipingExtensions} 次（每次 {listing.antiSnipingMinutes ?? 5} 分鐘）。
                   </p>
@@ -968,7 +976,7 @@ export default function AuctionDetail() {
                   <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">累計成交</span>
+                  <span className="text-xs text-gray-400">{t("auctionDetail.seller.totalSales")}</span>
                   <span className="text-sm font-black text-[#06038D]">{listing.sellerInfo.totalSales} 筆</span>
                 </div>
               </div>
@@ -979,7 +987,7 @@ export default function AuctionDetail() {
                 <Shield className="w-5 h-5 text-[#06038D]" />
               </div>
               <div>
-                <p className="font-black text-white text-sm">買家保障</p>
+                <p className="font-black text-white text-sm">{t("auctionDetail.terms.buyer.buyerProtection.title")}</p>
                 <p className="text-xs text-white/60 mt-1 leading-relaxed">
                   得標後 24 小時內付款，商品與描述不符可申請退款保障。
                 </p>

@@ -6767,10 +6767,7 @@ function AuctionsAdminTab() {
                         variant="outline"
                         className="border-red-300 text-red-600 hover:bg-red-50 text-xs h-8"
                         disabled={rejectMutation.isPending}
-                        onClick={() => {
-                          const reason = prompt('請輸入拒絕原因：');
-                          if (reason) rejectMutation.mutate({ listingId: listing.id, reason });
-                        }}
+                        onClick={() => setRejectDialog({ open: true, listingId: listing.id, reason: '' })}
                       >
                         ✗ 拒絕
                       </Button>
@@ -6806,10 +6803,7 @@ function AuctionsAdminTab() {
                       variant="outline"
                       className="border-red-300 text-red-600 hover:bg-red-50 text-xs h-8"
                       disabled={cancelMutation.isPending}
-                      onClick={() => {
-                        const reason = prompt('請輸入取消原因：');
-                        if (reason) cancelMutation.mutate({ listingId: listing.id, reason });
-                      }}
+                      onClick={() => setCancelDialog({ open: true, listingId: listing.id, reason: '' })}
                     >
                       強制取消
                     </Button>

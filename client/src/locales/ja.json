@@ -1,542 +1,2213 @@
 {
-  "trending": {
-    "title": "🔥 TCG 人気ランキング",
-    "subtitle": "過去2ヶ月以内のPSA 10グレードカード市場トレンド",
-    "searchHeat": "検索人気",
-    "searchHeatShort": "人気",
-    "priceSurge": "価格急上昇",
-    "priceSurgeShort": "上昇",
-    "priceDrop": "価格下落",
-    "priceDropShort": "下落",
-    "newlyAdded": "新規追加",
-    "newlyAddedShort": "新規",
-    "currentPrice": "現在の価格",
-    "priceChange": "価格変動",
-    "searchCount": "検索回数",
-    "viewDetails": "詳細を見る",
-    "goToSnkrdunk": "SNKRDUNKへ",
-    "fullRanking": "完全ランキング",
-    "noImage": "画像なし",
-    "emptySearches": "十分な検索データがありません",
-    "emptyPriceIncrease": "価格急上昇のカードがありません",
-    "emptyPriceDecrease": "価格下落のカードがありません",
-    "emptyNewlyAdded": "新規追加のカードがありません",
-    "emptyHint": "後で再試行するか、他のカテゴリに切り替えてください"
-  },
-  "research": {
-    "title": "カード研究",
-    "searchPlaceholder": "カード名を検索...",
-    "addToWatchlist": "ウォッチリストに追加",
-    "removeFromWatchlist": "ウォッチリストから削除",
-    "viewDetails": "詳細を見る",
-    "noResults": "カードが見つかりません",
-    "loading": "読み込み中...",
-    "watchlist": "ウォッチリスト",
-    "allCards": "すべてのカード"
-  },
-  "common": {
-    "home": "ホーム",
-    "research": "カード研究",
-    "pricing": "価格検索",
-    "priceComparison": "価格比較",
-    "terms": "利用規約",
-    "privacy": "プライバシーポリシー",
-    "admin": "管理画面",
-    "language": "言語",
-    "cancel": "キャンセル",
-    "login": "ログイン",
-    "logout": "ログアウト",
-    "marketInsights": "市場洞察",
-    "trending": "ランキング",
-    "about": "私たちについて",
-    "blog": "最新ニュース",
-    "back": "戻る",
-    "close": "閉じる",
-    "loading": "読み込み中...",
-    "marketplace": "マーケット",
-    "adminMarketplace": "ショップ管理",
-    "seller": "セラー",
-    "buyer": "バイヤー"
-  },
-  "home": {
-    "welcome": "Boxiumへようこそ〜ゲーム愛好家の世界",
-    "description": "グローバル市場データを統合し、PTCGファンとコレクターに正確なカード価格情報を提供します。カードの価格トレンドを追跡し、賢明な投資決定を行いましょう。",
-    "trackedCards": "追跡中のカード",
+  "aboutPage": {
+    "contactInfo": "ご質問やご提案がございましたら、プラットフォームの連絡先よりお問い合わせください。",
+    "coreServices": "コアサービス",
     "dataSources": "データソース",
-    "noImage": "画像なし",
-    "noTrendingCards": "トレンディングカードデータなし",
-    "coreFeatures": "コア機能",
-    "coreFeaturesDesc": "BOXIUMはプロフェッショナルなカード価格分析ツールを提供し、より賢明な投資決定を支援します",
-    "smartSearch": "スマート検索",
-    "smartSearchDesc": "数百枚のカードを素早く検索、名前、番号、シリーズなどの多次元フィルタリングをサポート",
-    "priceTrend": "価格トレンド",
-    "priceTrendDesc": "90日間の価格変動を表示、市場の動向と投資タイミングを把握",
-    "marketStats": "市場統計",
-    "marketStatsDesc": "リアルタイム市場データ分析、カードの平均価格と市場パフォーマンスを理解",
-    "topRanking": "トップランキング",
-    "topRankingDesc": "市場で最もホットなカードを発見、投資家の選択を追跡",
-    "trendingCards": "トレンディングカード",
-    "trendingCardsDesc": "PSA 10グレード最近の取引価格上昇率に基づく",
-    "dataSourcesDesc": "世界有数のカード取引プラットフォームを統合、データの精度とリアルタイム性を保証",
-    "snkrdunkDesc": "日本有数のカード取引プラットフォーム、最新のPSA 10グレードカード取引データと市場トレンド分析を提供",
-    "realtimeData": "リアルタイム取引データ",
-    "psaSupport": "PSAグレーディングサポート",
-    "jpyPrice": "日本円価格",
-    "ebayDesc": "世界最大のオンラインオークションプラットフォーム、国際市場のカード取引記録と価格参考を提供",
-    "globalMarket": "グローバル市場データ",
-    "startExploring": "カード探索",
-    "startSearching": "カード検索を始める",
-    "viewMarketTrends": "市場価格を比較する",
-    "goToMarketplace": "マーケットへ",
-    "readyToStart": "PTCGの旅を始める準備はできましたか？",
-    "readyToStartDesc": "BOXIUMのスマート検索と価格分析ツールを使用して、お気に入りのコレクションを見つけましょう。",
-    "footerDesc": "Pokémon、One Pieceなど複数のTCGの価格照会と市場分析に特化した総合プラットフォーム",
-    "quickLinks": "クイックリンク",
-    "cardSearch": "カード検索",
-    "marketReport": "市場レポート",
-    "priceQuery": "価格照会",
-    "adminPanel": "管理パネル",
-    "aboutUs": "私たちについて",
-    "aboutUsDesc": "BOXIUMはTCG投資家とコレクターに最も正確で専門的な市場情報と価格分析ツールを提供することに尽力しています。",
-    "socialMedia": "ソーシャルメディア",
-    "termsOfService": "利用規約",
-    "privacyPolicy": "プライバシーポリシー"
-  },
-  "footer": {
-    "description": "グローバルTCGの価格照会と市場分析に特化した総合プラットフォーム",
-    "quickLinks": "クイックリンク",
-    "cardSearch": "カード検索",
-    "trending": "ランキング",
-    "marketplace": "マーケット",
-    "blog": "最新ニュース",
-    "pricing": "価格検索",
-    "aboutUs": "私たちについて",
-    "platformIntro": "プラットフォーム紹介",
-    "disclaimer": "免責事項",
-    "adminPanel": "管理パネル",
-    "socialMedia": "ソーシャルメディア",
-    "terms": "利用規約",
-    "privacy": "プライバシーポリシー",
-    "about": "私たちについて",
-    "copyright": "© 2026 BOXIUM. All rights reserved. | Luck in Every Box"
-  },
-  "cardDetail": {
-    "referencePrice": "参考価格",
-    "basedOnRecords": "{{count}}件の取引記録に基づく",
-    "basedOnLatestRecords": "過去{{months}}ヶ月以内の最新{{count}}件のPSA 10取引記録に基づく",
-    "priceHistory": "価格履歴",
-    "date": "日付",
-    "price": "価格",
-    "grade": "グレード",
-    "source": "ソース",
-    "noData": "データなし",
-    "favorite": "お気に入り",
-    "favorited": "お気に入り済み",
-    "comparePrice": "価格比較",
-    "share": "共有",
-    "actualPrice": "（実際の取引価格）",
-    "marketPrice": "（市場出品価格）",
-    "actualPriceHistory": "実際の取引価格履歴",
-    "marketPriceHistory": "市場出品価格履歴",
-    "ebayDisclaimer": "これはeBayの市場出品価格（実際の取引価格ではありません）で、参考用です。実際の取引価格は異なる場合があります。",
-    "cachedData": "キャッシュデータ、最終更新：",
-    "liveMarketData": "リアルタイム市場出品価格（販売済み取引記録ではありません）",
-    "exchangeRate": "現在の為替レート",
-    "basicInfo": "基本情報",
-    "cardNumber": "カード番号",
-    "series": "シリーズ",
-    "noGradeData": "このグレードのデータがありません",
-    "noEbayData": "eBay取引記録がありません（API制限を超えた可能性があります。後で再試行してください）",
-    "hkdPrice": "HKD価格",
-    "usedGrade": "中古",
-    "chartTitle": "PSA 10 価格トレンド",
-    "timeRangeLabel": "PSA 10 期間",
-    "timeRange": {
-      "7days": "7日間",
-      "30days": "30日間",
-      "90days": "90日間",
-      "all": "すべて"
+    "features": {
+      "autoUpdate": "24時間自動更新で価格情報を常に最新の状態に維持",
+      "multiCurrency": "複数通貨表示に対応（HKD、USD、JPYなど）",
+      "realData": "SNKRDUNKやeBayなど世界の主要市場のリアルタイムデータを集約",
+      "responsive": "PC、タブレット、スマートフォンに完全対応—いつでもどこでも確認可能"
     },
-    "cardName": "カード名",
-    "japaneseName": "日本語名",
-    "title": "タイトル",
-    "productTitle": "商品タイトル",
-    "usdPrice": "USD価格",
-    "priceTrend": "30日間のトレンド",
-    "priceIncrease": "↑ 上昇",
-    "priceDecrease": "↓ 下落",
-    "priceUpdating": "最新の取引価格を更新中...",
-    "priceUpdated": "価格が更新されました",
-    "priceUpToDate": "価格は最新です",
-    "priceUpdateFailed": "価格の更新に失敗しました"
+    "missionContent": "BOXIUMは、TCGコレクター、投資家、売り手に最も正確でリアルタイムな市場データと取引環境を提供することに専念しています。Pokémon、One Pieceなど複数のゲームをカバーし、世界の主要取引プラットフォームからの実際の取引記録を集約し、安全で信頼性の高いカードの二次市場を提供します。",
+    "ourMission": "私たちのミッション",
+    "platformFeatures": "プラットフォームの特徴",
+    "services": {
+      "cardSearch": {
+        "description": "{{count}}枚以上のPTCGカードを検索し、PSA 10の歴史的な取引価格トレンドを確認して市場動向を把握",
+        "title": "カードリサーチ"
+      },
+      "gradeAnalysis": {
+        "description": "PSA 10カードの安全な取引プラットフォーム。出品者の管理機能と購入者保護を提供し、取引代金はプラットフォームが代管",
+        "title": "マーケットプレイス"
+      },
+      "marketTrends": {
+        "description": "24時間トレンドランキングでPSA 10カードの価格動向をリアルタイムに追跡し、市場機会を発見",
+        "title": "市場トレンド"
+      },
+      "priceTracking": {
+        "description": "PSA 10出品商品をリアルタイム表示。SNKRDUNKとeBayの市場データを統合し、グローバル価格を簡単に比較",
+        "title": "価格検索"
+      }
+    },
+    "sources": {
+      "ebay": "eBay：世界最大の中古市場。国際的なPSA 10カードの取引データを提供",
+      "snkrdunk": "SNKRDUNK：日本最大のPSA 10カード取引プラットフォーム。リアルタイムの出品情報と取引記録を提供"
+    },
+    "subtitle": "Boxiumへようこそ～ゲームファンのためのパラダイス！グローバルTCG市場データを統合し、リアルタイムで正確な価格情報を提供。",
+    "title": "BOXIUMについて",
+    "trackedCards": "追跡カード数"
   },
   "admin": {
-    "title": "管理パネル",
-    "dataSources": "データソース管理",
-    "statistics": "統計情報",
-    "schedule": "スケジュール管理",
-    "addDataSource": "データソースを追加",
-    "cardName": "カード名",
-    "url": "URL",
     "actions": "アクション",
-    "update": "更新",
-    "delete": "削除",
+    "addDataSource": "データソースを追加",
+    "addSuccess": "追加成功",
+    "averageSearchTime": "平均検索時間",
     "batchUpdateEbay": "すべてのeBay価格を一括更新",
     "batchUpdateSnkrdunk": "すべてのSNKRDUNK価格を一括更新",
-    "pause": "一時停止",
-    "resume": "再開",
-    "progress": "進行状況",
-    "success": "成功",
-    "failed": "失敗",
-    "totalRecords": "総レコード数",
-    "errors": "エラー",
-    "scheduleDescription": "毎日香港時間午前01:00に自動実行",
-    "scheduleEnabled": "スケジュール有効",
-    "scheduleDisabled": "スケジュール無効",
-    "nextExecution": "次回実行時刻",
-    "lastExecution": "前回実行時刻",
-    "triggerNow": "今すぐ実行",
-    "executionHistory": "実行履歴",
-    "executionType": "実行タイプ",
-    "status": "ステータス",
-    "executionTime": "実行時刻",
+    "cardName": "カード名",
+    "completed": "完了",
+    "confirmDelete": "このデータソースを削除しますか？",
+    "dataSources": "データソース管理",
+    "delete": "削除",
+    "deleteSuccess": "削除成功",
+    "ebayBatch": "eBay 一括更新",
     "errorMessage": "エラーメッセージ",
-    "trendingCards": {
-      "title": "トレンディングカード管理",
-      "description": "PSA10グレード最近20回取引価格変動に基づいて計算されたホームページにTOP 5トレンディングカードを管理",
-      "recalculate": "再計算",
-      "calculating": "計算中...",
-      "calculateSuccess": "トレンディングカード計算完了",
-      "calculateError": "計算失敗",
-      "nextUpdate": "次回更新時刻",
-      "updateFrequency": "更新頻度",
-      "daily6am": "毎日 06:00 HKT",
-      "currentTop5": "現在のTOP 5トレンディングカード",
-      "noData": "トレンディングカードデータがありません。「再計算」ボタンをクリックして生成してください"
-    },
+    "errors": "エラー",
+    "executionHistory": "実行履歴",
+    "executionTime": "実行時刻",
+    "executionType": "実行タイプ",
+    "failed": "失敗",
+    "fallbackToTextSearch": "テキスト検索へのフォールバック回数",
+    "imageSearch": "画像検索",
     "imageSearchStats": "画像検索統計",
     "imageSearchSuccessRate": "画像検索成功率",
-    "fallbackToTextSearch": "テキスト検索へのフォールバック回数",
-    "averageSearchTime": "平均検索時間",
-    "imageSearch": "画像検索",
-    "textSearch": "テキスト検索",
+    "lastExecution": "前回実行時刻",
+    "loading": "読み込み中...",
+    "nextExecution": "次回実行時刻",
+    "noData": "データなし",
     "optimization": "最適化の提案",
+    "pause": "一時停止",
     "paused": "一時停止中",
     "processing": "処理中",
-    "completed": "完了",
+    "progress": "進行状況",
+    "resume": "再開",
     "running": "実行中",
-    "ebayBatch": "eBay 一括更新",
-    "snkrdunkBatch": "SNKRDUNK 一括更新",
+    "schedule": "スケジュール管理",
+    "scheduleDescription": "毎日香港時間午前01:00に自動実行",
+    "scheduleDisabled": "スケジュール無効",
+    "scheduleEnabled": "スケジュール有効",
     "scheduled": "スケジュール実行",
-    "noData": "データなし",
-    "loading": "読み込み中...",
-    "addSuccess": "追加成功",
-    "deleteSuccess": "削除成功",
+    "snkrdunkBatch": "SNKRDUNK 一括更新",
+    "statistics": "統計情報",
+    "status": "ステータス",
+    "success": "成功",
+    "textSearch": "テキスト検索",
+    "title": "管理パネル",
+    "totalRecords": "総レコード数",
+    "trendingCards": {
+      "calculateError": "計算失敗",
+      "calculateSuccess": "トレンディングカード計算完了",
+      "calculating": "計算中...",
+      "currentTop5": "現在のTOP 5トレンディングカード",
+      "daily6am": "毎日 06:00 HKT",
+      "description": "PSA10グレード最近20回取引価格変動に基づいて計算されたホームページにTOP 5トレンディングカードを管理",
+      "nextUpdate": "次回更新時刻",
+      "noData": "トレンディングカードデータがありません。「再計算」ボタンをクリックして生成してください",
+      "recalculate": "再計算",
+      "title": "トレンディングカード管理",
+      "updateFrequency": "更新頻度"
+    },
+    "triggerNow": "今すぐ実行",
+    "update": "更新",
     "updateSuccess": "更新成功",
-    "confirmDelete": "このデータソースを削除しますか？"
+    "url": "URL"
   },
-  "share": {
-    "button": "共有",
-    "facebook": "Facebookで共有",
-    "whatsapp": "WhatsAppで共有",
-    "copyLink": "リンクをコピー",
-    "copySuccess": "リンクをクリップボードにコピーしました",
-    "copyError": "コピー失敗、手動でコピーしてください"
+  "auctionDetail": {
+    "antiSnipe": {
+      "description": "終了{{minutes}}分前に誰かが入札したため、終了時間が{{extensions}}回延長されました（各{{minutes}}分）。",
+      "title": "スナイプ入札防止延長"
+    },
+    "bidHistory": {
+      "beTheFirst": "最初の入札者になりましょう！",
+      "bidder": "購入者",
+      "collapse": "折りたたむ",
+      "count": "件",
+      "highestBid": "最高入札額",
+      "noBids": "入札履歴がありません",
+      "showAll": "すべての{{count}}件の入札を表示",
+      "title": "入札履歴"
+    },
+    "bidPanel": {
+      "bids": "入札",
+      "buyNow": "今すぐ購入",
+      "buyNowPrice": "即決価格",
+      "currentBid": "現在の入札",
+      "loginToBid": "入札するにはログインしてください",
+      "noBids": "まだ入札がありません",
+      "placeBid": "入札する"
+    },
+    "buyerProtection": {
+      "description": "落札後24時間以内にお支払いください。商品が説明と異なる場合は、返金を申請できます。",
+      "title": "購入者保護"
+    },
+    "countdown": {
+      "days": "日",
+      "ended": "オークション終了",
+      "endingSoon": "まもなく終了！",
+      "hours": "時間",
+      "minutes": "分",
+      "seconds": "秒"
+    },
+    "description": {
+      "condition": "状態：",
+      "noDescription": "出品者による詳細な説明はまだありません。",
+      "title": "商品説明"
+    },
+    "gallery": {
+      "auctionId": "オークション #",
+      "productImage": "商品画像"
+    },
+    "header": {
+      "details": "オークション詳細",
+      "startsAt": "開始"
+    },
+    "info": {
+      "bidIncrement": "入札単位",
+      "endTime": "終了時間",
+      "startTime": "開始時間",
+      "startingBid": "開始価格",
+      "title": "オークション情報"
+    },
+    "main": {
+      "backToMarketplace": "マーケットプレイスに戻る",
+      "loading": "オークションデータを読み込み中... ",
+      "notFound": "オークションが見つかりません"
+    },
+    "payment": {
+      "redirecting": "お支払いページに移動しています... "
+    },
+    "reserve": {
+      "met": "✓ 最低落札価格に達しました。落札が確定します。",
+      "notMet": "最低落札価格に達していません。現在の入札では落札は保証されません。"
+    },
+    "review": {
+      "comment": "あなたのコメント",
+      "commentPlaceholder": "この取引に関するご意見をお聞かせください... ",
+      "rating": "総合評価",
+      "submit": "レビューを送信",
+      "submitting": "送信中... ",
+      "success": "レビューが送信されました！フィードバックありがとうございます。",
+      "title": "取引の評価"
+    },
+    "seller": {
+      "rating": "評価",
+      "salesUnit": "件",
+      "title": "出品者情報",
+      "totalSales": "総売上"
+    },
+    "status": {
+      "active": "入札受付中",
+      "cancelled": "キャンセル済み",
+      "ended": "オークション終了",
+      "endedSold": "オークション終了（落札済み）",
+      "ended_no_bid": "入札なし",
+      "ended_sold": "落札済み",
+      "ending_soon": "まもなく終了",
+      "notStarted": "オークションはまだ開始されていません",
+      "pending_review": "審査中",
+      "rejected": "拒否済み",
+      "scheduled": "スケジュール済み",
+      "startTime": "開始時間："
+    },
+    "terms": {
+      "buyer": {
+        "bidIsCommitment": {
+          "desc": "入札すると、その金額で商品を購入することを約束したことになります。",
+          "title": "入札は契約です"
+        },
+        "buyerProtection": {
+          "desc": "商品が説明と異なる場合は、返金保証を申請できます。",
+          "title": "購入者保護"
+        },
+        "noCancellation": {
+          "desc": "オークション終了後、理由なく取引をキャンセルすることはできません。",
+          "title": "キャンセル不可"
+        },
+        "payment24h": {
+          "desc": "落札後24時間以内にお支払いを完了してください。期限を過ぎると違反として記録されます。",
+          "title": "24時間以内のお支払い"
+        },
+        "violationAccumulation": {
+          "desc": "違反が3回累積すると、すべてのオークション活動への参加が禁止されます。",
+          "title": "違反の累積"
+        }
+      },
+      "dialog": {
+        "agree": "読んで同意しました",
+        "buyerAgreement": "購入者参加規約",
+        "cancel": "キャンセル",
+        "close": "閉じる",
+        "fullTerms": "完全な規約 →",
+        "instruction": "入札の前に、以下のすべての規約をよくお読みください。",
+        "sellerAgreement": "出品者参加規約",
+        "title": "オークション規約"
+      },
+      "seller": {
+        "noWithdrawal": {
+          "desc": "入札があった後は、オークションをキャンセルすることはできません。",
+          "title": "オークションの取り下げ禁止"
+        },
+        "penalty": {
+          "desc": "規約に違反した場合、出品者の評価やプラットフォームの利用資格に影響します。",
+          "title": "違反に対する罰則"
+        },
+        "priceLock": {
+          "desc": "オークション開始後は、開始価格や即決価格を変更することはできません。",
+          "title": "価格の固定"
+        },
+        "review": {
+          "desc": "オークション出品は、管理者の審査を経てから公開されます。",
+          "title": "公開のための審査"
+        },
+        "shipping3days": {
+          "desc": "落札後、3営業日以内に発送を完了する必要があります。",
+          "title": "3営業日以内に発送"
+        }
+      }
+    },
+    "winnerPanel": {
+      "congratulations": "🎉 落札おめでとうございます！",
+      "leaveReview": "レビューを残す",
+      "payNow": "今すぐ支払う",
+      "paymentCompleted": "支払い完了 ✅",
+      "paymentReminder": "24時間以内にお支払いを完了してください。期限を過ぎると違反として記録されます。",
+      "sellerAwaitingShipment": "出品者は3営業日以内に商品を発送します。",
+      "thankYou": "ご購入ありがとうございます！",
+      "winningBid": "落札金額："
+    }
   },
   "auth": {
     "loginFailed": "ログイン失敗",
+    "loginFailedCallback": "OAuth認証に失敗しました。ネットワーク接続を確認して再試行してください。",
     "loginFailedGeneric": "ログイン中にエラーが発生しました。後でもう一度お試しください。",
     "loginFailedMissingInfo": "アカウント情報を取得できませんでした。別のログイン方法をお試しください。",
-    "loginFailedCallback": "OAuth認証に失敗しました。ネットワーク接続を確認して再試行してください。"
-  },
-  "notifications": {
-    "title": "通知センター",
-    "all": "すべて",
-    "unread": "未読",
-    "markAsRead": "既読にする",
-    "markAllAsRead": "すべて既読にする",
-    "delete": "削除",
-    "deleteAllRead": "既読を削除",
-    "noNotifications": "通知はありません",
-    "noUnreadNotifications": "未読の通知はありません",
-    "markAsReadSuccess": "既読にしました",
-    "markAsReadError": "既読にできませんでした",
-    "markAllAsReadSuccess": "すべて既読にしました",
-    "markAllAsReadError": "すべて既読にできませんでした",
-    "deleteSuccess": "刪除成功",
-    "deleteError": "削除に失敗しました",
-    "deleteAllReadSuccess": "すべての既読通知を削除しました",
-    "deleteAllReadError": "削除に失敗しました"
-  },
-  "nav": {
-    "login": "ログイン/登録",
-    "logout": "ログアウト",
-    "favorites": "マイお気に入り",
-    "dashboard": "ダッシュボード",
-    "admin": "管理画面",
-    "user": "ユーザー"
-  },
-  "favorites": {
-    "title": "マイお気に入り",
-    "items": "件",
-    "empty": "お気に入りはまだありません",
-    "emptyDescription": "お気に入りのカードを保存して、後で簡単にアクセスできます",
-    "startBrowsing": "閲覧を開始",
-    "favorite": "お気に入り",
-    "unfavorite": "お気に入り解除",
-    "added": "お気に入りに追加しました",
-    "removed": "お気に入りから削除しました",
-    "addError": "お気に入りに追加できませんでした",
-    "removeError": "お気に入りから削除できませんでした",
-    "confirmRemove": "このお気に入りを削除してもよろしいですか？"
-  },
-  "pricing": {
-    "title": "価格検索",
-    "subtitle": "グローバル市場のカード価格をリアルタイムで比較",
-    "searchHint": "ヒント: 検索結果はPSA 10グレードの購入可能な商品のみ表示されます",
-    "hint": "ヒント: 検索結果はPSA 10グレードの購入可能な商品のみ表示されます",
-    "imageSearch": "画像検索",
-    "imageSearchTitle": "カード画像分析機能",
-    "takePhoto": "写真を撮る",
-    "uploadFile": "ファイルをアップロード",
-    "dragDropImage": "ここに画像をドラッグ＆ドロップ",
-    "orSelectFile": "またはファイルを選択",
-    "cropImage": "画像をトリミング",
-    "searchNow": "今すぐ検索",
-    "searchCropped": "トリミング領域を検索",
-    "cancel": "キャンセル",
-    "pleaseSelectImage": "画像を選択してください",
-    "imageSearchSuccess": "カードが見つかりました：{{cardName}}",
-    "imageSearchFailed": "カードを識別できませんでした。別の画像をお試しください。",
-    "imageSearchError": "画像検索に失敗しました。後でもう一度お試しください。",
-    "searching": "検索中...",
-    "priceStats": "価格統計",
-    "totalListings": "合計{{count}}件の出品商品",
-    "minPrice": "最低価格",
-    "avgPrice": "平均価格",
-    "maxPrice": "最高価格",
-    "listings": "件",
-    "refresh": "更新",
-    "searchResults": "検索結果",
-    "totalResults": "合計{{count}}件",
-    "available": "購入可能",
-    "grade": "グレード",
-    "seller": "出品者",
-    "buyNow": "今すぐ購入",
-    "buy": "購入",
-    "noResults": "結果が見つかりませんでした。他のキーワードをお試しください。",
-    "searchResultsFor": "検索結果",
-    "foundCards": "{{count}}枚のカードが見つかりました",
-    "searchError": "検索エラー。もう一度お試しください。",
-    "noImage": "画像なし",
-    "enterKeyword": "検索キーワードを入力してください",
-    "loading": "読み込み中...",
-    "cardNotFound": "カードが見つかりません",
-    "cardNumber": "カード番号",
-    "series": "シリーズ",
-    "lowestPrice": "最低価格",
-    "averagePrice": "平均価格",
-    "highestPrice": "最高価格",
-    "psa10Listings": "PSA 10 出品商品",
-    "ebayListings": "eBay PSA 10 出品商品",
-    "allListings": "PSA 10 出品商品（価格順）",
-    "loadingListings": "商品を読み込み中...",
-    "noListings": "出品商品はありません",
-    "fetchingPrices": "最新価格を取得中...",
-    "pleaseWait": "お待ちください。20〜30秒かかる場合があります",
-    "condition": "状態",
-    "snkrdunkTitle": "SNKRDUNK PSA 10 出品商品",
-    "snkrdunkDescription": "下のボタンをクリックして、SNKRDUNKで最新のPSA 10出品商品を表示",
-    "viewOnSnkrdunk": "SNKRDUNKで見る",
-    "viewDetail": "詳細を見る"
+    "loginSuccess": "ログイン成功！",
+    "logoutCancelButton": "キャンセル",
+    "logoutConfirmButton": "ログアウト確認",
+    "logoutConfirmDescription": "ログアウトしてもよろしいですか？",
+    "logoutConfirmTitle": "ログアウト確認"
   },
   "blogPage": {
-    "title": "BOXIUM PTCG ブログ",
-    "subtitle": "プロのTCG市場分析、価格トレンド、投資アドバイス",
-    "searchPlaceholder": "記事を検索...",
     "allCategories": "すべてのカテゴリ",
-    "loading": "読み込み中...",
     "featuredPost": "注目記事",
     "latestPosts": "最新記事",
     "loadMore": "さらに読み込む",
+    "loading": "読み込み中...",
     "noPostsFound": "記事が見つかりません",
-    "tryOtherSearch": "他の検索条件をお試しください",
     "readMore": "詳しく読む",
+    "searchPlaceholder": "記事を検索...",
+    "subtitle": "プロのTCG市場分析、価格トレンド、投資アドバイス",
+    "title": "BOXIUM PTCG ブログ",
+    "tryOtherSearch": "他の検索条件をお試しください",
     "views": "閲覧"
   },
-  "profile": {
+  "cardDetail": {
+    "actualPrice": "（実際の取引価格）",
+    "actualPriceHistory": "実際の取引価格履歴",
+    "basedOnLatestRecords": "過去{{months}}ヶ月以内の最新{{count}}件のPSA 10取引記録に基づく",
+    "basedOnRecords": "{{count}}件の取引記録に基づく",
+    "basicInfo": "基本情報",
+    "cachedData": "キャッシュデータ、最終更新：",
+    "cardName": "カード名",
+    "cardNumber": "カード番号",
+    "chartTitle": "PSA 10 価格トレンド",
+    "comparePrice": "価格比較",
+    "date": "日付",
+    "ebayDisclaimer": "これはeBayの市場出品価格（実際の取引価格ではありません）で、参考用です。実際の取引価格は異なる場合があります。",
+    "exchangeRate": "現在の為替レート",
+    "favorite": "お気に入り",
+    "favorited": "お気に入り済み",
+    "grade": "グレード",
+    "hkdPrice": "HKD価格",
+    "japaneseName": "日本語名",
+    "liveMarketData": "リアルタイム市場出品価格（販売済み取引記録ではありません）",
+    "marketPrice": "（市場出品価格）",
+    "marketPriceHistory": "市場出品価格履歴",
+    "noData": "データなし",
+    "noEbayData": "eBay取引記録がありません（API制限を超えた可能性があります。後で再試行してください）",
+    "noGradeData": "このグレードのデータがありません",
+    "price": "価格",
+    "priceDecrease": "↓ 下落",
+    "priceHistory": "価格履歴",
+    "priceIncrease": "↑ 上昇",
+    "priceTrend": "30日間のトレンド",
+    "priceUpToDate": "価格は最新です",
+    "priceUpdateFailed": "価格の更新に失敗しました",
+    "priceUpdated": "価格が更新されました",
+    "priceUpdating": "最新の取引価格を更新中...",
+    "productTitle": "商品タイトル",
+    "referencePrice": "参考価格",
+    "series": "シリーズ",
+    "share": "共有",
+    "source": "ソース",
+    "timeRange": {
+      "30days": "30日間",
+      "7days": "7日間",
+      "90days": "90日間",
+      "all": "すべて"
+    },
+    "timeRangeLabel": "PSA 10 期間",
+    "title": "タイトル",
+    "usdPrice": "USD価格",
+    "usedGrade": "中古",
+    "basedOnLatestRecordsWeighted": "参考価格は加重中央値（半減期7日）、{{count}}件のPSA 10取引記録に基づく",
+    "basedOnLatestSealedRecords": "最新の取引記録に基づくボックス単価の推定",
+    "boosterBox": "ブースターボックス",
+    "boxType": "商品タイプ",
+    "noSealedData": "ボックス取引価格データなし",
+    "productName": "商品名",
+    "quantity": "数量",
+    "sealedPriceTrend": "価格推移",
+    "sealedProduct": "シールド商品",
+    "sealedReferencePrice": "参考価格",
+    "singleCard": "シングルカード",
+    "styleCode": "シリーズ番号"
+  },
+  "cardSelectionDialog": {
+    "avgPrice": "平均価格",
+    "backToSearch": "← 検索に戻る",
+    "cancel": "キャンセル",
+    "cardIndex": "━━━ カード {{index}} ━━━",
+    "cardMarketData": "【カード市場データ】",
+    "cardNumber": "カード番号",
+    "clearSelection": "選択をクリア",
+    "dataPreview": "データプレビュー",
+    "enterSearchKeyword": "検索キーワードを入力してカードを検索してください",
+    "failedToFetchCardData": "カードデータを取得できませんでした",
+    "fetchingData": "データベースから完全なデータを取得しています...",
+    "image": "画像",
+    "insertCardMarketData": "カード市場データを挿入",
+    "insertDataCount": "データを挿入 ({{count}}枚)",
+    "insertDataHint": "挿入時に完全な価格統計と取引データが含まれます。",
+    "insertedCardData": "{{count}}枚のカードの完全なデータを挿入しました",
+    "japaneseName": "日本語名",
+    "maxPrice": "最高価格",
+    "minPrice": "最低価格",
+    "name": "名前",
+    "noMatchingCards": "該当するカードが見つかりません",
+    "noPsa10Transactions": "PSA10の取引記録はまだありません",
+    "noTransactions": "取引記録がありません",
+    "noUsedGradeATransactions": "中古A級の取引記録はまだありません",
+    "peakPrice": "史上最高値",
+    "previewData": "データをプレビュー",
+    "previewDataCount": "データをプレビュー ({{count}}枚)",
+    "priceChange30d": "30日間価格変動",
+    "priceChange7d": "7日間価格変動",
+    "priceRange": "価格範囲",
+    "psa10GradedCard": "PSA10鑑定カード",
+    "psa10PriceStats": "PSA10鑑定カード価格統計",
+    "rarity": "レアリティ",
+    "searchDescription": "カードを検索して選択すると、システムがデータベースから完全なカード情報とすべての取引データを自動的に抽出し、AIが記事を生成します。",
+    "searchPlaceholder": "カード名またはカード番号で検索（例：pikachu、sv8a）",
+    "selectAtLeastOneCard": "少なくとも1枚のカードを選択してください",
+    "selectedCards": "{{count}}枚のカードを選択済み",
+    "series": "シリーズ",
+    "set": "セット",
+    "usedGradeA": "中古A級",
+    "usedGradeAPriceStats": "中古A級価格統計",
+    "volume": "出来高"
+  },
+  "cart": {
+    "address": {
+      "defaultBadge": "デフォルト",
+      "defaultLabel": "デフォルトの住所",
+      "fillManually": "新しい住所を手動で入力",
+      "goToProfile": "プロフィールに移動して住所を追加",
+      "noSavedAddresses": "保存された住所はまだありません",
+      "other": "対面受取/その他",
+      "savedAddresses": "保存済み住所",
+      "sfStationPrefix": "SFエクスプレス自取拠点："
+    },
+    "back": "戻る",
+    "cartCleared": "カートを空にしました",
+    "checkout": "レジに進む",
+    "checkoutDialog": {
+      "step1": "配送方法",
+      "step2": "支払い確認",
+      "step3": "スキャンして支払い",
+      "step4": "スクリーンショットをアップロード",
+      "title": "お支払い"
+    },
+    "clearCart": "カートを空にする",
+    "clearUnavailable": "無効な商品を削除",
+    "continueShopping": "買い物を続ける",
+    "empty": {
+      "browseButton": "マーケットへ",
+      "message": "マーケットでお気に入りのカードを見つけましょう！",
+      "title": "カートは空です"
+    },
+    "item": {
+      "pendingPaymentBadge": "支払い待ち →",
+      "unavailableBadge": "販売終了"
+    },
+    "loginPrompt": {
+      "browseMarketplace": "先にマーケットを見る →",
+      "loginButton": "今すぐログイン",
+      "message": "ログインしてカートを表示",
+      "title": "ログインしてください"
+    },
+    "maintenance": {
+      "backToHome": "ホームページに戻る",
+      "message": "現在、機能改善に取り組んでおります。しばらくお待ちください！",
+      "title": "マーケットはメンテナンス中です"
+    },
+    "newlyListed": "新着商品",
+    "offer": {
+      "acceptedBadge": "オファー承認済み",
+      "countdown": "出品者があなたのオファーを承認しました！<1>{{timeLeft}}</1>以内に支払いを完了してください。",
+      "expired": "オファーの有効期限が切れました。元の価格<1>HK${{price}}</1>で購入されます。"
+    },
+    "recommendationsFromWatchlist": "あなたへのおすすめ（ウォッチリストから）",
+    "removalFailed": "削除に失敗しました、もう一度お試しください",
+    "removedFromCart": "カートから削除しました",
+    "removedInvalidItems": "無効な商品を{{count}}点削除しました",
+    "seller": "出品者",
+    "shipping": {
+      "meetupDescription": "出品者と受取場所を調整してください",
+      "meetupTitle": "対面受取/その他",
+      "methodTitle": "配送方法",
+      "sfExpressDescription": "送料は荷物受け取り時にSFエクスプレスにお支払いください",
+      "sfExpressTitle": "SFエクスプレス（着払い）"
+    },
+    "shippingFee": "送料",
+    "shippingFeeValue": "着払い",
+    "subtotal": "小計（{{count}}点）",
+    "summary": "注文概要",
+    "title": "ショッピングカート",
+    "total": "合計",
+    "totalDisclaimer": "（送料別途）",
+    "unavailableItemsNotice": "販売終了の商品は決済に含まれません"
+  },
+  "common": {
+    "about": "私たちについて",
+    "admin": "管理画面",
+    "adminMarketplace": "ショップ管理",
+    "back": "戻る",
+    "blog": "最新ニュース",
+    "buyer": "バイヤー",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "home": "ホーム",
+    "language": "言語",
     "loading": "読み込み中...",
-    "pleaseLogin": "ログインしてください",
-    "loginRequired": "プロフィールを表示するにはログインが必要です",
-    "goToLogin": "ログインへ",
-    "welcome": "お帰りなさい！ここでカードコレクションと閲覧履歴を管理できます 🎴",
-    "user": "ユーザー",
-    "admin": "🎖️ 管理者",
-    "collector": "📦 コレクター",
-    "joinedAt": "登録日：",
-    "tabs": {
-      "info": "プロフィール",
-      "infoShort": "情報",
-      "watchlist": "ウォッチリスト",
-      "watchlistShort": "ウォッチ",
-      "history": "閲覧履歴",
-      "historyShort": "履歴",
-      "stats": "統計",
-      "statsShort": "統計"
-    },
-    "infoSection": {
-      "title": "個人情報",
-      "description": "個人情報を表示・編集",
-      "username": "ユーザー名",
-      "notSet": "未設定",
-      "email": "メールアドレス",
-      "role": "役割",
-      "adminRole": "🎖️ 管理者",
-      "normalUser": "📦 一般ユーザー",
-      "loginMethod": "ログイン方法",
-      "passwordLogin": "🔑 パスワードログイン",
-      "googleOAuth": "🔐 Google OAuth",
-      "registeredAt": "登録日時",
-      "lastLogin": "最終ログイン",
-      "noRecord": "記録なし",
-      "changePassword": "パスワード変更"
-    },
-    "watchlistSection": {
-      "title": "マイウォッチリスト",
-      "count": "合計 {{count}} 枚のカード",
-      "empty": "まだカードを追加していません",
-      "goToResearch": "カードを検索",
-      "removeSuccess": "ウォッチリストから削除しました",
-      "removeFailed": "削除失敗：{{error}}",
-      "table": {
-        "card": "カード",
-        "series": "シリーズ",
-        "latestPrice": "最新価格",
-        "notes": "備考",
-        "addedAt": "追加日時",
-        "actions": "操作",
-        "remove": "削除",
-        "noPrice": "価格なし"
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "marketInsights": "市場洞察",
+    "marketplace": "マーケット",
+    "priceComparison": "価格比較",
+    "pricing": "価格検索",
+    "privacy": "プライバシーポリシー",
+    "research": "カード研究",
+    "seller": "セラー",
+    "terms": "利用規約",
+    "trending": "ランキング"
+  },
+  "disclaimerPage": {
+    "contactInfo": "ご不明な点がございましたら、お問い合わせください：support@boxium.asia",
+    "lastUpdated": "最終更新日",
+    "sections": {
+      "dataDelay": {
+        "content": "本プラットフォームの価格データはサードパーティプラットフォーム（SNKRDUNK、eBayなど）から取得しており、遅延が生じる場合があります。ネットワーク状況、API制限、または技術的な理由により、一部のデータがリアルタイムで更新されない場合があります。本プラットフォームはデータ遅延による損失について責任を負いません。",
+        "title": "データ遅延免責事項"
+      },
+      "dataPrivacy": {
+        "content": "本プラットフォームはユーザーの個人情報保護を重視しています。収集した個人情報はサービス提供、取引処理、ユーザーエクスペリエンスの向上のみに使用されます。個人情報の取り扱い方法の詳細については、プライバシーポリシーをご参照ください。",
+        "title": "個人情報保護"
+      },
+      "externalLinks": {
+        "content": "本プラットフォームにはSNKRDUNKやeBayなどのサードパーティプラットフォームへのリンクが含まれる場合があります。これらのリンクは参考用であり、本プラットフォームはサードパーティプラットフォームのコンテンツ、プライバシーポリシー、または利用規約について責任を負いません。サードパーティプラットフォームにアクセスする際は、そのプラットフォームの利用規約に従ってください。",
+        "title": "外部リンク免責事項"
+      },
+      "intellectualProperty": {
+        "content": "本プラットフォームのすべてのコンテンツ（テキスト、画像、デザイン、コードを含む）は著作権法によって保護されています。プラットフォーム上の各ゲーム商標（Pokémon、One Pieceなど）はそれぞれの権利者に帰属し、本プラットフォームは各ゲーム会社と公式な関係はありません。無断でプラットフォームコンテンツを複製または使用することは禁止されています。",
+        "title": "知的財産権に関する通知"
+      },
+      "investmentRisk": {
+        "content": "PTCGカード（PSA 10グレードカードを含む）の市場価格は、市場の需給、希少性、版、コレクトトレンドなど様々な要因に影響されます。本プラットフォームが提供する価格情報、トレンド分析、または市場データは投資アドバイスを構成しません。ユーザーは独自にリスクを評価してください。本プラットフォームはプラットフォーム情報への依存から生じる投資損失について責任を負いません。",
+        "title": "投資リスク免責事項"
+      },
+      "jurisdiction": {
+        "content": "本免責事項は香港特別行政区の法律に準拠します。本プラットフォームの使用から生じる紛争については、双方が香港特別行政区の裁判所を第一審管轄裁判所とすることに同意します。",
+        "title": "準拠法"
+      },
+      "marketplaceDisclaimer": {
+        "content": "本プラットフォームのマーケットプレイスは買い手と売り手の仲介として機能し、取引マッチングサービスのみを提供します。本プラットフォームは、売り手が出品する商品の真正性、品質、合法性、または説明の正確性について保証しません。購入前に商品説明をよく読み、取引リスクを自己評価してください。本プラットフォームは、不正確な商品説明、商品の損傷、またはその他の取引紛争から生じる損失について直接的な法的責任を負いませんが、紛争解決のために合理的な努力を行います。",
+        "title": "マーケットプレイス取引免責事項"
+      },
+      "priceData": {
+        "content": "本プラットフォームはSNKRDUNKやeBayなど複数の市場からPSA 10カードの価格データを集約し、正確でタイムリーな市場情報の提供に努めています。ただし、市場価格は急速に変動するため、表示価格が実際の取引価格と完全に一致することを保証することはできません。すべての価格情報は参考用であり、実際の取引価格は各プラットフォームによって決定されます。",
+        "title": "価格データの正確性"
+      },
+      "serviceInterruption": {
+        "content": "本プラットフォームは、システムメンテナンス、技術的障害、ネットワーク問題、または不可抗力によりサービスを一時的に中断する場合があります。本プラットフォームはサービスの安定性確保に努めますが、サービス中断による損失について責任を負いません。",
+        "title": "サービス中断免責事項"
+      },
+      "userConduct": {
+        "content": "ユーザーは本プラットフォームの使用において、違法行為、他者の権利侵害、またはプラットフォームの正常な運営を妨げる行為を行ってはなりません。本プラットフォームは違反ユーザーに対して、アクセスの停止または終了を含む措置を取る権利を留保します。",
+        "title": "ユーザー行動規範"
       }
     },
+    "subtitle": "BOXIUMプラットフォーム免責事項 — 本プラットフォームをご利用の前に以下の重要な事項をよくお読みください",
+    "title": "免責事項"
+  },
+  "favorites": {
+    "addError": "お気に入りに追加できませんでした",
+    "added": "お気に入りに追加しました",
+    "confirmRemove": "このお気に入りを削除してもよろしいですか？",
+    "empty": "お気に入りはまだありません",
+    "emptyDescription": "お気に入りのカードを保存して、後で簡単にアクセスできます",
+    "favorite": "お気に入り",
+    "items": "件",
+    "removeError": "お気に入りから削除できませんでした",
+    "removed": "お気に入りから削除しました",
+    "startBrowsing": "閲覧を開始",
+    "title": "マイお気に入り",
+    "unfavorite": "お気に入り解除"
+  },
+  "footer": {
+    "about": "私たちについて",
+    "aboutUs": "私たちについて",
+    "adminPanel": "管理パネル",
+    "blog": "最新ニュース",
+    "cardSearch": "カード検索",
+    "copyright": "© 2026 BOXIUM. All rights reserved. | Luck in Every Box",
+    "description": "グローバルTCGの価格照会と市場分析に特化した総合プラットフォーム",
+    "disclaimer": "免責事項",
+    "marketplace": "マーケット",
+    "platformIntro": "プラットフォーム紹介",
+    "pricing": "価格検索",
+    "privacy": "プライバシーポリシー",
+    "quickLinks": "クイックリンク",
+    "socialMedia": "ソーシャルメディア",
+    "terms": "利用規約",
+    "trending": "ランキング"
+  },
+  "home": {
+    "aboutUs": "私たちについて",
+    "aboutUsDesc": "BOXIUMはTCG投資家とコレクターに最も正確で専門的な市場情報と価格分析ツールを提供することに尽力しています。",
+    "adminPanel": "管理パネル",
+    "cardSearch": "カード検索",
+    "coreFeatures": "コア機能",
+    "coreFeaturesDesc": "BOXIUMはプロフェッショナルなカード価格分析ツールを提供し、より賢明な投資決定を支援します",
+    "dataSources": "データソース",
+    "dataSourcesDesc": "世界有数のカード取引プラットフォームを統合、データの精度とリアルタイム性を保証",
+    "description": "グローバル市場データを統合し、PTCGファンとコレクターに正確なカード価格情報を提供します。カードの価格トレンドを追跡し、賢明な投資決定を行いましょう。",
+    "ebayDesc": "世界最大のオンラインオークションプラットフォーム、国際市場のカード取引記録と価格参考を提供",
+    "footerDesc": "Pokémon、One Pieceなど複数のTCGの価格照会と市場分析に特化した総合プラットフォーム",
+    "globalMarket": "グローバル市場データ",
+    "goToMarketplace": "マーケットへ",
+    "jpyPrice": "日本円価格",
+    "marketReport": "市場レポート",
+    "marketStats": "市場統計",
+    "marketStatsDesc": "リアルタイム市場データ分析、カードの平均価格と市場パフォーマンスを理解",
+    "metaDescription": "世界のTCG市場データを統合し、トレーディングカード愛好家のために、リアルタイムで正確な価格情報と市場分析を提供します。",
+    "noImage": "画像なし",
+    "noTrendingCards": "トレンディングカードデータなし",
+    "priceQuery": "価格照会",
+    "priceTrend": "価格トレンド",
+    "priceTrendDesc": "90日間の価格変動を表示、市場の動向と投資タイミングを把握",
+    "privacyPolicy": "プライバシーポリシー",
+    "psaSupport": "PSAグレーディングサポート",
+    "quickLinks": "クイックリンク",
+    "readyToStart": "PTCGの旅を始める準備はできましたか？",
+    "readyToStartDesc": "BOXIUMのスマート検索と価格分析ツールを使用して、お気に入りのコレクションを見つけましょう。",
+    "realtimeData": "リアルタイム取引データ",
+    "smartSearch": "スマート検索",
+    "smartSearchDesc": "数百枚のカードを素早く検索、名前、番号、シリーズなどの多次元フィルタリングをサポート",
+    "snkrdunkDesc": "日本有数のカード取引プラットフォーム、最新のPSA 10グレードカード取引データと市場トレンド分析を提供",
+    "socialMedia": "ソーシャルメディア",
+    "startExploring": "カード探索",
+    "startSearching": "カード検索を始める",
+    "termsOfService": "利用規約",
+    "topRanking": "トップランキング",
+    "topRankingDesc": "市場で最もホットなカードを発見、投資家の選択を追跡",
+    "trackedCards": "追跡中のカード",
+    "trendingCards": "トレンディングカード",
+    "trendingCardsDesc": "PSA 10グレード最近の取引価格上昇率に基づく",
+    "usdPrice": "米ドル価格",
+    "viewMarketTrends": "市場価格を比較する",
+    "welcome": "Boxiumへようこそ〜ゲーム愛好家の世界"
+  },
+  "login": {
+    "description": "アカウントとパスワードを入力してBOXIUM PTCGにログインしてください",
+    "dev": {
+      "fastLoginButton": "⚡ 開発モードクイックログイン (管理者 id=1)"
+    },
+    "dividerText": "または",
+    "error": {
+      "googleAuthFailed": "Googleでのログインに失敗しました。しばらくしてからもう一度お試しください。",
+      "noGoogleEmail": "Googleアカウントのメールアドレスを取得できませんでした。認証設定をご確認ください。",
+      "unknown": "不明なエラー",
+      "userCreationFailed": "アカウントの作成に失敗しました。しばらくしてからもう一度お試しいただくか、カスタマーサポートにお問い合わせください。"
+    },
+    "form": {
+      "loginInProgress": "ログイン中...",
+      "passwordLabel": "パスワード"
+    },
+    "googleLoginButton": "Googleでサインイン",
+    "register": {
+      "link": "今すぐ登録",
+      "prompt": "アカウントをお持ちでないですか？"
+    },
+    "title": "ログイン",
+    "toast": {
+      "devLoginFailed": "Devログインに失敗しました：",
+      "devLoginSuccess": "[DEV] {{user.name}}としてログインしました",
+      "loginFailed": "ログインに失敗しました",
+      "loginSuccess": "ログインに成功しました"
+    }
+  },
+  "marketplace": {
+    "addToWishlist": "お気に入りに追加",
+    "all": "すべて",
+    "backToTop": "トップに戻る",
+    "banner": {
+      "explore": {
+        "cta": "マーケットを探索",
+        "title": "マーケットプレイスを探索"
+      },
+      "official": {
+        "cta": "公式商品を見る",
+        "subtitle": "公式認証・品質保証・安心購入",
+        "title": "BOXIUM公式出品"
+      },
+      "psa": {
+        "cta": "今すぐ購入",
+        "subtitle": "厳選されたPSA 10の完美品・限定コレクション",
+        "title": "PSA鑑定カード専門エリア"
+      }
+    },
+    "copyFailed": "コピーに失敗しました",
+    "copyProductLink": "商品リンクをコピー",
+    "filter": {
+      "apply": "適用",
+      "bgsGraded": "BGS鑑定",
+      "cardCondition": "カードの状態",
+      "clear": "クリア",
+      "clearAll": "すべてのフィルターをクリア",
+      "individualSeller": "個人出品者",
+      "maxPrice": "最高価格",
+      "minPrice": "最低価格",
+      "priceRange": "価格範囲",
+      "psaGraded": "PSA鑑定",
+      "rawCard": "Rawカード",
+      "results": "絞り込み結果",
+      "sellerType": "出品者タイプ",
+      "tagGraded": "TAG鑑定",
+      "title": "フィルター"
+    },
+    "hotKeywords": "人気のキーワード",
+    "linkCopied": "リンクがコピーされました！",
+    "loadingMore": "さらに商品を読み込んでいます...",
+    "newSeller": "新規出品者",
+    "noResults": {
+      "suggestion": "フィルター条件を調整するか、すべてのフィルターをクリアしてみてください。",
+      "title": "条件に合う商品が見つかりませんでした"
+    },
+    "onlyNLeft": "残り{{quantity}}点",
+    "platform": "公式",
+    "removeFromWishlist": "お気に入りから削除",
+    "results": "件の結果",
+    "search": {
+      "button": "検索",
+      "placeholder": "カードを検索..."
+    },
+    "showing": "現在表示中",
+    "showingCount": "{{total}}件中{{count}}件を表示",
+    "soldOut": "売り切れ",
+    "sort": {
+      "newest": "新着順",
+      "priceHighToLow": "価格：高い順",
+      "priceLowToHigh": "価格：安い順",
+      "title": "並べ替え"
+    },
+    "title": "マーケット",
+    "viewDetails": "詳細を見る",
+    "wishlist": {
+      "added": "お気に入りに追加しました",
+      "loginRequired": "お気に入り機能を利用するにはログインしてください",
+      "removed": "お気に入りから削除しました"
+    }
+  },
+  "marketplaceListing": {
+    "30DayAverage": "30日平均価格",
+    "7DayTrend": "7日間トレンド",
+    "address": {
+      "region": {
+        "hongkong": "香港"
+      }
+    },
+    "alipay": {
+      "address": {
+        "clear": "選択した住所をクリア",
+        "manualFillPrompt": "保存済みの住所をクリックして自動入力するか、以下の項目を手動で入力してください。",
+        "recipientName": "受取人氏名 *",
+        "saved": "保存済み住所",
+        "sfStationLabel": "SF Expressステーション {code}",
+        "sfStationWithName": "SF Expressステーション {name} {code}",
+        "subtitle": "配送先住所は、配送手配のために出品者に提供されます。",
+        "title": "配送先住所を記入してください"
+      },
+      "amount": "支払金額：",
+      "copyId": "IDをコピー",
+      "copySuccess": "商品IDをコピーしました！Alipayの備考欄に貼り付けてください。",
+      "header": "AlipayHK 支払い",
+      "memoPrompt": "支払いの備考欄に商品IDを記入してください：",
+      "memoWarning": "⚠️ 支払いの確認のため、必ず上記のIDをAlipayの備考欄に記入してください。",
+      "nextStep": {
+        "address": "支払いが完了しました。配送先住所を記入してください。"
+      },
+      "offerPriceLabel": "（オファー価格）",
+      "openInApp": "スマートフォンでAlipayHKを開く",
+      "scanPrompt": "QRコードをスキャンするか、リンクをクリックしてお支払いください",
+      "title": "AlipayHK 支払い"
+    },
+    "backToHome": "ホームページに戻る",
+    "backToMarketplace": "マーケットプレイスに戻る",
+    "boxiumMarketPrice": "BOXIUM市場参考価格",
+    "buyerProtection": {
+      "description": "購入者保護：商品説明と異なる場合は返金を申請できます。"
+    },
+    "chart": {
+      "averagePrice": "平均価格",
+      "dataAttribution": "データソース：BOXIUM · 最近{days}日間で{count}件の取引記録",
+      "insufficientData": "この期間のデータが不足しているため、より長い期間を選択してください。",
+      "thisListing": "この商品"
+    },
+    "clickToZoom": "クリックして拡大",
+    "copyListingId": {
+      "success": "商品IDをコピーしました",
+      "tooltip": "クリックして商品IDをコピー"
+    },
+    "days": "日間",
+    "highest": "最高",
+    "image": "画像",
+    "loading": "読み込み中...",
+    "lowest": "最低",
+    "maintenance": {
+      "description": "現在、鋭意開発中です。ご期待ください！",
+      "title": "マーケットプレイスはメンテナンス中です"
+    },
+    "meta": {
+      "description": "状態：{condition} | 価格：HKD {price} | BOXIUM PTCG カードマーケットプレイス"
+    },
+    "nav": {
+      "marketplace": "マーケットプレイス"
+    },
+    "noRecentTransactions": "最近の取引データがありません",
+    "notFound": "商品が存在しないか、出品が取り下げられました",
+    "offer": {
+      "accepted": {
+        "banner": "出品者があなたのオファーを承認しました！下のボタンからお支払いに進んでください。",
+        "price": "オファー価格：HKD {price}"
+      },
+      "button": {
+        "loginRequired": "オファーするにはログインしてください",
+        "makeOffer": "価格交渉"
+      },
+      "expiresAt": "オファーは{date}に失効します",
+      "myOffer": "オファー済み",
+      "status": {
+        "pending": "出品者の返信を待っています"
+      },
+      "success": "オファーが送信されました！出品者からの返信をお待ちください。"
+    },
+    "order": {
+      "autoConfirm": "支払いから14日後に取引が自動的に完了します。",
+      "number": "注文番号：{orderNo}",
+      "submitted": "注文が送信されました！"
+    },
+    "payment": {
+      "goToPayment": "支払いに進む",
+      "linkError": "支払いリンクの取得に失敗しました",
+      "redirecting": "支払いページにリダイレクトしています...",
+      "stripe": {
+        "minimumError": "この商品の金額はStripeの最低支払額（HKD 4.00）を下回っています。AlipayHKをご利用ください。"
+      },
+      "verification": {
+        "error": "確認失敗：",
+        "failed": "⚠️ 支払い金額が一致しません。再確認してください。",
+        "success": "✅ 支払い金額の確認に成功しました！"
+      }
+    },
+    "priceComparison": {
+      "higher": "市場平均価格より高い",
+      "lower": "市場平均価格より低い"
+    },
+    "priceLabel": "販売価格",
+    "productImage": "商品画像",
+    "purchase": {
+      "loginRequired": "ご購入にはログインが必要です",
+      "pendingPayment": "現在、他のお客様がこの商品のお手続きをしています。しばらくしてからもう一度お試しください。"
+    },
+    "report": {
+      "button": "この商品を報告",
+      "success": "報告が送信されました。確認次第、対応いたします。"
+    },
+    "salesTrend": "販売動向",
+    "seller": {
+      "collapseReviews": "折りたたむ",
+      "individual": "👤 個人出品者",
+      "noReviews": "この出品者にはまだ評価がありません。",
+      "otherListings": "この出品者の他の商品",
+      "platform": "🏻 BOXIUM 公式",
+      "profile": {
+        "individual": "個人出品者",
+        "new": "新規出品者",
+        "totalSales": "販売済み{totalSales}点",
+        "view": "プロフィールを見る"
+      },
+      "showAllReviews": "すべてのレビュー（{total}件）を表示"
+    },
+    "share": {
+      "copy": {
+        "copied": "コピーしました！",
+        "default": "リンクをコピー",
+        "error": "コピーに失敗しました",
+        "success": "リンクをコピーしました！"
+      },
+      "whatsapp": "WhatsAppで共有"
+    },
+    "shipping": {
+      "local": "香港内SF Express（着払い）／自己引き取り（詳細は出品者にお問い合わせください）"
+    },
+    "status": {
+      "sold": "売り切れ",
+      "soldOut": "売り切れ"
+    },
+    "stock": "在庫：{quantity}点",
+    "tabs": {
+      "description": "商品説明",
+      "price": "市場価格",
+      "reviews": "出品者の評価"
+    },
+    "tcg": {
+      "other": "その他TCG"
+    },
+    "thumbnail": "サムネイル",
+    "trend": {
+      "flat": "横ばい"
+    },
+    "upload": {
+      "failed": "アップロードに失敗しました",
+      "retry": "スクリーンショットのアップロードに失敗しました。もう一度お試しください",
+      "sizeError": "スクリーンショットは5MBを超えることはできません",
+      "verifying": "スクリーンショットをアップロードしました。AIが金額を確認しています..."
+    },
+    "viewDetailedChart": "詳細な相場を見る",
+    "wishlist": {
+      "added": "お気に入りに追加しました",
+      "loginRequired": "お気に入りに追加するにはログインしてください",
+      "removed": "お気に入りから削除しました"
+    }
+  },
+  "nav": {
+    "admin": "管理画面",
+    "dashboard": "ダッシュボード",
+    "favorites": "マイお気に入り",
+    "login": "ログイン/登録",
+    "logout": "ログアウト",
+    "user": "ユーザー"
+  },
+  "notifications": {
+    "all": "すべて",
+    "delete": "削除",
+    "deleteAllRead": "既読を削除",
+    "deleteAllReadError": "削除に失敗しました",
+    "deleteAllReadSuccess": "すべての既読通知を削除しました",
+    "deleteError": "削除に失敗しました",
+    "deleteSuccess": "刪除成功",
+    "description": "すべてのシステム通知と取引の更新を表示します",
+    "filter": {
+      "all": "すべて",
+      "allTypes": "すべてのタイプ",
+      "dispute": "紛争",
+      "offer": "オファー",
+      "payment": "支払い",
+      "shipping": "配送",
+      "system": "システム",
+      "trade": "取引",
+      "unread": "未読"
+    },
+    "login": "ログイン",
+    "loginPrompt": "通知を表示するにはログインしてください",
+    "markAllAsRead": "すべて既読にする",
+    "markAllAsReadError": "すべて既読にできませんでした",
+    "markAllAsReadSuccess": "すべて既読にしました",
+    "markAsRead": "既読にする",
+    "markAsReadError": "既読にできませんでした",
+    "markAsReadSuccess": "既読にしました",
+    "noNotifications": "通知はありません",
+    "noUnreadNotifications": "未読の通知はありません",
+    "title": "通知センター",
+    "unread": "未読",
+    "unreadCount": "{unreadCount}件の未読",
+    "viewDetails": "クリックして詳細を表示 →"
+  },
+  "orderDetail": {
+    "alipayHk": "AlipayHK",
+    "alipayHkLabel": "アリペイ (香港)",
+    "alipayHkPayment": "AlipayHKでの支払い",
+    "alipayHkWallelt": "AlipayHKウォレットでの支払い",
+    "alipayRemarkNotice": "⚠️ 支払いの確認を容易にするため、必ずAlipayの備考欄に上記の番号を記入してください",
+    "amount": "金額",
+    "awaitingBuyerConfirmation": "購入者の受取待ち",
+    "awaitingPayment": "支払い待ち",
+    "backToMyOrders": "注文履歴に戻る",
+    "backToOrderList": "注文リストに戻る",
+    "buyerCancelled": "購入者が注文のキャンセルをリクエストしました",
+    "cancel": "キャンセル",
+    "cancellationReason": "キャンセルの理由",
+    "checkOrderDetails": "注文詳細をご確認ください",
+    "clickOrDragToUpload": "ここをクリックしてアップロードするか、ドラッグ＆ドロップしてください",
+    "confidence": "信頼度",
+    "confirm": "確認",
+    "confirmReceipt": "受取確認",
+    "confirmReceiptDesc": "この操作により注文が完了し、支払いが出品者に送金されます。",
+    "confirmReceiptPrompt": "商品を受け取りましたか？",
+    "contactPhone": "連絡先電話番号",
+    "contactPhoneLabel": "連絡先電話番号",
+    "contactSeller": "出品者に連絡",
+    "copy": "コピー",
+    "copyId": "番号をコピー",
+    "creditCardStripe": "クレジットカード (Stripe)",
+    "describeProblem": "発生した問題を詳しく説明してください",
+    "detailedAddress": "詳細な住所",
+    "disputeInProgress": "紛争処理中",
+    "disputeInProgressDesc": "現在お客様のケースを確認しておりますので、しばらくお待ちください。以下で出品者と連絡を取ることができます。",
+    "encryptedPayment": "すべての支払いは暗号化されて送信され、保護されています",
+    "enterDetailedAddress": "詳細な住所を入力してください",
+    "enterName": "氏名を入力してください",
+    "enterPhone": "電話番号を入力してください",
+    "fileFormatHint": "ファイル形式：PNG, JPG, HEIC (5MB以内)",
+    "fileTooLarge": "スクリーンショットは5MBを超えることはできません",
+    "fillOrderNumber": "支払いの備考欄に商品番号を記入してください：",
+    "fillShippingAddress": "配送先住所を記入してください",
+    "getPaymentLinkError": "支払いリンクを取得できません",
+    "high": "高",
+    "hongKong": "香港",
+    "hongKongIsland": "香港島",
+    "kowloon": "九龍",
+    "listingIdCopied": "商品番号がコピーされました！",
+    "low": "低",
+    "medium": "中",
+    "newTerritories": "新界",
+    "nextUploadProof": "次へ：支払いスクリーンショットをアップロード",
+    "openInAlipay": "スマートフォンでAlipayHKを開く",
+    "orderCancelled": "注文はキャンセルされました",
+    "orderCompleted": "注文完了",
+    "orderDetails": "注文詳細",
+    "orderNumber": "注文番号",
+    "orderStatus": "注文ステータス",
+    "orderSubmitted": "注文が送信されました",
+    "orderSubmittedSuccess": "注文は正常に送信されました。出品者の確認をお待ちください",
+    "orderSubmittedSuccessDesc": "ご注文ありがとうございます！出品者は支払い確認後、できるだけ早く発送いたします。注文ページでステータスの更新を追跡できます。",
+    "paidAndFillAddress": "支払いが完了しました。配送先住所を記入します",
+    "paidAndUpload": "支払いが完了しました。スクリーンショットをアップロードします",
+    "payee": "受取人",
+    "paymentAmount": "支払い金額：",
+    "paymentInfo": "支払い情報",
+    "paymentMethod": "支払い方法",
+    "paymentMethodLabel": "支払い方法",
+    "paymentMethods": "Visa / Mastercard / Apple Pay",
+    "paymentStatus": "支払いステータス",
+    "paymentVerifiedError": "⚠️ 検証に失敗しました。スクリーンショットを再アップロードしてください",
+    "paymentVerifiedSuccess": "✅ 支払い金額の検証に成功しました！",
+    "pending": "処理待ち",
+    "pendingPayment": "支払い待ち",
+    "proceedToPayment": "支払いに進む",
+    "processing": "準備中",
+    "productInfo": "商品情報",
+    "quantity": "数量",
+    "rateSeller": "出品者を評価する",
+    "rateTransaction": "この取引の評価をお願いします。",
+    "reason": "理由",
+    "recipient": "受取人",
+    "recipientName": "受取人氏名",
+    "region": "地域",
+    "requestAfterSales": "アフターサービスを申請/紛争を開始",
+    "resolved": "解決済み",
+    "reupload": "再アップロード",
+    "scanQrCode": "QRコードをスキャンするか、リンクをクリックして支払ってください",
+    "selectPaymentMethod": "支払い方法を選択",
+    "seller": "出品者",
+    "sellerProcessing": "出品者が準備中です",
+    "sellerShipped": "出品者が発送しました",
+    "shipped": "発送済み",
+    "shippingAddress": "配送先住所",
+    "shippingFee": "送料",
+    "shippingInfo": "配送情報",
+    "status": "ステータス",
+    "stripeCreditCardApplePay": "Stripe クレジットカード / Apple Pay",
+    "submitFailed": "送信に失敗しました。もう一度お試しください",
+    "submitOrder": "注文を送信",
+    "submitRating": "評価を送信",
+    "submitRequest": "リクエストを送信",
+    "subtotal": "小計",
+    "switchPaymentError": "支払い方法を切り替えられません",
+    "totalAmount": "合計金額",
+    "unitPrice": "単価",
+    "uploadFailed": "スクリーンショットのアップロードに失敗しました。もう一度お試しください",
+    "uploadPaymentProof": "支払いスクリーンショットをアップロード",
+    "uploadingAndVerifying": "スクリーンショットをアップロードしました。AIで金額を検証中です...",
+    "verificationFailed": "検証に失敗しました：",
+    "verificationFailedLabel": "検証に失敗しました",
+    "verificationSuccess": "検証に成功しました",
+    "verifying": "検証中...",
+    "viewProduct": "商品を見る"
+  },
+  "orderStatusStepper": {
+    "cancelled": {
+      "description": "この注文はキャンセルされたため、これ以上処理されません。",
+      "title": "注文はキャンセルされました"
+    },
+    "completed": {
+      "buyerDesc": "注文は完了しました",
+      "buyerLabel": "完了",
+      "meetup": {
+        "buyerLabel": "対面取引完了",
+        "sellerLabel": "対面取引完了"
+      },
+      "sellerDesc": "取引完了",
+      "sellerLabel": "完了"
+    },
+    "delivered": {
+      "buyerDesc": "商品の受け取りを確認してください",
+      "buyerLabel": "確認待ち",
+      "sellerDesc": "購入者の確認を待っています",
+      "sellerLabel": "配達済み"
+    },
+    "disputed": {
+      "description": "プラットフォームが介入して処理しています。1～3営業日お待ちください。",
+      "title": "紛争処理中"
+    },
+    "meetup": {
+      "paidHeld": {
+        "buyerLabel": "支払い済み",
+        "sellerLabel": "確認待ち"
+      }
+    },
+    "paidHeld": {
+      "buyerDesc": "支払いが確認されました",
+      "buyerLabel": "支払い済み",
+      "meetup": {
+        "buyerDesc": "支払いが確認されました。対面での取引を手配してください",
+        "sellerDesc": "購入者に連絡して、対面での取引を手配してください"
+      },
+      "sellerDesc": "できるだけ早く発送を手配してください",
+      "sellerLabel": "発送待ち"
+    },
+    "pendingPayment": {
+      "buyerDesc": "支払いの完了を待っています",
+      "buyerLabel": "お支払い待ち",
+      "sellerDesc": "購入者の支払いを待っています",
+      "sellerLabel": "お支払い待ち"
+    },
+    "refunded": {
+      "description": "元の支払い方法に返金されました。",
+      "title": "返金完了"
+    },
+    "shipped": {
+      "buyerDesc": "商品輸送中です",
+      "buyerLabel": "輸送中",
+      "sellerDesc": "購入者の受け取り確認を待っています",
+      "sellerLabel": "発送済み"
+    }
+  },
+  "orders": {
+    "action": {
+      "back": "戻る",
+      "cancel": "キャンセル",
+      "cancelOrder": "注文をキャンセル",
+      "cancelOrderConfirmation": "この注文をキャンセルしてもよろしいですか？キャンセル後、商品は再出品されます。",
+      "confirmCancel": "キャンセルを確認",
+      "confirmCancelOrder": "注文のキャンセルを確認",
+      "confirmReceipt": "受取確認",
+      "fileDispute": "紛争を申請",
+      "goToPayment": "支払いに進む",
+      "orderCancelled": "注文はキャンセルされました",
+      "payNow": "今すぐ支払う",
+      "rateSeller": "販売者を評価",
+      "viewProductPage": "商品ページを見る"
+    },
+    "buyer": "購入者",
+    "details": {
+      "itemAmount": "商品金額",
+      "paymentSummary": "お支払い概要",
+      "shippingInfo": "配送先情報",
+      "toggle": {
+        "hide": "配送/支払い情報を非表示",
+        "show": "配送/支払い情報を表示"
+      },
+      "total": "合計"
+    },
+    "dialog": {
+      "confirmReceipt": {
+        "confirmButton": "受取確認",
+        "description": "商品の受領を確認すると、支払いは直ちに販売者に送金されます。この操作は元に戻せません。",
+        "processing": "処理中...",
+        "title": "受取確認",
+        "warning": "商品の状態が説明と一致していることを確認してから受領を確認してください。問題がある場合は、まず紛争を申請してください。"
+      },
+      "fileDispute": {
+        "charCount": {
+          "min": "10文字以上入力してください",
+          "needed": "あと{{count}}文字必要です",
+          "ok": "✓ 内容は要件を満たしています"
+        },
+        "description": "問題を詳しく説明してください。管理者が1〜3営業日以内に対応します。",
+        "evidence": "証拠ファイル（任意、最大3つ）",
+        "placeholder": "問題（例：商品説明と異なる、商品が届かない、商品が破損しているなど）を10文字以上で説明してください。",
+        "submitButton": "紛争を申請",
+        "title": "紛争を申請",
+        "upload": {
+          "description": "またはここにドラッグ＆ドロップ",
+          "label": "ファイルをアップロード",
+          "uploading": "アップロード中..."
+        }
+      },
+      "rateSeller": {
+        "commentLabel": "あなたのコメント（任意）",
+        "commentPlaceholder": "あなたの体験についてもっと詳しく教えてください...",
+        "description": "取引体験を共有して、他の購入者を助けましょう。",
+        "ratingLabel": "あなたの評価",
+        "submitButton": "評価を送信",
+        "submitting": "送信中...",
+        "title": "販売者を評価"
+      }
+    },
+    "dispute": {
+      "inProgress": "紛争処理中です。管理者からの返信をお待ちください。"
+    },
+    "error": {
+      "createPaymentFailed": "決済を作成できませんでした"
+    },
+    "myOrders": "私の注文",
+    "noOrders": "注文がありません",
+    "noOrdersDescription": "現在、注文はありません。",
+    "orderDate": "注文日",
+    "orderNumber": "注文番号",
+    "payment": {
+      "alipayHK": "Alipay HK",
+      "alipayHKCompletePayment": "新しいウィンドウで支払いを完了し、このページに戻って支払いスクリーンショットをアップロードしてください",
+      "alipayHKPageOpened": "Alipay HKの支払いページが開かれました",
+      "alipayHKScreenshotRequired": "⚠️ 支払い後にスクリーンショットが必要です",
+      "alipayHKUploadScreenshot": "注文詳細ページに移動して、管理者が確認できるようにAlipayの支払いスクリーンショットをアップロードしてください",
+      "alipayHKWallet": "AlipayHK電子ウォレット決済",
+      "amount": "お支払い金額：",
+      "cardTypes": "Visa / Mastercard / その他のクレジットカード",
+      "encrypted": "すべての支払いは暗号化されて送信されます",
+      "iHavePaid": "支払いが完了しました",
+      "selectMethod": "お支払い方法を選択",
+      "stripeCreditCard": "Stripe クレジットカード"
+    },
+    "rated": "{{rating}}つ星で評価済み",
+    "seller": "販売者",
+    "status": {
+      "cancelled": "キャンセル済み",
+      "completed": "完了",
+      "delivered": "配達済み",
+      "disputed": "紛争中",
+      "paid_held": "支払い済み、発送待ち",
+      "payment_received": "入金済み",
+      "pending_payment": "支払い待ち",
+      "shipped": "発送済み"
+    },
+    "tabs": {
+      "buying": "購入中",
+      "selling": "販売中"
+    },
+    "total": "合計金額"
+  },
+  "pricing": {
+    "allListings": "PSA 10 出品商品（価格順）",
+    "available": "購入可能",
+    "averagePrice": "平均価格",
+    "avgPrice": "平均価格",
+    "buy": "購入",
+    "buyNow": "今すぐ購入",
+    "cancel": "キャンセル",
+    "cardNotFound": "カードが見つかりません",
+    "cardNumber": "カード番号",
+    "condition": "状態",
+    "cropImage": "画像をトリミング",
+    "dragDropImage": "ここに画像をドラッグ＆ドロップ",
+    "ebayListings": "eBay PSA 10 出品商品",
+    "enterKeyword": "検索キーワードを入力してください",
+    "fetchingPrices": "最新価格を取得中...",
+    "foundCards": "{{count}}枚のカードが見つかりました",
+    "grade": "グレード",
+    "highestPrice": "最高価格",
+    "hint": "ヒント: 検索結果はPSA 10グレードの購入可能な商品のみ表示されます",
+    "imageSearch": "画像検索",
+    "imageSearchError": "画像検索に失敗しました。後でもう一度お試しください。",
+    "imageSearchFailed": "カードを識別できませんでした。別の画像をお試しください。",
+    "imageSearchSuccess": "カードが見つかりました：{{cardName}}",
+    "imageSearchTitle": "カード画像分析機能",
+    "listings": "件",
+    "loading": "読み込み中...",
+    "loadingListings": "商品を読み込み中...",
+    "lowestPrice": "最低価格",
+    "maxPrice": "最高価格",
+    "minPrice": "最低価格",
+    "noImage": "画像なし",
+    "noListings": "出品商品はありません",
+    "noResults": "結果が見つかりませんでした。他のキーワードをお試しください。",
+    "orSelectFile": "またはファイルを選択",
+    "pleaseSelectImage": "画像を選択してください",
+    "pleaseWait": "お待ちください。20〜30秒かかる場合があります",
+    "priceStats": "価格統計",
+    "psa10Listings": "PSA 10 出品商品",
+    "refresh": "更新",
+    "searchCropped": "トリミング領域を検索",
+    "searchError": "検索エラー。もう一度お試しください。",
+    "searchHint": "ヒント: 検索結果はPSA 10グレードの購入可能な商品のみ表示されます",
+    "searchNow": "今すぐ検索",
+    "searchResults": "検索結果",
+    "searchResultsFor": "検索結果",
+    "searching": "検索中...",
+    "seller": "出品者",
+    "series": "シリーズ",
+    "snkrdunkDescription": "下のボタンをクリックして、SNKRDUNKで最新のPSA 10出品商品を表示",
+    "snkrdunkTitle": "SNKRDUNK PSA 10 出品商品",
+    "subtitle": "グローバル市場のカード価格をリアルタイムで比較",
+    "takePhoto": "写真を撮る",
+    "title": "価格検索",
+    "totalListings": "合計{{count}}件の出品商品",
+    "totalResults": "合計{{count}}件",
+    "uploadFile": "ファイルをアップロード",
+    "viewDetail": "詳細を見る",
+    "viewOnSnkrdunk": "SNKRDUNKで見る"
+  },
+  "profile": {
+    "addresses": {
+      "add": "住所を追加",
+      "addressLabel": "住所ラベル",
+      "addressLabelHint": "例：自宅、職場",
+      "addressType": "住所タイプ",
+      "cancel": "キャンセル",
+      "contactPhone": "連絡先電話番号",
+      "defaultBadge": "デフォルト",
+      "detailedAddress": "詳細な住所",
+      "detailedAddressHint": "通り、建物、階、部屋",
+      "district": "地区（任意）",
+      "districtHint": "例：旺角、銅鑼湾",
+      "empty": {
+        "description": "住所を追加すると、チェックアウト時に詳細を再入力することなく迅速に支払いできます。",
+        "title": "配送先住所がまだありません"
+      },
+      "invalidCode": "無効または存在しないコードです",
+      "recipientName": "受取人名",
+      "region": "地域",
+      "saveChanges": "変更を保存",
+      "searchCode": "コードを検索",
+      "setAsDefault": "デフォルトに設定",
+      "setDefault": "デフォルトの住所として設定",
+      "sfCode": "SFコード",
+      "sfCodeHint": "コード入力後、住所が自動入力されます",
+      "sfDisclaimer": "データはSF Express香港公式（2026年3月）のもので、125のSFステーションと729のロッカーが含まれています。最新の場所については、SF Express香港の公式サイトをご覧ください。",
+      "sfLocker": "🔒 ロッカー",
+      "sfStation": "📦 SFセルフピックアップポイント",
+      "type": {
+        "residential": "住宅/商業住所",
+        "sfStation": "SFステーション/ロッカー"
+      },
+      "validatingCode": "コードを検証しています..."
+    },
+    "admin": "🎖️ 管理者",
+    "auctions": {
+      "auctionTitle": "オークション #{id}",
+      "countdown": {
+        "daysHours": "{d}日 {h}時間",
+        "ended": "終了"
+      },
+      "currentHighest": "現在の最高額",
+      "empty": {
+        "description": "マーケットプレイスで進行中のオークションを探す",
+        "noRecords": "このカテゴリには記録がありません",
+        "title": "まだオークションに参加していません"
+      },
+      "goToMarketplace": "マーケットプレイスへ",
+      "myBid": "私の入札",
+      "outbidHint": "オークションページに移動して再度入札してください",
+      "status": {
+        "lost": "未落札",
+        "outbid": "⚠️ 高値更新",
+        "winning": "🏆 リード中",
+        "won": "✅ 落札"
+      },
+      "tabs": {
+        "active": "入札中",
+        "history": "入札履歴",
+        "won": "落札済み"
+      },
+      "timeLeft": "残り時間",
+      "viewOrder": "注文を見る"
+    },
+    "cart": {
+      "addFailed": "追加に失敗しました",
+      "added": "カートに追加しました"
+    },
+    "collector": "📦 コレクター",
+    "goToLogin": "ログインへ",
     "historySection": {
-      "title": "閲覧履歴",
-      "count": "最近 {{count}} 件の記録",
-      "empty": "閲覧履歴がありません",
+      "cancel": "キャンセル",
+      "clearFailed": "クリア失敗：{{error}}",
       "clearHistory": "履歴をクリア",
       "clearSuccess": "閲覧履歴をクリアしました",
-      "clearFailed": "クリア失敗：{{error}}",
+      "confirm": "確認",
       "confirmClear": "クリア確認",
       "confirmDescription": "この操作はすべての閲覧履歴を削除し、復元できません。",
-      "cancel": "キャンセル",
-      "confirm": "確認",
+      "count": "最近 {{count}} 件の記録",
+      "empty": "閲覧履歴がありません",
       "table": {
         "card": "カード",
         "series": "シリーズ",
         "viewedAt": "閲覧日時"
+      },
+      "title": "閲覧履歴"
+    },
+    "info": {
+      "email": "メールアドレス",
+      "joinDate": "登録日",
+      "phone": "電話番号",
+      "title": "アカウント情報",
+      "username": "ユーザー名"
+    },
+    "infoSection": {
+      "adminRole": "🎖️ 管理者",
+      "changePassword": "パスワード変更",
+      "description": "個人情報を表示・編集",
+      "email": "メールアドレス",
+      "googleOAuth": "🔐 Google OAuth",
+      "lastLogin": "最終ログイン",
+      "loginMethod": "ログイン方法",
+      "noRecord": "記録なし",
+      "normalUser": "📦 一般ユーザー",
+      "notSet": "未設定",
+      "passwordLogin": "🔑 パスワードログイン",
+      "registeredAt": "登録日時",
+      "role": "役割",
+      "title": "個人情報",
+      "username": "ユーザー名"
+    },
+    "joinedAt": "登録日：",
+    "loading": "読み込み中...",
+    "loginRequired": "プロフィールを表示するにはログインが必要です",
+    "nav": {
+      "addresses": "配送先住所",
+      "auctions": "私のオークション",
+      "notifications": "通知センター",
+      "offers": "私のオファー",
+      "orders": "注文履歴"
+    },
+    "notifications": {
+      "allRead": "すべて既読にする",
+      "empty": "現在通知はありません",
+      "title": "通知"
+    },
+    "offers": {
+      "acceptedMessage": "✅ 出品者がオファーを承認しました。速やかにお支払いください",
+      "cancelOffer": "オファーをキャンセル",
+      "empty": {
+        "description": "マーケットプレイスで気に入った商品にオファーをすると、オファー履歴がここに表示されます。",
+        "title": "まだオファーをしていません"
+      },
+      "expiresAt": "有効期限: {date}",
+      "goToMarketplace": "マーケットプレイスでオファーする",
+      "listingItem": "商品",
+      "message": "メッセージ: {message}",
+      "offerId": "オファー #{id}",
+      "offerPrice": "オファー価格: ",
+      "rejectionReason": "拒否理由: {reason}",
+      "status": {
+        "accepted": "承認済み",
+        "cancelled": "キャンセル済み",
+        "expired": "期限切れ",
+        "pending": "処理中",
+        "rejected": "拒否済み"
+      },
+      "viewItem": "商品を見る"
+    },
+    "orderStatus": {
+      "cancelled": "キャンセル済み",
+      "completed": "完了",
+      "delivered": "配達済み",
+      "disputed": "論争中",
+      "paid_held": "支払済み、発送待ち",
+      "payment_received": "入金済み",
+      "pending_payment": "支払い待ち",
+      "shipped": "発送済み"
+    },
+    "orders": {
+      "all": "すべて",
+      "empty": {
+        "description": "ショッピングまたはオークションで落札した後、ご注文はこちらに表示されます。",
+        "title": "まだ注文はありません"
+      },
+      "filterStatus": "ステータスで絞り込み",
+      "goToMarketplace": "マーケットプレイスへ",
+      "payNow": "支払う",
+      "searchPlaceholder": "注文IDまたは商品名で検索",
+      "status": {
+        "itemDelivered": "商品が配達されました",
+        "orderCancelled": "注文はキャンセルされました",
+        "orderCompleted": "取引完了",
+        "orderDisputed": "注文は論争中です",
+        "paymentConfirmed": "お支払いが確認されました。",
+        "paymentProcessing": "お支払いは処理中です。しばらくお待ちください。",
+        "paymentTimeout": "お支払い期限が切れ、ご注文は自動的にキャンセルされました。",
+        "sellerShipped": "出品者が発送しました",
+        "sellerShipping": "出品者が発送準備中です"
+      },
+      "table": {
+        "createdAt": "作成日時",
+        "items": "項目",
+        "orderId": "注文ID",
+        "total": "合計金額",
+        "viewDetails": "詳細を見る"
       }
+    },
+    "pleaseLogin": "ログインしてください",
+    "security": {
+      "changePassword": "パスワードの変更",
+      "confirmNewPassword": "新しいパスワードの確認",
+      "currentPassword": "現在のパスワード",
+      "newPassword": "新しいパスワード",
+      "passwordHint": "パスワードは8文字以上である必要があります",
+      "savePassword": "パスワードを保存",
+      "title": "セキュリティ設定"
     },
     "statsSection": {
-      "title": "コレクション統計",
-      "description": "カードコレクションのデータ分析",
-      "empty": "統計データがありません",
-      "watchlistCards": "ウォッチリスト",
-      "cardsCount": "枚",
-      "viewHistory": "閲覧履歴",
-      "recordsCount": "件",
       "activity": "アクティビティ",
       "activityLevel": "コレクション活動度",
+      "cardsCount": "枚",
+      "description": "カードコレクションのデータ分析",
+      "empty": "統計データがありません",
+      "highestCard": "最高価格カード",
+      "noRecord": "記録なし",
+      "recordsCount": "件",
+      "title": "コレクション統計",
       "totalCount": "ウォッチリスト総数",
       "totalValue": "総価値",
-      "highestCard": "最高価格カード",
-      "noRecord": "記録なし"
-    }
-  },
-  "disclaimerPage": {
-    "title": "免責事項",
-    "subtitle": "BOXIUMプラットフォーム免責事項 — 本プラットフォームをご利用の前に以下の重要な事項をよくお読みください",
-    "lastUpdated": "最終更新日",
-    "contactInfo": "ご不明な点がございましたら、お問い合わせください：support@boxium.asia",
-    "sections": {
-      "priceData": {
-        "title": "価格データの正確性",
-        "content": "本プラットフォームはSNKRDUNKやeBayなど複数の市場からPSA 10カードの価格データを集約し、正確でタイムリーな市場情報の提供に努めています。ただし、市場価格は急速に変動するため、表示価格が実際の取引価格と完全に一致することを保証することはできません。すべての価格情報は参考用であり、実際の取引価格は各プラットフォームによって決定されます。"
+      "viewHistory": "閲覧履歴",
+      "watchlistCards": "ウォッチリスト"
+    },
+    "tabs": {
+      "history": "閲覧履歴",
+      "historyShort": "履歴",
+      "info": "プロフィール",
+      "infoShort": "情報",
+      "stats": "統計",
+      "statsShort": "統計",
+      "watchlist": "ウォッチリスト",
+      "watchlistShort": "ウォッチ"
+    },
+    "user": "ユーザー",
+    "watchlist": {
+      "added": "お気に入りに追加しました",
+      "removed": "お気に入りから削除しました",
+      "sort": {
+        "label": "並べ替え：",
+        "newest": "新着順",
+        "oldest": "古い順",
+        "priceAsc": "価格↑",
+        "priceDesc": "価格↓"
       },
-      "marketplaceDisclaimer": {
-        "title": "マーケットプレイス取引免責事項",
-        "content": "本プラットフォームのマーケットプレイスは買い手と売り手の仲介として機能し、取引マッチングサービスのみを提供します。本プラットフォームは、売り手が出品する商品の真正性、品質、合法性、または説明の正確性について保証しません。購入前に商品説明をよく読み、取引リスクを自己評価してください。本プラットフォームは、不正確な商品説明、商品の損傷、またはその他の取引紛争から生じる損失について直接的な法的責任を負いませんが、紛争解決のために合理的な努力を行います。"
+      "tabs": {
+        "cardTracking": "カード追跡",
+        "favoriteItems": "お気に入り商品"
+      }
+    },
+    "watchlistSection": {
+      "count": "合計 {{count}} 枚のカード",
+      "empty": "まだカードを追加していません",
+      "goToResearch": "カードを検索",
+      "removeFailed": "削除失敗：{{error}}",
+      "removeSuccess": "ウォッチリストから削除しました",
+      "table": {
+        "actions": "操作",
+        "addedAt": "追加日時",
+        "card": "カード",
+        "latestPrice": "最新価格",
+        "noPrice": "価格なし",
+        "notes": "備考",
+        "remove": "削除",
+        "series": "シリーズ"
       },
-      "investmentRisk": {
-        "title": "投資リスク免責事項",
-        "content": "PTCGカード（PSA 10グレードカードを含む）の市場価格は、市場の需給、希少性、版、コレクトトレンドなど様々な要因に影響されます。本プラットフォームが提供する価格情報、トレンド分析、または市場データは投資アドバイスを構成しません。ユーザーは独自にリスクを評価してください。本プラットフォームはプラットフォーム情報への依存から生じる投資損失について責任を負いません。"
-      },
-      "dataDelay": {
-        "title": "データ遅延免責事項",
-        "content": "本プラットフォームの価格データはサードパーティプラットフォーム（SNKRDUNK、eBayなど）から取得しており、遅延が生じる場合があります。ネットワーク状況、API制限、または技術的な理由により、一部のデータがリアルタイムで更新されない場合があります。本プラットフォームはデータ遅延による損失について責任を負いません。"
-      },
-      "externalLinks": {
-        "title": "外部リンク免責事項",
-        "content": "本プラットフォームにはSNKRDUNKやeBayなどのサードパーティプラットフォームへのリンクが含まれる場合があります。これらのリンクは参考用であり、本プラットフォームはサードパーティプラットフォームのコンテンツ、プライバシーポリシー、または利用規約について責任を負いません。サードパーティプラットフォームにアクセスする際は、そのプラットフォームの利用規約に従ってください。"
-      },
-      "serviceInterruption": {
-        "title": "サービス中断免責事項",
-        "content": "本プラットフォームは、システムメンテナンス、技術的障害、ネットワーク問題、または不可抗力によりサービスを一時的に中断する場合があります。本プラットフォームはサービスの安定性確保に努めますが、サービス中断による損失について責任を負いません。"
-      },
-      "jurisdiction": {
-        "title": "準拠法",
-        "content": "本免責事項は香港特別行政区の法律に準拠します。本プラットフォームの使用から生じる紛争については、双方が香港特別行政区の裁判所を第一審管轄裁判所とすることに同意します。"
-      },
-      "userConduct": {
-        "title": "ユーザー行動規範",
-        "content": "ユーザーは本プラットフォームの使用において、違法行為、他者の権利侵害、またはプラットフォームの正常な運営を妨げる行為を行ってはなりません。本プラットフォームは違反ユーザーに対して、アクセスの停止または終了を含む措置を取る権利を留保します。"
-      },
-      "dataPrivacy": {
-        "title": "個人情報保護",
-        "content": "本プラットフォームはユーザーの個人情報保護を重視しています。収集した個人情報はサービス提供、取引処理、ユーザーエクスペリエンスの向上のみに使用されます。個人情報の取り扱い方法の詳細については、プライバシーポリシーをご参照ください。"
-      },
-      "intellectualProperty": {
-        "title": "知的財産権に関する通知",
-        "content": "本プラットフォームのすべてのコンテンツ（テキスト、画像、デザイン、コードを含む）は著作権法によって保護されています。プラットフォーム上の各ゲーム商標（Pokémon、One Pieceなど）はそれぞれの権利者に帰属し、本プラットフォームは各ゲーム会社と公式な関係はありません。無断でプラットフォームコンテンツを複製または使用することは禁止されています。"
+      "title": "マイウォッチリスト"
+    },
+    "welcome": "お帰りなさい！ここでカードコレクションと閲覧履歴を管理できます 🎴",
+    "wishlist": {
+      "table": {
+        "actions": "操作",
+        "addedAt": "追加日時",
+        "item": "商品",
+        "price": "価格",
+        "status": "ステータス"
       }
     }
   },
-  "aboutPage": {
-    "title": "BOXIUMについて",
-    "subtitle": "Boxiumへようこそ～ゲームファンのためのパラダイス！グローバルTCG市場データを統合し、リアルタイムで正確な価格情報を提供。",
-    "trackedCards": "追跡カード数",
-    "dataSources": "データソース",
-    "ourMission": "私たちのミッション",
-    "missionContent": "BOXIUMは、TCGコレクター、投資家、売り手に最も正確でリアルタイムな市場データと取引環境を提供することに専念しています。Pokémon、One Pieceなど複数のゲームをカバーし、世界の主要取引プラットフォームからの実際の取引記録を集約し、安全で信頼性の高いカードの二次市場を提供します。",
-    "coreServices": "コアサービス",
-    "platformFeatures": "プラットフォームの特徴",
-    "contactInfo": "ご質問やご提案がございましたら、プラットフォームの連絡先よりお問い合わせください。",
-    "services": {
-      "cardSearch": {
-        "title": "カードリサーチ",
-        "description": "{{count}}枚以上のPTCGカードを検索し、PSA 10の歴史的な取引価格トレンドを確認して市場動向を把握"
+  "register": {
+    "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
+    "confirmPasswordLabel": "パスワードの確認",
+    "description": "BOXIUM PTCGアカウントを作成",
+    "errorToast": "登録に失敗しました",
+    "loginLink": "今すぐログイン",
+    "nameLabel": "名前（任意）",
+    "namePlaceholder": "あなたの名前",
+    "passwordHint": "8文字以上、大文字、小文字、数字を含む",
+    "passwordLabel": "パスワード",
+    "passwordMismatch": "パスワードが一致しません",
+    "passwordRequiresLowercase": "パスワードには小文字を1つ以上含める必要があります",
+    "passwordRequiresNumber": "パスワードには数字を1つ以上含める必要があります",
+    "passwordRequiresUppercase": "パスワードには大文字を1つ以上含める必要があります",
+    "passwordTooShort": "パスワードは8文字以上である必要があります",
+    "submitButton": "会員登録",
+    "submittingText": "登録中...",
+    "successToast": "登録が成功しました！",
+    "title": "会員登録"
+  },
+  "research": {
+    "addToWatchlist": "ウォッチリストに追加",
+    "aiIdentificationResults": "AIモデルの識別結果",
+    "aiIdentifying": "AIを使用してカード名、番号、シリーズを識別しています...",
+    "allCards": "すべてのカード",
+    "cardIdentifiedSearching": "「{{cardName}}」を識別しました。テキスト検索を実行しています...",
+    "cardName": "カード名",
+    "cardNameJa": "日本語のカード名",
+    "cardNumber": "カード番号",
+    "cardSeries": "カードシリーズ",
+    "cropImage": "画像をトリミング",
+    "identificationSuccess": "識別成功！{{count}}件の一致が見つかりました。",
+    "imageUploadError": "画像ファイル（JPG、PNG）をアップロードしてください",
+    "loading": "読み込み中...",
+    "matchReasons": "一致理由",
+    "matchScore": "一致スコア",
+    "noExactMatchHelp": "AIが完全一致するカードを見つけられませんでした。画像の再アップロード、トリミング、または識別されたテキストでの検索をお試しください。",
+    "noMatchingCards": "一致するカードが見つかりません",
+    "noResults": "カードが見つかりません",
+    "photoTipsTitle": "撮影のヒント：",
+    "popularSearches": "人気の検索",
+    "rarity": "レアリティ",
+    "releaseToUpload": "ドロップして画像をアップロード",
+    "removeFromWatchlist": "ウォッチリストから削除",
+    "retakeOrReselect": "再撮影/再選択",
+    "searchAfterCrop": "トリミングして検索",
+    "searchByImage": "画像で検索",
+    "searchDirectly": "直接検索",
+    "searchPlaceholder": "カード名を検索...",
+    "selectOrDragImage": "TCGカード画像を選択またはドラッグ＆ドロップしてください",
+    "supportedFormats": "JPG、PNG形式をサポート",
+    "takePhoto": "写真を撮る",
+    "textSearch": "テキスト検索",
+    "tipAiRecognition": "• AIが自動的にカード名、番号、シリーズ、レアリティを認識します",
+    "tipAvoidReflection": "• 反射や影を避けてください",
+    "tipClearName": "• カード名とカード番号がはっきりと見えるようにしてください",
+    "tipUseCrop": "• トリミング機能を使用してカードの主要部分を囲むことをお勧めします",
+    "title": "カード研究",
+    "uploadImageToSearch": "画像をアップロードしてカードを検索",
+    "uploadPhoto": "写真をアップロード",
+    "viewDetails": "詳細を見る",
+    "watchlist": "ウォッチリスト"
+  },
+  "searchResults": {
+    "breadcrumb": {
+      "home": "ホーム",
+      "search": "検索"
+    },
+    "card": {
+      "noImage": "画像なし",
+      "sealedProduct": "未開封BOX"
+    },
+    "error": {
+      "message": "検索に失敗しました。もう一度お試しください"
+    },
+    "header": {
+      "loading": "検索中...",
+      "resultsCount": "{{count}}枚のカードが見つかりました",
+      "title": "TCGカード価格を検索",
+      "titleWithQuery": "「{{query}}」の検索結果"
+    },
+    "meta": {
+      "descriptionWithQuery": "BOXIUMで「{{query}}」関連のTCGカードを検索し、PSA 10の価格、SNKRDUNKの取引記録、市場動向分析を確認します。",
+      "title": "TCGカード価格を検索 - BOXIUMマーケットプレイス",
+      "titleWithQuery": "「{{query}}」のTCGカード価格を検索 - BOXIUMマーケットプレイス"
+    },
+    "noResults": {
+      "messageWithQuery": "「{{query}}」に一致するカードが見つかりませんでした",
+      "prompt": "検索キーワードを入力してください"
+    },
+    "pagination": {
+      "displaying": "{{start}}-{{end}}枚を表示",
+      "next": "次へ",
+      "pageInfo": "{{totalPages}}ページ中{{currentPage}}ページ目（合計{{totalResults}}枚）",
+      "previous": "前へ"
+    },
+    "search": {
+      "placeholder": "カードを検索..."
+    }
+  },
+  "seller": {
+    "action": {
+      "close": "閉じる",
+      "copied": "コピーしました",
+      "copy": "コピー"
+    },
+    "apply": {
+      "contactNumber": "連絡先電話番号",
+      "contactNumberPlaceholder": "連絡先電話番号を入力してください",
+      "contactSupport": "審査結果についてご質問がある場合は、カスタマーサポートにお問い合わせください。",
+      "description": "お客様のBOXIUMアカウントはまだ出品者機能が有効になっていません。下記に情報を入力して申請してください。24時間以内に審査いたします。",
+      "idNumber": "身分証明書番号",
+      "idNumberPlaceholder": "身分証明書番号を入力してください",
+      "inReviewDescription": "出品者申請を審査中です。通常24時間以内に完了します。承認されると、BOXIUMで商品の出品を開始できます。",
+      "inReviewTitle": "出品者申請は審査中です",
+      "ok": "はい",
+      "realName": "本名",
+      "realNamePlaceholder": "本名を入力してください",
+      "rejectedTitle": "出品者申請は拒否されました",
+      "rejectionReason": "拒否理由",
+      "storeProfile": "あなたのストア/プロフィール",
+      "storeProfilePlaceholder": "あなたのストア、主に販売するカードの種類などを簡単に紹介してください。",
+      "submit": "申請を送信",
+      "submitting": "処理中...",
+      "title": "出品者になるために申請する"
+    },
+    "auctions": {
+      "agreeTermsSuccess": "出品者利用規約に同意しました",
+      "card": {
+        "bids": "入札",
+        "buyNow": "即決",
+        "currentBid": "現在の入札",
+        "editAction": "編集",
+        "endedOn": "終了日",
+        "noBids": "まだ入札がありません",
+        "startingBid": "開始価格",
+        "startsIn": "開始まで",
+        "status": {
+          "completed": "終了",
+          "live": "開催中",
+          "pending": "開始待ち",
+          "rejected": "拒否済み",
+          "review": "審査中"
+        },
+        "timeLeft": "残り時間",
+        "viewAction": "表示"
       },
-      "priceTracking": {
-        "title": "価格検索",
-        "description": "PSA 10出品商品をリアルタイム表示。SNKRDUNKとeBayの市場データを統合し、グローバル価格を簡単に比較"
+      "createSuccess": "🔨 オークションが審査のために送信されました。承認後に入札を開始できます。",
+      "editRejected": {
+        "auctionEndLabel": "終了時間",
+        "bidError": "開始価格は0より大きい必要があります",
+        "bidIncrementLabel": "入札単位 (HK$)",
+        "buyNowPriceLabel": "即決価格 (HK$)",
+        "buyNowPricePlaceholder": "即決価格なし",
+        "cancel": "キャンセル",
+        "condition": {
+          "rawLightlyUsed": "未開封軽度使用 (Raw B)",
+          "rawNew": "未開封新品 (Raw A)",
+          "rawUsed": "未開封一般 (Raw C)"
+        },
+        "conditionLabel": "状態",
+        "descriptionLabel": "説明",
+        "descriptionPlaceholder": "説明を入力してください",
+        "endTimeError": "終了時間を選択してください",
+        "imagesLabel": "オークション画像（最大5枚）",
+        "optionalLabel": "(任意)",
+        "rejectionReason": "拒否理由",
+        "save": "変更を保存",
+        "saveSuccess": "変更が保存されました",
+        "saving": "保存中...",
+        "startingBidLabel": "開始価格 (HK$)",
+        "subtitle": "オークション内容を修正",
+        "title": "拒否されたオークションを編集",
+        "titleLabel": "タイトル",
+        "titlePlaceholder": "タイトルを入力してください"
       },
-      "marketTrends": {
-        "title": "市場トレンド",
-        "description": "24時間トレンドランキングでPSA 10カードの価格動向をリアルタイムに追跡し、市場機会を発見"
-      },
-      "gradeAnalysis": {
-        "title": "マーケットプレイス",
-        "description": "PSA 10カードの安全な取引プラットフォーム。出品者の管理機能と購入者保護を提供し、取引代金はプラットフォームが代管"
+      "tab": {
+        "filter": {
+          "all": "すべて",
+          "completed": "終了",
+          "live": "開催中",
+          "pending": "開始待ち",
+          "rejected": "拒否済み",
+          "review": "審査中"
+        },
+        "noAuctions": "まだオークション出品はありません",
+        "title": "マイオークション"
       }
     },
-    "features": {
-      "realData": "SNKRDUNKやeBayなど世界の主要市場のリアルタイムデータを集約",
-      "autoUpdate": "24時間自動更新で価格情報を常に最新の状態に維持",
-      "multiCurrency": "複数通貨表示に対応（HKD、USD、JPYなど）",
-      "responsive": "PC、タブレット、スマートフォンに完全対応—いつでもどこでも確認可能"
+    "bulkUpload": {
+      "closeButton": "閉じる",
+      "cta": "ここにCSVファイルをクリックまたはドラッグ",
+      "description": "CSVファイルをアップロードして一度に複数の商品を登録します",
+      "downloadTemplate": "テンプレートCSVをダウンロード",
+      "fields": {
+        "imageUrl": "公開画像URL、複数ある場合は|で区切ります（任意）",
+        "minOffer": "最低オファー額（任意）",
+        "title": "フィールド説明（CSVヘッダー行）"
+      },
+      "fileTypes": ".csv形式をサポート",
+      "hideErrors": "エラーを非表示",
+      "preview": "{count}個の商品をプレビュー中",
+      "reupload": "再アップロード",
+      "showErrors": "エラーを表示",
+      "startUpload": "登録開始",
+      "status": {
+        "done": "✓ 完了",
+        "error": "✗ 失敗",
+        "pending": "• 登録待ち",
+        "uploading": "⏳ 登録中"
+      },
+      "summary": "{completedCount} / {totalCount} 件完了",
+      "table": {
+        "condition": "状態",
+        "image": "画像",
+        "noImage": "なし",
+        "price": "価格",
+        "productName": "商品名",
+        "quantity": "数量",
+        "series": "シリーズ",
+        "status": "ステータス"
+      },
+      "title": "一括商品登録",
+      "uploadingButton": "登録中..."
     },
-    "sources": {
-      "snkrdunk": "SNKRDUNK：日本最大のPSA 10カード取引プラットフォーム。リアルタイムの出品情報と取引記録を提供",
-      "ebay": "eBay：世界最大の中古市場。国際的なPSA 10カードの取引データを提供"
+    "buyerInfo": {
+      "buyer": "購入者",
+      "phone": "電話番号",
+      "postalCode": "郵便番号",
+      "shippingAddress": "配送先住所",
+      "shippingMethod": "配送方法",
+      "title": "購入者情報"
+    },
+    "completedOrders": {
+      "completionDate": "完了日",
+      "netIncome": "純利益",
+      "noOrders": "まだ完了した注文はありません",
+      "orderAmount": "注文額",
+      "orderNo": "注文番号",
+      "platformFee": "プラットフォーム手数料",
+      "product": "商品",
+      "title": "最近の完了した注文5件",
+      "viewAll": "すべて表示"
+    },
+    "condition": {
+      "bgs8Below": "BGS 8 以下",
+      "psa8Below": "PSA 8 以下",
+      "rawA": "A品",
+      "rawB": "B品",
+      "rawC": "C品",
+      "rawCard": "Raw カード",
+      "rawD": "D品",
+      "tag9Below": "TAG 9 以下"
+    },
+    "dashboard": {
+      "overview": "概要",
+      "title": "出品者ダッシュボード"
+    },
+    "imageUploader": {
+      "coverPhoto": "カバー",
+      "cta": "クリックまたはドラッグ＆ドロップで画像をアップロード",
+      "fileInfo": "JPG、PNG、WebP対応、各最大10MB",
+      "genericError": "画像のアップロードに失敗しました",
+      "imageAlt": "商品画像 {index}",
+      "label": "商品画像（最大{maxImages}枚）",
+      "maxImagesError": "最大{maxImages}枚の画像までアップロードできます",
+      "notAnImageError": "{fileName}は画像ではありません",
+      "sizeLimitError": "{fileName}は10MBを超えています",
+      "uploadFailedError": "アップロードに失敗しました",
+      "uploadSuccess": "{count}枚の画像をアップロードしました",
+      "uploading": "アップロード中..."
+    },
+    "listings": {
+      "addNewListing": "＋ 新規商品を追加",
+      "adminCreateSuccess": "商品が正常に出品されました",
+      "applySellerSuccess": "申請が送信され、承認待ちです",
+      "batchActions": "一括操作",
+      "batchDeactivate": "出品停止",
+      "batchDeactivateSuccess": "{count}件の商品が出品停止されました",
+      "batchDelete": "完全に削除",
+      "batchDeleteCancelledOrders": "、{cancelledOrdersCount}件の支払い待ち注文をキャンセルしました",
+      "batchDeleteSuccess": "{deletedCount}件の商品を削除しました",
+      "batchReactivate": "再出品",
+      "batchReactivateSuccess": "{count}件の商品が再出品され、審査待ちです",
+      "bulkUpload": "一括アップロード",
+      "cancelBatchMode": "キャンセル",
+      "card": {
+        "adminDelisted": "⛔ 管理者により出品停止",
+        "deactivate": "出品停止",
+        "duplicateListingTooltip": "この商品を複製",
+        "duplicateSuccess": "商品情報をコピーしました。確認して出品してください。",
+        "edit": "編集",
+        "offers": "オファー",
+        "price": "価格",
+        "quantity": "数量",
+        "reactivate": "再出品",
+        "status": {
+          "active": "出品中",
+          "pendingReview": "審査待ち",
+          "removed": "出品停止中",
+          "sold": "販売済み"
+        },
+        "views": "閲覧数"
+      },
+      "createSuccess": "商品が審査のために送信されました",
+      "deactivateSuccess": "商品が出品停止されました",
+      "deleteConfirmButton": "削除の確認",
+      "deleteConfirmMessage": "選択した{count}件の商品を完全に削除してもよろしいですか？この操作は元に戻せません。進行中の注文はキャンセルされません。",
+      "deleteConfirmTitle": "削除の確認",
+      "filter": {
+        "active": "出品中",
+        "all": "すべて",
+        "pendingReview": "審査待ち",
+        "removed": "出品停止中",
+        "sold": "販売済み"
+      },
+      "noListings": "まだ商品がありません",
+      "noMatchingListings": "一致する商品がありません",
+      "reactivateSuccess": "商品が再出品され、審査待ちです",
+      "updateSuccess": "商品が更新されました",
+      "viewListingAction": "商品を見る →"
+    },
+    "new-listing": {
+      "validation": {
+        "reserve-price": "最低落札価格は開始価格以上である必要があります"
+      }
+    },
+    "newListing": {
+      "associateCard": "カードを関連付ける（任意）",
+      "auction": {
+        "days": "{days}日間",
+        "duration": "オークション期間 *",
+        "end": "終了時間",
+        "start": "開始時間",
+        "startNow": "すぐに開始"
+      },
+      "back": "戻る",
+      "changeCard": "変更",
+      "condition": "状態 *",
+      "listingMode": "出品モード *",
+      "marketPrice": "PSA 10 市場平均価格 HKD {price}",
+      "mode": {
+        "auction": "オークション",
+        "auctionDescription": "購入者が入札し、時間制限で終了します",
+        "buyNow": "即時購入",
+        "buyNowDescription": "購入者は定価で直接購入します"
+      },
+      "next": "次へ",
+      "preview": {
+        "listingPrice": "価格",
+        "submitAuction": "オークションを送信",
+        "submitListing": "確認して出品",
+        "title": "プレビュー"
+      },
+      "price": {
+        "allowOffers": "購入者のオファーを受け入れる",
+        "bidIncrement": "入札単位 (HKD) *",
+        "bidIncrementPlaceholder": "例: 10",
+        "buyNow": "価格 (HKD) *",
+        "buyNowPlaceholder": "商品価格を入力してください",
+        "buyNowPrice": "即決価格 (HKD)",
+        "buyNowPricePlaceholder": "任意、購入者が即時購入できます",
+        "minOffer": "最低オファー (HKD)",
+        "minOfferPlaceholder": "下限なしの場合は空欄",
+        "reservePrice": "最低落札価格 (HKD)",
+        "reservePricePlaceholder": "任意、満たない場合は売却されません",
+        "startingBid": "開始価格 (HKD) *",
+        "startingBidPlaceholder": "最低開始価格を入力"
+      },
+      "productDescription": "商品説明",
+      "productDescriptionPlaceholder": "カードの状態、バージョンなどを説明...",
+      "productName": "商品名 *",
+      "productNamePlaceholder": "例：リザードンex SAR",
+      "quantity": "数量 *",
+      "searchAndAssociateCard": "クリックしてカードを検索・関連付け",
+      "step1": "基本情報",
+      "step2": "価格と数量",
+      "step3": "プレビュー",
+      "tcgSeries": "TCGシリーズ *",
+      "title": "新規商品を追加",
+      "validation": {
+        "auctionEnd": "終了時間は未来である必要があります",
+        "bidIncrement": "有効な入札単位を入力してください",
+        "buyNowPrice": "即決価格は開始価格より高くする必要があります",
+        "minOffer": "最低オファー額は商品価格より低くする必要があります",
+        "price": "有効な商品価格を入力してください",
+        "startingBid": "有効な開始価格を入力してください",
+        "title": "商品名を入力してください"
+      }
+    },
+    "offer": {
+      "acceptSuccess": "オファーを承認しました",
+      "rejectSuccess": "オファーを拒否しました",
+      "view": "オファーを見る"
+    },
+    "offers": {
+      "card": {
+        "accept": "オファーを承認",
+        "buyer": "購入者",
+        "listingPrice": "商品価格",
+        "offerDate": "オファー時間",
+        "offerPrice": "オファー価格",
+        "reject": "拒否",
+        "status": {
+          "accepted": "✔️ 承認済み",
+          "expired": "⏰ 期限切れ",
+          "rejected": "❌ 拒否済み"
+        },
+        "viewListing": "商品へ"
+      },
+      "noOffers": "まだ購入者のオファーはありません"
+    },
+    "orderStatus": {
+      "cancelled": "キャンセル済み",
+      "completed": "完了",
+      "delivered": "配達済み",
+      "disputed": "論争中",
+      "paidToShip": "支払い済み、発送してください",
+      "pendingPayment": "支払い待ち",
+      "processingToShip": "処理中、発送してください",
+      "receivedToShip": "入金確認済み、発送してください",
+      "shipped": "発送済み"
+    },
+    "orders": {
+      "card": {
+        "buyer": "購入者",
+        "meetupBadge": "🤝 手渡し",
+        "orderDate": "注文日",
+        "orderTotal": "注文合計",
+        "viewDetails": "詳細を見る"
+      },
+      "filter": {
+        "active": "処理中",
+        "all": "すべて",
+        "done": "完了",
+        "meetup": "🤝 手渡し",
+        "pending": "確認待ち"
+      },
+      "noMatchingOrders": "一致する注文がありません",
+      "noOrders": "まだ注文がありません",
+      "searchPlaceholder": "注文番号または商品名を検索..."
+    },
+    "payoutProof": {
+      "altText": "支払証明",
+      "openOriginal": "新しいタブで元の画像を開く",
+      "viewAction": "支払証明を表示するにはクリック",
+      "zoomHint": "サムネイルをクリックして拡大表示"
+    },
+    "payouts": {
+      "stripeActiveDescription": "購入者が支払うと、プラットフォームはStripe経由で自動的にお客様のアカウントに資金を送金します（5%のプラットフォーム手数料を差し引きます）。",
+      "stripeActiveTitle": "Stripe支払いアカウントが有効です ✅",
+      "stripeDashboardButton": "Stripeダッシュボードへ",
+      "stripeDisabledDescription": "お客様のStripe Connectアカウントは無効になっています。Stripeサポートに連絡するか、再申請してください。",
+      "stripeDisabledTitle": "Stripeアカウントが無効です",
+      "stripeManageButton": "支払いアカウントを管理",
+      "stripeProcessing": "処理中...",
+      "stripeResetButton": "リセット",
+      "stripeRestrictedDescription": "お客様のStripe Connectアカウントは現在制限されており、追加情報が必要な場合があります。Stripeダッシュボードにアクセスして解決してください。",
+      "stripeRestrictedTitle": "Stripeアカウントが制限されています",
+      "stripeSetupButton": "Stripe支払いアカウントを設定",
+      "stripeSetupDescription": "出品者の支払い処理にはStripeを使用しています。下のボタンをクリックして、Stripeの安全なページにリダイレクトされ、支払いアカウントを設定してください。",
+      "stripeSetupTitle": "支払いのためにStripe Connectを設定",
+      "title": "支払設定"
+    },
+    "shippingMethod": {
+      "meetup": "手渡し",
+      "selfShip": "自己発送"
+    },
+    "shippingProof": {
+      "dragAndDrop": "ここにファイルをクリックまたはドラッグ",
+      "fileTypes": "PNG、JPG、WebP対応（最大5MB）",
+      "imageLabel": "発送証明画像",
+      "label": "📷 発送証明",
+      "uploadAction": "証明をアップロード",
+      "uploadButton": "アップロード",
+      "uploadDescription": "この注文は「自己発送」です。プラットフォームでの追跡のため、下に発送証明（例：郵便局の領収書、宅配便の追跡番号の写真）をアップロードしてください。",
+      "uploadError": "発送証明のアップロードに失敗しました",
+      "uploadSuccess": "発送証明のアップロードに成功しました",
+      "uploadTitle": "発送証明をアップロード",
+      "uploading": "アップロード中...",
+      "zoomAction": "クリックして発送証明を拡大表示"
+    },
+    "stats": {
+      "activeListings": "出品中の商品",
+      "activeListingsTooltip": "出品中の商品を表示するにはクリック",
+      "avgOrderValue": "平均注文額",
+      "completedOrders": "完了した注文",
+      "completedOrdersTooltip": "注文を表示するにはクリック",
+      "last30Days": "過去30日間",
+      "orders": "注文",
+      "rating": "評価",
+      "ratingCount": "({count}件のレビュー)",
+      "revenue": "収益",
+      "revenueTooltip": "収益記録を表示するにはクリック",
+      "thisMonthRevenue": "今月の収益",
+      "title": "売上データ",
+      "totalOrders": "総注文数",
+      "totalRevenue": "総収益"
+    },
+    "stepper": {
+      "awaitingDelivery": "購入者の受取待ち",
+      "awaitingPayment": "購入者の支払い待ち",
+      "awaitingShipment": "発送待ち",
+      "orderCancelled": "注文はキャンセルされました",
+      "orderCompleted": "注文完了",
+      "orderDisputed": "注文は論争中です",
+      "paymentInReview": "支払い審査中"
+    },
+    "tabs": {
+      "buyerOffers": "購入者のオファー",
+      "buyerOffersMobile": "オファー",
+      "earnings": "収益記録",
+      "earningsMobile": "収益",
+      "myAuctions": "マイオークション",
+      "myAuctionsMobile": "オークション",
+      "myListings": "マイ商品",
+      "myListingsMobile": "商品",
+      "orderManagement": "注文管理",
+      "orderManagementMobile": "注文"
+    },
+    "terms": {
+      "auctionSeller": {
+        "agree": "オークション出品者利用規約を読み、同意します",
+        "confirm": "確認して続行",
+        "title": "オークション出品者利用規約"
+      }
+    },
+    "tracking": {
+      "number": "追跡番号",
+      "view": "配送状況を確認"
     }
+  },
+  "sellerPublicProfile": {
+    "activeSeller": "アクティブセラー",
+    "anonymousBuyer": "匿名バイヤー",
+    "buyerReviews": "購入者の評価",
+    "conditionFair": "やや傷や汚れあり",
+    "conditionGood": "目立った傷や汚れなし",
+    "conditionLikeNew": "未使用に近い",
+    "conditionNew": "新品",
+    "listings": "出品商品",
+    "memberSince": "登録日",
+    "noListings": "この出品者は現在出品している商品がありません",
+    "noReviews": "まだ評価がありません",
+    "returnToMarketplace": "マーケットプレイスに戻る",
+    "reviews": "評価",
+    "sellerNotFound": "出品者が見つかりません",
+    "showingLatestReviews": "最新 {reviews.length} 件を表示中、全 {reviewTotal} 件の評価",
+    "topSeller": "トップセラー",
+    "transactions": "取引"
+  },
+  "share": {
+    "button": "共有",
+    "copyError": "コピー失敗、手動でコピーしてください",
+    "copyLink": "リンクをコピー",
+    "copySuccess": "リンクをクリップボードにコピーしました",
+    "facebook": "Facebookで共有",
+    "whatsapp": "WhatsAppで共有"
+  },
+  "topnav": {
+    "allMarkedAsRead": "すべて既読にしました",
+    "becomeSellerDescription": "BOXIUMプラットフォームでトレーディングカードを出品し、より多くの購入者にアピールしましょう。",
+    "becomeSellerTitle": "出品者になり、簡単にカードを販売",
+    "featureFreeListing": "出品は無料で、プラットフォームは5%のサービス手数料のみを徴収します",
+    "featureOrderManagement": "購入者に自動で通知し、注文を簡単に管理できます",
+    "featurePaymentMethods": "StripeクレジットカードおよびAlipay HKの支払いに対応しています",
+    "login": "ログイン",
+    "loginAndList": "ログインして出品",
+    "loginToSell": "ログイン後、追加の審査なしですぐに出品できます。",
+    "logout": "ログアウト",
+    "logoutSuccess": "正常にログアウトしました",
+    "markAllAsRead": "すべて既読にする",
+    "marketplace": "マーケット",
+    "messages": "メッセージ",
+    "myAccount": "マイアカウント",
+    "myCollection": "マイコレクション",
+    "myOrders": "注文履歴",
+    "noNotificationsDescription": "すべての通知はここに表示されます。",
+    "noNotificationsTitle": "まだ通知はありません",
+    "noUnreadMessagesDescription": "購入者または出品者からのメッセージはここに表示されます。",
+    "noUnreadMessagesTitle": "未読メッセージはまだありません",
+    "notifications": "お知らせ",
+    "register": "登録",
+    "registerFree": "無料登録",
+    "sellItem": "商品を出品",
+    "sellerDashboard": "出品者ダッシュボード",
+    "viewAllMessages": "すべてのメッセージを見る"
+  },
+  "trending": {
+    "currentPrice": "現在の価格",
+    "emptyHint": "後で再試行するか、他のカテゴリに切り替えてください",
+    "emptyNewlyAdded": "新規追加のカードがありません",
+    "emptyPriceDecrease": "価格下落のカードがありません",
+    "emptyPriceIncrease": "価格急上昇のカードがありません",
+    "emptySearches": "十分な検索データがありません",
+    "fullRanking": "完全ランキング",
+    "goToSnkrdunk": "SNKRDUNKへ",
+    "newlyAdded": "新規追加",
+    "newlyAddedShort": "新規",
+    "noImage": "画像なし",
+    "priceChange": "価格変動",
+    "priceDrop": "価格下落",
+    "priceDropShort": "下落",
+    "priceSurge": "価格急上昇",
+    "priceSurgeShort": "上昇",
+    "searchCount": "検索回数",
+    "searchHeat": "検索人気",
+    "searchHeatShort": "人気",
+    "subtitle": "過去2ヶ月以内のPSA 10グレードカード市場トレンド",
+    "title": "🔥 TCG 人気ランキング",
+    "viewDetails": "詳細を見る"
+  },
+  "unsubscribe": {
+    "confirm": {
+      "cancelButton": "キャンセル",
+      "confirmResubscribeButton": "再購読の確認",
+      "confirmUnsubscribeButton": "購読解除の確認",
+      "emailAddressLabel": "メールアドレス：",
+      "notificationTypeLabel": "通知タイプ：",
+      "resubscribeTitle": "メール通知の再購読",
+      "resubscribeWarning": "下のボタンをクリックすると、「{{emailTypeLabel}}」の受信を再開します。",
+      "unsubscribeTitle": "メール購読解除の確認",
+      "unsubscribeWarning": "下のボタンをクリックすると、「{{emailTypeLabel}}」を受信しなくなります。重要な注文確認やセキュリティに関する通知は引き続き送信されます。"
+    },
+    "contactSupport": "ご不明な点がございましたら、カスタマーサービスまでお問い合わせください：",
+    "emailPreferences": "BOXIUM PTCG メール設定",
+    "emailType": {
+      "all": "すべてのメール",
+      "general": "一般通知",
+      "offer": "オファー通知",
+      "order": "注文通知",
+      "review": "評価通知",
+      "seller": "出品者通知",
+      "system": "システム通知",
+      "welcome": "ようこそメール"
+    },
+    "invalidLink": {
+      "description": "この購読解除リンクは無効か期限切れです。カスタマーサービス (boxium.asia@gmail.com) までご連絡ください。",
+      "title": "無効なリンク"
+    },
+    "linkInvalid": {
+      "contact": "サポートが必要な場合は、boxium.asia@gmail.com までご連絡ください。",
+      "description": "この購読解除リンクは無効か期限切れです。",
+      "title": "リンク無効"
+    },
+    "loading": "読み込み中...",
+    "success": {
+      "backToHome": "ホームページに戻る",
+      "resubscribedMessage": "BOXIUM PTCG の「{{emailTypeLabel}}」を再購読しました。",
+      "resubscribedNotice": "引き続き BOXIUM PTCG のメール通知をご購読いただきありがとうございます。",
+      "resubscribedTitle": "再購読に成功しました",
+      "unsubscribedMessage": "BOXIUM PTCG の「{{emailTypeLabel}}」の購読を解除しました。",
+      "unsubscribedNotice": "重要な注文確認やセキュリティに関する通知は引き続き受信します。",
+      "unsubscribedTitle": "購読解除に成功しました"
+    }
+  },
+  "wishlist": {
+    "addedOn": "{{date}}に追加",
+    "emptyHint": "商品を閲覧中にハートアイコンをクリックすると、ほしい物リストに追加できます",
+    "goToMarketplace": "マーケットプレイスへ",
+    "isEmpty": "ほしい物リストは空です",
+    "loading": "読み込み中...",
+    "loginNow": "今すぐログイン",
+    "loginToView": "ログインしてほしい物リストをご覧ください",
+    "myWishlist": "ほしい物リスト",
+    "pleaseLogin": "まずログインしてください",
+    "remove": "お気に入りから削除",
+    "removedFromWishlist": "ほしい物リストから削除しました",
+    "returnToMarketplace": "マーケットプレイスに戻る",
+    "totalItems": "合計 {{count}} 点"
   }
 }

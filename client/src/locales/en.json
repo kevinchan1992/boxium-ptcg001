@@ -1,559 +1,2213 @@
 {
-  "trending": {
-    "title": "🔥 Pokemon TCG Trending Leaderboard",
-    "subtitle": "PSA 10 Graded Card Market Trends within Past 2 Months",
-    "searchHeat": "Search Heat",
-    "searchHeatShort": "Heat",
-    "priceSurge": "Price Surge",
-    "priceSurgeShort": "Surge",
-    "priceDrop": "Price Drop",
-    "priceDropShort": "Drop",
-    "newlyAdded": "Newly Added",
-    "newlyAddedShort": "New",
-    "currentPrice": "Current Price",
-    "priceChange": "Price Change",
-    "searchCount": "Search Count",
-    "viewDetails": "View Details",
-    "goToSnkrdunk": "Go to SNKRDUNK",
-    "fullRanking": "Full Ranking",
-    "noImage": "No Image",
-    "emptySearches": "No sufficient search data available",
-    "emptyPriceIncrease": "No cards with price surge",
-    "emptyPriceDecrease": "No cards with price drop",
-    "emptyNewlyAdded": "No newly added cards",
-    "emptyHint": "Please try again later or switch to other categories"
-  },
-  "research": {
-    "title": "Card Research",
-    "searchPlaceholder": "Search card name...",
-    "addToWatchlist": "Add to Watchlist",
-    "removeFromWatchlist": "Remove from Watchlist",
-    "viewDetails": "View Details",
-    "noResults": "No cards found",
-    "loading": "Loading...",
-    "watchlist": "Watchlist",
-    "allCards": "All Cards"
-  },
-  "common": {
-    "home": "Home",
-    "research": "Card Research",
-    "pricing": "Pricing",
-    "priceComparison": "Price Comparison",
-    "terms": "Terms of Service",
-    "privacy": "Privacy Policy",
-    "admin": "Admin",
-    "language": "Language",
-    "cancel": "Cancel",
-    "login": "Login",
-    "logout": "Logout",
-    "marketInsights": "Market Insights",
-    "trending": "Trending",
-    "about": "About Us",
-    "blog": "Latest News",
-    "back": "Back",
-    "close": "Close",
-    "loading": "Loading...",
-    "marketplace": "Marketplace",
-    "adminMarketplace": "Shop Management",
-    "seller": "Seller",
-    "buyer": "Buyer"
-  },
-  "home": {
-    "welcome": "Welcome to Boxium ~ Gaming Enthusiasts' World",
-    "description": "Integrating global market data to provide real-time and accurate card pricing information for PTCG enthusiasts and collectors. Track card price trends and make informed investment decisions.",
-    "trackedCards": "Tracked Cards",
+  "aboutPage": {
+    "contactInfo": "For any questions or suggestions, please contact us through the platform's contact channels.",
+    "coreServices": "Core Services",
     "dataSources": "Data Sources",
-    "noImage": "No Image",
-    "noTrendingCards": "No trending cards data",
-    "coreFeatures": "Core Features",
-    "coreFeaturesDesc": "BOXIUM provides professional card price analysis tools to help you make smarter investment decisions",
-    "smartSearch": "Smart Search",
-    "smartSearchDesc": "Quickly search hundreds of cards, support name, number, series and other multi-dimensional filtering",
-    "priceTrend": "Price Trend",
-    "priceTrendDesc": "View price changes within 90 days, grasp market dynamics and investment timing",
-    "marketStats": "Market Statistics",
-    "marketStatsDesc": "Real-time market data analysis, understand the average price and market performance of cards",
-    "topRanking": "Top Ranking",
-    "topRankingDesc": "Discover the hottest cards in the market, track investors' choices",
-    "trendingCards": "Trending Cards",
-    "trendingCardsDesc": "Based on PSA 10 this-week vs last-week weighted average price change (7-day half-life)",
-    "dataSourcesDesc": "Integrate the world's leading card trading platforms to ensure data accuracy and real-time",
-    "snkrdunkDesc": "Japan's leading card trading platform, providing the latest PSA 10 graded card transaction data and market trend analysis",
-    "realtimeData": "Real-time transaction data",
-    "psaSupport": "PSA grading support",
-    "jpyPrice": "JPY price",
-    "ebayDesc": "The world's largest online auction platform, providing international market card transaction records and price references",
-    "globalMarket": "Global market data",
-    "startExploring": "Card Explorer",
-    "startSearching": "Start Searching Cards",
-    "viewMarketTrends": "Compare Market Prices",
-    "goToMarketplace": "Go to Marketplace",
-    "readyToStart": "Ready to Start Your PTCG Journey?",
-    "readyToStartDesc": "Use BOXIUM's smart search and price analysis tools to find your favorite collectibles.",
-    "footerDesc": "A comprehensive platform focused on TCG price inquiry and market analysis, covering Pokémon, One Piece and more",
-    "quickLinks": "Quick Links",
-    "cardSearch": "Card Search",
-    "marketReport": "Market Report",
-    "priceQuery": "Price Query",
-    "adminPanel": "Admin Panel",
-    "aboutUs": "About Us",
-    "aboutUsDesc": "BOXIUM is committed to providing the most accurate and professional market information and price analysis tools for TCG investors and collectors.",
-    "socialMedia": "Social Media",
-    "termsOfService": "Terms of Service",
-    "privacyPolicy": "Privacy Policy"
-  },
-  "footer": {
-    "description": "A comprehensive platform focused on global TCG price inquiry and market analysis",
-    "quickLinks": "Quick Links",
-    "cardSearch": "Card Search",
-    "trending": "Trending",
-    "marketplace": "Marketplace",
-    "blog": "Latest News",
-    "pricing": "Pricing",
-    "aboutUs": "About Us",
-    "platformIntro": "Platform Introduction",
-    "disclaimer": "Disclaimer",
-    "adminPanel": "Admin Panel",
-    "socialMedia": "Social Media",
-    "terms": "Terms of Service",
-    "privacy": "Privacy Policy",
-    "about": "About Us",
-    "copyright": "© 2026 BOXIUM. All rights reserved. | Luck in Every Box"
-  },
-  "cardDetail": {
-    "referencePrice": "Reference Price",
-    "basedOnRecords": "Based on {{count}} transaction records",
-    "basedOnLatestRecords": "Based on the latest {{count}} PSA 10 transactions within the past {{months}} months",
-    "basedOnLatestRecordsWeighted": "Reference price is a time-decay weighted median (7-day half-life), based on {{count}} PSA 10 transactions",
-    "priceHistory": "Price History",
-    "date": "Date",
-    "price": "Price",
-    "grade": "Grade",
-    "source": "Source",
-    "noData": "No data available",
-    "favorite": "Favorite",
-    "favorited": "Favorited",
-    "comparePrice": "Compare Price",
-    "share": "Share",
-    "actualPrice": "(Actual Sale Price)",
-    "marketPrice": "(Market Listing Price)",
-    "actualPriceHistory": "Actual Sale Price History",
-    "marketPriceHistory": "Market Listing Price History",
-    "ebayDisclaimer": "This is eBay market listing price (not actual sale price), for reference only. Actual sale prices may differ.",
-    "cachedData": "Cached data, last updated:",
-    "liveMarketData": "Live market listing prices (not sold transaction records)",
-    "exchangeRate": "Current exchange rate",
-    "basicInfo": "Basic Information",
-    "cardNumber": "Card Number",
-    "series": "Series",
-    "noGradeData": "No data available for this grade",
-    "noEbayData": "No eBay transaction records (API limit may be exceeded, please try again later)",
-    "hkdPrice": "HKD Price",
-    "usedGrade": "Used",
-    "chartTitle": "PSA 10 Price Trend",
-    "timeRangeLabel": "PSA 10 Time Range",
-    "timeRange": {
-      "7days": "7 Days",
-      "30days": "30 Days",
-      "90days": "90 Days",
-      "all": "All"
+    "features": {
+      "autoUpdate": "24-hour automatic updates to ensure price information is always current",
+      "multiCurrency": "Supports multiple currency displays (HKD, USD, JPY, etc.)",
+      "realData": "Aggregates real-time data from major global markets including SNKRDUNK and eBay",
+      "responsive": "Full support for desktop, tablet, and mobile—check prices anytime, anywhere"
     },
-    "cardName": "Card Name",
-    "japaneseName": "Japanese Name",
-    "title": "Title",
-    "productTitle": "Product Title",
-    "usdPrice": "USD Price",
-    "priceTrend": "30-Day Trend",
-    "priceIncrease": "↑ Up",
-    "priceDecrease": "↓ Down",
-    "quantity": "Quantity",
-    "boxType": "Product Type",
-    "boosterBox": "Booster Box",
-    "sealedProduct": "Sealed Product",
-    "singleCard": "Single Card",
-    "productName": "Product Name",
-    "sealedPriceTrend": "Price Trend",
-    "sealedReferencePrice": "Reference Price",
-    "basedOnLatestSealedRecords": "Per-unit price based on the latest transaction",
-    "styleCode": "Style Code",
-    "noSealedData": "No sealed product price data available",
-    "priceUpdating": "Updating latest transaction prices...",
-    "priceUpdated": "Prices updated",
-    "priceUpToDate": "Prices are up to date",
-    "priceUpdateFailed": "Price update failed"
+    "missionContent": "BOXIUM is dedicated to providing TCG collectors, investors, and sellers with the most accurate and up-to-date market data and trading environment. We aggregate real transaction records from major global trading platforms, covering Pokémon, One Piece and more, and offer a secure card secondary market, allowing users to research, compare prices, and trade all in one place—empowering smarter collecting and investment decisions.",
+    "ourMission": "Our Mission",
+    "platformFeatures": "Platform Features",
+    "services": {
+      "cardSearch": {
+        "description": "Search over {{count}} PTCG cards, view PSA 10 historical transaction price trends, and stay informed on market movements",
+        "title": "Card Research"
+      },
+      "gradeAnalysis": {
+        "description": "A secure PSA 10 card trading platform with seller listing management and buyer protection—transaction funds held in escrow by the platform",
+        "title": "Marketplace"
+      },
+      "marketTrends": {
+        "description": "24-hour trending rankings to track PSA 10 card price movements in real time and discover market opportunities",
+        "title": "Market Trends"
+      },
+      "priceTracking": {
+        "description": "Real-time display of PSA 10 listings, integrating SNKRDUNK and eBay market data for easy global price comparison",
+        "title": "Price Search"
+      }
+    },
+    "sources": {
+      "ebay": "eBay: The world's largest secondary market, providing international PSA 10 card transaction data",
+      "snkrdunk": "SNKRDUNK: Japan's largest PSA 10 card trading platform, providing real-time listings and transaction records"
+    },
+    "subtitle": "Welcome to Boxium ~ The paradise for TCG enthusiasts! Integrating global TCG market data with real-time, accurate pricing.",
+    "title": "About BOXIUM",
+    "trackedCards": "Cards Tracked"
   },
   "admin": {
-    "title": "Admin Panel",
-    "dataSources": "Data Sources",
-    "statistics": "Statistics",
-    "schedule": "Schedule",
-    "addDataSource": "Add Data Source",
-    "cardName": "Card Name",
-    "url": "URL",
     "actions": "Actions",
-    "update": "Update",
-    "delete": "Delete",
+    "addDataSource": "Add Data Source",
+    "addSuccess": "Added Successfully",
+    "averageSearchTime": "Average Search Time",
     "batchUpdateEbay": "Batch Update All eBay Prices",
     "batchUpdateSnkrdunk": "Batch Update All SNKRDUNK Prices",
-    "pause": "Pause",
-    "resume": "Resume",
-    "progress": "Progress",
-    "success": "Success",
-    "failed": "Failed",
-    "totalRecords": "Total Records",
-    "errors": "Errors",
-    "scheduleDescription": "Auto-execute daily at 01:00 AM HKT",
-    "scheduleEnabled": "Schedule Enabled",
-    "scheduleDisabled": "Schedule Disabled",
-    "nextExecution": "Next Execution",
-    "lastExecution": "Last Execution",
-    "triggerNow": "Trigger Now",
-    "executionHistory": "Execution History",
-    "executionType": "Type",
-    "status": "Status",
-    "executionTime": "Execution Time",
+    "cardName": "Card Name",
+    "completed": "Completed",
+    "confirmDelete": "Are you sure you want to delete this data source?",
+    "dataSources": "Data Sources",
+    "delete": "Delete",
+    "deleteSuccess": "Deleted Successfully",
+    "ebayBatch": "eBay Batch Update",
     "errorMessage": "Error Message",
-    "trendingCards": {
-      "title": "Trending Cards Management",
-      "description": "Manage TOP 5 trending cards displayed on homepage, calculated based on PSA10 this-week vs last-week weighted average price change (7-day half-life time-decay weighting)",
-      "recalculate": "Recalculate",
-      "calculating": "Calculating...",
-      "calculateSuccess": "Trending cards calculation completed",
-      "calculateError": "Calculation failed",
-      "nextUpdate": "Next Update Time",
-      "updateFrequency": "Update Frequency",
-      "daily6am": "Daily 06:00 HKT",
-      "currentTop5": "Current TOP 5 Trending Cards",
-      "noData": "No trending cards data, please click 'Recalculate' button to generate"
-    },
+    "errors": "Errors",
+    "executionHistory": "Execution History",
+    "executionTime": "Execution Time",
+    "executionType": "Type",
+    "failed": "Failed",
+    "fallbackToTextSearch": "Fallback to Text Search Count",
+    "imageSearch": "Image Search",
     "imageSearchStats": "Image Search Statistics",
     "imageSearchSuccessRate": "Image Search Success Rate",
-    "fallbackToTextSearch": "Fallback to Text Search Count",
-    "averageSearchTime": "Average Search Time",
-    "imageSearch": "Image Search",
-    "textSearch": "Text Search",
+    "lastExecution": "Last Execution",
+    "loading": "Loading...",
+    "nextExecution": "Next Execution",
+    "noData": "No Data",
     "optimization": "Optimization Suggestions",
+    "pause": "Pause",
     "paused": "Paused",
     "processing": "Processing",
-    "completed": "Completed",
+    "progress": "Progress",
+    "resume": "Resume",
     "running": "Running",
-    "ebayBatch": "eBay Batch Update",
-    "snkrdunkBatch": "SNKRDUNK Batch Update",
+    "schedule": "Schedule",
+    "scheduleDescription": "Auto-execute daily at 01:00 AM HKT",
+    "scheduleDisabled": "Schedule Disabled",
+    "scheduleEnabled": "Schedule Enabled",
     "scheduled": "Scheduled",
-    "noData": "No Data",
-    "loading": "Loading...",
-    "addSuccess": "Added Successfully",
-    "deleteSuccess": "Deleted Successfully",
+    "snkrdunkBatch": "SNKRDUNK Batch Update",
+    "statistics": "Statistics",
+    "status": "Status",
+    "success": "Success",
+    "textSearch": "Text Search",
+    "title": "Admin Panel",
+    "totalRecords": "Total Records",
+    "trendingCards": {
+      "calculateError": "Calculation failed",
+      "calculateSuccess": "Trending cards calculation completed",
+      "calculating": "Calculating...",
+      "currentTop5": "Current TOP 5 Trending Cards",
+      "daily6am": "Daily 06:00 HKT",
+      "description": "Manage TOP 5 trending cards displayed on homepage, calculated based on PSA10 this-week vs last-week weighted average price change (7-day half-life time-decay weighting)",
+      "nextUpdate": "Next Update Time",
+      "noData": "No trending cards data, please click 'Recalculate' button to generate",
+      "recalculate": "Recalculate",
+      "title": "Trending Cards Management",
+      "updateFrequency": "Update Frequency"
+    },
+    "triggerNow": "Trigger Now",
+    "update": "Update",
     "updateSuccess": "Updated Successfully",
-    "confirmDelete": "Are you sure you want to delete this data source?"
+    "url": "URL"
   },
-  "share": {
-    "button": "Share",
-    "facebook": "Share to Facebook",
-    "whatsapp": "Share to WhatsApp",
-    "copyLink": "Copy Link",
-    "copySuccess": "Link copied to clipboard",
-    "copyError": "Copy failed, please copy manually"
+  "auctionDetail": {
+    "antiSnipe": {
+      "description": "A bid was placed within {{minutes}} minutes of the end time. The auction has been extended {{extensions}} times ({{minutes}} minutes each).",
+      "title": "Anti-Sniping Extension"
+    },
+    "bidHistory": {
+      "beTheFirst": "Be the first to bid!",
+      "bidder": "Buyer",
+      "collapse": "Collapse",
+      "count": "bids",
+      "highestBid": "Highest Bid",
+      "noBids": "No Bid History",
+      "showAll": "View all {{count}} bids",
+      "title": "Bid History"
+    },
+    "bidPanel": {
+      "bids": "Bids",
+      "buyNow": "Buy Now",
+      "buyNowPrice": "Buy Now Price",
+      "currentBid": "Current Bid",
+      "loginToBid": "Login to Bid",
+      "noBids": "No Bids Yet",
+      "placeBid": "Place Bid"
+    },
+    "buyerProtection": {
+      "description": "Pay within 24 hours of winning. If the item doesn't match the description, you can apply for a refund.",
+      "title": "Buyer Protection"
+    },
+    "countdown": {
+      "days": "d",
+      "ended": "Auction Ended",
+      "endingSoon": "Ending Soon!",
+      "hours": "h",
+      "minutes": "m",
+      "seconds": "s"
+    },
+    "description": {
+      "condition": "Condition:",
+      "noDescription": "No detailed description provided by the seller yet.",
+      "title": "Product Description"
+    },
+    "gallery": {
+      "auctionId": "Auction #",
+      "productImage": "Product Image"
+    },
+    "header": {
+      "details": "Auction Details",
+      "startsAt": "Starts"
+    },
+    "info": {
+      "bidIncrement": "Bid Increment",
+      "endTime": "End Time",
+      "startTime": "Start Time",
+      "startingBid": "Starting Bid",
+      "title": "Auction Information"
+    },
+    "main": {
+      "backToMarketplace": "Back to Marketplace",
+      "loading": "Loading auction data...",
+      "notFound": "Auction not found"
+    },
+    "payment": {
+      "redirecting": "Redirecting to payment page..."
+    },
+    "reserve": {
+      "met": "✓ Reserve price has been met. The winner will secure the item.",
+      "notMet": "Reserve price has not been met. The current bid does not guarantee a sale."
+    },
+    "review": {
+      "comment": "Your Comment",
+      "commentPlaceholder": "Share your thoughts on this transaction...",
+      "rating": "Overall Rating",
+      "submit": "Submit Review",
+      "submitting": "Submitting...",
+      "success": "Review submitted! Thank you for your feedback.",
+      "title": "Review Transaction"
+    },
+    "seller": {
+      "rating": "Ratings",
+      "salesUnit": "items",
+      "title": "Seller Information",
+      "totalSales": "Total Sales"
+    },
+    "status": {
+      "active": "Active",
+      "cancelled": "Canceled",
+      "ended": "Auction Ended",
+      "endedSold": "Auction Ended (Sold)",
+      "ended_no_bid": "No Bids",
+      "ended_sold": "Sold",
+      "ending_soon": "Ending Soon",
+      "notStarted": "Auction Not Started",
+      "pending_review": "Pending Review",
+      "rejected": "Rejected",
+      "scheduled": "Scheduled",
+      "startTime": "Start Time:"
+    },
+    "terms": {
+      "buyer": {
+        "bidIsCommitment": {
+          "desc": "Placing a bid means you commit to purchasing this item at that price.",
+          "title": "A Bid is a Commitment"
+        },
+        "buyerProtection": {
+          "desc": "If the item does not match the description, you can apply for a refund.",
+          "title": "Buyer Protection"
+        },
+        "noCancellation": {
+          "desc": "Transactions cannot be canceled without reason after the auction ends.",
+          "title": "No Cancellations"
+        },
+        "payment24h": {
+          "desc": "Payment must be completed within 24 hours of winning, or a violation will be recorded.",
+          "title": "24-Hour Payment"
+        },
+        "violationAccumulation": {
+          "desc": "Accumulating 3 violations will result in a ban from all auction activities.",
+          "title": "Violation Accumulation"
+        }
+      },
+      "dialog": {
+        "agree": "I have read and agree",
+        "buyerAgreement": "Buyer Agreement",
+        "cancel": "Cancel",
+        "close": "Close",
+        "fullTerms": "Full Terms →",
+        "instruction": "Please read all the following terms carefully before bidding:",
+        "sellerAgreement": "Seller Agreement",
+        "title": "Auction Terms"
+      },
+      "seller": {
+        "noWithdrawal": {
+          "desc": "The auction cannot be canceled after a bid has been placed.",
+          "title": "No Auction Withdrawal"
+        },
+        "penalty": {
+          "desc": "Violating the terms will affect the seller's rating and eligibility to use the platform.",
+          "title": "Violation Penalties"
+        },
+        "priceLock": {
+          "desc": "The starting bid and buy-now price cannot be changed after the auction starts.",
+          "title": "Price Lock"
+        },
+        "review": {
+          "desc": "Auction listings must be reviewed by an administrator before they are made public.",
+          "title": "Review for Publication"
+        },
+        "shipping3days": {
+          "desc": "Shipment must be completed within 3 business days after the item is won.",
+          "title": "Ship within 3 Business Days"
+        }
+      }
+    },
+    "winnerPanel": {
+      "congratulations": "🎉 Congratulations, you won!",
+      "leaveReview": "Leave a Review",
+      "payNow": "Pay Now",
+      "paymentCompleted": "Payment Completed ✅",
+      "paymentReminder": "Please complete the payment within 24 hours, or a violation will be recorded.",
+      "sellerAwaitingShipment": "The seller will ship your item within 3 business days.",
+      "thankYou": "Thank you for your purchase!",
+      "winningBid": "Winning Bid:"
+    }
   },
   "auth": {
     "loginFailed": "Login Failed",
+    "loginFailedCallback": "OAuth authentication failed. Please check your network connection and try again.",
     "loginFailedGeneric": "An error occurred during login. Please try again later.",
     "loginFailedMissingInfo": "Unable to retrieve your account information. Please try another login method.",
-    "loginFailedCallback": "OAuth authentication failed. Please check your network connection and try again.",
     "loginSuccess": "Login successful!",
-    "logoutConfirmTitle": "Confirm Logout",
-    "logoutConfirmDescription": "Are you sure you want to logout?",
+    "logoutCancelButton": "Cancel",
     "logoutConfirmButton": "Confirm Logout",
-    "logoutCancelButton": "Cancel"
-  },
-  "notifications": {
-    "title": "Notification Center",
-    "all": "All",
-    "unread": "Unread",
-    "markAsRead": "Mark as Read",
-    "markAllAsRead": "Mark All as Read",
-    "delete": "Delete",
-    "deleteAllRead": "Delete Read",
-    "noNotifications": "No notifications",
-    "noUnreadNotifications": "No unread notifications",
-    "markAsReadSuccess": "Marked as read",
-    "markAsReadError": "Failed to mark as read",
-    "markAllAsReadSuccess": "All marked as read",
-    "markAllAsReadError": "Failed to mark all as read",
-    "deleteSuccess": "刪除成功",
-    "deleteError": "Delete failed",
-    "deleteAllReadSuccess": "All read notifications deleted",
-    "deleteAllReadError": "Delete failed"
-  },
-  "nav": {
-    "login": "Login/Register",
-    "logout": "Logout",
-    "favorites": "My Favorites",
-    "dashboard": "Dashboard",
-    "admin": "Admin",
-    "user": "User"
-  },
-  "favorites": {
-    "title": "My Favorites",
-    "items": "items",
-    "empty": "No favorites yet",
-    "emptyDescription": "Start favoriting cards you love for quick access later",
-    "startBrowsing": "Start Browsing",
-    "favorite": "Favorite",
-    "unfavorite": "Unfavorite",
-    "added": "Added to favorites",
-    "removed": "Removed from favorites",
-    "addError": "Failed to add to favorites",
-    "removeError": "Failed to remove from favorites",
-    "confirmRemove": "Are you sure you want to remove this favorite?"
-  },
-  "pricing": {
-    "title": "Price Lookup",
-    "subtitle": "Real-time comparison of global card market prices",
-    "searchHint": "Hint: Search results only show PSA 10 graded items available for purchase",
-    "hint": "Hint: Search results only show PSA 10 graded items available for purchase",
-    "imageSearch": "Image Search",
-    "imageSearchTitle": "Card Image Analysis",
-    "takePhoto": "Take Photo",
-    "uploadFile": "Upload File",
-    "dragDropImage": "Drag and drop image here",
-    "orSelectFile": "or select file",
-    "cropImage": "Crop Image",
-    "searchNow": "Search Now",
-    "searchCropped": "Search Cropped Area",
-    "cancel": "Cancel",
-    "pleaseSelectImage": "Please select an image",
-    "imageSearchSuccess": "Found card: {{cardName}}",
-    "imageSearchFailed": "Unable to identify card. Please try another image.",
-    "imageSearchError": "Image search failed. Please try again later.",
-    "searching": "Searching...",
-    "priceStats": "Price Statistics",
-    "totalListings": "{{count}} listings in total",
-    "minPrice": "Min Price",
-    "avgPrice": "Average Price",
-    "maxPrice": "Max Price",
-    "listings": "items",
-    "refresh": "Refresh",
-    "searchResults": "Search Results",
-    "totalResults": "{{count}} total",
-    "available": "Available",
-    "grade": "Grade",
-    "seller": "Seller",
-    "buyNow": "Buy Now",
-    "buy": "Buy",
-    "noResults": "No results found. Please try other keywords.",
-    "searchResultsFor": "Search Results",
-    "foundCards": "Found {{count}} cards",
-    "searchError": "Search error. Please try again.",
-    "noImage": "No Image",
-    "enterKeyword": "Please enter search keywords",
-    "loading": "Loading...",
-    "cardNotFound": "Card not found",
-    "cardNumber": "Card Number",
-    "series": "Series",
-    "lowestPrice": "Min Price",
-    "averagePrice": "Average Price",
-    "highestPrice": "Max Price",
-    "psa10Listings": "PSA 10 Listings",
-    "ebayListings": "eBay PSA 10 Listings",
-    "allListings": "PSA 10 Listings (Sorted by Price)",
-    "loadingListings": "Loading listings...",
-    "noListings": "No listings available",
-    "fetchingPrices": "Fetching latest prices...",
-    "pleaseWait": "Please wait, this may take 20-30 seconds",
-    "condition": "Condition",
-    "snkrdunkTitle": "SNKRDUNK PSA 10 Listings",
-    "snkrdunkDescription": "Click the button below to view the latest PSA 10 listings on SNKRDUNK",
-    "viewOnSnkrdunk": "View on SNKRDUNK",
-    "viewDetail": "View Details"
+    "logoutConfirmDescription": "Are you sure you want to logout?",
+    "logoutConfirmTitle": "Confirm Logout"
   },
   "blogPage": {
-    "title": "BOXIUM PTCG Blog",
-    "subtitle": "Professional TCG market analysis, price trends, and investment advice",
-    "searchPlaceholder": "Search articles...",
     "allCategories": "All Categories",
-    "loading": "Loading...",
     "featuredPost": "Featured Post",
     "latestPosts": "Latest Posts",
     "loadMore": "Load More Articles",
+    "loading": "Loading...",
     "noPostsFound": "No articles found",
-    "tryOtherSearch": "Please try other search criteria",
     "readMore": "Read More",
+    "searchPlaceholder": "Search articles...",
+    "subtitle": "Professional TCG market analysis, price trends, and investment advice",
+    "title": "BOXIUM PTCG Blog",
+    "tryOtherSearch": "Please try other search criteria",
     "views": "views"
   },
-  "profile": {
+  "cardDetail": {
+    "actualPrice": "(Actual Sale Price)",
+    "actualPriceHistory": "Actual Sale Price History",
+    "basedOnLatestRecords": "Based on the latest {{count}} PSA 10 transactions within the past {{months}} months",
+    "basedOnLatestRecordsWeighted": "Reference price is a time-decay weighted median (7-day half-life), based on {{count}} PSA 10 transactions",
+    "basedOnLatestSealedRecords": "Per-unit price based on the latest transaction",
+    "basedOnRecords": "Based on {{count}} transaction records",
+    "basicInfo": "Basic Information",
+    "boosterBox": "Booster Box",
+    "boxType": "Product Type",
+    "cachedData": "Cached data, last updated:",
+    "cardName": "Card Name",
+    "cardNumber": "Card Number",
+    "chartTitle": "PSA 10 Price Trend",
+    "comparePrice": "Compare Price",
+    "date": "Date",
+    "ebayDisclaimer": "This is eBay market listing price (not actual sale price), for reference only. Actual sale prices may differ.",
+    "exchangeRate": "Current exchange rate",
+    "favorite": "Favorite",
+    "favorited": "Favorited",
+    "grade": "Grade",
+    "hkdPrice": "HKD Price",
+    "japaneseName": "Japanese Name",
+    "liveMarketData": "Live market listing prices (not sold transaction records)",
+    "marketPrice": "(Market Listing Price)",
+    "marketPriceHistory": "Market Listing Price History",
+    "noData": "No data available",
+    "noEbayData": "No eBay transaction records (API limit may be exceeded, please try again later)",
+    "noGradeData": "No data available for this grade",
+    "noSealedData": "No sealed product price data available",
+    "price": "Price",
+    "priceDecrease": "↓ Down",
+    "priceHistory": "Price History",
+    "priceIncrease": "↑ Up",
+    "priceTrend": "30-Day Trend",
+    "priceUpToDate": "Prices are up to date",
+    "priceUpdateFailed": "Price update failed",
+    "priceUpdated": "Prices updated",
+    "priceUpdating": "Updating latest transaction prices...",
+    "productName": "Product Name",
+    "productTitle": "Product Title",
+    "quantity": "Quantity",
+    "referencePrice": "Reference Price",
+    "sealedPriceTrend": "Price Trend",
+    "sealedProduct": "Sealed Product",
+    "sealedReferencePrice": "Reference Price",
+    "series": "Series",
+    "share": "Share",
+    "singleCard": "Single Card",
+    "source": "Source",
+    "styleCode": "Style Code",
+    "timeRange": {
+      "30days": "30 Days",
+      "7days": "7 Days",
+      "90days": "90 Days",
+      "all": "All"
+    },
+    "timeRangeLabel": "PSA 10 Time Range",
+    "title": "Title",
+    "usdPrice": "USD Price",
+    "usedGrade": "Used"
+  },
+  "cardSelectionDialog": {
+    "avgPrice": "Average Price",
+    "backToSearch": "← Back to Search",
+    "cancel": "Cancel",
+    "cardIndex": "━━━ Card {{index}} ━━━",
+    "cardMarketData": "[Card Market Data]",
+    "cardNumber": "Card Number",
+    "clearSelection": "Clear Selection",
+    "dataPreview": "Data Preview",
+    "enterSearchKeyword": "Please enter a search keyword to find cards",
+    "failedToFetchCardData": "Failed to fetch card data",
+    "fetchingData": "Fetching complete data from the database...",
+    "image": "Image",
+    "insertCardMarketData": "Insert Card Market Data",
+    "insertDataCount": "Insert Data ({{count}} cards)",
+    "insertDataHint": "Full price statistics and transaction data will be included upon insertion.",
+    "insertedCardData": "Inserted full data for {{count}} cards",
+    "japaneseName": "Japanese Name",
+    "maxPrice": "Maximum Price",
+    "minPrice": "Minimum Price",
+    "name": "Name",
+    "noMatchingCards": "No matching cards found",
+    "noPsa10Transactions": "No PSA 10 transaction records available",
+    "noTransactions": "No transaction records",
+    "noUsedGradeATransactions": "No Used Grade A transaction records available",
+    "peakPrice": "All-Time High Price",
+    "previewData": "Preview Data",
+    "previewDataCount": "Preview Data ({{count}})",
+    "priceChange30d": "30-Day Price Change",
+    "priceChange7d": "7-Day Price Change",
+    "priceRange": "Price Range",
+    "psa10GradedCard": "PSA 10 Graded Card",
+    "psa10PriceStats": "PSA 10 Price Statistics",
+    "rarity": "Rarity",
+    "searchDescription": "Search and select cards, and the system will automatically extract complete card information and all transaction data from the database for AI to generate articles.",
+    "searchPlaceholder": "Search card name or number (e.g., pikachu, sv8a)",
+    "selectAtLeastOneCard": "Please select at least one card",
+    "selectedCards": "{{count}} cards selected",
+    "series": "Series",
+    "set": "Set",
+    "usedGradeA": "Used Grade A",
+    "usedGradeAPriceStats": "Used Grade A Price Statistics",
+    "volume": "Volume"
+  },
+  "cart": {
+    "address": {
+      "defaultBadge": "Default",
+      "defaultLabel": "Default Address",
+      "fillManually": "Enter a new address",
+      "goToProfile": "Go to Profile to add an address",
+      "noSavedAddresses": "No saved addresses yet",
+      "other": "Meet-up / Other",
+      "savedAddresses": "Saved Addresses",
+      "sfStationPrefix": "SF Express Station:"
+    },
+    "back": "Back",
+    "cartCleared": "Cart cleared",
+    "checkout": "Proceed to Checkout",
+    "checkoutDialog": {
+      "step1": "Shipping",
+      "step2": "Confirmation",
+      "step3": "Scan to Pay",
+      "step4": "Upload Screenshot",
+      "title": "Checkout"
+    },
+    "clearCart": "Clear Cart",
+    "clearUnavailable": "Clear Unavailable Items",
+    "continueShopping": "Continue Shopping",
+    "empty": {
+      "browseButton": "Go to Marketplace",
+      "message": "Find your favorite cards in the marketplace!",
+      "title": "Your cart is empty"
+    },
+    "item": {
+      "pendingPaymentBadge": "Pending Payment →",
+      "unavailableBadge": "Unavailable"
+    },
+    "loginPrompt": {
+      "browseMarketplace": "Browse the marketplace first →",
+      "loginButton": "Log In Now",
+      "message": "Log in to view your cart",
+      "title": "Please Log In"
+    },
+    "maintenance": {
+      "backToHome": "Back to Home",
+      "message": "We are working hard on improvements. Please check back soon!",
+      "title": "Marketplace is Under Maintenance"
+    },
+    "newlyListed": "Newly Listed",
+    "offer": {
+      "acceptedBadge": "Offer Accepted",
+      "countdown": "The seller has accepted your offer! Please complete the payment within <1>{{timeLeft}}</1>.",
+      "expired": "Offer has expired. The item will be purchased at the original price of <1>HK${{price}}</1>."
+    },
+    "recommendationsFromWatchlist": "Recommended for You (from Watchlist)",
+    "removalFailed": "Removal failed, please try again",
+    "removedFromCart": "Removed from cart",
+    "removedInvalidItems": "Removed {{count}} unavailable items",
+    "seller": "Seller",
+    "shipping": {
+      "meetupDescription": "Please arrange a meeting point with the seller",
+      "meetupTitle": "Meet-up / Other",
+      "methodTitle": "Shipping Method",
+      "sfExpressDescription": "Shipping fee is collected by SF Express upon pickup",
+      "sfExpressTitle": "SF Express (Cash on Delivery)"
+    },
+    "shippingFee": "Shipping Fee",
+    "shippingFeeValue": "Cash on Delivery",
+    "subtotal": "Subtotal ({{count}} items)",
+    "summary": "Order Summary",
+    "title": "Shopping Cart",
+    "total": "Total",
+    "totalDisclaimer": "(excluding shipping fee)",
+    "unavailableItemsNotice": "Unavailable items will not be included in checkout"
+  },
+  "common": {
+    "about": "About Us",
+    "admin": "Admin",
+    "adminMarketplace": "Shop Management",
+    "back": "Back",
+    "blog": "Latest News",
+    "buyer": "Buyer",
+    "cancel": "Cancel",
+    "close": "Close",
+    "home": "Home",
+    "language": "Language",
     "loading": "Loading...",
-    "pleaseLogin": "Please Login",
-    "loginRequired": "You need to login to view your profile",
-    "goToLogin": "Go to Login",
-    "welcome": "Welcome back! Manage your card collection and browsing history here 🎴",
-    "user": "User",
-    "admin": "🎖️ Admin",
-    "collector": "📦 Collector",
-    "joinedAt": "Joined: ",
-    "tabs": {
-      "info": "Profile",
-      "infoShort": "Info",
-      "watchlist": "Watchlist",
-      "watchlistShort": "Watch",
-      "history": "History",
-      "historyShort": "History",
-      "stats": "Statistics",
-      "statsShort": "Stats"
-    },
-    "infoSection": {
-      "title": "Profile Information",
-      "description": "View and edit your personal information",
-      "username": "Username",
-      "notSet": "Not Set",
-      "email": "Email",
-      "role": "Role",
-      "adminRole": "🎖️ Admin",
-      "normalUser": "📦 Normal User",
-      "loginMethod": "Login Method",
-      "passwordLogin": "🔑 Password Login",
-      "googleOAuth": "🔐 Google OAuth",
-      "registeredAt": "Registered At",
-      "lastLogin": "Last Login",
-      "noRecord": "No Record",
-      "changePassword": "Change Password"
-    },
-    "watchlistSection": {
-      "title": "My Watchlist",
-      "count": "{{count}} cards total",
-      "empty": "You haven't added any cards to your watchlist yet",
-      "goToResearch": "Search Cards",
-      "removeSuccess": "Removed from watchlist",
-      "removeFailed": "Remove failed: {{error}}",
-      "table": {
-        "card": "Card",
-        "series": "Series",
-        "latestPrice": "Latest Price",
-        "notes": "Notes",
-        "addedAt": "Added At",
-        "actions": "Actions",
-        "remove": "Remove",
-        "noPrice": "No Price"
+    "login": "Login",
+    "logout": "Logout",
+    "marketInsights": "Market Insights",
+    "marketplace": "Marketplace",
+    "priceComparison": "Price Comparison",
+    "pricing": "Pricing",
+    "privacy": "Privacy Policy",
+    "research": "Card Research",
+    "seller": "Seller",
+    "terms": "Terms of Service",
+    "trending": "Trending"
+  },
+  "disclaimerPage": {
+    "contactInfo": "For any questions, please contact us: support@boxium.asia",
+    "lastUpdated": "Last Updated",
+    "sections": {
+      "dataDelay": {
+        "content": "Price data on this platform is sourced from third-party platforms (SNKRDUNK, eBay, etc.) and may be subject to delays. Some data may not update in real time due to network conditions, API limitations, or technical reasons. The platform accepts no liability for any losses caused by data delays.",
+        "title": "Data Delay Disclaimer"
+      },
+      "dataPrivacy": {
+        "content": "This platform values the protection of users' personal data. Personal data collected is used only for providing services, processing transactions, and improving user experience. For details on how personal data is handled, please refer to our Privacy Policy.",
+        "title": "Personal Data Protection"
+      },
+      "externalLinks": {
+        "content": "This platform may contain links to third-party platforms such as SNKRDUNK and eBay. These links are provided for reference only; the platform accepts no responsibility for the content, privacy policies, or terms of service of third-party platforms. Users accessing third-party platforms should comply with those platforms' terms of use.",
+        "title": "External Links Disclaimer"
+      },
+      "intellectualProperty": {
+        "content": "All content on this platform (including text, images, design, and code) is protected by copyright law. All game trademarks mentioned on this platform (such as Pokémon, One Piece, etc.) belong to their respective rights holders; this platform has no official affiliation with any game company. Reproduction or use of any platform content without authorization is prohibited.",
+        "title": "Intellectual Property Notice"
+      },
+      "investmentRisk": {
+        "content": "The market prices of PTCG cards (including PSA 10 graded cards) are influenced by various factors, including but not limited to market supply and demand, rarity, edition, and collecting trends. Any price information, trend analysis, or market data provided by this platform does not constitute investment advice. Users should independently assess risks; the platform accepts no responsibility for any investment losses resulting from reliance on platform information.",
+        "title": "Investment Risk Disclaimer"
+      },
+      "jurisdiction": {
+        "content": "This disclaimer is governed by the laws of the Hong Kong Special Administrative Region. For any disputes arising from the use of this platform, both parties agree to submit to the jurisdiction of the courts of the Hong Kong Special Administrative Region as the court of first instance.",
+        "title": "Governing Law"
+      },
+      "marketplaceDisclaimer": {
+        "content": "The Marketplace on this platform serves as an intermediary between buyers and sellers, providing only transaction matching services. The platform makes no guarantees regarding the authenticity, quality, legality, or accuracy of descriptions of items listed by sellers. Buyers should carefully read product descriptions and assess transaction risks independently before purchasing. The platform bears no direct legal liability for losses arising from inaccurate product descriptions, damaged goods, or other transaction disputes, but will make reasonable efforts to assist in dispute resolution.",
+        "title": "Marketplace Transaction Disclaimer"
+      },
+      "priceData": {
+        "content": "This platform aggregates PSA 10 card price data from multiple markets including SNKRDUNK and eBay, striving to provide accurate and timely market information. However, as market prices fluctuate rapidly, the platform cannot guarantee that displayed prices are identical to actual transaction prices. All price information is for reference only; actual transaction prices are determined by each respective platform.",
+        "title": "Price Data Accuracy"
+      },
+      "serviceInterruption": {
+        "content": "This platform may temporarily suspend services due to system maintenance, technical failures, network issues, or force majeure events. The platform will make every effort to ensure service stability but accepts no liability for any losses caused by service interruptions.",
+        "title": "Service Interruption Disclaimer"
+      },
+      "userConduct": {
+        "content": "Users must not engage in any illegal activities, infringe on the rights of others, or interfere with the normal operation of the platform when using this service. The platform reserves the right to take action against violating users, including but not limited to suspending or terminating their access.",
+        "title": "User Conduct Guidelines"
       }
     },
+    "subtitle": "BOXIUM Platform Disclaimer — Please read the following important statements carefully before using this platform",
+    "title": "Disclaimer"
+  },
+  "favorites": {
+    "addError": "Failed to add to favorites",
+    "added": "Added to favorites",
+    "confirmRemove": "Are you sure you want to remove this favorite?",
+    "empty": "No favorites yet",
+    "emptyDescription": "Start favoriting cards you love for quick access later",
+    "favorite": "Favorite",
+    "items": "items",
+    "removeError": "Failed to remove from favorites",
+    "removed": "Removed from favorites",
+    "startBrowsing": "Start Browsing",
+    "title": "My Favorites",
+    "unfavorite": "Unfavorite"
+  },
+  "footer": {
+    "about": "About Us",
+    "aboutUs": "About Us",
+    "adminPanel": "Admin Panel",
+    "blog": "Latest News",
+    "cardSearch": "Card Search",
+    "copyright": "© 2026 BOXIUM. All rights reserved. | Luck in Every Box",
+    "description": "A comprehensive platform focused on global TCG price inquiry and market analysis",
+    "disclaimer": "Disclaimer",
+    "marketplace": "Marketplace",
+    "platformIntro": "Platform Introduction",
+    "pricing": "Pricing",
+    "privacy": "Privacy Policy",
+    "quickLinks": "Quick Links",
+    "socialMedia": "Social Media",
+    "terms": "Terms of Service",
+    "trending": "Trending"
+  },
+  "home": {
+    "aboutUs": "About Us",
+    "aboutUsDesc": "BOXIUM is committed to providing the most accurate and professional market information and price analysis tools for TCG investors and collectors.",
+    "adminPanel": "Admin Panel",
+    "cardSearch": "Card Search",
+    "coreFeatures": "Core Features",
+    "coreFeaturesDesc": "BOXIUM provides professional card price analysis tools to help you make smarter investment decisions",
+    "dataSources": "Data Sources",
+    "dataSourcesDesc": "Integrate the world's leading card trading platforms to ensure data accuracy and real-time",
+    "description": "Integrating global market data to provide real-time and accurate card pricing information for PTCG enthusiasts and collectors. Track card price trends and make informed investment decisions.",
+    "ebayDesc": "The world's largest online auction platform, providing international market card transaction records and price references",
+    "footerDesc": "A comprehensive platform focused on TCG price inquiry and market analysis, covering Pokémon, One Piece and more",
+    "globalMarket": "Global market data",
+    "goToMarketplace": "Go to Marketplace",
+    "jpyPrice": "JPY price",
+    "marketReport": "Market Report",
+    "marketStats": "Market Statistics",
+    "marketStatsDesc": "Real-time market data analysis, understand the average price and market performance of cards",
+    "metaDescription": "Integrating global TCG market data to provide real-time, accurate price information and market analysis for trading card enthusiasts.",
+    "noImage": "No Image",
+    "noTrendingCards": "No trending cards data",
+    "priceQuery": "Price Query",
+    "priceTrend": "Price Trend",
+    "priceTrendDesc": "View price changes within 90 days, grasp market dynamics and investment timing",
+    "privacyPolicy": "Privacy Policy",
+    "psaSupport": "PSA grading support",
+    "quickLinks": "Quick Links",
+    "readyToStart": "Ready to Start Your PTCG Journey?",
+    "readyToStartDesc": "Use BOXIUM's smart search and price analysis tools to find your favorite collectibles.",
+    "realtimeData": "Real-time transaction data",
+    "smartSearch": "Smart Search",
+    "smartSearchDesc": "Quickly search hundreds of cards, support name, number, series and other multi-dimensional filtering",
+    "snkrdunkDesc": "Japan's leading card trading platform, providing the latest PSA 10 graded card transaction data and market trend analysis",
+    "socialMedia": "Social Media",
+    "startExploring": "Card Explorer",
+    "startSearching": "Start Searching Cards",
+    "termsOfService": "Terms of Service",
+    "topRanking": "Top Ranking",
+    "topRankingDesc": "Discover the hottest cards in the market, track investors' choices",
+    "trackedCards": "Tracked Cards",
+    "trendingCards": "Trending Cards",
+    "trendingCardsDesc": "Based on PSA 10 this-week vs last-week weighted average price change (7-day half-life)",
+    "usdPrice": "USD Price",
+    "viewMarketTrends": "Compare Market Prices",
+    "welcome": "Welcome to Boxium ~ Gaming Enthusiasts' World"
+  },
+  "login": {
+    "description": "Enter your account and password to log in to BOXIUM PTCG",
+    "dev": {
+      "fastLoginButton": "⚡ Dev Mode Quick Login (Admin id=1)"
+    },
+    "dividerText": "OR",
+    "error": {
+      "googleAuthFailed": "Google login failed. Please try again later.",
+      "noGoogleEmail": "Could not retrieve Google account email. Please check your authorization settings.",
+      "unknown": "Unknown error",
+      "userCreationFailed": "Account creation failed. Please try again later or contact customer support."
+    },
+    "form": {
+      "loginInProgress": "Logging in...",
+      "passwordLabel": "Password"
+    },
+    "googleLoginButton": "Sign in with Google",
+    "register": {
+      "link": "Sign up now",
+      "prompt": "Don't have an account?"
+    },
+    "title": "Login",
+    "toast": {
+      "devLoginFailed": "Dev login failed: ",
+      "devLoginSuccess": "[DEV] Logged in as {{user.name}}",
+      "loginFailed": "Login failed",
+      "loginSuccess": "Login successful"
+    }
+  },
+  "marketplace": {
+    "addToWishlist": "Add to Wishlist",
+    "all": "All",
+    "backToTop": "Back to Top",
+    "banner": {
+      "explore": {
+        "cta": "Explore Marketplace",
+        "title": "Explore Our Marketplace"
+      },
+      "official": {
+        "cta": "View Official Items",
+        "subtitle": "Official Certification · Quality Guaranteed · Buy with Confidence",
+        "title": "BOXIUM Official Listings"
+      },
+      "psa": {
+        "cta": "Shop Now",
+        "subtitle": "Featured PSA 10 Gem Mint · Limited Collection",
+        "title": "PSA Graded Card Zone"
+      }
+    },
+    "copyFailed": "Copy failed",
+    "copyProductLink": "Copy Product Link",
+    "filter": {
+      "apply": "Apply",
+      "bgsGraded": "BGS Graded",
+      "cardCondition": "Card Condition",
+      "clear": "Clear",
+      "clearAll": "Clear All Filters",
+      "individualSeller": "Individual Seller",
+      "maxPrice": "Max Price",
+      "minPrice": "Min Price",
+      "priceRange": "Price Range",
+      "psaGraded": "PSA Graded",
+      "rawCard": "Raw Card",
+      "results": "Filter Results",
+      "sellerType": "Seller Type",
+      "tagGraded": "TAG Graded",
+      "title": "Filter"
+    },
+    "hotKeywords": "Hot Keywords",
+    "linkCopied": "Link copied!",
+    "loadingMore": "Loading more items...",
+    "newSeller": "New Seller",
+    "noResults": {
+      "suggestion": "Try adjusting your filters or clearing all filters.",
+      "title": "No items found matching your criteria"
+    },
+    "onlyNLeft": "Only {{quantity}} left",
+    "platform": "Platform",
+    "removeFromWishlist": "Remove from Wishlist",
+    "results": "results",
+    "search": {
+      "button": "Search",
+      "placeholder": "Search for cards..."
+    },
+    "showing": "Showing",
+    "showingCount": "Showing {{count}} of {{total}} items",
+    "soldOut": "Sold Out",
+    "sort": {
+      "newest": "Newest",
+      "priceHighToLow": "Price: High to Low",
+      "priceLowToHigh": "Price: Low to High",
+      "title": "Sort by"
+    },
+    "title": "Marketplace",
+    "viewDetails": "View Details",
+    "wishlist": {
+      "added": "Added to Wishlist",
+      "loginRequired": "Please log in to use the wishlist",
+      "removed": "Removed from Wishlist"
+    }
+  },
+  "marketplaceListing": {
+    "30DayAverage": "30-Day Avg.",
+    "7DayTrend": "7-Day Trend",
+    "address": {
+      "region": {
+        "hongkong": "Hong Kong"
+      }
+    },
+    "alipay": {
+      "address": {
+        "clear": "Clear Selected Address",
+        "manualFillPrompt": "Click a saved address to auto-fill, or manually fill in the fields below.",
+        "recipientName": "Recipient Name *",
+        "saved": "Saved Addresses",
+        "sfStationLabel": "SF Express Station {code}",
+        "sfStationWithName": "SF Express Station {name} {code}",
+        "subtitle": "The shipping address will be provided to the seller for delivery.",
+        "title": "Please fill in the shipping address"
+      },
+      "amount": "Payment Amount:",
+      "copyId": "Copy ID",
+      "copySuccess": "Listing ID copied! Please paste it into the Alipay remarks field.",
+      "header": "AlipayHK Payment",
+      "memoPrompt": "Please enter the Listing ID in the payment remarks field:",
+      "memoWarning": "⚠️ Be sure to enter the ID above in the Alipay remarks field for payment verification.",
+      "nextStep": {
+        "address": "I have completed the payment, fill in the shipping address"
+      },
+      "offerPriceLabel": "(Offer Price)",
+      "openInApp": "Open AlipayHK on your phone",
+      "scanPrompt": "Please scan the QR code or click the link to pay",
+      "title": "AlipayHK Payment"
+    },
+    "backToHome": "Back to Home",
+    "backToMarketplace": "Back to Marketplace",
+    "boxiumMarketPrice": "BOXIUM Market Reference Price",
+    "buyerProtection": {
+      "description": "Buyer Protection: Request a refund if the item is not as described."
+    },
+    "chart": {
+      "averagePrice": "Avg. Price",
+      "dataAttribution": "Source: BOXIUM · {count} transactions in the last {days} days",
+      "insufficientData": "Insufficient data for this time range, please select a longer period.",
+      "thisListing": "This Listing"
+    },
+    "clickToZoom": "Click to zoom",
+    "copyListingId": {
+      "success": "Listing ID copied",
+      "tooltip": "Click to copy listing ID"
+    },
+    "days": "Days",
+    "highest": "Highest",
+    "image": "Image",
+    "loading": "Loading...",
+    "lowest": "Lowest",
+    "maintenance": {
+      "description": "We are working hard on improvements. Please check back soon!",
+      "title": "Marketplace is under maintenance"
+    },
+    "meta": {
+      "description": "Condition: {condition} | Price: HKD {price} | BOXIUM PTCG Card Marketplace"
+    },
+    "nav": {
+      "marketplace": "Marketplace"
+    },
+    "noRecentTransactions": "No recent transaction data",
+    "notFound": "Listing not found or has been removed",
+    "offer": {
+      "accepted": {
+        "banner": "Seller has accepted your offer! Please proceed to payment below.",
+        "price": "Offer Price: HKD {price}"
+      },
+      "button": {
+        "loginRequired": "Please log in to make an offer",
+        "makeOffer": "Make Offer"
+      },
+      "expiresAt": "Offer expires at {date}",
+      "myOffer": "Offer Made",
+      "status": {
+        "pending": "Waiting for seller's response"
+      },
+      "success": "Offer submitted! The seller will respond soon."
+    },
+    "order": {
+      "autoConfirm": "Transaction automatically confirmed 14 days after payment.",
+      "number": "Order No.: {orderNo}",
+      "submitted": "Order submitted!"
+    },
+    "payment": {
+      "goToPayment": "Proceed to Payment",
+      "linkError": "Failed to get payment link",
+      "redirecting": "Redirecting to payment page...",
+      "stripe": {
+        "minimumError": "This item is below the Stripe minimum payment amount (HKD 4.00). Please use AlipayHK."
+      },
+      "verification": {
+        "error": "Verification failed: ",
+        "failed": "⚠️ Payment amount mismatch, please re-verify.",
+        "success": "✅ Payment amount verified successfully!"
+      }
+    },
+    "priceComparison": {
+      "higher": "higher than market average",
+      "lower": "lower than market average"
+    },
+    "priceLabel": "Price",
+    "productImage": "Product Image",
+    "purchase": {
+      "loginRequired": "Please log in to purchase",
+      "pendingPayment": "Another buyer is currently paying for this item. Please try again later."
+    },
+    "report": {
+      "button": "Report this listing",
+      "success": "Report submitted. We will review it shortly."
+    },
+    "salesTrend": "Sales Trend",
+    "seller": {
+      "collapseReviews": "Collapse",
+      "individual": "👤 Individual Seller",
+      "noReviews": "This seller has no reviews yet.",
+      "otherListings": "Other listings from this seller",
+      "platform": "🏻 BOXIUM Official",
+      "profile": {
+        "individual": "Individual Seller",
+        "new": "New Seller",
+        "totalSales": "{totalSales} items sold",
+        "view": "View Profile"
+      },
+      "showAllReviews": "Show all {total} reviews"
+    },
+    "share": {
+      "copy": {
+        "copied": "Copied!",
+        "default": "Copy Link",
+        "error": "Copy failed",
+        "success": "Link copied!"
+      },
+      "whatsapp": "Share on WhatsApp"
+    },
+    "shipping": {
+      "local": "Local SF Express (pay on delivery) / Self-pickup (contact seller for details)"
+    },
+    "status": {
+      "sold": "Item Sold",
+      "soldOut": "Sold Out"
+    },
+    "stock": "Stock: {quantity} items",
+    "tabs": {
+      "description": "Description",
+      "price": "Market Price",
+      "reviews": "Seller Reviews"
+    },
+    "tcg": {
+      "other": "Other TCG"
+    },
+    "thumbnail": "Thumbnail",
+    "trend": {
+      "flat": "Flat"
+    },
+    "upload": {
+      "failed": "Upload failed",
+      "retry": "Screenshot upload failed, please try again",
+      "sizeError": "Screenshot cannot exceed 5MB",
+      "verifying": "Screenshot uploaded, verifying amount with AI..."
+    },
+    "viewDetailedChart": "View Detailed Chart",
+    "wishlist": {
+      "added": "Added to wishlist",
+      "loginRequired": "Please log in to add to wishlist",
+      "removed": "Removed from wishlist"
+    }
+  },
+  "nav": {
+    "admin": "Admin",
+    "dashboard": "Dashboard",
+    "favorites": "My Favorites",
+    "login": "Login/Register",
+    "logout": "Logout",
+    "user": "User"
+  },
+  "notifications": {
+    "all": "All",
+    "delete": "Delete",
+    "deleteAllRead": "Delete Read",
+    "deleteAllReadError": "Delete failed",
+    "deleteAllReadSuccess": "All read notifications deleted",
+    "deleteError": "Delete failed",
+    "deleteSuccess": "刪除成功",
+    "description": "View all system notifications and trade updates",
+    "filter": {
+      "all": "All",
+      "allTypes": "All Types",
+      "dispute": "Dispute",
+      "offer": "Offer",
+      "payment": "Payment",
+      "shipping": "Shipping",
+      "system": "System",
+      "trade": "Trade",
+      "unread": "Unread"
+    },
+    "login": "Log In",
+    "loginPrompt": "Please log in to view notifications",
+    "markAllAsRead": "Mark All as Read",
+    "markAllAsReadError": "Failed to mark all as read",
+    "markAllAsReadSuccess": "All marked as read",
+    "markAsRead": "Mark as Read",
+    "markAsReadError": "Failed to mark as read",
+    "markAsReadSuccess": "Marked as read",
+    "noNotifications": "No notifications",
+    "noUnreadNotifications": "No unread notifications",
+    "title": "Notification Center",
+    "unread": "Unread",
+    "unreadCount": "{unreadCount} unread",
+    "viewDetails": "Click to view details →"
+  },
+  "orderDetail": {
+    "alipayHk": "AlipayHK",
+    "alipayHkLabel": "Alipay (HK)",
+    "alipayHkPayment": "AlipayHK Payment",
+    "alipayHkWallelt": "AlipayHK Wallet Payment",
+    "alipayRemarkNotice": "⚠️ Please be sure to fill in the above number in the Alipay remarks field to facilitate payment verification",
+    "amount": "Amount",
+    "awaitingBuyerConfirmation": "Awaiting buyer confirmation",
+    "awaitingPayment": "Awaiting Payment",
+    "backToMyOrders": "Back to My Orders",
+    "backToOrderList": "Back to Order List",
+    "buyerCancelled": "Buyer has requested to cancel the order",
+    "cancel": "Cancel",
+    "cancellationReason": "Reason for cancellation",
+    "checkOrderDetails": "Please check the order details",
+    "clickOrDragToUpload": "Click here to upload or drag and drop",
+    "confidence": "Confidence",
+    "confirm": "Confirm",
+    "confirmReceipt": "Confirm Receipt",
+    "confirmReceiptDesc": "This action will complete the order and release the payment to the seller.",
+    "confirmReceiptPrompt": "Are you sure you have received the item?",
+    "contactPhone": "Contact Phone",
+    "contactPhoneLabel": "Contact Phone",
+    "contactSeller": "Contact Seller",
+    "copy": "Copy",
+    "copyId": "Copy ID",
+    "creditCardStripe": "Credit Card (Stripe)",
+    "describeProblem": "Please describe the problem you encountered in detail",
+    "detailedAddress": "Detailed Address",
+    "disputeInProgress": "Dispute in Progress",
+    "disputeInProgressDesc": "We are reviewing your case, please be patient. You can communicate with the seller below.",
+    "encryptedPayment": "All payments are protected by encrypted transmission",
+    "enterDetailedAddress": "Please enter the detailed address",
+    "enterName": "Please enter your name",
+    "enterPhone": "Please enter your phone number",
+    "fileFormatHint": "File format: PNG, JPG, HEIC (within 5MB)",
+    "fileTooLarge": "Screenshot cannot exceed 5MB",
+    "fillOrderNumber": "Please fill in the product number in the payment remarks field: ",
+    "fillShippingAddress": "Please fill in the shipping address",
+    "getPaymentLinkError": "Unable to retrieve payment link",
+    "high": "High",
+    "hongKong": "Hong Kong",
+    "hongKongIsland": "Hong Kong Island",
+    "kowloon": "Kowloon",
+    "listingIdCopied": "Listing ID copied!",
+    "low": "Low",
+    "medium": "Medium",
+    "newTerritories": "New Territories",
+    "nextUploadProof": "Next: Upload Payment Screenshot",
+    "openInAlipay": "Open AlipayHK on your phone",
+    "orderCancelled": "Order Cancelled",
+    "orderCompleted": "Order Completed",
+    "orderDetails": "Order Details",
+    "orderNumber": "Order Number",
+    "orderStatus": "Order Status",
+    "orderSubmitted": "Order Submitted",
+    "orderSubmittedSuccess": "Order submitted successfully, awaiting seller confirmation",
+    "orderSubmittedSuccessDesc": "Thank you for your order! The seller will ship as soon as possible after confirming payment. You can track status updates on the order page.",
+    "paidAndFillAddress": "I have completed the payment, fill in shipping address",
+    "paidAndUpload": "I have completed the payment, upload screenshot",
+    "payee": "Payee",
+    "paymentAmount": "Payment Amount: ",
+    "paymentInfo": "Payment Information",
+    "paymentMethod": "Payment Method",
+    "paymentMethodLabel": "Payment Method",
+    "paymentMethods": "Visa / Mastercard / Apple Pay",
+    "paymentStatus": "Payment Status",
+    "paymentVerifiedError": "⚠️ Verification failed, please re-upload the screenshot",
+    "paymentVerifiedSuccess": "✅ Payment amount verified successfully!",
+    "pending": "Pending",
+    "pendingPayment": "Pending Payment",
+    "proceedToPayment": "Proceed to Payment",
+    "processing": "Processing",
+    "productInfo": "Product Information",
+    "quantity": "Quantity",
+    "rateSeller": "Rate Seller",
+    "rateTransaction": "How would you rate this transaction?",
+    "reason": "Reason",
+    "recipient": "Recipient",
+    "recipientName": "Recipient Name",
+    "region": "Region",
+    "requestAfterSales": "Request After-Sales / Open Dispute",
+    "resolved": "Resolved",
+    "reupload": "Re-upload",
+    "scanQrCode": "Please scan the QR code or click the link to pay",
+    "selectPaymentMethod": "Select Payment Method",
+    "seller": "Seller",
+    "sellerProcessing": "Seller is preparing the order",
+    "sellerShipped": "Seller has shipped",
+    "shipped": "Shipped",
+    "shippingAddress": "Shipping Address",
+    "shippingFee": "Shipping Fee",
+    "shippingInfo": "Shipping Information",
+    "status": "Status",
+    "stripeCreditCardApplePay": "Stripe Credit Card / Apple Pay",
+    "submitFailed": "Submission failed, please try again",
+    "submitOrder": "Submit Order",
+    "submitRating": "Submit Rating",
+    "submitRequest": "Submit Request",
+    "subtotal": "Subtotal",
+    "switchPaymentError": "Unable to switch payment method",
+    "totalAmount": "Total Amount",
+    "unitPrice": "Unit Price",
+    "uploadFailed": "Screenshot upload failed, please try again",
+    "uploadPaymentProof": "Upload Payment Screenshot",
+    "uploadingAndVerifying": "Screenshot uploaded, verifying amount with AI...",
+    "verificationFailed": "Verification failed: ",
+    "verificationFailedLabel": "Verification Failed",
+    "verificationSuccess": "Verification Successful",
+    "verifying": "Verifying...",
+    "viewProduct": "View Product"
+  },
+  "orderStatusStepper": {
+    "cancelled": {
+      "description": "This order has been cancelled and will not be processed further.",
+      "title": "Order Cancelled"
+    },
+    "completed": {
+      "buyerDesc": "Order completed",
+      "buyerLabel": "Completed",
+      "meetup": {
+        "buyerLabel": "Meetup Completed",
+        "sellerLabel": "Meetup Completed"
+      },
+      "sellerDesc": "Transaction complete",
+      "sellerLabel": "Completed"
+    },
+    "delivered": {
+      "buyerDesc": "Please confirm receipt of the item",
+      "buyerLabel": "Pending Confirmation",
+      "sellerDesc": "Waiting for buyer's confirmation",
+      "sellerLabel": "Delivered"
+    },
+    "disputed": {
+      "description": "The platform is intervening. Please wait 1-3 business days.",
+      "title": "Dispute in Progress"
+    },
+    "meetup": {
+      "paidHeld": {
+        "buyerLabel": "Paid",
+        "sellerLabel": "Pending Confirmation"
+      }
+    },
+    "paidHeld": {
+      "buyerDesc": "Payment confirmed",
+      "buyerLabel": "Paid",
+      "meetup": {
+        "buyerDesc": "Payment confirmed, arrange for meetup",
+        "sellerDesc": "Please contact the buyer to arrange a meetup"
+      },
+      "sellerDesc": "Please arrange for shipment as soon as possible",
+      "sellerLabel": "To Ship"
+    },
+    "pendingPayment": {
+      "buyerDesc": "Waiting for payment to be completed",
+      "buyerLabel": "Pending Payment",
+      "sellerDesc": "Waiting for buyer's payment",
+      "sellerLabel": "Pending Payment"
+    },
+    "refunded": {
+      "description": "The amount has been refunded to the original payment method.",
+      "title": "Refund Completed"
+    },
+    "shipped": {
+      "buyerDesc": "The item is in transit",
+      "buyerLabel": "In Transit",
+      "sellerDesc": "Waiting for buyer to confirm receipt",
+      "sellerLabel": "Shipped"
+    }
+  },
+  "orders": {
+    "action": {
+      "back": "Back",
+      "cancel": "Cancel",
+      "cancelOrder": "Cancel Order",
+      "cancelOrderConfirmation": "Are you sure you want to cancel this order? The item will be relisted after cancellation.",
+      "confirmCancel": "Confirm Cancellation",
+      "confirmCancelOrder": "Confirm Cancel Order",
+      "confirmReceipt": "Confirm Receipt",
+      "fileDispute": "File a Dispute",
+      "goToPayment": "Go to Payment",
+      "orderCancelled": "Order has been cancelled",
+      "payNow": "Pay Now",
+      "rateSeller": "Rate Seller",
+      "viewProductPage": "View Product Page"
+    },
+    "buyer": "Buyer",
+    "details": {
+      "itemAmount": "Item Amount",
+      "paymentSummary": "Payment Summary",
+      "shippingInfo": "Shipping Information",
+      "toggle": {
+        "hide": "Hide Shipping / Payment Details",
+        "show": "Show Shipping / Payment Details"
+      },
+      "total": "Total"
+    },
+    "dialog": {
+      "confirmReceipt": {
+        "confirmButton": "Confirm Receipt",
+        "description": "Once you confirm receipt of the item, the payment will be immediately transferred to the seller. This action cannot be undone.",
+        "processing": "Processing...",
+        "title": "Confirm Receipt",
+        "warning": "Please confirm that the item's condition matches the description before confirming receipt. If there are any issues, please file a dispute first."
+      },
+      "fileDispute": {
+        "charCount": {
+          "min": "At least 10 characters",
+          "needed": "{{count}} more characters needed",
+          "ok": "✓ Content meets requirements"
+        },
+        "description": "Please describe the issue in detail. An administrator will handle it within 1-3 business days.",
+        "evidence": "Evidence Files (optional, max 3)",
+        "placeholder": "Please describe the issue, e.g., item not as described, item not received, item damaged, etc. (at least 10 characters)",
+        "submitButton": "Submit Dispute",
+        "title": "File a Dispute",
+        "upload": {
+          "description": "or drag and drop",
+          "label": "Upload File",
+          "uploading": "Uploading..."
+        }
+      },
+      "rateSeller": {
+        "commentLabel": "Your Comment (optional)",
+        "commentPlaceholder": "Share more about your experience...",
+        "description": "Share your transaction experience to help other buyers.",
+        "ratingLabel": "Your Rating",
+        "submitButton": "Submit Rating",
+        "submitting": "Submitting...",
+        "title": "Rate Seller"
+      }
+    },
+    "dispute": {
+      "inProgress": "Dispute in progress, please wait for administrator's response"
+    },
+    "error": {
+      "createPaymentFailed": "Failed to create payment"
+    },
+    "myOrders": "My Orders",
+    "noOrders": "No Orders",
+    "noOrdersDescription": "You currently do not have any orders.",
+    "orderDate": "Order Date",
+    "orderNumber": "Order Number",
+    "payment": {
+      "alipayHK": "Alipay HK",
+      "alipayHKCompletePayment": "Please complete the payment in the new window, then return to this page to upload the payment screenshot",
+      "alipayHKPageOpened": "Alipay HK payment page has been opened",
+      "alipayHKScreenshotRequired": "⚠️ Screenshot required after payment",
+      "alipayHKUploadScreenshot": "Go to the order details page to upload the Alipay payment screenshot for admin confirmation",
+      "alipayHKWallet": "AlipayHK E-wallet Payment",
+      "amount": "Payment Amount:",
+      "cardTypes": "Visa / Mastercard / Other Credit Cards",
+      "encrypted": "All payments are protected by encrypted transmission",
+      "iHavePaid": "I have completed the payment",
+      "selectMethod": "Select Payment Method",
+      "stripeCreditCard": "Stripe Credit Card"
+    },
+    "rated": "Rated {{rating}} stars",
+    "seller": "Seller",
+    "status": {
+      "cancelled": "Cancelled",
+      "completed": "Completed",
+      "delivered": "Delivered",
+      "disputed": "Disputed",
+      "paid_held": "Paid, Awaiting Shipment",
+      "payment_received": "Payment Received",
+      "pending_payment": "Pending Payment",
+      "shipped": "Shipped"
+    },
+    "tabs": {
+      "buying": "I'm Buying",
+      "selling": "I'm Selling"
+    },
+    "total": "Total Amount"
+  },
+  "pricing": {
+    "allListings": "PSA 10 Listings (Sorted by Price)",
+    "available": "Available",
+    "averagePrice": "Average Price",
+    "avgPrice": "Average Price",
+    "buy": "Buy",
+    "buyNow": "Buy Now",
+    "cancel": "Cancel",
+    "cardNotFound": "Card not found",
+    "cardNumber": "Card Number",
+    "condition": "Condition",
+    "cropImage": "Crop Image",
+    "dragDropImage": "Drag and drop image here",
+    "ebayListings": "eBay PSA 10 Listings",
+    "enterKeyword": "Please enter search keywords",
+    "fetchingPrices": "Fetching latest prices...",
+    "foundCards": "Found {{count}} cards",
+    "grade": "Grade",
+    "highestPrice": "Max Price",
+    "hint": "Hint: Search results only show PSA 10 graded items available for purchase",
+    "imageSearch": "Image Search",
+    "imageSearchError": "Image search failed. Please try again later.",
+    "imageSearchFailed": "Unable to identify card. Please try another image.",
+    "imageSearchSuccess": "Found card: {{cardName}}",
+    "imageSearchTitle": "Card Image Analysis",
+    "listings": "items",
+    "loading": "Loading...",
+    "loadingListings": "Loading listings...",
+    "lowestPrice": "Min Price",
+    "maxPrice": "Max Price",
+    "minPrice": "Min Price",
+    "noImage": "No Image",
+    "noListings": "No listings available",
+    "noResults": "No results found. Please try other keywords.",
+    "orSelectFile": "or select file",
+    "pleaseSelectImage": "Please select an image",
+    "pleaseWait": "Please wait, this may take 20-30 seconds",
+    "priceStats": "Price Statistics",
+    "psa10Listings": "PSA 10 Listings",
+    "refresh": "Refresh",
+    "searchCropped": "Search Cropped Area",
+    "searchError": "Search error. Please try again.",
+    "searchHint": "Hint: Search results only show PSA 10 graded items available for purchase",
+    "searchNow": "Search Now",
+    "searchResults": "Search Results",
+    "searchResultsFor": "Search Results",
+    "searching": "Searching...",
+    "seller": "Seller",
+    "series": "Series",
+    "snkrdunkDescription": "Click the button below to view the latest PSA 10 listings on SNKRDUNK",
+    "snkrdunkTitle": "SNKRDUNK PSA 10 Listings",
+    "subtitle": "Real-time comparison of global card market prices",
+    "takePhoto": "Take Photo",
+    "title": "Price Lookup",
+    "totalListings": "{{count}} listings in total",
+    "totalResults": "{{count}} total",
+    "uploadFile": "Upload File",
+    "viewDetail": "View Details",
+    "viewOnSnkrdunk": "View on SNKRDUNK"
+  },
+  "profile": {
+    "addresses": {
+      "add": "Add Address",
+      "addressLabel": "Address Label",
+      "addressLabelHint": "e.g., Home, Office",
+      "addressType": "Address Type",
+      "cancel": "Cancel",
+      "contactPhone": "Contact Phone",
+      "defaultBadge": "Default",
+      "detailedAddress": "Detailed Address",
+      "detailedAddressHint": "Street, Building, Floor, Flat",
+      "district": "District (Optional)",
+      "districtHint": "e.g., Mong Kok, Causeway Bay",
+      "empty": {
+        "description": "Add an address for faster checkout without re-entering details.",
+        "title": "No shipping addresses yet"
+      },
+      "invalidCode": "Invalid or non-existent code",
+      "recipientName": "Recipient Name",
+      "region": "Region",
+      "saveChanges": "Save Changes",
+      "searchCode": "Search Code",
+      "setAsDefault": "Set as Default",
+      "setDefault": "Set as default address",
+      "sfCode": "SF Code",
+      "sfCodeHint": "Address will be auto-filled after entering the code",
+      "sfDisclaimer": "Data from SF Express HK official (Mar 2026), with 125 SF stations and 729 lockers. For the latest locations, please visit the SF Express HK official website.",
+      "sfLocker": "🔒 Locker",
+      "sfStation": "📦 SF Pick-up Point",
+      "type": {
+        "residential": "Residential/Business Address",
+        "sfStation": "SF Station/Locker"
+      },
+      "validatingCode": "Validating code..."
+    },
+    "admin": "🎖️ Admin",
+    "auctions": {
+      "auctionTitle": "Auction #{id}",
+      "countdown": {
+        "daysHours": "{d}d {h}h",
+        "ended": "Ended"
+      },
+      "currentHighest": "Current Highest",
+      "empty": {
+        "description": "Explore ongoing auctions in the marketplace",
+        "noRecords": "No records in this category",
+        "title": "You haven't participated in any auctions yet"
+      },
+      "goToMarketplace": "Go to Marketplace",
+      "myBid": "My Bid",
+      "outbidHint": "Click to go to the auction page to bid again",
+      "status": {
+        "lost": "Not Won",
+        "outbid": "⚠️ Outbid",
+        "winning": "🏆 Winning",
+        "won": "✅ Won"
+      },
+      "tabs": {
+        "active": "Active Bids",
+        "history": "Bid History",
+        "won": "Won"
+      },
+      "timeLeft": "Time Left",
+      "viewOrder": "View Order"
+    },
+    "cart": {
+      "addFailed": "Failed to add",
+      "added": "Added to cart"
+    },
+    "collector": "📦 Collector",
+    "goToLogin": "Go to Login",
     "historySection": {
-      "title": "Browsing History",
-      "count": "Recent {{count}} records",
-      "empty": "No browsing history",
+      "cancel": "Cancel",
+      "clearFailed": "Clear failed: {{error}}",
       "clearHistory": "Clear History",
       "clearSuccess": "Browsing history cleared",
-      "clearFailed": "Clear failed: {{error}}",
+      "confirm": "Confirm Clear",
       "confirmClear": "Confirm Clear",
       "confirmDescription": "This action will clear all browsing history and cannot be undone.",
-      "cancel": "Cancel",
-      "confirm": "Confirm Clear",
+      "count": "Recent {{count}} records",
+      "empty": "No browsing history",
       "table": {
         "card": "Card",
         "series": "Series",
         "viewedAt": "Viewed At"
+      },
+      "title": "Browsing History"
+    },
+    "info": {
+      "email": "Email",
+      "joinDate": "Join Date",
+      "phone": "Phone Number",
+      "title": "Account Information",
+      "username": "Username"
+    },
+    "infoSection": {
+      "adminRole": "🎖️ Admin",
+      "changePassword": "Change Password",
+      "description": "View and edit your personal information",
+      "email": "Email",
+      "googleOAuth": "🔐 Google OAuth",
+      "lastLogin": "Last Login",
+      "loginMethod": "Login Method",
+      "noRecord": "No Record",
+      "normalUser": "📦 Normal User",
+      "notSet": "Not Set",
+      "passwordLogin": "🔑 Password Login",
+      "registeredAt": "Registered At",
+      "role": "Role",
+      "title": "Profile Information",
+      "username": "Username"
+    },
+    "joinedAt": "Joined: ",
+    "loading": "Loading...",
+    "loginRequired": "You need to login to view your profile",
+    "nav": {
+      "addresses": "Shipping Addresses",
+      "auctions": "My Auctions",
+      "notifications": "Notification Center",
+      "offers": "My Offers",
+      "orders": "My Orders"
+    },
+    "notifications": {
+      "allRead": "Mark all as read",
+      "empty": "There are no notifications at the moment",
+      "title": "Notifications"
+    },
+    "offers": {
+      "acceptedMessage": "✅ Seller has accepted the offer, please complete the payment as soon as possible",
+      "cancelOffer": "Cancel Offer",
+      "empty": {
+        "description": "Make offers on items you like in the marketplace, and your offer history will be displayed here.",
+        "title": "You haven't made any offers yet"
+      },
+      "expiresAt": "Expires: {date}",
+      "goToMarketplace": "Go to Marketplace to Make an Offer",
+      "listingItem": "Item",
+      "message": "Message: {message}",
+      "offerId": "Offer #{id}",
+      "offerPrice": "Offer Price: ",
+      "rejectionReason": "Rejection Reason: {reason}",
+      "status": {
+        "accepted": "Accepted",
+        "cancelled": "Cancelled",
+        "expired": "Expired",
+        "pending": "Pending",
+        "rejected": "Rejected"
+      },
+      "viewItem": "View Item"
+    },
+    "orderStatus": {
+      "cancelled": "Cancelled",
+      "completed": "Completed",
+      "delivered": "Delivered",
+      "disputed": "Disputed",
+      "paid_held": "Paid, Awaiting Shipment",
+      "payment_received": "Payment Received",
+      "pending_payment": "Pending Payment",
+      "shipped": "Shipped"
+    },
+    "orders": {
+      "all": "All",
+      "empty": {
+        "description": "After shopping or winning an auction, your orders will appear here.",
+        "title": "No orders yet"
+      },
+      "filterStatus": "Filter Status",
+      "goToMarketplace": "Go to Marketplace",
+      "payNow": "Pay Now",
+      "searchPlaceholder": "Search order ID or product name",
+      "status": {
+        "itemDelivered": "Item has been delivered",
+        "orderCancelled": "Order cancelled",
+        "orderCompleted": "Order completed",
+        "orderDisputed": "Order in dispute",
+        "paymentConfirmed": "Your payment has been confirmed.",
+        "paymentProcessing": "Your payment is still processing, please wait.",
+        "paymentTimeout": "Your payment has timed out, and the order has been automatically cancelled.",
+        "sellerShipped": "Seller has shipped",
+        "sellerShipping": "Seller is preparing for shipment"
+      },
+      "table": {
+        "createdAt": "Created At",
+        "items": "Items",
+        "orderId": "Order ID",
+        "total": "Total Amount",
+        "viewDetails": "View Details"
       }
+    },
+    "pleaseLogin": "Please Login",
+    "security": {
+      "changePassword": "Change Password",
+      "confirmNewPassword": "Confirm New Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "passwordHint": "Password must be at least 8 characters long",
+      "savePassword": "Save Password",
+      "title": "Security Settings"
     },
     "statsSection": {
-      "title": "Collection Statistics",
-      "description": "Your card collection data analysis",
-      "empty": "No statistics data",
-      "watchlistCards": "Watchlist Cards",
-      "cardsCount": "cards",
-      "viewHistory": "View History",
-      "recordsCount": "records",
       "activity": "Activity",
       "activityLevel": "Collection Activity",
+      "cardsCount": "cards",
+      "description": "Your card collection data analysis",
+      "empty": "No statistics data",
+      "highestCard": "Highest Value Card",
+      "noRecord": "No Record",
+      "recordsCount": "records",
+      "title": "Collection Statistics",
       "totalCount": "Total Watchlist",
       "totalValue": "Total Value",
-      "highestCard": "Highest Value Card",
-      "noRecord": "No Record"
-    }
-  },
-  "disclaimerPage": {
-    "title": "Disclaimer",
-    "subtitle": "BOXIUM Platform Disclaimer — Please read the following important statements carefully before using this platform",
-    "lastUpdated": "Last Updated",
-    "contactInfo": "For any questions, please contact us: support@boxium.asia",
-    "sections": {
-      "priceData": {
-        "title": "Price Data Accuracy",
-        "content": "This platform aggregates PSA 10 card price data from multiple markets including SNKRDUNK and eBay, striving to provide accurate and timely market information. However, as market prices fluctuate rapidly, the platform cannot guarantee that displayed prices are identical to actual transaction prices. All price information is for reference only; actual transaction prices are determined by each respective platform."
+      "viewHistory": "View History",
+      "watchlistCards": "Watchlist Cards"
+    },
+    "tabs": {
+      "history": "History",
+      "historyShort": "History",
+      "info": "Profile",
+      "infoShort": "Info",
+      "stats": "Statistics",
+      "statsShort": "Stats",
+      "watchlist": "Watchlist",
+      "watchlistShort": "Watch"
+    },
+    "user": "User",
+    "watchlist": {
+      "added": "Added to favorites",
+      "removed": "Removed from favorites",
+      "sort": {
+        "label": "Sort by:",
+        "newest": "Newest",
+        "oldest": "Oldest",
+        "priceAsc": "Price ↑",
+        "priceDesc": "Price ↓"
       },
-      "marketplaceDisclaimer": {
-        "title": "Marketplace Transaction Disclaimer",
-        "content": "The Marketplace on this platform serves as an intermediary between buyers and sellers, providing only transaction matching services. The platform makes no guarantees regarding the authenticity, quality, legality, or accuracy of descriptions of items listed by sellers. Buyers should carefully read product descriptions and assess transaction risks independently before purchasing. The platform bears no direct legal liability for losses arising from inaccurate product descriptions, damaged goods, or other transaction disputes, but will make reasonable efforts to assist in dispute resolution."
+      "tabs": {
+        "cardTracking": "Card Tracking",
+        "favoriteItems": "Favorite Items"
+      }
+    },
+    "watchlistSection": {
+      "count": "{{count}} cards total",
+      "empty": "You haven't added any cards to your watchlist yet",
+      "goToResearch": "Search Cards",
+      "removeFailed": "Remove failed: {{error}}",
+      "removeSuccess": "Removed from watchlist",
+      "table": {
+        "actions": "Actions",
+        "addedAt": "Added At",
+        "card": "Card",
+        "latestPrice": "Latest Price",
+        "noPrice": "No Price",
+        "notes": "Notes",
+        "remove": "Remove",
+        "series": "Series"
       },
-      "investmentRisk": {
-        "title": "Investment Risk Disclaimer",
-        "content": "The market prices of PTCG cards (including PSA 10 graded cards) are influenced by various factors, including but not limited to market supply and demand, rarity, edition, and collecting trends. Any price information, trend analysis, or market data provided by this platform does not constitute investment advice. Users should independently assess risks; the platform accepts no responsibility for any investment losses resulting from reliance on platform information."
-      },
-      "dataDelay": {
-        "title": "Data Delay Disclaimer",
-        "content": "Price data on this platform is sourced from third-party platforms (SNKRDUNK, eBay, etc.) and may be subject to delays. Some data may not update in real time due to network conditions, API limitations, or technical reasons. The platform accepts no liability for any losses caused by data delays."
-      },
-      "externalLinks": {
-        "title": "External Links Disclaimer",
-        "content": "This platform may contain links to third-party platforms such as SNKRDUNK and eBay. These links are provided for reference only; the platform accepts no responsibility for the content, privacy policies, or terms of service of third-party platforms. Users accessing third-party platforms should comply with those platforms' terms of use."
-      },
-      "serviceInterruption": {
-        "title": "Service Interruption Disclaimer",
-        "content": "This platform may temporarily suspend services due to system maintenance, technical failures, network issues, or force majeure events. The platform will make every effort to ensure service stability but accepts no liability for any losses caused by service interruptions."
-      },
-      "jurisdiction": {
-        "title": "Governing Law",
-        "content": "This disclaimer is governed by the laws of the Hong Kong Special Administrative Region. For any disputes arising from the use of this platform, both parties agree to submit to the jurisdiction of the courts of the Hong Kong Special Administrative Region as the court of first instance."
-      },
-      "userConduct": {
-        "title": "User Conduct Guidelines",
-        "content": "Users must not engage in any illegal activities, infringe on the rights of others, or interfere with the normal operation of the platform when using this service. The platform reserves the right to take action against violating users, including but not limited to suspending or terminating their access."
-      },
-      "dataPrivacy": {
-        "title": "Personal Data Protection",
-        "content": "This platform values the protection of users' personal data. Personal data collected is used only for providing services, processing transactions, and improving user experience. For details on how personal data is handled, please refer to our Privacy Policy."
-      },
-      "intellectualProperty": {
-        "title": "Intellectual Property Notice",
-        "content": "All content on this platform (including text, images, design, and code) is protected by copyright law. All game trademarks mentioned on this platform (such as Pokémon, One Piece, etc.) belong to their respective rights holders; this platform has no official affiliation with any game company. Reproduction or use of any platform content without authorization is prohibited."
+      "title": "My Watchlist"
+    },
+    "welcome": "Welcome back! Manage your card collection and browsing history here 🎴",
+    "wishlist": {
+      "table": {
+        "actions": "Actions",
+        "addedAt": "Added At",
+        "item": "Item",
+        "price": "Price",
+        "status": "Status"
       }
     }
   },
-  "aboutPage": {
-    "title": "About BOXIUM",
-    "subtitle": "Welcome to Boxium ~ The paradise for TCG enthusiasts! Integrating global TCG market data with real-time, accurate pricing.",
-    "trackedCards": "Cards Tracked",
-    "dataSources": "Data Sources",
-    "ourMission": "Our Mission",
-    "missionContent": "BOXIUM is dedicated to providing TCG collectors, investors, and sellers with the most accurate and up-to-date market data and trading environment. We aggregate real transaction records from major global trading platforms, covering Pokémon, One Piece and more, and offer a secure card secondary market, allowing users to research, compare prices, and trade all in one place\u2014empowering smarter collecting and investment decisions.",
-    "coreServices": "Core Services",
-    "platformFeatures": "Platform Features",
-    "contactInfo": "For any questions or suggestions, please contact us through the platform's contact channels.",
-    "services": {
-      "cardSearch": {
-        "title": "Card Research",
-        "description": "Search over {{count}} PTCG cards, view PSA 10 historical transaction price trends, and stay informed on market movements"
+  "register": {
+    "alreadyHaveAccount": "Already have an account?",
+    "confirmPasswordLabel": "Confirm Password",
+    "description": "Create your BOXIUM PTCG account",
+    "errorToast": "Registration failed",
+    "loginLink": "Log in now",
+    "nameLabel": "Name (Optional)",
+    "namePlaceholder": "Your Name",
+    "passwordHint": "At least 8 characters, including uppercase, lowercase, and numbers",
+    "passwordLabel": "Password",
+    "passwordMismatch": "Passwords do not match",
+    "passwordRequiresLowercase": "Password must contain at least one lowercase letter",
+    "passwordRequiresNumber": "Password must contain at least one number",
+    "passwordRequiresUppercase": "Password must contain at least one uppercase letter",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "submitButton": "Register",
+    "submittingText": "Registering...",
+    "successToast": "Registration successful!",
+    "title": "Register"
+  },
+  "research": {
+    "addToWatchlist": "Add to Watchlist",
+    "aiIdentificationResults": "AI Model Identification Results",
+    "aiIdentifying": "Using AI to identify card name, number, series...",
+    "allCards": "All Cards",
+    "cardIdentifiedSearching": "Identified \"{{cardName}}\", now performing text search...",
+    "cardName": "Card Name",
+    "cardNameJa": "Japanese Card Name",
+    "cardNumber": "Card Number",
+    "cardSeries": "Card Series",
+    "cropImage": "Crop Image",
+    "identificationSuccess": "Success! Found {{count}} matches.",
+    "imageUploadError": "Please upload an image file (JPG, PNG)",
+    "loading": "Loading...",
+    "matchReasons": "Match Reasons",
+    "matchScore": "Match Score",
+    "noExactMatchHelp": "Our AI couldn't find an exact match. Please try re-uploading, cropping the image, or searching with the identified text.",
+    "noMatchingCards": "No matching cards found",
+    "noResults": "No cards found",
+    "photoTipsTitle": "Photo Tips:",
+    "popularSearches": "Popular Searches",
+    "rarity": "Rarity",
+    "releaseToUpload": "Release to upload image",
+    "removeFromWatchlist": "Remove from Watchlist",
+    "retakeOrReselect": "Retake/Reselect",
+    "searchAfterCrop": "Search After Cropping",
+    "searchByImage": "Search by Image",
+    "searchDirectly": "Search Directly",
+    "searchPlaceholder": "Search card name...",
+    "selectOrDragImage": "Select or drag & drop a TCG card image",
+    "supportedFormats": "Supports JPG, PNG formats",
+    "takePhoto": "Take Photo",
+    "textSearch": "Text Search",
+    "tipAiRecognition": "• AI will automatically recognize the card name, number, series, and rarity",
+    "tipAvoidReflection": "• Avoid reflections and shadows",
+    "tipClearName": "• Ensure the card name and number are clearly visible",
+    "tipUseCrop": "• We recommend using the crop tool to frame the main card body",
+    "title": "Card Research",
+    "uploadImageToSearch": "Upload an image to search for a card",
+    "uploadPhoto": "Upload Photo",
+    "viewDetails": "View Details",
+    "watchlist": "Watchlist"
+  },
+  "searchResults": {
+    "breadcrumb": {
+      "home": "Home",
+      "search": "Search"
+    },
+    "card": {
+      "noImage": "No Image",
+      "sealedProduct": "Sealed Product"
+    },
+    "error": {
+      "message": "Search failed, please try again"
+    },
+    "header": {
+      "loading": "Searching...",
+      "resultsCount": "Found {{count}} cards",
+      "title": "Search TCG Card Prices",
+      "titleWithQuery": "Search results for \"{{query}}\""
+    },
+    "meta": {
+      "descriptionWithQuery": "Search for TCG cards related to \"{{query}}\" on BOXIUM, check PSA 10 prices, SNKRDUNK transaction records, and market trend analysis.",
+      "title": "Search TCG Card Prices - BOXIUM Marketplace",
+      "titleWithQuery": "Search \"{{query}}\" TCG Card Prices - BOXIUM Marketplace"
+    },
+    "noResults": {
+      "messageWithQuery": "No cards found for \"{{query}}\"",
+      "prompt": "Please enter a search keyword"
+    },
+    "pagination": {
+      "displaying": "Showing {{start}}-{{end}}",
+      "next": "Next",
+      "pageInfo": "Page {{currentPage}} of {{totalPages}} ({{totalResults}} cards total)",
+      "previous": "Previous"
+    },
+    "search": {
+      "placeholder": "Search for cards..."
+    }
+  },
+  "seller": {
+    "action": {
+      "close": "Close",
+      "copied": "Copied",
+      "copy": "Copy"
+    },
+    "apply": {
+      "contactNumber": "Contact Number",
+      "contactNumberPlaceholder": "Please enter your contact number",
+      "contactSupport": "If you have questions about the review result, please contact customer support.",
+      "description": "Your BOXIUM account is not yet enabled for seller features. Please fill out the information below to apply. We will review it within 24 hours.",
+      "idNumber": "ID Number",
+      "idNumberPlaceholder": "Please enter your ID number",
+      "inReviewDescription": "We are reviewing your seller application, which usually takes up to 24 hours. Once approved, you can start listing items on BOXIUM.",
+      "inReviewTitle": "Your seller application is under review",
+      "ok": "OK",
+      "realName": "Real Name",
+      "realNamePlaceholder": "Please enter your real name",
+      "rejectedTitle": "Your seller application has been rejected",
+      "rejectionReason": "Reason for rejection",
+      "storeProfile": "Your Store / Profile",
+      "storeProfilePlaceholder": "Briefly introduce your store, the main types of cards you sell, etc.",
+      "submit": "Submit Application",
+      "submitting": "Processing...",
+      "title": "Apply to be a Seller"
+    },
+    "auctions": {
+      "agreeTermsSuccess": "Seller terms agreed",
+      "card": {
+        "bids": "bids",
+        "buyNow": "Buy Now",
+        "currentBid": "Current Bid",
+        "editAction": "Edit",
+        "endedOn": "Ended on",
+        "noBids": "No bids yet",
+        "startingBid": "Starting Bid",
+        "startsIn": "Starts In",
+        "status": {
+          "completed": "COMPLETED",
+          "live": "LIVE",
+          "pending": "PENDING",
+          "rejected": "REJECTED",
+          "review": "IN REVIEW"
+        },
+        "timeLeft": "Time Left",
+        "viewAction": "View"
       },
-      "priceTracking": {
-        "title": "Price Search",
-        "description": "Real-time display of PSA 10 listings, integrating SNKRDUNK and eBay market data for easy global price comparison"
+      "createSuccess": "🔨 Auction submitted for review. Bidding can start after approval.",
+      "editRejected": {
+        "auctionEndLabel": "Auction End Time",
+        "bidError": "Starting bid must be greater than 0",
+        "bidIncrementLabel": "Bid Increment (HK$)",
+        "buyNowPriceLabel": "Buy Now Price (HK$)",
+        "buyNowPricePlaceholder": "No Buy Now price",
+        "cancel": "Cancel",
+        "condition": {
+          "rawLightlyUsed": "Raw - Lightly Used (Raw B)",
+          "rawNew": "Raw - New (Raw A)",
+          "rawUsed": "Raw - Used (Raw C)"
+        },
+        "conditionLabel": "Condition",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Please enter description",
+        "endTimeError": "Please select an end time",
+        "imagesLabel": "Auction Images (max 5)",
+        "optionalLabel": "(optional)",
+        "rejectionReason": "Rejection Reason",
+        "save": "Save Changes",
+        "saveSuccess": "Changes saved",
+        "saving": "Saving...",
+        "startingBidLabel": "Starting Bid (HK$)",
+        "subtitle": "Modify Auction Content",
+        "title": "Edit Rejected Auction",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Please enter title"
       },
-      "marketTrends": {
-        "title": "Market Trends",
-        "description": "24-hour trending rankings to track PSA 10 card price movements in real time and discover market opportunities"
-      },
-      "gradeAnalysis": {
-        "title": "Marketplace",
-        "description": "A secure PSA 10 card trading platform with seller listing management and buyer protection—transaction funds held in escrow by the platform"
+      "tab": {
+        "filter": {
+          "all": "All",
+          "completed": "Completed",
+          "live": "Live",
+          "pending": "Pending Start",
+          "rejected": "Rejected",
+          "review": "In Review"
+        },
+        "noAuctions": "No auction listings yet",
+        "title": "My Auctions"
       }
     },
-    "features": {
-      "realData": "Aggregates real-time data from major global markets including SNKRDUNK and eBay",
-      "autoUpdate": "24-hour automatic updates to ensure price information is always current",
-      "multiCurrency": "Supports multiple currency displays (HKD, USD, JPY, etc.)",
-      "responsive": "Full support for desktop, tablet, and mobile—check prices anytime, anywhere"
+    "bulkUpload": {
+      "closeButton": "Close",
+      "cta": "Click or drag CSV file here",
+      "description": "Upload a CSV file to list multiple items at once",
+      "downloadTemplate": "Download Template CSV",
+      "fields": {
+        "imageUrl": "Public image URL, use | to separate multiple (optional)",
+        "minOffer": "Minimum offer amount (optional)",
+        "title": "Field Descriptions (CSV Header Row)"
+      },
+      "fileTypes": "Supports .csv format",
+      "hideErrors": "Hide Errors",
+      "preview": "Previewing {count} items",
+      "reupload": "Re-upload",
+      "showErrors": "Show Errors",
+      "startUpload": "Start Upload",
+      "status": {
+        "done": "✓ Done",
+        "error": "✗ Failed",
+        "pending": "• Pending",
+        "uploading": "⏳ Uploading"
+      },
+      "summary": "{completedCount} / {totalCount} items completed",
+      "table": {
+        "condition": "Condition",
+        "image": "Image",
+        "noImage": "N/A",
+        "price": "Price",
+        "productName": "Product Name",
+        "quantity": "Quantity",
+        "series": "Series",
+        "status": "Status"
+      },
+      "title": "Bulk Upload Listings",
+      "uploadingButton": "Uploading..."
     },
-    "sources": {
-      "snkrdunk": "SNKRDUNK: Japan's largest PSA 10 card trading platform, providing real-time listings and transaction records",
-      "ebay": "eBay: The world's largest secondary market, providing international PSA 10 card transaction data"
+    "buyerInfo": {
+      "buyer": "Buyer",
+      "phone": "Phone",
+      "postalCode": "Postal Code",
+      "shippingAddress": "Shipping Address",
+      "shippingMethod": "Shipping Method",
+      "title": "Buyer Information"
+    },
+    "completedOrders": {
+      "completionDate": "Completion Date",
+      "netIncome": "Net Income",
+      "noOrders": "No completed orders yet",
+      "orderAmount": "Order Amount",
+      "orderNo": "Order #",
+      "platformFee": "Platform Fee",
+      "product": "Product",
+      "title": "Last 5 Completed Orders",
+      "viewAll": "View All"
+    },
+    "condition": {
+      "bgs8Below": "BGS 8 or below",
+      "psa8Below": "PSA 8 or below",
+      "rawA": "Grade A",
+      "rawB": "Grade B",
+      "rawC": "Grade C",
+      "rawCard": "Raw Card",
+      "rawD": "Grade D",
+      "tag9Below": "TAG 9 or below"
+    },
+    "dashboard": {
+      "overview": "Overview",
+      "title": "Seller Dashboard"
+    },
+    "imageUploader": {
+      "coverPhoto": "Cover",
+      "cta": "Click or drag & drop images to upload",
+      "fileInfo": "Supports JPG, PNG, WebP, max 10MB each",
+      "genericError": "Image upload failed",
+      "imageAlt": "Product image {index}",
+      "label": "Product Images (max {maxImages})",
+      "maxImagesError": "You can upload a maximum of {maxImages} images",
+      "notAnImageError": "{fileName} is not an image",
+      "sizeLimitError": "{fileName} exceeds 10MB",
+      "uploadFailedError": "Upload failed",
+      "uploadSuccess": "Uploaded {count} images",
+      "uploading": "Uploading..."
+    },
+    "listings": {
+      "addNewListing": "+ Add New Listing",
+      "adminCreateSuccess": "Listing successfully created",
+      "applySellerSuccess": "Application submitted, pending approval",
+      "batchActions": "Batch Actions",
+      "batchDeactivate": "Deactivate",
+      "batchDeactivateSuccess": "Deactivated {count} listings",
+      "batchDelete": "Permanently Delete",
+      "batchDeleteCancelledOrders": ", and cancelled {cancelledOrdersCount} pending orders",
+      "batchDeleteSuccess": "Deleted {deletedCount} listings",
+      "batchReactivate": "Reactivate",
+      "batchReactivateSuccess": "Reactivated {count} listings, pending review",
+      "bulkUpload": "Bulk Upload",
+      "cancelBatchMode": "Cancel",
+      "card": {
+        "adminDelisted": "⛔ Deactivated by Admin",
+        "deactivate": "Deactivate",
+        "duplicateListingTooltip": "Duplicate this listing",
+        "duplicateSuccess": "Listing info copied. Please review and list.",
+        "edit": "Edit",
+        "offers": "Offers",
+        "price": "Price",
+        "quantity": "Qty",
+        "reactivate": "Reactivate",
+        "status": {
+          "active": "Active",
+          "pendingReview": "Pending Review",
+          "removed": "Removed",
+          "sold": "Sold"
+        },
+        "views": "Views"
+      },
+      "createSuccess": "Listing submitted for review",
+      "deactivateSuccess": "Listing deactivated",
+      "deleteConfirmButton": "Confirm Delete",
+      "deleteConfirmMessage": "Are you sure you want to permanently delete the selected {count} listings? This action cannot be undone. Active orders will not be cancelled.",
+      "deleteConfirmTitle": "Confirm Deletion",
+      "filter": {
+        "active": "Active",
+        "all": "All",
+        "pendingReview": "Pending Review",
+        "removed": "Removed",
+        "sold": "Sold"
+      },
+      "noListings": "No listings yet",
+      "noMatchingListings": "No matching listings",
+      "reactivateSuccess": "Listing reactivated and pending review",
+      "updateSuccess": "Listing updated",
+      "viewListingAction": "View Listing →"
+    },
+    "new-listing": {
+      "validation": {
+        "reserve-price": "Reserve price must be greater than or equal to the starting bid"
+      }
+    },
+    "newListing": {
+      "associateCard": "Associate Card (Optional)",
+      "auction": {
+        "days": "{days} days",
+        "duration": "Auction Duration *",
+        "end": "End Time",
+        "start": "Start Time",
+        "startNow": "Start Immediately"
+      },
+      "back": "Back",
+      "changeCard": "Change",
+      "condition": "Condition *",
+      "listingMode": "Listing Mode *",
+      "marketPrice": "PSA 10 Market Avg. HKD {price}",
+      "mode": {
+        "auction": "Auction",
+        "auctionDescription": "Buyers bid, auction ends on a time limit",
+        "buyNow": "Buy Now",
+        "buyNowDescription": "Buyer purchases directly at a fixed price"
+      },
+      "next": "Next",
+      "preview": {
+        "listingPrice": "Price",
+        "submitAuction": "Submit Auction",
+        "submitListing": "Confirm & List",
+        "title": "Preview"
+      },
+      "price": {
+        "allowOffers": "Accept buyer offers",
+        "bidIncrement": "Bid Increment (HKD) *",
+        "bidIncrementPlaceholder": "e.g., 10",
+        "buyNow": "Price (HKD) *",
+        "buyNowPlaceholder": "Enter product price",
+        "buyNowPrice": "Buy Now Price (HKD)",
+        "buyNowPricePlaceholder": "Optional, allows buyer to purchase immediately",
+        "minOffer": "Minimum Offer (HKD)",
+        "minOfferPlaceholder": "Leave blank for no minimum",
+        "reservePrice": "Reserve Price (HKD)",
+        "reservePricePlaceholder": "Optional, won't sell if not met",
+        "startingBid": "Starting Bid (HKD) *",
+        "startingBidPlaceholder": "Enter minimum starting bid"
+      },
+      "productDescription": "Product Description",
+      "productDescriptionPlaceholder": "Describe card condition, edition, etc...",
+      "productName": "Product Name *",
+      "productNamePlaceholder": "e.g., Charizard ex SAR",
+      "quantity": "Quantity *",
+      "searchAndAssociateCard": "Click to search and associate a card",
+      "step1": "Basic Info",
+      "step2": "Price & Quantity",
+      "step3": "Preview",
+      "tcgSeries": "TCG Series *",
+      "title": "Add New Listing",
+      "validation": {
+        "auctionEnd": "End time must be in the future",
+        "bidIncrement": "Please enter a valid bid increment",
+        "buyNowPrice": "Buy Now price must be greater than the starting bid",
+        "minOffer": "Minimum offer must be less than the product price",
+        "price": "Please enter a valid product price",
+        "startingBid": "Please enter a valid starting bid",
+        "title": "Please enter a product name"
+      }
+    },
+    "offer": {
+      "acceptSuccess": "Offer accepted",
+      "rejectSuccess": "Offer rejected",
+      "view": "View Offer"
+    },
+    "offers": {
+      "card": {
+        "accept": "Accept Offer",
+        "buyer": "Buyer",
+        "listingPrice": "Listing Price",
+        "offerDate": "Offer Time",
+        "offerPrice": "Offer Price",
+        "reject": "Reject",
+        "status": {
+          "accepted": "✔️ Accepted",
+          "expired": "⏰ Expired",
+          "rejected": "❌ Rejected"
+        },
+        "viewListing": "Go to Listing"
+      },
+      "noOffers": "No buyer offers yet"
+    },
+    "orderStatus": {
+      "cancelled": "Cancelled",
+      "completed": "Completed",
+      "delivered": "Delivered",
+      "disputed": "Disputed",
+      "paidToShip": "Paid, Please Ship",
+      "pendingPayment": "Pending Payment",
+      "processingToShip": "Processing, Please Ship",
+      "receivedToShip": "Payment Received, Please Ship",
+      "shipped": "Shipped"
+    },
+    "orders": {
+      "card": {
+        "buyer": "Buyer",
+        "meetupBadge": "🤝 Meet-up",
+        "orderDate": "Order Date",
+        "orderTotal": "Order Total",
+        "viewDetails": "View Details"
+      },
+      "filter": {
+        "active": "Active",
+        "all": "All",
+        "done": "Done",
+        "meetup": "🤝 Meet-up",
+        "pending": "Pending"
+      },
+      "noMatchingOrders": "No matching orders",
+      "noOrders": "No orders yet",
+      "searchPlaceholder": "Search Order No. or Product Name..."
+    },
+    "payoutProof": {
+      "altText": "Payment Proof",
+      "openOriginal": "Open original image in new tab",
+      "viewAction": "Click to view payment proof",
+      "zoomHint": "Click thumbnail to enlarge"
+    },
+    "payouts": {
+      "stripeActiveDescription": "After a buyer pays, the platform will automatically transfer funds to your account via Stripe (minus a 5% platform fee).",
+      "stripeActiveTitle": "Stripe Payout Account Active ✅",
+      "stripeDashboardButton": "Go to Stripe Dashboard",
+      "stripeDisabledDescription": "Your Stripe Connect account has been disabled. Please contact Stripe support or re-apply.",
+      "stripeDisabledTitle": "Stripe Account Disabled",
+      "stripeManageButton": "Manage Payout Account",
+      "stripeProcessing": "Processing...",
+      "stripeResetButton": "Reset",
+      "stripeRestrictedDescription": "Your Stripe Connect account is currently restricted and may require additional information. Please visit your Stripe dashboard to resolve this.",
+      "stripeRestrictedTitle": "Stripe Account Restricted",
+      "stripeSetupButton": "Set up Stripe Payout Account",
+      "stripeSetupDescription": "We use Stripe to process seller payouts. Click the button below to be redirected to Stripe's secure page to set up your payout account.",
+      "stripeSetupTitle": "Set up Stripe Connect for Payouts",
+      "title": "Payout Settings"
+    },
+    "shippingMethod": {
+      "meetup": "Meet-up",
+      "selfShip": "Self-Ship"
+    },
+    "shippingProof": {
+      "dragAndDrop": "Click or drag file here",
+      "fileTypes": "Supports PNG, JPG, WebP (max 5MB)",
+      "imageLabel": "Shipping Proof Image",
+      "label": "📷 Shipping Proof",
+      "uploadAction": "Upload Proof",
+      "uploadButton": "Upload",
+      "uploadDescription": "This order is \"Self-Ship\". Please upload shipping proof below (e.g., post office receipt, courier tracking photo) for platform tracking.",
+      "uploadError": "Shipping proof upload failed",
+      "uploadSuccess": "Shipping proof uploaded successfully",
+      "uploadTitle": "Upload Shipping Proof",
+      "uploading": "Uploading...",
+      "zoomAction": "Click to enlarge shipping proof"
+    },
+    "stats": {
+      "activeListings": "Active Listings",
+      "activeListingsTooltip": "Click to view active listings",
+      "avgOrderValue": "Avg. Order Value",
+      "completedOrders": "Completed Orders",
+      "completedOrdersTooltip": "Click to view orders",
+      "last30Days": "Last 30 days",
+      "orders": "Orders",
+      "rating": "Rating",
+      "ratingCount": "({count} reviews)",
+      "revenue": "Revenue",
+      "revenueTooltip": "Click to view earnings",
+      "thisMonthRevenue": "This Month's Revenue",
+      "title": "Sales Data",
+      "totalOrders": "Total Orders",
+      "totalRevenue": "Total Revenue"
+    },
+    "stepper": {
+      "awaitingDelivery": "Awaiting buyer confirmation",
+      "awaitingPayment": "Awaiting buyer payment",
+      "awaitingShipment": "Awaiting shipment",
+      "orderCancelled": "Order cancelled",
+      "orderCompleted": "Order completed",
+      "orderDisputed": "Order disputed",
+      "paymentInReview": "Payment in review"
+    },
+    "tabs": {
+      "buyerOffers": "Buyer Offers",
+      "buyerOffersMobile": "Offers",
+      "earnings": "Earnings",
+      "earningsMobile": "Earnings",
+      "myAuctions": "My Auctions",
+      "myAuctionsMobile": "Auctions",
+      "myListings": "My Listings",
+      "myListingsMobile": "Listings",
+      "orderManagement": "Order Management",
+      "orderManagementMobile": "Orders"
+    },
+    "terms": {
+      "auctionSeller": {
+        "agree": "I have read and agree to the Auction Seller Terms",
+        "confirm": "Confirm and Continue",
+        "title": "Auction Seller Terms"
+      }
+    },
+    "tracking": {
+      "number": "Tracking No.",
+      "view": "Track Shipment"
     }
+  },
+  "sellerPublicProfile": {
+    "activeSeller": "Active Seller",
+    "anonymousBuyer": "Anonymous Buyer",
+    "buyerReviews": "Buyer Reviews",
+    "conditionFair": "Fair",
+    "conditionGood": "Good",
+    "conditionLikeNew": "Like New",
+    "conditionNew": "New",
+    "listings": "Listings",
+    "memberSince": "Member since",
+    "noListings": "This seller has no items for sale",
+    "noReviews": "No reviews yet",
+    "returnToMarketplace": "Return to Marketplace",
+    "reviews": "Reviews",
+    "sellerNotFound": "Seller not found",
+    "showingLatestReviews": "Showing latest {reviews.length} of {reviewTotal} reviews",
+    "topSeller": "Top Seller",
+    "transactions": "transactions"
+  },
+  "share": {
+    "button": "Share",
+    "copyError": "Copy failed, please copy manually",
+    "copyLink": "Copy Link",
+    "copySuccess": "Link copied to clipboard",
+    "facebook": "Share to Facebook",
+    "whatsapp": "Share to WhatsApp"
+  },
+  "topnav": {
+    "allMarkedAsRead": "All marked as read",
+    "becomeSellerDescription": "List your TCG cards on the BOXIUM platform to reach more buyers.",
+    "becomeSellerTitle": "Become a Seller, Sell Cards with Ease",
+    "featureFreeListing": "Free listing, the platform only charges a 5% service fee",
+    "featureOrderManagement": "Automatically notify buyers and easily manage orders",
+    "featurePaymentMethods": "Supports Stripe credit card and Alipay HK payments",
+    "login": "Log In",
+    "loginAndList": "Login and List",
+    "loginToSell": "Log in to list items immediately, no extra review needed.",
+    "logout": "Log Out",
+    "logoutSuccess": "Logged out successfully",
+    "markAllAsRead": "Mark all as read",
+    "marketplace": "Marketplace",
+    "messages": "Messages",
+    "myAccount": "My Account",
+    "myCollection": "My Collection",
+    "myOrders": "My Orders",
+    "noNotificationsDescription": "All your notifications will be displayed here.",
+    "noNotificationsTitle": "No notifications yet",
+    "noUnreadMessagesDescription": "Messages from buyers or sellers will appear here.",
+    "noUnreadMessagesTitle": "No unread messages yet",
+    "notifications": "Notifications",
+    "register": "Register",
+    "registerFree": "Register for Free",
+    "sellItem": "Sell Item",
+    "sellerDashboard": "Seller Dashboard",
+    "viewAllMessages": "View all messages"
+  },
+  "trending": {
+    "currentPrice": "Current Price",
+    "emptyHint": "Please try again later or switch to other categories",
+    "emptyNewlyAdded": "No newly added cards",
+    "emptyPriceDecrease": "No cards with price drop",
+    "emptyPriceIncrease": "No cards with price surge",
+    "emptySearches": "No sufficient search data available",
+    "fullRanking": "Full Ranking",
+    "goToSnkrdunk": "Go to SNKRDUNK",
+    "newlyAdded": "Newly Added",
+    "newlyAddedShort": "New",
+    "noImage": "No Image",
+    "priceChange": "Price Change",
+    "priceDrop": "Price Drop",
+    "priceDropShort": "Drop",
+    "priceSurge": "Price Surge",
+    "priceSurgeShort": "Surge",
+    "searchCount": "Search Count",
+    "searchHeat": "Search Heat",
+    "searchHeatShort": "Heat",
+    "subtitle": "PSA 10 Graded Card Market Trends within Past 2 Months",
+    "title": "🔥 Pokemon TCG Trending Leaderboard",
+    "viewDetails": "View Details"
+  },
+  "unsubscribe": {
+    "confirm": {
+      "cancelButton": "Cancel",
+      "confirmResubscribeButton": "Confirm Resubscription",
+      "confirmUnsubscribeButton": "Confirm Unsubscribe",
+      "emailAddressLabel": "Email Address:",
+      "notificationTypeLabel": "Notification Type:",
+      "resubscribeTitle": "Resubscribe to Email Notifications",
+      "resubscribeWarning": "After clicking the button below, you will start receiving '{{emailTypeLabel}}' again.",
+      "unsubscribeTitle": "Confirm Email Unsubscription",
+      "unsubscribeWarning": "After clicking the button below, you will no longer receive '{{emailTypeLabel}}'. Important order confirmations and security notices will still be sent."
+    },
+    "contactSupport": "If you have any questions, please contact customer service:",
+    "emailPreferences": "BOXIUM PTCG Email Preferences",
+    "emailType": {
+      "all": "All Emails",
+      "general": "General Notifications",
+      "offer": "Offer Notifications",
+      "order": "Order Notifications",
+      "review": "Review Notifications",
+      "seller": "Seller Notifications",
+      "system": "System Notifications",
+      "welcome": "Welcome Email"
+    },
+    "invalidLink": {
+      "description": "This unsubscribe link is invalid or has expired. Please contact customer service at boxium.asia@gmail.com",
+      "title": "Invalid Link"
+    },
+    "linkInvalid": {
+      "contact": "For assistance, please contact: boxium.asia@gmail.com",
+      "description": "This unsubscribe link is invalid or has expired.",
+      "title": "Link Invalid"
+    },
+    "loading": "Loading...",
+    "success": {
+      "backToHome": "Back to Home",
+      "resubscribedMessage": "You have resubscribed to '{{emailTypeLabel}}' from BOXIUM PTCG.",
+      "resubscribedNotice": "Thank you for continuing to subscribe to email notifications from BOXIUM PTCG.",
+      "resubscribedTitle": "Resubscribed Successfully",
+      "unsubscribedMessage": "You have unsubscribed from '{{emailTypeLabel}}' from BOXIUM PTCG.",
+      "unsubscribedNotice": "You will still receive important order confirmations and security notices.",
+      "unsubscribedTitle": "Unsubscribed Successfully"
+    }
+  },
+  "wishlist": {
+    "addedOn": "Added on {{date}}",
+    "emptyHint": "Click the heart icon while browsing to add items to your wishlist",
+    "goToMarketplace": "Go to Marketplace",
+    "isEmpty": "Your wishlist is empty",
+    "loading": "Loading...",
+    "loginNow": "Log In Now",
+    "loginToView": "Log in to view your wishlist",
+    "myWishlist": "My Wishlist",
+    "pleaseLogin": "Please log in first",
+    "remove": "Remove from wishlist",
+    "removedFromWishlist": "Removed from wishlist",
+    "returnToMarketplace": "Return to Marketplace",
+    "totalItems": "Total {{count}} items"
   }
 }

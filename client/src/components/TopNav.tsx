@@ -62,7 +62,7 @@ export function TopNav() {
   const utils = trpc.useUtils();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: async () => {
-      toast.success("登出成功");
+      toast.success(t("topnav.logoutSuccess"));
       // Clear all tRPC cache to reset auth state
       await utils.invalidate();
       // Hard reload to ensure all state is cleared (including cookies)
@@ -108,7 +108,7 @@ export function TopNav() {
     onSuccess: () => {
       utils.notifications.getUnreadCount.invalidate();
       utils.notifications.getMyNotifications.invalidate();
-      toast.success("已全部標記為已讀");
+      toast.success(t("topnav.allMarkedAsRead"));
     },
   });
 
@@ -146,7 +146,7 @@ export function TopNav() {
     { href: "/", label: t("common.home") },
     { href: "/research", label: t("common.research") },
     { href: "/pricing", label: t("common.priceComparison") },
-    { href: "/marketplace", label: "市集" },
+    { href: "/marketplace", label: t("topnav.marketplace") },
     { href: "/blog", label: t("common.blog") },
   ];
 
@@ -282,7 +282,7 @@ export function TopNav() {
               className="flex items-center gap-1.5 bg-[#FEDD00] text-[#06038d] text-sm font-bold px-3 py-1.5 rounded-md hover:bg-[#FEDD00]/90 transition-colors whitespace-nowrap"
             >
               <Tag className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>出售商品</span>
+              <span>{t("topnav.sellItem")}</span>
             </motion.button>
 
             {/* Shopping Cart — logged-in only */}

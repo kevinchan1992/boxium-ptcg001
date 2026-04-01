@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
+import { useTranslation } from "react-i18next";
 
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
   const s = size === "sm" ? "w-3.5 h-3.5" : "w-5 h-5";
@@ -22,6 +23,7 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md
 }
 
 export default function SellerPublicProfile() {
+  const { t } = useTranslation();
   const params = useParams<{ id: string }>();
   const sellerId = parseInt(params.id ?? "0");
 
@@ -46,9 +48,9 @@ export default function SellerPublicProfile() {
       <div className="min-h-screen bg-[#0a0a1a] pt-20 flex items-center justify-center">
         <div className="text-center">
           <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <p className="text-white text-lg mb-2">找不到此賣家</p>
+          <p className="text-white text-lg mb-2">{t("sellerPublicProfile.sellerNotFound")}</p>
           <Link href="/marketplace">
-            <Button className="bg-[#FEDD00] text-black hover:bg-[#FEDD00]/90">返回商城</Button>
+            <Button className="bg-[#FEDD00] text-black hover:bg-[#FEDD00]/90">{t("sellerPublicProfile.returnToMarketplace")}</Button>
           </Link>
         </div>
       </div>
@@ -144,7 +146,7 @@ export default function SellerPublicProfile() {
             {listings.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400">此賣家目前沒有在售商品</p>
+                <p className="text-gray-400">{t("sellerPublicProfile.noListings")}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -191,7 +193,7 @@ export default function SellerPublicProfile() {
             {reviews.length === 0 ? (
               <div className="text-center py-12">
                 <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400">暫無評價</p>
+                <p className="text-gray-400">{t("sellerPublicProfile.noReviews")}</p>
               </div>
             ) : (
               <div className="space-y-3">

@@ -20,24 +20,26 @@ import { generateShareImage, downloadShareImage } from "@/hooks/useShareImage";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useTranslation } from "react-i18next";
 // ─── PayoutProofThumbnail ────────────────────────────────────────────────────
 function PayoutProofThumbnail({ url }: { url: string }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   return (
     <>
       <button
         onClick={() => setOpen(true)}
         className="block mt-1 group relative w-20 h-14 rounded overflow-hidden border border-gray-200 hover:border-[#06038d] transition-colors"
-        title="點擊查看付款截圖"
+        title={t("seller.payoutProof.viewAction")}
       >
-        <img src={url} alt="付款截圖" className="w-full h-full object-cover" />
+        <img src={url} alt={t("seller.payoutProof.altText")} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
           <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
           </svg>
         </div>
       </button>
-      <p className="text-xs text-gray-500 mt-0.5">點擊縮圖可放大查看</p>
+      <p className="text-xs text-gray-500 mt-0.5">{t("seller.payoutProof.zoomHint")}</p>
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
@@ -50,7 +52,7 @@ function PayoutProofThumbnail({ url }: { url: string }) {
             >
               ×
             </button>
-            <img src={url} alt="付款截圖" className="max-w-full max-h-[85vh] rounded-lg shadow-xl object-contain" />
+            <img src={url} alt={t("seller.payoutProof.altText")} className="max-w-full max-h-[85vh] rounded-lg shadow-xl object-contain" />
             <a
               href={url}
               target="_blank"
@@ -76,6 +78,7 @@ function ImageUploader({
   onChange: (imgs: string[]) => void;
   maxImages?: number;
 }) {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -113,7 +116,7 @@ function ImageUploader({
 
   return (
     <div className="space-y-2">
-      <Label className="text-[#06038D] font-semibold">商品圖片（最多 {maxImages} 張）</Label>
+      <Label className="text-[#06038D] font-semibold">{t("seller.imageUploader.label")}</Label>
       {images.length > 0 && (
         <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
           {images.map((url, idx) => (
@@ -123,7 +126,7 @@ function ImageUploader({
                 className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <X className="w-3 h-3" />
               </button>
-              {idx === 0 && <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1 rounded">封面</span>}
+              {idx === 0 && <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1 rounded">{t("seller.imageUploader.coverPhoto")}</span>}
             </div>
           ))}
         </div>
@@ -137,13 +140,13 @@ function ImageUploader({
         >
           {uploading ? (
             <div className="flex items-center justify-center gap-2 text-[#06038D]/60">
-              <Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm">上傳中...</span>
+              <Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm">{t("seller.imageUploader.uploading")}</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-1 text-[#06038D]/60">
               <ImagePlus className="w-6 h-6 text-[#06038D]/50" />
-              <span className="text-sm">點擊或拖放圖片上傳</span>
-              <span className="text-xs">支援 JPG、PNG、WebP，每張最大 10MB</span>
+              <span className="text-sm">{t("seller.imageUploader.cta")}</span>
+              <span className="text-xs">{t("seller.imageUploader.fileInfo")}</span>
             </div>
           )}
         </div>
@@ -190,15 +193,16 @@ const orderStatusLabel: Record<string, { label: string; color: string }> = {
 
 // ─── SellerShippingProof ────────────────────────────────────────────────────
 function SellerShippingProof({ url }: { url: string }) {
+  const { t } = useTranslation();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   return (
     <>
       <div className="mt-1.5">
-        <p className="text-xs text-indigo-600 font-medium mb-1">📷 出貨憑證</p>
+        <p className="text-xs text-indigo-600 font-medium mb-1">{t("seller.shippingProof.label")}</p>
         <button
           onClick={() => setLightboxOpen(true)}
           className="relative group w-24 h-16 rounded-lg overflow-hidden border border-indigo-200 hover:border-[#06038d] transition-colors block"
-          title="點擊放大查看出貨憑證"
+          title={t("seller.shippingProof.zoomAction")}
         >
           <img src={url} alt="出貨憑證" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
@@ -403,6 +407,7 @@ function ShareButton({
 
 // ─── EarningsTab ─────────────────────────────────────────────────────────────
 function EarningsTab() {
+  const { t } = useTranslation();
   const { data: me } = trpc.auth.me.useQuery();
   const { data: sellerProfile } = trpc.marketplace.getMySellerProfile.useQuery(
     undefined, { enabled: !!me }
@@ -438,7 +443,7 @@ function EarningsTab() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
-          <p className="text-xs text-gray-500 mb-1">已完成訂單</p>
+          <p className="text-xs text-gray-500 mb-1">{t("seller.stats.completedOrders")}</p>
           <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{summary.completedCount}</p>
           <p className="text-xs text-gray-400 mt-1">待出貨/運送中 {summary.pendingCount} 筆</p>
         </div>
@@ -476,7 +481,7 @@ function EarningsTab() {
                 formatter={(value: number) => [`HKD ${value.toFixed(0)}`, '淨收入']}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
               />
-              <Bar dataKey="revenue" fill="#06038d" radius={[4, 4, 0, 0]} name="淨收入" />
+              <Bar dataKey="revenue" fill="#06038d" radius={[4, 4, 0, 0]} name={t("seller.completedOrders.netIncome")} />
             </BarChart>
           </ResponsiveContainer>
           <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
@@ -534,7 +539,7 @@ function EarningsTab() {
                 {/* Price Breakdown */}
                 <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">訂單金額</span>
+                    <span className="text-gray-500">{t("seller.completedOrders.orderAmount")}</span>
                     <span className="font-medium">HKD {parseFloat(order.subtotalHkd ?? '0').toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -542,7 +547,7 @@ function EarningsTab() {
                     <span className="text-red-500">- HKD {parseFloat(order.platformFeeHkd ?? '0').toFixed(2)}</span>
                   </div>
                   <div className="border-t border-gray-200 pt-1.5 flex justify-between">
-                    <span className="font-semibold text-gray-800">淨收入</span>
+                    <span className="font-semibold text-gray-800">{t("seller.completedOrders.netIncome")}</span>
                     <span className="font-bold text-green-600">HKD {parseFloat(order.sellerReceivableHkd ?? order.subtotalHkd ?? '0').toFixed(2)}</span>
                   </div>
                 </div>
@@ -567,6 +572,7 @@ function EditRejectedAuctionDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(auction?.title ?? '');
   const [description, setDescription] = useState(auction?.description ?? '');
   const [condition, setCondition] = useState(auction?.condition ?? 'raw_a');
@@ -588,14 +594,14 @@ function EditRejectedAuctionDialog({
   });
 
   const updateMutation = trpc.auction.updateRejectedAuction.useMutation({
-    onSuccess: () => { toast.success('已儲存修改'); onSaved(); onClose(); },
+    onSuccess: () => { toast.success(t("seller.auctions.editRejected.saveSuccess")); onSaved(); onClose(); },
     onError: (e) => toast.error(e.message),
   });
 
   const handleSave = () => {
     const bid = parseFloat(startingBid);
-    if (!bid || bid < 1) { toast.error('起標價必須大於 0'); return; }
-    if (!auctionEndAt) { toast.error('請選擇結標時間'); return; }
+    if (!bid || bid < 1) { toast.error(t("seller.auctions.editRejected.bidError")); return; }
+    if (!auctionEndAt) { toast.error(t("seller.auctions.editRejected.endTimeError")); return; }
     updateMutation.mutate({
       listingId: auction.id,
       title: title || undefined,
@@ -622,8 +628,8 @@ function EditRejectedAuctionDialog({
               <Pencil className="w-5 h-5 text-[#06038D]" />
             </div>
             <div>
-              <p className="text-[10px] text-white/60 font-semibold uppercase tracking-widest">編輯已拒絕拍賣</p>
-              <h2 className="text-lg font-black text-white leading-tight">修改拍賣內容</h2>
+              <p className="text-[10px] text-white/60 font-semibold uppercase tracking-widest">{t("seller.auctions.editRejected.title")}</p>
+              <h2 className="text-lg font-black text-white leading-tight">{t("seller.auctions.editRejected.subtitle")}</h2>
             </div>
           </div>
         </div>
@@ -635,7 +641,7 @@ function EditRejectedAuctionDialog({
               <span className="text-red-500 text-xs font-black">!</span>
             </div>
             <div>
-              <p className="text-xs font-bold text-red-600 mb-0.5">拒絕原因</p>
+              <p className="text-xs font-bold text-red-600 mb-0.5">{t("seller.apply.rejectionReason")}</p>
               <p className="text-xs text-red-700 leading-relaxed">{auction.rejectedReason}</p>
             </div>
           </div>
@@ -644,27 +650,27 @@ function EditRejectedAuctionDialog({
         {/* Form */}
         <div className="px-5 py-4 space-y-4 bg-white">
           <div>
-            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">標題</Label>
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">{t("seller.auctions.editRejected.titleLabel")}</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)}
               className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] focus:ring-[#06038D]/20 rounded-xl h-10"
-              placeholder="請輸入標題" />
+              placeholder={t("seller.auctions.editRejected.titlePlaceholder")} />
           </div>
           <div>
-            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">描述</Label>
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">{t("seller.auctions.editRejected.descriptionLabel")}</Label>
             <Textarea value={description} onChange={e => setDescription(e.target.value)}
               className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] focus:ring-[#06038D]/20 rounded-xl min-h-[80px] resize-none"
-              placeholder="請輸入描述" />
+              placeholder={t("seller.auctions.editRejected.descriptionPlaceholder")} />
           </div>
           <div>
-            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">品相</Label>
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">{t("seller.auctions.editRejected.conditionLabel")}</Label>
             <Select value={condition} onValueChange={setCondition}>
               <SelectTrigger className="mt-1.5 text-gray-900 bg-white border-gray-200 rounded-xl h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-white text-gray-900">
-                <SelectItem value="raw_a">無封全新 (Raw A)</SelectItem>
-                <SelectItem value="raw_b">無封輕微使用 (Raw B)</SelectItem>
-                <SelectItem value="raw_c">無封一般 (Raw C)</SelectItem>
+                <SelectItem value="raw_a">{t("seller.auctions.editRejected.condition.rawNew")}</SelectItem>
+                <SelectItem value="raw_b">{t("seller.auctions.editRejected.condition.rawLightlyUsed")}</SelectItem>
+                <SelectItem value="raw_c">{t("seller.auctions.editRejected.condition.rawUsed")}</SelectItem>
                 <SelectItem value="psa10">PSA 10</SelectItem>
                 <SelectItem value="psa9">PSA 9</SelectItem>
                 <SelectItem value="psa8">PSA 8</SelectItem>
@@ -675,28 +681,28 @@ function EditRejectedAuctionDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">起標價 (HK$)</Label>
+              <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">{t("seller.auctions.editRejected.startingBidLabel")}</Label>
               <Input type="number" value={startingBid} onChange={e => setStartingBid(e.target.value)}
                 className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] rounded-xl h-10" min={1} />
             </div>
             <div>
-              <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">加價幅度 (HK$)</Label>
+              <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">{t("seller.auctions.editRejected.bidIncrementLabel")}</Label>
               <Input type="number" value={bidIncrement} onChange={e => setBidIncrement(e.target.value)}
                 className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] rounded-xl h-10" min={1} />
             </div>
           </div>
           <div>
-            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">即時購價 (HK$) <span className="text-gray-400 normal-case font-normal">(可留空)</span></Label>
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">即時購價 (HK$) <span className="text-gray-400 normal-case font-normal">{t("seller.auctions.editRejected.optionalLabel")}</span></Label>
             <Input type="number" value={buyNowPrice} onChange={e => setBuyNowPrice(e.target.value)}
-              className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] rounded-xl h-10" min={1} placeholder="不設即時購價" />
+              className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] rounded-xl h-10" min={1} placeholder={t("seller.auctions.editRejected.buyNowPricePlaceholder")} />
           </div>
           <div>
-            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">結標時間</Label>
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">{t("seller.auctions.editRejected.auctionEndLabel")}</Label>
             <Input type="datetime-local" value={auctionEndAt} onChange={e => setAuctionEndAt(e.target.value)}
               className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] rounded-xl h-10" />
           </div>
           <div>
-            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide mb-1.5 block">拍賣圖片（最多 5 張）</Label>
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide mb-1.5 block">{t("seller.auctions.editRejected.imagesLabel")}</Label>
             <ImageUploader images={images} onChange={setImages} />
           </div>
         </div>
@@ -760,23 +766,25 @@ function SellerAuctionsTab() {
   }
 
   function AuctionStatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
     const map: Record<string, { label: string; cls: string }> = {
       active:         { label: "競拍中",   cls: "bg-blue-100 text-blue-700" },
       ending_soon:    { label: "即將結標", cls: "bg-orange-100 text-orange-700" },
       scheduled:      { label: "已排程",   cls: "bg-blue-100 text-blue-700" },
-      pending_review: { label: "審核中",   cls: "bg-yellow-100 text-yellow-700" },
+      pending_review: { label: t("seller.auctions.tab.filter.review"),   cls: "bg-yellow-100 text-yellow-700" },
       ended_sold:     { label: "已成交",   cls: "bg-green-100 text-green-700" },
       ended_no_bid:   { label: "流標",     cls: "bg-gray-100 text-gray-500" },
       ended:          { label: "已結標",   cls: "bg-green-100 text-green-700" },
       sold:           { label: "已成交",   cls: "bg-green-100 text-green-700" },
-      cancelled:      { label: "已取消",   cls: "bg-gray-100 text-gray-500" },
-      rejected:       { label: "已拒絕",   cls: "bg-red-100 text-red-600" },
+      cancelled:      { label: t("seller.orderStatus.cancelled"),   cls: "bg-gray-100 text-gray-500" },
+      rejected:       { label: t("seller.auctions.tab.filter.rejected"),   cls: "bg-red-100 text-red-600" },
     };
     const s = map[status] ?? { label: status, cls: "bg-gray-100 text-gray-500" };
     return <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>;
   }
 
   function AuctionCountdown({ endAt }: { endAt: string | null }) {
+  const { t } = useTranslation();
     const [timeLeft, setTimeLeft] = useState("");
     useEffect(() => {
       if (!endAt) { setTimeLeft("—"); return; }
@@ -870,7 +878,7 @@ function SellerAuctionsTab() {
                   <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
                     <div className="flex items-center gap-4">
                       <div>
-                        <p className="text-xs text-gray-400">起標價</p>
+                        <p className="text-xs text-gray-400">{"起標價"}</p>
                         <p className="text-sm font-bold" style={{ color: "#06038d" }}>HK${parseFloat(auction.startingBid ?? '0').toLocaleString()}</p>
                       </div>
                       <div>
@@ -880,7 +888,7 @@ function SellerAuctionsTab() {
                             HK${parseFloat(auction.currentHighestBid).toLocaleString()}
                           </p>
                         ) : (
-                          <p className="text-sm font-bold text-gray-400">尚無出價</p>
+                          <p className="text-sm font-bold text-gray-400">{"尚無出價"}</p>
                         )}
                       </div>
                       {auction.bidCount !== undefined && (
@@ -893,7 +901,7 @@ function SellerAuctionsTab() {
                     <div className="flex items-center gap-2">
                       {auction.auctionStatus === "active" && (
                         <div className="text-right">
-                          <p className="text-xs text-gray-400">剩餘時間</p>
+                          <p className="text-xs text-gray-400">{"剩餘時間"}</p>
                           <AuctionCountdown endAt={auction.auctionEndAt} />
                         </div>
                       )}
@@ -952,6 +960,7 @@ function SellerAuctionsTab() {
 }
 
 export default function SellerDashboard() {
+  const { t } = useTranslation();
   // ── Maintenance mode check (query placed before other hooks, guard after all hooks) ──
   const { data: accessData, isLoading: accessLoading } = trpc.marketplace.getMarketplaceAccess.useQuery();
   const [showApply, setShowApply] = useState(false);
@@ -1076,7 +1085,7 @@ export default function SellerDashboard() {
 
   const updateListingMutation = trpc.marketplace.updateMyListing.useMutation({
     onSuccess: () => {
-      toast.success("商品已更新");
+      toast.success(t("seller.listings.updateSuccess"));
       setShowEditDialog(false);
       setEditingListing(null);
       refetchListings();
@@ -1085,12 +1094,12 @@ export default function SellerDashboard() {
   });
 
   const deactivateMutation = trpc.marketplace.deleteMyListing.useMutation({
-    onSuccess: () => { toast.success("商品已下架"); refetchListings(); utils.marketplace.getMySellerProfile.invalidate(); },
+    onSuccess: () => { toast.success(t("seller.listings.deactivateSuccess")); refetchListings(); utils.marketplace.getMySellerProfile.invalidate(); },
     onError: (e) => toast.error(e.message),
   });
 
   const reactivateMutation = trpc.marketplace.updateMyListing.useMutation({
-    onSuccess: () => { toast.success("商品已重新上架，等待審核"); refetchListings(); utils.marketplace.getMySellerProfile.invalidate(); },
+    onSuccess: () => { toast.success(t("seller.listings.reactivateSuccess")); refetchListings(); utils.marketplace.getMySellerProfile.invalidate(); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -1161,13 +1170,13 @@ export default function SellerDashboard() {
   };
 
   const applyMutation = trpc.marketplace.applyAsSeller.useMutation({
-    onSuccess: () => { toast.success("申請已提交，等待審批"); setShowApply(false); refetchProfile(); },
+    onSuccess: () => { toast.success(t("seller.listings.applySellerSuccess")); setShowApply(false); refetchProfile(); },
     onError: (e) => toast.error(e.message),
   });
 
   const createListingMutation = trpc.marketplace.createListing.useMutation({
     onSuccess: () => {
-      toast.success("商品已提交審核");
+      toast.success(t("seller.listings.createSuccess"));
       setShowNewListing(false);
       setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "", auctionDurationDays: 7 });
       setListingStep(1);
@@ -1216,7 +1225,7 @@ export default function SellerDashboard() {
 
   const createAuctionMutation = trpc.auction.create.useMutation({
     onSuccess: () => {
-      toast.success("🔨 拍賣已提交審核，審核通過後即可開始競標");
+      toast.success(t("seller.auctions.createSuccess"));
       setShowNewListing(false);
       setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "", auctionDurationDays: 7 });
       setListingStep(1);
@@ -1234,7 +1243,7 @@ export default function SellerDashboard() {
       setNewListingId(id);
       toast.success(
         <div className="flex items-center gap-3">
-          <span>商品已成功上架</span>
+          <span>{t("seller.listings.adminCreateSuccess")}</span>
           {id && (
             <a
               href={`/marketplace/${id}`}
@@ -1446,7 +1455,7 @@ export default function SellerDashboard() {
                   <div className="flex items-center gap-3">
                     <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0" />
                     <div>
-                      <p className="font-bold text-blue-900">設定 Stripe 收款帳戶</p>
+                      <p className="font-bold text-blue-900">{t("seller.payouts.stripeSetupButton")}</p>
                       <p className="text-sm text-blue-700">完成 <strong>Stripe Connect</strong> 設定後才能收取款項。平台將透過 <strong>Stripe</strong> 自動轉帳給你。</p>
                     </div>
                   </div>
@@ -1500,8 +1509,8 @@ export default function SellerDashboard() {
                   <div className="flex items-center gap-3">
                     <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-red-900">Stripe 帳戶已停用</p>
-                      <p className="text-sm text-red-700">你的 Stripe Connect 帳戶已被停用，請聯絡 Stripe 支援或重新申請。</p>
+                      <p className="font-medium text-red-900">{t("seller.payouts.stripeDisabledTitle")}</p>
+                      <p className="text-sm text-red-700">{t("seller.payouts.stripeDisabledDescription")}</p>
                     </div>
                   </div>
                   <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
@@ -1518,8 +1527,8 @@ export default function SellerDashboard() {
                   <div className="flex items-center gap-3">
                     <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
                     <div>
-                      <p className="text-green-800 font-medium">Stripe 收款帳戶已啟用 ✅</p>
-                      <p className="text-sm text-green-700">買家付款後，平台將自動透過 Stripe 轉帳至你的帳戶（扣除 5% 平台服務費）。</p>
+                      <p className="text-green-800 font-medium">{t("seller.payouts.stripeActiveTitle")}</p>
+                      <p className="text-sm text-green-700">{t("seller.payouts.stripeActiveDescription")}</p>
                     </div>
                   </div>
                   <Button
@@ -1539,42 +1548,42 @@ export default function SellerDashboard() {
               {/* Stat: 上架商品 */}
               <div className="rounded-xl border border-gray-100 shadow-sm p-3 cursor-pointer hover:shadow-md hover:border-[#06038d]/30 transition-all active:scale-95" style={{ background: "#f8faff" }}
                 onClick={() => { setActiveTab('listings'); setListingFilter('active'); }}
-                title="點擊查看上架中商品">
+                title={t("seller.stats.activeListingsTooltip")}>
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#e8edff" }}>
                     <Package className="w-4 h-4" style={{ color: "#06038d" }} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xl font-bold leading-tight" style={{ color: "#06038d" }}>{myListings?.length ?? 0}</p>
-                    <p className="text-[11px] text-gray-500 leading-tight">上架商品</p>
+                    <p className="text-[11px] text-gray-500 leading-tight">{t("seller.stats.activeListings")}</p>
                   </div>
                 </div>
               </div>
               {/* Stat: 已完成訂單 */}
               <div className="rounded-xl border border-gray-100 shadow-sm p-3 cursor-pointer hover:shadow-md hover:border-[#06038d]/30 transition-all active:scale-95" style={{ background: "#f8faff" }}
                 onClick={() => setActiveTab('orders')}
-                title="點擊查看訂單">
+                title={t("seller.stats.completedOrdersTooltip")}>
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#e8edff" }}>
                     <ShoppingBag className="w-4 h-4" style={{ color: "#06038d" }} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xl font-bold leading-tight" style={{ color: "#06038d" }}>{salesStats?.completedOrders ?? sellerProfile?.totalSales ?? 0}</p>
-                    <p className="text-[11px] text-gray-500 leading-tight">已完成訂單</p>
+                    <p className="text-[11px] text-gray-500 leading-tight">{t("seller.stats.completedOrders")}</p>
                   </div>
                 </div>
               </div>
               {/* Stat: 本月收益 */}
               <div className="rounded-xl border border-gray-100 shadow-sm p-3 cursor-pointer hover:shadow-md hover:border-[#b8860b]/30 transition-all active:scale-95" style={{ background: "#f8faff" }}
                 onClick={() => setActiveTab('earnings')}
-                title="點擊查看收款記錄">
+                title={t("seller.stats.revenueTooltip")}>
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#fff8e0" }}>
                     <DollarSign className="w-4 h-4" style={{ color: "#b8860b" }} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-base font-bold leading-tight truncate" style={{ color: "#06038d" }}>HK${(salesStats?.thisMonthRevenue ?? 0).toFixed(0)}</p>
-                    <p className="text-[11px] text-gray-500 leading-tight">本月收益</p>
+                    <p className="text-[11px] text-gray-500 leading-tight">{t("seller.stats.thisMonthRevenue")}</p>
                     {salesStats && salesStats.lastMonthRevenue > 0 && (
                       <p className="text-[10px] leading-tight" style={{ color: salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '#22c55e' : '#ef4444' }}>
                         {salesStats.thisMonthRevenue >= salesStats.lastMonthRevenue ? '▲' : '▼'}
@@ -1600,13 +1609,13 @@ export default function SellerDashboard() {
 
             <BrandTabs defaultValue="listings" value={activeTab} onValueChange={setActiveTab}>
               <BrandTabsList grid tabCount={5}>
-                <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label="我的商品" mobileLabel="商品">
+                <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label={t("seller.tabs.myListings")} mobileLabel={t("seller.completedOrders.product")}>
                   我的商品
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="auctions" icon={<Gavel className="w-4 h-4" />} label="我的拍賣" mobileLabel="拍賣">
+                <BrandTabsTrigger value="auctions" icon={<Gavel className="w-4 h-4" />} label={t("seller.auctions.tab.title")} mobileLabel={t("seller.tabs.myAuctionsMobile")}>
                   我的拍賣
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label="訂單管理" mobileLabel="訂單">
+                <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label={t("seller.tabs.orderManagement")} mobileLabel={t("seller.stats.orders")}>
                   訂單管理
                   {pendingOrdersCount > 0 && (
                     <span className="inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
@@ -1614,7 +1623,7 @@ export default function SellerDashboard() {
                     </span>
                   )}
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="offers" icon={<MessageSquare className="w-4 h-4" />} label="買家出價" mobileLabel="出價">
+                <BrandTabsTrigger value="offers" icon={<MessageSquare className="w-4 h-4" />} label={t("seller.tabs.buyerOffers")} mobileLabel={t("seller.auctions.card.bids")}>
                   買家出價
                   {pendingSellerOffersCount > 0 && (
                     <span className="inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
@@ -1622,7 +1631,7 @@ export default function SellerDashboard() {
                     </span>
                   )}
                 </BrandTabsTrigger>
-                <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label="收款記錄" mobileLabel="收款">
+                <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label={t("seller.tabs.earnings")} mobileLabel={t("seller.tabs.earningsMobile")}>
                   收款記錄
                 </BrandTabsTrigger>
               </BrandTabsList>
@@ -2012,8 +2021,8 @@ export default function SellerDashboard() {
                                   onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}
                                 >
                                   <Pencil className="w-3 h-3 mr-1" />
-                                  <span className="hidden sm:inline">編輯</span>
-                                  <span className="sm:hidden">編輯</span>
+                                  <span className="hidden sm:inline">{t("seller.auctions.card.editAction")}</span>
+                                  <span className="sm:hidden">{t("seller.auctions.card.editAction")}</span>
                                 </Button>
                               )}
                               {/* Deactivate / Reactivate */}
@@ -2040,7 +2049,7 @@ export default function SellerDashboard() {
                                 </Button>
                               )}
                               {isRemoved && isAdminDelisted && (
-                                <span className="text-xs text-red-500 font-medium px-1">⛔ 管理員已下架</span>
+                                <span className="text-xs text-red-500 font-medium px-1">{t("seller.listings.card.adminDelisted")}</span>
                               )}
                               {/* View detail */}
                               {(isSold || isActive) && (
@@ -2056,7 +2065,7 @@ export default function SellerDashboard() {
                                   size="sm"
                                   variant="outline"
                                   className="text-xs h-8 px-2.5 border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/10"
-                                  title="複製此商品"
+                                  title={t("seller.listings.card.duplicateListingTooltip")}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setListingForm({
@@ -2076,7 +2085,7 @@ export default function SellerDashboard() {
                                     setSelectedCard(null);
                                     setListingStep(1);
                                     setShowNewListing(true);
-                                    toast.info('已複製商品資訊，請檢查後上架');
+                                    toast.info(t("seller.listings.card.duplicateSuccess"));
                                   }}
                                 >
                                   <Layers className="w-3.5 h-3.5" />
@@ -2132,7 +2141,7 @@ export default function SellerDashboard() {
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder="搜尋訂單號或商品名稱..."
+                        placeholder={t("seller.orders.searchPlaceholder")}
                         value={orderSearchQuery}
                         onChange={e => setOrderSearchQuery(e.target.value)}
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d] pr-8"
@@ -2394,7 +2403,7 @@ export default function SellerDashboard() {
                 {!sellerOffers?.length ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>尚無買家出價</p>
+                    <p>{t("seller.offers.noOffers")}</p>
                   </div>
                 ) : (() => {
                   const filtered = offerFilter === 'all' ? sellerOffers : (sellerOffers as any[]).filter((o: any) => o.status === offerFilter);
@@ -2522,7 +2531,7 @@ export default function SellerDashboard() {
                                   offer.status === 'rejected' ? 'bg-red-50 text-red-700 border border-red-200' :
                                   'bg-gray-50 text-gray-600 border border-gray-200'
                                 }`}>
-                                  {offer.status === 'accepted' ? <>✔️ 已接受</> : offer.status === 'rejected' ? <>❌ 已拒絕</> : <>⏰ 已過期</>}
+                                  {offer.status === 'accepted' ? <>{t("seller.offers.card.status.accepted")}</> : offer.status === 'rejected' ? <>{t("seller.offers.card.status.rejected")}</> : <>{t("seller.offers.card.status.expired")}</>}
                                 </span>
                               )}
                               {offer.listingId && (
@@ -2554,20 +2563,20 @@ export default function SellerDashboard() {
       {/* ─── Bulk Upload Dialog ─────────────────────────────────────────── */}
       <Dialog open={showBulkUpload} onOpenChange={(open) => { setShowBulkUpload(open); if (!open) { setCsvRows([]); setBulkUploading(false); } }}>
         <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-2xl">
-          <VisuallyHidden><DialogTitle>批量上架商品</DialogTitle></VisuallyHidden>
+          <VisuallyHidden><DialogTitle>{t("seller.bulkUpload.title")}</DialogTitle></VisuallyHidden>
           <div className="px-5 pt-5 pb-4" style={{backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00'}}>
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-base font-bold text-white">批量上架商品</h2>
+              <h2 className="text-base font-bold text-white">{t("seller.bulkUpload.title")}</h2>
               <button onClick={() => setShowBulkUpload(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-white/60 text-xs">上傳 CSV 檔案一次上架多件商品</p>
+            <p className="text-white/60 text-xs">{t("seller.bulkUpload.description")}</p>
           </div>
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
             {/* CSV Template Download */}
             <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3">
-              <p className="text-xs font-semibold text-[#06038D] mb-1">欄位說明（CSV 標題列）</p>
+              <p className="text-xs font-semibold text-[#06038D] mb-1">{t("seller.bulkUpload.fields.title")}</p>
               <p className="text-xs text-gray-500 font-mono">title, description, condition, price, quantity, tcg_series, allow_offers, min_offer, image_url</p>
               <div className="mt-2 text-xs text-gray-400 space-y-0.5">
                 <p>• condition: psa10 / psa9 / psa8_below / raw_a / raw_b / raw_c / raw_d</p>
@@ -2602,8 +2611,8 @@ export default function SellerDashboard() {
                 }}
               >
                 <Layers className="w-8 h-8 mx-auto mb-2 text-[#06038D]/40" />
-                <p className="text-sm font-medium text-[#06038D]">點擊或拖曳 CSV 檔案至此</p>
-                <p className="text-xs text-gray-400 mt-1">支援 .csv 格式</p>
+                <p className="text-sm font-medium text-[#06038D]">{t("seller.bulkUpload.cta")}</p>
+                <p className="text-xs text-gray-400 mt-1">{t("seller.bulkUpload.fileTypes")}</p>
                 <input id="csv-file-input" type="file" accept=".csv" className="hidden" onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) { const reader = new FileReader(); reader.onload = (ev) => parseCsv(ev.target?.result as string); reader.readAsText(file); }
@@ -2615,19 +2624,19 @@ export default function SellerDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold text-[#06038D]">預覽 {csvRows.length} 件商品</p>
-                  <button className="text-xs text-gray-400 underline" onClick={() => setCsvRows([])}>重新上傳</button>
+                  <button className="text-xs text-gray-400 underline" onClick={() => setCsvRows([])}>{t("seller.bulkUpload.reupload")}</button>
                 </div>
                 <div className="overflow-x-auto rounded-xl border border-[#06038D]/20">
                   <table className="w-full text-xs">
                     <thead className="bg-[#06038D] text-white">
                       <tr>
-                        <th className="px-3 py-2 text-center">圖片</th>
-                        <th className="px-3 py-2 text-left">商品名稱</th>
-                        <th className="px-3 py-2 text-left">品相</th>
-                        <th className="px-3 py-2 text-right">售價</th>
-                        <th className="px-3 py-2 text-center">數量</th>
-                        <th className="px-3 py-2 text-center">系列</th>
-                        <th className="px-3 py-2 text-center">狀態</th>
+                        <th className="px-3 py-2 text-center">{t("seller.bulkUpload.table.image")}</th>
+                        <th className="px-3 py-2 text-left">{t("seller.bulkUpload.table.productName")}</th>
+                        <th className="px-3 py-2 text-left">{t("seller.auctions.editRejected.conditionLabel")}</th>
+                        <th className="px-3 py-2 text-right">{t("seller.bulkUpload.table.price")}</th>
+                        <th className="px-3 py-2 text-center">{t("seller.listings.card.quantity")}</th>
+                        <th className="px-3 py-2 text-center">{t("seller.bulkUpload.table.series")}</th>
+                        <th className="px-3 py-2 text-center">{t("seller.bulkUpload.table.status")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2653,10 +2662,10 @@ export default function SellerDashboard() {
                           <td className="px-3 py-2 text-center">{row.quantity}</td>
                           <td className="px-3 py-2 text-center">{row.tcgSeries}</td>
                           <td className="px-3 py-2 text-center">
-                            {row._status === 'pending' && <span className="text-gray-400">• 待上架</span>}
-                            {row._status === 'uploading' && <span className="text-yellow-600">⏳ 上架中</span>}
-                            {row._status === 'done' && <span className="text-green-600">✓ 完成</span>}
-                            {row._status === 'error' && <span className="text-red-600" title={row._error}>✗ 失敗</span>}
+                            {row._status === 'pending' && <span className="text-gray-400">{t("seller.bulkUpload.status.pending")}</span>}
+                            {row._status === 'uploading' && <span className="text-yellow-600">{t("seller.bulkUpload.status.uploading")}</span>}
+                            {row._status === 'done' && <span className="text-green-600">{t("seller.bulkUpload.status.done")}</span>}
+                            {row._status === 'error' && <span className="text-red-600" title={row._error}>{t("seller.bulkUpload.status.error")}</span>}
                           </td>
                         </tr>
                       ))}
@@ -2741,7 +2750,7 @@ export default function SellerDashboard() {
                 }}
               >
                 {bulkUploading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />上架中...</>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("seller.bulkUpload.uploadingButton")}</>
                 ) : csvRows.every(r => r._status === 'done') ? (
                   '全部完成'
                 ) : (
@@ -2755,7 +2764,7 @@ export default function SellerDashboard() {
 
       <Dialog open={showApply} onOpenChange={setShowApply}>
         <DialogContent bottomSheet className="sm:max-w-md">
-          <DialogHeader><DialogTitle>申請成為賣家</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("seller.apply.title")}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>顯示名稱 *</Label>
@@ -2775,7 +2784,7 @@ export default function SellerDashboard() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApply(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setShowApply(false)}>{t("seller.auctions.editRejected.cancel")}</Button>
             <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white"
               disabled={!applyForm.displayName || applyMutation.isPending}
               onClick={() => applyMutation.mutate({ displayName: applyForm.displayName, bio: applyForm.bio || undefined })}>
@@ -2810,7 +2819,7 @@ export default function SellerDashboard() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="text-gray-700 bg-white" onClick={() => setShowRejectDialog(false)}>取消</Button>
+            <Button variant="outline" className="text-gray-700 bg-white" onClick={() => setShowRejectDialog(false)}>{t("seller.auctions.editRejected.cancel")}</Button>
             <Button
               className="text-white font-bold"
               style={{ backgroundColor: "#dc2626" }}
@@ -2895,16 +2904,16 @@ export default function SellerDashboard() {
               </div>
             )}
             <div>
-              <Label className="text-[#06038D] font-semibold">商品名稱</Label>
+              <Label className="text-[#06038D] font-semibold">{t("seller.bulkUpload.table.productName")}</Label>
               <Input
                 className="mt-1 bg-white text-black border-gray-300 placeholder:text-gray-400 focus:border-[#06038D]"
                 value={editForm.title}
                 onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
-                placeholder="商品名稱"
+                placeholder={t("seller.bulkUpload.table.productName")}
               />
             </div>
             <div>
-              <Label className="text-[#06038D] font-semibold">商品描述</Label>
+              <Label className="text-[#06038D] font-semibold">{t("seller.newListing.productDescription")}</Label>
               <Textarea
                 className="mt-1 resize-none bg-white text-black border-gray-300 placeholder:text-gray-400 focus:border-[#06038D]"
                 rows={3}
@@ -2944,7 +2953,7 @@ export default function SellerDashboard() {
 
           {/* Footer */}
           <div className="px-5 py-4 border-t border-gray-100 bg-white flex gap-3">
-            <Button variant="outline" className="flex-1 h-11 border-red-500 text-red-600 hover:bg-red-50" onClick={() => setShowEditDialog(false)}>取消</Button>
+            <Button variant="outline" className="flex-1 h-11 border-red-500 text-red-600 hover:bg-red-50" onClick={() => setShowEditDialog(false)}>{t("seller.auctions.editRejected.cancel")}</Button>
             <Button
               className="flex-1 h-11 font-bold text-base"
               style={{ background: '#FEDD00', color: '#06038D' }}
@@ -2984,7 +2993,7 @@ export default function SellerDashboard() {
             </div>
             {/* Step Indicator */}
             <div className="flex items-center gap-0">
-              {[{ n: 1, label: "基本資料" }, { n: 2, label: "定價設定" }, { n: 3, label: "確認上架" }].map(({ n, label }, idx) => (
+              {[{ n: 1, label: "基本資料" }, { n: 2, label: "定價設定" }, { n: 3, label: t("seller.newListing.preview.submitListing") }].map(({ n, label }, idx) => (
                 <React.Fragment key={n}>
                   <div className="flex flex-col items-center gap-1">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -3017,7 +3026,7 @@ export default function SellerDashboard() {
                 <ImageUploader images={listingImages} onChange={setListingImages} />
                 {/* Card Picker */}
                 <div>
-                  <Label className="text-[#06038D] font-semibold">關聯卡牌（選填）</Label>
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.associateCard")}</Label>
                   {selectedCard ? (
                     <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#06038D]/30 bg-[#06038D]/5">
                       {selectedCard.imageUrl ? (
@@ -3041,7 +3050,7 @@ export default function SellerDashboard() {
                         )}
                       </div>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-[#06038D] hover:bg-[#06038D]/10" onClick={() => setShowCardPicker(true)}>改變</Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-[#06038D] hover:bg-[#06038D]/10" onClick={() => setShowCardPicker(true)}>{t("seller.newListing.changeCard")}</Button>
                         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-500" onClick={() => setSelectedCard(null)}><X className="w-3 h-3" /></Button>
                       </div>
                     </div>
@@ -3060,19 +3069,19 @@ export default function SellerDashboard() {
                   )}
                 </div>
                 <div>
-                  <Label className="text-[#06038D] font-semibold">商品名稱 *</Label>
-                  <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder="例如：Charizard ex 噴火龍 SAR"
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.productName")}</Label>
+                  <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder={t("seller.newListing.productNamePlaceholder")}
                     value={listingForm.title}
                     onChange={(e) => setListingForm(p => ({ ...p, title: e.target.value }))} />
                 </div>
                 <div>
-                  <Label className="text-[#06038D] font-semibold">商品描述</Label>
-                  <Textarea className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder="描述卡牌狀況、版本等..."
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.productDescription")}</Label>
+                  <Textarea className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder={t("seller.newListing.productDescriptionPlaceholder")}
                     value={listingForm.description}
                     onChange={(e) => setListingForm(p => ({ ...p, description: e.target.value }))} />
                 </div>
                 <div>
-                  <Label className="text-[#06038D] font-semibold">TCG 系列 *</Label>
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.tcgSeries")}</Label>
                   <div className="mt-1 grid grid-cols-3 gap-2">
                     {[
                       { value: "pokemon",  label: "Pokémon",   logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif" },
@@ -3099,11 +3108,11 @@ export default function SellerDashboard() {
                 </div>
                 {/* Listing Mode Selector */}
                 <div>
-                  <Label className="text-[#06038D] font-semibold">上架模式 *</Label>
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.listingMode")}</Label>
                   <div className="mt-1 grid grid-cols-2 gap-2">
                     {[
-                      { value: "buy_now", label: "立即購買", icon: "🛒", desc: "買家直接以定價購買" },
-                      { value: "auction", label: "拍賣", icon: "🔨", desc: "買家競價，時限結標" },
+                      { value: "buy_now", label: t("seller.newListing.mode.buyNow"), icon: "🛒", desc: "買家直接以定價購買" },
+                      { value: "auction", label: t("seller.tabs.myAuctionsMobile"), icon: "🔨", desc: "買家競價，時限結標" },
                     ].map(mode => (
                       <button
                         key={mode.value}
@@ -3125,7 +3134,7 @@ export default function SellerDashboard() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[#06038D] font-semibold">品相 *</Label>
+                    <Label className="text-[#06038D] font-semibold">{t("seller.newListing.condition")}</Label>
                     <Select value={listingForm.condition} onValueChange={(v) => setListingForm(p => ({ ...p, condition: v }))}>
                       <SelectTrigger className="mt-1 bg-white border-[#06038D]/30 text-[#06038D]"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -3139,7 +3148,7 @@ export default function SellerDashboard() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-[#06038D] font-semibold">數量 *</Label>
+                    <Label className="text-[#06038D] font-semibold">{t("seller.newListing.quantity")}</Label>
                     <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]" type="number" min="1" value={listingForm.quantity}
                       onChange={(e) => setListingForm(p => ({ ...p, quantity: e.target.value }))} />
                   </div>
@@ -3333,7 +3342,7 @@ export default function SellerDashboard() {
                     <>
                       <div className="flex items-center justify-between p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
                         <div>
-                          <p className="text-sm font-medium text-[#06038D]">接受買家出價</p>
+                          <p className="text-sm font-medium text-[#06038D]">{t("seller.newListing.price.allowOffers")}</p>
                           <p className="text-xs text-[#06038D]/50">買家可提交低於定價的出價</p>
                         </div>
                         <button
@@ -3375,7 +3384,7 @@ export default function SellerDashboard() {
                   )}
                     <div className="rounded-xl border border-[#06038D]/20 divide-y divide-[#06038D]/10 overflow-hidden bg-white">
                     <div className="flex items-start justify-between px-4 py-3">
-                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">商品名稱</span>
+                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.bulkUpload.table.productName")}</span>
                       <span className="text-sm font-medium text-[#06038D] text-right">{listingForm.title}</span>
                     </div>
                     {selectedCard && (
@@ -3386,26 +3395,26 @@ export default function SellerDashboard() {
                     )}
                     {listingForm.description && (
                       <div className="flex items-start justify-between px-4 py-3">
-                        <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">描述</span>
+                        <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.auctions.editRejected.descriptionLabel")}</span>
                         <span className="text-sm text-[#06038D]/80 text-right line-clamp-3">{listingForm.description}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">品相</span>
+                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.auctions.editRejected.conditionLabel")}</span>
                       <span className="text-sm text-[#06038D]">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition}</span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">數量</span>
+                      <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.listings.card.quantity")}</span>
                       <span className="text-sm text-[#06038D]">{listingForm.quantity}</span>
                     </div>
                     {listingForm.listingMode === 'buy_now' ? (
                       <>
                         <div className="flex items-center justify-between px-4 py-3">
-                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">售價</span>
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.bulkUpload.table.price")}</span>
                           <span className="text-base font-bold text-[#06038D]">HKD {parseFloat(listingForm.price || "0").toFixed(2)}</span>
                         </div>
                         <div className="flex items-center justify-between px-4 py-3">
-                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">買家出價</span>
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.tabs.buyerOffers")}</span>
                           <span className="text-sm text-[#06038D]">{listingForm.acceptOffers ? `接受${listingForm.minOffer ? `（最低 HKD ${listingForm.minOffer}）` : ""}` : "不接受"}</span>
                         </div>
                       </>
@@ -3416,7 +3425,7 @@ export default function SellerDashboard() {
                           <span className="text-sm font-bold text-[#06038D]">🔨 拍賣</span>
                         </div>
                         <div className="flex items-center justify-between px-4 py-3">
-                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">起標價</span>
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.auctions.card.startingBid")}</span>
                           <span className="text-base font-bold text-[#06038D]">HKD {parseFloat(listingForm.startingBid || "0").toLocaleString()}</span>
                         </div>
                         {listingForm.reservePrice && (
@@ -3436,7 +3445,7 @@ export default function SellerDashboard() {
                           <span className="text-sm text-[#06038D]">HKD {parseFloat(listingForm.bidIncrement || "10").toLocaleString()}</span>
                         </div>
                         <div className="flex items-center justify-between px-4 py-3">
-                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">結標時間</span>
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.auctions.editRejected.auctionEndLabel")}</span>
                           <span className="text-sm text-[#06038D]">{listingForm.auctionEndAt ? new Date(listingForm.auctionEndAt).toLocaleString('zh-HK') : '-'}</span>
                         </div>
                       </>
@@ -3446,7 +3455,7 @@ export default function SellerDashboard() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
                         <div>
-                          <p className="text-sm font-medium text-[#06038D]">接受買家出價</p>
+                          <p className="text-sm font-medium text-[#06038D]">{t("seller.newListing.price.allowOffers")}</p>
                           <p className="text-xs text-[#06038D]/50">買家可提交低於定價的出價</p>
                         </div>
                         <button
@@ -3495,10 +3504,10 @@ export default function SellerDashboard() {
           {/* Footer Navigation */}
           <div className="px-5 py-4 flex gap-2 bg-white" style={{borderTop: '1px solid rgba(6,3,141,0.15)'}}>
             {listingStep === 1 && (
-              <Button variant="outline" className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white" onClick={() => setShowNewListing(false)}>取消</Button>
+              <Button variant="outline" className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white" onClick={() => setShowNewListing(false)}>{t("seller.auctions.editRejected.cancel")}</Button>
             )}
             {listingStep > 1 && (
-              <Button variant="outline" className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white" onClick={() => setListingStep(s => (s - 1) as 1 | 2 | 3)}>上一步</Button>
+              <Button variant="outline" className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white" onClick={() => setListingStep(s => (s - 1) as 1 | 2 | 3)}>{t("seller.newListing.back")}</Button>
             )}
             {listingStep < 3 && (
               <Button
@@ -3719,7 +3728,7 @@ export default function SellerDashboard() {
                   {shipImageUploading ? (
                     <div className="flex items-center gap-2 text-[#06038d]">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-xs">上傳中...</span>
+                      <span className="text-xs">{t("seller.imageUploader.uploading")}</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-1 text-[#06038d]">
@@ -3762,7 +3771,7 @@ export default function SellerDashboard() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="border-red-400 text-red-600 hover:bg-red-50" onClick={() => setShipDialog(d => ({ ...d, open: false }))}>取消</Button>
+            <Button variant="outline" className="border-red-400 text-red-600 hover:bg-red-50" onClick={() => setShipDialog(d => ({ ...d, open: false }))}>{t("seller.auctions.editRejected.cancel")}</Button>
             <Button
               className="bg-[#06038d] hover:bg-[#0804b8] text-white"
               disabled={!shipForm.shippingMethod || !shipForm.trackingNumber || !shipForm.shippingImageUrl || markShippedMutation.isPending || shipImageUploading}
@@ -3889,7 +3898,7 @@ export default function SellerDashboard() {
               {batchDeleteMutation.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-1 animate-spin" />刪除中...</>
               ) : (
-                <><Trash2 className="w-4 h-4 mr-1" />確認刪除</>
+                <><Trash2 className="w-4 h-4 mr-1" />{t("seller.listings.deleteConfirmTitle")}</>
               )}
             </Button>
           </div>

@@ -17,6 +17,7 @@ import { ArrowLeft, Package, CheckCircle, Truck, Clock, XCircle, AlertCircle,
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "react-i18next";
 
 type VerifyResult = {
   verified: boolean;
@@ -34,6 +35,7 @@ type VerifyResult = {
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
 function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShippingAddress }: { orderId: number; listingId?: number | null; amount: string; paymentMethod?: string; hasShippingAddress?: boolean }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   // If order already has alipay_hk selected, start at qr step directly
   const initialStep = paymentMethod === "alipay_hk" ? "qr" : "select";
@@ -68,8 +70,8 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
     onSuccess: (data) => {
       setVerifyResult(data as VerifyResult);
       setIsVerifying(false);
-      if (data.verified) toast.success("✅ 付款金額驗證成功！");
-      else toast.error("⚠️ 驗證未通過，請重新上傳截圖");
+      if (data.verified) toast.success(t("orderDetail.paymentVerifiedSuccess"));
+      else toast.error(t("orderDetail.paymentVerifiedError"));
     },
     onError: (e: any) => { setIsVerifying(false); toast.error("驗證失敗：" + e.message); },
   });
@@ -77,7 +79,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("截圖不能超過 5MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error(t("orderDetail.fileTooLarge")); return; }
     setIsUploading(true); setVerifyResult(null);
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -88,10 +90,10 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
       });
       const result = await submitProofMutation.mutateAsync({ orderId, proofImageBase64: base64, mimeType: file.type });
       setProofUrl(result.proofUrl);
-      toast.success("截圖已上傳，正在 AI 驗證金額...");
+      toast.success(t("orderDetail.uploadingAndVerifying"));
       setIsVerifying(true);
       verifyProofMutation.mutate({ proofImageUrl: result.proofUrl, expectedAmountHkd: parseFloat(amount) });
-    } catch { toast.error("截圖上傳失敗，請重試"); }
+    } catch { toast.error(t("orderDetail.uploadFailed")); }
     finally { setIsUploading(false); e.target.value = ""; }
   };
 
@@ -108,7 +110,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
 
       <Dialog open={open} onOpenChange={(v) => { if (!v) resetAndClose(); }}>
         <DialogContent showCloseButton={false} className="sm:max-w-md p-0 overflow-visible border-2 border-[#FEDD00] gap-0">
-          <VisuallyHidden><DialogTitle>付款方式</DialogTitle></VisuallyHidden>
+          <VisuallyHidden><DialogTitle>{t("orderDetail.paymentMethod")}</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -128,14 +130,14 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
 
           {alipayStep === "select" && (
             <div className="space-y-3">
-              <p className="text-sm text-gray-500">付款金額：<span className="font-bold text-gray-900">HKD {parseFloat(amount).toFixed(2)}</span></p>
+              <p className="text-sm text-gray-500">{t("orderDetail.paymentAmount")}<span className="font-bold text-gray-900">HKD {parseFloat(amount).toFixed(2)}</span></p>
               <button className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-[#06038d] hover:bg-[#f0f4ff] transition-all text-left group" disabled={isPending} onClick={() => getCheckoutMutation.mutate({ orderId })}>
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#635bff" }}>
                   <CreditCard className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 group-hover:text-[#06038d]">Stripe 信用卡 / Apple Pay</p>
-                  <p className="text-xs text-gray-500">Visa / Mastercard / Apple Pay</p>
+                  <p className="font-semibold text-gray-900 group-hover:text-[#06038d]">{t("orderDetail.stripeCreditCardApplePay")}</p>
+                  <p className="text-xs text-gray-500">{t("orderDetail.paymentMethods")}</p>
                 </div>
                 {getCheckoutMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-gray-300 group-hover:text-[#06038d] text-lg">›</span>}
               </button>
@@ -144,19 +146,19 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
                   <span className="text-white font-bold text-lg">支</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 group-hover:text-[#1677ff]">支付寶 HK</p>
-                  <p className="text-xs text-gray-500">AlipayHK 電子錢包付款</p>
+                  <p className="font-semibold text-gray-900 group-hover:text-[#1677ff]">{t("orderDetail.alipayHk")}</p>
+                  <p className="text-xs text-gray-500">{t("orderDetail.alipayHkWallelt")}</p>
                 </div>
                 {switchToAlipayMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-gray-300 group-hover:text-[#1677ff] text-lg">›</span>}
               </button>
-              <p className="text-xs text-gray-400 text-center pt-1">所有付款均通過加密傳輸保護</p>
+              <p className="text-xs text-gray-400 text-center pt-1">{t("orderDetail.encryptedPayment")}</p>
             </div>
           )}
 
           {alipayStep === "qr" && (
             <div className="space-y-4">
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4 text-sm">
-                <p className="font-bold text-[#06038D]">付款金額：<span className="text-lg">HKD {parseFloat(amount).toFixed(2)}</span></p>
+                <p className="font-bold text-[#06038D]">{t("orderDetail.paymentAmount")}<span className="text-lg">HKD {parseFloat(amount).toFixed(2)}</span></p>
               </div>
               <div className="text-center space-y-3">
                 <p className="text-sm text-gray-500">請揃描 QR Code 或點擊連結付款</p>
@@ -166,16 +168,16 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
                 </a>
               </div>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-                <p className="font-medium">付款備注填寫欄位請填寫商品編號：</p>
+                <p className="font-medium">{t("orderDetail.fillOrderNumber")}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="font-mono text-sm font-bold tracking-wide flex-1">{listingId ? `#BOXIUM-${listingId}` : "請查看訂單詳情"}</p>
                   {listingId && (
-                    <button onClick={() => { navigator.clipboard.writeText(`#BOXIUM-${listingId}`); toast.success("商品編號已複製！"); }} className="flex items-center gap-1 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg px-2 py-1 text-xs font-medium transition-colors">
+                    <button onClick={() => { navigator.clipboard.writeText(`#BOXIUM-${listingId}`); toast.success(t("orderDetail.listingIdCopied")); }} className="flex items-center gap-1 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg px-2 py-1 text-xs font-medium transition-colors">
                       <Copy className="w-3 h-3" />複製編號
                     </button>
                   )}
                 </div>
-                <p className="text-amber-600 mt-1">⚠️ 請務必在支付寶備注欄填寫以上編號，方便核對付款</p>
+                <p className="text-amber-600 mt-1">{t("orderDetail.alipayRemarkNotice")}</p>
               </div>
               <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => setAlipayStep(hasShippingAddress ? "upload" : "shipping")}>
                 {hasShippingAddress ? "我已完成付款，上傳截圖" : "我已完成付款，填寫收貨地址"}
@@ -186,7 +188,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
           {alipayStep === "shipping" && (
             <div className="space-y-4">
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm text-[#06038D]">
-                <p className="font-medium">請填寫收貨地址</p>
+                <p className="font-medium">{t("orderDetail.fillShippingAddress")}</p>
                 <p className="text-xs mt-1 text-gray-500">收貨地址將提供給賣家安排寄送</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -205,16 +207,16 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>地區</Label>
+                  <Label>{t("orderDetail.region")}</Label>
                   <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角" value={shippingForm.district} onChange={e => setShippingForm(f => ({ ...f, district: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>區域</Label>
                   <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={shippingForm.region} onChange={e => setShippingForm(f => ({ ...f, region: e.target.value }))}>
-                    <option value="香港島">香港島</option>
-                    <option value="九龍">九龍</option>
-                    <option value="新界">新界</option>
-                    <option value="香港">香港（不指定）</option>
+                    <option value={t("orderDetail.hongKongIsland")}>{t("orderDetail.hongKongIsland")}</option>
+                    <option value={t("orderDetail.kowloon")}>{t("orderDetail.kowloon")}</option>
+                    <option value={t("orderDetail.newTerritories")}>{t("orderDetail.newTerritories")}</option>
+                    <option value={t("orderDetail.hongKong")}>香港（不指定）</option>
                   </select>
                 </div>
               </div>
@@ -439,6 +441,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 }
 
 function OrderTimeline({ order }: { order: any }) {
+  const { t } = useTranslation();
   const currentIdx = STATUS_ORDER.indexOf(order.orderStatus);
   const isDisputed = order.orderStatus === "disputed";
   const isCancelled = order.orderStatus === "cancelled";
@@ -449,7 +452,7 @@ function OrderTimeline({ order }: { order: any }) {
         <div className="flex items-center gap-3 text-gray-500">
           <XCircle className="w-6 h-6" />
           <div>
-            <p className="font-medium text-gray-700">訂單已取消</p>
+            <p className="font-medium text-gray-700">{t("orderDetail.orderCancelled")}</p>
             <p className="text-sm text-gray-500">此訂單已被取消</p>
           </div>
         </div>
@@ -463,7 +466,7 @@ function OrderTimeline({ order }: { order: any }) {
         <div className="flex items-center gap-3 text-red-600">
           <AlertCircle className="w-6 h-6 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold">爭議處理中</p>
+            <p className="font-semibold">{t("orderDetail.disputeInProgress")}</p>
             <p className="text-sm text-red-500">管理員將在 1-3 個工作天內處理</p>
           </div>
         </div>
@@ -684,6 +687,7 @@ function OrderTimeline({ order }: { order: any }) {
 }
 
 export default function OrderDetail() {
+  const { t } = useTranslation();
   const params = useParams<{ orderNo: string }>();
   const orderNo = params.orderNo ?? "";
   const [, navigate] = useLocation();
@@ -760,8 +764,8 @@ export default function OrderDetail() {
     onSuccess: (data) => {
       setReuploadVerifyResult(data as VerifyResult);
       setIsReuploadVerifying(false);
-      if (data.verified) toast.success("✅ 付款金額驗證成功！");
-      else toast.error("⚠️ 驗證未通過，請重新上傳截圖");
+      if (data.verified) toast.success(t("orderDetail.paymentVerifiedSuccess"));
+      else toast.error(t("orderDetail.paymentVerifiedError"));
     },
     onError: (e: any) => { setIsReuploadVerifying(false); toast.error("驗證失敗：" + e.message); },
   });
@@ -769,7 +773,7 @@ export default function OrderDetail() {
   const handleReuploadProof = async (e: React.ChangeEvent<HTMLInputElement>, orderNo: string, amount: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("截圖不能超過 5MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error(t("orderDetail.fileTooLarge")); return; }
     setIsReuploadUploading(true); setReuploadVerifyResult(null);
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -780,10 +784,10 @@ export default function OrderDetail() {
       });
       const result = await reuploadProofMutation.mutateAsync({ orderNo, proofImageBase64: base64, mimeType: file.type });
       setReuploadProofUrl(result.proofUrl);
-      toast.success("截圖已上傳，正在 AI 驗證金額...");
+      toast.success(t("orderDetail.uploadingAndVerifying"));
       setIsReuploadVerifying(true);
       reuploadVerifyMutation.mutate({ proofImageUrl: result.proofUrl, expectedAmountHkd: parseFloat(amount) });
-    } catch { toast.error("截圖上傳失敗，請重試"); }
+    } catch { toast.error(t("orderDetail.uploadFailed")); }
     finally { setIsReuploadUploading(false); e.target.value = ""; }
   };
 
@@ -910,7 +914,7 @@ export default function OrderDetail() {
             <Package className="w-10 h-10" style={{ color: "#06038d", opacity: 0.4 }} />
           </div>
           <p className="font-medium text-gray-700">訂單不存在或無權查看</p>
-          <Link href="/profile?tab=orders"><Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">返回訂單列表</Button></Link>
+          <Link href="/profile?tab=orders"><Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">{t("orderDetail.backToOrderList")}</Button></Link>
         </div>
       </div>
     );
@@ -962,7 +966,7 @@ export default function OrderDetail() {
             </div>
             <div className="text-center md:text-left pb-1 flex-1">
               <div className="flex items-center gap-2 justify-center md:justify-start">
-                <h1 className="text-2xl md:text-3xl font-bold text-white">訂單詳情</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-white">{t("orderDetail.orderDetails")}</h1>
                 {order.shippingMethod === 'meetup' && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-400 text-amber-900 flex-shrink-0">
                     🤝 面交
@@ -1282,7 +1286,7 @@ export default function OrderDetail() {
         {/* Product Info */}
         {listing && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-gray-900">
-            <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>商品資訊</h2>
+            <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>{t("orderDetail.productInfo")}</h2>
             <div className="flex items-start gap-3">
               {(() => {
                 const imgs = listing.images
@@ -1374,7 +1378,7 @@ export default function OrderDetail() {
                   <button
                     onClick={() => { navigator.clipboard.writeText(sellerPhone!); toast.success('已複製賣家電話'); }}
                     className="text-xs text-[#06038D] underline hover:no-underline"
-                  >複製</button>
+                  >{t("orderDetail.copy")}</button>
                 </div>
               )}
               {isSeller && buyerContactPhone && (
@@ -1386,7 +1390,7 @@ export default function OrderDetail() {
                   <button
                     onClick={() => { navigator.clipboard.writeText(buyerContactPhone!); toast.success('已複製買家電話'); }}
                     className="text-xs text-[#06038D] underline hover:no-underline"
-                  >複製</button>
+                  >{t("orderDetail.copy")}</button>
                 </div>
               )}
               <p className="text-xs text-gray-400 mt-1">論電話僅於訂單完成後顯示，請自行與對方協商面交地點</p>
@@ -1403,11 +1407,11 @@ export default function OrderDetail() {
               <span className="text-gray-800">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">付款方式</span>
+              <span className="text-gray-500">{t("orderDetail.paymentMethod")}</span>
               <span className="text-gray-800 capitalize">{order.paymentMethod === "alipay_hk" ? "支付寶 HK" : "Stripe 信用卡"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">付款狀態</span>
+              <span className="text-gray-500">{t("orderDetail.paymentStatus")}</span>
               <span className={order.paymentStatus === "paid" ? "text-green-600 font-medium" : "text-amber-600"}>
                 {order.paymentStatus === "paid" ? "已付款" : order.paymentStatus === "pending" ? "待付款" : order.paymentStatus === "refunded" ? "已退款" : order.paymentStatus}
               </span>
@@ -1634,7 +1638,7 @@ export default function OrderDetail() {
       {/* Confirm Receipt Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent bottomSheet className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>確認收貨</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("orderDetail.confirmReceipt")}</DialogTitle></DialogHeader>
           <div className="py-2 space-y-3">
             <p className="text-sm text-muted-foreground">確認已收到商品後，款項將立即轉帳給賣家。此操作不可撤銷。</p>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
@@ -1643,7 +1647,7 @@ export default function OrderDetail() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>{t("orderDetail.cancel")}</Button>
             <Button
               className="bg-green-600 hover:bg-green-700 text-white"
               disabled={confirmReceiptMutation.isPending}
@@ -1651,7 +1655,7 @@ export default function OrderDetail() {
             >
               {confirmReceiptMutation.isPending
                 ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</>
-                : <><CheckCircle className="w-4 h-4 mr-2" />確認收貨</>}
+                : <><CheckCircle className="w-4 h-4 mr-2" />{t("orderDetail.confirmReceipt")}</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1716,7 +1720,7 @@ export default function OrderDetail() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowDisputeDialog(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setShowDisputeDialog(false)}>{t("orderDetail.cancel")}</Button>
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={openDisputeMutation.isPending || disputeReason.trim().length < 10 || isUploadingEvidence}
@@ -1774,7 +1778,7 @@ export default function OrderDetail() {
             </label>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowReviewDialog(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setShowReviewDialog(false)}>{t("orderDetail.cancel")}</Button>
             <Button
               className="bg-yellow-500 hover:bg-yellow-600 text-white"
               disabled={submitReviewMutation.isPending || reviewRating === 0}
@@ -1787,7 +1791,7 @@ export default function OrderDetail() {
             >
               {submitReviewMutation.isPending
                 ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</>
-                : <><MessageSquare className="w-4 h-4 mr-2" />提交評價</>}
+                : <><MessageSquare className="w-4 h-4 mr-2" />{t("orderDetail.submitRating")}</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1867,7 +1871,7 @@ export default function OrderDetail() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowAdminShipDialog(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setShowAdminShipDialog(false)}>{t("orderDetail.cancel")}</Button>
             <Button
               className="bg-[#06038d] hover:bg-[#0804b8] text-white"
               disabled={!adminShipForm.shippingMethod || !adminShipForm.trackingNo || !adminShipForm.shippingImageUrl || markOrderShippedMutation.isPending || isAdminShipImageUploading}

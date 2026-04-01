@@ -16,6 +16,7 @@ import {
   CONDITION_GROUPS, CONDITION_SHORT, CONDITION_BADGE,
   type ConditionValue
 } from "@/lib/conditions";
+import { useTranslation } from "react-i18next";
 
 // ─── TCG Series Config (只保留 3 種 + 全部) ──────────────────────────────────
 
@@ -60,6 +61,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
   wishlistIds?: number[];
   onWishlistToggle?: (id: number) => void;
 }) {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [copied, setCopied] = useState(false);
   const images: string[] | null = (() => {
@@ -75,9 +77,9 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
     const url = `${window.location.origin}/marketplace/${listing.id}${listing.tcgSeries && listing.tcgSeries !== 'all' ? `?series=${listing.tcgSeries}` : ''}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
-      toast.success('連結已複製！');
+      toast.success(t("marketplace.linkCopied"));
       setTimeout(() => setCopied(false), 2000);
-    }).catch(() => toast.error('複製失敗'));
+    }).catch(() => toast.error(t("marketplace.copyFailed")));
   };
 
   return (
@@ -104,7 +106,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
         {(listing.remainingQuantity === 0 || listing.status === 'sold') && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
             <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-              <span className="text-[#06038D] font-bold text-sm tracking-wider">已售出</span>
+              <span className="text-[#06038D] font-bold text-sm tracking-wider">{t("marketplace.soldOut")}</span>
             </div>
           </div>
         )}
@@ -173,7 +175,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
                   <span>({listing.sellerProfile.ratingCount})</span>
                 </>
               ) : (
-                <span className="text-gray-400">新賣家</span>
+                <span className="text-gray-400">{t("marketplace.newSeller")}</span>
               )}
             </div>
           ) : <span />}
@@ -188,7 +190,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
             <button
               onClick={handleCopyLink}
               className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:text-[#06038D] hover:bg-gray-100 transition-all"
-              title="複製商品連結"
+              title={t("marketplace.copyProductLink")}
             >
               {copied ? <Check className="w-3 h-3 text-green-500" /> : <Share2 className="w-3 h-3" />}
             </button>
@@ -200,6 +202,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
 }
 
 function ProductCardSkeleton() {
+  const { t } = useTranslation();
   return (
     <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
       <Skeleton className="aspect-square w-full" />
@@ -239,6 +242,7 @@ function SidebarFilter({
   activeFilterCount: number;
   resetAndSearch: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <aside className="w-full space-y-5 overflow-hidden">
 
@@ -305,7 +309,7 @@ function SidebarFilter({
           {[
             { value: "all",      label: "全部來源", icon: ShoppingBag },
             { value: "platform", label: "官方商品",  icon: Shield },
-            { value: "seller",   label: "個人賣家",  icon: Star },
+            { value: "seller",   label: t("marketplace.filter.individualSeller"),  icon: Star },
           ].map(chip => {
             const Icon = chip.icon;
             const isActive = sellerType === chip.value;
@@ -429,6 +433,7 @@ function MarketplaceMaintenancePage() {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function Marketplace() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const searchStr = useSearch();
   // ── Maintenance mode check ──
@@ -558,10 +563,10 @@ export default function Marketplace() {
       toast.success(res.wishlisted ? "已加入收藏" : "已移除收藏");
       utils.marketplace.getWishlistIds.invalidate();
     },
-    onError: () => toast.error("請先登入才能收藏"),
+    onError: () => toast.error(t("marketplace.wishlist.loginRequired")),
   });
   const handleWishlistToggle = (listingId: number) => {
-    if (!me) { toast.error("請先登入才能收藏"); return; }
+    if (!me) { toast.error(t("marketplace.wishlist.loginRequired")); return; }
     toggleWishlistMutation.mutate({ listingId });
   };
 
@@ -714,7 +719,7 @@ export default function Marketplace() {
                   <img src="/boxium-logo.png" alt="BOXIUM" className="h-9 w-auto object-contain hover:opacity-80 transition-opacity cursor-pointer" />
                 </Link>
                 <div className="h-7 w-px bg-white/20" />
-                <span className="text-[#FEDD00] font-bold text-xl tracking-wide">商城</span>
+                <span className="text-[#FEDD00] font-bold text-xl tracking-wide">{t("marketplace.title")}</span>
               </div>
               <p className="text-white/50 text-xs">
                 Pokémon · One Piece · Yu-Gi-Oh!
@@ -729,7 +734,7 @@ export default function Marketplace() {
                   <Input
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="搜尋卡牌..."
+                    placeholder={t("marketplace.search.placeholder")}
                     className="pl-12 pr-10 bg-white border-0 text-gray-900 placeholder:text-gray-400 h-12 rounded-full shadow-lg focus-visible:ring-2 focus-visible:ring-[#FEDD00] text-base w-full"
                   />
                   {searchInput && (
@@ -920,7 +925,7 @@ export default function Marketplace() {
                 ) : (
                   <span className={`text-sm font-bold ${
                     isActive ? 'text-white' : 'text-[#06038D]'
-                  }`}>全部</span>
+                  }`}>{t("marketplace.all")}</span>
                 )}
                 <span className={`text-[10px] sm:text-xs font-semibold ${
                   isActive ? 'text-white/90' : 'text-gray-500'
@@ -988,7 +993,7 @@ export default function Marketplace() {
                       </SelectTrigger>
                       <SelectContent align="end">
                         <SelectItem value="ending_soon">即將結標</SelectItem>
-                        <SelectItem value="newest">最新上架</SelectItem>
+                        <SelectItem value="newest">{t("marketplace.sort.newest")}</SelectItem>
                         <SelectItem value="price_asc">價格低→高</SelectItem>
                         <SelectItem value="price_desc">價格高→低</SelectItem>
                       </SelectContent>
@@ -1081,7 +1086,7 @@ export default function Marketplace() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent align="end">
-                  <SelectItem value="newest">最新上架</SelectItem>
+                  <SelectItem value="newest">{t("marketplace.sort.newest")}</SelectItem>
                   <SelectItem value="price_asc">價格低→高</SelectItem>
                   <SelectItem value="price_desc">價格高→低</SelectItem>
                 </SelectContent>

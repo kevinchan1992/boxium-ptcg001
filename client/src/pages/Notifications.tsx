@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { BrandTabs, BrandTabsList, BrandTabsTrigger, BrandTabsContent } from "@/components/BrandTabs";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { useTranslation } from "react-i18next";
 
 const typeIcon = (type: string) => {
   switch (type) {
@@ -18,6 +19,7 @@ const typeIcon = (type: string) => {
 };
 
 export default function Notifications() {
+  const { t } = useTranslation();
   const { data: user } = trpc.auth.me.useQuery();
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined);
@@ -38,7 +40,7 @@ export default function Notifications() {
 
   const markAllAsReadMutation = trpc.notifications.markAllAsRead.useMutation({
     onSuccess: () => {
-      toast.success("已標記所有通知為已讀");
+      toast.success(t("notifications.markAllAsReadSuccess"));
       utils.notifications.getMyNotifications.invalidate();
       utils.notifications.getUnreadCount.invalidate();
     },
@@ -58,8 +60,8 @@ export default function Notifications() {
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "#f0f4ff" }}>
             <Bell className="w-10 h-10" style={{ color: "#06038d", opacity: 0.4 }} />
           </div>
-          <p className="text-gray-700 text-lg mb-4">請先登入以查看通知</p>
-          <a href="/login"><Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">登入</Button></a>
+          <p className="text-gray-700 text-lg mb-4">{t("notifications.loginPrompt")}</p>
+          <a href="/login"><Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">{t("notifications.login")}</Button></a>
         </div>
       </div>
     );
@@ -86,12 +88,12 @@ export default function Notifications() {
             </div>
             <div className="text-center md:text-left pb-1 flex-1">
               <div className="flex items-center gap-3 justify-center md:justify-start flex-wrap">
-                <h1 className="text-2xl md:text-3xl font-bold text-white">通知中心</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-white">{t("notifications.title")}</h1>
                 {unreadCount > 0 && (
-                  <Badge className="bg-red-500 text-white text-sm px-2 py-0.5">{unreadCount} 則未讀</Badge>
+                  <Badge className="bg-red-500 text-white text-sm px-2 py-0.5">{t("notifications.unreadCount")}</Badge>
                 )}
               </div>
-              <p className="text-white/70 text-sm mt-1">查看所有系統通知和交易動態</p>
+              <p className="text-white/70 text-sm mt-1">{t("notifications.description")}</p>
             </div>
             {unreadCount > 0 && (
               <Button
@@ -120,8 +122,8 @@ export default function Notifications() {
             onValueChange={(v) => setUnreadOnly(v === "unread")}
           >
             <BrandTabsList className="mb-3">
-              <BrandTabsTrigger value="all" icon={<Bell className="w-4 h-4" />} label="全部">全部</BrandTabsTrigger>
-              <BrandTabsTrigger value="unread" icon={<Check className="w-4 h-4" />} label="未讀">
+              <BrandTabsTrigger value="all" icon={<Bell className="w-4 h-4" />} label={t("notifications.filter.all")}>{t("notifications.filter.all")}</BrandTabsTrigger>
+              <BrandTabsTrigger value="unread" icon={<Check className="w-4 h-4" />} label={t("notifications.filter.unread")}>
                 未讀
                 {unreadCount > 0 && (
                   <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full">
@@ -134,13 +136,13 @@ export default function Notifications() {
           {/* Row 2: Type filter */}
           <div className="flex gap-2 mb-4 flex-wrap">
             {[
-              { value: undefined, label: "所有類型" },
-              { value: "trade", label: "交易" },
-              { value: "payment", label: "付款" },
-              { value: "offer", label: "出價" },
-              { value: "shipping", label: "物流" },
-              { value: "dispute", label: "爭議" },
-              { value: "system", label: "系統" },
+              { value: undefined, label: t("notifications.filter.allTypes") },
+              { value: "trade", label: t("notifications.filter.trade") },
+              { value: "payment", label: t("notifications.filter.payment") },
+              { value: "offer", label: t("notifications.filter.offer") },
+              { value: "shipping", label: t("notifications.filter.shipping") },
+              { value: "dispute", label: t("notifications.filter.dispute") },
+              { value: "system", label: t("notifications.filter.system") },
             ].map(({ value, label }) => (
               <button
                 key={label}
@@ -182,6 +184,7 @@ function NotificationList({
   markAsReadMutation: any;
   deleteMutation: any;
 }) {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   if (isLoading) {
     return (
@@ -268,7 +271,7 @@ function NotificationList({
                   </div>
                 </div>
                 {notif.linkUrl && (
-                  <p className="text-xs mt-1.5 font-medium" style={{ color: "#06038d" }}>點擊查看詳情 →</p>
+                  <p className="text-xs mt-1.5 font-medium" style={{ color: "#06038d" }}>{t("notifications.viewDetails")}</p>
                 )}
               </div>
             </div>

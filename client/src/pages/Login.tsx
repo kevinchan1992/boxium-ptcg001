@@ -8,10 +8,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const IS_DEV = import.meta.env.DEV;
 
 export default function Login() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +41,7 @@ export default function Login() {
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: () => {
       setErrorMessage(null);
-      toast.success("登入成功");
+      toast.success(t("login.toast.loginSuccess"));
       // Wait a bit to ensure cookie is set before redirecting
       setTimeout(() => {
         window.location.href = "/";
@@ -114,7 +116,7 @@ export default function Login() {
               className="h-20 w-auto"
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-center">登入</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">{t("login.title")}</CardTitle>
           <CardDescription className="text-center">
             輸入您的帳號密碼以登入 BOXIUM PTCG
           </CardDescription>
@@ -142,7 +144,7 @@ export default function Login() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">密碼</Label>
+              <Label htmlFor="password">{t("login.form.passwordLabel")}</Label>
               <Input
                 id="password"
                 type="password"

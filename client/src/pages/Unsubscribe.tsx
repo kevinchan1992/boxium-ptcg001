@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Mail, RefreshCw, ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const BOXIUM_LOGO = "https://static-assets-cdn.manus.space/webdev-static-assets/Mua4eQ38uVnrovHUJBRepi/boxium-logo-white.png";
 
@@ -19,6 +20,7 @@ const EMAIL_TYPE_LABELS: Record<string, string> = {
 };
 
 export default function Unsubscribe() {
+  const { t } = useTranslation();
   const [location] = useLocation();
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token") ?? "";
@@ -59,8 +61,8 @@ export default function Unsubscribe() {
       <UnsubscribePage>
         <div className="text-center py-8">
           <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-          <h2 className="text-xl font-semibold text-white mb-2">無效的連結</h2>
-          <p className="text-gray-400 text-sm">此退訂連結無效或已過期，請聯絡客服：boxium.asia@gmail.com</p>
+          <h2 className="text-xl font-semibold text-white mb-2">{t("unsubscribe.invalidLink.title")}</h2>
+          <p className="text-gray-400 text-sm">{t("unsubscribe.invalidLink.description")}</p>
         </div>
       </UnsubscribePage>
     );
@@ -71,7 +73,7 @@ export default function Unsubscribe() {
       <UnsubscribePage>
         <div className="text-center py-8">
           <RefreshCw className="w-8 h-8 text-blue-400 mx-auto mb-3 animate-spin" />
-          <p className="text-gray-400">載入中...</p>
+          <p className="text-gray-400">{t("unsubscribe.loading")}</p>
         </div>
       </UnsubscribePage>
     );
@@ -82,9 +84,9 @@ export default function Unsubscribe() {
       <UnsubscribePage>
         <div className="text-center py-8">
           <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-          <h2 className="text-xl font-semibold text-white mb-2">連結無效</h2>
-          <p className="text-gray-400 text-sm">此退訂連結無效或已過期。</p>
-          <p className="text-gray-500 text-xs mt-2">如需協助，請聯絡：boxium.asia@gmail.com</p>
+          <h2 className="text-xl font-semibold text-white mb-2">{t("unsubscribe.linkInvalid.title")}</h2>
+          <p className="text-gray-400 text-sm">{t("unsubscribe.linkInvalid.description")}</p>
+          <p className="text-gray-500 text-xs mt-2">{t("unsubscribe.linkInvalid.contact")}</p>
         </div>
       </UnsubscribePage>
     );
@@ -128,11 +130,11 @@ export default function Unsubscribe() {
         {info && (
           <div className="bg-white/5 border border-white/10 rounded-lg p-4 my-4 text-left">
             <div className="flex items-center gap-2 text-sm text-gray-300 mb-1">
-              <span className="text-gray-500">電郵地址：</span>
+              <span className="text-gray-500">{t("unsubscribe.confirm.emailAddressLabel")}</span>
               <span className="font-mono">{info.email}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-300">
-              <span className="text-gray-500">通知類型：</span>
+              <span className="text-gray-500">{t("unsubscribe.confirm.notificationTypeLabel")}</span>
               <span className="bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded text-xs">{emailTypeLabel}</span>
             </div>
           </div>
@@ -180,6 +182,7 @@ export default function Unsubscribe() {
 }
 
 function UnsubscribePage({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-[#0a0a1a] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -195,7 +198,7 @@ function UnsubscribePage({ children }: { children: React.ReactNode }) {
               }}
             />
           </a>
-          <p className="text-gray-500 text-xs mt-2">BOXIUM PTCG 電郵偏好設定</p>
+          <p className="text-gray-500 text-xs mt-2">{t("unsubscribe.emailPreferences")}</p>
         </div>
 
         <Card className="bg-[#0d0d2b] border border-white/10">

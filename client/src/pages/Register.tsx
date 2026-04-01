@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export default function Register() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +19,7 @@ export default function Register() {
 
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: () => {
-      toast.success("註冊成功！");
+      toast.success(t("register.successToast"));
       // Wait a bit to ensure cookie is set before redirecting
       setTimeout(() => {
         window.location.href = "/";
@@ -36,25 +38,25 @@ export default function Register() {
     
     // Validate password match
     if (password !== confirmPassword) {
-      toast.error("密碼不一致");
+      toast.error(t("register.passwordMismatch"));
       return;
     }
 
     // Validate password strength
     if (password.length < 8) {
-      toast.error("密碼至少需要 8 個字符");
+      toast.error(t("register.passwordTooShort"));
       return;
     }
     if (!/[A-Z]/.test(password)) {
-      toast.error("密碼需要包含至少一個大寫字母");
+      toast.error(t("register.passwordRequiresUppercase"));
       return;
     }
     if (!/[a-z]/.test(password)) {
-      toast.error("密碼需要包含至少一個小寫字母");
+      toast.error(t("register.passwordRequiresLowercase"));
       return;
     }
     if (!/[0-9]/.test(password)) {
-      toast.error("密碼需要包含至少一個數字");
+      toast.error(t("register.passwordRequiresNumber"));
       return;
     }
 
@@ -83,7 +85,7 @@ export default function Register() {
               className="h-20 w-auto"
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-center">註冊</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">{t("register.title")}</CardTitle>
           <CardDescription className="text-center">
             創建您的 BOXIUM PTCG 帳號
           </CardDescription>
@@ -103,18 +105,18 @@ export default function Register() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="name">名稱（選填）</Label>
+              <Label htmlFor="name">{t("register.nameLabel")}</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="您的名稱"
+                placeholder={t("register.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">密碼</Label>
+              <Label htmlFor="password">{t("register.passwordLabel")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -129,7 +131,7 @@ export default function Register() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">確認密碼</Label>
+              <Label htmlFor="confirmPassword">{t("register.confirmPasswordLabel")}</Label>
               <Input
                 id="confirmPassword"
                 type="password"

@@ -5,9 +5,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Heart, Package, ShoppingBag, ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { CONDITION_SHORT, CONDITION_BADGE, type ConditionValue } from "@/lib/conditions";
+import { useTranslation } from "react-i18next";
 
 
 export default function Wishlist() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const { data: me, isLoading: authLoading } = trpc.auth.me.useQuery();
@@ -15,7 +17,7 @@ export default function Wishlist() {
 
   const toggleMutation = trpc.marketplace.toggleWishlist.useMutation({
     onSuccess: () => {
-      toast.success("已從願望清單移除");
+      toast.success(t("wishlist.removedFromWishlist"));
       utils.marketplace.getMyWishlist.invalidate();
       utils.marketplace.getWishlistIds.invalidate();
     },
@@ -25,7 +27,7 @@ export default function Wishlist() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center text-gray-400">載入中...</div>
+        <div className="text-center text-gray-400">{t("wishlist.loading")}</div>
       </div>
     );
   }
@@ -35,8 +37,8 @@ export default function Wishlist() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center space-y-4">
           <Heart className="w-16 h-16 mx-auto text-gray-200" />
-          <h2 className="text-xl font-bold text-gray-800">請先登入</h2>
-          <p className="text-gray-500">登入後即可查看你的願望清單</p>
+          <h2 className="text-xl font-bold text-gray-800">{t("wishlist.pleaseLogin")}</h2>
+          <p className="text-gray-500">{t("wishlist.loginToView")}</p>
           <Button
             className="bg-[#06038d] hover:bg-[#0a06b5] text-white"
             onClick={() => setLocation("/login")}
@@ -62,7 +64,7 @@ export default function Wishlist() {
           </button>
           <div className="flex items-center gap-2">
             <Heart className="w-5 h-5 fill-red-400 text-red-400" />
-            <h1 className="text-lg font-bold">我的願望清單</h1>
+            <h1 className="text-lg font-bold">{t("wishlist.myWishlist")}</h1>
           </div>
           <span className="text-sm text-white/60 ml-auto">共 {wishlistItems.length} 件商品</span>
         </div>
@@ -84,8 +86,8 @@ export default function Wishlist() {
         ) : wishlistItems.length === 0 ? (
           <div className="text-center py-24 space-y-4">
             <Heart className="w-20 h-20 mx-auto text-gray-200" />
-            <h3 className="text-xl font-semibold text-gray-600">願望清單是空的</h3>
-            <p className="text-gray-400 text-sm">在商城瀏覽商品時，點擊愛心圖示即可收藏</p>
+            <h3 className="text-xl font-semibold text-gray-600">{t("wishlist.isEmpty")}</h3>
+            <p className="text-gray-400 text-sm">{t("wishlist.emptyHint")}</p>
             <Button
               onClick={() => setLocation("/marketplace")}
               className="bg-[#06038d] hover:bg-[#0a06b5] text-white mt-2"
@@ -137,7 +139,7 @@ export default function Wishlist() {
                         e.stopPropagation();
                         toggleMutation.mutate({ listingId: listing.id });
                       }}
-                      aria-label="移除收藏"
+                      aria-label={t("wishlist.remove")}
                     >
                       <Heart className="w-4 h-4 fill-red-500 text-red-500" />
                     </button>

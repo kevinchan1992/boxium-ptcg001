@@ -7,8 +7,10 @@ import { trpc } from "@/lib/trpc";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { Button } from "@/components/ui/button";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
+import { useTranslation } from "react-i18next";
 
 export default function SearchResults() {
+  const { t } = useTranslation();
   const searchParams = useSearch();
   const params = new URLSearchParams(searchParams);
   const query = params.get("q") || "";
@@ -155,8 +157,8 @@ export default function SearchResults() {
         {/* Breadcrumb */}
         <Breadcrumb 
           items={[
-            { label: "主頁", href: "/" },
-            { label: "搜尋" }
+            { label: t("searchResults.breadcrumb.home"), href: "/" },
+            { label: t("searchResults.breadcrumb.search") }
           ]}
         />
         
@@ -170,7 +172,7 @@ export default function SearchResults() {
             }}
             cardLinkPrefix="card"
             inputClassName="py-4 sm:py-5 md:py-6 text-sm sm:text-base md:text-lg bg-card border-border rounded-lg sm:rounded-xl focus:ring-2 focus:ring-primary"
-            placeholder="搜尋卡牌..."
+            placeholder={t("searchResults.search.placeholder")}
           />
         </div>
 
@@ -180,7 +182,7 @@ export default function SearchResults() {
             {query ? `搜尋「${query}」的 TCG 卡牌價格` : '搜尋 TCG 卡牌價格'}
           </h1>
           {isLoading ? (
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">搜尋中...</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">{t("searchResults.header.loading")}</p>
           ) : (
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
               找到 {searchResults.length} 張卡牌
@@ -206,7 +208,7 @@ export default function SearchResults() {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-              <p className="text-muted-foreground">搜尋出錯,請重試</p>
+              <p className="text-muted-foreground">{t("searchResults.error.message")}</p>
             </div>
           </div>
         ) : searchResults.length > 0 ? (
@@ -234,7 +236,7 @@ export default function SearchResults() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <p className="text-muted-foreground text-xs">無圖片</p>
+                      <p className="text-muted-foreground text-xs">{t("searchResults.card.noImage")}</p>
                     </div>
                   )}
                 </div>

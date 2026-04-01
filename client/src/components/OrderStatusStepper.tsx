@@ -1,4 +1,5 @@
 import { Check, Clock, CreditCard, Package, Truck, CheckCircle2, XCircle, AlertTriangle, RotateCcw, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type StepState = "completed" | "active" | "upcoming";
@@ -150,6 +151,7 @@ export function OrderStatusStepper({
   size = "sm",
   timestamps,
 }: OrderStatusStepperProps) {
+  const { t } = useTranslation();
   const isMeetup = shippingMethod === "meetup";
   const isCancelled = orderStatus === "cancelled";
   const isDisputed = orderStatus === "disputed";
@@ -164,8 +166,8 @@ export function OrderStatusStepper({
           <XCircle className={`text-gray-500 ${isLg ? "w-5 h-5" : "w-4 h-4"}`} />
         </div>
         <div>
-          <p className={`font-semibold text-gray-600 ${isLg ? "text-sm" : "text-xs"}`}>訂單已取消</p>
-          <p className={`text-gray-400 mt-0.5 ${isLg ? "text-xs" : "text-[10px]"}`}>此訂單已被取消，不會繼續處理</p>
+          <p className={`font-semibold text-gray-600 ${isLg ? "text-sm" : "text-xs"}`}>{t("orderStatusStepper.cancelled.title")}</p>
+          <p className={`text-gray-400 mt-0.5 ${isLg ? "text-xs" : "text-[10px]"}`}>{t("orderStatusStepper.cancelled.description")}</p>
         </div>
       </div>
     );
@@ -178,8 +180,8 @@ export function OrderStatusStepper({
           <AlertTriangle className={`text-red-500 ${isLg ? "w-5 h-5" : "w-4 h-4"}`} />
         </div>
         <div>
-          <p className={`font-semibold text-red-700 ${isLg ? "text-sm" : "text-xs"}`}>爭議處理中</p>
-          <p className={`text-red-500 mt-0.5 ${isLg ? "text-xs" : "text-[10px]"}`}>平台正在介入處理，請耐心等候 1–3 個工作天</p>
+          <p className={`font-semibold text-red-700 ${isLg ? "text-sm" : "text-xs"}`}>{t("orderStatusStepper.disputed.title")}</p>
+          <p className={`text-red-500 mt-0.5 ${isLg ? "text-xs" : "text-[10px]"}`}>{t("orderStatusStepper.disputed.description")}</p>
         </div>
       </div>
     );
@@ -192,8 +194,8 @@ export function OrderStatusStepper({
           <RotateCcw className={`text-teal-600 ${isLg ? "w-5 h-5" : "w-4 h-4"}`} />
         </div>
         <div>
-          <p className={`font-semibold text-teal-700 ${isLg ? "text-sm" : "text-xs"}`}>退款已完成</p>
-          <p className={`text-teal-500 mt-0.5 ${isLg ? "text-xs" : "text-[10px]"}`}>款項已退回至原付款方式</p>
+          <p className={`font-semibold text-teal-700 ${isLg ? "text-sm" : "text-xs"}`}>{t("orderStatusStepper.refunded.title")}</p>
+          <p className={`text-teal-500 mt-0.5 ${isLg ? "text-xs" : "text-[10px]"}`}>{t("orderStatusStepper.refunded.description")}</p>
         </div>
       </div>
     );

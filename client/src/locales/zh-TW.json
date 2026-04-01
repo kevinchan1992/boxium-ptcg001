@@ -1,559 +1,2213 @@
 {
-  "auth": {
-    "loginFailed": "登入失敗",
-    "loginFailedGeneric": "登入過程中發生錯誤，請稍後再試。",
-    "loginFailedMissingInfo": "無法獲取您的帳戶資訊，請嘗試使用其他登入方式。",
-    "loginFailedCallback": "OAuth 認證失敗，請檢查網絡連接後重試。",
-    "loginSuccess": "登入成功！",
-    "logoutConfirmTitle": "確認登出",
-    "logoutConfirmDescription": "您確定要登出嗎？",
-    "logoutConfirmButton": "確認登出",
-    "logoutCancelButton": "取消"
-  },
-  "trending": {
-    "title": "🔥 TCG 熱門排行榜",
-    "subtitle": "最近 1 個月內 PSA 10 評級卡牌市場趋勢",
-    "searchHeat": "搜尋熱度",
-    "searchHeatShort": "熱度",
-    "priceSurge": "價格飆升",
-    "priceSurgeShort": "飆升",
-    "priceDrop": "價格回落",
-    "priceDropShort": "回落",
-    "newlyAdded": "新上架",
-    "newlyAddedShort": "新品",
-    "currentPrice": "當前價格",
-    "priceChange": "價格變化",
-    "searchCount": "搜尋次數",
-    "viewDetails": "查看詳情",
-    "goToSnkrdunk": "前往 SNKRDUNK",
-    "fullRanking": "完整排行槜",
-    "noImage": "無圖片",
-    "emptySearches": "目前沒有足夠的搜尋數據",
-    "emptyPriceIncrease": "目前沒有價格飆升的卡牌",
-    "emptyPriceDecrease": "目前沒有價格回落的卡牌",
-    "emptyNewlyAdded": "目前沒有新上架的卡牌",
-    "emptyHint": "請稍後再試或切換其他分類"
-  },
-  "research": {
-    "title": "卡牌研究",
-    "searchPlaceholder": "搜尋卡牌名稱...",
-    "addToWatchlist": "加入觀察清單",
-    "removeFromWatchlist": "從觀察清單移除",
-    "viewDetails": "查看詳情",
-    "noResults": "找不到符合條件的卡牌",
-    "loading": "載入中...",
-    "watchlist": "觀察清單",
-    "allCards": "所有卡牌"
-  },
-  "notifications": {
-    "title": "通知中心",
-    "all": "全部",
-    "unread": "未讀",
-    "markAsRead": "標記已讀",
-    "markAllAsRead": "全部標記已讀",
-    "delete": "刪除",
-    "deleteAllRead": "刪除已讀",
-    "noNotifications": "無通知",
-    "noUnreadNotifications": "無未讀通知",
-    "markAsReadSuccess": "已標記為已讀",
-    "markAsReadError": "標記失敗",
-    "markAllAsReadSuccess": "已全部標記為已讀",
-    "markAllAsReadError": "全部標記失敗",
-    "deleteSuccess": "刪除成功",
-    "deleteError": "刪除失敗",
-    "deleteAllReadSuccess": "已刪除所有已讀通知",
-    "deleteAllReadError": "刪除失敗"
-  },
-  "common": {
-    "home": "主頁",
-    "research": "卡牌搜尋",
-    "pricing": "價格查詢",
-    "priceComparison": "市場格價",
-    "terms": "服務條款",
-    "privacy": "隱私權政策",
-    "admin": "管理後台",
-    "language": "語言",
-    "cancel": "取消",
-    "login": "登入",
-    "logout": "登出",
-    "marketInsights": "市場洞察",
-    "trending": "熱門排行榜",
-    "about": "關於我們",
-    "blog": "最新消息",
-    "back": "返回",
-    "close": "關閉",
-    "loading": "載入中...",
-    "marketplace": "商場",
-    "adminMarketplace": "商場管理",
-    "seller": "賣家",
-    "buyer": "買家"
-  },
-  "nav": {
-    "login": "登入/註冊",
-    "logout": "登出",
-    "favorites": "我的收藏",
-    "dashboard": "個人中心",
-    "admin": "管理後台",
-    "user": "用戶"
-  },
-  "favorites": {
-    "title": "我的收藏",
-    "items": "項目",
-    "empty": "尚無收藏",
-    "emptyDescription": "開始收藏您喜愛的卡牌，方便日後快速查看",
-    "startBrowsing": "開始瀏覽",
-    "favorite": "收藏",
-    "unfavorite": "取消收藏",
-    "added": "已加入收藏",
-    "removed": "已移除收藏",
-    "addError": "加入收藏失敗",
-    "removeError": "移除收藏失敗",
-    "confirmRemove": "確定要移除此收藏嗎？"
-  },
-  "home": {
-    "welcome": "歡迎來到 Boxium ～ 遊戲迷的專屬樂園！",
-    "description": "我們整合全球 TCG 市場數據，為喜愛集換式卡牌的你提供即時、準確的價格資訊。在這裡，你可以輕鬆追蹤卡牌動態、交流收藏樂趣，並探索屬於卡牌世界的無限可能！",
-    "trackedCards": "已追蹤卡牌",
+  "aboutPage": {
+    "contactInfo": "如有任何問題或建議，歡迎透過平台提供的聯絡方式與我們聯繫。",
+    "coreServices": "核心服務",
     "dataSources": "資料來源",
-    "noImage": "無圖片",
-    "noTrendingCards": "暫無熱門卡牌數據",
-    "coreFeatures": "核心功能",
-    "coreFeaturesDesc": "BOXIUM 提供專業的卡牌價格分析工具，幫助您做出更明智的投資決策",
-    "smartSearch": "智能搜尋",
-    "smartSearchDesc": "快速搜尋數百張卡牌，支援名稱、編號、系列等多維度篩選",
-    "priceTrend": "價格趨勢",
-    "priceTrendDesc": "查看 90 天內的價格變化，掌握市場動態和投資時機",
-    "marketStats": "市場統計",
-    "marketStatsDesc": "實時市場數據分析，了解卡牌的平均價格和市場表現",
-    "topRanking": "熱門排行",
-    "topRankingDesc": "發現市場上最熱門的卡牌，跟蹤投資者的選擇",
-    "trendingCards": "熱門卡牌",
-    "trendingCardsDesc": "基於 PSA 10 七天最近成交價格漲幅",
-    "dataSourcesDesc": "整合全球領先的卡牌交易平台，確保數據的準確性和實時性",
-    "snkrdunkDesc": "日本領先的卡牌交易平台，提供最新的 PSA 10 評級卡牌交易數據和市場趨勢分析",
-    "realtimeData": "實時交易數據",
-    "psaSupport": "PSA 評級支援",
-    "jpyPrice": "日幣價格",
-    "ebayDesc": "全球最大的線上拍賣平台，提供國際市場的卡牌交易記錄和價格參考",
-    "globalMarket": "全球市場數據",
-    "startExploring": "卡牌探索",
-    "startSearching": "開始搜尋卡牌",
-    "viewMarketTrends": "比較市場格價",
-    "goToMarketplace": "前往市集",
-    "readyToStart": "準備好開始你的 TCG 卡牌之旅了嗎？",
-    "readyToStartDesc": "使用 BOXIUM 的智能搜尋和價格分析工具，找到你的愛好收藏品。",
-    "footerDesc": "專注於 TCG 集換式卡牌價格查詢與市場分析的綜合平台",
-    "quickLinks": "快速導航",
-    "cardSearch": "卡牌搜尋",
-    "marketReport": "市場報告",
-    "priceQuery": "價格查詢",
-    "adminPanel": "管理後台",
-    "aboutUs": "關於我們",
-    "aboutUsDesc": "BOXIUM 致力於為 TCG 集換式卡牌投資者和收藏家提供最準確、最專業的市場資訊和價格分析工具。",
-    "socialMedia": "社交媒體",
-    "termsOfService": "服務條款",
-    "privacyPolicy": "隱私權政策"
-  },
-  "footer": {
-    "description": "專注於全球 TCG 價格查詢與市場分析的綜合平台",
-    "quickLinks": "快速連結",
-    "cardSearch": "卡牧搜尋",
-    "trending": "熱門排行榜",
-    "marketplace": "市集",
-    "blog": "最新消息",
-    "pricing": "價格查詢",
-    "aboutUs": "關於我們",
-    "platformIntro": "平台介紹",
-    "disclaimer": "免責聲明",
-    "adminPanel": "管理後台",
-    "socialMedia": "社群媒體",
-    "terms": "服務條款",
-    "privacy": "隱私權政策",
-    "about": "關於我們",
-    "copyright": "© 2026 BOXIUM. All rights reserved. | Luck in Every Box"
-  },
-  "cardDetail": {
-    "referencePrice": "參考價格",
-    "basedOnRecords": "基於近 1 個月內 PSA 10 交易記錄",
-    "basedOnLatestRecords": "基於最近 {{months}} 個月內最新 {{count}} 筆 PSA 10 平均成交記錄",
-    "basedOnLatestRecordsWeighted": "參考價為加權中位數（半衰期 7 天），基於 {{count}} 筆 PSA 10 成交記錄",
-    "priceHistory": "價格歷史",
-    "date": "日期",
-    "price": "價格",
-    "grade": "評級",
-    "source": "來源",
-    "noData": "暫無數據",
-    "favorite": "收藏",
-    "favorited": "已收藏",
-    "comparePrice": "格價",
-    "share": "分享",
-    "actualPrice": "（實際成交價）",
-    "marketPrice": "（市場掛牌價）",
-    "actualPriceHistory": "實際成交價格歷史",
-    "marketPriceHistory": "市場掛牌價格歷史",
-    "ebayDisclaimer": "此為 eBay 市場掛牌價格（非實際成交價），僅供參考。實際成交價格可能與此不同。",
-    "cachedData": "資料庫緩存數據，最後更新：",
-    "liveMarketData": "即時市場掛牌價格（非已售出交易記錄）",
-    "exchangeRate": "當前匯率",
-    "basicInfo": "基本資料",
-    "cardNumber": "卡牌編號",
-    "series": "所屬系列",
-    "noGradeData": "暫無符合該等級的數據",
-    "noEbayData": "暫無 eBay 交易記錄（可能超出 API 調用限制，請稍後再試）",
-    "hkdPrice": "HKD 價格",
-    "usedGrade": "中古",
-    "chartTitle": "PSA 10 價格趨勢",
-    "timeRangeLabel": "PSA 10 時間範圍",
-    "timeRange": {
-      "7days": "7 天",
-      "30days": "30 天",
-      "90days": "90 天",
-      "all": "全部"
+    "features": {
+      "autoUpdate": "24 小時自動更新，確保價格資訊即時準確",
+      "multiCurrency": "支援多種貨幣顯示（HKD、USD、JPY 等）",
+      "realData": "整合 SNKRDUNK、eBay 等全球主要市場即時數據",
+      "responsive": "完整支援電腦、平板及手機，隨時隨地查詢"
     },
-    "cardName": "卡牌名稱",
-    "japaneseName": "日文名稱",
-    "title": "標題",
-    "productTitle": "商品標題",
-    "usdPrice": "USD 價格",
-    "priceTrend": "近 7 天趋勢",
-    "priceIncrease": "↑ 上漲",
-    "priceDecrease": "↓ 下跌",
-    "quantity": "數量",
-    "boxType": "產品類型",
-    "boosterBox": "卡盒",
-    "sealedProduct": "密封產品",
-    "singleCard": "單卡",
-    "productName": "產品名稱",
-    "sealedPriceTrend": "價格趨勢",
-    "sealedReferencePrice": "參考價格",
-    "basedOnLatestSealedRecords": "基於最新一筆成交記錄推算單盒價格",
-    "styleCode": "系列編號",
-    "noSealedData": "暫無卡盒交易價格數據",
-    "priceUpdating": "正在更新最新成交價格...",
-    "priceUpdated": "價格已更新",
-    "priceUpToDate": "價格已是最新",
-    "priceUpdateFailed": "價格更新失敗"
+    "missionContent": "BOXIUM 致力於為 TCG 集換式卡牌收藏家、投資者及賣家提供最準確、最即時的市場數據與交易環境。我們整合全球主要交易平台的真實成交記錄，涵蓋 Pokémon、One Piece 等多款遊戲，並提供安全可靠的卡牌二手市場，讓用戶在同一平台完成研究、比價及交易，做出明智的收藏與投資決策。",
+    "ourMission": "我們的使命",
+    "platformFeatures": "平台特色",
+    "services": {
+      "cardSearch": {
+        "description": "搜尋超過 {{count}} 張 PTCG 卡牌，查看 PSA 10 歷史成交價格趨勢，掌握卡牌市場動態",
+        "title": "卡牌研究"
+      },
+      "gradeAnalysis": {
+        "description": "PSA 10 卡牌安全交易平台，支援賣家上架管理、買家安心購買，交易款項由平台代管保障",
+        "title": "二手市場"
+      },
+      "marketTrends": {
+        "description": "24 小時熱門排行榜，即時掌握 PSA 10 卡牌價格動態，發現市場機遇",
+        "title": "市場趨勢"
+      },
+      "priceTracking": {
+        "description": "即時顯示 PSA 10 在售商品，整合 SNKRDUNK 及 eBay 市場數據，讓您輕鬆比較全球市場價格",
+        "title": "價格查詢"
+      }
+    },
+    "sources": {
+      "ebay": "eBay：全球最大的二手市場，提供國際 PSA 10 卡牌交易數據",
+      "snkrdunk": "SNKRDUNK：日本最大的 PSA 10 卡牌交易平台，提供即時在售商品及成交記錄"
+    },
+    "subtitle": "歡迎來到 Boxium ～ 遊戲迷的專屬樂園！整合全球 TCG 市場數據，提供即時、準確的價格資訊。",
+    "title": "關於 BOXIUM",
+    "trackedCards": "已追蹤卡牌"
   },
   "admin": {
-    "title": "管理後台",
-    "dataSources": "數據源管理",
-    "statistics": "統計資訊",
-    "schedule": "排程管理",
-    "addDataSource": "新增數據源",
-    "cardName": "卡牠名稱",
-    "url": "URL",
     "actions": "操作",
-    "update": "更新",
-    "delete": "刪除",
+    "addDataSource": "新增數據源",
+    "addSuccess": "新增成功",
+    "averageSearchTime": "平均搜尋時間",
     "batchUpdateEbay": "批量更新所有卡牠 eBay 價格",
     "batchUpdateSnkrdunk": "批量更新所有卡牠 SNKRDUNK 價格",
-    "pause": "暫停",
-    "resume": "繼續",
-    "progress": "進度",
-    "success": "成功",
-    "failed": "失敗",
-    "totalRecords": "總記錄數",
-    "errors": "錯誤",
-    "scheduleDescription": "每日香港時間凌晨 01:00 自動執行",
-    "scheduleEnabled": "排程已啟用",
-    "scheduleDisabled": "排程已停用",
-    "nextExecution": "下次執行時間",
-    "lastExecution": "上次執行時間",
-    "triggerNow": "立即執行",
-    "executionHistory": "執行歷史",
-    "executionType": "執行類型",
-    "status": "狀態",
-    "executionTime": "執行時間",
+    "cardName": "卡牠名稱",
+    "completed": "已完成",
+    "confirmDelete": "確定要刪除這個數據源嗎？",
+    "dataSources": "數據源管理",
+    "delete": "刪除",
+    "deleteSuccess": "刪除成功",
+    "ebayBatch": "eBay 批量更新",
     "errorMessage": "錯誤訊息",
-    "trendingCards": {
-      "title": "熱門卡牌管理",
-      "description": "管理首頁顯示的熱門卡牌 TOP 5，基於 PSA10 本週 vs 上週加權平均成交價格漲幅計算（半衰期 7 天時間衰減加權）",
-      "recalculate": "重新計算",
-      "calculating": "計算中...",
-      "calculateSuccess": "熱門卡牌計算完成",
-      "calculateError": "計算失敗",
-      "nextUpdate": "下次更新時間",
-      "updateFrequency": "更新頻率",
-      "daily6am": "每日 06:00 HKT",
-      "currentTop5": "當前 TOP 5 熱門卡牌",
-      "noData": "無熱門卡牌數據，請點擊「重新計算」按鈕生成"
-    },
+    "errors": "錯誤",
+    "executionHistory": "執行歷史",
+    "executionTime": "執行時間",
+    "executionType": "執行類型",
+    "failed": "失敗",
+    "fallbackToTextSearch": "回退到文字搜尋次數",
+    "imageSearch": "圖片搜尋",
     "imageSearchStats": "圖片搜尋統計",
     "imageSearchSuccessRate": "圖片搜尋成功率",
-    "fallbackToTextSearch": "回退到文字搜尋次數",
-    "averageSearchTime": "平均搜尋時間",
-    "imageSearch": "圖片搜尋",
-    "textSearch": "文字搜尋",
+    "lastExecution": "上次執行時間",
+    "loading": "載入中...",
+    "nextExecution": "下次執行時間",
+    "noData": "無數據",
     "optimization": "優化建議",
+    "pause": "暫停",
     "paused": "已暫停",
     "processing": "處理中",
-    "completed": "已完成",
+    "progress": "進度",
+    "resume": "繼續",
     "running": "運行中",
-    "ebayBatch": "eBay 批量更新",
-    "snkrdunkBatch": "SNKRDUNK 批量更新",
+    "schedule": "排程管理",
+    "scheduleDescription": "每日香港時間凌晨 01:00 自動執行",
+    "scheduleDisabled": "排程已停用",
+    "scheduleEnabled": "排程已啟用",
     "scheduled": "排程執行",
-    "noData": "無數據",
-    "loading": "載入中...",
-    "addSuccess": "新增成功",
-    "deleteSuccess": "刪除成功",
+    "snkrdunkBatch": "SNKRDUNK 批量更新",
+    "statistics": "統計資訊",
+    "status": "狀態",
+    "success": "成功",
+    "textSearch": "文字搜尋",
+    "title": "管理後台",
+    "totalRecords": "總記錄數",
+    "trendingCards": {
+      "calculateError": "計算失敗",
+      "calculateSuccess": "熱門卡牌計算完成",
+      "calculating": "計算中...",
+      "currentTop5": "當前 TOP 5 熱門卡牌",
+      "daily6am": "每日 06:00 HKT",
+      "description": "管理首頁顯示的熱門卡牌 TOP 5，基於 PSA10 本週 vs 上週加權平均成交價格漲幅計算（半衰期 7 天時間衰減加權）",
+      "nextUpdate": "下次更新時間",
+      "noData": "無熱門卡牌數據，請點擊「重新計算」按鈕生成",
+      "recalculate": "重新計算",
+      "title": "熱門卡牌管理",
+      "updateFrequency": "更新頻率"
+    },
+    "triggerNow": "立即執行",
+    "update": "更新",
     "updateSuccess": "更新成功",
-    "confirmDelete": "確定要刪除這個數據源嗎？"
+    "url": "URL"
   },
-  "pricing": {
-    "title": "價格查詢",
-    "subtitle": "實時比較全球市場卡牌價格",
-    "searchHint": "提示: 搜尋結果僅顯示 PSA 10 評級的可購買商品",
-    "hint": "提示: 搜尋結果僅顯示 PSA 10 評級的可購買商品",
-    "imageSearch": "圖片搜尋",
-    "imageSearchTitle": "卡牌圖片分析功能",
-    "takePhoto": "拍照",
-    "uploadFile": "上傳檔案",
-    "dragDropImage": "拖放圖片到此處",
-    "orSelectFile": "或選擇檔案",
-    "cropImage": "裁剪圖片",
-    "searchNow": "立即搜尋",
-    "searchCropped": "搜尋裁剪區域",
-    "cancel": "取消",
-    "pleaseSelectImage": "請選擇圖片",
-    "imageSearchSuccess": "找到卡牌：{{cardName}}",
-    "imageSearchFailed": "無法識別卡牌，請嘗試其他圖片",
-    "imageSearchError": "圖片搜尋失敗，請稍後再試",
-    "searching": "搜尋中...",
-    "priceStats": "價格統計",
-    "totalListings": "共 {{count}} 個在售商品",
-    "minPrice": "最低價",
-    "avgPrice": "平均價",
-    "maxPrice": "最高價",
-    "listings": "個",
-    "refresh": "刷新",
-    "searchResults": "搜尋結果",
-    "totalResults": "共 {{count}} 筆",
-    "available": "可購買",
-    "grade": "評級",
-    "seller": "賣家",
-    "buyNow": "前往購買",
-    "buy": "購買",
-    "noResults": "未找到相關結果，請嘗試其他關鍵詞",
-    "searchResultsFor": "搜尋結果",
-    "foundCards": "找到 {{count}} 張卡牌",
-    "searchError": "搜尋出錯，請重試",
-    "noImage": "無圖片",
-    "enterKeyword": "請輸入搜尋關鍵字",
-    "loading": "載入中...",
-    "cardNotFound": "找不到該卡牌",
-    "cardNumber": "卡牌編號",
-    "series": "系列",
-    "lowestPrice": "最低價",
-    "averagePrice": "平均價",
-    "highestPrice": "最高價",
-    "psa10Listings": "PSA 10 在售商品",
-    "ebayListings": "eBay PSA 10 在售商品",
-    "allListings": "PSA 10 在售商品（按價格排序）",
-    "loadingListings": "載入商品中...",
-    "noListings": "暫無在售商品",
-    "fetchingPrices": "正在獲取最新價格...",
-    "pleaseWait": "請稍候，這可能需要20-30秒",
-    "condition": "狀況",
-    "snkrdunkTitle": "SNKRDUNK PSA 10 在售商品",
-    "snkrdunkDescription": "點擊以下按鈕前往 SNKRDUNK 查看最新的 PSA 10 在售商品",
-    "viewOnSnkrdunk": "前往 SNKRDUNK 查看",
-    "viewDetail": "查看詳情"
+  "auctionDetail": {
+    "antiSnipe": {
+      "description": "有人在結標前 {{minutes}} 分鐘內出價，結標時間已延長 {{extensions}} 次（每次 {{minutes}} 分鐘）。",
+      "title": "防狙擊延長"
+    },
+    "bidHistory": {
+      "beTheFirst": "成為第一個出價者！",
+      "bidder": "買家",
+      "collapse": "收起",
+      "count": "次",
+      "highestBid": "最高出價",
+      "noBids": "暫無出價記錄",
+      "showAll": "查看全部 {{count}} 筆出價",
+      "title": "出價記錄"
+    },
+    "bidPanel": {
+      "bids": "次出價",
+      "buyNow": "立即購買",
+      "buyNowPrice": "即買價",
+      "currentBid": "目前出價",
+      "loginToBid": "登入以出價",
+      "noBids": "尚無出價",
+      "placeBid": "出價"
+    },
+    "buyerProtection": {
+      "description": "得標後 24 小時內付款，商品與描述不符可申請退款保障。",
+      "title": "買家保障"
+    },
+    "countdown": {
+      "days": "天",
+      "ended": "已結標",
+      "endingSoon": "即將結標！",
+      "hours": "時",
+      "minutes": "分",
+      "seconds": "秒"
+    },
+    "description": {
+      "condition": "品相：",
+      "noDescription": "賣家暫未提供詳細描述",
+      "title": "商品描述"
+    },
+    "gallery": {
+      "auctionId": "拍賣 #",
+      "productImage": "商品圖片"
+    },
+    "header": {
+      "details": "拍賣詳情",
+      "startsAt": "開始"
+    },
+    "info": {
+      "bidIncrement": "最低加價",
+      "endTime": "結標時間",
+      "startTime": "開始時間",
+      "startingBid": "起標價",
+      "title": "拍賣資訊"
+    },
+    "main": {
+      "backToMarketplace": "返回市集",
+      "loading": "載入拍賣資料...",
+      "notFound": "找不到此拍賣"
+    },
+    "payment": {
+      "redirecting": "正在前往付款頁面..."
+    },
+    "reserve": {
+      "met": "✓ 保留價已達到，得標者將確認成交",
+      "notMet": "保留價尚未達到，目前出價不保證成交"
+    },
+    "review": {
+      "comment": "您的評論",
+      "commentPlaceholder": "分享您對本次交易的看法...",
+      "rating": "整體評價",
+      "submit": "提交評價",
+      "submitting": "提交中...",
+      "success": "評價已提交！感謝您的回饋。",
+      "title": "評價交易"
+    },
+    "seller": {
+      "rating": "評價",
+      "salesUnit": "筆",
+      "title": "賣家資訊",
+      "totalSales": "累計成交"
+    },
+    "status": {
+      "active": "競標中",
+      "cancelled": "已取消",
+      "ended": "拍賣已結束",
+      "endedSold": "拍賣已結束（已售出）",
+      "ended_no_bid": "流拍",
+      "ended_sold": "已售出",
+      "ending_soon": "即將結標",
+      "notStarted": "拍賣尚未開始",
+      "pending_review": "審核中",
+      "rejected": "已拒絕",
+      "scheduled": "已排程",
+      "startTime": "開始時間："
+    },
+    "terms": {
+      "buyer": {
+        "bidIsCommitment": {
+          "desc": "出價即代表您承諾以該金額購買此商品",
+          "title": "出價即承諾"
+        },
+        "buyerProtection": {
+          "desc": "商品與描述不符可申請退款保障",
+          "title": "買家保障"
+        },
+        "noCancellation": {
+          "desc": "拍賣結束後不得無故取消交易",
+          "title": "不得撤销"
+        },
+        "payment24h": {
+          "desc": "得標後須在 24 小時內完成付款，逾期將被記錄違規",
+          "title": "24 小時付款"
+        },
+        "violationAccumulation": {
+          "desc": "累計 3 次違規將被禁止參與所有拍賣活動",
+          "title": "違規累計"
+        }
+      },
+      "dialog": {
+        "agree": "我已閱讀並同意",
+        "buyerAgreement": "買家參與協議",
+        "cancel": "取消",
+        "close": "關閉",
+        "fullTerms": "完整條款 →",
+        "instruction": "請仔細閱讀以下所有條款，同意後方可出價：",
+        "sellerAgreement": "賣家參與協議",
+        "title": "拍賣條款"
+      },
+      "seller": {
+        "noWithdrawal": {
+          "desc": "有人出價後不得取消拍賣",
+          "title": "禁止撤拍"
+        },
+        "penalty": {
+          "desc": "違反條款將影響賣家評分及平台使用資格",
+          "title": "違規處罰"
+        },
+        "priceLock": {
+          "desc": "拍賣開始後不得修改起標價或即買價",
+          "title": "價格鎖定"
+        },
+        "review": {
+          "desc": "上架拍賣需經管理員審核後才會公開",
+          "title": "審核公開"
+        },
+        "shipping3days": {
+          "desc": "得標後須在 3 個工作天內完成出貨",
+          "title": "3 工作天出貨"
+        }
+      }
+    },
+    "winnerPanel": {
+      "congratulations": "🎉 恭喜您得標！",
+      "leaveReview": "給予評價",
+      "payNow": "立即付款",
+      "paymentCompleted": "付款已完成 ✅",
+      "paymentReminder": "請在 24 小時內完成付款，逾期將被記錄違規。",
+      "sellerAwaitingShipment": "賣家將於 3 個工作天內為您出貨。",
+      "thankYou": "感謝您的購買！",
+      "winningBid": "得標金額："
+    }
   },
-  "share": {
-    "button": "分享",
-    "facebook": "分享到 Facebook",
-    "whatsapp": "分享到 WhatsApp",
-    "copyLink": "複製連結",
-    "copySuccess": "連結已複製到剪貼板",
-    "copyError": "複製失敗，請手動複製"
+  "auth": {
+    "loginFailed": "登入失敗",
+    "loginFailedCallback": "OAuth 認證失敗，請檢查網絡連接後重試。",
+    "loginFailedGeneric": "登入過程中發生錯誤，請稍後再試。",
+    "loginFailedMissingInfo": "無法獲取您的帳戶資訊，請嘗試使用其他登入方式。",
+    "loginSuccess": "登入成功！",
+    "logoutCancelButton": "取消",
+    "logoutConfirmButton": "確認登出",
+    "logoutConfirmDescription": "您確定要登出嗎？",
+    "logoutConfirmTitle": "確認登出"
   },
   "blogPage": {
-    "title": "BOXIUM PTCG 博客",
-    "subtitle": "專業的 TCG 集換式卡牌市場分析、價格趨勢、投資建議",
-    "searchPlaceholder": "搜尋文章...",
     "allCategories": "所有分類",
-    "loading": "載入中...",
     "featuredPost": "精選文章",
     "latestPosts": "最新文章",
     "loadMore": "載入更多文章",
+    "loading": "載入中...",
     "noPostsFound": "找不到符合條件的文章",
-    "tryOtherSearch": "請嘗試其他搜尋條件",
     "readMore": "閱讀更多",
+    "searchPlaceholder": "搜尋文章...",
+    "subtitle": "專業的 TCG 集換式卡牌市場分析、價格趨勢、投資建議",
+    "title": "BOXIUM PTCG 博客",
+    "tryOtherSearch": "請嘗試其他搜尋條件",
     "views": "次瀏覽"
   },
-  "profile": {
+  "cardDetail": {
+    "actualPrice": "（實際成交價）",
+    "actualPriceHistory": "實際成交價格歷史",
+    "basedOnLatestRecords": "基於最近 {{months}} 個月內最新 {{count}} 筆 PSA 10 平均成交記錄",
+    "basedOnLatestRecordsWeighted": "參考價為加權中位數（半衰期 7 天），基於 {{count}} 筆 PSA 10 成交記錄",
+    "basedOnLatestSealedRecords": "基於最新一筆成交記錄推算單盒價格",
+    "basedOnRecords": "基於近 1 個月內 PSA 10 交易記錄",
+    "basicInfo": "基本資料",
+    "boosterBox": "卡盒",
+    "boxType": "產品類型",
+    "cachedData": "資料庫緩存數據，最後更新：",
+    "cardName": "卡牌名稱",
+    "cardNumber": "卡牌編號",
+    "chartTitle": "PSA 10 價格趨勢",
+    "comparePrice": "格價",
+    "date": "日期",
+    "ebayDisclaimer": "此為 eBay 市場掛牌價格（非實際成交價），僅供參考。實際成交價格可能與此不同。",
+    "exchangeRate": "當前匯率",
+    "favorite": "收藏",
+    "favorited": "已收藏",
+    "grade": "評級",
+    "hkdPrice": "HKD 價格",
+    "japaneseName": "日文名稱",
+    "liveMarketData": "即時市場掛牌價格（非已售出交易記錄）",
+    "marketPrice": "（市場掛牌價）",
+    "marketPriceHistory": "市場掛牌價格歷史",
+    "noData": "暫無數據",
+    "noEbayData": "暫無 eBay 交易記錄（可能超出 API 調用限制，請稍後再試）",
+    "noGradeData": "暫無符合該等級的數據",
+    "noSealedData": "暫無卡盒交易價格數據",
+    "price": "價格",
+    "priceDecrease": "↓ 下跌",
+    "priceHistory": "價格歷史",
+    "priceIncrease": "↑ 上漲",
+    "priceTrend": "近 7 天趋勢",
+    "priceUpToDate": "價格已是最新",
+    "priceUpdateFailed": "價格更新失敗",
+    "priceUpdated": "價格已更新",
+    "priceUpdating": "正在更新最新成交價格...",
+    "productName": "產品名稱",
+    "productTitle": "商品標題",
+    "quantity": "數量",
+    "referencePrice": "參考價格",
+    "sealedPriceTrend": "價格趨勢",
+    "sealedProduct": "密封產品",
+    "sealedReferencePrice": "參考價格",
+    "series": "所屬系列",
+    "share": "分享",
+    "singleCard": "單卡",
+    "source": "來源",
+    "styleCode": "系列編號",
+    "timeRange": {
+      "30days": "30 天",
+      "7days": "7 天",
+      "90days": "90 天",
+      "all": "全部"
+    },
+    "timeRangeLabel": "PSA 10 時間範圍",
+    "title": "標題",
+    "usdPrice": "USD 價格",
+    "usedGrade": "中古"
+  },
+  "cardSelectionDialog": {
+    "avgPrice": "平均價格",
+    "backToSearch": "← 返回搜尋",
+    "cancel": "取消",
+    "cardIndex": "━━━ 卡牌 {{index}} ━━━",
+    "cardMarketData": "【卡牌市場數據】",
+    "cardNumber": "卡號",
+    "clearSelection": "清除選擇",
+    "dataPreview": "數據預覽",
+    "enterSearchKeyword": "請輸入搜尋關鍵字查找卡牌",
+    "failedToFetchCardData": "無法獲取卡牌資料",
+    "fetchingData": "正在從資料庫提取完整數據...",
+    "image": "圖片",
+    "insertCardMarketData": "插入卡牌市場數據",
+    "insertDataCount": "插入數據 ({{count}} 張)",
+    "insertDataHint": "插入時將包含完整的價格統計和成交數據",
+    "insertedCardData": "已插入 {{count}} 張卡牌的完整資料",
+    "japaneseName": "日文名",
+    "maxPrice": "最高價格",
+    "minPrice": "最低價格",
+    "name": "名稱",
+    "noMatchingCards": "找不到符合的卡牌",
+    "noPsa10Transactions": "暫無 PSA10 成交記錄",
+    "noTransactions": "暫無成交記錄",
+    "noUsedGradeATransactions": "暫無中古 A 級成交記錄",
+    "peakPrice": "歷史最高價",
+    "previewData": "預覽數據",
+    "previewDataCount": "預覽數據 ({{count}})",
+    "priceChange30d": "30天價格變化",
+    "priceChange7d": "7天價格變化",
+    "priceRange": "價格區間",
+    "psa10GradedCard": "PSA10 鑑定卡",
+    "psa10PriceStats": "PSA10 鑑定卡價格統計",
+    "rarity": "稀有度",
+    "searchDescription": "搜尋並選擇卡牌，系統將自動從資料庫提取完整的卡牌資訊和所有成交數據供 AI 生成文章",
+    "searchPlaceholder": "搜尋卡牌名稱或卡號（例如：pikachu、sv8a）",
+    "selectAtLeastOneCard": "請至少選擇一張卡牌",
+    "selectedCards": "已選擇 {{count}} 張卡牌",
+    "series": "系列",
+    "set": "套組",
+    "usedGradeA": "中古 A 級",
+    "usedGradeAPriceStats": "中古 A 級價格統計",
+    "volume": "成交量"
+  },
+  "cart": {
+    "address": {
+      "defaultBadge": "預設",
+      "defaultLabel": "預設地址",
+      "fillManually": "手動填寫其他地址",
+      "goToProfile": "前往個人中心新增地址",
+      "noSavedAddresses": "尚未儲存任何收貨地址",
+      "other": "面交/其他",
+      "savedAddresses": "已儲存的地址",
+      "sfStationPrefix": "順豐自提："
+    },
+    "back": "返回",
+    "cartCleared": "購物車已清空",
+    "checkout": "前往結帳",
+    "checkoutDialog": {
+      "step1": "送貨方式",
+      "step2": "付款確認",
+      "step3": "掃碼付款",
+      "step4": "上傳截圖",
+      "title": "結帳"
+    },
+    "clearCart": "清空購物車",
+    "clearUnavailable": "清除無效商品",
+    "continueShopping": "繼續購物",
+    "empty": {
+      "browseButton": "前往市集",
+      "message": "快去市集尋找你喜愛的卡牌吧！",
+      "title": "你的購物車是空的"
+    },
+    "item": {
+      "pendingPaymentBadge": "待付款 →",
+      "unavailableBadge": "已下架"
+    },
+    "loginPrompt": {
+      "browseMarketplace": "先去市集看看 →",
+      "loginButton": "立即登入",
+      "message": "登入後即可查看購物車",
+      "title": "請先登入"
+    },
+    "maintenance": {
+      "backToHome": "返回首頁",
+      "message": "我們正在緊鑼密鼓地開發中，敬請期待！",
+      "title": "市集正在維護中"
+    },
+    "newlyListed": "最新上架",
+    "offer": {
+      "acceptedBadge": "已接受出價",
+      "countdown": "賣家已接受你的出價！請在 <1>{{timeLeft}}</1> 內完成付款",
+      "expired": "出價已過期，將以原價 <1>HK${{price}}</1> 購買"
+    },
+    "recommendationsFromWatchlist": "為你推薦（來自關注清單）",
+    "removalFailed": "移除失敗，請重試",
+    "removedFromCart": "已從購物車移除",
+    "removedInvalidItems": "已移除 {{count}} 件無效商品",
+    "seller": "賣家",
+    "shipping": {
+      "meetupDescription": "請與賣家協商交收地點",
+      "meetupTitle": "面交 / 其他",
+      "methodTitle": "送貨方式",
+      "sfExpressDescription": "運費由順豐速運收取，於取件時支付",
+      "sfExpressTitle": "順豐速運（運費到付）"
+    },
+    "shippingFee": "運費",
+    "shippingFeeValue": "運費到付",
+    "subtotal": "小計 ({{count}} 件)",
+    "summary": "訂單摘要",
+    "title": "購物車",
+    "total": "合計",
+    "totalDisclaimer": "（不含運費）",
+    "unavailableItemsNotice": "已下架商品不會納入結帳"
+  },
+  "common": {
+    "about": "關於我們",
+    "admin": "管理後台",
+    "adminMarketplace": "商場管理",
+    "back": "返回",
+    "blog": "最新消息",
+    "buyer": "買家",
+    "cancel": "取消",
+    "close": "關閉",
+    "home": "主頁",
+    "language": "語言",
     "loading": "載入中...",
-    "pleaseLogin": "請先登入",
-    "loginRequired": "您需要登入才能查看個人頁面",
-    "goToLogin": "前往登入",
-    "welcome": "歡迎回來！在這裡管理您的卡牌收藏和瀏覽記錄 🎴",
-    "user": "用戶",
-    "admin": "🎖️ 管理員",
-    "collector": "📦 收藏家",
-    "joinedAt": "加入時間：",
-    "tabs": {
-      "info": "個人資訊",
-      "infoShort": "資訊",
-      "watchlist": "關注清單",
-      "watchlistShort": "關注",
-      "history": "瀏覽歷史",
-      "historyShort": "歷史",
-      "stats": "收藏統計",
-      "statsShort": "統計"
-    },
-    "infoSection": {
-      "title": "個人資訊",
-      "description": "查看和編輯您的個人資料",
-      "username": "用戶名稱",
-      "notSet": "未設置",
-      "email": "電子郵件",
-      "role": "角色",
-      "adminRole": "🎖️ 管理員",
-      "normalUser": "📦 普通用戶",
-      "loginMethod": "登入方式",
-      "passwordLogin": "🔑 密碼登入",
-      "googleOAuth": "🔐 Google OAuth",
-      "registeredAt": "註冊時間",
-      "lastLogin": "最後登入",
-      "noRecord": "未記錄",
-      "changePassword": "修改密碼"
-    },
-    "watchlistSection": {
-      "title": "我的關注清單",
-      "count": "共 {{count}} 張卡牌",
-      "empty": "您還沒有關注任何卡牌",
-      "goToResearch": "前往搜尋卡牌",
-      "removeSuccess": "已從關注清單中移除",
-      "removeFailed": "移除失敗：{{error}}",
-      "table": {
-        "card": "卡牌",
-        "series": "系列",
-        "latestPrice": "最新價格",
-        "notes": "備註",
-        "addedAt": "添加時間",
-        "actions": "操作",
-        "remove": "移除",
-        "noPrice": "暫無價格"
+    "login": "登入",
+    "logout": "登出",
+    "marketInsights": "市場洞察",
+    "marketplace": "商場",
+    "priceComparison": "市場格價",
+    "pricing": "價格查詢",
+    "privacy": "隱私權政策",
+    "research": "卡牌搜尋",
+    "seller": "賣家",
+    "terms": "服務條款",
+    "trending": "熱門排行榜"
+  },
+  "disclaimerPage": {
+    "contactInfo": "如有任何疑問，請聯繫我們：support@boxium.asia",
+    "lastUpdated": "最後更新日期",
+    "sections": {
+      "dataDelay": {
+        "content": "本平台的價格數據來源於第三方平台（SNKRDUNK、eBay 等），數據更新可能存在延遲。部分數據可能因網絡狀況、API 限制或技術原因而無法即時更新。本平台對因數據延遲而造成的任何損失不承擔責任。",
+        "title": "數據延遲聲明"
+      },
+      "dataPrivacy": {
+        "content": "本平台重視用戶的個人資料保護。我們收集的個人資料僅用於提供服務、處理交易及改善用戶體驗。詳細的個人資料處理方式，請參閱我們的隱私權政策。",
+        "title": "個人資料保護"
+      },
+      "externalLinks": {
+        "content": "本平台可能包含指向 SNKRDUNK、eBay 等第三方平台的連結。這些連結僅供用戶參考，本平台對第三方平台的內容、隱私政策或服務條款不承擔任何責任。用戶訪問第三方平台時，應遵守該平台的使用條款。",
+        "title": "外部連結聲明"
+      },
+      "intellectualProperty": {
+        "content": "本平台的所有內容（包括文字、圖片、設計及程式碼）均受著作權法保護。平台上涉及的各遊戲商標（如 Pokémon、One Piece 等）分別屬於其各自的權利人，本平台與各遊戲公司無任何官方關聯。未經授權，不得複製或使用本平台的任何內容。",
+        "title": "智慧財產權聲明"
+      },
+      "investmentRisk": {
+        "content": "PTCG 卡牌（包括 PSA 10 評級卡牌）的市場價格受多種因素影響，包括但不限於市場供需、稀有度、版本及收藏趨勢等。本平台提供的任何價格資訊、趨勢分析或市場數據均不構成投資建議。用戶應自行評估風險，本平台對任何因參考本平台資訊而產生的投資損失概不負責。",
+        "title": "投資風險聲明"
+      },
+      "jurisdiction": {
+        "content": "本免責聲明受香港特別行政區法律管轄。因使用本平台而產生的任何爭議，雙方同意以香港特別行政區法院為第一審管轄法院。",
+        "title": "管轄法律"
+      },
+      "marketplaceDisclaimer": {
+        "content": "本平台的二手市場（Marketplace）作為買賣雙方的中介平台，僅提供交易撮合服務。本平台不對賣家所刊登商品的真實性、品質、合法性或描述準確性作出保證。買家在購買前應仔細閱讀商品描述，並自行評估交易風險。本平台對因商品描述不實、商品損壞或其他交易糾紛所引起的損失，不承擔直接法律責任，但將盡力協助解決爭議。",
+        "title": "二手市場交易免責聲明"
+      },
+      "priceData": {
+        "content": "本平台整合 SNKRDUNK、eBay 等多個市場的 PSA 10 卡牌價格數據，致力提供準確即時的市場資訊。然而，由於市場價格瞬息萬變，本平台無法保證所顯示的價格與實際成交價格完全一致。所有價格資訊僅供參考，實際交易價格以各平台為準。",
+        "title": "價格數據準確性"
+      },
+      "serviceInterruption": {
+        "content": "本平台可能因系統維護、技術故障、網絡問題或不可抗力等原因而暫時中斷服務。本平台將盡力確保服務的穩定性，但對因服務中斷而造成的任何損失不承擔責任。",
+        "title": "服務中斷聲明"
+      },
+      "userConduct": {
+        "content": "用戶在使用本平台時，不得從事任何違法行為、侵害他人權益或干擾平台正常運作的行為。本平台保留對違規用戶採取措施的權利，包括但不限於暫停或終止其使用權限。",
+        "title": "用戶行為規範"
       }
     },
+    "subtitle": "BOXIUM 平台免責聲明 — 請在使用本平台前仔細閱讀以下重要聲明",
+    "title": "免責聲明"
+  },
+  "favorites": {
+    "addError": "加入收藏失敗",
+    "added": "已加入收藏",
+    "confirmRemove": "確定要移除此收藏嗎？",
+    "empty": "尚無收藏",
+    "emptyDescription": "開始收藏您喜愛的卡牌，方便日後快速查看",
+    "favorite": "收藏",
+    "items": "項目",
+    "removeError": "移除收藏失敗",
+    "removed": "已移除收藏",
+    "startBrowsing": "開始瀏覽",
+    "title": "我的收藏",
+    "unfavorite": "取消收藏"
+  },
+  "footer": {
+    "about": "關於我們",
+    "aboutUs": "關於我們",
+    "adminPanel": "管理後台",
+    "blog": "最新消息",
+    "cardSearch": "卡牧搜尋",
+    "copyright": "© 2026 BOXIUM. All rights reserved. | Luck in Every Box",
+    "description": "專注於全球 TCG 價格查詢與市場分析的綜合平台",
+    "disclaimer": "免責聲明",
+    "marketplace": "市集",
+    "platformIntro": "平台介紹",
+    "pricing": "價格查詢",
+    "privacy": "隱私權政策",
+    "quickLinks": "快速連結",
+    "socialMedia": "社群媒體",
+    "terms": "服務條款",
+    "trending": "熱門排行榜"
+  },
+  "home": {
+    "aboutUs": "關於我們",
+    "aboutUsDesc": "BOXIUM 致力於為 TCG 集換式卡牌投資者和收藏家提供最準確、最專業的市場資訊和價格分析工具。",
+    "adminPanel": "管理後台",
+    "cardSearch": "卡牌搜尋",
+    "coreFeatures": "核心功能",
+    "coreFeaturesDesc": "BOXIUM 提供專業的卡牌價格分析工具，幫助您做出更明智的投資決策",
+    "dataSources": "資料來源",
+    "dataSourcesDesc": "整合全球領先的卡牌交易平台，確保數據的準確性和實時性",
+    "description": "我們整合全球 TCG 市場數據，為喜愛集換式卡牌的你提供即時、準確的價格資訊。在這裡，你可以輕鬆追蹤卡牌動態、交流收藏樂趣，並探索屬於卡牌世界的無限可能！",
+    "ebayDesc": "全球最大的線上拍賣平台，提供國際市場的卡牌交易記錄和價格參考",
+    "footerDesc": "專注於 TCG 集換式卡牌價格查詢與市場分析的綜合平台",
+    "globalMarket": "全球市場數據",
+    "goToMarketplace": "前往市集",
+    "jpyPrice": "日幣價格",
+    "marketReport": "市場報告",
+    "marketStats": "市場統計",
+    "marketStatsDesc": "實時市場數據分析，了解卡牌的平均價格和市場表現",
+    "metaDescription": "整合全球 TCG 市場數據，為集換式卡牌愛好者提供即時、準確的價格資訊與市場分析",
+    "noImage": "無圖片",
+    "noTrendingCards": "暫無熱門卡牌數據",
+    "priceQuery": "價格查詢",
+    "priceTrend": "價格趨勢",
+    "priceTrendDesc": "查看 90 天內的價格變化，掌握市場動態和投資時機",
+    "privacyPolicy": "隱私權政策",
+    "psaSupport": "PSA 評級支援",
+    "quickLinks": "快速導航",
+    "readyToStart": "準備好開始你的 TCG 卡牌之旅了嗎？",
+    "readyToStartDesc": "使用 BOXIUM 的智能搜尋和價格分析工具，找到你的愛好收藏品。",
+    "realtimeData": "實時交易數據",
+    "smartSearch": "智能搜尋",
+    "smartSearchDesc": "快速搜尋數百張卡牌，支援名稱、編號、系列等多維度篩選",
+    "snkrdunkDesc": "日本領先的卡牌交易平台，提供最新的 PSA 10 評級卡牌交易數據和市場趨勢分析",
+    "socialMedia": "社交媒體",
+    "startExploring": "卡牌探索",
+    "startSearching": "開始搜尋卡牌",
+    "termsOfService": "服務條款",
+    "topRanking": "熱門排行",
+    "topRankingDesc": "發現市場上最熱門的卡牌，跟蹤投資者的選擇",
+    "trackedCards": "已追蹤卡牌",
+    "trendingCards": "熱門卡牌",
+    "trendingCardsDesc": "基於 PSA 10 七天最近成交價格漲幅",
+    "usdPrice": "美元價格",
+    "viewMarketTrends": "比較市場格價",
+    "welcome": "歡迎來到 Boxium ～ 遊戲迷的專屬樂園！"
+  },
+  "login": {
+    "description": "輸入您的帳號密碼以登入 BOXIUM PTCG",
+    "dev": {
+      "fastLoginButton": "⚡ 開發模式快速登入 (Admin id=1)"
+    },
+    "dividerText": "或",
+    "error": {
+      "googleAuthFailed": "Google 登入失敗，請稍後再試",
+      "noGoogleEmail": "無法取得 Google 帳號 Email，請確認授權設定",
+      "unknown": "未知錯誤",
+      "userCreationFailed": "帳號建立失敗，請稍後再試或聯絡客服"
+    },
+    "form": {
+      "loginInProgress": "登入中...",
+      "passwordLabel": "密碼"
+    },
+    "googleLoginButton": "使用 Google 登入",
+    "register": {
+      "link": "立即註冊",
+      "prompt": "還沒有帳號？"
+    },
+    "title": "登入",
+    "toast": {
+      "devLoginFailed": "Dev 登入失敗: ",
+      "devLoginSuccess": "[DEV] 已以 {{user.name}} 身份登入",
+      "loginFailed": "登入失敗",
+      "loginSuccess": "登入成功"
+    }
+  },
+  "marketplace": {
+    "addToWishlist": "加入收藏",
+    "all": "全部",
+    "backToTop": "回到頂部",
+    "banner": {
+      "explore": {
+        "cta": "探索商城",
+        "title": "探索我們的市集"
+      },
+      "official": {
+        "cta": "查看官方商品",
+        "subtitle": "官方認證 · 品質保證 · 安心購買",
+        "title": "BOXIUM 官方上架"
+      },
+      "psa": {
+        "cta": "立即選購",
+        "subtitle": "精選 PSA 10 完美品相 · 限量珍藏",
+        "title": "PSA 評級卡專區"
+      }
+    },
+    "copyFailed": "複製失敗",
+    "copyProductLink": "複製商品連結",
+    "filter": {
+      "apply": "套用",
+      "bgsGraded": "BGS 評級",
+      "cardCondition": "卡片品相",
+      "clear": "清除",
+      "clearAll": "清除全部篩選",
+      "individualSeller": "個人賣家",
+      "maxPrice": "最高價",
+      "minPrice": "最低價",
+      "priceRange": "價格範圍",
+      "psaGraded": "PSA 評級",
+      "rawCard": "Raw 卡",
+      "results": "篩選結果",
+      "sellerType": "賣家類型",
+      "tagGraded": "TAG 評級",
+      "title": "篩選"
+    },
+    "hotKeywords": "熱門關鍵字",
+    "linkCopied": "連結已複製！",
+    "loadingMore": "正在載入更多商品...",
+    "newSeller": "新賣家",
+    "noResults": {
+      "suggestion": "試試看調整篩選條件，或清除所有篩選。",
+      "title": "沒有找到符合條件的商品"
+    },
+    "onlyNLeft": "僅剩{{quantity}}",
+    "platform": "官方",
+    "removeFromWishlist": "移除收藏",
+    "results": "項結果",
+    "search": {
+      "button": "搜尋",
+      "placeholder": "搜尋卡牌..."
+    },
+    "showing": "目前顯示",
+    "showingCount": "顯示 {{total}} 件商品中的 {{count}} 件",
+    "soldOut": "已售出",
+    "sort": {
+      "newest": "最新上架",
+      "priceHighToLow": "價格由高到低",
+      "priceLowToHigh": "價格由低到高",
+      "title": "排序"
+    },
+    "title": "商城",
+    "viewDetails": "查看詳情",
+    "wishlist": {
+      "added": "已加入收藏",
+      "loginRequired": "請先登入才能收藏",
+      "removed": "已移除收藏"
+    }
+  },
+  "marketplaceListing": {
+    "30DayAverage": "30天均價",
+    "7DayTrend": "7天趨勢",
+    "address": {
+      "region": {
+        "hongkong": "香港"
+      }
+    },
+    "alipay": {
+      "address": {
+        "clear": "清除已選地址",
+        "manualFillPrompt": "點擊已儲存地址快速填入，或手動填寫以下欄位",
+        "recipientName": "收件人姓名 *",
+        "saved": "已儲存地址",
+        "sfStationLabel": "順豐自提站 {code}",
+        "sfStationWithName": "順豐自提站 {name} {code}",
+        "subtitle": "收貨地址將提供給賣家安排寄送",
+        "title": "請填寫收貨地址"
+      },
+      "amount": "付款金額：",
+      "copyId": "複製編號",
+      "copySuccess": "商品編號已複製！請貼上到支付寶備注欄位",
+      "header": "支付寶 HK 付款",
+      "memoPrompt": "付款備注填寫欄位請填寫商品編號：",
+      "memoWarning": "⚠️ 請務必在支付寶備注欄填寫以上編號，方便核對付款",
+      "nextStep": {
+        "address": "我已完成付款，填寫收貨地址"
+      },
+      "offerPriceLabel": "(出價價格)",
+      "openInApp": "在手機上開啟支付寶 HK",
+      "scanPrompt": "請掃描 QR Code 或點擊連結付款",
+      "title": "支付寶 HK 付款"
+    },
+    "backToHome": "返回首頁",
+    "backToMarketplace": "返回商城",
+    "boxiumMarketPrice": "BOXIUM 市場參考價",
+    "buyerProtection": {
+      "description": "買家保障：商品與描述不符可申請退款"
+    },
+    "chart": {
+      "averagePrice": "均價",
+      "dataAttribution": "數據來源：BOXIUM · 近 {days} 天 {count} 筆成交記錄",
+      "insufficientData": "此時間範圍內數據不足，請選擇更長時間範圍",
+      "thisListing": "此商品"
+    },
+    "clickToZoom": "點擊放大",
+    "copyListingId": {
+      "success": "商品編號已複製",
+      "tooltip": "點擊複製商品編號"
+    },
+    "days": "天",
+    "highest": "最高",
+    "image": "圖片",
+    "loading": "載入中...",
+    "lowest": "最低",
+    "maintenance": {
+      "description": "我們正在緊鑼密鼓地開發中，敬請期待！",
+      "title": "市集正在維護中"
+    },
+    "meta": {
+      "description": "商品狀況：{condition} | 價格：HKD {price} | BOXIUM PTCG 卡牌商城"
+    },
+    "nav": {
+      "marketplace": "商城"
+    },
+    "noRecentTransactions": "暫無近期交易數據",
+    "notFound": "商品不存在或已下架",
+    "offer": {
+      "accepted": {
+        "banner": "賣家已接受出價！請使用下方按鈕付款",
+        "price": "出價金額：HKD {price}"
+      },
+      "button": {
+        "loginRequired": "請先登入才能出價",
+        "makeOffer": "出價洽議"
+      },
+      "expiresAt": "出價將於 {date} 到期",
+      "myOffer": "已出價",
+      "status": {
+        "pending": "等待賣家回覆"
+      },
+      "success": "出價已送出！賣家將盡快回覆。"
+    },
+    "order": {
+      "autoConfirm": "付款後 14 天自動確認完成交易",
+      "number": "訂單號：{orderNo}",
+      "submitted": "訂單已提交！"
+    },
+    "payment": {
+      "goToPayment": "前往付款",
+      "linkError": "無法獲取付款連結",
+      "redirecting": "正在轉向付款頁面...",
+      "stripe": {
+        "minimumError": "此商品金額低於 Stripe 最低付款限額（HKD 4.00），請使用支付寶 HK 付款。"
+      },
+      "verification": {
+        "error": "驗證失敗：",
+        "failed": "⚠️ 付款金額不符，請重新確認",
+        "success": "✅ 付款金額驗證成功！"
+      }
+    },
+    "priceComparison": {
+      "higher": "比市場均價高",
+      "lower": "比市場均價低"
+    },
+    "priceLabel": "售價",
+    "productImage": "商品圖片",
+    "purchase": {
+      "loginRequired": "請先登入才能購買",
+      "pendingPayment": "此商品目前有買家正在付款，請稍後再試。"
+    },
+    "report": {
+      "button": "舉報此商品",
+      "success": "舉報已提交，我們將盡快審核。"
+    },
+    "salesTrend": "成交走勢",
+    "seller": {
+      "collapseReviews": "收起",
+      "individual": "👤 個人賣家",
+      "noReviews": "此賣家暫無評價記錄",
+      "otherListings": "同一賣家的其他商品",
+      "platform": "🏻 BOXIUM 官方",
+      "profile": {
+        "individual": "個人賣家",
+        "new": "新賣家",
+        "totalSales": "已售 {totalSales} 件",
+        "view": "查看主頁"
+      },
+      "showAllReviews": "查看全部 {total} 則評價"
+    },
+    "share": {
+      "copy": {
+        "copied": "已複製！",
+        "default": "複製連結",
+        "error": "複製失敗",
+        "success": "連結已複製！"
+      },
+      "whatsapp": "WhatsApp 分享"
+    },
+    "shipping": {
+      "local": "本地順豐到付 / 自取（詳情請聯絡賣家）"
+    },
+    "status": {
+      "sold": "商品已售出",
+      "soldOut": "已售出"
+    },
+    "stock": "庫存：{quantity} 件",
+    "tabs": {
+      "description": "商品描述",
+      "price": "市場價格",
+      "reviews": "賣家評價"
+    },
+    "tcg": {
+      "other": "其他 TCG"
+    },
+    "thumbnail": "縮圖",
+    "trend": {
+      "flat": "持平"
+    },
+    "upload": {
+      "failed": "上傳失敗",
+      "retry": "截圖上傳失敗，請重試",
+      "sizeError": "截圖不能超過 5MB",
+      "verifying": "截圖已上傳，正在 AI 驗證金額..."
+    },
+    "viewDetailedChart": "查看詳細行情",
+    "wishlist": {
+      "added": "已加入收藏",
+      "loginRequired": "請先登入才能收藏",
+      "removed": "已移除收藏"
+    }
+  },
+  "nav": {
+    "admin": "管理後台",
+    "dashboard": "個人中心",
+    "favorites": "我的收藏",
+    "login": "登入/註冊",
+    "logout": "登出",
+    "user": "用戶"
+  },
+  "notifications": {
+    "all": "全部",
+    "delete": "刪除",
+    "deleteAllRead": "刪除已讀",
+    "deleteAllReadError": "刪除失敗",
+    "deleteAllReadSuccess": "已刪除所有已讀通知",
+    "deleteError": "刪除失敗",
+    "deleteSuccess": "刪除成功",
+    "description": "查看所有系統通知和交易動態",
+    "filter": {
+      "all": "全部",
+      "allTypes": "所有類型",
+      "dispute": "爭議",
+      "offer": "出價",
+      "payment": "付款",
+      "shipping": "物流",
+      "system": "系統",
+      "trade": "交易",
+      "unread": "未讀"
+    },
+    "login": "登入",
+    "loginPrompt": "請先登入以查看通知",
+    "markAllAsRead": "全部標記已讀",
+    "markAllAsReadError": "全部標記失敗",
+    "markAllAsReadSuccess": "已全部標記為已讀",
+    "markAsRead": "標記已讀",
+    "markAsReadError": "標記失敗",
+    "markAsReadSuccess": "已標記為已讀",
+    "noNotifications": "無通知",
+    "noUnreadNotifications": "無未讀通知",
+    "title": "通知中心",
+    "unread": "未讀",
+    "unreadCount": "{unreadCount} 則未讀",
+    "viewDetails": "點擊查看詳情 →"
+  },
+  "orderDetail": {
+    "alipayHk": "支付寶 HK",
+    "alipayHkLabel": "支付寶 (香港)",
+    "alipayHkPayment": "支付寶 HK 付款",
+    "alipayHkWallelt": "AlipayHK 電子錢包付款",
+    "alipayRemarkNotice": "⚠️ 請務必在支付寶備注欄填寫以上編號，方便核對付款",
+    "amount": "金額",
+    "awaitingBuyerConfirmation": "等待買家收貨",
+    "awaitingPayment": "等待付款",
+    "backToMyOrders": "返回我的訂單",
+    "backToOrderList": "返回訂單列表",
+    "buyerCancelled": "買家已申請取消訂單",
+    "cancel": "取消",
+    "cancellationReason": "取消原因",
+    "checkOrderDetails": "請查看訂單詳情",
+    "clickOrDragToUpload": "點擊此處上傳 或 直接拖入",
+    "confidence": "可信度",
+    "confirm": "確認",
+    "confirmReceipt": "確認收貨",
+    "confirmReceiptDesc": "此操作將完成訂單並將款項發放給賣家。",
+    "confirmReceiptPrompt": "您確定已收到商品嗎？",
+    "contactPhone": "聯絡電話",
+    "contactPhoneLabel": "聯絡電話",
+    "contactSeller": "聯絡賣家",
+    "copy": "複製",
+    "copyId": "複製編號",
+    "creditCardStripe": "信用卡 (Stripe)",
+    "describeProblem": "請詳細說明您遇到的問題",
+    "detailedAddress": "詳細地址",
+    "disputeInProgress": "爭議處理中",
+    "disputeInProgressDesc": "我們正在審核您的案件，請耐心等候。您可以在下方與賣家溝通。",
+    "encryptedPayment": "所有付款均通過加密傳輸保護",
+    "enterDetailedAddress": "請輸入詳細地址",
+    "enterName": "請輸入姓名",
+    "enterPhone": "請輸入電話",
+    "fileFormatHint": "檔案格式：PNG, JPG, HEIC (5MB 以內)",
+    "fileTooLarge": "截圖不能超過 5MB",
+    "fillOrderNumber": "付款備注填寫欄位請填寫商品編號：",
+    "fillShippingAddress": "請填寫收貨地址",
+    "getPaymentLinkError": "無法獲取付款連結",
+    "high": "高",
+    "hongKong": "香港",
+    "hongKongIsland": "香港島",
+    "kowloon": "九龍",
+    "listingIdCopied": "商品編號已複製！",
+    "low": "低",
+    "medium": "中",
+    "newTerritories": "新界",
+    "nextUploadProof": "下一步：上傳付款截圖",
+    "openInAlipay": "在手機上開啟支付寶 HK",
+    "orderCancelled": "訂單已取消",
+    "orderCompleted": "訂單已完成",
+    "orderDetails": "訂單詳情",
+    "orderNumber": "訂單編號",
+    "orderStatus": "訂單狀態",
+    "orderSubmitted": "訂單已提交",
+    "orderSubmittedSuccess": "訂單已成功提交，等待賣家確認",
+    "orderSubmittedSuccessDesc": "感謝您的訂單！賣家將在確認付款後盡快發貨。您可以在訂單頁面追踪狀態更新。",
+    "paidAndFillAddress": "我已完成付款，填寫收貨地址",
+    "paidAndUpload": "我已完成付款，上傳截圖",
+    "payee": "收款人",
+    "paymentAmount": "付款金額：",
+    "paymentInfo": "付款資訊",
+    "paymentMethod": "付款方式",
+    "paymentMethodLabel": "付款方式",
+    "paymentMethods": "Visa / Mastercard / Apple Pay",
+    "paymentStatus": "付款狀態",
+    "paymentVerifiedError": "⚠️ 驗證未通過，請重新上傳截圖",
+    "paymentVerifiedSuccess": "✅ 付款金額驗證成功！",
+    "pending": "等待處理",
+    "pendingPayment": "待付款",
+    "proceedToPayment": "前往付款",
+    "processing": "備貨中",
+    "productInfo": "商品資訊",
+    "quantity": "數量",
+    "rateSeller": "評價賣家",
+    "rateTransaction": "您對這次交易的評價是？",
+    "reason": "原因",
+    "recipient": "收貨人",
+    "recipientName": "收貨人姓名",
+    "region": "地區",
+    "requestAfterSales": "申請售後／提出爭議",
+    "resolved": "已解決",
+    "reupload": "重新上傳",
+    "scanQrCode": "請掃描 QR Code 或點擊連結付款",
+    "selectPaymentMethod": "選擇付款方式",
+    "seller": "賣家",
+    "sellerProcessing": "賣家備貨中",
+    "sellerShipped": "賣家已發貨",
+    "shipped": "已發貨",
+    "shippingAddress": "收貨地址",
+    "shippingFee": "運費",
+    "shippingInfo": "收貨資訊",
+    "status": "狀態",
+    "stripeCreditCardApplePay": "Stripe 信用卡 / Apple Pay",
+    "submitFailed": "提交失敗，請重試",
+    "submitOrder": "提交訂單",
+    "submitRating": "提交評價",
+    "submitRequest": "提交申請",
+    "subtotal": "小計",
+    "switchPaymentError": "無法切換付款方式",
+    "totalAmount": "總金額",
+    "unitPrice": "單價",
+    "uploadFailed": "截圖上傳失敗，請重試",
+    "uploadPaymentProof": "上傳付款截圖",
+    "uploadingAndVerifying": "截圖已上傳，正在 AI 驗證金額...",
+    "verificationFailed": "驗證失敗：",
+    "verificationFailedLabel": "驗證失敗",
+    "verificationSuccess": "驗證成功",
+    "verifying": "驗證中...",
+    "viewProduct": "查看商品"
+  },
+  "orderStatusStepper": {
+    "cancelled": {
+      "description": "此訂單已被取消，不會繼續處理",
+      "title": "訂單已取消"
+    },
+    "completed": {
+      "buyerDesc": "訂單已完成",
+      "buyerLabel": "已完成",
+      "meetup": {
+        "buyerLabel": "面交完成",
+        "sellerLabel": "面交完成"
+      },
+      "sellerDesc": "交易完成",
+      "sellerLabel": "已完成"
+    },
+    "delivered": {
+      "buyerDesc": "請確認收貨",
+      "buyerLabel": "待確認",
+      "sellerDesc": "等待買家確認",
+      "sellerLabel": "已送達"
+    },
+    "disputed": {
+      "description": "平台正在介入處理，請耐心等候 1–3 個工作天",
+      "title": "爭議處理中"
+    },
+    "meetup": {
+      "paidHeld": {
+        "buyerLabel": "已付款",
+        "sellerLabel": "待確認"
+      }
+    },
+    "paidHeld": {
+      "buyerDesc": "付款已確認",
+      "buyerLabel": "已付款",
+      "meetup": {
+        "buyerDesc": "付款已確認，安排面交",
+        "sellerDesc": "請聯絡買家安排面交"
+      },
+      "sellerDesc": "請盡快安排出貨",
+      "sellerLabel": "待出貨"
+    },
+    "pendingPayment": {
+      "buyerDesc": "等待完成付款",
+      "buyerLabel": "待付款",
+      "sellerDesc": "等待買家付款",
+      "sellerLabel": "待付款"
+    },
+    "refunded": {
+      "description": "款項已退回至原付款方式",
+      "title": "退款已完成"
+    },
+    "shipped": {
+      "buyerDesc": "商品正在運送",
+      "buyerLabel": "運送中",
+      "sellerDesc": "等待買家確認收貨",
+      "sellerLabel": "已出貨"
+    }
+  },
+  "orders": {
+    "action": {
+      "back": "返回",
+      "cancel": "取消",
+      "cancelOrder": "取消訂單",
+      "cancelOrderConfirmation": "確定要取消此訂單？取消後商品將重新上架。",
+      "confirmCancel": "確認取消",
+      "confirmCancelOrder": "確認取消訂單",
+      "confirmReceipt": "確認收貨",
+      "fileDispute": "申請爭議",
+      "goToPayment": "前往付款",
+      "orderCancelled": "訂單已取消",
+      "payNow": "立即付款",
+      "rateSeller": "評價賣家",
+      "viewProductPage": "查看商品頁面"
+    },
+    "buyer": "買家",
+    "details": {
+      "itemAmount": "商品金額",
+      "paymentSummary": "付款摘要",
+      "shippingInfo": "收貨資料",
+      "toggle": {
+        "hide": "收起收貨 / 付款資料",
+        "show": "展開收貨 / 付款資料"
+      },
+      "total": "總計"
+    },
+    "dialog": {
+      "confirmReceipt": {
+        "confirmButton": "確認收貨",
+        "description": "確認已收到商品後，款項將立即轉帳給賣家。此操作不可撤銷。",
+        "processing": "處理中...",
+        "title": "確認收貨",
+        "warning": "請確認商品狀態與描述相符後再確認收貨。如有問題，請先申請爭議。"
+      },
+      "fileDispute": {
+        "charCount": {
+          "min": "至少輸入 10 個字",
+          "needed": "還需輸入 {{count}} 個字",
+          "ok": "✓ 內容已符合要求"
+        },
+        "description": "請詳細描述問題，管理員將在 1-3 個工作天內處理。",
+        "evidence": "證據檔案（選填，最多 3 個）",
+        "placeholder": "請描述問題，例如：商品與描述不符、未收到商品、商品損壞等（至少 10 字）",
+        "submitButton": "提交申請",
+        "title": "申請爭議",
+        "upload": {
+          "description": "或拖曳檔案到此處",
+          "label": "上傳檔案",
+          "uploading": "上傳中..."
+        }
+      },
+      "rateSeller": {
+        "commentLabel": "你的評論（選填）",
+        "commentPlaceholder": "分享更多關於你的體驗...",
+        "description": "分享你的交易體驗，幫助其他買家。",
+        "ratingLabel": "你的評分",
+        "submitButton": "提交評價",
+        "submitting": "提交中...",
+        "title": "評價賣家"
+      }
+    },
+    "dispute": {
+      "inProgress": "爭議處理中，請等待管理員回覆"
+    },
+    "error": {
+      "createPaymentFailed": "無法建立付款"
+    },
+    "myOrders": "我的訂單",
+    "noOrders": "沒有訂單",
+    "noOrdersDescription": "你目前沒有任何訂單。",
+    "orderDate": "訂單日期",
+    "orderNumber": "訂單號碼",
+    "payment": {
+      "alipayHK": "支付寶 HK",
+      "alipayHKCompletePayment": "請在新視窗完成付款，然後回到此頁面上傳付款截圖",
+      "alipayHKPageOpened": "支付寶 HK 付款頁面已開啟",
+      "alipayHKScreenshotRequired": "⚠️ 付款後需要",
+      "alipayHKUploadScreenshot": "前往訂單詳情頁上傳支付寶付款截圖，以便管理員確認收款",
+      "alipayHKWallet": "AlipayHK 電子錢包付款",
+      "amount": "付款金額：",
+      "cardTypes": "Visa / Mastercard / 其他信用卡",
+      "encrypted": "所有付款均通過加密傳輸保護",
+      "iHavePaid": "我已完成付款",
+      "selectMethod": "選擇付款方式",
+      "stripeCreditCard": "Stripe 信用卡"
+    },
+    "rated": "已評價 {{rating}} 星",
+    "seller": "賣家",
+    "status": {
+      "cancelled": "已取消",
+      "completed": "已完成",
+      "delivered": "已送達",
+      "disputed": "爭議中",
+      "paid_held": "已付款，等待出貨",
+      "payment_received": "已收款",
+      "pending_payment": "待付款",
+      "shipped": "已出貨"
+    },
+    "tabs": {
+      "buying": "我正在買",
+      "selling": "我正在賣"
+    },
+    "total": "總金額"
+  },
+  "pricing": {
+    "allListings": "PSA 10 在售商品（按價格排序）",
+    "available": "可購買",
+    "averagePrice": "平均價",
+    "avgPrice": "平均價",
+    "buy": "購買",
+    "buyNow": "前往購買",
+    "cancel": "取消",
+    "cardNotFound": "找不到該卡牌",
+    "cardNumber": "卡牌編號",
+    "condition": "狀況",
+    "cropImage": "裁剪圖片",
+    "dragDropImage": "拖放圖片到此處",
+    "ebayListings": "eBay PSA 10 在售商品",
+    "enterKeyword": "請輸入搜尋關鍵字",
+    "fetchingPrices": "正在獲取最新價格...",
+    "foundCards": "找到 {{count}} 張卡牌",
+    "grade": "評級",
+    "highestPrice": "最高價",
+    "hint": "提示: 搜尋結果僅顯示 PSA 10 評級的可購買商品",
+    "imageSearch": "圖片搜尋",
+    "imageSearchError": "圖片搜尋失敗，請稍後再試",
+    "imageSearchFailed": "無法識別卡牌，請嘗試其他圖片",
+    "imageSearchSuccess": "找到卡牌：{{cardName}}",
+    "imageSearchTitle": "卡牌圖片分析功能",
+    "listings": "個",
+    "loading": "載入中...",
+    "loadingListings": "載入商品中...",
+    "lowestPrice": "最低價",
+    "maxPrice": "最高價",
+    "minPrice": "最低價",
+    "noImage": "無圖片",
+    "noListings": "暫無在售商品",
+    "noResults": "未找到相關結果，請嘗試其他關鍵詞",
+    "orSelectFile": "或選擇檔案",
+    "pleaseSelectImage": "請選擇圖片",
+    "pleaseWait": "請稍候，這可能需要20-30秒",
+    "priceStats": "價格統計",
+    "psa10Listings": "PSA 10 在售商品",
+    "refresh": "刷新",
+    "searchCropped": "搜尋裁剪區域",
+    "searchError": "搜尋出錯，請重試",
+    "searchHint": "提示: 搜尋結果僅顯示 PSA 10 評級的可購買商品",
+    "searchNow": "立即搜尋",
+    "searchResults": "搜尋結果",
+    "searchResultsFor": "搜尋結果",
+    "searching": "搜尋中...",
+    "seller": "賣家",
+    "series": "系列",
+    "snkrdunkDescription": "點擊以下按鈕前往 SNKRDUNK 查看最新的 PSA 10 在售商品",
+    "snkrdunkTitle": "SNKRDUNK PSA 10 在售商品",
+    "subtitle": "實時比較全球市場卡牌價格",
+    "takePhoto": "拍照",
+    "title": "價格查詢",
+    "totalListings": "共 {{count}} 個在售商品",
+    "totalResults": "共 {{count}} 筆",
+    "uploadFile": "上傳檔案",
+    "viewDetail": "查看詳情",
+    "viewOnSnkrdunk": "前往 SNKRDUNK 查看"
+  },
+  "profile": {
+    "addresses": {
+      "add": "新增地址",
+      "addressLabel": "地址標籤",
+      "addressLabelHint": "例如：家、公司",
+      "addressType": "地址類型",
+      "cancel": "取消",
+      "contactPhone": "聯絡電話",
+      "defaultBadge": "預設",
+      "detailedAddress": "詳細地址",
+      "detailedAddressHint": "街道、大婦、樓層、單位",
+      "district": "區域（選填）",
+      "districtHint": "如：旺角、銅鸾灣",
+      "empty": {
+        "description": "新增地址後，付款時可快速帶入，無需重複填寫",
+        "title": "尚未新增收貨地址"
+      },
+      "invalidCode": "點碼無效或不存在",
+      "recipientName": "收件人姓名",
+      "region": "地區",
+      "saveChanges": "儲存更改",
+      "searchCode": "搜尋點碼",
+      "setAsDefault": "設為預設",
+      "setDefault": "設為預設地址",
+      "sfCode": "順豐點碼",
+      "sfCodeHint": "輸入點碼後自動帶入地址",
+      "sfDisclaimer": "資料來自順豐香港官方（2026-03），共 125 個順豐站、729 個智能櫃。如需查詢最新站點，請訪問順豐香港官網。",
+      "sfLocker": "🔒 智能櫃",
+      "sfStation": "📦 順豐自提站",
+      "type": {
+        "residential": "住宅/工商地址",
+        "sfStation": "順豐站/智能櫃"
+      },
+      "validatingCode": "正在驗證點碼..."
+    },
+    "admin": "🎖️ 管理員",
+    "auctions": {
+      "auctionTitle": "拍賣 #{id}",
+      "countdown": {
+        "daysHours": "{d}天 {h}時",
+        "ended": "已結標"
+      },
+      "currentHighest": "當前最高",
+      "empty": {
+        "description": "前往市集探索正在進行的拍賣",
+        "noRecords": "此分類暫無記錄",
+        "title": "您尚未參與任何拍賣"
+      },
+      "goToMarketplace": "前往市集",
+      "myBid": "我的出價",
+      "outbidHint": "點擊前往拍賣頁面再次出價",
+      "status": {
+        "lost": "未得標",
+        "outbid": "⚠️ 被超越",
+        "winning": "🏆 領先中",
+        "won": "✅ 得標"
+      },
+      "tabs": {
+        "active": "正在競拍",
+        "history": "歷史競拍",
+        "won": "已得標"
+      },
+      "timeLeft": "剩餘時間",
+      "viewOrder": "查看訂單"
+    },
+    "cart": {
+      "addFailed": "加入失敗",
+      "added": "已加入購物車"
+    },
+    "collector": "📦 收藏家",
+    "goToLogin": "前往登入",
     "historySection": {
-      "title": "瀏覽歷史",
-      "count": "最近 {{count}} 筆記錄",
-      "empty": "暫無瀏覽記錄",
+      "cancel": "取消",
+      "clearFailed": "清除失敗：{{error}}",
       "clearHistory": "清除歷史",
       "clearSuccess": "瀏覽歷史已清除",
-      "clearFailed": "清除失敗：{{error}}",
+      "confirm": "確認清除",
       "confirmClear": "確認清除",
       "confirmDescription": "此操作將清除所有瀏覽歷史記錄，且無法復原。",
-      "cancel": "取消",
-      "confirm": "確認清除",
+      "count": "最近 {{count}} 筆記錄",
+      "empty": "暫無瀏覽記錄",
       "table": {
         "card": "卡牌",
         "series": "系列",
         "viewedAt": "瀏覽時間"
+      },
+      "title": "瀏覽歷史"
+    },
+    "info": {
+      "email": "電子郵件",
+      "joinDate": "註冊時間",
+      "phone": "手機號碼",
+      "title": "帳戶資訊",
+      "username": "用戶名稱"
+    },
+    "infoSection": {
+      "adminRole": "🎖️ 管理員",
+      "changePassword": "修改密碼",
+      "description": "查看和編輯您的個人資料",
+      "email": "電子郵件",
+      "googleOAuth": "🔐 Google OAuth",
+      "lastLogin": "最後登入",
+      "loginMethod": "登入方式",
+      "noRecord": "未記錄",
+      "normalUser": "📦 普通用戶",
+      "notSet": "未設置",
+      "passwordLogin": "🔑 密碼登入",
+      "registeredAt": "註冊時間",
+      "role": "角色",
+      "title": "個人資訊",
+      "username": "用戶名稱"
+    },
+    "joinedAt": "加入時間：",
+    "loading": "載入中...",
+    "loginRequired": "您需要登入才能查看個人頁面",
+    "nav": {
+      "addresses": "收貨地址",
+      "auctions": "我的競拍",
+      "notifications": "通知中心",
+      "offers": "我的出價",
+      "orders": "我的訂單"
+    },
+    "notifications": {
+      "allRead": "全部已讀",
+      "empty": "目前沒有任何通知",
+      "title": "通知"
+    },
+    "offers": {
+      "acceptedMessage": "✅ 賣家已接受出價，請盡快完成付款",
+      "cancelOffer": "取消出價",
+      "empty": {
+        "description": "在商城中對喜愛的商品進行出價，您的出價記錄將會顯示在這裡。",
+        "title": "您尚未有任何出價"
+      },
+      "expiresAt": "到期: {date}",
+      "goToMarketplace": "前往商城出價",
+      "listingItem": "商品",
+      "message": "留言: {message}",
+      "offerId": "出價 #{id}",
+      "offerPrice": "出價金額: ",
+      "rejectionReason": "拒絕原因: {reason}",
+      "status": {
+        "accepted": "已接受",
+        "cancelled": "已取消",
+        "expired": "已過期",
+        "pending": "待處理",
+        "rejected": "已拒絕"
+      },
+      "viewItem": "查看商品"
+    },
+    "orderStatus": {
+      "cancelled": "已取消",
+      "completed": "已完成",
+      "delivered": "已送達",
+      "disputed": "爭議中",
+      "paid_held": "已付款，等待出貨",
+      "payment_received": "已收款",
+      "pending_payment": "待付款",
+      "shipped": "已出貨"
+    },
+    "orders": {
+      "all": "全部",
+      "empty": {
+        "description": "在商城購物或贏得拍賣後，您的訂單將會顯示在這裡。",
+        "title": "尚未有任何訂單"
+      },
+      "filterStatus": "篩選狀態",
+      "goToMarketplace": "前往商城",
+      "payNow": "付款",
+      "searchPlaceholder": "搜尋訂單編號或商品名稱",
+      "status": {
+        "itemDelivered": "商品已送達",
+        "orderCancelled": "訂單已取消",
+        "orderCompleted": "訂單已完成",
+        "orderDisputed": "訂單爭議中",
+        "paymentConfirmed": "您的付款已被確認。",
+        "paymentProcessing": "您的付款仍在處理中，請稍候。",
+        "paymentTimeout": "您的付款已逾時，訂單已自動取消。",
+        "sellerShipped": "賣家已出貨",
+        "sellerShipping": "賣家出貨中"
+      },
+      "table": {
+        "createdAt": "建立時間",
+        "items": "項目",
+        "orderId": "訂單編號",
+        "total": "總金額",
+        "viewDetails": "查看詳情"
       }
+    },
+    "pleaseLogin": "請先登入",
+    "security": {
+      "changePassword": "更改密碼",
+      "confirmNewPassword": "確認新密碼",
+      "currentPassword": "目前密碼",
+      "newPassword": "新密碼",
+      "passwordHint": "密碼長度至少8個字元",
+      "savePassword": "儲存密碼",
+      "title": "安全設定"
     },
     "statsSection": {
-      "title": "收藏統計",
-      "description": "您的卡牌收藏數據分析",
-      "empty": "暫無統計數據",
-      "watchlistCards": "關注卡牌",
-      "cardsCount": "張卡牌",
-      "viewHistory": "瀏覽記錄",
-      "recordsCount": "筆記錄",
       "activity": "活躍度",
       "activityLevel": "收藏活躍度",
+      "cardsCount": "張卡牌",
+      "description": "您的卡牌收藏數據分析",
+      "empty": "暫無統計數據",
+      "highestCard": "最高價卡牌",
+      "noRecord": "暫無記錄",
+      "recordsCount": "筆記錄",
+      "title": "收藏統計",
       "totalCount": "關注清單總數",
       "totalValue": "總價值",
-      "highestCard": "最高價卡牌",
-      "noRecord": "暫無記錄"
-    }
-  },
-  "disclaimerPage": {
-    "title": "免責聲明",
-    "subtitle": "BOXIUM 平台免責聲明 — 請在使用本平台前仔細閱讀以下重要聲明",
-    "lastUpdated": "最後更新日期",
-    "contactInfo": "如有任何疑問，請聯繫我們：support@boxium.asia",
-    "sections": {
-      "priceData": {
-        "title": "價格數據準確性",
-        "content": "本平台整合 SNKRDUNK、eBay 等多個市場的 PSA 10 卡牌價格數據，致力提供準確即時的市場資訊。然而，由於市場價格瞬息萬變，本平台無法保證所顯示的價格與實際成交價格完全一致。所有價格資訊僅供參考，實際交易價格以各平台為準。"
+      "viewHistory": "瀏覽記錄",
+      "watchlistCards": "關注卡牌"
+    },
+    "tabs": {
+      "history": "瀏覽歷史",
+      "historyShort": "歷史",
+      "info": "個人資訊",
+      "infoShort": "資訊",
+      "stats": "收藏統計",
+      "statsShort": "統計",
+      "watchlist": "關注清單",
+      "watchlistShort": "關注"
+    },
+    "user": "用戶",
+    "watchlist": {
+      "added": "已加入收藏",
+      "removed": "已移除收藏",
+      "sort": {
+        "label": "排序：",
+        "newest": "最新追蹤",
+        "oldest": "最早追蹤",
+        "priceAsc": "價格↑",
+        "priceDesc": "價格↓"
       },
-      "marketplaceDisclaimer": {
-        "title": "二手市場交易免責聲明",
-        "content": "本平台的二手市場（Marketplace）作為買賣雙方的中介平台，僅提供交易撮合服務。本平台不對賣家所刊登商品的真實性、品質、合法性或描述準確性作出保證。買家在購買前應仔細閱讀商品描述，並自行評估交易風險。本平台對因商品描述不實、商品損壞或其他交易糾紛所引起的損失，不承擔直接法律責任，但將盡力協助解決爭議。"
+      "tabs": {
+        "cardTracking": "卡牧追蹤",
+        "favoriteItems": "收藏商品"
+      }
+    },
+    "watchlistSection": {
+      "count": "共 {{count}} 張卡牌",
+      "empty": "您還沒有關注任何卡牌",
+      "goToResearch": "前往搜尋卡牌",
+      "removeFailed": "移除失敗：{{error}}",
+      "removeSuccess": "已從關注清單中移除",
+      "table": {
+        "actions": "操作",
+        "addedAt": "添加時間",
+        "card": "卡牌",
+        "latestPrice": "最新價格",
+        "noPrice": "暫無價格",
+        "notes": "備註",
+        "remove": "移除",
+        "series": "系列"
       },
-      "investmentRisk": {
-        "title": "投資風險聲明",
-        "content": "PTCG 卡牌（包括 PSA 10 評級卡牌）的市場價格受多種因素影響，包括但不限於市場供需、稀有度、版本及收藏趨勢等。本平台提供的任何價格資訊、趨勢分析或市場數據均不構成投資建議。用戶應自行評估風險，本平台對任何因參考本平台資訊而產生的投資損失概不負責。"
-      },
-      "dataDelay": {
-        "title": "數據延遲聲明",
-        "content": "本平台的價格數據來源於第三方平台（SNKRDUNK、eBay 等），數據更新可能存在延遲。部分數據可能因網絡狀況、API 限制或技術原因而無法即時更新。本平台對因數據延遲而造成的任何損失不承擔責任。"
-      },
-      "externalLinks": {
-        "title": "外部連結聲明",
-        "content": "本平台可能包含指向 SNKRDUNK、eBay 等第三方平台的連結。這些連結僅供用戶參考，本平台對第三方平台的內容、隱私政策或服務條款不承擔任何責任。用戶訪問第三方平台時，應遵守該平台的使用條款。"
-      },
-      "serviceInterruption": {
-        "title": "服務中斷聲明",
-        "content": "本平台可能因系統維護、技術故障、網絡問題或不可抗力等原因而暫時中斷服務。本平台將盡力確保服務的穩定性，但對因服務中斷而造成的任何損失不承擔責任。"
-      },
-      "jurisdiction": {
-        "title": "管轄法律",
-        "content": "本免責聲明受香港特別行政區法律管轄。因使用本平台而產生的任何爭議，雙方同意以香港特別行政區法院為第一審管轄法院。"
-      },
-      "userConduct": {
-        "title": "用戶行為規範",
-        "content": "用戶在使用本平台時，不得從事任何違法行為、侵害他人權益或干擾平台正常運作的行為。本平台保留對違規用戶採取措施的權利，包括但不限於暫停或終止其使用權限。"
-      },
-      "dataPrivacy": {
-        "title": "個人資料保護",
-        "content": "本平台重視用戶的個人資料保護。我們收集的個人資料僅用於提供服務、處理交易及改善用戶體驗。詳細的個人資料處理方式，請參閱我們的隱私權政策。"
-      },
-      "intellectualProperty": {
-        "title": "智慧財產權聲明",
-        "content": "本平台的所有內容（包括文字、圖片、設計及程式碼）均受著作權法保護。平台上涉及的各遊戲商標（如 Pokémon、One Piece 等）分別屬於其各自的權利人，本平台與各遊戲公司無任何官方關聯。未經授權，不得複製或使用本平台的任何內容。"
+      "title": "我的關注清單"
+    },
+    "welcome": "歡迎回來！在這裡管理您的卡牌收藏和瀏覽記錄 🎴",
+    "wishlist": {
+      "table": {
+        "actions": "操作",
+        "addedAt": "加入時間",
+        "item": "商品",
+        "price": "價格",
+        "status": "狀態"
       }
     }
   },
-  "aboutPage": {
-    "title": "關於 BOXIUM",
-    "subtitle": "歡迎來到 Boxium ～ 遊戲迷的專屬樂園！整合全球 TCG 市場數據，提供即時、準確的價格資訊。",
-    "trackedCards": "已追蹤卡牌",
-    "dataSources": "資料來源",
-    "ourMission": "我們的使命",
-    "missionContent": "BOXIUM 致力於為 TCG 集換式卡牌收藏家、投資者及賣家提供最準確、最即時的市場數據與交易環境。我們整合全球主要交易平台的真實成交記錄，涵蓋 Pokémon、One Piece 等多款遊戲，並提供安全可靠的卡牌二手市場，讓用戶在同一平台完成研究、比價及交易，做出明智的收藏與投資決策。",
-    "coreServices": "核心服務",
-    "platformFeatures": "平台特色",
-    "contactInfo": "如有任何問題或建議，歡迎透過平台提供的聯絡方式與我們聯繫。",
-    "services": {
-      "cardSearch": {
-        "title": "卡牌研究",
-        "description": "搜尋超過 {{count}} 張 PTCG 卡牌，查看 PSA 10 歷史成交價格趨勢，掌握卡牌市場動態"
+  "register": {
+    "alreadyHaveAccount": "已經有帳號？",
+    "confirmPasswordLabel": "確認密碼",
+    "description": "創建您的 BOXIUM PTCG 帳號",
+    "errorToast": "註冊失敗",
+    "loginLink": "立即登入",
+    "nameLabel": "名稱（選填）",
+    "namePlaceholder": "您的名稱",
+    "passwordHint": "至少 8 個字符，包含大小寫字母和數字",
+    "passwordLabel": "密碼",
+    "passwordMismatch": "密碼不一致",
+    "passwordRequiresLowercase": "密碼需要包含至少一個小寫字母",
+    "passwordRequiresNumber": "密碼需要包含至少一個數字",
+    "passwordRequiresUppercase": "密碼需要包含至少一個大寫字母",
+    "passwordTooShort": "密碼至少需要 8 個字符",
+    "submitButton": "註冊",
+    "submittingText": "註冊中...",
+    "successToast": "註冊成功！",
+    "title": "註冊"
+  },
+  "research": {
+    "addToWatchlist": "加入觀察清單",
+    "aiIdentificationResults": "AI 模型的識別結果",
+    "aiIdentifying": "正在使用 AI 識別卡牌名稱、卡號、系列...",
+    "allCards": "所有卡牌",
+    "cardIdentifiedSearching": "識別到「{{cardName}}」，正在進行文字搜尋...",
+    "cardName": "卡牌名稱",
+    "cardNameJa": "日文卡名",
+    "cardNumber": "卡牌號碼",
+    "cardSeries": "卡牌系列",
+    "cropImage": "裁剪圖片",
+    "identificationSuccess": "識別成功！找到 {{count}} 個匹配結果",
+    "imageUploadError": "請上傳圖片檔案（JPG、PNG）",
+    "loading": "載入中...",
+    "matchReasons": "匹配原因",
+    "matchScore": "匹配分數",
+    "noExactMatchHelp": "我們的 AI 找不到完全符合的卡牌。請嘗試重新上傳、裁剪圖片，或使用識別出的文字進行搜尋。",
+    "noMatchingCards": "找不到符合的卡牌",
+    "noResults": "找不到符合條件的卡牌",
+    "photoTipsTitle": "拍攝技巧：",
+    "popularSearches": "熱門搜尋",
+    "rarity": "稀有度",
+    "releaseToUpload": "釋放以上傳圖片",
+    "removeFromWatchlist": "從觀察清單移除",
+    "retakeOrReselect": "重拍/重選",
+    "searchAfterCrop": "裁剪後搜尋",
+    "searchByImage": "以圖搜圖",
+    "searchDirectly": "直接搜尋",
+    "searchPlaceholder": "搜尋卡牌名稱...",
+    "selectOrDragImage": "選擇或拖放一張 TCG 卡牌圖片",
+    "supportedFormats": "支持 JPG、PNG 格式",
+    "takePhoto": "拍攝照片",
+    "textSearch": "文字搜尋",
+    "tipAiRecognition": "• AI 會自動識別卡名、卡號、系列和稀有度",
+    "tipAvoidReflection": "• 避免反光和陰影",
+    "tipClearName": "• 確保卡牌名稱和卡號清晰可見",
+    "tipUseCrop": "• 建議使用裁剪功能框選卡牌主體",
+    "title": "卡牌研究",
+    "uploadImageToSearch": "上傳圖片以搜尋卡牌",
+    "uploadPhoto": "上傳照片",
+    "viewDetails": "查看詳情",
+    "watchlist": "觀察清單"
+  },
+  "searchResults": {
+    "breadcrumb": {
+      "home": "主頁",
+      "search": "搜尋"
+    },
+    "card": {
+      "noImage": "無圖片",
+      "sealedProduct": "卡盒"
+    },
+    "error": {
+      "message": "搜尋出錯,請重試"
+    },
+    "header": {
+      "loading": "搜尋中...",
+      "resultsCount": "找到 {{count}} 張卡牌",
+      "title": "搜尋 TCG 卡牌價格",
+      "titleWithQuery": "搜尋「{{query}}」的 TCG 卡牌價格"
+    },
+    "meta": {
+      "descriptionWithQuery": "在 BOXIUM 搜尋「{{query}}」相關的 TCG 卡牌，查看 PSA 10 價格、SNKRDUNK 交易記錄和市場趨勢分析。",
+      "title": "搜尋 TCG 卡牌價格 - BOXIUM 市場格價平台",
+      "titleWithQuery": "搜尋「{{query}}」的 TCG 卡牌價格 - BOXIUM 市場格價平台"
+    },
+    "noResults": {
+      "messageWithQuery": "找不到「{{query}}」相符的卡牌",
+      "prompt": "請輸入搜尋關鍵字"
+    },
+    "pagination": {
+      "displaying": "顯示 {{start}}-{{end}} 張",
+      "next": "下一頁",
+      "pageInfo": "第 {{currentPage}} 頁 / 共 {{totalPages}} 頁（總共 {{totalResults}} 張卡牌）",
+      "previous": "上一頁"
+    },
+    "search": {
+      "placeholder": "搜尋卡牌..."
+    }
+  },
+  "seller": {
+    "action": {
+      "close": "關閉",
+      "copied": "已複製",
+      "copy": "複製"
+    },
+    "apply": {
+      "contactNumber": "聯絡電話",
+      "contactNumberPlaceholder": "請輸入你的聯絡電話",
+      "contactSupport": "如果你對審核結果有疑問，請聯絡客服。",
+      "description": "你的 BOXIUM 帳戶尚未啟用賣家功能。請填寫以下資訊以申請，我們將在 24 小時內審核。",
+      "idNumber": "身分證號碼",
+      "idNumberPlaceholder": "請輸入你的身分證號碼",
+      "inReviewDescription": "我們正在審核你的賣家申請，通常會在 24 小時內完成。審核通過後，你將可以開始在 BOXIUM 上架商品。",
+      "inReviewTitle": "你的賣家申請正在審核中",
+      "ok": "好的",
+      "realName": "真實姓名",
+      "realNamePlaceholder": "請輸入你的真實姓名",
+      "rejectedTitle": "你的賣家申請已被拒絕",
+      "rejectionReason": "拒絕原因",
+      "storeProfile": "你的商店/個人簡介",
+      "storeProfilePlaceholder": "簡單介紹你的賣場、主要販售的卡牌類型等",
+      "submit": "提交申請",
+      "submitting": "處理中...",
+      "title": "申請成為賣家"
+    },
+    "auctions": {
+      "agreeTermsSuccess": "賣家條款已同意",
+      "card": {
+        "bids": "出價",
+        "buyNow": "即時購",
+        "currentBid": "目前出價",
+        "editAction": "編輯",
+        "endedOn": "結束於",
+        "noBids": "尚無出價",
+        "startingBid": "起標價",
+        "startsIn": "開始倒數",
+        "status": {
+          "completed": "已結束",
+          "live": "進行中",
+          "pending": "待開始",
+          "rejected": "已拒絕",
+          "review": "審核中"
+        },
+        "timeLeft": "剩餘時間",
+        "viewAction": "查看"
       },
-      "priceTracking": {
-        "title": "價格查詢",
-        "description": "即時顯示 PSA 10 在售商品，整合 SNKRDUNK 及 eBay 市場數據，讓您輕鬆比較全球市場價格"
+      "createSuccess": "🔨 拍賣已提交審核，審核通過後即可開始競標",
+      "editRejected": {
+        "auctionEndLabel": "結標時間",
+        "bidError": "起標價必須大於 0",
+        "bidIncrementLabel": "加價幅度 (HK$)",
+        "buyNowPriceLabel": "即時購價 (HK$)",
+        "buyNowPricePlaceholder": "不設即時購價",
+        "cancel": "取消",
+        "condition": {
+          "rawLightlyUsed": "無封輕微使用 (Raw B)",
+          "rawNew": "無封全新 (Raw A)",
+          "rawUsed": "無封一般 (Raw C)"
+        },
+        "conditionLabel": "品相",
+        "descriptionLabel": "描述",
+        "descriptionPlaceholder": "請輸入描述",
+        "endTimeError": "請選擇結標時間",
+        "imagesLabel": "拍賣圖片（最多 5 張）",
+        "optionalLabel": "(可留空)",
+        "rejectionReason": "拒絕原因",
+        "save": "儲存修改",
+        "saveSuccess": "已儲存修改",
+        "saving": "儲存中...",
+        "startingBidLabel": "起標價 (HK$)",
+        "subtitle": "修改拍賣內容",
+        "title": "編輯已拒絕拍賣",
+        "titleLabel": "標題",
+        "titlePlaceholder": "請輸入標題"
       },
-      "marketTrends": {
-        "title": "市場趨勢",
-        "description": "24 小時熱門排行榜，即時掌握 PSA 10 卡牌價格動態，發現市場機遇"
-      },
-      "gradeAnalysis": {
-        "title": "二手市場",
-        "description": "PSA 10 卡牌安全交易平台，支援賣家上架管理、買家安心購買，交易款項由平台代管保障"
+      "tab": {
+        "filter": {
+          "all": "全部",
+          "completed": "已結束",
+          "live": "進行中",
+          "pending": "待開始",
+          "rejected": "已拒絕",
+          "review": "審核中"
+        },
+        "noAuctions": "尚無拍賣商品",
+        "title": "我的拍賣"
       }
     },
-    "features": {
-      "realData": "整合 SNKRDUNK、eBay 等全球主要市場即時數據",
-      "autoUpdate": "24 小時自動更新，確保價格資訊即時準確",
-      "multiCurrency": "支援多種貨幣顯示（HKD、USD、JPY 等）",
-      "responsive": "完整支援電腦、平板及手機，隨時隨地查詢"
+    "bulkUpload": {
+      "closeButton": "關閉",
+      "cta": "點擊或拖曳 CSV 檔案至此",
+      "description": "上傳 CSV 檔案一次上架多件商品",
+      "downloadTemplate": "下載範本 CSV",
+      "fields": {
+        "imageUrl": "公開圖片 URL，多張用 | 分隔（可留空）",
+        "minOffer": "最低出價金額（可留空）",
+        "title": "欄位說明（CSV 標題列）"
+      },
+      "fileTypes": "支援 .csv 格式",
+      "hideErrors": "隱藏錯誤",
+      "preview": "預覽 {count} 件商品",
+      "reupload": "重新上傳",
+      "showErrors": "顯示錯誤",
+      "startUpload": "開始上架",
+      "status": {
+        "done": "✓ 完成",
+        "error": "✗ 失敗",
+        "pending": "• 待上架",
+        "uploading": "⏳ 上架中"
+      },
+      "summary": "{completedCount} / {totalCount} 件完成",
+      "table": {
+        "condition": "品相",
+        "image": "圖片",
+        "noImage": "無",
+        "price": "售價",
+        "productName": "商品名稱",
+        "quantity": "數量",
+        "series": "系列",
+        "status": "狀態"
+      },
+      "title": "批量上架商品",
+      "uploadingButton": "上架中..."
     },
-    "sources": {
-      "snkrdunk": "SNKRDUNK：日本最大的 PSA 10 卡牌交易平台，提供即時在售商品及成交記錄",
-      "ebay": "eBay：全球最大的二手市場，提供國際 PSA 10 卡牌交易數據"
+    "buyerInfo": {
+      "buyer": "買家",
+      "phone": "電話",
+      "postalCode": "郵遞區號",
+      "shippingAddress": "運送地址",
+      "shippingMethod": "運送方式",
+      "title": "買家資訊"
+    },
+    "completedOrders": {
+      "completionDate": "完成日期",
+      "netIncome": "淨收入",
+      "noOrders": "尚無已完成的訂單",
+      "orderAmount": "訂單金額",
+      "orderNo": "訂單 #",
+      "platformFee": "平台手續費",
+      "product": "商品",
+      "title": "最近 5 筆已完成訂單",
+      "viewAll": "查看全部"
+    },
+    "condition": {
+      "bgs8Below": "BGS 8 以下",
+      "psa8Below": "PSA 8 以下",
+      "rawA": "A品",
+      "rawB": "B品",
+      "rawC": "C品",
+      "rawCard": "Raw 卡",
+      "rawD": "D品",
+      "tag9Below": "TAG 9 以下"
+    },
+    "dashboard": {
+      "overview": "總覽",
+      "title": "賣家儀表板"
+    },
+    "imageUploader": {
+      "coverPhoto": "封面",
+      "cta": "點擊或拖放圖片上傳",
+      "fileInfo": "支援 JPG、PNG、WebP，每張最大 10MB",
+      "genericError": "圖片上傳失敗",
+      "imageAlt": "商品圖 {index}",
+      "label": "商品圖片（最多 {maxImages} 張）",
+      "maxImagesError": "最多上傳 {maxImages} 張圖片",
+      "notAnImageError": "{fileName} 不是圖片",
+      "sizeLimitError": "{fileName} 超過 10MB",
+      "uploadFailedError": "上傳失敗",
+      "uploadSuccess": "已上傳 {count} 張圖片",
+      "uploading": "上傳中..."
+    },
+    "listings": {
+      "addNewListing": "＋ 新增商品",
+      "adminCreateSuccess": "商品已成功上架",
+      "applySellerSuccess": "申請已提交，等待審批",
+      "batchActions": "批次操作",
+      "batchDeactivate": "下架",
+      "batchDeactivateSuccess": "已下架 {count} 件商品",
+      "batchDelete": "永久刪除",
+      "batchDeleteCancelledOrders": "，已取消 {cancelledOrdersCount} 個待付款訂單",
+      "batchDeleteSuccess": "已刪除 {deletedCount} 件商品",
+      "batchReactivate": "重新上架",
+      "batchReactivateSuccess": "已重新上架 {count} 件商品，等待審核",
+      "bulkUpload": "批次上架",
+      "cancelBatchMode": "取消",
+      "card": {
+        "adminDelisted": "⛔ 管理員已下架",
+        "deactivate": "下架",
+        "duplicateListingTooltip": "複製此商品",
+        "duplicateSuccess": "已複製商品資訊，請檢查後上架",
+        "edit": "編輯",
+        "offers": "出價",
+        "price": "價格",
+        "quantity": "數量",
+        "reactivate": "重新上架",
+        "status": {
+          "active": "上架中",
+          "pendingReview": "審核中",
+          "removed": "已下架",
+          "sold": "已售出"
+        },
+        "views": "瀏覽"
+      },
+      "createSuccess": "商品已提交審核",
+      "deactivateSuccess": "商品已下架",
+      "deleteConfirmButton": "確認刪除",
+      "deleteConfirmMessage": "確定要永久刪除選取的 {count} 件商品嗎？此操作無法復原。進行中的訂單不會被取消。",
+      "deleteConfirmTitle": "確認刪除",
+      "filter": {
+        "active": "上架中",
+        "all": "全部",
+        "pendingReview": "審核中",
+        "removed": "已下架",
+        "sold": "已售出"
+      },
+      "noListings": "尚無商品",
+      "noMatchingListings": "沒有符合條件的商品",
+      "reactivateSuccess": "商品已重新上架，等待審核",
+      "updateSuccess": "商品已更新",
+      "viewListingAction": "查看商品 →"
+    },
+    "new-listing": {
+      "validation": {
+        "reserve-price": "底價需高於或等於起標價"
+      }
+    },
+    "newListing": {
+      "associateCard": "關聯卡牌（選填）",
+      "auction": {
+        "days": "{days} 天",
+        "duration": "拍賣時長 *",
+        "end": "結束時間",
+        "start": "開始時間",
+        "startNow": "立即開始"
+      },
+      "back": "上一步",
+      "changeCard": "改變",
+      "condition": "品相 *",
+      "listingMode": "上架模式 *",
+      "marketPrice": "PSA 10 市場均價 HKD {price}",
+      "mode": {
+        "auction": "拍賣",
+        "auctionDescription": "買家競價，時限結標",
+        "buyNow": "立即購買",
+        "buyNowDescription": "買家直接以定價購買"
+      },
+      "next": "下一步",
+      "preview": {
+        "listingPrice": "售價",
+        "submitAuction": "提交拍賣",
+        "submitListing": "確認上架",
+        "title": "預覽"
+      },
+      "price": {
+        "allowOffers": "接受買家出價",
+        "bidIncrement": "每口叫價 (HKD) *",
+        "bidIncrementPlaceholder": "例如: 10",
+        "buyNow": "售價 (HKD) *",
+        "buyNowPlaceholder": "請輸入商品售價",
+        "buyNowPrice": "即時購價 (HKD)",
+        "buyNowPricePlaceholder": "選填，允許買家直接購買",
+        "minOffer": "最低出價 (HKD)",
+        "minOfferPlaceholder": "留空則不設底價",
+        "reservePrice": "底價 (HKD)",
+        "reservePricePlaceholder": "選填，未達底價不出售",
+        "startingBid": "起標價 (HKD) *",
+        "startingBidPlaceholder": "輸入最低起標價"
+      },
+      "productDescription": "商品描述",
+      "productDescriptionPlaceholder": "描述卡牌狀況、版本等...",
+      "productName": "商品名稱 *",
+      "productNamePlaceholder": "例如：Charizard ex 噴火龍 SAR",
+      "quantity": "數量 *",
+      "searchAndAssociateCard": "點擊搜索並關聯卡牌",
+      "step1": "基本資訊",
+      "step2": "價格與數量",
+      "step3": "預覽",
+      "tcgSeries": "TCG 系列 *",
+      "title": "新增商品",
+      "validation": {
+        "auctionEnd": "結束時間必須在未來",
+        "bidIncrement": "請輸入有效的每口叫價",
+        "buyNowPrice": "即時購價需高於起標價",
+        "minOffer": "最低出價金額需低於商品售價",
+        "price": "請輸入有效的商品售價",
+        "startingBid": "請輸入有效的起標價",
+        "title": "請輸入商品名稱"
+      }
+    },
+    "offer": {
+      "acceptSuccess": "已接受出價",
+      "rejectSuccess": "已拒絕出價",
+      "view": "查看出價"
+    },
+    "offers": {
+      "card": {
+        "accept": "接受出價",
+        "buyer": "買家",
+        "listingPrice": "商品原價",
+        "offerDate": "出價時間",
+        "offerPrice": "出價金額",
+        "reject": "拒絕",
+        "status": {
+          "accepted": "✔️ 已接受",
+          "expired": "⏰ 已過期",
+          "rejected": "❌ 已拒絕"
+        },
+        "viewListing": "前往商品"
+      },
+      "noOffers": "尚無買家出價"
+    },
+    "orderStatus": {
+      "cancelled": "已取消",
+      "completed": "已完成",
+      "delivered": "已送達",
+      "disputed": "爭議中",
+      "paidToShip": "已付款，請出貨",
+      "pendingPayment": "待付款",
+      "processingToShip": "處理中，請出貨",
+      "receivedToShip": "已收款，請出貨",
+      "shipped": "已寄出"
+    },
+    "orders": {
+      "card": {
+        "buyer": "買家",
+        "meetupBadge": "🤝 面交",
+        "orderDate": "訂單日期",
+        "orderTotal": "訂單總額",
+        "viewDetails": "查看詳情"
+      },
+      "filter": {
+        "active": "進行中",
+        "all": "全部",
+        "done": "已完成",
+        "meetup": "🤝 面交",
+        "pending": "待確認"
+      },
+      "noMatchingOrders": "沒有符合條件的訂單",
+      "noOrders": "尚無訂單",
+      "searchPlaceholder": "搜尋訂單號或商品名稱..."
+    },
+    "payoutProof": {
+      "altText": "付款截圖",
+      "openOriginal": "在新標籤頁開啟原圖",
+      "viewAction": "點擊查看付款截圖",
+      "zoomHint": "點擊縮圖可放大查看"
+    },
+    "payouts": {
+      "stripeActiveDescription": "買家付款後，平台將自動透過 Stripe 轉帳至你的帳戶（扣除 5% 平台服務費）。",
+      "stripeActiveTitle": "Stripe 收款帳戶已啟用 ✅",
+      "stripeDashboardButton": "前往 Stripe 儀表板",
+      "stripeDisabledDescription": "你的 Stripe Connect 帳戶已被停用，請聯絡 Stripe 支援或重新申請。",
+      "stripeDisabledTitle": "Stripe 帳戶已停用",
+      "stripeManageButton": "管理收款帳戶",
+      "stripeProcessing": "處理中...",
+      "stripeResetButton": "重新設定",
+      "stripeRestrictedDescription": "你的 Stripe Connect 帳戶目前功能受限，可能需要提供額外資訊。請前往 Stripe 儀表板處理。",
+      "stripeRestrictedTitle": "Stripe 帳戶受限",
+      "stripeSetupButton": "設定 Stripe 收款帳戶",
+      "stripeSetupDescription": "我們使用 Stripe 處理賣家收款。點擊下方按鈕，你將被導向至 Stripe 的安全頁面設定你的收款帳戶。",
+      "stripeSetupTitle": "設定 Stripe Connect 收款",
+      "title": "收款設定"
+    },
+    "shippingMethod": {
+      "meetup": "面交",
+      "selfShip": "自行寄送"
+    },
+    "shippingProof": {
+      "dragAndDrop": "點擊或拖曳檔案到此處",
+      "fileTypes": "支援 PNG, JPG, WebP (最大 5MB)",
+      "imageLabel": "出貨憑證圖片",
+      "label": "📷 出貨憑證",
+      "uploadAction": "上傳憑證",
+      "uploadButton": "上傳",
+      "uploadDescription": "此訂單為「自行寄送」，請在下方上傳出貨憑證（如：郵局收據、快遞單號照片），以利平台追蹤。",
+      "uploadError": "出貨憑證上傳失敗",
+      "uploadSuccess": "出貨憑證上傳成功",
+      "uploadTitle": "上傳出貨憑證",
+      "uploading": "正在上傳...",
+      "zoomAction": "點擊放大查看出貨憑證"
+    },
+    "stats": {
+      "activeListings": "上架商品",
+      "activeListingsTooltip": "點擊查看上架中商品",
+      "avgOrderValue": "平均訂單金額",
+      "completedOrders": "已完成訂單",
+      "completedOrdersTooltip": "點擊查看訂單",
+      "last30Days": "過去 30 天",
+      "orders": "訂單",
+      "rating": "評分",
+      "ratingCount": "({count} 則)",
+      "revenue": "收益",
+      "revenueTooltip": "點擊查看收款記錄",
+      "thisMonthRevenue": "本月收益",
+      "title": "銷售數據",
+      "totalOrders": "總訂單數",
+      "totalRevenue": "總收益"
+    },
+    "stepper": {
+      "awaitingDelivery": "等待買家收貨",
+      "awaitingPayment": "待買家付款",
+      "awaitingShipment": "等待出貨",
+      "orderCancelled": "訂單已取消",
+      "orderCompleted": "訂單完成",
+      "orderDisputed": "訂單爭議中",
+      "paymentInReview": "付款審核中"
+    },
+    "tabs": {
+      "buyerOffers": "買家出價",
+      "buyerOffersMobile": "出價",
+      "earnings": "收款記錄",
+      "earningsMobile": "收款",
+      "myAuctions": "我的拍賣",
+      "myAuctionsMobile": "拍賣",
+      "myListings": "我的商品",
+      "myListingsMobile": "商品",
+      "orderManagement": "訂單管理",
+      "orderManagementMobile": "訂單"
+    },
+    "terms": {
+      "auctionSeller": {
+        "agree": "我已閱讀並同意拍賣賣家條款",
+        "confirm": "確認並繼續",
+        "title": "拍賣賣家條款"
+      }
+    },
+    "tracking": {
+      "number": "物流單號",
+      "view": "查看物流"
     }
+  },
+  "sellerPublicProfile": {
+    "activeSeller": "活躍賣家",
+    "anonymousBuyer": "匿名買家",
+    "buyerReviews": "買家評價",
+    "conditionFair": "一般",
+    "conditionGood": "良好",
+    "conditionLikeNew": "近全新",
+    "conditionNew": "全新",
+    "listings": "在售商品",
+    "memberSince": "加入於",
+    "noListings": "此賣家目前沒有在售商品",
+    "noReviews": "暫無評價",
+    "returnToMarketplace": "返回商城",
+    "reviews": "評價",
+    "sellerNotFound": "找不到此賣家",
+    "showingLatestReviews": "顯示最新 {reviews.length} 則，共 {reviewTotal} 則評價",
+    "topSeller": "優質賣家",
+    "transactions": "筆成交"
+  },
+  "share": {
+    "button": "分享",
+    "copyError": "複製失敗，請手動複製",
+    "copyLink": "複製連結",
+    "copySuccess": "連結已複製到剪貼板",
+    "facebook": "分享到 Facebook",
+    "whatsapp": "分享到 WhatsApp"
+  },
+  "topnav": {
+    "allMarkedAsRead": "已全部標記為已讀",
+    "becomeSellerDescription": "在 BOXIUM 平台上架你的 TCG 卡牌，觸及更多買家。",
+    "becomeSellerTitle": "成為賣家，輕鬆出售卡牌",
+    "featureFreeListing": "免費上架，平台僅收取 5% 服務費",
+    "featureOrderManagement": "自動通知買家，輕鬆管理訂單",
+    "featurePaymentMethods": "支援 Stripe 信用卡及支付寶 HK 收款",
+    "login": "登入",
+    "loginAndList": "登入並上架",
+    "loginToSell": "登入後即可立即上架商品，無需額外審核。",
+    "logout": "登出",
+    "logoutSuccess": "登出成功",
+    "markAllAsRead": "全部標記為已讀",
+    "marketplace": "市集",
+    "messages": "訊息",
+    "myAccount": "我的帳戶",
+    "myCollection": "我的收藏",
+    "myOrders": "我的訂單",
+    "noNotificationsDescription": "您所有的通知都會顯示在這裡。",
+    "noNotificationsTitle": "目前沒有任何通知",
+    "noUnreadMessagesDescription": "來自買家或賣家的訊息會顯示在這裡。",
+    "noUnreadMessagesTitle": "目前沒有未讀訊息",
+    "notifications": "通知",
+    "register": "註冊",
+    "registerFree": "免費註冊",
+    "sellItem": "出售商品",
+    "sellerDashboard": "賣家中心",
+    "viewAllMessages": "查看全部訊息"
+  },
+  "trending": {
+    "currentPrice": "當前價格",
+    "emptyHint": "請稍後再試或切換其他分類",
+    "emptyNewlyAdded": "目前沒有新上架的卡牌",
+    "emptyPriceDecrease": "目前沒有價格回落的卡牌",
+    "emptyPriceIncrease": "目前沒有價格飆升的卡牌",
+    "emptySearches": "目前沒有足夠的搜尋數據",
+    "fullRanking": "完整排行槜",
+    "goToSnkrdunk": "前往 SNKRDUNK",
+    "newlyAdded": "新上架",
+    "newlyAddedShort": "新品",
+    "noImage": "無圖片",
+    "priceChange": "價格變化",
+    "priceDrop": "價格回落",
+    "priceDropShort": "回落",
+    "priceSurge": "價格飆升",
+    "priceSurgeShort": "飆升",
+    "searchCount": "搜尋次數",
+    "searchHeat": "搜尋熱度",
+    "searchHeatShort": "熱度",
+    "subtitle": "最近 1 個月內 PSA 10 評級卡牌市場趋勢",
+    "title": "🔥 TCG 熱門排行榜",
+    "viewDetails": "查看詳情"
+  },
+  "unsubscribe": {
+    "confirm": {
+      "cancelButton": "取消",
+      "confirmResubscribeButton": "確認重新訂閱",
+      "confirmUnsubscribeButton": "確認退訂",
+      "emailAddressLabel": "電郵地址：",
+      "notificationTypeLabel": "通知類型：",
+      "resubscribeTitle": "重新訂閱電郵通知",
+      "resubscribeWarning": "點擊下方按鈕後，您將重新收到「{{emailTypeLabel}}」。",
+      "unsubscribeTitle": "確認退訂電郵通知",
+      "unsubscribeWarning": "點擊下方按鈕後，您將不再收到「{{emailTypeLabel}}」。重要的訂單確認和安全通知仍會照常發送。"
+    },
+    "contactSupport": "如有疑問，請聯絡客服：",
+    "emailPreferences": "BOXIUM PTCG 電郵偏好設定",
+    "emailType": {
+      "all": "所有電郵",
+      "general": "一般通知",
+      "offer": "出價通知",
+      "order": "訂單通知",
+      "review": "評價通知",
+      "seller": "賣家通知",
+      "system": "系統通知",
+      "welcome": "歡迎信"
+    },
+    "invalidLink": {
+      "description": "此退訂連結無效或已過期，請聯絡客服：boxium.asia@gmail.com",
+      "title": "無效的連結"
+    },
+    "linkInvalid": {
+      "contact": "如需協助，請聯絡：boxium.asia@gmail.com",
+      "description": "此退訂連結無效或已過期。",
+      "title": "連結無效"
+    },
+    "loading": "載入中...",
+    "success": {
+      "backToHome": "返回首頁",
+      "resubscribedMessage": "您已重新訂閱來自 BOXIUM PTCG 的「{{emailTypeLabel}}」。",
+      "resubscribedNotice": "感謝您繼續訂閱 BOXIUM PTCG 的電郵通知。",
+      "resubscribedTitle": "已重新訂閱",
+      "unsubscribedMessage": "您已退訂來自 BOXIUM PTCG 的「{{emailTypeLabel}}」。",
+      "unsubscribedNotice": "您仍會收到重要的訂單確認和安全通知。",
+      "unsubscribedTitle": "已成功退訂"
+    }
+  },
+  "wishlist": {
+    "addedOn": "收藏於 {{date}}",
+    "emptyHint": "在商城瀏覽商品時，點擊愛心圖示即可收藏",
+    "goToMarketplace": "前往商城",
+    "isEmpty": "願望清單是空的",
+    "loading": "載入中...",
+    "loginNow": "立即登入",
+    "loginToView": "登入後即可查看你的願望清單",
+    "myWishlist": "我的願望清單",
+    "pleaseLogin": "請先登入",
+    "remove": "移除收藏",
+    "removedFromWishlist": "已從願望清單移除",
+    "returnToMarketplace": "返回商城",
+    "totalItems": "共 {{count}} 件商品"
   }
 }

@@ -115,11 +115,11 @@ export default function Profile() {
   const navItems: NavItem[] = [
     { id: "info", icon: <User className="w-4 h-4" />, label: t("profile.tabs.info") },
     { id: "watchlist", icon: <Heart className="w-4 h-4" />, label: t("profile.tabs.watchlist") },
-    { id: "addresses", icon: <MapPin className="w-4 h-4" />, label: "收貨地址" },
-    { id: "orders", icon: <ShoppingBag className="w-4 h-4" />, label: "我的訂單", badge: activeOrdersCount > 0 ? activeOrdersCount : undefined },
-    { id: "offers", icon: <Tag className="w-4 h-4" />, label: "我的出價" },
-    { id: "auctions", icon: <DollarSign className="w-4 h-4" />, label: "我的競拍", badge: activeBidsCount > 0 ? activeBidsCount : undefined },
-    { id: "notifications", icon: <Bell className="w-4 h-4" />, label: "通知中心", badge: unreadNotifCount > 0 ? unreadNotifCount : undefined },
+    { id: "addresses", icon: <MapPin className="w-4 h-4" />, label: t("profile.nav.addresses") },
+    { id: "orders", icon: <ShoppingBag className="w-4 h-4" />, label: t("profile.nav.orders"), badge: activeOrdersCount > 0 ? activeOrdersCount : undefined },
+    { id: "offers", icon: <Tag className="w-4 h-4" />, label: t("profile.nav.offers") },
+    { id: "auctions", icon: <DollarSign className="w-4 h-4" />, label: t("profile.nav.auctions"), badge: activeBidsCount > 0 ? activeBidsCount : undefined },
+    { id: "notifications", icon: <Bell className="w-4 h-4" />, label: t("profile.nav.notifications"), badge: unreadNotifCount > 0 ? unreadNotifCount : undefined },
   ];
 
   if (userLoading) {
@@ -342,6 +342,7 @@ export default function Profile() {
 
 // ─── Change Password Dialog ────────────────────────────────────
 function ChangePasswordDialog() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -385,16 +386,16 @@ function ChangePasswordDialog() {
             <Input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} placeholder="請輸入現有密碼" style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }} />
           </div>
           <div className="space-y-1.5">
-            <Label style={{ color: "#374151" }}>新密碼</Label>
+            <Label style={{ color: "#374151" }}>{t("profile.security.newPassword")}</Label>
             <Input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="至少 8 個字元" style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }} />
           </div>
           <div className="space-y-1.5">
-            <Label style={{ color: "#374151" }}>確認新密碼</Label>
+            <Label style={{ color: "#374151" }}>{t("profile.security.confirmNewPassword")}</Label>
             <Input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="再次輸入新密碼" style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} style={{ borderColor: "#d1d5db", color: "#374151", background: "#ffffff" }}>取消</Button>
+          <Button variant="outline" onClick={() => setOpen(false)} style={{ borderColor: "#d1d5db", color: "#374151", background: "#ffffff" }}>{t("profile.addresses.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={changePassword.isPending} style={{ background: BRAND_BLUE, color: "white" }}>
             {changePassword.isPending ? "修改中..." : "確認修改"}
           </Button>
@@ -460,7 +461,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
                 <Save className="w-3.5 h-3.5" />{updateProfile.isPending ? "儲存中..." : "儲存"}
               </button>
               <span className="text-gray-300">|</span>
-              <button onClick={() => setIsEditing(false)} className="text-sm font-medium text-gray-500">取消</button>
+              <button onClick={() => setIsEditing(false)} className="text-sm font-medium text-gray-500">{t("profile.addresses.cancel")}</button>
             </div>
           )}
         </div>
@@ -510,7 +511,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BRAND_BLUE}15` }}>
             <Shield className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
           </div>
-          <span className="text-sm font-bold text-gray-900">帳戶資訊</span>
+          <span className="text-sm font-bold text-gray-900">{t("profile.info.title")}</span>
         </div>
         {readonlyFields.map(({ icon: Icon, label, value }, idx) => (
           <div key={label} className={`flex items-center px-4 py-3.5 ${idx < readonlyFields.length - 1 ? "border-b border-gray-50" : ""}`}>
@@ -529,7 +530,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BRAND_BLUE}15` }}>
             <Lock className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
           </div>
-          <span className="text-sm font-bold text-gray-900">安全設定</span>
+          <span className="text-sm font-bold text-gray-900">{t("profile.security.title")}</span>
         </div>
         <div className="px-4 py-3">
           <ChangePasswordDialog />
@@ -562,7 +563,7 @@ function WatchlistSection() {
     },
   });
   const addToCart = trpc.marketplace.addToCart.useMutation({
-    onSuccess: () => { utils.marketplace.getCartCount.invalidate(); toast.success("已加入購物車"); },
+    onSuccess: () => { utils.marketplace.getCartCount.invalidate(); toast.success(t("profile.cart.added")); },
     onError: (err) => toast.error(err.message || "加入失敗"),
   });
 
@@ -648,13 +649,13 @@ function WatchlistSection() {
           <div className="space-y-3">
             {/* Card sort controls */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-gray-500 font-medium">排序：</span>
+              <span className="text-xs text-gray-500 font-medium">{t("profile.watchlist.sort.label")}</span>
               <div className="flex gap-1 flex-wrap">
                 {([
-                  { value: "time_desc" as const, label: "最新追蹤" },
-                  { value: "time_asc" as const, label: "最早追蹤" },
-                  { value: "price_asc" as const, label: "價格↑" },
-                  { value: "price_desc" as const, label: "價格↓" },
+                  { value: "time_desc" as const, label: t("profile.watchlist.sort.newest") },
+                  { value: "time_asc" as const, label: t("profile.watchlist.sort.oldest") },
+                  { value: "price_asc" as const, label: t("profile.watchlist.sort.priceAsc") },
+                  { value: "price_desc" as const, label: t("profile.watchlist.sort.priceDesc") },
                 ]).map((opt) => (
                   <button
                     key={opt.value}
@@ -728,13 +729,13 @@ function WatchlistSection() {
           <div className="space-y-3">
             {/* Sort controls */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-gray-500 font-medium">排序：</span>
+              <span className="text-xs text-gray-500 font-medium">{t("profile.watchlist.sort.label")}</span>
               <div className="flex gap-1 flex-wrap">
                 {([
                   { value: "time_desc" as const, label: "最新收藏" },
                   { value: "time_asc" as const, label: "最早收藏" },
-                  { value: "price_asc" as const, label: "價格↑" },
-                  { value: "price_desc" as const, label: "價格↓" },
+                  { value: "price_asc" as const, label: t("profile.watchlist.sort.priceAsc") },
+                  { value: "price_desc" as const, label: t("profile.watchlist.sort.priceDesc") },
                 ]).map((opt) => (
                   <button
                     key={opt.value}
@@ -831,6 +832,7 @@ function WatchlistSection() {
 
 // ─── Shipping Address Section ────────────────────────────────
 function ShippingAddressSection() {
+  const { t } = useTranslation();
   const utils = trpc.useUtils();
   const { data: addresses, isLoading } = trpc.marketplace.getMyShippingAddresses.useQuery();
   const [showForm, setShowForm] = useState(false);
@@ -914,11 +916,11 @@ function ShippingAddressSection() {
           <CardContent className="pt-5 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-700">地址標籤</Label>
+                <Label className="text-xs font-semibold text-gray-700">{t("profile.addresses.addressLabel")}</Label>
                 <Input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} placeholder="如：家、公司" className="text-sm bg-white text-gray-900 border-gray-300" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-700">地址類型</Label>
+                <Label className="text-xs font-semibold text-gray-700">{t("profile.addresses.addressType")}</Label>
                 <div className="flex gap-2">
                   {(["normal", "sf_station"] as const).map(type => (
                     <button key={type} onClick={() => setForm(f => ({ ...f, addressType: type }))}
@@ -932,7 +934,7 @@ function ShippingAddressSection() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-700">收件人姓名</Label>
+                <Label className="text-xs font-semibold text-gray-700">{t("profile.addresses.recipientName")}</Label>
                 <Input value={form.recipientName} onChange={e => setForm(f => ({ ...f, recipientName: e.target.value }))} placeholder="收件人全名" className="text-sm bg-white text-gray-900 border-gray-300" />
               </div>
               <div className="space-y-1.5">
@@ -1001,38 +1003,38 @@ function ShippingAddressSection() {
                     />
                   </div>
                 )}
-                <p className="text-xs text-gray-500">資料來自順豐香港官方（2026-03），共 125 個順豐站、729 個智能櫃。如需查詢最新站點，請訪問順豐香港官網。</p>
+                <p className="text-xs text-gray-500">{t("profile.addresses.sfDisclaimer")}</p>
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-700">地區</Label>
+                    <Label className="text-xs font-semibold text-gray-700">{t("profile.addresses.region")}</Label>
                     <select value={form.region} onChange={e => setForm(f => ({ ...f, region: e.target.value }))} className="w-full h-9 rounded-md border border-gray-300 bg-white text-gray-900 px-3 text-sm">
                       {["香港", "九龍", "新界"].map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-700">區域（選填）</Label>
-                    <Input value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))} placeholder="如：旺角、銅鸾灣" className="text-sm bg-white text-gray-900 border-gray-300" />
+                    <Label className="text-xs font-semibold text-gray-700">{t("profile.addresses.district")}</Label>
+                    <Input value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))} placeholder={t("profile.addresses.districtHint")} className="text-sm bg-white text-gray-900 border-gray-300" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-gray-700">詳細地址</Label>
-                  <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="街道、大婦、樓層、單位" className="text-sm bg-white text-gray-900 border-gray-300" />
+                  <Label className="text-xs font-semibold text-gray-700">{t("profile.addresses.detailedAddress")}</Label>
+                  <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder={t("profile.addresses.detailedAddressHint")} className="text-sm bg-white text-gray-900 border-gray-300" />
                 </div>
               </div>
             )}
             <div className="flex items-center gap-2">
               <input type="checkbox" id="isDefault" checked={form.isDefault} onChange={e => setForm(f => ({ ...f, isDefault: e.target.checked }))} className="rounded" />
-              <Label htmlFor="isDefault" className="text-sm cursor-pointer text-gray-800 font-medium">設為預設地址</Label>
+              <Label htmlFor="isDefault" className="text-sm cursor-pointer text-gray-800 font-medium">{t("profile.addresses.setDefault")}</Label>
             </div>
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSubmit} disabled={addMutation.isPending || updateMutation.isPending}
                 className="font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] disabled:scale-100 disabled:shadow-none" style={{ background: BRAND_BLUE, color: "white" }}>
                 {editingId ? "儲存更改" : "新增地址"}
               </Button>
-              <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); resetForm(); }} className="transition-all duration-200 hover:scale-[1.02] hover:shadow-sm active:scale-[0.98] border-gray-400 text-gray-700 bg-white hover:bg-gray-50">取消</Button>
+              <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); resetForm(); }} className="transition-all duration-200 hover:scale-[1.02] hover:shadow-sm active:scale-[0.98] border-gray-400 text-gray-700 bg-white hover:bg-gray-50">{t("profile.addresses.cancel")}</Button>
             </div>
           </CardContent>
         </Card>
@@ -1044,8 +1046,8 @@ function ShippingAddressSection() {
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: `${BRAND_BLUE}10` }}>
             <MapPin className="w-8 h-8" style={{ color: BRAND_BLUE }} />
           </div>
-          <p className="text-gray-500 mb-2">尚未新增收貨地址</p>
-          <p className="text-sm text-gray-400">新增地址後，付款時可快速帶入，無需重複填寫</p>
+          <p className="text-gray-500 mb-2">{t("profile.addresses.empty.title")}</p>
+          <p className="text-sm text-gray-400">{t("profile.addresses.empty.description")}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -1105,6 +1107,7 @@ function ShippingAddressSection() {
 
 // ─── Embedded Orders Section ───────────────────────────────────────────────
 function EmbeddedOrdersSection() {
+  const { t } = useTranslation();
   const { data: orders, isLoading } = trpc.marketplace.getMyOrders.useQuery();
   const { data: timeoutSettings } = trpc.system.getTimeoutSettings.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const paymentTimeoutMinutes = timeoutSettings?.paymentTimeoutMinutes ?? 30;
@@ -1169,10 +1172,10 @@ function EmbeddedOrdersSection() {
   };
 
   const filterTabs = [
-    { id: "all", label: "全部", count: countByBatch(allOrders) },
-    { id: "pending", label: "待付款", count: countByBatch(allOrders.filter(o => STATUS_GROUPS.pending.includes(o.orderStatus))) },
+    { id: "all", label: t("profile.orders.all"), count: countByBatch(allOrders) },
+    { id: "pending", label: t("profile.orderStatus.pending_payment"), count: countByBatch(allOrders.filter(o => STATUS_GROUPS.pending.includes(o.orderStatus))) },
     { id: "active", label: "進行中", count: countByBatch(allOrders.filter(o => STATUS_GROUPS.active.includes(o.orderStatus))) },
-    { id: "done", label: "已完成", count: countByBatch(allOrders.filter(o => STATUS_GROUPS.done.includes(o.orderStatus))) },
+    { id: "done", label: t("profile.orderStatus.completed"), count: countByBatch(allOrders.filter(o => STATUS_GROUPS.done.includes(o.orderStatus))) },
   ];
 
   return (
@@ -1263,6 +1266,7 @@ const notifTypeIcon = (type: string) => {
 };
 
 function EmbeddedNotificationsSection() {
+  const { t } = useTranslation();
   const utils = trpc.useUtils();
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined);
@@ -1319,7 +1323,7 @@ function EmbeddedNotificationsSection() {
       {/* 已讀/未讀切換 */}
       <div className="flex gap-2">
         {[
-          { value: false, label: "全部" },
+          { value: false, label: t("profile.orders.all") },
           { value: true, label: "未讀" },
         ].map(opt => (
           <button
@@ -1342,7 +1346,7 @@ function EmbeddedNotificationsSection() {
         {[
           { value: undefined, label: "所有類型" },
           { value: "trade", label: "交易" },
-          { value: "payment", label: "付款" },
+          { value: "payment", label: t("profile.orders.payNow") },
           { value: "offer", label: "出價" },
           { value: "shipping", label: "物流" },
           { value: "dispute", label: "爭議" },
@@ -1615,6 +1619,7 @@ function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paym
 }
 
 function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; paymentTimeoutMinutes?: number }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showDisputeDialog, setShowDisputeDialog] = useState(false);
@@ -1738,7 +1743,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
           <p className="font-bold" style={{ color: BRAND_BLUE }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</p>
           <p className="text-xs text-gray-500 capitalize">{order.paymentMethod?.replace("_", " ")}</p>
           <Link href={`/orders/${order.orderNo}`}>
-            <Button variant="outline" size="sm" className="text-xs h-7 px-2" style={{ color: BRAND_BLUE, borderColor: `${BRAND_BLUE}40` }}>查看詳情</Button>
+            <Button variant="outline" size="sm" className="text-xs h-7 px-2" style={{ color: BRAND_BLUE, borderColor: `${BRAND_BLUE}40` }}>{t("profile.orders.table.viewDetails")}</Button>
           </Link>
         </div>
       </div>
@@ -1846,7 +1851,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
         className="w-full px-4 py-2.5 border-t text-xs text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
         onClick={() => setExpanded(e => !e)}
       >
-        {expanded ? <><ChevronUp className="w-3.5 h-3.5" />收起詳情</> : <><ChevronDown className="w-3.5 h-3.5" />查看詳情</>}
+        {expanded ? <><ChevronUp className="w-3.5 h-3.5" />收起詳情</> : <><ChevronDown className="w-3.5 h-3.5" />{t("profile.orders.table.viewDetails")}</>}
       </button>
       {/* Expanded details */}
       {expanded && (
@@ -1886,7 +1891,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
           </DialogHeader>
           <p className="text-sm text-gray-600 py-2">確認已收到商品並且狀態良好？確認後款項將轉帳給賣家，此操作無法撤銷。</p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowConfirmDialog(false)}>取消</Button>
+            <Button variant="outline" size="sm" onClick={() => setShowConfirmDialog(false)}>{t("profile.addresses.cancel")}</Button>
             <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" disabled={confirmReceiptMutation.isPending}
               onClick={() => confirmReceiptMutation.mutate({ orderId: order.id })}>
               {confirmReceiptMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />確認中...</> : <><CheckCircle className="w-4 h-4 mr-2" />確認收貨</>}
@@ -1934,7 +1939,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => { setShowDisputeDialog(false); setDisputeReason(""); setDisputeEvidenceUrls([]); setDisputeEvidenceMimeTypes([]); }}>取消</Button>
+            <Button variant="outline" onClick={() => { setShowDisputeDialog(false); setDisputeReason(""); setDisputeEvidenceUrls([]); setDisputeEvidenceMimeTypes([]); }}>{t("profile.addresses.cancel")}</Button>
             <Button className="bg-red-600 hover:bg-red-700 text-white" disabled={openDisputeMutation.isPending || disputeReason.trim().length < 10 || isUploadingEvidence}
               onClick={() => openDisputeMutation.mutate({ orderId: order.id, reason: disputeReason.trim(), evidenceUrls: disputeEvidenceUrls.length > 0 ? disputeEvidenceUrls : undefined })}>
               {openDisputeMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : <><Flag className="w-4 h-4 mr-2" />提交爭議</>}
@@ -1963,7 +1968,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowReviewDialog(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setShowReviewDialog(false)}>{t("profile.addresses.cancel")}</Button>
             <Button className="bg-yellow-500 hover:bg-yellow-600 text-white" disabled={submitReviewMutation.isPending || reviewRating === 0}
               onClick={() => submitReviewMutation.mutate({ orderId: order.id, rating: reviewRating, comment: reviewComment.trim() || undefined })}>
               {submitReviewMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : <><MessageSquare className="w-4 h-4 mr-2" />提交評價</>}
@@ -1977,6 +1982,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
 
 // ─── Embedded Offers Section ───────────────────────────────────
 function EmbeddedOffersSection({ userId }: { userId: number }) {
+  const { t } = useTranslation();
   const utils = trpc.useUtils();
   const { data: offers, isLoading } = trpc.marketplace.getMyOffers.useQuery();
   const cancelOfferMutation = trpc.marketplace.cancelOffer.useMutation({
@@ -1985,10 +1991,10 @@ function EmbeddedOffersSection({ userId }: { userId: number }) {
   });
   const offerStatusLabel: Record<string, { label: string; color: string }> = {
     pending: { label: "待回覆", color: "bg-yellow-100 text-yellow-800" },
-    accepted: { label: "已接受", color: "bg-green-100 text-green-800" },
-    rejected: { label: "已拒絕", color: "bg-red-100 text-red-800" },
-    expired: { label: "已過期", color: "bg-gray-100 text-gray-600" },
-    cancelled: { label: "已取消", color: "bg-gray-100 text-gray-600" },
+    accepted: { label: t("profile.offers.status.accepted"), color: "bg-green-100 text-green-800" },
+    rejected: { label: t("profile.offers.status.rejected"), color: "bg-red-100 text-red-800" },
+    expired: { label: t("profile.offers.status.expired"), color: "bg-gray-100 text-gray-600" },
+    cancelled: { label: t("profile.orderStatus.cancelled"), color: "bg-gray-100 text-gray-600" },
   };
   if (isLoading) return <div className="text-center py-12 text-muted-foreground"><Loader2 className="w-6 h-6 mx-auto animate-spin" /></div>;
   if (!offers || offers.length === 0) {
@@ -1999,7 +2005,7 @@ function EmbeddedOffersSection({ userId }: { userId: number }) {
         </div>
         <p className="font-medium text-gray-500">暫無出價記錄</p>
         <Link href="/marketplace">
-          <Button style={{ backgroundColor: BRAND_BLUE }} className="text-white font-bold">前往商城出價</Button>
+          <Button style={{ backgroundColor: BRAND_BLUE }} className="text-white font-bold">{t("profile.offers.goToMarketplace")}</Button>
         </Link>
       </div>
     );
@@ -2033,16 +2039,16 @@ function EmbeddedOffersSection({ userId }: { userId: number }) {
             })()}
             <div className="flex-1 min-w-0">
               {offer.listingTitle && <p className="font-semibold text-sm text-gray-900 truncate mb-0.5">{offer.listingTitle}</p>}
-              <p className="font-medium text-gray-800">出價金額: <span style={{ color: BRAND_BLUE }}>HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</span></p>
+              <p className="font-medium text-gray-800">{t("profile.offers.offerPrice")}<span style={{ color: BRAND_BLUE }}>HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</span></p>
               {offer.message && <p className="text-sm text-gray-500 mt-1">留言: {offer.message}</p>}
               {offer.rejectionReason && <p className="text-sm text-red-500 mt-1">拒絕原因: {offer.rejectionReason}</p>}
               <p className="text-xs text-gray-400 mt-1">{new Date(offer.createdAt).toLocaleDateString("zh-HK")}</p>
               {offer.status === "pending" && <p className="text-xs text-amber-600 mt-1">到期: {new Date(offer.expiresAt).toLocaleString("zh-HK")}</p>}
-              {offer.status === "accepted" && <p className="text-xs text-green-600 mt-1 font-medium">✅ 賣家已接受出價，請盡快完成付款</p>}
+              {offer.status === "accepted" && <p className="text-xs text-green-600 mt-1 font-medium">{t("profile.offers.acceptedMessage")}</p>}
             </div>
             <div className="flex flex-col gap-2 flex-shrink-0">
               <Link href={`/shop/${offer.listingId}`}>
-                <Button size="sm" variant="outline" className="text-xs" style={{ color: BRAND_BLUE, borderColor: `${BRAND_BLUE}40` }}>查看商品</Button>
+                <Button size="sm" variant="outline" className="text-xs" style={{ color: BRAND_BLUE, borderColor: `${BRAND_BLUE}40` }}>{t("profile.offers.viewItem")}</Button>
               </Link>
               {offer.status === "pending" && (
                 <Button size="sm" variant="outline" className="text-xs border-red-300 text-red-600 hover:bg-red-50"
@@ -2072,6 +2078,7 @@ const TCG_COLORS_PROFILE: Record<string, { bg: string; text: string }> = {
 };
 
 function MyAuctionsSection({ bids }: { bids: any[] }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<"active" | "won" | "history">("active");
 
   // New API returns one entry per auction (grouped)
@@ -2080,14 +2087,15 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
   const historyBids = bids.filter(b => b.status === "lost");
 
   const tabs = [
-    { id: "active" as const, label: "正在競拍", count: activeBids.length },
-    { id: "won" as const, label: "已得標", count: wonBids.length },
-    { id: "history" as const, label: "歷史競拍", count: historyBids.length },
+    { id: "active" as const, label: t("profile.auctions.tabs.active"), count: activeBids.length },
+    { id: "won" as const, label: t("profile.auctions.tabs.won"), count: wonBids.length },
+    { id: "history" as const, label: t("profile.auctions.tabs.history"), count: historyBids.length },
   ];
 
   const currentBids = tab === "active" ? activeBids : tab === "won" ? wonBids : historyBids;
 
   function AuctionCountdown({ endAt }: { endAt: string | null }) {
+  const { t } = useTranslation();
     const [timeLeft, setTimeLeft] = useState("");
     useEffect(() => {
       if (!endAt) { setTimeLeft("—"); return; }
@@ -2118,8 +2126,8 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
         <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: `#06038d15` }}>
           <DollarSign className="w-8 h-8" style={{ color: "#06038d" }} />
         </div>
-        <p className="text-gray-500 font-medium">您尚未參與任何拍賣</p>
-        <p className="text-gray-400 text-sm mt-1">前往市集探索正在進行的拍賣</p>
+        <p className="text-gray-500 font-medium">{t("profile.auctions.empty.title")}</p>
+        <p className="text-gray-400 text-sm mt-1">{t("profile.auctions.empty.description")}</p>
         <Link href="/marketplace">
           <Button className="mt-4 font-semibold" style={{ background: "#06038d", color: "white" }}>
             前往市集
@@ -2156,7 +2164,7 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
 
       {/* Auction card list - one card per auction */}
       {currentBids.length === 0 ? (
-        <div className="text-center py-10 text-gray-400 text-sm">此分類暫無記錄</div>
+        <div className="text-center py-10 text-gray-400 text-sm">{t("profile.auctions.empty.noRecords")}</div>
       ) : (
         <div className="space-y-3">
           {currentBids.map((bid: any) => {
@@ -2229,14 +2237,14 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
                       <div className="flex items-end justify-between mt-2">
                         <div className="flex items-center gap-3">
                           <div>
-                            <p className="text-[10px] text-gray-400 font-medium">我的出價</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{t("profile.nav.offers")}</p>
                             <p className="text-sm font-black" style={{ color: '#06038d' }}>
                               HK${typeof bid.amount === 'number' ? bid.amount.toLocaleString() : bid.amount}
                             </p>
                           </div>
                           {bid.listing?.currentHighestBid && isOutbid && (
                             <div>
-                              <p className="text-[10px] text-gray-400 font-medium">當前最高</p>
+                              <p className="text-[10px] text-gray-400 font-medium">{t("profile.auctions.currentHighest")}</p>
                               <p className="text-sm font-bold text-orange-600">
                                 HK${typeof bid.listing.currentHighestBid === 'number'
                                   ? bid.listing.currentHighestBid.toLocaleString()
@@ -2247,7 +2255,7 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
                         </div>
                         {isActive && bid.listing?.auctionEndAt && (
                           <div className="text-right">
-                            <p className="text-[10px] text-gray-400 font-medium">剩餘時間</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{t("profile.auctions.timeLeft")}</p>
                             <AuctionCountdown endAt={bid.listing.auctionEndAt} />
                           </div>
                         )}
