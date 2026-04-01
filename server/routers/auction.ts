@@ -409,10 +409,79 @@ export const auctionRouter = router({
       return { success: true };
     }),
 
-  /** Get current user's bid history */
+  /** Get current user's bid history - grouped by listing (one card per auction) */
   myBids: protectedProcedure
     .query(async ({ ctx }) => {
-      return getBidsByBidderId(ctx.user.id, 50);
+      // Get all bids by this user
+      const allBids = await getBidsByBidderId(ctx.user.id, 200);
+      if (allBids.length === 0) return [];
+
+      // Group by listingId, keep highest bid per listing
+      const listingMap = new Map<number, typeof allBids[0]>();
+      for (const bid of allBids) {
+        const existing = listingMap.get(bid.listingId);
+        if (!existing || parseFloat(bid.amount) > parseFloat(existing.amount)) {
+          listingMap.set(bid.listingId, bid);
+        }
+      }
+
+      // Fetch listing info for each unique listingId
+      const listingIds = Array.from(listingMap.keys());
+      const listings = await Promise.all(
+        listingIds.map(id => getAuctionListingById(id))
+      );
+      const listingById = new Map(listings.filter(Boolean).map(l => [l!.id, l!]));
+
+      // Build enriched result
+      const results = listingIds.map(listingId => {
+        const bid = listingMap.get(listingId)!;
+        const listing = listingById.get(listingId);
+        const isEnded = listing && ['ended_sold', 'ended_no_bid', 'cancelled', 'rejected'].includes(listing.auctionStatus ?? '');
+        const isWinner = listing && listing.winnerId === ctx.user.id;
+        const isHighestBidder = listing && listing.currentHighestBidderId === ctx.user.id;
+
+        // Determine display status
+        let displayStatus: 'winning' | 'outbid' | 'won' | 'lost' | 'active';
+        if (isEnded) {
+          displayStatus = isWinner ? 'won' : 'lost';
+        } else if (isHighestBidder) {
+          displayStatus = 'winning';
+        } else {
+          displayStatus = 'outbid';
+        }
+
+        // Parse images
+        let imageUrls: string[] = [];
+        try { imageUrls = listing?.images ? JSON.parse(listing.images) : []; } catch {}
+
+        return {
+          id: bid.id,
+          listingId,
+          amount: parseFloat(bid.amount),
+          status: displayStatus,
+          createdAt: bid.createdAt,
+          listing: listing ? {
+            id: listing.id,
+            title: listing.title,
+            tcgSeries: listing.tcgSeries,
+            auctionStatus: listing.auctionStatus,
+            auctionEndAt: listing.auctionEndAt,
+            currentHighestBid: listing.currentHighestBid ? parseFloat(listing.currentHighestBid) : null,
+            imageUrls,
+            winnerId: listing.winnerId,
+            auctionPaymentStatus: listing.auctionPaymentStatus,
+          } : null,
+        };
+      });
+
+      // Sort: winning first, then outbid, then won, then lost; within each group by createdAt desc
+      const order: Record<string, number> = { winning: 0, outbid: 1, active: 2, won: 3, lost: 4 };
+      return results.sort((a, b) => {
+        const oa = order[a.status] ?? 5;
+        const ob = order[b.status] ?? 5;
+        if (oa !== ob) return oa - ob;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
     }),
 
   /** Get current user's auction violations */

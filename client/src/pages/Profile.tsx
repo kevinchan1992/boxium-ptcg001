@@ -2060,13 +2060,24 @@ function EmbeddedOffersSection({ userId }: { userId: number }) {
 }
 
 // ─── My Auctions Section ──────────────────────────────────────
+const TCG_LOGOS_PROFILE: Record<string, string> = {
+  pokemon:  'https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif',
+  onepiece: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif',
+  yugioh:   'https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp',
+};
+const TCG_COLORS_PROFILE: Record<string, { bg: string; text: string }> = {
+  pokemon:  { bg: 'bg-yellow-400', text: 'text-yellow-900' },
+  onepiece: { bg: 'bg-red-500',    text: 'text-white' },
+  yugioh:   { bg: 'bg-purple-500', text: 'text-white' },
+};
+
 function MyAuctionsSection({ bids }: { bids: any[] }) {
   const [tab, setTab] = useState<"active" | "won" | "history">("active");
-  const utils = trpc.useUtils();
 
-  const activeBids = bids.filter(b => b.status === "active" || b.status === "winning");
+  // New API returns one entry per auction (grouped)
+  const activeBids = bids.filter(b => b.status === "winning" || b.status === "outbid");
   const wonBids = bids.filter(b => b.status === "won");
-  const historyBids = bids.filter(b => b.status === "lost" || b.status === "retracted");
+  const historyBids = bids.filter(b => b.status === "lost");
 
   const tabs = [
     { id: "active" as const, label: "正在競拍", count: activeBids.length },
@@ -2083,10 +2094,11 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
       const update = () => {
         const diff = new Date(endAt).getTime() - Date.now();
         if (diff <= 0) { setTimeLeft("已結標"); return; }
-        const h = Math.floor(diff / 3600000);
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
         const m = Math.floor((diff % 3600000) / 60000);
         const s = Math.floor((diff % 60000) / 1000);
-        setTimeLeft(h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`);
+        setTimeLeft(d > 0 ? `${d}天 ${h}時` : h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`);
       };
       update();
       const t = setInterval(update, 1000);
@@ -2094,7 +2106,7 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
     }, [endAt]);
     const isUrgent = endAt && new Date(endAt).getTime() - Date.now() < 3600000;
     return (
-      <span className={`text-xs font-mono font-bold ${isUrgent ? "text-red-600" : "text-gray-600"}`}>
+      <span className={`text-xs font-mono font-bold ${isUrgent ? "text-red-600 animate-pulse" : "text-[#06038d]"}`}>
         {timeLeft}
       </span>
     );
@@ -2142,98 +2154,122 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
         ))}
       </div>
 
-      {/* Bid list */}
+      {/* Auction card list - one card per auction */}
       {currentBids.length === 0 ? (
         <div className="text-center py-10 text-gray-400 text-sm">此分類暫無記錄</div>
       ) : (
         <div className="space-y-3">
-          {currentBids.map((bid: any) => (
-            <div key={bid.id} className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
-              <div className="flex items-start gap-3">
-                {/* Card image */}
-                {bid.listing?.imageUrls?.[0] && (
-                  <img
-                    src={bid.listing.imageUrls[0]}
-                    alt={bid.listing.title}
-                    className="w-14 h-14 object-cover rounded-lg border border-gray-100 flex-shrink-0"
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-gray-900 text-sm truncate">
-                        {bid.listing?.title ?? `拍賣 #${bid.listingId}`}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {bid.listing?.cardName && `${bid.listing.cardName} · `}
-                        {bid.listing?.grade && `PSA ${bid.listing.grade}`}
-                      </p>
-                    </div>
-                    {/* Status badge */}
-                    {bid.status === "winning" && (
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "#FEDD00", color: "#06038d" }}>
-                        領先中
-                      </span>
-                    )}
-                    {bid.status === "active" && (
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 bg-blue-100 text-blue-700">
-                        競拍中
-                      </span>
-                    )}
-                    {bid.status === "won" && (
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 bg-green-100 text-green-700">
-                        已得標
-                      </span>
-                    )}
-                    {bid.status === "lost" && (
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 bg-gray-100 text-gray-500">
-                        未得標
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <p className="text-xs text-gray-400">我的出價</p>
-                        <p className="text-sm font-bold" style={{ color: "#06038d" }}>
-                          HK${bid.amount?.toLocaleString()}
-                        </p>
-                      </div>
-                      {bid.listing?.currentBid && (
-                        <div>
-                          <p className="text-xs text-gray-400">當前最高</p>
-                          <p className="text-sm font-bold text-gray-700">
-                            HK${bid.listing.currentBid?.toLocaleString()}
-                          </p>
+          {currentBids.map((bid: any) => {
+            const tcgSeries = bid.listing?.tcgSeries;
+            const tcgLogo = TCG_LOGOS_PROFILE[tcgSeries];
+            const tcgColor = TCG_COLORS_PROFILE[tcgSeries] ?? { bg: 'bg-gray-200', text: 'text-gray-700' };
+            const isWinning = bid.status === 'winning';
+            const isOutbid = bid.status === 'outbid';
+            const isWon = bid.status === 'won';
+            const isActive = isWinning || isOutbid;
+            return (
+              <Link key={bid.id} href={bid.listing?.id ? `/auction/${bid.listing.id}` : '#'}>
+                <div className={`bg-white border rounded-2xl overflow-hidden hover:shadow-md transition-all cursor-pointer ${
+                  isWinning ? 'border-[#FEDD00] shadow-sm shadow-yellow-100' :
+                  isOutbid ? 'border-orange-300 shadow-sm shadow-orange-50' :
+                  isWon ? 'border-green-300 shadow-sm shadow-green-50' :
+                  'border-gray-100'
+                }`}>
+                  <div className="flex gap-0">
+                    {/* Left: image */}
+                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 bg-gray-50">
+                      {bid.listing?.imageUrls?.[0] ? (
+                        <img
+                          src={bid.listing.imageUrls[0]}
+                          alt={bid.listing.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="w-8 h-8 text-gray-200" />
+                        </div>
+                      )}
+                      {/* Game logo overlay */}
+                      {tcgLogo && (
+                        <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded-md flex items-center gap-1 ${tcgColor.bg}`}>
+                          <img src={tcgLogo} alt={tcgSeries} className="h-3 w-auto object-contain" />
                         </div>
                       )}
                     </div>
-                    {(bid.status === "active" || bid.status === "winning") && bid.listing?.auctionEndAt && (
-                      <div className="text-right">
-                        <p className="text-xs text-gray-400">剩餘時間</p>
-                        <AuctionCountdown endAt={bid.listing.auctionEndAt} />
+
+                    {/* Right: info */}
+                    <div className="flex-1 min-w-0 p-3 flex flex-col justify-between">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-bold text-gray-900 text-sm leading-tight line-clamp-2">
+                          {bid.listing?.title ?? `拍賣 #${bid.listingId}`}
+                        </p>
+                        {/* Status badge */}
+                        {isWinning && (
+                          <span className="text-xs font-black px-2.5 py-1 rounded-full flex-shrink-0 whitespace-nowrap" style={{ background: '#FEDD00', color: '#06038d' }}>
+                            🏆 領先中
+                          </span>
+                        )}
+                        {isOutbid && (
+                          <span className="text-xs font-black px-2.5 py-1 rounded-full flex-shrink-0 whitespace-nowrap bg-orange-100 text-orange-700">
+                            ⚠️ 被超越
+                          </span>
+                        )}
+                        {isWon && (
+                          <span className="text-xs font-black px-2.5 py-1 rounded-full flex-shrink-0 whitespace-nowrap bg-green-100 text-green-700">
+                            ✅ 得標
+                          </span>
+                        )}
+                        {bid.status === 'lost' && (
+                          <span className="text-xs font-black px-2.5 py-1 rounded-full flex-shrink-0 whitespace-nowrap bg-gray-100 text-gray-500">
+                            未得標
+                          </span>
+                        )}
                       </div>
-                    )}
-                    {bid.status === "won" && bid.listing?.id && (
-                      <Link href={`/auction/${bid.listing.id}`}>
-                        <Button size="sm" className="text-xs font-semibold" style={{ background: "#06038d", color: "white" }}>
-                          前往付款
-                        </Button>
-                      </Link>
-                    )}
-                    {(bid.status === "active" || bid.status === "winning") && bid.listing?.id && (
-                      <Link href={`/auction/${bid.listing.id}`}>
-                        <Button size="sm" variant="outline" className="text-xs font-semibold border-[#06038d] text-[#06038d]">
-                          查看拍賣
-                        </Button>
-                      </Link>
-                    )}
+
+                      <div className="flex items-end justify-between mt-2">
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <p className="text-[10px] text-gray-400 font-medium">我的出價</p>
+                            <p className="text-sm font-black" style={{ color: '#06038d' }}>
+                              HK${typeof bid.amount === 'number' ? bid.amount.toLocaleString() : bid.amount}
+                            </p>
+                          </div>
+                          {bid.listing?.currentHighestBid && isOutbid && (
+                            <div>
+                              <p className="text-[10px] text-gray-400 font-medium">當前最高</p>
+                              <p className="text-sm font-bold text-orange-600">
+                                HK${typeof bid.listing.currentHighestBid === 'number'
+                                  ? bid.listing.currentHighestBid.toLocaleString()
+                                  : parseFloat(bid.listing.currentHighestBid).toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        {isActive && bid.listing?.auctionEndAt && (
+                          <div className="text-right">
+                            <p className="text-[10px] text-gray-400 font-medium">剩餘時間</p>
+                            <AuctionCountdown endAt={bid.listing.auctionEndAt} />
+                          </div>
+                        )}
+                        {isWon && (
+                          <span className="text-xs font-semibold text-[#06038d] flex items-center gap-1">
+                            查看訂單 <ChevronRight className="w-3 h-3" />
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Outbid call-to-action */}
+                      {isOutbid && (
+                        <div className="mt-2 text-[10px] text-orange-600 font-semibold">
+                          點擊前往拍賣頁面再次出價
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

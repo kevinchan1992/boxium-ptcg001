@@ -691,7 +691,13 @@ export default function AuctionDetail() {
     onepiece: { bg: 'bg-red-500',    text: 'text-white' },
     yugioh:   { bg: 'bg-purple-500', text: 'text-white' },
   };
+  const TCG_LOGOS: Record<string, string> = {
+    pokemon:  'https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif',
+    onepiece: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif',
+    yugioh:   'https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp',
+  };
   const tcgColor = TCG_COLORS[listing.tcgSeries] ?? { bg: 'bg-gray-200', text: 'text-gray-700' };
+  const tcgLogo = TCG_LOGOS[listing.tcgSeries];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -734,7 +740,8 @@ export default function AuctionDetail() {
             <div className="lg:hidden">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 {listing.tcgSeries && listing.tcgSeries !== 'other' && (
-                  <span className={`text-xs font-black px-2.5 py-1 rounded-full ${tcgColor.bg} ${tcgColor.text}`}>
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-black px-2.5 py-1 rounded-full ${tcgColor.bg} ${tcgColor.text}`}>
+                    {tcgLogo && <img src={tcgLogo} alt={listing.tcgSeries} className="h-4 w-auto object-contain" />}
                     {listing.tcgSeries === 'pokemon' ? 'Pokémon' : listing.tcgSeries === 'onepiece' ? 'One Piece' : 'Yu-Gi-Oh!'}
                   </span>
                 )}
@@ -848,7 +855,8 @@ export default function AuctionDetail() {
             <div className="hidden lg:block bg-white rounded-3xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center gap-2 mb-3 flex-wrap">
                 {listing.tcgSeries && listing.tcgSeries !== 'other' && (
-                  <span className={`text-xs font-black px-2.5 py-1 rounded-full ${tcgColor.bg} ${tcgColor.text}`}>
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-black px-2.5 py-1 rounded-full ${tcgColor.bg} ${tcgColor.text}`}>
+                    {tcgLogo && <img src={tcgLogo} alt={listing.tcgSeries} className="h-4 w-auto object-contain" />}
                     {listing.tcgSeries === 'pokemon' ? 'Pokémon' : listing.tcgSeries === 'onepiece' ? 'One Piece' : 'Yu-Gi-Oh!'}
                   </span>
                 )}
