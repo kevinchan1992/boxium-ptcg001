@@ -3235,27 +3235,35 @@ export default function SellerDashboard() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-sm text-white/90 max-h-72 overflow-y-auto pr-1">
-            <p className="font-semibold text-white">在上架拍賣前，請仔細閱讀以下條款：</p>
+            <p className="font-semibold text-white">上架拍賣前，請仔細閱讀並同意以下賣家責任條款：</p>
             <div className="space-y-2">
               <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">📋 競標規則</p>
-                <p className="text-xs">所有出價均具法律約束力。一旦出價，不得撤回。賣家須確保商品描述準確，圖片真實。</p>
-              </div>
-              <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">💳 付款期限</p>
-                <p className="text-xs">得標者須在結標後 24 小時內完成付款。逾期未付將被記錄違規，影響帳戶信用評分。</p>
-              </div>
-              <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">⚠️ 棄標懲罰</p>
-                <p className="text-xs">首次棄標：警告 → 第二次：7 天封禁 → 第三次：30 天封禁 → 第四次：永久封禁</p>
-              </div>
-              <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">🏷️ 新賣家限制</p>
-                <p className="text-xs">完成成交少於 5 次的新賣家，拍賣起拍價上限為 HK$5,000。起拍價超過 HK$10,000 的拍賣需額外審核。</p>
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">✅ 商品真實性保證</p>
+                <p className="text-xs">賣家須確保所上架商品為本人合法持有，商品描述、品相評級及圖片須如實反映商品狀況，不得虛假陳述或誇大。若商品為仿冒品或描述與實物不符，平台有權立即下架並封禁帳戶。</p>
               </div>
               <div className="bg-white/10 rounded-xl p-3">
                 <p className="font-bold text-[#FEDD00] text-xs mb-1">📦 出貨責任</p>
-                <p className="text-xs">賣家須在收款後 3 個工作天內安排出貨，並提供有效追蹤號碼。</p>
+                <p className="text-xs">拍賣結標且買家完成付款後，賣家須於 <strong>3 個工作天內</strong>安排出貨，並在平台填寫有效追蹤號碼。逾期未出貨將被記錄違規，影響帳戶評分及上架資格。</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">🚫 撤拍限制</p>
+                <p className="text-xs">拍賣一經上架並有人出價後，賣家<strong>不得</strong>無故撤回拍賣。如需撤拍，須提前聯絡平台客服說明原因。惡意撤拍將視同違規處理，首次警告，再犯將限制上架資格。</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">💰 平台服務費</p>
+                <p className="text-xs">每筆成功成交的拍賣，平台將收取成交金額 <strong>5%</strong> 作為服務費，於買家付款後自動扣除。賣家實際到手金額為成交價扣除服務費後的餘額。</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">🏷️ 新賣家限制</p>
+                <p className="text-xs">完成成交少於 5 次的新賣家，拍賣起拍價上限為 <strong>HK$5,000</strong>。起拍價超過 HK$10,000 的拍賣需提交額外審核，審核通過後方可公開展示。</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">⚠️ 違規處理</p>
+                <p className="text-xs">賣家違規（虛假描述、惡意撤拍、逾期不出貨等）將依以下程序處理：首次違規：警告 → 第二次：7 天限制上架 → 第三次：30 天封禁 → 第四次：永久封禁。</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">🤝 買賣雙方保障</p>
+                <p className="text-xs">平台設有買賣雙方評價系統。拍賣完成後，買家可對賣家評分，評分記錄公開顯示於賣家個人頁面。賣家亦可對買家評分，共同維護平台交易環境。</p>
               </div>
             </div>
             <p className="text-xs text-white/60 mt-2">
