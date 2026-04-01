@@ -613,6 +613,7 @@
     "topRanking": "熱門排行",
     "topRankingDesc": "發現市場上最熱門的卡牌，跟蹤投資者的選擇",
     "trackedCards": "已追蹤卡牌",
+    "priceDataPoints": "成交價格記錄",
     "trendingCards": "熱門卡牌",
     "trendingCardsDesc": "基於 PSA 10 七天最近成交價格漲幅",
     "usdPrice": "美元價格",

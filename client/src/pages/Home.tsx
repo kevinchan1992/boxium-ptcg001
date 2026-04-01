@@ -469,8 +469,10 @@ export default function Home() {
                 <div className="text-white/80 text-[9px] md:text-xs">{t("home.trackedCards")}</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
-                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">2</div>
-                <div className="text-white/80 text-[9px] md:text-xs">{t("home.dataSources")}</div>
+                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">
+                  {stats?.totalPriceRecords ? `${(stats.totalPriceRecords / 10000).toFixed(0)}萬+` : '—'}
+                </div>
+                <div className="text-white/80 text-[9px] md:text-xs">{t("home.priceDataPoints")}</div>
               </div>
             </div>
 

@@ -613,6 +613,7 @@
     "topRanking": "Top Ranking",
     "topRankingDesc": "Discover the hottest cards in the market, track investors' choices",
     "trackedCards": "Tracked Cards",
+    "priceDataPoints": "Price Records",
     "trendingCards": "Trending Cards",
     "trendingCardsDesc": "Based on PSA 10 this-week vs last-week weighted average price change (7-day half-life)",
     "usdPrice": "USD Price",

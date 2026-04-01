@@ -583,9 +583,13 @@ export const appRouter = router({
     getStats: publicProcedure
       .query(async () => {
         try {
-          const totalCards = await db.getTotalCardCount();
+          const [totalCards, totalPriceRecords] = await Promise.all([
+            db.getTotalCardCount(),
+            db.getTotalPriceRecordCount(),
+          ]);
           return {
             totalCards,
+            totalPriceRecords,
           };
         } catch (error: any) {
           console.error("[getStats] Error:", error);

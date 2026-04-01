@@ -7247,3 +7247,5 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 更新 AdminTrendingCards.tsx 顯示「PSA10 參考價」標籤
 - [x] 首頁 CTA 三面板加入 hover 圖示圓圈放大動畫（group-hover:scale-110）
 - [x] 首頁 CTA 區塊加入 Intersection Observer 滾動進場動畫（三面板依序從下方滑入）
+
+- [x] 首頁右側統計數字：將「2 資料來源」改為從資料庫即時讀取的卡牌價格記錄總數（目前 101萬+），標籤改為「成交價格記錄」
