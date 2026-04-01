@@ -1755,26 +1755,81 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     }
   }
 
+  // ── Calculate PSA10 reference price (latest-5 median) for each top card ──────
+  // This matches the CardDetail page calculation for consistency.
+  const allTopCardIds = allTop.map(c => c.cardId);
+
+  // Fetch all PSA10 records for these cards (no date limit, ordered newest first)
+  const refPriceRecords = await db
+    .select({ cardId: priceHistory.cardId, price: priceHistory.price })
+    .from(priceHistory)
+    .where(
+      and(
+        inArray(priceHistory.cardId, allTopCardIds),
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.grade, 'PSA10'),
+        eq(priceHistory.isSuspectedBulk, false),
+        sql`${priceHistory.soldAt} IS NOT NULL`
+      )
+    )
+    .orderBy(desc(priceHistory.soldAt));
+
+  // Group by cardId (already newest-first)
+  const refPricesByCard = new Map<number, number[]>();
+  for (const rec of refPriceRecords) {
+    const cid = rec.cardId;
+    if (!refPricesByCard.has(cid)) refPricesByCard.set(cid, []);
+    refPricesByCard.get(cid)!.push(parseFloat(rec.price as any));
+  }
+
+  // Helper: simple median
+  const simpleMedianDb = (prices: number[]): number => {
+    const sorted = [...prices].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+      ? (sorted[mid - 1] + sorted[mid]) / 2
+      : sorted[mid];
+  };
+
+  // Build a map: cardId -> PSA10 latest-5 median (reference price)
+  const refPriceMap = new Map<number, number>();
+  for (const cardId of allTopCardIds) {
+    const allPrices = refPricesByCard.get(cardId) ?? [];
+    if (allPrices.length === 0) {
+      // Fallback to weighted avg if no price records found
+      const card = allTop.find(c => c.cardId === cardId);
+      if (card) refPriceMap.set(cardId, card.currentPrice);
+      continue;
+    }
+    const usePrices = allPrices.slice(0, Math.min(5, allPrices.length));
+    refPriceMap.set(cardId, simpleMedianDb(usePrices));
+  }
+
+  console.log(`[calculateAndCacheTrendingCards] Calculated PSA10 reference prices for ${refPriceMap.size} cards`);
+
   // Clear existing cache
   await db.delete(trendingCardsCache);
 
   // Insert new cache — rank is per-game (1-5 within each gameId)
+  // currentPrice stores the PSA10 latest-5 median (reference price), matching CardDetail page
+  // oldPrice stores the last-week weighted avg (used for priceChange calculation)
   const calculatedAt = new Date();
   for (const [, list] of Array.from(byGame.entries())) {
     for (let i = 0; i < list.length; i++) {
       const card = list[i];
+      const referencePrice = refPriceMap.get(card.cardId) ?? card.currentPrice;
       await db.insert(trendingCardsCache).values({
         cardId: card.cardId,
         rank: i + 1,
         priceChange7d: card.priceChange.toFixed(2),
         oldPrice: card.oldPrice.toFixed(2),
-        currentPrice: card.currentPrice.toFixed(2),
+        currentPrice: referencePrice.toFixed(2), // PSA10 latest-5 median
         calculatedAt,
       });
     }
   }
 
-  console.log("[calculateAndCacheTrendingCards] Cache updated successfully (per-game top 5)");
+  console.log("[calculateAndCacheTrendingCards] Cache updated successfully (per-game top 5, currentPrice = PSA10 latest-5 median)");
 }
 
 /**

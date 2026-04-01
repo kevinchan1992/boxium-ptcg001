@@ -148,9 +148,12 @@ function GameTrendingPanel({
                       <p className="text-[9px] text-gray-400 line-clamp-1">{card.nameJa}</p>
                     )}
                     <div className="flex items-center justify-between gap-1">
-                      <p className="text-xs font-bold" style={{ color: accentColor === "#06038d" ? "#818cf8" : "#f87171" }}>
-                        HK${card.currentPrice?.toLocaleString()}
-                      </p>
+                      <div>
+                        <p className="text-xs font-bold" style={{ color: accentColor === "#06038d" ? "#818cf8" : "#f87171" }}>
+                          HK${card.currentPrice?.toLocaleString()}
+                        </p>
+                        <p className="text-[8px] text-gray-500">PSA10 參考價</p>
+                      </div>
                       <Badge
                         variant="outline"
                         className={`text-[9px] px-1 py-0 border-0 font-semibold ${priceChange >= 0 ? "bg-green-900/50 text-green-400" : "bg-red-900/50 text-red-400"}`}

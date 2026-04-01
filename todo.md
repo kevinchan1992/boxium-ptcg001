@@ -7216,3 +7216,29 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] 三個面板使用 items-stretch，內容區域統一高度對齊
 - [ ] 圖示、標題、說明文字、底部 CTA 各自對齊
 - [ ] 儲存 checkpoint
+
+
+---
+
+## ✅ 首頁 Hot Cards 及 Admin 後台熱門卡牌改用 PSA10 參考價格（最近 5 筆中位數）
+
+### 問題描述
+首頁熱門卡片和 Admin 後台顯示的價格使用「本週加權平均」（用於計算排名的內部指標），與 Research/CardDetail 頁面顯示的 PSA10 參考價格不一致，容易造成用戶和管理員混淆。
+
+### 修改內容
+
+#### 後端（db.ts）
+- [x] 修改 `calculateAndCacheTrendingCards` 函數：在計算完排名後，為每張入選的熱門卡片額外查詢所有 PSA10 成交記錄
+- [x] 計算「最近 5 筆 PSA10 成交中位數」作為 `currentPrice` 存入快取（與 CardDetail 頁面邏輯一致）
+- [x] 若無成交記錄則 fallback 到加權平均值
+- [x] `oldPrice` 仍保留上週加權平均（用於計算漲跌幅）
+
+#### Admin 後台（AdminTrendingCards.tsx）
+- [x] 在價格下方加入「PSA10 參考價」小標籤，讓管理員清楚知道顯示的是中位數參考價格
+
+#### 首頁（Home.tsx）
+- [x] 首頁 `TrendingCardRow` 顯示的 `currentPrice` 現在已是 PSA10 最近 5 筆中位數（無需額外修改）
+
+### 驗證
+- [x] 伺服器正常運行，無 TypeScript 錯誤
+- [x] 保存 checkpoint
