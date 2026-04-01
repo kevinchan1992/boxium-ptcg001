@@ -770,7 +770,7 @@ function SellerAuctionsTab() {
     const map: Record<string, { label: string; cls: string }> = {
       active:         { label: "競拍中",   cls: "bg-blue-100 text-blue-700" },
       ending_soon:    { label: "即將結標", cls: "bg-orange-100 text-orange-700" },
-      scheduled:      { label: "已排程",   cls: "bg-blue-100 text-blue-700" },
+      scheduled:      { label: "已排程",   cls: "bg-indigo-100 text-indigo-700" },
       pending_review: { label: t("seller.auctions.tab.filter.review"),   cls: "bg-yellow-100 text-yellow-700" },
       ended_sold:     { label: "已成交",   cls: "bg-green-100 text-green-700" },
       ended_no_bid:   { label: "流標",     cls: "bg-gray-100 text-gray-500" },
@@ -841,7 +841,7 @@ function SellerAuctionsTab() {
         <div className="text-center py-12">
           <Gavel className="w-10 h-10 mx-auto mb-3 text-gray-300" />
           <p className="text-gray-400 text-sm">
-            {subTab === "active" ? "目前沒有進行中的拍賣" : subTab === "rejected" ? "沒有被拒絕的拍賣" : "尚無已結標的拍賣"}
+            {subTab === "active" ? "目前沒有進行中或已排程的拍賣" : subTab === "rejected" ? "沒有被拒絕的拍賣" : "尚無已結標的拍賣"}
           </p>
           {subTab === "active" && (
             <p className="text-gray-400 text-xs mt-1">在「我的商品」標簽中選擇「拍賣模式」上架新拍賣</p>
@@ -875,26 +875,45 @@ function SellerAuctionsTab() {
                     <AuctionStatusBadge status={auction.auctionStatus} />
                   </div>
 
+                  {/* Scheduled auction info banner */}
+                  {auction.auctionStatus === 'scheduled' && auction.auctionStartAt && (
+                    <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+                      <span className="text-indigo-500 text-sm">🗓️</span>
+                      <div>
+                        <p className="text-xs font-semibold text-indigo-700">預計開始時間</p>
+                        <p className="text-xs text-indigo-600">{new Date(auction.auctionStartAt).toLocaleString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
                     <div className="flex items-center gap-4">
                       <div>
                         <p className="text-xs text-gray-400">{"起標價"}</p>
                         <p className="text-sm font-bold" style={{ color: "#06038d" }}>HK${parseFloat(auction.startingBid ?? '0').toLocaleString()}</p>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-400">目前最高出價</p>
-                        {auction.currentHighestBid ? (
-                          <p className="text-sm font-black text-[#FEDD00] bg-[#06038D] px-2 py-0.5 rounded-lg inline-block">
-                            HK${parseFloat(auction.currentHighestBid).toLocaleString()}
-                          </p>
-                        ) : (
-                          <p className="text-sm font-bold text-gray-400">{"尚無出價"}</p>
-                        )}
-                      </div>
-                      {auction.bidCount !== undefined && (
+                      {auction.auctionStatus !== 'scheduled' && (
+                        <div>
+                          <p className="text-xs text-gray-400">目前最高出價</p>
+                          {auction.currentHighestBid ? (
+                            <p className="text-sm font-black text-[#FEDD00] bg-[#06038D] px-2 py-0.5 rounded-lg inline-block">
+                              HK${parseFloat(auction.currentHighestBid).toLocaleString()}
+                            </p>
+                          ) : (
+                            <p className="text-sm font-bold text-gray-400">{"尚無出價"}</p>
+                          )}
+                        </div>
+                      )}
+                      {auction.auctionStatus !== 'scheduled' && auction.bidCount !== undefined && (
                         <div>
                           <p className="text-xs text-gray-400">出價次數</p>
                           <p className="text-sm font-bold text-gray-700">{auction.bidCount} 次</p>
+                        </div>
+                      )}
+                      {auction.auctionStatus === 'scheduled' && auction.buyNowPrice && (
+                        <div>
+                          <p className="text-xs text-gray-400">即買價</p>
+                          <p className="text-sm font-bold text-emerald-600">HK${parseFloat(auction.buyNowPrice).toLocaleString()}</p>
                         </div>
                       )}
                     </div>
@@ -902,6 +921,12 @@ function SellerAuctionsTab() {
                       {auction.auctionStatus === "active" && (
                         <div className="text-right">
                           <p className="text-xs text-gray-400">{"剩餘時間"}</p>
+                          <AuctionCountdown endAt={auction.auctionEndAt} />
+                        </div>
+                      )}
+                      {auction.auctionStatus === "ending_soon" && (
+                        <div className="text-right">
+                          <p className="text-xs text-orange-500 font-semibold">{"即將結標"}</p>
                           <AuctionCountdown endAt={auction.auctionEndAt} />
                         </div>
                       )}

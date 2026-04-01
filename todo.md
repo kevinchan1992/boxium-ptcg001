@@ -7151,4 +7151,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 加入「高價待審核」篩選器（isHighValueReview=true）
 - [x] 加入常見拒絕原因快速選項（6 個常見原因）
 - [x] 拒絕/取消按鈕改用 Dialog 而非 prompt()
+- [x] 儲存 checkpoint (da030b41)
+
+---
+## 📅 賣家中心「進行中」Tab 加入 scheduled 狀態拍賣
+- [x] 分析後端 getSellerAuctions 查詢邏輯
+- [x] 後端：已支援 scheduled 狀態（無筋選時返回全部）
+- [x] 前端：顯示 scheduled 狀態拍賣，加入「已排程」靛藍標籤和預計開始時間橫幅
+- [x] 撰寫 10 項 vitest 測試，全部通過
 - [ ] 儲存 checkpoint
