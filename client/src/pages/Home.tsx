@@ -371,11 +371,34 @@ export default function Home() {
             {t("home.readyToStartDesc")}
           </p>
         </div>
-        {/* Three color panels — no gap, full bleed */}
-        <div className="flex flex-row w-full" style={{ minHeight: "160px" }}>
-          {/* Panel 1: Search — deep navy */}
-          <Link href="/research" className="group flex-1 relative flex flex-col justify-between p-4 sm:p-6 md:p-10 cursor-pointer transition-all duration-200 active:brightness-90 select-none" style={{ backgroundColor: "#06038d" }}>
-            {/* hover overlay */}
+        {/* Three color panels — diagonal clip-path dividers, full bleed */}
+        {/* Wrapper: overflow-hidden to contain the clipped panels */}
+        <div className="relative flex flex-row w-full overflow-hidden" style={{ minHeight: "180px" }}>
+
+          {/* Panel 1: Search — deep navy (#06038d) */}
+          {/* Extends slightly past 33% to compensate for right diagonal clip */}
+          <Link
+            href="/research"
+            className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
+            style={{
+              backgroundColor: "#06038d",
+              width: "calc(33.333% + 16px)",
+              clipPath: "polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%)",
+              paddingLeft: "4%",
+              paddingRight: "calc(4% + 20px)",
+              paddingTop: "clamp(16px, 4vw, 40px)",
+              paddingBottom: "clamp(16px, 4vw, 40px)",
+              zIndex: 3,
+            }}
+          >
+            {/* TCG card texture — faint card outline shapes */}
+            <svg className="absolute inset-0 w-full h-full opacity-[0.06] pointer-events-none" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <rect x="10" y="15" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
+              <rect x="140" y="-10" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
+              <rect x="60" y="110" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
+              <rect x="-10" y="90" width="30" height="42" rx="3" fill="none" stroke="white" strokeWidth="1.5"/>
+              <rect x="160" y="130" width="50" height="70" rx="4" fill="none" stroke="white" strokeWidth="2"/>
+            </svg>
             <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-200" />
             <div className="relative z-10">
               <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 sm:mb-3 group-hover:bg-[#FEDD00] transition-all duration-200">
@@ -392,29 +415,82 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Panel 2: Market Pricing — medium blue */}
-          <Link href="/pricing" className="group flex-1 relative flex flex-col justify-between p-4 sm:p-6 md:p-10 cursor-pointer transition-all duration-200 active:brightness-90 select-none" style={{ backgroundColor: "#1a1a8c" }}>
-            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-200" />
+          {/* Panel 2: Market Pricing — white with navy text */}
+          {/* Extends past 33% on both sides for diagonal clips */}
+          <Link
+            href="/pricing"
+            className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
+            style={{
+              backgroundColor: "#ffffff",
+              width: "calc(33.333% + 32px)",
+              clipPath: "polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%)",
+              marginLeft: "-16px",
+              paddingLeft: "calc(4% + 20px)",
+              paddingRight: "calc(4% + 20px)",
+              paddingTop: "clamp(16px, 4vw, 40px)",
+              paddingBottom: "clamp(16px, 4vw, 40px)",
+              zIndex: 2,
+            }}
+          >
+            {/* TCG card texture — navy on white */}
+            <svg className="absolute inset-0 w-full h-full opacity-[0.05] pointer-events-none" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <rect x="20" y="20" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="130" y="5" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="70" y="120" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="0" y="100" width="30" height="42" rx="3" fill="none" stroke="#06038d" strokeWidth="1.5"/>
+              <rect x="170" y="140" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+            </svg>
+            <div className="absolute inset-0 transition-all duration-200" style={{ backgroundColor: "rgba(6,3,141,0)" }} />
+            <div className="absolute inset-0 group-hover:bg-[#06038d]/5 transition-all duration-200" />
             <div className="relative z-10">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 sm:mb-3 group-hover:bg-[#FEDD00] transition-all duration-200">
-                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white group-hover:text-[#06038d] transition-colors duration-200" />
+              <div
+                className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-2 sm:mb-3 transition-all duration-200"
+                style={{ backgroundColor: "rgba(6,3,141,0.08)" }}
+              >
+                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
               </div>
-              <h3 className="text-white font-bold text-xs sm:text-sm md:text-lg leading-tight mb-1 sm:mb-2">{t("home.viewMarketTrends")}</h3>
-              <p className="text-white/65 text-[10px] sm:text-xs md:text-sm leading-snug">
+              <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight mb-1 sm:mb-2" style={{ color: "#06038d" }}>{t("home.viewMarketTrends")}</h3>
+              <p className="text-[10px] sm:text-xs md:text-sm leading-snug" style={{ color: "#06038d", opacity: 0.6 }}>
                 {t("home.marketTrendsDesc", "查看市場價格走勢、比較各平台行情")}
               </p>
             </div>
-            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[#FEDD00]/80 text-[10px] sm:text-xs font-semibold">
+            <div className="relative z-10 mt-3 sm:mt-4 flex items-center gap-1 text-[10px] sm:text-xs font-semibold" style={{ color: "#06038d" }}>
               <span>{t("home.viewTrends", "查看行情")}</span>
               <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </div>
           </Link>
 
-          {/* Panel 3: Marketplace — yellow */}
-          <Link href="/marketplace" className="group flex-1 relative flex flex-col justify-between p-4 sm:p-6 md:p-10 cursor-pointer transition-all duration-200 active:brightness-90 select-none" style={{ backgroundColor: "#FEDD00" }}>
+          {/* Panel 3: Marketplace — yellow (#FEDD00) */}
+          {/* Extends slightly past 33% to compensate for left diagonal clip */}
+          <Link
+            href="/marketplace"
+            className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
+            style={{
+              backgroundColor: "#FEDD00",
+              width: "calc(33.333% + 16px)",
+              clipPath: "polygon(16px 0, 100% 0, 100% 100%, 0 100%)",
+              marginLeft: "-16px",
+              paddingLeft: "calc(4% + 20px)",
+              paddingRight: "4%",
+              paddingTop: "clamp(16px, 4vw, 40px)",
+              paddingBottom: "clamp(16px, 4vw, 40px)",
+              zIndex: 1,
+            }}
+          >
+            {/* TCG card texture — navy on yellow */}
+            <svg className="absolute inset-0 w-full h-full opacity-[0.07] pointer-events-none" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <rect x="15" y="10" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="135" y="-5" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="65" y="115" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+              <rect x="-5" y="95" width="30" height="42" rx="3" fill="none" stroke="#06038d" strokeWidth="1.5"/>
+              <rect x="165" y="135" width="50" height="70" rx="4" fill="none" stroke="#06038d" strokeWidth="2"/>
+            </svg>
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all duration-200" />
             <div className="relative z-10">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-2 sm:mb-3 transition-all duration-200" style={{ backgroundColor: "rgba(6,3,141,0.12)" }}>
+              <div
+                className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-2 sm:mb-3 transition-all duration-200"
+                style={{ backgroundColor: "rgba(6,3,141,0.12)" }}
+              >
                 <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
               </div>
               <h3 className="font-bold text-xs sm:text-sm md:text-lg leading-tight mb-1 sm:mb-2" style={{ color: "#06038d" }}>{t("home.goToMarketplace")}</h3>
