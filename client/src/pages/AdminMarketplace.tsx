@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer, XCircle, Settings, Timer, Shield, ShieldOff, ScrollText, Bot } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer, XCircle, Settings, Timer, Shield, ShieldOff, ScrollText, Bot, Gavel } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
@@ -4156,6 +4156,24 @@ function SalesReportTab() {
     ? (totalFees / overall.sellerSalesHkd) * 100
     : 0;
 
+  // Auction vs Direct breakdown
+  const auctionSales = (overall as any)?.auctionSalesHkd ?? 0;
+  const auctionCount = (overall as any)?.auctionCount ?? 0;
+  const auctionPlatformSales = (overall as any)?.auctionPlatformSalesHkd ?? 0;
+  const auctionSellerFees = (overall as any)?.auctionSellerFeesHkd ?? 0;
+  const auctionIncome = auctionPlatformSales + auctionSellerFees;
+  const directSales = (overall as any)?.directSalesHkd ?? 0;
+  const directCount = (overall as any)?.directCount ?? 0;
+  const directPlatformSales = (overall as any)?.directPlatformSalesHkd ?? 0;
+  const directSellerFees = (overall as any)?.directSellerFeesHkd ?? 0;
+  const directIncome = directPlatformSales + directSellerFees;
+
+  // Order source breakdown pie data
+  const orderSourcePieData = [
+    { name: '直購/出價', value: directSales, count: directCount, color: '#3b82f6' },
+    { name: '拍賣', value: auctionSales, count: auctionCount, color: '#f59e0b' },
+  ].filter(d => d.value > 0);
+
   // Chart data (reversed for chronological order)
   const chartData = [...monthly].reverse().map(r => ({
     month: fmtYearMonthShort(r.yearMonth),
@@ -4165,6 +4183,8 @@ function SalesReportTab() {
     手續費: parseFloat(r.sellerFeesHkd.toFixed(2)),
     平台收入: parseFloat(((r as any).platformIncomeHkd ?? (r.platformSalesHkd + r.sellerFeesHkd)).toFixed(2)),
     退款: parseFloat(((r as any).refundedAmountHkd ?? 0).toFixed(2)),
+    拍賣銷售: parseFloat(((r as any).auctionSalesHkd ?? 0).toFixed(2)),
+    直購銷售: parseFloat(((r as any).directSalesHkd ?? 0).toFixed(2)),
   }));
 
   // Payment method pie data
@@ -4412,6 +4432,107 @@ function SalesReportTab() {
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : '暫無數據'}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Auction vs Direct Breakdown Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Order source breakdown card */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <div className="flex items-center gap-2 mb-1">
+                <Gavel className="w-4 h-4 text-amber-600" />
+                <p className="text-sm font-semibold text-gray-800">訂單來源分佈</p>
+              </div>
+              <p className="text-xs text-gray-400 mb-4">拍賣 vs 直購/出價訂單比例</p>
+              {orderSourcePieData.length > 0 ? (
+                <div className="flex items-center gap-4">
+                  <ResponsiveContainer width={100} height={100}>
+                    <PieChart>
+                      <Pie data={orderSourcePieData} cx="50%" cy="50%" innerRadius={28} outerRadius={46} dataKey="value" strokeWidth={2}>
+                        {orderSourcePieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex-1 space-y-2">
+                    {orderSourcePieData.map(d => (
+                      <div key={d.name}>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
+                          <span className="text-xs text-gray-500">{d.name}</span>
+                          <span className="text-xs text-gray-400 ml-auto">{d.count} 筆</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-800 pl-4">HKD {fmtHkd(d.value)}</p>
+                        <p className="text-xs text-gray-400 pl-4">{totalSales > 0 ? ((d.value / totalSales) * 100).toFixed(1) : 0}%</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-400 text-xs">暫無數據</div>
+              )}
+            </div>
+
+            {/* Auction vs Direct income detail card */}
+            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <div className="flex items-center gap-2 mb-1">
+                <BarChart3 className="w-4 h-4 text-[#06038d]" />
+                <p className="text-sm font-semibold text-gray-800">拍賣 vs 直購平台收入明細</p>
+              </div>
+              <p className="text-xs text-gray-400 mb-4">各訂單來源對平台的收入貢獻</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Direct purchase column */}
+                <div className="bg-blue-50/50 rounded-lg p-4 border border-blue-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShoppingBag className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm font-bold text-blue-800">直購 / 出價</p>
+                    <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{directCount} 筆</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">銷售總額</span>
+                      <span className="text-sm font-semibold text-gray-800">HKD {fmtHkd(directSales)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">平台直售</span>
+                      <span className="text-sm font-semibold text-gray-800">HKD {fmtHkd(directPlatformSales)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">C2C 手續費</span>
+                      <span className="text-sm font-semibold text-gray-800">HKD {fmtHkd(directSellerFees)}</span>
+                    </div>
+                    <div className="pt-2 border-t border-blue-200 flex justify-between items-center">
+                      <span className="text-xs font-bold text-blue-700">平台收入</span>
+                      <span className="text-sm font-bold text-blue-700">HKD {fmtHkd(directIncome)}</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Auction column */}
+                <div className="bg-amber-50/50 rounded-lg p-4 border border-amber-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Gavel className="w-4 h-4 text-amber-600" />
+                    <p className="text-sm font-bold text-amber-800">拍賣</p>
+                    <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{auctionCount} 筆</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">銷售總額</span>
+                      <span className="text-sm font-semibold text-gray-800">HKD {fmtHkd(auctionSales)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">平台直售</span>
+                      <span className="text-sm font-semibold text-gray-800">HKD {fmtHkd(auctionPlatformSales)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">C2C 手續費</span>
+                      <span className="text-sm font-semibold text-gray-800">HKD {fmtHkd(auctionSellerFees)}</span>
+                    </div>
+                    <div className="pt-2 border-t border-amber-200 flex justify-between items-center">
+                      <span className="text-xs font-bold text-amber-700">平台收入</span>
+                      <span className="text-sm font-bold text-amber-700">HKD {fmtHkd(auctionIncome)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

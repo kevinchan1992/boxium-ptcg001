@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "wouter";
-import { Facebook, Instagram, Globe } from "lucide-react";
+import { Facebook, Instagram, Globe, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const languages = [
@@ -7,6 +8,42 @@ const languages = [
   { code: "en",    label: "EN" },
   { code: "ja",    label: "日本語" },
 ];
+
+function FooterAccordion({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="lg:block">
+      {/* Desktop: always show */}
+      <div className="hidden lg:block">
+        <h4 className="text-white font-semibold text-xs uppercase tracking-widest mb-5">
+          {title}
+        </h4>
+        {children}
+      </div>
+      {/* Mobile: accordion */}
+      <div className="lg:hidden">
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex items-center justify-between w-full py-3 border-b border-white/10"
+        >
+          <h4 className="text-white font-semibold text-xs uppercase tracking-widest">
+            {title}
+          </h4>
+          <ChevronDown
+            className={`w-4 h-4 text-white/50 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          />
+        </button>
+        <div
+          className={`overflow-hidden transition-all duration-300 ${
+            open ? "max-h-60 opacity-100 pt-3 pb-1" : "max-h-0 opacity-0"
+          }`}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Footer() {
   const { t, i18n } = useTranslation();
@@ -22,27 +59,27 @@ export default function Footer() {
       <div className="w-full max-w-7xl mx-auto px-6 lg:px-12 py-12">
 
         {/* Main grid: 4 columns on desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-10">
 
-          {/* Col 1: Brand */}
+          {/* Col 1: Brand + Slogan */}
           <div className="lg:col-span-1">
             <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
               <img
                 src="/boxium-logo.png"
                 alt="BOXIUM Logo"
-                className="h-12 mb-4 cursor-pointer hover:opacity-90 transition-opacity"
+                className="h-12 mb-2 cursor-pointer hover:opacity-90 transition-opacity"
               />
             </Link>
-            <p className="text-white/60 text-sm leading-relaxed max-w-xs">
+            <p className="text-[#FEDD00] text-sm font-semibold tracking-wide mb-3">
+              Luck in Every Box
+            </p>
+            <p className="text-white/60 text-sm leading-relaxed max-w-xs hidden lg:block">
               {t("footer.description")}
             </p>
           </div>
 
           {/* Col 2: Quick Links */}
-          <div>
-            <h4 className="text-white font-semibold text-xs uppercase tracking-widest mb-5">
-              {t("footer.quickLinks")}
-            </h4>
+          <FooterAccordion title={t("footer.quickLinks")}>
             <ul className="space-y-3">
               <li>
                 <Link href="/research" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
@@ -65,13 +102,10 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </FooterAccordion>
 
           {/* Col 3: About Us */}
-          <div>
-            <h4 className="text-white font-semibold text-xs uppercase tracking-widest mb-5">
-              {t("footer.aboutUs")}
-            </h4>
+          <FooterAccordion title={t("footer.aboutUs")}>
             <ul className="space-y-3">
               <li>
                 <Link href="/about" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
@@ -94,14 +128,14 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </FooterAccordion>
 
           {/* Col 4: Follow Us */}
           <div>
-            <h4 className="text-white font-semibold text-xs uppercase tracking-widest mb-5">
+            <h4 className="text-white font-semibold text-xs uppercase tracking-widest mb-5 hidden lg:block">
               Follow Us
             </h4>
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-4 lg:mt-0">
               <a
                 href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr"
                 target="_blank"

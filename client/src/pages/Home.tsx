@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame } from "lucide-react";
+import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame, ChevronRight, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
@@ -360,42 +360,47 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-6 md:py-12 px-4 sm:px-6 bg-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-base sm:text-lg md:text-xl font-bold mb-1.5 md:mb-3" style={{ color: "#06038d" }}>
+      {/* CTA Section - Two Column Layout */}
+      <section className="py-8 md:py-14 px-4 sm:px-6 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 md:mb-4 text-center" style={{ color: "#06038d" }}>
             {t("home.readyToStart")}
           </h2>
-          <p className="text-gray-600 text-[11px] sm:text-xs md:text-sm mb-3 md:mb-5 leading-relaxed px-2">
+          <p className="text-gray-600 text-[11px] sm:text-xs md:text-sm mb-5 md:mb-8 leading-relaxed text-center max-w-2xl mx-auto">
             {t("home.readyToStartDesc")}
           </p>
 
-          <div className="flex flex-row flex-wrap gap-3 justify-center px-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+            {/* Left: Search Cards */}
             <Link href="/research">
-              <Button
-                className="px-4 sm:px-6 md:px-8 py-2 md:py-3 text-sm sm:text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
-                style={{ backgroundColor: "#06038d", color: "white" }}
-              >
-                {t("home.startSearching")}
-              </Button>
+              <div className="group relative overflow-hidden rounded-xl p-6 md:p-8 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5" style={{ backgroundColor: "#06038d" }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <Search className="w-5 h-5 md:w-6 md:h-6 text-[#FEDD00]" />
+                  <h3 className="text-white font-bold text-base md:text-lg">{t("home.startSearching")}</h3>
+                </div>
+                <p className="text-white/70 text-xs md:text-sm leading-relaxed">
+                  {t("home.searchCardsDesc", "搜尋卡片、查看價格走勢與市場數據")}
+                </p>
+                <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#FEDD00] group-hover:text-[#06038d] transition-all">
+                  <ChevronRight className="w-4 h-4 text-white/60 group-hover:text-[#06038d]" />
+                </div>
+              </div>
             </Link>
-            {/* 比較市場格價 - 連結去/pricing */}
-            <Link href="/pricing">
-              <Button
-                variant="outline"
-                className="px-4 sm:px-6 md:px-8 py-2 md:py-3 text-sm sm:text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2"
-                style={{ borderColor: "#06038d", color: "#06038d" }}
-              >
-                {t("home.viewMarketTrends")}
-              </Button>
-            </Link>
+
+            {/* Right: Go to Marketplace */}
             <Link href="/marketplace">
-              <Button
-                className="px-4 sm:px-6 md:px-8 py-2 md:py-3 text-sm sm:text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
-                style={{ backgroundColor: "#FEDD00", color: "#06038d" }}
-              >
-                {t("home.goToMarketplace")}
-              </Button>
+              <div className="group relative overflow-hidden rounded-xl p-6 md:p-8 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 border-2" style={{ backgroundColor: "#FEDD00", borderColor: "#FEDD00" }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
+                  <h3 className="font-bold text-base md:text-lg" style={{ color: "#06038d" }}>{t("home.goToMarketplace")}</h3>
+                </div>
+                <p className="text-xs md:text-sm leading-relaxed" style={{ color: "#06038d", opacity: 0.7 }}>
+                  {t("home.marketplaceDesc", "瀏覽市集商品、參與拍賣、安全交易")}
+                </p>
+                <div className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all" style={{ backgroundColor: "rgba(6,3,141,0.1)" }}>
+                  <ChevronRight className="w-4 h-4" style={{ color: "#06038d" }} />
+                </div>
+              </div>
             </Link>
           </div>
         </div>

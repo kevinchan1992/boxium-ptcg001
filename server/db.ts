@@ -4225,6 +4225,13 @@ export async function getSalesReport(months: number = 12) {
     platformSales: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'platform' THEN subtotalHkd ELSE 0 END), 0)`,
     sellerSales: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'seller' THEN subtotalHkd ELSE 0 END), 0)`,
     sellerFees: sql<string>`COALESCE(SUM(CASE WHEN sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
+    // Auction breakdown
+    auctionSales: sql<string>`COALESCE(SUM(CASE WHEN orderSource = 'auction' THEN subtotalHkd ELSE 0 END), 0)`,
+    auctionCount: sql<number>`SUM(CASE WHEN orderSource = 'auction' THEN 1 ELSE 0 END)`,
+    auctionPlatformSales: sql<string>`COALESCE(SUM(CASE WHEN orderSource = 'auction' AND sellerType = 'platform' THEN subtotalHkd ELSE 0 END), 0)`,
+    auctionSellerFees: sql<string>`COALESCE(SUM(CASE WHEN orderSource = 'auction' AND sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
+    directSales: sql<string>`COALESCE(SUM(CASE WHEN orderSource != 'auction' THEN subtotalHkd ELSE 0 END), 0)`,
+    directCount: sql<number>`SUM(CASE WHEN orderSource != 'auction' THEN 1 ELSE 0 END)`,
   })
     .from(marketplaceOrders)
     .where(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]))
@@ -4272,6 +4279,16 @@ export async function getSalesReport(months: number = 12) {
     alipayPlatformSales: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'alipay_hk' AND sellerType = 'platform' THEN subtotalHkd ELSE 0 END), 0)`,
     stripeSellerFees: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'stripe' AND sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
     alipaySellerFees: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'alipay_hk' AND sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
+    // Auction breakdown
+    auctionSales: sql<string>`COALESCE(SUM(CASE WHEN orderSource = 'auction' THEN subtotalHkd ELSE 0 END), 0)`,
+    auctionCount: sql<number>`SUM(CASE WHEN orderSource = 'auction' THEN 1 ELSE 0 END)`,
+    auctionPlatformSales: sql<string>`COALESCE(SUM(CASE WHEN orderSource = 'auction' AND sellerType = 'platform' THEN subtotalHkd ELSE 0 END), 0)`,
+    auctionSellerSales: sql<string>`COALESCE(SUM(CASE WHEN orderSource = 'auction' AND sellerType = 'seller' THEN subtotalHkd ELSE 0 END), 0)`,
+    auctionSellerFees: sql<string>`COALESCE(SUM(CASE WHEN orderSource = 'auction' AND sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
+    directSales: sql<string>`COALESCE(SUM(CASE WHEN orderSource != 'auction' THEN subtotalHkd ELSE 0 END), 0)`,
+    directCount: sql<number>`SUM(CASE WHEN orderSource != 'auction' THEN 1 ELSE 0 END)`,
+    directPlatformSales: sql<string>`COALESCE(SUM(CASE WHEN orderSource != 'auction' AND sellerType = 'platform' THEN subtotalHkd ELSE 0 END), 0)`,
+    directSellerFees: sql<string>`COALESCE(SUM(CASE WHEN orderSource != 'auction' AND sellerType = 'seller' THEN platformFeeHkd ELSE 0 END), 0)`,
   }).from(marketplaceOrders).where(inArray(marketplaceOrders.orderStatus, paidStatuses as any[]));
 
   // Overall refund/cancel totals
@@ -4319,6 +4336,13 @@ export async function getSalesReport(months: number = 12) {
         cancelledCount: refund.cancelledCount,
         refundedAmountHkd: refund.refundedAmountHkd,
         netRevenueHkd: salesHkd - refund.refundedAmountHkd,
+        // Auction vs Direct breakdown
+        auctionSalesHkd: parseFloat(r.auctionSales ?? '0'),
+        auctionCount: Number(r.auctionCount ?? 0),
+        auctionPlatformSalesHkd: parseFloat(r.auctionPlatformSales ?? '0'),
+        auctionSellerFeesHkd: parseFloat(r.auctionSellerFees ?? '0'),
+        directSalesHkd: parseFloat(r.directSales ?? '0'),
+        directCount: Number(r.directCount ?? 0),
       };
     }),
     overall: {
@@ -4348,6 +4372,16 @@ export async function getSalesReport(months: number = 12) {
       paidOutCount: Number(payoutStats?.paidOutCount ?? 0),
       // Net platform profit = income - refunds
       platformNetProfitHkd: platformIncomeHkd - totalRefundedHkd,
+      // Auction vs Direct breakdown
+      auctionSalesHkd: parseFloat(overall?.auctionSales ?? '0'),
+      auctionCount: Number(overall?.auctionCount ?? 0),
+      auctionPlatformSalesHkd: parseFloat(overall?.auctionPlatformSales ?? '0'),
+      auctionSellerSalesHkd: parseFloat(overall?.auctionSellerSales ?? '0'),
+      auctionSellerFeesHkd: parseFloat(overall?.auctionSellerFees ?? '0'),
+      directSalesHkd: parseFloat(overall?.directSales ?? '0'),
+      directCount: Number(overall?.directCount ?? 0),
+      directPlatformSalesHkd: parseFloat(overall?.directPlatformSales ?? '0'),
+      directSellerFeesHkd: parseFloat(overall?.directSellerFees ?? '0'),
     },
   };
 }
