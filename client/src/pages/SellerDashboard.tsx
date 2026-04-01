@@ -3814,15 +3814,18 @@ export default function SellerDashboard() {
 
       {/* Batch Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-red-600 flex items-center gap-2">
-              <Trash2 className="w-5 h-5" />
-              確認刪除商品
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-2 space-y-3">
-            {/* Product list to be deleted */}
+        <DialogContent className="max-w-md p-0 overflow-hidden border-0 shadow-2xl">
+          {/* BOXIUM-style header */}
+          <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#FEDD00] rounded-lg flex items-center justify-center">
+                <Trash2 className="w-4 h-4 text-[#06038D]" />
+              </div>
+              <span className="text-white font-black text-lg">確認刪除商品</span>
+            </div>
+          </div>
+          {/* Body */}
+          <div className="bg-white px-6 py-4 space-y-4">
             {(() => {
               const deletableListings = Array.from(selectedIds)
                 .map(id => (myListings ?? []).find((x: any) => x.id === id))
@@ -3830,19 +3833,19 @@ export default function SellerDashboard() {
               return (
                 <>
                   <p className="text-sm text-gray-700">
-                    您即將永久刪除以下 <strong className="text-red-600">{deletableListings.length} 件</strong>商品，此操作不可復原：
+                    您即將永久刪除以下 <strong className="text-[#06038D]">{deletableListings.length} 件</strong>商品，此操作不可復原：
                   </p>
-                  <div className="border border-red-200 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                  <div className="border border-[#06038D]/20 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
                     {deletableListings.map((l, idx) => (
-                      <div key={l.id} className={`flex items-center gap-2 px-3 py-2 text-sm ${
-                        idx % 2 === 0 ? 'bg-red-50' : 'bg-white'
+                      <div key={l.id} className={`flex items-center gap-2 px-3 py-2.5 text-sm border-b border-[#06038D]/10 last:border-0 ${
+                        idx % 2 === 0 ? 'bg-white' : 'bg-[#06038D]/3'
                       }`}>
-                        <span className="text-red-400 font-mono text-xs shrink-0">#BOXIUM-{l.id}</span>
-                        <span className="text-gray-800 truncate flex-1">{l.title || '(未命名商品)'}</span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${
+                        <span className="text-[#06038D]/50 font-mono text-xs shrink-0 font-bold">#BOXIUM-{String(l.id).padStart(6, '0')}</span>
+                        <span className="text-gray-800 truncate flex-1 font-medium">{l.title || '(未命名商品)'}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 font-medium ${
                           l.status === 'active' ? 'bg-green-100 text-green-700' :
                           l.status === 'pending_review' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-gray-100 text-gray-600'
+                          'bg-gray-100 text-gray-500'
                         }`}>
                           {l.status === 'active' ? '上架中' :
                            l.status === 'pending_review' ? '審核中' : '已下架'}
@@ -3853,25 +3856,27 @@ export default function SellerDashboard() {
                 </>
               );
             })()}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-xs text-amber-800 font-medium">⚠️ 注意事項：</p>
-              <ul className="text-xs text-amber-700 mt-1 space-y-1">
-                <li>• 商品將從資料庫永久刪除</li>
-                <li>• 如有待付款訂單，將自動更新為已取消</li>
-                <li>• 已售出商品不會被刪除</li>
-              </ul>
+            <div className="bg-[#06038D]/5 border border-[#06038D]/15 rounded-xl p-3">
+              <p className="text-xs text-[#06038D] font-bold mb-1">注意事項</p>
+              <div className="text-xs text-[#06038D]/70 space-y-0.5">
+                <p>• 商品將從資料庫永久刪除</p>
+                <p>• 如有待付款訂單，將自動更新為已取消</p>
+                <p>• 已售出商品不會被刪除</p>
+              </div>
             </div>
           </div>
-          <DialogFooter className="gap-2">
+          {/* Footer */}
+          <div className="bg-gray-50 border-t border-gray-100 px-6 py-3 flex justify-end gap-3">
             <Button
               variant="outline"
               onClick={() => setShowDeleteConfirm(false)}
               disabled={batchDeleteMutation.isPending}
+              className="border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/5"
             >
               取消
             </Button>
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
               disabled={batchDeleteMutation.isPending}
               onClick={() => {
                 const deletableIds = Array.from(selectedIds).filter(id => {
@@ -3887,7 +3892,7 @@ export default function SellerDashboard() {
                 <><Trash2 className="w-4 h-4 mr-1" />確認刪除</>
               )}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

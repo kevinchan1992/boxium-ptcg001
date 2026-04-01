@@ -3727,6 +3727,8 @@ export async function getMarketplaceStats() {
   const [sellerCount] = await db.select({ count: sql<number>`count(*)` }).from(sellerProfiles).where(eq(sellerProfiles.isActive, true));
   // pendingReviewListings: only non-auction listings (auctions are managed separately)
   const [pendingReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(eq(marketplaceListings.status, 'pending_review'), ne(marketplaceListings.listingMode, 'auction')));
+  // pendingAuctionReview: auction listings pending review
+  const [pendingAuctionReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(eq(marketplaceListings.listingMode as any, 'auction'), eq(marketplaceListings.auctionStatus as any, 'pending_review')));
   // Unresolved disputes count
   const [disputeCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders).where(eq(marketplaceOrders.orderStatus, 'disputed'));
   // Sales revenue stats - all paid orders (total sales includes platform orders; fees only for C2C seller orders)
@@ -3793,6 +3795,7 @@ export async function getMarketplaceStats() {
     pendingAlipayConfirmation: Number(pendingAlipay?.count ?? 0),
     activeSellerCount: Number(sellerCount?.count ?? 0),
     pendingReviewListings: Number(pendingReview?.count ?? 0),
+    pendingAuctionReview: Number(pendingAuctionReview?.count ?? 0),
     unresolvedDisputeCount: Number(disputeCount?.count ?? 0),
     // Sales revenue
     totalSalesHkd: parseFloat(totalRevenue?.totalSales ?? '0'),

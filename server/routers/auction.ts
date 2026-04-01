@@ -887,6 +887,15 @@ export const auctionRouter = router({
       return { success: true };
     }),
 
+  /** Admin: Force-end an active/ending_soon auction immediately (for testing) */
+  adminForceEnd: adminProcedure
+    .input(z.object({ listingId: z.number().int() }))
+    .mutation(async ({ input }) => {
+      const { forceEndAuction } = await import('../auctionProcessor');
+      await forceEndAuction(input.listingId);
+      return { success: true };
+    }),
+
   /** Admin: List auction orders with filtering */
   adminGetAuctionOrders: adminProcedure
     .input(z.object({

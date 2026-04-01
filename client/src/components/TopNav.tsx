@@ -66,12 +66,13 @@ export function TopNav() {
       // Clear all tRPC cache to reset auth state
       await utils.invalidate();
       // Hard reload to ensure all state is cleared (including cookies)
-      window.location.replace("/");
+      // Redirect to home page top regardless of current page
+      window.location.replace("/#top");
     },
     onError: (err) => {
       console.error('[Logout] Error:', err);
-      // Even if API fails, force reload to clear client state
-      window.location.replace("/");
+      // Even if API fails, force reload to clear client state and go to home top
+      window.location.replace("/#top");
     },
   });
 

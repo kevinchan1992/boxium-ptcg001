@@ -22,6 +22,7 @@ import {
   getSellerProfileById,
   getAuctionOrdersNeedingPaymentReminder,
   markAuctionPaymentReminderSent,
+  getAuctionListingById,
 } from "./db";
 import { createNotification } from "./db/notifications";
 import {
@@ -374,4 +375,19 @@ async function finalizeAuction(listing: any): Promise<void> {
       await updateBidStatus(bid.id, 'retracted');
     }
   }
+}
+
+// ---- Admin: Force-end a single active/ending_soon auction immediately ----
+export async function forceEndAuction(listingId: number): Promise<void> {
+  const listing = await getAuctionListingById(listingId);
+  if (!listing) throw new Error(`Auction ${listingId} not found`);
+  if (!['active', 'ending_soon', 'scheduled'].includes(listing.auctionStatus ?? '')) {
+    throw new Error(`Auction ${listingId} is not in an active state (current: ${listing.auctionStatus})`);
+  }
+  // If scheduled, just activate first then finalize
+  if (listing.auctionStatus === 'scheduled') {
+    await updateAuctionListing(listingId, { auctionStatus: 'active' });
+    listing.auctionStatus = 'active';
+  }
+  await finalizeAuction(listing);
 }

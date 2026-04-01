@@ -6451,6 +6451,11 @@ function AuctionsAdminTab() {
     onError: (e) => toast.error(e.message),
   });
 
+  const forceEndMutation = trpc.auction.adminForceEnd.useMutation({
+    onSuccess: () => { toast.success('拍賣已強制結標'); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+
   const statusOptions = [
     { value: 'pending_review', label: '待審核' },
     { value: 'rejected', label: '已拒絕' },
@@ -6658,6 +6663,20 @@ function AuctionsAdminTab() {
                       onClick={() => approveMutation.mutate({ listingId: listing.id })}
                     >
                       重新審核通過
+                    </Button>
+                  )}
+                  {['active', 'ending_soon'].includes(listing.auctionStatus ?? '') && (
+                    <Button
+                      size="sm"
+                      className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-8"
+                      disabled={forceEndMutation.isPending}
+                      onClick={() => {
+                        if (confirm(`確認將拍賣 #${listing.id}「${listing.title}」強制結標？`)) {
+                          forceEndMutation.mutate({ listingId: listing.id });
+                        }
+                      }}
+                    >
+                      ⚡ 強制結標
                     </Button>
                   )}
                   {['active', 'ending_soon', 'scheduled'].includes(listing.auctionStatus ?? '') && (
@@ -7183,9 +7202,9 @@ function AuctionOrdersAdminTab() {
 type SidebarItem = { key: string; label: string; icon: any; badgeKey?: string };
 const sidebarMenuItems: SidebarItem[] = [
   { key: 'listings', label: '商品管理', icon: Package, badgeKey: 'pendingReviewListings' },
-  { key: 'auctions', label: '🔨 拍賣管理', icon: Package },
-  { key: 'auction_orders', label: '📦 拍賣訂單', icon: ShoppingBag },
-  { key: 'auction_violations', label: '⚠️ 拍賣違規', icon: Shield },
+  { key: 'auctions', label: '拍賣管理', icon: Package, badgeKey: 'pendingAuctionReview' },
+  { key: 'auction_orders', label: '拍賣訂單', icon: ShoppingBag },
+  { key: 'auction_violations', label: '拍賣違規', icon: Shield },
   { key: 'orders', label: '訂單管理', icon: ShoppingBag },
   { key: 'alipay', label: '支付寶核對', icon: DollarSign, badgeKey: 'pendingAlipayConfirmation' },
   { key: 'sellers', label: '賣家管理', icon: Users },
