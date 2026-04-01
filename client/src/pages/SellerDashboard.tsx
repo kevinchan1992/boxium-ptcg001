@@ -763,7 +763,7 @@ function SellerAuctionsTab() {
     const map: Record<string, { label: string; cls: string }> = {
       active:         { label: "競拍中",   cls: "bg-blue-100 text-blue-700" },
       ending_soon:    { label: "即將結標", cls: "bg-orange-100 text-orange-700" },
-      scheduled:      { label: "待開始",   cls: "bg-purple-100 text-purple-700" },
+      scheduled:      { label: "已排程",   cls: "bg-blue-100 text-blue-700" },
       pending_review: { label: "審核中",   cls: "bg-yellow-100 text-yellow-700" },
       ended_sold:     { label: "已成交",   cls: "bg-green-100 text-green-700" },
       ended_no_bid:   { label: "流標",     cls: "bg-gray-100 text-gray-500" },
@@ -1784,21 +1784,21 @@ export default function SellerDashboard() {
                                 className="text-xs h-8 border-red-400 text-red-600 hover:bg-red-50"
                                 disabled={batchDeactivateMutation.isPending}
                                 onClick={() => {
-                                  // Only deactivate 'active' listings, not pending_review
-                                  const activeIds = Array.from(selectedIds).filter(id => {
+                                  // Allow deactivating active and pending_review listings
+                                  const deactivatableIds = Array.from(selectedIds).filter(id => {
                                     const l = filteredListings.find((x: any) => x.id === id);
-                                    return l && l.status === 'active';
+                                    return l && (l.status === 'active' || l.status === 'pending_review');
                                   });
-                                  if (activeIds.length > 0) batchDeactivateMutation.mutate({ ids: activeIds });
+                                  if (deactivatableIds.length > 0) batchDeactivateMutation.mutate({ ids: deactivatableIds });
                                 }}
                               >
                                 <EyeOff className="w-3 h-3 mr-1" />
                                 {(() => {
-                                  const activeCount = Array.from(selectedIds).filter(id => {
+                                  const deactivatableCount = Array.from(selectedIds).filter(id => {
                                     const l = filteredListings.find((x: any) => x.id === id);
-                                    return l && l.status === 'active';
+                                    return l && (l.status === 'active' || l.status === 'pending_review');
                                   }).length;
-                                  return `下架 (${activeCount})`;
+                                  return `下架 (${deactivatableCount})`;
                                 })()}
                               </Button>
 {(() => {

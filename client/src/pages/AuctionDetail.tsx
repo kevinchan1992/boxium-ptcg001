@@ -674,7 +674,7 @@ export default function AuctionDetail() {
 
   const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
     pending_review: { label: '審核中',   bg: 'bg-yellow-100', text: 'text-yellow-800', dot: 'bg-yellow-500' },
-    scheduled:      { label: '待開始',   bg: 'bg-blue-100',   text: 'text-blue-800',   dot: 'bg-blue-500' },
+    scheduled:      { label: '已排程',   bg: 'bg-blue-100',   text: 'text-blue-800',   dot: 'bg-blue-500' },
     active:         { label: '競標中',   bg: 'bg-green-100',  text: 'text-green-800',  dot: 'bg-green-500' },
     ending_soon:    { label: '即將結標', bg: 'bg-red-100',    text: 'text-red-800',    dot: 'bg-red-500' },
     ended_sold:     { label: '已售出',   bg: 'bg-gray-100',   text: 'text-gray-600',   dot: 'bg-gray-400' },
@@ -726,6 +726,11 @@ export default function AuctionDetail() {
               listing.auctionStatus === 'active' || listing.auctionStatus === 'ending_soon' ? 'animate-pulse' : ''
             }`} />
             <span className={`text-xs font-bold ${status.text}`}>{status.label}</span>
+            {listing.auctionStatus === 'scheduled' && listing.auctionStartAt && (
+              <span className="text-xs text-blue-600 ml-0.5">
+                · {new Date(listing.auctionStartAt).toLocaleString('zh-HK', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}開始
+              </span>
+            )}
           </div>
         </div>
       </div>

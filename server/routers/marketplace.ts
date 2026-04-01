@@ -1052,7 +1052,7 @@ export const marketplaceRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { marketplaceListings } = await import("../../drizzle/schema_new");
       const { inArray: inArrayFn } = await import("drizzle-orm");
-      const listings = await db.select({ id: marketplaceListings.id, sellerId: marketplaceListings.sellerId, sellerType: marketplaceListings.sellerType })
+      const listings = await db.select({ id: marketplaceListings.id, sellerId: marketplaceListings.sellerId, sellerType: marketplaceListings.sellerType, status: marketplaceListings.status })
         .from(marketplaceListings)
         .where(inArrayFn(marketplaceListings.id, input.ids));
       // Admin can deactivate platform listings
@@ -1064,6 +1064,16 @@ export const marketplaceRouter = router({
         if (!seller) throw new TRPCError({ code: "FORBIDDEN" });
         const unauthorized = listings.filter(l => l.sellerId !== seller.id);
         if (unauthorized.length > 0) throw new TRPCError({ code: "FORBIDDEN", message: "部分商品不屬於你" });
+      }
+      // For pending_review listings: cancel any pending_payment orders
+      const pendingReviewIds = listings.filter(l => l.status === 'pending_review').map(l => l.id);
+      if (pendingReviewIds.length > 0) {
+        const { or: orFn, eq: eqFn2 } = await import("drizzle-orm");
+        await db.update(marketplaceOrders)
+          .set({ orderStatus: "cancelled" })
+          .where(
+            inArrayFn(marketplaceOrders.listingId, pendingReviewIds)
+          );
       }
       // Batch update status to removed
       await db.update(marketplaceListings)
