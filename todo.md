@@ -6984,3 +6984,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 資料庫修復：更新 5 筆拍賣記錄（#330001~#330005）的 sellerId 從 users.id=8 改為 sellerProfiles.id=1
 - [x] 92 項拍賣測試全部通過
 - [x] 儲存 checkpoint
+
+## 🔧 拍賣頁面 UI 修復
+- [x] 修復 AuctionCard 顯示「已結標」錯誤（auctionEndTime → auctionEndAt，startingPrice → startingBid）
+- [x] AuctionDetail 出價框內文字改為黑色（text-gray-900 bg-white）
+- [x] AuctionDetail 倒計時框（距離結標）改為 BOXIUM 品牌風格（深藍 #06038D 背景，黃色時鐘圖示）
+- [x] 買家拍賣條款 Dialog 重新設計為 BOXIUM 品牌風格（深藍頭部、黃色盾牌圖示、卡片式條款列表）
+- [ ] 儲存 checkpoint

@@ -95,52 +95,83 @@ function TermsDialog({
     onError: (e) => toast.error(e.message),
   });
 
+  const buyerTerms = [
+    { icon: '⚡', title: '出價即承諾', desc: '出價即代表您承諾以該金額購買此商品' },
+    { icon: '⏰', title: '24 小時付款', desc: '得標後須在 24 小時內完成付款，逾期將被記錄違規' },
+    { icon: '🚫', title: '違規累計', desc: '累計 3 次違規將被禁止參與所有拍賣活動' },
+    { icon: '🛡️', title: '買家保障', desc: '商品與描述不符可申請退款保障' },
+    { icon: '📋', title: '不得撤销', desc: '拍賣結束後不得無故取消交易' },
+  ];
+
+  const sellerTerms = [
+    { icon: '✅', title: '審核公開', desc: '上架拍賣需經管理員審核後才會公開' },
+    { icon: '🔒', title: '價格鎖定', desc: '拍賣開始後不得修改起標價或即買價' },
+    { icon: '🚫', title: '禁止撤拍', desc: '有人出價後不得取消拍賣' },
+    { icon: '📦', title: '3 工作天出貨', desc: '得標後須在 3 個工作天內完成出貨' },
+    { icon: '⚠️', title: '違規處罰', desc: '違反條款將影響賣家評分及平台使用資格' },
+  ];
+
+  const terms = role === 'buyer' ? buyerTerms : sellerTerms;
+
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[#06038D]" />
-            {role === 'buyer' ? '買家' : '賣家'}拍賣條款
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3 text-sm text-gray-600 max-h-64 overflow-y-auto pr-2">
-          <div className="flex items-center justify-between">
-            <p className="font-semibold text-gray-800">請仔細閱讀以下條款：</p>
+      <DialogContent className="max-w-md p-0 overflow-hidden border-0 rounded-3xl">
+        {/* Header - BOXIUM brand */}
+        <div className="bg-[#06038D] px-6 pt-6 pb-5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#FEDD00]/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#FEDD00] rounded-xl flex items-center justify-center shrink-0">
+                <Shield className="w-5 h-5 text-[#06038D]" />
+              </div>
+              <div>
+                <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider">拍賣條款</p>
+                <h2 className="text-lg font-black text-white">{role === 'buyer' ? '買家' : '賣家'}參與協議</h2>
+              </div>
+            </div>
             <a href="/auction/terms" target="_blank" rel="noopener noreferrer"
-              className="text-xs text-[#06038D] hover:underline flex items-center gap-1">
-              查看完整條款 →
+              className="text-[10px] text-[#FEDD00] hover:text-yellow-300 flex items-center gap-1 font-bold transition-colors">
+              完整條款 →
             </a>
           </div>
-          {role === 'buyer' ? (
-            <ul className="space-y-2 list-disc list-inside">
-              <li>出價即代表您承諾以該金額購買商品</li>
-              <li>得標後須在 <strong>24 小時內</strong>完成付款</li>
-              <li>逾期未付款將被記錄違規，累計 3 次將被禁止參與拍賣</li>
-              <li>商品描述與實物不符可申請退款保障</li>
-              <li>拍賣結束後不得無故取消交易</li>
-            </ul>
-          ) : (
-            <ul className="space-y-2 list-disc list-inside">
-              <li>上架拍賣需經管理員審核後才會公開</li>
-              <li>拍賣開始後不得修改起標價或即買價</li>
-              <li>有人出價後不得取消拍賣</li>
-              <li>得標後須在 <strong>3 個工作天</strong>內出貨</li>
-              <li>違反條款將影響賣家評分及平台使用資格</li>
-            </ul>
-          )}
         </div>
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose}>取消</Button>
+
+        {/* Terms list */}
+        <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
+          <p className="text-xs text-gray-500 font-medium mb-3">請仔細閱讀以下所有條款，同意後方可出價：</p>
+          {terms.map((term, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-2xl hover:bg-[#06038D]/5 transition-colors">
+              <span className="text-lg leading-none mt-0.5 shrink-0">{term.icon}</span>
+              <div>
+                <p className="text-xs font-black text-gray-900">{term.title}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{term.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 pb-5 pt-2 flex gap-2.5">
           <Button
-            className="bg-[#06038D] hover:bg-[#0804b8] text-white"
+            variant="outline"
+            onClick={onClose}
+            className="flex-1 rounded-xl border-2 border-gray-200 text-gray-600 font-bold h-11"
+          >
+            取消
+          </Button>
+          <Button
+            className="flex-[2] bg-[#06038D] hover:bg-[#0804b8] text-white rounded-xl font-black h-11"
             onClick={() => agreeMutation.mutate({ role })}
             disabled={agreeMutation.isPending}
           >
-            {agreeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+            {agreeMutation.isPending
+              ? <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              : <CheckCircle2 className="w-4 h-4 mr-2" />
+            }
             我已閱讀並同意
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -371,11 +402,16 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
 
       {/* Countdown */}
       {isActive && remaining !== null && (
-        <div className="bg-gray-900 rounded-2xl p-4">
-          <p className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5" /> 距離結標
+        <div className="bg-[#06038D] rounded-2xl p-4 relative overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#FEDD00]/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+          <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-1.5 relative">
+            <Clock className="w-3.5 h-3.5 text-[#FEDD00]" /> 距離結標
           </p>
-          <CountdownDisplay ms={remaining} />
+          <div className="relative">
+            <CountdownDisplay ms={remaining} />
+          </div>
         </div>
       )}
 
@@ -392,7 +428,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
                   value={bidAmount}
                   onChange={e => setBidAmount(e.target.value)}
                   placeholder={minBid.toString()}
-                  className="pl-12 border-2 border-[#06038D]/20 focus:border-[#06038D] focus:ring-[#06038D]/20 rounded-xl text-base font-bold h-12"
+                  className="pl-12 border-2 border-[#06038D]/20 focus:border-[#06038D] focus:ring-[#06038D]/20 rounded-xl text-base font-bold h-12 text-gray-900 bg-white"
                   min={minBid}
                   step={parseFloat(listing.bidIncrement || "10")}
                 />

@@ -43,7 +43,7 @@ function formatCountdown(ms: number): { text: string; urgent: boolean } {
 // ─── AuctionCard ─────────────────────────────────────────────────────────────
 export function AuctionCard({ auction }: { auction: any }) {
   const [, setLocation] = useLocation();
-  const remaining = useCountdown(auction.auctionEndTime);
+  const remaining = useCountdown(auction.auctionEndAt);
   // remaining is null when countdown hasn't been calculated yet (prevents false "ended" flash)
   const remainingMs = remaining ?? Infinity;
   const { text: countdownText, urgent } = remaining !== null ? formatCountdown(remaining) : { text: '...', urgent: false };
@@ -56,7 +56,7 @@ export function AuctionCard({ auction }: { auction: any }) {
 
   const currentPrice = auction.currentHighestBid
     ? parseFloat(auction.currentHighestBid)
-    : parseFloat(auction.startingPrice || "0");
+    : parseFloat(auction.startingBid || "0");
 
   const isEndingSoon = auction.auctionStatus === 'ending_soon' || (remainingMs > 0 && remainingMs < 30 * 60 * 1000);
   // Only mark as ended when remaining is calculated (not null) and is 0, or auctionStatus indicates ended
