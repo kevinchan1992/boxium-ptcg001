@@ -127,6 +127,16 @@ export function TopNav() {
       case "trade": return <Tag className="w-4 h-4 text-green-400" />;
       case "payment": return <Package className="w-4 h-4 text-blue-400" />;
       case "shipping": return <Package className="w-4 h-4 text-purple-400" />;
+      case "auction_outbid": return <Bell className="w-4 h-4 text-orange-400" />;
+      case "auction_won": return <ShoppingBag className="w-4 h-4 text-green-400" />;
+      case "auction_sold": return <Tag className="w-4 h-4 text-green-400" />;
+      case "auction_ending_soon": return <Bell className="w-4 h-4 text-red-400" />;
+      case "auction_started": return <Tag className="w-4 h-4 text-blue-400" />;
+      case "auction_approved": return <Package className="w-4 h-4 text-green-400" />;
+      case "auction_rejected": return <Bell className="w-4 h-4 text-red-400" />;
+      case "auction_cancelled": return <Bell className="w-4 h-4 text-gray-400" />;
+      case "auction_ended_no_bid": return <Bell className="w-4 h-4 text-gray-400" />;
+      case "auction_violation": return <Bell className="w-4 h-4 text-red-500" />;
       default: return <Bell className="w-4 h-4 text-gray-400" />;
     }
   };

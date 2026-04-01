@@ -64,6 +64,7 @@ export async function processScheduledAuctions(): Promise<void> {
             title: '您的拍賣已開始',
             body: `拍賣 #${listing.id} 已開始競投`,
             relatedId: listing.id,
+            linkUrl: `/auction/${listing.id}`,
           });
         }
       } catch (err) {
@@ -105,6 +106,7 @@ export async function notifyEndingSoon(): Promise<void> {
               ? `拍賣 #${listing.id} 將在 1 小時內結束，您目前是最高出價者`
               : `拍賣 #${listing.id} 將在 1 小時內結束，您目前已被超越`,
             relatedId: listing.id,
+            linkUrl: `/auction/${listing.id}`,
           });
         }
       } catch (err) {
@@ -119,6 +121,7 @@ export async function notifyEndingSoon(): Promise<void> {
           title: '您的拍賣即將結束',
           body: `拍賣 #${listing.id} 將在 1 小時內結束，當前最高出價：HK$${listing.currentHighestBid ?? listing.startingBid ?? '未有出價'}`,
           relatedId: listing.id,
+          linkUrl: `/auction/${listing.id}`,
         });
       }
 
@@ -157,6 +160,7 @@ async function finalizeAuction(listing: any): Promise<void> {
           ? `拍賣 #${listing.id} 已結束，最高出價未達底價`
           : `拍賣 #${listing.id} 已結束，無人出價`,
         relatedId: listing.id,
+        linkUrl: `/seller?tab=auctions`,
       });
     }
 
@@ -168,6 +172,7 @@ async function finalizeAuction(listing: any): Promise<void> {
         title: '拍賣已結束（未達底價）',
         body: `您競投的拍賣 #${listing.id} 已結束，最高出價未達底價`,
         relatedId: listing.id,
+        linkUrl: `/auction/${listing.id}`,
       });
       await updateBidStatus(winningBid.id, 'retracted');
     }
@@ -219,6 +224,7 @@ async function finalizeAuction(listing: any): Promise<void> {
       title: '恭喜！您贏得了拍賣',
       body: `您以 HK$${winAmount} 贏得拍賣 #${listing.id}，請在 24 小時內完成付款。訂單號：${orderNo}`,
       relatedId: order.id,
+      linkUrl: `/orders/${orderNo}`,
     });
 
     // Notify seller
@@ -229,6 +235,7 @@ async function finalizeAuction(listing: any): Promise<void> {
         title: '拍賣成功售出',
         body: `您的拍賣 #${listing.id} 以 HK$${winAmount} 售出，訂單號：${orderNo}`,
         relatedId: order.id,
+        linkUrl: `/seller?tab=auctions`,
       });
     }
   }

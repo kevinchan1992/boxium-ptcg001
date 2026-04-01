@@ -271,6 +271,7 @@ export const auctionRouter = router({
           title: '您已被超越出價',
           body: `您在拍賣 #${input.listingId} 的出價已被超越，最新最高出價為 HK$${input.amount}`,
           relatedId: input.listingId,
+          linkUrl: `/auction/${input.listingId}`,
         });
         // Also send email notification (non-blocking)
         const cardName = listing.title ?? `拍賣 #${input.listingId}`;
@@ -377,6 +378,7 @@ export const auctionRouter = router({
           title: '拍賣已售出（即時購買）',
           body: `您的拍賣 #${input.listingId} 已被即時購買，訂單號：${orderNo}`,
           relatedId: order.id,
+          linkUrl: `/seller?tab=auctions`,
         });
       }
 
@@ -499,6 +501,7 @@ export const auctionRouter = router({
         title: '拍賣已通過審核',
         body: `您的拍賣 #${input.listingId} 已通過審核，${newStatus === 'active' ? '現已開始競投' : '將於排定時間開始'}`,
         relatedId: input.listingId,
+        linkUrl: `/auction/${input.listingId}`,
       });
 
       return { success: true, newStatus };
@@ -561,6 +564,7 @@ export const auctionRouter = router({
             title: '拍賣已被取消',
             body: `您競投的拍賣 #${input.listingId} 已被管理員取消`,
             relatedId: input.listingId,
+            linkUrl: `/auction/${input.listingId}`,
           });
         }
       }
@@ -604,6 +608,7 @@ export const auctionRouter = router({
         title: '拍賣違規通知',
         body: `您的帳戶因拍賣違規（${input.type}）被記錄違規，處罰：${input.penalty}`,
         relatedId: violation.id,
+        linkUrl: `/profile?tab=notifications`,
       });
 
       return { success: true, violationId: violation.id };

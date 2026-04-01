@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { Bell, Check, CheckCheck, Trash2, Package, DollarSign, AlertTriangle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ export default function Notifications() {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined);
   const utils = trpc.useUtils();
+  const [, setLocation] = useLocation();
 
   const { data, isLoading } = trpc.notifications.getMyNotifications.useQuery(
     { limit: 50, offset: 0, unreadOnly, type: typeFilter },
@@ -181,6 +182,7 @@ function NotificationList({
   markAsReadMutation: any;
   deleteMutation: any;
 }) {
+  const [, setLocation] = useLocation();
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -209,11 +211,17 @@ function NotificationList({
       {notifications.map((notif: any) => (
         <div
           key={notif.id}
-          className="rounded-xl border overflow-hidden transition-all"
+          className={`rounded-xl border overflow-hidden transition-all ${notif.linkUrl ? 'cursor-pointer hover:shadow-md hover:border-blue-200' : ''}`}
           style={{
             borderLeft: !notif.isRead ? "4px solid #06038d" : "1px solid #e5e7eb",
             borderColor: !notif.isRead ? undefined : "#e5e7eb",
             background: !notif.isRead ? "#f8faff" : "white",
+          }}
+          onClick={() => {
+            if (notif.linkUrl) {
+              if (!notif.isRead) markAsReadMutation.mutate({ notificationId: notif.id });
+              setLocation(notif.linkUrl);
+            }
           }}
         >
           <div className="p-4">
@@ -260,17 +268,7 @@ function NotificationList({
                   </div>
                 </div>
                 {notif.linkUrl && (
-                  <Link href={notif.linkUrl}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-2 h-7 text-xs p-0 font-semibold hover:underline"
-                      style={{ color: "#06038d" }}
-                      onClick={() => !notif.isRead && markAsReadMutation.mutate({ notificationId: notif.id })}
-                    >
-                      查看詳情 →
-                    </Button>
-                  </Link>
+                  <p className="text-xs mt-1.5 font-medium" style={{ color: "#06038d" }}>點擊查看詳情 →</p>
                 )}
               </div>
             </div>

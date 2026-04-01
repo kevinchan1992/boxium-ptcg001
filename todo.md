@@ -7041,3 +7041,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 移除「最高成交」獨立顯示，改為 P25/P75 區間
 - [x] 更新 i18n 說明文字
 - [x] 儲存 checkpoint
+
+## 🔧 通知點擊跳轉功能
+- [x] 後端：auction.ts 超越出價通知加入 linkUrl: /auction/${listingId}
+- [x] 後端：檢查其他拍賣通知（結標、得標、審核等）補全 linkUrl
+- [x] 前端：Notifications.tsx 全部通知頁面加入點擊跳轉功能
+- [x] 前端：TopNav 通知下拉中加入拍賣通知類型圖示（各類型對應不同顏色圖示）
+- [x] 儲存 checkpoint
