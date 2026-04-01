@@ -937,7 +937,12 @@ export default function SellerDashboard() {
           reservePrice: listingForm.reservePrice ? parseFloat(listingForm.reservePrice) : undefined,
           buyNowPrice: listingForm.buyNowPrice ? parseFloat(listingForm.buyNowPrice) : undefined,
           bidIncrement: parseFloat(listingForm.bidIncrement || '10'),
-          auctionStartAt: listingForm.auctionStartAt ? new Date(listingForm.auctionStartAt) : undefined,
+          auctionStartAt: (() => {
+            if (!listingForm.auctionStartAt) return undefined;
+            const today = new Date();
+            const [hh, mm] = listingForm.auctionStartAt.split(':').map(Number);
+            return new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
+          })(),
           auctionEndAt: new Date(listingForm.auctionEndAt),
         });
       }
@@ -2959,10 +2964,12 @@ export default function SellerDashboard() {
                             onClick={() => {
                               setListingForm(p => {
                                 const newDuration = days;
-                                // Recalculate endAt if startAt is set
+                                // Recalculate endAt if startAt (time-only HH:MM) is set
                                 let newEndAt = p.auctionEndAt;
-                                if (p.auctionStartAt) {
-                                  const start = new Date(p.auctionStartAt);
+                                if (p.auctionStartAt && p.auctionStartAt.includes(':')) {
+                                  const today = new Date();
+                                  const [hh, mm] = p.auctionStartAt.split(':').map(Number);
+                                  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
                                   const end = new Date(start.getTime() + newDuration * 24 * 60 * 60 * 1000);
                                   newEndAt = end.toISOString().slice(0, 16);
                                 }
@@ -2980,23 +2987,26 @@ export default function SellerDashboard() {
                         ))}
                       </div>
                     </div>
-                    {/* Start time */}
+                    {/* Start time - 24h time only, date = today */}
                     <div>
-                      <Label className="text-[#06038D] font-semibold">開始時間（留空表示審核通過後立即開始）</Label>
+                      <Label className="text-[#06038D] font-semibold">開始時間（24小時制，留空表示審核通過後立即開始）</Label>
                       <Input
                         className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]"
-                        type="datetime-local"
+                        type="time"
                         value={listingForm.auctionStartAt}
                         onChange={(e) => {
-                          const startVal = e.target.value;
+                          const timeVal = e.target.value; // "HH:MM"
                           setListingForm(p => {
                             let newEndAt = p.auctionEndAt;
-                            if (startVal && p.auctionDurationDays) {
-                              const start = new Date(startVal);
+                            if (timeVal && p.auctionDurationDays) {
+                              // Build today's date with the chosen time
+                              const today = new Date();
+                              const [hh, mm] = timeVal.split(':').map(Number);
+                              const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
                               const end = new Date(start.getTime() + p.auctionDurationDays * 24 * 60 * 60 * 1000);
                               newEndAt = end.toISOString().slice(0, 16);
                             }
-                            return { ...p, auctionStartAt: startVal, auctionEndAt: newEndAt };
+                            return { ...p, auctionStartAt: timeVal, auctionEndAt: newEndAt };
                           });
                         }}
                       />
@@ -3227,7 +3237,12 @@ export default function SellerDashboard() {
                       reservePrice: listingForm.reservePrice ? parseFloat(listingForm.reservePrice) : undefined,
                       buyNowPrice: listingForm.buyNowPrice ? parseFloat(listingForm.buyNowPrice) : undefined,
                       bidIncrement: parseFloat(listingForm.bidIncrement || '10'),
-                      auctionStartAt: listingForm.auctionStartAt ? new Date(listingForm.auctionStartAt) : undefined,
+                      auctionStartAt: (() => {
+                        if (!listingForm.auctionStartAt) return undefined;
+                        const today = new Date();
+                        const [hh, mm] = listingForm.auctionStartAt.split(':').map(Number);
+                        return new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
+                      })(),
                       auctionEndAt: new Date(listingForm.auctionEndAt),
                     });
                   } else {
