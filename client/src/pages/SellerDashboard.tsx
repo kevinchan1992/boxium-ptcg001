@@ -556,10 +556,156 @@ function EarningsTab() {
 }
 
 // ─── SellerAuctionsTab ────────────────────────────────────────
+function EditRejectedAuctionDialog({
+  auction,
+  open,
+  onClose,
+  onSaved,
+}: {
+  auction: any;
+  open: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [title, setTitle] = useState(auction?.title ?? '');
+  const [description, setDescription] = useState(auction?.description ?? '');
+  const [condition, setCondition] = useState(auction?.condition ?? 'raw_a');
+  const [images, setImages] = useState<string[]>(() => {
+    try {
+      if (Array.isArray(auction?.imageUrls) && auction.imageUrls.length > 0) return auction.imageUrls;
+      const parsed = typeof auction?.images === 'string' ? JSON.parse(auction.images) : auction?.images;
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  });
+  const [startingBid, setStartingBid] = useState(String(auction?.startingBid ?? ''));
+  const [bidIncrement, setBidIncrement] = useState(String(auction?.bidIncrement ?? '10'));
+  const [buyNowPrice, setBuyNowPrice] = useState(auction?.buyNowPrice ? String(auction.buyNowPrice) : '');
+  const [auctionEndAt, setAuctionEndAt] = useState(() => {
+    if (!auction?.auctionEndAt) return '';
+    const d = new Date(auction.auctionEndAt);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
+
+  const updateMutation = trpc.auction.updateRejectedAuction.useMutation({
+    onSuccess: () => { toast.success('已儲存修改'); onSaved(); onClose(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleSave = () => {
+    const bid = parseFloat(startingBid);
+    if (!bid || bid < 1) { toast.error('起標價必須大於 0'); return; }
+    if (!auctionEndAt) { toast.error('請選擇結標時間'); return; }
+    updateMutation.mutate({
+      listingId: auction.id,
+      title: title || undefined,
+      description: description || undefined,
+      condition: condition || undefined,
+      images,
+      startingBid: bid,
+      bidIncrement: parseFloat(bidIncrement) || 10,
+      buyNowPrice: buyNowPrice ? parseFloat(buyNowPrice) : null,
+      auctionEndAt: new Date(auctionEndAt),
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 border-0 rounded-2xl">
+        {/* Header */}
+        <div className="bg-[#06038D] px-6 pt-5 pb-4 rounded-t-2xl">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-[#FEDD00] rounded-xl flex items-center justify-center shrink-0">
+              <Pencil className="w-4 h-4 text-[#06038D]" />
+            </div>
+            <div>
+              <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider">編輯已拒絕拍賣</p>
+              <h2 className="text-base font-black text-white">修改拍賣內容</h2>
+            </div>
+          </div>
+        </div>
+
+        {/* Rejection reason reminder */}
+        {auction?.rejectedReason && (
+          <div className="mx-5 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-xs font-semibold text-red-600 mb-0.5">拒絕原因</p>
+            <p className="text-xs text-red-700">{auction.rejectedReason}</p>
+          </div>
+        )}
+
+        {/* Form */}
+        <div className="px-5 py-4 space-y-4">
+          <div>
+            <Label className="text-[#06038D] font-semibold text-xs">標題</Label>
+            <Input value={title} onChange={e => setTitle(e.target.value)} className="mt-1 text-gray-900" placeholder="請輸入標題" />
+          </div>
+          <div>
+            <Label className="text-[#06038D] font-semibold text-xs">描述</Label>
+            <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1 text-gray-900 min-h-[80px]" placeholder="請輸入描述" />
+          </div>
+          <div>
+            <Label className="text-[#06038D] font-semibold text-xs">品相</Label>
+            <Select value={condition} onValueChange={setCondition}>
+              <SelectTrigger className="mt-1 text-gray-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="raw_a">無封全新 (Raw A)</SelectItem>
+                <SelectItem value="raw_b">無封輕微使用 (Raw B)</SelectItem>
+                <SelectItem value="raw_c">無封一般 (Raw C)</SelectItem>
+                <SelectItem value="psa10">PSA 10</SelectItem>
+                <SelectItem value="psa9">PSA 9</SelectItem>
+                <SelectItem value="psa8">PSA 8</SelectItem>
+                <SelectItem value="bgs10">BGS 10</SelectItem>
+                <SelectItem value="bgs9">BGS 9.5</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-[#06038D] font-semibold text-xs">起標價 (HK$)</Label>
+              <Input type="number" value={startingBid} onChange={e => setStartingBid(e.target.value)} className="mt-1 text-gray-900" min={1} />
+            </div>
+            <div>
+              <Label className="text-[#06038D] font-semibold text-xs">加價幅度 (HK$)</Label>
+              <Input type="number" value={bidIncrement} onChange={e => setBidIncrement(e.target.value)} className="mt-1 text-gray-900" min={1} />
+            </div>
+          </div>
+          <div>
+            <Label className="text-[#06038D] font-semibold text-xs">即時購價 (HK$)（可留空）</Label>
+            <Input type="number" value={buyNowPrice} onChange={e => setBuyNowPrice(e.target.value)} className="mt-1 text-gray-900" min={1} placeholder="不設即時購價" />
+          </div>
+          <div>
+            <Label className="text-[#06038D] font-semibold text-xs">結標時間</Label>
+            <Input type="datetime-local" value={auctionEndAt} onChange={e => setAuctionEndAt(e.target.value)} className="mt-1 text-gray-900" />
+          </div>
+          <ImageUploader images={images} onChange={setImages} />
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 pb-5 flex gap-2.5 border-t border-gray-100 pt-3">
+          <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl border-2 border-gray-200 text-gray-600 font-bold h-11 bg-white hover:bg-gray-50">
+            取消
+          </Button>
+          <Button
+            className="flex-[2] bg-[#06038D] hover:bg-[#0804b8] text-white rounded-xl font-black h-11"
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+          >
+            {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
+            儲存修改
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function SellerAuctionsTab() {
   const [subTab, setSubTab] = useState<"active" | "ended" | "rejected">("active");
   const { data: auctions, isLoading, refetch } = trpc.auction.sellerAuctions.useQuery({ page: 1, pageSize: 50 });
   const utils = trpc.useUtils();
+  const [editingAuction, setEditingAuction] = useState<any>(null);
 
   const resubmitMutation = trpc.auction.resubmitAuction.useMutation({
     onSuccess: () => {
@@ -733,18 +879,28 @@ function SellerAuctionsTab() {
                       )}
                     </div>
                   </div>
-                  {/* Rejection reason + resubmit */}
+                  {/* Rejection reason + edit + resubmit */}
                   {auction.auctionStatus === 'rejected' && (
-                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
                       <p className="text-xs font-semibold text-red-600 mb-1">拒絕原因：</p>
                       <p className="text-xs text-red-700 mb-3">{auction.rejectedReason || '未提供原因'}</p>
-                      <button
-                        className="text-xs px-4 py-2 rounded-lg font-semibold bg-[#06038d] text-white hover:bg-[#06038d]/90 transition-colors disabled:opacity-50"
-                        disabled={resubmitMutation.isPending}
-                        onClick={() => resubmitMutation.mutate({ listingId: auction.id })}
-                      >
-                        {resubmitMutation.isPending ? '提交中...' : '重新提交審核'}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          className="flex-1 text-xs px-3 py-2 rounded-lg font-semibold border-2 border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white transition-colors flex items-center justify-center gap-1.5"
+                          onClick={() => setEditingAuction(auction)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                          編輯拍賣
+                        </button>
+                        <button
+                          className="flex-1 text-xs px-3 py-2 rounded-lg font-semibold bg-[#06038d] text-white hover:bg-[#06038d]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                          disabled={resubmitMutation.isPending}
+                          onClick={() => resubmitMutation.mutate({ listingId: auction.id })}
+                        >
+                          {resubmitMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                          {resubmitMutation.isPending ? '提交中...' : '重新提交審核'}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -753,6 +909,16 @@ function SellerAuctionsTab() {
             );
           })}
         </div>
+      )}
+
+      {/* Edit rejected auction dialog */}
+      {editingAuction && (
+        <EditRejectedAuctionDialog
+          auction={editingAuction}
+          open={!!editingAuction}
+          onClose={() => setEditingAuction(null)}
+          onSaved={() => { setEditingAuction(null); refetch(); }}
+        />
       )}
     </div>
   );

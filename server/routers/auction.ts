@@ -761,4 +761,54 @@ export const auctionRouter = router({
 
       return { success: true };
     }),
+
+  /** Seller: update content of a rejected auction before resubmitting */
+  updateRejectedAuction: protectedProcedure
+    .input(z.object({
+      listingId: z.number().int(),
+      title: z.string().optional(),
+      description: z.string().optional(),
+      condition: z.string().optional(),
+      images: z.array(z.string()).optional(),
+      startingBid: z.number().min(1).optional(),
+      reservePrice: z.number().optional().nullable(),
+      buyNowPrice: z.number().optional().nullable(),
+      bidIncrement: z.number().min(1).optional(),
+      auctionStartAt: z.date().optional().nullable(),
+      auctionEndAt: z.date().optional(),
+      antiSnipingMinutes: z.number().int().min(0).max(30).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await getAuctionListingById(input.listingId);
+      if (!listing) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      // Verify ownership via sellerProfile
+      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      if (!sellerProfile || listing.sellerId !== sellerProfile.id) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: '您沒有權限操作此拍賣' });
+      }
+      if (listing.auctionStatus !== 'rejected') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '只能編輯已被拒絕的拍賣' });
+      }
+
+      const updateData: Record<string, any> = {};
+      if (input.title !== undefined) updateData.title = input.title;
+      if (input.description !== undefined) updateData.description = input.description;
+      if (input.condition !== undefined) updateData.condition = input.condition;
+      if (input.images !== undefined) updateData.images = JSON.stringify(input.images);
+      if (input.startingBid !== undefined) {
+        updateData.startingBid = input.startingBid.toString();
+        updateData.priceHkd = input.startingBid.toString();
+      }
+      if (input.reservePrice !== undefined) updateData.reservePrice = input.reservePrice?.toString() ?? null;
+      if (input.buyNowPrice !== undefined) updateData.buyNowPrice = input.buyNowPrice?.toString() ?? null;
+      if (input.bidIncrement !== undefined) updateData.bidIncrement = input.bidIncrement.toString();
+      if (input.auctionStartAt !== undefined) updateData.auctionStartAt = input.auctionStartAt;
+      if (input.auctionEndAt !== undefined) updateData.auctionEndAt = input.auctionEndAt;
+      if (input.antiSnipingMinutes !== undefined) updateData.antiSnipingMinutes = input.antiSnipingMinutes;
+
+      await updateAuctionListing(input.listingId, updateData);
+
+      return { success: true };
+    }),
 });
