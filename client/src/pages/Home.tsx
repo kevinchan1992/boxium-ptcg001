@@ -206,6 +206,31 @@ function TrendingCardsGrid() {
   );
 }
 
+// ─── useCountUp hook: animates a number from 0 to target on mount ─────────────
+function useCountUp(target: number | undefined, duration = 1800) {
+  const [display, setDisplay] = useState(0);
+  const rafRef = useRef<number | null>(null);
+  const startRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (target === undefined || target === 0) return;
+    startRef.current = null;
+    const animate = (ts: number) => {
+      if (startRef.current === null) startRef.current = ts;
+      const elapsed = ts - startRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * target));
+      if (progress < 1) rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target, duration]);
+
+  return display;
+}
+
 // ─── CTA Section with scroll-in animation & hover icon scale ───────────────
 function CtaSection() {
   const { t } = useTranslation();
@@ -434,7 +459,11 @@ export default function Home() {
   
   // Fetch real card count from database
   const { data: stats } = trpc.cards.getStats.useQuery();
-  
+
+  // Count-up animations for hero stats
+  const animatedCards = useCountUp(stats?.totalCards);
+  const animatedPriceRecords = useCountUp(stats?.totalPriceRecords);
+
   return (
     <>
       <StructuredData data={structuredData} />
@@ -465,12 +494,16 @@ export default function Home() {
             {/* Key Stats - Responsive layout */}
             <div className="grid grid-cols-2 gap-2 md:gap-5 w-full max-w-md px-2">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
-                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">{stats?.totalCards || 0}+</div>
+                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">
+                  {animatedCards.toLocaleString()}+
+                </div>
                 <div className="text-white/80 text-[9px] md:text-xs">{t("home.trackedCards")}</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
                 <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">
-                  {stats?.totalPriceRecords ? `${(stats.totalPriceRecords / 10000).toFixed(0)}萬+` : '—'}
+                  {stats?.totalPriceRecords
+                    ? `${Math.round(animatedPriceRecords / 10000)}萬+`
+                    : '—'}
                 </div>
                 <div className="text-white/80 text-[9px] md:text-xs">{t("home.priceDataPoints")}</div>
               </div>
