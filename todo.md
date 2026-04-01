@@ -7273,3 +7273,5 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 找出「計算失敗: The string did not match the expected pattern.」錯誤原因（NaN/Infinity 被 toFixed 轉為字串後 MySQL decimal 欄位拒絕）
 - [x] 修復 calculateAndCacheTrendingCards 中的 PSA10 中位數查詢邏輯（加入 isFinite/isNaN 防護、safeFixed helper）
 - [x] 驗證計算正常運作（API 返回 success: true，日誌顯示 15 張卡片計算成功）
+
+- [x] 移除首頁 Hero 區塊搜尋列，移除統計數字下方說明文字，CTA 按鈕改回並排一行

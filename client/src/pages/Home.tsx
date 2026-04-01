@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame, ChevronRight, ShoppingBag } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
@@ -467,9 +466,6 @@ export default function Home() {
       }
     }
   };
-  const [, setLocation] = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
-  
   // Fetch real card count from database
   const { data: stats } = trpc.cards.getStats.useQuery();
   
@@ -495,9 +491,6 @@ export default function Home() {
               <h1 className="text-white text-base sm:text-lg md:text-2xl font-bold leading-tight">
                 {t("home.welcome")}
               </h1>
-              <p className="text-white/80 text-[11px] sm:text-xs md:text-base leading-relaxed">
-                {t("home.description")}
-              </p>
             </div>
 
             {/* Key Stats - Responsive layout */}
@@ -512,35 +505,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="w-full max-w-xl px-2">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (searchQuery.trim()) {
-                    setLocation(`/research?q=${encodeURIComponent(searchQuery.trim())}`);
-                  }
-                }}
-                className="flex gap-2"
-              >
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t("home.searchPlaceholder")}
-                  className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus:border-[#FEDD00] text-xs md:text-sm h-9 md:h-11"
-                />
-                <Button
-                  type="submit"
-                  className="px-3 md:px-5 h-9 md:h-11 font-semibold text-xs md:text-sm"
-                  style={{ backgroundColor: "#FEDD00", color: "#06038d" }}
-                >
-                  <Search className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                </Button>
-              </form>
-            </div>
-
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 md:gap-4 px-2">
+            <div className="flex flex-row gap-2 md:gap-4 px-2">
               <Link href="/research">
                 <Button
                   className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
