@@ -7159,4 +7159,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 後端：已支援 scheduled 狀態（無筋選時返回全部）
 - [x] 前端：顯示 scheduled 狀態拍賣，加入「已排程」靛藍標籤和預計開始時間橫幅
 - [x] 撰寫 10 項 vitest 測試，全部通過
+- [x] 儲存 checkpoint (76069233)
+
+---
+## 🐛 手機版展示問題修復
+- [x] 修復 CTA 兩個按鈕在手機版寬度不一致（Link 改為 block w-full + h-full）
+- [x] 修復 Footer Slogan 與 Logo 手機版改為 flex items-center 橫排，消除大間距
 - [ ] 儲存 checkpoint

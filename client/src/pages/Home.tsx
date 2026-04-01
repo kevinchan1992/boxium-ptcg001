@@ -372,8 +372,8 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
             {/* Left: Search Cards */}
-            <Link href="/research">
-              <div className="group relative overflow-hidden rounded-xl p-6 md:p-8 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5" style={{ backgroundColor: "#06038d" }}>
+            <Link href="/research" className="block w-full">
+              <div className="group relative overflow-hidden rounded-xl p-6 md:p-8 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 h-full" style={{ backgroundColor: "#06038d" }}>
                 <div className="flex items-center gap-3 mb-2">
                   <Search className="w-5 h-5 md:w-6 md:h-6 text-[#FEDD00]" />
                   <h3 className="text-white font-bold text-base md:text-lg">{t("home.startSearching")}</h3>
@@ -388,8 +388,8 @@ export default function Home() {
             </Link>
 
             {/* Right: Go to Marketplace */}
-            <Link href="/marketplace">
-              <div className="group relative overflow-hidden rounded-xl p-6 md:p-8 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 border-2" style={{ backgroundColor: "#FEDD00", borderColor: "#FEDD00" }}>
+            <Link href="/marketplace" className="block w-full">
+              <div className="group relative overflow-hidden rounded-xl p-6 md:p-8 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 border-2 h-full" style={{ backgroundColor: "#FEDD00", borderColor: "#FEDD00" }}>
                 <div className="flex items-center gap-3 mb-2">
                   <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" style={{ color: "#06038d" }} />
                   <h3 className="font-bold text-base md:text-lg" style={{ color: "#06038d" }}>{t("home.goToMarketplace")}</h3>

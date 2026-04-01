@@ -63,16 +63,18 @@ export default function Footer() {
 
           {/* Col 1: Brand + Slogan */}
           <div className="lg:col-span-1">
-            <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-              <img
-                src="/boxium-logo.png"
-                alt="BOXIUM Logo"
-                className="h-12 mb-2 cursor-pointer hover:opacity-90 transition-opacity"
-              />
-            </Link>
-            <p className="text-[#FEDD00] text-sm font-semibold tracking-wide mb-3">
-              Luck in Every Box
-            </p>
+            <div className="flex items-center gap-3 lg:block">
+              <Link href="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+                <img
+                  src="/boxium-logo.png"
+                  alt="BOXIUM Logo"
+                  className="h-10 lg:h-12 lg:mb-1 cursor-pointer hover:opacity-90 transition-opacity"
+                />
+              </Link>
+              <p className="text-[#FEDD00] text-sm font-semibold tracking-wide lg:mb-3">
+                Luck in Every Box
+              </p>
+            </div>
             <p className="text-white/60 text-sm leading-relaxed max-w-xs hidden lg:block">
               {t("footer.description")}
             </p>
