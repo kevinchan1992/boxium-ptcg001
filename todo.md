@@ -6951,4 +6951,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 後端：getMarketplaceStats pendingReview 排除拍賣品
 - [x] 後端：adminApprove 拍賣品批准後不設 `status: 'active'`（避免出現在商品管理）
 - [x] 後端：getAdminOrders 加入子查詢排除拍賣訂單（直購 vs 拍賣分隔）
+- [x] 儲存 checkpoint
+
+## 🔧 拍賣狀態顯示修復 + 詳情頁重新設計
+
+- [x] 修復拍賣列表卡片「已結標」狀態顯示錯誤（AuctionCard useCountdown 初始値改為 null，避免首次渲染前誤認為 0）
+- [x] 重新設計 /auction/[id] 詳情頁為 BOXIUM 專業品牌風格（深藍+黃色，倉列布局，大型倒計時器，出價記錄可展開）
 - [ ] 儲存 checkpoint

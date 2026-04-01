@@ -5,10 +5,14 @@ import { Badge } from "@/components/ui/badge";
 
 // ─── Countdown Hook ──────────────────────────────────────────────────────────
 function useCountdown(endTime: Date | string | null) {
-  const [remaining, setRemaining] = useState<number>(0);
+  // Use null as initial state to distinguish "not yet calculated" from "ended (0)"
+  const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!endTime) return;
+    if (!endTime) {
+      setRemaining(0);
+      return;
+    }
     const end = new Date(endTime).getTime();
 
     const tick = () => {
@@ -40,7 +44,9 @@ function formatCountdown(ms: number): { text: string; urgent: boolean } {
 export function AuctionCard({ auction }: { auction: any }) {
   const [, setLocation] = useLocation();
   const remaining = useCountdown(auction.auctionEndTime);
-  const { text: countdownText, urgent } = formatCountdown(remaining);
+  // remaining is null when countdown hasn't been calculated yet (prevents false "ended" flash)
+  const remainingMs = remaining ?? Infinity;
+  const { text: countdownText, urgent } = remaining !== null ? formatCountdown(remaining) : { text: '...', urgent: false };
 
   const images: string[] | null = (() => {
     try { return auction.images ? JSON.parse(auction.images) : null; }
@@ -52,8 +58,9 @@ export function AuctionCard({ auction }: { auction: any }) {
     ? parseFloat(auction.currentHighestBid)
     : parseFloat(auction.startingPrice || "0");
 
-  const isEndingSoon = auction.auctionStatus === 'ending_soon' || (remaining > 0 && remaining < 30 * 60 * 1000);
-  const isEnded = remaining <= 0 || auction.auctionStatus === 'ended_sold' || auction.auctionStatus === 'ended_no_bid';
+  const isEndingSoon = auction.auctionStatus === 'ending_soon' || (remainingMs > 0 && remainingMs < 30 * 60 * 1000);
+  // Only mark as ended when remaining is calculated (not null) and is 0, or auctionStatus indicates ended
+  const isEnded = (remaining !== null && remaining <= 0) || auction.auctionStatus === 'ended_sold' || auction.auctionStatus === 'ended_no_bid';
   const hasBids = (auction.bidCount ?? 0) > 0;
 
   const TCG_BADGE: Record<string, string> = {
