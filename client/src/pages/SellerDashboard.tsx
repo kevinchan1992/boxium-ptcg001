@@ -1783,10 +1783,23 @@ export default function SellerDashboard() {
                                 variant="outline"
                                 className="text-xs h-8 border-red-400 text-red-600 hover:bg-red-50"
                                 disabled={batchDeactivateMutation.isPending}
-                                onClick={() => batchDeactivateMutation.mutate({ ids: Array.from(selectedIds) })}
+                                onClick={() => {
+                                  // Only deactivate 'active' listings, not pending_review
+                                  const activeIds = Array.from(selectedIds).filter(id => {
+                                    const l = filteredListings.find((x: any) => x.id === id);
+                                    return l && l.status === 'active';
+                                  });
+                                  if (activeIds.length > 0) batchDeactivateMutation.mutate({ ids: activeIds });
+                                }}
                               >
                                 <EyeOff className="w-3 h-3 mr-1" />
-                                下架 ({selectedIds.size})
+                                {(() => {
+                                  const activeCount = Array.from(selectedIds).filter(id => {
+                                    const l = filteredListings.find((x: any) => x.id === id);
+                                    return l && l.status === 'active';
+                                  }).length;
+                                  return `下架 (${activeCount})`;
+                                })()}
                               </Button>
 {(() => {
                                 // Only count non-sold listings that can be relisted
@@ -3801,7 +3814,7 @@ export default function SellerDashboard() {
 
       {/* Batch Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-red-600 flex items-center gap-2">
               <Trash2 className="w-5 h-5" />
@@ -3809,15 +3822,37 @@ export default function SellerDashboard() {
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-gray-700">
-              您即將永久刪除 <strong className="text-red-600">{(() => {
-                const deletableCount = Array.from(selectedIds).filter(id => {
-                  const l = (myListings ?? []).find((x: any) => x.id === id);
-                  return l && l.status !== 'sold';
-                }).length;
-                return deletableCount;
-              })()} 件</strong>商品，此操作不可復原。
-            </p>
+            {/* Product list to be deleted */}
+            {(() => {
+              const deletableListings = Array.from(selectedIds)
+                .map(id => (myListings ?? []).find((x: any) => x.id === id))
+                .filter((l): l is any => !!l && l.status !== 'sold');
+              return (
+                <>
+                  <p className="text-sm text-gray-700">
+                    您即將永久刪除以下 <strong className="text-red-600">{deletableListings.length} 件</strong>商品，此操作不可復原：
+                  </p>
+                  <div className="border border-red-200 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                    {deletableListings.map((l, idx) => (
+                      <div key={l.id} className={`flex items-center gap-2 px-3 py-2 text-sm ${
+                        idx % 2 === 0 ? 'bg-red-50' : 'bg-white'
+                      }`}>
+                        <span className="text-red-400 font-mono text-xs shrink-0">#BOXIUM-{l.id}</span>
+                        <span className="text-gray-800 truncate flex-1">{l.title || '(未命名商品)'}</span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${
+                          l.status === 'active' ? 'bg-green-100 text-green-700' :
+                          l.status === 'pending_review' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {l.status === 'active' ? '上架中' :
+                           l.status === 'pending_review' ? '審核中' : '已下架'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
               <p className="text-xs text-amber-800 font-medium">⚠️ 注意事項：</p>
               <ul className="text-xs text-amber-700 mt-1 space-y-1">
