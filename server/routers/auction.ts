@@ -116,6 +116,7 @@ export const auctionRouter = router({
 
       // High-value risk control: check seller's completed sales count
       const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      if (!sellerProfile) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: '請先完成賣家認證才能上架拍賣' });
       const sellerTotalSales = sellerProfile?.totalSales ?? 0;
       const isNewSeller = sellerTotalSales < NEW_SELLER_SALES_THRESHOLD;
       if (isNewSeller && input.startingBid > NEW_SELLER_MAX_BID_HKD) {
@@ -132,8 +133,9 @@ export const auctionRouter = router({
       const endAt = input.auctionEndAt;
 
       // Create the listing in draft/pending_review state
+      // IMPORTANT: sellerId must be sellerProfile.id (not user.id) for consistency
       const listing = await createListing({
-        sellerId: ctx.user.id,
+        sellerId: sellerProfile.id,
         sellerType: 'seller',
         cardId: input.cardId ?? null,
         title: input.title,
@@ -192,7 +194,9 @@ export const auctionRouter = router({
       if (!['active', 'ending_soon'].includes(listing.auctionStatus ?? '')) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "拍賣未在進行中" });
       }
-      if (listing.sellerId === ctx.user.id) {
+      // Compare using sellerProfile.id (sellerId stores sellerProfile.id, not user.id)
+      const bidderSellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      if (bidderSellerProfile && listing.sellerId === bidderSellerProfile.id) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "不能競投自己的拍賣" });
       }
 
@@ -311,7 +315,9 @@ export const auctionRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "拍賣未在進行中" });
       }
       if (!listing.buyNowPrice) throw new TRPCError({ code: "BAD_REQUEST", message: "此拍賣不支援即時購買" });
-      if (listing.sellerId === ctx.user.id) {
+      // Compare using sellerProfile.id (sellerId stores sellerProfile.id, not user.id)
+      const buyerSellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      if (buyerSellerProfile && listing.sellerId === buyerSellerProfile.id) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "不能購買自己的拍賣" });
       }
 

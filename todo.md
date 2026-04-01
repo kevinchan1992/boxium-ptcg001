@@ -6971,3 +6971,16 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 
 - [ ] 排查並修復 sellerAuctions 後端查詢，確保 rejected 狀態拍賣正確返回
 - [ ] 儲存 checkpoint
+
+## 🔧 賣家中心「我的拍賣」進行中 tab 顯示修復
+
+- [ ] 前端：「進行中」tab 加入 scheduled 狀態的拍賣（審核通過但未到開始時間）
+- [ ] 儲存 checkpoint
+
+## ✅ 修復 sellerId 錯誤導致賣家看不到自己拍賣的問題
+- [x] 確認 auction.ts createAuction 已正確使用 sellerProfile.id（非 user.id）
+- [x] 修復 placeBid 的「不能競投自己的拍賣」檢查（改用 sellerProfile.id 比對）
+- [x] 修復 buyNow 的「不能購買自己的拍賣」檢查（改用 sellerProfile.id 比對）
+- [x] 資料庫修復：更新 5 筆拍賣記錄（#330001~#330005）的 sellerId 從 users.id=8 改為 sellerProfiles.id=1
+- [x] 92 項拍賣測試全部通過
+- [x] 儲存 checkpoint
