@@ -722,7 +722,7 @@ export default function SellerDashboard() {
     // Auction fields
     listingMode: "buy_now" as "buy_now" | "auction",
     startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10",
-    auctionStartAt: "", auctionEndAt: "",
+    auctionStartAt: "", auctionEndAt: "", auctionDurationDays: 7,
   });
   const [listingImages, setListingImages] = useState<string[]>([]);
   const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
@@ -905,7 +905,7 @@ export default function SellerDashboard() {
     onSuccess: () => {
       toast.success("商品已提交審核");
       setShowNewListing(false);
-      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "" });
+      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "", auctionDurationDays: 7 });
       setListingStep(1);
       setListingImages([]);
       setSelectedCard(null);
@@ -949,7 +949,7 @@ export default function SellerDashboard() {
     onSuccess: () => {
       toast.success("🔨 拍賣已提交審核，審核通過後即可開始競標");
       setShowNewListing(false);
-      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "" });
+      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "", auctionDurationDays: 7 });
       setListingStep(1);
       setListingImages([]);
       setSelectedCard(null);
@@ -980,10 +980,10 @@ export default function SellerDashboard() {
         { duration: 8000 }
       );
       setShowNewListing(false);
-      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "" });
+      setListingForm({ title: "", description: "", condition: "raw_a", price: "", quantity: "1", minOffer: "", acceptOffers: false, tcgSeries: "pokemon", listingMode: "buy_now", startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10", auctionStartAt: "", auctionEndAt: "", auctionDurationDays: 7 });
       setListingStep(1);
-      setListingImages([]);
       setSelectedCard(null);
+      setListingImages([]);
       refetchListings();
     },
     onError: (e) => toast.error(e.message),
@@ -1767,7 +1767,7 @@ export default function SellerDashboard() {
                                       minOffer: (listing as any).minOfferHkd ? String(parseFloat((listing as any).minOfferHkd)) : '',
                                       listingMode: 'buy_now',
                                       startingBid: '', reservePrice: '', buyNowPrice: '', bidIncrement: '10',
-                                      auctionStartAt: '', auctionEndAt: '',
+                                      auctionStartAt: '', auctionEndAt: '', auctionDurationDays: 7,
                                     });
                                     setListingImages([]);
                                     setSelectedCard(null);
@@ -2947,19 +2947,69 @@ export default function SellerDashboard() {
                       onChange={(e) => setListingForm(p => ({ ...p, bidIncrement: e.target.value }))} />
                   </div>
                   {/* Auction timing */}
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="space-y-3">
+                    {/* Duration selector */}
+                    <div>
+                      <Label className="text-[#06038D] font-semibold">拍賣天數 *</Label>
+                      <div className="mt-2 grid grid-cols-2 gap-3">
+                        {[3, 7].map((days) => (
+                          <button
+                            key={days}
+                            type="button"
+                            onClick={() => {
+                              setListingForm(p => {
+                                const newDuration = days;
+                                // Recalculate endAt if startAt is set
+                                let newEndAt = p.auctionEndAt;
+                                if (p.auctionStartAt) {
+                                  const start = new Date(p.auctionStartAt);
+                                  const end = new Date(start.getTime() + newDuration * 24 * 60 * 60 * 1000);
+                                  newEndAt = end.toISOString().slice(0, 16);
+                                }
+                                return { ...p, auctionDurationDays: newDuration, auctionEndAt: newEndAt };
+                              });
+                            }}
+                            className={`py-3 rounded-xl border-2 font-bold text-sm transition-all ${
+                              listingForm.auctionDurationDays === days
+                                ? 'border-[#06038D] bg-[#06038D] text-white'
+                                : 'border-[#06038D]/30 bg-white text-[#06038D] hover:border-[#06038D]/60'
+                            }`}
+                          >
+                            {days} 日
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Start time */}
                     <div>
                       <Label className="text-[#06038D] font-semibold">開始時間（留空表示審核通過後立即開始）</Label>
-                      <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]" type="datetime-local"
+                      <Input
+                        className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]"
+                        type="datetime-local"
                         value={listingForm.auctionStartAt}
-                        onChange={(e) => setListingForm(p => ({ ...p, auctionStartAt: e.target.value }))} />
+                        onChange={(e) => {
+                          const startVal = e.target.value;
+                          setListingForm(p => {
+                            let newEndAt = p.auctionEndAt;
+                            if (startVal && p.auctionDurationDays) {
+                              const start = new Date(startVal);
+                              const end = new Date(start.getTime() + p.auctionDurationDays * 24 * 60 * 60 * 1000);
+                              newEndAt = end.toISOString().slice(0, 16);
+                            }
+                            return { ...p, auctionStartAt: startVal, auctionEndAt: newEndAt };
+                          });
+                        }}
+                      />
                     </div>
-                    <div>
-                      <Label className="text-[#06038D] font-semibold">結標時間 *</Label>
-                      <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]" type="datetime-local"
-                        value={listingForm.auctionEndAt}
-                        onChange={(e) => setListingForm(p => ({ ...p, auctionEndAt: e.target.value }))} />
-                    </div>
+                    {/* Auto-calculated end time display */}
+                    {listingForm.auctionEndAt && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#06038D]/5 border border-[#06038D]/20">
+                        <span className="text-xs text-[#06038D]/60">預計結標時間：</span>
+                        <span className="text-xs font-semibold text-[#06038D]">
+                          {new Date(listingForm.auctionEndAt).toLocaleString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 )}
