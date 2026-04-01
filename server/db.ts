@@ -3258,14 +3258,15 @@ export async function getAdminListings(page = 1, pageSize = 20, status?: string,
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
-  const conditions: any[] = [];
+  // Exclude auction listings — they are managed separately in the Auction Admin tab
+  const conditions: any[] = [ne(marketplaceListings.listingMode, 'auction')];
   if (status) conditions.push(eq(marketplaceListings.status, status as any));
   if (tcgSeries) conditions.push(eq(marketplaceListings.tcgSeries, tcgSeries as any));
   const rows = await db.select().from(marketplaceListings)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(desc(marketplaceListings.createdAt)).limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings)
-    .where(conditions.length ? and(...conditions) : undefined);
+    .where(and(...conditions));
   return { listings: rows, total: Number(countRows[0]?.count ?? 0) };
 }
 export async function getSellerListings(sellerId: number) {
@@ -3711,7 +3712,8 @@ export async function getMarketplaceStats() {
       sql`${marketplaceOrders.alipayProofImageUrl} IS NOT NULL`
     ));
   const [sellerCount] = await db.select({ count: sql<number>`count(*)` }).from(sellerProfiles).where(eq(sellerProfiles.isActive, true));
-  const [pendingReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(eq(marketplaceListings.status, 'pending_review'));
+  // pendingReviewListings: only non-auction listings (auctions are managed separately)
+  const [pendingReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(eq(marketplaceListings.status, 'pending_review'), ne(marketplaceListings.listingMode, 'auction')));
   // Unresolved disputes count
   const [disputeCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders).where(eq(marketplaceOrders.orderStatus, 'disputed'));
   // Sales revenue stats - all paid orders (total sales includes platform orders; fees only for C2C seller orders)

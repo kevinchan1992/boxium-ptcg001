@@ -6435,6 +6435,7 @@ function AuctionsAdminTab() {
 
   const statusOptions = [
     { value: 'pending_review', label: '待審核' },
+    { value: 'rejected', label: '已拒絕' },
     { value: 'scheduled', label: '已排程' },
     { value: 'active', label: '競標中' },
     { value: 'ending_soon', label: '即將結標' },
@@ -6453,6 +6454,7 @@ function AuctionsAdminTab() {
       ended_sold: { label: '已成交', className: 'bg-[#06038D]/10 text-[#06038D]' },
       ended_no_bid: { label: '流標', className: 'bg-gray-100 text-gray-500' },
       cancelled: { label: '已取消', className: 'bg-red-100 text-red-600' },
+      rejected: { label: '已拒絕', className: 'bg-red-200 text-red-700' },
     };
     const s = map[status] ?? { label: status, className: 'bg-gray-100 text-gray-500' };
     return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${s.className}`}>{s.label}</span>;
@@ -6540,9 +6542,24 @@ function AuctionsAdminTab() {
         </div>
       ) : (
         <div className="space-y-3">
-          {listings.map((listing: any) => (
+          {listings.map((listing: any) => {
+            // Parse images field (stored as JSON string or array)
+            let thumbUrl: string | null = null;
+            try {
+              const imgs = typeof listing.images === 'string' ? JSON.parse(listing.images) : listing.images;
+              if (Array.isArray(imgs) && imgs.length > 0) thumbUrl = imgs[0];
+            } catch {}
+            return (
             <div key={listing.id} className="bg-white rounded-xl border border-[#06038D]/15 p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
+                {/* Thumbnail */}
+                <div className="flex-shrink-0 w-16 h-20 rounded-lg overflow-hidden bg-[#06038D]/5 border border-[#06038D]/10 flex items-center justify-center">
+                  {thumbUrl ? (
+                    <img src={thumbUrl} alt="拍賣品" className="w-full h-full object-contain" />
+                  ) : (
+                    <span className="text-[#06038D]/30 text-xs text-center px-1">無圖片</span>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     {auctionStatusBadge(listing.auctionStatus ?? 'pending_review')}
@@ -6560,6 +6577,13 @@ function AuctionsAdminTab() {
                     {listing.auctionStartAt && <span className="text-xs text-[#06038D]/50">開始: {new Date(listing.auctionStartAt).toLocaleString('zh-HK')}</span>}
                     {listing.auctionEndAt && <span className="text-xs text-[#06038D]/50">結標: {new Date(listing.auctionEndAt).toLocaleString('zh-HK')}</span>}
                   </div>
+                  {/* Rejection reason */}
+                  {listing.auctionStatus === 'rejected' && listing.rejectedReason && (
+                    <div className="mt-2 px-2 py-1.5 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-xs font-semibold text-red-600">拒絕原因：</p>
+                      <p className="text-xs text-red-700 mt-0.5">{listing.rejectedReason}</p>
+                    </div>
+                  )}
                 </div>
                 {/* Action buttons */}
                 <div className="flex flex-col gap-2 flex-shrink-0">
@@ -6587,6 +6611,16 @@ function AuctionsAdminTab() {
                       </Button>
                     </>
                   )}
+                  {listing.auctionStatus === 'rejected' && (
+                    <Button
+                      size="sm"
+                      className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold text-xs h-8"
+                      disabled={approveMutation.isPending}
+                      onClick={() => approveMutation.mutate({ listingId: listing.id })}
+                    >
+                      重新審核通過
+                    </Button>
+                  )}
                   {['active', 'ending_soon', 'scheduled'].includes(listing.auctionStatus ?? '') && (
                     <Button
                       size="sm"
@@ -6612,7 +6646,8 @@ function AuctionsAdminTab() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -782,7 +782,7 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   bidCount: int("bidCount").default(0).notNull(),
   auctionStatus: mysqlEnum("auctionStatus", [
     "draft", "pending_review", "scheduled", "active",
-    "ending_soon", "ended_sold", "ended_no_bid", "cancelled"
+    "ending_soon", "ended_sold", "ended_no_bid", "cancelled", "rejected"
   ]),
   antiSnipingMinutes: int("antiSnipingMinutes").default(5).notNull(),
   antiSnipingExtensions: int("antiSnipingExtensions").default(0).notNull(),

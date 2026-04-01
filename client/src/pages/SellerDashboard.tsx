@@ -557,25 +557,51 @@ function EarningsTab() {
 
 // ─── SellerAuctionsTab ────────────────────────────────────────
 function SellerAuctionsTab() {
-  const [subTab, setSubTab] = useState<"active" | "ended">("active");
-  const { data: auctions, isLoading } = trpc.auction.sellerAuctions.useQuery({ page: 1, pageSize: 50 });
+  const [subTab, setSubTab] = useState<"active" | "ended" | "rejected">("active");
+  const { data: auctions, isLoading, refetch } = trpc.auction.sellerAuctions.useQuery({ page: 1, pageSize: 50 });
+  const utils = trpc.useUtils();
 
-  const activeAuctions = (auctions?.listings ?? []).filter((a: any) =>
-    ["active", "scheduled", "pending_review"].includes(a.auctionStatus)
+  const resubmitMutation = trpc.auction.resubmitAuction.useMutation({
+    onSuccess: () => {
+      toast.success('已重新提交審核，請等候管理員審核');
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const allListings = auctions?.listings ?? [];
+  const activeAuctions = allListings.filter((a: any) =>
+    ["active", "scheduled", "pending_review", "ending_soon"].includes(a.auctionStatus)
   );
-  const endedAuctions = (auctions?.listings ?? []).filter((a: any) =>
-    ["ended", "cancelled", "sold"].includes(a.auctionStatus)
+  const endedAuctions = allListings.filter((a: any) =>
+    ["ended_sold", "ended_no_bid", "cancelled", "ended", "sold"].includes(a.auctionStatus)
   );
-  const current = subTab === "active" ? activeAuctions : endedAuctions;
+  const rejectedAuctions = allListings.filter((a: any) => a.auctionStatus === "rejected");
+
+  const current = subTab === "active" ? activeAuctions : subTab === "ended" ? endedAuctions : rejectedAuctions;
+
+  // Helper to parse images field (stored as JSON string or array)
+  function getThumbUrl(auction: any): string | null {
+    try {
+      if (auction.imageUrls?.[0]) return auction.imageUrls[0];
+      const imgs = typeof auction.images === 'string' ? JSON.parse(auction.images) : auction.images;
+      if (Array.isArray(imgs) && imgs.length > 0) return imgs[0];
+    } catch {}
+    return null;
+  }
 
   function AuctionStatusBadge({ status }: { status: string }) {
     const map: Record<string, { label: string; cls: string }> = {
       active:         { label: "競拍中",   cls: "bg-blue-100 text-blue-700" },
+      ending_soon:    { label: "即將結標", cls: "bg-orange-100 text-orange-700" },
       scheduled:      { label: "待開始",   cls: "bg-purple-100 text-purple-700" },
       pending_review: { label: "審核中",   cls: "bg-yellow-100 text-yellow-700" },
+      ended_sold:     { label: "已成交",   cls: "bg-green-100 text-green-700" },
+      ended_no_bid:   { label: "流標",     cls: "bg-gray-100 text-gray-500" },
       ended:          { label: "已結標",   cls: "bg-green-100 text-green-700" },
       sold:           { label: "已成交",   cls: "bg-green-100 text-green-700" },
       cancelled:      { label: "已取消",   cls: "bg-gray-100 text-gray-500" },
+      rejected:       { label: "已拒絕",   cls: "bg-red-100 text-red-600" },
     };
     const s = map[status] ?? { label: status, cls: "bg-gray-100 text-gray-500" };
     return <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>;
@@ -609,21 +635,27 @@ function SellerAuctionsTab() {
     <div className="space-y-4">
       {/* Sub-tab switcher */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-        {(["active", "ended"] as const).map(t => (
+        {([
+          { key: "active", label: "進行中", count: activeAuctions.length },
+          { key: "ended", label: "已結標", count: endedAuctions.length },
+          { key: "rejected", label: "已拒絕", count: rejectedAuctions.length },
+        ] as const).map(t => (
           <button
-            key={t}
-            onClick={() => setSubTab(t)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
-              subTab === t ? "text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+            key={t.key}
+            onClick={() => setSubTab(t.key)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
+              subTab === t.key ? "text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
             }`}
-            style={subTab === t ? { background: "#06038d" } : {}}
+            style={subTab === t.key ? { background: t.key === 'rejected' ? '#dc2626' : '#06038d' } : {}}
           >
-            {t === "active" ? "進行中" : "已結標"}
-            <span className={`text-xs rounded-full px-1.5 py-0.5 font-bold ${
-              subTab === t ? "bg-white/25 text-white" : "bg-gray-200 text-gray-600"
-            }`}>
-              {t === "active" ? activeAuctions.length : endedAuctions.length}
-            </span>
+            {t.label}
+            {t.count > 0 && (
+              <span className={`text-xs rounded-full px-1.5 py-0.5 font-bold ${
+                subTab === t.key ? "bg-white/25 text-white" : t.key === 'rejected' ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-600'
+              }`}>
+                {t.count}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -631,19 +663,25 @@ function SellerAuctionsTab() {
       {current.length === 0 ? (
         <div className="text-center py-12">
           <Gavel className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-          <p className="text-gray-400 text-sm">{subTab === "active" ? "目前沒有進行中的拍賣" : "尚無已結標的拍賣"}</p>
+          <p className="text-gray-400 text-sm">
+            {subTab === "active" ? "目前沒有進行中的拍賣" : subTab === "rejected" ? "沒有被拒絕的拍賣" : "尚無已結標的拍賣"}
+          </p>
           {subTab === "active" && (
-            <p className="text-gray-400 text-xs mt-1">在「我的商品」標籤中選擇「拍賣模式」上架新拍賣</p>
+            <p className="text-gray-400 text-xs mt-1">在「我的商品」標簽中選擇「拍賣模式」上架新拍賣</p>
           )}
         </div>
       ) : (
         <div className="space-y-3">
-          {current.map((auction: any) => (
-            <div key={auction.id} className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
+          {current.map((auction: any) => {
+            const thumbUrl = getThumbUrl(auction);
+            return (
+            <div key={auction.id} className={`bg-white border rounded-xl p-4 hover:shadow-sm transition-shadow ${
+              auction.auctionStatus === 'rejected' ? 'border-red-200 bg-red-50/30' : 'border-gray-100'
+            }`}>
               <div className="flex items-start gap-3">
-                {auction.imageUrls?.[0] && (
+                {thumbUrl && (
                   <img
-                    src={auction.imageUrls[0]}
+                    src={thumbUrl}
                     alt={auction.title}
                     className="w-14 h-14 object-cover rounded-lg border border-gray-100 flex-shrink-0"
                   />
@@ -686,17 +724,34 @@ function SellerAuctionsTab() {
                           <AuctionCountdown endAt={auction.auctionEndAt} />
                         </div>
                       )}
-                      <a href={`/auction/${auction.id}`} target="_blank" rel="noopener noreferrer">
-                        <button className="text-xs px-3 py-1.5 rounded-lg font-semibold border border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white transition-colors">
-                          查看拍賣
-                        </button>
-                      </a>
+                      {auction.auctionStatus !== 'rejected' && (
+                        <a href={`/auction/${auction.id}`} target="_blank" rel="noopener noreferrer">
+                          <button className="text-xs px-3 py-1.5 rounded-lg font-semibold border border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white transition-colors">
+                            查看拍賣
+                          </button>
+                        </a>
+                      )}
                     </div>
                   </div>
+                  {/* Rejection reason + resubmit */}
+                  {auction.auctionStatus === 'rejected' && (
+                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-xs font-semibold text-red-600 mb-1">拒絕原因：</p>
+                      <p className="text-xs text-red-700 mb-3">{auction.rejectedReason || '未提供原因'}</p>
+                      <button
+                        className="text-xs px-4 py-2 rounded-lg font-semibold bg-[#06038d] text-white hover:bg-[#06038d]/90 transition-colors disabled:opacity-50"
+                        disabled={resubmitMutation.isPending}
+                        onClick={() => resubmitMutation.mutate({ listingId: auction.id })}
+                      >
+                        {resubmitMutation.isPending ? '提交中...' : '重新提交審核'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

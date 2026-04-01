@@ -421,7 +421,35 @@ export const auctionRouter = router({
       pageSize: z.number().int().min(1).max(50).default(20),
     }))
     .query(async ({ ctx, input }) => {
-      return getSellerAuctions(ctx.user.id, input);
+      // marketplaceListings.sellerId stores sellerProfiles.id, not users.id
+      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      if (!sellerProfile) return { listings: [], total: 0 };
+      return getSellerAuctions(sellerProfile.id, input);
+    }),
+
+  /** Seller: resubmit a rejected auction for review */
+  resubmitAuction: protectedProcedure
+    .input(z.object({ listingId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const listing = await getAuctionListingById(input.listingId);
+      if (!listing) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      // Verify ownership via sellerProfile
+      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      if (!sellerProfile || listing.sellerId !== sellerProfile.id) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: '您沒有權限操作此拍賣' });
+      }
+      if (listing.auctionStatus !== 'rejected') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '只能重新提交已被拒絕的拍賣' });
+      }
+
+      await updateAuctionListing(input.listingId, {
+        auctionStatus: 'pending_review',
+        status: 'pending_review',
+        rejectedReason: null,
+      });
+
+      return { success: true };
     }),
 
   // ---- Admin ----
@@ -443,8 +471,8 @@ export const auctionRouter = router({
     .mutation(async ({ input }) => {
       const listing = await getAuctionListingById(input.listingId);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
-      if (listing.auctionStatus !== 'pending_review') {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "只能審核待審核的拍賣" });
+      if (listing.auctionStatus !== 'pending_review' && listing.auctionStatus !== 'rejected') {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "只能審核待審核或已拒絕的拍賣" });
       }
 
       const now = new Date();
@@ -478,18 +506,21 @@ export const auctionRouter = router({
       const listing = await getAuctionListingById(input.listingId);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
 
+      // Use 'rejected' status (distinct from 'cancelled') so seller can resubmit
       await updateAuctionListing(input.listingId, {
-        auctionStatus: 'cancelled',
+        auctionStatus: 'rejected',
         status: 'removed',
         rejectedReason: input.reason,
       });
 
+      // Notify seller with link to their auction dashboard
       await createNotification({
         userId: listing.sellerId!,
         type: 'auction_rejected',
         title: '拍賣未通過審核',
-        body: `您的拍賣 #${input.listingId} 未通過審核。原因：${input.reason}`,
+        body: `您的拍賣「${listing.title ?? `#${input.listingId}`}」未通過審核。拒絕原因：${input.reason}。您可修改後重新提交。`,
         relatedId: input.listingId,
+        linkUrl: '/seller?tab=auctions',
       });
 
       return { success: true };
