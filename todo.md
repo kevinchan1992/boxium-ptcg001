@@ -7165,4 +7165,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ## 🐛 手機版展示問題修復
 - [x] 修復 CTA 兩個按鈕在手機版寬度不一致（Link 改為 block w-full + h-full）
 - [x] 修復 Footer Slogan 與 Logo 手機版改為 flex items-center 橫排，消除大間距
+- [x] 儲存 checkpoint (1fb8e0ce)
+
+---
+## ✨ Footer 和 CTA 微優化
+- [x] Footer 手機版加入 Follow Us 小標題（所有裝置均顯示）
+- [x] CTA 卡片加入 active:scale-[0.97] 微動畫縮放效果
 - [ ] 儲存 checkpoint

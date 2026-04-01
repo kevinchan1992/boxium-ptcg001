@@ -134,10 +134,10 @@ export default function Footer() {
 
           {/* Col 4: Follow Us */}
           <div>
-            <h4 className="text-white font-semibold text-xs uppercase tracking-widest mb-5 hidden lg:block">
+            <h4 className="text-white font-semibold text-xs uppercase tracking-widest mb-3 lg:mb-5">
               Follow Us
             </h4>
-            <div className="flex gap-3 mt-4 lg:mt-0">
+            <div className="flex gap-3">
               <a
                 href="https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr"
                 target="_blank"
