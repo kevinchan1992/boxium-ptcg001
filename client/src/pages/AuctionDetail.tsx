@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 
@@ -327,6 +327,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
   const [bidAmount, setBidAmount] = useState("");
   const [showTerms, setShowTerms] = useState(false);
   const [pendingAction, setPendingAction] = useState<'bid' | 'buynow' | null>(null);
+  const pendingBidAmountRef = useRef<number | null>(null);
 
   const { data: termsData, refetch: refetchTerms } = trpc.auction.checkTermsAgreement.useQuery(
     { role: 'buyer' },
@@ -361,10 +362,24 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
   const isEnded = (remaining !== null && remaining <= 0) || ['ended_sold', 'ended_no_bid', 'cancelled'].includes(listing.auctionStatus);
   const isActive = listing.auctionStatus === 'active' || listing.auctionStatus === 'ending_soon';
 
-  const handleBid = useCallback(() => {
+  const handleBid = useCallback((forceAgree = false) => {
     if (!user) { setLocation('/login'); return; }
-    if (!termsData?.agreed) { setPendingAction('bid'); setShowTerms(true); return; }
-    const amount = parseFloat(bidAmount);
+    if (!forceAgree && !termsData?.agreed) {
+      // Save current bid amount before showing terms
+      const amount = parseFloat(bidAmount);
+      if (!isNaN(amount) && amount >= minBid) {
+        pendingBidAmountRef.current = amount;
+      } else if (isNaN(amount) || amount < minBid) {
+        toast.error(`最低出價為 HK$${minBid.toLocaleString()}`);
+        return;
+      }
+      setPendingAction('bid');
+      setShowTerms(true);
+      return;
+    }
+    // Use saved amount if available (from before terms dialog), otherwise parse current input
+    const amount = pendingBidAmountRef.current ?? parseFloat(bidAmount);
+    pendingBidAmountRef.current = null;
     if (isNaN(amount) || amount < minBid) {
       toast.error(`最低出價為 HK$${minBid.toLocaleString()}`);
       return;
@@ -372,17 +387,21 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
     placeBidMutation.mutate({ listingId: listing.id, amount });
   }, [user, termsData, bidAmount, minBid, listing.id]);
 
-  const handleBuyNow = useCallback(() => {
+  const handleBuyNow = useCallback((forceAgree = false) => {
     if (!user) { setLocation('/login'); return; }
-    if (!termsData?.agreed) { setPendingAction('buynow'); setShowTerms(true); return; }
+    if (!forceAgree && !termsData?.agreed) { setPendingAction('buynow'); setShowTerms(true); return; }
     buyNowMutation.mutate({ listingId: listing.id });
   }, [user, termsData, listing.id]);
 
   const handleTermsAgreed = () => {
-    refetchTerms();
-    if (pendingAction === 'bid') handleBid();
-    else if (pendingAction === 'buynow') handleBuyNow();
+    // Immediately execute the pending action with forceAgree=true
+    // Do NOT wait for refetchTerms() to complete - that would cause a race condition
+    const action = pendingAction;
     setPendingAction(null);
+    setShowTerms(false);
+    refetchTerms(); // Refresh in background for future checks
+    if (action === 'bid') handleBid(true);
+    else if (action === 'buynow') handleBuyNow(true);
   };
 
   return (
@@ -443,7 +462,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
                 />
               </div>
               <Button
-                onClick={handleBid}
+                onClick={() => handleBid()}
                 disabled={placeBidMutation.isPending || isEnded}
                 className="bg-[#06038D] hover:bg-[#0804b8] text-white px-5 shrink-0 h-12 rounded-xl font-bold text-base"
               >
@@ -479,7 +498,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
                   <p className="text-2xl font-black text-[#06038D]">HK${buyNowPrice.toLocaleString()}</p>
                 </div>
                 <Button
-                  onClick={handleBuyNow}
+                  onClick={() => handleBuyNow()}
                   disabled={buyNowMutation.isPending}
                   className="bg-[#FEDD00] hover:bg-yellow-400 text-[#06038D] font-black px-5 rounded-xl h-12"
                 >

@@ -6416,7 +6416,7 @@ function AuctionsAdminTab() {
     status: filterStatus === 'all' ? undefined : filterStatus,
     page,
     pageSize: 20,
-  });
+  }, { refetchInterval: 20000 }); // Poll every 20s for real-time bid updates
 
   const approveMutation = trpc.auction.adminApprove.useMutation({
     onSuccess: () => { toast.success('拍賣已審核通過'); refetch(); },

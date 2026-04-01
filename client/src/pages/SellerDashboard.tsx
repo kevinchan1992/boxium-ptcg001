@@ -703,7 +703,10 @@ function EditRejectedAuctionDialog({
 
 function SellerAuctionsTab() {
   const [subTab, setSubTab] = useState<"active" | "ended" | "rejected">("active");
-  const { data: auctions, isLoading, refetch } = trpc.auction.sellerAuctions.useQuery({ page: 1, pageSize: 50 });
+  const { data: auctions, isLoading, refetch } = trpc.auction.sellerAuctions.useQuery(
+    { page: 1, pageSize: 50 },
+    { refetchInterval: 20000 } // Poll every 20s for real-time bid updates
+  );
   const utils = trpc.useUtils();
   const [editingAuction, setEditingAuction] = useState<any>(null);
 
