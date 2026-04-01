@@ -3022,11 +3022,13 @@ export default function SellerDashboard() {
                                 // Recalculate endAt if startAt (time-only HH:MM) is set
                                 let newEndAt = p.auctionEndAt;
                                 if (p.auctionStartAt && p.auctionStartAt.includes(':')) {
-                                  const today = new Date();
-                                  const [hh, mm] = p.auctionStartAt.split(':').map(Number);
-                                  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
-                                  const end = new Date(start.getTime() + newDuration * 24 * 60 * 60 * 1000);
-                                  newEndAt = end.toISOString().slice(0, 16);
+                              const today = new Date();
+                              const [hh, mm] = p.auctionStartAt.split(':').map(Number);
+                              const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
+                              const end = new Date(start.getTime() + newDuration * 24 * 60 * 60 * 1000);
+                              // Use local time string to avoid UTC offset issues
+                              const pad = (n: number) => String(n).padStart(2, '0');
+                              newEndAt = `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}T${pad(end.getHours())}:${pad(end.getMinutes())}`;
                                 }
                                 return { ...p, auctionDurationDays: newDuration, auctionEndAt: newEndAt };
                               });
@@ -3059,7 +3061,11 @@ export default function SellerDashboard() {
                               const [hh, mm] = timeVal.split(':').map(Number);
                               const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
                               const end = new Date(start.getTime() + p.auctionDurationDays * 24 * 60 * 60 * 1000);
-                              newEndAt = end.toISOString().slice(0, 16);
+                              // Use local time string to avoid UTC offset issues
+                              const pad = (n: number) => String(n).padStart(2, '0');
+                              newEndAt = `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}T${pad(end.getHours())}:${pad(end.getMinutes())}`;
+                            } else if (!timeVal) {
+                              newEndAt = '';
                             }
                             return { ...p, auctionStartAt: timeVal, auctionEndAt: newEndAt };
                           });
@@ -3258,7 +3264,7 @@ export default function SellerDashboard() {
                   listingStep === 1 ? !listingForm.title :
                   listingStep === 2 ? (
                     listingForm.listingMode === 'auction'
-                      ? (!listingForm.startingBid || !listingForm.auctionEndAt)
+                      ? !listingForm.startingBid
                       : (!listingForm.price || parseFloat(listingForm.price) < 4.00)
                   ) : false
                 }
