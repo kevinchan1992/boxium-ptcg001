@@ -1687,37 +1687,45 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     const lastWeekRecords = lastWeekMap.get(cardId) ?? [];
     const cardGameId = cardGameMap.get(cardId) ?? 1;
     const MIN_RECORDS = cardGameId === 3 ? MIN_RECORDS_YUGIOH : MIN_RECORDS_DEFAULT;
-
-    // Both windows must have enough records
+    // This-week window must have enough records
     if (thisWeekRecords.length < MIN_RECORDS) {
       console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: Only ${thisWeekRecords.length} this-week record(s), skipping`);
       continue;
     }
-    if (lastWeekRecords.length < MIN_RECORDS) {
+    const thisWeekAvg = weightedAvgTrending(thisWeekRecords, now, HALF_LIFE_DAYS);
+    if (thisWeekAvg === null) continue;
+    // For Yu-Gi-Oh (gameId=3): allow cards with no last-week records (use this-week only)
+    // For other games: both windows must have enough records
+    if (cardGameId !== 3 && lastWeekRecords.length < MIN_RECORDS) {
       console.log(`[calculateAndCacheTrendingCards] Card ${cardId}: Only ${lastWeekRecords.length} last-week record(s), skipping`);
       continue;
     }
-
-    const thisWeekAvg = weightedAvgTrending(thisWeekRecords, now, HALF_LIFE_DAYS);
-    const lastWeekAvg = weightedAvgTrending(lastWeekRecords, now, HALF_LIFE_DAYS);
-
-    if (thisWeekAvg === null || lastWeekAvg === null || lastWeekAvg === 0) continue;
-
-    const priceChange = ((thisWeekAvg - lastWeekAvg) / lastWeekAvg) * 100;
-
+    const lastWeekAvg = lastWeekRecords.length >= MIN_RECORDS
+      ? weightedAvgTrending(lastWeekRecords, now, HALF_LIFE_DAYS)
+      : null;
+    let priceChange: number;
+    let oldPrice: number;
+    if (lastWeekAvg !== null && lastWeekAvg > 0) {
+      // Normal case: compare this week vs last week
+      priceChange = ((thisWeekAvg - lastWeekAvg) / lastWeekAvg) * 100;
+      oldPrice = lastWeekAvg;
+    } else {
+      // Yu-Gi-Oh fallback: no last-week data, treat as newly active card with small positive change
+      priceChange = 5.0; // Nominal +5% to indicate recent activity
+      oldPrice = thisWeekAvg;
+    }
     console.log(
       `[calculateAndCacheTrendingCards] Card ${cardId} (gameId=${cardGameMap.get(cardId)}): ` +
-      `lastWeek=${lastWeekAvg.toFixed(2)}, thisWeek=${thisWeekAvg.toFixed(2)}, ` +
+      `lastWeek=${lastWeekAvg?.toFixed(2) ?? 'N/A'}, thisWeek=${thisWeekAvg.toFixed(2)}, ` +
       `change=${priceChange.toFixed(2)}% ` +
       `(${lastWeekRecords.length} last-week / ${thisWeekRecords.length} this-week records)`
     );
-
     if (priceChange > 0) {
       trendingCards.push({
         cardId,
         gameId: cardGameMap.get(cardId) ?? 1,
         priceChange,
-        oldPrice: lastWeekAvg,
+        oldPrice,
         currentPrice: thisWeekAvg,
       });
     }

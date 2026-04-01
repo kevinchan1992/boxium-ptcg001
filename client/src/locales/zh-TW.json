@@ -176,7 +176,7 @@
     "referencePrice": "參考價格",
     "basedOnRecords": "基於近 1 個月內 PSA 10 交易記錄",
     "basedOnLatestRecords": "基於最近 {{months}} 個月內最新 {{count}} 筆 PSA 10 平均成交記錄",
-    "basedOnLatestRecordsWeighted": "基於最近 {{count}} 筆 PSA 10 成交記錄加權計算（半衰期 7 天，近期成交佔高比重）",
+    "basedOnLatestRecordsWeighted": "參考價為加權中位數（半衰期 7 天），基於 {{count}} 筆 PSA 10 成交記錄",
     "priceHistory": "價格歷史",
     "date": "日期",
     "price": "價格",

@@ -4851,7 +4851,7 @@ Production 環境（boxium.asia）的 Express OG SSR 路由（`/card/:id`）無�
 - [ ] 前端：信任區移到底部
 - [ ] 前端：響應式設計（桌面5列/平板3列/手機2列）
 - [ ] 撰寫單元測試
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 
 ## 🔲 Marketplace 佈局修改（左側篩選欄 + 右側商品）
@@ -6943,7 +6943,7 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 前端：拍賣管理加入「已拒絕」筛選器 tab
 - [x] 前端：賣家中心「我的拍賣」 Tab 顯示被拒絕的拍賣（含拒絕原因紅色提示）
 - [x] 前端：賣家中心被拒絕拍賣卡片加入「重新提交」按鈕（可修改後重新申請審核）
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 拍賣品與商品管理分離修復
 
@@ -6970,12 +6970,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ## 🔧 賣家中心「已拒絕」拍賣不顯示修復
 
 - [ ] 排查並修復 sellerAuctions 後端查詢，確保 rejected 狀態拍賣正確返回
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 賣家中心「我的拍賣」進行中 tab 顯示修復
 
 - [ ] 前端：「進行中」tab 加入 scheduled 狀態的拍賣（審核通過但未到開始時間）
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## ✅ 修復 sellerId 錯誤導致賣家看不到自己拍賣的問題
 - [x] 確認 auction.ts createAuction 已正確使用 sellerProfile.id（非 user.id）
@@ -6990,42 +6990,54 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] AuctionDetail 出價框內文字改為黑色（text-gray-900 bg-white）
 - [x] AuctionDetail 倒計時框（距離結標）改為 BOXIUM 品牌風格（深藍 #06038D 背景，黃色時鐘圖示）
 - [x] 買家拍賣條款 Dialog 重新設計為 BOXIUM 品牌風格（深藍頭部、黃色盾牌圖示、卡片式條款列表）
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 貨幣顯示修復（¥ → HK$）
 - [ ] 搜尋並修復賣家中心拍賣起標價顯示「¥」問題
 - [ ] 全平台貨幣格式統一為 HK$
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 賣家中心 Tab 順序調整
 - [x] 調整 Tab 順序：我的商品 > 我的拍賣 > 訂單管理 > 買家出價 > 收款記錄
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 買家拍賣條款 Dialog UI 修復
 - [ ] 條款列表區域改為白色底色（非深色）
 - [ ] 關閉按鈕移至右上角，避免與「完整條款 →」重疊
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 已拒絕拍賣品編輯流程- [x] 在「已拒絕」 Tab 加入「編輯拍賣」按鈕，讓賣家修改後再重新提交審核
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 拍賣出價流程修復 + 實時同步
 - [x] 修復：同意條款後自動執行出價（修復 race condition，使用 forceAgree=true 繞過失效的 termsData 檢查）
 - [x] 加入輪詢機制：拍賣詳情頁已有 refetchInterval: 15000，確認有效
 - [x] 加入輪詢機制：賣家中心「我的拍賣」每 20 秒自動刷新
 - [x] 管理後台拍賣列表每 20 秒自動刷新
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 賣家中心拍賣卡片顯示目前最高出價
 - [x] 在「進行中」拍賣卡片加入「目前最高出價」欄位（黃底深藍樣式）
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 修改拍賣內容 Dialog 淺色 BOXIUM 風格
 - [x] 將 EditRejectedAuctionDialog 改為淡色模式（白色背景、深藍標題、黃色圖示）
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
 
 ## 🔧 拍賣詳情頁手機版優化
 - [x] 快速出價按鈕改為均勻 grid 排列（手機版不換行不整齊）
 - [x] 出價記錄顯示買家實際用戶名稱（非「買家 #330001」）
 - [x] 最高出價者不可再出價限制（顯示「您目前是最高出價者」提示）
-- [ ] 儲存 checkpoint
+- [x] 儲存 checkpoint
+
+## 🔧 修復熱門卡牌顯示數量不足問題
+- [ ] 調查遊戲王熱門卡牌只顯示 3 張的原因
+- [ ] 修復熱門卡牌計算邏輯（應顯示更多熱門卡牌）
+- [x] 儲存 checkpoint
+
+## 🔧 PSA 10 參考價格公式改進（加權中位數）
+- [x] 修改 calculateReferencePrice：主參考價改為加權中位數（7天←14天←30天←90天，不足5筆才擴展）
+- [x] 前台三欄顯示：參考價（加權中位數）+ 最近成交（最新1筆）+ 30天P25/P75區間
+- [x] 移除「最高成交」獨立顯示，改為 P25/P75 區間
+- [x] 更新 i18n 說明文字
+- [x] 儲存 checkpoint

@@ -191,50 +191,85 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   }
 
   // Calculate reference price
-  const calculateReferencePrice = () => {
-    if (activeRecentPrices.length === 0) return "N/A";
-    if (isSealedProduct) {
-      const latest = activeRecentPrices[0];
-      if (!latest) return "N/A";
-      const price = parseFloat(latest.price as any);
-      const qty = latest.quantity ? parseInt(latest.quantity as any, 10) : 1;
-      return isNaN(price) ? "N/A" : (price / (qty || 1)).toString();
-    }
-    // Single card: time-decay weighted average
+  // ── Helper: weighted median ──────────────────────────────────────────────
+  // Each record gets weight = 2^(-daysAgo / halfLife). We sort by price, then
+  // find the price where cumulative weight crosses 50% of total weight.
+  const weightedMedian = (records: typeof activeRecentPrices, halfLifeDays: number): number | null => {
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-    let records = activeRecentPrices.filter(p => {
-      if (!p.soldAt) return false;
-      return new Date(p.soldAt) >= thirtyDaysAgo;
-    });
-    if (records.length < 3) {
-      records = activeRecentPrices.filter(p => {
-        if (!p.soldAt) return false;
-        return new Date(p.soldAt) >= ninetyDaysAgo;
-      });
+    const weighted = records
+      .map(p => {
+        const price = parseFloat(p.price as any);
+        if (isNaN(price)) return null;
+        const daysAgo = p.soldAt
+          ? (now.getTime() - new Date(p.soldAt).getTime()) / (1000 * 60 * 60 * 24)
+          : halfLifeDays * 2;
+        return { price, weight: Math.pow(2, -daysAgo / halfLifeDays) };
+      })
+      .filter((x): x is { price: number; weight: number } => x !== null);
+    if (weighted.length === 0) return null;
+    weighted.sort((a, b) => a.price - b.price);
+    const totalWeight = weighted.reduce((s, x) => s + x.weight, 0);
+    let cumWeight = 0;
+    for (const { price, weight } of weighted) {
+      cumWeight += weight;
+      if (cumWeight >= totalWeight / 2) return price;
     }
-    if (records.length === 0) return "N/A";
-    const HALF_LIFE_DAYS = 7;
-    let weightedSum = 0;
-    let totalWeight = 0;
-    for (const record of records) {
-      const price = parseFloat(record.price as any);
-      if (isNaN(price)) continue;
-      const daysAgo = record.soldAt
-        ? (now.getTime() - new Date(record.soldAt).getTime()) / (1000 * 60 * 60 * 24)
-        : 30;
-      const weight = Math.pow(2, -daysAgo / HALF_LIFE_DAYS);
-      weightedSum += price * weight;
-      totalWeight += weight;
-    }
-    return totalWeight > 0 ? (weightedSum / totalWeight).toString() : "N/A";
+    return weighted[weighted.length - 1].price;
   };
 
-  const avgPrice = calculateReferencePrice();
+  // ── Main reference price: weighted median (7d → 14d → 30d → 90d) ─────────
+  const calculateReferencePrice = (): { price: string; windowDays: number; recordCount: number } => {
+    if (activeRecentPrices.length === 0) return { price: "N/A", windowDays: 0, recordCount: 0 };
+    if (isSealedProduct) {
+      const latest = activeRecentPrices[0];
+      if (!latest) return { price: "N/A", windowDays: 0, recordCount: 0 };
+      const price = parseFloat(latest.price as any);
+      const qty = latest.quantity ? parseInt(latest.quantity as any, 10) : 1;
+      return { price: isNaN(price) ? "N/A" : (price / (qty || 1)).toString(), windowDays: 0, recordCount: 1 };
+    }
+    const now = new Date();
+    const windows = [7, 14, 30, 90];
+    for (const days of windows) {
+      const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      const records = activeRecentPrices.filter(p => p.soldAt && new Date(p.soldAt) >= cutoff);
+      if (records.length >= 3) {
+        const median = weightedMedian(records, 7);
+        return { price: median !== null ? median.toString() : "N/A", windowDays: days, recordCount: records.length };
+      }
+    }
+    // Fallback: use all available records
+    const median = weightedMedian(activeRecentPrices, 7);
+    return { price: median !== null ? median.toString() : "N/A", windowDays: 90, recordCount: activeRecentPrices.length };
+  };
+
+  const refPriceResult = calculateReferencePrice();
+  const avgPrice = refPriceResult.price;
+  const refWindowDays = refPriceResult.windowDays;
+  const refRecordCount = refPriceResult.recordCount;
   const recordCount = activeRecentPrices.length;
 
-  // Calculate min/max from PSA10 records
+  // ── Latest single trade ───────────────────────────────────────────────────
+  const latestTrade = activeRecentPrices.length > 0 ? activeRecentPrices[0] : null;
+  const latestTradePrice = latestTrade ? parseFloat(latestTrade.price as any) : null;
+
+  // ── 30-day P25 / P75 ─────────────────────────────────────────────────────
+  const thirtyDayPrices = (() => {
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    return activeRecentPrices
+      .filter(p => !isSealedProduct && p.soldAt && new Date(p.soldAt) >= cutoff)
+      .map(p => parseFloat(p.price as any))
+      .filter(p => !isNaN(p))
+      .sort((a, b) => a - b);
+  })();
+  const p25 = thirtyDayPrices.length >= 4
+    ? thirtyDayPrices[Math.floor(thirtyDayPrices.length * 0.25)]
+    : null;
+  const p75 = thirtyDayPrices.length >= 4
+    ? thirtyDayPrices[Math.floor(thirtyDayPrices.length * 0.75)]
+    : null;
+
+  // Legacy min/max kept for sealed products
   const psa10Prices = activeRecentPrices.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
   const minPrice = psa10Prices.length > 0 ? Math.min(...psa10Prices) : null;
   const maxPrice = psa10Prices.length > 0 ? Math.max(...psa10Prices) : null;
@@ -392,16 +427,19 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               {/* Price Stats Grid */}
               <div className="bg-[#0A2472]/80 backdrop-blur-sm">
                 <div className="grid grid-cols-3 divide-x divide-[#1565C0]/40">
-                  {/* Average Price */}
+
+                  {/* Col 1: Reference Price (weighted median) */}
                   <div className="px-3 py-4 text-center">
-                    <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">參考均價</p>
+                    <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">
+                      {isSealedProduct ? '參考均價' : `參考價${refWindowDays > 0 ? ` (${refWindowDays}天)` : ''}`}
+                    </p>
                     {avgPrice === "N/A" ? (
                       <p className="text-sm sm:text-base md:text-lg font-bold text-[#FFD600] leading-tight">N/A</p>
                     ) : (
                       <>
                         <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
                         <p className="text-sm sm:text-base md:text-lg font-bold text-[#FFD600] leading-tight">
-                          {(() => { const n = typeof avgPrice === 'string' ? parseFloat(avgPrice) : (avgPrice ?? 0); return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); })()}
+                          {parseFloat(avgPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </>
                     )}
@@ -412,38 +450,72 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                       </div>
                     )}
                   </div>
-                  {/* Min Price */}
+
+                  {/* Col 2: Latest single trade */}
                   <div className="px-3 py-4 text-center">
-                    <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">最低成交</p>
-                    {minPrice !== null ? (
+                    <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">最近成交</p>
+                    {latestTradePrice !== null && !isNaN(latestTradePrice) ? (
                       <>
                         <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
-                        <p className="text-sm sm:text-base font-bold text-green-400 leading-tight">
-                          {minPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <p className="text-sm sm:text-base font-bold text-blue-300 leading-tight">
+                          {latestTradePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
+                        {latestTrade?.soldAt && (
+                          <p className="text-[9px] text-zinc-500 mt-0.5">
+                            {new Date(latestTrade.soldAt).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })}
+                          </p>
+                        )}
                       </>
-                    ) : <p className="text-sm font-bold text-green-400">N/A</p>}
+                    ) : (
+                      isSealedProduct && minPrice !== null ? (
+                        <>
+                          <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
+                          <p className="text-sm sm:text-base font-bold text-blue-300 leading-tight">
+                            {minPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </>
+                      ) : <p className="text-sm font-bold text-blue-300">N/A</p>
+                    )}
                   </div>
-                  {/* Max Price */}
+
+                  {/* Col 3: 30-day P25/P75 range (single cards) or max price (sealed) */}
                   <div className="px-3 py-4 text-center">
-                    <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">最高成交</p>
-                    {maxPrice !== null ? (
+                    {!isSealedProduct && p25 !== null && p75 !== null ? (
                       <>
+                        <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">30天區間</p>
                         <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
-                        <p className="text-sm sm:text-base font-bold text-red-400 leading-tight">
-                          {maxPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <p className="text-[10px] sm:text-xs font-semibold text-green-400 leading-tight">
+                          {p25.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </p>
+                        <p className="text-[9px] text-zinc-500">↕</p>
+                        <p className="text-[10px] sm:text-xs font-semibold text-orange-400 leading-tight">
+                          {p75.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </p>
+                        <p className="text-[9px] text-zinc-500 mt-0.5">P25 / P75</p>
                       </>
-                    ) : <p className="text-sm font-bold text-red-400">N/A</p>}
+                    ) : (
+                      <>
+                        <p className="text-[10px] sm:text-xs text-zinc-400 mb-1">最高成交</p>
+                        {maxPrice !== null ? (
+                          <>
+                            <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
+                            <p className="text-sm sm:text-base font-bold text-orange-400 leading-tight">
+                              {maxPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </>
+                        ) : <p className="text-sm font-bold text-orange-400">N/A</p>}
+                      </>
+                    )}
                   </div>
+
                 </div>
 
                 {/* Footer note */}
-                <div className="px-4 py-2 border-t border-[#1565C0]/30 flex items-center justify-between">
+                <div className="px-4 py-2 border-t border-[#1565C0]/30">
                   <p className="text-[10px] text-zinc-500">
                     {isSealedProduct
                       ? t("cardDetail.basedOnLatestSealedRecords", { count: recordCount, months: 2 })
-                      : t("cardDetail.basedOnLatestRecordsWeighted", { count: recordCount })
+                      : `基於最近 ${refRecordCount} 筆 PSA 10 成交記錄加權中位數（${refWindowDays} 天視窗，半衰期 7 天）`
                     }
                     {priceTrend && <span className="ml-1">· {t("cardDetail.priceTrend")}</span>}
                   </p>
