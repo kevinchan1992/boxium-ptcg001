@@ -12,7 +12,7 @@ import {
   Gavel, Clock, TrendingUp, ChevronLeft, User, Shield, Zap,
   AlertTriangle, CheckCircle2, ArrowUp, Loader2, Eye, Package,
   ChevronRight, ImageIcon, Star, CreditCard, Trophy, Flame,
-  Info, ChevronDown, ChevronUp, X
+  Info, ChevronDown, ChevronUp, X, ShoppingCart
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -192,18 +192,9 @@ function TermsDialog({
 // ─── Winner Payment Panel ───────────────────────────────────────────────────
 function WinnerPaymentPanel({ listing, onRefetch }: { listing: any; onRefetch: () => void }) {
   const { t } = useTranslation();
+  const [, setLocation] = useLocation();
   const { data: me } = trpc.auth.me.useQuery();
   const [showReview, setShowReview] = useState(false);
-
-  const paymentMutation = trpc.auction.createAuctionPayment.useMutation({
-    onSuccess: (data) => {
-      if (data.checkoutUrl) {
-        toast.success(t("auctionDetail.payment.redirecting"));
-        window.open(data.checkoutUrl, '_blank');
-      }
-    },
-    onError: (e) => toast.error(e.message),
-  });
 
   const winningBid = parseFloat(listing.currentHighestBid ?? '0');
   const isWinner = me && listing.winnerId === (me as any).id;
@@ -227,12 +218,11 @@ function WinnerPaymentPanel({ listing, onRefetch }: { listing: any; onRefetch: (
             </div>
           </div>
           <Button
-            onClick={() => paymentMutation.mutate({ listingId: listing.id, origin: window.location.origin })}
-            disabled={paymentMutation.isPending}
+            onClick={() => setLocation('/cart')}
             className="w-full bg-[#06038D] hover:bg-[#0804b8] text-[#FEDD00] font-black text-base py-3 rounded-xl"
           >
-            {paymentMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-5 h-5 mr-2" />}
-            立即付款 HK${winningBid.toLocaleString()}
+            <ShoppingCart className="w-5 h-5 mr-2" />
+            前往購物車付款 HK${winningBid.toLocaleString()}
           </Button>
         </div>
       ) : (

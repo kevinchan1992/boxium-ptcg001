@@ -12,7 +12,7 @@ import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import {
   Package, ArrowLeft, CheckCircle, Truck, Clock, XCircle, AlertCircle,
   ChevronDown, ChevronUp, MapPin, Phone, User, CreditCard, Loader2,
-  Star, MessageSquare, Flag, Tag, Camera, ImageIcon, RotateCcw
+  Star, MessageSquare, Flag, Tag, Camera, ImageIcon, RotateCcw, ShoppingCart
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -552,9 +552,9 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
             )}
             {isPending && (
               <>
-                <Link href={`/orders/${order.orderNo}`} className="flex-1">
+                <Link href="/cart" className="flex-1">
                   <Button size="sm" className="w-full h-10 text-xs font-bold text-white rounded-xl shadow-sm" style={{ backgroundColor: "#06038d" }}>
-                    <CreditCard className="w-3.5 h-3.5 mr-1.5" />前往付款
+                    <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />前往購物車付款
                   </Button>
                 </Link>
                 <div className="flex-shrink-0"><BuyerCancelButton orderId={order.id} onSuccess={() => utils.marketplace.getMyOrders.invalidate()} /></div>
@@ -866,7 +866,11 @@ function MyOffersTab({ userId }: { userId: number }) {
                 </Button>
               )}
               {offer.status === "accepted" && offer.orderId && (
-                <OfferPaymentButton offerId={offer.id} amount={offer.offerPriceHkd} />
+                <Link href="/cart">
+                  <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: "#06038d" }}>
+                    <ShoppingCart className="w-3.5 h-3.5 mr-1" />前往購物車付款
+                  </Button>
+                </Link>
               )}
             </div>
           </div>

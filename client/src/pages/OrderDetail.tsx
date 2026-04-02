@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Package, CheckCircle, Truck, Clock, XCircle, AlertCircle,
   CreditCard, MapPin, Phone, User, Flag, Star, MessageSquare, Loader2,
-  Copy, ExternalLink, ShieldCheck, CircleDot, Smartphone, FileImage, CheckSquare, XSquare, Hourglass
+  Copy, ExternalLink, ShieldCheck, CircleDot, Smartphone, FileImage, CheckSquare, XSquare, Hourglass, ShoppingCart
 } from "lucide-react";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { ImageLightbox } from "@/components/ImageLightbox";
@@ -1064,17 +1064,18 @@ export default function OrderDetail() {
             </div>
           )}
 
-          {/* Action Buttons - pending_payment: show pay button + cancel button */}
+          {/* Action Buttons - pending_payment: go to cart to pay */}
           {isBuyer && order.orderStatus === "pending_payment" && (
             <div className="px-4 pb-4 flex items-center gap-2 border-t pt-3">
-              <PayOrderButton
-                orderId={order.id}
-                listingId={order.listingId}
-                amount={order.subtotalHkd as string ?? "0"}
-                paymentMethod={order.paymentMethod ?? undefined}
-                hasShippingAddress={!!(order as any).shippingAddress}
-                sellerType={order.sellerType}
-              />
+              <Link href="/cart">
+                <Button
+                  size="sm"
+                  className="text-white font-bold"
+                  style={{ backgroundColor: "#06038d" }}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />前往購物車付款
+                </Button>
+              </Link>
               <Button
                 size="sm"
                 variant="outline"

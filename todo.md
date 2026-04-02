@@ -7255,3 +7255,28 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復 Admin 後台「強制結標」功能失效的 SQL INSERT 錯誤（修復 createMarketplaceOrder 和 createOrderItems 欄位不匹配：加入 listingId/sellerType/title/price/platformFeeHkd/sellerReceivableHkd，移除 totalHkd/cardId/unitPriceHkd/subtotalHkd 非 schema 欄位）
 
 - [ ] 拍賣結標付款流程整合購物車：拍賣訂單加入購物車、顯示24小時倒數、平台自有商品不扣費且開放支付寶
+
+---
+
+## ✅ 統一付款流程：所有商品經購物車付款
+
+### 目標
+所有商品（直接購買、出價、拍賣得標）都必須經過購物車完成付款，移除所有繞過購物車的直接付款路徑
+
+### 任務清單
+- [x] 審查現有付款流程，找出所有繞過購物車的付款路徑
+- [x] 新增後端 `getMyPendingAuctionOrders` procedure（返回買家待付款拍賣訂單）
+- [x] 更新 `getCartCount`：計入待付款拍賣訂單數量（購物車圖示徽章）
+- [x] AuctionDetail WinnerPaymentPanel：「立即付款」改為「前往購物車付款」
+- [x] Orders.tsx：「前往付款」改為「前往購物車付款」（導向 /cart）
+- [x] Profile.tsx：「前往付款」改為「前往購物車付款」（導向 /cart）
+- [x] OrderDetail.tsx：移除直接付款按鈕，改為「前往購物車付款」
+- [x] Cart.tsx：新增「拍賣得標待付款」區塊（AuctionOrderRow 組件）
+  - [x] 🏆 拍賣得標徽章
+  - [x] 24小時付款倒數（HH:MM:SS，從系統設定讀取）
+  - [x] 信用卡付款按鈕（Stripe）
+  - [x] 支付寶 HK 按鈕（僅限平台商品）+ QR code 顯示
+  - [x] 時限到期提示
+- [x] TypeScript 編譯通過（0 errors）
+- [x] 保存 checkpoint
+

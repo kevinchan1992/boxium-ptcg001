@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock, Check, X, Phone, MapPin, CreditCard, Truck, Users, ChevronDown, Smartphone, Copy, Upload, Loader2, CheckCircle } from "lucide-react";
+import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock, Check, X, Phone, MapPin, CreditCard, Truck, Users, ChevronDown, Smartphone, Copy, Upload, Loader2, CheckCircle, Trophy, XCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +71,17 @@ export default function Cart() {
   const { data: cartItems, isLoading } = trpc.marketplace.getMyCart.useQuery(undefined, {
     enabled: !!user,
     staleTime: 10000,
+  });
+
+  // ── Pending auction orders (shown separately in cart) ──
+  const { data: pendingAuctionOrders } = trpc.marketplace.getMyPendingAuctionOrders.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: 30000, // Refresh every 30s to keep countdowns accurate
+  });
+  // ── Payment timeout settings (for auction countdown) ──
+  const { data: timeoutSettings } = trpc.system.getTimeoutSettings.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 300000,
   });
 
   const removeFromCartMutation = trpc.marketplace.removeFromCart.useMutation({
@@ -164,7 +175,8 @@ export default function Cart() {
   }, [activeItems]);
 
   // isEmpty must be computed before hooks that depend on it
-  const isEmpty = !cartItems || cartItems.length === 0;
+  // Cart is empty only if both regular cart items AND pending auction orders are empty
+  const isEmpty = (!cartItems || cartItems.length === 0) && (!pendingAuctionOrders || pendingAuctionOrders.length === 0);
 
   // Fetch watchlist for personalized recommendations (always call hooks, use enabled to control)
   const { data: watchlist } = trpc.profile.getWatchlist.useQuery(undefined, {
@@ -350,7 +362,7 @@ export default function Cart() {
             <ShoppingCart className="w-7 h-7 text-white" />
             <h1 className="text-2xl font-bold text-white">{t("cart.title")}</h1>
             {!isEmpty && (
-              <span className="text-sm text-white/60">（{cartItems.length} 件商品）</span>
+              <span className="text-sm text-white/60">（{(cartItems?.length ?? 0) + (pendingAuctionOrders?.length ?? 0)} 件商品）</span>
             )}
           </div>
         </div>
@@ -464,6 +476,29 @@ export default function Cart() {
                 </div>
               )}
 
+              {/* ── Pending Auction Orders ── */}
+              {pendingAuctionOrders && pendingAuctionOrders.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-yellow-200 overflow-hidden">
+                  <div className="flex items-center gap-2 px-5 py-3 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-amber-50">
+                    <Trophy className="w-4 h-4 text-amber-500" />
+                    <span className="font-semibold text-amber-800 text-sm">拍賣得標待付款（{pendingAuctionOrders.length}）</span>
+                    <span className="text-xs text-amber-600 ml-1">— 請在時限內完成付款</span>
+                  </div>
+                  <div className="divide-y divide-yellow-50">
+                    {pendingAuctionOrders.map((order) => (
+                      <AuctionOrderRow
+                        key={order.orderId}
+                        order={order}
+                        paymentTimeoutMinutes={timeoutSettings?.paymentTimeoutMinutes ?? 1440}
+                        onPaymentSuccess={() => {
+                          utils.marketplace.getMyPendingAuctionOrders.invalidate();
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Unavailable items */}
               {unavailableItems.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm border border-red-100 overflow-hidden">
@@ -559,6 +594,177 @@ export default function Cart() {
         sfDistricts={SF_DISTRICTS}
         user={user}
       />
+    </div>
+  );
+}
+
+// ─── Auction Order Row ──────────────────────────────────────────────────────────
+type PendingAuctionOrder = {
+  orderId: number;
+  orderNo: string;
+  listingId: number;
+  auctionListingId: number | null;
+  subtotalHkd: string;
+  orderStatus: string;
+  createdAt: Date | null;
+  sellerType: string | null;
+  sellerId: number | null;
+  title: string;
+  images: string | null;
+  condition: string | null;
+  listingMode: string | null;
+  auctionEndAt: Date | null;
+  sellerDisplayName: string | null;
+  isAuctionOrder: true;
+};
+
+function AuctionOrderRow({ order, paymentTimeoutMinutes, onPaymentSuccess }: {
+  order: PendingAuctionOrder;
+  paymentTimeoutMinutes: number;
+  onPaymentSuccess: () => void;
+}) {
+  const [timeLeft, setTimeLeft] = React.useState<{ hours: number; minutes: number; seconds: number; expired: boolean } | null>(null);
+  const [isPaying, setIsPaying] = React.useState(false);
+  const [showAlipayQR, setShowAlipayQR] = React.useState(false);
+  const utils = trpc.useUtils();
+
+  const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
+    onSuccess: (data) => { window.location.href = data.checkoutUrl; },
+    onError: (err) => { toast.error(err.message || '建立付款連結失敗'); setIsPaying(false); },
+  });
+
+  const switchToAlipayMutation = trpc.marketplace.switchOrderPaymentToAlipay.useMutation({
+    onSuccess: () => {
+      setShowAlipayQR(true);
+      utils.marketplace.getMyPendingAuctionOrders.invalidate();
+    },
+    onError: (err) => toast.error(err.message || '切換付款方式失敗'),
+  });
+
+  React.useEffect(() => {
+    if (!order.createdAt) return;
+    const deadline = new Date(order.createdAt).getTime() + paymentTimeoutMinutes * 60 * 1000;
+    const update = () => {
+      const diff = deadline - Date.now();
+      if (diff <= 0) {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0, expired: true });
+        return;
+      }
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      setTimeLeft({ hours, minutes, seconds, expired: false });
+    };
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [order.createdAt, paymentTimeoutMinutes]);
+
+  const imgs: string[] | null = (() => { try { return order.images ? JSON.parse(order.images) : null; } catch { return null; } })();
+  const canUseAlipay = order.sellerType !== 'seller';
+
+  return (
+    <div className="flex flex-col">
+      {/* Countdown banner */}
+      {timeLeft && !timeLeft.expired && (
+        <div className="mx-4 mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+          <Clock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+          <span className="text-xs text-amber-700 font-mono font-semibold">
+            付款時限剩餘：{String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+          </span>
+        </div>
+      )}
+      {timeLeft?.expired && (
+        <div className="mx-4 mt-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+          <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+          <span className="text-xs text-red-700 font-semibold">付款時限已到，訂單即將自動取消</span>
+        </div>
+      )}
+      <div className="flex items-center gap-4 px-5 py-4">
+        {/* Image */}
+        <Link href={`/orders/${order.orderNo}`}>
+          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-yellow-200">
+            {imgs?.[0] ? (
+              <img src={imgs[0]} alt={order.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-amber-400" />
+              </div>
+            )}
+          </div>
+        </Link>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <Link href={`/orders/${order.orderNo}`}>
+            <p className="text-sm font-medium text-gray-800 line-clamp-2 hover:text-[#06038D] transition-colors">{order.title}</p>
+          </Link>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <Badge className="text-xs px-1.5 py-0 h-5 bg-amber-100 text-amber-700 border-amber-300">
+              <Trophy className="w-2.5 h-2.5 mr-1" />拍賣得標
+            </Badge>
+            {order.condition && (
+              <Badge variant="outline" className="text-xs px-1.5 py-0 h-5 text-gray-700 border-gray-300">{order.condition}</Badge>
+            )}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">訂單 #{order.orderNo}</p>
+        </div>
+        {/* Price + Pay button */}
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <span className="font-bold text-[#06038D] text-sm">HK${Number(order.subtotalHkd).toFixed(0)}</span>
+          <div className="flex flex-col gap-1">
+            <Button
+              size="sm"
+              className="text-xs text-white font-bold h-7 px-3"
+              style={{ backgroundColor: '#06038d' }}
+              disabled={isPaying || getCheckoutMutation.isPending || !!timeLeft?.expired}
+              onClick={() => {
+                setIsPaying(true);
+                getCheckoutMutation.mutate({ orderId: order.orderId });
+              }}
+            >
+              {getCheckoutMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CreditCard className="w-3 h-3 mr-1" />}
+              信用卡付款
+            </Button>
+            {canUseAlipay && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-7 px-3 border-blue-300 text-blue-700 hover:bg-blue-50"
+                disabled={switchToAlipayMutation.isPending || !!timeLeft?.expired}
+                onClick={() => switchToAlipayMutation.mutate({ orderId: order.orderId })}
+              >
+                <Smartphone className="w-3 h-3 mr-1" />支付寶 HK
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* AlipayHK QR Code Dialog */}
+      {showAlipayQR && (
+        <div className="mx-4 mb-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Smartphone className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-semibold text-blue-800">支付寶 HK 付款</span>
+            </div>
+            <button onClick={() => setShowAlipayQR(false)} className="text-blue-400 hover:text-blue-600">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex flex-col items-center gap-3">
+            <img src={ALIPAY_QR_URL} alt="支付寶 HK QR Code" className="w-32 h-32 rounded-lg border border-blue-200" />
+            <div className="text-center">
+              <p className="text-sm font-bold text-blue-800">HK${Number(order.subtotalHkd).toFixed(2)}</p>
+              <p className="text-xs text-blue-600 mt-1">掃描 QR code 付款，付款後請截圖上傳付款證明</p>
+            </div>
+            <Link href={`/orders/${order.orderNo}`}>
+              <Button size="sm" variant="outline" className="text-xs border-blue-300 text-blue-700 hover:bg-blue-100">
+                前往訂單上傳付款證明
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

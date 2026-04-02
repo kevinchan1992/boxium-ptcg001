@@ -32,7 +32,7 @@ import {
   Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X, Lock,
   Search, Tag, CreditCard, Loader2, CheckCircle, Truck, Clock,
   XCircle, AlertCircle, ChevronDown, ChevronUp, Flag, MessageSquare,
-  ChevronRight, Bell, CheckCheck, DollarSign, Info, AlertTriangle, Filter
+  ChevronRight, Bell, CheckCheck, DollarSign, Info, AlertTriangle, Filter, ShoppingCart
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { searchSFPointsAsync, validateSFCode, findSFPointByCodeAsync, type SFPoint } from "@/lib/sfStations";
@@ -1552,9 +1552,9 @@ function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paym
         <div className="px-4 pb-3 flex flex-wrap items-center gap-2">
           {isPending && (
             <>
-              <Link href={`/orders/${firstOrder.orderNo}`}>
+              <Link href="/cart">
                 <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: BRAND_BLUE }}>
-                  <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
+                  <ShoppingCart className="w-3.5 h-3.5 mr-1" />前往購物車付款
                 </Button>
               </Link>
               {paymentCountdown && !paymentCountdown.expired && (
@@ -1772,9 +1772,9 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
           )}
           {isPending && (
             <div className="flex items-center gap-2 flex-wrap">
-              <Link href={`/orders/${order.orderNo}`}>
+              <Link href="/cart">
                 <Button size="sm" className="text-xs text-white font-bold" style={{ backgroundColor: BRAND_BLUE }}>
-                  <CreditCard className="w-3.5 h-3.5 mr-1" />前往付款
+                  <ShoppingCart className="w-3.5 h-3.5 mr-1" />前往購物車付款
                 </Button>
               </Link>
               {paymentCountdown && !paymentCountdown.expired && (

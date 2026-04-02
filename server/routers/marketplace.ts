@@ -4814,8 +4814,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) return { count: 0 };
-      const [row] = await db.select({ count: sql<number>`count(*)` }).from(cartItems).where(eq(cartItems.userId, ctx.user.id));
-      return { count: Number(row?.count ?? 0) };
+      const [cartRow] = await db.select({ count: sql<number>`count(*)` }).from(cartItems).where(eq(cartItems.userId, ctx.user.id));
+      const [auctionRow] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders).where(and(
+        eq(marketplaceOrders.buyerId, ctx.user.id),
+        eq(marketplaceOrders.orderSource, 'auction'),
+        eq(marketplaceOrders.orderStatus, 'pending_payment'),
+      ));
+      return { count: Number(cartRow?.count ?? 0) + Number(auctionRow?.count ?? 0) };
     }),
 
   isInCart: protectedProcedure
@@ -5644,5 +5649,49 @@ IMPORTANT:
         cancelledOrdersCount: ordersToCancel.length,
         skippedCount: input.ids.length - deletableIds.length,
       };
+    }),
+
+  /**
+   * Get buyer's pending auction orders (orderSource='auction', orderStatus='pending_payment')
+   * These appear in the cart alongside regular cart items so the buyer can pay from one place.
+   */
+  getMyPendingAuctionOrders: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const rows = await db
+        .select({
+          orderId: marketplaceOrders.id,
+          orderNo: marketplaceOrders.orderNo,
+          listingId: marketplaceOrders.listingId,
+          auctionListingId: marketplaceOrders.auctionListingId,
+          subtotalHkd: marketplaceOrders.subtotalHkd,
+          orderStatus: marketplaceOrders.orderStatus,
+          createdAt: marketplaceOrders.createdAt,
+          sellerType: marketplaceOrders.sellerType,
+          sellerId: marketplaceOrders.sellerId,
+          // Listing info
+          title: marketplaceListings.title,
+          images: marketplaceListings.images,
+          condition: marketplaceListings.condition,
+          listingMode: marketplaceListings.listingMode,
+          auctionEndAt: marketplaceListings.auctionEndAt,
+          // Seller info
+          sellerDisplayName: sellerProfiles.displayName,
+        })
+        .from(marketplaceOrders)
+        .innerJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
+        .leftJoin(sellerProfiles, eq(marketplaceListings.sellerId, sellerProfiles.id))
+        .where(and(
+          eq(marketplaceOrders.buyerId, ctx.user.id),
+          eq(marketplaceOrders.orderSource, 'auction'),
+          eq(marketplaceOrders.orderStatus, 'pending_payment'),
+        ))
+        .orderBy(desc(marketplaceOrders.createdAt));
+      return rows.map(row => ({
+        ...row,
+        subtotalHkd: row.subtotalHkd ? String(row.subtotalHkd) : '0',
+        isAuctionOrder: true as const,
+      }));
     }),
 });
