@@ -3471,7 +3471,10 @@ export default function SellerDashboard() {
                         </div>
                         <div className="flex items-center justify-between px-4 py-3">
                           <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.auctions.editRejected.auctionEndLabel")}</span>
-                          <span className="text-sm text-[#06038D]">{listingForm.auctionEndAt ? new Date(listingForm.auctionEndAt).toLocaleString('zh-HK') : '-'}</span>
+                          <span className="text-sm text-[#06038D]">{listingForm.auctionEndAt
+                            ? new Date(listingForm.auctionEndAt).toLocaleString('zh-HK')
+                            : new Date(Date.now() + (listingForm.auctionDurationDays || 7) * 24 * 60 * 60 * 1000).toLocaleString('zh-HK') + '（審核通過後起算）'
+                          }</span>
                         </div>
                       </>
                     )}
@@ -3581,7 +3584,12 @@ export default function SellerDashboard() {
                         const [hh, mm] = listingForm.auctionStartAt.split(':').map(Number);
                         return new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
                       })(),
-                      auctionEndAt: new Date(listingForm.auctionEndAt),
+                      auctionEndAt: (() => {
+                        // If auctionEndAt is set, use it; otherwise calculate from now + duration
+                        if (listingForm.auctionEndAt) return new Date(listingForm.auctionEndAt);
+                        const now = new Date();
+                        return new Date(now.getTime() + (listingForm.auctionDurationDays || 7) * 24 * 60 * 60 * 1000);
+                      })(),
                     });
                   } else {
                     const payload = {
