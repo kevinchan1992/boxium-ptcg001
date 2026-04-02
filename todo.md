@@ -7640,3 +7640,48 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 重新設計 Tab 切換：在售商品、進行中拍賣、買家評價
 - [x] 重新設計商品卡片：圖片、標題、價格、狀態標籤
 - [x] 響應式設計：手機、平板、桌面端
+
+## 🐛 移除所有商品的鎖定邏輯（先到先得）
+- [ ] 找出所有設定 status='reserved' 的地方（createOrder、acceptOffer、checkoutCart）
+- [ ] 修復 db.ts reserveListingStock：不再設定 reserved，只扣庫存不鎖定
+- [ ] 修復 marketplace.ts：移除所有 reserved 相關邏輯
+- [ ] 修復 claimListingAsSold：只接受 active 狀態，不再接受 reserved
+- [ ] 修復 restoreListingStock：不再處理 reserved → active 轉換
+- [ ] 更新前端：移除鎖定狀態顯示（isLocked、倍計時等）
+
+
+---
+
+## ✅ 實現「先到先得」庫存模型：移除 reserved 狀態
+
+### 目標
+移除所有前端「reserved 狀態」UI 元素，實現真正的先到先得模型：商品不再在訂單創建時鎖定，只在付款成功或爭議發生時才鎖定庫存。
+
+### 任務清單
+- [x] 移除 AdminMarketplace.tsx 中的 'reserved' 狀態篩選器和 UI 元素
+- [x] 移除 Cart.tsx 中 activeItems 和 unavailableItems 過濾器的 'reserved' 狀態
+- [x] 移除 MarketplaceListing.tsx 中的 isLocked 檢查和「🔒 鎖定中」提示
+- [x] 更新 SellerDashboard.tsx 註釋（reserved → sold）
+- [x] 後端已完成（db.ts 和 marketplace.ts 已移除 reserveListingStock 調用）
+- [x] TypeScript 編譯通過（0 errors）
+- [x] 保存 checkpoint
+
+### 實施詳情
+**後端修改（已完成）：**
+- 移除 createOrder 和 checkoutCart 中的 reserveListingStock 調用
+- 保留 claimListingAsSold 用於付款成功時的原子庫存扣減
+- 移除 getActiveOrderByListingId 檢查（不再需要鎖定檢查）
+- 實現買家專屬的重複訂單防護
+
+**前端修改（本次完成）：**
+- AdminMarketplace.tsx：移除所有 'reserved' 狀態相關的顏色、標籤、篩選器
+- Cart.tsx：activeItems 和 unavailableItems 過濾器不再包含 'reserved' 狀態
+- MarketplaceListing.tsx：移除 isLocked 變量和「🔒 鎖定中」提示橫幅
+- SellerDashboard.tsx：更新註釋文字（reserved → sold）
+
+### 測試結果
+- ✅ TypeScript 編譯通過（0 errors）
+- ✅ 開發伺服器正常運行
+- ✅ 所有 reserved 相關 UI 元素已移除
+- ✅ 保留的 🔒 圖標僅用於順豐智能櫃和拍賣規則說明（與訂單鎖定無關）
+

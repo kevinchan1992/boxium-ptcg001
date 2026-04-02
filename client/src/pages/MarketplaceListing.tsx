@@ -691,7 +691,7 @@ export default function MarketplaceListing() {
   // If buyer has an accepted offer, use offer price for payment buttons
   const acceptedOffer = myPendingOffer?.status === "accepted" ? myPendingOffer : null;
   const effectivePrice = acceptedOffer ? parseFloat(acceptedOffer.offerPriceHkd as string) : price;
-  const isLocked = !!(listing as any).isLocked;
+
   const rawImages = listing.images;
   const images: string[] | null = (() => {
     if (!rawImages) return null;
@@ -940,13 +940,7 @@ export default function MarketplaceListing() {
                     <span>請先<Link href="/login" className="font-semibold underline mx-1">登入</Link>才能購買</span>
                   </div>
                 )}
-                {/* Listing locked notice - another user is paying */}
-                {isLocked && !acceptedOffer && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-sm text-orange-800 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{t("marketplaceListing.purchase.pendingPayment")}</span>
-                  </div>
-                )}
+
                 {/* Accepted offer banner */}
                 {acceptedOffer && (
                   <div className="w-full rounded-xl border-2 border-green-400 bg-green-50 p-3">

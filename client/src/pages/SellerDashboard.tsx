@@ -2915,7 +2915,7 @@ export default function SellerDashboard() {
               </div>
             )}
 
-            {/* Warning: listing has active orders (remainingQuantity < quantity means stock was reserved) */}
+            {/* Warning: listing has active orders (remainingQuantity < quantity means stock was sold) */}
             {editingListing && editingListing.remainingQuantity !== undefined && editingListing.remainingQuantity < editingListing.quantity && (
               <div className="flex items-start gap-2 p-3 rounded-xl border border-amber-200 bg-amber-50">
                 <span className="text-amber-500 mt-0.5 flex-shrink-0">⚠️</span>

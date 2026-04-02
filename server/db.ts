@@ -3259,37 +3259,35 @@ export async function updateListing(id: number, data: Partial<InsertMarketplaceL
 }
 
 /**
- * Atomic stock reservation — prevents overselling via SQL-level WHERE guard.
- * Returns true if stock was successfully reserved, false if insufficient stock.
- * For quantity=1 listings, also marks status as 'sold'.
+ * Check stock availability without locking (first-come-first-served).
+ * Returns true if stock is available, false if insufficient stock.
+ * Products are NOT locked until payment is confirmed (claimListingAsSold).
+ * Only disputes trigger a 'reserved' lock (handled separately by admin).
  */
 export async function reserveListingStock(listingId: number, quantity: number): Promise<boolean> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // Atomic UPDATE: only succeeds if listing is active AND has enough quantity.
-  // For quantity=1 listings, set status='reserved' to indicate the item is locked
-  // by a pending order. Status changes to 'sold' only after payment confirmation.
-  // This prevents other buyers from purchasing while showing admin the item is locked.
-  const result = await db.execute(
-    sql`UPDATE marketplaceListings
-        SET quantity = quantity - ${quantity},
-            remainingQuantity = remainingQuantity - ${quantity},
-            status = CASE WHEN (quantity - ${quantity}) <= 0 THEN 'reserved' ELSE status END,
-            updatedAt = NOW()
-        WHERE id = ${listingId}
-          AND status = 'active'
-          AND quantity >= ${quantity}`
-  );
-  // MySQL returns affectedRows; if 0, the WHERE guard failed (sold out or inactive)
-  const affectedRows = (result as any)?.[0]?.affectedRows ?? (result as any)?.affectedRows ?? 0;
-  return affectedRows > 0;
+  // Just check availability — do NOT change status or deduct quantity here.
+  // Stock is only deducted atomically when payment succeeds (claimListingAsSold).
+  const rows = await db
+    .select({ qty: marketplaceListings.quantity })
+    .from(marketplaceListings)
+    .where(
+      and(
+        eq(marketplaceListings.id, listingId),
+        eq(marketplaceListings.status, 'active'),
+        gte(marketplaceListings.quantity, quantity)
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
 }
 
 /**
  * Atomically claim a listing as sold on payment success (first-pay-first-served).
  * Returns true if this caller was first to claim (stock decremented and status set to 'sold').
  * Returns false if another payment already claimed the stock (oversell protection).
- * Accepts both 'active' and 'reserved' status to handle batch-checkout items.
+ * Only accepts 'active' status (no 'reserved' for normal purchases).
  */
 export async function claimListingAsSold(listingId: number, quantity: number): Promise<boolean> {
   const db = await getDb();
@@ -3301,7 +3299,7 @@ export async function claimListingAsSold(listingId: number, quantity: number): P
             status = 'sold',
             updatedAt = NOW()
         WHERE id = ${listingId}
-          AND status IN ('active', 'reserved')
+          AND status = 'active'
           AND quantity >= ${quantity}`
   );
   const affectedRows = (result as any)?.[0]?.affectedRows ?? (result as any)?.affectedRows ?? 0;
@@ -3311,6 +3309,7 @@ export async function claimListingAsSold(listingId: number, quantity: number): P
 /**
  * Restore listing stock after order cancellation / payment timeout.
  * Re-activates the listing if it was marked as sold.
+ * Note: Since normal purchases don't lock stock, this is only needed when payment fails.
  */
 export async function restoreListingStock(listingId: number, quantity: number): Promise<void> {
   const db = await getDb();
@@ -3319,7 +3318,7 @@ export async function restoreListingStock(listingId: number, quantity: number): 
     sql`UPDATE marketplaceListings
         SET quantity = quantity + ${quantity},
             remainingQuantity = remainingQuantity + ${quantity},
-            status = CASE WHEN status IN ('reserved', 'sold') THEN 'active' ELSE status END,
+            status = CASE WHEN status = 'sold' THEN 'active' ELSE status END,
             updatedAt = NOW()
         WHERE id = ${listingId}`
   );

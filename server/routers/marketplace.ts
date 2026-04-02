@@ -180,10 +180,8 @@ export const marketplaceRouter = router({
           avatarUrl: sp.avatarUrl ?? null,
         };
       }
-      // Check if listing is locked (has a pending_payment order)
-      const activeOrder = listing.status === "active" ? await getActiveOrderByListingId(input.id) : null;
-      const isLocked = !!activeOrder;
-      return { ...listing, sellerProfile, isLocked };
+      // First-come-first-served: no locking, buyers compete at payment time
+      return { ...listing, sellerProfile };
     }),
 
   // ============================================================
@@ -208,9 +206,9 @@ export const marketplaceRouter = router({
       const listing = await getListingById(input.listingId);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
       if (listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架或售出" });
-      // Atomic stock reservation — prevents overselling under concurrent requests
-      const reserved = await reserveListingStock(listing.id, input.quantity ?? 1);
-      if (!reserved) throw new TRPCError({ code: "BAD_REQUEST", message: "庫存不足，商品可能已被其他買家搶購" });
+      // First-come-first-served: check availability but don't lock stock
+      const available = await reserveListingStock(listing.id, input.quantity ?? 1);
+      if (!available) throw new TRPCError({ code: "BAD_REQUEST", message: "庫存不足，商品可能已被其他買家搶購" });
 
       const price = parseFloat(listing.priceHkd as string);
       const subtotal = price * input.quantity;
@@ -2147,14 +2145,7 @@ export const marketplaceRouter = router({
             alipayProofImageUrl: null,
             aiVerificationResult: null,
           });
-          if (targetOrder.listingId) {
-            try {
-              await restoreListingStock(targetOrder.listingId, targetOrder.quantity ?? 1);
-              console.log(`[AdminCancel] Restored listing ${targetOrder.listingId} stock for order ${targetOrder.orderNo}`);
-            } catch (relistErr: any) {
-              console.warn(`[AdminCancel] Failed to restore listing stock for order ${targetOrder.orderNo}:`, relistErr.message);
-            }
-          }
+          // No need to restore stock — first-come-first-served, stock never locked
           // Cancel associated accepted offers
           try {
             await db.update(offers)
@@ -2167,15 +2158,7 @@ export const marketplaceRouter = router({
       } else {
         // Single order update (non-cancel or no batchRef)
         await updateMarketplaceOrder(input.orderId, updates);
-        // When cancelling, restore listing stock
-        if (input.orderStatus === "cancelled" && order.listingId) {
-          try {
-            await restoreListingStock(order.listingId, order.quantity ?? 1);
-            console.log(`[AdminCancel] Restored listing ${order.listingId} stock for cancelled order ${order.orderNo}`);
-          } catch (relistErr: any) {
-            console.warn("[AdminCancel] Failed to restore listing stock:", relistErr.message);
-          }
-        }
+        // No need to restore stock — first-come-first-served, stock never locked
       }
 
       const cancelledCount = input.orderStatus === "cancelled" ? batchOrderIds.length : 1;
@@ -2426,10 +2409,10 @@ export const marketplaceRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "商品不存在或已售出" });
       }
       // Check if listing is locked by another user's pending order
-      const activeOrder = await getActiveOrderByListingId(input.listingId);
-      if (activeOrder && activeOrder.buyerId !== ctx.user.id) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "此商品目前有其他買家正在進行付款，請稍後再試。" });
-      }
+      // First-come-first-served: no locking, buyers compete at payment time
+      // Check if this buyer has an existing pending order for idempotency
+      const existingOrder = await getActiveOrderByListingId(input.listingId);
+      const activeOrder = existingOrder?.buyerId === ctx.user.id ? existingOrder : null;
       // Determine effective price: use offer price if offerId provided
       let effectivePrice = parseFloat(listing.priceHkd as string);
       let offerRecord: any = null;
@@ -2454,12 +2437,7 @@ export const marketplaceRouter = router({
         });
       }
 
-      // ── If buyer has an existing Alipay pending order, cancel it first (payment method switch) ──
-      if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'alipay_hk') {
-        await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', paymentStatus: 'cancelled', updatedAt: new Date() });
-        // Single-item Alipay orders don't call reserveListingStock, so no stock to restore here.
-        console.log(`[createStripeOrder] Cancelled existing Alipay order ${activeOrder.orderNo} for payment method switch`);
-      }
+      // No need to check for existing orders — first-come-first-served
 
       // ── Idempotency: reuse existing pending_payment Stripe order for same buyer+listing ──
       // This prevents duplicate orders when user closes checkout and clicks pay again
@@ -2719,10 +2697,10 @@ All three checks must pass for verified to be true. Respond with JSON only match
         throw new TRPCError({ code: "BAD_REQUEST", message: "個人賣家商品僅支援 Stripe 信用卡付款，不支援支付寶 HK。" });
       }
       // Check if listing is locked by another user's pending order
-      const activeOrder = await getActiveOrderByListingId(input.listingId);
-      if (activeOrder && activeOrder.buyerId !== ctx.user.id) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "此商品目前有其他買家正在進行付款，請稍後再試。" });
-      }
+      // First-come-first-served: no locking, buyers compete at payment time
+      // Check if this buyer has an existing pending order for idempotency
+      const existingOrder = await getActiveOrderByListingId(input.listingId);
+      const activeOrder = existingOrder?.buyerId === ctx.user.id ? existingOrder : null;
       // Determine effective price: use offer price if offerId provided
       let effectivePrice = parseFloat(listing.priceHkd as string);
       if (input.offerId) {
@@ -2899,22 +2877,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         if (!listing || listing.status !== "active" || listing.quantity < 1) {
           throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing?.title ?? item.listingId}」不存在或已售出` });
         }
-        // Check if locked by another user
-        const activeOrder = await getActiveOrderByListingId(item.listingId);
-        if (activeOrder && activeOrder.buyerId !== ctx.user.id) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」目前有其他買家正在付款，請稍後再試。` });
-        }
-        // Cancel any existing pending orders for this listing by this buyer (payment method switch)
-        if (activeOrder && activeOrder.buyerId === ctx.user.id) {
-          await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', paymentStatus: 'cancelled', updatedAt: new Date() });
-          // Batch orders DO call reserveListingStock, so restore stock when cancelling old batch order.
-          try {
-            await restoreListingStock(item.listingId, 1);
-            console.log(`[createBatchStripeOrder] Restored stock for listing ${item.listingId} after cancelling old order ${activeOrder.orderNo}`);
-          } catch (restoreErr: any) {
-            console.warn(`[createBatchStripeOrder] Failed to restore stock for listing ${item.listingId}:`, restoreErr.message);
-          }
-        }
+        // First-come-first-served: no locking, no need to check or cancel existing orders
 
         let effectivePrice = parseFloat(listing.priceHkd as string);
         let offerRecord: any = null;
@@ -2959,27 +2922,12 @@ All three checks must pass for verified to be true. Respond with JSON only match
         paymentStatus: "pending",
       });
 
-      // Step 3.5: Atomic stock reservation for ALL items (prevents overselling)
-      const reservedListingIds: number[] = [];
-      try {
-        for (const { listing } of orderItems) {
-          const reserved = await reserveListingStock(listing.id, 1);
-          if (!reserved) {
-            // Rollback already-reserved items
-            for (const lid of reservedListingIds) {
-              await restoreListingStock(lid, 1).catch(() => {});
-            }
-            throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」庫存不足，可能已被其他買家搶購` });
-          }
-          reservedListingIds.push(listing.id);
+      // Step 3.5: Check stock availability for ALL items (first-come-first-served)
+      for (const { listing } of orderItems) {
+        const available = await reserveListingStock(listing.id, 1);
+        if (!available) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」庫存不足，可能已被其他買家搶購` });
         }
-      } catch (err) {
-        if (err instanceof TRPCError) throw err;
-        // Rollback on unexpected error
-        for (const lid of reservedListingIds) {
-          await restoreListingStock(lid, 1).catch(() => {});
-        }
-        throw err;
       }
 
       // Step 4: Create all sub-orders in DB with pending_payment status
@@ -3141,35 +3089,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         if (!listing || listing.status !== "active" || listing.quantity < 1) {
           throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing?.title ?? item.listingId}」不存在或已售出` });
         }
-        const activeOrder = await getActiveOrderByListingId(item.listingId);
-        if (activeOrder && activeOrder.buyerId !== ctx.user.id) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」目前有其他買家正在付款，請稍後再試。` });
-        }
-        // Cancel any existing pending orders (payment method switch)
-        if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'stripe') {
-          await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', paymentStatus: 'cancelled', updatedAt: new Date() });
-          // Batch Stripe orders DO call reserveListingStock, so restore stock when cancelling old batch Stripe order.
-          try {
-            await restoreListingStock(item.listingId, 1);
-            console.log(`[createBatchAlipayOrder] Restored stock for listing ${item.listingId} after cancelling old Stripe order ${activeOrder.orderNo}`);
-          } catch (restoreErr: any) {
-            console.warn(`[createBatchAlipayOrder] Failed to restore stock for listing ${item.listingId}:`, restoreErr.message);
-          }
-        }
-        // Reuse existing alipay pending order (no new stock reservation needed)
-        if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'alipay_hk') {
-          await updateMarketplaceOrder(activeOrder.id, {
-            alipayProofImageUrl: input.proofImageUrl,
-            shippingName: input.shippingAddress?.name ?? null,
-            shippingPhone: input.shippingAddress?.phone ?? null,
-            shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
-            updatedAt: new Date(),
-          });
-          const price = parseFloat(activeOrder.subtotalHkd as string);
-          createdOrders.push({ orderNo: activeOrder.orderNo, listingTitle: listing.title, effectivePrice: price });
-          totalAmount += price;
-          continue;
-        }
+        // First-come-first-served: no locking, no need to check or cancel existing orders
 
         let effectivePrice = parseFloat(listing.priceHkd as string);
         if (item.offerId) {
@@ -3185,25 +3105,12 @@ All three checks must pass for verified to be true. Respond with JSON only match
         itemsToCreate.push({ listing, effectivePrice, offerId: item.offerId });
       }
 
-      // Atomic stock reservation for new items (prevents overselling)
-      const reservedListingIds: number[] = [];
-      try {
-        for (const { listing } of itemsToCreate) {
-          const reserved = await reserveListingStock(listing.id, 1);
-          if (!reserved) {
-            for (const lid of reservedListingIds) {
-              await restoreListingStock(lid, 1).catch(() => {});
-            }
-            throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」庫存不足，可能已被其他買家搶購` });
-          }
-          reservedListingIds.push(listing.id);
+      // Check stock availability for new items (first-come-first-served, no locking)
+      for (const { listing } of itemsToCreate) {
+        const available = await reserveListingStock(listing.id, 1);
+        if (!available) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」庫存不足，可能已被其他買家搶購` });
         }
-      } catch (err) {
-        if (err instanceof TRPCError) throw err;
-        for (const lid of reservedListingIds) {
-          await restoreListingStock(lid, 1).catch(() => {});
-        }
-        throw err;
       }
 
       // Create new orders for items that need them

@@ -146,12 +146,12 @@ export default function Cart() {
   const activeItems = useMemo(
     // Items are "active" if the listing is active, OR if the buyer already has a pending_payment
     // order for this listing (meaning they checked out but haven't paid yet).
-    () => (cartItems ?? []).filter((item) => item.status === "active" || item.status === "reserved" || (item as any).hasPendingOrder),
+    () => (cartItems ?? []).filter((item) => item.status === "active" || (item as any).hasPendingOrder),
     [cartItems]
   );
 
   const unavailableItems = useMemo(
-    () => (cartItems ?? []).filter((item) => item.status !== "active" && item.status !== "reserved" && !(item as any).hasPendingOrder),
+    () => (cartItems ?? []).filter((item) => item.status !== "active" && !(item as any).hasPendingOrder),
     [cartItems]
   );
 

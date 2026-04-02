@@ -773,8 +773,8 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap pt-1">
-                        <Badge className={listing.status === 'active' ? 'bg-green-100 text-green-800' : listing.status === 'reserved' ? 'bg-amber-100 text-amber-800' : listing.status === 'sold' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
-                          {listing.status === 'active' ? '上架中' : listing.status === 'reserved' ? '🔒 鎖定中' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
+                        <Badge className={listing.status === 'active' ? 'bg-green-100 text-green-800' : listing.status === 'sold' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
+                          {listing.status === 'active' ? '上架中' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
                         </Badge>
                         {(listing as any).adminDelisted && (
                           <Badge className="bg-red-600 text-white font-bold border-0">
@@ -849,15 +849,15 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                     </div>
                     <div className="p-4">
                       <div className="flex flex-wrap gap-2">
-                        {['active', 'reserved', 'draft', 'removed'].map(s => (
+                        {['active', 'draft', 'removed'].map(s => (
                           <Button key={s} size="sm"
                             variant={listing.status === s ? 'default' : 'outline'}
                             className={listing.status === s
-                              ? (s === 'reserved' ? 'bg-amber-600 text-white' : 'bg-[#06038d] text-white')
-                              : (s === 'reserved' ? 'border-amber-400 text-amber-700 hover:bg-amber-50' : 'border-[#06038d]/30 text-[#06038d] hover:bg-[#06038d]/10')}
+                              ? ('bg-[#06038d] text-white')
+                              : ('border-[#06038d]/30 text-[#06038d] hover:bg-[#06038d]/10')}
                             disabled={listing.status === s || updateMutation.isPending}
                             onClick={() => updateMutation.mutate({ id: listingId!, status: s as any })}>
-                            {s === 'active' ? '上架中' : s === 'reserved' ? '🔒 鎖定中' : s === 'draft' ? '草稿' : '已下架'}
+                            {s === 'active' ? '上架中' : s === 'draft' ? '草稿' : '已下架'}
                           </Button>
                         ))}
                       </div>
@@ -1102,13 +1102,13 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
       <div className="flex items-center gap-2">
         {/* Filter tabs - horizontally scrollable on tablet to prevent overflow */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 flex-1 min-w-0" style={{scrollbarWidth:'none', msOverflowStyle:'none'}}>
-          {["all", "active", "reserved", "draft", "sold", "removed", "admin_delisted", "anomalous"].map(s => (
+          {["all", "active", "draft", "sold", "removed", "admin_delisted", "anomalous"].map(s => (
             <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
               onClick={() => { setStatusFilter(s); setPage(1); setSelectedIds(new Set()); }}
               className={`flex-shrink-0 text-xs h-8 px-2.5 ${statusFilter === s
-                ? (s === 'reserved' ? 'bg-amber-600 text-white' : s === 'admin_delisted' ? 'bg-red-600 text-white' : s === 'anomalous' ? 'bg-orange-600 text-white' : 'bg-[#06038d] text-white')
-                : (s === 'reserved' ? 'text-amber-700 bg-amber-50 border-amber-300' : s === 'admin_delisted' ? 'text-red-700 bg-red-50 border-red-300' : s === 'anomalous' ? 'text-orange-700 bg-orange-50 border-orange-300' : 'text-gray-700 bg-white')}`}>
-              {s === "all" ? "全部" : s === "active" ? "上架中" : s === "reserved" ? "🔒鎖定" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : s === "admin_delisted" ? "🚫強制下架" : s === "anomalous" ? "⚠️異常" : "已下架"}
+                ? (s === 'admin_delisted' ? 'bg-red-600 text-white' : s === 'anomalous' ? 'bg-orange-600 text-white' : 'bg-[#06038d] text-white')
+                : (s === 'admin_delisted' ? 'text-red-700 bg-red-50 border-red-300' : s === 'anomalous' ? 'text-orange-700 bg-orange-50 border-orange-300' : 'text-gray-700 bg-white')}`}>
+              {s === "all" ? "全部" : s === "active" ? "上架中" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : s === "admin_delisted" ? "🚫強制下架" : s === "anomalous" ? "⚠️異常" : "已下架"}
             </Button>
           ))}
         </div>
@@ -1233,11 +1233,10 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
                   ) : (
                     <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${
                       listing.status === 'active' ? 'bg-green-200 text-green-900' :
-                      listing.status === 'reserved' ? 'bg-amber-200 text-amber-900' :
                       listing.status === 'sold' ? 'bg-gray-300 text-gray-800' :
                       'bg-red-200 text-red-900'
                     }`}>
-                      {listing.status === 'active' ? '上架中' : listing.status === 'reserved' ? '🔒鎖定' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
+                      {listing.status === 'active' ? '上架中' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
                     </span>
                   )}
                   <span className="text-white/70 text-[10px] whitespace-nowrap hidden sm:inline">{new Date(listing.createdAt).toLocaleDateString('zh-HK')}</span>
