@@ -7374,3 +7374,21 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復 finalizeAuction：加入 try-catch，訂單建立失敗時記錄 CRITICAL 日誌
 - [x] 新增「孤立拍賣訂單修復」排程任務（每 2 小時自動檢查並補建）
 - [x] 儲存 checkpoint
+
+## 🐛 修復「上架新商品」第二步提交驗證錯誤
+
+### 問題描述
+用戶在「上架新商品」第二步「定價定性」填寫完畢後，點擊「提交審核」按鈕時出現驗證錯誤：
+```json
+[{ "origin": "string", "code": "too_small", "minimum": 3, "inclusive": true, "path": ["title"], "message": "Too small: expected string to have >=3 characters" }]
+```
+
+### 診斷步驟
+- [ ] 檢查第二步表單提交的數據結構
+- [ ] 確認 title 欄位是否正確傳遞
+- [ ] 檢查後端 createListing API 的驗證邏輯
+- [ ] 測試修復結果
+
+### 修復任務
+- [ ] 修復表單數據傳遞邏輯
+- [ ] 保存 checkpoint

@@ -3098,6 +3098,9 @@ export default function SellerDashboard() {
                   <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder={t("seller.newListing.productNamePlaceholder")}
                     value={listingForm.title}
                     onChange={(e) => setListingForm(p => ({ ...p, title: e.target.value }))} />
+                  {listingForm.title && listingForm.title.trim().length < 3 && (
+                    <p className="text-xs text-red-500 mt-1">商品名稱至少需要 3 個字元</p>
+                  )}
                 </div>
                 <div>
                   <Label className="text-[#06038D] font-semibold">{t("seller.newListing.productDescription")}</Label>
@@ -3541,7 +3544,7 @@ export default function SellerDashboard() {
               <Button
                 className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
                 disabled={
-                  listingStep === 1 ? !listingForm.title :
+                  listingStep === 1 ? (!listingForm.title || listingForm.title.trim().length < 3) :
                   listingStep === 2 ? (
                     listingForm.listingMode === 'auction'
                       ? !listingForm.startingBid
