@@ -7318,3 +7318,29 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] Webhook 更新：batch checkout 處理拍賣訂單時同步更新 auctionPaymentStatus=paid
 - [x] 購物車 UI：訂單摘要顯示市集商品小計 + 拍賣得標小計 + 合計；結帳確認頁同步顯示
 - [x] 11 項單元測試全部通過（auction-features.test.ts）
+
+
+---
+
+## 🔨 競標封禁提示 + Web Push 推播通知（2026-04-02）
+
+- [ ] 競標前封禁提示：出價頁面加入即時封禁狀態檢查
+- [ ] 競標前封禁提示：顯示封禁原因（no_payment 違約）及解封時間
+- [ ] Web Push：VAPID 金鑰生成及環境變數設定
+- [ ] Web Push：資料庫新增 pushSubscriptions 表
+- [ ] Web Push：後端訂閱管理 API（subscribe/unsubscribe）
+- [ ] Web Push：前端 Service Worker 及訂閱流程
+- [ ] Web Push：得標時發送推播通知
+- [ ] 撰寫測試並儲存 checkpoint
+
+
+---
+
+## ✅ 競標前封禁提示（2026-04-02）
+
+- [x] auction router 新增 `getMyBanStatus` endpoint（返回封禁狀態、原因、解封時間、違約次數）
+- [x] AuctionDetail BidPanel 加入即時封禁狀態查詢（staleTime 30s）
+- [x] 封禁時顯示紅色警告框：封禁原因、解封時間、累計違約次數
+- [x] 有警告但未封禁時顯示黃色提示框：提醒付款規則
+- [x] 封禁時禁用「出價」及「立即購買」按鈕
+- [x] 撰寫 9 項單元測試，全部通過

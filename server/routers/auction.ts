@@ -490,6 +490,43 @@ export const auctionRouter = router({
       return getViolationsByUserId(ctx.user.id);
     }),
 
+  /** Get current user's active ban status with full details (for bid page pre-check) */
+  getMyBanStatus: protectedProcedure
+    .query(async ({ ctx }) => {
+      const violations = await getViolationsByUserId(ctx.user.id);
+      const now = new Date();
+      // Find the most severe active ban
+      const penaltyOrder: Record<string, number> = { permanent: 0, ban_30d: 1, ban_7d: 2, warning: 3 };
+      const activeBan = violations
+        .filter(v => {
+          if (v.penalty === 'permanent') return true;
+          if ((v.penalty === 'ban_7d' || v.penalty === 'ban_30d') && v.banExpiresAt) {
+            return new Date(v.banExpiresAt) > now;
+          }
+          return false;
+        })
+        .sort((a, b) => (penaltyOrder[a.penalty] ?? 9) - (penaltyOrder[b.penalty] ?? 9))[0];
+
+      const warningCount = violations.filter(v => v.penalty === 'warning').length;
+      const noPaymentCount = violations.filter(v => v.type === 'no_payment').length;
+
+      if (!activeBan) {
+        return { isBanned: false, warningCount, noPaymentCount, activeBan: null };
+      }
+      return {
+        isBanned: true,
+        warningCount,
+        noPaymentCount,
+        activeBan: {
+          penalty: activeBan.penalty as string,
+          type: activeBan.type as string,
+          banExpiresAt: activeBan.banExpiresAt,
+          createdAt: activeBan.createdAt,
+          adminNote: activeBan.adminNote,
+        },
+      };
+    }),
+
   /** Seller: get their own auction listings */
   sellerAuctions: protectedProcedure
     .input(z.object({

@@ -314,7 +314,7 @@ function AuctionReviewDialog({
   );
 }
 
-// ─── Bid Panel ────────────────────────────────────────────────────────────────
+/// ─── Bid Panel ────────────────────────────────────────────────────────────────
 function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onRefetch: () => void }) {
   const { t } = useTranslation();
   const { data: me } = trpc.auth.me.useQuery();
@@ -324,10 +324,14 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
   const [showTerms, setShowTerms] = useState(false);
   const [pendingAction, setPendingAction] = useState<'bid' | 'buynow' | null>(null);
   const pendingBidAmountRef = useRef<number | null>(null);
-
   const { data: termsData, refetch: refetchTerms } = trpc.auction.checkTermsAgreement.useQuery(
     { role: 'buyer' },
     { enabled: !!user }
+  );
+  // Pre-check ban status so user sees it immediately before trying to bid
+  const { data: banStatus } = trpc.auction.getMyBanStatus.useQuery(
+    undefined,
+    { enabled: !!user, staleTime: 30_000 }
   );
 
   const placeBidMutation = trpc.auction.placeBid.useMutation({
@@ -439,6 +443,40 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
         </div>
       )}
 
+      {/* Ban Alert - shown before bid input when user is banned */}
+      {user && banStatus?.isBanned && (
+        <div className="bg-red-50 border-2 border-red-400 rounded-2xl p-4 flex items-start gap-3">
+          <div className="w-9 h-9 bg-red-500 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+            <AlertTriangle className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-red-700">您的帳戶已被禁止參與拍賣</p>
+            <p className="text-xs text-red-600 mt-1 leading-relaxed">
+              原因：{banStatus.activeBan?.type === 'no_payment' ? '未在期限內完成付款' : banStatus.activeBan?.type === 'fake_bid' ? '虛假出價' : '違反拍賣規則'}
+              {banStatus.activeBan?.adminNote && ` — ${banStatus.activeBan.adminNote}`}
+            </p>
+            {banStatus.activeBan?.penalty === 'permanent' ? (
+              <p className="text-xs font-bold text-red-700 mt-1">永久封禁，請聯絡客服申訴</p>
+            ) : banStatus.activeBan?.banExpiresAt ? (
+              <p className="text-xs font-bold text-red-700 mt-1">
+                解封時間：{new Date(banStatus.activeBan.banExpiresAt).toLocaleString('zh-HK', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </p>
+            ) : null}
+            {banStatus.noPaymentCount > 0 && (
+              <p className="text-xs text-red-500 mt-1">累計未付款違約：{banStatus.noPaymentCount} 次</p>
+            )}
+          </div>
+        </div>
+      )}
+      {/* Warning notice - shown when user has warnings but not yet banned */}
+      {user && banStatus && !banStatus.isBanned && banStatus.warningCount > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 flex items-start gap-3">
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700 leading-relaxed">
+            <span className="font-bold">注意：</span>您有 {banStatus.warningCount} 次違約警告記錄。累計 3 次未付款將被封禁 30 天。請確保得標後在 24 小時內完成付款。
+          </p>
+        </div>
+      )}
       {/* Bid input */}
       {isActive && !isEnded && (
         <div className="space-y-3">
@@ -472,7 +510,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
                   </div>
                   <Button
                     onClick={() => handleBid()}
-                    disabled={placeBidMutation.isPending || isEnded}
+                    disabled={placeBidMutation.isPending || isEnded || !!banStatus?.isBanned}
                     className="bg-[#06038D] hover:bg-[#0804b8] text-white px-5 shrink-0 h-12 rounded-xl font-bold text-base"
                   >
                     {placeBidMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Gavel className="w-5 h-5" />}
@@ -510,7 +548,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
                 </div>
                 <Button
                   onClick={() => handleBuyNow()}
-                  disabled={buyNowMutation.isPending}
+                  disabled={buyNowMutation.isPending || !!banStatus?.isBanned}
                   className="bg-[#FEDD00] hover:bg-yellow-400 text-[#06038D] font-black px-5 rounded-xl h-12"
                 >
                   {buyNowMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-5 h-5" />}
