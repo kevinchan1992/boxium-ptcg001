@@ -29,6 +29,8 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import VerifyEmail from "./pages/VerifyEmail";
+import ResendVerification from "./pages/ResendVerification";
 import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
@@ -81,6 +83,8 @@ function Router() {
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/verify-email" component={VerifyEmail} />
+      <Route path="/resend-verification" component={ResendVerification} />
       <Route path="/profile" component={Profile} />
 
       <Route path="/admin">

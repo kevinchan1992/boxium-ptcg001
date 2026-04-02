@@ -1677,3 +1677,63 @@ export async function sendAuctionPaymentReminderEmail({
     return false;
   }
 }
+
+// ─── Email Verification ───────────────────────────────────────────────────────
+
+/**
+ * Send email verification link to a new user.
+ * Called when a user registers with email/password.
+ */
+export async function sendEmailVerificationEmail({
+  userId,
+  userName,
+  email,
+  verificationToken,
+  siteUrl = "https://boxium.asia",
+}: {
+  userId: number;
+  userName: string;
+  email: string;
+  verificationToken: string;
+  siteUrl?: string;
+}): Promise<boolean> {
+  const verifyUrl = `${siteUrl}/verify-email?token=${verificationToken}`;
+  const subject = `✉️ 請驗證您的 BOXIUM 電郵地址`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">請驗證您的電郵地址 ✉️</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${userName}</strong>，<br/>
+      感謝您註冊 BOXIUM PTCG！請點擊以下按鈕驗證您的電郵地址，完成帳號啟用。
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f1ff;border:1px solid #c8cbf0;border-radius:8px;margin:20px 0;">
+      <tr>
+        <td style="padding:16px 20px;">
+          <p style="margin:0;font-size:14px;color:#333;">
+            ⏰ 此驗證連結將於 <strong>24 小時</strong>後過期。<br/>
+            如果您沒有在 BOXIUM 註冊帳號，請忽略此電郵。
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    ${ctaButton("驗證電郵地址", verifyUrl)}
+
+    <p style="color:#999;font-size:12px;margin-top:24px;">
+      如果按鈕無法點擊，請複製以下連結到瀏覽器：<br/>
+      <a href="${verifyUrl}" style="color:#06038d;word-break:break-all;">${verifyUrl}</a>
+    </p>
+    <p style="color:#999;font-size:12px;margin-top:8px;text-align:center;">
+      如有任何問題，歡迎聯絡我們：<a href="mailto:boxium.asia@gmail.com" style="color:#06038d;">boxium.asia@gmail.com</a>
+    </p>
+  `);
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    emailType: 'email_verification',
+    toUserId: userId,
+    skipUnsubscribeCheck: true, // Always send verification emails
+    dedupeKey: `email_verification_${userId}_${verificationToken}`,
+  });
+}

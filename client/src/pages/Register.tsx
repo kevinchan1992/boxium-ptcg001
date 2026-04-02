@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { Mail, CheckCircle } from "lucide-react";
 
 export default function Register() {
   const { t } = useTranslation();
@@ -17,20 +18,34 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   const registerMutation = trpc.auth.register.useMutation({
-    onSuccess: () => {
-      toast.success(t("register.successToast"));
-      // Wait a bit to ensure cookie is set before redirecting
-      setTimeout(() => {
-        window.location.href = "/";
-        // Scroll to top after redirect
-        window.scrollTo(0, 0);
-      }, 100);
+    onSuccess: (data) => {
+      if (data.requiresEmailVerification) {
+        // Show verification pending screen
+        setRegisteredEmail(email);
+        setIsLoading(false);
+      } else {
+        // Fallback: direct login (shouldn't happen for password accounts)
+        toast.success(t("register.successToast"));
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 100);
+      }
     },
     onError: (error) => {
       toast.error(parseApiError(error));
       setIsLoading(false);
+    },
+  });
+
+  const resendMutation = trpc.auth.resendVerificationEmail.useMutation({
+    onSuccess: () => {
+      toast.success("驗證電郵已重新發送！");
+    },
+    onError: () => {
+      toast.error("發送失敗，請稍後再試");
     },
   });
 
@@ -73,6 +88,52 @@ export default function Register() {
       // Error handled in onError
     }
   };
+
+  // Show verification pending screen after successful registration
+  if (registeredEmail) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+        <Card className="w-full max-w-md text-center">
+          <CardHeader className="space-y-4">
+            <div className="flex justify-center">
+              <img src="/boxium-logo.png" alt="BOXIUM LOGO" className="h-16 w-auto" />
+            </div>
+            <div className="flex justify-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                <Mail className="h-8 w-8 text-blue-600" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-bold">請驗證您的電郵地址</CardTitle>
+            <CardDescription>
+              我們已發送驗證電郵至
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 pb-8">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="font-semibold text-blue-800 text-lg break-all">{registeredEmail}</p>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              請查看您的收件算（包括垃圾郵件），點擊驗證連結完成帳號啟用。<br />
+              驗證連結將於 <strong>24 小時</strong>後過期。
+            </p>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={resendMutation.isPending}
+              onClick={() => resendMutation.mutate({ email: registeredEmail })}
+            >
+              {resendMutation.isPending ? "發送中..." : (
+                <><Mail className="h-4 w-4 mr-2" />重新發送驗證電郵</>
+              )}
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={() => setLocation("/login")}>
+              返回登入
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">

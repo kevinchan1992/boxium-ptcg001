@@ -1,9 +1,17 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { eq } from "drizzle-orm";
+import crypto from "crypto";
 import { getDb } from "./db";
 import { users } from "../drizzle/schema_new";
 import type { User } from "../drizzle/schema_new";
+
+/**
+ * Generate a secure random email verification token
+ */
+export function generateEmailVerificationToken(): string {
+  return crypto.randomBytes(48).toString('hex');
+}
 
 const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -116,7 +124,11 @@ export async function registerUser(
   // Hash password
   const passwordHash = await hashPassword(password);
 
-  // Create user
+  // Generate email verification token (valid for 24 hours)
+  const emailVerificationToken = generateEmailVerificationToken();
+  const emailVerificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+  // Create user (NOT verified yet)
   const [newUser] = await db.insert(users).values({
     email,
     name: name || email.split("@")[0],
@@ -124,6 +136,8 @@ export async function registerUser(
     loginMethod: "password",
     role: "user",
     emailVerified: false,
+    emailVerificationToken,
+    emailVerificationExpiry,
   });
 
   // Fetch the created user
@@ -132,23 +146,22 @@ export async function registerUser(
     return { success: false, error: "創建用戶失敗" };
   }
 
-  // Generate token for automatic login after registration
-  const token = generateToken(createdUser[0]);
-
-  // Send welcome email asynchronously (don't block registration)
+  // Send verification email (don't block registration)
   const newUserRecord = createdUser[0];
   if (newUserRecord.email) {
-    import('./emailService').then(({ sendWelcomeEmail }) => {
-      sendWelcomeEmail({
+    import('./emailService').then(({ sendEmailVerificationEmail }) => {
+      sendEmailVerificationEmail({
         userId: newUserRecord.id,
         userName: newUserRecord.name || newUserRecord.email!.split('@')[0],
         email: newUserRecord.email!,
+        verificationToken: emailVerificationToken,
         siteUrl: 'https://boxium.asia',
-      }).catch((err: Error) => console.error('[Auth] Failed to send welcome email:', err));
+      }).catch((err: Error) => console.error('[Auth] Failed to send verification email:', err));
     });
   }
 
-  return { success: true, user: createdUser[0], token };
+  // Do NOT generate session token — user must verify email first
+  return { success: true, user: createdUser[0], token: undefined, requiresEmailVerification: true };
 }
 
 /**
@@ -157,7 +170,7 @@ export async function registerUser(
 export async function loginUser(
   email: string,
   password: string
-): Promise<{ success: boolean; user?: User; token?: string; error?: string }> {
+): Promise<{ success: boolean; user?: User; token?: string; error?: string; requiresEmailVerification?: boolean }> {
   const db = await getDb();
   if (!db) {
     return { success: false, error: "數據庫連接失敗" };
@@ -186,6 +199,11 @@ export async function loginUser(
   if ((user as any).isBlocked) {
     const reason = (user as any).blockReason;
     return { success: false, error: reason ? `帳號已被封鎖：${reason}` : "帳號已被封鎖，請聯絡客服" };
+  }
+
+  // Check if email is verified (only for password-based accounts)
+  if (!user.emailVerified) {
+    return { success: false, error: "EMAIL_NOT_VERIFIED", requiresEmailVerification: true };
   }
 
   // Update last signed in

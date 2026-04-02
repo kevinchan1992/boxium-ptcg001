@@ -67,6 +67,8 @@ export const users = mysqlTable("users", {
   phone: varchar("phone", { length: 30 }),
   isBlocked: boolean("isBlocked").default(false).notNull(),
   blockReason: text("blockReason"),
+  emailVerificationToken: varchar("emailVerificationToken", { length: 128 }), // Token for email verification (null after verified)
+  emailVerificationExpiry: timestamp("emailVerificationExpiry"), // Expiry time for the verification token
 });
 
 export type User = typeof users.$inferSelect;

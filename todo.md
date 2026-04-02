@@ -7814,3 +7814,78 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 #### 3. 完成
 - [ ] 儲存 checkpoint
 - [ ] 向用戶報告完成結果
+
+
+---
+
+## ✉️ Email 驗證功能（必須點擊連結才能完成註冊）
+
+### 需求
+- 用戶註冊後必須點擊驗證電郵中的連結，方可完成註冊
+- 未驗證前顯示「等待驗證」頁面，無法使用平台
+- 驗證完成後顯示成功訊息並返回主頁
+
+### 任務清單
+
+#### 1. 分析現有系統
+- [ ] 分析現有 OAuth 和密碼登入流程
+- [ ] 確認 emailVerified 欄位現狀
+
+#### 2. 資料庫 Schema 更新
+- [ ] 新增 emailVerificationToken 欄位（varchar 64）
+- [ ] 新增 emailVerificationExpiry 欄位（timestamp）
+- [ ] 執行 pnpm db:push
+
+#### 3. 後端實現
+- [ ] 用戶註冊時生成 token 並發送驗證電郵
+- [ ] 新增 GET /api/verify-email?token=xxx 路由
+- [ ] 驗證成功：設 emailVerified=true，清除 token
+- [ ] token 過期處理（24 小時）
+- [ ] 重新發送驗證電郵 API
+
+#### 4. 前端實現
+- [ ] 未驗證用戶登入後顯示「等待電郵驗證」頁面
+- [ ] 提供「重新發送驗證電郵」按鈕
+- [ ] /verify-email 頁面：處理驗證結果（成功/失敗/過期）
+- [ ] 驗證成功後顯示成功訊息並跳轉主頁
+
+#### 5. 測試
+- [ ] 撰寫單元測試
+- [ ] 儲存 checkpoint
+
+
+---
+
+## ✅ Email 驗證功能（必須點擊連結才能登入）
+
+### 目標
+用戶密碼註冊後必須點擊驗證電郵中的連結才能登入，未驗證前可瀏覽平台但無登入狀態。
+
+### 任務清單
+
+#### 1. 資料庫 Schema 更新
+- [x] 新增 `emailVerificationToken` 欄位（varchar 128）
+- [x] 新增 `emailVerificationExpiry` 欄位（timestamp）
+- [x] 執行 `pnpm db:push` 推送 Schema 變更
+
+#### 2. 後端邏輯
+- [x] `registerUser`：密碼註冊後不設置 session cookie，發送驗證電郵，返回 `requiresEmailVerification: true`
+- [x] `loginUser`：登入時檢查 `emailVerified`，未驗證則返回 `EMAIL_NOT_VERIFIED` 錯誤
+- [x] `sendEmailVerificationEmail`：新增驗證電郵模板（含 24 小時有效連結）
+- [x] `verifyEmail` procedure：驗證 token，成功後設 `emailVerified=true` 並清除 token
+- [x] `resendVerificationEmail` procedure：重新發送驗證電郵（僅限未驗證用戶）
+
+#### 3. 前端頁面
+- [x] `Register.tsx`：註冊後顯示「請驗證電郵」提示畫面（含重新發送按鈕）
+- [x] `Login.tsx`：登入失敗時顯示「電郵尚未驗證」橫幅（含重新發送連結）
+- [x] `VerifyEmail.tsx`：處理 `/verify-email?token=xxx` 連結點擊，顯示驗證結果
+- [x] `ResendVerification.tsx`：`/resend-verification` 頁面，可重新發送驗證電郵
+- [x] `App.tsx`：新增 `/verify-email` 和 `/resend-verification` 路由
+
+#### 4. 測試
+- [x] 撰寫單元測試（email-verification.test.ts）
+- [x] 所有 10 項測試通過
+
+#### 5. 完成
+- [ ] 儲存 checkpoint
+- [ ] 向用戶報告完成結果

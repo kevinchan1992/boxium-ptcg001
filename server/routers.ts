@@ -296,15 +296,13 @@ export const appRouter = router({
           });
         }
         
-        // Set session cookie for automatic login after registration
-        if (result.token && ctx.res && ctx.req) {
-          ctx.res.cookie('session', result.token, getSessionCookieOptions(ctx.req));
-        }
+        // Do NOT set session cookie — user must verify email first
+        // (Google OAuth users are auto-verified and don't go through this path)
         
         return {
           success: true,
           user: result.user,
-          token: result.token,
+          requiresEmailVerification: result.requiresEmailVerification ?? false,
         };
       }),
     
@@ -330,6 +328,13 @@ export const appRouter = router({
         
         if (!result.success) {
           console.log('[Login API] Login failed:', result.error);
+          // Special case: email not verified — return structured error
+          if (result.requiresEmailVerification) {
+            throw new TRPCError({
+              code: 'UNAUTHORIZED',
+              message: 'EMAIL_NOT_VERIFIED',
+            });
+          }
           throw new TRPCError({
             code: 'UNAUTHORIZED',
             message: result.error || '登入失敗',
@@ -399,6 +404,119 @@ export const appRouter = router({
         await drizzleDb.update(usersTable).set({ passwordHash: newHash }).where(eqOp(usersTable.id, ctx.user.id));
         return { success: true };
       }),
+    verifyEmail: publicProcedure
+      .input(z.object({
+        token: z.string().min(1),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { getDb } = await import('./db');
+        const { users: usersTable } = await import('../drizzle/schema_new');
+        const { eq, and, gt } = await import('drizzle-orm');
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '資料庫連線失敗' });
+
+        // Find user with matching token that hasn't expired
+        const now = new Date();
+        const userResults = await drizzleDb
+          .select()
+          .from(usersTable)
+          .where(
+            and(
+              eq(usersTable.emailVerificationToken, input.token),
+              gt(usersTable.emailVerificationExpiry, now)
+            )
+          )
+          .limit(1);
+
+        if (userResults.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: '驗證連結無效或已過期，請重新發送驗證電郵',
+          });
+        }
+
+        const user = userResults[0];
+
+        // Mark email as verified and clear the token
+        await drizzleDb
+          .update(usersTable)
+          .set({
+            emailVerified: true,
+            emailVerificationToken: null,
+            emailVerificationExpiry: null,
+            lastSignedIn: new Date(),
+          })
+          .where(eq(usersTable.id, user.id));
+
+        // Fetch updated user
+        const updatedUsers = await drizzleDb.select().from(usersTable).where(eq(usersTable.id, user.id)).limit(1);
+        const updatedUser = updatedUsers[0];
+
+        // Generate session token and set cookie (auto-login after verification)
+        const { generateToken } = await import('./auth');
+        const token = generateToken(updatedUser);
+        if (ctx.res && ctx.req) {
+          ctx.res.cookie('session', token, getSessionCookieOptions(ctx.req));
+        }
+
+        // Send welcome email now that user is verified
+        if (updatedUser.email) {
+          import('./emailService').then(({ sendWelcomeEmail }) => {
+            sendWelcomeEmail({
+              userId: updatedUser.id,
+              userName: updatedUser.name || updatedUser.email!.split('@')[0],
+              email: updatedUser.email!,
+              siteUrl: 'https://boxium.asia',
+            }).catch((err: Error) => console.error('[Auth] Failed to send welcome email after verification:', err));
+          });
+        }
+
+        return { success: true, user: updatedUser };
+      }),
+
+    resendVerificationEmail: publicProcedure
+      .input(z.object({
+        email: z.string().trim().toLowerCase().email(),
+      }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import('./db');
+        const { users: usersTable } = await import('../drizzle/schema_new');
+        const { eq } = await import('drizzle-orm');
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '資料庫連線失敗' });
+
+        const userResults = await drizzleDb.select().from(usersTable).where(eq(usersTable.email, input.email)).limit(1);
+        const user = userResults[0];
+
+        // Always return success to prevent email enumeration
+        if (!user || user.emailVerified) {
+          return { success: true };
+        }
+
+        // Generate new token
+        const { generateEmailVerificationToken } = await import('./auth');
+        const newToken = generateEmailVerificationToken();
+        const newExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await drizzleDb
+          .update(usersTable)
+          .set({ emailVerificationToken: newToken, emailVerificationExpiry: newExpiry })
+          .where(eq(usersTable.id, user.id));
+
+        // Send verification email
+        import('./emailService').then(({ sendEmailVerificationEmail }) => {
+          sendEmailVerificationEmail({
+            userId: user.id,
+            userName: user.name || user.email!.split('@')[0],
+            email: user.email!,
+            verificationToken: newToken,
+            siteUrl: 'https://boxium.asia',
+          }).catch((err: Error) => console.error('[Auth] Failed to resend verification email:', err));
+        });
+
+        return { success: true };
+      }),
+
     logout: publicProcedure
       .mutation(async ({ ctx }) => {
         console.log('[Logout API] Clearing session cookie...');

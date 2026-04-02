@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const IS_DEV = import.meta.env.DEV;
@@ -38,9 +38,16 @@ export default function Login() {
     }
   }, []);
 
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const resendMutation = trpc.auth.resendVerificationEmail.useMutation({
+    onSuccess: () => toast.success("驗證電郵已重新發送！"),
+    onError: () => toast.error("發送失敗，請稍後再試"),
+  });
+
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: () => {
       setErrorMessage(null);
+      setEmailNotVerified(false);
       toast.success(t("login.toast.loginSuccess"));
       // Wait a bit to ensure cookie is set before redirecting
       setTimeout(() => {
@@ -51,6 +58,13 @@ export default function Login() {
     },
     onError: (error) => {
       const msg = error.message || "登入失敗";
+      // Handle email not verified case
+      if (msg === "EMAIL_NOT_VERIFIED") {
+        setEmailNotVerified(true);
+        setIsLoading(false);
+        return;
+      }
+      setEmailNotVerified(false);
       // Show blocked errors in the alert banner, other errors as toast
       if (msg.includes("封鎖") || msg.includes("blocked")) {
         setErrorMessage(msg);
@@ -127,6 +141,25 @@ export default function Login() {
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Email Not Verified Banner */}
+          {emailNotVerified && (
+            <Alert className="mb-4 border-amber-300 bg-amber-50">
+              <Mail className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800">
+                <p className="font-semibold mb-1">您的電郵尚未驗證</p>
+                <p className="text-sm mb-2">請查看您的收件算，點擊驗證連結完成帳號啟用。</p>
+                <button
+                  type="button"
+                  className="text-sm underline text-amber-700 hover:text-amber-900 disabled:opacity-50"
+                  disabled={resendMutation.isPending}
+                  onClick={() => resendMutation.mutate({ email })}
+                >
+                  {resendMutation.isPending ? "發送中..." : "重新發送驗證電郵"}
+                </button>
+              </AlertDescription>
             </Alert>
           )}
 
