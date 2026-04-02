@@ -7465,3 +7465,54 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 
 ### Checkpoint
 - [ ] 儲存 checkpoint
+
+
+---
+
+## ✅ 方案 A：治理模式 - 自動發布架構（已完成）
+
+### 問題描述
+原有的人工審核流程（pending_review 狀態）已不再適用，需要改為自動發布架構。
+
+### 解決方案
+採用方案 A：治理模式（Governance Mode），商品自動發布，管理員事後治理。
+
+### 已完成項目
+
+#### 後端修改
+- [x] 修復 marketplace.ts 的 Git 衝突語法錯誤（listingModerationLogs schema 欄位更新）
+- [x] marketplace.ts line 961：商品創建時 status 設為 "active"（自動發布）
+- [x] auction.ts line 139-140：拍賣根據開始時間自動設為 "scheduled" 或 "active"
+- [x] db.ts line 3784：pendingReviewListings 統計改為 0（governance mode）
+- [x] db.ts line 3786：pendingAuctionReview 改為統計 isHighValueReview 的高價監控拍賣
+- [x] auction.ts line 552-581：resubmitAuction 允許賣家重新上架被下架的拍賣
+- [x] auction.ts line 598-629：adminApprove 用於重新上架被下架的拍賣
+- [x] auction.ts line 632-663：adminReject 改為「強制下架」（governance mode）
+
+#### 前端修改
+- [x] SellerDashboard line 3522-3523：「提交後等待審核」改為「提交後立即公開上架」
+- [x] SellerDashboard line 3618：按鈕文字「提交審核」改為「確認上架」
+- [x] SellerDashboard line 3889-3893：刪除確認對話框移除 pending_review 狀態顯示
+- [x] SellerDashboard line 3326：拍賣開始時間說明移除「審核通過後」
+- [x] SellerDashboard line 3476：拍賣結束時間說明改為「上架後起算」
+- [x] SellerDashboard line 3669：新賣家限制說明改為「高價風控監控範圍」
+- [x] SellerDashboard line 742：resubmitMutation 成功訊息改為「已重新上架拍賣」
+- [x] SellerDashboard line 750：activeAuctions 篩選移除 "pending_review"
+- [x] SellerDashboard line 819：拍賣 tab「已拒絕」改為「已下架」
+- [x] SellerDashboard line 946：下架原因標籤改為「下架原因」
+- [x] SellerDashboard line 962：按鈕文字「重新提交審核」改為「重新上架」
+- [x] AdminMarketplace line 1289：按鈕文字「確認拒絕」改為「確認強制下架」
+- [x] AdminMarketplace line 6672：「高價待審核」改為「高價監控」
+- [x] AdminMarketplace line 6816：按鈕文字「確認拒絕」改為「確認強制下架」
+- [x] AdminMarketplace line 6806：placeholder 改為「請輸入下架原因...」
+- [x] AdminMarketplace line 7281：移除 pendingReviewListings badge
+- [x] AdminMarketplace line 7461-7464：移除 pendingReviewListings 通知區塊
+
+### 測試結果
+- ✅ TypeScript 編譯通過（EXIT:0，0 個錯誤）
+- ✅ 後端自動發布邏輯正確（marketplace.ts, auction.ts）
+- ✅ 前端 UI 更新完成（移除審核相關文字）
+- ✅ 管理員仍可強制下架/重新上架商品
+
+### Checkpoint
+- [x] 儲存 checkpoint

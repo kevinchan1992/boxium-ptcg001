@@ -739,7 +739,7 @@ function SellerAuctionsTab() {
 
   const resubmitMutation = trpc.auction.resubmitAuction.useMutation({
     onSuccess: () => {
-      toast.success('已重新提交審核，請等候管理員審核');
+      toast.success('已重新上架拍賣');
       refetch();
     },
     onError: (e) => toast.error(parseApiError(e)),
@@ -747,12 +747,12 @@ function SellerAuctionsTab() {
 
   const allListings = auctions?.listings ?? [];
   const activeAuctions = allListings.filter((a: any) =>
-    ["active", "scheduled", "pending_review", "ending_soon"].includes(a.auctionStatus)
+    ["active", "scheduled", "ending_soon"].includes(a.auctionStatus)
   );
   const endedAuctions = allListings.filter((a: any) =>
     ["ended_sold", "ended_no_bid", "cancelled", "ended", "sold"].includes(a.auctionStatus)
   );
-  const rejectedAuctions = allListings.filter((a: any) => a.auctionStatus === "rejected");
+  const rejectedAuctions = allListings.filter((a: any) => a.auctionStatus === "rejected" || a.adminDelisted);
 
   const current = subTab === "active" ? activeAuctions : subTab === "ended" ? endedAuctions : rejectedAuctions;
 
@@ -816,7 +816,7 @@ function SellerAuctionsTab() {
         {([
           { key: "active", label: "進行中", count: activeAuctions.length },
           { key: "ended", label: "已結標", count: endedAuctions.length },
-          { key: "rejected", label: "已拒絕", count: rejectedAuctions.length },
+          { key: "rejected", label: "已下架", count: rejectedAuctions.length },
         ] as const).map(t => (
           <button
             key={t.key}
@@ -940,10 +940,10 @@ function SellerAuctionsTab() {
                       )}
                     </div>
                   </div>
-                  {/* Rejection reason + edit + resubmit */}
-                  {auction.auctionStatus === 'rejected' && (
+                  {/* Delist reason + edit + resubmit (governance mode: adminDelisted or rejected) */}
+                  {(auction.auctionStatus === 'rejected' || auction.adminDelisted) && (
                     <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
-                      <p className="text-xs font-semibold text-red-600 mb-1">拒絕原因：</p>
+                      <p className="text-xs font-semibold text-red-600 mb-1">下架原因：</p>
                       <p className="text-xs text-red-700 mb-3">{auction.rejectedReason || '未提供原因'}</p>
                       <div className="flex gap-2">
                         <button
@@ -959,7 +959,7 @@ function SellerAuctionsTab() {
                           onClick={() => resubmitMutation.mutate({ listingId: auction.id })}
                         >
                           {resubmitMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                          {resubmitMutation.isPending ? '提交中...' : '重新提交審核'}
+                          {resubmitMutation.isPending ? '提交中...' : '重新上架'}
                         </button>
                       </div>
                     </div>
@@ -3323,7 +3323,7 @@ export default function SellerDashboard() {
                     </div>
                     {/* Start time - 24h time only, date = today */}
                     <div>
-                      <Label className="text-[#06038D] font-semibold">開始時間（24小時制，留空表示審核通過後立即開始）</Label>
+                      <Label className="text-[#06038D] font-semibold">開始時間（24小時制，留空表示立即開始）</Label>
                       <Input
                         className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]"
                         type="time"
@@ -3473,7 +3473,7 @@ export default function SellerDashboard() {
                           <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.auctions.editRejected.auctionEndLabel")}</span>
                           <span className="text-sm text-[#06038D]">{listingForm.auctionEndAt
                             ? new Date(listingForm.auctionEndAt).toLocaleString('zh-HK')
-                            : new Date(Date.now() + (listingForm.auctionDurationDays || 7) * 24 * 60 * 60 * 1000).toLocaleString('zh-HK') + '（審核通過後起算）'
+                            : new Date(Date.now() + (listingForm.auctionDurationDays || 7) * 24 * 60 * 60 * 1000).toLocaleString('zh-HK') + '（上架後起算）'
                           }</span>
                         </div>
                       </>
@@ -3519,8 +3519,8 @@ export default function SellerDashboard() {
                       <p className="font-medium">確認後直接公開上架</p>
                     ) : (
                       <>
-                        <p className="font-medium">提交後等待審核</p>
-                        <p className="mt-0.5">商品將在管理員審核通過後公開顯示，通常需要 1-2 個工作天。</p>
+                        <p className="font-medium">提交後立即公開上架</p>
+                        <p className="mt-0.5">商品提交後將自動公開，展示於市集中供買家瀏覽。</p>
                       </>
                     )}
                   </div>
@@ -3615,7 +3615,7 @@ export default function SellerDashboard() {
                   }
                 }}
               >
-                {(createListingMutation.isPending || adminCreateListingMutation.isPending || createAuctionMutation.isPending) ? "提交中..." : isAdmin ? "確認上架" : "提交審核"}
+                {(createListingMutation.isPending || adminCreateListingMutation.isPending || createAuctionMutation.isPending) ? "提交中..." : "確認上架"}
               </Button>
             )}
           </div>
@@ -3666,7 +3666,7 @@ export default function SellerDashboard() {
               </div>
               <div className="bg-white/10 rounded-xl p-3">
                 <p className="font-bold text-[#FEDD00] text-xs mb-1">🏷️ 新賣家限制</p>
-                <p className="text-xs">完成成交少於 5 次的新賣家，拍賣起拍價上限為 <strong>HK$5,000</strong>。起拍價超過 HK$10,000 的拍賣需提交額外審核，審核通過後方可公開展示。</p>
+                <p className="text-xs">完成成交少於 5 次的新賣家，拍賣起拍價上限為 <strong>HK$5,000</strong>。起拍價超過 HK$10,000 的拍賣屬於高價風控監控範圍，將自動公開並通知管理員監控。</p>
               </div>
               <div className="bg-white/10 rounded-xl p-3">
                 <p className="font-bold text-[#FEDD00] text-xs mb-1">⚠️ 違規處理</p>
@@ -3886,11 +3886,9 @@ export default function SellerDashboard() {
                         <span className="text-gray-800 truncate flex-1 font-medium">{l.title || '(未命名商品)'}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 font-medium ${
                           l.status === 'active' ? 'bg-green-100 text-green-700' :
-                          l.status === 'pending_review' ? 'bg-yellow-100 text-yellow-700' :
                           'bg-gray-100 text-gray-500'
                         }`}>
-                          {l.status === 'active' ? '上架中' :
-                           l.status === 'pending_review' ? '審核中' : '已下架'}
+                          {l.status === 'active' ? '上架中' : '已下架'}
                         </span>
                       </div>
                     ))}

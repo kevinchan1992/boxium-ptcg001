@@ -3780,10 +3780,10 @@ export async function getMarketplaceStats() {
       sql`${marketplaceOrders.alipayProofImageUrl} IS NOT NULL`
     ));
   const [sellerCount] = await db.select({ count: sql<number>`count(*)` }).from(sellerProfiles).where(eq(sellerProfiles.isActive, true));
-  // pendingReviewListings: only non-auction listings (auctions are managed separately)
-  const [pendingReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(eq(marketplaceListings.status, 'pending_review'), ne(marketplaceListings.listingMode, 'auction')));
-  // pendingAuctionReview: auction listings pending review
-  const [pendingAuctionReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(eq(marketplaceListings.listingMode as any, 'auction'), eq(marketplaceListings.auctionStatus as any, 'pending_review')));
+  // pendingReviewListings: governance mode - no pending_review, always 0
+  const pendingReview = { count: 0 };
+  // pendingAuctionReview: high-value auctions flagged for monitoring (isHighValueReview)
+  const [pendingAuctionReview] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(eq(marketplaceListings.listingMode as any, 'auction'), eq(marketplaceListings.isHighValueReview as any, true), eq(marketplaceListings.status, 'active')));
   // Unresolved disputes count
   const [disputeCount] = await db.select({ count: sql<number>`count(*)` }).from(marketplaceOrders).where(eq(marketplaceOrders.orderStatus, 'disputed'));
   // Sales revenue stats - all paid orders (total sales includes platform orders; fees only for C2C seller orders)

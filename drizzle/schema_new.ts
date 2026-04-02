@@ -1381,58 +1381,40 @@ export type AuctionViolation = typeof auctionViolations.$inferSelect;
 export type InsertAuctionViolation = typeof auctionViolations.$inferInsert;
 
 /**
- * Listing Moderation Logs - tracks all moderation actions on listings (governance mode)
+ * Listing Moderation Logs - audit trail for all admin actions on listings
  */
 export const listingModerationLogs = mysqlTable("listingModerationLogs", {
   id: int("id").autoincrement().primaryKey(),
   listingId: int("listingId").notNull(),
-  operatorId: int("operatorId").notNull(),
-  operatorName: varchar("operatorName", { length: 100 }).notNull(),
-  action: mysqlEnum("action", ["delist", "restore", "warn", "edit"]).notNull(),
-  reason: varchar("reason", { length: 500 }).notNull(),
-  note: text("note"),
-  notifiedSeller: boolean("notifiedSeller").default(false).notNull(),
+  listingMode: mysqlEnum("listingMode", ["direct", "auction"]).notNull().default("direct"),
+  adminId: int("adminId").notNull(),
+  adminName: varchar("adminName", { length: 100 }),
+  action: mysqlEnum("action", [
+    "delist", "restore", "batch_delist", "batch_restore", "flag_risk", "clear_flag", "edit",
+  ]).notNull(),
+  reason: text("reason"),
+  previousStatus: varchar("previousStatus", { length: 50 }),
+  newStatus: varchar("newStatus", { length: 50 }),
+  metadata: text("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   listingIdIdx: index("lml_listingId_idx").on(table.listingId),
-  operatorIdIdx: index("lml_operatorId_idx").on(table.operatorId),
-  actionIdx: index("lml_action_idx").on(table.action),
+  adminIdIdx: index("lml_adminId_idx").on(table.adminId),
   createdAtIdx: index("lml_createdAt_idx").on(table.createdAt),
 }));
 export type ListingModerationLog = typeof listingModerationLogs.$inferSelect;
 export type InsertListingModerationLog = typeof listingModerationLogs.$inferInsert;
 
 /**
- * Seller Risk Profiles - tracks seller risk levels and violations (governance mode)
- */
-export const sellerRiskProfiles = mysqlTable("sellerRiskProfiles", {
-  id: int("id").autoincrement().primaryKey(),
-  sellerId: int("sellerId").notNull(),
-  riskLevel: mysqlEnum("riskLevel", ["low", "medium", "high", "banned"]).default("low").notNull(),
-  violationCount: int("violationCount").default(0).notNull(),
-  violations: text("violations"),
-  lastViolationAt: timestamp("lastViolationAt"),
-  restrictedUntil: timestamp("restrictedUntil"),
-  note: text("note"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-}, (table) => ({
-  sellerIdIdx: uniqueIndex("srp_sellerId_idx").on(table.sellerId),
-  riskLevelIdx: index("srp_riskLevel_idx").on(table.riskLevel),
-}));
-export type SellerRiskProfile = typeof sellerRiskProfiles.$inferSelect;
-export type InsertSellerRiskProfile = typeof sellerRiskProfiles.$inferInsert;
-
-/**
- * Platform Rules - defines platform rules and policies (governance mode)
+ * Platform Rules - configurable rules and policies
  */
 export const platformRules = mysqlTable("platformRules", {
   id: int("id").autoincrement().primaryKey(),
-  category: mysqlEnum("category", ["listing", "transaction", "seller", "buyer", "content", "other"]).notNull(),
+  category: mysqlEnum("category", ["listing", "auction", "payment", "shipping", "conduct", "seller"]).notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   content: text("content").notNull(),
   isActive: boolean("isActive").default(true).notNull(),
-  priority: int("priority").default(0).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 }, (table) => ({
@@ -1443,18 +1425,44 @@ export type PlatformRule = typeof platformRules.$inferSelect;
 export type InsertPlatformRule = typeof platformRules.$inferInsert;
 
 /**
- * Listing Categories - defines listing categories for classification (governance mode)
+ * Product Categories - configurable categories for marketplace listings
  */
-export const listingCategories = mysqlTable("listingCategories", {
+export const productCategories = mysqlTable("productCategories", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull(),
   description: text("description"),
+  parentId: int("parentId"),
+  tcgSeries: varchar("tcgSeries", { length: 50 }),
   isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  slugIdx: uniqueIndex("pc_slug_idx").on(table.slug),
+  isActiveIdx: index("pc_isActive_idx").on(table.isActive),
+}));
+export type ProductCategory = typeof productCategories.$inferSelect;
+export type InsertProductCategory = typeof productCategories.$inferInsert;
+
+/**
+ * Seller Risk Profiles - tracks seller risk signals for governance
+ */
+export const sellerRiskProfiles = mysqlTable("sellerRiskProfiles", {
+  id: int("id").autoincrement().primaryKey(),
+  sellerId: int("sellerId").notNull(),
+  riskLevel: mysqlEnum("riskLevel", ["low", "medium", "high", "critical"]).default("low").notNull(),
+  totalListings: int("totalListings").default(0).notNull(),
+  delistedCount: int("delistedCount").default(0).notNull(),
+  reportCount: int("reportCount").default(0).notNull(),
+  disputeCount: int("disputeCount").default(0).notNull(),
+  lastReviewAt: timestamp("lastReviewAt"),
+  adminNote: text("adminNote"),
+  isWatched: boolean("isWatched").default(false).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 }, (table) => ({
-  nameIdx: uniqueIndex("lc_name_idx").on(table.name),
-  isActiveIdx: index("lc_isActive_idx").on(table.isActive),
+  sellerIdIdx: uniqueIndex("srp_sellerId_idx").on(table.sellerId),
+  riskLevelIdx: index("srp_riskLevel_idx").on(table.riskLevel),
+  isWatchedIdx: index("srp_isWatched_idx").on(table.isWatched),
 }));
-export type ListingCategory = typeof listingCategories.$inferSelect;
-export type InsertListingCategory = typeof listingCategories.$inferInsert;
+export type SellerRiskProfile = typeof sellerRiskProfiles.$inferSelect;
+export type InsertSellerRiskProfile = typeof sellerRiskProfiles.$inferInsert;

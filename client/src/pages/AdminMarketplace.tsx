@@ -1283,10 +1283,10 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
           <Label className="text-sm">下架原因（將通知賣家）</Label>
           <Textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="請輸入具體原因，如：圖片不清晰、描述不符實際等..." rows={3} />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectDialogId(null)}>取消</Button>
+              <Button variant="outline" onClick={() => setRejectDialogId(null)}>取消</Button>
             <Button variant="destructive" disabled={updateMutation.isPending}
               onClick={() => { if (rejectDialogId) { updateMutation.mutate({ id: rejectDialogId, status: "removed", delistReason: rejectReason || undefined }); setRejectDialogId(null); } }}>
-              確認拒絕
+              確認強制下架
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -6669,7 +6669,7 @@ function AuctionsAdminTab() {
               : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
           }`}
         >
-          💎 高價待審核
+          💎 高價監控
           {(auctionStats?.highValuePending ?? 0) > 0 && (
             <span className={`text-[10px] rounded-full px-1 py-0 ${
               filterHighValue ? 'bg-white text-amber-600' : 'bg-amber-500 text-white'
@@ -6803,7 +6803,7 @@ function AuctionsAdminTab() {
             <Textarea
               value={rejectDialog.reason}
               onChange={e => setRejectDialog(d => ({ ...d, reason: e.target.value }))}
-              placeholder="詳細說明拒絕原因..."
+              placeholder="請輸入下架原因..."
               rows={3}
               className="w-full resize-none"
             />
@@ -6813,7 +6813,7 @@ function AuctionsAdminTab() {
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white"
                 disabled={!rejectDialog.reason.trim() || rejectMutation.isPending}
                 onClick={() => { if (rejectDialog.listingId) rejectMutation.mutate({ listingId: rejectDialog.listingId, reason: rejectDialog.reason.trim() }); }}
-              >確認拒絕</Button>
+              >確認強制下架</Button>
             </div>
           </div>
         </div>
@@ -7278,7 +7278,7 @@ function AuctionOrdersAdminTab() {
 // Sidebar menu items configuration
 type SidebarItem = { key: string; label: string; icon: any; badgeKey?: string };
 const sidebarMenuItems: SidebarItem[] = [
-  { key: 'listings', label: '商品管理', icon: Package, badgeKey: 'pendingReviewListings' },
+  { key: 'listings', label: '商品管理', icon: Package },
   { key: 'auctions', label: '拍賣管理', icon: Package, badgeKey: 'pendingAuctionReview' },
   { key: 'auction_orders', label: '拍賣訂單', icon: ShoppingBag },
   { key: 'auction_violations', label: '拍賣違規', icon: Shield },
@@ -7458,11 +7458,7 @@ export default function AdminMarketplace() {
                 <p className="text-[10px] text-white/60">本月取消訂單</p>
               </div>
             </div>
-            {(stats?.pendingReviewListings ?? 0) > 0 && (
-              <div className="mt-2 bg-orange-500/20 text-orange-200 rounded-lg p-2 text-xs text-center">
-                {stats?.pendingReviewListings} 個商品待審核
-              </div>
-            )}
+
             {pendingPayoutCount > 0 && (
               <button
                 className="mt-2 w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 rounded-lg p-2 text-xs text-center transition-colors"

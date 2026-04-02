@@ -947,7 +947,7 @@ export const marketplaceRouter = router({
           throw new TRPCError({ code: "BAD_REQUEST", message: `您已有同一卡片同品相的上架商品「${duplicate.title}」，請編輯現有商品而非重複上架` });
         }
       }
-      // AUTO-PUBLISH: listing goes live immediately after passing validation (no admin review)
+
       const listing = await createListing({
         sellerType: "seller",
         sellerId: seller.id,
@@ -958,7 +958,7 @@ export const marketplaceRouter = router({
         quantity: input.quantity,
         cardId: input.cardId,
         images: input.images ? JSON.stringify(input.images) : null,
-        status: "active", // Auto-published — governance mode, no pre-approval required
+        status: "active", // Auto-publish: no manual review required
         viewCount: 0,
         allowOffers: input.allowOffers,
         minOfferHkd: input.minOfferHkd ? input.minOfferHkd.toFixed(2) as any : null,
@@ -1536,11 +1536,13 @@ export const marketplaceRouter = router({
             const action = data.status === 'removed' ? 'delist' : data.status === 'active' ? 'restore' : 'edit';
             await db.insert(listingModerationLogs).values({
               listingId: id,
-              operatorId: operatorId ?? ctx.user.id,
-              operatorName: operatorName ?? ctx.user.name ?? 'Admin',
+              listingMode: 'direct',
+              adminId: operatorId ?? ctx.user.id,
+              adminName: operatorName ?? ctx.user.name ?? 'Admin',
               action,
               reason: delistReason ?? (action === 'restore' ? '管理員重新上架' : '管理員操作'),
-              notifiedSeller: false,
+              previousStatus: prevListing?.status ?? null,
+              newStatus: data.status ?? null,
             });
           }
         } catch (e) { console.warn('[Governance] Failed to write moderation log:', e); }
@@ -3925,11 +3927,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
           if (listing.status !== status) {
             await db.insert(listingModerationLogs).values({
               listingId: listing.id,
-              operatorId: adminId,
-              operatorName: adminName,
-              action,
+              listingMode: 'direct',
+              adminId,
+              adminName,
+              action: action === 'delist' ? 'batch_delist' : 'batch_restore',
               reason: delistReason ?? (action === 'restore' ? '管理員批量重新上架' : '管理員批量下架'),
-              notifiedSeller: false,
+              previousStatus: listing.status,
+              newStatus: status,
             }).catch(() => {});
           }
         }
