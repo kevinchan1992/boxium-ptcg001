@@ -7403,3 +7403,65 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] 建立全局 parseApiError 工具函數（解析 Zod 錯誤、tRPC 錯誤）
 - [ ] 更新 SellerDashboard 的 createListing/createAuction 錯誤處理
 - [ ] 保存 checkpoint
+
+## 🚀 市集商品上架機制改為自動發佈 + 後台治理模式
+
+### 需求總結
+- **取消人工審批**：直購及拍賣商品在賣家填寫完整資料、上傳最少一張圖片、通過基本欄位驗證後，系統自動發佈為公開商品（status: active）
+- **後台改為治理模式**：不再作前置審批，改為事後治理（搜尋、批量下架、舉報處理、賣家風控、異常偵測、類別設定、規則管理）
+- **保留完整操作紀錄**：所有下架、舉報處理、賣家風控操作需記錄操作者、時間、原因
+- **下架通知機制**：商品被下架時，系統自動通知賣家（包含原因）
+
+### 資料庫 Schema 更新
+- [ ] 移除 marketplaceListings.status 的 `pending_review` 狀態（保留 draft, active, reserved, sold, removed）
+- [ ] 移除 auctionStatus 的 `pending_review` 狀態
+- [ ] 新增 `listingModerationLogs` 表（操作紀錄）：
+  - id, listingId, operatorId, action (下架/恢復/警告), reason, note, createdAt
+- [ ] 新增 `sellerRiskProfiles` 表（賣家風控）：
+  - id, sellerId, riskLevel (low/medium/high/banned), violations (JSON), lastViolationAt, restrictedUntil, note, updatedAt
+- [ ] 新增 `platformRules` 表（平台規則管理）：
+  - id, category, title, content, isActive, priority, createdAt, updatedAt
+- [ ] 新增 `listingCategories` 表（商品類別設定）：
+  - id, name, description, isActive, createdAt
+- [ ] 擴展 listingReports 表：新增 `actionTaken` (下架/警告/無動作), `actionedBy`, `actionedAt`
+
+### 後端邏輯更新
+- [ ] **createListing API**：移除 `pending_review` 狀態，改為直接設為 `active`（驗證通過後）
+- [ ] **auction.create API**：移除 `pending_review` 狀態，改為直接設為 `scheduled` 或 `active`
+- [ ] **新增 admin.moderateListing API**：批量下架商品（支援多選、原因、通知）
+- [ ] **新增 admin.restoreListing API**：恢復被下架的商品
+- [ ] **新增 admin.handleReport API**：處理舉報（批准/駁回、下架商品、記錄操作）
+- [ ] **新增 admin.updateSellerRisk API**：更新賣家風控等級（限制上架、封禁）
+- [ ] **新增 admin.getPlatformRules API**：取得平台規則列表
+- [ ] **新增 admin.upsertPlatformRule API**：新增/編輯平台規則
+- [ ] **新增 admin.getListingCategories API**：取得商品類別列表
+- [ ] **新增 admin.upsertListingCategory API**：新增/編輯商品類別
+- [ ] **新增 admin.getModerationLogs API**：取得操作紀錄（分頁、篩選）
+- [ ] **新增 admin.detectAnomalies API**：異常偵測（價格異常、重複上架、疑似詐騙）
+- [ ] **下架通知機制**：商品被下架時，自動發送通知給賣家（包含原因、申訴連結）
+- [ ] **移除舊的 admin.updateListing 中的審批邏輯**（status: pending_review → active）
+
+### 前端更新
+- [ ] **SellerDashboard**：移除「待審核」狀態顯示，改為「已上架」
+- [ ] **SellerDashboard**：商品被下架時，顯示「已下架」標籤及原因，提供申訴按鈕
+- [ ] **AdminMarketplace**：移除「待審核」標籤頁
+- [ ] **AdminMarketplace**：新增「治理中心」標籤頁：
+  - 商品搜尋（關鍵字、賣家、狀態、價格範圍、上架時間）
+  - 批量下架（多選、原因、通知）
+  - 舉報處理（列表、詳情、處理動作）
+  - 賣家風控（列表、風險等級、違規記錄、限制/封禁）
+  - 異常偵測（價格異常、重複上架、疑似詐騙）
+  - 操作紀錄（分頁、篩選、匯出）
+- [ ] **AdminMarketplace**：新增「平台規則」標籤頁（新增/編輯/停用規則）
+- [ ] **AdminMarketplace**：新增「商品類別」標籤頁（新增/編輯/停用類別）
+
+### 測試
+- [ ] 測試自動發佈流程（直購商品、拍賣商品）
+- [ ] 測試批量下架功能
+- [ ] 測試舉報處理流程
+- [ ] 測試賣家風控功能
+- [ ] 測試下架通知機制
+- [ ] 測試操作紀錄查詢
+
+### Checkpoint
+- [ ] 儲存 checkpoint

@@ -1687,7 +1687,7 @@
         "timeLeft": "Time Left",
         "viewAction": "View"
       },
-      "createSuccess": "🔨 Auction submitted for review. Bidding can start after approval.",
+      "createSuccess": "🔨 Auction listed successfully!",
       "editRejected": {
         "auctionEndLabel": "Auction End Time",
         "bidError": "Starting bid must be greater than 0",
@@ -1844,7 +1844,7 @@
         },
         "views": "Views"
       },
-      "createSuccess": "Listing submitted for review",
+      "createSuccess": "Listing published successfully!",
       "deactivateSuccess": "Listing deactivated",
       "deleteConfirmButton": "Confirm Delete",
       "deleteConfirmMessage": "Are you sure you want to permanently delete the selected {count} listings? This action cannot be undone. Active orders will not be cancelled.",

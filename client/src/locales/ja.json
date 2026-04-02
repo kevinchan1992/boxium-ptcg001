@@ -1687,7 +1687,7 @@
         "timeLeft": "残り時間",
         "viewAction": "表示"
       },
-      "createSuccess": "🔨 オークションが審査のために送信されました。承認後に入札を開始できます。",
+      "createSuccess": "🔨 オークションが正常に出品されました！",
       "editRejected": {
         "auctionEndLabel": "終了時間",
         "bidError": "開始価格は0より大きい必要があります",

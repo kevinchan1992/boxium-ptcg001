@@ -16,6 +16,7 @@ import {
   getSellerAuctions, getAuctionAdminStats,
   getAllAuctionViolations, liftAuctionBan,
   getSellerProfileByUserId,
+  getSellerProfileById,
 } from "../db";
 import { createNotification } from "../db/notifications";
 import Stripe from 'stripe';
@@ -126,13 +127,19 @@ export const auctionRouter = router({
         });
       }
 
-      // Flag high-value listings for extra admin review
+      // Flag high-value listings for admin monitoring (governance mode: still auto-published)
       const isHighValueReview = input.startingBid > HIGH_VALUE_THRESHOLD_HKD;
 
       const startAt = input.auctionStartAt ?? new Date();
       const endAt = input.auctionEndAt;
+      const now = new Date();
 
-      // Create the listing in draft/pending_review state
+      // AUTO-PUBLISH: Determine auction status based on start time
+      // If startAt is in the future, set to 'scheduled'; otherwise 'active'
+      const auctionStatus = startAt > now ? 'scheduled' : 'active';
+      const listingStatus = startAt > now ? 'active' : 'active'; // Always active for governance mode
+
+      // Create the listing — auto-published, no admin pre-approval required
       // IMPORTANT: sellerId must be sellerProfile.id (not user.id) for consistency
       const listing = await createListing({
         sellerId: sellerProfile.id,
@@ -146,9 +153,9 @@ export const auctionRouter = router({
         images: input.images ? JSON.stringify(input.images) : null,
         tcgSeries: (input.tcgSeries ?? 'pokemon') as any,
         priceHkd: input.startingBid.toString(),
-        status: 'pending_review',
+        status: listingStatus,
         listingMode: 'auction',
-        auctionStatus: 'pending_review',
+        auctionStatus: auctionStatus,
         auctionStartAt: startAt,
         auctionEndAt: endAt,
         startingBid: input.startingBid.toString(),
@@ -160,13 +167,13 @@ export const auctionRouter = router({
         isHighValueReview: isHighValueReview,
       } as any);
 
-      // Notify admin for high-value listings
+      // Governance: notify admin for high-value listings (monitoring, not blocking)
       if (isHighValueReview) {
         const { notifyAdmin } = await import('../emailService').catch(() => ({ notifyAdmin: null }));
         if (notifyAdmin) {
           await notifyAdmin({
-            title: '高價拍賣待額外審核',
-            content: `賣家 #${ctx.user.id} 上架的拍賣起拍價為 HK$${input.startingBid.toLocaleString()}，超過 HK$${HIGH_VALUE_THRESHOLD_HKD.toLocaleString()} 門標，需要額外審核。拍賣 ID: ${listing?.id}`,
+            title: '高價拍賣風控通知',
+            content: `賣家 #${ctx.user.id} 上架的拍賣起拍價為 HK$${input.startingBid.toLocaleString()}，超過 HK$${HIGH_VALUE_THRESHOLD_HKD.toLocaleString()} 門標，已自動發佈但需要風控監控。拍賣 ID: ${listing?.id}`,
           }).catch(() => {});
         }
       }
@@ -385,7 +392,7 @@ export const auctionRouter = router({
       return { success: true, orderNo };
     }),
 
-  /** Seller cancels a pending_review or scheduled auction */
+  /** Seller cancels a scheduled auction (governance mode: no pending_review) */
   cancel: protectedProcedure
     .input(z.object({
       listingId: z.number().int(),
@@ -396,9 +403,10 @@ export const auctionRouter = router({
       if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "拍賣不存在" });
       if (listing.sellerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
 
-      const cancellableStatuses = ['pending_review', 'scheduled'];
+      // Governance mode: only scheduled auctions can be cancelled by seller
+      const cancellableStatuses = ['scheduled'];
       if (!cancellableStatuses.includes(listing.auctionStatus ?? '')) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "只能取消待審核或已排程的拍賣" });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "只能取消已排程的拍賣（尚未開始）" });
       }
 
       await updateAuctionListing(input.listingId, {
@@ -541,7 +549,7 @@ export const auctionRouter = router({
       return getSellerAuctions(sellerProfile.id, input);
     }),
 
-  /** Seller: resubmit a rejected auction for review */
+  /** Seller: resubmit a delisted auction (governance mode: republish as scheduled/active) */
   resubmitAuction: protectedProcedure
     .input(z.object({ listingId: z.number().int() }))
     .mutation(async ({ ctx, input }) => {
@@ -553,15 +561,21 @@ export const auctionRouter = router({
       if (!sellerProfile || listing.sellerId !== sellerProfile.id) {
         throw new TRPCError({ code: 'FORBIDDEN', message: '您沒有權限操作此拍賣' });
       }
-      if (listing.auctionStatus !== 'rejected') {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: '只能重新提交已被拒絕的拍賣' });
+      // Governance mode: seller can only resubmit admin-delisted auctions (not cancelled ones)
+      if (listing.auctionStatus !== 'rejected' && !listing.adminDelisted) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '只能重新上架被平台下架的拍賣' });
       }
 
+      const now = new Date();
+      const startAt = listing.auctionStartAt ? new Date(listing.auctionStartAt) : now;
+      const newAuctionStatus = startAt > now ? 'scheduled' : 'active';
+
       await updateAuctionListing(input.listingId, {
-        auctionStatus: 'pending_review',
-        status: 'pending_review',
+        auctionStatus: newAuctionStatus,
+        status: 'active',
         rejectedReason: null,
-      });
+        adminDelisted: false,
+      } as any);
 
       return { success: true };
     }),
@@ -580,41 +594,41 @@ export const auctionRouter = router({
       return getAdminAuctionListings(input);
     }),
 
-  /** Admin: approve a pending_review auction */
+  /** Admin: restore a delisted auction (governance mode) */
   adminApprove: adminProcedure
     .input(z.object({ listingId: z.number().int() }))
     .mutation(async ({ input }) => {
       const listing = await getAuctionListingById(input.listingId);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
-      if (listing.auctionStatus !== 'pending_review' && listing.auctionStatus !== 'rejected') {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "只能審核待審核或已拒絕的拍賣" });
-      }
 
       const now = new Date();
       const startAt = listing.auctionStartAt ? new Date(listing.auctionStartAt) : now;
       const newStatus = startAt <= now ? 'active' : 'scheduled';
 
-      // NOTE: Do NOT set status='active' for auction listings.
-      // Auction listings use auctionStatus for lifecycle management.
-      // Setting status='active' would cause them to appear in the regular marketplace product list.
       await updateAuctionListing(input.listingId, {
         auctionStatus: newStatus,
-      });
+        status: 'active',
+        adminDelisted: false,
+        rejectedReason: null,
+      } as any);
 
       // Notify seller
-      await createNotification({
-        userId: listing.sellerId!,
-        type: 'auction_approved',
-        title: '拍賣已通過審核',
-        body: `您的拍賣 #${input.listingId} 已通過審核，${newStatus === 'active' ? '現已開始競投' : '將於排定時間開始'}`,
-        relatedId: input.listingId,
-        linkUrl: `/auction/${input.listingId}`,
-      });
+      const sellerProfile = await getSellerProfileById(listing.sellerId!);
+      if (sellerProfile?.userId) {
+        await createNotification({
+          userId: sellerProfile.userId,
+          type: 'auction_approved',
+          title: '拍賣已重新上架 ✅',
+          body: `您的拍賣「${listing.title ?? `#${input.listingId}`}」已由管理員重新上架。`,
+          relatedId: input.listingId,
+          linkUrl: `/auction/${input.listingId}`,
+        }).catch(() => {});
+      }
 
       return { success: true, newStatus };
     }),
 
-  /** Admin: reject a pending_review auction */
+  /** Admin: delist an auction (governance mode — replaces reject) */
   adminReject: adminProcedure
     .input(z.object({
       listingId: z.number().int(),
@@ -624,22 +638,26 @@ export const auctionRouter = router({
       const listing = await getAuctionListingById(input.listingId);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
 
-      // Use 'rejected' status (distinct from 'cancelled') so seller can resubmit
+      // Governance: delist the auction (seller can appeal or resubmit)
       await updateAuctionListing(input.listingId, {
-        auctionStatus: 'rejected',
+        auctionStatus: 'cancelled',
         status: 'removed',
+        adminDelisted: true,
         rejectedReason: input.reason,
-      });
+      } as any);
 
-      // Notify seller with link to their auction dashboard
-      await createNotification({
-        userId: listing.sellerId!,
-        type: 'auction_rejected',
-        title: '拍賣未通過審核',
-        body: `您的拍賣「${listing.title ?? `#${input.listingId}`}」未通過審核。拒絕原因：${input.reason}。您可修改後重新提交。`,
-        relatedId: input.listingId,
-        linkUrl: '/seller?tab=auctions',
-      });
+      // Notify seller
+      const sellerProfile = await getSellerProfileById(listing.sellerId!);
+      if (sellerProfile?.userId) {
+        await createNotification({
+          userId: sellerProfile.userId,
+          type: 'auction_rejected',
+          title: '拍賣已被強制下架 ❌',
+          body: `您的拍賣「${listing.title ?? `#${input.listingId}`}」已被平台下架。原因：${input.reason}`,
+          relatedId: input.listingId,
+          linkUrl: '/seller?tab=auctions',
+        }).catch(() => {});
+      }
 
       return { success: true };
     }),

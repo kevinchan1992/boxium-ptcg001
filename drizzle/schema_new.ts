@@ -1379,3 +1379,82 @@ export const auctionViolations = mysqlTable("auctionViolations", {
 }));
 export type AuctionViolation = typeof auctionViolations.$inferSelect;
 export type InsertAuctionViolation = typeof auctionViolations.$inferInsert;
+
+/**
+ * Listing Moderation Logs - tracks all moderation actions on listings (governance mode)
+ */
+export const listingModerationLogs = mysqlTable("listingModerationLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  listingId: int("listingId").notNull(),
+  operatorId: int("operatorId").notNull(),
+  operatorName: varchar("operatorName", { length: 100 }).notNull(),
+  action: mysqlEnum("action", ["delist", "restore", "warn", "edit"]).notNull(),
+  reason: varchar("reason", { length: 500 }).notNull(),
+  note: text("note"),
+  notifiedSeller: boolean("notifiedSeller").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  listingIdIdx: index("lml_listingId_idx").on(table.listingId),
+  operatorIdIdx: index("lml_operatorId_idx").on(table.operatorId),
+  actionIdx: index("lml_action_idx").on(table.action),
+  createdAtIdx: index("lml_createdAt_idx").on(table.createdAt),
+}));
+export type ListingModerationLog = typeof listingModerationLogs.$inferSelect;
+export type InsertListingModerationLog = typeof listingModerationLogs.$inferInsert;
+
+/**
+ * Seller Risk Profiles - tracks seller risk levels and violations (governance mode)
+ */
+export const sellerRiskProfiles = mysqlTable("sellerRiskProfiles", {
+  id: int("id").autoincrement().primaryKey(),
+  sellerId: int("sellerId").notNull(),
+  riskLevel: mysqlEnum("riskLevel", ["low", "medium", "high", "banned"]).default("low").notNull(),
+  violationCount: int("violationCount").default(0).notNull(),
+  violations: text("violations"),
+  lastViolationAt: timestamp("lastViolationAt"),
+  restrictedUntil: timestamp("restrictedUntil"),
+  note: text("note"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+}, (table) => ({
+  sellerIdIdx: uniqueIndex("srp_sellerId_idx").on(table.sellerId),
+  riskLevelIdx: index("srp_riskLevel_idx").on(table.riskLevel),
+}));
+export type SellerRiskProfile = typeof sellerRiskProfiles.$inferSelect;
+export type InsertSellerRiskProfile = typeof sellerRiskProfiles.$inferInsert;
+
+/**
+ * Platform Rules - defines platform rules and policies (governance mode)
+ */
+export const platformRules = mysqlTable("platformRules", {
+  id: int("id").autoincrement().primaryKey(),
+  category: mysqlEnum("category", ["listing", "transaction", "seller", "buyer", "content", "other"]).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  content: text("content").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  priority: int("priority").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+}, (table) => ({
+  categoryIdx: index("pr_category_idx").on(table.category),
+  isActiveIdx: index("pr_isActive_idx").on(table.isActive),
+}));
+export type PlatformRule = typeof platformRules.$inferSelect;
+export type InsertPlatformRule = typeof platformRules.$inferInsert;
+
+/**
+ * Listing Categories - defines listing categories for classification (governance mode)
+ */
+export const listingCategories = mysqlTable("listingCategories", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+}, (table) => ({
+  nameIdx: uniqueIndex("lc_name_idx").on(table.name),
+  isActiveIdx: index("lc_isActive_idx").on(table.isActive),
+}));
+export type ListingCategory = typeof listingCategories.$inferSelect;
+export type InsertListingCategory = typeof listingCategories.$inferInsert;

@@ -712,7 +712,6 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                         <SelectTrigger className="mt-1 border-[#06038d]/30"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="active">上架中</SelectItem>
-                          <SelectItem value="pending_review">待審核</SelectItem>
                           <SelectItem value="draft">草稿</SelectItem>
                           <SelectItem value="removed">已下架</SelectItem>
                         </SelectContent>
@@ -774,8 +773,8 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap pt-1">
-                        <Badge className={listing.status === 'active' ? 'bg-green-100 text-green-800' : listing.status === 'reserved' ? 'bg-amber-100 text-amber-800' : listing.status === 'pending_review' ? 'bg-yellow-100 text-yellow-800' : listing.status === 'sold' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
-                          {listing.status === 'active' ? '上架中' : listing.status === 'reserved' ? '🔒 鎖定中' : listing.status === 'pending_review' ? '待審核' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
+                        <Badge className={listing.status === 'active' ? 'bg-green-100 text-green-800' : listing.status === 'reserved' ? 'bg-amber-100 text-amber-800' : listing.status === 'sold' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
+                          {listing.status === 'active' ? '上架中' : listing.status === 'reserved' ? '🔒 鎖定中' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
                         </Badge>
                         {(listing as any).adminDelisted && (
                           <Badge className="bg-red-600 text-white font-bold border-0">
@@ -850,7 +849,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                     </div>
                     <div className="p-4">
                       <div className="flex flex-wrap gap-2">
-                        {['active', 'reserved', 'pending_review', 'draft', 'removed'].map(s => (
+                        {['active', 'reserved', 'draft', 'removed'].map(s => (
                           <Button key={s} size="sm"
                             variant={listing.status === s ? 'default' : 'outline'}
                             className={listing.status === s
@@ -858,7 +857,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                               : (s === 'reserved' ? 'border-amber-400 text-amber-700 hover:bg-amber-50' : 'border-[#06038d]/30 text-[#06038d] hover:bg-[#06038d]/10')}
                             disabled={listing.status === s || updateMutation.isPending}
                             onClick={() => updateMutation.mutate({ id: listingId!, status: s as any })}>
-                            {s === 'active' ? '上架中' : s === 'reserved' ? '🔒 鎖定中' : s === 'pending_review' ? '待審核' : s === 'draft' ? '草稿' : '已下架'}
+                            {s === 'active' ? '上架中' : s === 'reserved' ? '🔒 鎖定中' : s === 'draft' ? '草稿' : '已下架'}
                           </Button>
                         ))}
                       </div>
@@ -1095,13 +1094,13 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          {["all", "active", "reserved", "pending_review", "draft", "sold", "removed", "admin_delisted"].map(s => (
+          {["all", "active", "reserved", "draft", "sold", "removed", "admin_delisted"].map(s => (
             <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
               onClick={() => { setStatusFilter(s); setPage(1); setSelectedIds(new Set()); }}
               className={statusFilter === s
                 ? (s === 'reserved' ? 'bg-amber-600 text-white' : s === 'admin_delisted' ? 'bg-red-600 text-white' : 'bg-[#06038d] text-white')
                 : (s === 'reserved' ? 'text-amber-700 bg-amber-50 border-amber-300' : s === 'admin_delisted' ? 'text-red-700 bg-red-50 border-red-300' : 'text-gray-700 bg-white')}>
-              {s === "all" ? "全部" : s === "active" ? "上架中" : s === "reserved" ? "🔒 鎖定中" : s === "pending_review" ? "待審核" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : s === "admin_delisted" ? "🚫 強制下架" : "已下架"}
+              {s === "all" ? "全部" : s === "active" ? "上架中" : s === "reserved" ? "🔒 鎖定中" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : s === "admin_delisted" ? "🚫 強制下架" : "已下架"}
             </Button>
           ))}
         </div>
@@ -1154,14 +1153,13 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
             >
               <option value="" disabled className="text-gray-800">更改狀態為...</option>
               <option value="active" className="text-gray-800">✅ 上架中</option>
-              <option value="pending_review" className="text-gray-800">🔄 待審核</option>
               <option value="draft" className="text-gray-800">📝 草稿</option>
               <option value="removed" className="text-gray-800">❌ 下架</option>
             </select>
             <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white text-xs"
               disabled={batchUpdateMutation.isPending}
               onClick={() => batchUpdateMutation.mutate({ ids: Array.from(selectedIds), status: 'active' })}>
-              <CheckCircle className="w-3 h-3 mr-1" />審核通過
+              <CheckCircle className="w-3 h-3 mr-1" />重新上架
             </Button>
             <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white text-xs"
               disabled={batchUpdateMutation.isPending}
@@ -1223,11 +1221,10 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     listing.status === 'active' ? 'bg-green-200 text-green-900' :
                     listing.status === 'reserved' ? 'bg-amber-200 text-amber-900' :
-                    listing.status === 'pending_review' ? 'bg-yellow-200 text-yellow-900' :
                     listing.status === 'sold' ? 'bg-gray-300 text-gray-800' :
                     'bg-red-200 text-red-900'
                   }`}>
-                    {listing.status === 'active' ? '上架中' : listing.status === 'reserved' ? '🔒 鎖定中' : listing.status === 'pending_review' ? '待審核' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
+                    {listing.status === 'active' ? '上架中' : listing.status === 'reserved' ? '🔒 鎖定中' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
                   </span>
                   {(listing as any).adminDelisted && (
                     <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-600 text-white flex items-center gap-1">
@@ -1260,18 +1257,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
                   <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => setSelectedListingId(listing.id)}>
                     <Eye className="w-3 h-3 mr-1" />{listing.status === 'sold' ? '查看詳情' : '查看/編輯'}
                   </Button>
-                  {listing.status === 'pending_review' && (
-                    <>
-                      <Button size="sm" className="text-xs bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => updateMutation.mutate({ id: listing.id, status: 'active' })}>
-                        <CheckCircle className="w-3 h-3 mr-1" />批准
-                      </Button>
-                      <Button size="sm" variant="outline" className="text-xs border-red-300 text-red-600 hover:bg-red-50"
-                        onClick={() => { setRejectDialogId(listing.id); setRejectReason(''); }}>
-                        拒絕
-                      </Button>
-                    </>
-                  )}
+                  {/* Governance mode: no per-listing approve/reject buttons; admin uses batch delist */}
                   {listing.status === 'active' && (
                     <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => updateMutation.mutate({ id: listing.id, status: 'removed' })}>下架</Button>
                   )}
@@ -1293,13 +1279,13 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
       )}
       <Dialog open={rejectDialogId !== null} onOpenChange={() => setRejectDialogId(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>拒絕商品上架</DialogTitle></DialogHeader>
-          <Label className="text-sm">拒絕原因（將通知賣家）</Label>
+          <DialogHeader><DialogTitle>強制下架商品</DialogTitle></DialogHeader>
+          <Label className="text-sm">下架原因（將通知賣家）</Label>
           <Textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="請輸入具體原因，如：圖片不清晰、描述不符實際等..." rows={3} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setRejectDialogId(null)}>取消</Button>
             <Button variant="destructive" disabled={updateMutation.isPending}
-              onClick={() => { if (rejectDialogId) { updateMutation.mutate({ id: rejectDialogId, status: "removed", rejectedReason: rejectReason || undefined }); setRejectDialogId(null); } }}>
+              onClick={() => { if (rejectDialogId) { updateMutation.mutate({ id: rejectDialogId, status: "removed", delistReason: rejectReason || undefined }); setRejectDialogId(null); } }}>
               確認拒絕
             </Button>
           </DialogFooter>
@@ -1324,7 +1310,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
                 batchUpdateMutation.mutate({
                   ids: Array.from(selectedIds),
                   status: 'removed',
-                  rejectedReason: batchRejectReason || undefined
+                  delistReason: batchRejectReason || undefined
                 });
                 setShowBatchRejectDialog(false);
               }}>
@@ -6528,7 +6514,7 @@ function AuditLogsTab() {
 
 // ---- Auction Admin Tab ----
 function AuctionsAdminTab() {
-  const [filterStatus, setFilterStatus] = useState<string>('pending_review');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterHighValue, setFilterHighValue] = useState(false);
   const [page, setPage] = useState(1);
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; listingId: number | null; reason: string }>({ open: false, listingId: null, reason: '' });
@@ -6579,15 +6565,14 @@ function AuctionsAdminTab() {
   });
 
   const statusOptions = [
-    { value: 'pending_review', label: '待審核' },
-    { value: 'rejected', label: '已拒絕' },
+    { value: 'all', label: '全部' },
     { value: 'scheduled', label: '已排程' },
     { value: 'active', label: '競標中' },
     { value: 'ending_soon', label: '即將結標' },
     { value: 'ended_sold', label: '已成交' },
     { value: 'ended_no_bid', label: '流標' },
     { value: 'cancelled', label: '已取消' },
-    { value: 'all', label: '全部' },
+    { value: 'admin_delisted', label: '🚫 強制下架' },
   ];
 
   const auctionStatusBadge = (status: string) => {
@@ -6630,7 +6615,7 @@ function AuctionsAdminTab() {
               <div className="p-1.5 rounded-lg bg-white/15"><TrendingUp className="w-3.5 h-3.5 text-white" /></div>
             </div>
             <p className="text-2xl font-bold">{auctionStats.todayNewAuctions}</p>
-            <p className="text-xs text-white/60 mt-1">待審核 {auctionStats.pendingReview} 筆</p>
+            <p className="text-xs text-white/60 mt-1">已排程 {auctionStats.scheduledAuctions ?? 0} 筆</p>
           </div>
           <div className="bg-gradient-to-br from-[#16a34a] to-[#15803d] rounded-xl p-4 text-white shadow-md">
             <div className="flex items-center justify-between mb-2">
@@ -6672,16 +6657,12 @@ function AuctionsAdminTab() {
             }`}
           >
             {opt.label}
-            {opt.value === 'pending_review' && ((auctionStats?.pendingReview ?? 0) + (auctionStats?.rejectedCount ?? 0)) > 0 && (
-              <span className={`text-[10px] rounded-full px-1 py-0 ${
-                filterStatus === 'pending_review' && !filterHighValue ? 'bg-white text-[#06038D]' : 'bg-red-500 text-white'
-              }`}>{(auctionStats?.pendingReview ?? 0) + (auctionStats?.rejectedCount ?? 0)}</span>
-            )}
+
           </button>
         ))}
         {/* High Value filter */}
         <button
-          onClick={() => { setFilterHighValue(v => !v); setFilterStatus('pending_review'); setPage(1); }}
+          onClick={() => { setFilterHighValue(v => !v); setFilterStatus('all'); setPage(1); }}
           className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
             filterHighValue
               ? 'bg-amber-500 text-white'
@@ -6753,35 +6734,15 @@ function AuctionsAdminTab() {
                 </div>
                 {/* Action buttons */}
                 <div className="flex flex-col gap-2 flex-shrink-0">
-                  {listing.auctionStatus === 'pending_review' && (
-                    <>
-                      <Button
-                        size="sm"
-                        className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold text-xs h-8"
-                        disabled={approveMutation.isPending}
-                        onClick={() => approveMutation.mutate({ listingId: listing.id })}
-                      >
-                        ✓ 審核通過
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-red-300 text-red-600 hover:bg-red-50 text-xs h-8"
-                        disabled={rejectMutation.isPending}
-                        onClick={() => setRejectDialog({ open: true, listingId: listing.id, reason: '' })}
-                      >
-                        ✗ 拒絕
-                      </Button>
-                    </>
-                  )}
-                  {listing.auctionStatus === 'rejected' && (
+                  {/* Governance mode: no approve/reject; admin uses delist/restore */}
+                  {listing.auctionStatus === 'admin_delisted' && (
                     <Button
                       size="sm"
                       className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold text-xs h-8"
                       disabled={approveMutation.isPending}
                       onClick={() => approveMutation.mutate({ listingId: listing.id })}
                     >
-                      重新審核通過
+                      重新上架
                     </Button>
                   )}
                   {['active', 'ending_soon'].includes(listing.auctionStatus ?? '') && (
@@ -6825,11 +6786,11 @@ function AuctionsAdminTab() {
         </div>
       )}
 
-      {/* Reject Dialog */}
+      {/* Delist Dialog */}
       {rejectDialog.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h3 className="text-lg font-bold text-[#06038D] mb-4">拒絕拍賣申請</h3>
+            <h3 className="text-lg font-bold text-[#06038D] mb-4">強制下架拍賣</h3>
             <p className="text-sm text-[#06038D]/60 mb-3">選擇常見原因或自行輸入：</p>
             <div className="flex flex-wrap gap-2 mb-4">
               {QUICK_REJECT_REASONS.map(r => (

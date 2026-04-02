@@ -933,18 +933,21 @@ export const marketplaceRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: `您的賣家帳號已被凍結，無法上架商品。原因：${(seller as any).suspensionReason || '請聯繫客服'}` });
       }
       if (seller.stripeConnectStatus !== "active") throw new TRPCError({ code: "FORBIDDEN", message: "請先完成 Stripe Connect 收款帳戶設定，才能上架商品" });
-
-      // RC3: Duplicate listing check — same card + same condition by same seller
+      // Image requirement: at least 1 image required for auto-publish
+      if (!input.images || input.images.length === 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "請至少上傳一張商品圖片才能上架" });
+      }
+      // RC3: Duplicate listing check — same card + same condition by same seller (active only)
       if (input.cardId) {
         const existingListings = await getPublicListings({ sellerType: 'seller', pageSize: 100, page: 1 });
         const duplicate = existingListings.listings.find(
-          (l: any) => l.cardId === input.cardId && l.condition === input.condition && ['active', 'pending_review'].includes(l.status)
+          (l: any) => l.cardId === input.cardId && l.condition === input.condition && l.status === 'active'
         );
         if (duplicate) {
           throw new TRPCError({ code: "BAD_REQUEST", message: `您已有同一卡片同品相的上架商品「${duplicate.title}」，請編輯現有商品而非重複上架` });
         }
       }
-
+      // AUTO-PUBLISH: listing goes live immediately after passing validation (no admin review)
       const listing = await createListing({
         sellerType: "seller",
         sellerId: seller.id,
@@ -955,7 +958,7 @@ export const marketplaceRouter = router({
         quantity: input.quantity,
         cardId: input.cardId,
         images: input.images ? JSON.stringify(input.images) : null,
-        status: "pending_review",
+        status: "active", // Auto-published — governance mode, no pre-approval required
         viewCount: 0,
         allowOffers: input.allowOffers,
         minOfferHkd: input.minOfferHkd ? input.minOfferHkd.toFixed(2) as any : null,
@@ -1493,33 +1496,56 @@ export const marketplaceRouter = router({
   adminUpdateListing: adminProcedure
     .input(z.object({
       id: z.number().int(),
-      status: z.enum(["draft", "pending_review", "active", "reserved", "sold", "removed"]).optional(),
+      // Governance mode: pending_review removed; admins can set active/removed/draft only
+      status: z.enum(["draft", "active", "reserved", "sold", "removed"]).optional(),
       price: z.number().positive().optional(),
       quantity: z.number().int().min(0).optional(),
       title: z.string().optional(),
       description: z.string().optional(),
-      rejectedReason: z.string().max(500).optional(),
+      delistReason: z.string().max(500).optional(), // Governance: reason for admin delist action
       tcgSeries: z.enum(["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).optional(),
+      operatorId: z.number().int().optional(), // Admin user ID for audit log
+      operatorName: z.string().optional(),     // Admin display name for audit log
     }))
-    .mutation(async ({ input }) => {
-      const { id, rejectedReason, ...data } = input;
+    .mutation(async ({ input, ctx }) => {
+      const { id, delistReason, operatorId, operatorName, ...data } = input;
       const updatePayload: Record<string, any> = { ...data };
       if (updatePayload.price) {
         updatePayload.priceHkd = parseFloat(updatePayload.price).toFixed(2);
         delete updatePayload.price;
       }
-      if (rejectedReason) updatePayload.rejectedReason = rejectedReason;
+      // Governance: store delist reason in rejectedReason field for backward compat
+      if (delistReason) updatePayload.rejectedReason = delistReason;
       // Admin 下架時設 adminDelisted=true，防止賣家自行重新上架
       if (data.status === 'removed') {
         updatePayload.adminDelisted = true;
       } else if (data.status === 'active') {
         // Admin 手動重新上架時清除 adminDelisted 標記
         updatePayload.adminDelisted = false;
+        updatePayload.rejectedReason = null;
       }
       // Fetch listing before update to detect status change
       const prevListing = await getListingById(id);
       await updateListing(id, updatePayload);
-      // Send notification when status changes to active (approved) or removed (rejected)
+      // Write moderation audit log
+      if (data.status && prevListing && data.status !== prevListing.status) {
+        try {
+          const db = await getDb();
+          if (db) {
+            const { listingModerationLogs } = await import('../../drizzle/schema_new');
+            const action = data.status === 'removed' ? 'delist' : data.status === 'active' ? 'restore' : 'edit';
+            await db.insert(listingModerationLogs).values({
+              listingId: id,
+              operatorId: operatorId ?? ctx.user.id,
+              operatorName: operatorName ?? ctx.user.name ?? 'Admin',
+              action,
+              reason: delistReason ?? (action === 'restore' ? '管理員重新上架' : '管理員操作'),
+              notifiedSeller: false,
+            });
+          }
+        } catch (e) { console.warn('[Governance] Failed to write moderation log:', e); }
+      }
+      // Governance: send delist/restore notifications to seller
       if (prevListing && data.status && data.status !== prevListing.status) {
         if (prevListing.sellerType === "seller" && prevListing.sellerId) {
           const sellerProfile = await getSellerProfileById(prevListing.sellerId);
@@ -1528,16 +1554,16 @@ export const marketplaceRouter = router({
               await createNotification({
                 userId: sellerProfile.userId,
                 type: "trade",
-                title: "商品審核通過 ✅",
-                body: `您的商品「${prevListing.title}」已通過審核，現已上架！`,
+                title: "商品已重新上架 ✅",
+                body: `您的商品「${prevListing.title}」已由管理員重新上架。`,
                 linkUrl: `/marketplace/${id}`,
               }).catch(() => {});
             } else if (data.status === "removed") {
               await createNotification({
                 userId: sellerProfile.userId,
                 type: "trade",
-                title: "商品審核未通過 ❌",
-                body: `您的商品「${prevListing.title}」審核未通過。${rejectedReason ? `原因：${rejectedReason}` : "請修改後重新提交。"}`,
+                title: "商品已被強制下架 ❌",
+                body: `您的商品「${prevListing.title}」已被平台下架。${delistReason ? `原因：${delistReason}` : ''}`,
                 linkUrl: `/seller`,
               }).catch(() => {});
             }
@@ -3858,13 +3884,16 @@ All three checks must pass for verified to be true. Respond with JSON only match
   adminBatchUpdateListingStatus: adminProcedure
     .input(z.object({
       ids: z.array(z.number().int()).min(1).max(100),
-      status: z.enum(["active", "removed", "pending_review"]),
-      rejectedReason: z.string().max(500).optional(),
+      // Governance mode: only active (restore) or removed (delist) allowed in batch
+      status: z.enum(["active", "removed"]),
+      delistReason: z.string().max(500).optional(),
+      operatorId: z.number().int().optional(),
+      operatorName: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
-      const { ids, status, rejectedReason } = input;
+      const { ids, status, delistReason, operatorId, operatorName } = input;
       // Fetch all listings to send notifications
       const listings = await db.select({
         id: marketplaceListings.id,
@@ -3874,13 +3903,38 @@ All three checks must pass for verified to be true. Respond with JSON only match
         status: marketplaceListings.status,
       }).from(marketplaceListings)
         .where(sql`${marketplaceListings.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
-      // Batch update
+      // Batch update with governance flags
       const updatePayload: Record<string, any> = { status };
-      if (rejectedReason) updatePayload.rejectedReason = rejectedReason;
+      if (status === 'removed') {
+        updatePayload.adminDelisted = true;
+        if (delistReason) updatePayload.rejectedReason = delistReason;
+      } else if (status === 'active') {
+        updatePayload.adminDelisted = false;
+        updatePayload.rejectedReason = null;
+      }
       await db.update(marketplaceListings)
         .set(updatePayload)
         .where(sql`${marketplaceListings.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`);
-      // Send notifications to affected sellers
+      // Write moderation audit logs for each listing
+      try {
+        const { listingModerationLogs } = await import('../../drizzle/schema_new');
+        const action = status === 'removed' ? 'delist' : 'restore';
+        const adminId = operatorId ?? ctx.user.id;
+        const adminName = operatorName ?? ctx.user.name ?? 'Admin';
+        for (const listing of listings) {
+          if (listing.status !== status) {
+            await db.insert(listingModerationLogs).values({
+              listingId: listing.id,
+              operatorId: adminId,
+              operatorName: adminName,
+              action,
+              reason: delistReason ?? (action === 'restore' ? '管理員批量重新上架' : '管理員批量下架'),
+              notifiedSeller: false,
+            }).catch(() => {});
+          }
+        }
+      } catch (e) { console.warn('[Governance] Failed to write batch moderation logs:', e); }
+      // Governance: send delist/restore notifications to affected sellers
       let notified = 0;
       for (const listing of listings) {
         if (listing.sellerType === 'seller' && listing.sellerId && listing.status !== status) {
@@ -3890,8 +3944,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
               await createNotification({
                 userId: sellerProfile.userId,
                 type: 'trade',
-                title: '商品審核通過 ✅',
-                body: `您的商品「${listing.title}」已通過審核，現已上架！`,
+                title: '商品已重新上架 ✅',
+                body: `您的商品「${listing.title}」已由管理員重新上架。`,
                 linkUrl: `/marketplace/${listing.id}`,
               }).catch(() => {});
               notified++;
@@ -3899,8 +3953,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
               await createNotification({
                 userId: sellerProfile.userId,
                 type: 'trade',
-                title: '商品已下架 ❌',
-                body: `您的商品「${listing.title}」已被下架。${rejectedReason ? `原因：${rejectedReason}` : ''}`,
+                title: '商品已被強制下架 ❌',
+                body: `您的商品「${listing.title}」已被平台下架。${delistReason ? `原因：${delistReason}` : ''}`,
                 linkUrl: `/seller`,
               }).catch(() => {});
               notified++;

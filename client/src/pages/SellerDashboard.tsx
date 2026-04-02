@@ -1054,7 +1054,7 @@ export default function SellerDashboard() {
   });
 
    // ─── Listing filter state ─────────────────────────────────────────
-  const [listingFilter, setListingFilter] = useState<'all' | 'active' | 'sold' | 'removed' | 'pending_review'>('all');
+  const [listingFilter, setListingFilter] = useState<'all' | 'active' | 'sold' | 'removed'>('all');
   const [listingViewMode, setListingViewMode] = useState<'list' | 'grid'>(() => {
     return (localStorage.getItem('seller-listing-view') as 'list' | 'grid') ?? 'list';
   });
@@ -1142,7 +1142,7 @@ export default function SellerDashboard() {
 
   const batchReactivateMutation = trpc.marketplace.batchReactivateListings.useMutation({
     onSuccess: (data) => {
-      toast.success(`已重新上架 ${data.count} 件商品，等待審核`);
+      toast.success(`已重新上架 ${data.count} 件商品！`);
       setSelectedIds(new Set());
       setBatchMode(false);
       refetchListings();
@@ -1669,7 +1669,7 @@ export default function SellerDashboard() {
                     { key: 'all' as const, label: '全部', count: myListings?.length ?? 0 },
                     { key: 'active' as const, label: '上架中', count: myListings?.filter((l: any) => l.status === 'active').length ?? 0 },
                     { key: 'sold' as const, label: '已售出', count: myListings?.filter((l: any) => l.status === 'sold').length ?? 0 },
-                    { key: 'pending_review' as const, label: '審核中', count: myListings?.filter((l: any) => l.status === 'pending_review').length ?? 0 },
+                    // Governance mode: no pending_review tab
                     { key: 'removed' as const, label: '已下架', count: myListings?.filter((l: any) => l.status === 'removed').length ?? 0 },
                   ];
                   const filteredListings = listingFilter === 'all'
@@ -1819,10 +1819,10 @@ export default function SellerDashboard() {
                                 className="text-xs h-8 border-red-400 text-red-600 hover:bg-red-50"
                                 disabled={batchDeactivateMutation.isPending}
                                 onClick={() => {
-                                  // Allow deactivating active and pending_review listings
+                                  // Governance mode: only active listings can be deactivated by seller
                                   const deactivatableIds = Array.from(selectedIds).filter(id => {
                                     const l = filteredListings.find((x: any) => x.id === id);
-                                    return l && (l.status === 'active' || l.status === 'pending_review');
+                                    return l && l.status === 'active';
                                   });
                                   if (deactivatableIds.length > 0) batchDeactivateMutation.mutate({ ids: deactivatableIds });
                                 }}
@@ -1831,7 +1831,7 @@ export default function SellerDashboard() {
                                 {(() => {
                                   const deactivatableCount = Array.from(selectedIds).filter(id => {
                                     const l = filteredListings.find((x: any) => x.id === id);
-                                    return l && (l.status === 'active' || l.status === 'pending_review');
+                                    return l && l.status === 'active';
                                   }).length;
                                   return `下架 (${deactivatableCount})`;
                                 })()}
@@ -1929,13 +1929,11 @@ export default function SellerDashboard() {
                                 {/* Status badge overlay */}
                                 <span className={`absolute top-1.5 right-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
                                   isActive ? "bg-green-500 text-white" :
-                                  listing.status === "pending_review" ? "bg-yellow-400 text-yellow-900" :
                                   isSold ? "bg-blue-500 text-white" :
                                   isRemoved ? "bg-red-500 text-white" :
                                   "bg-gray-500 text-white"
                                 }`}>
                                   {isActive ? "上架" :
-                                   listing.status === "pending_review" ? "審核" :
                                    isSold ? "售出" :
                                    isRemoved ? "下架" : listing.status}
                                 </span>
@@ -1987,13 +1985,11 @@ export default function SellerDashboard() {
                                 </div>
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                   isActive ? "bg-green-400/20 text-green-200 border border-green-400/30" :
-                                  listing.status === "pending_review" ? "bg-yellow-400/20 text-yellow-200 border border-yellow-400/30" :
                                   isSold ? "bg-blue-400/20 text-blue-200 border border-blue-400/30" :
                                   isRemoved ? "bg-red-400/20 text-red-200 border border-red-400/30" :
                                   "bg-white/20 text-white/70 border border-white/30"
                                 }`}>
                                   {isActive ? "上架中" :
-                                   listing.status === "pending_review" ? "審核中" :
                                    isSold ? "已售出" :
                                    isRemoved ? "已下架" : listing.status}
                                 </span>

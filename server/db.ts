@@ -5464,6 +5464,7 @@ export async function getAuctionAdminStats(): Promise<{
   endedSold: number;
   endedNoBid: number;
   pendingReview: number;
+  scheduledAuctions: number;
   highValuePending: number;
   rejectedCount: number;
   totalBids: number;
@@ -5542,6 +5543,7 @@ export async function getAuctionAdminStats(): Promise<{
     endedSold: counts['ended_sold'] ?? 0,
     endedNoBid: counts['ended_no_bid'] ?? 0,
     pendingReview: counts['pending_review'] ?? 0,
+    scheduledAuctions: counts['scheduled'] ?? 0,
     highValuePending: Number(highValueResult[0]?.count ?? 0),
     rejectedCount: counts['rejected'] ?? 0,
     totalBids: Number(totalBidsResult[0]?.count ?? 0),

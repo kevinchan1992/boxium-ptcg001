@@ -1687,7 +1687,7 @@
         "timeLeft": "剩餘時間",
         "viewAction": "查看"
       },
-      "createSuccess": "🔨 拍賣已提交審核，審核通過後即可開始競標",
+      "createSuccess": "🔨 拍賣已成功上架！",
       "editRejected": {
         "auctionEndLabel": "結標時間",
         "bidError": "起標價必須大於 0",
@@ -1844,7 +1844,7 @@
         },
         "views": "瀏覽"
       },
-      "createSuccess": "商品已提交審核",
+      "createSuccess": "商品已成功上架！",
       "deactivateSuccess": "商品已下架",
       "deleteConfirmButton": "確認刪除",
       "deleteConfirmMessage": "確定要永久刪除選取的 {count} 件商品嗎？此操作無法復原。進行中的訂單不會被取消。",
