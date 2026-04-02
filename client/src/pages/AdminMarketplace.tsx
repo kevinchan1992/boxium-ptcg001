@@ -1099,20 +1099,21 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2">
+        {/* Filter tabs - horizontally scrollable on tablet to prevent overflow */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 flex-1 min-w-0" style={{scrollbarWidth:'none', msOverflowStyle:'none'}}>
           {["all", "active", "reserved", "draft", "sold", "removed", "admin_delisted", "anomalous"].map(s => (
             <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
               onClick={() => { setStatusFilter(s); setPage(1); setSelectedIds(new Set()); }}
-              className={statusFilter === s
+              className={`flex-shrink-0 text-xs h-8 px-2.5 ${statusFilter === s
                 ? (s === 'reserved' ? 'bg-amber-600 text-white' : s === 'admin_delisted' ? 'bg-red-600 text-white' : s === 'anomalous' ? 'bg-orange-600 text-white' : 'bg-[#06038d] text-white')
-                : (s === 'reserved' ? 'text-amber-700 bg-amber-50 border-amber-300' : s === 'admin_delisted' ? 'text-red-700 bg-red-50 border-red-300' : s === 'anomalous' ? 'text-orange-700 bg-orange-50 border-orange-300' : 'text-gray-700 bg-white')}>
-              {s === "all" ? "全部" : s === "active" ? "上架中" : s === "reserved" ? "🔒 鎖定中" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : s === "admin_delisted" ? "🚫 強制下架" : s === "anomalous" ? "⚠️ 異常商品" : "已下架"}
+                : (s === 'reserved' ? 'text-amber-700 bg-amber-50 border-amber-300' : s === 'admin_delisted' ? 'text-red-700 bg-red-50 border-red-300' : s === 'anomalous' ? 'text-orange-700 bg-orange-50 border-orange-300' : 'text-gray-700 bg-white')}`}>
+              {s === "all" ? "全部" : s === "active" ? "上架中" : s === "reserved" ? "🔒鎖定" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : s === "admin_delisted" ? "🚫強制下架" : s === "anomalous" ? "⚠️異常" : "已下架"}
             </Button>
           ))}
         </div>
-        <Button onClick={() => setShowCreate(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white">
-          <Plus className="w-4 h-4 mr-2" />新增平台商品
+        <Button onClick={() => setShowCreate(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white flex-shrink-0 text-xs h-8 px-3">
+          <Plus className="w-3.5 h-3.5 mr-1" /><span className="hidden md:inline">新增平台商品</span><span className="md:hidden">新增</span>
         </Button>
       </div>
       {/* TCG Series Filter */}
@@ -1224,21 +1225,22 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
                     listing.sellerType === 'platform' ? 'bg-blue-200 text-blue-900' : 'bg-orange-200 text-orange-900'
                   }`}>{listing.sellerType === 'platform' ? '官方' : '賣家'}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    listing.status === 'active' ? 'bg-green-200 text-green-900' :
-                    listing.status === 'reserved' ? 'bg-amber-200 text-amber-900' :
-                    listing.status === 'sold' ? 'bg-gray-300 text-gray-800' :
-                    'bg-red-200 text-red-900'
-                  }`}>
-                    {listing.status === 'active' ? '上架中' : listing.status === 'reserved' ? '🔒 鎖定中' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
-                  </span>
-                  {(listing as any).adminDelisted && (
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-600 text-white flex items-center gap-1">
-                      🚫 強制下架
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {(listing as any).adminDelisted ? (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-600 text-white whitespace-nowrap">
+                      🚫強制下架
+                    </span>
+                  ) : (
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+                      listing.status === 'active' ? 'bg-green-200 text-green-900' :
+                      listing.status === 'reserved' ? 'bg-amber-200 text-amber-900' :
+                      listing.status === 'sold' ? 'bg-gray-300 text-gray-800' :
+                      'bg-red-200 text-red-900'
+                    }`}>
+                      {listing.status === 'active' ? '上架中' : listing.status === 'reserved' ? '🔒鎖定' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
                     </span>
                   )}
-                  <span className="text-white/80 text-xs">{new Date(listing.createdAt).toLocaleDateString('zh-HK')}</span>
+                  <span className="text-white/70 text-[10px] whitespace-nowrap hidden sm:inline">{new Date(listing.createdAt).toLocaleDateString('zh-HK')}</span>
                 </div>
               </div>
               {/* Content */}
@@ -7252,14 +7254,14 @@ function AuctionOrdersAdminTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-[#06038D]/5 border-b border-[#06038D]/10">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#06038D]/70">訂單號</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#06038D]/70">商品</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#06038D]/70">買家</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#06038D]/70">賣家</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-[#06038D]/70">金額</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#06038D]/70">狀態</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#06038D]/70">催款提醒</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#06038D]/70">下單時間</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-[#06038D]/70 whitespace-nowrap">訂單號</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-[#06038D]/70 whitespace-nowrap">商品</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-[#06038D]/70 whitespace-nowrap">買家</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-[#06038D]/70 whitespace-nowrap">賣家</th>
+                  <th className="text-right px-3 py-3 text-xs font-semibold text-[#06038D]/70 whitespace-nowrap">金額</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-[#06038D]/70 whitespace-nowrap">狀態</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-[#06038D]/70 whitespace-nowrap">催款</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-[#06038D]/70 whitespace-nowrap">下單時間</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#06038D]/5">
@@ -7269,45 +7271,45 @@ function AuctionOrdersAdminTab() {
                   const reminderSent = order.paymentReminderSentAt;
                   return (
                     <tr key={order.id} className="hover:bg-[#06038D]/[0.02] transition-colors">
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-xs text-[#06038D] font-semibold">{order.orderNo}</span>
+                      <td className="px-3 py-2.5">
+                        <span className="font-mono text-xs text-[#06038D] font-semibold whitespace-nowrap">{order.orderNo}</span>
                         {order.listingId && (
-                          <div className="text-[10px] text-gray-400 mt-0.5">拍賣 #{order.listingId}</div>
+                          <div className="text-[10px] text-gray-400 mt-0.5 whitespace-nowrap">拍賣 #{order.listingId}</div>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2.5">
                         <div className="flex items-center gap-2">
                           {thumb && <img src={thumb} alt="" className="w-8 h-8 object-cover rounded-md border border-gray-200 flex-shrink-0" />}
-                          <span className="text-xs text-gray-700 line-clamp-2 max-w-[160px]">{order.listingTitle ?? '—'}</span>
+                          <span className="text-xs text-gray-700 line-clamp-2" style={{maxWidth:'120px'}}>{order.listingTitle ?? '—'}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="text-xs font-semibold text-gray-800">{order.buyerName ?? '—'}</div>
-                        <div className="text-[10px] text-gray-400">{order.buyerEmail ?? ''}</div>
+                      <td className="px-3 py-2.5">
+                        <div className="text-xs font-semibold text-gray-800 whitespace-nowrap">{order.buyerName ?? '—'}</div>
+                        <div className="text-[10px] text-gray-400 whitespace-nowrap">{order.buyerEmail ?? ''}</div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="text-xs text-gray-700">{order.sellerDisplayName ?? order.sellerUserName ?? '—'}</div>
+                      <td className="px-3 py-2.5">
+                        <div className="text-xs text-gray-700 whitespace-nowrap">{order.sellerDisplayName ?? order.sellerUserName ?? '—'}</div>
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-bold text-[#06038D]">HK${parseFloat(order.subtotalHkd ?? '0').toLocaleString()}</span>
+                      <td className="px-3 py-2.5 text-right">
+                        <span className="font-bold text-[#06038D] whitespace-nowrap text-xs">HK${parseFloat(order.subtotalHkd ?? '0').toLocaleString()}</span>
                       </td>
-                      <td className="px-4 py-3">{orderStatusBadge(order.orderStatus)}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2.5">{orderStatusBadge(order.orderStatus)}</td>
+                      <td className="px-3 py-2.5">
                         {order.orderStatus === 'pending_payment' ? (
                           reminderSent ? (
-                            <span className="text-[10px] text-green-600 font-semibold">
-                              ✓ 已發送<br/>
-                              <span className="text-gray-400">{new Date(reminderSent).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                            </span>
+                            <div className="text-[10px] text-green-600 font-semibold">
+                              <div className="whitespace-nowrap">✓ 已發送</div>
+                              <div className="text-gray-400 whitespace-nowrap">{new Date(reminderSent).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                            </div>
                           ) : (
-                            <span className="text-[10px] text-amber-600">待發送</span>
+                            <span className="text-[10px] text-amber-600 whitespace-nowrap">待發送</span>
                           )
                         ) : (
                           <span className="text-[10px] text-gray-300">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs text-gray-500">
+                      <td className="px-3 py-2.5">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">
                           {new Date(order.createdAt).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </td>
