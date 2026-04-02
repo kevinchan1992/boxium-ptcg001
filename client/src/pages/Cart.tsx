@@ -536,10 +536,18 @@ export default function Cart() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 sticky top-24">
                 <h2 className="font-bold text-gray-800 mb-4">訂單資訊</h2>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between text-gray-600">
-                    <span>小計（{activeItems.length} 件）</span>
-                    <span>HK${activeSubtotal.toFixed(0)}</span>
-                  </div>
+                  {activeItems.length > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>市集商品（{activeItems.length} 件）</span>
+                      <span>HK${activeSubtotal.toFixed(0)}</span>
+                    </div>
+                  )}
+                  {pendingAuctionOrders && pendingAuctionOrders.length > 0 && (
+                    <div className="flex justify-between text-amber-700">
+                      <span>🏆 拍賣得標（{pendingAuctionOrders.length} 件）</span>
+                      <span>HK${pendingAuctionOrders.reduce((s, o) => s + parseFloat(String(o.subtotalHkd)), 0).toFixed(0)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-gray-500">
                     <span>{t("cart.shippingFee")}</span>
                     <span className="text-green-600">{t("cart.shippingFeeValue")}</span>
@@ -548,7 +556,7 @@ export default function Cart() {
                 <Separator className="my-3" />
                 <div className="flex justify-between font-bold text-base text-[#06038D]">
                   <span>{t("cart.total")}</span>
-                  <span>HK${activeSubtotal.toFixed(0)}</span>
+                  <span>HK${(activeSubtotal + (pendingAuctionOrders ?? []).reduce((s, o) => s + parseFloat(String(o.subtotalHkd)), 0)).toFixed(0)}</span>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">{t("cart.totalDisclaimer")}</p>
 
@@ -556,7 +564,7 @@ export default function Cart() {
                   <button
                     className="w-full h-9 rounded-md text-sm font-bold bg-[#06038D] text-white hover:bg-[#06038D]/90 disabled:opacity-50 disabled:pointer-events-none cursor-pointer transition-all"
                     style={{ border: 'none', outline: 'none' }}
-                    disabled={activeItems.length === 0}
+                    disabled={activeItems.length === 0 && (!pendingAuctionOrders || pendingAuctionOrders.length === 0)}
                     onClick={() => setShowCheckout(true)}
                   >
                     前往結帳
@@ -593,6 +601,7 @@ export default function Cart() {
         activeSubtotal={activeSubtotal}
         sfDistricts={SF_DISTRICTS}
         user={user}
+        pendingAuctionOrders={pendingAuctionOrders}
       />
     </div>
   );
@@ -927,10 +936,11 @@ interface CheckoutDialogProps {
   activeSubtotal: number;
   sfDistricts: string[];
   user?: { id: number; name?: string | null; phone?: string | null; email?: string | null } | null;
+  pendingAuctionOrders?: Array<{ orderId: number; orderNo: string; subtotalHkd: string | number }> | null;
 }
 
 function CheckoutDialog({
-  open, onClose, form, setForm, filteredStations, selectedStation, activeItems, activeSubtotal, sfDistricts, user,
+  open, onClose, form, setForm, filteredStations, selectedStation, activeItems, activeSubtotal, sfDistricts, user, pendingAuctionOrders,
 }: CheckoutDialogProps) {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
@@ -1135,13 +1145,17 @@ function CheckoutDialog({
       ...(item.acceptedOfferId ? { offerId: item.acceptedOfferId } : {}),
     }));
 
+    // Collect auction order IDs for mixed checkout
+    const auctionOrderIds = (pendingAuctionOrders ?? []).map(o => o.orderId);
+
     if (form.paymentMethod === "stripe") {
-      // ── Stripe: batch checkout, one payment for all items ──
-      setBatchProgress({ total: activeItems.length, done: 0, errors: 0 });
+      // ── Stripe: batch checkout, one payment for all items (including auction orders) ──
+      setBatchProgress({ total: activeItems.length + auctionOrderIds.length, done: 0, errors: 0 });
       try {
         const result = await new Promise<{ checkoutUrl: string; orderNos: string[]; totalAmount: number }>((resolve, reject) => {
           createBatchStripeOrderMutation.mutate({
             items: itemsPayload,
+            auctionOrderIds: auctionOrderIds.length > 0 ? auctionOrderIds : undefined,
             shippingAddress,
             shippingMethod: form.shippingMethod,
             buyerPhone: buyerPhone || undefined,
@@ -1559,9 +1573,19 @@ function CheckoutDialog({
                     </span>
                   </div>
                 ))}
+                {pendingAuctionOrders && pendingAuctionOrders.length > 0 && (
+                  <>
+                    {pendingAuctionOrders.map((o) => (
+                      <div key={o.orderId} className="flex justify-between text-sm text-amber-700">
+                        <span className="truncate flex-1 mr-2">🏆 拍賣得標 #{o.orderNo}</span>
+                        <span className="flex-shrink-0 font-medium">HK${parseFloat(String(o.subtotalHkd)).toFixed(0)}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
                 <div className="border-t border-[#06038D]/20 pt-2 mt-2 flex justify-between font-bold text-[#06038D]">
                   <span>合計（不含運費）</span>
-                  <span>HK${activeSubtotal.toFixed(0)}</span>
+                  <span>HK${(activeSubtotal + (pendingAuctionOrders ?? []).reduce((s, o) => s + parseFloat(String(o.subtotalHkd)), 0)).toFixed(0)}</span>
                 </div>
               </div>
 
@@ -1691,11 +1715,14 @@ function CheckoutDialog({
                 </RadioGroup>
               </div>
 
-              {activeItems.length > 1 && form.paymentMethod === "stripe" && (
+              {(activeItems.length > 1 || (pendingAuctionOrders && pendingAuctionOrders.length > 0)) && form.paymentMethod === "stripe" && (
                 <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-200">
                   <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-blue-700">
-                    將為 {activeItems.length} 件商品建立 {activeItems.length} 個訂單，並合併為一筆 HK${activeSubtotal.toFixed(0)} 的 Stripe 付款，一次完成所有訂單的支付。
+                    {activeItems.length > 0 && `將為 ${activeItems.length} 件市集商品`}
+                    {activeItems.length > 0 && pendingAuctionOrders && pendingAuctionOrders.length > 0 && `及 `}
+                    {pendingAuctionOrders && pendingAuctionOrders.length > 0 && `${pendingAuctionOrders.length} 件拍賣得標`}
+                    {`建立訂單，並合並為一筆 HK$${(activeSubtotal + (pendingAuctionOrders ?? []).reduce((s, o) => s + parseFloat(String(o.subtotalHkd)), 0)).toFixed(0)} 的 Stripe 付款，一次完成所有訂單的支付。`}
                   </p>
                 </div>
               )}

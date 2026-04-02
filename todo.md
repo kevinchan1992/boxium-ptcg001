@@ -7280,3 +7280,41 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] TypeScript 編譯通過（0 errors）
 - [x] 保存 checkpoint
 
+
+---
+
+## 🔨 三項新功能開發
+
+### 1. 逾時違約記錄與競標限制
+- [ ] 資料庫 users 表新增 auctionViolationCount 欄位
+- [ ] 資料庫新增 auctionViolationLogs 表（記錄每次違約詳情）
+- [ ] 修改 cancelExpiredAuctionOrders：取消時自動遞增 violationCount
+- [ ] 達到閾值（3次）時標記 isBannedFromAuction = true
+- [ ] 競標時檢查 isBannedFromAuction，被封禁用戶無法出價
+- [ ] Admin 後台顯示違約記錄並可手動解封
+
+### 2. 得標 Email 通知優化
+- [ ] 在得標通知 Email 中加入「前往購物車付款」連結
+- [ ] 加入付款截止時間（得標時間 + 系統設定的付款時限）
+- [ ] 更新 Email 模板樣式
+
+### 3. 購物車混合結帳
+- [ ] 修改 createBatchStripeOrder：支援同時包含普通商品和拍賣訂單
+- [ ] 修改 Cart.tsx：全選時包含拍賣訂單，合併結帳
+- [ ] 拍賣訂單在 Stripe session 中以獨立 line item 顯示
+- [ ] 付款成功後同時更新普通訂單和拍賣訂單狀態
+- [ ] 撰寫測試
+- [ ] 保存 checkpoint
+
+
+
+---
+
+## ✅ 三項新功能完成（2026-04-02）
+
+- [x] 逾時違約記錄：拍賣訂單逾時取消時自動記錄 no_payment 違約，1次=warning, 2次=ban_7d, 3+次=ban_30d
+- [x] Email 通知優化：得標通知及付款提醒 Email 改為「前往購物車付款」CTA，連結至 /cart，並顯示付款截止時間
+- [x] 購物車混合結帳：createBatchStripeOrder 支援 auctionOrderIds，拍賣訂單與市集商品合併一次 Stripe 付款
+- [x] Webhook 更新：batch checkout 處理拍賣訂單時同步更新 auctionPaymentStatus=paid
+- [x] 購物車 UI：訂單摘要顯示市集商品小計 + 拍賣得標小計 + 合計；結帳確認頁同步顯示
+- [x] 11 項單元測試全部通過（auction-features.test.ts）

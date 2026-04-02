@@ -143,6 +143,20 @@ async function startServer() {
                   stripePaymentIntentId: paymentIntentId ?? batchOrder.stripePaymentIntentId,
                 });
                 console.log(`[Webhook] Batch order ${batchOrderNo} marked as payment_received`);
+                // If this is an auction order, also update auctionListings.auctionPaymentStatus
+                if ((batchOrder as any).orderSource === 'auction' && (batchOrder as any).auctionListingId) {
+                  try {
+                    const { updateAuctionListing } = await import('../db');
+                    await updateAuctionListing((batchOrder as any).auctionListingId, {
+                      auctionPaymentStatus: 'paid',
+                      auctionPaymentPaidAt: new Date(),
+                      auctionOrderId: batchOrder.id,
+                    } as any);
+                    console.log(`[Webhook] Updated auctionListing#${(batchOrder as any).auctionListingId} auctionPaymentStatus=paid`);
+                  } catch (auctionUpdateErr: any) {
+                    console.warn(`[Webhook] Failed to update auctionListing for order ${batchOrderNo}:`, auctionUpdateErr.message);
+                  }
+                }
                 // Clear cart item for this listing after successful payment
                 try {
                   const { cartItems: _bCartItemsTable } = await import('../../drizzle/schema_new');

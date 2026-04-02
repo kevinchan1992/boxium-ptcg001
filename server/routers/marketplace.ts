@@ -2788,7 +2788,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       items: z.array(z.object({
         listingId: z.number().int(),
         offerId: z.number().int().optional(),
-      })).min(1),
+      })).default([]),
+      auctionOrderIds: z.array(z.number().int()).optional().default([]),
       buyerPhone: z.string().optional().default(""),
       shippingMethod: z.string().optional(),
       shippingAddress: z.object({
@@ -2804,6 +2805,58 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .mutation(async ({ ctx, input }) => {
       const stripe = getStripe();
       const feeRate = await getPlatformFeeRate();
+
+      // Validate: must have at least one item or one auction order
+      if (input.items.length === 0 && (!input.auctionOrderIds || input.auctionOrderIds.length === 0)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '請至少選擇一項商品或拍賣訂單' });
+      }
+
+      // Step 0: Validate auction orders (if any)
+      const auctionOrders: Array<{ id: number; orderNo: string; subtotalHkd: string; listingTitle: string; auctionListingId?: number | null }> = [];
+      if (input.auctionOrderIds && input.auctionOrderIds.length > 0) {
+        const { getDb } = await import('../db');
+        const { marketplaceOrders: moTable, marketplaceListings: mlTable } = await import('../../drizzle/schema_new');
+        const { and, eq, inArray } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB not available' });
+        const auctionOrderRows = await db.select({
+          id: moTable.id,
+          orderNo: moTable.orderNo,
+          buyerId: moTable.buyerId,
+          orderStatus: moTable.orderStatus,
+          orderSource: moTable.orderSource,
+          subtotalHkd: moTable.subtotalHkd,
+          auctionListingId: moTable.auctionListingId,
+          listingId: moTable.listingId,
+        }).from(moTable).where(
+          and(
+            inArray(moTable.id, input.auctionOrderIds),
+            eq(moTable.buyerId, ctx.user.id),
+            eq(moTable.orderStatus, 'pending_payment'),
+            eq(moTable.orderSource, 'auction'),
+          )
+        );
+        if (auctionOrderRows.length !== input.auctionOrderIds.length) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: '部分拍賣訂單不存在或已不在待付款狀態' });
+        }
+        // Fetch listing titles for line items
+        const listingIds = auctionOrderRows.map(o => o.auctionListingId ?? o.listingId).filter(Boolean) as number[];
+        const listingTitles: Record<number, string> = {};
+        if (listingIds.length > 0) {
+          const listings = await db.select({ id: mlTable.id, title: mlTable.title }).from(mlTable).where(inArray(mlTable.id, listingIds));
+          for (const l of listings) listingTitles[l.id] = l.title;
+        }
+        for (const row of auctionOrderRows) {
+          const titleKey = row.auctionListingId ?? row.listingId;
+          auctionOrders.push({
+            id: row.id,
+            orderNo: row.orderNo,
+            subtotalHkd: row.subtotalHkd as string,
+            listingTitle: titleKey ? (listingTitles[titleKey] ?? `拍賣商品 #${titleKey}`) : `拍賣訂單 #${row.orderNo}`,
+            auctionListingId: row.auctionListingId,
+          });
+        }
+      }
 
       // Step 1: Validate all listings and compute prices
       const orderItems: Array<{
@@ -2857,7 +2910,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
 
       // Step 2: Compute totals and determine payment restrictions (P1)
-      const totalAmount = orderItems.reduce((sum, o) => sum + o.effectivePrice, 0);
+      const auctionTotal = auctionOrders.reduce((sum, o) => sum + parseFloat(o.subtotalHkd), 0);
+      const totalAmount = orderItems.reduce((sum, o) => sum + o.effectivePrice, 0) + auctionTotal;
       const totalPlatformFee = orderItems.reduce((sum, { listing, effectivePrice }) =>
         sum + calcPlatformFeeWithRate(listing.sellerType, effectivePrice, feeRate), 0);
       const totalSellerReceivable = totalAmount - totalPlatformFee;
@@ -2934,17 +2988,31 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
 
       // Step 5: Create a single Stripe Checkout Session for all orders
-      const batchOrderNos = createdOrders.map(o => o.orderNo).join(",");
-      const firstOrderNo = createdOrders[0].orderNo;
+      const batchOrderNos = [
+        ...createdOrders.map(o => o.orderNo),
+        ...auctionOrders.map(o => o.orderNo),
+      ].join(",");
+      const firstOrderNo = createdOrders[0]?.orderNo ?? auctionOrders[0]?.orderNo ?? 'MIXED';
+      const auctionOrderNosStr = auctionOrders.map(o => o.orderNo).join(',');
 
-      const lineItems = orderItems.map(({ listing, effectivePrice }) => ({
-        price_data: {
-          currency: "hkd",
-          product_data: { name: listing.title, description: listing.description ?? undefined },
-          unit_amount: Math.round(effectivePrice * 100),
-        },
-        quantity: 1,
-      }));
+      const lineItems = [
+        ...orderItems.map(({ listing, effectivePrice }) => ({
+          price_data: {
+            currency: "hkd",
+            product_data: { name: listing.title, description: listing.description ?? undefined },
+            unit_amount: Math.round(effectivePrice * 100),
+          },
+          quantity: 1,
+        })),
+        ...auctionOrders.map(o => ({
+          price_data: {
+            currency: "hkd",
+            product_data: { name: `🏆 拍賣得標：${o.listingTitle}`, description: `訂單號 ${o.orderNo}` },
+            unit_amount: Math.round(parseFloat(o.subtotalHkd) * 100),
+          },
+          quantity: 1,
+        })),
+      ];
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card", "alipay"],
@@ -2959,12 +3027,14 @@ All three checks must pass for verified to be true. Respond with JSON only match
           order_no: firstOrderNo, // backward compat
           total_amount: totalAmount.toFixed(2),
           cart_order_id: cartOrder?.id?.toString() ?? "", // P1: Master order reference
+          auction_order_nos: auctionOrderNosStr, // auction orders in this session
         },
         payment_intent_data: {
           metadata: {
             batch_order_nos: batchOrderNos,
             buyerId: ctx.user.id.toString(),
             cart_order_id: cartOrder?.id?.toString() ?? "", // P1: for Transfer source_transaction lookup
+            auction_order_nos: auctionOrderNosStr,
           },
         },
       });

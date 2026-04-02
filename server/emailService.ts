@@ -1405,12 +1405,13 @@ interface AuctionWonEmailData {
   orderNo: string;
   paymentDeadline: string;
   orderUrl: string;
+  cartUrl: string;
   siteUrl?: string;
 }
 
 export function buildAuctionWonEmail(data: AuctionWonEmailData): { subject: string; html: string } {
   const siteUrl = data.siteUrl ?? "https://boxium.asia";
-  const subject = `恭喜得標！${data.cardName} — 請在 24 小時內付款`;
+  const subject = `恭喜得標！${data.cardName} — 請前往購物車完成付款`;
   const body = `
     <div style="text-align:center;margin-bottom:24px;">
       <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">恭喜您得標！</h2>
@@ -1436,9 +1437,9 @@ export function buildAuctionWonEmail(data: AuctionWonEmailData): { subject: stri
       </td></tr>
     </table>
     <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:16px;margin-bottom:24px;">
-      <p style="color:#856404;font-size:13px;margin:0;"><strong>重要提醒：</strong>請在 <strong>24 小時內</strong>完成付款，逾期將被記錄違規，累計 3 次違規將被禁止參與拍賣。</p>
+      <p style="color:#856404;font-size:13px;margin:0;"><strong>重要提醒：</strong>請在付款期限內前往購物車完成付款，逾期將被記錄違規，累計 3 次違規將被禁止參與拍賣。</p>
     </div>
-    ${ctaButton("立即前往付款", data.orderUrl)}
+    ${ctaButton("前往購物車付款", data.cartUrl)}
   `;
   const html = wrapHtml(subject, body);
   return { subject, html };
@@ -1473,6 +1474,7 @@ export async function sendAuctionWonEmail({
       orderNo,
       paymentDeadline,
       orderUrl: `${siteUrl}/orders/${orderNo}`,
+      cartUrl: `${siteUrl}/cart`,
       siteUrl,
     });
     return sendEmail({
@@ -1581,7 +1583,7 @@ export async function sendAuctionSoldEmail({
   }
 }
 
-// ─── Auction Payment Reminder Email (to winner, 12h after end) ───────────────
+// ─── Auction Payment Reminder Email (to winner, 12h after end) ─────────────────────────────────────────────
 interface AuctionPaymentReminderEmailData {
   winnerName: string;
   cardName: string;
@@ -1589,6 +1591,7 @@ interface AuctionPaymentReminderEmailData {
   orderNo: string;
   paymentDeadline: string;
   orderUrl: string;
+  cartUrl: string;
   siteUrl?: string;
 }
 
@@ -1623,7 +1626,7 @@ export function buildAuctionPaymentReminderEmail(data: AuctionPaymentReminderEma
     <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:16px;margin-bottom:24px;">
       <p style="color:#856404;font-size:13px;margin:0;"><strong>警告：</strong>若未在截止時間前付款，此訂單將被取消，並記錄為一次違規。累計 3 次違規將被禁止參與拍賣。</p>
     </div>
-    ${ctaButton("立即前往付款", data.orderUrl)}
+    ${ctaButton("前往購物車付款", data.cartUrl)}
   `;
   const html = wrapHtml(subject, body);
   return { subject, html };
@@ -1658,6 +1661,7 @@ export async function sendAuctionPaymentReminderEmail({
       orderNo,
       paymentDeadline,
       orderUrl: `${siteUrl}/orders/${orderNo}`,
+      cartUrl: `${siteUrl}/cart`,
       siteUrl,
     });
     return sendEmail({

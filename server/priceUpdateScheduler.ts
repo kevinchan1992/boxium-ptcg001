@@ -935,6 +935,8 @@ export function startPaymentTimeoutCancelScheduler() {
           sellerId: marketplaceOrders.sellerId,
           listingId: marketplaceOrders.listingId,
           createdAt: marketplaceOrders.createdAt,
+          orderSource: marketplaceOrders.orderSource,
+          auctionListingId: marketplaceOrders.auctionListingId,
         })
           .from(marketplaceOrders)
           .where(
@@ -999,6 +1001,51 @@ export function startPaymentTimeoutCancelScheduler() {
                   linkUrl: '/seller',
                   relatedId: order.id,
                 }).catch(() => {});
+              }
+            }
+            // ── Record violation for auction orders (no_payment) ──
+            if (order.orderSource === 'auction') {
+              try {
+                const { createViolation, getViolationsByUserId } = await import('./db');
+                // Count existing no_payment violations for this buyer
+                const existingViolations = await getViolationsByUserId(order.buyerId);
+                const noPaymentCount = existingViolations.filter(v => v.type === 'no_payment').length;
+                // Determine penalty: 1st=warning, 2nd=ban_7d, 3rd+=ban_30d
+                let penalty: 'warning' | 'ban_7d' | 'ban_30d' = 'warning';
+                let banExpiresAt: Date | null = null;
+                if (noPaymentCount === 1) {
+                  penalty = 'ban_7d';
+                  banExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                } else if (noPaymentCount >= 2) {
+                  penalty = 'ban_30d';
+                  banExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                }
+                await createViolation({
+                  userId: order.buyerId,
+                  type: 'no_payment',
+                  listingId: order.auctionListingId ?? order.listingId ?? undefined,
+                  orderId: order.id,
+                  penalty,
+                  banExpiresAt: banExpiresAt ?? undefined,
+                  adminNote: `訂單 #${order.orderNo} 逾時未付款，自動記錄違規（第 ${noPaymentCount + 1} 次）`,
+                } as any);
+                // Notify buyer about violation
+                const violationMsg = penalty === 'warning'
+                  ? '這是您的第 1 次警告，累計 3 次將被暫停競標資格。'
+                  : penalty === 'ban_7d'
+                  ? '您已被暫停競標資格 7 天。'
+                  : '您已被暫停競標資格 30 天。';
+                await createNotification({
+                  userId: order.buyerId,
+                  type: 'order',
+                  title: '拍賣違規警告',
+                  body: `訂單 #${order.orderNo} 因逾時未付款已被記錄違規。${violationMsg}`,
+                  linkUrl: `/orders/${order.orderNo}`,
+                  relatedId: order.id,
+                }).catch(() => {});
+                console.log(`[PaymentTimeout] Recorded auction violation (${penalty}) for buyer ${order.buyerId}, order ${order.orderNo}`);
+              } catch (violationErr: any) {
+                console.error(`[PaymentTimeout] Failed to record violation for order ${order.id}:`, violationErr.message);
               }
             }
             console.log(`[PaymentTimeout] Cancelled order ${order.orderNo} (id: ${order.id})`);
