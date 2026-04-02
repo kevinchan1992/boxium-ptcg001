@@ -866,6 +866,7 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   shippedAt: timestamp("shippedAt"),
   autoCompleteAt: timestamp("autoCompleteAt"), // 14 days after delivered
   buyerConfirmedAt: timestamp("buyerConfirmedAt"),
+  payoutHoldUntil: timestamp("payoutHoldUntil"), // 48-hour cooling period after buyer confirms receipt; payout triggers only after this timestamp (and no active dispute)
   disputeOpenedAt: timestamp("disputeOpenedAt"),
   disputeReason: text("disputeReason"),
   disputeEvidenceUrls: text("disputeEvidenceUrls"), // JSON array of S3 URLs

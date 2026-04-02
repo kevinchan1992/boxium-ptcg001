@@ -816,26 +816,30 @@ export const marketplaceRouter = router({
       }
       // Platform orders: payment already collected by platform, no payout needed
       const isPlatformOrder = order.sellerType === 'platform';
+      // NEW PAYOUT LOGIC: 48-hour cooling period after buyer confirms receipt.
+      // Payout is NOT triggered immediately — the payoutHoldScheduler cron job will
+      // trigger executeSellerPayout once payoutHoldUntil has passed AND no dispute exists.
+      const payoutHoldUntil = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours from now
       await updateMarketplaceOrder(input.orderId, {
         orderStatus: "completed",
         buyerConfirmedAt: new Date(),
         payoutStatus: isPlatformOrder ? "not_applicable" : "processing",
+        payoutHoldUntil: isPlatformOrder ? null : payoutHoldUntil,
       });
-      // P2: Handle payout for C2C orders via executeSellerPayout (centralized logic)
+      // Notify seller: payout is on hold for 48 hours
       let sellerUserIdForNotify: number | null = null;
       if (order.sellerType === "seller" && order.sellerId) {
         const sellerProfile = await getSellerProfileById(order.sellerId);
         sellerUserIdForNotify = sellerProfile?.userId ?? null;
-        try {
-          const { executeSellerPayout } = await import("../sellerPayout");
-          const payoutResult = await executeSellerPayout(input.orderId);
-          if (payoutResult.success) {
-            console.log(`[Payout] P2 Transfer ${payoutResult.transferId} (HKD ${payoutResult.amountHkd}) for order ${order.orderNo}`);
-          } else {
-            console.error(`[Payout] P2 failed for order ${order.orderNo}: ${payoutResult.error}`);
-          }
-        } catch (payoutErr: any) {
-          console.error("[Payout] executeSellerPayout threw:", payoutErr.message);
+        if (sellerProfile?.userId) {
+          const { createNotification } = await import("../db/notifications");
+          await createNotification({
+            userId: sellerProfile.userId,
+            type: "trade",
+            title: "買家已確認收貨 ✅",
+            body: `訂單 ${order.orderNo} 買家已確認收貨。款項將在 48 小時後（${payoutHoldUntil.toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' })}）自動放款，期間如無爭議即可收款。`,
+            linkUrl: "/seller",
+          }).catch(() => {});
         }
       }
       // Send completed email to buyer

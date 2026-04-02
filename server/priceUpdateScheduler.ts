@@ -404,13 +404,15 @@ export function startAutoCompleteOrdersScheduler() {
         if (!db) return;
 
         const now = new Date();
-        const { inArray: inArr } = await import('drizzle-orm');
-        // F3: Query both 'shipped' and 'delivered' orders (excludes 'disputed' which should NOT auto-complete)
+        const { inArray: inArr, ne } = await import('drizzle-orm');
+        // NEW LOGIC: Only auto-complete orders that are NOT in 'disputed' status
+        // (prevents auto-complete from triggering payout during active disputes)
         const overdueOrders = await db.select()
           .from(marketplaceOrders)
           .where(
             and(
               inArr(marketplaceOrders.orderStatus, ['shipped', 'delivered']),
+              ne(marketplaceOrders.orderStatus, 'disputed'),  // CRITICAL: exclude disputed orders
               isNotNull(marketplaceOrders.autoCompleteAt),
               lte(marketplaceOrders.autoCompleteAt, now)
             )
@@ -424,8 +426,15 @@ export function startAutoCompleteOrdersScheduler() {
           try {
             // Platform orders: payment already collected by platform, no payout needed
             const isPlatformOrder = order.sellerType === 'platform';
+            // NEW PAYOUT LOGIC: Set 48-hour cooling period for C2C orders (same as confirmReceipt)
+            const payoutHoldUntil = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours from now
             await db.update(marketplaceOrders)
-              .set({ orderStatus: 'completed', buyerConfirmedAt: now, payoutStatus: isPlatformOrder ? 'not_applicable' : 'processing' })
+              .set({
+                orderStatus: 'completed',
+                buyerConfirmedAt: now,
+                payoutStatus: isPlatformOrder ? 'not_applicable' : 'processing',
+                payoutHoldUntil: isPlatformOrder ? null : payoutHoldUntil,
+              })
               .where(eq(marketplaceOrders.id, order.id));
 
             // Notify buyer: order auto-completed
@@ -446,40 +455,28 @@ export function startAutoCompleteOrdersScheduler() {
               console.warn(`[AutoComplete] Buyer email failed for order ${order.orderNo}:`, emailErr.message);
             }
 
-            // Trigger Stripe Transfer payout if C2C order (using centralized executeSellerPayout)
+            // NEW PAYOUT LOGIC: Do NOT trigger payout immediately.
+            // The payoutHoldScheduler cron job will trigger executeSellerPayout
+            // once payoutHoldUntil has passed AND no dispute exists.
+            // Notify seller about auto-completion and 48-hour cooling period
             if (order.sellerType === 'seller' && order.sellerId) {
-              try {
-                const { executeSellerPayout } = await import('./sellerPayout');
-                const payoutResult = await executeSellerPayout(order.id);
-                if (payoutResult.success) {
-                  console.log(`[AutoComplete] Payout transfer ${payoutResult.transferId} for order ${order.orderNo}, HKD ${payoutResult.amountHkd}`);
-                } else {
-                  console.error(`[AutoComplete] Payout failed for order ${order.orderNo}: ${payoutResult.error}`);
-                }
-                // Notify seller about auto-completion
-                const sellerProfile = await getSellerProfileById(order.sellerId);
-                if (sellerProfile?.userId) {
-                  const payoutMsg = payoutResult.success
-                    ? `HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`
-                    : `款項將由平台管理員安排轉帳。`;
-                  await createNotification({
-                    userId: sellerProfile.userId,
-                    type: 'trade',
-                    title: payoutResult.success ? '款項已自動轉帳 💰' : '訂單已自動完成 ✅',
-                    body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨）。${payoutMsg}`,
-                    linkUrl: `/seller`,
+              const sellerProfile = await getSellerProfileById(order.sellerId);
+              if (sellerProfile?.userId) {
+                await createNotification({
+                  userId: sellerProfile.userId,
+                  type: 'trade',
+                  title: '訂單已自動完成 ✅',
+                  body: `訂單 ${order.orderNo} 已自動完成（買家 14 天內未確認收貨）。款項將在 48 小時後（${payoutHoldUntil.toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' })}）自動放款，期間如無爭議即可收款。`,
+                  linkUrl: `/seller`,
                 }).catch(() => {});
-                  try {
-                    const { sendOrderEmail, buildOrderAutoCompletedSellerEmail, getOrderEmailData } = await import('./emailService');
-                    const emailData = await getOrderEmailData(order);
-                    const { subject, html } = buildOrderAutoCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
-                    await sendOrderEmail({ userId: sellerProfile.userId, subject, html, dedupeKey: `order_autocomplete_seller_${order.id}` });
-                  } catch (emailErr: any) {
-                    console.warn(`[AutoComplete] Seller email failed for order ${order.orderNo}:`, emailErr.message);
-                  }
+                try {
+                  const { sendOrderEmail, buildOrderAutoCompletedSellerEmail, getOrderEmailData } = await import('./emailService');
+                  const emailData = await getOrderEmailData(order);
+                  const { subject, html } = buildOrderAutoCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
+                  await sendOrderEmail({ userId: sellerProfile.userId, subject, html, dedupeKey: `order_autocomplete_seller_${order.id}` });
+                } catch (emailErr: any) {
+                  console.warn(`[AutoComplete] Seller email failed for order ${order.orderNo}:`, emailErr.message);
                 }
-              } catch (payoutErr: any) {
-                console.error(`[AutoComplete] executeSellerPayout threw for order ${order.orderNo}:`, payoutErr.message);
               }
             }
             console.log(`[AutoComplete] Order ${order.orderNo} auto-completed`);
@@ -2002,6 +1999,117 @@ export function stopPayoutRetryScheduler() {
   if (payoutRetryCronJob) {
     payoutRetryCronJob.stop();
     payoutRetryCronJob = null;
+  }
+}
+
+
+// ============================================================
+// 48-Hour Cooling Period Payout Scheduler
+// Triggers payout for orders where payoutHoldUntil has passed
+// and no active dispute exists
+// ============================================================
+let payoutHoldSchedulerCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startPayoutHoldScheduler() {
+  if (payoutHoldSchedulerCronJob) return;
+
+  payoutHoldSchedulerCronJob = cron.schedule(
+    '0 * * * *', // Every hour at :00
+    async () => {
+      console.log('[PayoutHold] Checking for orders past cooling period...');
+      try {
+        const { getDb, getSellerProfileById } = await import('./db');
+        const { marketplaceOrders } = await import('../drizzle/schema_new');
+        const { eq, and, lte, isNotNull, ne } = await import('drizzle-orm');
+        const { createNotification } = await import('./db/notifications');
+        const db = await getDb();
+        if (!db) return;
+
+        const now = new Date();
+        // Find orders where:
+        // 1. payoutHoldUntil has passed
+        // 2. orderStatus = 'completed'
+        // 3. payoutStatus = 'processing' (not yet paid)
+        // 4. orderStatus != 'disputed' (no active dispute)
+        // 5. sellerType = 'seller' (C2C orders only)
+        const readyOrders = await db.select()
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.orderStatus, 'completed'),
+              ne(marketplaceOrders.orderStatus, 'disputed'),  // CRITICAL: exclude disputed orders
+              eq(marketplaceOrders.payoutStatus, 'processing'),
+              eq(marketplaceOrders.sellerType, 'seller'),
+              isNotNull(marketplaceOrders.payoutHoldUntil),
+              lte(marketplaceOrders.payoutHoldUntil, now)
+            )
+          )
+          .limit(50);
+
+        if (readyOrders.length === 0) {
+          console.log('[PayoutHold] No orders ready for payout.');
+          return;
+        }
+
+        console.log(`[PayoutHold] Found ${readyOrders.length} orders ready for payout.`);
+        let succeeded = 0;
+        let failed = 0;
+
+        for (const order of readyOrders) {
+          try {
+            const { executeSellerPayout } = await import('./sellerPayout');
+            const payoutResult = await executeSellerPayout(order.id);
+            if (payoutResult.success) {
+              succeeded++;
+              console.log(`[PayoutHold] ✅ Order ${order.orderNo} payout succeeded: ${payoutResult.transferId}, HKD ${payoutResult.amountHkd}`);
+              // Notify seller: payout completed
+              if (order.sellerId) {
+                const sellerProfile = await getSellerProfileById(order.sellerId);
+                if (sellerProfile?.userId) {
+                  await createNotification({
+                    userId: sellerProfile.userId,
+                    type: 'trade',
+                    title: '款項已自動轉帳 💰',
+                    body: `訂單 ${order.orderNo} 的款項 HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
+                    linkUrl: `/seller`,
+                  }).catch(() => {});
+                }
+              }
+            } else {
+              failed++;
+              console.error(`[PayoutHold] ❌ Order ${order.orderNo} payout failed: ${payoutResult.error}`);
+            }
+          } catch (err: any) {
+            failed++;
+            console.error(`[PayoutHold] Order ${order.orderNo} payout threw:`, err.message);
+          }
+        }
+
+        console.log(`[PayoutHold] Completed: ${succeeded} succeeded, ${failed} failed.`);
+
+        // Notify admin if there are failures
+        if (failed > 0) {
+          try {
+            const { notifyOwner } = await import('./_core/notification');
+            await notifyOwner({
+              title: '48小時放款報告',
+              content: `自動處理 ${readyOrders.length} 筆放款：${succeeded} 筆成功，${failed} 筆失敗。請到管理後台查看詳情。`,
+            });
+          } catch {}
+        }
+      } catch (err) {
+        console.error('[PayoutHold] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[PayoutHold] 48-hour cooling period payout scheduler started (every hour)');
+}
+
+export function stopPayoutHoldScheduler() {
+  if (payoutHoldSchedulerCronJob) {
+    payoutHoldSchedulerCronJob.stop();
+    payoutHoldSchedulerCronJob = null;
   }
 }
 
