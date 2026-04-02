@@ -4477,7 +4477,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const seller = await getSellerProfileById(input.sellerId);
       if (!seller || !seller.isActive) throw new TRPCError({ code: "NOT_FOUND", message: "賣家不存在" });
       const listings = await getSellerListings(seller.id);
-      const activeListings = listings.filter((l: any) => l.status === "active");
+      // Exclude auction listings — they are shown in the Auction page, not seller profile
+      const activeListings = listings.filter((l: any) => l.status === "active" && l.listingMode !== "auction");
       const reviews = await getSellerReviews(seller.id, 1, 10);
       return {
         seller: {

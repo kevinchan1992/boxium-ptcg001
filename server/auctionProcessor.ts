@@ -304,7 +304,7 @@ async function finalizeAuction(listing: any): Promise<void> {
       platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
       platformFeeHkd: platformFee.toFixed(2),
       sellerReceivableHkd: sellerReceivable.toFixed(2),
-      paymentMethod: 'stripe',
+      paymentMethod: itemSellerType === 'platform' ? null : 'stripe', // Platform auctions allow Alipay choice
       orderStatus: 'pending_payment',
       paymentStatus: 'pending',
       orderSource: 'auction',

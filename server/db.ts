@@ -3148,7 +3148,11 @@ export async function getPublicListings(options: {
   const { page = 1, pageSize = 20, search, condition, conditions: conditionList, sellerType, minPrice, maxPrice, sortBy = 'newest', tcgSeries, cardIds } = options;
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
-  const conditions = [eq(marketplaceListings.status, 'active')];
+  // Exclude auction listings — they are managed separately in the Auction page
+  const conditions = [
+    eq(marketplaceListings.status, 'active'),
+    ne(marketplaceListings.listingMode, 'auction')
+  ];
   if (search) conditions.push(like(marketplaceListings.title, `%${search}%`));
   if (cardIds && cardIds.length > 0) conditions.push(inArray(marketplaceListings.cardId, cardIds));
   // Support multi-condition array (OR) or single condition
@@ -3192,11 +3196,15 @@ export async function getPublicListings(options: {
     .limit(pageSize).offset(offset);
   const countRows = await db.select({ count: sql<number>`count(*)` }).from(marketplaceListings).where(and(...conditions));
   // Series counts (always based on active status only, no other filters)
+  // Exclude auction listings from series counts
   const seriesCountRows = await db.select({
     series: marketplaceListings.tcgSeries,
     count: sql<number>`count(*)`
   }).from(marketplaceListings)
-    .where(eq(marketplaceListings.status, 'active'))
+    .where(and(
+      eq(marketplaceListings.status, 'active'),
+      ne(marketplaceListings.listingMode, 'auction')
+    ))
     .groupBy(marketplaceListings.tcgSeries);
   const seriesCounts: Record<string, number> = { all: 0 };
   for (const row of seriesCountRows) {

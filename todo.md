@@ -7571,3 +7571,35 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 「催款提醒」欄位文字避免換行（縮短為「催款」 + whitespace-nowrap）
 - [x] 表格欄寬在平板上重新分配（減少 padding，px-4 → px-3）
 - [x] 表格在平板上改為可水平滾動（已存在 overflow-x-auto）
+
+## 🐛 Bug：拍賣品同時出現在商城直購商品列表
+
+- [ ] 檢查 #390002 的數據庫記錄（auctionListings vs marketplaceListings）
+- [ ] 找出拍賣品上架時同時創建 marketplaceListing 的原因
+- [ ] 修復後端邏輯，確保拍賣品不會同時創建直購商品
+- [ ] 清理現有重複記錄（刪除 #390002 的 marketplaceListing）
+
+## 🔄 重構拍賣品付款流程（得標後加入購物車統一結帳）
+
+### Schema 更新
+- [ ] cartItems 表加入 `auctionListingId` 欄位（支援拍賣品加入購物車）
+- [ ] 推送 schema 變更到 DB
+
+### 後端 API
+- [ ] 建立 `auction.addWinningAuctionToCart` 程序（得標後自動加入購物車）
+- [ ] 更新 `marketplace.cartCheckout` 支援拍賣品結帳
+- [ ] 更新購物車結帳邏輯：平台自有商品開放支付寶選項
+- [ ] 移除 `auction.createAuctionPayment` 獨立付款流程
+- [ ] 更新 Stripe webhook 處理拍賣訂單（`orderSource = 'auction'`）
+
+### 前端 UI
+- [ ] 拍賣得標頁面：移除「立即付款」按鈕，改為「加入購物車」
+- [ ] 購物車頁面：顯示拍賣品（標註「拍賣得標」）
+- [ ] 購物車結帳：平台自有商品顯示支付寶選項
+
+## 🐛 修復拍賣品創建邏輯## 用戶回報問題
+- [x]## 🐛 修復拍賣品創建邏輯
+- [x] 修復：確保 listingMode='auction' 的商品不會同時創建 listingMode='buy_now' 的直購商品
+  - 根本原因：生產環境 getPublicListings 缺少 ne(listingMode, 'auction') 過濾器
+  - 修復：db.ts getPublicListings 已加入 auction 過濾器（本地代碼已有，需部署）
+  - 修復：marketplace.ts getSellerPublicProfile 加入 listingMode !== 'auction' 過濾
