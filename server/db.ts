@@ -3318,7 +3318,7 @@ export async function restoreListingStock(listingId: number, quantity: number): 
     sql`UPDATE marketplaceListings
         SET quantity = quantity + ${quantity},
             remainingQuantity = remainingQuantity + ${quantity},
-            status = CASE WHEN status = 'sold' THEN 'active' ELSE status END,
+            status = CASE WHEN status IN ('sold', 'reserved') THEN 'active' ELSE status END,
             updatedAt = NOW()
         WHERE id = ${listingId}`
   );

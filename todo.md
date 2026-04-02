@@ -7685,3 +7685,43 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - ✅ 所有 reserved 相關 UI 元素已移除
 - ✅ 保留的 🔒 圖標僅用於順豐智能櫃和拍賣規則說明（與訂單鎖定無關）
 
+
+
+---
+
+## 🔒 實現爭議鎖定邏輯
+
+### 目標
+當買家或賣家創建爭議時，將商品 status 設為 'reserved'，防止其他買家購買，直到管理員解決爭議。
+
+### 任務清單
+
+#### 1. 分析現有爭議系統
+- [x] 檢查現有爭議相關代碼（openDispute, adminResolveDispute）
+- [x] 確認爭議流程：openDispute → orderStatus='disputed' → adminResolveDispute → orderStatus='cancelled'/'completed'
+- [x] 確認目前沒有鎖定商品的邏輯
+
+#### 2. 後端爭議鎖定邏輯
+- [x] 在 openDispute 中添加商品鎖定邏輯（設置 listing status='reserved'）
+- [x] 在 adminResolveDispute 中添加解鎖邏輯：
+  - refund_buyer: 恢復庫存並設置 status='active'（已有 restoreListingStock）
+  - release_seller: 保持 status='sold'（商品已售出）
+- [x] 更新 getPublicListings 確保 reserved 商品不顯示在商城（已有 eq(status, 'active') 過濾）
+- [x] 更新 MarketplaceListing 頁面確保 reserved 商品顯示「爭議處理中」狀態
+
+#### 3. 前端爭議 UI
+- [x] 檢查現有爭議 UI（買家申請爭議、管理員解決爭議）
+- [x] 確保爭議商品在商城顯示「爭議處理中」狀態（添加「⚠️ 爭議處理中」徽章）
+- [x] 確保爭議商品無法加入購物車（顯示「此商品正在爭議處理中」提示）
+
+#### 4. 測試
+- [x] 撰寫單元測試（dispute-locking.test.ts）
+- [x] 測試爭議創建時商品鎖定
+- [x] 測試爭議解決時商品解鎖
+- [x] 測試 reserved 商品不顯示在商城
+- [x] 所有測試通過（15 tests passed）
+
+#### 5. 完成
+- [ ] 保存 checkpoint
+- [ ] 向用戶報告完成結果
+

@@ -806,7 +806,8 @@ export default function MarketplaceListing() {
                    listing.tcgSeries === "mtg" ? "MTG" : "其他 TCG"}
                 </Badge>
               )}
-              {!isAvailable && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">{t("marketplaceListing.status.soldOut")}</Badge>}
+              {listing.status === 'reserved' && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">⚠️ 爭議處理中</Badge>}
+              {!isAvailable && listing.status !== 'reserved' && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">{t("marketplaceListing.status.soldOut")}</Badge>}
             </div>
 
             {/* Title */}
@@ -931,6 +932,12 @@ export default function MarketplaceListing() {
                 <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
                 <p className="text-green-800 font-semibold">{t("marketplaceListing.order.submitted")}</p>
                 <p className="text-sm text-green-700 mt-1">訂單號：{completedOrderNo}</p>
+              </div>
+            ) : listing.status === 'reserved' ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+                <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                <p className="text-amber-800 font-semibold">此商品正在爭議處理中</p>
+                <p className="text-sm text-amber-700 mt-1">管理員正在處理相關爭議，商品暫時無法購買</p>
               </div>
             ) : isAvailable ? (
               <div className="space-y-2.5">

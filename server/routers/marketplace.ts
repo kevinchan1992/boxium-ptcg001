@@ -3376,6 +3376,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
         disputeEvidenceUrls: input.evidenceUrls ? JSON.stringify(input.evidenceUrls) : null,
         disputeDeadlineAt: disputeDeadline,
       });
+      // Lock listing to prevent other buyers from purchasing during dispute
+      if (order.listingId) {
+        await updateListing(order.listingId, { status: 'reserved' });
+        console.log(`[Dispute] Listing ${order.listingId} locked (status=reserved) for order ${order.orderNo}`);
+      }
       // Notify admin
       await notifyAdmin({
         title: "新爭議申請 ⚠️",
@@ -3622,6 +3627,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
           });
           console.log(`[Dispute] Alipay refund tracking set to pending for order ${order.orderNo}`);
         }
+      }
+      // If releasing to seller, unlock listing (set status='sold' since payment was valid)
+      if (input.outcome === "release_seller" && order.listingId) {
+        await updateListing(order.listingId, { status: 'sold' });
+        console.log(`[Dispute] Listing ${order.listingId} status set to 'sold' after release_seller for order ${order.orderNo}`);
       }
       // If releasing to seller, trigger payout via centralized executeSellerPayout
       let disputeSellerUserId: number | null = null;
