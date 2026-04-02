@@ -921,7 +921,7 @@ interface CheckoutDialogProps {
   activeSubtotal: number;
   sfDistricts: string[];
   user?: { id: number; name?: string | null; phone?: string | null; email?: string | null } | null;
-  pendingAuctionOrders?: Array<{ orderId: number; orderNo: string; subtotalHkd: string | number }> | null;
+  pendingAuctionOrders?: Array<{ orderId: number; orderNo: string; subtotalHkd: string | number; sellerType?: string | null }> | null;
 }
 
 function CheckoutDialog({
@@ -1041,9 +1041,11 @@ function CheckoutDialog({
   };
 
   // P0: Detect if any item is from a C2C seller — restricts payment to Stripe only
+  // Also check pending auction orders: if any auction order is from a C2C seller, disable Alipay HK
   const hasSellerItems = useMemo(
-    () => activeItems.some((item) => item.sellerType === "seller"),
-    [activeItems]
+    () => activeItems.some((item) => item.sellerType === "seller")
+      || (pendingAuctionOrders ?? []).some((o) => o.sellerType === "seller"),
+    [activeItems, pendingAuctionOrders]
   );
 
   // P0: Auto-switch to Stripe if Alipay HK is selected but cart has seller items

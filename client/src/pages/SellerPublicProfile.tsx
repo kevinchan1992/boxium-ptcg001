@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
-import { Star, Package, ShoppingBag, ArrowLeft, MessageSquare, Calendar, Award } from "lucide-react";
+import { Star, Package, ShoppingBag, ArrowLeft, MessageSquare, Calendar, Award, Gavel, Clock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,6 +18,39 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md
           className={`${s} ${i <= Math.round(rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`}
         />
       ))}
+    </div>
+  );
+}
+
+/** Countdown timer for auction end time */
+function AuctionCountdown({ endAt }: { endAt: Date | string | null }) {
+  const [timeLeft, setTimeLeft] = useState<string>("");
+
+  useEffect(() => {
+    if (!endAt) return;
+    const end = new Date(endAt).getTime();
+    const update = () => {
+      const diff = end - Date.now();
+      if (diff <= 0) { setTimeLeft("已結標"); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      if (d > 0) setTimeLeft(`${d}天 ${h}時`);
+      else if (h > 0) setTimeLeft(`${h}時 ${m}分`);
+      else setTimeLeft(`${m}分 ${s}秒`);
+    };
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [endAt]);
+
+  const isUrgent = endAt && (new Date(endAt).getTime() - Date.now()) < 3600000;
+
+  return (
+    <div className={`flex items-center gap-1 text-xs ${isUrgent ? "text-red-400" : "text-gray-400"}`}>
+      <Clock className="w-3 h-3" />
+      <span>{timeLeft || "計算中..."}</span>
     </div>
   );
 }
@@ -57,8 +90,9 @@ export default function SellerPublicProfile() {
     );
   }
 
-  const { seller, listings, reviews, reviewTotal } = data;
+  const { seller, listings, activeAuctions, reviews, reviewTotal } = data as any;
   const avgRating = parseFloat(seller.avgRating as string ?? "0");
+  const auctionCount = (activeAuctions ?? []).length;
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] pt-20 pb-12">
@@ -125,17 +159,29 @@ export default function SellerPublicProfile() {
                     活躍賣家
                   </Badge>
                 )}
+                {auctionCount > 0 && (
+                  <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                    <Gavel className="w-3 h-3 mr-1" />
+                    拍賣中
+                  </Badge>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Tabs: Listings & Reviews */}
-        <Tabs defaultValue="listings">
+        {/* Tabs: Listings, Auctions & Reviews */}
+        <Tabs defaultValue={auctionCount > 0 && listings.length === 0 ? "auctions" : "listings"}>
           <TabsList className="bg-white/5 border border-white/10 mb-4">
             <TabsTrigger value="listings" className="text-white data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
               在售商品 ({listings.length})
             </TabsTrigger>
+            {auctionCount > 0 && (
+              <TabsTrigger value="auctions" className="text-white data-[state=active]:bg-orange-600 data-[state=active]:text-white">
+                <Gavel className="w-3.5 h-3.5 mr-1.5" />
+                進行中拍賣 ({auctionCount})
+              </TabsTrigger>
+            )}
             <TabsTrigger value="reviews" className="text-white data-[state=active]:bg-[#06038d] data-[state=active]:text-white">
               買家評價 ({reviewTotal})
             </TabsTrigger>
@@ -187,6 +233,73 @@ export default function SellerPublicProfile() {
               </div>
             )}
           </TabsContent>
+
+          {/* Active Auctions Tab */}
+          {auctionCount > 0 && (
+            <TabsContent value="auctions">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {(activeAuctions ?? []).map((auction: any) => {
+                  const imgs = (() => { try { return JSON.parse(auction.images ?? "[]"); } catch { return []; } })();
+                  const currentBid = auction.currentHighestBid
+                    ? parseFloat(auction.currentHighestBid)
+                    : parseFloat(auction.startingBid ?? "0");
+                  const isCurrentBid = !!auction.currentHighestBid;
+                  return (
+                    <Link key={auction.id} href={`/auction/${auction.id}`}>
+                      <Card className="bg-white/5 border border-white/10 hover:border-orange-400/50 transition-all cursor-pointer group">
+                        <CardContent className="p-0">
+                          {/* Image */}
+                          {imgs[0] ? (
+                            <div className="relative">
+                              <img
+                                src={imgs[0]}
+                                alt={auction.title}
+                                className="w-full h-40 object-cover rounded-t-lg"
+                              />
+                              <div className="absolute top-2 left-2">
+                                <Badge className="bg-orange-500 text-white text-xs px-1.5 py-0.5 border-0">
+                                  <Gavel className="w-2.5 h-2.5 mr-1" />競標中
+                                </Badge>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="relative w-full h-40 bg-white/5 rounded-t-lg flex items-center justify-center">
+                              <Gavel className="w-8 h-8 text-orange-400" />
+                              <div className="absolute top-2 left-2">
+                                <Badge className="bg-orange-500 text-white text-xs px-1.5 py-0.5 border-0">
+                                  <Gavel className="w-2.5 h-2.5 mr-1" />競標中
+                                </Badge>
+                              </div>
+                            </div>
+                          )}
+                          <div className="p-3">
+                            <p className="text-white text-sm font-medium line-clamp-2 group-hover:text-orange-400 transition-colors">
+                              {auction.title}
+                            </p>
+                            {/* Current bid */}
+                            <div className="mt-2">
+                              <div className="flex items-center gap-1 text-xs text-gray-400 mb-0.5">
+                                <TrendingUp className="w-3 h-3" />
+                                <span>{isCurrentBid ? "當前出價" : "起拍價"}</span>
+                              </div>
+                              <span className="text-orange-400 font-bold text-sm">
+                                HK${currentBid.toLocaleString()}
+                              </span>
+                            </div>
+                            {/* Bid count & countdown */}
+                            <div className="flex items-center justify-between mt-2">
+                              <span className="text-xs text-gray-500">{auction.bidCount ?? 0} 次出價</span>
+                              <AuctionCountdown endAt={auction.auctionEndAt} />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+            </TabsContent>
+          )}
 
           {/* Reviews Tab */}
           <TabsContent value="reviews">

@@ -7603,3 +7603,23 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
   - 根本原因：生產環境 getPublicListings 缺少 ne(listingMode, 'auction') 過濾器
   - 修復：db.ts getPublicListings 已加入 auction 過濾器（本地代碼已有，需部署）
   - 修復：marketplace.ts getSellerPublicProfile 加入 listingMode !== 'auction' 過濾
+## 🎯 新功能：拍賣品支付寶、賣家頁面拍賣區塊、拍賣結標自動下架
+
+### 功能一：平台自有拍賣品支持支付寶 HK 付款
+- [x] 修復 CheckoutDialog hasSellerItems 邏輯：考慮 pendingAuctionOrders 的 sellerType
+- [x] 確保購物車同時有平台拍賣品和 C2C 直購品時，支付寶選項正確顯示/禁用
+- [x] 測試：購物車只有平台拍賣品 → 支付寶可用
+- [x] 測試：購物車有平台拍賣品 + C2C 直購品 → 支付寶禁用
+- [x] 測試：購物車只有 C2C 拍賣品 → 支付寶禁用
+
+### 功能二：賣家公開頁面加入「進行中拍賣」區塊
+- [x] 後端：getSellerPublicProfile API 加入 activeAuctions 查詢（auctionStatus='active'）
+- [x] 前端：SellerPublicProfile.tsx 加入「進行中拍賣」 Tab
+- [x] 前端：顯示拍賣品卡片（圖片、標題、當前出價、結標時間倒計時）
+- [x] 前端：點擊拍賣品卡片跳轉到 /auction/:id
+
+### 功能三：拍賣結標後自動將 marketplaceListings 設為 inactive
+- [x] 修復 finalizeAuction：流標時設 status='removed'（而非 'active'）
+- [x] 修復 finalizeAuction：成交時保持 status='sold'（已正確）
+- [x] 測試：拍賣流標後，商品不出現在商城
+- [x] 測試：拍賣成交後，商品不出現在商城

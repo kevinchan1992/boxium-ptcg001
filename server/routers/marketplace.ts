@@ -4477,8 +4477,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const seller = await getSellerProfileById(input.sellerId);
       if (!seller || !seller.isActive) throw new TRPCError({ code: "NOT_FOUND", message: "賣家不存在" });
       const listings = await getSellerListings(seller.id);
-      // Exclude auction listings — they are shown in the Auction page, not seller profile
+      // Separate buy-now listings and active auctions
       const activeListings = listings.filter((l: any) => l.status === "active" && l.listingMode !== "auction");
+      const activeAuctions = listings.filter((l: any) => l.listingMode === "auction" && l.auctionStatus === "active");
       const reviews = await getSellerReviews(seller.id, 1, 10);
       return {
         seller: {
@@ -4492,6 +4493,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
           memberSince: seller.createdAt,
         },
         listings: activeListings,
+        activeAuctions,
         reviews: reviews.reviews,
         reviewTotal: reviews.total,
       };

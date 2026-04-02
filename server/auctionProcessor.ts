@@ -230,9 +230,11 @@ async function finalizeAuction(listing: any): Promise<void> {
 
   if (!winningBid || !listing.hasReserveMet) {
     // No bids or reserve not met → ended with no sale
+    // Set status to 'removed' so the listing is hidden from marketplace
+    // Seller can relist from their dashboard if they wish
     await updateAuctionListing(listing.id, {
       auctionStatus: 'ended_no_bid',
-      status: 'active', // Keep listing active so seller can relist
+      status: 'removed',
     });
 
     console.log(`[AuctionProcessor] Auction ${listing.id} ended with no sale`);
