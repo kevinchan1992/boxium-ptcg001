@@ -188,8 +188,8 @@ export async function executeSellerPayout(orderId: number): Promise<PayoutResult
     await createNotification({
       userId: sellerProfile.userId,
       type: "trade",
-      title: "賣款已轉帳 💰",
-      body: `訂單 ${order.orderNo} 的賣款 HKD ${sellerReceivable.toFixed(2)} 已成功轉帳至你的 Stripe 帳戶。`,
+      title: "💰 款項已成功轉帳",
+      body: `您的訂單 #${order.orderNo} 款項已成功轉帳至您的 Stripe 帳戶，金額 HKD ${sellerReceivable.toFixed(2)}。`,
       linkUrl: "/seller",
     }).catch(() => {});
 

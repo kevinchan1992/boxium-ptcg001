@@ -3805,8 +3805,18 @@ function DisputesTab() {
   if (isLoading) return <div className="py-8 text-center text-gray-500">載入中...</div>;
 
   const disputes = data?.orders ?? [];
-  const filteredDisputes = priorityFilter === "all" ? disputes
-    : disputes.filter((o: any) => (o.disputePriority ?? "medium") === priorityFilter);
+  const filteredDisputes = (priorityFilter === "all" ? disputes
+    : disputes.filter((o: any) => (o.disputePriority ?? "medium") === priorityFilter))
+    // Sort by urgency: expired cooling period first, then by hours remaining (ascending), then by dispute opened date
+    .slice().sort((a: any, b: any) => {
+      const getUrgencyScore = (order: any) => {
+        if (!order.payoutHoldUntil || order.disputeResolvedAt) return 9999; // resolved or no hold = lowest urgency
+        const msLeft = new Date(order.payoutHoldUntil).getTime() - Date.now();
+        if (msLeft <= 0) return -1; // expired = highest urgency
+        return msLeft; // sort by time remaining ascending
+      };
+      return getUrgencyScore(a) - getUrgencyScore(b);
+    });
 
   const priorityConfig = {
     high: { label: "高", color: "bg-red-100 text-red-700 border-red-300" },
@@ -3908,6 +3918,34 @@ function DisputesTab() {
                   <span className="text-yellow-300 text-xs font-semibold">HKD {parseFloat(order.subtotalHkd ?? '0').toFixed(2)}</span>
                 </div>
               </div>
+              {/* Payout Hold Urgency Banner */}
+              {!order.disputeResolvedAt && order.payoutHoldUntil && (() => {
+                const holdUntil = new Date(order.payoutHoldUntil);
+                const now = new Date();
+                const msLeft = holdUntil.getTime() - now.getTime();
+                const hoursLeft = Math.ceil(msLeft / (1000 * 60 * 60));
+                const isExpired = msLeft <= 0;
+                const isUrgent = !isExpired && hoursLeft <= 6;
+                const isWarning = !isExpired && hoursLeft <= 24;
+                return (
+                  <div className={`px-4 py-2 flex items-center gap-2 text-xs font-medium ${
+                    isExpired ? 'bg-red-600 text-white' :
+                    isUrgent ? 'bg-orange-100 text-orange-800 border-b border-orange-200' :
+                    isWarning ? 'bg-yellow-50 text-yellow-800 border-b border-yellow-200' :
+                    'bg-blue-50 text-blue-700 border-b border-blue-100'
+                  }`}>
+                    <span>{isExpired ? '🔴' : isUrgent ? '⚠️' : isWarning ? '⏰' : '🕐'}</span>
+                    <span>
+                      {isExpired
+                        ? `冷靜期已到期！應於 ${holdUntil.toLocaleString('zh-HK', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 放款，請立即處理爭議`
+                        : isUrgent
+                        ? `緊急：冷靜期將於 ${holdUntil.toLocaleString('zh-HK', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 到期（還有 ${hoursLeft} 小時），請優先處理`
+                        : `冷靜期截止：${holdUntil.toLocaleString('zh-HK', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}（還有 ${hoursLeft} 小時）`
+                      }
+                    </span>
+                  </div>
+                );
+              })()}
               {/* Three-column content */}
               <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 bg-white">
                 {/* Col 1: Product */}

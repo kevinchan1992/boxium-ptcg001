@@ -2066,13 +2066,45 @@ export function startPayoutHoldScheduler() {
               if (order.sellerId) {
                 const sellerProfile = await getSellerProfileById(order.sellerId);
                 if (sellerProfile?.userId) {
+                  const amountStr = parseFloat(order.sellerReceivableHkd as string).toFixed(2);
                   await createNotification({
                     userId: sellerProfile.userId,
                     type: 'trade',
-                    title: '款項已自動轉帳 💰',
-                    body: `訂單 ${order.orderNo} 的款項 HKD ${order.sellerReceivableHkd} 已轉帳至你的 Stripe 帳戶。`,
+                    title: '💰 款項已成功轉帳',
+                    body: `您的訂單 #${order.orderNo} 款項已成功轉帳至您的 Stripe 帳戶，金額 HKD ${amountStr}。`,
                     linkUrl: `/seller`,
                   }).catch(() => {});
+                  // Send email notification to seller
+                  ;(async () => {
+                    try {
+                      const { getUserById } = await import('./userManagement');
+                      const sellerUser = await getUserById(sellerProfile.userId);
+                      if (!sellerUser?.email) return;
+                      const { sendEmail, wrapHtmlTest } = await import('./emailService');
+                      const subject = `💰 款項已轉帳 — 訂單 #${order.orderNo}`;
+                      const html = wrapHtmlTest(
+                        subject,
+                        `<h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">款項已成功轉帳 💰</h2>
+                        <p style="margin:0 0 16px;color:#555;font-size:15px;">
+                          親愛的 <strong>${sellerUser.name || '賣家'}</strong>，<br/>
+                          您的訂單 <strong>#${order.orderNo}</strong> 的 48 小時冷靜期已結束，款項已成功轉帳至您的 Stripe 帳戶。
+                        </p>
+                        <div style="background:#f0f4ff;border-radius:12px;padding:16px 20px;margin:0 0 20px;">
+                          <p style="margin:0 0 6px;color:#06038d;font-size:13px;font-weight:600;">轉帳詳情</p>
+                          <p style="margin:0 0 4px;color:#333;font-size:15px;">訂單號：<strong>#${order.orderNo}</strong></p>
+                          <p style="margin:0 0 4px;color:#333;font-size:15px;">轉帳金額：<strong style="color:#06038d;font-size:18px;">HKD ${amountStr}</strong></p>
+                          <p style="margin:0;color:#666;font-size:13px;">轉帳時間：${new Date().toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' })}</p>
+                        </div>
+                        <div style="text-align:center;margin:24px 0;">
+                          <a href="https://boxium.asia/seller" style="display:inline-block;background:#FFD700;color:#06038d;font-size:15px;font-weight:bold;padding:14px 36px;border-radius:50px;text-decoration:none;">前往賣家中心查看</a>
+                        </div>
+                        <p style="color:#999;font-size:12px;text-align:center;">款項將在 1-3 個工作天內到達您的銀行帳戶，具體時間取決於 Stripe 的處理進度。</p>`
+                      );
+                      await sendEmail({ to: sellerUser.email, subject, html, emailType: 'order', toUserId: sellerProfile.userId, dedupeKey: `payout_completed_${order.id}` });
+                    } catch (e) {
+                      console.warn(`[PayoutHold] Email notification failed for order ${order.orderNo}:`, e);
+                    }
+                  })();
                 }
               }
             } else {
