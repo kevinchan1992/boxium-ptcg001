@@ -1065,6 +1065,47 @@ export default function OrderDetail() {
             </div>
           )}
 
+          {/* 48-hour cooling period banner - shown for completed orders with payoutHoldUntil */}
+          {isBuyer && order.orderStatus === "completed" && order.payoutStatus === "processing" && (order as any).payoutHoldUntil && (() => {
+            const payoutHoldUntil = new Date((order as any).payoutHoldUntil);
+            const now = new Date();
+            const hoursLeft = Math.max(0, Math.ceil((payoutHoldUntil.getTime() - now.getTime()) / (1000 * 60 * 60)));
+            const hasExpired = now >= payoutHoldUntil;
+            return (
+              <div className="mx-4 mb-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-100 rounded-full p-1.5 flex-shrink-0">
+                    <Hourglass className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-blue-800">
+                      {hasExpired ? '💰 賣家即將收到款項' : '放款冷靜期中'}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-0.5">
+                      {hasExpired
+                        ? '冷靜期已結束，系統正在處理放款給賣家'
+                        : `賣家將於 ${payoutHoldUntil.toLocaleString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 後收款，期間你可申請爭議`
+                      }
+                    </p>
+                  </div>
+                  {!hasExpired && hoursLeft > 0 && (
+                    <div className="flex-shrink-0 text-right">
+                      <p className="text-lg font-bold text-blue-700 tabular-nums">{hoursLeft}</p>
+                      <p className="text-[10px] text-blue-500">小時</p>
+                    </div>
+                  )}
+                </div>
+                {!hasExpired && canDispute && (
+                  <div className="pt-2 border-t border-blue-200">
+                    <p className="text-xs text-blue-700">
+                      ⚠️ 如商品有問題，請於冷靜期內申請爭議，放款後將無法退款。
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Action Buttons - pending_payment: go to cart to pay */}
           {isBuyer && order.orderStatus === "pending_payment" && (
             <div className="px-4 pb-4 flex items-center gap-2 border-t pt-3">

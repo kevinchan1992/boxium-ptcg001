@@ -7761,3 +7761,34 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 #### 6. 完成
 - [ ] 儲存 checkpoint
 - [ ] 向用戶報告完成結果
+
+
+---
+
+## 🎯 UI 優化：冷靜期顯示 + 拍賣條款連結
+
+### 目標
+1. 主頁「關於我們」區域加入拍賣條款連結（/auction/terms）
+2. 訂單詳情頁顯示 48 小時冷靜期倒計時
+3. 賣家後台顯示預計放款時間
+
+### 任務清單
+
+#### 1. 主頁「關於我們」區域
+- [x] 在 Footer.tsx 的「關於我們」區域加入「拍賣條款」連結 (/auction/terms)
+- [x] 新增 auctionTerms 翻譯到所有 locale 檔案 (zh-TW, en, ja)
+
+#### 2. 訂單詳情頁冷靜期倒計時
+- [x] 在買家訂單詳情頁（OrderDetail.tsx）加入冷靜期倒計時
+- [x] 顯示格式：「賣家將於 YYYY-MM-DD HH:MM 後收款，期間你可申請爭議」
+- [x] 只在 orderStatus='completed' 且 payoutStatus='processing' 且 payoutHoldUntil 存在時顯示
+- [x] 顯示剩餘小時數，到期後顯示「正在處理放款」
+
+#### 3. 賣家後台預計放款時間
+- [x] 在 SellerDashboard.tsx 的訂單列表中顯示 payoutHoldUntil
+- [x] 對 payoutStatus='processing' 的訂單顯示「預計放款時間：MM月 DD日 HH:MM (還有 X 小時)」
+- [x] 到期後顯示「正在處理放款」
+
+#### 4. 完成
+- [ ] 儲存 checkpoint
+- [ ] 向用戶報告完成結果

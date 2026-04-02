@@ -2330,6 +2330,32 @@ export default function SellerDashboard() {
                                 <CheckCircle className="w-3.5 h-3.5" />
                                 訂單已完成，收到 HKD {parseFloat(item.sellerReceivableHkd ?? item.priceHkd ?? '0').toFixed(2)}
                               </div>
+                              {/* Payout hold period info */}
+                              {item.payoutStatus === 'processing' && (item as any).payoutHoldUntil && (() => {
+                                const payoutHoldUntil = new Date((item as any).payoutHoldUntil);
+                                const now = new Date();
+                                const hoursLeft = Math.max(0, Math.ceil((payoutHoldUntil.getTime() - now.getTime()) / (1000 * 60 * 60)));
+                                const hasExpired = now >= payoutHoldUntil;
+                                return (
+                                  <div className="text-xs bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 space-y-1">
+                                    <p className="font-semibold text-blue-800 flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {hasExpired ? '💰 正在處理放款' : '預計放款時間'}
+                                    </p>
+                                    <p className="text-blue-700">
+                                      {hasExpired
+                                        ? '冷靜期已結束，系統正在處理轉帳給你'
+                                        : `${payoutHoldUntil.toLocaleString('zh-HK', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} (還有 ${hoursLeft} 小時)`
+                                      }
+                                    </p>
+                                    {!hasExpired && (
+                                      <p className="text-blue-600 text-[10px]">
+                                        ⚠️ 48 小時冷靜期中，買家可申請爭議，到期後自動放款
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                               {/* Show buyer phone for completed meetup orders */}
                               {item.shippingMethod === 'meetup' && (item as any).buyerPhone && (
                                 <div className="text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">

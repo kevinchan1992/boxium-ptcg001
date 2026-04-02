@@ -125,6 +125,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/auction/terms" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
+                  {t("footer.auctionTerms", "拍賣條款")}
+                </Link>
+              </li>
+              <li>
                 <Link href="/privacy" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
                   {t("footer.privacy")}
                 </Link>
