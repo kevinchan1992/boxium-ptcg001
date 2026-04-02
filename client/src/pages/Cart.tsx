@@ -1040,13 +1040,16 @@ function CheckoutDialog({
     }
   };
 
-  // P0: Detect if any item is from a C2C seller — restricts payment to Stripe only
-  // Also check pending auction orders: if any auction order is from a C2C seller, disable Alipay HK
-  const hasSellerItems = useMemo(
-    () => activeItems.some((item) => item.sellerType === "seller")
-      || (pendingAuctionOrders ?? []).some((o) => o.sellerType === "seller"),
-    [activeItems, pendingAuctionOrders]
-  );
+  // P0: Alipay HK is ONLY allowed when ALL items (direct-buy + auction) are platform-owned.
+  // If even one item is NOT sellerType='platform', Alipay HK must be disabled.
+  const hasSellerItems = useMemo(() => {
+    const allDirectBuyArePlatform = activeItems.length === 0 || activeItems.every((item) => item.sellerType === "platform");
+    const allAuctionArePlatform = (pendingAuctionOrders ?? []).length === 0 || (pendingAuctionOrders ?? []).every((o) => o.sellerType === "platform");
+    const hasAnyItem = activeItems.length > 0 || (pendingAuctionOrders ?? []).length > 0;
+    // hasSellerItems = true means Alipay is BLOCKED
+    // Block Alipay if: no items at all, or any item is not platform-owned
+    return !hasAnyItem || !allDirectBuyArePlatform || !allAuctionArePlatform;
+  }, [activeItems, pendingAuctionOrders]);
 
   // P0: Auto-switch to Stripe if Alipay HK is selected but cart has seller items
   useEffect(() => {
