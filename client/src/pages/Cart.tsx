@@ -1053,7 +1053,8 @@ function CheckoutDialog({
   }, [hasSellerItems, form.paymentMethod, setForm]);
 
   const canProceedStep1 = useMemo(() => {
-    if (activeItems.length === 0) return false;
+    const hasItems = activeItems.length > 0 || (pendingAuctionOrders && pendingAuctionOrders.length > 0);
+    if (!hasItems) return false;
     if (selectedAddressId !== null) return true;
     if (form.shippingMethod === "sf_cod") {
       if (!form.recipientName.trim() || !form.recipientPhone.trim()) return false;
@@ -1470,6 +1471,7 @@ function CheckoutDialog({
                                 <SelectItem key={s.code} value={s.code}>
                                   <span className="font-medium">
                                     {s.type === 'locker' ? '🔒 ' : '📦 '}{s.name}
+                                    <span className="ml-1.5 text-xs text-gray-400 font-mono">[{s.code}]</span>
                                   </span>
                                 </SelectItem>
                               ))}
