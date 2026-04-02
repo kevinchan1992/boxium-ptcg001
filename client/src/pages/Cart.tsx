@@ -24,7 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SF_STATIONS as sfStations, SFStation } from "@/lib/sfStations";
+import { SF_STATIONS as sfStations, SFPoint } from "@/lib/sfStations";
+import { SF_LOCKERS } from "@/lib/sfLockers";
 import { useTranslation } from "react-i18next";
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
@@ -39,7 +40,12 @@ const CONDITION_LABELS: Record<string, string> = {
   poor: "Poor",
 };
 
-const SF_DISTRICTS = Array.from(new Set(sfStations.map((s: SFStation) => s.district))).sort();
+// Combine stations and lockers for district list
+const ALL_SF_POINTS: SFPoint[] = [
+  ...sfStations.map(s => ({ ...s, type: 'station' as const })),
+  ...SF_LOCKERS.map(l => ({ ...l, type: 'locker' as const })),
+];
+const SF_DISTRICTS = Array.from(new Set(ALL_SF_POINTS.map((s) => s.district))).sort();
 
 type ShippingMethod = "sf_cod" | "meetup";
 type PaymentMethod = "stripe" | "alipay_hk";
@@ -122,12 +128,12 @@ export default function Cart() {
   });
 
   const filteredStations = useMemo(
-    () => (form.sfDistrict ? sfStations.filter((s: SFStation) => s.district === form.sfDistrict) : []),
+    () => (form.sfDistrict ? ALL_SF_POINTS.filter((s) => s.district === form.sfDistrict) : []),
     [form.sfDistrict]
   );
 
   const selectedStation = useMemo(
-    () => sfStations.find((s: SFStation) => s.code === form.sfStationCode),
+    () => ALL_SF_POINTS.find((s) => s.code === form.sfStationCode),
     [form.sfStationCode]
   );
 
@@ -633,15 +639,8 @@ function AuctionOrderRow({ order, paymentTimeoutMinutes, onPaymentSuccess }: {
   onPaymentSuccess: () => void;
 }) {
   const [timeLeft, setTimeLeft] = React.useState<{ hours: number; minutes: number; seconds: number; expired: boolean } | null>(null);
-  const [isPaying, setIsPaying] = React.useState(false);
   const [showAlipayQR, setShowAlipayQR] = React.useState(false);
   const utils = trpc.useUtils();
-
-  const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
-    onSuccess: (data) => { window.location.href = data.checkoutUrl; },
-    onError: (err) => { toast.error(err.message || '建立付款連結失敗'); setIsPaying(false); },
-  });
-
   const switchToAlipayMutation = trpc.marketplace.switchOrderPaymentToAlipay.useMutation({
     onSuccess: () => {
       setShowAlipayQR(true);
@@ -717,35 +716,20 @@ function AuctionOrderRow({ order, paymentTimeoutMinutes, onPaymentSuccess }: {
           </div>
           <p className="text-xs text-gray-400 mt-1">訂單 #{order.orderNo}</p>
         </div>
-        {/* Price + Pay button */}
+        {/* Price */}
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
           <span className="font-bold text-[#06038D] text-sm">HK${Number(order.subtotalHkd).toFixed(0)}</span>
-          <div className="flex flex-col gap-1">
+          {canUseAlipay && (
             <Button
               size="sm"
-              className="text-xs text-white font-bold h-7 px-3"
-              style={{ backgroundColor: '#06038d' }}
-              disabled={isPaying || getCheckoutMutation.isPending || !!timeLeft?.expired}
-              onClick={() => {
-                setIsPaying(true);
-                getCheckoutMutation.mutate({ orderId: order.orderId });
-              }}
+              variant="outline"
+              className="text-xs h-7 px-3 border-blue-300 text-blue-700 hover:bg-blue-50"
+              disabled={switchToAlipayMutation.isPending || !!timeLeft?.expired}
+              onClick={() => switchToAlipayMutation.mutate({ orderId: order.orderId })}
             >
-              {getCheckoutMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CreditCard className="w-3 h-3 mr-1" />}
-              信用卡付款
+              <Smartphone className="w-3 h-3 mr-1" />支付寶 HK
             </Button>
-            {canUseAlipay && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs h-7 px-3 border-blue-300 text-blue-700 hover:bg-blue-50"
-                disabled={switchToAlipayMutation.isPending || !!timeLeft?.expired}
-                onClick={() => switchToAlipayMutation.mutate({ orderId: order.orderId })}
-              >
-                <Smartphone className="w-3 h-3 mr-1" />支付寶 HK
-              </Button>
-            )}
-          </div>
+          )}
         </div>
       </div>
       {/* AlipayHK QR Code Dialog */}
@@ -921,8 +905,8 @@ interface CheckoutDialogProps {
   onClose: () => void;
   form: CheckoutForm;
   setForm: React.Dispatch<React.SetStateAction<CheckoutForm>>;
-  filteredStations: typeof sfStations;
-  selectedStation: typeof sfStations[0] | undefined;
+  filteredStations: SFPoint[];
+  selectedStation: SFPoint | undefined;
   activeItems: Array<{
     listingId: number;
     title: string;
@@ -1468,28 +1452,33 @@ function CheckoutDialog({
                       </div>
                       {form.sfDistrict && (
                         <div>
-                          <Label className="text-xs text-gray-600 mb-1 block">順豐網點 *</Label>
+                          <Label className="text-xs text-gray-600 mb-1 block">
+                            順豐點 / 智能櫃 *
+                            {form.sfDistrict && (
+                              <span className="ml-1 text-gray-400">（{filteredStations.length} 個）</span>
+                            )}
+                          </Label>
                           <Select
                             value={form.sfStationCode ?? ""}
                             onValueChange={(v) => setForm((f) => ({ ...f, sfStationCode: v }))}
                           >
                             <SelectTrigger className="text-sm h-9 border-[#06038D]/30 text-gray-900">
-                              <SelectValue placeholder="選擇網點" />
+                              <SelectValue placeholder="選擇順豐點 / 智能櫃" />
                             </SelectTrigger>
-                            <SelectContent>
-                              {filteredStations.map((s: SFStation) => (
+                            <SelectContent className="max-h-60">
+                              {filteredStations.map((s) => (
                                 <SelectItem key={s.code} value={s.code}>
-                                  <div className="flex flex-col py-0.5">
-                                    <span className="font-medium">{s.name}</span>
-                                    <span className="text-xs text-gray-400 mt-0.5">{s.address}</span>
-                                  </div>
+                                  <span className="font-medium">
+                                    {s.type === 'locker' ? '🔒 ' : '📦 '}{s.name}
+                                  </span>
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                           {selectedStation && (
                             <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />{selectedStation.address}
+                              <MapPin className="w-3 h-3 flex-shrink-0" />
+                              <span>{selectedStation.address}</span>
                             </p>
                           )}
                         </div>
