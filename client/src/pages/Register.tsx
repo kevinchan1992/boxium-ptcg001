@@ -1,3 +1,4 @@
+import { parseApiError } from "@/lib/parseApiError";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -28,7 +29,7 @@ export default function Register() {
       }, 100);
     },
     onError: (error) => {
-      toast.error(error.message || "註冊失敗");
+      toast.error(parseApiError(error));
       setIsLoading(false);
     },
   });

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { parseApiError } from "@/lib/parseApiError";
 import { useParams, Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -593,7 +594,7 @@ export default function MarketplaceListing() {
     onSuccess: (data) => {
       if (data.checkoutUrl) { window.location.href = data.checkoutUrl; }
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const makeOfferMutation = trpc.marketplace.makeOffer.useMutation({
@@ -602,7 +603,7 @@ export default function MarketplaceListing() {
       setShowOfferDialog(false); setOfferAmount(""); setOfferMessage("");
       utils.marketplace.getMyOfferForListing.invalidate({ listingId: id });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const { data: myPendingOffer } = trpc.marketplace.getMyOfferForListing.useQuery(
@@ -615,12 +616,12 @@ export default function MarketplaceListing() {
       toast.success(t("marketplaceListing.report.success"));
       setShowReportDialog(false); setReportReason(""); setReportDetails("");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const createAlipayOrderMutation = trpc.marketplace.createAlipayOrder.useMutation({
     onSuccess: (data) => { setCompletedOrderNo(data.orderNo); setAlipayStep("done"); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const verifyPaymentProofMutation = trpc.marketplace.verifyPaymentProof.useMutation({

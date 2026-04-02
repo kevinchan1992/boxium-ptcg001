@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { parseApiError } from "@/lib/parseApiError";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 
@@ -646,7 +647,7 @@ function AuctionOrderRow({ order, paymentTimeoutMinutes, onPaymentSuccess }: {
       setShowAlipayQR(true);
       utils.marketplace.getMyPendingAuctionOrders.invalidate();
     },
-    onError: (err) => toast.error(err.message || '切換付款方式失敗'),
+    onError: (err) => toast.error(parseApiError(err)),
   });
 
   React.useEffect(() => {
@@ -981,17 +982,17 @@ function CheckoutDialog({
   // For cart checkout we create individual orders per listing (one order per item)
   // since each listing is from potentially different sellers
   const createBatchStripeOrderMutation = trpc.marketplace.createBatchStripeOrder.useMutation({
-    onError: (err) => toast.error(err.message || "建立訂單失敗"),
+    onError: (err) => toast.error(parseApiError(err)),
   });
 
   const createBatchAlipayOrderMutation = trpc.marketplace.createBatchAlipayOrder.useMutation({
-    onError: (err) => toast.error(err.message || "建立訂單失敗"),
+    onError: (err) => toast.error(parseApiError(err)),
   });
 
   const isProcessing = createBatchStripeOrderMutation.isPending || createBatchAlipayOrderMutation.isPending;
 
   const submitBatchAlipayProofMutation = trpc.marketplace.submitBatchAlipayProof.useMutation({
-    onError: (err) => toast.error(err.message || "上傳截圖失敗，請重試"),
+    onError: (err) => toast.error(parseApiError(err)),
   });
 
   const handleProofFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

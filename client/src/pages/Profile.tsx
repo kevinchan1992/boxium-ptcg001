@@ -1,5 +1,6 @@
 
 import { trpc } from "@/lib/trpc";
+import { parseApiError } from "@/lib/parseApiError";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -564,7 +565,7 @@ function WatchlistSection() {
   });
   const addToCart = trpc.marketplace.addToCart.useMutation({
     onSuccess: () => { utils.marketplace.getCartCount.invalidate(); toast.success(t("profile.cart.added")); },
-    onError: (err) => toast.error(err.message || "加入失敗"),
+    onError: (err) => toast.error(parseApiError(err)),
   });
 
   // Sort state for listings
@@ -867,19 +868,19 @@ function ShippingAddressSection() {
   }, [sfSearchQuery, sfSearchRegion, sfPointType, form.addressType]);
   const addMutation = trpc.marketplace.addShippingAddress.useMutation({
     onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); setShowForm(false); resetForm(); toast.success("地址已新增"); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const updateMutation = trpc.marketplace.updateShippingAddress.useMutation({
     onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); setShowForm(false); setEditingId(null); resetForm(); toast.success("地址已更新"); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const deleteMutation = trpc.marketplace.deleteShippingAddress.useMutation({
     onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); toast.success("地址已刪除"); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const setDefaultMutation = trpc.marketplace.setDefaultShippingAddress.useMutation({
     onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); toast.success("預設地址已更新"); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const resetForm = () => { setForm({ label: "預設地址", addressType: "normal", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", sfStationAddress: "", isDefault: false }); setSfSearchQuery(""); setSfSearchRegion(""); setSfPointType('all'); setShowSfDropdown(false); setSfResults([]); };
   const handleEdit = (addr: any) => {
@@ -1638,7 +1639,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
       setShowConfirmDialog(false);
       utils.marketplace.getMyOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const uploadDisputeEvidenceMutation = trpc.marketplace.uploadDisputeEvidence.useMutation();
   const openDisputeMutation = trpc.marketplace.openDispute.useMutation({
@@ -1650,7 +1651,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
       setDisputeEvidenceMimeTypes([]);
       utils.marketplace.getMyOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const submitReviewMutation = trpc.marketplace.submitReview.useMutation({
     onSuccess: () => {
@@ -1660,7 +1661,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
       setReviewRating(5);
       utils.marketplace.getMyOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const { data: existingReview } = trpc.marketplace.getOrderReview.useQuery(
     { orderId: order.id },
@@ -1987,7 +1988,7 @@ function EmbeddedOffersSection({ userId }: { userId: number }) {
   const { data: offers, isLoading } = trpc.marketplace.getMyOffers.useQuery();
   const cancelOfferMutation = trpc.marketplace.cancelOffer.useMutation({
     onSuccess: () => { toast.success("出價已取消"); utils.marketplace.getMyOffers.invalidate(); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(parseApiError(e)),
   });
   const offerStatusLabel: Record<string, { label: string; color: string }> = {
     pending: { label: "待回覆", color: "bg-yellow-100 text-yellow-800" },

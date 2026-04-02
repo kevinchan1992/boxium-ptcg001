@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { parseApiError } from "@/lib/parseApiError";
 import { Link, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -171,7 +172,7 @@ function BuyerCancelButton({ orderId, onSuccess }: { orderId: number; onSuccess:
       setShowDialog(false);
       onSuccess();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   return (
     <>
@@ -242,7 +243,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
       setShowConfirmDialog(false);
       utils.marketplace.getMyOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const uploadDisputeEvidenceMutation = trpc.marketplace.uploadDisputeEvidence.useMutation();
@@ -299,7 +300,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
       setDisputeEvidenceMimeTypes([]);
       utils.marketplace.getMyOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const submitReviewMutation = trpc.marketplace.submitReview.useMutation({
@@ -310,7 +311,7 @@ function OrderCard({ order, highlight }: { order: any; highlight?: boolean }) {
       setReviewRating(5);
       utils.marketplace.getMyOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const { data: existingReview } = trpc.marketplace.getOrderReview.useQuery(
@@ -792,7 +793,7 @@ function MyOffersTab({ userId }: { userId: number }) {
   const { data: offers, isLoading } = trpc.marketplace.getMyOffers.useQuery();
   const cancelOfferMutation = trpc.marketplace.cancelOffer.useMutation({
     onSuccess: () => { toast.success("出價已取消"); utils.marketplace.getMyOffers.invalidate(); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(parseApiError(e)),
   });
   const offerStatusLabel: Record<string, { label: string; color: string }> = {
     pending: { label: "待回覆", color: "bg-yellow-100 text-yellow-800" },

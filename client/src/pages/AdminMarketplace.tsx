@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { parseApiError } from "@/lib/parseApiError";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -185,7 +186,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
 
   const createMutation = trpc.marketplace.adminCreatePlatformListing.useMutation({
     onSuccess: () => { toast.success("平台商品已上架"); onSuccess(); onClose(); reset(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   return (
@@ -551,7 +552,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
       utils.marketplace.adminGetStats.invalidate();
       utils.marketplace.adminGetPendingPayoutCount.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const listing = data?.listing;
@@ -1041,7 +1042,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
     : (data?.listings ?? []);
   const updateMutation = trpc.marketplace.adminUpdateListing.useMutation({
     onSuccess: () => { toast.success("已更新"); refetch(); invalidateStats(); },
-    onError: (e) => toast.error(e.message)
+    onError: (e) => toast.error(parseApiError(e))
   });
   const batchUpdateMutation = trpc.marketplace.adminBatchUpdateListingStatus.useMutation({
     onSuccess: (res) => {
@@ -1050,7 +1051,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
       refetch();
       invalidateStats();
     },
-    onError: (e) => toast.error(e.message)
+    onError: (e) => toast.error(parseApiError(e))
   });
   const listings = filteredListings;
   const total = data?.total ?? 0;
@@ -1418,11 +1419,11 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
   });
   const updateStatusMutation = trpc.marketplace.adminUpdateOrderStatus.useMutation({
     onSuccess: () => { toast.success("訂單狀態已更新"); refetch(); setSelectedOrder(null); setTrackingNumber(""); invalidateStats(); },
-    onError: (e) => toast.error(e.message)
+    onError: (e) => toast.error(parseApiError(e))
   });
   const saveNoteMutation = trpc.marketplace.adminSaveOrderNote.useMutation({
     onSuccess: () => { toast.success("備注已儲存"); refetch(); },
-    onError: (e) => toast.error(e.message)
+    onError: (e) => toast.error(parseApiError(e))
   });
 
   // Send message to buyer
@@ -1431,7 +1432,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
   const [sendMessageBody, setSendMessageBody] = useState('');
   const sendMessageMutation = trpc.marketplace.adminSendBuyerMessage.useMutation({
     onSuccess: () => { toast.success('訊息已發送給買家'); setShowSendMessageDialog(false); setSendMessageSubject(''); setSendMessageBody(''); },
-    onError: (e) => toast.error(e.message)
+    onError: (e) => toast.error(parseApiError(e))
   });
 
   // Order status history
@@ -1442,7 +1443,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
   const [adminNoteInput, setAdminNoteInput] = useState('');
   const addOrderNoteMutation = trpc.marketplace.adminAddOrderNote.useMutation({
     onSuccess: () => { toast.success('備注已新增'); setAdminNoteInput(''); orderHistoryQuery.refetch(); },
-    onError: (e) => toast.error(e.message)
+    onError: (e) => toast.error(parseApiError(e))
   });
 
   // Order messages (sent to buyer)
@@ -1522,7 +1523,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       setBatchShippingMode('unified');
       setIndividualTrackingMap({});
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   // Batch payout dialog state
@@ -1536,7 +1537,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       setShowBatchPayoutDialog(false);
       setBatchPayoutNote('');
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   // Batch note dialog state
@@ -1548,7 +1549,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       setShowBatchNoteDialog(false);
       setBatchNoteInput('');
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   // Batch approve alipay proof dialog state
   const [showBatchApproveProofDialog, setShowBatchApproveProofDialog] = useState(false);
@@ -1559,7 +1560,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       setSelectedOrderIds(new Set());
       setShowBatchApproveProofDialog(false);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const handleExportCSV = () => {
@@ -2654,14 +2655,14 @@ function AlipayPendingTab() {
 
   const confirmMutation = trpc.marketplace.adminConfirmAlipayPayment.useMutation({
     onSuccess: () => { toast.success("已確認收款，已通知買家"); refetch(); setSelectedOrder(null); invalidateStats(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const [rejectOrder, setRejectOrder] = useState<any>(null);
   const [rejectReason, setRejectReason] = useState("");
   const rejectMutation = trpc.marketplace.adminRejectAlipayPayment.useMutation({
     onSuccess: () => { toast.success("已拒絕付款，已通知買家重新上傳"); refetch(); setRejectOrder(null); setRejectReason(""); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   // AI Verify mutation
@@ -2704,7 +2705,7 @@ function AlipayPendingTab() {
       setBatchRejectReason("");
       invalidateStats();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const batchConfirmMutation = trpc.marketplace.adminBatchConfirmAlipayPayment.useMutation({
@@ -2715,7 +2716,7 @@ function AlipayPendingTab() {
       setShowBatchDialog(false);
       invalidateStats();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const allIds = orders?.map((o: any) => o.id) ?? [];
@@ -3506,7 +3507,7 @@ function SellersTab() {
       refetch();
       utils.marketplace.adminGetStats.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const suspendMutation = trpc.marketplace.adminSuspendSeller.useMutation({
     onSuccess: () => {
@@ -3515,7 +3516,7 @@ function SellersTab() {
       setSuspendReason("");
       refetch();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const unsuspendMutation = trpc.marketplace.adminUnsuspendSeller.useMutation({
     onSuccess: () => {
@@ -3523,7 +3524,7 @@ function SellersTab() {
       setUnsuspendDialog({ open: false, sellerId: 0, sellerName: "" });
       refetch();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const sellers = data?.sellers ?? [];
   const total = data?.total ?? 0;
@@ -3793,7 +3794,7 @@ function DisputesTab() {
       utils.marketplace.adminGetDisputes.invalidate();
       utils.marketplace.adminGetOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });;
 
   if (isLoading) return <div className="py-8 text-center text-gray-500">載入中...</div>;
@@ -5228,7 +5229,7 @@ function ReportsTab() {
   const { data, isLoading, refetch } = trpc.marketplace.adminGetReports.useQuery({ page, pageSize: 20, status: statusFilter });
   const reviewMutation = trpc.marketplace.adminReviewReport.useMutation({
     onSuccess: () => { toast.success("舉報已處理"); refetch(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const [noteDialogId, setNoteDialogId] = useState<number | null>(null);
   const [adminNote, setAdminNote] = useState("");
@@ -6223,7 +6224,7 @@ function TimeoutSettingsTab() {
   const { data, isLoading } = trpc.system.getTimeoutSettings.useQuery();
   const updateMutation = trpc.system.updateTimeoutSettings.useMutation({
     onSuccess: () => toast.success('超時設定已更新'),
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const [paymentTimeout, setPaymentTimeout] = useState<string>('');
@@ -6554,27 +6555,27 @@ function AuctionsAdminTab() {
 
   const approveMutation = trpc.auction.adminApprove.useMutation({
     onSuccess: () => { toast.success('拍賣已審核通過'); refetch(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const approveHighValueMutation = trpc.auction.adminApproveHighValue.useMutation({
     onSuccess: () => { toast.success('高價拍賣已通過額外審核'); refetch(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const rejectMutation = trpc.auction.adminReject.useMutation({
     onSuccess: () => { toast.success('拍賣已拒絕'); setRejectDialog({ open: false, listingId: null, reason: '' }); refetch(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const cancelMutation = trpc.auction.adminCancel.useMutation({
     onSuccess: () => { toast.success('拍賣已強制取消'); setCancelDialog({ open: false, listingId: null, reason: '' }); refetch(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const forceEndMutation = trpc.auction.adminForceEnd.useMutation({
     onSuccess: () => { toast.success('拍賣已強制結標'); refetch(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const statusOptions = [
@@ -6912,12 +6913,12 @@ function AuctionViolationsAdminTab() {
 
   const liftBanMutation = trpc.auction.adminLiftBan.useMutation({
     onSuccess: () => { toast.success('已解除封禁'); refetch(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const recordViolationMutation = trpc.auction.adminRecordViolation.useMutation({
     onSuccess: () => { toast.success('違規記錄已新增'); setRecordDialog(false); refetch(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const penaltyLabel: Record<string, string> = {
@@ -7564,7 +7565,7 @@ function MaintenanceModeTab() {
       toast.success(data.enabled ? '市集維護模式已開啟' : '市集維護模式已關閉');
       utils.marketplace.getMarketplaceMaintenanceMode.invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(parseApiError(e)),
   });
   const addWhitelistMutation = trpc.marketplace.addMarketplaceWhitelist.useMutation({
     onSuccess: () => {
@@ -7572,14 +7573,14 @@ function MaintenanceModeTab() {
       utils.marketplace.getMarketplaceWhitelist.invalidate();
       setSearchEmail(''); setSearchResult(null);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(parseApiError(e)),
   });
   const removeWhitelistMutation = trpc.marketplace.removeMarketplaceWhitelist.useMutation({
     onSuccess: () => {
       toast.success('已從白名單移除');
       utils.marketplace.getMarketplaceWhitelist.invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(parseApiError(e)),
   });
   const handleSearchUser = async () => {
     if (!searchEmail.trim()) return;

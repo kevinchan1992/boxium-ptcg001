@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
+import { parseApiError } from "@/lib/parseApiError";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -595,7 +596,7 @@ function EditRejectedAuctionDialog({
 
   const updateMutation = trpc.auction.updateRejectedAuction.useMutation({
     onSuccess: () => { toast.success(t("seller.auctions.editRejected.saveSuccess")); onSaved(); onClose(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const handleSave = () => {
@@ -741,7 +742,7 @@ function SellerAuctionsTab() {
       toast.success('已重新提交審核，請等候管理員審核');
       refetch();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const allListings = auctions?.listings ?? [];
@@ -1049,7 +1050,7 @@ export default function SellerDashboard() {
       utils.marketplace.getMyOffers.invalidate();
       utils.marketplace.getSellerOffers.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
    // ─── Listing filter state ─────────────────────────────────────────
@@ -1115,17 +1116,17 @@ export default function SellerDashboard() {
       setEditingListing(null);
       refetchListings();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const deactivateMutation = trpc.marketplace.deleteMyListing.useMutation({
     onSuccess: () => { toast.success(t("seller.listings.deactivateSuccess")); refetchListings(); utils.marketplace.getMySellerProfile.invalidate(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const reactivateMutation = trpc.marketplace.updateMyListing.useMutation({
     onSuccess: () => { toast.success(t("seller.listings.reactivateSuccess")); refetchListings(); utils.marketplace.getMySellerProfile.invalidate(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const batchDeactivateMutation = trpc.marketplace.batchDeactivateListings.useMutation({
@@ -1136,7 +1137,7 @@ export default function SellerDashboard() {
       refetchListings();
       utils.marketplace.getMySellerProfile.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const batchReactivateMutation = trpc.marketplace.batchReactivateListings.useMutation({
@@ -1147,7 +1148,7 @@ export default function SellerDashboard() {
       refetchListings();
       utils.marketplace.getMySellerProfile.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -1161,7 +1162,7 @@ export default function SellerDashboard() {
       utils.marketplace.getMySellerProfile.invalidate();
     },
     onError: (e) => {
-      toast.error(e.message);
+      toast.error(parseApiError(e));
       setShowDeleteConfirm(false);
     },
   });
@@ -1196,7 +1197,7 @@ export default function SellerDashboard() {
 
   const applyMutation = trpc.marketplace.applyAsSeller.useMutation({
     onSuccess: () => { toast.success(t("seller.listings.applySellerSuccess")); setShowApply(false); refetchProfile(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const createListingMutation = trpc.marketplace.createListing.useMutation({
@@ -1209,7 +1210,7 @@ export default function SellerDashboard() {
       setSelectedCard(null);
       refetchListings();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const { data: sellerTermsData, refetch: refetchSellerTerms } = trpc.auction.checkTermsAgreement.useQuery(
@@ -1245,7 +1246,7 @@ export default function SellerDashboard() {
         });
       }
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const createAuctionMutation = trpc.auction.create.useMutation({
@@ -1258,7 +1259,7 @@ export default function SellerDashboard() {
       setSelectedCard(null);
       refetchListings();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const [newListingId, setNewListingId] = useState<number | null>(null);
@@ -1289,7 +1290,7 @@ export default function SellerDashboard() {
       setListingImages([]);
       refetchListings();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const stripeMutation = trpc.marketplace.startStripeConnectOnboarding.useMutation({
@@ -1303,7 +1304,7 @@ export default function SellerDashboard() {
         window.open(data.onboardingUrl, "_blank");
       }
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const stripeLoginMutation = trpc.marketplace.getStripeExpressDashboardLink.useMutation({
@@ -1311,7 +1312,7 @@ export default function SellerDashboard() {
       toast.info("正在跳轉到 Stripe Express Dashboard...");
       window.open(data.url, "_blank");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const syncStripeMutation = trpc.marketplace.syncStripeConnectStatus.useMutation({
@@ -1350,7 +1351,7 @@ export default function SellerDashboard() {
       setMeetupConfirmDialog({ open: false, orderId: 0, orderNo: '' });
       utils.marketplace.getMySellerOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
   const uploadShippingImageMutation = trpc.marketplace.uploadShippingImage.useMutation();
   const markShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
@@ -1360,7 +1361,7 @@ export default function SellerDashboard() {
       setShipForm({ shippingMethod: "", trackingNumber: "", shippingImageUrl: "" });
       utils.marketplace.getMySellerOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
    if (!me) return (
@@ -3797,7 +3798,7 @@ export default function SellerDashboard() {
                         };
                         reader.readAsDataURL(file);
                       } catch (err: any) {
-                        toast.error(err.message || "上傳失敗");
+                        toast.error(parseApiError(err));
                         setShipImageUploading(false);
                       }
                     }}

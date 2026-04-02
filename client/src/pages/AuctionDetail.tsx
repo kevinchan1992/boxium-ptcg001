@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { parseApiError } from "@/lib/parseApiError";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 
@@ -95,7 +96,7 @@ function TermsDialog({
   const { t } = useTranslation();
   const agreeMutation = trpc.auction.agreeToTerms.useMutation({
     onSuccess: () => { onAgree(); onClose(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const buyerTerms = [
@@ -262,7 +263,7 @@ function AuctionReviewDialog({
 
   const reviewMutation = trpc.auction.submitAuctionReview.useMutation({
     onSuccess: () => { toast.success('評價已提交！'); onSuccess(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   return (
@@ -340,7 +341,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
       setBidAmount("");
       onRefetch();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const buyNowMutation = trpc.auction.buyNow.useMutation({
@@ -348,7 +349,7 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
       toast.success("即買成功！請前往訂單頁面完成付款。");
       onRefetch();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const currentPrice = listing.currentHighestBid

@@ -7392,3 +7392,14 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ### 修復任務
 - [ ] 修復表單數據傳遞邏輯
 - [ ] 保存 checkpoint
+
+## 🐛 將後端錯誤訊息轉換為友好中文提示
+
+### 問題描述
+後端 tRPC/Zod 驗證錯誤以原始 JSON 格式顯示給用戶，例如：
+`[{ "origin": "string", "code": "too_small", ... }]`
+
+### 修復任務
+- [ ] 建立全局 parseApiError 工具函數（解析 Zod 錯誤、tRPC 錯誤）
+- [ ] 更新 SellerDashboard 的 createListing/createAuction 錯誤處理
+- [ ] 保存 checkpoint

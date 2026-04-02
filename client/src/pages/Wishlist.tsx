@@ -1,4 +1,5 @@
 import { useLocation } from "wouter";
+import { parseApiError } from "@/lib/parseApiError";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,7 +22,7 @@ export default function Wishlist() {
       utils.marketplace.getMyWishlist.invalidate();
       utils.marketplace.getWishlistIds.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   if (authLoading) {

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { parseApiError } from "@/lib/parseApiError";
 import { useParams, Link, useLocation } from "wouter";
 import OrderChat from "@/components/OrderChat";
 import DisputeMediaUpload from "@/components/DisputeMediaUpload";
@@ -745,7 +746,7 @@ export default function OrderDetail() {
       utils.marketplace.getOrderByNo.invalidate({ orderNo });
       utils.marketplace.getMyOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const confirmReceiptMutation = trpc.marketplace.confirmReceipt.useMutation({
@@ -755,7 +756,7 @@ export default function OrderDetail() {
       utils.marketplace.getOrderByNo.invalidate({ orderNo });
       utils.marketplace.getMyOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const uploadDisputeEvidenceMutation = trpc.marketplace.uploadDisputeEvidence.useMutation();
@@ -804,7 +805,7 @@ export default function OrderDetail() {
       utils.marketplace.getOrderByNo.invalidate({ orderNo });
       utils.marketplace.getMyOrders.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const handleEvidenceUpload = async (e: React.ChangeEvent<HTMLInputElement>, orderId: number) => {
@@ -849,7 +850,7 @@ export default function OrderDetail() {
       setAdminShipForm({ shippingMethod: 'sf_express', trackingNo: '', shippingImageUrl: '' });
       utils.marketplace.getOrderByNo.invalidate({ orderNo });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   const uploadShippingImageMutation = trpc.marketplace.uploadShippingImage.useMutation();
@@ -881,7 +882,7 @@ export default function OrderDetail() {
       setReviewRating(5);
       utils.marketplace.getOrderByNo.invalidate({ orderNo });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(parseApiError(e)),
   });
 
   // Payment timeout countdown - fetch timeout setting
