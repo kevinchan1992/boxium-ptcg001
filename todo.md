@@ -7516,3 +7516,46 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 
 ### Checkpoint
 - [x] 儲存 checkpoint
+
+---
+
+## 🚧 方案 1：強化商場管理後台現有標籤頁（進行中）
+
+#### Schema 更新
+- [x] 推送 sellerRiskProfiles 表到 DB（風控評分）
+- [x] 推送 listingModerationLogs 表到 DB（商品操作審計）
+### 後端 API
+- [x] marketplace.adminGetSellerRiskProfile：取得/創建賣家風控資料
+- [x] marketplace.adminUpdateSellerRiskProfile：更新風控等級/監控狀態
+- [x] marketplace.adminGetListingModerationLogs：取得商品操作日誌（分頁、篩選）
+- [x] marketplace.adminGetAnomalousListings：取得異常商品（高價/有舉報）
+- [x] marketplace.adminGetReportStats：取得舉報統計（按類型、按賣家）
+- [x] marketplace.adminGetReportsEnhanced：強化舉報列表（含商品縮圖、賣家名稱）
+
+###### 前端：商品管理標籤頁強化
+- [ ] 商品卡片加入風控標記（🚩 旗標按鈕）
+- [ ] 商品卡片加入異常偵測標旗（⚠️ 價格異常/重複上架）
+- [ ] 下架操作自動記錄到 listingModerationLogs
+- [x] 新增「異常商品」篩選 tab（高價/有舉報）
+### 前端：賣家管理標籤頁強化
+- [x] 賣家卡片加入風控等級徽章（low/medium/high/critical）
+- [x] 賣家卡片加入風控等級更新功能（對話框）
+- [ ] 風控評分自動計算（下架次數、舉報次數、等等）
+- [ ] 「監控中」標記和篩選
+- [ ] 賣家詳情加入違規記錄列表
+### 前端：舉報管理標籤頁強化
+- [x] 舉報統計摘要（待處理/已審核/已處置/共計）
+- [x] 舉報類型分佈圖表（假貨/錯誤描述/禁止商品/詐騙）
+- [ ] 顯示相關商品縮圖和標題
+- [ ] 快速跳轉到商品管理/賣家管理
+- [ ] 批量處理（批量忽略/批量標記已處置）
+### 前端：審計日誌標籤頁強化
+- [x] 加入商品目標類型篩選（listing）
+- [x] 新增商品操作類型（delist/restore/flag_risk）
+- [ ] 加入管理員 ID 篩選
+- [ ] 匙出 CSV 功能
+- [ ] 顯示商品標題（而非只顯示 ID）D）
+
+### 測試
+- [ ] 撰寫並通過單元測試
+- [ ] 儲存 checkpoint

@@ -5822,4 +5822,84 @@ IMPORTANT:
         isAuctionOrder: true as const,
       }));
     }),
+
+  // ============================================================
+  // GOVERNANCE: SELLER RISK PROFILES
+  // ============================================================
+  adminGetSellerRiskProfile: adminProcedure
+    .input(z.object({ sellerId: z.number().int() }))
+    .query(async ({ input }) => {
+      const { getOrCreateSellerRiskProfile, recalculateSellerRiskProfile } = await import('../governance-helpers');
+      await recalculateSellerRiskProfile(input.sellerId).catch(() => {});
+      return getOrCreateSellerRiskProfile(input.sellerId);
+    }),
+
+  adminUpdateSellerRiskProfile: adminProcedure
+    .input(z.object({
+      sellerId: z.number().int(),
+      riskLevel: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+      adminNote: z.string().max(1000).nullable().optional(),
+      isWatched: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { updateSellerRiskProfile, getOrCreateSellerRiskProfile } = await import('../governance-helpers');
+      const { sellerId, ...data } = input;
+      await getOrCreateSellerRiskProfile(sellerId);
+      await updateSellerRiskProfile(sellerId, { ...data, lastReviewAt: new Date() });
+      return { success: true };
+    }),
+
+  // ============================================================
+  // GOVERNANCE: LISTING MODERATION LOGS
+  // ============================================================
+  adminGetListingModerationLogs: adminProcedure
+    .input(z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(50),
+      listingId: z.number().int().optional(),
+      adminId: z.number().int().optional(),
+      action: z.string().optional(),
+      listingMode: z.enum(['direct', 'auction']).optional(),
+    }))
+    .query(async ({ input }) => {
+      const { getListingModerationLogs } = await import('../governance-helpers');
+      return getListingModerationLogs(input);
+    }),
+
+  // ============================================================
+  // GOVERNANCE: ANOMALY DETECTION
+  // ============================================================
+  adminGetAnomalousListings: adminProcedure
+    .input(z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(50).default(20),
+      anomalyType: z.enum(['high_value', 'reported', 'all']).default('all'),
+    }))
+    .query(async ({ input }) => {
+      const { getAnomalousListings } = await import('../governance-helpers');
+      return getAnomalousListings(input);
+    }),
+
+  // ============================================================
+  // GOVERNANCE: REPORT STATS
+  // ============================================================
+  adminGetReportStats: adminProcedure
+    .query(async () => {
+      const { getReportStats } = await import('../governance-helpers');
+      return getReportStats();
+    }),
+
+  // ============================================================
+  // GOVERNANCE: ENHANCED REPORTS (with listing info)
+  // ============================================================
+  adminGetReportsEnhanced: adminProcedure
+    .input(z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(50).default(20),
+      status: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const { getAdminListingReportsEnhanced } = await import('../governance-helpers');
+      return getAdminListingReportsEnhanced(input);
+    }),
 });

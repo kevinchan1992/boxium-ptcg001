@@ -1033,11 +1033,17 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
   };
   const { data, isLoading, refetch } = trpc.marketplace.adminGetListings.useQuery({
     page, pageSize: 20,
-    status: statusFilter === "all" ? undefined : statusFilter === "admin_delisted" ? "removed" : statusFilter,
+    status: statusFilter === "all" || statusFilter === "anomalous" ? undefined : statusFilter === "admin_delisted" ? "removed" : statusFilter,
     tcgSeries: seriesFilter === "all" ? undefined : seriesFilter as any,
-  });
+  }, { enabled: statusFilter !== 'anomalous' });
+  const { data: anomalousData, isLoading: anomalousLoading } = trpc.marketplace.adminGetAnomalousListings.useQuery(
+    { page, pageSize: 20 },
+    { enabled: statusFilter === 'anomalous' }
+  );
   const filteredListings = statusFilter === "admin_delisted"
     ? (data?.listings ?? []).filter((l: any) => l.adminDelisted)
+    : statusFilter === 'anomalous'
+    ? (anomalousData?.listings ?? [])
     : (data?.listings ?? []);
   const updateMutation = trpc.marketplace.adminUpdateListing.useMutation({
     onSuccess: () => { toast.success("已更新"); refetch(); invalidateStats(); },
@@ -1053,7 +1059,8 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
     onError: (e) => toast.error(parseApiError(e))
   });
   const listings = filteredListings;
-  const total = data?.total ?? 0;
+  const total = statusFilter === 'anomalous' ? (anomalousData?.total ?? 0) : (data?.total ?? 0);
+  const isLoadingCombined = statusFilter === 'anomalous' ? anomalousLoading : isLoading;
   const allIds = listings.map((l: any) => l.id);
   const allSelected = allIds.length > 0 && allIds.every((id: number) => selectedIds.has(id));
   const someSelected = selectedIds.size > 0;
@@ -1094,13 +1101,13 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          {["all", "active", "reserved", "draft", "sold", "removed", "admin_delisted"].map(s => (
+          {["all", "active", "reserved", "draft", "sold", "removed", "admin_delisted", "anomalous"].map(s => (
             <Button key={s} size="sm" variant={statusFilter === s ? "default" : "outline"}
               onClick={() => { setStatusFilter(s); setPage(1); setSelectedIds(new Set()); }}
               className={statusFilter === s
-                ? (s === 'reserved' ? 'bg-amber-600 text-white' : s === 'admin_delisted' ? 'bg-red-600 text-white' : 'bg-[#06038d] text-white')
-                : (s === 'reserved' ? 'text-amber-700 bg-amber-50 border-amber-300' : s === 'admin_delisted' ? 'text-red-700 bg-red-50 border-red-300' : 'text-gray-700 bg-white')}>
-              {s === "all" ? "全部" : s === "active" ? "上架中" : s === "reserved" ? "🔒 鎖定中" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : s === "admin_delisted" ? "🚫 強制下架" : "已下架"}
+                ? (s === 'reserved' ? 'bg-amber-600 text-white' : s === 'admin_delisted' ? 'bg-red-600 text-white' : s === 'anomalous' ? 'bg-orange-600 text-white' : 'bg-[#06038d] text-white')
+                : (s === 'reserved' ? 'text-amber-700 bg-amber-50 border-amber-300' : s === 'admin_delisted' ? 'text-red-700 bg-red-50 border-red-300' : s === 'anomalous' ? 'text-orange-700 bg-orange-50 border-orange-300' : 'text-gray-700 bg-white')}>
+              {s === "all" ? "全部" : s === "active" ? "上架中" : s === "reserved" ? "🔒 鎖定中" : s === "draft" ? "草稿" : s === "sold" ? "已售出" : s === "admin_delisted" ? "🚫 強制下架" : s === "anomalous" ? "⚠️ 異常商品" : "已下架"}
             </Button>
           ))}
         </div>
@@ -1178,7 +1185,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
         </div>
       )}
       {/* Select all row */}
-      {listings.length > 0 && !isLoading && (
+      {listings.length > 0 && !isLoadingCombined && (
         <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
           <input type="checkbox" checked={allSelected} onChange={toggleAll}
             className="w-4 h-4 rounded border-gray-300 flex-shrink-0" />
@@ -1190,7 +1197,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
           )}
         </div>
       )}
-      {isLoading ? (
+      {isLoadingCombined ? (
         <div className="text-center py-12 text-gray-500">載入中...</div>
       ) : listings.length === 0 ? (
         <div className="text-center py-12 text-gray-500"><Package className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無商品</p></div>
@@ -3514,6 +3521,12 @@ function SellersTab() {
   });
   const sellers = data?.sellers ?? [];
   const total = data?.total ?? 0;
+  const updateRiskMutation = trpc.marketplace.adminUpdateSellerRiskProfile.useMutation({
+    onSuccess: () => { toast.success("風控等級已更新"); refetch(); },
+    onError: (e) => toast.error(parseApiError(e)),
+  });
+  const riskLevelLabel: Record<string, string> = { low: '低風險', medium: '中風險', high: '高風險', critical: '極高風險' };
+  const riskLevelColor: Record<string, string> = { low: 'bg-green-100 text-green-800', medium: 'bg-yellow-100 text-yellow-800', high: 'bg-orange-100 text-orange-800', critical: 'bg-red-100 text-red-800' };
 
   const handleExportSellersCSV = () => {
     const rows = sellers.map((s: any) => ({
@@ -3583,6 +3596,11 @@ function SellersTab() {
                     seller.stripeConnectStatus === 'pending' ? 'bg-yellow-200 text-yellow-900' :
                     'bg-red-200 text-red-900'
                   }`}>Stripe: {seller.stripeConnectStatus}</span>
+                  {seller.riskLevel && seller.riskLevel !== 'low' && (
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${riskLevelColor[seller.riskLevel] ?? 'bg-gray-100 text-gray-700'}`}>
+                      ⚠️ {riskLevelLabel[seller.riskLevel] ?? seller.riskLevel}
+                    </span>
+                  )}
                 </div>
                 <span className="text-white/80 text-xs">申請：{new Date(seller.createdAt).toLocaleDateString('zh-HK')}</span>
               </div>
@@ -5213,6 +5231,7 @@ function ReportsTab() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("pending");
   const { data, isLoading, refetch } = trpc.marketplace.adminGetReports.useQuery({ page, pageSize: 20, status: statusFilter });
+  const { data: statsData } = trpc.marketplace.adminGetReportStats.useQuery();
   const reviewMutation = trpc.marketplace.adminReviewReport.useMutation({
     onSuccess: () => { toast.success("舉報已處理"); refetch(); },
     onError: (e) => toast.error(parseApiError(e)),
@@ -5225,7 +5244,39 @@ function ReportsTab() {
   const statusLabel: Record<string, string> = { pending: "待處理", reviewed: "已審核", dismissed: "已忽略", actioned: "已處置", all: "全部" };
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 mb-2">
+      {/* Stats Summary */}
+      {statsData && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-3">
+            <p className="text-xs text-yellow-700 font-medium">待處理</p>
+            <p className="text-2xl font-bold text-yellow-800">{statsData.byStatus?.pending ?? 0}</p>
+          </div>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+            <p className="text-xs text-blue-700 font-medium">已審核</p>
+            <p className="text-2xl font-bold text-blue-800">{statsData.byStatus?.reviewed ?? 0}</p>
+          </div>
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3">
+            <p className="text-xs text-red-700 font-medium">已處置</p>
+            <p className="text-2xl font-bold text-red-800">{statsData.byStatus?.actioned ?? 0}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+            <p className="text-xs text-gray-600 font-medium">共計</p>
+            <p className="text-2xl font-bold text-gray-800">{statsData.total ?? 0}</p>
+          </div>
+        </div>
+      )}
+      {/* Top reported reasons */}
+      {statsData?.byReason && statsData.byReason.length > 0 && (
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs text-gray-500 font-medium">舉報類型：</span>
+          {statsData.byReason.map((r: any) => (
+            <span key={r.reason} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+              {reasonLabel[r.reason] ?? r.reason} ({r.count})
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
         {["all", "pending", "reviewed", "dismissed", "actioned"].map(s => (
           <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
@@ -6344,6 +6395,10 @@ const actionLabels: Record<string, string> = {
   suspend_seller: '凍結賣家',
   unsuspend_seller: '解凍賣家',
   ai_verify_alipay: 'AI 核對支付寶',
+  delist_listing: '強制下架商品',
+  restore_listing: '重新上架商品',
+  flag_risk: '標記高風險商品',
+  update_seller_risk: '更新賣家風控等級',
 };
 const actionColors: Record<string, string> = {
   confirm_alipay: 'bg-green-100 text-green-800',
@@ -6352,6 +6407,10 @@ const actionColors: Record<string, string> = {
   suspend_seller: 'bg-orange-100 text-orange-800',
   unsuspend_seller: 'bg-cyan-100 text-cyan-800',
   ai_verify_alipay: 'bg-indigo-100 text-indigo-800',
+  delist_listing: 'bg-red-100 text-red-800',
+  restore_listing: 'bg-green-100 text-green-800',
+  flag_risk: 'bg-amber-100 text-amber-800',
+  update_seller_risk: 'bg-purple-100 text-purple-800',
 };
 
 function AuditLogsTab() {
@@ -6429,6 +6488,7 @@ function AuditLogsTab() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部目標</SelectItem>
+            <SelectItem value="listing">商品</SelectItem>
             <SelectItem value="order">訂單</SelectItem>
             <SelectItem value="seller">賣家</SelectItem>
             <SelectItem value="dispute">爭議</SelectItem>
