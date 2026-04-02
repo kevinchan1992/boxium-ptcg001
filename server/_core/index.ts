@@ -17,7 +17,7 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler, startPayoutRetryScheduler, startDisputeSlaEscalationScheduler, startDispute3DayReminderScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler, startPayoutRetryScheduler, startDisputeSlaEscalationScheduler, startDispute3DayReminderScheduler, startOrphanAuctionRepairScheduler } from "../priceUpdateScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import { getListingById, getCardById, getSealedProductById } from "../db";
@@ -1391,6 +1391,8 @@ async function startServer() {
     startDisputeSlaEscalationScheduler();
     // Start the dispute 3-day reminder scheduler (every 6 hours)
     startDispute3DayReminderScheduler();
+    // Start the orphan auction order repair scheduler (every 2 hours)
+    startOrphanAuctionRepairScheduler();
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();

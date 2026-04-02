@@ -267,45 +267,54 @@ async function finalizeAuction(listing: any): Promise<void> {
     return;
   }
 
-  // Has winning bid and reserve met → create order
+    // Has winning bid and reserve met → create order
   await updateAuctionListing(listing.id, {
     auctionStatus: 'ended_sold',
     status: 'sold',
     winnerId: winningBid.bidderId,
     winningBidId: winningBid.id,
   });
-
   const winAmount = parseFloat(winningBid.amount as any);
-  const orderNo = await generateOrderNo();
+  let orderNo: string;
+  try {
+    orderNo = await generateOrderNo();
+  } catch (err) {
+    console.error(`[AuctionProcessor] Failed to generate order number for auction ${listing.id}:`, err);
+    throw err;
+  }
   const paymentDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
   const paymentDeadlineStr = formatHKT(paymentDeadline);
-
   // Determine seller type and calculate platform fee
   // Platform-owned items (no sellerId) have 0% platform fee
   const itemSellerType = listing.sellerId ? 'seller' : 'platform';
   const PLATFORM_FEE_RATE = itemSellerType === 'platform' ? 0 : 0.05;
   const platformFee = parseFloat((winAmount * PLATFORM_FEE_RATE).toFixed(2));
   const sellerReceivable = parseFloat((winAmount - platformFee).toFixed(2));
-
-  const order = await createMarketplaceOrder({
-    orderNo,
-    buyerId: winningBid.bidderId,
-    sellerId: listing.sellerId ?? undefined,
-    sellerType: itemSellerType,
-    listingId: listing.id,
-    unitPriceHkd: winAmount.toFixed(2),
-    quantity: 1,
-    subtotalHkd: winAmount.toFixed(2),
-    platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
-    platformFeeHkd: platformFee.toFixed(2),
-    sellerReceivableHkd: sellerReceivable.toFixed(2),
-    paymentMethod: 'stripe',
-    orderStatus: 'pending_payment',
-    paymentStatus: 'pending',
-    orderSource: 'auction',
-    auctionListingId: listing.id,
-    auctionWinningBidId: winningBid.id,
-  } as any);
+  let order: any;
+  try {
+    order = await createMarketplaceOrder({
+      orderNo,
+      buyerId: winningBid.bidderId,
+      sellerId: listing.sellerId ?? undefined,
+      sellerType: itemSellerType,
+      listingId: listing.id,
+      unitPriceHkd: winAmount.toFixed(2),
+      quantity: 1,
+      subtotalHkd: winAmount.toFixed(2),
+      platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
+      platformFeeHkd: platformFee.toFixed(2),
+      sellerReceivableHkd: sellerReceivable.toFixed(2),
+      paymentMethod: 'stripe',
+      orderStatus: 'pending_payment',
+      paymentStatus: 'pending',
+      orderSource: 'auction',
+      auctionListingId: listing.id,
+      auctionWinningBidId: winningBid.id,
+    } as any);
+  } catch (err) {
+    console.error(`[AuctionProcessor] CRITICAL: Failed to create order for auction ${listing.id} (${orderNo}). Auction marked as ended_sold but no order exists. Manual intervention required.`, err);
+    throw err;
+  }
 
   if (order) {
     await createOrderItems([{

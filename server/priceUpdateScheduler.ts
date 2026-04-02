@@ -2193,3 +2193,142 @@ export function stopDispute3DayReminderScheduler() {
     dispute3DayReminderCronJob = null;
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Orphan Auction Order Repair Scheduler
+// Detects ended_sold auctions with no corresponding order and re-creates them
+// ─────────────────────────────────────────────────────────────────────────────
+let orphanAuctionRepairCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startOrphanAuctionRepairScheduler() {
+  if (orphanAuctionRepairCronJob) return;
+
+  orphanAuctionRepairCronJob = cron.schedule(
+    '0 */2 * * *', // Every 2 hours
+    async () => {
+      try {
+        const { getDb } = await import('./db');
+        const { marketplaceListings, marketplaceOrders, auctionBids } = await import('../drizzle/schema_new');
+        const { eq, isNull, and } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) return;
+
+        // Find ended_sold auctions with no auctionOrderId
+        const orphanListings = await db
+          .select()
+          .from(marketplaceListings)
+          .where(and(
+            eq(marketplaceListings.auctionStatus, 'ended_sold'),
+            isNull(marketplaceListings.auctionOrderId)
+          ))
+          .limit(20);
+
+        if (orphanListings.length === 0) return;
+
+        console.log(`[OrphanAuctionRepair] Found ${orphanListings.length} orphan auction(s) to repair`);
+
+        for (const listing of orphanListings) {
+          try {
+            // Check if an order already exists (by listingId + orderSource)
+            const existingOrders = await db
+              .select({ id: marketplaceOrders.id })
+              .from(marketplaceOrders)
+              .where(and(
+                eq(marketplaceOrders.listingId, listing.id),
+                eq(marketplaceOrders.orderSource, 'auction')
+              ))
+              .limit(1);
+
+            if (existingOrders.length > 0) {
+              // Order exists, just update the listing's auctionOrderId
+              await db.update(marketplaceListings)
+                .set({ auctionOrderId: existingOrders[0].id })
+                .where(eq(marketplaceListings.id, listing.id));
+              console.log(`[OrphanAuctionRepair] Linked existing order ${existingOrders[0].id} to auction ${listing.id}`);
+              continue;
+            }
+
+            // No order exists - need to create one
+            if (!listing.winnerId || !listing.winningBidId) {
+              console.warn(`[OrphanAuctionRepair] Auction ${listing.id} has no winner, skipping`);
+              continue;
+            }
+
+            // Get the winning bid
+            const [winningBid] = await db
+              .select()
+              .from(auctionBids)
+              .where(eq(auctionBids.id, listing.winningBidId))
+              .limit(1);
+
+            if (!winningBid) {
+              console.warn(`[OrphanAuctionRepair] Winning bid ${listing.winningBidId} not found for auction ${listing.id}`);
+              continue;
+            }
+
+            const winAmount = parseFloat(winningBid.amount as any);
+            const itemSellerType = listing.sellerId ? 'seller' : 'platform';
+            const PLATFORM_FEE_RATE = itemSellerType === 'platform' ? 0 : 0.05;
+            const platformFee = parseFloat((winAmount * PLATFORM_FEE_RATE).toFixed(2));
+            const sellerReceivable = parseFloat((winAmount - platformFee).toFixed(2));
+
+            const { generateOrderNo, createMarketplaceOrder, createOrderItems } = await import('./db');
+            const orderNo = await generateOrderNo();
+
+            const newOrder = await createMarketplaceOrder({
+              orderNo,
+              buyerId: winningBid.bidderId,
+              sellerId: listing.sellerId ?? undefined,
+              sellerType: itemSellerType,
+              listingId: listing.id,
+              unitPriceHkd: winAmount.toFixed(2),
+              quantity: 1,
+              subtotalHkd: winAmount.toFixed(2),
+              platformFeeRate: PLATFORM_FEE_RATE.toFixed(4),
+              platformFeeHkd: platformFee.toFixed(2),
+              sellerReceivableHkd: sellerReceivable.toFixed(2),
+              paymentMethod: 'stripe',
+              orderStatus: 'pending_payment',
+              paymentStatus: 'pending',
+              orderSource: 'auction',
+              auctionListingId: listing.id,
+              auctionWinningBidId: winningBid.id,
+            } as any);
+
+            if (newOrder) {
+              await createOrderItems([{
+                orderId: newOrder.id,
+                listingId: listing.id,
+                sellerId: listing.sellerId ?? undefined,
+                sellerType: itemSellerType,
+                title: listing.title ?? `拍賣品 #${listing.id}`,
+                price: winAmount.toFixed(2),
+                quantity: 1,
+              } as any]);
+
+              await db.update(marketplaceListings)
+                .set({ auctionOrderId: newOrder.id })
+                .where(eq(marketplaceListings.id, listing.id));
+
+              console.log(`[OrphanAuctionRepair] Repaired auction ${listing.id} → created order ${orderNo} (id=${newOrder.id})`);
+            }
+          } catch (err) {
+            console.error(`[OrphanAuctionRepair] Failed to repair auction ${listing.id}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[OrphanAuctionRepair] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+
+  console.log('[OrphanAuctionRepair] Orphan auction order repair scheduler started (every 2 hours)');
+}
+
+export function stopOrphanAuctionRepairScheduler() {
+  if (orphanAuctionRepairCronJob) {
+    orphanAuctionRepairCronJob.stop();
+    orphanAuctionRepairCronJob = null;
+  }
+}
