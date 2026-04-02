@@ -7623,3 +7623,9 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復 finalizeAuction：成交時保持 status='sold'（已正確）
 - [x] 測試：拍賣流標後，商品不出現在商城
 - [x] 測試：拍賣成交後，商品不出現在商城
+
+## 🐛 修復購物車「不能將自己的商品加入購物車」誤剄
+- [x] 分析「不能將自己的商品加入購物車」的檢查邏輯（前端或後端）
+- [x] 修復：Admin 帳號應該可以加入其他賣家的商品
+- [x] 確認檢查邏輯使用 sellerProfiles.userId 而非 users.id 來判斷是否為自己的商品
+  - 根本原因：listing.sellerId 是 sellerProfiles.id，不是 users.id，直接與 ctx.user.id 比較導致誤剄

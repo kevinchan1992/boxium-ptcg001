@@ -4833,7 +4833,15 @@ All three checks must pass for verified to be true. Respond with JSON only match
         throw new TRPCError({ code: 'BAD_REQUEST', message: '此商品庫存不足，無法加入購物車' });
       }
       // Cannot add own listing to cart
-      if (listing.sellerId === ctx.user.id) throw new TRPCError({ code: 'BAD_REQUEST', message: '不能將自己的商品加入購物車' });
+      // listing.sellerId is sellerProfiles.id (NOT users.id), so we must look up the seller's userId
+      if (listing.sellerId && listing.sellerType !== 'platform') {
+        const [sellerProfile] = await db.select({ userId: sellerProfiles.userId })
+          .from(sellerProfiles)
+          .where(eq(sellerProfiles.id, listing.sellerId));
+        if (sellerProfile?.userId === ctx.user.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: '不能將自己的商品加入購物車' });
+        }
+      }
       // Upsert (ignore if already in cart) — expiresAt = 14 days from now
       const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
       await db.insert(cartItems).values({ userId: ctx.user.id, listingId: input.listingId, expiresAt }).onDuplicateKeyUpdate({ set: { addedAt: sql`NOW()`, expiresAt: sql`DATE_ADD(NOW(), INTERVAL 14 DAY)` } });
