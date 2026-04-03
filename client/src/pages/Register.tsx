@@ -1,5 +1,5 @@
 import { parseApiError } from "@/lib/parseApiError";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -40,12 +40,35 @@ export default function Register() {
     },
   });
 
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startCooldown = () => {
+    setResendCooldown(60);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          if (cooldownRef.current) clearInterval(cooldownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
+
   const resendMutation = trpc.auth.resendVerificationEmail.useMutation({
     onSuccess: () => {
       toast.success("驗證電郵已重新發送！");
+      startCooldown();
     },
-    onError: () => {
-      toast.error("發送失敗，請稍後再試");
+    onError: (error) => {
+      const msg = error.message || "發送失敗，請稍後再試";
+      toast.error(msg);
+      if (error.data?.code === 'TOO_MANY_REQUESTS') {
+        startCooldown();
+      }
     },
   });
 
@@ -119,10 +142,12 @@ export default function Register() {
             <Button
               variant="outline"
               className="w-full"
-              disabled={resendMutation.isPending}
-              onClick={() => resendMutation.mutate({ email: registeredEmail })}
+              disabled={resendMutation.isPending || resendCooldown > 0}
+              onClick={() => resendMutation.mutate({ email: registeredEmail! })}
             >
-              {resendMutation.isPending ? "發送中..." : (
+              {resendMutation.isPending ? "發送中..." : resendCooldown > 0 ? (
+                <><Mail className="h-4 w-4 mr-2" />重新發送（{resendCooldown} 秒後）</>
+              ) : (
                 <><Mail className="h-4 w-4 mr-2" />重新發送驗證電郵</>
               )}
             </Button>

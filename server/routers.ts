@@ -493,6 +493,20 @@ export const appRouter = router({
           return { success: true };
         }
 
+        // 60-second cooldown: check if a token was recently issued
+        // Token expiry is set to 24 hours from issue time, so if expiry > 23h59m from now, it was issued within 60 seconds
+        if (user.emailVerificationExpiry) {
+          const issuedAt = new Date(user.emailVerificationExpiry).getTime() - 24 * 60 * 60 * 1000;
+          const secondsSinceIssued = (Date.now() - issuedAt) / 1000;
+          if (secondsSinceIssued < 60) {
+            const remainingSeconds = Math.ceil(60 - secondsSinceIssued);
+            throw new TRPCError({
+              code: 'TOO_MANY_REQUESTS',
+              message: `請等待 ${remainingSeconds} 秒後再重新發送`,
+            });
+          }
+        }
+
         // Generate new token
         const { generateEmailVerificationToken } = await import('./auth');
         const newToken = generateEmailVerificationToken();

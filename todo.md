@@ -7889,3 +7889,13 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 #### 5. 完成
 - [ ] 儲存 checkpoint
 - [ ] 向用戶報告完成結果
+
+
+---
+
+## 60 秒重新發送冷卻時間
+
+- [x] 後端：resendVerificationEmail 加入 60 秒冷卻限制（檢查 emailVerificationExpiry 距現在是否不足 60 秒）
+- [x] 前端 Register.tsx：重新發送按鈕加入 60 秒倒計時
+- [x] 前端 ResendVerification.tsx：重新發送按鈕加入 60 秒倒計時
+- [ ] 儲存 checkpoint

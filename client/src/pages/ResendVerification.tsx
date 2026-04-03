@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,12 +13,34 @@ export default function ResendVerification() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
 
+  const [cooldown, setCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startCooldown = () => {
+    setCooldown(60);
+    cooldownRef.current = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          if (cooldownRef.current) clearInterval(cooldownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
+
   const resendMutation = trpc.auth.resendVerificationEmail.useMutation({
     onSuccess: () => {
       setSent(true);
+      startCooldown();
     },
     onError: (error) => {
       toast.error(error.message || "發送失敗，請稍後再試");
+      if (error.data?.code === 'TOO_MANY_REQUESTS') {
+        startCooldown();
+      }
     },
   });
 
@@ -75,10 +97,12 @@ export default function ResendVerification() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={resendMutation.isPending}
+                disabled={resendMutation.isPending || cooldown > 0}
               >
                 {resendMutation.isPending ? (
                   "發送中..."
+                ) : cooldown > 0 ? (
+                  <><Mail className="h-4 w-4 mr-2" />發送驗證電郵（{cooldown} 秒後）</>
                 ) : (
                   <>
                     <Mail className="h-4 w-4 mr-2" />
@@ -108,9 +132,10 @@ export default function ResendVerification() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => setSent(false)}
+                disabled={cooldown > 0}
+                onClick={() => { setSent(false); }}
               >
-                重新發送
+                {cooldown > 0 ? `重新發送（${cooldown} 秒後）` : "重新發送"}
               </Button>
               <Button
                 variant="ghost"
