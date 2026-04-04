@@ -1,5 +1,57 @@
-import { invokeLLM } from "./_core/llm";
+import { ENV } from "./_core/env";
 import * as db from "./db";
+import * as crypto from "crypto";
+
+// ─── Fast LLM call bypassing the global thinking/max_tokens defaults ──────────
+const LLM_API_URL = () =>
+  ENV.forgeApiUrl
+    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
+    : "https://api.manus.im/v1/chat/completions";
+
+async function invokeFastLLM(payload: Record<string, unknown>): Promise<any> {
+  const response = await fetch(LLM_API_URL(), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${ENV.forgeApiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`LLM invoke failed: ${response.status} – ${errorText}`);
+  }
+  return response.json();
+}
+
+// ─── In-memory LRU cache for image identification results (24h TTL) ──────────
+const IMAGE_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const imageCache = new Map<string, { result: any; ts: number }>();
+
+function getImageHash(base64Image: string): string {
+  // Hash only the first 8KB + last 1KB to avoid hashing multi-MB strings
+  const sample = base64Image.slice(0, 8192) + base64Image.slice(-1024);
+  return crypto.createHash("md5").update(sample).digest("hex");
+}
+
+function getCachedIdentification(hash: string): any | null {
+  const entry = imageCache.get(hash);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > IMAGE_CACHE_TTL_MS) {
+    imageCache.delete(hash);
+    return null;
+  }
+  return entry.result;
+}
+
+function setCachedIdentification(hash: string, result: any): void {
+  // Keep cache size bounded (max 200 entries)
+  if (imageCache.size >= 200) {
+    const oldest = [...imageCache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
+    if (oldest) imageCache.delete(oldest[0]);
+  }
+  imageCache.set(hash, { result, ts: Date.now() });
+}
 
 /**
  * Structured card identification result from LLM
@@ -42,52 +94,45 @@ export interface ImageSearchResult {
   matches: MatchedCard[];
   bestMatch: MatchedCard | null;
   error?: string;
+  cached?: boolean;
 }
 
 /**
- * Step 1: Use LLM with structured output to identify card details from image
+ * Step 1: Use LLM with structured output to identify card details from image.
+ * Uses a fast direct API call (no thinking budget, low max_tokens) + in-memory cache.
  */
-async function identifyCardFromImage(base64Image: string): Promise<CardIdentification> {
-  const response = await invokeLLM({
+async function identifyCardFromImage(base64Image: string): Promise<{ identification: CardIdentification; cached: boolean }> {
+  // Check cache first
+  const hash = getImageHash(base64Image);
+  const cached = getCachedIdentification(hash);
+  if (cached) {
+    console.log("[Image Card Search] Cache HIT – returning cached identification");
+    return { identification: cached as CardIdentification, cached: true };
+  }
+
+  // Direct API call: disable thinking, cap max_tokens at 512 for fast JSON output
+  const response = await invokeFastLLM({
+    model: "gemini-2.5-flash",
+    max_tokens: 512,
+    // thinking disabled (budget_tokens: 0) – card OCR needs no chain-of-thought
+    thinking: { budget_tokens: 0 },
     messages: [
       {
         role: "system",
-        content: `You are an expert Pokémon Trading Card Game (PTCG) card identifier. Your task is to analyze card images and extract ALL visible text and identifying information from the card.
-
-CRITICAL INSTRUCTIONS:
-1. Read ALL text on the card carefully - card name, card number, set info, HP, attacks, etc.
-2. The card number is usually at the bottom of the card in format like "110/080", "085/070", "001/078", etc.
-3. The set name/expansion pack info may appear near the card number or at the bottom.
-4. Japanese cards (日本語) have names in katakana/hiragana/kanji. Read them exactly as shown.
-5. The rarity symbol is usually at the bottom-right (e.g., ★, ◆, ●, HR, SR, SAR, AR, RR, R, U, C).
-6. Pokemon name is the large text at the top of the card.
-7. Look for any expansion pack symbols or codes (e.g., "SV5K", "S12a", "SV6", etc.)
-8. If the card is in a PSA/BGS/CGC grading slab, read the label information too.
-9. Extract the EXACT text as printed - do not translate or modify it.
-10. For Japanese text, provide both the original Japanese and any romanized/English equivalent if visible.`
+        content: "You are a TCG card OCR tool. Extract card info as JSON. Be concise and fast.",
       },
       {
         role: "user",
         content: [
           {
             type: "text",
-            text: `Analyze this Pokémon card image carefully. Extract ALL identifying information visible on the card.
-
-Focus on:
-- The EXACT card name as printed (top of card)
-- The card number (bottom, format like "XXX/YYY")
-- The set/expansion name or code
-- The rarity marking
-- The Pokémon's name
-- Any other identifying text
-
-Return your analysis as structured JSON.`
+            text: "Read this TCG card image and return JSON with: cardName (printed name), cardNameJa (Japanese name or null), cardNumber (e.g. '110/080' or null), setName (set code/name or null), rarity (HR/SR/SAR/AR/R/etc or null), pokemonName (English or null), pokemonNameJa (Japanese or null), language ('ja'/'en'/'zh'/'ko'), additionalText (array of other text). Extract EXACT text as printed.",
           },
           {
             type: "image_url",
             image_url: {
               url: base64Image,
-              detail: "auto",
+              detail: "low",
             },
           },
         ],
@@ -101,59 +146,35 @@ Return your analysis as structured JSON.`
         schema: {
           type: "object",
           properties: {
-            cardName: {
-              type: ["string", "null"],
-              description: "The full card name as printed on the card (e.g., 'リザードンex', 'Charizard ex', 'ピカチュウ VMAX')"
-            },
-            cardNameJa: {
-              type: ["string", "null"],
-              description: "The Japanese name if the card is Japanese, or null if not Japanese"
-            },
-            cardNumber: {
-              type: ["string", "null"],
-              description: "The card number as printed (e.g., '110/080', '085/070', '206/165'). Include the full format with slash."
-            },
-            setName: {
-              type: ["string", "null"],
-              description: "The expansion pack or set name/code (e.g., 'SV5K', 'バイオレットex', 'Obsidian Flames', 'S12a')"
-            },
-            rarity: {
-              type: ["string", "null"],
-              description: "The rarity of the card (e.g., 'HR', 'SR', 'SAR', 'AR', 'RR', 'R', 'U', 'C', 'UR')"
-            },
-            pokemonName: {
-              type: ["string", "null"],
-              description: "The Pokémon's name in English (e.g., 'Charizard', 'Pikachu')"
-            },
-            pokemonNameJa: {
-              type: ["string", "null"],
-              description: "The Pokémon's name in Japanese if visible (e.g., 'リザードン', 'ピカチュウ')"
-            },
-            language: {
-              type: "string",
-              description: "The primary language of the card: 'ja' for Japanese, 'en' for English, 'zh' for Chinese, 'ko' for Korean"
-            },
-            additionalText: {
-              type: "array",
-              items: { type: "string" },
-              description: "Any other identifying text visible on the card (attack names, set symbols, etc.)"
-            }
+            cardName: { type: ["string", "null"] },
+            cardNameJa: { type: ["string", "null"] },
+            cardNumber: { type: ["string", "null"] },
+            setName: { type: ["string", "null"] },
+            rarity: { type: ["string", "null"] },
+            pokemonName: { type: ["string", "null"] },
+            pokemonNameJa: { type: ["string", "null"] },
+            language: { type: "string" },
+            additionalText: { type: "array", items: { type: "string" } },
           },
           required: ["cardName", "cardNameJa", "cardNumber", "setName", "rarity", "pokemonName", "pokemonNameJa", "language", "additionalText"],
-          additionalProperties: false
-        }
-      }
-    }
+          additionalProperties: false,
+        },
+      },
+    },
   });
 
-  const content = response.choices[0]?.message?.content;
+  const content = response.choices?.[0]?.message?.content;
   if (!content) {
     throw new Error("LLM returned empty response");
   }
 
-  const parsed = JSON.parse(typeof content === 'string' ? content : JSON.stringify(content));
+  const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
   console.log("[Image Card Search] LLM identification result:", JSON.stringify(parsed, null, 2));
-  return parsed as CardIdentification;
+
+  // Store in cache
+  setCachedIdentification(hash, parsed);
+
+  return { identification: parsed as CardIdentification, cached: false };
 }
 
 /**
@@ -369,10 +390,10 @@ export async function searchCardByImage(base64Image: string): Promise<ImageSearc
     console.log("[Image Card Search] Starting enhanced image recognition...");
     const startTime = Date.now();
 
-    // Step 1: Identify card from image using LLM
-    const identification = await identifyCardFromImage(base64Image);
+    // Step 1: Identify card from image using LLM (with cache)
+    const { identification, cached } = await identifyCardFromImage(base64Image);
     const llmTime = Date.now() - startTime;
-    console.log(`[Image Card Search] LLM identification completed in ${llmTime}ms`);
+    console.log(`[Image Card Search] LLM identification completed in ${llmTime}ms (cached: ${cached})`);
 
     // Validate that we got at least some useful information
     if (!identification.cardName && !identification.cardNameJa && !identification.cardNumber) {
@@ -398,27 +419,30 @@ export async function searchCardByImage(base64Image: string): Promise<ImageSearc
         identification,
         matches: [],
         bestMatch: null,
-        error: `識別到卡牌「${identification.cardName || identification.cardNameJa}」${identification.cardNumber ? ` (${identification.cardNumber})` : ''}，但在資料庫中未找到匹配的卡牌`,
+        cached,
+        error: `識別到卡牌「${identification.cardName || identification.cardNameJa}」，但在資料庫中找不到匹配的卡牌`,
       };
     }
 
+    // Return best match (highest score)
     const bestMatch = matches[0];
-    console.log(`[Image Card Search] Best match: ${bestMatch.name} (score: ${bestMatch.matchScore}, reasons: ${bestMatch.matchReasons.join(', ')})`);
+    console.log(`[Image Card Search] Best match: ${bestMatch.name} (score: ${bestMatch.matchScore})`);
 
     return {
       success: true,
       identification,
       matches,
-      bestMatch,
+      bestMatch: bestMatch.matchScore >= 20 ? bestMatch : null,
+      cached,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("[Image Card Search] Error:", error);
     return {
       success: false,
       identification: null,
       matches: [],
       bestMatch: null,
-      error: error.message || "圖片分析過程中發生錯誤",
+      error: error instanceof Error ? error.message : "圖片搜尋失敗",
     };
   }
 }
