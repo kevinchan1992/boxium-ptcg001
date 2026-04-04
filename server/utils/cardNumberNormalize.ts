@@ -20,6 +20,10 @@
  *
  *   TYPE E – Pure number:
  *     288, 001
+ *
+ *   TYPE F – Compound card number (Yu-Gi-Oh / other):
+ *     YGOPR-JP001, ROTD-JP001, DAMA-EN001
+ *     Set code = letters, then hyphen, then region+number
  */
 
 export interface CardNumberParts {
@@ -62,7 +66,8 @@ function detectSetCodeType(code: string): "hyphen" | "promo" | "space" | null {
 
   // Space-format set codes: letters + digits + optional trailing letters
   // e.g. SV10, SV8a, SM12, S12a, SM8b, XY5, DP4
-  if (/^[A-Z]{1,4}\d{1,3}[A-Z]{0,2}$/.test(upper)) return "space";
+  // NOTE: We limit to at most 2 digits to avoid matching card number suffixes like JP001 (3 digits)
+  if (/^[A-Z]{1,4}\d{1,2}[A-Z]{0,2}$/.test(upper)) return "space";
 
   // Short letter-only codes that are known series (e.g. "SM" as a prefix for SM series)
   // These are partial prefixes typed by the user
@@ -99,6 +104,9 @@ export function isPureSeriesCodeQuery(query: string): boolean {
   if (/[\s/]/.test(trimmed)) return false;
   // Must be 2–8 characters
   if (trimmed.length < 2 || trimmed.length > 8) return false;
+  // Exclude compound card number suffixes like JP001, EN001 (2 letters + 3 digits)
+  // These are card number parts, not set codes
+  if (/^[A-Z]{2,3}\d{3,4}$/.test(trimmed)) return false;
   // Must match a set code pattern
   return detectSetCodeType(trimmed) !== null;
 }
@@ -182,7 +190,7 @@ export function parseCardNumber(raw: string): CardNumberParts | null {
     };
   }
 
-  // Reversed: "288/SM-P", "288 SM-P"
+  // Reversed: "288/SM-P", "288 SM-P", "074/SM-P"
   const numberThenSet = s.match(/^(\d{1,4})\s*[/ ]\s*([A-Z]{1,5}(?:-[A-Z]{1,3})?)$/);
   if (numberThenSet) {
     return { number: numberThenSet[1], setCode: numberThenSet[2], total: null };
@@ -263,6 +271,12 @@ export function normalizeCardQuery(query: string): string {
 
 /**
  * Determine whether a query looks like a "pure card number" (not a card name).
+ * A query is a pure card number if ALL space-separated tokens are either:
+ * - A pure number: e.g. "012", "125/098"
+ * - A valid set code (as determined by detectSetCodeType): e.g. "SV10", "SM-P", "ST01", "SM"
+ * - A full hyphen-format card number: e.g. "ST01-012"
+ * - A compound card number suffix: e.g. "JP001"
+ * This prevents names like "Monkey", "Pikachu", "Luffy" from being treated as set codes.
  */
 function isPureCardNumberQuery(query: string): boolean {
   const trimmed = query.trim().toUpperCase();
@@ -271,10 +285,15 @@ function isPureCardNumberQuery(query: string): boolean {
   if (!parsed) return false;
   const tokens = trimmed.split(/\s+/);
   for (const token of tokens) {
+    // Pure number or number/total
     if (/^\d{1,4}(?:\/\d{1,4})?$/.test(token)) continue;
-    if (/^[A-Z]{1,4}(?:-[A-Z]{1,3})?\d{0,3}[A-Z]{0,2}$/.test(token) && token.length <= 8) continue;
-    // Hyphen format token like "ST01-012" – entire token is a card number
+    // Full hyphen-format card number: ST01-012
     if (/^[A-Z]{2,4}\d{2}-\d{1,4}$/.test(token)) continue;
+    // Compound card number suffix: JP001, EN001
+    if (/^[A-Z]{2,3}\d{3,4}$/.test(token)) continue;
+    // Valid set code (uses the same logic as detectSetCodeType)
+    if (detectSetCodeType(token) !== null) continue;
+    // None of the above → this token is a card name word, not a card number
     return false;
   }
   return true;
@@ -305,13 +324,31 @@ export function tokenizeSearchQuery(query: string): string[] {
 
 /**
  * Build a set of LIKE patterns for a single token.
+ * Now handles:
+ * - Case-insensitive matching (always uppercase for cardNumber)
+ * - Reversed formats: "074/sm-p" → matches "SM-P 74"
+ * - Compound card numbers: "JP001" → matches "-JP001" in card numbers like "YGOPR-JP001"
+ * - Leading zeros: "074" matches "74" and vice versa
+ * - Single-letter tokens: only match word boundaries in names, not card numbers
  */
 export function buildTokenPatterns(token: string): {
   namePatterns: string[];
   cardNumberPatterns: string[];
+  isSingleLetter?: boolean;
 } {
   const upper = token.toUpperCase();
   const lower = token.toLowerCase();
+
+  // Single-letter tokens (e.g. "D" in "Monkey D 012") should only match
+  // word boundaries in names (e.g. " D " or " D."), not card numbers.
+  // This prevents false positives like matching every card with "D" in the name.
+  if (upper.length === 1 && /^[A-Z]$/.test(upper)) {
+    return {
+      namePatterns: [`% ${lower} %`, `% ${lower}.%`, `${lower} %`, `% ${lower}`],
+      cardNumberPatterns: [],
+      isSingleLetter: true,
+    };
+  }
 
   const cnPatterns = new Set<string>();
 
@@ -340,6 +377,20 @@ export function buildTokenPatterns(token: string): {
         cnPatterns.add(`%${number}/${setCode}%`);
         cnPatterns.add(`%${number} ${setCode}%`);
         cnPatterns.add(`%${setCode}%${number}%`);
+        // Also handle reversed format: "074/sm-p" → "SM-P 74" (strip leading zeros)
+        const numNoLeadingZeros = String(parseInt(number, 10));
+        if (numNoLeadingZeros !== number) {
+          cnPatterns.add(`%${setCode} ${numNoLeadingZeros}%`);
+          cnPatterns.add(`%${setCode}${numNoLeadingZeros}%`);
+          cnPatterns.add(`%${numNoLeadingZeros}/${setCode}%`);
+          cnPatterns.add(`%${setCode}%${numNoLeadingZeros}%`);
+        }
+        // Handle zero-padded variants: "74" → also try "074"
+        if (number.length < 3) {
+          const padded = number.padStart(3, '0');
+          cnPatterns.add(`%${setCode} ${padded}%`);
+          cnPatterns.add(`%${setCode}${padded}%`);
+        }
       }
     } else if (number && total) {
       cnPatterns.add(`%${number}/${total}%`);
@@ -349,8 +400,169 @@ export function buildTokenPatterns(token: string): {
     }
   }
 
+  // Handle compound card number suffix patterns: "JP001" → matches "-JP001" or " JP001"
+  // This covers Yu-Gi-Oh style: YGOPR-JP001, ROTD-JP001
+  if (/^[A-Z]{2,3}\d{3,4}$/.test(upper)) {
+    cnPatterns.add(`%-${upper}%`);
+    cnPatterns.add(`% ${upper}%`);
+    // Also try without leading zeros in the number part
+    const letterPart = upper.match(/^([A-Z]+)/)?.[1] ?? '';
+    const numPart = upper.match(/(\d+)$/)?.[1] ?? '';
+    if (letterPart && numPart) {
+      const numNoZero = String(parseInt(numPart, 10));
+      if (numNoZero !== numPart) {
+        cnPatterns.add(`%-${letterPart}${numNoZero}%`);
+        cnPatterns.add(`% ${letterPart}${numNoZero}%`);
+      }
+    }
+  }
+
   return {
     namePatterns: [`%${lower}%`],
     cardNumberPatterns: Array.from(cnPatterns),
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RELEVANCE SCORING
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Score a card's relevance to a search query.
+ * Higher score = more relevant.
+ *
+ * Scoring tiers:
+ *   100 – Exact card number match (case-insensitive)
+ *    90 – Card number starts with query
+ *    80 – Card number contains exact query (substring)
+ *    70 – Exact name match (case-insensitive)
+ *    60 – Name starts with query
+ *    50 – All tokens match card number closely
+ *    40 – All tokens match name closely
+ *    20 – Partial match (some tokens match)
+ *     0 – No meaningful match
+ */
+export function scoreCardRelevance(
+  card: { name: string | null; nameJa?: string | null; cardNumber: string | null },
+  query: string,
+  tokens: string[]
+): number {
+  const queryUpper = query.trim().toUpperCase();
+  const cardNumberUpper = (card.cardNumber ?? '').toUpperCase();
+  const nameUpper = (card.name ?? '').toUpperCase();
+  const nameJaUpper = (card.nameJa ?? '').toUpperCase();
+
+  let score = 0;
+
+  // Tier 1: Exact card number match
+  if (cardNumberUpper === queryUpper) {
+    score = Math.max(score, 100);
+  }
+
+  // Tier 2: Card number starts with query
+  if (cardNumberUpper.startsWith(queryUpper)) {
+    score = Math.max(score, 90);
+  }
+
+  // Tier 3: Card number contains exact query
+  if (cardNumberUpper.includes(queryUpper)) {
+    score = Math.max(score, 80);
+  }
+
+  // Tier 4: Exact name match
+  if (nameUpper === queryUpper || nameJaUpper === queryUpper) {
+    score = Math.max(score, 70);
+  }
+
+  // Tier 5: Name starts with query
+  if (nameUpper.startsWith(queryUpper) || nameJaUpper.startsWith(queryUpper)) {
+    score = Math.max(score, 60);
+  }
+
+  // Token-level scoring
+  if (tokens.length > 1) {
+    let cardNumberTokenMatches = 0;
+    let nameTokenMatches = 0;
+    let exactCardNumberTokenMatches = 0;
+
+    for (const token of tokens) {
+      const tokenUpper = token.toUpperCase();
+      const tokenLower = token.toLowerCase();
+
+      // Check card number match
+      if (cardNumberUpper.includes(tokenUpper)) {
+        cardNumberTokenMatches++;
+        // Bonus for exact segment match (e.g. "ST01" in "ST01-012")
+        if (cardNumberUpper.split(/[-\s/]/).some(seg => seg === tokenUpper)) {
+          exactCardNumberTokenMatches++;
+        }
+      }
+
+      // Check name match
+      if (nameUpper.includes(tokenUpper) || nameJaUpper.includes(tokenUpper) ||
+          card.name.toLowerCase().includes(tokenLower)) {
+        nameTokenMatches++;
+      }
+    }
+
+    const totalTokens = tokens.length;
+
+    // All tokens match card number
+    if (cardNumberTokenMatches === totalTokens) {
+      const exactBonus = exactCardNumberTokenMatches * 5;
+      score = Math.max(score, 50 + exactBonus);
+    }
+
+    // All tokens match name
+    if (nameTokenMatches === totalTokens) {
+      score = Math.max(score, 40);
+    }
+
+    // Mixed: some tokens match card number, some match name
+    if (cardNumberTokenMatches + nameTokenMatches >= totalTokens) {
+      score = Math.max(score, 35);
+    }
+
+    // Partial match: more than half tokens match
+    const totalMatches = Math.max(cardNumberTokenMatches, nameTokenMatches);
+    if (totalMatches > 0 && totalMatches < totalTokens) {
+      score = Math.max(score, 20 * (totalMatches / totalTokens));
+    }
+  } else if (tokens.length === 1) {
+    // Single token scoring
+    const tokenUpper = tokens[0].toUpperCase();
+    const tokenLower = tokens[0].toLowerCase();
+
+    if (cardNumberUpper.includes(tokenUpper)) {
+      score = Math.max(score, 75);
+      // Bonus if it's an exact segment
+      if (cardNumberUpper.split(/[-\s/]/).some(seg => seg === tokenUpper)) {
+        score = Math.max(score, 82);
+      }
+    }
+
+    if (nameUpper.includes(tokenUpper) || card.name.toLowerCase().includes(tokenLower)) {
+      score = Math.max(score, 45);
+    }
+  }
+
+  // Bonus: card number contains the numeric part of query (helps with "012" matching "ST01-012")
+  // But penalize if the number appears in too many contexts (avoid false positives)
+  const queryNumbers = queryUpper.match(/\d+/g) ?? [];
+  const queryLetters = queryUpper.match(/[A-Z]+/g) ?? [];
+
+  if (queryNumbers.length > 0 && queryLetters.length > 0) {
+    // Mixed query (has both letters and numbers) - check if card number contains both parts
+    const hasAllNumbers = queryNumbers.every(n => {
+      const nNoZero = String(parseInt(n, 10));
+      return cardNumberUpper.includes(n) || cardNumberUpper.includes(nNoZero);
+    });
+    const hasAllLetters = queryLetters.every(l => cardNumberUpper.includes(l));
+
+    if (hasAllNumbers && hasAllLetters) {
+      score = Math.max(score, 55);
+    }
+  }
+
+  return score;
 }

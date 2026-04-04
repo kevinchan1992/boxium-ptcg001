@@ -1,6 +1,6 @@
 import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull, isNull, ne, gt, lt } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
-import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns, buildSeriesPrefixPatterns } from './utils/cardNumberNormalize';
+import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns, buildSeriesPrefixPatterns, scoreCardRelevance } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
 import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks, disputeMedia, InsertDisputeMedia, DisputeMedia } from "../drizzle/schema_new";
 import { ENV } from './_core/env';
@@ -76,7 +76,6 @@ export async function searchCards(query: string, limit: number = 20, offset: num
   // All tokens must match (AND logic across tokens, OR logic within each token)
   const tokens = tokenizeSearchQuery(trimmedQuery);
   if (tokens.length === 0) return { cards: [], total: 0 };
-
   // Build per-token conditions
   const tokenConditions = tokens.map(token => {
     const { namePatterns, cardNumberPatterns: cnPatterns } = buildTokenPatterns(token);
@@ -128,22 +127,31 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     }
   }
 
-  // Sort cards by price (highest first), cards without price go to the end
-  const sortedCards = matchingCards.sort((a, b) => {
-    const priceA = priceMap.get(a.id) || 0;
-    const priceB = priceMap.get(b.id) || 0;
+  // Score each card by relevance to the query, then sort by (relevance DESC, price DESC)
+  const cardsWithScore = matchingCards.map(card => ({
+    ...card,
+    latestPrice: priceMap.get(card.id) || null,
+    _relevanceScore: scoreCardRelevance(
+      { name: card.name, nameJa: card.nameJa, cardNumber: card.cardNumber },
+      trimmedQuery,
+      tokens
+    ),
+  }));
+
+  // Primary sort: relevance score (descending)
+  // Secondary sort: price (descending) for cards with same relevance
+  cardsWithScore.sort((a, b) => {
+    if (b._relevanceScore !== a._relevanceScore) {
+      return b._relevanceScore - a._relevanceScore;
+    }
+    const priceA = a.latestPrice || 0;
+    const priceB = b.latestPrice || 0;
     return priceB - priceA;
   });
 
-  // Add latestPrice to each card
-  const cardsWithPrice = sortedCards.map(card => ({
-    ...card,
-    latestPrice: priceMap.get(card.id) || null,
-  }));
-
   return {
-    cards: cardsWithPrice.slice(offset, offset + limit),
-    total: cardsWithPrice.length,
+    cards: cardsWithScore.slice(offset, offset + limit),
+    total: cardsWithScore.length,
   };
 }
 
