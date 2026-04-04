@@ -87,7 +87,7 @@ Return your analysis as structured JSON.`
             type: "image_url",
             image_url: {
               url: base64Image,
-              detail: "high",
+              detail: "auto",
             },
           },
         ],
@@ -161,120 +161,54 @@ Return your analysis as structured JSON.`
  * Uses card number, name, series, and rarity for weighted scoring
  */
 async function findMatchingCards(identification: CardIdentification): Promise<MatchedCard[]> {
+  // Build list of unique search queries to run in parallel
+  const searchQueries: Array<{ query: string; label: string }> = [];
+
+  if (identification.cardNumber) {
+    const normalizedNumber = normalizeCardNumber(identification.cardNumber);
+    searchQueries.push({ query: normalizedNumber, label: `card number: ${normalizedNumber}` });
+  }
+  if (identification.cardNameJa) {
+    searchQueries.push({ query: identification.cardNameJa, label: `Japanese name: ${identification.cardNameJa}` });
+  }
+  if (identification.cardName) {
+    searchQueries.push({ query: identification.cardName, label: `card name: ${identification.cardName}` });
+  }
+  if (identification.pokemonName && identification.pokemonName !== identification.cardName) {
+    searchQueries.push({ query: identification.pokemonName, label: `Pokemon name: ${identification.pokemonName}` });
+  }
+  if (identification.pokemonNameJa && identification.pokemonNameJa !== identification.cardNameJa) {
+    searchQueries.push({ query: identification.pokemonNameJa, label: `Pokemon Japanese name: ${identification.pokemonNameJa}` });
+  }
+
+  // Deduplicate queries (avoid running the same search twice)
+  const uniqueQueries = searchQueries.filter(
+    (q, idx, arr) => arr.findIndex(x => x.query === q.query) === idx
+  );
+
+  console.log(`[Image Card Search] Running ${uniqueQueries.length} search strategies in parallel`);
+
+  // Execute all DB searches in parallel
+  const results = await Promise.all(
+    uniqueQueries.map(({ query, label }) =>
+      db.searchCards(query, 20)
+        .then(r => ({ cards: r.cards, label }))
+        .catch(err => {
+          console.warn(`[Image Card Search] Search failed for ${label}:`, err.message);
+          return { cards: [], label };
+        })
+    )
+  );
+
+  // Merge results, deduplicating by card ID
   const allMatches: MatchedCard[] = [];
   const seenIds = new Set<number>();
 
-  // Strategy 1: Exact card number match (highest priority)
-  // Uses smart normalization to handle format variants (SM-P 288 / 288/SM-P / 288 sm-p)
-  if (identification.cardNumber) {
-    const normalizedNumber = normalizeCardNumber(identification.cardNumber);
-    console.log(`[Image Card Search] Searching by card number: ${normalizedNumber} (original: ${identification.cardNumber})`);
-    
-    const numberResults = await db.searchCards(normalizedNumber, 20);
-    for (const card of numberResults.cards) {
+  for (const { cards } of results) {
+    for (const card of cards) {
       if (seenIds.has(card.id)) continue;
       seenIds.add(card.id);
-      
-      const { score, reasons } = calculateMatchScore(card, identification);
-      allMatches.push({
-        id: card.id,
-        name: card.name,
-        nameJa: card.nameJa || null,
-        cardNumber: card.cardNumber || null,
-        series: card.series || null,
-        setName: card.setName || null,
-        rarity: card.rarity || null,
-        imageUrl: card.imageUrl || null,
-        matchScore: score,
-        matchReasons: reasons,
-        latestPrice: card.latestPrice || null,
-      });
-    }
-  }
 
-  // Strategy 2: Search by Japanese name (for Japanese cards)
-  if (identification.cardNameJa) {
-    console.log(`[Image Card Search] Searching by Japanese name: ${identification.cardNameJa}`);
-    const jaResults = await db.searchCards(identification.cardNameJa, 20);
-    for (const card of jaResults.cards) {
-      if (seenIds.has(card.id)) continue;
-      seenIds.add(card.id);
-      
-      const { score, reasons } = calculateMatchScore(card, identification);
-      allMatches.push({
-        id: card.id,
-        name: card.name,
-        nameJa: card.nameJa || null,
-        cardNumber: card.cardNumber || null,
-        series: card.series || null,
-        setName: card.setName || null,
-        rarity: card.rarity || null,
-        imageUrl: card.imageUrl || null,
-        matchScore: score,
-        matchReasons: reasons,
-        latestPrice: card.latestPrice || null,
-      });
-    }
-  }
-
-  // Strategy 3: Search by card name
-  if (identification.cardName) {
-    console.log(`[Image Card Search] Searching by card name: ${identification.cardName}`);
-    const nameResults = await db.searchCards(identification.cardName, 20);
-    for (const card of nameResults.cards) {
-      if (seenIds.has(card.id)) continue;
-      seenIds.add(card.id);
-      
-      const { score, reasons } = calculateMatchScore(card, identification);
-      allMatches.push({
-        id: card.id,
-        name: card.name,
-        nameJa: card.nameJa || null,
-        cardNumber: card.cardNumber || null,
-        series: card.series || null,
-        setName: card.setName || null,
-        rarity: card.rarity || null,
-        imageUrl: card.imageUrl || null,
-        matchScore: score,
-        matchReasons: reasons,
-        latestPrice: card.latestPrice || null,
-      });
-    }
-  }
-
-  // Strategy 4: Search by Pokemon name (English)
-  if (identification.pokemonName && identification.pokemonName !== identification.cardName) {
-    console.log(`[Image Card Search] Searching by Pokemon name: ${identification.pokemonName}`);
-    const pokemonResults = await db.searchCards(identification.pokemonName, 20);
-    for (const card of pokemonResults.cards) {
-      if (seenIds.has(card.id)) continue;
-      seenIds.add(card.id);
-      
-      const { score, reasons } = calculateMatchScore(card, identification);
-      allMatches.push({
-        id: card.id,
-        name: card.name,
-        nameJa: card.nameJa || null,
-        cardNumber: card.cardNumber || null,
-        series: card.series || null,
-        setName: card.setName || null,
-        rarity: card.rarity || null,
-        imageUrl: card.imageUrl || null,
-        matchScore: score,
-        matchReasons: reasons,
-        latestPrice: card.latestPrice || null,
-      });
-    }
-  }
-
-  // Strategy 5: Search by Pokemon Japanese name
-  if (identification.pokemonNameJa && identification.pokemonNameJa !== identification.cardNameJa) {
-    console.log(`[Image Card Search] Searching by Pokemon Japanese name: ${identification.pokemonNameJa}`);
-    const pokemonJaResults = await db.searchCards(identification.pokemonNameJa, 20);
-    for (const card of pokemonJaResults.cards) {
-      if (seenIds.has(card.id)) continue;
-      seenIds.add(card.id);
-      
       const { score, reasons } = calculateMatchScore(card, identification);
       allMatches.push({
         id: card.id,

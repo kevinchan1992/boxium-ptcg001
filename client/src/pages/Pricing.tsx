@@ -62,6 +62,39 @@ export default function Pricing() {
     setShowImageDialog(true);
   };
 
+  // Compress image before sending to API: resize to max 800px, JPEG quality 0.85
+  const compressImage = (dataUrl: string, maxDimension = 800, quality = 0.85): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const { naturalWidth: w, naturalHeight: h } = img;
+        let targetW = w;
+        let targetH = h;
+        if (w > maxDimension || h > maxDimension) {
+          if (w >= h) {
+            targetW = maxDimension;
+            targetH = Math.round(h * (maxDimension / w));
+          } else {
+            targetH = maxDimension;
+            targetW = Math.round(w * (maxDimension / h));
+          }
+        }
+        // If already small enough and already JPEG, return as-is
+        if (targetW === w && targetH === h && dataUrl.startsWith('data:image/jpeg')) {
+          resolve(dataUrl);
+          return;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = dataUrl;
+    });
+  };
+
   const processImageFile = (file: File) => {
     setSelectedImage(file);
     const reader = new FileReader();
@@ -123,14 +156,17 @@ export default function Pricing() {
 
       // 如果用戶選擇裁剪且有完成的裁剪區域
       if (useCrop && completedCrop && imgRef.current) {
-        base64Image = await getCroppedImg(imgRef.current, completedCrop);
+        const cropped = await getCroppedImg(imgRef.current, completedCrop);
+        // Cropped images are already small; still compress to ensure consistent size
+        base64Image = await compressImage(cropped, 800, 0.85);
       } else {
-        // 使用原圖
+        // 使用原圖，先讀取再壓縮
         const reader = new FileReader();
-        base64Image = await new Promise((resolve) => {
+        const rawDataUrl = await new Promise<string>((resolve) => {
           reader.onloadend = () => resolve(reader.result as string);
           reader.readAsDataURL(selectedImage);
         });
+        base64Image = await compressImage(rawDataUrl, 800, 0.85);
       }
       
       // Call image search API
