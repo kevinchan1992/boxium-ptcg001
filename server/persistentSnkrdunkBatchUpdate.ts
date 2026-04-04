@@ -190,22 +190,35 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
       if (database) {
         const { priceHistory: priceHistoryTable } = await import('../drizzle/schema_new');
         
-        // Assign sourcePosition (0-based index in API response) to differentiate same-day same-price
-        // transactions. The UNIQUE INDEX now includes sourcePosition, so all distinct API records
-        // can be stored without false-positive deduplication.
-        const records = priceHistory.map((entry, idx) => ({
-          cardId: product.id,
-          source: "snkrdunk" as const,
-          price: convertJpyToHkd(entry.price).toString(),
-          currency: "HKD",
-          jpyPrice: entry.jpyPrice ?? entry.price, // Original JPY price - used for stable deduplication
-          sourcePosition: idx, // Position in API response (0-based) - allows multiple same-day same-price records
-          grade: productType === 'single_card' ? (entry.normalisedGrade ?? null) : null,
-          quantity: productType === 'sealed_product' ? (entry.quantity || null) : null,
-          productType,
-          soldAt: entry.soldAt,
-          listingUrl: product.sourceUrl,
-        }));
+        // Assign sourcePosition using PER-GROUP relative position (not global index).
+        // Key insight: sourcePosition must be stable across scrape runs.
+        // Using global index (idx) causes duplicates because when new records are added
+        // at the top of the API response, all older records shift down in position.
+        // Instead, we assign position within each (soldAt, grade, jpyPrice) group,
+        // so the same transaction always gets the same sourcePosition regardless of
+        // how many new records have been added since the last scrape.
+        const groupCounters = new Map<string, number>();
+        const records = priceHistory.map((entry) => {
+          const soldAtStr = entry.soldAt ? entry.soldAt.toISOString().slice(0, 10) : 'unknown';
+          const grade = productType === 'single_card' ? (entry.normalisedGrade ?? 'null') : 'null';
+          const jpyPrice = entry.jpyPrice ?? entry.price;
+          const groupKey = `${soldAtStr}|${grade}|${jpyPrice}`;
+          const pos = groupCounters.get(groupKey) ?? 0;
+          groupCounters.set(groupKey, pos + 1);
+          return {
+            cardId: product.id,
+            source: "snkrdunk" as const,
+            price: convertJpyToHkd(entry.price).toString(),
+            currency: "HKD",
+            jpyPrice,
+            sourcePosition: pos, // Relative position within same (soldAt, grade, jpyPrice) group
+            grade: productType === 'single_card' ? (entry.normalisedGrade ?? null) : null,
+            quantity: productType === 'sealed_product' ? (entry.quantity || null) : null,
+            productType,
+            soldAt: entry.soldAt,
+            listingUrl: product.sourceUrl,
+          };
+        });
         
         // ─── Bulk purchase detection (isSuspectedBulk) ─────────────
         // For single cards: compute 30-day median JPY price per grade,

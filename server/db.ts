@@ -952,17 +952,42 @@ export async function addPriceHistory(data: {
   const db = await getDb();
   if (!db) return null;
 
-  // Deduplication: rely entirely on the database UNIQUE INDEX
+  // Deduplication: rely on the database UNIQUE INDEX
   // (cardId, source, grade, soldAt, jpyPrice, sourcePosition)
   // sourcePosition differentiates multiple transactions on the same day with the same grade and price.
   // onDuplicateKeyUpdate is a no-op that silently ignores constraint violations.
+  //
+  // IMPORTANT: When sourcePosition is not provided (defaults to 0), apply application-level
+  // deduplication to prevent inserting duplicates of existing records that may have
+  // been stored with a different sourcePosition in a previous scrape run.
+  const sourcePosition = data.sourcePosition ?? 0;
+  if (sourcePosition === 0 && data.source === 'snkrdunk' && data.soldAt && data.jpyPrice != null) {
+    // Check if any record with same (cardId, source, grade, soldAt, jpyPrice) already exists
+    // regardless of sourcePosition — this catches cross-run duplicates
+    const existing = await db
+      .select({ id: priceHistory.id })
+      .from(priceHistory)
+      .where(and(
+        eq(priceHistory.cardId, data.cardId),
+        eq(priceHistory.source, data.source),
+        data.grade ? eq(priceHistory.grade, data.grade) : sql`${priceHistory.grade} IS NULL`,
+        eq(priceHistory.soldAt, data.soldAt),
+        eq(priceHistory.jpyPrice, data.jpyPrice),
+      ))
+      .limit(1);
+    if (existing.length > 0) {
+      // Already exists — skip insert to avoid duplicate
+      return null;
+    }
+  }
+
   const result = await db.insert(priceHistory).values({
     cardId: data.cardId,
     source: data.source,
     price: data.price,
     currency: data.currency,
     jpyPrice: data.jpyPrice ?? null,
-    sourcePosition: data.sourcePosition ?? 0,
+    sourcePosition,
     grade: data.grade,
     quantity: data.quantity,
     productType: data.productType || "single_card", // Default to single_card
