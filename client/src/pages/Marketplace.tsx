@@ -897,14 +897,19 @@ export default function Marketplace() {
       <div className="max-w-7xl mx-auto px-4 mt-4">
         <div className="grid grid-cols-4 gap-3">
           {TCG_SERIES.map(s => {
-            const isActive = tcgSeries === s.value;
-            const count = seriesCounts[s.value];
+            const isActive = marketTab === 'auction' ? auctionSeries === s.value : tcgSeries === s.value;
+            const count = marketTab === 'auction' ? undefined : seriesCounts[s.value];
             return (
               <button
                 key={s.value}
                 onClick={() => {
-                  setTcgSeries(s.value);
-                  resetAndSearch();
+                  if (marketTab === 'auction') {
+                    setAuctionSeries(s.value);
+                    setAuctionPage(1);
+                  } else {
+                    setTcgSeries(s.value);
+                    resetAndSearch();
+                  }
                 }}
                 className={`relative flex flex-col items-center justify-center gap-1.5 py-3.5 px-3 rounded-2xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm ${
                   isActive

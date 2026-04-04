@@ -5183,31 +5183,38 @@ export async function getAuctionListings(opts: {
   page?: number;
   pageSize?: number;
   cardId?: number;
+  tcgSeries?: string;
+  sortBy?: 'ending_soon' | 'newest' | 'price_asc' | 'price_desc';
 }) {
-  const { status = ['active', 'ending_soon', 'scheduled'], page = 1, pageSize = 20, cardId } = opts;
+  const { status = ['active', 'ending_soon', 'scheduled'], page = 1, pageSize = 20, cardId, tcgSeries, sortBy = 'ending_soon' } = opts;
   const offset = (page - 1) * pageSize;
   const db = await getDb();
   if (!db) throw new Error("DB not available");
-
   const conditions: any[] = [
     eq(marketplaceListings.listingMode, 'auction'),
     inArray(marketplaceListings.auctionStatus, status as any[]),
   ];
   if (cardId) conditions.push(eq(marketplaceListings.cardId, cardId));
-
+  if (tcgSeries && tcgSeries !== 'all') conditions.push(eq(marketplaceListings.tcgSeries, tcgSeries as any));
+  // Build order clause based on sortBy
+  let orderClause;
+  switch (sortBy) {
+    case 'newest': orderClause = desc(marketplaceListings.createdAt); break;
+    case 'price_asc': orderClause = asc(marketplaceListings.priceHkd); break;
+    case 'price_desc': orderClause = desc(marketplaceListings.priceHkd); break;
+    case 'ending_soon':
+    default: orderClause = asc(marketplaceListings.auctionEndAt); break;
+  }
   const rows = await db.select().from(marketplaceListings)
     .where(and(...conditions))
-    .orderBy(asc(marketplaceListings.auctionEndAt))
+    .orderBy(orderClause)
     .limit(pageSize)
     .offset(offset);
-
   const [{ total }] = await db.select({ total: sql<number>`count(*)` })
     .from(marketplaceListings)
     .where(and(...conditions));
-
   return { listings: rows, total: Number(total), page, pageSize };
 }
-
 export async function getAuctionListingById(id: number) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");

@@ -49,6 +49,8 @@ export const auctionRouter = router({
       page: z.number().int().min(1).default(1),
       pageSize: z.number().int().min(1).max(50).default(20),
       cardId: z.number().int().optional(),
+      tcgSeries: z.string().optional(),
+      sortBy: z.enum(['ending_soon', 'newest', 'price_asc', 'price_desc']).optional(),
     }))
     .query(async ({ input }) => {
       return getAuctionListings(input);
