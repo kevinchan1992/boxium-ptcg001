@@ -24,6 +24,8 @@ export default function Pricing() {
   const [crop, setCrop] = useState<CropType>();
   const [completedCrop, setCompletedCrop] = useState<CropType>();
   const [isDragging, setIsDragging] = useState(false);
+  // Progressive step feedback: null = idle, 'compress' | 'identify' | 'search' | 'done'
+  const [searchStep, setSearchStep] = useState<null | 'compress' | 'identify' | 'search' | 'done'>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -151,13 +153,13 @@ export default function Pricing() {
     }
 
     setIsSearching(true);
+    setSearchStep('compress');
     try {
       let base64Image: string;
 
       // 如果用戶選擇裁剪且有完成的裁剪區域
       if (useCrop && completedCrop && imgRef.current) {
         const cropped = await getCroppedImg(imgRef.current, completedCrop);
-        // Cropped images are already small; still compress to ensure consistent size
         base64Image = await compressImage(cropped, 800, 0.85);
       } else {
         // 使用原圖，先讀取再壓縮
@@ -168,9 +170,14 @@ export default function Pricing() {
         });
         base64Image = await compressImage(rawDataUrl, 800, 0.85);
       }
-      
-      // Call image search API
+
+      setSearchStep('identify');
+      // Call image search API (LLM identification + DB search happen server-side)
+      // We switch to 'search' step after a short delay to simulate the two-phase progress
+      const searchStepTimer = setTimeout(() => setSearchStep('search'), 3000);
       const result = await imageSearchMutation.mutateAsync({ image: base64Image });
+      clearTimeout(searchStepTimer);
+      setSearchStep('done');
       
       if (result.success && result.bestMatch) {
         const cardName = result.bestMatch.name;
@@ -196,6 +203,7 @@ export default function Pricing() {
       toast.error(t('pricing.imageSearchError') || '圖片搜尋失敗，請稍後再試');
     } finally {
       setIsSearching(false);
+      setSearchStep(null);
     }
   };
 
@@ -400,6 +408,47 @@ export default function Pricing() {
               </div>
             )}
 
+            {/* Progressive search step indicator */}
+            {isSearching && searchStep && (
+              <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 space-y-3">
+                {/* Step list */}
+                {([
+                  { key: 'compress', label: '正在處理圖片...' },
+                  { key: 'identify', label: 'AI 正在辨識卡牌...' },
+                  { key: 'search',   label: '正在搜尋資料庫...' },
+                  { key: 'done',     label: '處理完成！' },
+                ] as const).map(({ key, label }, idx) => {
+                  const stepOrder = ['compress', 'identify', 'search', 'done'] as const;
+                  const currentIdx = stepOrder.indexOf(searchStep);
+                  const thisIdx = stepOrder.indexOf(key);
+                  const isDone = thisIdx < currentIdx;
+                  const isActive = thisIdx === currentIdx;
+                  return (
+                    <div key={key} className={`flex items-center gap-3 transition-opacity duration-300 ${
+                      thisIdx > currentIdx ? 'opacity-30' : 'opacity-100'
+                    }`}>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                        isDone ? 'bg-green-500' : isActive ? 'bg-primary' : 'bg-muted'
+                      }`}>
+                        {isDone ? (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : isActive ? (
+                          <Loader2 className="w-3 h-3 text-white animate-spin" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                        )}
+                      </div>
+                      <span className={`text-sm font-medium ${
+                        isDone ? 'text-green-500' : isActive ? 'text-primary' : 'text-muted-foreground'
+                      }`}>{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-3">
               {!imagePreview && (
@@ -428,6 +477,7 @@ export default function Pricing() {
                   <Button
                     variant="outline"
                     onClick={handleStartCrop}
+                    disabled={isSearching}
                     className="w-full"
                   >
                     <Crop className="w-4 h-4 mr-2" />
@@ -441,7 +491,7 @@ export default function Pricing() {
                     {isSearching ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {t('pricing.searching') || '搜尋中...'}
+                        處理中...
                       </>
                     ) : (
                       t('pricing.searchNow') || '立即搜尋'
@@ -455,6 +505,7 @@ export default function Pricing() {
                   <Button
                     variant="outline"
                     onClick={handleCancelCrop}
+                    disabled={isSearching}
                     className="w-full"
                   >
                     {t('pricing.cancel') || '取消'}
@@ -467,7 +518,7 @@ export default function Pricing() {
                     {isSearching ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {t('pricing.searching') || '搜尋中...'}
+                        處理中...
                       </>
                     ) : (
                       t('pricing.searchCropped') || '搜尋裁剪區域'
