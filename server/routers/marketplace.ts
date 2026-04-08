@@ -62,26 +62,69 @@ function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' });
 }
 
-// Platform fee rate default (5% for C2C listings only) — overridden by systemSettings.platform_fee_rate
-const DEFAULT_PLATFORM_FEE_RATE = 0.05;
+// Tiered platform fee rate defaults:
+// Tier 1: HK$1 – 5000 → 5%
+// Tier 2: HK$5001 – 10000 → 4%
+// Tier 3: HK$10001+ → 3%
+const DEFAULT_FEE_TIERS = [
+  { maxAmount: 5000,    rate: 0.05 },
+  { maxAmount: 10000,   rate: 0.04 },
+  { maxAmount: Infinity, rate: 0.03 },
+];
 // Alipay HK static payment link
 const ALIPAY_HK_STATIC_LINK = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
 /**
- * Get the current platform fee rate from systemSettings.
- * Falls back to DEFAULT_PLATFORM_FEE_RATE (0.05) if not configured.
+ * Tiered fee rate settings stored in systemSettings:
+ *   fee_tier_1_max   (default 5000)  — upper bound of tier 1
+ *   fee_tier_1_rate  (default 0.05)  — rate for tier 1
+ *   fee_tier_2_max   (default 10000) — upper bound of tier 2
+ *   fee_tier_2_rate  (default 0.04)  — rate for tier 2
+ *   fee_tier_3_rate  (default 0.03)  — rate for tier 3 (no upper bound)
  */
-async function getPlatformFeeRate(): Promise<number> {
+async function getPlatformFeeTiers(): Promise<Array<{ maxAmount: number; rate: number }>> {
   try {
-    const setting = await getSystemSetting('platform_fee_rate');
-    if (setting) {
-      const rate = parseFloat(setting.settingValue);
-      if (!isNaN(rate) && rate >= 0 && rate <= 1) return rate;
+    const [t1max, t1rate, t2max, t2rate, t3rate] = await Promise.all([
+      getSystemSetting('fee_tier_1_max'),
+      getSystemSetting('fee_tier_1_rate'),
+      getSystemSetting('fee_tier_2_max'),
+      getSystemSetting('fee_tier_2_rate'),
+      getSystemSetting('fee_tier_3_rate'),
+    ]);
+    const tier1Max  = t1max  ? parseFloat(t1max.settingValue)  : 5000;
+    const tier1Rate = t1rate ? parseFloat(t1rate.settingValue) : 0.05;
+    const tier2Max  = t2max  ? parseFloat(t2max.settingValue)  : 10000;
+    const tier2Rate = t2rate ? parseFloat(t2rate.settingValue) : 0.04;
+    const tier3Rate = t3rate ? parseFloat(t3rate.settingValue) : 0.03;
+    if ([tier1Max, tier1Rate, tier2Max, tier2Rate, tier3Rate].every(v => !isNaN(v))) {
+      return [
+        { maxAmount: tier1Max,    rate: tier1Rate },
+        { maxAmount: tier2Max,    rate: tier2Rate },
+        { maxAmount: Infinity,    rate: tier3Rate },
+      ];
     }
   } catch {
-    // Non-fatal: fall back to default
+    // Non-fatal: fall back to defaults
   }
-  return DEFAULT_PLATFORM_FEE_RATE;
+  return DEFAULT_FEE_TIERS;
+}
+
+/**
+ * Get the applicable fee rate for a given transaction amount.
+ */
+function getFeeRateForAmount(amount: number, tiers: Array<{ maxAmount: number; rate: number }>): number {
+  for (const tier of tiers) {
+    if (amount <= tier.maxAmount) return tier.rate;
+  }
+  return tiers[tiers.length - 1].rate;
+}
+
+/**
+ * Convenience: fetch tiers then return the rate for a specific amount.
+ */
+async function getPlatformFeeRate(amount: number = 0): Promise<number> {
+  const tiers = await getPlatformFeeTiers();
+  return getFeeRateForAmount(amount, tiers);
 }
 
 /**
@@ -213,7 +256,7 @@ export const marketplaceRouter = router({
       const price = parseFloat(listing.priceHkd as string);
       const subtotal = price * input.quantity;
       // Platform fee is deducted from seller's payout (buyer pays listing price only)
-      const feeRate = await getPlatformFeeRate();
+      const feeRate = await getPlatformFeeRate(subtotal);
       const platformFee = calcPlatformFeeWithRate(listing.sellerType, subtotal, feeRate);
       const total = subtotal; // Buyer pays listing price only, no extra fees
 
@@ -2431,9 +2474,8 @@ export const marketplaceRouter = router({
         }
         effectivePrice = parseFloat(offerRecord.offerPriceHkd as string);
       }
-      const stripe = getStripe();
-      const feeRateStripe = await getPlatformFeeRate();
-
+       const stripe = getStripe();
+      const feeRateStripe = await getPlatformFeeRate(effectivePrice);
       // Stripe requires minimum HKD 4.00 for card payments
       if (effectivePrice < 4.00) {
         throw new TRPCError({
@@ -2746,7 +2788,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
 
       const orderNo = await generateOrderNo();
-      const feeRateAlipay = await getPlatformFeeRate();
+      const feeRateAlipay = await getPlatformFeeRate(effectivePrice);
       const newOrder = await createMarketplaceOrder({
         orderNo,
         buyerId: ctx.user.id,
@@ -2906,10 +2948,12 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
 
       // Step 2: Compute totals and determine payment restrictions (P1)
+      // Tiered fee: fetch tiers once, apply per-item based on each item's price
+      const feeTiers = await getPlatformFeeTiers();
       const auctionTotal = auctionOrders.reduce((sum, o) => sum + parseFloat(o.subtotalHkd), 0);
       const totalAmount = orderItems.reduce((sum, o) => sum + o.effectivePrice, 0) + auctionTotal;
       const totalPlatformFee = orderItems.reduce((sum, { listing, effectivePrice }) =>
-        sum + calcPlatformFeeWithRate(listing.sellerType, effectivePrice, feeRate), 0);
+        sum + calcPlatformFeeWithRate(listing.sellerType, effectivePrice, getFeeRateForAmount(effectivePrice, feeTiers)), 0);
       const totalSellerReceivable = totalAmount - totalPlatformFee;
       const hasSellerItems = orderItems.some(({ listing }) => listing.sellerType === "seller");
 
@@ -2939,6 +2983,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const batchRef = orderItems.length > 1 ? `BATCH-${Date.now()}-${ctx.user.id}` : undefined;
       const createdOrders: Array<{ orderNo: string; orderId: number; listingId: number; effectivePrice: number }> = [];
       for (const { listing, effectivePrice, offerId } of orderItems) {
+        const itemFeeRate = getFeeRateForAmount(effectivePrice, feeTiers);
         const orderNo = await generateOrderNo();
         const newOrder = await createMarketplaceOrder({
           orderNo,
@@ -2952,9 +2997,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
           listingId: listing.id,
           unitPriceHkd: effectivePrice.toFixed(2),
           quantity: 1,
-          platformFeeRate: feeRate.toFixed(4),
-          platformFeeHkd: calcPlatformFeeWithRate(listing.sellerType, effectivePrice, feeRate).toFixed(2),
-          sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, effectivePrice, feeRate).toFixed(2),
+          platformFeeRate: itemFeeRate.toFixed(4),
+          platformFeeHkd: calcPlatformFeeWithRate(listing.sellerType, effectivePrice, itemFeeRate).toFixed(2),
+          sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, effectivePrice, itemFeeRate).toFixed(2),
           stripePaymentIntentId: null,
           stripeSessionId: null,
           shippingName: input.shippingAddress?.name ?? null,
@@ -3119,7 +3164,10 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
 
       // Create new orders for items that need them
+      // Fetch tiers once for batch processing
+      const alipayFeeTiers = await getPlatformFeeTiers();
       for (const { listing, effectivePrice } of itemsToCreate) {
+        const itemFeeRate = getFeeRateForAmount(effectivePrice, alipayFeeTiers);
         const orderNo = await generateOrderNo();
         await createMarketplaceOrder({
           orderNo,
@@ -3133,9 +3181,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
           listingId: listing.id,
           unitPriceHkd: effectivePrice.toFixed(2),
           quantity: 1,
-          platformFeeRate: feeRate.toFixed(4),
-          platformFeeHkd: calcPlatformFeeWithRate(listing.sellerType, effectivePrice, feeRate).toFixed(2),
-          sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, effectivePrice, feeRate).toFixed(2),
+          platformFeeRate: itemFeeRate.toFixed(4),
+          platformFeeHkd: calcPlatformFeeWithRate(listing.sellerType, effectivePrice, itemFeeRate).toFixed(2),
+          sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, effectivePrice, itemFeeRate).toFixed(2),
           alipayProofImageUrl: input.proofImageUrl,
           shippingName: input.shippingAddress?.name ?? null,
           shippingPhone: input.shippingAddress?.phone ?? null,
@@ -4230,7 +4278,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const offerPrice = parseFloat(offer.offerPriceHkd as string);
       // Platform fee is deducted from seller's payout (buyer pays offer price only)
       // Platform-owned listings are exempt from platform fees
-      const feeRateOffer = await getPlatformFeeRate();
+      const feeRateOffer = await getPlatformFeeRate(offerPrice);
       const platformFee = calcPlatformFeeWithRate(listing.sellerType, offerPrice, feeRateOffer);
       const orderNo = await generateOrderNo();
       const order = await createMarketplaceOrder({

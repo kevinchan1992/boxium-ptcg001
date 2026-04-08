@@ -227,7 +227,24 @@ async function startServer() {
               if (winnerId) {
                 const orderNo_ = await generateOrderNo();
                 const winningBidAmount = parseFloat(auctionListing.currentHighestBid ?? '0');
-                const platformFeeRate = 0.05;
+                // Tiered fee rate: 5% for ≤5000, 4% for ≤10000, 3% for >10000
+                const { getSystemSetting: getSetting_ } = await import('../db');
+                let platformFeeRate: number;
+                try {
+                  const [t1max, t1rate, t2max, t2rate, t3rate] = await Promise.all([
+                    getSetting_('fee_tier_1_max'), getSetting_('fee_tier_1_rate'),
+                    getSetting_('fee_tier_2_max'), getSetting_('fee_tier_2_rate'),
+                    getSetting_('fee_tier_3_rate'),
+                  ]);
+                  const tier1Max  = t1max  ? parseFloat(t1max.settingValue)  : 5000;
+                  const tier1Rate = t1rate ? parseFloat(t1rate.settingValue) : 0.05;
+                  const tier2Max  = t2max  ? parseFloat(t2max.settingValue)  : 10000;
+                  const tier2Rate = t2rate ? parseFloat(t2rate.settingValue) : 0.04;
+                  const tier3Rate = t3rate ? parseFloat(t3rate.settingValue) : 0.03;
+                  platformFeeRate = winningBidAmount <= tier1Max ? tier1Rate : winningBidAmount <= tier2Max ? tier2Rate : tier3Rate;
+                } catch {
+                  platformFeeRate = winningBidAmount <= 5000 ? 0.05 : winningBidAmount <= 10000 ? 0.04 : 0.03;
+                }
                 const platformFee = winningBidAmount * platformFeeRate;
                 const sellerReceivable = winningBidAmount - platformFee;
                 const sellerProf = auctionListing.sellerId ? await getSellerProfileByUserId(auctionListing.sellerId) : null;

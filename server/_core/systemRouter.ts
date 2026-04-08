@@ -28,32 +28,54 @@ export const systemRouter = router({
       } as const;
     }),
 
-  // Get platform settings (fee rate, etc.)
+  // Get platform settings (tiered fee rate)
   getPlatformSettings: adminProcedure
     .query(async () => {
-      const feeRateSetting = await getSystemSetting("platform_fee_rate");
-      const feeRate = feeRateSetting ? parseFloat(feeRateSetting.settingValue) : 0.05;
+      const [t1max, t1rate, t2max, t2rate, t3rate] = await Promise.all([
+        getSystemSetting('fee_tier_1_max'),
+        getSystemSetting('fee_tier_1_rate'),
+        getSystemSetting('fee_tier_2_max'),
+        getSystemSetting('fee_tier_2_rate'),
+        getSystemSetting('fee_tier_3_rate'),
+      ]);
       return {
-        platformFeeRate: feeRate,
-        platformFeeRatePercent: Math.round(feeRate * 100 * 100) / 100, // e.g. 5.00
+        tier1Max:  t1max  ? parseFloat(t1max.settingValue)  : 5000,
+        tier1Rate: t1rate ? parseFloat(t1rate.settingValue) : 0.05,
+        tier2Max:  t2max  ? parseFloat(t2max.settingValue)  : 10000,
+        tier2Rate: t2rate ? parseFloat(t2rate.settingValue) : 0.04,
+        tier3Rate: t3rate ? parseFloat(t3rate.settingValue) : 0.03,
+        // Legacy compat: return tier1 rate as platformFeeRate
+        platformFeeRate: t1rate ? parseFloat(t1rate.settingValue) : 0.05,
+        platformFeeRatePercent: t1rate ? Math.round(parseFloat(t1rate.settingValue) * 100 * 100) / 100 : 5,
       };
     }),
 
-  // Update platform fee rate
+  // Update tiered platform fee rates
   updatePlatformFeeRate: adminProcedure
     .input(
       z.object({
-        feeRatePercent: z.number().min(0).max(30, "Fee rate cannot exceed 30%"),
+        tier1Max:  z.number().min(1).optional(),
+        tier1Rate: z.number().min(0).max(30).optional(),
+        tier2Max:  z.number().min(1).optional(),
+        tier2Rate: z.number().min(0).max(30).optional(),
+        tier3Rate: z.number().min(0).max(30).optional(),
+        // Legacy single-rate compat
+        feeRatePercent: z.number().min(0).max(30).optional(),
       })
     )
     .mutation(async ({ input }) => {
-      const feeRate = input.feeRatePercent / 100;
-      await setSystemSetting(
-        "platform_fee_rate",
-        feeRate.toString(),
-        `Platform fee rate for C2C marketplace listings (${input.feeRatePercent}%)`
-      );
-      return { success: true, feeRate, feeRatePercent: input.feeRatePercent };
+      const updates: Promise<any>[] = [];
+      if (input.tier1Max  !== undefined) updates.push(setSystemSetting('fee_tier_1_max',  input.tier1Max.toString(),  'Tier 1 max price threshold (HKD)'));
+      if (input.tier1Rate !== undefined) updates.push(setSystemSetting('fee_tier_1_rate', (input.tier1Rate / 100).toString(), `Tier 1 fee rate (${input.tier1Rate}%)` ));
+      if (input.tier2Max  !== undefined) updates.push(setSystemSetting('fee_tier_2_max',  input.tier2Max.toString(),  'Tier 2 max price threshold (HKD)'));
+      if (input.tier2Rate !== undefined) updates.push(setSystemSetting('fee_tier_2_rate', (input.tier2Rate / 100).toString(), `Tier 2 fee rate (${input.tier2Rate}%)` ));
+      if (input.tier3Rate !== undefined) updates.push(setSystemSetting('fee_tier_3_rate', (input.tier3Rate / 100).toString(), `Tier 3 fee rate (${input.tier3Rate}%)` ));
+      // Legacy compat: if only feeRatePercent provided, update tier1 rate
+      if (input.feeRatePercent !== undefined && input.tier1Rate === undefined) {
+        updates.push(setSystemSetting('fee_tier_1_rate', (input.feeRatePercent / 100).toString(), `Tier 1 fee rate (${input.feeRatePercent}%)`));
+      }
+      await Promise.all(updates);
+      return { success: true };
     }),
 
   // Get marketplace timeout settings (public so order pages can read payment timeout)

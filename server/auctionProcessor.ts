@@ -286,10 +286,34 @@ async function finalizeAuction(listing: any): Promise<void> {
   }
   const paymentDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
   const paymentDeadlineStr = formatHKT(paymentDeadline);
-  // Determine seller type and calculate platform fee
+  // Determine seller type and calculate platform fee (tiered)
   // Platform-owned items (no sellerId) have 0% platform fee
   const itemSellerType = listing.sellerId ? 'seller' : 'platform';
-  const PLATFORM_FEE_RATE = itemSellerType === 'platform' ? 0 : 0.05;
+  // Tiered fee rate: 5% for ≤5000, 4% for ≤10000, 3% for >10000
+  const { getSystemSetting } = await import('./db');
+  let PLATFORM_FEE_RATE: number;
+  if (itemSellerType === 'platform') {
+    PLATFORM_FEE_RATE = 0;
+  } else {
+    try {
+      const [t1max, t1rate, t2max, t2rate, t3rate] = await Promise.all([
+        getSystemSetting('fee_tier_1_max'), getSystemSetting('fee_tier_1_rate'),
+        getSystemSetting('fee_tier_2_max'), getSystemSetting('fee_tier_2_rate'),
+        getSystemSetting('fee_tier_3_rate'),
+      ]);
+      const tier1Max  = t1max  ? parseFloat(t1max.settingValue)  : 5000;
+      const tier1Rate = t1rate ? parseFloat(t1rate.settingValue) : 0.05;
+      const tier2Max  = t2max  ? parseFloat(t2max.settingValue)  : 10000;
+      const tier2Rate = t2rate ? parseFloat(t2rate.settingValue) : 0.04;
+      const tier3Rate = t3rate ? parseFloat(t3rate.settingValue) : 0.03;
+      if (winAmount <= tier1Max) PLATFORM_FEE_RATE = tier1Rate;
+      else if (winAmount <= tier2Max) PLATFORM_FEE_RATE = tier2Rate;
+      else PLATFORM_FEE_RATE = tier3Rate;
+    } catch {
+      // Fallback to tier 1 default
+      PLATFORM_FEE_RATE = winAmount <= 5000 ? 0.05 : winAmount <= 10000 ? 0.04 : 0.03;
+    }
+  }
   const platformFee = parseFloat((winAmount * PLATFORM_FEE_RATE).toFixed(2));
   const sellerReceivable = parseFloat((winAmount - platformFee).toFixed(2));
   let order: any;

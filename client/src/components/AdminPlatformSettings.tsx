@@ -7,23 +7,54 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Settings, Percent, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
+import { Settings, Percent, AlertCircle, CheckCircle2, RefreshCw, ChevronRight } from "lucide-react";
+
+interface TierState {
+  tier1Max: string;
+  tier1Rate: string;
+  tier2Max: string;
+  tier2Rate: string;
+  tier3Rate: string;
+}
+
+function calcFeeForAmount(amount: number, tiers: TierState): number {
+  const t1Max  = parseFloat(tiers.tier1Max)  || 5000;
+  const t1Rate = parseFloat(tiers.tier1Rate) || 5;
+  const t2Max  = parseFloat(tiers.tier2Max)  || 10000;
+  const t2Rate = parseFloat(tiers.tier2Rate) || 4;
+  const t3Rate = parseFloat(tiers.tier3Rate) || 3;
+  let rate: number;
+  if (amount <= t1Max) rate = t1Rate;
+  else if (amount <= t2Max) rate = t2Rate;
+  else rate = t3Rate;
+  return Math.round(amount * (rate / 100) * 100) / 100;
+}
 
 export default function AdminPlatformSettings() {
-  const [feeRateInput, setFeeRateInput] = useState<string>("");
+  const [tiers, setTiers] = useState<TierState>({
+    tier1Max: "5000", tier1Rate: "5",
+    tier2Max: "10000", tier2Rate: "4",
+    tier3Rate: "3",
+  });
   const [isEditing, setIsEditing] = useState(false);
 
   const { data: settings, isLoading, refetch } = trpc.system.getPlatformSettings.useQuery(undefined);
 
   useEffect(() => {
     if (settings && !isEditing) {
-      setFeeRateInput(settings.platformFeeRatePercent.toString());
+      setTiers({
+        tier1Max:  (settings.tier1Max  ?? 5000).toString(),
+        tier1Rate: (((settings.tier1Rate ?? 0.05) * 100)).toString(),
+        tier2Max:  (settings.tier2Max  ?? 10000).toString(),
+        tier2Rate: (((settings.tier2Rate ?? 0.04) * 100)).toString(),
+        tier3Rate: (((settings.tier3Rate ?? 0.03) * 100)).toString(),
+      });
     }
   }, [settings, isEditing]);
 
   const updateMutation = trpc.system.updatePlatformFeeRate.useMutation({
-    onSuccess: (data) => {
-      toast.success(`平台費率已更新為 ${data.feeRatePercent}%`);
+    onSuccess: () => {
+      toast.success("三級費率已成功更新");
       setIsEditing(false);
       refetch();
     },
@@ -33,20 +64,45 @@ export default function AdminPlatformSettings() {
   });
 
   const handleSave = () => {
-    const val = parseFloat(feeRateInput);
-    if (isNaN(val) || val < 0 || val > 30) {
+    const t1Max  = parseFloat(tiers.tier1Max);
+    const t1Rate = parseFloat(tiers.tier1Rate);
+    const t2Max  = parseFloat(tiers.tier2Max);
+    const t2Rate = parseFloat(tiers.tier2Rate);
+    const t3Rate = parseFloat(tiers.tier3Rate);
+    if ([t1Max, t1Rate, t2Max, t2Rate, t3Rate].some(isNaN)) {
+      toast.error("所有欄位必須填寫有效數字");
+      return;
+    }
+    if (t1Max >= t2Max) {
+      toast.error("第一級上限必須小於第二級上限");
+      return;
+    }
+    if ([t1Rate, t2Rate, t3Rate].some(v => v < 0 || v > 30)) {
       toast.error("費率必須在 0% 至 30% 之間");
       return;
     }
-    updateMutation.mutate({ feeRatePercent: val });
+    updateMutation.mutate({ tier1Max: t1Max, tier1Rate: t1Rate, tier2Max: t2Max, tier2Rate: t2Rate, tier3Rate: t3Rate });
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     if (settings) {
-      setFeeRateInput(settings.platformFeeRatePercent.toString());
+      setTiers({
+        tier1Max:  (settings.tier1Max  ?? 5000).toString(),
+        tier1Rate: (((settings.tier1Rate ?? 0.05) * 100)).toString(),
+        tier2Max:  (settings.tier2Max  ?? 10000).toString(),
+        tier2Rate: (((settings.tier2Rate ?? 0.04) * 100)).toString(),
+        tier3Rate: (((settings.tier3Rate ?? 0.03) * 100)).toString(),
+      });
     }
   };
+
+  const updateTier = (key: keyof TierState, value: string) => {
+    setTiers(prev => ({ ...prev, [key]: value }));
+    setIsEditing(true);
+  };
+
+  const previewAmounts = [500, 2000, 5000, 6000, 10000, 15000];
 
   return (
     <div className="space-y-6">
@@ -58,28 +114,33 @@ export default function AdminPlatformSettings() {
         </div>
       </div>
 
-      {/* Platform Fee Rate Card */}
+      {/* Tiered Fee Rate Card */}
       <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Percent className="w-5 h-5 text-yellow-400" />
-              <CardTitle className="text-white text-lg">平台交易費率</CardTitle>
+              <CardTitle className="text-white text-lg">平台交易費率（三級制）</CardTitle>
             </div>
             {!isLoading && settings && (
-              <Badge
-                variant="outline"
-                className="border-yellow-500 text-yellow-400 text-sm px-3 py-1"
-              >
-                當前：{settings.platformFeeRatePercent}%
-              </Badge>
+              <div className="flex gap-2">
+                <Badge variant="outline" className="border-yellow-500 text-yellow-400 text-xs px-2 py-0.5">
+                  ≤HK${(settings.tier1Max ?? 5000).toLocaleString()}: {((settings.tier1Rate ?? 0.05) * 100).toFixed(1)}%
+                </Badge>
+                <Badge variant="outline" className="border-blue-500 text-blue-400 text-xs px-2 py-0.5">
+                  ≤HK${(settings.tier2Max ?? 10000).toLocaleString()}: {((settings.tier2Rate ?? 0.04) * 100).toFixed(1)}%
+                </Badge>
+                <Badge variant="outline" className="border-green-500 text-green-400 text-xs px-2 py-0.5">
+                  其他: {((settings.tier3Rate ?? 0.03) * 100).toFixed(1)}%
+                </Badge>
+              </div>
             )}
           </div>
           <CardDescription className="text-gray-400">
-            適用於所有 C2C 二手市集交易。平台費率從每筆訂單的成交金額中扣除，並在賣家放款時生效。
+            適用於所有 C2C 二手市集交易。費率按成交金額自動套用對應等級，並在賣家放款時生效。
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           {isLoading ? (
             <div className="flex items-center gap-2 text-gray-400">
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -93,80 +154,172 @@ export default function AdminPlatformSettings() {
                   <AlertCircle className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
                   <div className="text-sm text-blue-300 space-y-1">
                     <p>費率變更<strong>僅影響新建立的訂單</strong>，已存在的訂單不受影響。</p>
-                    <p>例如：費率設為 5%，成交金額 HK$1,000，平台費 = HK$50，賣家實收 HK$950。</p>
+                    <p>每筆訂單按<strong>該訂單的成交金額</strong>套用對應等級費率（非累進計算）。</p>
                   </div>
                 </div>
               </div>
 
-              {/* Fee Rate Input */}
-              <div className="space-y-2">
-                <Label className="text-gray-300 text-sm">費率（%）</Label>
-                <div className="flex items-center gap-3">
-                  <div className="relative w-40">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="30"
-                      step="0.1"
-                      value={feeRateInput}
-                      onChange={(e) => {
-                        setFeeRateInput(e.target.value);
-                        setIsEditing(true);
-                      }}
-                      className="bg-gray-800 border-gray-600 text-white pr-8 focus:border-yellow-500"
-                      placeholder="5.0"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
-                  </div>
-                  {isEditing && (
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleSave}
-                        disabled={updateMutation.isPending}
-                        className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold"
-                        size="sm"
-                      >
-                        {updateMutation.isPending ? (
-                          <>
-                            <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
-                            儲存中...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            儲存
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        onClick={handleCancel}
-                        variant="outline"
-                        size="sm"
-                        className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                      >
-                        取消
-                      </Button>
+              {/* Three Tier Inputs */}
+              <div className="space-y-4">
+                {/* Tier 1 */}
+                <div className="bg-gray-800/60 rounded-xl p-4 border border-yellow-900/40">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center">
+                      <span className="text-yellow-400 text-xs font-bold">1</span>
                     </div>
-                  )}
+                    <span className="text-yellow-400 font-semibold text-sm">第一級</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-gray-400 text-xs">成交金額上限（HKD）</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">HK$</span>
+                        <Input
+                          type="number" min="1" step="100"
+                          value={tiers.tier1Max}
+                          onChange={e => updateTier("tier1Max", e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white pl-10 focus:border-yellow-500"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500">HK$1 至此金額</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-gray-400 text-xs">費率（%）</Label>
+                      <div className="relative">
+                        <Input
+                          type="number" min="0" max="30" step="0.1"
+                          value={tiers.tier1Rate}
+                          onChange={e => updateTier("tier1Rate", e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white pr-8 focus:border-yellow-500"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500">有效範圍：0% 至 30%，支援小數點（例如 4.5）</p>
+
+                {/* Arrow */}
+                <div className="flex justify-center">
+                  <ChevronRight className="w-4 h-4 text-gray-600 rotate-90" />
+                </div>
+
+                {/* Tier 2 */}
+                <div className="bg-gray-800/60 rounded-xl p-4 border border-blue-900/40">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/50 flex items-center justify-center">
+                      <span className="text-blue-400 text-xs font-bold">2</span>
+                    </div>
+                    <span className="text-blue-400 font-semibold text-sm">第二級</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-gray-400 text-xs">成交金額上限（HKD）</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">HK$</span>
+                        <Input
+                          type="number" min="1" step="100"
+                          value={tiers.tier2Max}
+                          onChange={e => updateTier("tier2Max", e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white pl-10 focus:border-blue-500"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500">超過第一級至此金額</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-gray-400 text-xs">費率（%）</Label>
+                      <div className="relative">
+                        <Input
+                          type="number" min="0" max="30" step="0.1"
+                          value={tiers.tier2Rate}
+                          onChange={e => updateTier("tier2Rate", e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white pr-8 focus:border-blue-500"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Arrow */}
+                <div className="flex justify-center">
+                  <ChevronRight className="w-4 h-4 text-gray-600 rotate-90" />
+                </div>
+
+                {/* Tier 3 */}
+                <div className="bg-gray-800/60 rounded-xl p-4 border border-green-900/40">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center">
+                      <span className="text-green-400 text-xs font-bold">3</span>
+                    </div>
+                    <span className="text-green-400 font-semibold text-sm">第三級（最高級）</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-gray-400 text-xs">適用範圍</Label>
+                      <div className="bg-gray-700/50 rounded-md px-3 py-2 text-gray-400 text-sm">
+                        超過 HK${(parseFloat(tiers.tier2Max) || 10000).toLocaleString()} 以上
+                      </div>
+                      <p className="text-xs text-gray-500">無上限</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-gray-400 text-xs">費率（%）</Label>
+                      <div className="relative">
+                        <Input
+                          type="number" min="0" max="30" step="0.1"
+                          value={tiers.tier3Rate}
+                          onChange={e => updateTier("tier3Rate", e.target.value)}
+                          className="bg-gray-700 border-gray-600 text-white pr-8 focus:border-green-500"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              {/* Save / Cancel Buttons */}
+              {isEditing && (
+                <div className="flex gap-3 pt-1">
+                  <Button
+                    onClick={handleSave}
+                    disabled={updateMutation.isPending}
+                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold"
+                  >
+                    {updateMutation.isPending ? (
+                      <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />儲存中...</>
+                    ) : (
+                      <><CheckCircle2 className="w-4 h-4 mr-2" />儲存三級費率</>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleCancel}
+                    variant="outline"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    取消
+                  </Button>
+                </div>
+              )}
 
               <Separator className="bg-gray-700" />
 
-              {/* Preview calculation */}
-              <div className="space-y-2">
+              {/* Preview Table */}
+              <div className="space-y-3">
                 <p className="text-sm text-gray-400 font-medium">費率預覽計算</p>
-                <div className="grid grid-cols-3 gap-3">
-                  {[500, 1000, 2000].map((amount) => {
-                    const rate = parseFloat(feeRateInput) || 0;
-                    const fee = Math.round(amount * (rate / 100));
+                <div className="grid grid-cols-3 gap-2">
+                  {previewAmounts.map((amount) => {
+                    const fee = calcFeeForAmount(amount, tiers);
                     const sellerReceives = amount - fee;
+                    const t1Max = parseFloat(tiers.tier1Max) || 5000;
+                    const t2Max = parseFloat(tiers.tier2Max) || 10000;
+                    const tierLabel = amount <= t1Max ? "第一級" : amount <= t2Max ? "第二級" : "第三級";
+                    const tierColor = amount <= t1Max ? "text-yellow-400" : amount <= t2Max ? "text-blue-400" : "text-green-400";
                     return (
                       <div key={amount} className="bg-gray-800 rounded-lg p-3 text-center">
-                        <p className="text-xs text-gray-500 mb-1">成交 HK${amount}</p>
-                        <p className="text-yellow-400 text-sm font-semibold">費 HK${fee}</p>
-                        <p className="text-green-400 text-xs">賣家收 HK${sellerReceives}</p>
+                        <p className={`text-xs mb-0.5 font-medium ${tierColor}`}>{tierLabel}</p>
+                        <p className="text-xs text-gray-500 mb-1">成交 HK${amount.toLocaleString()}</p>
+                        <p className="text-yellow-400 text-sm font-semibold">費 HK${fee.toLocaleString()}</p>
+                        <p className="text-green-400 text-xs">賣家收 HK${sellerReceives.toLocaleString()}</p>
                       </div>
                     );
                   })}
