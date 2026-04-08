@@ -3679,10 +3679,10 @@ export default function SellerDashboard() {
                   </div>
 
                   {/* Terms Agreement Checkbox */}
-                  <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 transition-colors"
+                  <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-colors"
                     style={{ borderColor: listingTermsAgreed ? '#06038D' : 'rgba(6,3,141,0.2)', backgroundColor: listingTermsAgreed ? 'rgba(6,3,141,0.05)' : 'white' }}
                   >
-                    <div className="relative flex-shrink-0 mt-0.5">
+                    <div className="relative flex-shrink-0">
                       <input
                         type="checkbox"
                         className="sr-only"
@@ -3695,7 +3695,7 @@ export default function SellerDashboard() {
                         {listingTermsAgreed && <Check className="w-3 h-3 text-white" />}
                       </div>
                     </div>
-                    <span className="text-xs text-[#06038D]/80 leading-relaxed">
+                    <span className="text-xs text-[#06038D]/80 leading-normal">
                       我已閱讀並同意
                       <a href="/auction/terms" target="_blank" rel="noopener noreferrer"
                         className="font-semibold text-[#06038D] underline underline-offset-2 hover:text-[#06038D]/70 mx-1"

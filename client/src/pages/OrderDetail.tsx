@@ -724,6 +724,7 @@ export default function OrderDetail() {
   const utils = trpc.useUtils();
   const { data: me } = trpc.auth.me.useQuery();
   const isAdmin = me?.role === 'admin';
+  const { data: feeTiersData } = trpc.marketplace.getFeeTiers.useQuery();
 
   const { data, isLoading, error } = trpc.marketplace.getOrderByNo.useQuery(
     { orderNo },
@@ -1539,8 +1540,19 @@ export default function OrderDetail() {
             {isSeller && order.sellerType === 'seller' && (() => {
               const amount = parseFloat(order.subtotalHkd as string ?? '0');
               const rate = parseFloat(order.platformFeeRate as string ?? '0.05');
-              const ratePercent = Math.round(rate * 100);
-              const tier = ratePercent >= 5 ? 1 : ratePercent >= 4 ? 2 : 3;
+              const ratePercent = Math.round(rate * 100 * 10) / 10;
+              // Determine tier dynamically from API data
+              let tier = 1;
+              if (feeTiersData && feeTiersData.length >= 3) {
+                const t1Rate = Math.round(feeTiersData[0].rate * 100 * 10) / 10;
+                const t2Rate = Math.round(feeTiersData[1].rate * 100 * 10) / 10;
+                if (ratePercent <= t2Rate) tier = 3;
+                else if (ratePercent <= t1Rate) tier = 2;
+                else tier = 1;
+              } else {
+                // fallback: higher rate = lower tier number
+                tier = ratePercent >= 5.5 ? 1 : ratePercent >= 5 ? 2 : 3;
+              }
               const platformFee = parseFloat(order.platformFeeHkd as string ?? '0');
               const sellerReceivable = parseFloat(order.sellerReceivableHkd as string ?? (amount - platformFee).toFixed(2));
               const tierBg = tier === 1 ? 'bg-yellow-50 border-yellow-200' : tier === 2 ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200';
