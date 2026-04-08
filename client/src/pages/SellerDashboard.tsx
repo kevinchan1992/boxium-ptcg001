@@ -1868,21 +1868,7 @@ export default function SellerDashboard() {
                             </svg>
                           </button>
                         </div>
-                        <Button
-                          size="sm"
-                          className="text-xs h-9 font-bold px-4 shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
-                          style={{ background: '#FEDD00', color: '#06038D' }}
-                          onClick={() => {
-                            if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
-                              toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
-                              return;
-                            }
-                            setShowNewListing(true);
-                          }}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          上架新商品
-                        </Button>
+
                       </div>
                       {/* Row 2: Batch actions (shown only in batch mode) */}
                       {batchMode && (
