@@ -1,6 +1,6 @@
 import { useEffect, useState, createContext, useContext, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, LogOut, User, Bell, Tag, ShoppingBag, LogIn, Package, MessageSquare, CheckCheck, ExternalLink, ShoppingCart } from "lucide-react";
+import { Menu, X, LogOut, User, Bell, Tag, ShoppingBag, LogIn, Package, MessageSquare, CheckCheck, ExternalLink, ShoppingCart, ScrollText } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -148,6 +148,7 @@ export function TopNav() {
     { href: "/pricing", label: t("common.priceComparison") },
     { href: "/marketplace", label: t("topnav.marketplace") },
     { href: "/blog", label: t("common.blog") },
+    { href: "/auction/terms", label: t("common.auctionTerms", "買賣條款") },
   ];
 
   useEffect(() => {
