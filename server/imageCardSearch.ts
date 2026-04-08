@@ -47,7 +47,7 @@ function getCachedIdentification(hash: string): any | null {
 function setCachedIdentification(hash: string, result: any): void {
   // Keep cache size bounded (max 200 entries)
   if (imageCache.size >= 200) {
-    const oldest = [...imageCache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
+    const oldest = Array.from(imageCache.entries()).sort((a, b) => a[1].ts - b[1].ts)[0];
     if (oldest) imageCache.delete(oldest[0]);
   }
   imageCache.set(hash, { result, ts: Date.now() });

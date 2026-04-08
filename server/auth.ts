@@ -96,7 +96,7 @@ export async function registerUser(
   email: string,
   password: string,
   name?: string
-): Promise<{ success: boolean; user?: User; token?: string; error?: string }> {
+): Promise<{ success: boolean; user?: User; token?: string; error?: string; requiresEmailVerification?: boolean }> {
   const db = await getDb();
   if (!db) {
     return { success: false, error: "數據庫連接失敗" };

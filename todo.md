@@ -7899,3 +7899,24 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 前端 Register.tsx：重新發送按鈕加入 60 秒倒計時
 - [x] 前端 ResendVerification.tsx：重新發送按鈕加入 60 秒倒計時
 - [ ] 儲存 checkpoint
+
+---
+
+## ✅ 全面系統測試 - Bug 修復（2026-04-08）
+
+### 測試範圍
+從賣家上架商品 → 買家加入購物車付款 → 爭議處理 → 確認收貨的完整流程
+
+### 已修復的 Bug
+
+- [x] **BUG-1**: C2C 賣家在 OrderDetail 頁面沒有出貨按鈕 — 已在 OrderDetail.tsx 添加 C2C 賣家出貨按鈕（payment_received/processing/paid_held 狀態）
+- [x] **BUG-2**: RC3 重複上架檢查未過濾 sellerId — 改用 getSellerListings(seller.id) 只查當前賣家的商品
+- [x] **BUG-3**: openDispute 後端 allowedStatuses 缺少 paid_held — 已添加（前後端一致）
+- [x] **BUG-4**: adminResolveDispute partial 結果的 finalStatus 設置 — partial 結果設為 completed + payoutStatus=failed（需人工處理）
+- [x] **BUG-5**: OrderDetail.tsx typo「爭議」文字修正
+- [x] **BUG-6**: SellerDashboard Step 1 缺少圖片上傳必填提示 — 已添加紅色提示文字 + 按鈕 disabled 驗證
+- [x] **BUG-7**: auction.create 後端缺少 endAt 必須在未來的驗證 — 已添加後端驗證；前端也添加紅色警告提示
+- [x] **BUG-8**: Cart meetup 模式下 canProceedStep1 未驗證 recipientPhone — 已添加電話必填驗證 + UI 提示
+- [x] **BUG-9**: canDispute 未排除 disputed 狀態（可能重複申請爭議）— 已修復
+- [x] **BUG-10**: disputed 狀態缺少清晰的提示訊息 — 已添加「等待管理員處理中」提示
+

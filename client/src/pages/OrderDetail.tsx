@@ -947,7 +947,8 @@ export default function OrderDetail() {
   })() : null;
   const disputeDaysLeft = disputeDeadline ? Math.ceil((disputeDeadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   const isWithinDisputeWindow = disputeDaysLeft !== null ? disputeDaysLeft > 0 : true; // if no shippedAt, allow dispute
-  const canDispute = isBuyer && ["shipped", "delivered", "payment_received", "processing", "paid_held"].includes(order.orderStatus) && isWithinDisputeWindow;
+  // BUG-9 Fix: Exclude 'disputed' status to prevent double-dispute
+  const canDispute = isBuyer && ["shipped", "delivered", "payment_received", "processing", "paid_held"].includes(order.orderStatus) && order.orderStatus !== "disputed" && isWithinDisputeWindow;
   const isCompleted = order.orderStatus === "completed";
   const canReview = isBuyer && isCompleted && order.sellerType === "seller" && !review;
 
@@ -1136,6 +1137,19 @@ export default function OrderDetail() {
               </span>
             </div>
           )}
+          {/* BUG-1 Fix: C2C Seller actions: ship order from OrderDetail page */}
+          {isSeller && order.sellerType === 'seller' && ["payment_received", "processing", "paid_held"].includes(order.orderStatus) && (
+            <div className="px-4 pb-4 border-t pt-3 flex flex-wrap gap-2 items-center">
+              <Button
+                size="sm"
+                className="bg-[#06038d] hover:bg-[#0804b8] text-white"
+                onClick={() => setShowAdminShipDialog(true)}
+              >
+                <Truck className="w-4 h-4 mr-1.5" />確認出貨
+              </Button>
+              <span className="text-xs text-gray-500">買家已付款，請盡快安排出貨</span>
+            </div>
+          )}
           {/* Admin seller actions: ship order */}
           {isAdmin && order.sellerType === 'platform' && ["payment_received", "processing", "paid_held"].includes(order.orderStatus) && (
             <div className="px-4 pb-4 border-t pt-3 flex flex-wrap gap-2">
@@ -1146,6 +1160,14 @@ export default function OrderDetail() {
               >
                 <Truck className="w-4 h-4 mr-1.5" />確認出貨
               </Button>
+            </div>
+          )}
+          {/* BUG-10 Fix: Show disputed status info */}
+          {order.orderStatus === 'disputed' && (
+            <div className="px-4 pb-4 border-t pt-3">
+              <span className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 inline-flex items-center gap-1.5">
+                <Flag className="w-3.5 h-3.5" />等待管理員處理中，請勿重複提交等待回覆
+              </span>
             </div>
           )}
           {/* Action Buttons */}
@@ -1167,7 +1189,7 @@ export default function OrderDetail() {
                 </div>
               )}
               {isBuyer && ["shipped", "delivered"].includes(order.orderStatus) && !isWithinDisputeWindow && (
-                <p className="text-xs text-gray-500 self-center">爬議申請期限已過（7 天）</p>
+                <p className="text-xs text-gray-500 self-center">爭議申請期限已過（7 天）</p>
               )}
               {canReview && (
                 <Button size="sm" variant="outline" className="border-yellow-300 text-yellow-700 hover:bg-yellow-50" onClick={() => setShowReviewDialog(true)}>

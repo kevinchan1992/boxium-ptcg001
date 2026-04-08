@@ -135,6 +135,15 @@ export const auctionRouter = router({
       const startAt = input.auctionStartAt ?? new Date();
       const endAt = input.auctionEndAt;
       const now = new Date();
+      // BUG-7 Fix: Validate that auctionEndAt must be in the future
+      if (endAt <= now) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "拍賣結束時間必須在未來，請重新設定" });
+      }
+      // Minimum auction duration: 1 hour
+      const minDurationMs = 60 * 60 * 1000;
+      if (endAt.getTime() - startAt.getTime() < minDurationMs) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "拍賣時間至少需要 1 小時" });
+      }
 
       // AUTO-PUBLISH: Determine auction status based on start time
       // If startAt is in the future, set to 'scheduled'; otherwise 'active'

@@ -3072,6 +3072,9 @@ export default function SellerDashboard() {
             {listingStep === 1 && (
               <>
                 <ImageUploader images={listingImages} onChange={setListingImages} />
+                {listingImages.length === 0 && (
+                  <p className="text-xs text-red-500 -mt-2">* 請至少上傳一張商品圖片（必填）</p>
+                )}
                 {/* Card Picker */}
                 <div>
                   <Label className="text-[#06038D] font-semibold">{t("seller.newListing.associateCard")}</Label>
@@ -3377,11 +3380,14 @@ export default function SellerDashboard() {
                     </div>
                     {/* Auto-calculated end time display */}
                     {listingForm.auctionEndAt && (
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#06038D]/5 border border-[#06038D]/20">
+                      <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${new Date(listingForm.auctionEndAt) <= new Date() ? 'bg-red-50 border-red-200' : 'bg-[#06038D]/5 border-[#06038D]/20'}`}>
                         <span className="text-xs text-[#06038D]/60">預計結標時間：</span>
-                        <span className="text-xs font-semibold text-[#06038D]">
+                        <span className={`text-xs font-semibold ${new Date(listingForm.auctionEndAt) <= new Date() ? 'text-red-600' : 'text-[#06038D]'}`}>
                           {new Date(listingForm.auctionEndAt).toLocaleString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                         </span>
+                        {new Date(listingForm.auctionEndAt) <= new Date() && (
+                          <span className="text-xs text-red-500 ml-1">⚠️ 結標時間已過去，請重新設定</span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -3567,10 +3573,10 @@ export default function SellerDashboard() {
               <Button
                 className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
                 disabled={
-                  listingStep === 1 ? (!listingForm.title || listingForm.title.trim().length < 3) :
+                  listingStep === 1 ? (!listingForm.title || listingForm.title.trim().length < 3 || listingImages.length === 0) :
                   listingStep === 2 ? (
                     listingForm.listingMode === 'auction'
-                      ? !listingForm.startingBid
+                      ? (!listingForm.startingBid || !listingForm.auctionEndAt || new Date(listingForm.auctionEndAt) <= new Date())
                       : (!listingForm.price || parseFloat(listingForm.price) < 4.00)
                   ) : false
                 }

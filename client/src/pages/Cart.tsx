@@ -1068,6 +1068,10 @@ function CheckoutDialog({
       if (sfAddressMode === "manual") return !!(form.meetupNote.trim());
       return false;
     }
+    // BUG-8 Fix: meetup mode should require recipientPhone for contact purposes
+    if (form.shippingMethod === "meetup") {
+      return !!(form.recipientPhone.trim());
+    }
     return true;
   }, [form, activeItems, selectedAddressId, sfAddressMode]);
 
@@ -1529,10 +1533,23 @@ function CheckoutDialog({
                     </div>
                   </div>
 
+                  {/* BUG-8 Fix: meetup requires phone for contact */}
+                  <div>
+                    <Label className="text-xs text-gray-600 mb-1 block">購買人聯絡電話 *</Label>
+                    <Input
+                      placeholder="+852 XXXX XXXX"
+                      value={form.recipientPhone}
+                      onChange={(e) => setForm((f) => ({ ...f, recipientPhone: e.target.value }))}
+                      className={`text-sm h-9 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400 ${!form.recipientPhone.trim() ? 'border-red-300' : 'border-[#06038D]/30'}`}
+                    />
+                    {!form.recipientPhone.trim() && (
+                      <p className="text-xs text-red-500 mt-1">請填寫聯絡電話，方便賣家安排面交</p>
+                    )}
+                  </div>
                   <div>
                     <Label className="text-xs text-gray-600 mb-1 block">偏好交收地點（可選）</Label>
                     <Input
-                      placeholder="例：旺角地鐵站 B 出口、荃灣廣場門口..."
+                      placeholder="例：旺角地鐵站 B 出口、荘灣廣場門口..."
                       value={form.meetupNote}
                       onChange={(e) => setForm((f) => ({ ...f, meetupNote: e.target.value }))}
                       className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"

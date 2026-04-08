@@ -500,7 +500,7 @@ export function scoreCardRelevance(
 
       // Check name match
       if (nameUpper.includes(tokenUpper) || nameJaUpper.includes(tokenUpper) ||
-          card.name.toLowerCase().includes(tokenLower)) {
+          (card.name && card.name.toLowerCase().includes(tokenLower))) {
         nameTokenMatches++;
       }
     }
@@ -541,7 +541,7 @@ export function scoreCardRelevance(
       }
     }
 
-    if (nameUpper.includes(tokenUpper) || card.name.toLowerCase().includes(tokenLower)) {
+    if (nameUpper.includes(tokenUpper) || (card.name && card.name.toLowerCase().includes(tokenLower))) {
       score = Math.max(score, 45);
     }
   }

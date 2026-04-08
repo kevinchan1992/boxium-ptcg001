@@ -940,9 +940,10 @@ export const marketplaceRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "請至少上傳一張商品圖片才能上架" });
       }
       // RC3: Duplicate listing check — same card + same condition by same seller (active only)
+      // BUG-2 Fix: Use getSellerListings(seller.id) to only check current seller's listings
       if (input.cardId) {
-        const existingListings = await getPublicListings({ sellerType: 'seller', pageSize: 100, page: 1 });
-        const duplicate = existingListings.listings.find(
+        const sellerListings = await getSellerListings(seller.id);
+        const duplicate = sellerListings.find(
           (l: any) => l.cardId === input.cardId && l.condition === input.condition && l.status === 'active'
         );
         if (duplicate) {
@@ -3350,7 +3351,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
-      const allowedStatuses = ["shipped", "delivered", "payment_received", "processing"];
+      const allowedStatuses = ["shipped", "delivered", "payment_received", "processing", "paid_held"];
       if (!allowedStatuses.includes(order.orderStatus)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單狀態不允許申請爭議" });
       }
@@ -3582,6 +3583,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
         throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不在爭議狀態" });
       }
       // Determine final order status based on outcome
+      // BUG-4 Fix: partial outcome sets to 'completed' with payoutStatus='failed' for manual handling
       const finalStatus = outcome === "refund_buyer" ? "cancelled" : "completed";
       // Build resolution history entry
       const historyEntry = {
