@@ -262,9 +262,9 @@ export default function AuctionTerms() {
               </div>
               <div className="divide-y divide-blue-50">
                 {[
-                  { tier: "第一級", range: "HKD 5,000 或以下", rate: "5%", color: "bg-amber-50", badge: "bg-amber-100 text-amber-800", example: "成交 HKD 1,000 → 服務費 HKD 50，實收 HKD 950" },
-                  { tier: "第二級", range: "HKD 5,001 – HKD 10,000", rate: "4%", color: "bg-blue-50", badge: "bg-blue-100 text-blue-800", example: "成交 HKD 8,000 → 服務費 HKD 320，實收 HKD 7,680" },
-                  { tier: "第三級", range: "HKD 10,001 或以上", rate: "3%", color: "bg-green-50", badge: "bg-green-100 text-green-800", example: "成交 HKD 15,000 → 服務費 HKD 450，實收 HKD 14,550" },
+                  { tier: "第一級", range: "HKD 5,000 或以下", rate: "5.5%", color: "bg-amber-50", badge: "bg-amber-100 text-amber-800", example: "成交 HKD 1,000 → 服務費 HKD 55，實收 HKD 945" },
+                  { tier: "第二級", range: "HKD 5,001 – HKD 10,000", rate: "5%", color: "bg-blue-50", badge: "bg-blue-100 text-blue-800", example: "成交 HKD 8,000 → 服務費 HKD 400，實收 HKD 7,600" },
+                  { tier: "第三級", range: "HKD 10,001 或以上", rate: "4.5%", color: "bg-green-50", badge: "bg-green-100 text-green-800", example: "成交 HKD 15,000 → 服務費 HKD 675，實收 HKD 14,325" },
                 ].map((t, i) => (
                   <div key={i} className={`px-4 py-3.5 ${t.color}`}>
                     <div className="flex items-center justify-between mb-1.5">
@@ -308,15 +308,46 @@ export default function AuctionTerms() {
               </div>
             </div>
             <div className="border-t border-gray-100 pt-3">
-              <p className="font-semibold text-[#06038D] mb-2">賣家結算</p>
+              <p className="font-semibold text-[#06038D] mb-2">賣家結算與放款流程</p>
               <div className="space-y-2">
                 <Rule num="1" title="Stripe Connect 帳戶">賣家須設立並連接 Stripe Connect 帳戶，方可接收款項。</Rule>
-                <Rule num="2" title="結算時間">買家確認收貨或交易完成後，平台將於 <strong>3–5 個工作天</strong>內完成結算。</Rule>
-                <Rule num="3" title="結算金額">結算金額為成交金額扣除平台服務費後的實收金額。</Rule>
+                <Rule num="2" title="買家確認收貨">買家收到商品後，須在訂單頁面點擊「確認收貨」。如買家在出貨後 14 天內未確認收貨，系統將自動完成訂單。</Rule>
+                <Rule num="3" title="48 小時冷靜期">買家確認收貨（或系統自動完成訂單）後，款項進入 <strong>48 小時冷靜期保護</strong>。在此期間，買家可就商品問題提出爭議申請。</Rule>
+                <Rule num="4" title="自動放款">冷靜期結束後，若無任何爭議，系統將自動將款項（扣除平台服務費後的實收金額）轉帳至賣家 Stripe Connect 帳戶。</Rule>
+                <Rule num="5" title="爭議暫停放款">如冷靜期內買家提出爭議，款項將暫時凍結，直至爭議處理完畢後方可放款。</Rule>
               </div>
             </div>
+
+            {/* Payout Flow Diagram */}
+            <div className="rounded-xl overflow-hidden border border-blue-100">
+              <div className="px-4 py-2.5 text-xs font-bold text-white flex items-center gap-2" style={{ background: BRAND_BLUE }}>
+                <Clock className="w-3.5 h-3.5" />
+                放款時間軸
+              </div>
+              <div className="p-4">
+                <div className="flex items-start gap-0">
+                  {[
+                    { step: "買家確認收貨", sub: "或系統自動完成（14天後）", color: "bg-blue-500" },
+                    { step: "48 小時冷靜期", sub: "買家可提出爭議申請", color: "bg-amber-500" },
+                    { step: "自動放款", sub: "款項轉入賣家帳戶", color: "bg-green-500" },
+                  ].map((item, i, arr) => (
+                    <div key={i} className="flex-1 flex flex-col items-center">
+                      <div className="flex items-center w-full">
+                        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${item.color}`} />
+                        {i < arr.length - 1 && <div className="flex-1 h-0.5 bg-gray-200" />}
+                      </div>
+                      <div className="mt-2 text-center px-1">
+                        <p className="text-xs font-semibold text-gray-800">{item.step}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{item.sub}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <InfoBox type="info">
-              如賣家尚未設立 Stripe Connect 帳戶，款項將暫時保留，直至帳戶設立完成後方可提取。
+              如賣家尚未設立 Stripe Connect 帳戶，款項將暫時保留，直至帳戶設立完成後方可提取。冷靜期保護機制旨在保障買家權益，同時確保賣家在無爭議的情況下能及時收款。
             </InfoBox>
           </div>
         </Section>
